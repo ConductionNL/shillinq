@@ -230,6 +230,27 @@
 					"order": 84
 				},
 				{
+					"id": "XBRLTaxonomies",
+					"label": "XBRL Taxonomies",
+					"icon": "FileTreeOutline",
+					"route": "XBRLTaxonomies",
+					"order": 85
+				},
+				{
+					"id": "SBRDocuments",
+					"label": "SBR Documents",
+					"icon": "FileDocumentEditOutline",
+					"route": "SBRDocuments",
+					"order": 86
+				},
+				{
+					"id": "XBRLMappingValidation",
+					"label": "Mapping Validation",
+					"icon": "ArrowDecisionOutline",
+					"route": "XBRLMappingValidation",
+					"order": 87
+				},
+				{
 					"id": "EmuRapportage",
 					"label": "EMU-rapportage",
 					"icon": "ChartBarOutline",
@@ -13657,6 +13678,152 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "PensionDisclosureTables"
+			}
+		},
+		{
+			"id": "XBRLTaxonomies",
+			"route": "/xbrl-taxonomies",
+			"type": "index",
+			"title": "XBRL Taxonomies",
+			"config": {
+				"register": "shillinq",
+				"schema": "XBRLTaxonomy",
+				"columns": [
+					{"key": "taxonomyId", "label": "Taxonomy ID", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "taxonomyVersion", "label": "Version", "sortable": true},
+					{"key": "publicationDate", "label": "Published", "sortable": true},
+					{"key": "effectiveDate", "label": "Effective", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true, "filterable": true}
+				],
+				"defaultSort": "-publicationDate",
+				"detailRoute": "XBRLTaxonomyDetail"
+			}
+		},
+		{
+			"id": "XBRLTaxonomyDetail",
+			"route": "/xbrl-taxonomies/:id",
+			"type": "detail",
+			"title": "XBRL Taxonomy",
+			"config": {
+				"register": "shillinq",
+				"schema": "XBRLTaxonomy",
+				"fields": [
+					{"key": "taxonomyId", "label": "Taxonomy ID", "type": "string"},
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "taxonomyVersion", "label": "Version", "type": "string"},
+					{"key": "publicationDate", "label": "Publication Date", "type": "date"},
+					{"key": "effectiveDate", "label": "Effective Date", "type": "date"},
+					{"key": "expiryDate", "label": "Expiry Date", "type": "date"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "description", "label": "Description", "type": "string"}
+				],
+				"relatedLists": [
+					{
+						"id": "taxonomy-mappings",
+						"title": "Account Mappings",
+						"schema": "XBRLMapping",
+						"filter": {"taxonomyVersion": "@self.taxonomyVersion"},
+						"columns": [
+							{"key": "sourceAccountId", "label": "Source Account"},
+							{"key": "targetXBRLConcept", "label": "XBRL GL Concept"},
+							{"key": "mappingDate", "label": "Mapping Date"},
+							{"key": "status", "label": "Status"}
+						]
+					}
+				],
+				"indexRoute": "XBRLTaxonomies"
+			}
+		},
+		{
+			"id": "SBRDocuments",
+			"route": "/sbr-documents",
+			"type": "index",
+			"title": "SBR Documents",
+			"config": {
+				"register": "shillinq",
+				"schema": "SBRDocumentType",
+				"columns": [
+					{"key": "code", "label": "Code", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "administrationId", "label": "Administration", "sortable": true},
+					{"key": "taxonomyVersion", "label": "Taxonomy Version", "sortable": true},
+					{"key": "filingDeadline", "label": "Filing Deadline", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true, "filterable": true}
+				],
+				"defaultSort": "filingDeadline",
+				"detailRoute": "SBRDocumentDetail"
+			}
+		},
+		{
+			"id": "SBRDocumentDetail",
+			"route": "/sbr-documents/:id",
+			"type": "detail",
+			"title": "SBR Document",
+			"config": {
+				"register": "shillinq",
+				"schema": "SBRDocumentType",
+				"fields": [
+					{"key": "code", "label": "Code", "type": "string"},
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "description", "label": "Description", "type": "string"},
+					{"key": "applicableEntityTypes", "label": "Applicable Entity Types", "type": "array"},
+					{"key": "filingDeadline", "label": "Filing Deadline", "type": "date"},
+					{"key": "fiscalYearStart", "label": "Fiscal Year Start", "type": "date"},
+					{"key": "fiscalYearEnd", "label": "Fiscal Year End", "type": "date"},
+					{"key": "taxonomyVersion", "label": "Taxonomy Version", "type": "string"},
+					{"key": "submissionEndpoint", "label": "Submission Endpoint", "type": "string"},
+					{"key": "authMethod", "label": "Authentication Method", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "requiredFields", "label": "Required Fields", "type": "array"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "validationErrors", "label": "Validation Errors", "type": "array"},
+					{"key": "submittedAt", "label": "Submitted At", "type": "date-time"},
+					{"key": "approvedAt", "label": "Approved At", "type": "date-time"},
+					{"key": "rejectionReason", "label": "Rejection Reason", "type": "string"},
+					{"key": "filingId", "label": "Belastingdienst Filing ID", "type": "string"}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SBRDocuments"
+			}
+		},
+		{
+			"id": "XBRLMappingValidation",
+			"route": "/xbrl-mapping-validation",
+			"type": "index",
+			"title": "Mapping Validation",
+			"config": {
+				"register": "shillinq",
+				"schema": "XBRLMapping",
+				"columns": [
+					{"key": "sourceAccountId", "label": "Source Account", "sortable": true},
+					{"key": "targetXBRLConcept", "label": "XBRL GL Concept", "sortable": true},
+					{"key": "taxonomyVersion", "label": "Taxonomy Version", "sortable": true, "filterable": true},
+					{"key": "mappingDate", "label": "Mapping Date", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true, "filterable": true}
+				],
+				"defaultSort": "sourceAccountId",
+				"detailRoute": "XBRLMappingDetail"
+			}
+		},
+		{
+			"id": "XBRLMappingDetail",
+			"route": "/xbrl-mapping-validation/:id",
+			"type": "detail",
+			"title": "XBRL Mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "XBRLMapping",
+				"fields": [
+					{"key": "sourceAccountId", "label": "Source Account", "type": "string"},
+					{"key": "targetXBRLConcept", "label": "XBRL GL Concept", "type": "string"},
+					{"key": "taxonomyVersion", "label": "Taxonomy Version", "type": "string"},
+					{"key": "mappingDate", "label": "Mapping Date", "type": "date"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "notes", "label": "Notes", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"indexRoute": "XBRLMappingValidation"
 			}
 		}
 	]
