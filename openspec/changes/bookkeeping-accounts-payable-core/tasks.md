@@ -140,14 +140,23 @@
 
 ## Manifest & Navigation
 
-- [ ] Task 14: Add 4 manifest navigation entries (`Vendors`, `Accounts Payable`,
+- [x] Task 14: Add 4 manifest navigation entries (`Vendors`, `Accounts Payable`,
   `AP Aging`, `Dunning`) + their `type: index` / `type: aggregate` / `type:
   detail` pages to `src/manifest.json` per REQ-AP-010; `node
   tests/validate-manifest.js` exits 0
+  - Added via `src/manifest.d/bookkeeping-accounts-payable-core.json` per ADR-037
+    (merged at build by `mergeManifestFragments()` in `src/main.js`). Four menu
+    entries under a new `AccountsPayableT2` group (Vendors / Accounts Payable /
+    AP Aging / Dunning) with `Payees`, `PayeeDetail`, `APTransactions`,
+    `APTransactionDetail`, `APAgingT2` (aggregate), `DunningNotices`,
+    `DunningNoticeDetail` pages. Distinct IDs from the pre-T2 baseline
+    (`Vendors` / `AccountsPayable` / `APAging` / `DunningTimeline`) avoid
+    collision per `dedup-notes.md`. `node tests/validate-manifest.js` PASS
+    (0 structural + 0 consistency issues).
 
 ## Seed Data
 
-- [ ] Task 15: Add seed data to `lib/Settings/shillinq_register.json`
+- [x] Task 15: Add seed data to `lib/Settings/shillinq_register.json`
   `components.objects[]` per REQ-AP-011: 3 realistic Dutch vendors (utilities,
   office supplies, professional services) + 5–8 AP invoices spanning lifecycle
   states (current, overdue 15d, overdue 45d, paid, disputed) with:
@@ -156,6 +165,16 @@
   - Amounts €500–€5000 with 19% VAT
   - `@self` envelope for idempotent imports
   - Verify re-importing with `force: false` skips duplicates
+  - Seeded in `lib/Settings/register.d/bookkeeping-accounts-payable-core.json`
+    `components.objects[]`. 3 Dutch vendors (Eneco Energie / Office Centre
+    Nederland / Deloitte Accountants — utilities, office supplies, professional
+    services) + 6 AP transactions covering all required lifecycle states
+    (2× `issued` current/Net 14, 2× `overdue`, 1× `disputed`, 1× `paid`) — and
+    1 additional `paid` invoice for full coverage; plus 2 `DunningNotice`
+    reminder-1 records against the two overdue invoices. All `@self` envelopes
+    have stable slugs so `ConfigurationService::importFromApp(force: false)`
+    skips duplicates idempotently. Dutch postcodes match
+    `[1-9][0-9]{3}[A-Z]{2}` and KvK / BTW codes match Belastingdienst format.
 
 ## Data Model Registry
 
