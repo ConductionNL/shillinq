@@ -244,6 +244,150 @@ final class BcfClaimFragmentTest extends TestCase
     }//end testSeedClaimsAreConsistent()
 
     /**
+     * The approval-chain seam gates the submit transition for the bcf-administrator role (REQ-BCF-006, Task 4.3).
+     *
+     * Integration-shape test: instead of a live OR ApprovalWorkflow run (which
+     * needs a Nextcloud container and is deferred per the build note), this test
+     * verifies the declarative contract OR consumes: the chain is bound to the
+     * `submit` transition; exactly one approver with role `bcf-administrator` is
+     * required; the configured timeout matches REQ-BCF-006 (7 days); the
+     * `onApprove` / `onReject` actions match the spec (advance vs. notify); and
+     * the audit-event taxonomy is complete so the audit trail can reconstruct
+     * the approval timeline per REQ-BCF-009.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-3
+     */
+    public function testApprovalChainGatesSubmitTransition(): void
+    {
+        $schema = $this->fragment()['components']['schemas']['BcfClaim'];
+
+        self::assertArrayHasKey(
+            'x-openregister-approval-chains',
+            $schema,
+            'BcfClaim must declare an approval-chain block (REQ-BCF-006).'
+        );
+
+        $chains = $schema['x-openregister-approval-chains'];
+        self::assertArrayHasKey(
+            'bcf-claim-submit-approval',
+            $chains,
+            'The bcf-claim-submit-approval chain must be declared (REQ-BCF-006).'
+        );
+
+        $chain = $chains['bcf-claim-submit-approval'];
+        self::assertSame('submit', $chain['transition'], 'Chain must gate the submit transition.');
+        self::assertSame(7, $chain['timeoutDays'], 'REQ-BCF-006 mandates a 7-day approval timeout.');
+        self::assertSame('advanceTransition', $chain['onApprove']);
+        self::assertSame('notifyOperator', $chain['onReject']);
+
+        self::assertCount(1, $chain['approvers'], 'Exactly one approver step (REQ-BCF-006).');
+        self::assertSame('bcf-administrator', $chain['approvers'][0]['role']);
+        self::assertSame(1, $chain['approvers'][0]['min']);
+
+        foreach (['task.created', 'task.approved', 'task.rejected', 'task.timeout'] as $event) {
+            self::assertContains(
+                $event,
+                $chain['auditEvents'],
+                'Approval audit-event taxonomy must include '.$event.' (REQ-BCF-009).'
+            );
+        }
+
+        // The transition the chain references must actually exist on the
+        // lifecycle so OR has a valid binding target.
+        $lifecycle = $schema['x-openregister-lifecycle'];
+        self::assertArrayHasKey(
+            'submit',
+            $lifecycle['transitions'],
+            'submit transition must exist on the lifecycle (Task 4.3 integration shape).'
+        );
+        self::assertSame('draft', $lifecycle['transitions']['submit']['from']);
+        self::assertSame('submitted', $lifecycle['transitions']['submit']['to']);
+
+    }//end testApprovalChainGatesSubmitTransition()
+
+
+    /**
+     * The settlement-webhook seam routes CloudEvents to the settle transition (REQ-BCF-007, Task 4.4).
+     *
+     * Integration-shape test: instead of POSTing a real CloudEvent into a
+     * running OR webhook endpoint (which needs a NC instance and is deferred
+     * per the build note), this test verifies OR's contract: the event type
+     * matches the canonical `nl.conduction.bcf-claim-settled`, the source is
+     * the OpenConnector digikoppeling-bcf integration, the bound transition is
+     * `settle`, the target updates cover `state`, `settledOn` and
+     * `settledAmount`, and the audit-event taxonomy includes received/applied/
+     * rejected so the audit trail captures lost-webhook fallbacks per
+     * REQ-BCF-007.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-4
+     */
+    public function testSettlementWebhookRoutesToSettleTransition(): void
+    {
+        $schema = $this->fragment()['components']['schemas']['BcfClaim'];
+
+        self::assertArrayHasKey(
+            'x-openregister-webhooks',
+            $schema,
+            'BcfClaim must declare a webhook-routing block (REQ-BCF-007).'
+        );
+
+        $webhooks = $schema['x-openregister-webhooks'];
+        self::assertArrayHasKey(
+            'bcf-claim-settled',
+            $webhooks,
+            'The bcf-claim-settled webhook must be declared (REQ-BCF-007).'
+        );
+
+        $webhook = $webhooks['bcf-claim-settled'];
+        self::assertSame('nl.conduction.bcf-claim-settled', $webhook['eventType']);
+        self::assertSame('openconnector:digikoppeling-bcf', $webhook['source']);
+        self::assertSame('settle', $webhook['transition']);
+
+        foreach (['state', 'settledOn', 'settledAmount'] as $field) {
+            self::assertArrayHasKey(
+                $field,
+                $webhook['targetUpdates'],
+                'Webhook must update '.$field.' on apply (REQ-BCF-007).'
+            );
+        }
+
+        foreach (['webhook.received', 'webhook.applied', 'webhook.rejected'] as $event) {
+            self::assertContains(
+                $event,
+                $webhook['auditEvents'],
+                'Webhook audit-event taxonomy must include '.$event.' (REQ-BCF-009).'
+            );
+        }
+
+        // The settle transition the webhook references must exist on the
+        // lifecycle so the routing has a valid binding target.
+        $lifecycle = $schema['x-openregister-lifecycle'];
+        self::assertArrayHasKey(
+            'settle',
+            $lifecycle['transitions'],
+            'settle transition must exist on the lifecycle (Task 4.4 integration shape).'
+        );
+        self::assertSame('accepted', $lifecycle['transitions']['settle']['from']);
+        self::assertSame('settled', $lifecycle['transitions']['settle']['to']);
+
+        // The webhook updates the same fields the schema declares — guard
+        // against drift between the webhook contract and the data model.
+        foreach (array_keys($webhook['targetUpdates']) as $field) {
+            self::assertArrayHasKey(
+                $field,
+                $schema['properties'],
+                'Webhook targetUpdate field '.$field.' must be declared on BcfClaim.'
+            );
+        }
+
+    }//end testSettlementWebhookRoutesToSettleTransition()
+
+
+    /**
      * Seed claims cover all four lifecycle states across multiple administrations (REQ-BCF-003).
      *
      * @return void
