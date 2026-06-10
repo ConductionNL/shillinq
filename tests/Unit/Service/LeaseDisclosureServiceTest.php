@@ -341,4 +341,121 @@ final class LeaseDisclosureServiceTest extends TestCase
         self::assertStringContainsString('"Lessor ""Acme, Inc."" reviewed contracts."', $csv);
 
     }//end testExportToCsvEscapesQuotesAndCommas()
+
+
+    /**
+     * exportDisclosureNoteToHtml renders a self-contained HTML document
+     * with the IFRS 16 sections (Task 10.2 skeleton).
+     *
+     * @return void
+     */
+    public function testExportDisclosureNoteToHtmlRendersSections(): void
+    {
+        $service    = $this->buildService([]);
+        $disclosure = [
+            'fiscalPeriod'                => '2026',
+            'administrationId'            => 'adm-pdf',
+            'closingRouByClass'           => ['vehicle' => 1500.0, 'real-estate' => 2500.0],
+            'maturityAnalysis'            => ['lt1y' => 12000.0, '1to2y' => 12000.0],
+            'weightedAverageIbrByClass'   => ['vehicle' => 4.2],
+            'totalLeaseLiabilityCurrent'  => 9000.0,
+            'totalLeaseLiabilityNoncurrent' => 30000.0,
+            'totalInterestExpense'        => 1500.0,
+            'totalShortTermLeaseExpense'  => 500.0,
+            'totalLowValueLeaseExpense'   => 0.0,
+            'totalVariableLeaseExpense'   => 0.0,
+            'qualitativeNarrative'        => 'The entity leases assets recognised under IFRS 16.',
+        ];
+
+        $html = $service->exportDisclosureNoteToHtml($disclosure, 'en');
+
+        self::assertStringContainsString('<!DOCTYPE html>', $html);
+        self::assertStringContainsString('<html lang="en">', $html);
+        self::assertStringContainsString('IFRS 16 Disclosure Note', $html);
+        self::assertStringContainsString('Closing right-of-use asset by class', $html);
+        self::assertStringContainsString('Undiscounted maturity analysis', $html);
+        self::assertStringContainsString('Weighted-average incremental borrowing rate by class', $html);
+        self::assertStringContainsString('Qualitative narrative', $html);
+        self::assertStringContainsString('vehicle', $html);
+
+    }//end testExportDisclosureNoteToHtmlRendersSections()
+
+
+    /**
+     * Dutch language flag flips both the <html lang="nl"> attribute and
+     * the section headings to the Dutch labels.
+     *
+     * @return void
+     */
+    public function testExportDisclosureNoteToHtmlDutch(): void
+    {
+        $service = $this->buildService([]);
+        $html    = $service->exportDisclosureNoteToHtml(
+            [
+                'fiscalPeriod'      => '2026',
+                'closingRouByClass' => ['vehicle' => 100.0],
+                'maturityAnalysis'  => ['lt1y' => 12000.0],
+            ],
+            'nl'
+        );
+
+        self::assertStringContainsString('<html lang="nl">', $html);
+        self::assertStringContainsString('IFRS 16-toelichting', $html);
+        self::assertStringContainsString('Looptijdanalyse', $html);
+        self::assertStringContainsString('Boekwaarde gebruiksrechtactivum', $html);
+
+    }//end testExportDisclosureNoteToHtmlDutch()
+
+
+    /**
+     * exportDisclosureNoteToPDF wraps the HTML in the docudesk-render envelope
+     * with status pending-pdf-pipeline (Task 10.2).
+     *
+     * @return void
+     */
+    public function testExportDisclosureNoteToPDFEnvelope(): void
+    {
+        $service = $this->buildService([]);
+        $envelope = $service->exportDisclosureNoteToPDF(
+            ['fiscalPeriod' => '2026', 'administrationId' => 'adm-pdf'],
+            'en'
+        );
+
+        self::assertSame('lease-disclosure-note', $envelope['kind']);
+        self::assertSame('pending-pdf-pipeline', $envelope['status']);
+        self::assertSame('2026', $envelope['fiscalPeriod']);
+        self::assertSame('en', $envelope['language']);
+        self::assertStringContainsString('<!DOCTYPE html>', $envelope['html']);
+
+    }//end testExportDisclosureNoteToPDFEnvelope()
+
+
+    /**
+     * exportToXBRL produces the iXBRL skeleton with the IFRS-full facts
+     * the bookkeeping-sbr-xbrl-reporting integration consumes (Task 10.4).
+     *
+     * @return void
+     */
+    public function testExportToXbrlSkeletonShape(): void
+    {
+        $service = $this->buildService([]);
+        $payload = $service->exportToXBRL(
+            [
+                'fiscalPeriod'                  => '2026',
+                'totalLeaseLiabilityCurrent'    => 9000.0,
+                'totalLeaseLiabilityNoncurrent' => 30000.0,
+                'totalInterestExpense'          => 1500.0,
+                'totalShortTermLeaseExpense'    => 500.0,
+            ]
+        );
+
+        self::assertSame('lease-disclosure-xbrl', $payload['kind']);
+        self::assertSame('pending-sbr-xbrl-reporting', $payload['status']);
+        self::assertSame('ctx-2026', $payload['contextRef']);
+        self::assertSame('ifrs-full-2024', $payload['taxonomy']);
+        self::assertArrayHasKey('ifrs-full:LeaseLiabilitiesCurrent', $payload['facts']);
+        self::assertSame(9000.0, $payload['facts']['ifrs-full:LeaseLiabilitiesCurrent']);
+        self::assertSame(1500.0, $payload['facts']['ifrs-full:InterestExpenseOnLeaseLiabilities']);
+
+    }//end testExportToXbrlSkeletonShape()
 }//end class
