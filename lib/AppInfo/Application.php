@@ -28,9 +28,12 @@ use OCA\Shillinq\Listener\DBAFactuurMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
+use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
+use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
+use OCA\Shillinq\Listener\VerplichtingTransitionListener;
 use OCA\Shillinq\Notification\Notifier;
 use OCA\Shillinq\Service\Dunning\CreditScoreFetchAdapterInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
@@ -276,6 +279,52 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectCreatedEvent::class,
             listener: DBAFactuurMonitorListener::class
+        );
+
+        // bookkeeping-tenderned-integratie Tasks 5.1 / 5.2 / 5.3 — react to
+        // the OR object-lifecycle events that materialise the
+        // `tenderned.award.detected`, `obligation.activated`, and
+        // `milestone.completed` CloudEvents (design D4). Every listener is
+        // fail-soft: an exception is logged but never propagated back into
+        // the originating OR write path.
+        //
+        // Task 5.1 — TenderNedAwardDetectedListener auto-promotes an
+        // awarded TenderNed dossier into an active Verplichting when the
+        // winning KvK matches the tenant org (REQ-002 idempotent on
+        // bronReferentie + REQ-003 milestone plan generated from the
+        // opdrachttype template).
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: TenderNedAwardDetectedListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: TenderNedAwardDetectedListener::class
+        );
+
+        // Task 5.2 — VerplichtingTransitionListener emits the cross-app
+        // `obligation.activated` CloudEvent on auto-promoted (created
+        // active) AND manually-enriched (transitioned to active)
+        // tenderned-sourced obligations (REQ-007 budget-impact pipeline).
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: VerplichtingTransitionListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: VerplichtingTransitionListener::class
+        );
+
+        // Task 5.3 — OpdrachtUitvoeringTransitionListener emits
+        // `milestone.completed` on every completed OpdrachtUitvoering and
+        // (for the approved eindoplevering of a tenderned-sourced
+        // obligation) triggers the outbound status-sync to TenderNed
+        // (REQ-006). The buyer-side gate is enforced both server-side
+        // (RBAC + TenderNedAanbestedingGuard::canAfronden) and inside
+        // TenderNedStatusSync as a defence-in-depth tenant KvK check.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: OpdrachtUitvoeringTransitionListener::class
         );
 
     }//end register()

@@ -214,10 +214,12 @@ final class FluxServiceTest extends TestCase
         $narrative = $s->buildNarrative(items: $items, periodId: '2026-03');
 
         self::assertSame(3, $narrative['itemCount']);
-        // COGS first, then Salaries, then Freight (by abs variance).
+        // Ordered by absolute variance descending: COGS (18 000 000) >
+        // Freight (800 000) > Salaries (600 000). R&D is dropped as
+        // immaterial.
         self::assertSame('COGS', $narrative['rows'][0]['glAccountNumber']);
-        self::assertSame('Salaries', $narrative['rows'][1]['glAccountNumber']);
-        self::assertSame('Freight', $narrative['rows'][2]['glAccountNumber']);
+        self::assertSame('Freight', $narrative['rows'][1]['glAccountNumber']);
+        self::assertSame('Salaries', $narrative['rows'][2]['glAccountNumber']);
         // Explained vs unexplained tracking.
         self::assertSame(2, $narrative['explainedCount']);
         self::assertSame(1, $narrative['unexplainedCount']);
