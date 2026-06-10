@@ -47,7 +47,9 @@ class BbvSeedService
      * @var array<int, array<string, string>>
      */
     private const CATALOGUES = [
-        ['file' => 'bbv-taakvelden-gemeente-2025.json', 'key' => 'taakvelden', 'schema' => 'Taakveld', 'dedup' => 'code'],
+        ['file' => 'bbv-taakvelden-gemeente-2025.json', 'key' => 'taakvelden', 'schema' => 'Taakveld', 'dedup' => 'code', 'secondaryDedup' => 'overheidslaag'],
+        ['file' => 'bbv-taakvelden-provincia-2025.json', 'key' => 'taakvelden', 'schema' => 'Taakveld', 'dedup' => 'code', 'secondaryDedup' => 'overheidslaag'],
+        ['file' => 'bbv-taakvelden-waterschap-2025.json', 'key' => 'taakvelden', 'schema' => 'Taakveld', 'dedup' => 'code', 'secondaryDedup' => 'overheidslaag'],
         ['file' => 'economische-categorieen-2025.json', 'key' => 'economischeCategorieen', 'schema' => 'EconomischeCategorie', 'dedup' => 'code'],
         ['file' => 'beleidsindicatoren-bbv-2025.json', 'key' => 'beleidsindicatoren', 'schema' => 'BeleidsIndicator', 'dedup' => 'code'],
         ['file' => 'rgs-decentraal-2025.json', 'key' => 'mappings', 'schema' => 'BbvAccountMapping', 'dedup' => 'rgsDecentraalCode'],
@@ -126,7 +128,8 @@ class BbvSeedService
             objectService: $objectService,
             rows: $rows,
             schema: $catalogue['schema'],
-            dedupField: $catalogue['dedup']
+            dedupField: $catalogue['dedup'],
+            secondaryDedupField: ($catalogue['secondaryDedup'] ?? null)
         );
 
     }//end seedCatalogue()
@@ -172,8 +175,13 @@ class BbvSeedService
      *
      * @return array{seeded:int,skipped:int}
      */
-    private function importRows(object $objectService, array $rows, string $schema, string $dedupField): array
-    {
+    private function importRows(
+        object $objectService,
+        array $rows,
+        string $schema,
+        string $dedupField,
+        ?string $secondaryDedupField = null
+    ): array {
         $seeded       = 0;
         $skipped      = 0;
         $registerSlug = $this->getRegisterSlug();
@@ -184,10 +192,19 @@ class BbvSeedService
                 continue;
             }
 
+            $filters = [$dedupField => $dedupValue];
+
+            if ($secondaryDedupField !== null) {
+                $secondaryValue = ($row[$secondaryDedupField] ?? null);
+                if ($secondaryValue !== null) {
+                    $filters[$secondaryDedupField] = $secondaryValue;
+                }
+            }
+
             $existing = $objectService
                 ->setRegister($registerSlug)
                 ->setSchema($schema)
-                ->findAll(['filters' => [$dedupField => $dedupValue], 'limit' => 1]);
+                ->findAll(['filters' => $filters, 'limit' => 1]);
 
             if (empty($existing) === false) {
                 $skipped++;
