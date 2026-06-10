@@ -418,6 +418,224 @@ class LeaseDisclosureService
 
     }//end exportToCSV()
 
+
+    /**
+     * Render the disclosure note as a self-contained HTML document for the
+     * Phase-2 docudesk PDF pipeline (Task 10.2 — skeleton).
+     *
+     * Produces deterministic, screen-reader-friendly HTML mirroring the
+     * IFRS 16.51–60 section layout (quantitative summary, RoU-by-class,
+     * undiscounted maturity analysis, weighted-average IBR, expense
+     * breakdown, qualitative narrative). The HTML is the input contract
+     * for the docudesk-driven PDF renderer when that pipeline lands; the
+     * caller can also stream the HTML directly as a print-friendly export.
+     *
+     * Pure-logic helper: NO PDF binary is produced here. The Phase-2
+     * docudesk pipeline (RfC bookkeeping-pdf-pipeline) consumes this
+     * HTML + a docudesk template id to render the final PDF.
+     *
+     * @param array<string,mixed> $disclosure The disclosure payload from generateForPeriod.
+     * @param string              $language   ISO 639-1 language code ('en' or 'nl'); defaults to 'en'.
+     *
+     * @return string The rendered HTML document.
+     *
+     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     */
+    public function exportDisclosureNoteToHtml(array $disclosure, string $language = 'en'): string
+    {
+        $lang   = ($language === 'nl' ? 'nl' : 'en');
+        $labels = $this->disclosureLabels(language: $lang);
+
+        $fiscalPeriod = htmlspecialchars(
+            string: (string) ($disclosure['fiscalPeriod'] ?? ''),
+            flags: (ENT_QUOTES | ENT_HTML5),
+            encoding: 'UTF-8'
+        );
+
+        $html  = '<!DOCTYPE html><html lang="'.$lang.'"><head><meta charset="UTF-8">';
+        $html .= '<title>'.htmlspecialchars(string: $labels['title'], flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8').' '.$fiscalPeriod.'</title>';
+        $html .= '</head><body>';
+        $html .= '<h1>'.htmlspecialchars(string: $labels['title'], flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8').' '.$fiscalPeriod.'</h1>';
+
+        $html .= $this->htmlSection(heading: $labels['rouByClass'], rows: (array) ($disclosure['closingRouByClass'] ?? []));
+        $html .= $this->htmlSection(heading: $labels['maturity'], rows: (array) ($disclosure['maturityAnalysis'] ?? []));
+        $html .= $this->htmlSection(heading: $labels['weightedIbr'], rows: (array) ($disclosure['weightedAverageIbrByClass'] ?? []));
+
+        $totals = [];
+        foreach ([
+            'totalLeaseLiabilityCurrent',
+            'totalLeaseLiabilityNoncurrent',
+            'totalInterestExpense',
+            'totalShortTermLeaseExpense',
+            'totalLowValueLeaseExpense',
+            'totalVariableLeaseExpense',
+        ] as $key) {
+            if (array_key_exists($key, $disclosure) === true) {
+                $totals[$key] = $disclosure[$key];
+            }
+        }
+
+        $html .= $this->htmlSection(heading: $labels['totals'], rows: $totals);
+
+        $narrative = (string) ($disclosure['qualitativeNarrative'] ?? '');
+        if ($narrative !== '') {
+            $html .= '<h2>'.htmlspecialchars(string: $labels['narrative'], flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8').'</h2>';
+            $html .= '<p>'.nl2br(string: htmlspecialchars(string: $narrative, flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8')).'</p>';
+        }
+
+        $html .= '<footer><p><em>'.htmlspecialchars(string: $labels['footerNote'], flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8').'</em></p></footer>';
+        $html .= '</body></html>';
+
+        return $html;
+
+    }//end exportDisclosureNoteToHtml()
+
+
+    /**
+     * Render the disclosure note for the Phase-2 PDF pipeline (Task 10.2).
+     *
+     * Wraps exportDisclosureNoteToHtml in the docudesk-render envelope:
+     *   - kind: 'lease-disclosure-note'
+     *   - status: 'pending-pdf-pipeline'  (rendered when docudesk lands)
+     *   - html : self-contained HTML body
+     *
+     * The envelope shape is what the docudesk integration will consume
+     * to produce the final signed PDF (REQ-LD-004(1)). Until the
+     * pipeline lands the caller can still surface the HTML to the
+     * operator as a print-friendly preview.
+     *
+     * @param array<string,mixed> $disclosure The disclosure payload.
+     * @param string              $language   'en' or 'nl'.
+     *
+     * @return array<string,mixed> The render envelope.
+     *
+     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     */
+    public function exportDisclosureNoteToPDF(array $disclosure, string $language = 'en'): array
+    {
+        return [
+            'kind'             => 'lease-disclosure-note',
+            'fiscalPeriod'     => ($disclosure['fiscalPeriod'] ?? ''),
+            'administrationId' => ($disclosure['administrationId'] ?? ''),
+            'language'         => ($language === 'nl' ? 'nl' : 'en'),
+            'status'           => 'pending-pdf-pipeline',
+            'html'             => $this->exportDisclosureNoteToHtml(disclosure: $disclosure, language: $language),
+        ];
+
+    }//end exportDisclosureNoteToPDF()
+
+
+    /**
+     * Skeleton XBRL/ESEF export for the bookkeeping-sbr-xbrl-reporting
+     * integration (Task 10.4).
+     *
+     * Emits an iXBRL fragment with the IFRS 16 disclosure facts the
+     * SBR XBRL pipeline will tag against the EFRAG taxonomy. The full
+     * ESEF wrapper + taxonomy linking lands with the
+     * `bookkeeping-sbr-xbrl-reporting` change; this skeleton stamps the
+     * facts in a stable contextRef so the consumer can map them.
+     *
+     * Pure-logic helper: NO XBRL validation is performed; the
+     * sbr-xbrl-reporting service will validate against the taxonomy.
+     *
+     * @param array<string,mixed> $disclosure The disclosure payload.
+     *
+     * @return array<string,mixed> { status, contextRef, facts:array<string,string|float|int> }
+     *
+     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     */
+    public function exportToXBRL(array $disclosure): array
+    {
+        $period     = (string) ($disclosure['fiscalPeriod'] ?? '');
+        $contextRef = ('ctx-'.($period !== '' ? str_replace(' ', '_', $period) : 'period'));
+
+        $facts = [
+            // IFRS 16 RoU totals (rough mapping to the IFRS taxonomy).
+            'ifrs-full:RightofuseAssets'                          => (float) ($disclosure['totalRouAsset'] ?? 0),
+            'ifrs-full:LeaseLiabilitiesCurrent'                   => (float) ($disclosure['totalLeaseLiabilityCurrent'] ?? 0),
+            'ifrs-full:LeaseLiabilitiesNoncurrent'                => (float) ($disclosure['totalLeaseLiabilityNoncurrent'] ?? 0),
+            'ifrs-full:InterestExpenseOnLeaseLiabilities'         => (float) ($disclosure['totalInterestExpense'] ?? 0),
+            'ifrs-full:ExpenseRelatingToShorttermLeases'          => (float) ($disclosure['totalShortTermLeaseExpense'] ?? 0),
+            'ifrs-full:ExpenseRelatingToLeasesOfLowvalueAssets'   => (float) ($disclosure['totalLowValueLeaseExpense'] ?? 0),
+            'ifrs-full:ExpenseRelatingToVariableLeasePayments'    => (float) ($disclosure['totalVariableLeaseExpense'] ?? 0),
+        ];
+
+        return [
+            'kind'        => 'lease-disclosure-xbrl',
+            'status'      => 'pending-sbr-xbrl-reporting',
+            'contextRef'  => $contextRef,
+            'facts'       => $facts,
+            'taxonomy'    => 'ifrs-full-2024',
+            'note'        => 'Skeleton: full ESEF iXBRL wrapper + taxonomy linkbase land with the bookkeeping-sbr-xbrl-reporting change.',
+        ];
+
+    }//end exportToXBRL()
+
+
+    /**
+     * Resolve the per-language label set for the disclosure note.
+     *
+     * @param string $language 'en' or 'nl'.
+     *
+     * @return array<string,string>
+     */
+    private function disclosureLabels(string $language): array
+    {
+        if ($language === 'nl') {
+            return [
+                'title'       => 'IFRS 16-toelichting',
+                'rouByClass'  => 'Boekwaarde gebruiksrechtactivum per activaklasse',
+                'maturity'    => 'Looptijdanalyse (niet-verdisconteerd)',
+                'weightedIbr' => 'Gewogen gemiddelde marginale rentevoet per activaklasse',
+                'totals'      => 'Overige toelichtingen',
+                'narrative'   => 'Toelichting op de leaseactiviteiten',
+                'footerNote'  => 'Opgesteld op basis van IFRS 16.51–60. Een externe PDF-render levert het ondertekende exemplaar.',
+            ];
+        }
+
+        return [
+            'title'       => 'IFRS 16 Disclosure Note',
+            'rouByClass'  => 'Closing right-of-use asset by class',
+            'maturity'    => 'Undiscounted maturity analysis',
+            'weightedIbr' => 'Weighted-average incremental borrowing rate by class',
+            'totals'      => 'Other disclosures',
+            'narrative'   => 'Qualitative narrative',
+            'footerNote'  => 'Compiled per IFRS 16.51–60. A signed PDF copy is produced by the docudesk render pipeline.',
+        ];
+
+    }//end disclosureLabels()
+
+
+    /**
+     * Render one labelled key→value section for the HTML disclosure note.
+     *
+     * @param string                $heading Section heading (already-localised).
+     * @param array<string,mixed>   $rows    Key→value rows.
+     *
+     * @return string The HTML fragment.
+     */
+    private function htmlSection(string $heading, array $rows): string
+    {
+        if ($rows === []) {
+            return '';
+        }
+
+        $html = '<h2>'.htmlspecialchars(string: $heading, flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8').'</h2>';
+        $html .= '<table><tbody>';
+        foreach ($rows as $label => $value) {
+            $html .= '<tr><th scope="row">'
+                .htmlspecialchars(string: (string) $label, flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8')
+                .'</th><td>'
+                .htmlspecialchars(string: $this->csvNumber(value: $value), flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8')
+                .'</td></tr>';
+        }
+
+        $html .= '</tbody></table>';
+        return $html;
+
+    }//end htmlSection()
+
+
     /**
      * Render a numeric value as a two-decimal CSV string.
      *

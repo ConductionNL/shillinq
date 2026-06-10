@@ -11,9 +11,9 @@ Lease accounting covers the recognition of Right-of-Use (RoU) assets and lease l
 
 ## ADDED Requirements
 
-### REQ-LA-001: When a lease transitions to `active`, the system SHALL generate the opening RoU asset and lease liability
+### Requirement: REQ-LA-001 — When a lease transitions to `active`, the system SHALL generate the opening RoU asset and lease liability
 
-At the moment a `lease-contract` transitions from `draft` to `active`:
+The system SHALL recognise the opening RoU asset and lease liability at activation. At the moment a `lease-contract` transitions from `draft` to `active`:
 
 1. **Compute present value of unavoidable payments**: using the lease's IBR and the payment schedule (frequency, base amount, indexation, extension-options marked "reasonably certain"), compute the PV of all future contractual payments
 2. **Opening Lease Liability** = PV
@@ -44,7 +44,7 @@ The journal entry is batched and posted at month-end along with other period pos
     - Cr. Lease liability (account 2310-Lease obligation) 34,300
 - **AND** a fixed-asset record is created with source-lease=<lease-id>
 
-### REQ-LA-002: The system SHALL generate a `lease-payment-schedule` table for periodic reference
+### Requirement: REQ-LA-002 — The system SHALL generate a `lease-payment-schedule` table for periodic reference
 
 One row per payment period (monthly, quarterly, annual, as specified by payment-frequency) from lease commencement to end of term (or reasonably-certain extensions). Each row MUST carry:
 
@@ -76,9 +76,9 @@ The schedule is generated and stored when a lease transitions to `active`. It is
   - ... (continuing with decreasing liability and increasing principal portion)
   - Period 36: opening-liability=~1,000, interest=~3.33, payment=1,000, principal=996.67, closing=~0.00
 
-### REQ-LA-003: Periodic month-end posting SHALL generate GL lines for interest, principal payment, and depreciation
+### Requirement: REQ-LA-003 — Periodic month-end posting SHALL generate GL lines for interest, principal payment, and depreciation
 
-At the end of each fiscal period (monthly, quarterly, as configured), the system:
+Periodic month-end posting SHALL generate the interest, principal, and depreciation GL lines for every active lease. At the end of each fiscal period (monthly, quarterly, as configured), the system:
 
 1. Identifies all active leases with a payment due in that period
 2. For each lease, queries the corresponding `lease-payment-schedule` row
@@ -103,9 +103,9 @@ The journal entries are batched and routed through an approval gate (optional or
   - Cr. Bank account (EUR) 1,000
 - **AND** the depreciation charge for the same period (34,300 / 36 = ~952.78) is posted by bookkeeping-fixed-assets-depreciation
 
-### REQ-LA-004: The system SHALL track payment currency and FX rates for non-functional-currency leases
+### Requirement: REQ-LA-004 — The system SHALL track payment currency and FX rates for non-functional-currency leases
 
-If a lease's `payment-currency` differs from the company's functional currency (e.g., a EUR company paying a USD lease), the `lease-payment-schedule` must carry:
+The system SHALL track payment currency and FX rates per period. If a lease's `payment-currency` differs from the company's functional currency (e.g., a EUR company paying a USD lease), the `lease-payment-schedule` must carry:
 
 - `payment-currency` (e.g., USD)
 - `fx-rate` (the EUR/USD rate at the payment date)
@@ -125,9 +125,9 @@ If a lease's `payment-currency` differs from the company's functional currency (
   - Cr. Bank (USD) 1,000 (posting in USD account)
   - Cr. FX gain/loss (if the rate changed from prior period)
 
-### REQ-LA-005: Restoration obligations SHALL be included in the opening RoU asset and recognized as a non-current liability
+### Requirement: REQ-LA-005 — Restoration obligations SHALL be included in the opening RoU asset and recognized as a non-current liability
 
-If a lease specifies a restoration obligation (e.g., return the building to original condition, estimated cost EUR 75,000, discount rate 4.5%), the opening RoU asset includes:
+Restoration obligations SHALL be capitalised into the opening RoU asset and recognised as a separate non-current liability. If a lease specifies a restoration obligation (e.g., return the building to original condition, estimated cost EUR 75,000, discount rate 4.5%), the opening RoU asset includes:
 
 - PV of restoration obligation = estimated-cost / (1 + discount-rate)^months
 
@@ -144,9 +144,9 @@ The restoration obligation is posted to a separate GL account (subtype=`lease-re
     - Dr. RoU asset 59,100
     - Cr. Lease restoration obligation 59,100
 
-### REQ-LA-006: Prepaid or accrued rent SHALL be factored into the opening RoU asset balance
+### Requirement: REQ-LA-006 — Prepaid or accrued rent SHALL be factored into the opening RoU asset balance
 
-If a lease has prepaid rent (e.g., the lessor required 3 months' rent upfront) or accrued rent (e.g., rent is payable in arrears but there's a timing difference), the opening RoU asset adjusts:
+Prepaid or accrued rent SHALL adjust the opening RoU asset. If a lease has prepaid rent (e.g., the lessor required 3 months' rent upfront) or accrued rent (e.g., rent is payable in arrears but there's a timing difference), the opening RoU asset adjusts:
 
 - opening-RoU-asset = PV + initial-direct-costs − lease-incentives − prepaid-rent-balance + accrued-rent-balance
 

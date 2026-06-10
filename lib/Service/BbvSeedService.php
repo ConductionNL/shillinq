@@ -102,10 +102,21 @@ class BbvSeedService
 
         $counts = [];
         foreach (self::CATALOGUES as $catalogue) {
-            $counts[$catalogue['schema']] = $this->seedCatalogue(
+            $result = $this->seedCatalogue(
                 objectService: $objectService,
                 catalogue: $catalogue
             );
+
+            // Accumulate per-schema across multiple catalogue files (e.g. the three
+            // Taakveld files for gemeente / provincie / waterschap all feed the same
+            // schema bucket — previously the last run overwrote the earlier two).
+            $schema = $catalogue['schema'];
+            if (isset($counts[$schema]) === false) {
+                $counts[$schema] = ['seeded' => 0, 'skipped' => 0];
+            }
+
+            $counts[$schema]['seeded']  += (int) $result['seeded'];
+            $counts[$schema]['skipped'] += (int) $result['skipped'];
         }
 
         return ['success' => true, 'counts' => $counts];
