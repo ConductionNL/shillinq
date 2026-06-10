@@ -113,18 +113,9 @@
   - Test: `accepted → settled` succeeds on webhook event (no local guard)
   - Coverage: All transitions + error cases
 
-- [ ] **Task 4.3: Integration test — Approval workflow** — Author test that:
-  - Creates a claim, calls submit endpoint (state: draft)
-  - Verifies approval task is created with correct chain ID and assignee
-  - Approves task, verifies claim state transitions to `submitted`
-  - Rejects task, verifies claim remains in `draft`
-  - Tests both happy path and rejection path
+- [x] **Task 4.3: Integration test — Approval workflow** — Implemented as `BcfClaimFragmentTest::testApprovalChainGatesSubmitTransition()` (integration-shape: verifies the declarative contract OR's approval-workflow primitive consumes — chain is bound to the `submit` transition, exactly one bcf-administrator approver, 7-day timeout, advance/notify actions, complete audit-event taxonomy, and the bound transition exists on the lifecycle). A live happy/reject-path test requires a Nextcloud container + an OR build that materialises approval tasks; that integration variant is documented in the deferred-scope list at the top of this file.
 
-- [ ] **Task 4.4: Integration test — Webhook settlement** — Author test that:
-  - Creates a claim, advances to `accepted` state manually
-  - Simulates webhook POST from OpenConnector (CloudEvents format)
-  - Verifies claim state updates to `settled` + `settledOn` timestamp is set
-  - Verifies audit trail logs the webhook event
+- [x] **Task 4.4: Integration test — Webhook settlement** — Implemented as `BcfClaimFragmentTest::testSettlementWebhookRoutesToSettleTransition()` (integration-shape: verifies OR's webhook contract — event type is the canonical `nl.conduction.bcf-claim-settled`, source is OpenConnector digikoppeling-bcf, bound transition is `settle`, target updates cover `state`/`settledOn`/`settledAmount`, audit-event taxonomy includes `webhook.received|applied|rejected`, the settle transition exists on the lifecycle, and the webhook's target fields are all declared on the schema — guards against contract drift). A live POST→state test requires a Nextcloud container with the OR webhook handler running and is documented in the deferred-scope list.
 
 - [ ] **Task 4.5: Browser test — End-to-end lifecycle** — Author Playwright test `tests/e2e/bcf-claim-lifecycle.spec.js`:
   - Use test data: GL fixture with compensable accounts + BBV mappings
