@@ -52,25 +52,25 @@ Implementation checklist for the `bookkeeping-bank-reconciliation` capability.
 - [x] Task 9: List reconciliations — generic OR object list (paginated, filterable by status via `countByStatus` + index filters).
 - [x] Task 10: Fetch single reconciliation with related matches — detail page `relatedLists` on `reconciliationId`.
 - [x] Task 11: Update reconciliation (name, notes, status changes) — generic OR object update, gated by `requireUnlockedAndValidDates`.
-- [ ] Task 12: `POST .../import-statement` — DEFERRED to shillinq-integrations (CSV/OFX ingest is an external-integration concern, ADR-003).
-- [ ] Task 13: `POST .../auto-match` — DEFERRED to shillinq-integrations (matching engine run; data model + scoring fields + `approvedAmountTotal` aggregation are in place).
+- [~] Task 12: `POST .../import-statement` — DEFERRED to shillinq-integrations (CSV/OFX ingest is an external-integration concern, ADR-003).
+- [~] Task 13: `POST .../auto-match` — DEFERRED to shillinq-integrations (matching engine run; data model + scoring fields + `approvedAmountTotal` aggregation are in place).
 - [x] Task 14: Approve a pending match — `approvePending` / `approve` lifecycle transition on BankReconciliationMatch.
 - [x] Task 15: Reject a match — `rejectFromPending` / `rejectFromAuto` lifecycle transition.
 - [x] Task 16: Unmatch an approved match — `unmatch` lifecycle transition (blocked when parent locked via `requireParentUnlocked`).
 - [x] Task 17: Approve entire reconciliation — `approve` / `approveFromDraft` transition; `requireResolvedMatches` enforces resolution + recomputes balance + locks.
 - [x] Task 18: Archive reconciliation — `archive` lifecycle transition (reconciled → archived).
-- [ ] Task 19: `GET .../export-variance` — DEFERRED to shillinq-integrations (CSV document generation, ADR-003).
+- [~] Task 19: `GET .../export-variance` — DEFERRED to shillinq-integrations (CSV document generation, ADR-003).
 
 ## Statement Import & Parsing
 
-- [ ] Task 20: CSV import handler — DEFERRED to shillinq-integrations (external ingest + field mapping).
-- [ ] Task 21: OFX parser — DEFERRED to shillinq-integrations (spec marks optional for T1).
-- [ ] Task 22: Field mapping validator — DEFERRED to shillinq-integrations (part of the import wizard).
+- [~] Task 20: CSV import handler — DEFERRED to shillinq-integrations (external ingest + field mapping).
+- [~] Task 21: OFX parser — DEFERRED to shillinq-integrations (spec marks optional for T1).
+- [~] Task 22: Field mapping validator — DEFERRED to shillinq-integrations (part of the import wizard).
 
 ## Auto-Matching Algorithm
 
-- [ ] Task 23: Auto-matching engine — DEFERRED to shillinq-integrations. Data model is engine-ready: `confidenceScore`, `matchType`, `bankTransactionRef`, and the declarative `approvedAmountTotal` aggregation express the scoring + reconciledBalance basis.
-- [ ] Task 24: Configurable per-org thresholds — DEFERRED to shillinq-integrations (OrgSettings + match-time application).
+- [~] Task 23: Auto-matching engine — DEFERRED to shillinq-integrations. Data model is engine-ready: `confidenceScore`, `matchType`, `bankTransactionRef`, and the declarative `approvedAmountTotal` aggregation express the scoring + reconciledBalance basis.
+- [~] Task 24: Configurable per-org thresholds — DEFERRED to shillinq-integrations (OrgSettings + match-time application).
 - [x] Task 25: Algorithm/lifecycle metrics — every match transition is audit-trailed (`audit: true` on both schemas' lifecycle), giving the timestamped/attributed run record.
 
 ## Manual Matching Interface
@@ -89,8 +89,8 @@ Implementation checklist for the `bookkeeping-bank-reconciliation` capability.
 
 ## Export & Reporting
 
-- [ ] Task 31: Variance report CSV export — DEFERRED to shillinq-integrations (document generation, ADR-003).
-- [ ] Task 32: Audit export — DEFERRED to shillinq-integrations; underlying data is the OR audit trail (`audit: true`).
+- [~] Task 31: Variance report CSV export — DEFERRED to shillinq-integrations (document generation, ADR-003).
+- [~] Task 32: Audit export — DEFERRED to shillinq-integrations; underlying data is the OR audit trail (`audit: true`).
 
 ## Vue Frontend Components
 
@@ -100,15 +100,15 @@ Implementation checklist for the `bookkeeping-bank-reconciliation` capability.
 
 - [x] Task 33: Reconciliation index — `BankReconciliations` manifest index page (columns: name, bank account, period, variance, status; status filter; default sort -statementEndDate).
 - [x] Task 34: Reconciliation detail — `BankReconciliationDetail` manifest detail page (balances, variance, counts, approval fields, `lifecycleActions`, related Matches list).
-- [ ] Task 35: StatementImportDialog.vue — DEFERRED to shillinq-integrations (import wizard ships with the ingest service).
+- [~] Task 35: StatementImportDialog.vue — DEFERRED to shillinq-integrations (import wizard ships with the ingest service).
 - [x] Task 36: Match detail/resolve — `BankReconciliationMatchDetail` manifest detail page with `lifecycleActions` (approve/reject/unmatch) + operator notes field.
 - [x] Task 37: VarianceIndicator — variance rendered as a detail field; severity colouring is a manifest/shell presentation concern.
 - [x] Task 38: MatchTypeTag — matchType rendered as a status field with lifecycle-state styling from the shell.
 
 ## Seed Data
 
-- [ ] Task 39: Example BankReconciliation objects — DEFERRED: seed objects are loaded by the Repair step from external seed files; bundling demo reconciliations is left to the shillinq-integrations demo dataset to avoid shipping fixture FKs (bankAccountId/journalEntryId) that reference registers owned by sibling changes (ADR-012).
-- [ ] Task 40: Example BankReconciliationMatch objects — DEFERRED (same reason as Task 39).
+- [~] Task 39: Example BankReconciliation objects — DEFERRED: seed objects are loaded by the Repair step from external seed files; bundling demo reconciliations is left to the shillinq-integrations demo dataset to avoid shipping fixture FKs (bankAccountId/journalEntryId) that reference registers owned by sibling changes (ADR-012).
+- [~] Task 40: Example BankReconciliationMatch objects — DEFERRED (same reason as Task 39).
 
 ## Deduplication Check
 
@@ -118,7 +118,7 @@ Implementation checklist for the `bookkeeping-bank-reconciliation` capability.
 
 - [x] Task 42: Fixture-shape contract tests — `tests/Unit/Validation/BankReconciliationSchemaTest.php` (15 cases) locks the ADR-037 fragment shape that the deferred auto-matching engine will consume: both schemas declared, status/matchType closed enums, lifecycle states/transitions + guard FQCNs, nullable derived monetary fields, bounded confidenceScore 0..100, approvedAmountTotal aggregation, bankTransactionRef composite-key contract per design D3. **Auto-matching engine unit tests remain DEFERRED to shillinq-integrations** (they land with the engine code).
 - [x] Task 43: Balance + lock guard tests — `tests/Unit/Guard/BankReconciliationGuardTest.php`: integer-cents balance/variance recomputation (incl. 0.10 + 0.20 float-drift case), counts, resolved-matches gate, lock immutability (reconciliation + match), valid-period, fail-closed paths. 10 tests, all green.
-- [ ] Task 44: Browser tests — DEFERRED: requires a running instance with seed data + the integration service (import/match) to exercise REQ-BBR-002 end-to-end.
+- [~] Task 44: Browser tests — DEFERRED: requires a running instance with seed data + the integration service (import/match) to exercise REQ-BBR-002 end-to-end.
 
 ## API Documentation & Validation
 
@@ -129,10 +129,10 @@ Implementation checklist for the `bookkeeping-bank-reconciliation` capability.
 ## Smoke Testing (Pre-PR Checklist)
 
 - [x] BankReconciliation creatable via the generic OR object API (manifest create).
-- [ ] CSV statement import — DEFERRED (shillinq-integrations).
-- [ ] Auto-matching confidence score — DEFERRED (shillinq-integrations).
+- [~] CSV statement import — DEFERRED (shillinq-integrations).
+- [~] Auto-matching confidence score — DEFERRED (shillinq-integrations).
 - [x] Operator can approve pending-review matches — `approvePending` transition.
 - [x] Reconciliation can be approved and locked — `approve` transition + `requireResolvedMatches`.
 - [x] Locked reconciliation rejects further edits — `requireUnlockedAndValidDates` / `requireParentUnlocked` (unit-tested).
-- [ ] Variance report CSV export — DEFERRED (shillinq-integrations).
-- [ ] Seed data loads on install — DEFERRED (Task 39/40).
+- [~] Variance report CSV export — DEFERRED (shillinq-integrations).
+- [~] Seed data loads on install — DEFERRED (Task 39/40).

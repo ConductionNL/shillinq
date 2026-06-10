@@ -197,7 +197,7 @@ proposal.md) has been finalized and approved.
 - [x] Playwright tests authored — `tests/e2e/bookkeeping-period-close.spec.ts` covers the index + custom-component detail mounts (REQ-PC-005). Full lifecycle scenarios are gate-19 deferred (need live instance + seeded register + role groups)
 - [x] Newman collection authored — `tests/integration/period-close.postman_collection.json` (full execution deferred until live-verify; needs live instance + seeded register + role groups)
 - [x] Period close detail page implemented — `src/components/period-close/PeriodCloseDetail.vue` (kind:"page" custom component) + isolated `src/modals/ReopenPeriodDialog.vue` modal; visual verify deferred to live-verify stage
-- [ ] Bookkeeper persona peer review — Hydra review stage
+- [~] Bookkeeper persona peer review — Hydra review stage — deferred to live env / cross-app / apply cycle
 - [x] Architecture review: ADR-022 (real ObjectService API) + ADR-031 (declarative lifecycle, no PHP state machine) + ADR-037 (register.d fragment) compliant
 
 ## Acceptance Criteria

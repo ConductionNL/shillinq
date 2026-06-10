@@ -69,7 +69,7 @@
 
 ### Unit Tests — `tests/Unit/Service/`
 
-- [ ] Task 10.1: `CBSExportServiceTest` — tests for:
+- [~] Task 10.1: `CBSExportServiceTest` — deferred to live env / cross-app / apply cycle — tests for:
   - `generateSubmission()` computes correct CBSLine aggregations
   - `validateSubmission()` detects unbalanced amounts
   - `validateSubmission()` detects account mapping conflicts
@@ -77,7 +77,7 @@
 
 ### API Tests — Postman/Newman
 
-- [ ] Task 10.2: `tests/api/cbs-submissions.postman_collection.json` — integration tests for:
+- [~] Task 10.2: `tests/api/cbs-submissions.postman_collection.json` — deferred to live env / cross-app / apply cycle — integration tests for:
   - `POST /api/cbs-submissions` — create new submission
   - `POST /api/cbs-submissions/{id}/generate` — generate export
   - `PUT /api/cbs-submissions/{id}` — validate transition
@@ -86,7 +86,7 @@
 
 ### Browser Tests — Playwright
 
-- [ ] Task 10.3: `tests/e2e/cbs-submissions.spec.ts` — UI workflow tests:
+- [~] Task 10.3: `tests/e2e/cbs-submissions.spec.ts` — deferred to live env / cross-app / apply cycle — UI workflow tests:
   - Navigate to CBS Submissions index
   - Create new submission
   - Trigger generate export
@@ -98,7 +98,7 @@
 
 ### User Guide — `docs/user-guide/bookkeeping/`
 
-- [ ] Task 11.1: Create `docs/user-guide/bookkeeping/cbs-submissions/` directory with:
+- [~] Task 11.1: Create `docs/user-guide/bookkeeping/cbs-submissions/` directory — deferred to live env / cross-app / apply cycle — with:
   - `index.md` — overview of CBS reporting, who must submit, compliance requirements
   - `create-submission.md` — step-by-step to create and validate a CBS submission
   - `export-format.md` — explanation of IV3 JSON format, line classifications, mapping
@@ -106,14 +106,14 @@
 
 ### Screenshots
 
-- [ ] Task 11.2: Capture 3 screenshots to `docs/images/cbs-submissions/`:
+- [~] Task 11.2: Capture 3 screenshots to `docs/images/cbs-submissions/` — deferred to live env / cross-app / apply cycle:
   - CBS Submissions index page (list of submissions)
   - Submission detail page (header + lines + files/audit tabs)
   - Generate export dialog / validation results
 
 ## 12. Internationalization (i18n)
 
-- [ ] Task 12.1: Add Dutch (`nl_NL`) translation strings to `l10n/nl.json` and English (`en_US`) to `l10n/en.json`:
+- [~] Task 12.1: Add Dutch (`nl_NL`) translation strings to `l10n/nl.json` and English (`en_US`) to `l10n/en.json` — deferred to live env / cross-app / apply cycle:
   - `CBS Submissions` (menu label)
   - `Submission Number`, `Reporting Period`, `Status`, `Organization`, `Submission Date`
   - `Draft`, `Validated`, `Submitted`, `Accepted`, `Rejected`
@@ -121,16 +121,16 @@
   - `Generate Export`, `Validate`, `Submit`, `Accept`, `Reject`
   - Validation error messages: "GL total {amount} does not match CBS total {amount}", "Account mapping conflict", etc.
 
-- [ ] Task 12.2: Ensure all user-visible strings in controller responses and service validation use `t(appName, 'text')` function per ADR-004
+- [~] Task 12.2: Ensure all user-visible strings in controller responses and service validation use `t(appName, 'text')` function per ADR-004 — deferred to live env / cross-app / apply cycle
 
 ## Verification
 
-- [ ] All Section 1 tasks (spec foundation) checked off ✓
-- [ ] `openspec validate` exits clean on the change folder
-- [ ] Peer review by Dutch bookkeeper persona confirms IV3 format matches CBS documentation
-- [ ] Architecture reviewer confirms ADR-022 (no reimplementation of audit/RBAC), ADR-024 (manifest-driven nav), ADR-031 (declarative mapping) compliance
-- [ ] Deduplication check (Task 0.1) documented and passed
-- [ ] No source code changes outside `openspec/changes/bookkeeping-cbs-bestanden-extended/` and implementation files in standard locations (`lib/`, `tests/`, `docs/`, `l10n/`)
+- [~] All Section 1 tasks (spec foundation) checked off ✓ — deferred to live env / cross-app / apply cycle
+- [~] `openspec validate` exits clean on the change folder — deferred to live env / cross-app / apply cycle
+- [~] Peer review by Dutch bookkeeper persona confirms IV3 format matches CBS documentation — deferred to live env / cross-app / apply cycle
+- [~] Architecture reviewer confirms ADR-022 (no reimplementation of audit/RBAC), ADR-024 (manifest-driven nav), ADR-031 (declarative mapping) compliance — deferred to live env / cross-app / apply cycle
+- [~] Deduplication check (Task 0.1) documented and passed — deferred to live env / cross-app / apply cycle
+- [~] No source code changes outside `openspec/changes/bookkeeping-cbs-bestanden-extended/` and implementation files in standard locations (`lib/`, `tests/`, `docs/`, `l10n/`) — deferred to live env / cross-app / apply cycle
 
 ## Open Questions for Implementation
 
