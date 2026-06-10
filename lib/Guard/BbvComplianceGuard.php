@@ -173,6 +173,15 @@ class BbvComplianceGuard
             return true;
         }
 
+        // REQ-BBV-002 forward-only: skip historic postings whose postingDate falls
+        // before the BBV installation date. The app config key
+        // `bbv_installation_date` is stamped by the InitializeSettings repair step
+        // when the first BBV-tenant comes online; an empty value means BBV is not
+        // yet installation-anchored, so the precondition runs for every line.
+        if ($this->isHistoricPosting(line: $line) === true) {
+            return true;
+        }
+
         $account = $this->resolveAccount(
             accountNumber: (string) ($line['accountNumber'] ?? ''),
             administrationId: (string) ($line['administrationId'] ?? '')
@@ -207,6 +216,46 @@ class BbvComplianceGuard
         return $this->checkExploitatieClassification(line: $line);
 
     }//end requireLineClassification()
+
+    /**
+     * REQ-BBV-002 forward-only carve-out: a posting is "historic" when its
+     * `postingDate` precedes the BBV installation date stored in app config.
+     *
+     * Returns `false` when no installation date is configured (so the
+     * precondition runs for every line) and `false` when the line carries
+     * no parseable postingDate (so we don't silently accept a missing date).
+     *
+     * @param array<string,mixed> $line GLLine object array.
+     *
+     * @return bool True when the posting is historic and exempt; false otherwise.
+     */
+    private function isHistoricPosting(array $line): bool
+    {
+        $installRaw = $this->appConfig->getValueString(
+            Application::APP_ID,
+            'bbv_installation_date',
+            ''
+        );
+
+        if ($installRaw === '') {
+            return false;
+        }
+
+        $postingRaw = (string) ($line['postingDate'] ?? '');
+        if ($postingRaw === '') {
+            return false;
+        }
+
+        try {
+            $installDate = new \DateTimeImmutable(datetime: $installRaw);
+            $postingDate = new \DateTimeImmutable(datetime: $postingRaw);
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        return $postingDate < $installDate;
+
+    }//end isHistoricPosting()
 
     /**
      * REQ-BBV-004: reserve mutaties run uitsluitend via taakveld 0.10.

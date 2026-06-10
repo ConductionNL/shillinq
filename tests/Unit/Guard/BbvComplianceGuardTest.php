@@ -602,6 +602,55 @@ class BbvComplianceGuardTest extends TestCase
     }//end buildAccountStub()
 
     /*
+     * REQ-BBV-002 forward-only: historic postings are exempt.
+     */
+
+    /**
+     * When an install-date is configured and the posting precedes it,
+     * the line is treated as historic and the classification check is skipped.
+     *
+     * @return void
+     */
+    public function testHistoricPostingIsExemptFromClassification(): void
+    {
+        $container = $this->createMock(originalClassName: ContainerInterface::class);
+        $appConfig = $this->createMock(originalClassName: IAppConfig::class);
+        $logger    = $this->createMock(originalClassName: LoggerInterface::class);
+
+        $appConfig->method('getValueString')
+            ->willReturnCallback(function (string $appId, string $key, string $default): string {
+                if ($key === 'bbv_installation_date') {
+                    return '2026-01-01';
+                }
+
+                if ($key === 'register') {
+                    return 'shillinq';
+                }
+
+                return $default;
+            });
+        $appConfig->method('getValueInt')->willReturn(5000000);
+
+        $guard = new BbvComplianceGuard(
+            container: $container,
+            appConfig: $appConfig,
+            logger: $logger,
+        );
+
+        $result = $guard->requireLineClassification(
+            [
+                'administrationType' => 'gemeente',
+                'administrationId'   => 'gem-1',
+                'accountNumber'      => '4310',
+                'postingDate'        => '2025-12-31',
+            ]
+        );
+
+        self::assertTrue(condition: $result, message: 'REQ-BBV-002 forward-only: historic posting exempt');
+
+    }//end testHistoricPostingIsExemptFromClassification()
+
+    /*
      * REQ-BBV-007: Paragraaf-completeness gate.
      */
 
