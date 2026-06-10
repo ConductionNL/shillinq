@@ -11,9 +11,9 @@ IFRS 16 paragraphs 51–60 mandate detailed quantitative and qualitative disclos
 
 ## ADDED Requirements
 
-### REQ-LD-001: The system SHALL generate a `lease-disclosure-table` snapshot at period close
+### Requirement: REQ-LD-001 — The system SHALL generate a `lease-disclosure-table` snapshot at period close
 
-At the end of each fiscal period (annual, quarterly, as configured), the system:
+The system SHALL materialise a `lease-disclosure-table` snapshot at every period close. At the end of each fiscal period (annual, quarterly, as configured), the system:
 
 1. Queries all `lease-contract` records with status = active or modified in the period
 2. Aggregates data from `lease-payment-schedule` and `lease-reassessment-event` records
@@ -53,7 +53,7 @@ At the end of each fiscal period (annual, quarterly, as configured), the system:
   - weighted-average-ibr-by-class = { vehicles: 4.2%, real-estate: 3.8%, IT: 4.5%, machinery: 4.0% }
   - maturity-analysis = { "<1y": 450,000, "1-2y": 430,000, "2-3y": 420,000, ... ">5y": 800,000 }
 
-### REQ-LD-002: The maturity analysis SHALL be disclosed in undiscounted future cash-flow basis
+### Requirement: REQ-LD-002 — The maturity analysis SHALL be disclosed in undiscounted future cash-flow basis
 
 IFRS 16.52(a) requires the maturity analysis to show undiscounted future lease payments (not PV). The table MUST include:
 
@@ -70,7 +70,7 @@ IFRS 16.52(a) requires the maturity analysis to show undiscounted future lease p
 - **AND** the sum across all buckets = 48 × 1,000 = 48,000 (undiscounted total future payments)
 - **BUT** the current lease-liability on the balance sheet may be only ~45,000 (PV discounted at the IBR)
 
-### REQ-LD-003: Weighted-average IBR SHALL be calculated per asset class
+### Requirement: REQ-LD-003 — Weighted-average IBR SHALL be calculated per asset class
 
 IFRS 16.51(e) requires disclosure of the weighted-average IBR. The system MUST compute:
 
@@ -86,7 +86,7 @@ IFRS 16.51(e) requires disclosure of the weighted-average IBR. The system MUST c
 - **WHEN** the disclosure table is generated
 - **THEN** weighted-average-ibr-vehicles = (30,000 × 4.0% + 20,000 × 4.5%) / (30,000 + 20,000) = (1,200 + 900) / 50,000 = 4.2%
 
-### REQ-LD-004: The disclosure table SHALL be auditor-friendly and exportable
+### Requirement: REQ-LD-004 — The disclosure table SHALL be auditor-friendly and exportable
 
 The materialized `lease-disclosure-table` record MUST support:
 
@@ -107,9 +107,9 @@ The materialized `lease-disclosure-table` record MUST support:
   - Boilerplate Dutch IFRS 16 guidance (legal citations)
 - **AND** the PDF is signed with the CFO's name and approval date
 
-### REQ-LD-005: The disclosure table SHALL include qualitative narrative seeds
+### Requirement: REQ-LD-005 — The disclosure table SHALL include qualitative narrative seeds
 
-IFRS 16.59 requires qualitative disclosures:
+The disclosure table SHALL seed the IFRS 16.59 qualitative narrative sections. IFRS 16.59 requires qualitative disclosures:
 
 - Nature of the entity's leasing activities
 - Future cash outflows not yet reflected in lease liabilities (e.g., extension options not yet deemed "reasonably certain")
@@ -146,9 +146,9 @@ that are not included in the lease liability as of [PERIOD-END]:
 - **THEN** the operator sees the template text and fills in actual numbers and details from the lease register
 - **AND** the completed narrative is stored in the disclosure-table record and exported with the PDF
 
-### REQ-LD-006: Period-end disclosure table SHALL be materialized and immutable
+### Requirement: REQ-LD-006 — Period-end disclosure table SHALL be materialized and immutable
 
-Once a `lease-disclosure-table` is generated and materialized at period close, it is immutable (read-only after approval). If lease data is later corrected (e.g., a lease is re-classified), a correction entry is made to the disclosure-table with a note explaining the restatement, but the original materialized snapshot is preserved for audit trail purposes.
+The period-end disclosure table SHALL be materialised and immutable. Once a `lease-disclosure-table` is generated and materialized at period close, it MUST be read-only after approval. If lease data is later corrected (e.g., a lease is re-classified), a correction entry is made to the disclosure-table with a note explaining the restatement, but the original materialized snapshot is preserved for audit trail purposes.
 
 This prevents accidental changes to published disclosures and ensures auditors can compare period-to-period changes reliably.
 
@@ -160,9 +160,9 @@ This prevents accidental changes to published disclosures and ensures auditors c
 - **AND** a restatement note is added to the 2025 disclosure-table: "The 2024 disclosure-table included [Lease Number] as capitalised; subsequent review determined it qualifies for short-term exemption. Restated 2024 figures are below."
 - **AND** the restated 2024 figures are recalculated and disclosed in the 2025 note
 
-### REQ-LD-007: The disclosure table SHALL support in-app narrative validation
+### Requirement: REQ-LD-007 — The disclosure table SHALL support in-app narrative validation
 
-Before period-close, the operator is prompted to validate that the qualitative narrative is complete and accurate:
+The disclosure table SHALL drive an in-app narrative validation checklist before approval. Before period-close, the operator is prompted to validate that the qualitative narrative is complete and accurate:
 
 1. **Reviewer checklist**: "Nature of leasing activities" — yes/no
 2. "Future cash-flow commitments disclosed" — yes/no

@@ -11,9 +11,9 @@ Over the life of a lease, modifications and remeasurement events occur: a lessee
 
 ## ADDED Requirements
 
-### REQ-LR-001: A reassessment event records every modification and remeasurement
+### Requirement: REQ-LR-001 — A reassessment event records every modification and remeasurement
 
-The `lease-reassessment-event` schema captures:
+Every lease modification or remeasurement SHALL be recorded as a `lease-reassessment-event`. The `lease-reassessment-event` schema captures:
 
 | Field | Purpose |
 |---|---|
@@ -44,9 +44,9 @@ The `lease-reassessment-event` schema captures:
   - new-contract-snapshot carries base-payment-amount = 1,021 (1,000 × 1.021)
   - post-event-lease-liability is recomputed with the new payment stream
 
-### REQ-LR-002: Extension-option and termination-option reassessments are manual workflows
+### Requirement: REQ-LR-002 — Extension-option and termination-option reassessments are manual workflows
 
-When a customer assesses whether an extension option is now "reasonably certain" to be exercised (or a termination option is now "reasonably certain" to be exercised), the operator:
+Extension-option and termination-option reassessments SHALL be initiated by operator action and MUST regenerate the payment schedule forward. When a customer assesses whether an extension option is now "reasonably certain" to be exercised (or a termination option is now "reasonably certain" to be exercised), the operator:
 
 1. Navigates to the lease and selects "Reassess Extension Options"
 2. The system displays all current extension-options with their exercise-likelihood (possible, reasonably-certain, unlikely)
@@ -67,9 +67,9 @@ The payment schedule is regenerated from the event date forward to include the n
 - **AND** the payment schedule is regenerated to include 24 additional months (the extended term)
 - **AND** a new GL posting is queued to adjust the lease liability (from the 2-year extension's PV)
 
-### REQ-LR-003: Payment and scope modifications follow the IFRS 16.44 decision tree
+### Requirement: REQ-LR-003 — Payment and scope modifications follow the IFRS 16.44 decision tree
 
-If a lease is modified (e.g., a new floor is added to a building lease, or payment terms are renegotiated), the reassessment workflow applies the IFRS 16.44-46 decision tree:
+Payment and scope modifications SHALL be evaluated against the IFRS 16.44 decision tree. If a lease is modified (e.g., a new floor is added to a building lease, or payment terms are renegotiated), the reassessment workflow applies the IFRS 16.44-46 decision tree:
 
 1. **Is this a separate lease?** (IFRS 16.44: does the customer now lease an additional identified asset, or does the modification affect only the original asset?)
    - If yes → separate-lease (creates a new lease-contract record)
@@ -97,9 +97,9 @@ If a lease is modified (e.g., a new floor is added to a building lease, or payme
     - Dr. RoU asset (additional floor value)
     - Cr. Lease liability (increase)
 
-### REQ-LR-004: Impairment and abandonment are recorded as separate reassessment events
+### Requirement: REQ-LR-004 — Impairment and abandonment are recorded as separate reassessment events
 
-If an RoU asset is impaired (e.g., the building is no longer usable due to damage) or abandoned (e.g., the asset is removed from service but the lease is not terminated), a reassessment-event is created:
+Impairment and abandonment SHALL be recorded as distinct reassessment-event types with their own P&L impact. If an RoU asset is impaired (e.g., the building is no longer usable due to damage) or abandoned (e.g., the asset is removed from service but the lease is not terminated), a reassessment-event is created:
 
 - **Impairment**: RoU asset is written down to recoverable value; loss is recognized in P&L
 - **Abandonment**: RoU asset remains on the books, but is no longer used; depreciation continues; the liability also continues
@@ -117,9 +117,9 @@ If an RoU asset is impaired (e.g., the building is no longer usable due to damag
     - Cr. RoU asset 15,000
     - Cr. Bank 3,000 (penalty paid)
 
-### REQ-LR-005: Partial terminations adjust liability and RoU pro-rata
+### Requirement: REQ-LR-005 — Partial terminations adjust liability and RoU pro-rata
 
-If a lessee returns part of a lease (e.g., two floors of a five-floor building), the liability and RoU are adjusted pro-rata:
+Partial terminations SHALL pro-rata-adjust the lease liability and RoU asset and recognise any difference in P&L. If a lessee returns part of a lease (e.g., two floors of a five-floor building), the liability and RoU are adjusted pro-rata:
 
 - **Original lease liability** (before termination) = 500,000
 - **Floors returned** = 2 of 5 = 40%
@@ -139,9 +139,9 @@ The gain or loss on the partial termination is recognized based on the differenc
   - rou-asset-reduction = 600,000 × (2/5) = 240,000
   - pl-impact = 240,000 − 200,000 = 40,000 gain (recognized in P&L)
 
-### REQ-LR-006: Reassessment events MUST be immutable once GL-posted
+### Requirement: REQ-LR-006 — Reassessment events MUST be immutable once GL-posted
 
-Once a `lease-reassessment-event` is marked `posted-to-gl` (FK to a GL transaction), no further edits are allowed. If a correction is needed, a new reassessment-event is created (an "adjustment reassessment").
+Reassessment events MUST be immutable once the `posted-to-gl` FK is populated. Once a `lease-reassessment-event` is marked `posted-to-gl` (FK to a GL transaction), no further edits are allowed. If a correction is needed, a new reassessment-event is created (an "adjustment reassessment").
 
 Auditors can walk the full event history of a lease from commencement to period-end and confirm every event was recorded and GL-posted in sequence.
 
@@ -152,9 +152,9 @@ Auditors can walk the full event history of a lease from commencement to period-
 - **THEN** the auditor sees a chronological list of all events with timestamps, posted-to-gl FKs, and before/after snapshots
 - **AND** each event is immutable (no edit button visible; only "create correction event" option)
 
-### REQ-LR-007: Reassessment approval routing via decidesk for material events
+### Requirement: REQ-LR-007 — Reassessment approval routing via decidesk for material events
 
-If the RoU asset impact of a reassessment exceeds a threshold (e.g., EUR 100,000), the event routes through a `decidesk` board-decision workflow:
+Material reassessments SHALL be routed through decidesk for board-level approval before GL posting. If the RoU asset impact of a reassessment exceeds a threshold (e.g., EUR 100,000), the event routes through a `decidesk` board-decision workflow:
 
 1. Operator creates the reassessment-event (status = `pending-approval`)
 2. A webhook fires to decidesk, creating a board-decision for the lease manager and CFO to review
