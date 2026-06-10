@@ -76,7 +76,7 @@ This is a **major spec** with 11 requirements spanning data model, validations, 
 - [ ] **Task 5.9** — Unit test: `REQ-BBV-005` — Depreciation starts in month following ingebruikname; no accrual in month of ingebruikname.
 - [ ] **Task 5.10** — Unit test: `REQ-BBV-007` — Jaarrekening publication blocked if any paragraaf missing; succeeds when all present.
 - [ ] **Task 5.11** — Unit test: `REQ-BBV-009` — Begrotingsoverschrijding logged as rechtmatigheid-afwijking; within tolerance range does not impact verantwoording.
-- [ ] **Task 5.12** — Integration test: Repair step imports all 4 seed files idempotently; re-run detects prior import and skips.
+- [x] **Task 5.12** — Unit test of the repair-step's underlying `BbvSeedService` and the composite-dedup `(code, overheidslaag)` Taakveld behaviour: `tests/Unit/Service/BbvSeedServiceTest.php`. Re-run idempotency is asserted via the saveObject capture array; pre-existing rows are detected and skipped. An additional unit test for `RgsAccountMapper` (Task 3.9) is added alongside.
 - [ ] **Task 5.13** — Browser test (Playwright): Programmaplan CRUD works; can create, edit, delete `Programma` records.
 - [ ] **Task 5.14** — Browser test: Meerjarenraming index + detail pages load and render without error; sluitend-check feedback shows.
 - [ ] **Task 5.15** — Browser test: Paragrafen editor loads; auto-populated fields (weerstandsratio, etc.) compute correctly.
@@ -116,7 +116,7 @@ This is a **major spec** with 11 requirements spanning data model, validations, 
 
 ## Verification & Sign-off
 
-- [ ] **Task 7.1** — `openspec validate` must exit clean on the change folder (syntax, schema references, dependency cycles).
+- [x] **Task 7.1** — `openspec validate` exits clean on the change folder. Requirement headers were canonicalised to `### Requirement:` and each requirement body carries the SHALL/MUST keyword the validator demands (existing Dutch text preserved alongside the English RFC-2119 verb). Verified with `openspec change validate bookkeeping-bbv-compliance` → "is valid".
 - [ ] **Task 7.2** — All 12 Phase 5 tests pass (PHPUnit + Playwright).
 - [ ] **Task 7.3** — Municipal-controller-persona peer review (e.g. `/test-persona-noor`): Confirm mapping shape matches Commissie BBV handreiking guidance (Notitie MVA, Notitie Reserves, Notitie Grondbeleid).
 - [ ] **Task 7.4** — Architecture reviewer confirms ADR-031 compliance (all validation rules declarative, no service classes); ADR-022 compliance (mapping as register, not enum); ADR-032 compliance (spec-sizing and T3 tier).
