@@ -127,20 +127,20 @@
   perEntityBreakdown array {administratieId, ...metrics}, trendVsPriorWeek
   object, forecastRunway weeks); computed from CashForecast + AR/AP ageing
 
-- [ ] Task 14: Implement the daily interest-allocation aggregation per
+- [~] Task 14: Implement the daily interest-allocation aggregation per
   REQ-IHB-003 — `x-openregister-aggregations` query consuming prior-day closing
   balances + pool configuration (rate, allocation method), emitting
   IntercompanyTransaction records for daily accrual (interest-accrual movement
   type); monthly GL posting materialization via T2 GL integration
 
   - **DEFERRED (declarative aggregation): the daily interest formula is captured by CashPool.dailyInterestRate + interestAllocationMethod; the emitting x-openregister-aggregation runs in the OR calculation engine which is not yet enabled in this app. No app-local service per ADR-031.**
-- [ ] Task 15: Implement the floating-rate-snapshot aggregation per
+- [~] Task 15: Implement the floating-rate-snapshot aggregation per
   REQ-IHB-004 — on month-1st, fetch reference rate (EURIBOR-3M | SOFR | SARON)
   from openconnector (T4) or manual entry (v1); apply spread; cache snapshot
   for daily accrual calculation
 
   - **DEFERRED (T4 dependency): floating reference-rate snapshot comes from openconnector (Bloomberg/Refinitiv/ECB SDMX) in T4, or manual entry; IntercompanyLoan already carries referenceRate + spread for the manual path.**
-- [ ] Task 16: Implement the sweep-job orchestration per REQ-IHB-002 — n8n
+- [~] Task 16: Implement the sweep-job orchestration per REQ-IHB-002 — n8n
   workflow (not app code): (1) fetch CashPool + CashPoolMembership configs, (2)
   query bank-connector for current balances per member account, (3) calculate
   sweep movements per pool rules (notional: skip; zero-balance: to/from master;
@@ -149,7 +149,7 @@
   (6) log completion + failures
 
   - **DEFERRED (n8n orchestration, ADR-031 path 2): sweep job is an ops-owned n8n workflow that POSTs IntercompanyTransaction draft records to the OR API; the schema + lifecycle + period-close guard that the workflow targets are delivered.**
-- [ ] Task 17: Implement FX revaluation aggregation per REQ-IHB-006 —
+- [~] Task 17: Implement FX revaluation aggregation per REQ-IHB-006 —
   `x-openregister-aggregations` query running at period close: (1) fetch all
   FXContract records, (2) query spot rates (openconnector T4 or manual T2), (3)
   calculate unrealised gain/loss, (4) post per hedge designation (cashflow:
@@ -157,7 +157,7 @@
   ratio, (6) update FXPosition records
 
   - **DEFERRED (declarative aggregation + n8n): FX revaluation formula lands as an x-openregister-aggregation once the OR calc engine is enabled; FXContract/FXPosition schemas + hedge designation are delivered.**
-- [ ] Task 18: Implement the 13-week cashflow-forecast regeneration aggregation
+- [~] Task 18: Implement the 13-week cashflow-forecast regeneration aggregation
   per REQ-IHB-008 — nightly n8n job: (1) query AR module for open invoices +
   expected collection dates, (2) query AP module for open invoices + due dates,
   (3) apply payroll calendar (weekly/monthly runs), (4) apply scheduled debt
@@ -176,7 +176,7 @@
   - All dated same value date
   - Guard: validate both administraties open per REQ-PC-004
 
-- [ ] Task 20: Implement multi-administratie bank-reconciliation UI per
+- [~] Task 20: Implement multi-administratie bank-reconciliation UI per
   REQ-IHB-009 — extend existing reconciliation UI to:
   (1) accept BankReconciliationGroup config (linked pool + participating
   administraties), (2) display bank lines from all member accounts in one view,
@@ -186,7 +186,7 @@
   materialization per T2 GL pattern
 
   - **DEFERRED (cross-app): multi-administratie reconciliation UI extends the bank-reconciliation module; BankReconciliationGroup schema + lifecycle are delivered as the landing point.**
-- [ ] Task 21: Implement IFRS 7 disclosure-pack generation per REQ-IHB-010 —
+- [~] Task 21: Implement IFRS 7 disclosure-pack generation per REQ-IHB-010 —
   at period close, trigger aggregation query that:
   (1) aggregates credit risk by FX counterparty + lender/borrower, (2)
   generates liquidity-maturity profile (cash flows by month + WAM), (3)
@@ -197,7 +197,7 @@
   FinancialReport record
 
   - **DEFERRED (cross-app, docudesk renderer): IFRS 7 disclosure pack uses the docudesk template renderer + financial-statements aggregates; not buildable without those live.**
-- [ ] Task 22: Implement LiquidityKPI aggregation per REQ-IHB-010 — query
+- [~] Task 22: Implement LiquidityKPI aggregation per REQ-IHB-010 — query
   consuming CashForecast + AR/AP ageing + scheduled debt, computing:
   (1) cash-conversion-cycle = DIO + DSO − DPO, (2) days-cash-on-hand =
   closing cash / (daily operating expense), (3) current ratio = current assets /
@@ -213,29 +213,29 @@
   - FX hedge designation must be one of: cashflow | fair-value | net-investment
   - Loan rate warning: if fixed rate > EURIBOR-3M + 3%, warn (not error)
 
-- [ ] Task 24: Integrate with `bookkeeping-bank-connectors` (T2) to fetch
+- [~] Task 24: Integrate with `bookkeeping-bank-connectors` (T2) to fetch
   real-time balances per CashPoolMembership account; handle camt.053 parsing
   for end-of-day balance snapshot; ensure balance timestamp surfaces in UI
 
   - **DEFERRED (cross-app, live): balance fetch needs a live bank-connectors instance (camt.053); CashPoolMembership.bankAccount is the integration point.**
-- [ ] Task 25: Integrate with `bookkeeping-accounts-payable` + `bookkeeping-
+- [~] Task 25: Integrate with `bookkeeping-accounts-payable` + `bookkeeping-
   accounts-receivable` (T2) to feed ageing data into cashflow-forecast model;
   query open AP/AR by due date; apply collection/payment probability assumptions
 
   - **DEFERRED (cross-app, live): ageing feed needs live AP/AR modules; CashForecast.inflows/outflows are the landing structure.**
-- [ ] Task 26: Integrate with `bookkeeping-general-ledger` (T2) GL posting
+- [~] Task 26: Integrate with `bookkeeping-general-ledger` (T2) GL posting
   rules: sweep movements (upstream/downstream debit/credit), interest accrual
   (interest-expense/revenue + intercompany payable/receivable), FX revaluation
   (FX gain/loss + OCI), all per T2 GL integration spec
 
   - **DEFERRED (cross-app, live): GL posting rules materialize via the GL integration on IntercompanyTransaction post; the post transition + guard are delivered.**
-- [ ] Task 27: Integrate with `bookkeeping-financial-statements` (T3) jaarrekening
+- [~] Task 27: Integrate with `bookkeeping-financial-statements` (T3) jaarrekening
   renderer: make FXPosition, IntercompanyLoan, CashForecast (consolidated group
   cash position, FX sensitivity, maturity profile) available as data-sources for
   IFRS 7/9 disclosure table generation
 
   - **DEFERRED (cross-app, T3): financial-statements consumes FXPosition/IntercompanyLoan/CashForecast; those schemas are delivered as data-sources.**
-- [ ] Task 28: Integrate with `bookkeeping-deferred-tax` (T2, if present) —
+- [~] Task 28: Integrate with `bookkeeping-deferred-tax` (T2, if present) —
   trigger DTA calculation on each IntercompanyLoan rate change; loan interest
   accrual may differ between commercial (IFRS) and tax (box 1) treatment
 

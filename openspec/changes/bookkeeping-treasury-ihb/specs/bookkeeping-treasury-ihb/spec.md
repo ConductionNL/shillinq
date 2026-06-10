@@ -12,7 +12,7 @@
 
 ## ADDED Requirements
 
-### REQ-IHB-001: Cash pools SHALL be declared as `CashPool` + `CashPoolMembership` registers with type discriminator (notional | zero-balance | target-balance)
+### Requirement: REQ-IHB-001 Cash pools SHALL be declared as `CashPool` + `CashPoolMembership` registers with type discriminator (notional | zero-balance | target-balance)
 
 CashPool MUST be expressed as two new registers in `lib/Settings/shillinq_register.json`:
 
@@ -43,7 +43,7 @@ Schema.org annotations: `CashPool: schema:FinancialProduct`, `CashPoolMembership
 - **WHEN** sweep job runs at 23:30
 - **THEN** sweep MUST credit A by EUR 50K to M, debit B by EUR 30K from M, credit C by EUR 10K to M, leaving A, B, C at zero and M at +EUR 30K, all with corresponding intercompany current-account entries, same value date.
 
-### REQ-IHB-002: Zero-balance sweep SHALL generate end-of-day sweep transactions per pool rules, posting one side to participant ledger and offsetting side to master ledger plus intercompany current account on both sides
+### Requirement: REQ-IHB-002 Zero-balance sweep SHALL generate end-of-day sweep transactions per pool rules, posting one side to participant ledger and offsetting side to master ledger plus intercompany current account on both sides
 
 For pools with `type: zero-balance`, the system MUST execute nightly sweep job:
 1. Fetch current balances from bank connectors (camt.053) per participating account
@@ -66,7 +66,7 @@ No partial sweeps; all-or-nothing per pool execution.
   - Master: debit intercompany receivable EUR 50000, credit cash EUR 50000
   - All posted to T1 GL per REQ-JE-007 pattern
 
-### REQ-IHB-003: Notional pool interest calculation SHALL be performed daily on aggregate balance and allocated per configured method (proportional | weighted-average | fixed)
+### Requirement: REQ-IHB-003 Notional pool interest calculation SHALL be performed daily on aggregate balance and allocated per configured method (proportional | weighted-average | fixed)
 
 For pools with `type: notional`, system MUST:
 1. Calculate daily interest on aggregate balance = sum of all member closing balances × daily rate / 365
@@ -86,7 +86,7 @@ For pools with `type: notional`, system MUST:
   - Credit intercompany-interest-payable EUR 553.42
   - No cash transfer
 
-### REQ-IHB-004: Inter-company loans MUST support fixed and floating rates with reference-rate look-up (EURIBOR, SOFR, SARON), accrue interest daily, and post monthly to both lender and borrower ledgers
+### Requirement: REQ-IHB-004 Inter-company loans MUST support fixed and floating rates with reference-rate look-up (EURIBOR, SOFR, SARON), accrue interest daily, and post monthly to both lender and borrower ledgers
 
 `IntercompanyLoan` register MUST declare:
 - Lender administratieId (FK to Administration)
@@ -118,7 +118,9 @@ System MUST:
 - **WHEN** operator enters `transferPricingDocumentReference: "docudesk://<UUID>"` linking to signed OECD-compliant memo
 - **THEN** audit trail MUST record document reference, and external auditor MUST be able to access without redaction
 
-### REQ-IHB-005: Inter-company transactions MUST produce balanced double-entry postings in both administraties simultaneously and prevent posting if offsetting administratie is closed for the period
+### Requirement: REQ-IHB-005 Inter-company transactions MUST produce balanced double-entry postings in both administraties simultaneously and prevent posting if offsetting administratie is closed for the period
+
+The system MUST express every inter-company movement (sweep, drawdown, interest accrual, settlement) as a single `IntercompanyTransaction` record whose lifecycle transition to `posted` materialises balanced GL entries on both ledgers simultaneously, and MUST refuse the transition if either administratie's period is closed.
 
 `IntercompanyTransaction` register (sweep, loan drawdown, interest accrual, settlement movements):
 - Pool or loan reference (FK)
@@ -142,7 +144,7 @@ System MUST:
 - **WHEN** adm-002 has closed period April 2026 per REQ-PC-004
 - **THEN** posting MUST be rejected with message "Cannot post to closed period in receiving administratie adm-002. Reopen period or post to May 2026."
 
-### REQ-IHB-006: FX contracts MUST be recorded with full lifecycle (trade, confirmation, settlement), revalued at each period close using closing-rate FX, with unrealised gains/losses posted to OCI or P&L depending on hedge designation per IFRS 9
+### Requirement: REQ-IHB-006 FX contracts MUST be recorded with full lifecycle (trade, confirmation, settlement), revalued at each period close using closing-rate FX, with unrealised gains/losses posted to OCI or P&L depending on hedge designation per IFRS 9
 
 `FXContract` register MUST declare:
 - Counterparty bank name + reference number
@@ -174,7 +176,7 @@ System MUST:
   - Credit OCI (Other Comprehensive Income) EUR 3000
   - **AND** disclosure MUST show hedge-effectiveness ratio = 100% (forward fully hedged the payable)
 
-### REQ-IHB-007: Daily group cash position MUST be available before 09:00 local time, aggregating balances from all bank connectors across all participating administraties in their reporting currency
+### Requirement: REQ-IHB-007 Daily group cash position MUST be available before 09:00 local time, aggregating balances from all bank connectors across all participating administraties in their reporting currency
 
 System MUST generate nightly job (23:00 – 08:00) that:
 1. Fetches latest balance for each CashPoolMembership account from bank connectors (camt.053)
@@ -193,7 +195,7 @@ System MUST flag if:
 - **WHEN** CFO opens dashboard at 08:45
 - **THEN** CFO MUST see "Group Cash Position: EUR 144.5K (net of pending sweeps)" with per-member breakdown and timestamp showing 08:00 feed completion
 
-### REQ-IHB-008: 13-week rolling cashflow forecast MUST be regenerated nightly using actual AR/AP ageing, scheduled debt service, payroll calendar, and seasonality model, with explainable variance vs prior forecast
+### Requirement: REQ-IHB-008 13-week rolling cashflow forecast MUST be regenerated nightly using actual AR/AP ageing, scheduled debt service, payroll calendar, and seasonality model, with explainable variance vs prior forecast
 
 System MUST generate nightly forecast-regeneration job (01:00 – 05:00) that:
 1. Fetches open AR invoices + expected collection dates from AP module
@@ -221,7 +223,9 @@ System MUST surface forecast and variance on CFO dashboard.
 - **WHEN** nightly job regenerates with new AR/AP ageing + actual collections/payments to date
 - **THEN** new Week 7 forecast shows EUR 380K, **AND** system MUST raise alert "Week 7 cash forecast variance: EUR 70K below prior estimate. Review AR collections and AP timing."
 
-### REQ-IHB-009: Bank reconciliation MUST work across all pool participants in one workflow, allowing operator to match single bank line to journal entries from multiple administraties (typical for shared-service-centre payments)
+### Requirement: REQ-IHB-009 Bank reconciliation MUST work across all pool participants in one workflow, allowing operator to match single bank line to journal entries from multiple administraties (typical for shared-service-centre payments)
+
+The system MUST present a single multi-administratie reconciliation workflow per CashPool that lets an operator match one bank line against journal entries drawn from any participating administratie without context-switching, surfacing auto-match suggestions at score ≥ 95% and queuing lower-confidence candidates for manual review.
 
 `BankReconciliationGroup` register (extends existing bank-reconciliation module):
 - Multiple participating administraties (array of FK to Administration)
@@ -243,7 +247,7 @@ System MUST:
 - **WHEN** operator reviews reconciliation and searches for matching GL entries across 3 member administraties
 - **THEN** system MUST find and auto-match (score 99%): adm-001 expense EUR 50K (50% of 100K @ CHF/EUR), adm-002 expense EUR 35K (35%), adm-003 expense EUR 15K (15%), all dated same value date
 
-### REQ-IHB-010: System MUST produce IFRS 7 disclosure pack covering credit risk concentration, liquidity maturity profile, market risk sensitivity (FX, interest rate), hedging effectiveness, exportable to PDF and XBRL
+### Requirement: REQ-IHB-010 System MUST produce IFRS 7 disclosure pack covering credit risk concentration, liquidity maturity profile, market risk sensitivity (FX, interest rate), hedging effectiveness, exportable to PDF and XBRL
 
 At period close, system MUST generate `IFRS-7-disclosure-pack.pdf` (or XBRL) containing:
 
@@ -285,7 +289,7 @@ Disclosure pack MUST be:
   - Hedging: Cumulative effectiveness 99.7%, recycled to P&L EUR 2.5K
   - Loans: Loan-A (adm-001 to adm-002, EUR 250K @ 6.5% fixed, maturity 2026-12-31, TP doc docudesk://<UUID>)
 
-### REQ-IHB-011: Manifest navigation SHALL include five entries for treasury workflow
+### Requirement: REQ-IHB-011 Manifest navigation SHALL include five entries for treasury workflow
 
 The `src/manifest.json` navigation MUST declare five entries:
 
@@ -303,7 +307,7 @@ Each entry MUST have corresponding detail pages (list pages auto-generated by `C
 - **WHEN** user opens app
 - **THEN** left sidebar MUST show "Cash Pools", "Intercompany Loans", "FX Hedges", "Cashflow Forecast", "Group Liquidity Dashboard" as clickable entries
 
-### REQ-IHB-012: Seed data SHALL include 1 notional pool, 1 zero-balance pool, 2 intercompany loans, 3 FX contracts, 13-week forecast (generated from seed AR/AP), with realistic Dutch/European values
+### Requirement: REQ-IHB-012 Seed data SHALL include 1 notional pool, 1 zero-balance pool, 2 intercompany loans, 3 FX contracts, 13-week forecast (generated from seed AR/AP), with realistic Dutch/European values
 
 Seed objects MUST include:
 
