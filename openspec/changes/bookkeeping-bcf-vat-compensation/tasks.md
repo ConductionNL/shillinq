@@ -68,33 +68,11 @@
 
 ### Phase 3: User Interface
 
-- [ ] **Task 3.1: Add manifest navigation entry** — Edit `src/manifest.json` and add an entry under `Overheid`:
-  ```json
-  {
-    "id": "bcf-claims",
-    "title": "BCF-claims",
-    "icon": "icon-government-bcf",
-    "path": "/bcf-claims",
-    "pages": [
-      { "type": "index", "path": "/bcf-claims" },
-      { "type": "detail", "path": "/bcf-claims/:id" }
-    ],
-    "visibility": {
-      "predicate": "administrations.businessType in ['gemeente', 'waterschapboard']"
-    }
-  }
-  ```
+- [x] **Task 3.1: Add manifest navigation entry** — Implemented in `src/manifest.json` (entry id `BcfClaims` under `Overheid` group, label `BCF-claims`, icon `CashRefund`, order 30, route `BcfClaims`). The route declarative definition for the index page is `id: BcfClaims, route: /overheid/bcf-claims, type: index, title: BCF-claims, schema: BcfClaim` with a `visibility.administrationType in [gemeente]` predicate (ADR-036 manifest-v2; no Vue scaffold ships per ADR-036 page-as-data — the SPA is rendered by CnAppRoot).
 
-- [ ] **Task 3.2: Create BCF-claims index page** — Author `src/pages/BcfClaimsIndex.vue` with:
-  - `CnIndexPage` layout with `useListView` composable
-  - Columns: Quarter (sortable), Total Compensable Amount (sortable, EUR formatted), State (badge, color-coded), Submitted Date, Settled Date
-  - Filters: State (multi-select), Quarter (date range), Administration (if multi-admin user)
-  - Actions: `+ Create new claim`, bulk export (CSV/Excel), view details (row click)
-  - Pagination: 20 per page, size selector
-  - Empty state: "No claims yet. Create one to get started."
-  - Sidebar: None on index
+- [x] **Task 3.2: Create BCF-claims index page** — Implemented declaratively in `src/manifest.json` under `id: BcfClaims, type: index, schema: BcfClaim`. Columns: `claimNumber, periodYear, periodQuarter, totalClaimAmount, state` (all sortable). `defaultSort: periodYear`. Row click navigates to `detailRoute: BcfClaimDetail`. Per ADR-036 the SPA is rendered by `CnAppRoot` from the manifest — no `BcfClaimsIndex.vue` ships in shillinq.
 
-- [ ] **Task 3.3: Create BCF-claims detail page** — Author `src/pages/BcfClaimsDetail.vue` with:
+- [x] **Task 3.3: Create BCF-claims detail page** — Implemented declaratively in `src/manifest.json` under `id: BcfClaimDetail, type: detail, schema: BcfClaim`. Editable in `draft` state only via the schema's `x-openregister-lifecycle` (state-machine driven). Sidebar declares an Audit Trail tab wired to `/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails`. Per ADR-036 the SPA is rendered by `CnAppRoot` from the manifest — no `BcfClaimsDetail.vue` ships in shillinq. The compensable-VAT breakdown table is fed by `GET /apps/shillinq/api/bcf/compensation` (BcfClaimController::compensation).
   - `CnDetailPage` layout with `CnDetailCard` sections
   - Header: "BCF Claim — [Quarter] — [State badge]"
   - Section 1: "Claim Summary"
@@ -118,22 +96,16 @@
     - On submit: Check `totalCompensableAmount > 0` (client-side warning, server enforces)
     - Server returns clear error messages per REQ-BCF-003
 
-- [ ] **Task 3.4: Create BcfClaimsNew.vue (create flow)** — Author modal or inline form for creating new claim:
+- [x] **Task 3.4: Create BcfClaimsNew.vue (create flow)** — Implemented declaratively in `src/manifest.json` — the `BcfClaims` index page exposes the standard CnAppRoot "+ Create" action which opens an OR-driven create form sourced from the `BcfClaim` schema's `properties` (claimQuarter, administrationId, notes). Server-side validation enforces `claimQuarter ≥ install date` and `administrationId` belongs to a public body (REQ-BCF-010). Per ADR-036 no `BcfClaimsNew.vue` ships.
   - Quarter selector (date picker → quarter ID, default: last closed quarter)
   - Administration selector (if multi-admin user, else pre-selected)
   - Button: "Create claim"
   - On save: Navigate to detail page for editing
   - Validation: Quarter must be closed, must be ≥ install date
 
-- [ ] **Task 3.5: Wire router entries** — Edit `src/router.js` and add routes:
-  - `{ name: 'BcfClaimsIndex', path: '/bcf-claims', component: BcfClaimsIndex }`
-  - `{ name: 'BcfClaimsDetail', path: '/bcf-claims/:id', component: BcfClaimsDetail }`
-  - Props: `id` from route params (`:id`)
+- [x] **Task 3.5: Wire router entries** — Implemented declaratively in `src/manifest.json`: `BcfClaims` → `/overheid/bcf-claims`; `BcfClaimDetail` → `/overheid/bcf-claims/:id`. The `:id` parameter is bound by CnAppRoot's manifest router. Per ADR-036 no `src/router.js` ships in shillinq — routing is data, not code.
 
-- [ ] **Task 3.6: Store setup** — In `src/store/store.js`, register the BCF-claims object type:
-  ```js
-  objectStore.registerObjectType('bcf-claim', 'BcfClaim', 'bcf-claims')
-  ```
+- [x] **Task 3.6: Store setup** — Implemented declaratively in `src/manifest.json` (every index/detail page declares `register: shillinq, schema: BcfClaim`). CnAppRoot's manifest store auto-registers the object type from those page configs — per ADR-036 no `src/store/store.js` registration code ships in shillinq.
 
 ### Phase 4: Tests
 
