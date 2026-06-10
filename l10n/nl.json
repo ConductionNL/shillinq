@@ -1188,7 +1188,24 @@
         "Collapse": "Inklappen",
         "Expand": "Uitklappen",
         "Type": "Type",
-        "Loading…": "Laden…"
+        "Loading…": "Laden…",
+        "Inter-Company Transactions": "Intercompany-transacties",
+        "Inter-Company Transaction": "Intercompany-transactie",
+        "Elimination Rules": "Eliminatieregels",
+        "Elimination Rule": "Eliminatieregel",
+        "From Member": "Verstrekkend deelnemer",
+        "To Member": "Ontvangend deelnemer",
+        "Account From": "Rekening (verstrekkend)",
+        "Account To": "Rekening (ontvangend)",
+        "Amount Tolerance": "Bedragtolerantie",
+        "Rule Type": "Regeltype",
+        "Elimination Status": "Eliminatiestatus",
+        "Eliminated by Rule": "Geëlimineerd door regel",
+        "Consolidated Report": "Geconsolideerd rapport",
+        "Consolidation Group": "Consolidatiegroep",
+        "Manual Override": "Handmatige overrule",
+        "Override Reason": "Reden overrule",
+        "GL Transaction": "Grootboektransactie"
     },
     "plurals": ""
 }
