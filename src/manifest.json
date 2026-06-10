@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.16",
+	"version": "1.3.17",
 	"dependencies": [
 		"openregister"
 	],
@@ -826,6 +826,49 @@
 					"icon": "FileSignOutline",
 					"route": "AuditDocuments",
 					"order": 40
+				},
+				{
+					"id": "ENSIA",
+					"label": "ENSIA Zelfevaluatie",
+					"icon": "ShieldCheckOutline",
+					"order": 45,
+					"children": [
+						{
+							"id": "ENSIACycles",
+							"label": "ENSIA Cycles",
+							"icon": "CalendarCheckOutline",
+							"route": "ENSIACycles",
+							"order": 10
+						},
+						{
+							"id": "ENSIAEvaluations",
+							"label": "Evaluations",
+							"icon": "ClipboardQuestionOutline",
+							"route": "ENSIAEvaluations",
+							"order": 20
+						},
+						{
+							"id": "ENSIAFindings",
+							"label": "Findings",
+							"icon": "AlertCircleOutline",
+							"route": "ENSIAFindings",
+							"order": 30
+						},
+						{
+							"id": "ENSIAAuditTrail",
+							"label": "Audit Trail",
+							"icon": "ClipboardCheckOutline",
+							"route": "ENSIAAuditTrail",
+							"order": 40
+						},
+						{
+							"id": "ENSIACollegeVerklaring",
+							"label": "College Verklaring",
+							"icon": "FileSignOutline",
+							"route": "ENSIACollegeVerklaring",
+							"order": 50
+						}
+					]
 				},
 				{
 					"id": "DBA",
@@ -16259,6 +16302,227 @@
 					{ "key": "sha256", "label": "SHA-256", "type": "string" }
 				],
 				"indexRoute": "DBAModelovereenkomstRegister"
+			}
+		},
+		{
+			"id": "ENSIACycles",
+			"route": "/compliance/ensia/cycles",
+			"type": "index",
+			"title": "ENSIA Cycles",
+			"config": {
+				"register": "shillinq",
+				"schema": "ENSIAJaarcyclus",
+				"columns": [
+					{ "key": "jaar", "label": "Year", "sortable": true },
+					{ "key": "organisatie.naam", "label": "Organisation", "sortable": false },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "vraagSetVersion", "label": "Question set", "sortable": false },
+					{ "key": "deadlineMinister", "label": "Deadline minister", "sortable": true }
+				],
+				"defaultSort": "-jaar",
+				"detailRoute": "ENSIACycleDetail"
+			}
+		},
+		{
+			"id": "ENSIACycleDetail",
+			"route": "/compliance/ensia/cycles/:id",
+			"type": "detail",
+			"title": "ENSIA Cycle",
+			"config": {
+				"register": "shillinq",
+				"schema": "ENSIAJaarcyclus",
+				"fields": [
+					{ "key": "jaar", "label": "Year", "type": "number" },
+					{ "key": "organisatie.naam", "label": "Organisation", "type": "string" },
+					{ "key": "organisatie.kvk", "label": "KvK", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "verantwoordingsdomeinen", "label": "Domains", "type": "array" },
+					{ "key": "vraagSetVersion", "label": "Question set version", "type": "string" },
+					{ "key": "startDatum", "label": "Start date", "type": "date" },
+					{ "key": "deadlineColleges", "label": "Deadline college", "type": "date" },
+					{ "key": "deadlineMinister", "label": "Deadline minister", "type": "date" },
+					{ "key": "procesEigenaar", "label": "Process owner", "type": "string" },
+					{ "key": "verklaringFile", "label": "Verklaring document", "type": "string" },
+					{ "key": "submittedAt", "label": "Submitted at", "type": "date-time" }
+				],
+				"indexRoute": "ENSIACycles",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ENSIAEvaluations",
+			"route": "/compliance/ensia/evaluations",
+			"type": "index",
+			"title": "ENSIA Evaluations",
+			"config": {
+				"register": "shillinq",
+				"schema": "Evaluatievraag",
+				"columns": [
+					{ "key": "domein", "label": "Domain", "sortable": true },
+					{ "key": "onderwerp", "label": "Topic", "sortable": true },
+					{ "key": "vraagCode", "label": "Question code", "sortable": true },
+					{ "key": "antwoord", "label": "Answer", "sortable": false },
+					{ "key": "volwassenheidsScore", "label": "Maturity score", "sortable": true },
+					{ "key": "peerReviewStatus", "label": "Peer review status", "sortable": true },
+					{ "key": "beantwoorder", "label": "Answerer", "sortable": false }
+				],
+				"defaultSort": "vraagCode",
+				"detailRoute": "ENSIAEvaluationDetail"
+			}
+		},
+		{
+			"id": "ENSIAEvaluationDetail",
+			"route": "/compliance/ensia/evaluations/:id",
+			"type": "detail",
+			"title": "ENSIA Evaluation Question",
+			"config": {
+				"register": "shillinq",
+				"schema": "Evaluatievraag",
+				"fields": [
+					{ "key": "cyclusId", "label": "Cycle", "type": "string" },
+					{ "key": "domein", "label": "Domain", "type": "string" },
+					{ "key": "onderwerp", "label": "Topic", "type": "string" },
+					{ "key": "vraagCode", "label": "Question code", "type": "string" },
+					{ "key": "vraagtekst", "label": "Question text", "type": "string" },
+					{ "key": "antwoordType", "label": "Answer type", "type": "string" },
+					{ "key": "antwoord", "label": "Answer", "type": "string" },
+					{ "key": "volwassenheidsScore", "label": "Maturity score", "type": "number" },
+					{ "key": "normniveau", "label": "VNG norm level", "type": "number" },
+					{ "key": "toelichting", "label": "Explanation", "type": "string" },
+					{ "key": "bewijsstukken", "label": "Evidence", "type": "array" },
+					{ "key": "beantwoorder", "label": "Answerer", "type": "string" },
+					{ "key": "peerReviewer", "label": "Peer reviewer", "type": "string" },
+					{ "key": "peerReviewStatus", "label": "Peer review status", "type": "string" },
+					{ "key": "peerReviewCommentaar", "label": "Peer review comment", "type": "string" },
+					{ "key": "peerReviewedAt", "label": "Peer reviewed at", "type": "date-time" },
+					{ "key": "reden", "label": "Change reason", "type": "string" }
+				],
+				"indexRoute": "ENSIAEvaluations",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Change History",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ENSIAFindings",
+			"route": "/compliance/ensia/findings",
+			"type": "index",
+			"title": "ENSIA Findings",
+			"config": {
+				"register": "shillinq",
+				"schema": "Bevinding",
+				"columns": [
+					{ "key": "type", "label": "Type", "sortable": true },
+					{ "key": "beschrijving", "label": "Description", "sortable": false },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "verantwoordelijke", "label": "Owner", "sortable": true },
+					{ "key": "streefDatum", "label": "Target date", "sortable": true }
+				],
+				"defaultSort": "-streefDatum",
+				"detailRoute": "ENSIAFindingDetail"
+			}
+		},
+		{
+			"id": "ENSIAFindingDetail",
+			"route": "/compliance/ensia/findings/:id",
+			"type": "detail",
+			"title": "ENSIA Finding",
+			"config": {
+				"register": "shillinq",
+				"schema": "Bevinding",
+				"fields": [
+					{ "key": "cyclusId", "label": "Cycle", "type": "string" },
+					{ "key": "vraagId", "label": "Question", "type": "string" },
+					{ "key": "type", "label": "Type", "type": "string" },
+					{ "key": "beschrijving", "label": "Description", "type": "string" },
+					{ "key": "impact", "label": "Impact", "type": "string" },
+					{ "key": "kans", "label": "Probability", "type": "string" },
+					{ "key": "mitigatieActie", "label": "Mitigation action", "type": "string" },
+					{ "key": "verantwoordelijke", "label": "Owner", "type": "string" },
+					{ "key": "streefDatum", "label": "Target date", "type": "date" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "redenAcceptatie", "label": "Acceptance reason", "type": "string" }
+				],
+				"indexRoute": "ENSIAFindings"
+			}
+		},
+		{
+			"id": "ENSIAAuditTrail",
+			"route": "/compliance/ensia/audit-trail",
+			"type": "logs",
+			"title": "ENSIA Audit Trail",
+			"config": {
+				"source": "/index.php/apps/openregister/api/audit-trails?objectTypes=ENSIAJaarcyclus,Evaluatievraag,Bevinding&action=create,update,delete,lifecycle",
+				"columns": [
+					{ "key": "created", "label": "Timestamp", "sortable": true },
+					{ "key": "user", "label": "Actor", "sortable": true },
+					{ "key": "schema", "label": "Record type", "sortable": true },
+					{ "key": "objectId", "label": "Record", "sortable": false },
+					{ "key": "action", "label": "Action", "sortable": true },
+					{ "key": "summary", "label": "Change", "sortable": false }
+				],
+				"defaultSort": "-created",
+				"description": "Read-only ENSIA audit-trail view for external IT auditors per REQ-ENSIA-008. Shows every create/update/delete/lifecycle event across ENSIAJaarcyclus + Evaluatievraag + Bevinding with before/after diff rendering. Post-peer-review edits carry a `reden` field enforced by ENSIAValidationGuard."
+			}
+		},
+		{
+			"id": "ENSIACollegeVerklaring",
+			"route": "/compliance/ensia/college-verklaring",
+			"type": "dashboard",
+			"title": "ENSIA College Verklaring",
+			"config": {
+				"register": "shillinq",
+				"schema": "ENSIAJaarcyclus",
+				"widgets": [
+					{
+						"id": "ensia-college-verklaring-generator",
+						"type": "action",
+						"title": "Generate college verklaring (DOCX)",
+						"description": "Renders a VNG-template Word document for college sign-off (REQ-ENSIA-006). The active ENSIA cyclus MUST be in college-akkoord status. Output is a downloadable DOCX archived on cyclus.verklaringFile via docudesk."
+					},
+					{
+						"id": "ensia-portal-xml-export",
+						"type": "action",
+						"title": "Export ENSIA-portal XML",
+						"description": "Renders an ENSIA-XSD-compliant XML payload for upload to the landelijke ENSIA-portal (REQ-ENSIA-007). The active ENSIA cyclus MUST be in college-akkoord with a signed verklaringFile."
+					}
+				]
 			}
 		}
 	]
