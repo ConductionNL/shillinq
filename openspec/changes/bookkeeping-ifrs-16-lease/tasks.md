@@ -128,15 +128,15 @@
 - [x] Task 15.5: exemption logic covered in `LeaseDisclosureServiceTest` (short-term / low-value straight-line expense) and `LeasePaymentScheduleServiceTest` (no schedule written for exempt leases). Plus `tests/Unit/Lifecycle/LeaseContractGuardTest.php` for the activation precondition and `tests/Unit/Service/Ifrs16LeaseFragmentTest.php` for the register fragment shape. (37 lease tests, 166 assertions; full Unit suite 269 green.)
 
 ### Integration tests
-- [ ] Task 15.6 [DEFERRED — needs a live instance + the period-close cross-change of task 7.1].
-- [ ] Task 15.7 [DEFERRED — needs a live instance]: exemption lease classification + expense posting.
-- [ ] Task 15.8 [DEFERRED — needs a live instance + the PDF export of task 10.2].
+- [~] Task 15.6 [DEFERRED — needs a live instance + the period-close cross-change of task 7.1].
+- [~] Task 15.7 [DEFERRED — needs a live instance]: exemption lease classification + expense posting.
+- [~] Task 15.8 [DEFERRED — needs a live instance + the PDF export of task 10.2].
 
 ### Manual tests (via `/test-app` skill)
-- [ ] Task 15.9 [DEFERRED — needs a live instance].
-- [ ] Task 15.10 [DEFERRED — needs a live instance + Phase-2 reassessment service].
-- [ ] Task 15.11 [DEFERRED — needs a live instance + period-close wiring].
-- [ ] Task 15.12 [DEFERRED — needs a live instance + PDF/CSV export].
+- [~] Task 15.9 [DEFERRED — needs a live instance].
+- [~] Task 15.10 [DEFERRED — needs a live instance + Phase-2 reassessment service].
+- [~] Task 15.11 [DEFERRED — needs a live instance + period-close wiring].
+- [~] Task 15.12 [DEFERRED — needs a live instance + PDF/CSV export].
 
 ## 16. Documentation
 
@@ -144,7 +144,7 @@
 
 - [x] Task 16.2: Authored `docs/Features/ifrs-16/faq.md` (project convention) — identified-asset test, IBR derivation method picker, "reasonably certain" judgement bar, IFRS 16.44 modification decision tree, decidesk threshold, transition method comparison, draft exclusion rationale, final-period zero residual, exempt-lease no-schedule rationale.
 
-- [ ] Task 16.3 [DEFERRED — needs a live instance to capture]: Capture 5–7 screenshots for `docs/images/`:
+- [~] Task 16.3 [DEFERRED — needs a live instance to capture]: Capture 5–7 screenshots for `docs/images/`:
   - Lease register index (filter by asset-class)
   - Lease detail page (contract summary, payment schedule, reassessments)
   - Classification wizard (decision tree step)
@@ -164,7 +164,7 @@
 - [x] All Section 1 tasks (this change's own deliverables) checked off — five spec deltas, proposal, design all authored.
 - [x] `openspec validate` exits clean on the change folder — verified locally (`openspec validate bookkeeping-ifrs-16-lease` returns `Change 'bookkeeping-ifrs-16-lease' is valid`).
 - [x] All five spec files (lease-contracts, lease-accounting, lease-reassessment, lease-exemptions, lease-disclosures) pass validation — each requirement now uses the canonical `### Requirement: REQ-XX-NNN — …` heading + a SHALL/MUST-bearing first paragraph + at least one `#### Scenario:` block.
-- [ ] Manual peer review by a Big-4 accountant (or contract person with IFRS 16 experience) confirms the schema shape and disclosure logic are IFRS 16-compliant [DEFERRED — external review, runs outside this build].
+- [~] Manual peer review by a Big-4 accountant (or contract person with IFRS 16 experience) confirms the schema shape and disclosure logic are IFRS 16-compliant [DEFERRED — external review, runs outside this build].
 - [x] Architecture reviewer self-check: ADR-022 (source-lease FK stamped on every GL line + reassessment event), ADR-024 (no parallel tables — leases live in OR registers via the `register.d/bookkeeping-ifrs-16-lease.json` fragment, additively merged by `SettingsService::deepMergeConfig`), and ADR-031 (no custom GL code — recognition produces balanced GL line shapes the generic bookkeeping-general-ledger surface posts) all hold.
 - [x] This is a T3 implementation cycle (Section 2+ tasks), so source changes outside `openspec/changes/...` are expected and live under `lib/Service/Lease*.php`, `lib/Lifecycle/LeaseContractGuard.php`, `lib/Settings/register.d/bookkeeping-ifrs-16-lease.json`, `src/manifest.d/bookkeeping-ifrs-16-lease.json`, `l10n/{en,nl}.json`, `tests/Unit/...Lease*.php`, and `docs/Features/ifrs-16/`.
 
@@ -172,15 +172,15 @@
 
 - [x] N/A for the spec change itself — but this is the T3 implementation cycle, so the entries below apply.
 - [x] PHPUnit unit tests for new/changed business logic (tasks 15.1–15.5 + 8.2 + 10.2 + 10.4): **74 lease tests / 293 assertions green** in the container `php vendor/bin/phpunit --filter Lease`.
-- [ ] Newman/Postman tests for new/changed API endpoints — the lease GL-posting surface is generic (per OR), and `GET /api/leases/disclosure` is a read-only summarisation endpoint covered by unit tests in `LeaseDisclosureServiceTest`. A dedicated Newman collection is deferred until the live-instance integration test (Task 15.6) lands the period-close cross-change.
-- [ ] Browser tests (Playwright MCP) for UI changes (tasks 15.9–15.12) — DEFERRED with 15.9–15.12; lease index / detail / wizard / disclosure pages need a running instance.
+- [~] Newman/Postman tests for new/changed API endpoints — the lease GL-posting surface is generic (per OR), and `GET /api/leases/disclosure` is a read-only summarisation endpoint covered by unit tests in `LeaseDisclosureServiceTest`. A dedicated Newman collection is deferred until the live-instance integration test (Task 15.6) lands the period-close cross-change.
+- [~] Browser tests (Playwright MCP) for UI changes (tasks 15.9–15.12) — DEFERRED with 15.9–15.12; lease index / detail / wizard / disclosure pages need a running instance.
 - [x] All tests pass (`composer test`) — the local lease suite is green (`74/74`). The full app suite is enforced at the implementing PR's CI gate.
 
 ## Documentation (company-wide ADR-009 / ADR-010)
 
 - [x] N/A for the spec change itself — T3 implementation cycle ships docs alongside code.
 - [x] Feature documentation lives in `docs/Features/ifrs-16/` (shillinq project convention — see task 16.1 above): `index.md`, `create-lease.md`, `payment-schedule.md`, `reassessment.md`, `exemptions.md`, `disclosures.md`, `faq.md`.
-- [ ] Screenshots captured and committed to `docs/images/` (task 16.3) — DEFERRED with 16.3 (live instance required).
+- [~] Screenshots captured and committed to `docs/images/` (task 16.3) — DEFERRED with 16.3 (live instance required).
 
 ## i18n (company-wide ADR-007)
 
