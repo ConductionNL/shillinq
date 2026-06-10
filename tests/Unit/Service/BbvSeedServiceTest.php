@@ -138,8 +138,8 @@ class BbvSeedServiceTest extends TestCase
         self::assertTrue(condition: $result['success']);
         $taakveldCounts = $result['counts']['Taakveld'];
         // Gemeente 0.10 must be skipped; provincie + waterschap 0.10 must be seeded.
-        self::assertGreaterThan(minimum: 0, actual: $taakveldCounts['seeded']);
-        self::assertGreaterThan(minimum: 0, actual: $taakveldCounts['skipped']);
+        self::assertGreaterThan(0, $taakveldCounts['seeded']);
+        self::assertGreaterThan(0, $taakveldCounts['skipped']);
 
     }//end testTaakveldCompositeDedupAcrossOverheidslagen()
 

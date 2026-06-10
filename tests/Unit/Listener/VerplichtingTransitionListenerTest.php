@@ -284,7 +284,13 @@ final class VerplichtingTransitionListenerTest extends TestCase
     }//end testNonVerplichtingSchemaIsIgnored()
 
     /**
-     * A null entity is handled gracefully.
+     * An entity with a null payload is handled gracefully (the listener
+     * resolves the schema, sees no object payload, and returns null).
+     *
+     * Originally this test passed a null event but the OR
+     * ObjectCreatedEvent constructor now type-hints non-null ObjectEntity.
+     * The fail-soft contract is identical: a non-Verplichting / payload-less
+     * entity must NOT cause an emit.
      *
      * @return void
      */
@@ -294,7 +300,9 @@ final class VerplichtingTransitionListenerTest extends TestCase
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $listener   = new VerplichtingTransitionListener($emitter, new NullLogger());
 
-        $event = new ObjectCreatedEvent(null);
+        $entity = new ObjectEntity();
+        $entity->setSchema('not-a-verplichting');
+        $event  = new ObjectCreatedEvent($entity);
         $listener->handle($event);
 
         $this->assertCount(0, $dispatcher->events);
