@@ -147,20 +147,9 @@
   - Verify against BCF terminology in official Belastingdienst documents (handreiking)
   - Examples: `bcf-claim` → `BCF-vordering`, `compensable-percentage` → `Compensabel percentage`
 
-- [ ] **Task 5.3: User documentation** — Author `docs/user-guide/bookkeeping/bcf-vat-compensation.md`:
-  - Overview: What is BCF, why use this feature
-  - Prerequisites: VAT filing configured, BBV mappings complete
-  - Workflow: Step-by-step guide (create → configure → submit → approve → settle)
-  - Screenshots: Index page, detail page, breakdown table, approval workflow
-  - FAQs: Common questions (quarters, mixed-use accounts, webhook delays, manual settlement fallback)
-  - Troubleshooting: Error messages + solutions
+- [x] **Task 5.3: User documentation** — Authored `docs/user-guide/bookkeeping/bcf-vat-compensation.md` covering: overview + why use the feature, prerequisites (VAT filing, BBV mappings, period close, RBAC), the four-state lifecycle, the seven steps (open index → create → review breakdown → send for approval → approve → quarterly DigiKoppeling submission → settlement), FAQs (empty claim, `compensablePercentage`, frozen breakdowns, lost webhook fallback, retention/delete, schedule), and a troubleshooting table mapping each user-facing error to a cause + fix. Screenshots are captured by the in-app journeydoc story flow when the live environment is available (deferred — needs the NC container).
 
-- [ ] **Task 5.4: Admin documentation** — Author `docs/admin/bcf-configuration.md`:
-  - RBAC setup: How to assign roles (`bcf-administrator`, `bcf-operator`, `bcf-viewer`)
-  - Quarterly schedule configuration: Cron expression for submission
-  - Webhook configuration: Verify OpenConnector source is registered
-  - Audit trail export: How to export for court/auditor review
-  - Rollback procedures: If feature needs to be disabled
+- [x] **Task 5.4: Admin documentation** — Authored `docs/admin/bcf-configuration.md` covering: prerequisites (OR + OC, network reachability, administration type), the RBAC matrix (`bcf-viewer`/`bcf-operator`/`bcf-administrator` + global admin) and how to wire it up, the quarterly schedule defaults + how to adjust them, the `digikoppeling-bcf` source contract (input/auth/output + settlement webhook payload), the webhook routing flow (declared on the schema fragment, owned by OR's generic handler), audit-trail export (per-claim CSV + administration-wide via OR), rollback procedures (disable workflow + hide menu + non-destructive register retention), and an operational checklist for go-live.
 
 ### Phase 6: Quality & Verification
 
