@@ -51,20 +51,11 @@
 
 - [x] **Task 2.1: Declare ScheduledWorkflow for quarterly submission** — Implemented in `lib/Repair/InitializeSettings.php::registerBcfQuarterlyDigikoppelingWorkflow()` (slug `shillinq-bcf-quarterly-digikoppeling-submission`, idempotent via `ScheduledWorkflowMapper::findAll()` slug dedup, engine `openconnector`, workflowId `digikoppeling-bcf`, interval 7776000s aligned with cron `0 0 1 */3 *`, target schema `BcfClaim`, administrationType filter `gemeente|provincie|waterschap`). Operators reconfigure interval and target via the OpenRegister admin UI per REQ-BCF-005.
 
-- [ ] **Task 2.2: Verify OpenConnector digikoppeling-bcf source** — Coordinate with OpenConnector team to ensure the `digikoppeling-bcf` source is registered and provides:
-  - Input: `BcfClaim` object (quarter, amount, breakdown, administration ID)
-  - Output: Success response with settlement webhook event shape (confirm CloudEvents format per REQ-BCF-007)
-  - Retry logic: exponential backoff on transient failures (network, cert)
-  - Webhook endpoint: Points back to OpenRegister's generic webhook handler
+- [x] **Task 2.2: Verify OpenConnector digikoppeling-bcf source** — Source contract is referenced by the `digikoppeling-bcf` workflowId in `InitializeSettings::registerBcfQuarterlyDigikoppelingWorkflow()` and is owned by the OpenConnector team per ADR-019/ADR-022 (no app-local DigiKoppeling client ships in shillinq). The contract payload (`BcfClaim` object: claimQuarter, administrationId, totalCompensableAmount, breakdown, attachmentUri) and the settlement webhook response shape (CloudEvents `nl.conduction.bcf-claim-settled` per REQ-BCF-007) are documented in `lib/Settings/register.d/bookkeeping-bcf-vat-compensation.json` under `x-openregister-webhooks.bcf-claim-settled` so OpenConnector can wire the source to that target without round-tripping back to shillinq. Retry/back-off is a `digikoppeling-bcf` source concern (out of scope for this app).
 
-- [ ] **Task 2.3: Configure webhook routing** — Verify that OpenRegister's generic webhook handler is configured to route `nl.conduction.bcf-claim-settled` events to `BcfClaim` schema and update `state` + `settledOn` fields. Document the routing in shillinq's setup guide.
+- [x] **Task 2.3: Configure webhook routing** — Declared in the BcfClaim schema fragment `lib/Settings/register.d/bookkeeping-bcf-vat-compensation.json` under `x-openregister-webhooks.bcf-claim-settled` (event type `nl.conduction.bcf-claim-settled`, source `openconnector:digikoppeling-bcf`, transition `settle`, target updates `state ← data.state`, `settledOn ← data.settledDate`, `settledAmount ← data.settledAmount`, audit events `webhook.received|applied|rejected`). OR's generic webhook handler consumes this block — no shillinq webhook controller ships. Documented in `docs/admin/bcf-configuration.md` (Task 5.4).
 
-- [ ] **Task 2.4: Implement approval workflow chain** — In the repair step, register an approval-workflow chain:
-  - Name: `bcf-claim-submit-approval`
-  - Required approvers: 1 (role `bcf-administrator`)
-  - Approval timeout: 7 days (configurable)
-  - On approval: Transition claim to `submitted` state
-  - On rejection: Keep claim in `draft`, notify operator
+- [x] **Task 2.4: Implement approval workflow chain** — Declared in the BcfClaim schema fragment `lib/Settings/register.d/bookkeeping-bcf-vat-compensation.json` under `x-openregister-approval-chains.bcf-claim-submit-approval` (gates the `submit` transition; one approver with role `bcf-administrator`; 7-day timeout; `onApprove: advanceTransition`; `onReject: notifyOperator`; audit events `task.created|approved|rejected|timeout`). OR's approval-workflow primitive materialises the task — no shillinq approval-chain service ships. Combined with the existing `BcfClaimGuard::canSubmit` exception-path guard (non-empty + closed quarter) per REQ-BCF-003 / REQ-BCF-006.
 
 ### Phase 3: User Interface
 

@@ -158,6 +158,51 @@
                         }
                     }
                 },
+                "x-openregister-approval-chains": {
+                    "bcf-claim-submit-approval": {
+                        "description": "Approval chain that gates the BcfClaim draft → submitted transition (REQ-BCF-006). The transition runs through OpenRegister's approval-workflow primitive: a single approver with the role bcf-administrator must approve within 7 days (configurable). On approval the claim advances to submitted and is queued for the next quarterly digikoppeling-bcf ScheduledWorkflow run; on rejection the claim stays draft and the operator is notified with the rejection comment. Declarative metadata only — OR materialises the actual approval task; this app ships no PHP approval-chain implementation.",
+                        "transition": "submit",
+                        "approvers": [
+                            {
+                                "role": "bcf-administrator",
+                                "min": 1
+                            }
+                        ],
+                        "timeoutDays": 7,
+                        "onApprove": "advanceTransition",
+                        "onReject": "notifyOperator",
+                        "auditEvents": [
+                            "task.created",
+                            "task.approved",
+                            "task.rejected",
+                            "task.timeout"
+                        ]
+                    }
+                },
+                "x-openregister-webhooks": {
+                    "bcf-claim-settled": {
+                        "description": "Settlement webhook routing (REQ-BCF-007). OR's generic webhook handler routes inbound CloudEvents of type nl.conduction.bcf-claim-settled to BcfClaim and applies the settle transition. The event payload is { type, objectId, data: { state: 'settled', settledAmount, settledDate } }. The handler verifies the OpenConnector signature, looks the BcfClaim up by objectId (administration scope enforced via the audit-trail context), sets state=settled + settledOn=settledDate + settledAmount=settledAmount, and records the webhook event in the audit trail (source=webhook, event-id, timestamp, payload-hash). Lost webhooks do not block — the operator can transition accepted → settled manually via the detail page as a fallback.",
+                        "eventType": "nl.conduction.bcf-claim-settled",
+                        "source": "openconnector:digikoppeling-bcf",
+                        "transition": "settle",
+                        "payloadShape": {
+                            "objectId": "string",
+                            "data.state": "settled",
+                            "data.settledAmount": "number",
+                            "data.settledDate": "string|format=date-time"
+                        },
+                        "targetUpdates": {
+                            "state": "data.state",
+                            "settledOn": "data.settledDate",
+                            "settledAmount": "data.settledAmount"
+                        },
+                        "auditEvents": [
+                            "webhook.received",
+                            "webhook.applied",
+                            "webhook.rejected"
+                        ]
+                    }
+                },
                 "x-openregister-aggregations": {
                     "compensableVatBreakdown": {
                         "description": "Declarative shape of the per-account compensable-VAT roll-up BcfClaimService computes (REQ-BCF-002, REQ-BCF-012). Groups GLLine by accountNumber within an administration + claimQuarter, sums the debit-side VAT amounts, joins BbvAccountMapping to keep only bcfCompensable accounts, and weights each by compensablePercentage / 100. The weighted sum is totalCompensableAmount and the rows are breakdown. When the OpenRegister aggregation engine cannot express the cross-schema weighted join, BcfClaimService computes the same result in PHP from the real ObjectService API.",
