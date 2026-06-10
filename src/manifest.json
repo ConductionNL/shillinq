@@ -637,6 +637,13 @@
 			},
 			"children": [
 				{
+					"id": "Iv3Aanlevering",
+					"label": "Iv3-aanlevering",
+					"icon": "ChartTimelineVariant",
+					"route": "Iv3Aanlevering",
+					"order": 5
+				},
+				{
 					"id": "Iv3Rapportages",
 					"label": "IV3-rapportages",
 					"icon": "FileChartOutline",
@@ -3429,6 +3436,142 @@
 						}
 					]
 				}
+			}
+		},
+		{
+			"id": "Iv3Aanlevering",
+			"route": "/overheid/iv3-aanlevering",
+			"type": "dashboard",
+			"title": "Iv3-aanlevering",
+			"config": {
+				"register": "shillinq",
+				"schema": "Iv3Export",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"gemeente",
+						"provincie",
+						"waterschap"
+					]
+				},
+				"widgets": [
+					{
+						"id": "iv3-status-q1",
+						"title": "Q1",
+						"type": "stats-block",
+						"iconClass": "icon-calendar",
+						"props": {
+							"countLabel": "status",
+							"variant": "default"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "Iv3Export",
+							"filters": {
+								"reportingYear": "@currentFiscalYear",
+								"reportingQuarter": "Q1"
+							},
+							"aggregate": "lastState"
+						}
+					},
+					{
+						"id": "iv3-status-q2",
+						"title": "Q2",
+						"type": "stats-block",
+						"iconClass": "icon-calendar",
+						"props": {
+							"countLabel": "status",
+							"variant": "default"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "Iv3Export",
+							"filters": {
+								"reportingYear": "@currentFiscalYear",
+								"reportingQuarter": "Q2"
+							},
+							"aggregate": "lastState"
+						}
+					},
+					{
+						"id": "iv3-status-q3",
+						"title": "Q3",
+						"type": "stats-block",
+						"iconClass": "icon-calendar",
+						"props": {
+							"countLabel": "status",
+							"variant": "default"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "Iv3Export",
+							"filters": {
+								"reportingYear": "@currentFiscalYear",
+								"reportingQuarter": "Q3"
+							},
+							"aggregate": "lastState"
+						}
+					},
+					{
+						"id": "iv3-status-q4",
+						"title": "Q4",
+						"type": "stats-block",
+						"iconClass": "icon-calendar",
+						"props": {
+							"countLabel": "status",
+							"variant": "default"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "Iv3Export",
+							"filters": {
+								"reportingYear": "@currentFiscalYear",
+								"reportingQuarter": "Q4"
+							},
+							"aggregate": "lastState"
+						}
+					},
+					{
+						"id": "iv3-status-year",
+						"title": "Jaar",
+						"type": "stats-block",
+						"iconClass": "icon-checkmark",
+						"props": {
+							"countLabel": "status",
+							"variant": "success"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "Iv3Export",
+							"filters": {
+								"reportingYear": "@currentFiscalYear",
+								"reportingQuarter": "YEAR"
+							},
+							"aggregate": "lastState"
+						}
+					},
+					{
+						"id": "iv3-recent-exports",
+						"title": "Recente exports",
+						"type": "table",
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "Iv3Export",
+							"filters": {
+								"reportingYear": "@currentFiscalYear"
+							},
+							"sort": "-generatedAt",
+							"limit": 10
+						},
+						"columns": [
+							{ "key": "reportingQuarter", "label": "Periode" },
+							{ "key": "state", "label": "Status" },
+							{ "key": "generatedAt", "label": "Gegenereerd" },
+							{ "key": "submittedAt", "label": "Ingediend" },
+							{ "key": "iv3Version", "label": "Versie" }
+						]
+					}
+				]
 			}
 		},
 		{
