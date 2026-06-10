@@ -44,15 +44,15 @@
 
 - [x] Task 10: Declare the `UrenEvidence` schema in `lib/Settings/shillinq_register.json` with all REQ-URC-010 fields (id, ondernemingId, periode, totaalUren, perCategorie{}, exportFormaat, fileRef, sha256, gegenereerdOp, bewaarTermijn)
 
-- [ ] Task 11: Implement daily tally batch (end-of-day, idempotent) per REQ-URC-001 — sums `UrenRegistratie` entries for the day, applies reistijd-cap (max 4 uur, logs overages), updates `UrencriteriumYear.lopendeUren`; no PHP service, pure aggregation
+- [x] Task 11: Implement daily tally batch (end-of-day, idempotent) per REQ-URC-001 — sums `UrenRegistratie` entries for the day, applies reistijd-cap (max 4 uur, logs overages), updates `UrencriteriumYear.lopendeUren`; no PHP service, pure aggregation
 
-- [ ] Task 12: Implement prognosis batch per REQ-URC-002 — rolling-12-week average + seasonality correction (e.g., -25% for August) + vakantie adjustments + ingeplande-opdrachten override; model version stored (`v3.2-12wk-seasonal`); confidence interval computed; updates `UrenPrognose` + `UrencriteriumYear.prognoseEindeJaar`
+- [x] Task 12: Implement prognosis batch per REQ-URC-002 — rolling-12-week average + seasonality correction (e.g., -25% for August) + vakantie adjustments + ingeplande-opdrachten override; model version stored (`v3.2-12wk-seasonal`); confidence interval computed; updates `UrenPrognose` + `UrencriteriumYear.prognoseEindeJaar`
 
-- [ ] Task 13: Implement alert-trigger batch per REQ-URC-003 — fires quarterly (31 Mar, 30 Jun, 30 Sep, 31 Dec) + on drempelStatus omslag (OP_KOERS → RISICO, RISICO → KRITIEK); generates `UrenAlert` with 3+ handelingsperspectief (acquisitie-hours, vakantie-revisie, fiscaal-verlies EUR context)
+- [x] Task 13: Implement alert-trigger batch per REQ-URC-003 — fires quarterly (31 Mar, 30 Jun, 30 Sep, 31 Dec) + on drempelStatus omslag (OP_KOERS → RISICO, RISICO → KRITIEK); generates `UrenAlert` with 3+ handelingsperspectief (acquisitie-hours, vakantie-revisie, fiscaal-verlies EUR context)
 
-- [ ] Task 14: Implement norm-determination logic per REQ-URC-000 on tracker init — query entrepreneur profiel (rechtsvorm, AO-status from `hrmq`, parallel loondienst, meewerkende-partner-status), auto-set doelNorm (1.225 default / 800 AO / 525 meewerkaftrek), grotendeelsCriterium applicability, normGrondslag; no manual entry required
+- [x] Task 14: Implement norm-determination logic per REQ-URC-000 on tracker init — query entrepreneur profiel (rechtsvorm, AO-status from `hrmq`, parallel loondienst, meewerkende-partner-status), auto-set doelNorm (1.225 default / 800 AO / 525 meewerkaftrek), grotendeelsCriterium applicability, normGrondslag; no manual entry required
 
-- [ ] Task 15: Implement grotendeels-criterium check per REQ-URC-007 — daily batch calculates (loondienst-uren + onderneming-uren); if loondienst > 50% total, flags NIET_GROTENDEELS_ONDERNEMING and blocks zelfstandigenaftrek; stored on `UrencriteriumYear`
+- [x] Task 15: Implement grotendeels-criterium check per REQ-URC-007 — daily batch calculates (loondienst-uren + onderneming-uren); if loondienst > 50% total, flags NIET_GROTENDEELS_ONDERNEMING and blocks zelfstandigenaftrek; stored on `UrencriteriumYear`
 
 - [ ] Task 16: Implement WBSO-uren sync per REQ-URC-005 — automatic feed from `bookkeeping-wbso-administratie` → `UrenRegistratie.R_AND_D_WBSO` without duplication; reconciliation check flags discrepancies between WBSO-recorded-uren and time-tracking-uren
 
