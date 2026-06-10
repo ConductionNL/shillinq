@@ -7,9 +7,9 @@
 
 ## ADDED Requirements
 
-### REQ-BBV-001: RGS-decentraal verplicht voor BBV-tenants
+### Requirement: REQ-BBV-001 — RGS-decentraal verplicht voor BBV-tenants
 
-Tenants met `bbv_compliance=true` mogen geen grootboekrekening aanmaken of muteren zonder geldige `rgs_decentraal_code`. Bij migratie van een bestaande administratie naar BBV-modus draait een verplichte mappingstap die elke rekening koppelt aan een D-code uit de actuele RGS-decentraal-publicatie (versie wordt vastgelegd in tenant-config). De RGS-decentraal-set wordt jaarlijks geïmporteerd uit de officiële publicatie op referentiegrootboekschema.nl en gevalideerd tegen het hoofdkenmerk (`dc`, `niveau`, `referentienummer`).
+Tenants met `bbv_compliance=true` mogen geen grootboekrekening aanmaken of muteren zonder geldige `rgs_decentraal_code`. BBV-tenants SHALL hold a valid `rgsDecentraalCode` on every `Account` before a posting is accepted. Bij migratie van een bestaande administratie naar BBV-modus draait een verplichte mappingstap die elke rekening koppelt aan een D-code uit de actuele RGS-decentraal-publicatie (versie wordt vastgelegd in tenant-config). De RGS-decentraal-set wordt jaarlijks geïmporteerd uit de officiële publicatie op referentiegrootboekschema.nl en gevalideerd tegen het hoofdkenmerk (`dc`, `niveau`, `referentienummer`).
 
 #### Scenario: Nieuwe grootboekrekening zonder RGS-koppeling wordt geweigerd
 
@@ -29,9 +29,9 @@ Tenants met `bbv_compliance=true` mogen geen grootboekrekening aanmaken of muter
 - **WHEN** de admin de auto-map functie start met optie `match-on=referentienummer`
 - **THEN** matcht het systeem elke legacy rekening op het 5-niveau referentienummer en presenteert een review-scherm met confidence-score per voorgestelde koppeling
 
-### REQ-BBV-002: Taakveld-classificatie op iedere exploitatie-boeking
+### Requirement: REQ-BBV-002 — Taakveld-classificatie op iedere exploitatie-boeking
 
-Iedere journaalpostregel met een exploitatie-grootboekrekening moet een `taakveld` en een `economische_categorie` dragen. Het systeem mag default-waarden afleiden van de gekoppelde RGS-decentraal-rekening (zie `taakveld_default`, `economische_categorie_default`), maar de gebruiker kan deze overschrijven binnen de toegestane set voor die rekening. Balansboekingen en boekingen op reserves/voorzieningen zijn vrijgesteld van taakveld-plicht (taakveld 0.10 = "Mutaties reserves" is uitzondering).
+Every GLLine that targets an exploitatie account SHALL carry both a `taakveld` and an `economischeCategorie`; iedere journaalpostregel met een exploitatie-grootboekrekening moet een `taakveld` en een `economische_categorie` dragen. Het systeem mag default-waarden afleiden van de gekoppelde RGS-decentraal-rekening (zie `taakveld_default`, `economische_categorie_default`), maar de gebruiker kan deze overschrijven binnen de toegestane set voor die rekening. Balansboekingen en boekingen op reserves/voorzieningen zijn vrijgesteld van taakveld-plicht (taakveld 0.10 = "Mutaties reserves" is uitzondering).
 
 #### Scenario: Auto-defaulting taakveld bij boeking
 
@@ -51,9 +51,9 @@ Iedere journaalpostregel met een exploitatie-grootboekrekening moet een `taakvel
 - **WHEN** journaalpost `JP-2026-0451` wordt aangeboden met een exploitatie-regel zonder `taakveld`
 - **THEN** faalt de boeking met `ValidationError("REQ-BBV-002: taakveld verplicht voor bbv_classificatie=exploitatie op regel 3")`
 
-### REQ-BBV-003: Meerjarenraming T+0 t/m T+3 sluitend
+### Requirement: REQ-BBV-003 — Meerjarenraming T+0 t/m T+3 sluitend
 
-De primitieve begroting voor jaar T moet vergezeld gaan van een meerjarenraming voor T+1, T+2, T+3. Voor elk van de vier jaren geldt de regel **structureel en reëel sluitend**: totaal baten minus totaal lasten plus saldo mutaties reserves >= 0, waarbij incidentele baten en lasten apart worden getoond. Het systeem berekent het saldo per jaar live en blokkeert publicatie van een niet-sluitende begroting (override mogelijk met motivatie + raadsbesluit-referentie).
+The primitieve begroting for year T SHALL be accompanied by a four-year meerjarenraming covering T+1, T+2, T+3; de primitieve begroting voor jaar T moet vergezeld gaan van een meerjarenraming voor T+1, T+2, T+3. Voor elk van de vier jaren geldt de regel **structureel en reëel sluitend**: totaal baten minus totaal lasten plus saldo mutaties reserves >= 0, waarbij incidentele baten en lasten apart worden getoond. Het systeem berekent het saldo per jaar live en blokkeert publicatie van een niet-sluitende begroting (override mogelijk met motivatie + raadsbesluit-referentie).
 
 #### Scenario: Sluitende meerjarenraming wordt vastgesteld
 
@@ -73,9 +73,9 @@ De primitieve begroting voor jaar T moet vergezeld gaan van een meerjarenraming 
 - **WHEN** het systeem het "Overzicht structureel begrotingssaldo" genereert
 - **THEN** toont de output baten EUR 1.5M structureel + EUR 0.5M incidenteel, met expliciete sub-totalen conform BBV-art. 19
 
-### REQ-BBV-004: Reserves en voorzieningen — correcte mutatieroute
+### Requirement: REQ-BBV-004 — Reserves en voorzieningen — correcte mutatieroute
 
-Mutaties op reserves lopen uitsluitend via resultaatbestemming (taakveld 0.10), nooit via een exploitatie-taakveld. Mutaties op voorzieningen lopen wel via exploitatie (last bij toevoeging, vrijval als negatieve last). Het systeem dwingt deze routing bij iedere journaalpost af en blokkeert verkeerde combinaties.
+Reserve mutations SHALL route exclusively through taakveld 0.10 (resultaatbestemming); mutaties op reserves lopen uitsluitend via resultaatbestemming (taakveld 0.10), nooit via een exploitatie-taakveld. Mutaties op voorzieningen lopen wel via exploitatie (last bij toevoeging, vrijval als negatieve last). Het systeem dwingt deze routing bij iedere journaalpost af en blokkeert verkeerde combinaties.
 
 #### Scenario: Storting bestemmingsreserve via 0.10
 
@@ -95,9 +95,9 @@ Mutaties op reserves lopen uitsluitend via resultaatbestemming (taakveld 0.10), 
 - **WHEN** vrijval-boeking: D 2420 EUR 80.000 / C 4250 met `taakveld=2.1`
 - **THEN** registreert het systeem dit als negatieve last op taakveld 2.1 in periode-rapportage (niet als bate categorie 8)
 
-### REQ-BBV-005: Materiële vaste activa — afschrijvingsregime per categorie
+### Requirement: REQ-BBV-005 — Materiële vaste activa — afschrijvingsregime per categorie
 
-MVA worden geadministreerd conform Notitie MVA (commissie BBV, juli 2023). Activa met economisch nut worden geactiveerd tegen aanschafwaarde minus eventuele bijdragen van derden die in directe relatie staan tot het actief; subsidies/bijdragen worden in mindering gebracht. Activa met maatschappelijk nut worden sinds 2017 verplicht geactiveerd (geen netto-methode meer toegestaan). Afschrijving start in de maand volgend op ingebruikname. Componentenmethode is toegestaan voor samengestelde activa (bv schoolgebouw: dak 40jr, installaties 20jr, casco 60jr).
+MVA SHALL be administered conform Notitie MVA (commissie BBV, juli 2023). MVA worden geadministreerd conform Notitie MVA (commissie BBV, juli 2023). Activa met economisch nut worden geactiveerd tegen aanschafwaarde minus eventuele bijdragen van derden die in directe relatie staan tot het actief; subsidies/bijdragen worden in mindering gebracht. Activa met maatschappelijk nut worden sinds 2017 verplicht geactiveerd (geen netto-methode meer toegestaan). Afschrijving start in de maand volgend op ingebruikname. Componentenmethode is toegestaan voor samengestelde activa (bv schoolgebouw: dak 40jr, installaties 20jr, casco 60jr).
 
 #### Scenario: Subsidie van derden in mindering op aanschaf
 
@@ -117,9 +117,9 @@ MVA worden geadministreerd conform Notitie MVA (commissie BBV, juli 2023). Activ
 - **WHEN** maandafsluiting september 2026 draait
 - **THEN** geen afschrijvingsboeking; bij oktober-afsluiting wordt eerste afschrijving EUR 4.270,83 (= 2.050.000 / 40 / 12) geboekt op taakveld 5.2
 
-### REQ-BBV-006: Iv3-aanlevering aan CBS — kwartaal en jaar
+### Requirement: REQ-BBV-006 — Iv3-aanlevering aan CBS — kwartaal en jaar
 
-BBV-pijler is de Iv3-aanlevering aan CBS via Kredo (KRedo voor Decentrale Overheden). Kwartaal-Iv3 binnen 1 maand na kwartaaleinde, jaar-Iv3 voor 15 juli. Bestandsformaat: XBRL conform de jaarlijks gepubliceerde Iv3-taxonomy. Aggregatie: alle boekingen op `boekjaar`, `kwartaal`, `taakveld`, `economische_categorie`. Het systeem genereert het XBRL-instance document, valideert tegen de taxonomy, en biedt het aan via de Kredo SOAP/REST-koppeling.
+Every BBV-tenant SHALL submit a quarterly + annual Iv3-aanlevering to CBS via Kredo. BBV-pijler is de Iv3-aanlevering aan CBS via Kredo (KRedo voor Decentrale Overheden). Kwartaal-Iv3 binnen 1 maand na kwartaaleinde, jaar-Iv3 voor 15 juli. Bestandsformaat: XBRL conform de jaarlijks gepubliceerde Iv3-taxonomy. Aggregatie: alle boekingen op `boekjaar`, `kwartaal`, `taakveld`, `economische_categorie`. Het systeem genereert het XBRL-instance document, valideert tegen de taxonomy, en biedt het aan via de Kredo SOAP/REST-koppeling.
 
 #### Scenario: Q1-aanlevering genereren
 
@@ -139,9 +139,9 @@ BBV-pijler is de Iv3-aanlevering aan CBS via Kredo (KRedo voor Decentrale Overhe
 - **WHEN** het XBRL-document wordt opgebouwd
 - **THEN** bevat het zowel realisatie 2025 (primair) als realisatie 2024 (vergelijkend) per taakveld×categorie, conform Iv3-informatievoorschrift 2025 §4.2
 
-### REQ-BBV-007: Verplichte paragrafen in begroting en jaarrekening
+### Requirement: REQ-BBV-007 — Verplichte paragrafen in begroting en jaarrekening
 
-BBV art. 9 schrijft 7 verplichte paragrafen voor: (1) Lokale heffingen, (2) Weerstandsvermogen en risicobeheersing, (3) Onderhoud kapitaalgoederen, (4) Financiering, (5) Bedrijfsvoering, (6) Verbonden partijen, (7) Grondbeleid. Voor provincies geldt een aangepaste set (Wet Fido + provinciale BBV). Voor waterschappen Waterschapsbesluit. Iedere paragraaf is een gestructureerd document met verplichte onderdelen (bv weerstandsvermogen vereist incidenteel + structureel weerstandscapaciteit, risicobedrag, ratio). Het systeem biedt per paragraaf een template-driven editor met velden die automatisch gevuld worden vanuit de administratie (bv weerstandsratio = beschikbaar / benodigd weerstandsvermogen).
+The BBV jaarrekening SHALL contain all seven obligatory paragrafen prescribed by BBV art. 9; ontbrekende paragrafen MUST block publication. BBV art. 9 schrijft 7 verplichte paragrafen voor: (1) Lokale heffingen, (2) Weerstandsvermogen en risicobeheersing, (3) Onderhoud kapitaalgoederen, (4) Financiering, (5) Bedrijfsvoering, (6) Verbonden partijen, (7) Grondbeleid. Voor provincies geldt een aangepaste set (Wet Fido + provinciale BBV). Voor waterschappen Waterschapsbesluit. Iedere paragraaf is een gestructureerd document met verplichte onderdelen (bv weerstandsvermogen vereist incidenteel + structureel weerstandscapaciteit, risicobedrag, ratio). Het systeem biedt per paragraaf een template-driven editor met velden die automatisch gevuld worden vanuit de administratie (bv weerstandsratio = beschikbaar / benodigd weerstandsvermogen).
 
 #### Scenario: Paragraaf Weerstandsvermogen auto-berekent ratio
 
@@ -161,9 +161,9 @@ BBV art. 9 schrijft 7 verplichte paragrafen voor: (1) Lokale heffingen, (2) Weer
 - **WHEN** ambtenaar klikt "Vaststellen jaarrekening"
 - **THEN** blokkeert het systeem met lijst ontbrekende verplichte paragrafen en verwijzing naar BBV-art. 9
 
-### REQ-BBV-008: Vergelijkende periode verplicht
+### Requirement: REQ-BBV-008 — Vergelijkende periode verplicht
 
-Iedere BBV-conforme rapportage toont minstens vergelijkende cijfers vorig jaar. Jaarrekening jaar T toont kolommen: realisatie T-1, primitieve begroting T, begroting na wijziging T, realisatie T, verschil. Begroting jaar T toont realisatie T-2 (vastgesteld), begroting T-1 (na wijziging tot publicatiedatum), primitieve begroting T, plus meerjarenraming T+1/T+2/T+3.
+Every BBV report SHALL display at least the comparative figures of the prior year. Iedere BBV-conforme rapportage toont minstens vergelijkende cijfers vorig jaar. Jaarrekening jaar T toont kolommen: realisatie T-1, primitieve begroting T, begroting na wijziging T, realisatie T, verschil. Begroting jaar T toont realisatie T-2 (vastgesteld), begroting T-1 (na wijziging tot publicatiedatum), primitieve begroting T, plus meerjarenraming T+1/T+2/T+3.
 
 #### Scenario: Jaarrekening 2025 toont vijf kolommen
 
@@ -177,9 +177,9 @@ Iedere BBV-conforme rapportage toont minstens vergelijkende cijfers vorig jaar. 
 - **WHEN** begroting 2026 wordt opgesteld
 - **THEN** herrekent het systeem realisatie 2024 + begroting 2025 naar de nieuwe indeling en markeert deze cijfers met `stelselwijziging=true` voor toelichting
 
-### REQ-BBV-009: Rechtmatigheidsverantwoording per 2023
+### Requirement: REQ-BBV-009 — Rechtmatigheidsverantwoording per 2023
 
-Sinds boekjaar 2023 geeft het college/GS/DB zelf een rechtmatigheidsverantwoording af bij de jaarrekening (was voorheen taak accountant). Het systeem onderbouwt deze verantwoording door per boeking de rechtmatigheids-aspecten vast te leggen: begrotingsrechtmatigheid (binnen vastgesteld budget?), voorwaarden-rechtmatigheid (conform regelgeving?), M&O-rechtmatigheid (misbruik & oneigenlijk gebruik beheerst?). Bij overschrijdingen wordt automatisch een fout/onzekerheid geregistreerd en getoetst aan de door de raad vastgestelde rapportagegrens en goedkeuringstolerantie (default 1% / 3% van totale lasten).
+From boekjaar 2023 onwards the executive board (college/GS/DB) SHALL issue its own rechtmatigheidsverantwoording with the jaarrekening; the system MUST underpin it with per-posting rechtmatigheidsstamps. Sinds boekjaar 2023 geeft het college/GS/DB zelf een rechtmatigheidsverantwoording af bij de jaarrekening (was voorheen taak accountant). Het systeem onderbouwt deze verantwoording door per boeking de rechtmatigheids-aspecten vast te leggen: begrotingsrechtmatigheid (binnen vastgesteld budget?), voorwaarden-rechtmatigheid (conform regelgeving?), M&O-rechtmatigheid (misbruik & oneigenlijk gebruik beheerst?). Bij overschrijdingen wordt automatisch een fout/onzekerheid geregistreerd en getoetst aan de door de raad vastgestelde rapportagegrens en goedkeuringstolerantie (default 1% / 3% van totale lasten).
 
 #### Scenario: Begrotingsoverschrijding genereert rechtmatigheidsfout
 
@@ -193,9 +193,9 @@ Sinds boekjaar 2023 geeft het college/GS/DB zelf een rechtmatigheidsverantwoordi
 - **WHEN** inkoopdossier wordt afgesloten zonder bewijs van aanbestedingsprocedure
 - **THEN** registreert het systeem onrechtmatige uitgave EUR 285k in M&O-register en toont waarschuwing in rechtmatigheidsverantwoording-concept
 
-### REQ-BBV-010: SiSa-bijlage genereren
+### Requirement: REQ-BBV-010 — SiSa-bijlage genereren
 
-Single information Single audit: gemeenten verantwoorden specifieke uitkeringen van het Rijk via de SiSa-bijlage bij de jaarrekening (jaarlijks geactualiseerde tabel van BZK, ca. 50 regelingen). Per regeling vaste indicatorenset (bedragen, aantallen, prestaties). Het systeem genereert SiSa-bijlage uit de subsidie-administratie en toetst volledigheid tegen de actuele SiSa-bijlagenlijst.
+Gemeenten SHALL produce a SiSa-bijlage at the jaarrekening that covers every specifieke uitkering, conform the annually-updated BZK table. Single information Single audit: gemeenten verantwoorden specifieke uitkeringen van het Rijk via de SiSa-bijlage bij de jaarrekening (jaarlijks geactualiseerde tabel van BZK, ca. 50 regelingen). Per regeling vaste indicatorenset (bedragen, aantallen, prestaties). Het systeem genereert SiSa-bijlage uit de subsidie-administratie en toetst volledigheid tegen de actuele SiSa-bijlagenlijst.
 
 #### Scenario: SiSa H8 Combinatiefuncties
 
@@ -209,9 +209,9 @@ Single information Single audit: gemeenten verantwoorden specifieke uitkeringen 
 - **WHEN** ambtenaar probeert beschikking te boeken
 - **THEN** waarschuwt het systeem: "Mogelijk SiSa-plichtig: regeling Onderwijsachterstanden valt onder SiSa-bijlage code D8. Bevestig of overslaan?"
 
-### REQ-BBV-011: Jaarrekening-export PDF/A en XBRL
+### Requirement: REQ-BBV-011 — Jaarrekening-export PDF/A en XBRL
 
-De vastgestelde jaarrekening wordt aangeleverd in twee formaten: (a) een leesbaar PDF/A-3 document met alle programma's, paragrafen, balans, overzicht baten/lasten, kasstroomoverzicht en toelichtingen (voor raad/PS/AB en publicatie op overheid.nl), en (b) een XBRL-instance conform de Iv3-taxonomie voor aanlevering aan CBS. PDF wordt opgebouwd uit register-templates met dynamische tabellen; XBRL via dezelfde aggregaties als REQ-BBV-006.
+The vastgestelde jaarrekening SHALL be made available in two formats — PDF/A-3 and XBRL — to satisfy publication + CBS-submission requirements. De vastgestelde jaarrekening wordt aangeleverd in twee formaten: (a) een leesbaar PDF/A-3 document met alle programma's, paragrafen, balans, overzicht baten/lasten, kasstroomoverzicht en toelichtingen (voor raad/PS/AB en publicatie op overheid.nl), en (b) een XBRL-instance conform de Iv3-taxonomie voor aanlevering aan CBS. PDF wordt opgebouwd uit register-templates met dynamische tabellen; XBRL via dezelfde aggregaties als REQ-BBV-006.
 
 #### Scenario: Vastgestelde jaarrekening publiceren
 
