@@ -49,13 +49,7 @@
 
 ### Phase 2: Workflow & Integration
 
-- [ ] **Task 2.1: Declare ScheduledWorkflow for quarterly submission** — In the repair step (`lib/Migration/*.php`), add code to register a `ScheduledWorkflow`:
-  - Name: `bcf-claim-quarterly-submit`
-  - Type: Scheduled (cron)
-  - Schedule: `0 9 1 */3 *` (first day of each quarter at 09:00) or configurable via `IAppConfig`
-  - Trigger: Invoke OpenConnector source `digikoppeling-bcf`
-  - Input: All `BcfClaim` records in `submitted` state for the previous closed quarter
-  - Registration is idempotent (check if already registered before creating)
+- [x] **Task 2.1: Declare ScheduledWorkflow for quarterly submission** — Implemented in `lib/Repair/InitializeSettings.php::registerBcfQuarterlyDigikoppelingWorkflow()` (slug `shillinq-bcf-quarterly-digikoppeling-submission`, idempotent via `ScheduledWorkflowMapper::findAll()` slug dedup, engine `openconnector`, workflowId `digikoppeling-bcf`, interval 7776000s aligned with cron `0 0 1 */3 *`, target schema `BcfClaim`, administrationType filter `gemeente|provincie|waterschap`). Operators reconfigure interval and target via the OpenRegister admin UI per REQ-BCF-005.
 
 - [ ] **Task 2.2: Verify OpenConnector digikoppeling-bcf source** — Coordinate with OpenConnector team to ensure the `digikoppeling-bcf` source is registered and provides:
   - Input: `BcfClaim` object (quarter, amount, breakdown, administration ID)
