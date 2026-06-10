@@ -37,6 +37,7 @@
 				}
 			},
 			"Product": {
+				"slug": "Product",
 				"properties": {
 					"requiresLotTracking": {
 						"type": "boolean",
