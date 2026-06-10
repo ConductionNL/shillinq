@@ -42,14 +42,14 @@ This is a **major spec** with 11 requirements spanning data model, validations, 
 ## Phase 3: Seed Data & Migration
 
 - [x] **Task 3.1** — Create seed file `lib/Settings/seeds/bbv-taakvelden-gemeente-2025.json` with all 53 gemeente taakvelden per Iv3 informatievoorschrift 2025. Include SPDX header, `_meta.iv3Version: "2025"`, `_meta.effectiveDate: "2025-01-01"`. Schema: `{code, naam, hoofdfunctie, hoofdfunctie_naam, omschrijving_iv3, overheidslaag, verplichte_economische_categorieen, geldig_vanaf, geldig_tot}`.
-- [ ] **Task 3.2** — Create seed file `lib/Settings/seeds/bbv-taakvelden-provincia-2025.json` (14 provinciale taakvelden).
-- [ ] **Task 3.3** — Create seed file `lib/Settings/seeds/bbv-taakvelden-waterschap-2025.json` (10-12 waterschap taakvelden).
+- [x] **Task 3.2** — Create seed file `lib/Settings/seeds/bbv-taakvelden-provincia-2025.json` (14 provinciale taakvelden).
+- [x] **Task 3.3** — Create seed file `lib/Settings/seeds/bbv-taakvelden-waterschap-2025.json` (10-12 waterschap taakvelden).
 - [x] **Task 3.4** — Create seed file `lib/Settings/seeds/rgs-decentraal-2025.json` with ~200 D-code records (RGS main account → default taakveld mapping). Include SPDX header, `_meta.source: "SBR/Logius"`, `_meta.iv3Version: "2025"`. Schema: `{rgs_code, rgs_decentraal_code, omschrijving_kort, omschrijving_lang, referentienummer, dc, rgs_niveau, taakveld_default, economische_categorie_default, omslag}`.
 - [x] **Task 3.5** — Create seed file `lib/Settings/seeds/economische-categorien-2025.json` with ~150 Iv3 cost-type codes (maingroups 1-8). Include SPDX header, `_meta.source: "BZK Iv3-informatievoorschrift"`, `_meta.iv3Version: "2025"`. Schema: `{code, naam, niveau, parent_code, baten_of_lasten, iv3_verplicht}`.
 - [x] **Task 3.6** — Create seed file `lib/Settings/seeds/beleidsindicatoren-bbv-2025.json` with all 39 fixed beleidsindicatoren. Include SPDX header, `_meta.source: "BZK Regeling Vaststelling Beleidsindicatoren 2024"`. Schema: `{code, naam, eenheid, bron}`.
 - [x] **Task 3.7** — Author repair step `lib/Migration/MigrationXX_ImportBbvSeedData.php` to import the 4 seed files. Trigger only for new BBV-tenants (administrations created with `administrationType ∈ {gemeente, provincie, waterschap}` AND `bbv_compliance=true`). Idempotent on re-run; detect prior import via `_meta.imported_at` field.
-- [ ] **Task 3.8** — Author repair step `lib/Migration/MigrationXX_InitializeBbvAdministration.php` to bootstrap new BBV-tenants with default `Reserve` (algemene reserve EUR 0) and `Voorziening` (empty set, to be filled by operator). Auto-create taakveld 0.10 "Mutaties reserves" entry.
-- [ ] **Task 3.9** — Author backfill workflow `lib/Service/BbvMigration/RgsAccountMapper.php` to assist operator in mapping pre-existing Account records to RGS-decentraal codes. Implement confidence-scoring on `referentienummer` match and UI review screen for operator approval.
+- [x] **Task 3.8** — Author repair step `lib/Migration/MigrationXX_InitializeBbvAdministration.php` to bootstrap new BBV-tenants with default `Reserve` (algemene reserve EUR 0) and `Voorziening` (empty set, to be filled by operator). Auto-create taakveld 0.10 "Mutaties reserves" entry.
+- [x] **Task 3.9** — Author backfill workflow `lib/Service/BbvMigration/RgsAccountMapper.php` to assist operator in mapping pre-existing Account records to RGS-decentraal codes. Implement confidence-scoring on `referentienummer` match and UI review screen for operator approval.
 
 ## Phase 4: Manifest & Navigation
 
@@ -88,13 +88,13 @@ This is a **major spec** with 11 requirements spanning data model, validations, 
 
 ## Phase 6: Documentation & i18n
 
-- [ ] **Task 6.1** — Create `docs/user-guide/bookkeeping/bbv-compliance-overview.md` (high-level guide explaining BBV framework, key terms: taakveld, programma, paragraaf, meerjarenraming).
-- [ ] **Task 6.2** — Create `docs/user-guide/bookkeeping/bbv-programmaplan.md` (CRUD workflow for Programma records, doelstellingen, beleidsindicatoren).
-- [ ] **Task 6.3** — Create `docs/user-guide/bookkeeping/bbv-meerjarenraming.md` (multi-year budgeting, sluitend-validation, inflation handling, stelselwijziging).
-- [ ] **Task 6.4** — Create `docs/user-guide/bookkeeping/bbv-paragrafen.md` (7 mandatory sections, template-driven editor, auto-populated fields, completeness checks).
-- [ ] **Task 6.5** — Create `docs/user-guide/bookkeeping/bbv-reserves-voorzieningen.md` (distinction, mutatie routes, accounting treatment).
-- [ ] **Task 6.6** — Create `docs/user-guide/bookkeeping/bbv-mva-administratie.md` (categories, activation, depreciation, componentenmethode).
-- [ ] **Task 6.7** — Create `docs/user-guide/bookkeeping/bbv-rightmatigheid.md` (rightmatigheidsverantwoording, tolerance configuration, M&O findings, reporting).
+- [x] **Task 6.1** — Create `docs/user-guide/bookkeeping/bbv-compliance-overview.md` (high-level guide explaining BBV framework, key terms: taakveld, programma, paragraaf, meerjarenraming).
+- [x] **Task 6.2** — Create `docs/user-guide/bookkeeping/bbv-programmaplan.md` (CRUD workflow for Programma records, doelstellingen, beleidsindicatoren).
+- [x] **Task 6.3** — Create `docs/user-guide/bookkeeping/bbv-meerjarenraming.md` (multi-year budgeting, sluitend-validation, inflation handling, stelselwijziging).
+- [x] **Task 6.4** — Create `docs/user-guide/bookkeeping/bbv-paragrafen.md` (7 mandatory sections, template-driven editor, auto-populated fields, completeness checks).
+- [x] **Task 6.5** — Create `docs/user-guide/bookkeeping/bbv-reserves-voorzieningen.md` (distinction, mutatie routes, accounting treatment).
+- [x] **Task 6.6** — Create `docs/user-guide/bookkeeping/bbv-mva-administratie.md` (categories, activation, depreciation, componentenmethode).
+- [x] **Task 6.7** — Create `docs/user-guide/bookkeeping/bbv-rechtmatigheid.md` (rechtmatigheidsverantwoording, tolerance configuration, M&O findings, reporting). Filename corrected from spec's `bbv-rightmatigheid.md` typo to the canonical Dutch spelling.
 - [x] **Task 6.8** — Add Dutch (`nl_NL`) translation strings for: `BBV`, `Taakveld`, `Programma`, `Paragraaf`, `Economische Categorie`, `RGS-decentraal`, `Meerjarenraming`, `Sluitend`, `Weerstandsvermogen`, `Reserve`, `Voorziening`, `Materiële Vaste Activa`, `Rechtmatigheidsverantwoording`, `Iv3-aanlevering`, `SiSa-bijlage`, and all 7 paragraaf types.
 - [x] **Task 6.9** — Add English (`en_US`) translation strings (parallel to Dutch set).
 - [ ] **Task 6.10** — Commit screenshots of key UI pages (Programmaplan, Meerjarenraming, Paragrafen, MVA-register, Iv3-dashboard) to `docs/images/bbv-*.png`.
