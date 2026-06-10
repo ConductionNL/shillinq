@@ -6953,6 +6953,89 @@ _Tender or procurement notice published to TED/OJEU and market platforms for pub
 **Relations:**
 - → Organization (many-to-one)
 
+### TenderNedAanbesteding
+**Schema.org:** `schema:Order`
+_A procurement tender imported from TenderNed (Logius central platform). Wraps the public dossier metadata (REQ-001) and links to the materialised Shillinq Verplichting. Consumed by both the aanbestedende dienst (public buyer) and the inschrijvende leverancier (winning vendor), with role-based visibility filtering (design D6)._
+**Primary spec:** bookkeeping-tenderned-integratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| aanbestedingId | string | Yes | TenderNed dossier identifier (unique per administration). |
+| tenderNedUrl | string | No | Deeplink to the public TenderNed dossier (REQ-007 drill-through). |
+| titel | string | Yes | Human-readable tender title. |
+| beschrijving | string | No | Tender description. |
+| cpvCodes | array | No | CPV-2008 classification codes (design D7). |
+| aanbestedendeDienst | string | Yes | KvK + name of the public buyer running the procurement. |
+| gunningsDatum | date | No | Award date (Aanbestedingswet 2012 art. 2.135). |
+| contractWaarde | number | Yes | Contract value excl. BTW in the administration's base currency. |
+| looptijdStart | date | No | Contract term start — drives REQ-003 milestone plan. |
+| looptijdEind | date | No | Contract term end — drives REQ-003 milestone plan. |
+| gegundeLeverancier | string | No | KvK + name of the awarded supplier (REQ-002 / REQ-008 vendor filter). |
+| opdrachttype | enum | Yes | levering-in-fases / dienstverlening-doorlopend / other (REQ-003 template selector). |
+| verplichtingId | string | No | FK to the materialised Shillinq Verplichting. |
+| status | enum | Yes | open / gegund / in-uitvoering / afgerond / beëindigd. |
+| administrationId | string | Yes | Tenant administration. |
+
+**Lifecycle (x-openregister-lifecycle):**
+- `open → gegund` via `gunnen` (TenderNedAanbestedingGuard.canGunnen: REQ-002 award gate).
+- `gegund → in-uitvoering` automatic on Verplichting promotion (REQ-002 listener).
+- `in-uitvoering → afgerond` via `afronden` (TenderNedAanbestedingGuard.canAfronden: REQ-006 eindoplevering gate).
+
+**Relations:**
+- → Verplichting (one-to-one, FK on verplichtingId).
+
+### Verplichting
+**Schema.org:** `schema:Order`
+_A financial commitment (obligation) tracked in Shillinq with optional TenderNed provenance, mijlpaalplanning, and cross-app budget-impact emission. Declared in this register fragment with bron/bronReferentie/mijlpalen built in (see implementation note in tasks.md); reconciles with the future bookkeeping-obligation-financial-administration T2 entity when that lands._
+**Primary spec:** bookkeeping-tenderned-integratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| verplichtingNummer | string | Yes | Unique obligation reference. |
+| omschrijving | string | Yes | Short description (e.g. tender title). |
+| bron | enum | Yes | manual / tenderned / inkooporder (default: manual). |
+| bronReferentie | string | Cond. | Required when bron=tenderned (aanbestedingId FK). |
+| bedrag | number | Yes | Committed amount in the administration's base currency. |
+| kostenplaats | string | No | Cost centre (required for activation). |
+| grootboekrekening | string | No | GL account (required for activation). |
+| looptijdStart | date | No | Contract term start. |
+| looptijdEind | date | No | Contract term end. |
+| mijlpalen | array&lt;Mijlpaal&gt; | No | Embedded mijlpaalplan (REQ-003). |
+| status | enum | Yes | concept / active / completed / cancelled. |
+| administrationId | string | Yes | Tenant administration. |
+
+**Lifecycle:** `concept → active` via `activeren` (VerplichtingGuard.canActiveren: requires kostenplaats + grootboekrekening + milestone dates within term).
+
+**Mijlpaal (embedded value object):** mijlpaalId, datum, omschrijving, percentage (0–100), opleveringsType (deeloplevering | eindoplevering), status (planned / in-progress / completed / cancelled), factuurnummer.
+
+**Relations:**
+- → TenderNedAanbesteding (many-to-one via bronReferentie when bron=tenderned).
+- → OpdrachtUitvoering (one-to-many on verplichtingId).
+- → mydash budget-impact widget via `shillinq.obligation.activated` CloudEvent (REQ-007).
+
+### OpdrachtUitvoering
+**Schema.org:** `schema:DeliveryEvent`
+_A milestone delivery (oplevering) on a Verplichting, carrying the proof-of-delivery (bewijsstuk) file references and the approval state. Used to gate completion (REQ-004) and to trigger the REQ-006 TenderNed status-sync on the eindoplevering._
+**Primary spec:** bookkeeping-tenderned-integratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| verplichtingId | string | Yes | FK to the parent Verplichting. |
+| mijlpaalId | string | Yes | FK to the embedded mijlpaal being delivered. |
+| opleveringsDatum | date | Yes | Delivery date. |
+| opleveringsType | enum | Yes | deeloplevering / eindoplevering. |
+| goedgekeurd | boolean | Yes | Approval marker (only true → completed succeeds with proof). |
+| goedkeurder | string | No | Approver UID. |
+| bewijsstukken | array | Yes | File-references to docudesk-stored proof (REQ-004). |
+| status | enum | Yes | in-progress / completed / cancelled. |
+| administrationId | string | Yes | Tenant administration. |
+
+**Lifecycle:** `in-progress → completed` via `voltooien` (OpdrachtUitvoeringGuard.canVoltooien: at least one bewijsstuk with non-empty documentId — REQ-004). On completion of an approved eindoplevering, OpdrachtUitvoeringTransitionListener triggers TenderNedStatusSync → openconnector outbound (REQ-006).
+
+**Relations:**
+- → Verplichting (many-to-one on verplichtingId).
+- → docudesk file (many-to-many via bewijsstukken[].documentId).
+
 ### TimeEntry
 **Schema.org:** `TimeEntry`
 _Time tracking entries for project tasks including manual entry and timer-based tracking_
