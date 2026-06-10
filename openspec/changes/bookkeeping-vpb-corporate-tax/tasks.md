@@ -69,9 +69,9 @@
 - [x] Task 39: Author PHPUnit test suite for `TaxDeadlineController` (≥3 methods) covering: create deadline, update status, list with filter, search per ADR-009
 - [x] Task 40: Author PHPUnit test suite for `TaxPaymentController` (≥3 methods) covering: create payment, reconcile GL postings, list with search per ADR-009
 - [x] Task 41: Author PHPUnit test suite for `TaxReportController` (≥3 methods) covering: aggregation calculation, filter by fiscal period + tag, warning count for untagged postings per ADR-009
-- [ ] Task 42: Author Playwright browser tests for tax deadline list: search, filter, bulk action, detail page; verify deadline notifications show in UI per ADR-009
-- [ ] Task 43: Author Playwright tests for quarterly tax report: verify aggregation calculation, warning for untagged postings, export to Excel/PDF per ADR-009
-- [ ] Task 44: Author `docs/user-guide/bookkeeping/tax/vpb-administration.md` with screenshots: deadline management, payment tracking, quarterly reporting per ADR-010
+- [x] Task 42: Author Playwright browser tests for tax deadline list: search, filter, bulk action, detail page; verify deadline notifications show in UI per ADR-009
+- [x] Task 43: Author Playwright tests for quarterly tax report: verify aggregation calculation, warning for untagged postings, export to Excel/PDF per ADR-009
+- [x] Task 44: Author `docs/user-guide/bookkeeping/tax/vpb-administration.md` with screenshots: deadline management, payment tracking, quarterly reporting per ADR-010
 - [x] Task 45: Update `openspec/architecture/adr-000-data-model.md` with one-paragraph annotation for `TaxDeadline`, `TaxPaymentTracking`, `TaxReport` cross-referencing this spec
 
 ## Phase 10: Internationalization & Compliance
