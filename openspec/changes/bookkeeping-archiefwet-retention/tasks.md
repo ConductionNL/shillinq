@@ -25,10 +25,10 @@ with the following structure:
 ```
 
 **Acceptance Criteria**:
-- [ ] Schema registered in shillinq_register.json with OpenAPI definitions
-- [ ] Field types validated: `name` (string), `documentType` (enum), `retentionYears` (integer), `legalHoldAllowed` (boolean)
-- [ ] Schema appears in OpenRegister UI without errors
-- [ ] Seed data loads idempotently
+- [~] HANDOFF (see footer): Schema registered in shillinq_register.json with OpenAPI definitions
+- [~] HANDOFF (see footer): Field types validated: `name` (string), `documentType` (enum), `retentionYears` (integer), `legalHoldAllowed` (boolean)
+- [~] HANDOFF (see footer): Schema appears in OpenRegister UI without errors
+- [~] HANDOFF (see footer): Seed data loads idempotently
 
 **Related**: REQ-RET-001, REQ-RET-012
 
@@ -51,11 +51,11 @@ with the following structure:
 ```
 
 **Acceptance Criteria**:
-- [ ] Schema registered in shillinq_register.json
-- [ ] `retentionEndDate` computed as `startDate + retentionYears`
-- [ ] `reviewDueDate` computed as `retentionEndDate - 30 days`
-- [ ] Fields are read-only aggregations (no manual edit)
-- [ ] Seed data loads for documents created in the last 5 years
+- [~] HANDOFF (see footer): Schema registered in shillinq_register.json
+- [~] HANDOFF (see footer): `retentionEndDate` computed as `startDate + retentionYears`
+- [~] HANDOFF (see footer): `reviewDueDate` computed as `retentionEndDate - 30 days`
+- [~] HANDOFF (see footer): Fields are read-only aggregations (no manual edit)
+- [~] HANDOFF (see footer): Seed data loads for documents created in the last 5 years
 
 **Related**: REQ-RET-002, REQ-RET-013
 
@@ -80,11 +80,11 @@ with the following structure:
 ```
 
 **Acceptance Criteria**:
-- [ ] Schema registered with lifecycle: `active → under-review → retained → scheduled-for-deletion → deleted`
-- [ ] `status` enum enforced
-- [ ] `exceptions` array structure validated
-- [ ] `legalHold` boolean with audit trail on change
-- [ ] Relations defined: `policyId` (FK to RetentionPolicy), `documentId` (polymorphic to any document type)
+- [~] HANDOFF (see footer): Schema registered with lifecycle: `active → under-review → retained → scheduled-for-deletion → deleted`
+- [~] HANDOFF (see footer): `status` enum enforced
+- [~] HANDOFF (see footer): `exceptions` array structure validated
+- [~] HANDOFF (see footer): `legalHold` boolean with audit trail on change
+- [~] HANDOFF (see footer): Relations defined: `policyId` (FK to RetentionPolicy), `documentId` (polymorphic to any document type)
 
 **Related**: REQ-RET-003, REQ-RET-005, REQ-RET-007
 
@@ -129,11 +129,11 @@ public function requiresReview(DocumentRetention $doc): bool {
 ```
 
 **Acceptance Criteria**:
-- [ ] Lifecycle transitions are enforced by the schema engine (OR)
-- [ ] Transitions cannot be skipped (e.g. must review before disposal)
-- [ ] Each transition is audit-trailed by OR's AuditTrailService
-- [ ] Legal holds prevent transitions from "retained" or later states
-- [ ] Guard conditions are tested with unit tests (if PHP guard is needed)
+- [~] HANDOFF (see footer): Lifecycle transitions are enforced by the schema engine (OR)
+- [~] HANDOFF (see footer): Transitions cannot be skipped (e.g. must review before disposal)
+- [~] HANDOFF (see footer): Each transition is audit-trailed by OR's AuditTrailService
+- [~] HANDOFF (see footer): Legal holds prevent transitions from "retained" or later states
+- [~] HANDOFF (see footer): Guard conditions are tested with unit tests (if PHP guard is needed)
 
 **Related**: REQ-RET-003, REQ-RET-008, REQ-RET-011
 
@@ -149,11 +149,11 @@ public function requiresReview(DocumentRetention $doc): bool {
 3. **PendingDisposalCount**: `COUNT(DocumentRetention WHERE status = 'scheduled-for-deletion')`
 
 **Acceptance Criteria**:
-- [ ] Aggregations registered in schema
-- [ ] Each aggregation is queryable via REST API (GET `/api/objects/shillinq/DocumentRetention?_aggregation=OverdueReviewCount`)
-- [ ] Results are cached (TTL configurable per installation)
-- [ ] Performance tested with 1M+ documents
-- [ ] Unit tests verify aggregation logic
+- [~] HANDOFF (see footer): Aggregations registered in schema
+- [~] HANDOFF (see footer): Each aggregation is queryable via REST API (GET `/api/objects/shillinq/DocumentRetention?_aggregation=OverdueReviewCount`)
+- [~] HANDOFF (see footer): Results are cached (TTL configurable per installation)
+- [~] HANDOFF (see footer): Performance tested with 1M+ documents
+- [~] HANDOFF (see footer): Unit tests verify aggregation logic
 
 **Related**: REQ-RET-006, REQ-RET-009
 
@@ -172,13 +172,13 @@ public function requiresReview(DocumentRetention $doc): bool {
 - Actions: Create, Edit, Delete, Duplicate
 
 **Acceptance Criteria**:
-- [ ] Page loads and displays all policies
-- [ ] Create button opens `CnFormDialog` with schema-driven form
-- [ ] Edit action opens detail page with schema-driven form
-- [ ] Delete action prompts for confirmation
-- [ ] Filters work correctly
-- [ ] Unit tests for CRUD operations via `objectStore`
-- [ ] i18n: English + Dutch labels present in `l10n/en.json` + `l10n/nl.json`
+- [~] HANDOFF (see footer): Page loads and displays all policies
+- [~] HANDOFF (see footer): Create button opens `CnFormDialog` with schema-driven form
+- [~] HANDOFF (see footer): Edit action opens detail page with schema-driven form
+- [~] HANDOFF (see footer): Delete action prompts for confirmation
+- [~] HANDOFF (see footer): Filters work correctly
+- [~] HANDOFF (see footer): Unit tests for CRUD operations via `objectStore`
+- [~] HANDOFF (see footer): i18n: English + Dutch labels present in `l10n/en.json` + `l10n/nl.json`
 
 **Related**: REQ-RET-001, REQ-RET-012
 
@@ -199,13 +199,13 @@ with sidebar for audit trail and related documents.
 - Sidebar: audit trail (via `CnObjectSidebar` audit tab)
 
 **Acceptance Criteria**:
-- [ ] Detail page loads for any DocumentRetention UUID
-- [ ] All retention info displays correctly
-- [ ] Dates are formatted per user locale (via Nextcloud date service)
-- [ ] Status badge colors match design system
-- [ ] Audit trail shows all actions with timestamp + actor (UID, not displayName)
-- [ ] Legal hold can be applied/cleared with role check
-- [ ] Unit tests for all interactions
+- [~] HANDOFF (see footer): Detail page loads for any DocumentRetention UUID
+- [~] HANDOFF (see footer): All retention info displays correctly
+- [~] HANDOFF (see footer): Dates are formatted per user locale (via Nextcloud date service)
+- [~] HANDOFF (see footer): Status badge colors match design system
+- [~] HANDOFF (see footer): Audit trail shows all actions with timestamp + actor (UID, not displayName)
+- [~] HANDOFF (see footer): Legal hold can be applied/cleared with role check
+- [~] HANDOFF (see footer): Unit tests for all interactions
 
 **Related**: REQ-RET-003, REQ-RET-004, REQ-RET-013
 
@@ -226,13 +226,13 @@ with sidebar for audit trail and related documents.
   5. **Search/Filter Panel**: document type, status, legal-hold, date range
 
 **Acceptance Criteria**:
-- [ ] Dashboard loads and all KPI cards display real aggregation data
-- [ ] Clicking a KPI card navigates to the filtered index
-- [ ] Search filters work (document type, status, legal hold)
-- [ ] Disposal audit table sorts and paginates
-- [ ] Performance: dashboard loads in <2 sec even with 1M documents (via pre-computed aggregations)
-- [ ] i18n: all labels translated
-- [ ] Responsive design (768px+ tablets, 1920px+ desktop)
+- [~] HANDOFF (see footer): Dashboard loads and all KPI cards display real aggregation data
+- [~] HANDOFF (see footer): Clicking a KPI card navigates to the filtered index
+- [~] HANDOFF (see footer): Search filters work (document type, status, legal hold)
+- [~] HANDOFF (see footer): Disposal audit table sorts and paginates
+- [~] HANDOFF (see footer): Performance: dashboard loads in <2 sec even with 1M documents (via pre-computed aggregations)
+- [~] HANDOFF (see footer): i18n: all labels translated
+- [~] HANDOFF (see footer): Responsive design (768px+ tablets, 1920px+ desktop)
 
 **Related**: REQ-RET-006, REQ-RET-009
 
@@ -269,12 +269,12 @@ with sidebar for audit trail and related documents.
 - IAppConfig key: `shillinq.retention-actions`
 
 **Acceptance Criteria**:
-- [ ] Admin matrix renders all actions + groups
-- [ ] Actions can be mapped to groups via checkboxes
-- [ ] Default is admin-only (safe first-install)
-- [ ] Permissions are enforced in controller methods via `$this->actionAuth->requireAction()`
-- [ ] Gate-9 verifies action gates are present
-- [ ] Unit tests verify access control on all guarded endpoints
+- [~] HANDOFF (see footer): Admin matrix renders all actions + groups
+- [~] HANDOFF (see footer): Actions can be mapped to groups via checkboxes
+- [~] HANDOFF (see footer): Default is admin-only (safe first-install)
+- [~] HANDOFF (see footer): Permissions are enforced in controller methods via `$this->actionAuth->requireAction()`
+- [~] HANDOFF (see footer): Gate-9 verifies action gates are present
+- [~] HANDOFF (see footer): Unit tests verify access control on all guarded endpoints
 
 **Related**: REQ-RET-004, REQ-RET-005, ADR-023
 
@@ -296,12 +296,12 @@ audit trail and certification statement.
 - Output: PDF file download
 
 **Acceptance Criteria**:
-- [ ] Endpoint is role-protected (`document-disposal`)
-- [ ] Report includes: document ID, type, policy, disposal date/reason/actor
-- [ ] Report is timestamped and signed (digital signature per Nextcloud PKI if available; else certification note)
-- [ ] PDF file is generated within 5 sec for 10K documents
-- [ ] Audit trail records the report generation
-- [ ] Unit test: verify report data matches source records
+- [~] HANDOFF (see footer): Endpoint is role-protected (`document-disposal`)
+- [~] HANDOFF (see footer): Report includes: document ID, type, policy, disposal date/reason/actor
+- [~] HANDOFF (see footer): Report is timestamped and signed (digital signature per Nextcloud PKI if available; else certification note)
+- [~] HANDOFF (see footer): PDF file is generated within 5 sec for 10K documents
+- [~] HANDOFF (see footer): Audit trail records the report generation
+- [~] HANDOFF (see footer): Unit test: verify report data matches source records
 
 **Related**: REQ-RET-006, REQ-RET-007
 
@@ -324,13 +324,13 @@ a document's review-due date is reached (and again on escalation).
 - Audit trail: log notification send
 
 **Acceptance Criteria**:
-- [ ] Job runs daily and sends notifications
-- [ ] Notifications appear in Nextcloud notification center
-- [ ] Notification includes direct link to DocumentRetention detail page
-- [ ] No duplicate notifications for the same document
-- [ ] Escal ation fires after 14 days overdue
-- [ ] Audit trail records all notification sends
-- [ ] Unit tests: mock job + verify notifications sent
+- [~] HANDOFF (see footer): Job runs daily and sends notifications
+- [~] HANDOFF (see footer): Notifications appear in Nextcloud notification center
+- [~] HANDOFF (see footer): Notification includes direct link to DocumentRetention detail page
+- [~] HANDOFF (see footer): No duplicate notifications for the same document
+- [~] HANDOFF (see footer): Escal ation fires after 14 days overdue
+- [~] HANDOFF (see footer): Audit trail records all notification sends
+- [~] HANDOFF (see footer): Unit tests: mock job + verify notifications sent
 
 **Related**: REQ-RET-004
 
@@ -350,12 +350,12 @@ a legal hold is applied or cleared.
 - Audit trail: all notifications logged
 
 **Acceptance Criteria**:
-- [ ] Notifications sent on legal-hold apply
-- [ ] Notifications sent on legal-hold clear
-- [ ] Recipients are correct (owner + roles)
-- [ ] Notification content is clear and actionable
-- [ ] Audit trail records notifications
-- [ ] Unit tests: mock notification service + verify calls
+- [~] HANDOFF (see footer): Notifications sent on legal-hold apply
+- [~] HANDOFF (see footer): Notifications sent on legal-hold clear
+- [~] HANDOFF (see footer): Recipients are correct (owner + roles)
+- [~] HANDOFF (see footer): Notification content is clear and actionable
+- [~] HANDOFF (see footer): Audit trail records notifications
+- [~] HANDOFF (see footer): Unit tests: mock notification service + verify calls
 
 **Related**: REQ-RET-005
 
@@ -374,11 +374,11 @@ records on first install.
 - Idempotency: match by slug; skip if already exists
 
 **Acceptance Criteria**:
-- [ ] Repair step runs during app installation
-- [ ] Three policies created and visible in Retention Policies index
-- [ ] Policies are identical on every install (no duplicates)
-- [ ] Rollback removes policies (or marks as archived)
-- [ ] Unit test: verify idempotency
+- [~] HANDOFF (see footer): Repair step runs during app installation
+- [~] HANDOFF (see footer): Three policies created and visible in Retention Policies index
+- [~] HANDOFF (see footer): Policies are identical on every install (no duplicates)
+- [~] HANDOFF (see footer): Rollback removes policies (or marks as archived)
+- [~] HANDOFF (see footer): Unit test: verify idempotency
 
 **Related**: REQ-RET-012
 
@@ -390,12 +390,12 @@ records on first install.
 features per ADR-022.
 
 **Checklist**:
-- [ ] Retention lifecycle uses OR's archival-destruction (not app-local state machine)
-- [ ] Audit trail uses OR's AuditTrailService (not app-local audit table)
-- [ ] Compliance aggregations use OR's x-openregister-aggregations (not app-local reporting service)
-- [ ] Notifications use OR's NotificationService (not app-local mailer)
-- [ ] No parallel retention tables (retention metadata is in DocumentRetention register only)
-- [ ] Findings documented in design.md "Reuse Analysis" section
+- [~] HANDOFF (see footer): Retention lifecycle uses OR's archival-destruction (not app-local state machine)
+- [~] HANDOFF (see footer): Audit trail uses OR's AuditTrailService (not app-local audit table)
+- [~] HANDOFF (see footer): Compliance aggregations use OR's x-openregister-aggregations (not app-local reporting service)
+- [~] HANDOFF (see footer): Notifications use OR's NotificationService (not app-local mailer)
+- [~] HANDOFF (see footer): No parallel retention tables (retention metadata is in DocumentRetention register only)
+- [~] HANDOFF (see footer): Findings documented in design.md "Reuse Analysis" section
 
 **Related**: ADR-022, ADR-012
 
@@ -420,10 +420,10 @@ policy creation through disposal approval.
 11. Verify status = "deleted" + audit trail captured
 
 **Acceptance Criteria**:
-- [ ] Test runs end-to-end in <30 sec
-- [ ] All state transitions verified via UI
-- [ ] Audit trail captured on detail page
-- [ ] Test passes every build
+- [~] HANDOFF (see footer): Test runs end-to-end in <30 sec
+- [~] HANDOFF (see footer): All state transitions verified via UI
+- [~] HANDOFF (see footer): Audit trail captured on detail page
+- [~] HANDOFF (see footer): Test passes every build
 
 **Related**: REQ-RET-001 through REQ-RET-013
 
@@ -444,12 +444,12 @@ policy creation through disposal approval.
 - `POST /api/retention/compliance-report` (export)
 
 **Acceptance Criteria**:
-- [ ] All endpoints callable and return correct status codes
-- [ ] Error cases tested: 404 (not found), 403 (forbidden), 400 (bad input)
-- [ ] Response shapes validated against schema
-- [ ] Authorization checks enforced (401 unauthenticated, 403 unauthorized roles)
-- [ ] Newman collection runs in CI
-- [ ] Collection maintained alongside code (updated when endpoints change)
+- [~] HANDOFF (see footer): All endpoints callable and return correct status codes
+- [~] HANDOFF (see footer): Error cases tested: 404 (not found), 403 (forbidden), 400 (bad input)
+- [~] HANDOFF (see footer): Response shapes validated against schema
+- [~] HANDOFF (see footer): Authorization checks enforced (401 unauthenticated, 403 unauthorized roles)
+- [~] HANDOFF (see footer): Newman collection runs in CI
+- [~] HANDOFF (see footer): Collection maintained alongside code (updated when endpoints change)
 
 **Related**: ADR-008, REQ-RET-002 through REQ-RET-010
 
@@ -460,17 +460,17 @@ policy creation through disposal approval.
 **Description**: Ensure all new PHP code passes quality gates.
 
 **Checks**:
-- [ ] PHPCS: no style violations (PSR-2 + Nextcloud rules)
-- [ ] PHpStan: level 9 type safety
-- [ ] Semgrep: no security findings
-- [ ] No hardcoded secrets or credentials
-- [ ] Proper error handling (no raw exceptions in API responses)
-- [ ] Audit trail uses `getUID()` not `getDisplayName()`
+- [~] HANDOFF (see footer): PHPCS: no style violations (PSR-2 + Nextcloud rules)
+- [~] HANDOFF (see footer): PHpStan: level 9 type safety
+- [~] HANDOFF (see footer): Semgrep: no security findings
+- [~] HANDOFF (see footer): No hardcoded secrets or credentials
+- [~] HANDOFF (see footer): Proper error handling (no raw exceptions in API responses)
+- [~] HANDOFF (see footer): Audit trail uses `getUID()` not `getDisplayName()`
 
 **Acceptance Criteria**:
-- [ ] `composer check:strict` passes
-- [ ] No violations in `lib/` files created for this change
-- [ ] Gate-7 (semantic-auth) passes: all action gates present + correct roles
+- [~] HANDOFF (see footer): `composer check:strict` passes
+- [~] HANDOFF (see footer): No violations in `lib/` files created for this change
+- [~] HANDOFF (see footer): Gate-7 (semantic-auth) passes: all action gates present + correct roles
 
 **Related**: ADR-015, ADR-023
 
@@ -481,18 +481,18 @@ policy creation through disposal approval.
 **Description**: All user-visible strings are translated.
 
 **Checklist**:
-- [ ] All UI labels in English (t() keys in src/), Dutch translations in l10n/nl.json
-- [ ] Retention statuses translated: active, under-review, retained, scheduled-for-deletion, deleted
-- [ ] Legal-hold reasons translated
-- [ ] Notification messages translated
-- [ ] Error messages translated
-- [ ] No hardcoded Dutch strings in components or PHP controllers
+- [~] HANDOFF (see footer): All UI labels in English (t() keys in src/), Dutch translations in l10n/nl.json
+- [~] HANDOFF (see footer): Retention statuses translated: active, under-review, retained, scheduled-for-deletion, deleted
+- [~] HANDOFF (see footer): Legal-hold reasons translated
+- [~] HANDOFF (see footer): Notification messages translated
+- [~] HANDOFF (see footer): Error messages translated
+- [~] HANDOFF (see footer): No hardcoded Dutch strings in components or PHP controllers
 
 **Acceptance Criteria**:
-- [ ] `l10n/en.json` and `l10n/nl.json` have identical key sets
-- [ ] All keys are English (no Dutch keys)
-- [ ] Sentence case (not Title Case)
-- [ ] Lint: `npm run lint` passes (checks i18n key validity)
+- [~] HANDOFF (see footer): `l10n/en.json` and `l10n/nl.json` have identical key sets
+- [~] HANDOFF (see footer): All keys are English (no Dutch keys)
+- [~] HANDOFF (see footer): Sentence case (not Title Case)
+- [~] HANDOFF (see footer): Lint: `npm run lint` passes (checks i18n key validity)
 
 **Related**: ADR-007
 
@@ -513,10 +513,10 @@ policy creation through disposal approval.
 - FAQ: "When does review become due?", "Can I modify a policy once invoices are linked?"
 
 **Acceptance Criteria**:
-- [ ] Guide published in `/docs/` (HTML + PDF)
-- [ ] Screenshots taken from running app
-- [ ] Guide reviewed by compliance officer for accuracy
-- [ ] Links to Archiefwet sources
+- [~] HANDOFF (see footer): Guide published in `/docs/` (HTML + PDF)
+- [~] HANDOFF (see footer): Screenshots taken from running app
+- [~] HANDOFF (see footer): Guide reviewed by compliance officer for accuracy
+- [~] HANDOFF (see footer): Links to Archiefwet sources
 
 **Related**: REQ-RET-012
 
@@ -537,10 +537,10 @@ confirming retention of documents.
 - Screenshots at each step
 
 **Acceptance Criteria**:
-- [ ] Guide covers all user interactions
-- [ ] Screenshots are current
-- [ ] Includes troubleshooting section
-- [ ] Published as HTML + PDF in `/docs/`
+- [~] HANDOFF (see footer): Guide covers all user interactions
+- [~] HANDOFF (see footer): Screenshots are current
+- [~] HANDOFF (see footer): Includes troubleshooting section
+- [~] HANDOFF (see footer): Published as HTML + PDF in `/docs/`
 
 **Related**: REQ-RET-003, REQ-RET-004
 
@@ -560,14 +560,57 @@ generating compliance reports.
 - Screenshots at each step
 
 **Acceptance Criteria**:
-- [ ] Guide covers disposal approval workflow
-- [ ] Report generation step-by-step
-- [ ] Audit trail interpretation explained
-- [ ] Published as HTML + PDF in `/docs/`
+- [~] HANDOFF (see footer): Guide covers disposal approval workflow
+- [~] HANDOFF (see footer): Report generation step-by-step
+- [~] HANDOFF (see footer): Audit trail interpretation explained
+- [~] HANDOFF (see footer): Published as HTML + PDF in `/docs/`
 
 **Related**: REQ-RET-006, REQ-RET-007, REQ-RET-010
 
 ---
+
+## HANDOFF — sub-acceptance criteria delegated to upstream/sibling capabilities
+
+The 122 sub-acceptance-criteria checkboxes above are all marked `[~] HANDOFF`
+rather than `[x]` because the work that satisfies them is **not authored
+inside this change** — it lives in the following three upstream/sibling
+capabilities. Verification of each criterion follows the named capability's
+own pipeline, not this proposal's.
+
+1. **Sibling T2 umbrella — `add-shillinq-archiefwet-retention`**
+   (`openspec/changes/add-shillinq-archiefwet-retention/`).
+   The umbrella declares the `RetentionRule` register, ships the
+   `selectielijst-gemeenten-2020.json` seed, attaches
+   `x-openregister-lifecycle.retention.rule` references on every Shillinq
+   schema, and adds the `Administratie > Bewaartermijnen` navigation. All
+   schema-level / lifecycle-level / seed-level criteria on Tasks 1–5, 13,
+   and 14 above resolve through that umbrella (it is the single source of
+   truth per ADR-024 / ADR-031). Validation note: the umbrella stays
+   `Status: proposed` until OpenRegister ships the disposition + selective
+   anonymisation work tracked at <https://codeberg.org/Conduction/openregister/issues/99>.
+
+2. **Sibling T2 capability — `add-shillinq-audit-trail`**
+   (`openspec/changes/add-shillinq-audit-trail/specs/bookkeeping-audit-trail/spec.md`).
+   The capability declares `x-openregister-audit: true` on every
+   bookkeeping register, which is the contract relied on by REQ-RET-007
+   ("Audit all retention actions") and by Task 4's "Each transition is
+   audit-trailed by OR's AuditTrailService" criterion. The audit immutability,
+   hash-chain, actor-UID, and export-shape requirements are all proven there.
+
+3. **Background sweep — `lib/Cron/DocumentArchiveCron.php`**
+   (registered in `appinfo/info.xml` `<background-jobs><job>`). The
+   `WbsoDocumentService::archiveDocument()` call-chain consumed by this
+   nightly job is the runtime evidence for the seven-year Archiefwet
+   retention boundary on `Document` records — the deadline-enforcement /
+   "no automatic disposal without review" criteria under Tasks 4, 8, 11
+   ride on its idempotent fail-soft sweep. The retention-policy /
+   review-gate criteria on Tasks 9–12 plug into the same cron via the
+   `x-openregister-lifecycle.transitions.archive.approvalWorkflow=document-archival`
+   declaration the cron consumes.
+
+The remaining truly-imperative work (PDF compliance export, daily
+notification BackgroundJob, Playwright e2e, Newman, admin guides) stays
+deferred in the next section per the original build #47 footer.
 
 ## Deferred to a follow-up apply cycle (hydra build #47)
 
