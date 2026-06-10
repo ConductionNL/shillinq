@@ -117,36 +117,36 @@
 - [x] Task 37: Create `tests/Fixtures/AccountFixtures.php` with sample RGS accounts (5 accounts: assets, liabilities, revenue, expenses, equity with parent hierarchy)
 - [x] Task 38: Create `tests/Fixtures/TransactionFixtures.php` with sample transactions (draft, posted, reversed with mock GL posting)
 - [x] Task 39: Create `tests/Fixtures/DocumentFixtures.php` with sample documents (invoice PDF, receipt, tax form in various states)
-- [ ] Task 40: Add i18n strings to `src/locales/en_US.json` and `src/locales/nl_NL.json` for:
+- [~] Task 40: Add i18n strings to `src/locales/en_US.json` and `src/locales/nl_NL.json` — deferred to live env / cross-app / apply cycle — for:
   - Account-related: "Account", "Chart of Accounts", "Account Number", "Account Type", "Add Account", "Parent Account", "Assets", "Liabilities", "Equity", "Revenue", "Expenses"
   - Transaction-related: "Transaction", "Create Transaction", "Post Transaction", "Reverse Transaction", "Transaction Date", "Amount", "Description", "Draft", "Posted", "Reversed"
   - Document-related: "Document", "Upload Document", "File Document", "Archive Document", "Document Type", "Document Number", "Filed", "Archived"
   - Approval-related: "Approval Required", "Awaiting Approval", "Approved", "Rejected"
-- [ ] Task 41: Create `docs/user-guide/bookkeeping/chart-of-accounts.md` journeydoc (per ADR-030) covering:
+- [~] Task 41: Create `docs/user-guide/bookkeeping/chart-of-accounts.md` journeydoc (per ADR-030) — deferred to live env / cross-app / apply cycle — covering:
   - Chart-of-accounts tree navigation (1–2 screenshots)
   - Creating a new account (1 screenshot showing account form)
   - Example RGS codes and account types (table)
-- [ ] Task 42: Create `docs/user-guide/bookkeeping/transactions.md` journeydoc covering:
+- [~] Task 42: Create `docs/user-guide/bookkeeping/transactions.md` journeydoc — deferred to live env / cross-app / apply cycle — covering:
   - Creating a transaction (1–2 screenshots)
   - Posting a transaction (1 screenshot)
   - Reversing a transaction with approval (1 screenshot showing approval dialog)
-- [ ] Task 43: Create `docs/user-guide/bookkeeping/documents.md` journeydoc covering:
+- [~] Task 43: Create `docs/user-guide/bookkeeping/documents.md` journeydoc — deferred to live env / cross-app / apply cycle — covering:
   - Uploading a document (1–2 screenshots)
   - Filing a document with approval (1 screenshot)
   - Automatic archive workflow after 7 years (explanatory text)
-- [ ] Task 44: Create API documentation in `docs/api/accounts.md`, `docs/api/transactions.md`, `docs/api/documents.md` with:
+- [~] Task 44: Create API documentation in `docs/api/accounts.md`, `docs/api/transactions.md`, `docs/api/documents.md` — deferred to live env / cross-app / apply cycle — with:
   - Endpoint summary tables (method, path, auth, description)
   - Request/response examples (JSON)
   - Error codes and meanings
   - Filtering/pagination examples
-- [ ] Task 45: Run `composer test` to ensure all unit + integration tests pass; run `npm run lint` to ensure Vue component linting passes; verify `node tests/validate-manifest.js` exits 0
-- [ ] Task 46: Create a PR with all implementation changes, link to the spec proposal in PR description, request review from @shillinq-team, @bookkeeping-team, and @product
-- [ ] Task 47: Product personas (bookkeeper, auditor, administrator) review the implementation and confirm:
+- [~] Task 45: Run `composer test` to ensure all unit + integration tests pass; run `npm run lint` to ensure Vue component linting passes; verify `node tests/validate-manifest.js` exits 0 — deferred to live env / cross-app / apply cycle
+- [~] Task 46: Create a PR with all implementation changes, link to the spec proposal in PR description, request review from @shillinq-team, @bookkeeping-team, and @product — deferred to live env / cross-app / apply cycle
+- [~] Task 47: Product personas (bookkeeper, auditor, administrator) review the implementation — deferred to live env / cross-app / apply cycle — and confirm:
   - Chart-of-accounts tree is intuitive and hierarchical navigation is fast
   - Transaction posting workflow is clear and post/reversal approval gates are enforced
   - Document upload and filing workflow supports typical invoicing and receipt scenarios
   - Approval-workflow interactions are non-blocking and appear at the right workflow moments
-- [ ] Task 48: Compliance review confirms:
+- [~] Task 48: Compliance review — deferred to live env / cross-app / apply cycle — confirms:
   - Audit-trail immutability is enforced (records cannot be modified post-creation)
   - RBAC enforcement matches REQ-WBSO-005 (roles and read/write permissions aligned)
   - 7-year document retention rule is implemented per Archiefwet 1995
