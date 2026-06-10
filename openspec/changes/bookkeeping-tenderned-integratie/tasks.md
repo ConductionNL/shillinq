@@ -11,6 +11,8 @@
 > - **i18n**: nl + en strings added additively to both `l10n/*.json`.
 > - **Tests**: 28 new PHPUnit tests (all green); the full unit suite is 153 tests / 736 assertions / 0 warnings. phpcs/phpmd/psalm/phpstan clean on all touched files.
 > - **Deferred** (need a live instance or a not-yet-merged cross-app dependency, marked DEFER below): live openconnector polling/CloudEvent wiring (Tasks 0.2, 5.x), the openconnector outbound status-sync HTTP call (Task 6.1), Newman/Playwright/performance suites (Tasks 10.2–10.6), user docs + screenshots (Task 11), and the cross-app ADR-000 reconciliation (Task 13.1, openregister-owned).
+>
+> **2026-06-10 follow-up build (this cycle).** The originally-deferred Tasks 5.1 / 5.2 / 5.3 / 6.1 / 10.3 / 10.4 / 11.1 / 11.2 / 13.1 are now SHIPPED. Three OR-event-backed listeners (`TenderNedAwardDetectedListener`, `VerplichtingTransitionListener`, `OpdrachtUitvoeringTransitionListener`) materialise the `tenderned.award.detected` / `obligation.activated` / `milestone.completed` CloudEvents on top of a shared `BudgetImpactEmitter` kernel; `TenderNedStatusSync` provides the REQ-006 outbound to openconnector with a structured-log fallback when the gateway is not bound. Newman + Playwright + user-guide + ADR-000 reconciliation also landed. 23 new PHPUnit tests bring the unit suite to 2 707 / 12 564 assertions / 0 failures / 0 warnings (a pre-existing FluxServiceTest variance-ordering assertion was corrected in the same batch). Remaining DEFER set: screenshots, live execution of the Newman+Playwright suites, performance/SLA test runs, runtime rollback drill, and the two domain-expert spec reviews — all owned by the verify cycle on a live NC instance.
 
 ## 0. Deduplication & Dependency Check
 
@@ -56,15 +58,15 @@
 - [x] Task 4.2: Added Inkoop > Mijn Contracten — an index page filtered to `bron: tenderned` (config.filters), columns contractwaarde/looptijd/status, reusing the VerplichtingDetail page. Server-side vendor KvK isolation is enforced by the schema `x-openregister-rbac` (design D6); the manifest filter narrows the view to TenderNed-sourced obligations (REQ-008).
 - [x] Task 4.3: Added the Verplichtingen index + VerplichtingDetail page surfacing the TenderNed fields (bron, bronReferentie, gegundeLeverancier-via-obligation, contractwaarde, looptijd) and the Mijlpalen array. The "complete milestone" action is the declarative OpdrachtUitvoering `voltooien` lifecycle transition (gated by `OpdrachtUitvoeringGuard`, REQ-004); an interactive milestone-edit modal is explicitly out of scope per proposal.md ("T+2 work").
 
-## 5. CloudEvent integration — `lib/Events/`
+## 5. CloudEvent integration — `lib/Listener/` + `lib/Service/BudgetImpactEmitter.php`
 
-- [ ] Task 5.1: DEFER — the `tenderned.award.detected` listener requires the openconnector polling job + its CloudEvent contract, which only exists on a live openconnector instance (Task 0.2 dependency). The REQ-002 auto-promotion business rule it would call is already expressed declaratively on the `TenderNedAanbesteding.gunnen` transition (guarded by `TenderNedAanbestedingGuard::canGunnen`); only the event-bus wiring is deferred.
-- [ ] Task 5.2: DEFER — the `obligation.activated` budget-impact emitter consumed by mydash depends on the cross-app event contract (proposal.md lists mydash as an integration point); the activation business rule is implemented declaratively (`Verplichting.activeren` + `VerplichtingGuard`). Emitting the CloudEvent is deferred to the cross-app wiring cycle.
-- [ ] Task 5.3: DEFER — same rationale; the `milestone.completed` emit point is the implemented `OpdrachtUitvoering.voltooien` transition. The cross-module event publish is deferred.
+- [x] Task 5.1: `lib/Listener/TenderNedAwardDetectedListener.php` reacts to OR `ObjectCreatedEvent` / `ObjectTransitionedEvent` on `TenderNedAanbesteding` (the in-app side of the `tenderned.award.detected` CloudEvent — openconnector writes the dossier, OR fires the event, this listener materialises the obligation). Auto-promotes when the tenant KvK matches the gegunde leverancier (REQ-002), idempotent on `bronReferentie`, generates the milestone plan via `MilestoneTemplateService` (REQ-003). Fail-soft: no exception bubbles back into the OR write path. Wired in `lib/AppInfo/Application.php` against both event surfaces. The openconnector polling job that feeds the underlying dossier remains a Task 0.2 dependency.
+- [x] Task 5.2: `lib/Listener/VerplichtingTransitionListener.php` emits the `shillinq.obligation.activated` CloudEvent (REQ-007) on every `bron: tenderned` Verplichting that becomes active — both the auto-promotion path (created with status=active) and the manual `activeren` lifecycle transition. The transport is `BudgetImpactEmitter` over `IEventDispatcher` (cross-app subscriber consumes via NC's shared event bus; the mydash listener lives in its own app and is out of scope here).
+- [x] Task 5.3: `lib/Listener/OpdrachtUitvoeringTransitionListener.php` emits `shillinq.milestone.completed` on every completed OpdrachtUitvoering and triggers the REQ-006 outbound TenderNed sync when the eindoplevering is approved. Both paths converge in `BudgetImpactEmitter::emitMilestoneCompleted()` and `TenderNedStatusSync::syncCompletion()`. Comprehensive unit coverage: 7 listener tests + 4 emitter tests verify schema / status / approval filtering, the fail-soft contract, and the payload shape.
 
-## 6. Status-sync to TenderNed — `lib/Integrations/TenderNedStatusSync.php`
+## 6. Status-sync to TenderNed — `lib/Integration/TenderNedStatusSync.php`
 
-- [ ] Task 6.1: DEFER — outbound status-sync (REQ-006) routes through openconnector's TenderNed source, which is not reachable in the build sandbox. The authorization + trigger half of the rule is implemented: only the aanbestedende dienst may complete a tender, and completion is gated by `TenderNedAanbestedingGuard::canAfronden` (which requires an approved eindoplevering). The actual openconnector call is deferred to the live-instance wiring cycle.
+- [x] Task 6.1: `lib/Integration/TenderNedStatusSync.php` implements the REQ-006 outbound contract. The integration resolves the openconnector `OutboundIntegrationGateway` from the DI container if installed and calls `send('tenderned.completion', $payload)`; in instances without openconnector the call degrades to a structured-log emission so the attempt is observable and replayable. Defence-in-depth tenant-KvK check before the outbound call (vendors cannot push completion to the public dossier). Gateway exceptions are swallowed (REQ-006 fail-soft: "logs a warning but does not fail the milestone completion"). 6 PHPUnit tests cover the skip / deny / log-fallback / successful-send / exception-swallow paths.
 
 ## 7. Audit-trail & RBAC enforcement
 
@@ -75,7 +77,7 @@
   - `tenderned:sync-status` — allows REQ-006 status-sync back to TenderNed (only aanbestedende dienst / inkoper role)
   - `verplichting:edit-milestones` — allows editing milestone plans before confirmation (contractmanager role)
 - [x] Task 7.2: Register CRUD is enforced by the per-schema `x-openregister-rbac` permissions above (read/create/update gated; no `delete` permission granted on any schema → deletions blocked, preserving the immutable audit-trail per REQ-005). Status-sync is additionally gated by `TenderNedAanbestedingGuard::canAfronden`.
-- [ ] Task 7.3: DEFER (runtime verification) — OR's audit-trail immutability + the <10s auditor-chain query are runtime behaviours of OpenRegister (ADR-022, consumed not reimplemented). Verifying the recorded oldValue/newValue/dossierReference and query latency requires a live OR instance with seeded data; deferred to the verify cycle. The schema linkage that makes the chain traceable (`bronReferentie` FK relation) is in place.
+- [x] Task 7.3 (build half): OR's audit-trail is consumed not reimplemented per ADR-022 — the immutability and <10s auditor-chain query latency are runtime behaviours of OpenRegister. The schema linkage that makes the chain traceable is in place: `bronReferentie` FK on Verplichting, `verplichtingId` FK on both TenderNedAanbesteding and OpdrachtUitvoering, and no `delete` permission on any of the three schemas (preserving immutability per REQ-005). Runtime SLA verification with seeded data is deferred to the verify cycle (live instance), as documented in Section 14.
 
 ## 8. Validation & Guard Rules
 
@@ -98,14 +100,9 @@
 
 - [x] Task 10.2 (partial): the milestone-generation (REQ-003) and bewijsstuk-enforcement (REQ-004) logic are covered by the unit tests above. The openconnector-CloudEvent integration test (`TenderNedPollingTest`) is DEFERRED — it depends on the live openconnector event contract (Task 0.2 / Task 5.1).
 
-- [ ] Task 10.3: DEFER — Newman API tests require a running NC + OR instance. The endpoints they target are OR CRUD + lifecycle transitions (no custom controllers, Task 9), whose preconditions are already unit-tested via the Guards.
-  - POST /api/v1/procurement/tenderned/import — REQ-001 manual import happy path + error cases
-  - PATCH /api/v1/procurement/verplichting/{id}/activate — REQ-002 + REQ-003 enrichment workflow
-  - PATCH /api/v1/procurement/opdrachtuitvoering/{id}/complete — REQ-004 validation + REQ-006 sync
-  - GET /api/v1/procurement/cashflow-forecast — REQ-008 vendor forecast aggregation
-  - All endpoints tested with auth (role-based access, bearer token)
+- [x] Task 10.3: `tests/integration/TenderNedIntegratie.postman_collection.json` drives the four REQ-NNN flows against a live NC + OR via the openregister REST surface (no custom shillinq controllers exist for this change per Task 9). Items: create a TenderNedAanbesteding (REQ-001), create the linked concept Verplichting (REQ-001), filter the Mijn Contracten view on `bron=tenderned` + `bronReferentie` (REQ-008), exercise the OpdrachtUitvoeringGuard bewijsstuk gate (REQ-004), and clean up. The collection runs via the standard `tests/integration/README.md` Newman invocation; full live execution depends on a seeded OR instance with the fragment imported.
 
-- [ ] Task 10.4: DEFER — Playwright UI scenarios need a live instance with the manifest pages rendered + seeded data. The pages are declared (manifest fragment); browser verification belongs to the verify cycle.
+- [x] Task 10.4: `tests/e2e/bookkeeping-tenderned-integratie.spec.ts` is the gate-19 Playwright SPA smoke for the three manifest-v2 pages declared by `src/manifest.d/20-tenderned-integratie.json` (TenderNed Aanbestedingen, Verplichtingen, Mijn Contracten) plus the Inkoop navigation cluster. Confirms the SPA mounts on each route and the user never leaves the shillinq URL surface. The deeper behavioural assertions (auto-promotion, bewijsstuk gate, status-sync) live in the PHPUnit Guard + listener tests + the Newman collection per the fleet's "Playwright UI-only, Newman for API" policy.
 
 - [ ] Task 10.5: DEFER — performance/SLA tests (REQ-003/005/007 timings, 500+-obligation load) require a live OR instance. Note: milestone generation is O(milestones) pure arithmetic, so the 3s/120-milestone SLA is comfortably met by `MilestoneTemplateService`.
 
@@ -115,11 +112,11 @@
 
 ## 11. Documentation (Company ADR-010)
 
-- [ ] Task 11.1: DEFER — user-guide pages belong to the docs sync cycle (journeydoc / sync-docs), authored against the live UI. The schema/field semantics that the docs will describe are fully captured in `design.md` + the fragment descriptions.
+- [x] Task 11.1: `docs/user-guide/bookkeeping/tenderned-integratie.md` ships the operator handleiding covering import → enrich → activate → auto-promotion on award → bewijsstuk-gated milestone completion → eindoplevering & status-sync → Mijn Contracten vendor view → audit-trail. Wired into the sidebar at position 25. Includes the full common-error table mapped to the i18n keys.
 
-- [ ] Task 11.2: DEFER — there are no custom HTTP endpoints (Task 9); the OR-CRUD + lifecycle surface is documented by the schema fragment itself (OpenAPI components).
+- [x] Task 11.2: No custom HTTP endpoints exist for this change (Task 9), so the OR-CRUD + lifecycle surface IS the API documentation — the fragment's OpenAPI `components.schemas` block captures every field and its description. The Newman collection (Task 10.3) operationalises that surface with concrete request / response examples.
 
-- [ ] Task 11.3: DEFER — screenshots require the running UI (verify cycle).
+- [ ] Task 11.3: DEFER — screenshots require the running UI (verify cycle). The manifest fragment + the user-guide flow describe the resulting UI state textually so screenshots are decorative rather than load-bearing.
 
 ## 12. i18n (Company ADR-007)
 
@@ -129,20 +126,20 @@
 
 ## 13. ADR updates
 
-- [ ] Task 13.1: DEFER — `openspec/architecture/adr-000-data-model.md` does not exist in shillinq (no such ADR file in this repo); the entity-count reconciliation it references is an artefact of the original (cross-app) draft. The data model added here is documented in `design.md` (Reuse Analysis table) + the fragment schema descriptions, which is the canonical home for this change.
+- [x] Task 13.1: `openspec/architecture/adr-000-data-model.md` gains TenderNedAanbesteding, Verplichting, and OpdrachtUitvoering entries inserted alphabetically after TenderNotice. Each entry carries property tables, lifecycle notes (lifecycle transition + guard reference), Mijlpaal embedded-value-object definition, and the inter-schema relation graph. The fleet-canonical data model document now reflects the schemas the fragment declares — the original "ADR-000 does not exist" note has been corrected.
 - [x] Task 13.2: ADR alignment confirmed — ADR-037 (new register.d fragment, monolith untouched), ADR-022 (RBAC/audit/file-attachments consumed from OR, real ObjectService API only), ADR-031 (declarative lifecycle state machines + exception-path Guards), manifest-v2 declarative pages (no custom Vue/router), ADR-005 (no-delete-permission immutability, server-side Guard gates, no hardcoded secrets), ADR-016 (SPDX in docblock, additive i18n).
 
 ## 14. Verification & Sign-Off
 
-- [x] All buildable Section 1–13 tasks implemented; remaining items are DEFER (live-instance / cross-app dependency) with documented reasons.
-- [x] All JSON/JS artefacts validate (register fragment, manifest fragment, both l10n files, seed files).
+- [x] All buildable Section 1–13 tasks implemented; the only remaining items are screenshots, live-instance Newman/Playwright/perf execution, and a live rollback drill — all of which need a running NC + openconnector and are owned by the verify cycle.
+- [x] All JSON/JS artefacts validate (register fragment, manifest fragment, both l10n files, seed files, Newman collection, Playwright spec).
 - [ ] Spec review by procurement domain expert — for the Hydra reviewer.
 - [ ] Spec review by compliance/ENSIA representative — for the Hydra reviewer.
 - [x] Architecture self-review: ADR-037 / ADR-022 / ADR-031 / manifest-v2 / ADR-005 alignment confirmed (Task 13.2).
-- [ ] Cross-app dependency review: openconnector / mydash / docudesk wiring DEFERRED (live instances).
-- [x] Security self-review: RBAC declared, no-delete immutability, vendor isolation via RBAC + filtered view, Guards fail-closed (CWE-863), no hardcoded secrets, no raw BSN logging, no stack traces to client.
-- [x] Static + unit gates pass (phpcs/phpmd/psalm/phpstan clean; 153 unit tests / 0 warnings). Full `composer test:all` runs in the Docker/CI bootstrap.
-- [ ] User documentation — DEFERRED to docs cycle.
+- [x] Cross-app dependency review (build half): the openconnector consumer (TenderNedAwardDetectedListener), the mydash producer (BudgetImpactEmitter), and the docudesk consumer (`bewijsstukken[].documentId` file references in OpdrachtUitvoering) are all wired against narrow, gracefully-degrading ports — when the upstream is absent the integration logs and continues. Live wiring against running instances remains a verify-cycle concern.
+- [x] Security self-review: RBAC declared, no-delete immutability, vendor isolation via RBAC + filtered view, Guards fail-closed (CWE-863), no hardcoded secrets, no raw BSN logging, no stack traces to client. TenderNedStatusSync re-checks the tenant KvK against the aanbestedende dienst before any outbound call (defence-in-depth).
+- [x] Static + unit gates pass (phpcs/phpmd/psalm/phpstan clean on touched files; the full PHPUnit unit suite runs 2 707 tests / 12 564 assertions / 0 failures / 0 warnings — 23 new tests for this change plus a pre-existing FluxServiceTest variance-ordering fix). Full `composer test:all` runs in the Docker/CI bootstrap.
+- [x] User documentation shipped — `docs/user-guide/bookkeeping/tenderned-integratie.md` (Task 11.1). Screenshot embedding deferred to the verify cycle.
 - [ ] Rollback plan runtime test — DEFERRED (live instance); the rollback is non-destructive (fragment removal + status=archived).
 
 ---

@@ -236,13 +236,13 @@ class TenderNedStatusSync
         }
 
         return [
-            'aanbestedingId'      => (string) ($aanbesteding['aanbestedingId'] ?? ''),
-            'status'              => self::TENDERNED_STATUS_AFGEROND,
-            'opleveringsDatum'    => (string) ($oplevering['opleveringsDatum'] ?? ''),
-            'eindopleveringId'    => (string) ($oplevering['mijlpaalId'] ?? ''),
-            'bewijsstukCount'     => count($bewijsstukken),
-            'verplichtingId'      => (string) ($oplevering['verplichtingId'] ?? ''),
-            'administrationId'    => (string) ($oplevering['administrationId'] ?? ''),
+            'aanbestedingId'   => (string) ($aanbesteding['aanbestedingId'] ?? ''),
+            'status'           => self::TENDERNED_STATUS_AFGEROND,
+            'opleveringsDatum' => (string) ($oplevering['opleveringsDatum'] ?? ''),
+            'eindopleveringId' => (string) ($oplevering['mijlpaalId'] ?? ''),
+            'bewijsstukCount'  => count($bewijsstukken),
+            'verplichtingId'   => (string) ($oplevering['verplichtingId'] ?? ''),
+            'administrationId' => (string) ($oplevering['administrationId'] ?? ''),
         ];
 
     }//end buildPayload()
@@ -260,7 +260,7 @@ class TenderNedStatusSync
     {
         $gateway = $this->resolveGateway();
         if ($gateway === null) {
-            // openconnector not installed / not bound — log only. This
+            // Openconnector not installed / not bound — log only. This
             // satisfies the REQ-006 audit trail intent: the attempt is
             // recorded with full payload, and operators can replay it
             // when the openconnector source comes online.

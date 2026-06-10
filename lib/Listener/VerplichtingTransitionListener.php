@@ -116,19 +116,7 @@ class VerplichtingTransitionListener implements IEventListener
      */
     private function extractActivatedVerplichting(Event $event): ?array
     {
-        if ($event instanceof ObjectCreatedEvent === false
-            && $event instanceof ObjectTransitionedEvent === false
-        ) {
-            return null;
-        }
-
-        if ($event instanceof ObjectTransitionedEvent === true
-            && $event->getTo() !== 'active'
-        ) {
-            return null;
-        }
-
-        $entity = $event->getObject();
+        $entity = $this->resolveTargetEntity(event: $event);
         if ($entity === null) {
             return null;
         }
@@ -155,6 +143,31 @@ class VerplichtingTransitionListener implements IEventListener
         return $payload;
 
     }//end extractActivatedVerplichting()
+
+    /**
+     * Resolve the carrying entity for ObjectCreatedEvent or
+     * ObjectTransitionedEvent-to-active, returning null when the event is
+     * not a relevant lifecycle hook.
+     *
+     * @param Event $event OR event.
+     *
+     * @return \OCA\OpenRegister\Db\ObjectEntity|null
+     */
+    private function resolveTargetEntity(Event $event): ?\OCA\OpenRegister\Db\ObjectEntity
+    {
+        if ($event instanceof ObjectCreatedEvent === true) {
+            return $event->getObject();
+        }
+
+        if ($event instanceof ObjectTransitionedEvent === true
+            && $event->getTo() === 'active'
+        ) {
+            return $event->getObject();
+        }
+
+        return null;
+
+    }//end resolveTargetEntity()
 
     /**
      * Emit the budget-impact event only for TenderNed-sourced obligations.

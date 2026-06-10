@@ -46,6 +46,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -73,7 +75,6 @@ class BudgetImpactEmitter
      */
     public const EVENT_MILESTONE_COMPLETED = 'shillinq.milestone.completed';
 
-
     /**
      * Construct the emitter.
      *
@@ -99,19 +100,21 @@ class BudgetImpactEmitter
      * @param array<string, mixed> $source       Source TenderNedAanbesteding payload (dossier URL).
      *
      * @return void
+     *
+     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5-2
      */
     public function emitActivated(array $verplichting, array $source=[]): void
     {
         $payload = [
-            'eventName'       => self::EVENT_OBLIGATION_ACTIVATED,
-            'bronReferentie'  => (string) ($verplichting['bronReferentie'] ?? ''),
-            'contractWaarde'  => (float) ($verplichting['bedrag'] ?? 0),
-            'kostenplaats'    => (string) ($verplichting['kostenplaats'] ?? ''),
-            'looptijdStart'   => (string) ($verplichting['looptijdStart'] ?? ''),
-            'looptijdEind'    => (string) ($verplichting['looptijdEind'] ?? ''),
-            'tenderNedUrl'    => (string) ($source['tenderNedUrl'] ?? ''),
+            'eventName'        => self::EVENT_OBLIGATION_ACTIVATED,
+            'bronReferentie'   => (string) ($verplichting['bronReferentie'] ?? ''),
+            'contractWaarde'   => (float) ($verplichting['bedrag'] ?? 0),
+            'kostenplaats'     => (string) ($verplichting['kostenplaats'] ?? ''),
+            'looptijdStart'    => (string) ($verplichting['looptijdStart'] ?? ''),
+            'looptijdEind'     => (string) ($verplichting['looptijdEind'] ?? ''),
+            'tenderNedUrl'     => (string) ($source['tenderNedUrl'] ?? ''),
             'administrationId' => (string) ($verplichting['administrationId'] ?? ''),
-            'emittedAt'       => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('c'),
+            'emittedAt'        => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
         ];
 
         $this->dispatch(eventName: self::EVENT_OBLIGATION_ACTIVATED, payload: $payload);
@@ -129,6 +132,8 @@ class BudgetImpactEmitter
      * @param array<string, mixed> $oplevering Completed OpdrachtUitvoering payload.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5-3
      */
     public function emitMilestoneCompleted(array $oplevering): void
     {
@@ -138,15 +143,15 @@ class BudgetImpactEmitter
         }
 
         $payload = [
-            'eventName'       => self::EVENT_MILESTONE_COMPLETED,
-            'verplichtingId'  => (string) ($oplevering['verplichtingId'] ?? ''),
-            'mijlpaalId'      => (string) ($oplevering['mijlpaalId'] ?? ''),
-            'opleveringsType' => (string) ($oplevering['opleveringsType'] ?? ''),
+            'eventName'        => self::EVENT_MILESTONE_COMPLETED,
+            'verplichtingId'   => (string) ($oplevering['verplichtingId'] ?? ''),
+            'mijlpaalId'       => (string) ($oplevering['mijlpaalId'] ?? ''),
+            'opleveringsType'  => (string) ($oplevering['opleveringsType'] ?? ''),
             'opleveringsDatum' => (string) ($oplevering['opleveringsDatum'] ?? ''),
             'goedgekeurd'      => (bool) ($oplevering['goedgekeurd'] ?? false),
             'bewijsstukCount'  => count($bewijsstukken),
             'administrationId' => (string) ($oplevering['administrationId'] ?? ''),
-            'emittedAt'       => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('c'),
+            'emittedAt'        => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
         ];
 
         $this->dispatch(eventName: self::EVENT_MILESTONE_COMPLETED, payload: $payload);

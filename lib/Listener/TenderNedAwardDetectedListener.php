@@ -349,8 +349,8 @@ class TenderNedAwardDetectedListener implements IEventListener
     /**
      * Look up an existing Verplichting by bronReferentie.
      *
-     * @param object $objectService    OR ObjectService.
-     * @param string $bronReferentie   TenderNed aanbestedingId.
+     * @param object $objectService  OR ObjectService.
+     * @param string $bronReferentie TenderNed aanbestedingId.
      *
      * @return array<string, mixed>|null
      */
