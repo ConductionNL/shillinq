@@ -24,8 +24,8 @@ Implementation checklist for the `bookkeeping-bank-reconciliation` capability.
 
 ## Data Model & Schema
 
-- [x] Task 1: Create `BankReconciliation` schema in `lib/Settings/shillinq_register.json` with all properties per spec (name, bankAccountId, statement dates, opening/closing balance, reconciled balance, variance, match counts, status, approval tracking, notes).
-- [x] Task 2: Create `BankReconciliationMatch` schema in `lib/Settings/shillinq_register.json` with all properties (reconciliationId, bankTransactionRef, bankTransactionAmount, journalEntryId, journalEntryDescription, matchType enum, confidenceScore, operatorNotes, audit timestamps).
+- [x] Task 1: Create `BankReconciliation` schema in `lib/Settings/register.d/bookkeeping-bank-reconciliation.json` (ADR-037 fragment, not the monolith) with all properties per spec (name, bankAccountId, statement dates, opening/closing balance, reconciled balance, variance, match counts, status, approval tracking, notes). Originally in `shillinq_register.json` (hydra-build #50); restored as a fragment after the schemas were dropped during a sibling union-merge so concurrent builds never collide on the monolith.
+- [x] Task 2: Create `BankReconciliationMatch` schema in `lib/Settings/register.d/bookkeeping-bank-reconciliation.json` (same ADR-037 fragment) with all properties (reconciliationId, bankTransactionRef, bankTransactionAmount, journalEntryId, journalEntryDescription, matchType enum, confidenceScore, operatorNotes, audit timestamps).
 - [x] Task 3: Define status enum for BankReconciliation: `draft | in-progress | reconciled | archived` with default `draft`.
 - [x] Task 4: Define matchType enum for BankReconciliationMatch: `auto-matched | pending-review | approved | rejected`.
 - [x] Task 5: Add OpenRegister relations:
@@ -116,7 +116,7 @@ Implementation checklist for the `bookkeeping-bank-reconciliation` capability.
 
 ## Testing & Validation
 
-- [ ] Task 42: Auto-matching unit tests — DEFERRED to shillinq-integrations (lands with the engine).
+- [x] Task 42: Fixture-shape contract tests — `tests/Unit/Validation/BankReconciliationSchemaTest.php` (15 cases) locks the ADR-037 fragment shape that the deferred auto-matching engine will consume: both schemas declared, status/matchType closed enums, lifecycle states/transitions + guard FQCNs, nullable derived monetary fields, bounded confidenceScore 0..100, approvedAmountTotal aggregation, bankTransactionRef composite-key contract per design D3. **Auto-matching engine unit tests remain DEFERRED to shillinq-integrations** (they land with the engine code).
 - [x] Task 43: Balance + lock guard tests — `tests/Unit/Guard/BankReconciliationGuardTest.php`: integer-cents balance/variance recomputation (incl. 0.10 + 0.20 float-drift case), counts, resolved-matches gate, lock immutability (reconciliation + match), valid-period, fail-closed paths. 10 tests, all green.
 - [ ] Task 44: Browser tests — DEFERRED: requires a running instance with seed data + the integration service (import/match) to exercise REQ-BBR-002 end-to-end.
 
