@@ -74,16 +74,24 @@ class LeaseReassessmentService
     /**
      * Construct the service with lazy DI of OpenRegister's ObjectService.
      *
-     * @param ContainerInterface          $container  DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig                  $appConfig  App config for the register slug.
-     * @param LeaseAmortizationCalculator $calculator Pure-logic IFRS 16 arithmetic helper.
-     * @param LoggerInterface             $logger     Logger (no stack traces to client).
+     * The decidesk webhook service is optional: when present and an event
+     * lands with status `pending-approval`, the service tries to deliver
+     * the approval webhook (Task 8.2). The webhook is allowed to fail
+     * soft — the persisted LeaseReassessmentEvent remains the source of
+     * truth for the audit trail.
+     *
+     * @param ContainerInterface              $container       DI container — OR's ObjectService is fetched lazily.
+     * @param IAppConfig                      $appConfig       App config for the register slug.
+     * @param LeaseAmortizationCalculator     $calculator      Pure-logic IFRS 16 arithmetic helper.
+     * @param LoggerInterface                 $logger          Logger (no stack traces to client).
+     * @param LeaseDecideskWebhookService|null $decideskWebhook Optional decidesk webhook delivery service.
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
         private readonly LeaseAmortizationCalculator $calculator,
         private readonly LoggerInterface $logger,
+        private readonly ?LeaseDecideskWebhookService $decideskWebhook = null,
     ) {
     }//end __construct()
 
@@ -418,6 +426,9 @@ class LeaseReassessmentService
                 schema: 'LeaseReassessmentEvent',
             );
             if (is_array($saved) === true) {
+                // Task 8.2: fire decidesk approval webhook for material events.
+                // Fail-soft per ADR-005 — the persisted event is the audit record.
+                $this->fireDecideskWebhook(event: $saved);
                 return $saved;
             }
         } catch (\Throwable $e) {
@@ -777,4 +788,37 @@ class LeaseReassessmentService
         return $register;
 
     }//end register()
+
+
+    /**
+     * Best-effort decidesk webhook delivery for material reassessment events.
+     *
+     * Wired by the optional LeaseDecideskWebhookService injection: if the
+     * service is configured AND the persisted event has status
+     * `pending-approval`, fire the approval webhook. Any error inside the
+     * webhook layer is already swallowed and logged by the webhook
+     * service — this method must never raise to the caller because the
+     * persisted event is the source of truth (Task 8.2).
+     *
+     * @param array<string,mixed> $event The persisted LeaseReassessmentEvent row.
+     *
+     * @return void
+     */
+    private function fireDecideskWebhook(array $event): void
+    {
+        if ($this->decideskWebhook === null) {
+            return;
+        }
+
+        try {
+            $this->decideskWebhook->deliver(event: $event);
+        } catch (\Throwable $e) {
+            // Defensive guard. Webhook service swallows its own errors.
+            $this->logger->debug(
+                'LeaseReassessmentService: decidesk webhook helper raised — suppressed',
+                ['message' => $e->getMessage()]
+            );
+        }
+
+    }//end fireDecideskWebhook()
 }//end class
