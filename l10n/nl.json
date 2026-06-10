@@ -1400,7 +1400,24 @@
         "ABB stale: public interest decision has not been evaluated in over 2 years.": "ABB verouderd: algemeen belang besluit is meer dan 2 jaar niet geëvalueerd.",
         "Manual override accumulation: more than 5% of allocations carry manual overrides.": "Opeenstapeling handmatige overrides: meer dan 5% van de toewijzingen draagt een handmatige override.",
         "Potential overhead underschatting: direct cost growth without overhead growth.": "Potentiële overhead-onderschatting: directe-kostengroei zonder overhead-groei.",
-        "Bevoordeling risk: tariff is more than 15% below market benchmark median.": "Bevoordelingsrisico: tarief ligt meer dan 15% onder de mediaan van de marktbenchmark."
+        "Bevoordeling risk: tariff is more than 15% below market benchmark median.": "Bevoordelingsrisico: tarief ligt meer dan 15% onder de mediaan van de marktbenchmark.",
+        "Inter-Company Transactions": "Intercompany-transacties",
+        "Inter-Company Transaction": "Intercompany-transactie",
+        "Elimination Rules": "Eliminatieregels",
+        "Elimination Rule": "Eliminatieregel",
+        "From Member": "Verstrekkend deelnemer",
+        "To Member": "Ontvangend deelnemer",
+        "Account From": "Rekening (verstrekkend)",
+        "Account To": "Rekening (ontvangend)",
+        "Amount Tolerance": "Bedragtolerantie",
+        "Rule Type": "Regeltype",
+        "Elimination Status": "Eliminatiestatus",
+        "Eliminated by Rule": "Geëlimineerd door regel",
+        "Consolidated Report": "Geconsolideerd rapport",
+        "Consolidation Group": "Consolidatiegroep",
+        "Manual Override": "Handmatige overrule",
+        "Override Reason": "Reden overrule",
+        "GL Transaction": "Grootboektransactie"
     },
     "plurals": ""
 }

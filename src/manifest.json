@@ -245,6 +245,20 @@
 					"order": 83
 				},
 				{
+					"id": "IntercompanyTransactions",
+					"label": "Inter-Company Transactions",
+					"icon": "SwapHorizontalBold",
+					"route": "IntercompanyTransactions",
+					"order": 835
+				},
+				{
+					"id": "EliminationRules",
+					"label": "Elimination Rules",
+					"icon": "VectorDifference",
+					"route": "EliminationRules",
+					"order": 836
+				},
+				{
 					"id": "Iv3Reports",
 					"label": "IV3 Reports",
 					"icon": "FileChartOutline",
@@ -5782,6 +5796,281 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "ConsolidatedReport",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "IntercompanyTransactions",
+			"route": "/financial-statements/intercompany-transactions",
+			"type": "index",
+			"title": "Inter-Company Transactions",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyTransaction",
+				"columns": [
+					{
+						"key": "transactionDate",
+						"label": "Date",
+						"sortable": true
+					},
+					{
+						"key": "fromMemberId",
+						"label": "From Member",
+						"sortable": true
+					},
+					{
+						"key": "toMemberId",
+						"label": "To Member",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"sortable": true
+					},
+					{
+						"key": "accountFrom",
+						"label": "Account From",
+						"sortable": true
+					},
+					{
+						"key": "accountTo",
+						"label": "Account To",
+						"sortable": true
+					},
+					{
+						"key": "eliminationStatus",
+						"label": "Elimination Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-transactionDate",
+				"detailRoute": "IntercompanyTransactionDetail"
+			}
+		},
+		{
+			"id": "IntercompanyTransactionDetail",
+			"route": "/financial-statements/intercompany-transactions/:id",
+			"type": "detail",
+			"title": "Inter-Company Transaction",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyTransaction",
+				"fields": [
+					{
+						"key": "consolidationGroupId",
+						"label": "Consolidation Group",
+						"type": "string"
+					},
+					{
+						"key": "fromMemberId",
+						"label": "From Member",
+						"type": "string"
+					},
+					{
+						"key": "toMemberId",
+						"label": "To Member",
+						"type": "string"
+					},
+					{
+						"key": "transactionDate",
+						"label": "Transaction Date",
+						"type": "date-time"
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "accountFrom",
+						"label": "Account From",
+						"type": "string"
+					},
+					{
+						"key": "accountTo",
+						"label": "Account To",
+						"type": "string"
+					},
+					{
+						"key": "reference",
+						"label": "Reference",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "glTransactionId",
+						"label": "GL Transaction",
+						"type": "string"
+					},
+					{
+						"key": "isManualOverride",
+						"label": "Manual Override",
+						"type": "boolean"
+					},
+					{
+						"key": "overrideReason",
+						"label": "Override Reason",
+						"type": "string"
+					},
+					{
+						"key": "eliminatedByRuleId",
+						"label": "Eliminated by Rule",
+						"type": "string"
+					},
+					{
+						"key": "consolidatedReportId",
+						"label": "Consolidated Report",
+						"type": "string"
+					},
+					{
+						"key": "eliminationStatus",
+						"label": "Elimination Status",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "IntercompanyTransactions",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "EliminationRules",
+			"route": "/financial-statements/elimination-rules",
+			"type": "index",
+			"title": "Elimination Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "EliminationRule",
+				"columns": [
+					{
+						"key": "consolidationGroupId",
+						"label": "Consolidation Group",
+						"sortable": true
+					},
+					{
+						"key": "ruleType",
+						"label": "Rule Type",
+						"sortable": true
+					},
+					{
+						"key": "accountPairFrom",
+						"label": "Account From",
+						"sortable": true
+					},
+					{
+						"key": "accountPairTo",
+						"label": "Account To",
+						"sortable": true
+					},
+					{
+						"key": "amountTolerance",
+						"label": "Amount Tolerance",
+						"sortable": true
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"sortable": true
+					}
+				],
+				"defaultSort": "consolidationGroupId",
+				"detailRoute": "EliminationRuleDetail"
+			}
+		},
+		{
+			"id": "EliminationRuleDetail",
+			"route": "/financial-statements/elimination-rules/:id",
+			"type": "detail",
+			"title": "Elimination Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "EliminationRule",
+				"fields": [
+					{
+						"key": "consolidationGroupId",
+						"label": "Consolidation Group",
+						"type": "string"
+					},
+					{
+						"key": "ruleType",
+						"label": "Rule Type",
+						"type": "string"
+					},
+					{
+						"key": "accountPairFrom",
+						"label": "Account From",
+						"type": "string"
+					},
+					{
+						"key": "accountPairTo",
+						"label": "Account To",
+						"type": "string"
+					},
+					{
+						"key": "amountTolerance",
+						"label": "Amount Tolerance",
+						"type": "number"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "isActive",
+						"label": "Active",
+						"type": "boolean"
+					}
+				],
+				"indexRoute": "EliminationRules",
 				"sidebarProps": {
 					"tabs": [
 						{

@@ -101,6 +101,10 @@
 							]
 						}
 					}
+				},
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "Every create/update/delete of an EliminationRule is logged to OR's immutable audit trail (REQ-AT-001 / REQ-ICP-007)."
 				}
 			},
 			"IntercompanyTransaction": {
@@ -307,6 +311,10 @@
 							]
 						}
 					}
+				},
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "Every create/update/delete and lifecycle transition (eliminate / exclude / restore / reinstate) of an IntercompanyTransaction is logged to OR's immutable audit trail (REQ-AT-001 / REQ-ICP-007)."
 				}
 			}
 		}

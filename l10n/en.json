@@ -1400,7 +1400,24 @@
         "ABB stale: public interest decision has not been evaluated in over 2 years.": "ABB stale: public interest decision has not been evaluated in over 2 years.",
         "Manual override accumulation: more than 5% of allocations carry manual overrides.": "Manual override accumulation: more than 5% of allocations carry manual overrides.",
         "Potential overhead underschatting: direct cost growth without overhead growth.": "Potential overhead underschatting: direct cost growth without overhead growth.",
-        "Bevoordeling risk: tariff is more than 15% below market benchmark median.": "Bevoordeling risk: tariff is more than 15% below market benchmark median."
+        "Bevoordeling risk: tariff is more than 15% below market benchmark median.": "Bevoordeling risk: tariff is more than 15% below market benchmark median.",
+        "Inter-Company Transactions": "Inter-Company Transactions",
+        "Inter-Company Transaction": "Inter-Company Transaction",
+        "Elimination Rules": "Elimination Rules",
+        "Elimination Rule": "Elimination Rule",
+        "From Member": "From Member",
+        "To Member": "To Member",
+        "Account From": "Account From",
+        "Account To": "Account To",
+        "Amount Tolerance": "Amount Tolerance",
+        "Rule Type": "Rule Type",
+        "Elimination Status": "Elimination Status",
+        "Eliminated by Rule": "Eliminated by Rule",
+        "Consolidated Report": "Consolidated Report",
+        "Consolidation Group": "Consolidation Group",
+        "Manual Override": "Manual Override",
+        "Override Reason": "Override Reason",
+        "GL Transaction": "GL Transaction"
     },
     "plurals": ""
 }
