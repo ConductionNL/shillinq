@@ -8,7 +8,7 @@ T2 document-attachment (`./bookkeeping-document-attachment-integration/spec.md`)
 
 ## ADDED Requirements
 
-### REQ-ENSIA-001: ENSIA Jaarcyclus initialiseren met VNG-vragenset
+### Requirement: REQ-ENSIA-001 — ENSIA Jaarcyclus initialiseren met VNG-vragenset
 
 Jaarcyclus-initialisatie MUST load the current-year BIO question set from
 openregister bio-nen7510 (or configured external API) and generate
@@ -39,7 +39,7 @@ openregister bio-nen7510 (or configured external API) and generate
   fetched version (e.g., "BIO-1.04-2026") so external auditors can trace
   which question set was used.
 
-### REQ-ENSIA-002: Vraag-toewijzing per onderwerp-eigenaar
+### Requirement: REQ-ENSIA-002 — Vraag-toewijzing per onderwerp-eigenaar
 
 Evaluatievraag assignment MUST allow the proceseigenaar to assign per-domein
 answerers, who receive notifications and see their worklist grouped per
@@ -53,7 +53,7 @@ onderwerp.
 - **THEN** the infra-teamlead MUST receive a notification with deeplink to
   their worklist, filtered to only their assigned questions, grouped by onderwerp.
 
-### REQ-ENSIA-003: Volwassenheidsscore met onderbouwing-eis
+### Requirement: REQ-ENSIA-003 — Volwassenheidsscore met onderbouwing-eis
 
 Maturity-level answers (type `volwassenheidsniveau-1-5`) at score ≥ 3 MUST
 require at least one evidence document and a toelichting field ≥ 50 characters.
@@ -72,7 +72,7 @@ require at least one evidence document and a toelichting field ≥ 50 characters
 - **WHEN** the beantwoorder enters `volwassenheidsScore: 2` and a 10-char toelichting
 - **THEN** save MUST succeed without evidence requirement.
 
-### REQ-ENSIA-004: Peer-review-flow met wijziging-blokking
+### Requirement: REQ-ENSIA-004 — Peer-review-flow met wijziging-blokking
 
 Peer-review MUST gate college-akkoord: per-question peer-review status
 (akkoord / wijziging-gevraagd) must be tracked, and any unresolved
@@ -100,7 +100,7 @@ wijziging-gevraagd MUST block cycle advance to `college-akkoord`.
 - **THEN** the transition MUST succeed, and the `ENSIAJaarcyclus` status
   becomes `college-akkoord`.
 
-### REQ-ENSIA-005: Bevinding automatisch genereren
+### Requirement: REQ-ENSIA-005 — Bevinding automatisch genereren
 
 When peer-review is complete, the system MUST auto-generate `Bevinding` records
 (type `tekortkoming`) for questions where `volwassenheidsScore < VNG.normniveau`
@@ -124,7 +124,7 @@ When peer-review is complete, the system MUST auto-generate `Bevinding` records
 - **THEN** the finding MUST remain in the register for audit trail but
   not appear in compliance reports until manually reopened.
 
-### REQ-ENSIA-006: College-verklaring genereren
+### Requirement: REQ-ENSIA-006 — College-verklaring genereren
 
 College-declaration generation MUST produce a Word document on VNG template
 with auto-filled organisation data, per-domain summaries, and top findings.
@@ -142,7 +142,7 @@ with auto-filled organisation data, per-domain summaries, and top findings.
   - blank handtekeningvelden with date fields for college-ondertekenaars
   - ready for college-vergadering review and signing.
 
-### REQ-ENSIA-007: XML-export naar landelijke ENSIA-portal
+### Requirement: REQ-ENSIA-007 — XML-export naar landelijke ENSIA-portal
 
 XML export MUST conform to ENSIA-XSD and include all answers, scores,
 evidence hashes, and college-brief reference.
@@ -168,7 +168,7 @@ evidence hashes, and college-brief reference.
 - **THEN** XML export MUST be regenerable with updated answers + new
   evidence hashes, provided cycle ≤ 1 May deadline has not passed.
 
-### REQ-ENSIA-008: Wijzigings-audit-log met diff
+### Requirement: REQ-ENSIA-008 — Wijzigings-audit-log met diff
 
 Every answer change MUST record timestamp, user, old/new values, and
 (post peer-review) a required reason field. External auditors MUST be
@@ -196,7 +196,7 @@ able to view the change history per question.
 - **THEN** the auditor MUST be able to see the full change sequence
   with before/after values, timestamps, and user who made the change.
 
-### REQ-ENSIA-009: Bewijsstuk-koppeling met omschrijving
+### Requirement: REQ-ENSIA-009 — Bewijsstuk-koppeling met omschrijving
 
 Evidence documents MUST be attachable per question with file reference
 (docudesk FK) and omschrijving (description).
@@ -209,7 +209,7 @@ Evidence documents MUST be attachable per question with file reference
 - **THEN** the `Evaluatievraag.bewijsstukken` array MUST contain the file-reference
   (docudesk URI) and omschrijving, visible to both peer-reviewers and auditors.
 
-### REQ-ENSIA-010: Manifest navigation entries
+### Requirement: REQ-ENSIA-010 — Manifest navigation entries
 
 Five manifest entries MUST be added for ENSIA navigation.
 
