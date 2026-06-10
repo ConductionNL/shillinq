@@ -324,6 +324,32 @@
 							"permissions": ["read"]
 						}
 					}
+				},
+				"x-openregister-scheduled-workflows": {
+					"wmo-annual-review-detector": {
+						"name": "Annual review-task generator",
+						"description": "Daily walker over all active CommercialActivity records. Emits a 'wmo-annual-review' task whenever lastReviewedAt is > 365 days old (REQ-WMO-001 §c). Composed by CommercialActivityReviewService and dispatched via the Nextcloud notification + IJobList task surface.",
+						"cron": "0 6 * * *",
+						"register": "shillinq",
+						"schema": "CommercialActivity",
+						"enabled": true,
+						"filter": {
+							"state": ["active"]
+						},
+						"handler": "OCA\\Shillinq\\Service\\CommercialActivityReviewService::composeReviewTask"
+					},
+					"wmo-cross-subsidy-detector": {
+						"name": "Cross-subsidy detector",
+						"description": "Monthly walker per CommercialActivity, evaluating the 6 REQ-WMO-007 cross-subsidy risk scenarios (loss-financing, omzet-spike-no-IKP-update, overhead-under-allocation, ABB-stale, manual-override-accumulation, potentiele-overhead-onderschatting) plus the REQ-WMO-012 Phase-3 bevoordeling-risk scenario. Emits AlertLog records via CrossSubsidyDetector for any match. Runs the 1st of the month at 02:00 UTC.",
+						"cron": "0 2 1 * *",
+						"register": "shillinq",
+						"schema": "CommercialActivity",
+						"enabled": true,
+						"filter": {
+							"state": ["active"]
+						},
+						"handler": "OCA\\Shillinq\\Service\\CrossSubsidyDetector::composeAlert"
+					}
 				}
 			},
 			"IntegralCostPrice": {
@@ -492,6 +518,26 @@
 						"auditor": {
 							"permissions": ["read"]
 						}
+					}
+				},
+				"x-openregister-scheduled-workflows": {
+					"wmo-ikp-monthly-calculation": {
+						"name": "Monthly IKP calculation",
+						"description": "Monthly calculation of IntegralCostPrice voorlopig per active CommercialActivity (REQ-WMO-002). Pulls GL lines tagged with the activity's kostenplaats / kostendrager, applies the geldende OverheadDistributionRule (BBV taakveld 0.4 sleutel), the WACC vermogenskosten rate, and the per-period winstopslag. Persists one IKP record per (commercialActivityId, periode). Runs the 1st of the month at 03:00 UTC.",
+						"cron": "0 3 1 * *",
+						"register": "shillinq",
+						"schema": "IntegralCostPrice",
+						"enabled": true,
+						"handler": "OCA\\Shillinq\\Service\\IntegralCostPriceCalculator::compose"
+					},
+					"wmo-ikp-year-end-lock": {
+						"name": "Year-end IKP definitief lock",
+						"description": "On 31 March of the following fiscal year, aggregates all monthly voorlopig IKP records for the closed FY into a single definitief IKP-YTD record, locked by accountant digital signature (REQ-WMO-002 §year-end lock).",
+						"cron": "0 4 31 3 *",
+						"register": "shillinq",
+						"schema": "IntegralCostPrice",
+						"enabled": true,
+						"handler": "OCA\\Shillinq\\Service\\IntegralCostPriceLockService::lock"
 					}
 				}
 			},
@@ -694,6 +740,16 @@
 						"auditor": {
 							"permissions": ["read"]
 						}
+					}
+				},
+				"x-openregister-event-listeners": {
+					"journal-entry-posted": {
+						"name": "Activity cost allocation splitter",
+						"description": "On JournalEntry.created / .transitioned to status=posted, resolve the geldende OverheadDistributionRule for the posting date, match the CommercialActivity by kostenplaats/kostendrager, and persist an ActivityCostAllocation record carrying the PUBL / MO splits (REQ-WMO-003). Materialise mode (post splits as additional balanced GL lines) is operator-configurable per administration.",
+						"sourceSchema": "JournalEntry",
+						"trigger": "transitioned",
+						"toState": "posted",
+						"handler": "OCA\\Shillinq\\Service\\ActivityCostAllocationSplitter::compose"
 					}
 				}
 			},
@@ -932,6 +988,30 @@
 							"permissions": ["read"]
 						}
 					}
+				},
+				"x-openregister-lifecycle-actions": {
+					"validateTransition": {
+						"trigger": "beforeTransition",
+						"description": "Validate ABB status transition preconditions (e.g. publicatie requires gemeenteblad + datum; geldig requires ACM kenmerk). Implemented by AbbLifecycleService::canTransition.",
+						"handler": "OCA\\Shillinq\\Service\\AbbLifecycleService::canTransition"
+					},
+					"generateTasks": {
+						"trigger": "afterTransition",
+						"description": "Emit the auto-generated task envelope (publish-gemeenteblad, notify-acm, review-bezwaarschriften, evaluate-abb) per REQ-WMO-005 §c.",
+						"handler": "OCA\\Shillinq\\Service\\AbbLifecycleService::generateTasks"
+					},
+					"verifyDrop": {
+						"trigger": "afterTransition",
+						"transitions": ["publicatie"],
+						"description": "On publicatie, look up the gemeenteblad reference via the DROP API (openconnector OC-source) and write the verification envelope back onto dropVerification (REQ-WMO-005 §automatic verification). Fail-soft: an unavailable DROP API logs a verification record with success=false but does NOT block the transition.",
+						"handler": "OCA\\Shillinq\\Service\\DropApiVerificationService::composeLookupRequest"
+					},
+					"flagDependentActivities": {
+						"trigger": "afterTransition",
+						"transitions": ["intrekking", "herziening"],
+						"description": "When an ABB enters intrekking or herziening, flag dependent CommercialActivity records (those whose exemptionBesluitId points at this ABB) for operator review (REQ-WMO-005 §dependents).",
+						"handler": "OCA\\Shillinq\\Service\\AbbLifecycleService::flagDependentActivities"
+					}
 				}
 			},
 			"ACMReport": {
@@ -1085,6 +1165,25 @@
 							"permissions": ["read"]
 						}
 					}
+				},
+				"x-openregister-lifecycle-actions": {
+					"signReport": {
+						"trigger": "beforeTransition",
+						"transitions": ["ready-for-submission"],
+						"description": "On transition draft -> ready-for-submission, apply the concerncontroller's digital signature (NC certificate / PKI fingerprint) and write ondertekenaar + ondertekendOp + signatureFingerprint (REQ-WMO-006 §digital signature).",
+						"handler": "OCA\\Shillinq\\Service\\AcmReportGenerator::sign"
+					},
+					"submitReport": {
+						"trigger": "afterTransition",
+						"transitions": ["verzonden"],
+						"description": "On transition ready-for-submission -> verzonden, set verzondenAanAcm=true, optionally publish to gemeenteblad via openconnector, copy to write-once archive store, begin 7-year retention countdown (REQ-WMO-006 §submission + immutability).",
+						"handler": "OCA\\Shillinq\\Service\\AcmReportGenerator::submit"
+					},
+					"jaarrekeningWiring": {
+						"trigger": "afterCreate",
+						"description": "Wire annual ACM-rapport generation into the bookkeeping-financial-reporting T4 jaarrekening-generator: when an annual ACMReport (period ending in -YTD) is created, the financial-reporting export pipeline includes the WMO-bijlage produced by WmoJaarrekeningBijlageService (REQ-WMO-004 wiring, P1-15).",
+						"handler": "OCA\\Shillinq\\Service\\WmoJaarrekeningBijlageService::compose"
+					}
 				}
 			},
 			"AlertLog": {
@@ -1196,6 +1295,28 @@
 						"auditor": {
 							"permissions": ["read"]
 						}
+					}
+				},
+				"x-openregister-scheduled-workflows": {
+					"wmo-alert-escalation": {
+						"name": "Cross-subsidy alert escalation",
+						"description": "Weekly walker over open AlertLog records. Any alert older than 4 weeks transitions status open -> escalation-due, is reassigned to gemeentesecretaris, and emits an escalation notification (REQ-WMO-007 §escalation).",
+						"cron": "0 5 * * 1",
+						"register": "shillinq",
+						"schema": "AlertLog",
+						"enabled": true,
+						"filter": {
+							"status": ["open"]
+						},
+						"handler": "OCA\\Shillinq\\Service\\CrossSubsidyDetector::escalate"
+					}
+				},
+				"x-openregister-lifecycle-actions": {
+					"resolveAlert": {
+						"trigger": "beforeTransition",
+						"transitions": ["reviewed-no-action", "remediated"],
+						"description": "Validate resolution notes are non-empty and write the operator's motivation onto resolutionNotes (REQ-WMO-007 §resolution).",
+						"handler": "OCA\\Shillinq\\Service\\CrossSubsidyDetector::resolve"
 					}
 				}
 			},
@@ -1315,6 +1436,20 @@
 							"permissions": ["create", "read"]
 						}
 					}
+				},
+				"x-openregister-scheduled-workflows": {
+					"wmo-audit-log-retention-archival": {
+						"name": "WMO audit-log retention archival",
+						"description": "Daily walker over logged WMOAuditLog entries. Entries crossing the 7-year retention boundary transition status logged -> archived; entries may then be purged per Mededingingswet bewaartermijn (REQ-WMO-010 §retention).",
+						"cron": "30 4 * * *",
+						"register": "shillinq",
+						"schema": "WMOAuditLog",
+						"enabled": true,
+						"filter": {
+							"status": ["logged"]
+						},
+						"handler": "OCA\\Shillinq\\Service\\WmoAuditLogService::retentionExpiredState"
+					}
 				}
 			},
 			"MarketBenchmark": {
@@ -1387,6 +1522,13 @@
 						"auditor": {
 							"permissions": ["read"]
 						}
+					}
+				},
+				"x-openregister-lifecycle-actions": {
+					"detectBevoordelingRisk": {
+						"trigger": "afterCreate",
+						"description": "Phase 3 (REQ-WMO-012): when a MarketBenchmark is created, recompute the bevoordeling-risk for the linked CommercialActivity's most recent IKP. If gehanteerdTarief < benchmark median × 0.85 while gehanteerdTarief >= kostprijsPerEenheid, emit a HIGH-severity bevoordeling-risk AlertLog (Art. 25j Mededingingswet).",
+						"handler": "OCA\\Shillinq\\Service\\CrossSubsidyDetector::detectBevoordelingRisk"
 					}
 				}
 			}

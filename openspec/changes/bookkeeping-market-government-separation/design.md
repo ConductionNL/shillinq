@@ -112,3 +112,21 @@ For testing IKP calculation, one seed `integral-cost-price-example-q1-2026.json`
 - marge = €295 - €285 = €10, margin 3.5% — compliant
 
 These seeds are educational; operators' live data accumulates through operation.
+
+## Phase 3 design (deferred Q1–Q2 2027)
+
+### D9 — Activity transitions reuse the existing `state` lifecycle, plus a transitions register
+
+REQ-WMO-008 (publiek ↔ commercieel) is implemented as: a new `ActivityTransition` register record carrying `commercialActivityId`, `transitionDate`, `direction` (publiek-to-commercieel / commercieel-to-publiek), `openingsbalans` (marktwaarde + boekwaarde + delta), `marktwaardeProcedure` (independent valuation), `acmMeldingDeadline` (transition+28d). On save, an internal-sale GLTransaction is auto-posted at marktwaarde from the publiek dimension to the MO dimension, with the delta booked as bevoordeling-risk control entry. First post-transition IKP is marked `status: voorlopig-transitie` (enum value already in the IntegralCostPrice schema). Phase 3 build implements `ActivityTransitionService::generateOpeningsbalans`.
+
+### D10 — Governance coupling falls through to a freeform raads-besluit reference
+
+REQ-WMO-009 governance coupling is opt-in: if the `bookkeeping-governance` spec is installed, the `AlgemeenBelangBesluit.raadsBesluitId` field becomes a foreign-key dropdown into the governance register and inherits the raads-handtekening + griffier-handtekening to the WMO audit trail. Without governance installed, the field stays freeform string and operators record a 2-eye verification note on the ABB. No service layer change is required; the dual-mode is encoded as a `oneOf` schema in the Phase-3 register fragment.
+
+### D11 — Multi-bestuursorgaan support uses the existing `deelnemers[]` array
+
+REQ-WMO-011 is partially implemented in Phase 1: the `CommercialActivity.deelnemers[]` field already accepts an array of `{organisatie, aandeelPercentage, kostenplaatsCode, kostendragerCode, administrationId, exemptionBesluitId}` entries. Phase 3 wiring activates per-deelnemer cost allocation in `ActivityCostAllocationSplitter` (an additional outer loop over deelnemers, multiplying ratios by `aandeelPercentage / 100`), per-deelnemer ABB validation in the `wmo-cross-subsidy-detector` workflow, and per-deelnemer jaarrekening / ACM-rapport segmentation.
+
+### D12 — Market benchmark sourcing through openconnector OC-sources
+
+REQ-WMO-012 sourcing integrations (BDO Benchmark, COELO) ship as openconnector source slugs `bdo-benchmark` / `coelo-tariefoverzicht`. The Phase 3 build adds a scheduled workflow `wmo-benchmark-poll` on a quarterly cadence (`0 0 1 */3 *`) that pulls fresh benchmarks per active activity. Until then, operators enter benchmarks manually through the **Market Benchmarks** index page (Phase 1+2 surface). The bevoordeling-risk detector is already live in `CrossSubsidyDetector::detectBevoordelingRisk` and fires on every MarketBenchmark create via the declarative `x-openregister-lifecycle-actions.afterCreate` hook on the MarketBenchmark schema.
