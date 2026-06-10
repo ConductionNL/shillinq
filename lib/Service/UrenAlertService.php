@@ -131,6 +131,13 @@ final class UrenAlertService
      */
     public function bouwKwartaalAlert(array $year, string $datum): array
     {
+        if ($this->isKwartaalEinde(datum: $datum) === false) {
+            $this->logger->debug(
+                'UrenAlertService: bouwKwartaalAlert called on non-quarter-end date',
+                ['datum' => $datum]
+            );
+        }
+
         $alert = $this->seedAlert(
             year: $year,
             type: 'KWARTAAL_EINDE',
@@ -166,6 +173,13 @@ final class UrenAlertService
      */
     public function bouwOmslagAlert(array $year, string $oldStatus, string $newStatus): array
     {
+        if ($this->isOmslag(oldStatus: $oldStatus, newStatus: $newStatus) === false) {
+            $this->logger->debug(
+                'UrenAlertService: bouwOmslagAlert called for non-escalating transition',
+                ['oldStatus' => $oldStatus, 'newStatus' => $newStatus]
+            );
+        }
+
         $type     = ($newStatus === 'KRITIEK') ? 'OMSLAG_KRITIEK' : 'OMSLAG_RISICO';
         $urgentie = ($newStatus === 'KRITIEK') ? 'KRITIEK' : 'WAARSCHUWING';
 

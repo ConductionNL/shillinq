@@ -95,6 +95,9 @@ class DBAController extends Controller
     #[NoAdminRequired]
     public function scoreIntake(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
         $body = $this->jsonBody();
         $total = $this->scoreCalc->computeTotal($body);
         $band = DBAConstants::bandFromScore($total);
@@ -131,7 +134,7 @@ class DBAController extends Controller
         }
 
         $register = $this->register();
-        $opdracht = $this->guardedFind(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
+        $opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
         if ($opdracht === null) {
             return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
@@ -176,6 +179,9 @@ class DBAController extends Controller
     #[NoAdminRequired]
     public function vbarCheck(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
         $body = $this->jsonBody();
         $bedragCents = (int) ($body['bedragCents'] ?? 0);
         $uren = (float) ($body['uren'] ?? 0.0);
@@ -223,7 +229,7 @@ class DBAController extends Controller
             return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
         }
         $register = $this->register();
-        $opdracht = $this->guardedFind(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
+        $opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
         if ($opdracht === null) {
             return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
@@ -261,7 +267,7 @@ class DBAController extends Controller
             return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
         }
         $register = $this->register();
-        $opdracht = $this->guardedFind(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
+        $opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
         if ($opdracht === null) {
             return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
@@ -291,6 +297,9 @@ class DBAController extends Controller
     #[NoAdminRequired]
     public function setMode(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+        }
         $body = $this->jsonBody();
         $mode = (string) ($body['mode'] ?? '');
         $administrationId = (string) ($body['administrationId'] ?? '');
@@ -330,7 +339,7 @@ class DBAController extends Controller
             return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
         }
         $register = $this->register();
-        $opdracht = $this->guardedFind(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
+        $opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
         if ($opdracht === null) {
             return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
@@ -366,7 +375,7 @@ class DBAController extends Controller
             return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
         }
         $register = $this->register();
-        $dossier = $this->guardedFind(objectService: $os, register: $register, schema: 'DBAEvidenceDossier', id: $dossierId);
+        $dossier = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAEvidenceDossier', id: $dossierId);
         if ($dossier === null) {
             return $this->error(message: 'Dossier niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
@@ -405,7 +414,7 @@ class DBAController extends Controller
             return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
         }
         $register = $this->register();
-        $opdracht = $this->guardedFind(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
+        $opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
         if ($opdracht === null) {
             return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
@@ -440,7 +449,7 @@ class DBAController extends Controller
             return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
         }
         $register = $this->register();
-        $opdracht = $this->guardedFind(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
+        $opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
         if ($opdracht === null) {
             return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
@@ -479,7 +488,7 @@ class DBAController extends Controller
         $dossier = null;
         $dossierId = (string) ($opdracht['evidenceDossierId'] ?? '');
         if ($dossierId !== '') {
-            $dossier = $this->guardedFind(objectService: $os, register: $register, schema: 'DBAEvidenceDossier', id: $dossierId);
+            $dossier = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAEvidenceDossier', id: $dossierId);
         }
 
         $payload = [
@@ -573,7 +582,7 @@ class DBAController extends Controller
      *
      * @return array<string,mixed>|null The object payload, or null when not found.
      */
-    private function guardedFind(object $objectService, string $register, string $schema, string $id): ?array
+    private function findEntityOrNull(object $objectService, string $register, string $schema, string $id): ?array
     {
         try {
             $entity = $objectService->setRegister($register)->setSchema($schema)->find($id);
@@ -597,7 +606,7 @@ class DBAController extends Controller
             }
         }
         return null;
-    }//end guardedFind()
+    }//end findEntityOrNull()
 
     /**
      * Guard per-object authorization. The currently active user MUST belong to the

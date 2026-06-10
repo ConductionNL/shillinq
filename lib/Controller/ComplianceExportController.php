@@ -123,9 +123,9 @@ class ComplianceExportController extends Controller
         }
 
         $uid       = $user->getUID();
-        $isAdmin   = $this->groupManager->isAdmin($uid);
-        $isAuditor = $this->groupManager->isInGroup($uid, self::AUDITOR_GROUP);
-        if ($isAdmin === false && $isAuditor === false) {
+        $adminBypass = $this->groupManager->isAdmin($uid);
+        $isAuditor   = $this->groupManager->isInGroup($uid, self::AUDITOR_GROUP);
+        if ($adminBypass !== true && $isAuditor !== true) {
             return new JSONResponse(
                 ['error' => 'Compliance export requires the auditor group (REQ-RAP-005)'],
                 Http::STATUS_FORBIDDEN
