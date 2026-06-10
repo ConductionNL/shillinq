@@ -27,7 +27,7 @@ This is a **major spec** with 11 requirements spanning data model, validations, 
 - [x] **Task 1.12** — Declare `Subsidie` schema with fields: `subsidie_soort` (enum: verstrekt-incidenteel|verstrekt-structureel|ontvangen-rijk|ontvangen-provincie|ontvangen-eu), `regeling_naam` (string), `sisa_indicator` (string, nullable, e.g. "H8"), `verstrekker_of_ontvanger` (string), `beschikking_nummer` (string), `bedrag_verleend` (decimal 15,2), `bedrag_vastgesteld` (decimal 15,2, nullable), `bedrag_gerealiseerd` (decimal 15,2, nullable), `taakveld` (ref[Taakveld]), `economische_categorie` (ref[EconomischeCategorie]), `verleningsdatum` (date), `beëindigingsdatum` (date, nullable). Register: `bookkeeping-bbv`. Unique: `(administrationId, beschikking_nummer)`.
 - [x] **Task 1.13** — Declare `Begrotingswijziging` schema with fields: `nummer` (string, PK per admin), `programma` (ref[Programma]), `taakveld` (ref[Taakveld]), `economische_categorie` (ref[EconomischeCategorie]), `bedrag_oorspronkelijk` (decimal 15,2), `bedrag_wijziging` (decimal 15,2), `bedrag_nieuw` (decimal 15,2), `reden` (text), `raadsbesluit_nummer` (string), `raadsbesluit_datum` (date), `status` (enum: concept|vastgesteld|verwerkt), `effectievedatum` (date). Register: `bookkeeping-bbv`. Unique: `(administrationId, nummer)`.
 - [x] **Task 1.14** — Extend T1 `JournalEntry` schema to add optional field `rechtmatigheid_status` (enum: compliant|afwijking_within_tolerance|afwijking_outside_tolerance), per REQ-BBV-009. Default: `compliant`.
-- [ ] **Task 1.15** — Update `openspec/architecture/adr-000-data-model.md` with the 11 new entities + 2 schema extensions. Note `Primary spec: bookkeeping-bbv-compliance` for each.
+- [x] **Task 1.15** — Update `openspec/architecture/adr-000-data-model.md` with the 11 new entities + 2 schema extensions. Note `Primary spec: bookkeeping-bbv-compliance` for each.
 
 ## Phase 2: Lifecycle Validations & Constraints
 
@@ -98,7 +98,7 @@ This is a **major spec** with 11 requirements spanning data model, validations, 
 - [x] **Task 6.8** — Add Dutch (`nl_NL`) translation strings for: `BBV`, `Taakveld`, `Programma`, `Paragraaf`, `Economische Categorie`, `RGS-decentraal`, `Meerjarenraming`, `Sluitend`, `Weerstandsvermogen`, `Reserve`, `Voorziening`, `Materiële Vaste Activa`, `Rechtmatigheidsverantwoording`, `Iv3-aanlevering`, `SiSa-bijlage`, and all 7 paragraaf types.
 - [x] **Task 6.9** — Add English (`en_US`) translation strings (parallel to Dutch set).
 - [ ] **Task 6.10** — Commit screenshots of key UI pages (Programmaplan, Meerjarenraming, Paragrafen, MVA-register, Iv3-dashboard) to `docs/images/bbv-*.png`.
-- [ ] **Task 6.11** — Create `docs/journeydoc/bbv-gemeente-controller-journey.md` per ADR-030 (persona: gemeente-controller). Scenario: set up new BBV-tenant, author programme budget, input meerjarenraming, validate sluitend, fill paragrafen, export jaarrekening.
+- [x] **Task 6.11** — Create `docs/journeys/gemeente-controller-bbv-journey.md` per ADR-030 (persona: gemeente-controller). Scenario: set up new BBV-tenant, author programme budget, input meerjarenraming, validate sluitend, fill paragrafen, export jaarrekening. Filename uses the canonical `docs/journeys/` directory (the repo's pattern) instead of the spec's `docs/journeydoc/` proposal.
 
 ## Build-status note (hydra build #51)
 

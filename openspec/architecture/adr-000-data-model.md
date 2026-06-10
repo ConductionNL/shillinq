@@ -7935,3 +7935,272 @@ existing data-model entry is rewritten.
 **Cites:** ADR-022 (audit-trail immutable on every register), ADR-031
 (orchestration-exception path for `SoftCloseExecutor`), ADR-037 (modular
 register fragments).
+
+## bookkeeping-bbv-compliance (T3, 2026-06-10)
+
+The `bookkeeping-bbv-compliance` change declares the data model for
+the Besluit Begroting en Verantwoording (BBV) regime that gemeenten,
+provincies and waterschappen must follow. Per ADR-012 dedup, three
+sibling-owned schemas (`Account`, `GLLine`, `Iv3Export`) are
+**extended/referenced, not redeclared**; the eleven entities below
+are net-new and unique to this change. `BBVProgramma` from the
+sibling `bookkeeping-waterschappen-bbv-variant` (declared above in
+this document) coexists with the new `Programma` schema — the
+waterschappen variant retains the `programmaStructure` discriminator
+and `kostentoedeling` aggregation, while the gemeente/provincie
+`Programma` follows the BBV art. 8 doelstelling / beleidsindicator
+shape. Cross-resolution at runtime is by
+`(administrationType, bbvVariant)`.
+
+### Taakveld
+**Primary spec:** bookkeeping-bbv-compliance
+**Schema.org:** `schema:DefinedTerm`
+_Statutorily-fixed activity classification per Iv3-informatievoorschrift.
+53 gemeente-codes, 14 provinciale codes, 10–12 waterschap-codes.
+Doubles as the enum source for `Account.taakveld` and `GLLine.taakveld`.
+Composite uniqueness key `(code, overheidslaag)`; the same numeric
+code (e.g. `0.10`) recurs across overheidslagen with different naam._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Taakveld code (e.g. `0.10`, `2.1`) |
+| naam | string | Yes | Taakveld naam |
+| hoofdfunctie | int | Yes | Hoofdfunctie code (0-8) |
+| hoofdfunctieNaam | string | Yes | Hoofdfunctie naam |
+| omschrijvingIv3 | text | No | Iv3 omschrijving |
+| overheidslaag | enum | Yes | gemeente / provincie / waterschap |
+| verplichteEconomischeCategorieen | array[ref[EconomischeCategorie]] | No | Restricted set, enforced by REQ-BBV-002 |
+| geldigVanaf | date | Yes | First date this code is valid |
+| geldigTot | date | No | Last date this code is valid (nullable) |
+
+**Uniqueness:** `(code, overheidslaag)`.
+
+### EconomischeCategorie
+**Primary spec:** bookkeeping-bbv-compliance
+**Schema.org:** `schema:DefinedTerm`
+_Iv3 economische categorie (kostensoort), hoofdgroepen 1-8.
+Hierarchical via `parentCode`. Required next to `taakveld` on every
+exploitatie posting (REQ-BBV-002)._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Categorie code (e.g. `1.1`) |
+| naam | string | Yes | Categorie naam |
+| niveau | int | Yes | 1, 2 or 3 |
+| parentCode | string | No | FK to EconomischeCategorie.code |
+| batenOfLasten | enum | Yes | baten / lasten / balans |
+| iv3Verplicht | boolean | No | Whether iv3-export rolls this up |
+
+**Uniqueness:** `code`.
+
+### RgsDecentraalRekening
+**Primary spec:** bookkeeping-bbv-compliance
+_Shared (cross-tenant) catalogue mapping each RGS-account to its
+RGS-decentraal code and default BBV-categorisering. Seeded from
+`lib/Settings/seeds/rgs-decentraal-2025.json`. In the live register
+this catalogue surfaces as `BbvAccountMapping` (the name that
+`Iv3Export.buckets` already references); per ADR-012 the schema is
+not redeclared here — the field shape lives on `BbvAccountMapping`
+in the section above._
+
+### Programma
+**Primary spec:** bookkeeping-bbv-compliance
+**Schema.org:** `schema:DefinedTerm`
+_Council-approved BBV programma per BBV art. 8. Distinct from
+`BBVProgramma` (waterschappen-variant); coexists by
+`(administrationType, bbvVariant)`. One row per
+`(administrationId, nummer, boekjaar)`._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| nummer | int | Yes | 0–99 |
+| naam | string | Yes | Programma naam |
+| omschrijving | text | No | Operator narrative |
+| portefeuillehouder | string | No | Bestuurder |
+| taakvelden | array[ref[Taakveld]] | Yes | Covered taakvelden |
+| doelstellingen | array[object{wat, wanneer, kpi}] | No | Doelstelling rows |
+| beleidsindicatoren | array[ref[BeleidsIndicator]] | No | Linked indicators |
+| boekjaar | int | Yes | Cyclus jaar |
+| versie | enum | Yes | begroting / jaarrekening / burap-1 / burap-2 / marap / tussenrapportage |
+| raadsbesluitNummer | string | No | Sluitend-override anchor (REQ-BBV-003) |
+| raadsbesluitDatum | date | No | Sluitend-override anchor |
+| administrationId | string | Yes | FK to Administration |
+
+**Uniqueness:** `(administrationId, nummer, boekjaar)`.
+
+### BeleidsIndicator
+**Primary spec:** bookkeeping-bbv-compliance
+_Vaste of administratie-eigen beleidsindicator gekoppeld aan één
+Programma. De 39 wettelijke indicatoren worden geseed; operators
+mogen lokale indicatoren toevoegen._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Indicator code |
+| naam | string | Yes | Indicator naam |
+| eenheid | string | Yes | Meeteenheid (bijv. %, aantal) |
+| bron | string | Yes | Bron (bijv. CBS, gemeente) |
+| waarde | number | No | Vastgestelde waarde |
+| programma | ref[Programma] | Yes | Linked programma |
+
+**Uniqueness:** `(administrationId, code, programma)`.
+
+### MeerjarenBudget
+**Primary spec:** bookkeeping-bbv-compliance
+_Vierjaars budget per programma × taakveld × economische_categorie
+per horizon (T..T+3). All amounts integer-cent. Drives REQ-BBV-003
+sluitend-check op `Programma.publish`._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| programma | ref[Programma] | Yes | FK |
+| taakveld | ref[Taakveld] | Yes | FK |
+| economischeCategorie | ref[EconomischeCategorie] | Yes | FK |
+| boekjaar | int | Yes | Cyclus T |
+| bedragBaten | decimal(15,2) | Yes | Cents |
+| bedragLasten | decimal(15,2) | Yes | Cents |
+| versie | enum | Yes | primitief / na-wijziging / realisatie |
+| begrotingswijziging | ref[Begrotingswijziging] | No | Source of mutation |
+| meerjarenHorizon | int | Yes | 0..3 |
+| toelichting | text | No | Per-row narrative |
+| stelselwijziging | boolean | No | Default false |
+
+**Uniqueness:** `(administrationId, programma, taakveld, economischeCategorie, boekjaar, meerjarenHorizon, versie)`.
+
+### Reserve
+**Primary spec:** bookkeeping-bbv-compliance
+_Eigen-vermogen earmark. Mutations routed via taakveld 0.10
+(REQ-BBV-004). `algemene` OR `bestemming`._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| naam | string | Yes | Reserve naam |
+| soort | enum | Yes | algemeen / bestemming |
+| doel | text | Conditional | Required when soort = bestemming |
+| raadsbesluitInstelling | string | Yes | Instellingsbesluit reference |
+| plafond | decimal(15,2) | No | Cents |
+| bodem | decimal(15,2) | No | Cents |
+| looptijdEinde | date | No | End date |
+| programma | ref[Programma] | No | Linked programma (optional) |
+| rentetoerekening | boolean | No | Default false |
+| saldoBeginJaar | decimal(15,2) | Yes | Cents |
+| saldoEindJaar | decimal(15,2) | No | Computed, cents |
+
+**Uniqueness:** `(administrationId, naam)`.
+
+### Voorziening
+**Primary spec:** bookkeeping-bbv-compliance
+_Verplichting earmark per BBV art. 44 (categorieën a/b/c/d).
+Linked to een gekoppeld taakveld dat alle mutaties moet dragen
+(REQ-BBV-004)._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| naam | string | Yes | Voorziening naam |
+| bbvArtikel44Categorie | enum | Yes | a / b / c / d |
+| onderbouwingDocument | ref[Document] | Yes | Onderbouwingsdocument |
+| actualisatieFrequentieJaar | int | Yes | Frequentie van actualisering |
+| volgendeActualisatie | date | Yes | Volgende actualisatie-datum |
+| taakveld | ref[Taakveld] | Yes | Gekoppelde taakveld |
+| saldoBeginJaar | decimal(15,2) | Yes | Cents |
+| dotatiesJaar | decimal(15,2) | Yes | Cents |
+| vrijvallenJaar | decimal(15,2) | Yes | Cents |
+| saldoEindJaar | decimal(15,2) | No | Computed, cents |
+
+**Uniqueness:** `(administrationId, naam)`.
+
+### MaterieleVasteActiva
+**Primary spec:** bookkeeping-bbv-compliance
+_Capitalised investment with depreciation schedule. Drives the
+onderhoud-kapitaalgoederen paragraaf (REQ-BBV-007 D-3) and the
+activeringsgrens guard (REQ-BBV-005)._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| omschrijving | string | Yes | Asset naam |
+| mvaCategorie | enum | Yes | economisch-nut / economisch-nut-heffing / maatschappelijk-nut |
+| aanschafwaarde | decimal(15,2) | Yes | Cents |
+| ingebruiknameDatum | date | Yes | Activerings-datum |
+| afschrijvingsmethode | enum | Yes | lineair / annuitair |
+| afschrijvingstermijnJaar | int | Yes | Termijn |
+| restwaarde | decimal(15,2) | Yes | Cents |
+| renteOmslagPercentage | decimal(5,3) | No | Percentage |
+| taakveld | ref[Taakveld] | Yes | Programma-link |
+| kredietbesluit | string | Yes | Raadsbesluit reference |
+| componentenMethode | boolean | No | Default false |
+| subsidieVanDerden | decimal(15,2) | No | Cents, deducted from base |
+| boekwaardeBeginJaar | decimal(15,2) | Yes | Cents |
+| afschrijvingJaar | decimal(15,2) | No | Computed, cents |
+
+**Uniqueness:** `(administrationId, omschrijving, ingebruiknameDatum)`.
+
+### Subsidie
+**Primary spec:** bookkeeping-bbv-compliance
+_Subsidie-record gevoed door de SiSa-bijlage (verstrekt of
+ontvangen). Re-uses the existing `Subsidie` schema declared above
+in this document; the BBV change adds `sisaIndicator` as the SiSa
+joining field (additive)._
+
+### Begrotingswijziging
+**Primary spec:** bookkeeping-bbv-compliance
+_Amendment op een vastgestelde meerjarenraming. Eén row per
+raadsbesluit; status concept → vastgesteld → verwerkt drijft de
+`BegrotingswijzigingStacker` die nieuwe MeerjarenBudget rows
+genereert met versie `na-wijziging`._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| nummer | string | Yes | PK per administratie |
+| programma | ref[Programma] | Yes | FK |
+| taakveld | ref[Taakveld] | Yes | FK |
+| economischeCategorie | ref[EconomischeCategorie] | Yes | FK |
+| bedragOorspronkelijk | decimal(15,2) | Yes | Cents |
+| bedragWijziging | decimal(15,2) | Yes | Cents |
+| bedragNieuw | decimal(15,2) | Yes | Cents |
+| reden | text | Yes | Toelichting |
+| raadsbesluitNummer | string | Yes | Anchor |
+| raadsbesluitDatum | date | Yes | Anchor |
+| status | enum | Yes | concept / vastgesteld / verwerkt |
+| effectievedatum | date | Yes | Geldig vanaf |
+
+**Uniqueness:** `(administrationId, nummer)`.
+
+### Paragraaf
+**Primary spec:** bookkeeping-bbv-compliance
+_Eén van de zeven verplichte paragrafen in de jaarrekening
+(BBV art. 9). Een Jaarrekening kan niet worden vastgesteld
+zonder alle zeven (REQ-BBV-007 paragraaf-completeness gate)._
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| type | enum | Yes | lokale-heffingen / weerstandsvermogen / onderhoud-kapitaalgoederen / financiering / bedrijfsvoering / verbonden-partijen / grondbeleid |
+| boekjaar | int | Yes | Cyclus jaar |
+| status | enum | Yes | draft / concept / vastgesteld |
+| voltooiingPercentage | int | No | 0–100, computed |
+| autoVelden | array[object{naam, waarde}] | No | Engine-populated |
+| narratief | text | No | Operator narrative |
+| administrationId | string | Yes | FK |
+
+**Uniqueness:** `(administrationId, type, boekjaar)`.
+
+### Schema extensions
+
+- **Account** (T1 / bookkeeping-operations): four additive optional
+  fields — `rgsDecentraalCode` (ref[BbvAccountMapping]),
+  `taakveld` (ref[Taakveld]), `economischeCategorie`
+  (ref[EconomischeCategorie]) and `bbvClassificatie` (enum:
+  exploitatie / investering / reserve / voorziening /
+  balans-overig). Required-on-write only for BBV-administrations
+  (`administrationType ∈ {gemeente, provincie, waterschap}`); non-BBV
+  tenants bypass via `BbvComplianceGuard`.
+- **JournalEntry** (T1 / bookkeeping-operations): one additive
+  optional field — `rechtmatigheidStatus` (enum: compliant /
+  afwijking_within_tolerance / afwijking_outside_tolerance, default
+  `compliant`). Driven by the per-posting stamp logic described in
+  REQ-BBV-009 / `bbv-rechtmatigheid.md`.
+
+**Cites:** ADR-012 (no-duplicate schemas), ADR-022 (audit-trail
+immutable on every register), ADR-031 (PHP guards remain a
+legitimate seam — `BbvComplianceGuard` is the single thin seam),
+ADR-032 (T3 spec sizing), ADR-037 (modular register fragments).
+
