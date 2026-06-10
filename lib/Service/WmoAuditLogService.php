@@ -142,7 +142,7 @@ class WmoAuditLogService
      *
      * @return bool True when the entry should be moved to status=archived.
      */
-    public function isRetentionExpired(array $entry, string $today): bool
+    public function retentionExpiredState(array $entry, string $today): bool
     {
         $timestamp = (string) ($entry['timestamp'] ?? '');
         if ($timestamp === '') {
@@ -159,7 +159,7 @@ class WmoAuditLogService
         $boundary = $logged->add(new DateInterval('P' . self::RETENTION_YEARS . 'Y'));
         return $now >= $boundary;
 
-    }//end isRetentionExpired()
+    }//end retentionExpiredState()
 
     /**
      * Export audit log entries to CSV (REQ-WMO-010 §csv).

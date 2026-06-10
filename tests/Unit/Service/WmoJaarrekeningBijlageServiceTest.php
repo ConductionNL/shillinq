@@ -103,7 +103,7 @@ final class WmoJaarrekeningBijlageServiceTest extends TestCase
     public function testValidateCompliance(): void
     {
         $bijlage = ['activiteiten' => [['compliant' => true], ['compliant' => false], ['compliant' => true]]];
-        $result  = $this->svc->validateCompliance($bijlage);
+        $result  = $this->svc->summariseCompliance($bijlage);
         self::assertSame(2, $result['compliant']);
         self::assertSame(1, $result['nonCompliant']);
         self::assertFalse($result['overallCompliant']);

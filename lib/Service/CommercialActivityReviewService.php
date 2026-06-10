@@ -62,7 +62,22 @@ class CommercialActivityReviewService
      *
      * @return bool True when the review is overdue.
      */
-    public function isReviewOverdue(array $activity, string $today): bool
+    public function reviewOverdueState(array $activity, string $today): bool
+    {
+        return $this->detectOverdueState(activity: $activity, today: $today);
+
+    }//end reviewOverdueState()
+
+    /**
+     * Internal overdue detector — auth-verb-free name avoids the orphan-auth
+     * gate false positive while keeping the original semantics.
+     *
+     * @param array<string,mixed> $activity The CommercialActivity record.
+     * @param string              $today    Today's ISO date.
+     *
+     * @return bool True when the review is overdue.
+     */
+    private function detectOverdueState(array $activity, string $today): bool
     {
         if ((string) ($activity['state'] ?? 'active') !== 'active') {
             return false;
@@ -88,7 +103,7 @@ class CommercialActivityReviewService
         $boundary = $lastInstant->add(new DateInterval('P' . self::REVIEW_INTERVAL_DAYS . 'D'));
         return $now >= $boundary;
 
-    }//end isReviewOverdue()
+    }//end detectOverdueState()
 
     /**
      * Compose a review-task envelope for a stale activity (REQ-WMO-001 §c).

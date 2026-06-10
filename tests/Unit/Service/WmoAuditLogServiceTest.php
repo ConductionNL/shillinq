@@ -96,10 +96,10 @@ final class WmoAuditLogServiceTest extends TestCase
     public function testIsRetentionExpired(): void
     {
         $entry = ['timestamp' => '2018-01-01T00:00:00Z'];
-        self::assertTrue($this->svc->isRetentionExpired($entry, '2026-01-15'));
+        self::assertTrue($this->svc->retentionExpiredState($entry, '2026-01-15'));
 
         $fresh = ['timestamp' => '2024-01-01T00:00:00Z'];
-        self::assertFalse($this->svc->isRetentionExpired($fresh, '2026-01-15'));
+        self::assertFalse($this->svc->retentionExpiredState($fresh, '2026-01-15'));
 
     }//end testIsRetentionExpired()
 

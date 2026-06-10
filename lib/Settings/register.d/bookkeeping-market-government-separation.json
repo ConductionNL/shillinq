@@ -1448,7 +1448,7 @@
 						"filter": {
 							"status": ["logged"]
 						},
-						"handler": "OCA\\Shillinq\\Service\\WmoAuditLogService::isRetentionExpired"
+						"handler": "OCA\\Shillinq\\Service\\WmoAuditLogService::retentionExpiredState"
 					}
 				}
 			},

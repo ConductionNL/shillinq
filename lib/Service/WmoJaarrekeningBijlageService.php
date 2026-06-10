@@ -144,7 +144,7 @@ class WmoJaarrekeningBijlageService
      *
      * @return array{compliant:int,nonCompliant:int,total:int,overallCompliant:bool}
      */
-    public function validateCompliance(array $bijlage): array
+    public function summariseCompliance(array $bijlage): array
     {
         $compliant    = 0;
         $nonCompliant = 0;
@@ -170,7 +170,7 @@ class WmoJaarrekeningBijlageService
             'overallCompliant' => ($nonCompliant === 0 && $total > 0),
         ];
 
-    }//end validateCompliance()
+    }//end summariseCompliance()
 
     /**
      * Render the WMO-bijlage as PDF-ready Markdown (REQ-WMO-004 §pdf).

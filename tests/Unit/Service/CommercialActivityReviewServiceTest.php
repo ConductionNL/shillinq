@@ -54,7 +54,7 @@ final class CommercialActivityReviewServiceTest extends TestCase
     public function testStaleActivityIsOverdue(): void
     {
         $activity = ['state' => 'active', 'lastReviewedAt' => '2024-12-31T00:00:00Z'];
-        self::assertTrue($this->svc->isReviewOverdue($activity, '2026-01-15'));
+        self::assertTrue($this->svc->reviewOverdueState($activity, '2026-01-15'));
 
     }//end testStaleActivityIsOverdue()
 
@@ -64,7 +64,7 @@ final class CommercialActivityReviewServiceTest extends TestCase
     public function testFreshReviewIsNotOverdue(): void
     {
         $activity = ['state' => 'active', 'lastReviewedAt' => '2025-12-01T00:00:00Z'];
-        self::assertFalse($this->svc->isReviewOverdue($activity, '2026-01-15'));
+        self::assertFalse($this->svc->reviewOverdueState($activity, '2026-01-15'));
 
     }//end testFreshReviewIsNotOverdue()
 
@@ -74,7 +74,7 @@ final class CommercialActivityReviewServiceTest extends TestCase
     public function testPausedActivitiesAreSkipped(): void
     {
         $activity = ['state' => 'paused', 'lastReviewedAt' => '2024-12-31T00:00:00Z'];
-        self::assertFalse($this->svc->isReviewOverdue($activity, '2026-01-15'));
+        self::assertFalse($this->svc->reviewOverdueState($activity, '2026-01-15'));
 
     }//end testPausedActivitiesAreSkipped()
 
@@ -84,7 +84,7 @@ final class CommercialActivityReviewServiceTest extends TestCase
     public function testNeverReviewedFallbackToStart(): void
     {
         $activity = ['state' => 'active', 'startDatum' => '2024-01-15'];
-        self::assertTrue($this->svc->isReviewOverdue($activity, '2026-01-16'));
+        self::assertTrue($this->svc->reviewOverdueState($activity, '2026-01-16'));
 
     }//end testNeverReviewedFallbackToStart()
 
