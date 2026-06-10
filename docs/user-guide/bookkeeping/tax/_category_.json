@@ -1,0 +1,11 @@
+{
+	"label": "Tax",
+	"position": 9,
+	"collapsible": true,
+	"collapsed": true,
+	"link": {
+		"type": "generated-index",
+		"title": "Tax administration",
+		"description": "Day-to-day tax administration flows in Shillinq — Vpb (Vennootschapsbelasting / Dutch corporate tax) deadline management, payment tracking, and quarterly statement aggregation."
+	}
+}
