@@ -102,10 +102,7 @@
 							"description": "Peer-review voltooid (geen unresolved wijziging-gevraagd); college kan verklaring ondertekenen (REQ-ENSIA-004 + REQ-ENSIA-006). ENSIAValidationGuard blokkeert deze transitie zolang er een Evaluatievraag in peerReviewStatus=wijziging-gevraagd staat.",
 							"roles": ["proces-eigenaar"],
 							"preconditions": [
-								{
-									"guard": "OCA\\Shillinq\\Lifecycle\\ENSIAValidationGuard::collegeAkkoordAllowed",
-									"description": "Block college-akkoord while any child Evaluatievraag has peerReviewStatus=wijziging-gevraagd unresolved (REQ-ENSIA-004)."
-								}
+								"OCA\\Shillinq\\Lifecycle\\ENSIAValidationGuard::collegeAkkoordAllowed"
 							]
 						},
 						"indienen": {
@@ -267,6 +264,12 @@
 						"peer-reviewer": {"permissions": ["read", "update"]},
 						"auditor": {"permissions": ["read"]}
 					}
+				},
+				"x-openregister-preconditions": {
+					"persist": [
+						"OCA\\Shillinq\\Lifecycle\\ENSIAValidationGuard::maturityEvidenceSatisfied",
+						"OCA\\Shillinq\\Lifecycle\\ENSIAValidationGuard::postPeerReviewReasonRequired"
+					]
 				},
 				"x-openregister-audit-trail": {
 					"enabled": true,
