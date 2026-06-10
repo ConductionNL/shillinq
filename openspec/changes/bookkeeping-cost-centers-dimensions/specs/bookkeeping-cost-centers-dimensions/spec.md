@@ -7,7 +7,7 @@
 
 ## ADDED Requirements
 
-### REQ-CD-001: The system SHALL store analytical dimensions as OpenRegister-managed registers declared in the app manifest
+### Requirement: REQ-CD-001 — The system SHALL store analytical dimensions as OpenRegister-managed registers declared in the app manifest
 
 Cost centers, projects, and custom analytical dimensions MUST be declared as registers in the app configuration (e.g., `lib/Settings/shillinq_register.json`) and surfaced through `src/manifest.json` per ADR-024. The set of supported dimension types MUST be open: an administration MAY add a custom dimension register (e.g., "region", "product line", "department") by declaring it the same way, without code changes to the bookkeeping PHP layer (per ADR-022 — consume OR's register abstraction rather than write a parallel dimension table).
 
@@ -23,7 +23,9 @@ Cost centers, projects, and custom analytical dimensions MUST be declared as reg
 - **WHEN** the manifest declares an index/detail page for it
 - **THEN** the dimension MUST be selectable from the GL line entry form alongside the built-in cost-center and project dimensions, with no bookkeeping PHP edits.
 
-### REQ-CD-002: The `CostCenter` schema SHALL declare a fixed minimum field set with hierarchy support
+### Requirement: REQ-CD-002 — The `CostCenter` schema SHALL declare a fixed minimum field set with hierarchy support
+
+The `CostCenter` schema MUST declare the following fixed minimum field set, and the `Project` schema MUST declare an equivalent shape (code, name, parentCode for hierarchy, manager, budget, status, administrationId) for project-based analytical accounting.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -44,7 +46,7 @@ The `Project` schema MUST declare an equivalent shape (code, name, parentCode fo
 - **WHEN** the child's `parentCode` is set to `CC-001`
 - **THEN** OR's relation engine MUST resolve the parent on read; **AND** the segment P&L (per REQ-CD-004) MUST roll child amounts up to the parent.
 
-### REQ-CD-003: The `GLLine` schema SHALL carry optional dimension references additively
+### Requirement: REQ-CD-003 — The `GLLine` schema SHALL carry optional dimension references additively
 
 The tier-1 `GLLine` schema MUST be extended additively with the following optional fields:
 
@@ -68,7 +70,7 @@ The `dimensions` map MUST be validated per registered analytical dimension (each
 - **WHEN** a `GLLine` is saved with `dimensions: {"region": "NL"}`
 - **THEN** the save MUST fail with an "unknown dimension value" error.
 
-### REQ-CD-004: The system SHALL expose a segment P&L derived from dimension-tagged GL lines via `x-openregister-aggregations`
+### Requirement: REQ-CD-004 — The system SHALL expose a segment P&L derived from dimension-tagged GL lines via `x-openregister-aggregations`
 
 Per ADR-031, segment P&L (P&L broken down by cost-center, project, or custom dimension) MUST be declared as `x-openregister-aggregations` on `GLLine` keyed by (`fiscalYearId`, `accountNumber`, dimension code). The aggregation MUST be consumable by:
 
@@ -90,7 +92,7 @@ No PHP `SegmentReportService.getByDimension()` aggregates from ledger lines — 
 - **WHEN** the segment P&L aggregation is queried
 - **THEN** separate aggregations MUST be available for cost-center roll-up AND project roll-up, without data duplication or schema changes.
 
-### REQ-CD-005: Analytical dimensions and cost centers SHALL be reachable through the manifest navigation
+### Requirement: REQ-CD-005 — Analytical dimensions and cost centers SHALL be reachable through the manifest navigation
 
 `src/manifest.json` MUST declare navigation entries (under `Bookkeeping > Dimensions`) with `type: index` + `type: detail` pages for `CostCenter`, `Project`, `AnalyticalDimension`, and any operator-registered custom dimension register. All pages MUST be rendered by the generic `@conduction/nextcloud-vue` `CnIndexPage` / `CnDetailPage` components — no bespoke Vue files (per ADR-024).
 
@@ -100,7 +102,7 @@ No PHP `SegmentReportService.getByDimension()` aggregates from ledger lines — 
 - **WHEN** the manifest is reloaded
 - **THEN** the `Bookkeeping > Dimensions > Department` entry MUST appear with no PHP / Vue edits.
 
-### REQ-CD-006: The `AnalyticalDimension` register SHALL define custom dimension shape and governance
+### Requirement: REQ-CD-006 — The `AnalyticalDimension` register SHALL define custom dimension shape and governance
 
 The `AnalyticalDimension` register MUST declare the shape for operator-defined custom analytical dimensions:
 
@@ -121,7 +123,7 @@ Each analytical dimension's **values** (e.g., regions: NL, BE, DE) are stored as
 - **WHEN** an administration operator creates region value records (NL, BE, DE)
 - **THEN** GL lines MAY reference them via `dimensions: {"region": "NL"}` with automatic validation.
 
-### REQ-CD-007: Multi-dimensional hierarchies SHALL support roll-up and drill-down analysis
+### Requirement: REQ-CD-007 — Multi-dimensional hierarchies SHALL support roll-up and drill-down analysis
 
 The segment P&L aggregation MUST support hierarchical roll-up — when a cost-center or project has a parent, aggregated amounts for the child MUST be automatically rolled up to the parent level without duplication or double-counting.
 
@@ -137,7 +139,7 @@ The segment P&L aggregation MUST support hierarchical roll-up — when a cost-ce
 - **WHEN** they drill down or expand CC-001
 - **THEN** child cost-center breakdowns (CC-010: €100, CC-020: €200) MUST appear inline or in a detail view.
 
-### REQ-CD-008: The capability SHALL support multi-dimensional analysis (cost center AND project AND custom dimension simultaneously)
+### Requirement: REQ-CD-008 — The capability SHALL support multi-dimensional analysis (cost center AND project AND custom dimension simultaneously)
 
 GL lines MAY be tagged with multiple dimensions simultaneously (e.g., cost-center + project + region). The aggregation engine MUST support independent roll-ups for each dimension without requiring separate data storage or cross-dimensional computation.
 
