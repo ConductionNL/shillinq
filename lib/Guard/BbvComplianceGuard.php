@@ -449,6 +449,145 @@ class BbvComplianceGuard
     }//end requireMvaActivation()
 
     /**
+     * The seven mandatory BBV paragrafen per BBV art. 9.
+     *
+     * Used by `requireParagrafenCompleet` (REQ-BBV-007).
+     *
+     * @var array<int, string>
+     */
+    private const REQUIRED_PARAGRAFEN = [
+        'lokale-heffingen',
+        'weerstandsvermogen',
+        'onderhoud-kapitaalgoederen',
+        'financiering',
+        'bedrijfsvoering',
+        'verbonden-partijen',
+        'grondbeleid',
+    ];
+
+    /**
+     * Precondition for Jaarrekening.publish (REQ-BBV-007 paragraaf-completeness).
+     *
+     * Loads every `Paragraaf` row for the administration + boekjaar with
+     * `status = vastgesteld` and checks that all seven mandatory types are
+     * present. Non-BBV tenants bypass.
+     *
+     * @param array<string, mixed> $jaarrekening Jaarrekening record (administrationId + boekjaar).
+     *
+     * @return bool True when all seven paragrafen are vastgesteld, false otherwise.
+     *
+     * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-007)
+     */
+    public function requireParagrafenCompleet(array $jaarrekening): bool
+    {
+        if ($this->isBbvTenant(record: $jaarrekening) === false) {
+            return true;
+        }
+
+        $administrationId = (string) ($jaarrekening['administrationId'] ?? '');
+        $boekjaar         = (int) ($jaarrekening['boekjaar'] ?? 0);
+
+        if ($administrationId === '' || $boekjaar === 0) {
+            $this->logger->info(
+                'BbvComplianceGuard: jaarrekening missing administrationId or boekjaar (REQ-BBV-007)'
+            );
+            return false;
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $rows          = $objectService
+                ->setRegister($this->getRegisterSlug())
+                ->setSchema('Paragraaf')
+                ->findAll(
+                    [
+                        'filters' => [
+                            'administrationId' => $administrationId,
+                            'boekjaar'         => $boekjaar,
+                            'status'           => 'vastgesteld',
+                        ],
+                    ]
+                );
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'BbvComplianceGuard: paragraaf lookup failed — denying publish (fail-closed)',
+                ['exception' => $e->getMessage()]
+            );
+            return false;
+        }
+
+        $aanwezig = [];
+        foreach ($rows as $row) {
+            $aanwezig[(string) ($row['type'] ?? '')] = true;
+        }
+
+        $ontbrekend = [];
+        foreach (self::REQUIRED_PARAGRAFEN as $type) {
+            if (isset($aanwezig[$type]) === false) {
+                $ontbrekend[] = $type;
+            }
+        }
+
+        if (count($ontbrekend) > 0) {
+            $this->logger->info(
+                'BbvComplianceGuard: jaarrekening mist verplichte paragrafen (REQ-BBV-007, BBV art. 9)',
+                [
+                    'administrationId' => $administrationId,
+                    'boekjaar'         => $boekjaar,
+                    'ontbrekend'       => $ontbrekend,
+                ]
+            );
+            return false;
+        }
+
+        return true;
+
+    }//end requireParagrafenCompleet()
+
+    /**
+     * Compute the month-of-first-depreciation for an MVA per REQ-BBV-005.
+     *
+     * Depreciation starts in the month FOLLOWING `ingebruiknameDatum`. Example:
+     *   ingebruiknameDatum = 2026-09-15 → first depreciation in 2026-10.
+     *
+     * Declarative helper used by the FixedAssets monthly-depreciation workflow
+     * and exercised by the spec scenario "Afschrijving start maand na ingebruikname".
+     * Returns `null` when the ingebruikname date is missing or unparseable.
+     *
+     * @param array<string, mixed> $mva MaterieleVasteActiva record.
+     *
+     * @return string|null First depreciation month as `YYYY-MM`, or null.
+     *
+     * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-005)
+     */
+    public function depreciationStartMonth(array $mva): ?string
+    {
+        $raw = (string) ($mva['ingebruiknameDatum'] ?? '');
+        if ($raw === '') {
+            return null;
+        }
+
+        try {
+            $date = new \DateTimeImmutable(datetime: $raw);
+        } catch (\Throwable $e) {
+            $this->logger->info(
+                'BbvComplianceGuard: ingebruiknameDatum unparseable, depreciation start unknown',
+                ['raw' => $raw, 'exception' => $e->getMessage()]
+            );
+            return null;
+        }
+
+        // First depreciation accrues in the month AFTER ingebruikname (REQ-BBV-005).
+        $next = $date->modify(modifier: 'first day of next month');
+        if ($next === false) {
+            return null;
+        }
+
+        return $next->format(format: 'Y-m');
+
+    }//end depreciationStartMonth()
+
+    /**
      * Resolve the activeringsgrens in integer cents from app config, defaulting
      * to EUR 50.000 (5_000_000 cents) per the gangbare gemeente-drempel.
      *
