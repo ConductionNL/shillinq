@@ -312,11 +312,14 @@ cycle after spec approval:
   accounts-payable.md` per ADR-030 journeydoc convention, with screenshots of AP
   invoice receipt → posting → aging report
 
-- [~] **i18n Translations** (implementing cycle) — deferred to live env / cross-app / apply cycle: Dutch (`nl_NL`) and English
-  (`en_US`) strings for: "Accounts Payable", "Vendor", "Vendors", "AP Invoice",
-  "Dunning", "Reminder", "Formal Notice", "Collection", "Write-off", "Disputed",
-  "Payment Terms", "Aging", "Issued", "Paid", "Overdue", "Partially Paid",
-  "Current", "30–60 days", "60–90 days", "90+ days"
+- [x] **i18n Translations** — added to `l10n/nl.json` + `l10n/en.json`: 20 AP
+  strings — "Accounts Payable" (Crediteuren), "Vendor"/"Vendors"
+  (Leverancier/Leveranciers), "AP Invoice" (Crediteurenfactuur), "Dunning"
+  (Aanmaning), "Reminder" (Herinnering), "Formal Notice" (Ingebrekestelling),
+  "Collection" (Incasso), "Write-off" (Afboeking), "Disputed" (Betwist),
+  "Payment Terms" (Betalingscondities), "Aging" (Ouderdomsanalyse), "Issued"
+  (Verzonden), "Paid" (Betaald), "Overdue" (Vervallen), "Partially Paid"
+  (Deels betaald), "Current" (Lopend), plus the four aging buckets. ADR-025.
 
 ## Verification (Spec-Only)
 

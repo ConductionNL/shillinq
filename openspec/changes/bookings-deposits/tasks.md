@@ -56,7 +56,7 @@
 - [x] Task 37: i18n strings added to `l10n/nl.json` + `l10n/en.json` (Deposit, Payment pending/failed, Refund initiated, error messages, etc.) — ADR-025
 - [x] Task 38: User guide added at `docs/user-guide/user/07-booking-deposits.md` (enable deposits, configure percentage/fixed, refund policy, manage failed deposits)
 - [~] Task 39: Screenshots DEFERRED — require the UI rendered against a live seeded instance
-- [~] Task 40: Data-model ADR update DEFERRED — `openspec/architecture/adr-000-data-model.md` does not exist in this repo; the schema is self-documenting in the fragment
+- [x] Task 40: Data-model ADR update — `openspec/architecture/adr-000-data-model.md` now carries the `Order / Invoice / InvoiceLine / CreditNote / DepositPayment` section (introduced by `bookings-deposit-to-invoice`) which documents the DepositPayment field surface, lifecycle, and ownership boundary; the bookings-deposits fragment is the canonical declaration site, the ADR is the cross-change index.
 - [x] Task 41: `composer check:strict` run (phpcs/phpmd/psalm/phpstan + phpunit); unit tests green (see PR body). `npm test` script is not defined in this app; manifest validated via `node tests/validate-manifest.js`
 - [x] Task 42: Manifest validated (pre-existing `roadmap`/`report` page-type lint fallback noted; new pages use valid `index`/`detail`)
 - [~] Task 43: Architecture review — handled by the Hydra reviewer on this PR
