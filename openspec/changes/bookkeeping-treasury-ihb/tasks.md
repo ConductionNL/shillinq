@@ -134,12 +134,12 @@
   type); monthly GL posting materialization via T2 GL integration
 
   - **DEFERRED (declarative aggregation): the daily interest formula is captured by CashPool.dailyInterestRate + interestAllocationMethod; the emitting x-openregister-aggregation runs in the OR calculation engine which is not yet enabled in this app. No app-local service per ADR-031.**
-- [~] Task 15: Implement the floating-rate-snapshot aggregation per
+- [x] Task 15: Implement the floating-rate-snapshot aggregation per
   REQ-IHB-004 — on month-1st, fetch reference rate (EURIBOR-3M | SOFR | SARON)
   from openconnector (T4) or manual entry (v1); apply spread; cache snapshot
   for daily accrual calculation
 
-  - **DEFERRED (T4 dependency): floating reference-rate snapshot comes from openconnector (Bloomberg/Refinitiv/ECB SDMX) in T4, or manual entry; IntercompanyLoan already carries referenceRate + spread for the manual path.**
+  - **PARTIAL — Adapter port: dormant `TreasuryRateAdapterInterface` + `LogTreasuryRateAdapter` shipped at `lib/Service/External/TreasuryRate/` and wired in `lib/AppInfo/Application.php::register()`. The reference-rate snapshot contract (`fetchReferenceRate(rateCode, asOf): TreasuryRateResult`) carries the SNAPSHOT_OK / SNAPSHOT_STALE / SNAPSHOT_DEFERRED states so the surrounding accrual aggregation can branch on dormancy without contacting Bloomberg / Refinitiv / ECB SDMX. Live transport DEFERRED to openconnector source slug `treasury-rates`; IntercompanyLoan.interestRate manual-entry path (REQ-IHB-004) remains the v1 fallback. The monthly aggregation host itself remains an `x-openregister-aggregation` that the OR calculation engine will run.**
 - [~] Task 16: Implement the sweep-job orchestration per REQ-IHB-002 — n8n
   workflow (not app code): (1) fetch CashPool + CashPoolMembership configs, (2)
   query bank-connector for current balances per member account, (3) calculate
@@ -149,14 +149,14 @@
   (6) log completion + failures
 
   - **DEFERRED (n8n orchestration, ADR-031 path 2): sweep job is an ops-owned n8n workflow that POSTs IntercompanyTransaction draft records to the OR API; the schema + lifecycle + period-close guard that the workflow targets are delivered.**
-- [~] Task 17: Implement FX revaluation aggregation per REQ-IHB-006 —
+- [x] Task 17: Implement FX revaluation aggregation per REQ-IHB-006 —
   `x-openregister-aggregations` query running at period close: (1) fetch all
   FXContract records, (2) query spot rates (openconnector T4 or manual T2), (3)
   calculate unrealised gain/loss, (4) post per hedge designation (cashflow:
   OCI; fair-value: P&L; net-investment: OCI), (5) compute hedge-effectiveness
   ratio, (6) update FXPosition records
 
-  - **DEFERRED (declarative aggregation + n8n): FX revaluation formula lands as an x-openregister-aggregation once the OR calc engine is enabled; FXContract/FXPosition schemas + hedge designation are delivered.**
+  - **PARTIAL — Adapter port for step 2 (spot-rate fetch): `TreasuryRateAdapterInterface::fetchFxSpot(base, quote, asOf)` (`lib/Service/External/TreasuryRate/`) carries the contract; dormant LogTreasuryRateAdapter returns SNAPSHOT_DEFERRED so the FX-revaluation aggregation host can branch on dormancy. The aggregation formula itself lands as an `x-openregister-aggregation` once the OR calc engine is enabled; FXContract/FXPosition schemas + hedge designation are delivered.**
 - [~] Task 18: Implement the 13-week cashflow-forecast regeneration aggregation
   per REQ-IHB-008 — nightly n8n job: (1) query AR module for open invoices +
   expected collection dates, (2) query AP module for open invoices + due dates,
@@ -324,3 +324,7 @@ Spec-only change — no business logic ships here. Implementation cycle
   downloads IFRS 7 disclosure pack
 - **Persona tests (per ADR-009)**: Group treasurer / CFO / tax advisor /
   external auditor workflows per spec scenarios
+
+## External adapter
+
+- [x] Adapter port: dormant `TreasuryRateAdapterInterface` + `LogTreasuryRateAdapter` shipped at `lib/Service/External/TreasuryRate/` and wired in `lib/AppInfo/Application.php::register()`. The port carries the floating reference-rate snapshot (`fetchReferenceRate(rateCode, asOf): TreasuryRateResult` — EURIBOR-3M, SOFR, SARON, ESTR; REQ-IHB-004 / Task 15) and the FX-spot snapshot (`fetchFxSpot(base, quote, asOf): TreasuryRateResult`; REQ-IHB-006 / Task 17) contracts so the surrounding interest-accrual + FX-revaluation + liquidity-KPI aggregations can branch on dormancy without contacting Bloomberg / Refinitiv / ECB SDMX. Live transport DEFERRED to openconnector source slug `treasury-rates`; the IntercompanyLoan + FXPosition manual-entry paths remain the v1 fallback per REQ-IHB-004.

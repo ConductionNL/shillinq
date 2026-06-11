@@ -65,6 +65,8 @@ use OCA\Shillinq\Service\External\RvO\LogRvOAanvraagAdapter;
 use OCA\Shillinq\Service\External\RvO\RvOAanvraagAdapterInterface;
 use OCA\Shillinq\Service\External\Salarisbureau\LogSalarisbureauAdapter;
 use OCA\Shillinq\Service\External\Salarisbureau\SalarisbureauAdapterInterface;
+use OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter;
+use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
@@ -390,6 +392,21 @@ class Application extends App implements IBootstrap
             UwvLoonaangifteAdapterInterface::class,
             static function ($c): UwvLoonaangifteAdapterInterface {
                 return $c->get(LogUwvLoonaangifteAdapter::class);
+            }
+        );
+
+        // bookkeeping-treasury-ihb Tasks 14/15/17/22 — reference-rate
+        // (EURIBOR-3M / SOFR / SARON / ESTR) + FX-spot snapshots for the
+        // declarative interest-accrual, FX-revaluation, and liquidity-KPI
+        // aggregations. The dormant LogTreasuryRateAdapter returns
+        // SNAPSHOT_DEFERRED so the aggregation host stays observable until
+        // openconnector source slug `treasury-rates` (ECB SDMX / Bloomberg /
+        // Refinitiv) is bound; the IntercompanyLoan + FXPosition manual-entry
+        // path remains the v1 fallback per REQ-IHB-004.
+        $context->registerService(
+            TreasuryRateAdapterInterface::class,
+            static function ($c): TreasuryRateAdapterInterface {
+                return $c->get(LogTreasuryRateAdapter::class);
             }
         );
 
