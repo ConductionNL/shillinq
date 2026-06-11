@@ -53,6 +53,8 @@ use OCA\Shillinq\Service\External\CcmRuleEngine\CcmRuleEngineAdapterInterface;
 use OCA\Shillinq\Service\External\CcmRuleEngine\LogCcmRuleEngineAdapter;
 use OCA\Shillinq\Service\External\CsrdEsrsXbrl\CsrdEsrsXbrlAdapterInterface;
 use OCA\Shillinq\Service\External\CsrdEsrsXbrl\LogCsrdEsrsXbrlAdapter;
+use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
+use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
 use OCA\Shillinq\Service\External\Ib47\Ib47AdapterInterface;
@@ -396,6 +398,24 @@ class Application extends App implements IBootstrap
             UwvLoonaangifteAdapterInterface::class,
             static function ($c): UwvLoonaangifteAdapterInterface {
                 return $c->get(LogUwvLoonaangifteAdapter::class);
+            }
+        );
+
+        // bookings-deposits REQ-DP-001/005/007/008 — DepositPayment
+        // lifecycle adapter port (request / status / refund). Sits one
+        // layer ABOVE MolliePaymentAdapterInterface (which is already
+        // wired): the lifecycle code never sees a Mollie vs. Stripe
+        // branch, only the projected DepositPayment lifecycle state.
+        // Dormant LogDepositPaymentAdapter returns `pending` /
+        // PAYMENT_DEFERRED with dormant=true so
+        // DepositReconciliationService::pollPending() MUST inspect the
+        // dormant flag before advancing the lifecycle. The production
+        // binding delegates to MolliePaymentAdapterInterface and
+        // projects the Mollie state onto the DepositPayment lifecycle.
+        $context->registerService(
+            DepositPaymentAdapterInterface::class,
+            static function ($c): DepositPaymentAdapterInterface {
+                return $c->get(LogDepositPaymentAdapter::class);
             }
         );
 
