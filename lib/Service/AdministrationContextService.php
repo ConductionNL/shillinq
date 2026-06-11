@@ -174,12 +174,32 @@ class AdministrationContextService
      */
     public function accessibleAdministrationIds(): array
     {
-        $ids = [];
-        foreach ($this->buildContext()['administrations'] as $administration) {
-            $ids[] = (string) $administration['administrationId'];
+        // Access is granted by a valid AdministrationMembership (REQ-MA-001) — the
+        // membership IS the access grant. Derive the accessible ids directly from
+        // the user's currently-valid memberships rather than from buildContext(),
+        // which additionally requires an Administration metadata object to exist;
+        // a membership must still authorise access even when the (optional)
+        // Administration record has not been materialised.
+        $userId = $this->currentUserId();
+        if ($userId === null) {
+            return [];
         }
 
-        return $ids;
+        $ids = [];
+        foreach ($this->membershipsForUser(userId: $userId) as $membership) {
+            $administrationId = (string) ($membership['administrationId'] ?? '');
+            if ($administrationId === '') {
+                continue;
+            }
+
+            if ($this->membershipIsCurrentlyValid(membership: $membership) === false) {
+                continue;
+            }
+
+            $ids[] = $administrationId;
+        }
+
+        return array_values(array_unique($ids));
 
     }//end accessibleAdministrationIds()
 
@@ -325,8 +345,10 @@ class AdministrationContextService
 
         $result = [];
         foreach ($memberships as $membership) {
-            if (is_array($membership) === true) {
-                $result[] = $membership;
+            // OpenRegister's findAll() returns ObjectEntity instances; normalise.
+            $arr = $this->asArray(row: $membership);
+            if ($arr !== []) {
+                $result[] = $arr;
             }
         }
 
@@ -363,14 +385,52 @@ class AdministrationContextService
         }
 
         foreach ($matches as $match) {
-            if (is_array($match) === true) {
-                return $match;
+            // OpenRegister's findAll() returns ObjectEntity instances; normalise.
+            $arr = $this->asArray(row: $match);
+            if ($arr !== []) {
+                return $arr;
             }
         }
 
         return null;
 
     }//end findAdministration()
+
+    /**
+     * Normalise an OpenRegister ObjectService row (ObjectEntity or array) to a
+     * plain array<string,mixed>.
+     *
+     * @param mixed $row Raw row from ObjectService::findAll()/find().
+     *
+     * @return array<string,mixed> The object as an array (empty array when unusable).
+     */
+    private function asArray(mixed $row): array
+    {
+        if (is_array($row) === true) {
+            return $row;
+        }
+
+        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+            $out = $row->jsonSerialize();
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
+        }
+
+        if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+            $out = $row->getObject();
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
+        }
+
+        return [];
+
+    }//end asArray()
 
     /**
      * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

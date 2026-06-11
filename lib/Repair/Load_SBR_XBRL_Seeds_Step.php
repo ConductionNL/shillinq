@@ -89,6 +89,8 @@ class Load_SBR_XBRL_Seeds_Step implements IRepairStep
      * Human-readable name of this repair step.
      *
      * @return string
+     *
+     * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md#task-13
      */
     public function getName(): string
     {
@@ -108,6 +110,8 @@ class Load_SBR_XBRL_Seeds_Step implements IRepairStep
      * @param IOutput $output Progress output interface.
      *
      * @return void
+     *
+     * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md#task-13
      */
     public function run(IOutput $output): void
     {
@@ -151,12 +155,14 @@ class Load_SBR_XBRL_Seeds_Step implements IRepairStep
             if (is_array($object) === false) {
                 continue;
             }
+
             $self   = (array) ($object['@self'] ?? []);
             $schema = (string) ($self['schema'] ?? '');
             $slug   = (string) ($self['slug'] ?? '');
             if ($schema === '' || $slug === '') {
                 continue;
             }
+
             if (in_array($schema, self::SCHEMAS, true) === false) {
                 continue;
             }
@@ -183,10 +189,16 @@ class Load_SBR_XBRL_Seeds_Step implements IRepairStep
                 unset($payload['@self']);
                 $payload['slug'] = $slug;
 
+                // Runs in the installer/repair context where no web user is
+                // authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
+                // seed persists instead of throwing "User 'Anonymous' does not have
+                // permission to 'create'" — mirrors the OR ImportHandler fix.
                 $objectService->saveObject(
                     object: $payload,
                     register: $registerSlug,
                     schema: $schema,
+                    _rbac: false,
+                    _multitenancy: false,
                 );
                 $seeded++;
             } catch (\Throwable $e) {

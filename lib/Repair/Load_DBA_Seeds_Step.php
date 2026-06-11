@@ -46,8 +46,11 @@ use Throwable;
  */
 class Load_DBA_Seeds_Step implements IRepairStep
 {
+
     /**
      * Absolute path to the canonical seed JSON (the register fragment).
+     *
+     * @var string
      */
     private string $seedPath;
 
@@ -70,6 +73,8 @@ class Load_DBA_Seeds_Step implements IRepairStep
      * Human-readable name of this repair step.
      *
      * @return string
+     *
+     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
      */
     public function getName(): string
     {
@@ -82,6 +87,8 @@ class Load_DBA_Seeds_Step implements IRepairStep
      * @param IOutput $output Progress output.
      *
      * @return void
+     *
+     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
      */
     public function run(IOutput $output): void
     {
@@ -118,19 +125,21 @@ class Load_DBA_Seeds_Step implements IRepairStep
         }
 
         $registerSlug = $this->register();
-        $seeded = 0;
-        $skipped = 0;
+        $seeded       = 0;
+        $skipped      = 0;
 
         foreach ($objects as $object) {
             if (is_array($object) === false) {
                 continue;
             }
-            $self = (array) ($object['@self'] ?? []);
+
+            $self   = (array) ($object['@self'] ?? []);
             $schema = (string) ($self['schema'] ?? '');
-            $slug = (string) ($self['slug'] ?? '');
+            $slug   = (string) ($self['slug'] ?? '');
             if ($schema === '' || $slug === '') {
                 continue;
             }
+
             if ($schema !== 'DBAModelovereenkomst') {
                 continue;
             }
@@ -149,10 +158,16 @@ class Load_DBA_Seeds_Step implements IRepairStep
                 unset($payload['@self']);
                 $payload['slug'] = $slug;
 
+                // Runs in the installer/repair context where no web user is
+                // authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
+                // seed persists instead of throwing "User 'Anonymous' does not have
+                // permission to 'create'" — mirrors the OR ImportHandler fix.
                 $objectService->saveObject(
                     object: $payload,
                     register: $registerSlug,
                     schema: $schema,
+                    _rbac: false,
+                    _multitenancy: false,
                 );
                 $seeded++;
             } catch (Throwable $e) {
@@ -180,6 +195,10 @@ class Load_DBA_Seeds_Step implements IRepairStep
     private function register(): string
     {
         $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        return ($register === '') ? 'shillinq' : $register;
+        if ($register === '') {
+            return 'shillinq';
+        }
+
+        return $register;
     }//end register()
 }//end class

@@ -121,7 +121,7 @@ class BackfillFiscalPeriods implements IRepairStep
             // Bucket distinct (administrationId, periodId) tuples.
             $tuples = [];
             foreach ($lines as $line) {
-                $arr = (array) $line;
+                $arr      = (array) $line;
                 $periodId = (string) ($arr['periodId'] ?? '');
                 if ($periodId === '') {
                     continue;
@@ -146,7 +146,8 @@ class BackfillFiscalPeriods implements IRepairStep
                     registerSlug: $registerSlug,
                     periodId: $tuple['periodId'],
                     administrationId: $tuple['administrationId']
-                ) === true) {
+                ) === true
+                ) {
                     $skipped++;
                     continue;
                 }
@@ -156,13 +157,19 @@ class BackfillFiscalPeriods implements IRepairStep
                     administrationId: $tuple['administrationId']
                 );
 
+                // Runs in the installer/repair context where no web user is
+                // authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
+                // backfill persists instead of throwing "User 'Anonymous' does not
+                // have permission to 'create'".
                 $objectService->saveObject(
                     object: $record,
                     register: $registerSlug,
                     schema: 'FiscalPeriod',
+                    _rbac: false,
+                    _multitenancy: false,
                 );
                 $created++;
-            }
+            }//end foreach
 
             $output->info(
                 'Shillinq: FiscalPeriod backfill complete — '.$created.' created, '.$skipped.' skipped (already exist).'
@@ -226,17 +233,22 @@ class BackfillFiscalPeriods implements IRepairStep
     {
         $derived = $this->derivePeriodFields(periodId: $periodId);
 
+        $resolvedAdministrationId = 'unknown';
+        if ($administrationId !== '') {
+            $resolvedAdministrationId = $administrationId;
+        }
+
         $record = [
-            'periodId' => $periodId,
-            'name' => $derived['name'],
-            'administrationId' => ($administrationId !== '' ? $administrationId : 'unknown'),
-            'startDate' => $derived['startDate'],
-            'endDate' => $derived['endDate'],
-            'fiscalYear' => $derived['fiscalYear'],
-            'state' => 'open',
-            'reopenedHistory' => [],
+            'periodId'           => $periodId,
+            'name'               => $derived['name'],
+            'administrationId'   => $resolvedAdministrationId,
+            'startDate'          => $derived['startDate'],
+            'endDate'            => $derived['endDate'],
+            'fiscalYear'         => $derived['fiscalYear'],
+            'state'              => 'open',
+            'reopenedHistory'    => [],
             'taskChecklistItems' => [],
-            'aiFlags' => [],
+            'aiFlags'            => [],
         ];
 
         return $record;
@@ -262,23 +274,23 @@ class BackfillFiscalPeriods implements IRepairStep
      */
     private function derivePeriodFields(string $periodId): array
     {
-        $now = new \DateTimeImmutable();
+        $now          = new \DateTimeImmutable();
         $fallbackYear = (int) $now->format('Y');
 
         // YYYY-Qn (calendar quarter).
         if (preg_match('/^(\d{4})-Q([1-4])$/i', $periodId, $m) === 1) {
-            $year = (int) $m[1];
-            $quarter = (int) $m[2];
+            $year       = (int) $m[1];
+            $quarter    = (int) $m[2];
             $startMonth = (($quarter - 1) * 3) + 1;
-            $endMonth = $startMonth + 2;
-            $start = sprintf('%04d-%02d-01', $year, $startMonth);
-            $endDay = (int) (new \DateTimeImmutable(sprintf('%04d-%02d-01', $year, $endMonth)))->format('t');
-            $end = sprintf('%04d-%02d-%02d', $year, $endMonth, $endDay);
+            $endMonth   = $startMonth + 2;
+            $start      = sprintf('%04d-%02d-01', $year, $startMonth);
+            $endDay     = (int) (new \DateTimeImmutable(sprintf('%04d-%02d-01', $year, $endMonth)))->format('t');
+            $end        = sprintf('%04d-%02d-%02d', $year, $endMonth, $endDay);
 
             return [
-                'name' => sprintf('Q%d %04d', $quarter, $year),
-                'startDate' => $start,
-                'endDate' => $end,
+                'name'       => sprintf('Q%d %04d', $quarter, $year),
+                'startDate'  => $start,
+                'endDate'    => $end,
                 'fiscalYear' => $year,
             ];
         }
@@ -287,34 +299,34 @@ class BackfillFiscalPeriods implements IRepairStep
         if (preg_match('/^(\d{4})-M(\d{2})$/i', $periodId, $m) === 1
             || preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $periodId, $m) === 1
         ) {
-            $year = (int) $m[1];
-            $month = (int) $m[2];
-            $start = sprintf('%04d-%02d-01', $year, $month);
+            $year   = (int) $m[1];
+            $month  = (int) $m[2];
+            $start  = sprintf('%04d-%02d-01', $year, $month);
             $endDay = (int) (new \DateTimeImmutable($start))->format('t');
-            $end = sprintf('%04d-%02d-%02d', $year, $month, $endDay);
+            $end    = sprintf('%04d-%02d-%02d', $year, $month, $endDay);
 
             $names = [
-                1 => 'January',
-                2 => 'February',
-                3 => 'March',
-                4 => 'April',
-                5 => 'May',
-                6 => 'June',
-                7 => 'July',
-                8 => 'August',
-                9 => 'September',
+                1  => 'January',
+                2  => 'February',
+                3  => 'March',
+                4  => 'April',
+                5  => 'May',
+                6  => 'June',
+                7  => 'July',
+                8  => 'August',
+                9  => 'September',
                 10 => 'October',
                 11 => 'November',
                 12 => 'December',
             ];
 
             return [
-                'name' => sprintf('%s %04d', $names[$month], $year),
-                'startDate' => $start,
-                'endDate' => $end,
+                'name'       => sprintf('%s %04d', $names[$month], $year),
+                'startDate'  => $start,
+                'endDate'    => $end,
                 'fiscalYear' => $year,
             ];
-        }
+        }//end if
 
         // YYYY-Wnn (ISO week — startDate Monday, endDate Sunday).
         if (preg_match('/^(\d{4})-W(\d{2})$/i', $periodId, $m) === 1) {
@@ -322,16 +334,16 @@ class BackfillFiscalPeriods implements IRepairStep
             $week = (int) $m[2];
             try {
                 $start = (new \DateTimeImmutable())->setISODate($year, $week, 1)->format('Y-m-d');
-                $end = (new \DateTimeImmutable())->setISODate($year, $week, 7)->format('Y-m-d');
+                $end   = (new \DateTimeImmutable())->setISODate($year, $week, 7)->format('Y-m-d');
             } catch (\Throwable) {
                 $start = sprintf('%04d-01-01', $year);
-                $end = sprintf('%04d-12-31', $year);
+                $end   = sprintf('%04d-12-31', $year);
             }
 
             return [
-                'name' => sprintf('Week %d %04d', $week, $year),
-                'startDate' => $start,
-                'endDate' => $end,
+                'name'       => sprintf('Week %d %04d', $week, $year),
+                'startDate'  => $start,
+                'endDate'    => $end,
                 'fiscalYear' => $year,
             ];
         }
@@ -341,9 +353,9 @@ class BackfillFiscalPeriods implements IRepairStep
             $year = (int) $m[1];
 
             return [
-                'name' => sprintf('Fiscal year %04d', $year),
-                'startDate' => sprintf('%04d-01-01', $year),
-                'endDate' => sprintf('%04d-12-31', $year),
+                'name'       => sprintf('Fiscal year %04d', $year),
+                'startDate'  => sprintf('%04d-01-01', $year),
+                'endDate'    => sprintf('%04d-12-31', $year),
                 'fiscalYear' => $year,
             ];
         }
@@ -353,18 +365,18 @@ class BackfillFiscalPeriods implements IRepairStep
             $year = (int) $m[1];
 
             return [
-                'name' => $periodId,
-                'startDate' => sprintf('%04d-01-01', $year),
-                'endDate' => sprintf('%04d-12-31', $year),
+                'name'       => $periodId,
+                'startDate'  => sprintf('%04d-01-01', $year),
+                'endDate'    => sprintf('%04d-12-31', $year),
                 'fiscalYear' => $year,
             ];
         }
 
         // Total fallback.
         return [
-            'name' => $periodId,
-            'startDate' => sprintf('%04d-01-01', $fallbackYear),
-            'endDate' => sprintf('%04d-12-31', $fallbackYear),
+            'name'       => $periodId,
+            'startDate'  => sprintf('%04d-01-01', $fallbackYear),
+            'endDate'    => sprintf('%04d-12-31', $fallbackYear),
             'fiscalYear' => $fallbackYear,
         ];
 

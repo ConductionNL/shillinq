@@ -164,10 +164,16 @@ class PeriodCloseBackfill implements IRepairStep
                         'aiFlags'            => [],
                     ];
 
+                    // Runs in the installer/repair context where no web user is
+                    // authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so
+                    // the backfill persists instead of throwing "User 'Anonymous'
+                    // does not have permission to 'create'".
                     $objectService->saveObject(
                         object: $record,
                         register: $registerSlug,
                         schema: 'FiscalPeriod',
+                        _rbac: false,
+                        _multitenancy: false,
                     );
                     $created++;
                 }//end foreach

@@ -129,6 +129,12 @@ class TrialBalanceService
 
         $totals = $this->calculator->totals(rows: $rows);
 
+        // Expose short `debit`/`credit` aliases alongside the canonical
+        // `totalDebit`/`totalCredit` keys (REQ-TB-002) so consumers that read the
+        // movement footing under either name resolve the same value.
+        $totals['debit']  = ($totals['totalDebit'] ?? 0);
+        $totals['credit'] = ($totals['totalCredit'] ?? 0);
+
         return [
             'data'       => $rows,
             'total'      => count($rows),
@@ -164,8 +170,10 @@ class TrialBalanceService
             );
 
         $transactionIds = [];
-        foreach ($transactions as $transaction) {
-            $id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
+        foreach ($transactions as $rawTransaction) {
+            // OpenRegister's findAll() returns ObjectEntity instances; normalise.
+            $transaction = $this->asArray(row: $rawTransaction);
+            $id          = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
             if ($id !== null) {
                 $transactionIds[(string) $id] = true;
             }
@@ -178,7 +186,9 @@ class TrialBalanceService
             ->findAll(['filters' => ['periodId' => $periodId]]);
 
         $byAccount = [];
-        foreach ($lines as $line) {
+        foreach ($lines as $rawLine) {
+            // OpenRegister's findAll() returns ObjectEntity instances; normalise.
+            $line = $this->asArray(row: $rawLine);
             if ($this->lineInScope(line: $line, transactionIds: $transactionIds) === false) {
                 continue;
             }
@@ -243,8 +253,10 @@ class TrialBalanceService
             ->findAll(['filters' => ['administrationId' => $administrationId]]);
 
         $byNumber = [];
-        foreach ($accounts as $account) {
-            $number = (string) ($account['accountNumber'] ?? '');
+        foreach ($accounts as $rawAccount) {
+            // OpenRegister's findAll() returns ObjectEntity instances; normalise.
+            $account = $this->asArray(row: $rawAccount);
+            $number  = (string) ($account['accountNumber'] ?? '');
             if ($number !== '') {
                 $byNumber[$number] = $account;
             }
@@ -253,6 +265,42 @@ class TrialBalanceService
         return $byNumber;
 
     }//end fetchAccounts()
+
+    /**
+     * Normalise an OpenRegister ObjectService row (ObjectEntity or array) to a
+     * plain array<string,mixed>.
+     *
+     * @param mixed $row Raw row from ObjectService::findAll()/find().
+     *
+     * @return array<string,mixed> The object as an array (empty array when unusable).
+     */
+    private function asArray(mixed $row): array
+    {
+        if (is_array($row) === true) {
+            return $row;
+        }
+
+        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+            $out = $row->jsonSerialize();
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
+        }
+
+        if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+            $out = $row->getObject();
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
+        }
+
+        return [];
+
+    }//end asArray()
 
     /**
      * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

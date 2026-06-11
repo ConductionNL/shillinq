@@ -58,15 +58,11 @@ test.describe('shillinq finance — trial balance balances (debits == credits)',
 	})
 
 	test('a balanced journal posting yields a balanced trial balance with exact totals', async () => {
+		// The shillinq register and its GLTransaction/GLLine/Account/
+		// AdministrationMembership schemas MUST be imported; the prior import
+		// blocker is fixed, so a missing schema is now a real regression.
 		const missing = await fx.missingSchema(NEEDED)
-		test.fixme(
-			missing !== null,
-			`BLOCKED (env): shillinq OpenRegister register/schema not imported (missing: ${missing}). ` +
-				`Root cause: OpenRegister ImportHandler.php:1277 TypeError on a null schema slug while importing ` +
-				`shillinq register.d fragments, so the GLTransaction/GLLine/Account/AdministrationMembership ` +
-				`schemas are never created. Once the register imports, this test posts a balanced journal and ` +
-				`asserts totals.debit == totals.credit == 500.00 and isBalanced === true.`,
-		)
+		expect(missing, `shillinq register/schema not imported (missing: ${missing})`).toBeNull()
 
 		// Membership so the admin user passes the per-administration IDOR guard.
 		await fx.create('AdministrationMembership', {
@@ -79,28 +75,36 @@ test.describe('shillinq finance — trial balance balances (debits == credits)',
 		})
 
 		// Chart of accounts (names for the trial-balance rows).
-		await fx.create('Account', { administrationId: ADMIN_ID, accountNumber: '1000', accountName: 'Cash', accountType: 'asset' })
-		await fx.create('Account', { administrationId: ADMIN_ID, accountNumber: '8000', accountName: 'Revenue', accountType: 'revenue' })
+		await fx.create('Account', { administrationId: ADMIN_ID, accountNumber: '1000', name: 'Cash', accountType: 'assets', status: 'active', currency: 'EUR' })
+		await fx.create('Account', { administrationId: ADMIN_ID, accountNumber: '8000', name: 'Revenue', accountType: 'revenue', status: 'active', currency: 'EUR' })
 
 		// The balanced journal entry.
 		const { id: txId } = await fx.create('GLTransaction', {
 			administrationId: ADMIN_ID,
 			periodId: PERIOD_ID,
+			transactionNumber: `${UNIQUE_PREFIX}-TX1`,
+			postingDate: '2026-01-15',
+			currency: 'EUR',
+			state: 'posted',
 			description: `${UNIQUE_PREFIX} balanced posting`,
 		})
 		await fx.create('GLLine', {
 			transactionId: txId,
 			periodId: PERIOD_ID,
+			lineNumber: 1,
 			accountNumber: '1000',
 			side: 'debit',
 			amount: 500.0,
+			currency: 'EUR',
 		})
 		await fx.create('GLLine', {
 			transactionId: txId,
 			periodId: PERIOD_ID,
+			lineNumber: 2,
 			accountNumber: '8000',
 			side: 'credit',
 			amount: 500.0,
+			currency: 'EUR',
 		})
 
 		// Compute the trial balance.
@@ -129,7 +133,7 @@ test.describe('shillinq finance — trial balance balances (debits == credits)',
 
 	test('an UNBALANCED journal posting is reported as not balanced', async () => {
 		const missing = await fx.missingSchema(NEEDED)
-		test.fixme(missing !== null, `BLOCKED (env): shillinq register not imported (missing: ${missing}).`)
+		expect(missing, `shillinq register/schema not imported (missing: ${missing})`).toBeNull()
 
 		const period = `${PERIOD_ID}-unb`
 
@@ -144,11 +148,15 @@ test.describe('shillinq finance — trial balance balances (debits == credits)',
 		const { id: txId } = await fx.create('GLTransaction', {
 			administrationId: ADMIN_ID,
 			periodId: period,
+			transactionNumber: `${UNIQUE_PREFIX}-TX2`,
+			postingDate: '2026-01-16',
+			currency: 'EUR',
+			state: 'posted',
 			description: `${UNIQUE_PREFIX} unbalanced posting`,
 		})
 		// Debit 500, credit only 300 — deliberately NOT balanced.
-		await fx.create('GLLine', { transactionId: txId, periodId: period, accountNumber: '1000', side: 'debit', amount: 500.0 })
-		await fx.create('GLLine', { transactionId: txId, periodId: period, accountNumber: '8000', side: 'credit', amount: 300.0 })
+		await fx.create('GLLine', { transactionId: txId, periodId: period, lineNumber: 1, accountNumber: '1000', side: 'debit', amount: 500.0, currency: 'EUR' })
+		await fx.create('GLLine', { transactionId: txId, periodId: period, lineNumber: 2, accountNumber: '8000', side: 'credit', amount: 300.0, currency: 'EUR' })
 
 		const res = await api.get(
 			`/index.php${APP}/api/trial-balance?administration_id=${ADMIN_ID}&period_id=${period}`,

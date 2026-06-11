@@ -51,6 +51,7 @@ use Psr\Log\LoggerInterface;
  */
 class Load_CBS_Seeds_Step implements IRepairStep
 {
+
     /**
      * Absolute path to the canonical seed JSON (the register fragment).
      *
@@ -142,12 +143,14 @@ class Load_CBS_Seeds_Step implements IRepairStep
             if (is_array($object) === false) {
                 continue;
             }
+
             $self   = (array) ($object['@self'] ?? []);
             $schema = (string) ($self['schema'] ?? '');
             $slug   = (string) ($self['slug'] ?? '');
             if ($schema === '' || $slug === '') {
                 continue;
             }
+
             if (in_array($schema, ['CBSSubmission', 'CBSLine'], true) === false) {
                 continue;
             }
@@ -174,10 +177,16 @@ class Load_CBS_Seeds_Step implements IRepairStep
                 unset($payload['@self']);
                 $payload['slug'] = $slug;
 
+                // Runs in the installer/repair context where no web user is
+                // authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
+                // seed persists instead of throwing "User 'Anonymous' does not have
+                // permission to 'create'" — mirrors the OR ImportHandler fix.
                 $objectService->saveObject(
                     object: $payload,
                     register: $registerSlug,
                     schema: $schema,
+                    _rbac: false,
+                    _multitenancy: false,
                 );
                 $seeded++;
             } catch (\Throwable $e) {

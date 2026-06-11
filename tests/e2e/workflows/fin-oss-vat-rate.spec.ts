@@ -50,14 +50,11 @@ test.describe('shillinq finance — OSS/BTW VAT rate resolution (computed number
 	})
 
 	test('resolves the exact destination VAT rate and the derived VAT/gross are correct', async () => {
+		// The shillinq register and its EuVatRate (TEDB) schema MUST be imported;
+		// the prior import blocker is fixed, so a missing schema is now a real
+		// regression.
 		const missing = await fx.missingSchema(NEEDED)
-		test.fixme(
-			missing !== null,
-			`BLOCKED (env): shillinq OpenRegister register/schema not imported (missing: ${missing}). ` +
-				`Root cause: OpenRegister ImportHandler.php:1277 TypeError on a null schema slug while importing ` +
-				`shillinq register.d fragments, so the EuVatRate (TEDB) schema is never created. ` +
-				`Once the register imports, this test asserts DE standard = 19.0 and the €100 @ 19% identity.`,
-		)
+		expect(missing, `shillinq register/schema not imported (missing: ${missing})`).toBeNull()
 
 		// Seed a known DE standard rate.
 		await fx.create('EuVatRate', {

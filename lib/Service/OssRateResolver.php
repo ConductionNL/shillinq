@@ -185,7 +185,14 @@ class OssRateResolver
                 ['filters' => ['countryCode' => strtoupper(trim($countryCode)), 'rateCategory' => $rateCategory]]
             );
 
-        $row = $this->selectRateInForce(rates: $rates, invoiceDate: $invoiceDate);
+        // OpenRegister's findAll() returns ObjectEntity instances, not plain
+        // arrays; normalise to the array shape selectRateInForce() reads.
+        $normalised = [];
+        foreach ($rates as $rate) {
+            $normalised[] = $this->asArray(row: $rate);
+        }
+
+        $row = $this->selectRateInForce(rates: $normalised, invoiceDate: $invoiceDate);
         if ($row === null) {
             return null;
         }
@@ -215,4 +222,40 @@ class OssRateResolver
         return $register;
 
     }//end register()
+
+    /**
+     * Normalise an OpenRegister ObjectService row (ObjectEntity or array) to a
+     * plain array<string,mixed>.
+     *
+     * @param mixed $row Raw row from ObjectService::findAll()/find().
+     *
+     * @return array<string,mixed> The object as an array (empty array when unusable).
+     */
+    private function asArray(mixed $row): array
+    {
+        if (is_array($row) === true) {
+            return $row;
+        }
+
+        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+            $out = $row->jsonSerialize();
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
+        }
+
+        if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+            $out = $row->getObject();
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
+        }
+
+        return [];
+
+    }//end asArray()
 }//end class

@@ -171,8 +171,11 @@ class LeasePaymentScheduleService
             ->setSchema('LeaseContract')
             ->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-        foreach ($matches as $lease) {
-            if (is_array($lease) === false) {
+        foreach ($matches as $match) {
+            // OpenRegister's findAll() returns ObjectEntity instances, not plain
+            // arrays; normalise to the array shape this service reads.
+            $lease = $this->asArray(row: $match);
+            if ($lease === []) {
                 continue;
             }
 
@@ -186,6 +189,42 @@ class LeasePaymentScheduleService
         return null;
 
     }//end fetchLease()
+
+    /**
+     * Normalise an OpenRegister ObjectService row (ObjectEntity or array) to a
+     * plain array<string,mixed>.
+     *
+     * @param mixed $row Raw row from ObjectService::findAll()/find().
+     *
+     * @return array<string,mixed> The object as an array (empty array when unusable).
+     */
+    private function asArray(mixed $row): array
+    {
+        if (is_array($row) === true) {
+            return $row;
+        }
+
+        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+            $out = $row->jsonSerialize();
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
+        }
+
+        if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+            $out = $row->getObject();
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
+        }
+
+        return [];
+
+    }//end asArray()
 
     /**
      * Resolve OpenRegister's ObjectService lazily.

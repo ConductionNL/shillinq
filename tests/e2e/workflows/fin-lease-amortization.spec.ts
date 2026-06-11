@@ -67,25 +67,30 @@ test.describe('shillinq finance — IFRS 16 lease amortization (computed numbers
 	})
 
 	test('amortization schedule computes exact opening liability, interest, principal and closes to zero', async () => {
+		// The shillinq register and its LeaseContract schema MUST be imported; the
+		// prior import blocker is fixed, so a missing schema is now a real
+		// regression.
 		const missing = await fx.missingSchema(NEEDED)
-		test.fixme(
-			missing !== null,
-			`BLOCKED (env): shillinq OpenRegister register/schema not imported (missing: ${missing}). ` +
-				`Root cause: OpenRegister ImportHandler.php:1277 throws ` +
-				`"SchemaMapper::find(): Argument #1 ($id) must be of type string|int, null given" ` +
-				`while importing shillinq register.d fragments, so the LeaseContract schema is never created. ` +
-				`Once the register imports, this test asserts the exact amortization numbers below.`,
-		)
+		expect(missing, `shillinq register/schema not imported (missing: ${missing})`).toBeNull()
 
 		// Seed a capitalised lease with the known inputs above.
 		const { id: leaseId } = await fx.create('LeaseContract', {
 			administrationId: ADMIN_ID,
+			leaseNumber: `${UNIQUE_PREFIX}-L1`,
+			counterparty: 'Acme Leasing BV',
+			description: `${UNIQUE_PREFIX} lease`,
+			assetClass: 'machinery',
+			commencementDate: '2024-01-01',
+			endDate: '2024-03-31',
 			classification: 'IFRS16-capitalised',
 			basePaymentAmount: 1000.0,
 			paymentFrequency: 'monthly',
 			paymentTiming: 'in-arrears',
+			paymentCurrency: 'EUR',
 			ibrPercent: 6.0,
+			ibrDerivationMethod: 'group-policy',
 			nonCancellableTermMonths: 3,
+			status: 'active',
 			title: `${UNIQUE_PREFIX} lease`,
 		})
 

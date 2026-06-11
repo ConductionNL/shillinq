@@ -49,14 +49,10 @@ test.describe('shillinq finance — ledger Account full CRUD with persistence', 
 	})
 
 	test('create -> read -> update -> delete an Account, asserting persistence at each step', async () => {
+		// The shillinq register and its Account schema MUST be imported; the prior
+		// import blocker is fixed, so a missing schema is now a real regression.
 		const missing = await fx.missingSchema(NEEDED)
-		test.fixme(
-			missing !== null,
-			`BLOCKED (env): shillinq OpenRegister register/schema not imported (missing: ${missing}). ` +
-				`Root cause: OpenRegister ImportHandler.php:1277 TypeError on a null schema slug while importing ` +
-				`shillinq register.d fragments, so the Account schema is never created. Once the register imports, ` +
-				`this test exercises the full create/read/update/delete persistence cycle.`,
-		)
+		expect(missing, `shillinq register/schema not imported (missing: ${missing})`).toBeNull()
 
 		const accountNumber = `${UNIQUE_PREFIX}-4100`
 
@@ -64,15 +60,17 @@ test.describe('shillinq finance — ledger Account full CRUD with persistence', 
 		const { id } = await fx.create('Account', {
 			administrationId: ADMIN_ID,
 			accountNumber,
-			accountName: 'Office supplies',
-			accountType: 'expense',
+			name: 'Office supplies',
+			accountType: 'expenses',
+			status: 'active',
+			currency: 'EUR',
 		})
 
 		// READ BACK — the created fields persisted.
 		const created = await fx.get('Account', id)
 		expect(created.accountNumber).toBe(accountNumber)
-		expect(created.accountName).toBe('Office supplies')
-		expect(created.accountType).toBe('expense')
+		expect(created.name).toBe('Office supplies')
+		expect(created.accountType).toBe('expenses')
 
 		// READ (listing) — the row appears in the schema's object list.
 		const listRes = await api.get(
@@ -89,11 +87,13 @@ test.describe('shillinq finance — ledger Account full CRUD with persistence', 
 		await fx.update('Account', id, {
 			administrationId: ADMIN_ID,
 			accountNumber,
-			accountName: 'Office supplies (renamed)',
-			accountType: 'expense',
+			name: 'Office supplies (renamed)',
+			accountType: 'expenses',
+			status: 'active',
+			currency: 'EUR',
 		})
 		const updated = await fx.get('Account', id)
-		expect(updated.accountName).toBe('Office supplies (renamed)')
+		expect(updated.name).toBe('Office supplies (renamed)')
 
 		// DELETE — then a fresh read must 404 (truly gone, not soft-shadowed).
 		await fx.remove('Account', id)
