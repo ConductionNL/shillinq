@@ -1,0 +1,41 @@
+# frontend-unit.yml — OFFLINE Vitest gate for shillinq.
+#
+# Runs the pure-logic Vitest suite under tests/vitest/** (the app-administration
+# settings Pinia store: fetch envelope-unwrap, hasOpenRegisters / isAdmin flag
+# derivation, loading lifecycle, save round-trip). No Nextcloud runtime, no
+# browser — @nextcloud/router is aliased to a deterministic stub in
+# vitest.config.js. Always gating. Additive — does not touch app-tests-live.yml
+# / tests-live.yml / release workflows.
+
+name: frontend-unit
+
+on:
+  pull_request:
+    branches:
+      - development
+      - main
+      - beta
+  push:
+    branches:
+      - development
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend-unit:
+    name: Frontend unit (Vitest — shillinq)
+    runs-on: codeberg-small
+    container:
+      image: code.forgejo.org/oci/ci-node:20
+    steps:
+      - name: Checkout
+        uses: https://code.forgejo.org/actions/checkout@v4
+
+      - name: Install npm deps
+        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+
+      - name: Run Vitest unit suite
+        run: npm run test:unit
