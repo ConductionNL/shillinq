@@ -49,6 +49,12 @@ use OCA\Shillinq\Service\External\Cbs\CbsBestandenAdapterInterface;
 use OCA\Shillinq\Service\External\Cbs\CbsIv3AdapterInterface;
 use OCA\Shillinq\Service\External\Cbs\LogCbsBestandenAdapter;
 use OCA\Shillinq\Service\External\Cbs\LogCbsIv3Adapter;
+use OCA\Shillinq\Service\External\CcmRuleEngine\CcmRuleEngineAdapterInterface;
+use OCA\Shillinq\Service\External\CcmRuleEngine\LogCcmRuleEngineAdapter;
+use OCA\Shillinq\Service\External\CsrdEsrsXbrl\CsrdEsrsXbrlAdapterInterface;
+use OCA\Shillinq\Service\External\CsrdEsrsXbrl\LogCsrdEsrsXbrlAdapter;
+use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
+use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
 use OCA\Shillinq\Service\External\Ib47\Ib47AdapterInterface;
@@ -65,6 +71,8 @@ use OCA\Shillinq\Service\External\RvO\LogRvOAanvraagAdapter;
 use OCA\Shillinq\Service\External\RvO\RvOAanvraagAdapterInterface;
 use OCA\Shillinq\Service\External\Salarisbureau\LogSalarisbureauAdapter;
 use OCA\Shillinq\Service\External\Salarisbureau\SalarisbureauAdapterInterface;
+use OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter;
+use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
@@ -390,6 +398,71 @@ class Application extends App implements IBootstrap
             UwvLoonaangifteAdapterInterface::class,
             static function ($c): UwvLoonaangifteAdapterInterface {
                 return $c->get(LogUwvLoonaangifteAdapter::class);
+            }
+        );
+
+        // bookings-deposits REQ-DP-001/005/007/008 — DepositPayment
+        // lifecycle adapter port (request / status / refund). Sits one
+        // layer ABOVE MolliePaymentAdapterInterface (which is already
+        // wired): the lifecycle code never sees a Mollie vs. Stripe
+        // branch, only the projected DepositPayment lifecycle state.
+        // Dormant LogDepositPaymentAdapter returns `pending` /
+        // PAYMENT_DEFERRED with dormant=true so
+        // DepositReconciliationService::pollPending() MUST inspect the
+        // dormant flag before advancing the lifecycle. The production
+        // binding delegates to MolliePaymentAdapterInterface and
+        // projects the Mollie state onto the DepositPayment lifecycle.
+        $context->registerService(
+            DepositPaymentAdapterInterface::class,
+            static function ($c): DepositPaymentAdapterInterface {
+                return $c->get(LogDepositPaymentAdapter::class);
+            }
+        );
+
+        // bookkeeping-csrd-esrs Tasks 30/31/32 — EFRAG ESRS XBRL taxonomy
+        // mapping + mandatory-data-point validation + iXBRL instance build.
+        // Per ADR-022 the XBRL pipeline itself lives in
+        // bookkeeping-sbr-xbrl-reporting (cross-app dependency); this port
+        // is the seam. Dormant LogCsrdEsrsXbrlAdapter
+        // SAFETY-CRITICAL: validateMandatoryDataPoints() always returns
+        // VALIDATION_BLOCKED with a LOG_DEFERRED sentinel so a deferred
+        // binding cannot let an unvalidated CSRD report slip past EFRAG
+        // IG-3. The produced iXBRL instance is handed to the existing
+        // DigipoortSbrAdapterInterface (filingType: csrd-xbrl-pack) for
+        // KvK / AFM transport.
+        $context->registerService(
+            CsrdEsrsXbrlAdapterInterface::class,
+            static function ($c): CsrdEsrsXbrlAdapterInterface {
+                return $c->get(LogCsrdEsrsXbrlAdapter::class);
+            }
+        );
+
+        // bookkeeping-ccm-rule-engine REQ-CCM-002 — cross-app rule-engine
+        // delegation port. The local CcmRuleEngine (ADR-031 exception) runs
+        // v1 sync/async DSL evaluation in-process; this port is the swap-out
+        // seam for the future OpenRegister native rule engine (or a
+        // third-party evaluator). Dormant LogCcmRuleEngineAdapter returns
+        // DEFERRED + fired=false (fail-soft) so binding the openconnector
+        // source slug `ccm-rule-engine` never raises a false finding.
+        $context->registerService(
+            CcmRuleEngineAdapterInterface::class,
+            static function ($c): CcmRuleEngineAdapterInterface {
+                return $c->get(LogCcmRuleEngineAdapter::class);
+            }
+        );
+
+        // bookkeeping-treasury-ihb Tasks 14/15/17/22 — reference-rate
+        // (EURIBOR-3M / SOFR / SARON / ESTR) + FX-spot snapshots for the
+        // declarative interest-accrual, FX-revaluation, and liquidity-KPI
+        // aggregations. The dormant LogTreasuryRateAdapter returns
+        // SNAPSHOT_DEFERRED so the aggregation host stays observable until
+        // openconnector source slug `treasury-rates` (ECB SDMX / Bloomberg /
+        // Refinitiv) is bound; the IntercompanyLoan + FXPosition manual-entry
+        // path remains the v1 fallback per REQ-IHB-004.
+        $context->registerService(
+            TreasuryRateAdapterInterface::class,
+            static function ($c): TreasuryRateAdapterInterface {
+                return $c->get(LogTreasuryRateAdapter::class);
             }
         );
 
