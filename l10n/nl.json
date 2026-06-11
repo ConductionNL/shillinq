@@ -1,5 +1,13 @@
 {
     "translations": {
+        "Action": "Actie",
+        "Created": "Aangemaakt",
+        "Date": "Datum",
+        "No": "Nee",
+        "Remove": "Verwijderen",
+        "Total": "Totaal",
+        "Value": "Waarde",
+        "Yes": "Ja",
         "Signing audit trail": "Audittrail ondertekening",
         "Destruction report": "Vernietigingsrapport",
         "Change history": "Wijzigingshistorie",
@@ -1448,7 +1456,8 @@
         "XML Export": "XML-export",
         "Portal Upload": "Portal-upload",
         "VNG Question Set": "VNG-vragenset",
-        "Evidence Document": "Bewijsstuk"
+        "Evidence Document": "Bewijsstuk",
+        "Bevoordeling risk: tariff is more than 15% below market benchmark median.": "Bevoordelingsrisico: tarief ligt meer dan 15% onder de mediaan van de marktbenchmark."
     },
     "plurals": ""
 }

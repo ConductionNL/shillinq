@@ -1,5 +1,13 @@
 {
     "translations": {
+        "Action": "Action",
+        "Created": "Created",
+        "Date": "Date",
+        "No": "No",
+        "Remove": "Remove",
+        "Total": "Total",
+        "Value": "Value",
+        "Yes": "Yes",
         "Signing audit trail": "Signing audit trail",
         "Destruction report": "Destruction report",
         "Change history": "Change history",
@@ -1448,7 +1456,8 @@
         "XML Export": "XML Export",
         "Portal Upload": "Portal Upload",
         "VNG Question Set": "VNG Question Set",
-        "Evidence Document": "Evidence Document"
+        "Evidence Document": "Evidence Document",
+        "Bevoordeling risk: tariff is more than 15% below market benchmark median.": "Bevoordeling risk: tariff is more than 15% below market benchmark median."
     },
     "plurals": ""
 }
