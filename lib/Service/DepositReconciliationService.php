@@ -30,6 +30,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
+use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -109,9 +111,18 @@ class DepositReconciliationService
     /**
      * Constructor for DepositReconciliationService.
      *
-     * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger.
+     * @param ContainerInterface              $container DI container — OR's ObjectService is fetched lazily.
+     * @param IAppConfig                      $appConfig App config for the register slug.
+     * @param LoggerInterface                 $logger    Logger.
+     * @param ?DepositPaymentAdapterInterface $adapter   Optional DepositPayment lifecycle
+     *                                                   adapter. When supplied, the scheduled
+     *                                                   polling workflow (REQ-DP-007) can call
+     *                                                   `pollPendingViaAdapter()` to project
+     *                                                   gateway status onto OUTCOME_* without
+     *                                                   the caller having to know about the
+     *                                                   adapter at all. Optional so existing
+     *                                                   call sites that pass an explicit
+     *                                                   `pollPending($callable)` still work.
      *
      * @return void
      */
@@ -119,6 +130,7 @@ class DepositReconciliationService
         private ContainerInterface $container,
         private IAppConfig $appConfig,
         private LoggerInterface $logger,
+        private ?DepositPaymentAdapterInterface $adapter=null,
     ) {
     }//end __construct()
 
@@ -291,6 +303,90 @@ class DepositReconciliationService
             'reconciled' => $reconciled,
         ];
     }//end pollPending()
+
+    /**
+     * Adapter-backed polling fallback (REQ-DP-007).
+     *
+     * Convenience wrapper that synthesises the status-provider callable
+     * from the injected `DepositPaymentAdapterInterface`. The scheduled
+     * polling workflow (`shillinq-deposit-polling-fallback`) hits this
+     * method so the lifecycle code never sees a Mollie-vs-Stripe branch —
+     * the adapter projects the gateway's raw status onto the
+     * DepositPayment lifecycle state (`pending`, `authorized`, `failed`,
+     * `voided`) and this service maps that lifecycle state to one of the
+     * OUTCOME_* constants. Dormant adapter outcomes (the
+     * `LogDepositPaymentAdapter` synthetic `pending` / `PAYMENT_DEFERRED`
+     * envelope) leave the deposit pending — no premature lifecycle
+     * advancement.
+     *
+     * When no adapter is bound, the method returns a zeroed counter pair
+     * and logs a warning so the scheduled-workflow tick is observable
+     * even on tenants that have not yet configured a PSP.
+     *
+     * @return array{scanned: int, reconciled: int} Counters for observability.
+     *
+     * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-007)
+     */
+    public function pollPendingViaAdapter(): array
+    {
+        if ($this->adapter === null) {
+            $this->logger->warning(
+                'Shillinq DepositReconciliationService::pollPendingViaAdapter() called without an adapter bound — returning empty counters. Configure DepositPaymentAdapterInterface in Application::register() to enable.'
+            );
+            return ['scanned' => 0, 'reconciled' => 0];
+        }
+
+        $adapter = $this->adapter;
+        $logger  = $this->logger;
+
+        return $this->pollPending(
+            static function (string $intentId) use ($adapter, $logger): ?string {
+                try {
+                    $result = $adapter->fetchStatus($intentId, '');
+                } catch (\Throwable $e) {
+                    $logger->warning(
+                        'Shillinq DepositPayment fetchStatus threw — skipping for this tick',
+                        ['paymentIntentId' => $intentId, 'exception' => $e->getMessage()]
+                    );
+                    return null;
+                }
+
+                // Dormant adapter MUST NOT advance the lifecycle (per
+                // LogDepositPaymentAdapter docblock + REQ-DP-007).
+                if ($result->dormant === true) {
+                    return null;
+                }
+
+                return self::lifecycleStateToOutcome($result);
+            }
+        );
+    }//end pollPendingViaAdapter()
+
+    /**
+     * Map a `DepositPaymentResult.lifecycleState` to one of the
+     * `OUTCOME_*` constants the reconcile loop understands.
+     *
+     * Pure mapping — no side effects — pulled out so the test surface can
+     * verify the projection contract independent of the adapter wiring.
+     *
+     * @param DepositPaymentResult $result The adapter result.
+     *
+     * @return ?string One of OUTCOME_AUTHORIZED / OUTCOME_FAILED /
+     *                 OUTCOME_VOIDED, or NULL when the lifecycle state
+     *                 does not warrant a reconciliation advance (e.g.
+     *                 `pending`, `draft`, `captured` — `captured` is
+     *                 covered by the AUTHORIZED → CAPTURED transition
+     *                 the lifecycle owns separately).
+     */
+    public static function lifecycleStateToOutcome(DepositPaymentResult $result): ?string
+    {
+        return match ($result->lifecycleState) {
+            'authorized', 'captured' => self::OUTCOME_AUTHORIZED,
+            'failed'                 => self::OUTCOME_FAILED,
+            'voided'                 => self::OUTCOME_VOIDED,
+            default                  => null,
+        };
+    }//end lifecycleStateToOutcome()
 
     /**
      * Resolve the OpenRegister register slug from app config.
