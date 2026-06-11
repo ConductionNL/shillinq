@@ -228,6 +228,24 @@ import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
 // the page is registered as a kind:"page" custom component per ADR-024.
 import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashboard.vue'
 
+// Shillinq W8 (external-adapters admin UIs): the External Connections
+// section renders an operator roll-up + per-adapter activation panel
+// for the 14 dormant external-API adapter ports (Digipoort/SBR,
+// Salarisbureau, RvO, IB47, CBS Bestanden, CBS Iv3, BZK SiSa,
+// Mollie, Bunq, KvK, UWV, Treasury Rates, CCM Rule Engine,
+// CSRD ESRS XBRL, DepositPayment). Each page reads
+// /api/admin/external-adapters and surfaces the dormancy badge +
+// activation steps (config keys, openconnector source slug, feature
+// flag). Neither view fits a built-in `index` / `detail` page type:
+// the data is not an OR register (it's an in-controller registry of
+// adapter metadata), and the detail page renders an ordered
+// activation checklist + per-row code blocks. Both are kind:"page"
+// custom components per ADR-024 / ADR-036. The detail page is
+// reused for all 14 families by passing a slug via the manifest
+// page entry's `props.adapterId`.
+import ExternalAdaptersStatus from './views/external-adapters/ExternalAdaptersStatus.vue'
+import ExternalAdapterDetail from './views/external-adapters/ExternalAdapterDetail.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -286,4 +304,8 @@ export default {
 
 	// bookkeeping-cost-centers-dimensions Task 14: segment P&L drill-down.
 	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },
+
+	// Shillinq W8: External Connections admin pages (index + per-adapter detail).
+	ExternalAdaptersStatus: { kind: 'page', component: ExternalAdaptersStatus },
+	ExternalAdapterDetail: { kind: 'page', component: ExternalAdapterDetail },
 }
