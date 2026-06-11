@@ -329,3 +329,7 @@ Per Task 31–33: journeydoc user guide (`docs/user-guide/bookkeeping/ccm-rule-e
 ## i18n (company-wide ADR-007)
 
 Per Task 31: Dutch + English translations for all UI labels, rule names, descriptions, notifications, and audit committee report fields.
+
+## External adapter
+
+- [x] Adapter port: dormant `CcmRuleEngineAdapterInterface` + `LogCcmRuleEngineAdapter` shipped at `lib/Service/External/CcmRuleEngine/` and wired in `lib/AppInfo/Application.php::register()`. The port carries the `compileRule(ruleCode, ruleLogic): CcmRuleEngineResult` + `evaluate(astHandle, transactionContext): CcmRuleEngineResult` contract so the v1 local `OCA\Shillinq\Service\CcmRuleEngine` (the ADR-031 exception per Task 8) can be swapped out for the future OpenRegister native rule-expression engine (or a third-party evaluator such as Drools / OpenA3) without touching FindingService, the nightly async-sweep / SoD-materialisation workflows, or the audit-committee report assembly. Dormant default returns `DEFERRED + fired=false` per the REQ-CCM-002 fail-soft contract — binding the openconnector source slug `ccm-rule-engine` activates real cross-app evaluation. The local engine continues to run in-process while the binding is dormant (overlay semantics).

@@ -49,6 +49,8 @@ use OCA\Shillinq\Service\External\Cbs\CbsBestandenAdapterInterface;
 use OCA\Shillinq\Service\External\Cbs\CbsIv3AdapterInterface;
 use OCA\Shillinq\Service\External\Cbs\LogCbsBestandenAdapter;
 use OCA\Shillinq\Service\External\Cbs\LogCbsIv3Adapter;
+use OCA\Shillinq\Service\External\CcmRuleEngine\CcmRuleEngineAdapterInterface;
+use OCA\Shillinq\Service\External\CcmRuleEngine\LogCcmRuleEngineAdapter;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
 use OCA\Shillinq\Service\External\Ib47\Ib47AdapterInterface;
@@ -392,6 +394,20 @@ class Application extends App implements IBootstrap
             UwvLoonaangifteAdapterInterface::class,
             static function ($c): UwvLoonaangifteAdapterInterface {
                 return $c->get(LogUwvLoonaangifteAdapter::class);
+            }
+        );
+
+        // bookkeeping-ccm-rule-engine REQ-CCM-002 — cross-app rule-engine
+        // delegation port. The local CcmRuleEngine (ADR-031 exception) runs
+        // v1 sync/async DSL evaluation in-process; this port is the swap-out
+        // seam for the future OpenRegister native rule engine (or a
+        // third-party evaluator). Dormant LogCcmRuleEngineAdapter returns
+        // DEFERRED + fired=false (fail-soft) so binding the openconnector
+        // source slug `ccm-rule-engine` never raises a false finding.
+        $context->registerService(
+            CcmRuleEngineAdapterInterface::class,
+            static function ($c): CcmRuleEngineAdapterInterface {
+                return $c->get(LogCcmRuleEngineAdapter::class);
             }
         );
 
