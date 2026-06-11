@@ -53,6 +53,14 @@ use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
 use OCA\Shillinq\Service\External\Ib47\Ib47AdapterInterface;
 use OCA\Shillinq\Service\External\Ib47\LogIb47Adapter;
+use OCA\Shillinq\Service\External\Kvk\KvkHandelsregisterAdapterInterface;
+use OCA\Shillinq\Service\External\Kvk\LogKvkHandelsregisterAdapter;
+use OCA\Shillinq\Service\External\Mollie\LogMolliePaymentAdapter;
+use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
+use OCA\Shillinq\Service\External\Bunq\BunqBankConnectorAdapterInterface;
+use OCA\Shillinq\Service\External\Bunq\LogBunqBankConnectorAdapter;
+use OCA\Shillinq\Service\External\Uwv\LogUwvLoonaangifteAdapter;
+use OCA\Shillinq\Service\External\Uwv\UwvLoonaangifteAdapterInterface;
 use OCA\Shillinq\Service\External\RvO\LogRvOAanvraagAdapter;
 use OCA\Shillinq\Service\External\RvO\RvOAanvraagAdapterInterface;
 use OCA\Shillinq\Service\External\Salarisbureau\LogSalarisbureauAdapter;
@@ -343,6 +351,45 @@ class Application extends App implements IBootstrap
             Ib47AdapterInterface::class,
             static function ($c): Ib47AdapterInterface {
                 return $c->get(LogIb47Adapter::class);
+            }
+        );
+
+        // Wave-4 external-API ports (low-volume families):
+        //
+        // - KvK Handelsregister (bookkeeping-multi-administratie onboarding,
+        //   AR/AP debtor/creditor enrichment,
+        //   bookkeeping-consolidation-commercial deelnemingen-graaf walk).
+        // - Mollie Payments (bookings-deposits DepositPayment intent,
+        //   bookkeeping-accounts-receivable-core invoice payment links +
+        //   webhook verification).
+        // - Bunq Bank Connector (bookkeeping-bank-connectors per-Source
+        //   pull + consent-renewal action; ADR-031 ScheduledWorkflow
+        //   delegates transport to this port; no aggregator JSON path —
+        //   Bunq exposes CAMT.053 natively).
+        // - UWV Loonaangifte + Werkhervattingskas (LHAfdracht acceptance
+        //   pull + werkgever-setup sectorindeling validation).
+        $context->registerService(
+            KvkHandelsregisterAdapterInterface::class,
+            static function ($c): KvkHandelsregisterAdapterInterface {
+                return $c->get(LogKvkHandelsregisterAdapter::class);
+            }
+        );
+        $context->registerService(
+            MolliePaymentAdapterInterface::class,
+            static function ($c): MolliePaymentAdapterInterface {
+                return $c->get(LogMolliePaymentAdapter::class);
+            }
+        );
+        $context->registerService(
+            BunqBankConnectorAdapterInterface::class,
+            static function ($c): BunqBankConnectorAdapterInterface {
+                return $c->get(LogBunqBankConnectorAdapter::class);
+            }
+        );
+        $context->registerService(
+            UwvLoonaangifteAdapterInterface::class,
+            static function ($c): UwvLoonaangifteAdapterInterface {
+                return $c->get(LogUwvLoonaangifteAdapter::class);
             }
         );
 
