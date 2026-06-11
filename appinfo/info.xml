@@ -141,5 +141,14 @@ Vrij en open source onder de EUPL-1.2-licentie.
              CET completion; on-demand testing route lives at POST
              /api/v2/soft-close/{administrationId}/execute-now. -->
         <job>OCA\Shillinq\Cron\SoftCloseJob</job>
+        <!-- add-shillinq-multi-currency REQ-MC-003 / Task 11: daily ECB FX-rate
+             import. Delegates the rate fetch to TreasuryRateAdapterInterface
+             (openconnector source slug `treasury-rates`) and upserts FxRate
+             records idempotently on (transactionCurrency, baseCurrency, date,
+             source). Dormant by default (TreasuryRateAdapter is a log-only
+             stub until the openconnector binding is wired in
+             Application::register()); manual operator FxRate entries via the
+             admin UI keep working regardless. -->
+        <job>OCA\Shillinq\BackgroundJob\FxRateImportJob</job>
     </background-jobs>
 </info>
