@@ -19,4 +19,15 @@ test.describe('Shillinq — visual baselines', () => {
 	test('dashboard', async ({ page }) => {
 		await shootSurface(page, `${APP}/#/`, 'dashboard.png')
 	})
+
+	// New W8 external-adapter admin surfaces. The status index + a detail
+	// activation panel; baseline their chrome. Adapter status is dormant-by-
+	// default + static, so the shots are deterministic.
+	test('external adapters status', async ({ page }) => {
+		await shootSurface(page, `${APP}/external-adapters`, 'external-adapters-status.png')
+	})
+
+	test('external adapter detail', async ({ page }) => {
+		await shootSurface(page, `${APP}/external-adapters/digipoort-sbr`, 'external-adapter-detail.png')
+	})
 })
