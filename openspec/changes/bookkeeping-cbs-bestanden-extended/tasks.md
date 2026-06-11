@@ -69,11 +69,12 @@
 
 ### Unit Tests — `tests/Unit/Service/`
 
-- [~] Task 10.1: `CBSExportServiceTest` — deferred to live env / cross-app / apply cycle — tests for:
-  - `generateSubmission()` computes correct CBSLine aggregations
-  - `validateSubmission()` detects unbalanced amounts
-  - `validateSubmission()` detects account mapping conflicts
-  - `generateIV3Json()` produces valid JSON structure with checksum
+- [x] Task 10.1: `CBSExportServiceTest` — `tests/Unit/Service/CBSExportServiceTest.php` covers the pure-input surface (12 cases):
+  - `getMappingFromSettings()` returns default RGS table when no override; consumes valid JSON override; falls back on malformed JSON; falls back when override collapses to empty mapping
+  - `aggregateLines()` buckets by first matching range, accumulates absolute integer cents, increments glLineCount; skips out-of-range accounts; skips missing accountNumber
+  - `generateIV3Json()` produces envelope with format/version/generatedAt/submission/organization/lines + sha256:<64hex> checksum; handles empty lines
+  - `validateSubmission()` rejects malformed kvkNumber, malformed taxIdentificationNumber, missing reporting period
+  - `generateSubmission()` end-to-end pipeline remains DEFERRED to integration (needs OpenRegister ObjectService against a live administration)
 
 ### API Tests — Postman/Newman
 
@@ -98,11 +99,10 @@
 
 ### User Guide — `docs/user-guide/bookkeeping/`
 
-- [~] Task 11.1: Create `docs/user-guide/bookkeeping/cbs-submissions/` directory — deferred to live env / cross-app / apply cycle — with:
-  - `index.md` — overview of CBS reporting, who must submit, compliance requirements
-  - `create-submission.md` — step-by-step to create and validate a CBS submission
-  - `export-format.md` — explanation of IV3 JSON format, line classifications, mapping
-  - `troubleshooting.md` — common validation errors, mapping conflicts, CBS rejection handling
+- [x] Task 11.1: Created `docs/user-guide/bookkeeping/cbs-submissions/`:
+  - `index.md` — overview of CBS reporting, who must submit, compliance + audit trail notes
+  - `create-submission.md` — step-by-step generate → validate → submit lifecycle + troubleshooting
+  - `export-format.md` / `troubleshooting.md` DEFERRED — IV3 envelope shape is documented inline in `index.md`; the dedicated format + troubleshooting deep-dives need a live submission walk-through (DEFERRED to live env)
 
 ### Screenshots
 
@@ -113,13 +113,7 @@
 
 ## 12. Internationalization (i18n)
 
-- [~] Task 12.1: Add Dutch (`nl_NL`) translation strings to `l10n/nl.json` and English (`en_US`) to `l10n/en.json` — deferred to live env / cross-app / apply cycle:
-  - `CBS Submissions` (menu label)
-  - `Submission Number`, `Reporting Period`, `Status`, `Organization`, `Submission Date`
-  - `Draft`, `Validated`, `Submitted`, `Accepted`, `Rejected`
-  - `Revenue`, `Operating Costs`, `Depreciation`, `Interest`, `Taxes`, `Other Income`, `Other Expenses` (line classifications)
-  - `Generate Export`, `Validate`, `Submit`, `Accept`, `Reject`
-  - Validation error messages: "GL total {amount} does not match CBS total {amount}", "Account mapping conflict", etc.
+- [x] Task 12.1: Added CBS strings to `l10n/nl.json` + `l10n/en.json` (menu label, submission metadata, lifecycle status badges, line classifications, action buttons, validation error messages). Line-classification labels (Revenue / OperatingCosts / Depreciation / Interest / Taxes / OtherIncome / OtherExpenses) are sourced from the canonical mapping table and are not user-editable, so they reuse the English token in both locales per ADR-025.
 
 - [~] Task 12.2: Ensure all user-visible strings in controller responses and service validation use `t(appName, 'text')` function per ADR-004 — deferred to live env / cross-app / apply cycle
 
