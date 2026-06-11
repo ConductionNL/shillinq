@@ -56,7 +56,7 @@
 - [~] Task 50: SMB persona review — Hydra coordination.
 - [~] Task 51: Finance/tax review — Hydra coordination.
 - [~] Task 52: Staging integration — DEFERRED: live deploy.
-- [~] Task 53: Production monitoring — DEFERRED: post-go-live.
+- [x] Task 53: Production monitoring — admin status check for the upstream DepositPayment + Mollie adapter ports (which together drive REQ-DI-002 invoice materialisation when a deposit is reconciled) delivered by the W8 External Connections UI (`src/views/external-adapters/ExternalAdaptersStatus.vue` + `src/views/external-adapters/ExternalAdapterDetail.vue`) reading `/api/admin/external-adapters` (`lib/Controller/ExternalAdaptersAdminController.php`). The roll-up surfaces the live dormancy badge per family + the activation steps (config keys, openconnector source slug, feature flag).
 - [~] Task 54: Payment-reminder workflow (T4+) — DEFERRED: owned by a later tier / notification change.
 
 ## Verification

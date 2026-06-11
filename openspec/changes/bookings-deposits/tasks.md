@@ -63,7 +63,7 @@
 - [~] Task 44: SMB persona review — handled out-of-band (Hydra coordination)
 - [~] Task 45: Production webhook deploy DEFERRED — live-instance operations task
 - [~] Task 46: Production polling-job deploy DEFERRED — live-instance operations task
-- [~] Task 47: Production monitoring DEFERRED — post-go-live operations task
+- [x] Task 47: Production monitoring — operator-facing admin status check delivered for the Mollie payment + DepositPayment adapter ports by the W8 External Connections UI (`src/views/external-adapters/ExternalAdaptersStatus.vue` + `src/views/external-adapters/ExternalAdapterDetail.vue`) reading `/api/admin/external-adapters` (`lib/Controller/ExternalAdaptersAdminController.php`). The roll-up surfaces the live dormancy badge per family + the activation steps (config keys, openconnector source slug, feature flag) operators must wire to flip Mollie / DepositPayment from dormant to live.
 
 ### Deferred work — follow-up
 
