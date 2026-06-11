@@ -84,28 +84,33 @@
 
 ## Deferral reasons (hydra build)
 
-The deterministic, unit-testable fiscal core of the deferred tasks is already
-implemented in the two guards; what remains deferred is the runtime wiring that
-needs a live instance and/or cross-app dependency surfaces that are not yet
-merged. The app currently ships **no** PHP TimedJob/cron infrastructure, so the
-batch jobs would be the first of their kind and require a running Nextcloud
-scheduler + OpenRegister data to verify — out of scope for a static hydra build.
+The deterministic, unit-testable fiscal core is fully implemented as four
+Service classes (`UrenTallyService`, `UrenPrognoseService`, `UrenAlertService`,
+`UrenNormDeterminationService`) plus the two guards (`UrencriteriumYearGuard`,
+`UrenDagregistratieGuard`), each with a matching `tests/Unit/Service/*Test.php`
+suite. What remains DEFERRED is the runtime wiring that needs a live instance
+and/or cross-app dependency surfaces (TimedJob registration, hrmq AO-status,
+openconnector ICS, openregister file-storage, IB-aangifte consumer) — out of
+scope for a static hydra build but no longer the deterministic-logic gap that
+the original deferral notes captured.
 
-- **Task 11 (daily tally batch)** — DEFERRED: needs a live OpenRegister instance
-  to aggregate `UrenDagregistratie` rows; the reistijd-cap aggregation rule it
-  depends on IS implemented + tested in `UrenDagregistratieGuard::pasReistijdCapToe`.
-- **Task 12 (prognose batch)** — DEFERRED: rolling-12-week-seasonal computation
-  needs historical OR data + a scheduler to run against.
-- **Task 13 (alert-trigger batch)** — DEFERRED: needs the scheduler + live
-  drempel-status transitions; the alert shape + handelingsperspectief is declared
-  on the `UrenAlert` schema.
-- **Task 14 (norm-determination)** — PARTIAL: the deterministic logic
-  (`bepaalDoelNorm` / `bepaalNormGrondslag`) is implemented + tested in
-  `UrencriteriumYearGuard`; the `hrmq` profile query + init wiring is DEFERRED
-  (cross-app `hrmq` AO-status surface not yet available).
-- **Task 15 (grotendeels-criterium)** — PARTIAL: the >50% threshold logic
-  (`bepaalGrotendeelsCriterium`) is implemented + tested; the daily loondienst-hours
-  sync from `hrmq` is DEFERRED (cross-app dependency).
+- **Task 11 (daily tally batch)** — DONE (service): `UrenTallyService` plus
+  `UrenTallyServiceTest`. The TimedJob registration on a live scheduler is the
+  only runtime piece left and tracked under Task 29.
+- **Task 12 (prognose batch)** — DONE (service): `UrenPrognoseService` (rolling
+  12-week + seasonality + vakantie overrides + confidence interval) plus
+  `UrenPrognoseServiceTest`. Scheduler wiring tracked under Task 29.
+- **Task 13 (alert-trigger batch)** — DONE (service): `UrenAlertService` plus
+  `UrenAlertServiceTest` (quarterly + drempel-omslag + ≥3 handelingsperspectief).
+  Scheduler wiring tracked under Task 29.
+- **Task 14 (norm-determination)** — DONE (service): `UrenNormDeterminationService`
+  wraps `UrencriteriumYearGuard::bepaalDoelNorm / bepaalNormGrondslag` and accepts
+  the entrepreneur profile array; `UrenNormDeterminationServiceTest` covers the
+  policy paths. The hrmq AO-status query that fills the profile remains DEFERRED
+  (cross-app surface).
+- **Task 15 (grotendeels-criterium)** — DONE (logic): the >50% threshold lives in
+  `UrencriteriumYearGuard::bepaalGrotendeelsCriterium` with unit coverage; the
+  daily loondienst-hours sync from `hrmq` remains DEFERRED (cross-app).
 - **Task 16 (WBSO sync)** — DEFERRED: needs `bookkeeping-wbso-administratie`
   read surface; the R_AND_D_WBSO category is seeded for the eventual feed.
 - **Task 17 (zwangerschap-fictie)** — DEFERRED: needs ZEZ-uitkering registration
