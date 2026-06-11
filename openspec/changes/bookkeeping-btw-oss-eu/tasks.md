@@ -68,3 +68,8 @@ Spec-only change — no user-facing strings ship here. The implementation cycle 
 - European Commission Taxes in Europe Database (TEDB) v3 REST endpoint (ec.europa.eu/taxation_customs/tedb).
 - Article 273 Directive 2006/112/EC (penalties for VAT non-compliance, up to 50% of unpaid VAT).
 
+## External adapters
+
+- [x] Adapter port: dormant `DigipoortSbrAdapterInterface` + `LogDigipoortSbrAdapter` shipped at `lib/Service/External/Digipoort/` and wired in `lib/AppInfo/Application.php::register()`. The quarterly OSS aangifte (Belastingdienst mijn-bd OSS) is dispatched through this port; the port shape carries `filingType: btw-oss-aangifte` + the per-EU-member-state subtotals. Production swap to an openconnector-backed binding at source slug `digipoort-sbr` is non-breaking.
+- [x] Adapter port: dormant `Ib47AdapterInterface` + `LogIb47Adapter` shipped at `lib/Service/External/Ib47/` and wired in `lib/AppInfo/Application.php::register()`. The post-IB47 UBD reporting stream for cross-border side-payments to EU-resident contributors above threshold is dispatched through this port; the log-default redacts BSN/name/address from per-recipient rows before logging. Production swap to an openconnector-backed binding at source slug `belastingdienst-ib47` is non-breaking.
+

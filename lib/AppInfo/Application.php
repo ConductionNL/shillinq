@@ -43,6 +43,20 @@ use OCA\Shillinq\Service\Dunning\LogDunningChannelAdapter;
 use OCA\Shillinq\Service\Dunning\LogIncassoBureauAdapter;
 use OCA\Shillinq\Service\Dunning\LogPostNLAdapter;
 use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
+use OCA\Shillinq\Service\External\Sisa\BzkSisaUploadAdapterInterface;
+use OCA\Shillinq\Service\External\Sisa\LogBzkSisaUploadAdapter;
+use OCA\Shillinq\Service\External\Cbs\CbsBestandenAdapterInterface;
+use OCA\Shillinq\Service\External\Cbs\CbsIv3AdapterInterface;
+use OCA\Shillinq\Service\External\Cbs\LogCbsBestandenAdapter;
+use OCA\Shillinq\Service\External\Cbs\LogCbsIv3Adapter;
+use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
+use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
+use OCA\Shillinq\Service\External\Ib47\Ib47AdapterInterface;
+use OCA\Shillinq\Service\External\Ib47\LogIb47Adapter;
+use OCA\Shillinq\Service\External\RvO\LogRvOAanvraagAdapter;
+use OCA\Shillinq\Service\External\RvO\RvOAanvraagAdapterInterface;
+use OCA\Shillinq\Service\External\Salarisbureau\LogSalarisbureauAdapter;
+use OCA\Shillinq\Service\External\Salarisbureau\SalarisbureauAdapterInterface;
 use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
@@ -266,6 +280,69 @@ class Application extends App implements IBootstrap
             PostNLAdapterInterface::class,
             static function ($c): PostNLAdapterInterface {
                 return $c->get(LogPostNLAdapter::class);
+            }
+        );
+
+        // External-API adapter ports — every binding below is dormant by
+        // default (log-only), so the regulatory-filing lifecycles can
+        // advance into `submitted` without contacting an external party.
+        // Override each binding in a downstream Application::register()
+        // (or via a runtime configuration hook) once the matching
+        // openconnector source slug + credential is provisioned.
+        //
+        // - CBS Bestanden (bookkeeping-cbs-bestanden-extended)
+        // - CBS Iv3 (bookkeeping-cbs-iv3 / provincies + gemeenten Iv3)
+        // - BZK SiSa (bookkeeping-sisa-reporting)
+        // - Digipoort/SBR (bookkeeping-vat-btw-filing,
+        //   bookkeeping-financial-statements,
+        //   bookkeeping-sbr-xbrl-reporting, bookkeeping-csrd-esrs)
+        // - Salarisbureau (bookkeeping-detachering-payroll-administratie,
+        //   bookkeeping-payroll-engine-nl)
+        // - RvO (bookkeeping-investeringsaftrek,
+        //   bookkeeping-wbso-sno-administratie)
+        // - Belastingdienst IB47
+        //   (bookkeeping-detachering-payroll-administratie,
+        //   bookkeeping-btw-oss-eu).
+        $context->registerService(
+            CbsBestandenAdapterInterface::class,
+            static function ($c): CbsBestandenAdapterInterface {
+                return $c->get(LogCbsBestandenAdapter::class);
+            }
+        );
+        $context->registerService(
+            CbsIv3AdapterInterface::class,
+            static function ($c): CbsIv3AdapterInterface {
+                return $c->get(LogCbsIv3Adapter::class);
+            }
+        );
+        $context->registerService(
+            BzkSisaUploadAdapterInterface::class,
+            static function ($c): BzkSisaUploadAdapterInterface {
+                return $c->get(LogBzkSisaUploadAdapter::class);
+            }
+        );
+        $context->registerService(
+            DigipoortSbrAdapterInterface::class,
+            static function ($c): DigipoortSbrAdapterInterface {
+                return $c->get(LogDigipoortSbrAdapter::class);
+            }
+        );
+        $context->registerService(
+            SalarisbureauAdapterInterface::class,
+            static function ($c): SalarisbureauAdapterInterface {
+                return $c->get(LogSalarisbureauAdapter::class);
+            }
+        );
+        $context->registerService(
+            RvOAanvraagAdapterInterface::class,
+            static function ($c): RvOAanvraagAdapterInterface {
+                return $c->get(LogRvOAanvraagAdapter::class);
+            }
+        );
+        $context->registerService(
+            Ib47AdapterInterface::class,
+            static function ($c): Ib47AdapterInterface {
+                return $c->get(LogIb47Adapter::class);
             }
         );
 

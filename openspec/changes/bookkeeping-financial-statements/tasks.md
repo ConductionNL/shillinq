@@ -41,3 +41,7 @@ Spec-only change — no user-facing docs ship here. The implementation cycle aut
 ## i18n (company-wide ADR-005)
 
 Spec-only change — no user-facing strings ship here. The implementation cycle adds Dutch (`nl_NL`) and English (`en_US`) translation strings for: `Financial Statements`, `Balance Sheet`, `Trial Balance`, `Consolidations`, `Consolidated Report`, `Assets`, `Liabilities`, `Equity`, `Total Debits`, `Total Credits`, `Balanced`, `Consolidation Group`, `Elimination Rules`, `Published`, `Final`, `Draft`.
+
+## External adapter
+
+- [x] Adapter port: dormant `DigipoortSbrAdapterInterface` + `LogDigipoortSbrAdapter` shipped at `lib/Service/External/Digipoort/` and wired in `lib/AppInfo/Application.php::register()`. The `deponering` lifecycle transition for jaarrekening + consolidations can advance without a live Digipoort connector; the same port covers KvK + DNB SBR delivery once an openconnector source slug `digipoort-sbr` is provisioned.

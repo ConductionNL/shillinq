@@ -226,3 +226,7 @@
   - Track LH-afdracht discrepancies (Belastingdienst feedback)
   - Monitor SV-premium premium-recalcs (UWV annual updates)
   - Tax-table hot-patches (Belastingdienst mid-year corrections)
+
+## External adapter
+
+- [x] Adapter port: dormant `SalarisbureauAdapterInterface` + `LogSalarisbureauAdapter` shipped at `lib/Service/External/Salarisbureau/` and wired in `lib/AppInfo/Application.php::register()`. The payroll-run delta for outsourced flows (ADP RUN / Loket / Nmbrs / Visma) is dispatched through this port — the in-house engine that owns this capability still computes LH/SV; the port exists to dispatch the run to a bureau when the tenant uses one. Production swap to an openconnector-backed binding at source slug `salarisbureau-<vendor>` is non-breaking.
