@@ -35,6 +35,20 @@ return [
         // #[AuthorizedAdminSetting(Application::class)].
         ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
 
+        // Shillinq W8 (external-adapters admin UIs): read-only admin
+        // roll-up + per-adapter detail over the 14 dormant external-API
+        // adapter ports (Digipoort/SBR, Salarisbureau, RvO, IB47, CBS x2,
+        // BZK SiSa, Mollie, Bunq, KvK, UWV, Treasury Rates, CCM Rule
+        // Engine, CSRD ESRS XBRL, DepositPayment). Drives
+        // ExternalAdaptersStatus.vue (index) +
+        // ExternalAdapterDetail.vue (per-adapter activation panel).
+        // Both endpoints gated by
+        // #[AuthorizedAdminSetting(Application::class)] — the
+        // activation steps reveal configuration keys which are
+        // admin-only data.
+        ['name' => 'externalAdaptersAdmin#index', 'url' => '/api/admin/external-adapters', 'verb' => 'GET'],
+        ['name' => 'externalAdaptersAdmin#show', 'url' => '/api/admin/external-adapters/{id}', 'verb' => 'GET'],
+
         // Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog).
         ['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
         ['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
