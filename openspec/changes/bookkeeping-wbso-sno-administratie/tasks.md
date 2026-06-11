@@ -197,3 +197,7 @@ Implementation cycle adds translation strings (Task 40):
 - `src/locales/nl_NL.json`: Dutch translations (Grootboekrekening, Transactie, Bestand, etc.)
 
 All journeydoc and user-facing strings are translated to Dutch (primary) and English (fallback).
+
+## External adapter
+
+- [x] Adapter port: dormant `RvOAanvraagAdapterInterface` + `LogRvOAanvraagAdapter` shipped at `lib/Service/External/RvO/` and wired in `lib/AppInfo/Application.php::register()`. The WBSO `aanvraag` and SnO `voortgangsmelding werkelijk gerealiseerde uren` are dispatched through this port; the port shape carries `scheme: wbso|sno`, `aanvraagType`, the per-project hours, and the `attachmentBytes`/`attachmentChecksum` envelope. Production swap to an openconnector-backed binding at source slug `rvo-aanvraag` (eHerkenning Level 3 + Mijn-RvO REST endpoint for WBSO/SnO) is non-breaking.

@@ -295,6 +295,10 @@ Before opening PR:
 
 ---
 
+## External adapter
+
+- [x] Adapter port: dormant `DigipoortSbrAdapterInterface` + `LogDigipoortSbrAdapter` shipped at `lib/Service/External/Digipoort/` and wired in `lib/AppInfo/Application.php::register()`. The `submitted` lifecycle transition can advance without a live Digipoort connector; production binding is swapped in once the PKIoverheid Services-server cert + openconnector source slug `digipoort-sbr` are provisioned.
+
 ## References
 
 - Proposal: [`bookkeeping-vat-btw-filing`](proposal.md)

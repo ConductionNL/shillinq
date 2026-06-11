@@ -82,3 +82,8 @@ Spec-only change — no user-facing docs ship here. The implementation cycle aut
 
 Spec-only change — no user-facing strings ship here. The implementation cycle adds Dutch (`nl_NL`) and English (`en_US`) translation strings per Task 25: all noun/verb/label strings used in forms, tables, and navigation. Verify `grep -rn "t('shillinq', '" src/` returns zero matches until i18n commit; all strings English in code, Dutch in `l10n/nl.json`.
 
+## External adapters
+
+- [x] Adapter port: dormant `SalarisbureauAdapterInterface` + `LogSalarisbureauAdapter` shipped at `lib/Service/External/Salarisbureau/` and wired in `lib/AppInfo/Application.php::register()`. The payroll-run delta to ADP RUN / Loket / Nmbrs / Visma is dispatched through this port; the log-default sanitises BSN out of per-employee rows. Production swap to an openconnector-backed binding at source slug `salarisbureau-<vendor>` is non-breaking.
+- [x] Adapter port: dormant `Ib47AdapterInterface` + `LogIb47Adapter` shipped at `lib/Service/External/Ib47/` and wired in `lib/AppInfo/Application.php::register()`. The Belastingdienst IB47 / UBD opgaaf for third-party honoraria is dispatched through this port; the log-default reduces the recipients[] array to a nature-code histogram before logging (never leak BSN). Production swap to an openconnector-backed binding at source slug `belastingdienst-ib47` is non-breaking.
+

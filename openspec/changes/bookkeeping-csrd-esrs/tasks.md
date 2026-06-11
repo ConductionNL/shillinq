@@ -126,3 +126,7 @@ If spec is rejected post-review, or implementation halted mid-cycle:
 - Unwind `x-openregister-lifecycle` + `x-openregister-aggregations` rules
 
 **Once any ESRS report is published (status=published, submitted to KvK):** Rollback is not an option. Restatement workflow (next period) is the only path forward.
+
+## External adapter
+
+- [x] Adapter port: dormant `DigipoortSbrAdapterInterface` + `LogDigipoortSbrAdapter` shipped at `lib/Service/External/Digipoort/` and wired in `lib/AppInfo/Application.php::register()`. The CSRD/ESRS iXBRL pack submission contract (Task 33 KvK/AFM submission) lands behind this port — the port shape carries `filingType: csrd-xbrl-pack`, `xbrlInstanceBytes`, and `taxonomyVersion: efrag-esrs-2024`. Live transport is still deferred (depends on EFRAG ESRS XBRL taxonomy mapping + openconnector binding to source slug `digipoort-sbr`); the port lets the rest of the lifecycle advance into `submitted` on a clean instance without a Digipoort credential.

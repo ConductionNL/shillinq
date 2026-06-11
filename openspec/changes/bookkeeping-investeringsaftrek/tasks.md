@@ -343,3 +343,7 @@ For existing Shillinq deployments with pre-existing `FixedAsset` records:
 - RvO lists: switch active seed per fiscal year (2026 → 2027, etc.) via
   administration settings.
 - Audit trail preserved for all claim lifecycle events.
+
+## External adapter
+
+- [x] Adapter port: dormant `RvOAanvraagAdapterInterface` + `LogRvOAanvraagAdapter` shipped at `lib/Service/External/RvO/` and wired in `lib/AppInfo/Application.php::register()`. The KIA / EIA / MIA / Vamil mededeling (per-investment annual `mededeling werkelijk gerealiseerde investeringen`) is dispatched through this port; the port shape carries `scheme: kia|eia|mia|vamil`, `aanvraagType: mededeling`, and the per-investment bedragen. Production swap to an openconnector-backed binding at source slug `rvo-aanvraag` (eHerkenning Level 3 + Mijn-RvO REST) is non-breaking.

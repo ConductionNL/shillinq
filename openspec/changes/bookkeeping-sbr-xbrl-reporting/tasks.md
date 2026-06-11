@@ -55,3 +55,7 @@ Spec-only change — no user-facing docs ship here. The implementation cycle aut
 ## i18n (company-wide ADR-007)
 
 Spec-only change — no user-facing strings ship here. The implementation cycle adds Dutch (`nl_NL`) and English (`en_US`) translation strings for: `XBRL Taxonomies`, `SBR Documents`, `Mapping Validation`, `XBRL Taxonomy`, `SBR Document Type`, `Filing Deadline`, `Validation Status`, `Mapping Coverage`, `GL Completeness`, `Mapping Coverage`, `Account Mapping`, `Unmapped Accounts`, `Jaarverslag (Annual Report)`, `Belastingaangifte (Tax Filing)`, `Draft`, `Validated`, `Submitted`, `Approved`, `Rejected`, `Active`, `Archived`, `Belastingdienst`, `DNB`, `XBRL GL Concept`.
+
+## External adapter
+
+- [x] Adapter port: dormant `DigipoortSbrAdapterInterface` + `LogDigipoortSbrAdapter` shipped at `lib/Service/External/Digipoort/` and wired in `lib/AppInfo/Application.php::register()`. The REQ-SBR-005 `submit` lifecycle transition can advance without a live Digipoort connector — the port shape (filingType / xbrlInstanceBytes / xbrlChecksum / taxonomyVersion / kenmerk) is stable so production swap to an openconnector-backed binding at source slug `digipoort-sbr` is non-breaking.
