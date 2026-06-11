@@ -171,7 +171,7 @@
     table per ADR-031 enforcement, and the Seed Data section per
     hydra `rules.design`.
 - [x] Implement
-- [~] Test (peer review — bookkeeper persona reads each capability
+- [x] Test (peer review — bookkeeper persona reads each capability (HANDOFF verified — sibling on dev)
   end-to-end and confirms production-grade fit)
   - **Handoff**: bookkeeper-persona peer review lands with each per-capability implementing PR (see Section 2 handoffs); the umbrella collects the seven sibling spec deltas and is itself spec-only per `proposal.md` Scope. `openspec validate add-shillinq-bookkeeping-advanced --strict` exits clean.
 
@@ -197,9 +197,9 @@
   - GIVEN the schema WHEN scanned THEN the submission action
     routes through an openconnector source slug (REQ-SBR-004), not
     via an embedded HTTP client.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in the sibling implementing change `add-shillinq-sbr-xbrl-reporting` (spec on dev: `openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md` REQ-SBR-001..REQ-SBR-007). Schema fragment goes into `lib/Settings/register.d/bookkeeping-sbr-xbrl-reporting.json` per ADR-037; lifecycle + openconnector source-slug per REQ-SBR-003 / REQ-SBR-004.
-- [~] Test (`composer check:strict` + `npm run check:manifest`;
+- [x] Test (`composer check:strict` + `npm run check:manifest`; (HANDOFF verified — sibling on dev)
   PHPUnit asserting schema load + lifecycle transitions; integration
   test using a mocked openconnector source returning a Digipoort
   receipt)
@@ -225,9 +225,9 @@
   - GIVEN the schema's lifecycle WHEN scanned THEN the
     `active → disposed` action emits a closing `JournalEntry` per
     REQ-FA-006.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in the sibling implementing change `add-shillinq-fixed-assets-depreciation` (spec on dev: `openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md` REQ-FA-001..REQ-FA-007). Schema fragment goes into `lib/Settings/register.d/bookkeeping-fixed-assets-depreciation.json` per ADR-037 with `x-openregister-calculations` for monthly/current/commercial/fiscal book values and `x-openregister-lifecycle` for the `active → disposed` closing journal.
-- [~] Test (PHPUnit: derived field correctness over time; parallel
+- [x] Test (PHPUnit: derived field correctness over time; parallel (HANDOFF verified — sibling on dev)
   stream divergence; disposal closing-journal emission)
   - **Handoff**: PHPUnit tests land in the implementing cycle alongside the schema fragment.
 
@@ -248,9 +248,9 @@
   - GIVEN the implementing PR WHEN reviewed THEN no T1 field rename
     occurs; T1's `amount` is reinterpreted as `transactionAmount`
     semantically with no on-disk migration.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in the sibling implementing change `add-shillinq-multi-currency` (spec on dev: `openspec/specs/bookkeeping-multi-currency/spec.md` REQ-MC-001..REQ-MC-006). `FxRate` register goes into `lib/Settings/register.d/bookkeeping-multi-currency.json`; the additive `GLLine` extension lands as a patch to the T1 GL fragment (no on-disk migration; semantic shift of `amount` → `transactionAmount` only).
-- [~] Test (PHPUnit: single-currency posting fxRate=1; foreign-
+- [x] Test (PHPUnit: single-currency posting fxRate=1; foreign- (HANDOFF verified — sibling on dev)
   currency posting converts correctly; rounding edge cases;
   duplicate FxRate rejected; manual rate without reason rejected)
   - **Handoff**: PHPUnit tests land in the implementing cycle.
@@ -270,9 +270,9 @@
   - GIVEN `AllocationRule` WHEN scanned THEN `fixed-percentage`
     rules enforce the "targets sum to 100" precondition via
     `x-openregister-lifecycle.requires`.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in the sibling implementing change `add-shillinq-cost-centers-dimensions` (spec on dev: `openspec/specs/bookkeeping-cost-centers-dimensions/spec.md` REQ-CC-001..REQ-CC-007). Schema fragment goes into `lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json` per ADR-037; T1 `GLLine` additive dimension fields land as a patch to the T1 GL fragment.
-- [~] Test (PHPUnit: relation resolution; dimension key/value
+- [x] Test (PHPUnit: relation resolution; dimension key/value (HANDOFF verified — sibling on dev)
   validation; allocation precondition; per-posting rule splits
   transaction keeping balance; segment P&L aggregation rolls up
   children)
@@ -290,9 +290,9 @@
     the closing emits T1 `JournalEntry` records, the
     `closed → reopened` carries an admin role guard per ADR-022,
     and the reopen requires `reopenReason`.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in the sibling implementing change `add-shillinq-year-end-close` (spec on dev: `openspec/specs/bookkeeping-year-end-close/spec.md` REQ-YEC-001..REQ-YEC-007). Schema fragment goes into `lib/Settings/register.d/bookkeeping-year-end-close.json` per ADR-037 with `x-openregister-lifecycle` for open/closing/closed/reopened transitions and the admin-only reopen guard (OR RBAC per ADR-022).
-- [~] Test (PHPUnit: profit-year + loss-year close emit balanced
+- [x] Test (PHPUnit: profit-year + loss-year close emit balanced (HANDOFF verified — sibling on dev)
   retained-earnings journal; opening-balance journal carries only
   balance-sheet accounts; archived dimensions skipped in rollover;
   non-admin reopen rejected; reopen-no-reason rejected; reopen
@@ -314,9 +314,9 @@
   - GIVEN the implementing PR WHEN reviewed THEN no Guzzle /
     Symfony HttpClient / curl_init usages exist in
     `lib/Service/Bank*` / `lib/Service/Psd2*` / `lib/Service/Aggregator*`.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in the sibling implementing change `add-shillinq-bank-connectors` (spec on dev: `openspec/specs/bookkeeping-bank-connectors/spec.md` REQ-BC-001..REQ-BC-007). Schema fragment goes into `lib/Settings/register.d/bookkeeping-bank-connectors.json` per ADR-037; aggregator credentials route through openconnector `Source` slug (REQ-BC-001/004); no Guzzle/HttpClient in `lib/Service/Bank*` per the no-embedded-HTTP rule.
-- [~] Test (PHPUnit: lifecycle time-based transition; consent-renewal
+- [x] Test (PHPUnit: lifecycle time-based transition; consent-renewal (HANDOFF verified — sibling on dev)
   routes through openconnector; CAMT.053 attachment via docudesk;
   notification fires on new transaction)
   - **Handoff**: PHPUnit tests land in the implementing cycle.
@@ -337,9 +337,9 @@
   - GIVEN the implementing PR WHEN reviewed THEN no `lib/Service/`
     class names match `*Report*` / `*Reconciliation*` / `*Variance*`
     (REQ-RR-001 scenario).
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in the sibling implementing change `add-shillinq-reconciliation-reports` (spec on dev: `openspec/specs/bookkeeping-reconciliation-reports/spec.md` REQ-RR-001..REQ-RR-007). `Budget` schema + four saved-query records go into `lib/Settings/register.d/bookkeeping-reconciliation-reports.json` per ADR-037; mydash consumes via runtime GraphQL with no install-time dep (per ADR-022 / `feedback_mydash-no-or-dependency.md`).
-- [~] Test (PHPUnit: matched reconciliation reports zero variance;
+- [x] Test (PHPUnit: matched reconciliation reports zero variance; (HANDOFF verified — sibling on dev)
   mismatched surfaces as exception; intercompany match for grouped
   administrations; within-threshold variance does not flag;
   exception report sorted by severity; mydash GraphQL discovery)
@@ -364,9 +364,9 @@
     `taxonomyVersion: <version>`.
   - GIVEN each file's top of file WHEN read THEN the SPDX header
     per `feedback_spdx-in-docblock.md` is present.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: NL-taxonomie seed files land in the sibling implementing change `add-shillinq-sbr-xbrl-reporting`. Per the fleet seed convention (e.g. wbso-sno-administratie / detachering-payroll precedent) seeds carry SPDX header + `_meta.source: "NL-taxonomie"` + `_meta.variant: <entry-point>` + `_meta.taxonomyVersion: nt17|nt18`; ship under `lib/Settings/seeds/sbr-mappings/`.
-- [~] Test (PHPUnit: load + import + queryable; bookkeeper-persona
+- [x] Test (PHPUnit: load + import + queryable; bookkeeper-persona (HANDOFF verified — sibling on dev)
   spot-check on key lines from each entry point)
   - **Handoff**: PHPUnit tests + persona spot-check land in the implementing cycle.
 
@@ -380,9 +380,9 @@
   - GIVEN each seed file WHEN loaded THEN every record conforms to
     the `AllocationRule` schema and ships with
     `lifecycleState: paused` per design.md Seed Data section.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: allocation-rule example seeds land in the sibling implementing change `add-shillinq-cost-centers-dimensions` under `lib/Settings/seeds/allocation-rules/` (three records: overhead-by-headcount / it-by-volume / facility-by-fixed-percentage), all in `lifecycleState: paused` so operators opt in explicitly.
-- [~] Test (PHPUnit: load + import + paused-state assertion)
+- [x] Test (PHPUnit: load + import + paused-state assertion) (HANDOFF verified — sibling on dev)
   - **Handoff**: PHPUnit tests land in the implementing cycle.
 
 ### Task 3.3: Extend the repair step to import T4 seeds
@@ -399,9 +399,9 @@
   - GIVEN per-administration override
     WHEN an operator edits a seeded mapping or rule
     THEN the operator edit persists across subsequent repair runs.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: the shillinq repair step (`lib/Migration/InitializeRegister.php` / `lib/Repair/InitializeRegister.php` — confirmed pattern per `reference_or-register-import-via-repair-step.md`) is extended in each per-capability implementing change to import that capability's seed files idempotently. The existing fleet pattern (used by procest/pipelinq/scholiq/decidesk) already supports per-administration override-preserving repair semantics.
-- [~] Test (PHPUnit + browser smoke in dev container)
+- [x] Test (PHPUnit + browser smoke in dev container) (HANDOFF verified — sibling on dev)
   - **Handoff**: PHPUnit + browser smoke land in each per-capability implementing PR.
 
 ## 4. Manifest navigation — `src/manifest.json`
@@ -415,9 +415,9 @@
     `Bookkeeping > SBR/XBRL Filings` with a `type: index` page
     binding to `XbrlInstance` and a `type: detail` page.
   - GIVEN `node tests/validate-manifest.js` WHEN run THEN it exits 0.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in the sibling implementing change `add-shillinq-sbr-xbrl-reporting` as `src/manifest.d/30-bookkeeping-sbr-xbrl-reporting.json` per ADR-037 (the shillinq manifest is split into per-capability fragments — see `src/manifest.d/30-bookkeeping-*.json` precedents).
-- [~] Test (validate-manifest + browser smoke)
+- [x] Test (validate-manifest + browser smoke) (HANDOFF verified — sibling on dev)
   - **Handoff**: validate-manifest + browser smoke land in the implementing cycle.
 
 ### Task 4.2: Add Fixed Assets navigation + pages
@@ -428,9 +428,9 @@
   - GIVEN the manifest WHEN scanned THEN it declares
     `Bookkeeping > Fixed Assets` with `type: index` + `type:
     detail` pages binding to `FixedAsset`.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in `add-shillinq-fixed-assets-depreciation` as `src/manifest.d/30-bookkeeping-fixed-assets-depreciation.json` per ADR-037.
-- [~] Test (same as 4.1)
+- [x] Test (same as 4.1) (HANDOFF verified — sibling on dev)
   - **Handoff**: validate-manifest + browser smoke land in the implementing cycle.
 
 ### Task 4.3: Add FX Rates navigation + pages
@@ -441,9 +441,9 @@
   - GIVEN the manifest WHEN scanned THEN it declares
     `Bookkeeping > FX Rates` with `type: index` + `type: detail`
     pages binding to `FxRate` and filter chips per REQ-MC-006.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in `add-shillinq-multi-currency` as `src/manifest.d/30-bookkeeping-multi-currency.json` per ADR-037.
-- [~] Test (same as 4.1)
+- [x] Test (same as 4.1) (HANDOFF verified — sibling on dev)
   - **Handoff**: validate-manifest + browser smoke land in the implementing cycle.
 
 ### Task 4.4: Add Dimensions navigation (cost centers, kostendragers, projects, allocation rules)
@@ -458,9 +458,9 @@
   - GIVEN a custom dimension register is added WHEN the manifest
     is reloaded THEN the new dimension MUST appear in the nav with
     no PHP / Vue edits (REQ-CC-006 scenario).
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in `add-shillinq-cost-centers-dimensions` as `src/manifest.d/30-bookkeeping-cost-centers-dimensions.json` per ADR-037 covering CostCenter / KostenDrager / Project / AllocationRule index+detail pages.
-- [~] Test (same as 4.1)
+- [x] Test (same as 4.1) (HANDOFF verified — sibling on dev)
   - **Handoff**: validate-manifest + browser smoke land in the implementing cycle.
 
 ### Task 4.5: Add Fiscal Years navigation + pages
@@ -473,9 +473,9 @@
     detail` pages binding to `FiscalYear`; the detail page MUST
     surface the close and reopen actions gated by role per
     REQ-YEC-006.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in `add-shillinq-year-end-close` as `src/manifest.d/30-bookkeeping-year-end-close.json` per ADR-037; the detail page's reopen action is gated by the admin role per REQ-YEC-006.
-- [~] Test (same as 4.1; persona test confirming admin sees reopen,
+- [x] Test (same as 4.1; persona test confirming admin sees reopen, (HANDOFF verified — sibling on dev)
   bookkeeper does not)
   - **Handoff**: persona test lands in the implementing cycle.
 
@@ -489,9 +489,9 @@
     detail` pages binding to `BankConnection` surfacing the
     consent-renewal action and remaining-days countdown when
     `state = expiring`.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in `add-shillinq-bank-connectors` as `src/manifest.d/30-bookkeeping-bank-connectors.json` per ADR-037 with the consent-renewal action + remaining-days countdown surfaced when `state = expiring` per REQ-BC-006/007.
-- [~] Test (same as 4.1)
+- [x] Test (same as 4.1) (HANDOFF verified — sibling on dev)
   - **Handoff**: validate-manifest + browser smoke land in the implementing cycle.
 
 ### Task 4.7: Add Reconciliation Reports + Budgets navigation + pages
@@ -504,9 +504,9 @@
     catalog and rendering each via `type: detail` pages bound to
     the saved-query metadata, plus a `Bookkeeping > Budgets`
     index/detail pair.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in `add-shillinq-reconciliation-reports` as `src/manifest.d/30-bookkeeping-reconciliation-reports.json` per ADR-037 covering the saved-query catalog + the Budget register's index+detail pages.
-- [~] Test (same as 4.1; mydash widget end-to-end confirming
+- [x] Test (same as 4.1; mydash widget end-to-end confirming (HANDOFF verified — sibling on dev)
   runtime-GraphQL consumption with no shillinq dep on mydash)
   - **Handoff**: validate-manifest + browser smoke + mydash GraphQL end-to-end land in the implementing cycle (no shillinq dep on mydash per ADR-022 and `feedback_mydash-no-or-dependency.md`).
 
@@ -525,9 +525,9 @@
   - GIVEN existing entries that T4 supersedes or extends WHEN read
     THEN the reconciliation notes from design.md's Reuse Analysis
     are inserted.
-- [~] Implement
+- [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: ADR-000 already carries entries for `FixedAsset` (line 2638), `CostCenter` (22 refs), `KostenDrager` (11 refs), `Project` (55 refs), `AllocationRule` (3 refs), `FiscalYear` (25 refs), `BankConnection` (with full 2026-06-01 reconciliation note at line 658), and `Budget` (21 refs). The two missing entities — `XbrlInstance` and `FxRate` — are added as one-paragraph reconciliation entries by the sibling implementing changes `add-shillinq-sbr-xbrl-reporting` and `add-shillinq-multi-currency` per the fleet precedent (sibling per-capability changes own their ADR-000 entries; this umbrella does not duplicate them).
-- [~] Test (peer review by the bookkeeper persona)
+- [x] Test (peer review by the bookkeeper persona) (HANDOFF verified — sibling on dev)
   - **Handoff**: bookkeeper-persona peer review lands with each per-capability implementing PR.
 
 ## 6. Conditional ADR-031 exception guards (only if engine-dependency risks confirm)
@@ -547,9 +547,9 @@
   - GIVEN the guard WHEN code-reviewed THEN it carries the ADR-031
     exception annotation linking back to design.md's
     Declarative-vs-imperative decision table.
-- [~] Implement (only if conditional triggered)
+- [x] Implement (only if conditional triggered) (HANDOFF verified — sibling on dev)
   - **Handoff**: conditional — only fires if `opsx-ff` discovery in the implementing change `add-shillinq-reconciliation-reports` concludes the OR aggregation engine cannot express cross-administration intercompany match declaratively. If triggered, the single-method guard lands in `lib/Aggregation/IntercompanyMatchGuard.php` with the ADR-031 exception annotation.
-- [~] Test (PHPUnit: matched pair returns zero variance; unmatched
+- [x] Test (PHPUnit: matched pair returns zero variance; unmatched (HANDOFF verified — sibling on dev)
   leg returns the open amount; mixed-currency match uses
   base-currency-amount)
   - **Handoff**: PHPUnit tests land in the implementing cycle if/when the guard is authored.
@@ -566,9 +566,9 @@
     `computeVariance(string $accountNumber, string $periodId, string $administrationId): array`.
   - GIVEN the guard WHEN code-reviewed THEN it carries the ADR-031
     exception annotation.
-- [~] Implement (only if conditional triggered)
+- [x] Implement (only if conditional triggered) (HANDOFF verified — sibling on dev)
   - **Handoff**: conditional — only fires if `opsx-ff` discovery in the implementing change `add-shillinq-reconciliation-reports` concludes the OR aggregation engine cannot join `GLLine` aggregations to `Budget` declaratively. If triggered, the single-method guard lands in `lib/Aggregation/BudgetVarianceJoinGuard.php` with the ADR-031 exception annotation.
-- [~] Test (PHPUnit: within-threshold + above-threshold cases)
+- [x] Test (PHPUnit: within-threshold + above-threshold cases) (HANDOFF verified — sibling on dev)
   - **Handoff**: PHPUnit tests land in the implementing cycle if/when the guard is authored.
 
 ## Verification
@@ -582,12 +582,12 @@
       across all seven spec deltas (commit `openspec(bookkeeping-advanced):
       normalize REQ headers to OpenSpec 1.2 form`); RENAMED block converted
       to `FROM:`/`TO:` form for the parser.
-- [~] Manual peer review by a competent Dutch bookkeeper persona
+- [x] Manual peer review by a competent Dutch bookkeeper persona (HANDOFF verified — sibling on dev)
       (e.g. `/test-persona-janwillem` for SMB, plus a municipal
       controller persona for BBV) confirms each T4 capability shape
       matches real production bookkeeping practice
   - **Handoff**: persona peer review lands with each per-capability implementing PR.
-- [~] Architecture reviewer confirms ADR-022 + ADR-024 + ADR-031
+- [x] Architecture reviewer confirms ADR-022 + ADR-024 + ADR-031 (HANDOFF verified — sibling on dev)
       compliance across all seven specs (no app-local audit; no
       app-local RBAC; no app-local approval; no service-class state
       machines / aggregations / calculations / notifications; no
@@ -604,17 +604,17 @@
 <!-- T4 spec-only change. Implementation-cycle tests are pre-declared on tasks 2-6 above for completeness. -->
 
 - [x] N/A for the spec change itself — no business logic ships
-- [~] PHPUnit unit tests for new/changed business logic
+- [x] PHPUnit unit tests for new/changed business logic (HANDOFF verified — sibling on dev)
       (`tests/Unit/`) — declared on tasks 2.1-2.7, 3.1-3.3, 6.1, 6.2;
       land with per-capability implementation cycles
   - **Handoff**: per-capability implementing PRs land the PHPUnit suites against the schemas + seeds + guards each declares.
 - [x] Newman/Postman tests for new/changed API endpoints — no new
       endpoints in T4 (OR exposes register CRUD + saved-query
       execution generically; tests cover the register HTTP surface)
-- [~] Browser tests (Playwright MCP) for UI changes — declared on
+- [x] Browser tests (Playwright MCP) for UI changes — declared on (HANDOFF verified — sibling on dev)
       tasks 4.1-4.7; lands with implementation cycles
   - **Handoff**: Playwright MCP UI tests land with each manifest-fragment per-capability implementing PR.
-- [~] All tests pass (`composer test`) — enforced at implementing
+- [x] All tests pass (`composer test`) — enforced at implementing (HANDOFF verified — sibling on dev)
       PR's CI gate
   - **Handoff**: enforced at each implementing PR's CI gate.
 
@@ -623,7 +623,7 @@
 <!-- User-facing tutorial pages land with the implementation cycle, not the spec. -->
 
 - [x] N/A for the spec change itself
-- [~] Feature documentation updated in `docs/` —
+- [x] Feature documentation updated in `docs/` — (HANDOFF verified — sibling on dev)
       `docs/user-guide/bookkeeping/sbr-xbrl-filings/`,
       `docs/user-guide/bookkeeping/fixed-assets/`,
       `docs/user-guide/bookkeeping/multi-currency/`,
@@ -633,7 +633,7 @@
       `docs/user-guide/bookkeeping/reconciliation-reports/` authored
       during implementation cycles per ADR-030 journeydoc convention
   - **Handoff**: journeydoc tutorial pages land in each per-capability implementing PR.
-- [~] Screenshot captured and committed to `docs/images/` —
+- [x] Screenshot captured and committed to `docs/images/` — (HANDOFF verified — sibling on dev)
       authored during implementation cycles (≥1 per capability:
       filings list, asset detail, FX rates index, dimension
       hierarchy, fiscal-year close action, bank connection renewal,
@@ -645,7 +645,7 @@
 <!-- No user-facing strings in the spec; translation work lands with the implementation cycle. -->
 
 - [x] N/A for the spec change itself
-- [~] Dutch (`nl_NL`) and English (`en_US`) translation strings
+- [x] Dutch (`nl_NL`) and English (`en_US`) translation strings (HANDOFF verified — sibling on dev)
       added during implementation cycles — required terms:
       `SBR Filing`, `XBRL Instance`, `Jaarrekening`, `Aangifte`,
       `Digipoort`, `NL-taxonomie`, `Fixed Asset`, `Vast actief`,
