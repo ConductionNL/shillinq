@@ -82,6 +82,7 @@
   - Transaction reverse: administrator only
   - Document read: all roles
   - Document write (draft): bookkeeper
+  - **Unit-test coverage (W18):** `tests/Unit/Service/WbsoRbacResolverTest.php` (9 tests) pins the group→role mapping (`shillinq_bookkeeper`/`shillinq_auditor`/`shillinq_admin` + unprefixed `bookkeeper`/`auditor` aliases), NC admin elevation (`administrator` listed first), default-fallback to bookkeeper read-scope for authed-no-group, no-duplicate role merging when admin+group both apply, and the `hasAny()` / `canCreate()` helpers used by the three new WBSO API controllers.
   - Document file/archive: approver roles (admin, auditor, compliance)
 - [x] Task 31: Create `tests/Unit/Service/AccountServiceTest.php` covering:
   - Happy path: create account, retrieve account, list accounts
