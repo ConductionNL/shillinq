@@ -1,0 +1,72 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-cost-centers-dimensions",
+		"description": "Manifest navigation + index/detail pages for Analytical Dimensions (REQ-CD-005, REQ-CD-006). CostCenters / Projects already live in src/manifest.json from prior consultancy-project-accounting + cost-centers builds — this fragment only adds the AnalyticalDimension nav + pages that were the remaining gap in bookkeeping-cost-centers-dimensions/tasks.md (Task 12)."
+	},
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"label": "Bookkeeping",
+			"icon": "icon-category-organization",
+			"order": 20,
+			"children": [
+				{
+					"id": "AnalyticalDimensions",
+					"label": "Analytical Dimensions",
+					"icon": "ChartBoxOutline",
+					"route": "AnalyticalDimensions",
+					"order": 92
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "AnalyticalDimensions",
+			"route": "/bookkeeping/dimensions/analytical-dimensions",
+			"type": "index",
+			"title": "Analytical Dimensions",
+			"config": {
+				"register": "shillinq",
+				"schema": "AnalyticalDimension",
+				"columns": [
+					{ "key": "code", "label": "Code", "sortable": true },
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "dataType", "label": "Data type", "sortable": true },
+					{ "key": "isHierarchical", "label": "Hierarchical", "sortable": true },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "sortOrder",
+				"filters": [
+					{ "key": "lifecycleState", "label": "Status" },
+					{ "key": "dataType", "label": "Data type" }
+				],
+				"detailRoute": "AnalyticalDimensionDetail"
+			}
+		},
+		{
+			"id": "AnalyticalDimensionDetail",
+			"route": "/bookkeeping/dimensions/analytical-dimensions/:id",
+			"type": "detail",
+			"title": "Analytical Dimension",
+			"config": {
+				"register": "shillinq",
+				"schema": "AnalyticalDimension",
+				"fields": [
+					{ "key": "code", "label": "Code", "type": "string" },
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "text" },
+					{ "key": "dataType", "label": "Data type", "type": "string" },
+					{ "key": "isHierarchical", "label": "Hierarchical", "type": "boolean" },
+					{ "key": "referenceRegister", "label": "Reference register", "type": "string" },
+					{ "key": "referenceSchema", "label": "Reference schema", "type": "string" },
+					{ "key": "sortOrder", "label": "Sort order", "type": "integer" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				]
+			}
+		}
+	]
+}

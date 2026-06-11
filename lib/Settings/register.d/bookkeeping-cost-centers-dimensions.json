@@ -1,0 +1,283 @@
+{
+	"_meta": {
+		"adr": "ADR-037",
+		"change": "bookkeeping-cost-centers-dimensions",
+		"description": "Operator-extensible AnalyticalDimension register + GLLine segment P&L roll-up aggregations. Lands the parts of bookkeeping-cost-centers-dimensions/tasks.md that the prior consultancy-project-accounting build deferred (Tasks 7, 9, 10). CostCenter + Project schemas already live in shillinq_register.json; GLLine.dimensions field already declared there too. This fragment adds the AnalyticalDimension schema, segment-P&L aggregations on GLLine (per-cost-center, per-project, per-dimension), and 3 cost-center + 2 project + 2 analytical-dimension seed objects.",
+		"license": "AGPL-3.0-or-later",
+		"copyright": "Conduction B.V."
+	},
+	"components": {
+		"schemas": {
+			"AnalyticalDimension": {
+				"slug": "AnalyticalDimension",
+				"icon": "ChartBoxOutline",
+				"version": "0.1.0",
+				"title": "Analytical Dimension",
+				"description": "Operator-defined custom analytical dimension (Region, Product Line, Department, etc.) per REQ-CD-006. Each declared dimension becomes a key in GLLine.dimensions and surfaces as a filter / group-by in the segment P&L aggregations declared on GLLine. The OR relations engine validates that GLLine.dimensions keys reference an active AnalyticalDimension.code per administration.",
+				"x-schema-org": "schema:DefinedTerm",
+				"type": "object",
+				"required": [
+					"code",
+					"name",
+					"dataType",
+					"administrationId",
+					"lifecycleState"
+				],
+				"properties": {
+					"code": {
+						"type": "string",
+						"description": "Stable operator-facing dimension code, unique per administration. Referenced as a key in GLLine.dimensions.",
+						"example": "REGION"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable dimension name shown in the operator UI and segment P&L drill-down.",
+						"example": "Region"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true,
+						"description": "Optional long-form description of the dimension and its intended use."
+					},
+					"dataType": {
+						"type": "string",
+						"enum": [
+							"string",
+							"integer",
+							"decimal",
+							"date",
+							"reference"
+						],
+						"description": "JSON value type for the dimension. `reference` indicates the value MUST be a slug of another register (operator picks the target register via referenceRegister/referenceSchema below)."
+					},
+					"isHierarchical": {
+						"type": "boolean",
+						"default": false,
+						"description": "When true, the dimension supports parent-child roll-up via a `parentCode` self-relation on the dimension values. Drives drill-down navigation."
+					},
+					"referenceRegister": {
+						"type": "string",
+						"nullable": true,
+						"description": "When dataType=`reference`, the slug of the register the dimension value references (typically `shillinq`)."
+					},
+					"referenceSchema": {
+						"type": "string",
+						"nullable": true,
+						"description": "When dataType=`reference`, the slug of the schema the dimension value references (e.g. `Contact`, `Project`)."
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "Owning administratie. Dimensions are scoped per administration; the same dimension code MAY exist with different metadata across administrations."
+					},
+					"lifecycleState": {
+						"type": "string",
+						"enum": [
+							"active",
+							"archived"
+						],
+						"default": "active",
+						"description": "Operator-managed activation state. Archived dimensions remain referenced from historical GLLine.dimensions but cannot be selected on new postings."
+					},
+					"sortOrder": {
+						"type": "integer",
+						"default": 0,
+						"description": "Display order in the operator UI."
+					}
+				},
+				"x-openregister-relations": {
+					"referenceTarget": {
+						"description": "When dataType=`reference`, the dimension value MUST resolve to an object of (referenceRegister, referenceSchema). Validated by the OR relations engine.",
+						"sourceField": "referenceSchema",
+						"relatedSchema": "@self.referenceSchema",
+						"cardinality": "0..1"
+					}
+				}
+			},
+			"GLLine": {
+				"x-openregister-aggregations": {
+					"byCostCenter": {
+						"description": "Per-cost-center roll-up of posted GL amounts within an administration per REQ-CD-004. Surfaces segment P&L per CostCenter.code (joined to CostCenter.name for the drill-down). Declared declaratively per ADR-031 — no PHP SegmentReportService walks the GL.",
+						"source": "GLLine",
+						"groupBy": [
+							"costCenterCode"
+						],
+						"filter": {
+							"administrationId": "@self.administrationId"
+						},
+						"join": {
+							"through": "CostCenter",
+							"on": "CostCenter.code",
+							"select": [
+								"CostCenter.name",
+								"CostCenter.parentCode"
+							]
+						},
+						"sum": [
+							"amount"
+						]
+					},
+					"byCostCenterHierarchy": {
+						"description": "Hierarchical roll-up of GL amounts per CostCenter.parentCode tree per REQ-CD-007. Child cost-center sums propagate to parents through the self-relation; drives drill-down navigation in the segment P&L view. Declarative (ADR-031).",
+						"source": "GLLine",
+						"groupBy": [
+							"CostCenter.parentCode"
+						],
+						"filter": {
+							"administrationId": "@self.administrationId"
+						},
+						"join": {
+							"through": "CostCenter",
+							"on": "CostCenter.code",
+							"select": [
+								"CostCenter.parentCode",
+								"CostCenter.name"
+							]
+						},
+						"sum": [
+							"amount"
+						]
+					},
+					"byProject": {
+						"description": "Per-project roll-up of posted GL amounts within an administration per REQ-CD-004. Surfaces project P&L for consultancy and grant-funded work. Declarative (ADR-031).",
+						"source": "GLLine",
+						"groupBy": [
+							"projectCode"
+						],
+						"filter": {
+							"administrationId": "@self.administrationId"
+						},
+						"join": {
+							"through": "Project",
+							"on": "Project.code",
+							"select": [
+								"Project.name",
+								"Project.parentCode"
+							]
+						},
+						"sum": [
+							"amount"
+						]
+					},
+					"byAnalyticalDimension": {
+						"description": "Per-custom-dimension roll-up of posted GL amounts per REQ-CD-006. Each registered AnalyticalDimension contributes a group-by key drawn from GLLine.dimensions[code]. Drives the operator-extensible segment P&L surface; new dimensions appear automatically without PHP/Vue edits.",
+						"source": "GLLine",
+						"groupBy": [
+							"dimensions.*"
+						],
+						"filter": {
+							"administrationId": "@self.administrationId"
+						},
+						"sum": [
+							"amount"
+						]
+					}
+				}
+			}
+		}
+	},
+	"objects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "AnalyticalDimension",
+				"slug": "dim-region"
+			},
+			"code": "REGION",
+			"name": "Region",
+			"description": "Geographic region (e.g. Noord-Holland, Zuid-Holland). Surfaces regional P&L per municipality / branch.",
+			"dataType": "string",
+			"isHierarchical": false,
+			"administrationId": "adm-default",
+			"lifecycleState": "active",
+			"sortOrder": 10
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "AnalyticalDimension",
+				"slug": "dim-productline"
+			},
+			"code": "PRODUCT_LINE",
+			"name": "Product Line",
+			"description": "Product line (e.g. Hosting, Consulting, Training). Surfaces product-mix P&L for revenue-side analytics.",
+			"dataType": "string",
+			"isHierarchical": true,
+			"administrationId": "adm-default",
+			"lifecycleState": "active",
+			"sortOrder": 20
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-admin-amsterdam"
+			},
+			"code": "CC-ADM-AMS",
+			"name": "Administratie Amsterdam",
+			"description": "Administrative back-office, Amsterdam location.",
+			"status": "active",
+			"organizationId": "org-conduction-bv",
+			"responsibleUser": "manager.admin@conduction.nl",
+			"lifecycleState": "active",
+			"administrationId": "adm-default"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-sales-utrecht"
+			},
+			"code": "CC-SLS-UTR",
+			"name": "Sales Utrecht",
+			"description": "Sales team based in Utrecht (Randstad-Oost coverage).",
+			"status": "active",
+			"organizationId": "org-conduction-bv",
+			"responsibleUser": "manager.sales@conduction.nl",
+			"lifecycleState": "active",
+			"administrationId": "adm-default"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CostCenter",
+				"slug": "cc-logistics-rotterdam"
+			},
+			"code": "CC-LOG-RTM",
+			"name": "Logistics Rotterdam",
+			"description": "Logistics + fulfilment hub in Rotterdam.",
+			"status": "active",
+			"organizationId": "org-conduction-bv",
+			"responsibleUser": "manager.logistics@conduction.nl",
+			"lifecycleState": "active",
+			"administrationId": "adm-default"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Project",
+				"slug": "proj-internal-platform"
+			},
+			"code": "PROJ-INT-PLAT",
+			"name": "Internal Platform Maintenance",
+			"projectNumber": "PROJ-INT-PLAT",
+			"responsibleUser": "manager.engineering@conduction.nl",
+			"timeBookingEnabled": true,
+			"lifecycleState": "active",
+			"administrationId": "adm-default"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "Project",
+				"slug": "proj-grant-research"
+			},
+			"code": "PROJ-GRANT-RND",
+			"name": "WBSO Research Grant 2026",
+			"projectNumber": "PROJ-GRANT-RND",
+			"responsibleUser": "manager.rnd@conduction.nl",
+			"timeBookingEnabled": true,
+			"lifecycleState": "active",
+			"administrationId": "adm-default"
+		}
+	]
+}

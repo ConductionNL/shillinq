@@ -1,0 +1,74 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "add-shillinq-multi-currency",
+		"description": "T4 envelope manifest fragment per REQ-MC-006: adds the FXRates child entry to the existing BookkeepingMultiCurrency menu (BankAccounts + CurrencyBalances were shipped by the T3 sibling fragment) plus the FXRates index + FXRateDetail detail page pair binding to the FxRate register declared in lib/Settings/register.d/add-shillinq-multi-currency-t4.json."
+	},
+	"menu": [
+		{
+			"id": "BookkeepingMultiCurrency",
+			"label": "Bookkeeping",
+			"icon": "LedgerOutline",
+			"order": 11,
+			"children": [
+				{
+					"id": "FXRates",
+					"label": "FX Rates",
+					"icon": "CurrencyUsd",
+					"route": "FXRates",
+					"order": 28
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "FXRates",
+			"route": "/bookkeeping/multi-currency/fx-rates",
+			"type": "index",
+			"title": "FX Rates",
+			"config": {
+				"register": "shillinq",
+				"schema": "FxRate",
+				"columns": [
+					{ "key": "transactionCurrency", "label": "From", "sortable": true },
+					{ "key": "baseCurrency", "label": "To", "sortable": true },
+					{ "key": "date", "label": "Date", "sortable": true },
+					{ "key": "source", "label": "Source", "sortable": true },
+					{ "key": "rate", "label": "Rate", "sortable": true },
+					{ "key": "inverseRate", "label": "Inverse rate", "sortable": false }
+				],
+				"defaultSort": "date",
+				"defaultSortDirection": "desc",
+				"filters": [
+					{ "key": "transactionCurrency", "label": "From currency" },
+					{ "key": "baseCurrency", "label": "To currency" },
+					{ "key": "source", "label": "Source" }
+				],
+				"detailRoute": "FXRateDetail"
+			}
+		},
+		{
+			"id": "FXRateDetail",
+			"route": "/bookkeeping/multi-currency/fx-rates/:id",
+			"type": "detail",
+			"title": "FX Rate",
+			"config": {
+				"register": "shillinq",
+				"schema": "FxRate",
+				"fields": [
+					{ "key": "transactionCurrency", "label": "Transaction currency", "type": "string" },
+					{ "key": "baseCurrency", "label": "Base currency", "type": "string" },
+					{ "key": "date", "label": "Effective date", "type": "date" },
+					{ "key": "source", "label": "Source", "type": "string" },
+					{ "key": "rate", "label": "Rate (transaction → base)", "type": "number" },
+					{ "key": "inverseRate", "label": "Inverse rate (base → transaction)", "type": "number" },
+					{ "key": "manualOverrideReason", "label": "Manual override reason", "type": "text" },
+					{ "key": "ingestedAt", "label": "Ingested at", "type": "date-time" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				]
+			}
+		}
+	]
+}
