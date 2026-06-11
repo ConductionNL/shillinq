@@ -18,6 +18,13 @@
 					"icon": "CurrencyUsd",
 					"route": "FXRates",
 					"order": 28
+				},
+				{
+					"id": "FxRatesAdmin",
+					"label": "FX Rates (Admin)",
+					"icon": "CogOutline",
+					"route": "FxRatesAdmin",
+					"order": 29
 				}
 			]
 		}
@@ -69,6 +76,13 @@
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				]
 			}
+		},
+		{
+			"id": "FxRatesAdmin",
+			"route": "/bookkeeping/multi-currency/fx-rates/admin",
+			"type": "custom",
+			"title": "FX Rates (Admin)",
+			"component": "FxRatesAdmin"
 		}
 	]
 }

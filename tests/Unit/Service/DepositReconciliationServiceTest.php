@@ -20,6 +20,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\DepositReconciliationService;
+use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
+use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentResult;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -111,6 +113,52 @@ final class DepositReconciliationServiceTest extends TestCase
             logger: $this->createMock(LoggerInterface::class),
         );
     }//end makeService()
+
+    /**
+     * Build a service with both an ObjectService stub and a deposit-payment
+     * adapter injected — used by the adapter-wired pollPending tests.
+     *
+     * @param object                         $objectService Stub.
+     * @param ?DepositPaymentAdapterInterface $adapter      Adapter to inject (NULL for the
+     *                                                     adapter-absent path).
+     *
+     * @return DepositReconciliationService
+     */
+    private function makeServiceWithAdapter(object $objectService, ?DepositPaymentAdapterInterface $adapter): DepositReconciliationService
+    {
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('get')->willReturn($objectService);
+
+        $appConfig = $this->createMock(IAppConfig::class);
+        $appConfig->method('getValueString')->willReturn('shillinq');
+
+        return new DepositReconciliationService(
+            container: $container,
+            appConfig: $appConfig,
+            logger: $this->createMock(LoggerInterface::class),
+            adapter: $adapter,
+        );
+    }//end makeServiceWithAdapter()
+
+    /**
+     * Build a DepositPaymentResult with the given lifecycle state.
+     *
+     * @param string $lifecycleState The projected DepositPayment lifecycle state.
+     * @param bool   $dormant        TRUE for a synthetic dormant outcome.
+     *
+     * @return DepositPaymentResult
+     */
+    private function buildAdapterResult(string $lifecycleState, bool $dormant=false): DepositPaymentResult
+    {
+        return new DepositPaymentResult(
+            lifecycleState: $lifecycleState,
+            gatewayStatus: $dormant ? 'PAYMENT_DEFERRED' : 'paid',
+            paymentIntentId: 'tr_test',
+            paymentLink: '',
+            gateway: $dormant ? 'LOG_DEFERRED' : 'mollie',
+            dormant: $dormant,
+        );
+    }//end buildAdapterResult()
 
     /**
      * A pending deposit transitions to authorized and authorizedAt is set.
@@ -312,4 +360,175 @@ final class DepositReconciliationServiceTest extends TestCase
         self::assertSame(0, $counters['reconciled']);
         self::assertCount(0, $saved);
     }//end testPollPendingSurvivesProviderError()
+
+    /**
+     * `lifecycleStateToOutcome` projects DepositPayment lifecycle states
+     * onto the OUTCOME_* constants the reconcile loop understands.
+     * Captured maps to AUTHORIZED because the capture transition is owned
+     * by the lifecycle, not the polling fallback.
+     *
+     * @return void
+     */
+    public function testLifecycleStateToOutcomeMapsCorrectly(): void
+    {
+        $authorized = $this->buildAdapterResult('authorized');
+        $captured   = $this->buildAdapterResult('captured');
+        $failed     = $this->buildAdapterResult('failed');
+        $voided     = $this->buildAdapterResult('voided');
+        $pending    = $this->buildAdapterResult('pending');
+        $draft      = $this->buildAdapterResult('draft');
+
+        self::assertSame(
+            DepositReconciliationService::OUTCOME_AUTHORIZED,
+            DepositReconciliationService::lifecycleStateToOutcome($authorized)
+        );
+        self::assertSame(
+            DepositReconciliationService::OUTCOME_AUTHORIZED,
+            DepositReconciliationService::lifecycleStateToOutcome($captured)
+        );
+        self::assertSame(
+            DepositReconciliationService::OUTCOME_FAILED,
+            DepositReconciliationService::lifecycleStateToOutcome($failed)
+        );
+        self::assertSame(
+            DepositReconciliationService::OUTCOME_VOIDED,
+            DepositReconciliationService::lifecycleStateToOutcome($voided)
+        );
+        self::assertNull(DepositReconciliationService::lifecycleStateToOutcome($pending));
+        self::assertNull(DepositReconciliationService::lifecycleStateToOutcome($draft));
+    }//end testLifecycleStateToOutcomeMapsCorrectly()
+
+    /**
+     * `pollPendingViaAdapter()` returns zeroed counters and logs a warning
+     * when no adapter is bound. The lifecycle does NOT advance and the
+     * ObjectService is never touched — the scheduled workflow tick stays
+     * a no-op until the production binding lands.
+     *
+     * @return void
+     */
+    public function testPollPendingViaAdapterReturnsZeroWhenNoAdapterBound(): void
+    {
+        $saved   = [];
+        $stub    = $this->buildObjectServiceStub(
+            [['paymentIntentId' => 'tr_a', 'state' => 'pending']],
+            $saved
+        );
+        $service = $this->makeServiceWithAdapter($stub, null);
+
+        $counters = $service->pollPendingViaAdapter();
+
+        self::assertSame(0, $counters['scanned']);
+        self::assertSame(0, $counters['reconciled']);
+        self::assertCount(0, $saved);
+    }//end testPollPendingViaAdapterReturnsZeroWhenNoAdapterBound()
+
+    /**
+     * The dormant adapter leaves pending deposits pending — REQ-DP-007:
+     * `LogDepositPaymentAdapter` returns dormant=true and the service
+     * MUST NOT advance the lifecycle on a dormant outcome.
+     *
+     * @return void
+     */
+    public function testPollPendingViaAdapterRespectsDormancy(): void
+    {
+        $saved   = [];
+        $stub    = $this->buildObjectServiceStub(
+            [['paymentIntentId' => 'tr_a', 'state' => 'pending', 'paymentGateway' => 'mollie']],
+            $saved
+        );
+
+        $adapter = $this->createMock(DepositPaymentAdapterInterface::class);
+        $adapter->method('fetchStatus')->willReturn(
+            $this->buildAdapterResult('pending', dormant: true)
+        );
+
+        $service  = $this->makeServiceWithAdapter($stub, $adapter);
+        $counters = $service->pollPendingViaAdapter();
+
+        self::assertSame(1, $counters['scanned']);
+        self::assertSame(0, $counters['reconciled']);
+        self::assertCount(0, $saved);
+    }//end testPollPendingViaAdapterRespectsDormancy()
+
+    /**
+     * The adapter-wired poll advances `pending` deposits to `authorized`
+     * when the adapter projects an `authorized` lifecycle state — the
+     * canonical happy-path of the polling fallback (REQ-DP-007).
+     *
+     * @return void
+     */
+    public function testPollPendingViaAdapterAdvancesOnLiveAuthorized(): void
+    {
+        $saved   = [];
+        $stub    = $this->buildObjectServiceStub(
+            [['paymentIntentId' => 'tr_a', 'state' => 'pending', 'paymentGateway' => 'mollie']],
+            $saved
+        );
+
+        $adapter = $this->createMock(DepositPaymentAdapterInterface::class);
+        $adapter->method('fetchStatus')->willReturn(
+            $this->buildAdapterResult('authorized')
+        );
+
+        $service  = $this->makeServiceWithAdapter($stub, $adapter);
+        $counters = $service->pollPendingViaAdapter();
+
+        self::assertSame(1, $counters['scanned']);
+        self::assertSame(1, $counters['reconciled']);
+        self::assertCount(1, $saved);
+        self::assertSame('authorized', $saved[0]['state']);
+        self::assertArrayHasKey('authorizedAt', $saved[0]);
+    }//end testPollPendingViaAdapterAdvancesOnLiveAuthorized()
+
+    /**
+     * An adapter exception is contained per-deposit — the lifecycle does
+     * not advance and the surrounding scheduled-workflow tick keeps
+     * processing the rest of the batch.
+     *
+     * @return void
+     */
+    public function testPollPendingViaAdapterSurvivesAdapterException(): void
+    {
+        $saved   = [];
+        $stub    = $this->buildObjectServiceStub(
+            [['paymentIntentId' => 'tr_a', 'state' => 'pending', 'paymentGateway' => 'mollie']],
+            $saved
+        );
+
+        $adapter = $this->createMock(DepositPaymentAdapterInterface::class);
+        $adapter->method('fetchStatus')->willThrowException(new \RuntimeException('PSP unreachable'));
+
+        $service  = $this->makeServiceWithAdapter($stub, $adapter);
+        $counters = $service->pollPendingViaAdapter();
+
+        self::assertSame(1, $counters['scanned']);
+        self::assertSame(0, $counters['reconciled']);
+        self::assertCount(0, $saved);
+    }//end testPollPendingViaAdapterSurvivesAdapterException()
+
+    /**
+     * A failed lifecycle state from the adapter projects onto OUTCOME_FAILED.
+     *
+     * @return void
+     */
+    public function testPollPendingViaAdapterProjectsFailedLifecycleOntoFailedOutcome(): void
+    {
+        $saved   = [];
+        $stub    = $this->buildObjectServiceStub(
+            [['paymentIntentId' => 'tr_a', 'state' => 'pending', 'paymentGateway' => 'mollie']],
+            $saved
+        );
+
+        $adapter = $this->createMock(DepositPaymentAdapterInterface::class);
+        $adapter->method('fetchStatus')->willReturn(
+            $this->buildAdapterResult('failed')
+        );
+
+        $service  = $this->makeServiceWithAdapter($stub, $adapter);
+        $counters = $service->pollPendingViaAdapter();
+
+        self::assertSame(1, $counters['scanned']);
+        self::assertSame(1, $counters['reconciled']);
+        self::assertSame('failed', $saved[0]['state']);
+    }//end testPollPendingViaAdapterProjectsFailedLifecycleOntoFailedOutcome()
 }//end class
