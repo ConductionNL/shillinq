@@ -51,6 +51,8 @@ use OCA\Shillinq\Service\External\Cbs\LogCbsBestandenAdapter;
 use OCA\Shillinq\Service\External\Cbs\LogCbsIv3Adapter;
 use OCA\Shillinq\Service\External\CcmRuleEngine\CcmRuleEngineAdapterInterface;
 use OCA\Shillinq\Service\External\CcmRuleEngine\LogCcmRuleEngineAdapter;
+use OCA\Shillinq\Service\External\CsrdEsrsXbrl\CsrdEsrsXbrlAdapterInterface;
+use OCA\Shillinq\Service\External\CsrdEsrsXbrl\LogCsrdEsrsXbrlAdapter;
 use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
 use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
 use OCA\Shillinq\Service\External\Ib47\Ib47AdapterInterface;
@@ -394,6 +396,24 @@ class Application extends App implements IBootstrap
             UwvLoonaangifteAdapterInterface::class,
             static function ($c): UwvLoonaangifteAdapterInterface {
                 return $c->get(LogUwvLoonaangifteAdapter::class);
+            }
+        );
+
+        // bookkeeping-csrd-esrs Tasks 30/31/32 — EFRAG ESRS XBRL taxonomy
+        // mapping + mandatory-data-point validation + iXBRL instance build.
+        // Per ADR-022 the XBRL pipeline itself lives in
+        // bookkeeping-sbr-xbrl-reporting (cross-app dependency); this port
+        // is the seam. Dormant LogCsrdEsrsXbrlAdapter
+        // SAFETY-CRITICAL: validateMandatoryDataPoints() always returns
+        // VALIDATION_BLOCKED with a LOG_DEFERRED sentinel so a deferred
+        // binding cannot let an unvalidated CSRD report slip past EFRAG
+        // IG-3. The produced iXBRL instance is handed to the existing
+        // DigipoortSbrAdapterInterface (filingType: csrd-xbrl-pack) for
+        // KvK / AFM transport.
+        $context->registerService(
+            CsrdEsrsXbrlAdapterInterface::class,
+            static function ($c): CsrdEsrsXbrlAdapterInterface {
+                return $c->get(LogCsrdEsrsXbrlAdapter::class);
             }
         );
 
