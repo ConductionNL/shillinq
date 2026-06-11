@@ -209,6 +209,25 @@ import BookingWidgetKeys from './views/BookingWidgetKeys.vue'
 // kind:"page" custom component per ADR-024 / ADR-036.
 import PeriodCloseDetail from './components/period-close/PeriodCloseDetail.vue'
 
+// add-shillinq-multi-currency Task 14: the FxRatesAdmin page wraps the
+// declarative FxRate index grid with a cron-status overlay (last-run
+// timestamp + TreasuryRateAdapter dormancy flag) read from
+// /api/admin/fx-rate-import-status. The header strip + dormancy hint do
+// not fit any built-in `index` / `detail` / `dashboard` page type, so the
+// page is registered as a kind:"page" custom component per ADR-024.
+// Admin-only — the controller is gated by
+// #[AuthorizedAdminSetting(Application::class)].
+import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
+
+// bookkeeping-cost-centers-dimensions Task 14 (W6): the SegmentPnLDashboard
+// composes server-side aggregations declared on GLLine
+// (byCostCenter / byCostCenterHierarchy / byProject /
+// byAnalyticalDimension) into one operator-facing P&L drill-down. The
+// dashboard owns segment selection, hierarchical roll-up rendering, and a
+// CSV export — none of which fit any built-in declarative page type, so
+// the page is registered as a kind:"page" custom component per ADR-024.
+import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashboard.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -261,4 +280,10 @@ export default {
 
 	// bookkeeping-period-close detail page (REQ-PC-005, REQ-PC-006).
 	PeriodCloseDetail: { kind: 'page', component: PeriodCloseDetail },
+
+	// add-shillinq-multi-currency Task 14: FxRates admin overlay (cron status).
+	FxRatesAdmin: { kind: 'page', component: FxRatesAdmin },
+
+	// bookkeeping-cost-centers-dimensions Task 14: segment P&L drill-down.
+	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },
 }

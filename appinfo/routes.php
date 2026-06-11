@@ -28,6 +28,13 @@ return [
         ['name' => 'timelineDeadLetter#index', 'url' => '/api/pipelinq/dead-letter', 'verb' => 'GET'],
         ['name' => 'timelineDeadLetter#retry', 'url' => '/api/pipelinq/dead-letter/{id}/retry', 'verb' => 'POST'],
 
+        // add-shillinq-multi-currency Task 14: FxRate admin status — read-only
+        // endpoint that surfaces the last-run timestamp of FxRateImportJob plus
+        // the TreasuryRateAdapter dormancy flag. Drives the FxRatesAdmin Vue
+        // page "Import status" header strip. Gated by
+        // #[AuthorizedAdminSetting(Application::class)].
+        ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
+
         // Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog).
         ['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
         ['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],

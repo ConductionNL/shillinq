@@ -18,6 +18,13 @@
 					"icon": "ChartBoxOutline",
 					"route": "AnalyticalDimensions",
 					"order": 92
+				},
+				{
+					"id": "SegmentPnLDashboard",
+					"label": "Segment P&L",
+					"icon": "PollOutline",
+					"route": "SegmentPnLDashboard",
+					"order": 93
 				}
 			]
 		}
@@ -67,6 +74,13 @@
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				]
 			}
+		},
+		{
+			"id": "SegmentPnLDashboard",
+			"route": "/bookkeeping/dimensions/segment-pnl",
+			"type": "custom",
+			"title": "Segment P&L",
+			"component": "SegmentPnLDashboard"
 		}
 	]
 }
