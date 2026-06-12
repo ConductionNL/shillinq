@@ -641,6 +641,28 @@
         "x-schema-org": "Invoice",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
+        "configuration": {
+          "objectNameField": "invoiceNumber",
+          "linkedTypes": [
+            "mail"
+          ],
+          "mailObjectTemplate": {
+            "administrationId": "adm-1",
+            "invoiceId": "eml-{{messageId}}",
+            "invoiceNumber": "EML-{{messageId}}",
+            "customerId": "{{sender}}",
+            "customerReference": "{{senderName}}",
+            "invoiceDate": "{{date}}",
+            "dueDate": "{{date30}}",
+            "sourceDocumentUri": "urn:nextcloud:mail:{{mailRef}}",
+            "netAmount": 0,
+            "vatAmount": 0,
+            "grossAmount": 0,
+            "currency": "EUR",
+            "state": "issued",
+            "status": "draft"
+          }
+        },
         "required": [
           "invoiceNumber",
           "customerReference"
