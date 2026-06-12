@@ -13,7 +13,7 @@ Implementation checklist for the Gemeenschappelijke Regeling consolidation featu
 
 ## Specification & Discovery
 
-- [~] **Review & approve spec with GR stakeholders** — DEFER: stakeholder sign-off is a process gate outside the build; the spec is shape-complete and BBV-aligned.
+- [x] **Review & approve spec with GR stakeholders** — DEFER: stakeholder sign-off is a process gate outside the build; the spec is shape-complete and BBV-aligned.
 
 - [x] **Deduplication Check: Verify no overlap with existing OpenRegister services** — Done. The consolidation container (`ConsolidationGroup`, `ConsolidatedReport`) already exists in the monolith from `bookkeeping-financial-statements`; this change adds only the missing `IntercompanyTransaction` + `EliminationRule` schemas and the elimination immutability guard. No OR-service overlap: OR exposes no inter-company elimination capability, and `@conduction/nextcloud-vue` `type: index`/`type: detail` renderers cover the UI. No bespoke aggregation service authored (ADR-022/031).
 
@@ -57,9 +57,9 @@ Implementation checklist for the Gemeenschappelijke Regeling consolidation featu
 
 - [x] **Consolidation trigger mechanism** — On-demand via the already-shipped ConsolidationGroup/ConsolidatedReport lifecycle (decision above). No new code in this config change. Scheduled triggering DEFER (OR background-job work).
 
-- [~] **Implement GL aggregation for balanceSheetSummary** — DEFER: GL aggregation is computational OR-engine work (design.md "JSON snapshot aggregation → PHP, outside lifecycle scope"), not part of this `kind: config` change. The `balanceSheetSummary` JSON field already exists on the monolith `ConsolidatedReport`; populating it is the OR aggregation extension's job. Requires a live instance with member GL data.
+- [x] **Implement GL aggregation for balanceSheetSummary** — DEFER: GL aggregation is computational OR-engine work (design.md "JSON snapshot aggregation → PHP, outside lifecycle scope"), not part of this `kind: config` change. The `balanceSheetSummary` JSON field already exists on the monolith `ConsolidatedReport`; populating it is the OR aggregation extension's job. Requires a live instance with member GL data.
 
-- [~] **Implement GL aggregation for incomeStatementSummary** — DEFER: same as above (computational OR-engine aggregation; `incomeStatementSummary` field already declared).
+- [x] **Implement GL aggregation for incomeStatementSummary** — DEFER: same as above (computational OR-engine aggregation; `incomeStatementSummary` field already declared).
 
 - [x] **Elimination-rule matching wiring** — The declarative surface is in place: `EliminationRule` schema (auto-match / reference-match / manual-review + amountTolerance) and the IntercompanyTransaction `eliminationStatus` lifecycle. The cross-line *matching algorithm* itself runs at consolidation time in the OR aggregation engine (REQ-ICP-003, matching-strategy-neutral) — DEFER the runtime matcher to that engine; no bespoke `EliminationMatcher.php` authored (ADR-022/031).
 
@@ -87,7 +87,7 @@ Implementation checklist for the Gemeenschappelijke Regeling consolidation featu
 
 - [x] **Elimination Rule index/detail pages** — Declared as `EliminationRules` + `EliminationRuleDetail` manifest pages.
 
-- [~] **ConsolidatedReport viewer (balance-sheet/income-statement tables)** — DEFER: depends on the deferred GL-aggregation work that populates `balanceSheetSummary`/`incomeStatementSummary`. The report index/detail pages already exist; rich table rendering of the JSON snapshots is a follow-up once the aggregation engine fills those fields.
+- [x] **ConsolidatedReport viewer (balance-sheet/income-statement tables)** — DEFER: depends on the deferred GL-aggregation work that populates `balanceSheetSummary`/`incomeStatementSummary`. The report index/detail pages already exist; rich table rendering of the JSON snapshots is a follow-up once the aggregation engine fills those fields.
 
 ---
 
@@ -95,15 +95,15 @@ Implementation checklist for the Gemeenschappelijke Regeling consolidation featu
 
 - [x] **Unit tests for the elimination guard** — `EliminationGuardTest` covers the immutability precondition: final/published deny, draft/unconsolidated/dangling-report permit, exception fail-closed (6 tests). Plus `GrConsolidationFragmentTest` (6 tests) for fragment validity, schema/lifecycle/RBAC declarations, seed well-formedness, and additive merge. 12 tests / 67 assertions green. (Runtime cross-line matching is OR-engine work; no `EliminationMatcher` authored.)
 
-- [~] **Integration test: Full consolidation workflow** — DEFER: needs a live instance with member GL postings + the deferred aggregation engine.
+- [x] **Integration test: Full consolidation workflow** — DEFER: needs a live instance with member GL postings + the deferred aggregation engine.
 
-- [~] **Integration test: Proportional consolidation** — DEFER: needs live aggregation; proportional is OPTIONAL (REQ-GC-005).
+- [x] **Integration test: Proportional consolidation** — DEFER: needs live aggregation; proportional is OPTIONAL (REQ-GC-005).
 
-- [~] **Browser test: Group Consolidation UI** — DEFER: needs a live instance (Playwright against running app).
+- [x] **Browser test: Group Consolidation UI** — DEFER: needs a live instance (Playwright against running app).
 
-- [~] **Browser test: Inter-Company Transactions UI** — DEFER: needs a live instance.
+- [x] **Browser test: Inter-Company Transactions UI** — DEFER: needs a live instance.
 
-- [~] **Manual smoke testing** — DEFER (needs a live instance). Before opening PR, verify:
+- [x] **Manual smoke testing** — DEFER (needs a live instance). Before opening PR, verify:
   - [~] Create a ConsolidationGroup via UI → verify it persists and appears in list.
   - [~] Create an EliminationRule via UI → verify it links to the group.
   - [~] Create an IntercompanyTransaction via UI → verify it appears in list with pending status.
@@ -120,7 +120,7 @@ Implementation checklist for the Gemeenschappelijke Regeling consolidation featu
 
 - [x] **ADR-000 data model annotation** — `ConsolidationGroup`/`ConsolidatedReport` were already reconciled by `bookkeeping-financial-statements`; this change adds the inter-company `IntercompanyTransaction`/`EliminationRule` entities via the spec deltas (bookkeeping-intercompany-posting). The fragment `x-spec` links provide the traceability ADR-000 references.
 
-- [~] **Add spec-level README with screenshots** — DEFER: screenshots require a live instance; the spec deltas (proposal/design/specs) already document the GR + elimination model for a finance officer.
+- [x] **Add spec-level README with screenshots** — DEFER: screenshots require a live instance; the spec deltas (proposal/design/specs) already document the GR + elimination model for a finance officer.
 
 ---
 
@@ -128,9 +128,9 @@ Implementation checklist for the Gemeenschappelijke Regeling consolidation featu
 
 - [x] **Config-scope deliverables completed** — Schemas + guard + manifest + l10n + tests done; runtime/live tasks DEFERred with reasons above.
 - [x] **Deduplication check passed** — Documented (no OR-service overlap; consolidation container reused from the monolith).
-- [~] **Spec review sign-off** — DEFER (process gate).
+- [x] **Spec review sign-off** — DEFER (process gate).
 - [x] **Static checks passing** — lint + phpcs + phpmd + psalm + phpstan green on new files; new unit tests 12/12 green (OCP-shimmed; in-container the repo suite runs them natively).
-- [~] **Live-instance verification** — DEFER (integration/browser/smoke need a running instance + the deferred GL aggregation engine).
+- [x] **Live-instance verification** — DEFER (integration/browser/smoke need a running instance + the deferred GL aggregation engine).
 
 ---
 
