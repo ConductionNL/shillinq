@@ -13,6 +13,42 @@
 			"order": 10
 		},
 		{
+			"id": "BankingTreasury",
+			"label": "Banking & Treasury",
+			"icon": "BankOutline",
+			"order": 25
+		},
+		{
+			"id": "Sales",
+			"label": "Sales",
+			"icon": "CartOutline",
+			"order": 30
+		},
+		{
+			"id": "Purchasing",
+			"label": "Purchasing & Inventory",
+			"icon": "CartArrowDownOutline",
+			"order": 35
+		},
+		{
+			"id": "Payroll",
+			"label": "People & Projects",
+			"icon": "TableAccountOutline",
+			"order": 55
+		},
+		{
+			"id": "PublicSector",
+			"label": "Public sector",
+			"icon": "OfficeBuildingOutline",
+			"order": 60
+		},
+		{
+			"id": "ExternalConnections",
+			"label": "External Connections",
+			"icon": "SwapHorizontalBoldOutline",
+			"order": 80
+		},
+		{
 			"id": "Bookkeeping",
 			"label": "Bookkeeping",
 			"icon": "icon-category-organization",
@@ -436,7 +472,7 @@
 			"id": "Inventory",
 			"label": "Inventory",
 			"icon": "icon-category-customization",
-			"order": 22,
+			"order": 40,
 			"children": [
 				{
 					"id": "Products",
@@ -549,7 +585,7 @@
 			"id": "Belastingen",
 			"label": "Belastingen",
 			"icon": "icon-category-monitoring",
-			"order": 25,
+			"order": 50,
 			"visibility": {
 				"field": "administrationType",
 				"in": [
@@ -780,9 +816,9 @@
 		},
 		{
 			"id": "Subsidies",
-			"label": "Subsidies",
+			"label": "Subsidies & Funds",
 			"icon": "HandHeartOutline",
-			"order": 32,
+			"order": 65,
 			"children": [
 				{
 					"id": "SubsidiesOverzicht",
@@ -809,9 +845,9 @@
 		},
 		{
 			"id": "Compliance",
-			"label": "Compliance",
+			"label": "Reporting & Compliance",
 			"icon": "icon-category-monitoring",
-			"order": 40,
+			"order": 70,
 			"children": [
 				{
 					"id": "SisaRapportages",
@@ -948,9 +984,9 @@
 		},
 		{
 			"id": "Projecten",
-			"label": "Projecten",
+			"label": "Projects",
 			"icon": "FolderOpenOutline",
-			"order": 30,
+			"order": 45,
 			"visibilityPredicate": {
 				"administrationType": [
 					"mkb",

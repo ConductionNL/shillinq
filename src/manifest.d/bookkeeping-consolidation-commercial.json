@@ -130,11 +130,11 @@
 					{"key": "state", "label": "State", "sortable": true}
 				],
 				"defaultSort": "reportDate",
-				"detailRoute": "ConsolidatedReportDetail"
+				"detailRoute": "ConsolidatedBalanceDetail"
 			}
 		},
 		{
-			"id": "ConsolidatedReportDetail",
+			"id": "ConsolidatedBalanceDetail",
 			"route": "/consolidation/reports/:id",
 			"type": "detail",
 			"title": "Consolidated Balance",
