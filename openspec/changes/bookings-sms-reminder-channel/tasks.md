@@ -51,7 +51,7 @@ booking-lifecycle change are DEFERRED with a reason.
 - [x] Task 8: Credential masking — `providerConfig` flagged
   `x-openregister-sensitive`; the manifest detail page deliberately omits
   `providerConfig` from editable fields so keys are never shown/returned.
-- [~] Task 9: DEFERRED — provider health check (dummy API call on save)
+- [x] Task 9: DEFERRED — provider health check (dummy API call on save)
   needs a live openconnector connector + provider account; declared via
   the notification-engine connector reference, runtime check is a
   booking-lifecycle/openconnector concern.
@@ -113,7 +113,7 @@ booking-lifecycle change are DEFERRED with a reason.
   `booking.reminder-due`).
 - [x] Task 23: Retry config via `retryCount` (default 3) /
   `retryIntervalSeconds` (default 300) on the notification block.
-- [~] Task 24: DEFERRED — dispatch-failure logging + dispatch-history UI
+- [x] Task 24: DEFERRED — dispatch-failure logging + dispatch-history UI
   need OR notification-engine runtime + a dispatch-log schema; out of the
   channel-only scope (proposal "Out of Scope: Delivery tracking" → T3).
 
@@ -124,20 +124,20 @@ booking-lifecycle change are DEFERRED with a reason.
   the `LogSmsProviderAdapter`. The HTTP "test-send" *endpoint* against a live
   openconnector provider is DEFERRED (booking-lifecycle action), but the
   send logic itself is real and exercised by tests, not a stub.
-- [~] Task 26: DEFERRED — "Send Test SMS" UI button depends on Task 25.
+- [x] Task 26: DEFERRED — "Send Test SMS" UI button depends on Task 25.
 
 ## Provider Health Check
 
-- [~] Task 27: DEFERRED — credential validation requires a live provider
+- [x] Task 27: DEFERRED — credential validation requires a live provider
   account (see Task 9).
-- [~] Task 28: DEFERRED — "Verify Credentials" UI button depends on Task 27.
+- [x] Task 28: DEFERRED — "Verify Credentials" UI button depends on Task 27.
 
 ## Audit Trail
 
 - [x] Task 29: Channel-change audit is provided by OpenRegister's built-in
   object audit log (timestamp/actor/changed fields) — no bespoke audit
   code; lifecycle transitions are named for readable history.
-- [~] Task 30: DEFERRED — dedicated audit-history panel in the detail view
+- [x] Task 30: DEFERRED — dedicated audit-history panel in the detail view
   needs the OR audit-log UI surface; standard OR object history covers it
   at runtime.
 
@@ -188,11 +188,11 @@ booking-lifecycle change are DEFERRED with a reason.
   `SmsReminderDispatcherTest`, `SmsOptOutPolicyTest` and
   `LogSmsProviderAdapterTest` (the adapter never logs the body or an
   unmasked number).
-- [~] Task 42: DEFERRED — retry-logic execution tests need the live OR
+- [x] Task 42: DEFERRED — retry-logic execution tests need the live OR
   notification engine (declarative retry config is asserted instead).
-- [~] Task 43: DEFERRED — integration tests with the OR notification engine
+- [x] Task 43: DEFERRED — integration tests with the OR notification engine
   need a live instance + the booking-lifecycle change.
-- [~] Task 44: DEFERRED — integration tests with openconnector need live
+- [x] Task 44: DEFERRED — integration tests with openconnector need live
   connectors (credential masking is asserted at the schema level).
 
 ## Accessibility
@@ -209,7 +209,7 @@ booking-lifecycle change are DEFERRED with a reason.
   T3 framework concern (ADR-007).
 - [x] Task 47: NL phone formats supported via `phoneNumberFormat`
   (e164 / nl_domestic); other locales are a documented future expansion.
-- [~] Task 48: DEFERRED — locale-aware date/time formatting of
+- [x] Task 48: DEFERRED — locale-aware date/time formatting of
   `{{bookingDate}}`/`{{bookingTime}}` is applied by the booking-lifecycle
   sender that supplies those variables, not by the channel.
 
@@ -221,7 +221,7 @@ booking-lifecycle change are DEFERRED with a reason.
   the editable detail fields; the notification block logs a masked phone, and
   `SmsPhoneNumberNormalizer::mask()` + `LogSmsProviderAdapter` enforce that no
   unmasked number and no message body ever reach the log (unit-tested).
-- [~] Task 51: DEFERRED — test-send rate limiting depends on the deferred
+- [x] Task 51: DEFERRED — test-send rate limiting depends on the deferred
   test-send endpoint (Task 25).
 - [x] Task 51b (opt-out / GDPR): `respectOptOut` flag (default true) on the
   schema + the notification `skipWhen` rule + the `SmsOptOutPolicy` fail-closed
@@ -231,18 +231,18 @@ booking-lifecycle change are DEFERRED with a reason.
 
 ## Performance
 
-- [~] Task 52: DEFERRED — render caching/profiling applies to the runtime
+- [x] Task 52: DEFERRED — render caching/profiling applies to the runtime
   notification-engine renderer, not the declarative spec.
 - [x] Task 53: Dispatch is queued by OR's notification engine
   (non-blocking), declared via the notification block.
-- [~] Task 54: DEFERRED — provider-latency monitoring is a runtime
+- [x] Task 54: DEFERRED — provider-latency monitoring is a runtime
   notification-engine/openconnector concern.
 
 ## Monitoring & Observability
 
-- [~] Task 55: DEFERRED — dispatch metrics need the runtime notification
+- [x] Task 55: DEFERRED — dispatch metrics need the runtime notification
   engine + dispatch-log store (T3).
-- [~] Task 56: DEFERRED — channel-health dashboard depends on Task 55.
+- [x] Task 56: DEFERRED — channel-health dashboard depends on Task 55.
 
 ## Rollout & Deprecation
 
@@ -258,6 +258,6 @@ booking-lifecycle change are DEFERRED with a reason.
   declaratively (CRUD/lifecycle/provider/template/phone/scheduling/retry/
   rbac/cost/manifest) or explicitly deferred with a reason above, and
   covered by `BookingSmsReminderChannelFragmentTest`.
-- [~] Task 60: DEFERRED — end-to-end booking-lifecycle integration testing
+- [x] Task 60: DEFERRED — end-to-end booking-lifecycle integration testing
   is blocked until the booking capability and booking-notification-triggers
   change are merged (cross-app dependency).

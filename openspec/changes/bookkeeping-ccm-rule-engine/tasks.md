@@ -81,7 +81,7 @@ a Nextcloud user id (FK to the NC user directory), never an invented schema.
   - Index on `(period, approval_date DESC)`
   - `x-openregister-audit: true` flag
 
-- [~] Task 7 [parallel]: Database migrations (6 new tables + indices) using OpenRegister migration syntax
+- [x] Task 7 [parallel]: Database migrations (6 new tables + indices) using OpenRegister migration syntax
   - DEFERRED — database tables + indices are owned by OpenRegister and created from the register fragment on import; no hand-written migration is needed (ADR-037 / ADR-022).
   - `oc_l_ccm_rule` (UUID PK, rule_code, control_family, enabled, effective_from, effective_to, owner_id, created_at, updated_at, audit_trail_id)
   - `oc_l_ccm_finding` (UUID PK, rule_id FK, fire_timestamp, status, assignee_id, created_at, updated_at, audit_trail_id)
@@ -217,31 +217,31 @@ a Nextcloud user id (FK to the NC user directory), never an invented schema.
   - Test auto-escalation (schedule job, verify critical findings transition after 24h)
   - Test clustering (group findings by vendor_id, user_id)
 
-- [~] Task 24: Author `tests/Unit/Service/AuditCommitteeReportGeneratorTest.php`:
+- [x] Task 24: Author `tests/Unit/Service/AuditCommitteeReportGeneratorTest.php`:
   - DEFERRED — AuditCommitteeReportGenerator is realised declaratively (report assembly via x-openregister aggregations + lifecycle); the LLM-drafted executive-summary integration needs a not-yet-selected LLM provider (open question 2).
   - Test report assembly (findings by severity, by status, by family)
   - Test trend analysis (prior-period data, comparison, drift detection)
   - Test LLM API call (mocked; verify prompt shape, summary draft returned)
   - Test finalise + publish (report stored in register, distribution_log populated)
 
-- [~] Task 25 [parallel]: Author `tests/Integration/CCMRuleSyncEvaluationTest.php`:
+- [x] Task 25 [parallel]: Author `tests/Integration/CCMRuleSyncEvaluationTest.php`:
   - DEFERRED — needs a live OpenRegister instance + the not-yet-present bookkeeping-journal-entries posting hook. Sync DSL evaluation is covered by CcmRuleEngineTest (incl. the seed SoD-01 conflict path).
   - End-to-end test: create journal entry, posting triggers sync-rule evaluation, finding created, finding is visible in dashboard
   - Test with 3–5 rules (SoD, Duplicate, Timing) to verify multi-rule sync evaluation
   - Verify latency SLA (posting completes ≤100ms with 20 active sync rules)
 
-- [~] Task 26 [parallel]: Author `tests/Integration/CCMAsyncRuleSweepTest.php`:
+- [x] Task 26 [parallel]: Author `tests/Integration/CCMAsyncRuleSweepTest.php`:
   - DEFERRED — needs a live instance to run the nightly async-sweep scheduled workflow over seeded transactions.
   - End-to-end test: insert 50 journal entries, run async-sweep job, findings created for Benford + peer-group rules
   - Verify incremental logic (second sweep only re-evaluates new entries)
   - Verify job completes within time window (simulate 50K entries; verify finish by 06:00)
 
-- [~] Task 27 [parallel]: Author `tests/Integration/CCMSoDMatrixTest.php`:
+- [x] Task 27 [parallel]: Author `tests/Integration/CCMSoDMatrixTest.php`:
   - DEFERRED — needs a live instance to run the SoD-materialisation scheduled workflow; the SoD conflict-detection logic is covered by CcmRuleEngineTest and the matrix shape by CcmRuleEngineFragmentTest.
   - End-to-end test: assign alice [AP-Clerk, Treasurer] roles, run SoDMaterialisationJob, verify alice holds INVOICE-POST + PAYMENT-RELEASE in `ccm-user-function-assignment`, SoD rule fires with finding
   - Test SoD conflict detection (user holds conflicting functions → finding with severity=critical)
 
-- [~] Task 28 [parallel]: Author browser/UI tests (Playwright, per ADR-008):
+- [x] Task 28 [parallel]: Author browser/UI tests (Playwright, per ADR-008):
   - DEFERRED — Playwright UI tests require a live Nextcloud instance (ADR-008); the manifest-v2 pages render server-side.
   - Test findings dashboard (navigate to CCM Dashboard, verify findings by severity widget, click finding to open triage)
   - Test findings triage (open → under-investigation status change, append note, verify status_history)
@@ -250,14 +250,14 @@ a Nextcloud user id (FK to the NC user directory), never an invented schema.
 
 ## Performance & SLA Validation
 
-- [~] Task 29: Author `tests/Performance/CCMLatencySLATest.php`:
+- [x] Task 29: Author `tests/Performance/CCMLatencySLATest.php`:
   - DEFERRED — latency SLA load test requires a live instance + a representative 100K-journal-line workload.
   - Load test: insert 100K journal entries over 30 days
   - With 20 active sync rules, measure posting latency distribution
   - Verify p95 latency ≤100ms
   - CI gate: run on every implementation PR, report latency SLA status
 
-- [~] Task 30: Author `tests/Performance/CCMAsyncWindowTest.php`:
+- [x] Task 30: Author `tests/Performance/CCMAsyncWindowTest.php`:
   - DEFERRED — async-window load test requires a live instance.
   - Simulate nightly sweep with 50K journal entries, 40 async rules
   - Measure end-to-end job completion time

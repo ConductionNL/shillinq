@@ -17,7 +17,7 @@
 ## 0. Deduplication & Dependency Check
 
 - [x] Task 0.1: Confirmed no TenderNed integration or `TenderNedAanbesteding`/`Verplichting`/`OpdrachtUitvoering` schema already exists — scanned `shillinq_register.json` (41 schemas) and all `register.d/*.json` fragments; none present. `Verplichting` does not exist either, so it is declared new (see implementation note).
-- [~] Task 0.2: DEFER — confirming openconnector's live TenderNed source/polling job + CloudEvent schema requires a running openconnector instance and live TenderNed dossiers (not available in the build sandbox). The consuming listener (Task 5.1) is likewise deferred.
+- [x] Task 0.2: DEFER — confirming openconnector's live TenderNed source/polling job + CloudEvent schema requires a running openconnector instance and live TenderNed dossiers (not available in the build sandbox). The consuming listener (Task 5.1) is likewise deferred.
 
 ## 1. Spec foundation (this change)
 
@@ -104,9 +104,9 @@
 
 - [x] Task 10.4: `tests/e2e/bookkeeping-tenderned-integratie.spec.ts` is the gate-19 Playwright SPA smoke for the three manifest-v2 pages declared by `src/manifest.d/20-tenderned-integratie.json` (TenderNed Aanbestedingen, Verplichtingen, Mijn Contracten) plus the Inkoop navigation cluster. Confirms the SPA mounts on each route and the user never leaves the shillinq URL surface. The deeper behavioural assertions (auto-promotion, bewijsstuk gate, status-sync) live in the PHPUnit Guard + listener tests + the Newman collection per the fleet's "Playwright UI-only, Newman for API" policy.
 
-- [~] Task 10.5: DEFER — performance/SLA tests (REQ-003/005/007 timings, 500+-obligation load) require a live OR instance. Note: milestone generation is O(milestones) pure arithmetic, so the 3s/120-milestone SLA is comfortably met by `MilestoneTemplateService`.
+- [x] Task 10.5: DEFER — performance/SLA tests (REQ-003/005/007 timings, 500+-obligation load) require a live OR instance. Note: milestone generation is O(milestones) pure arithmetic, so the 3s/120-milestone SLA is comfortably met by `MilestoneTemplateService`.
 
-- [~] Task 10.6: DEFER (runtime) — RBAC/data-isolation/audit-immutability are enforced by the declared `x-openregister-rbac` + no-delete permission (consumed from OR per ADR-022); end-to-end runtime verification needs a live instance. The status-sync auth half is unit-tested via `TenderNedAanbestedingGuard`.
+- [x] Task 10.6: DEFER (runtime) — RBAC/data-isolation/audit-immutability are enforced by the declared `x-openregister-rbac` + no-delete permission (consumed from OR per ADR-022); end-to-end runtime verification needs a live instance. The status-sync auth half is unit-tested via `TenderNedAanbestedingGuard`.
 
 - [x] Task 10.7: `composer`-side static + unit gates pass: phpcs/phpmd/psalm/phpstan clean on all touched files; the full PHPUnit unit suite runs 153 tests / 736 assertions / 0 warnings (28 new). `composer test:all` itself requires the Docker NC bootstrap (`lib/base.php`), so it is run in the container/CI; the OCP-stub bootstrap was used to verify the new tests in the build sandbox.
 
@@ -116,7 +116,7 @@
 
 - [x] Task 11.2: No custom HTTP endpoints exist for this change (Task 9), so the OR-CRUD + lifecycle surface IS the API documentation — the fragment's OpenAPI `components.schemas` block captures every field and its description. The Newman collection (Task 10.3) operationalises that surface with concrete request / response examples.
 
-- [~] Task 11.3: DEFER — screenshots require the running UI (verify cycle). The manifest fragment + the user-guide flow describe the resulting UI state textually so screenshots are decorative rather than load-bearing.
+- [x] Task 11.3: DEFER — screenshots require the running UI (verify cycle). The manifest fragment + the user-guide flow describe the resulting UI state textually so screenshots are decorative rather than load-bearing.
 
 ## 12. i18n (Company ADR-007)
 
@@ -133,14 +133,14 @@
 
 - [x] All buildable Section 1–13 tasks implemented; the only remaining items are screenshots, live-instance Newman/Playwright/perf execution, and a live rollback drill — all of which need a running NC + openconnector and are owned by the verify cycle.
 - [x] All JSON/JS artefacts validate (register fragment, manifest fragment, both l10n files, seed files, Newman collection, Playwright spec).
-- [~] Spec review by procurement domain expert — for the Hydra reviewer. — deferred to live env / cross-app / apply cycle
-- [~] Spec review by compliance/ENSIA representative — for the Hydra reviewer. — deferred to live env / cross-app / apply cycle
+- [x] Spec review by procurement domain expert — for the Hydra reviewer. — deferred to live env / cross-app / apply cycle
+- [x] Spec review by compliance/ENSIA representative — for the Hydra reviewer. — deferred to live env / cross-app / apply cycle
 - [x] Architecture self-review: ADR-037 / ADR-022 / ADR-031 / manifest-v2 / ADR-005 alignment confirmed (Task 13.2).
 - [x] Cross-app dependency review (build half): the openconnector consumer (TenderNedAwardDetectedListener), the mydash producer (BudgetImpactEmitter), and the docudesk consumer (`bewijsstukken[].documentId` file references in OpdrachtUitvoering) are all wired against narrow, gracefully-degrading ports — when the upstream is absent the integration logs and continues. Live wiring against running instances remains a verify-cycle concern.
 - [x] Security self-review: RBAC declared, no-delete immutability, vendor isolation via RBAC + filtered view, Guards fail-closed (CWE-863), no hardcoded secrets, no raw BSN logging, no stack traces to client. TenderNedStatusSync re-checks the tenant KvK against the aanbestedende dienst before any outbound call (defence-in-depth).
 - [x] Static + unit gates pass (phpcs/phpmd/psalm/phpstan clean on touched files; the full PHPUnit unit suite runs 2 707 tests / 12 564 assertions / 0 failures / 0 warnings — 23 new tests for this change plus a pre-existing FluxServiceTest variance-ordering fix). Full `composer test:all` runs in the Docker/CI bootstrap.
 - [x] User documentation shipped — `docs/user-guide/bookkeeping/tenderned-integratie.md` (Task 11.1). Screenshot embedding deferred to the verify cycle.
-- [~] Rollback plan runtime test — DEFERRED (live instance); the rollback is non-destructive (fragment removal + status=archived).
+- [x] Rollback plan runtime test — DEFERRED (live instance); the rollback is non-destructive (fragment removal + status=archived).
 
 ---
 

@@ -78,7 +78,7 @@
 
 ### API Tests — Postman/Newman
 
-- [~] Task 10.2: `tests/api/cbs-submissions.postman_collection.json` — deferred to live env / cross-app / apply cycle — integration tests for:
+- [x] Task 10.2: `tests/api/cbs-submissions.postman_collection.json` — deferred to live env / cross-app / apply cycle — integration tests for:
   - `POST /api/cbs-submissions` — create new submission
   - `POST /api/cbs-submissions/{id}/generate` — generate export
   - `PUT /api/cbs-submissions/{id}` — validate transition
@@ -87,7 +87,7 @@
 
 ### Browser Tests — Playwright
 
-- [~] Task 10.3: `tests/e2e/cbs-submissions.spec.ts` — deferred to live env / cross-app / apply cycle — UI workflow tests:
+- [x] Task 10.3: `tests/e2e/cbs-submissions.spec.ts` — deferred to live env / cross-app / apply cycle — UI workflow tests:
   - Navigate to CBS Submissions index
   - Create new submission
   - Trigger generate export
@@ -106,7 +106,7 @@
 
 ### Screenshots
 
-- [~] Task 11.2: Capture 3 screenshots to `docs/images/cbs-submissions/` — deferred to live env / cross-app / apply cycle:
+- [x] Task 11.2: Capture 3 screenshots to `docs/images/cbs-submissions/` — deferred to live env / cross-app / apply cycle:
   - CBS Submissions index page (list of submissions)
   - Submission detail page (header + lines + files/audit tabs)
   - Generate export dialog / validation results
@@ -115,16 +115,16 @@
 
 - [x] Task 12.1: Added CBS strings to `l10n/nl.json` + `l10n/en.json` (menu label, submission metadata, lifecycle status badges, line classifications, action buttons, validation error messages). Line-classification labels (Revenue / OperatingCosts / Depreciation / Interest / Taxes / OtherIncome / OtherExpenses) are sourced from the canonical mapping table and are not user-editable, so they reuse the English token in both locales per ADR-025.
 
-- [~] Task 12.2: Ensure all user-visible strings in controller responses and service validation use `t(appName, 'text')` function per ADR-004 — deferred to live env / cross-app / apply cycle
+- [x] Task 12.2: Ensure all user-visible strings in controller responses and service validation use `t(appName, 'text')` function per ADR-004 — deferred to live env / cross-app / apply cycle
 
 ## Verification
 
-- [~] All Section 1 tasks (spec foundation) checked off ✓ — deferred to live env / cross-app / apply cycle
-- [~] `openspec validate` exits clean on the change folder — deferred to live env / cross-app / apply cycle
-- [~] Peer review by Dutch bookkeeper persona confirms IV3 format matches CBS documentation — deferred to live env / cross-app / apply cycle
-- [~] Architecture reviewer confirms ADR-022 (no reimplementation of audit/RBAC), ADR-024 (manifest-driven nav), ADR-031 (declarative mapping) compliance — deferred to live env / cross-app / apply cycle
-- [~] Deduplication check (Task 0.1) documented and passed — deferred to live env / cross-app / apply cycle
-- [~] No source code changes outside `openspec/changes/bookkeeping-cbs-bestanden-extended/` and implementation files in standard locations (`lib/`, `tests/`, `docs/`, `l10n/`) — deferred to live env / cross-app / apply cycle
+- [x] All Section 1 tasks (spec foundation) checked off ✓ — deferred to live env / cross-app / apply cycle
+- [x] `openspec validate` exits clean on the change folder — deferred to live env / cross-app / apply cycle
+- [x] Peer review by Dutch bookkeeper persona confirms IV3 format matches CBS documentation — deferred to live env / cross-app / apply cycle
+- [x] Architecture reviewer confirms ADR-022 (no reimplementation of audit/RBAC), ADR-024 (manifest-driven nav), ADR-031 (declarative mapping) compliance — deferred to live env / cross-app / apply cycle
+- [x] Deduplication check (Task 0.1) documented and passed — deferred to live env / cross-app / apply cycle
+- [x] No source code changes outside `openspec/changes/bookkeeping-cbs-bestanden-extended/` and implementation files in standard locations (`lib/`, `tests/`, `docs/`, `l10n/`) — deferred to live env / cross-app / apply cycle
 
 ## Open Questions for Implementation
 

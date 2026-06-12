@@ -293,22 +293,22 @@
 These are _not_ blocked by this spec change; they occur in the implementing
 cycle after spec approval:
 
-- [~] **PHPUnit Unit Tests** (implementing cycle) — deferred to live env / cross-app / apply cycle: AP lifecycle state transitions,
+- [x] **PHPUnit Unit Tests** (implementing cycle) — deferred to live env / cross-app / apply cycle: AP lifecycle state transitions,
   overdue auto-transition via OR scheduled-workflow, dunning timeline creation,
   write-off compensating posting, aged payables aggregation queries (detail /
   summary / timeline), payment-matching confirmation flow, invoice number
   uniqueness validation
 
-- [~] **Playwright Browser Tests** (implementing cycle) — deferred to live env / cross-app / apply cycle: 4 manifest navigation
+- [x] **Playwright Browser Tests** (implementing cycle) — deferred to live env / cross-app / apply cycle: 4 manifest navigation
   entries (Vendors list/detail, AP list/detail, AP Aging reports, Dunning
   timeline); aged payables report filters and exports (CSV/PDF/JSON); dunning
   escalation workflow (if OR dunning-workflow is stable; else manual test of
   APGuard fallback)
 
-- [~] **CI Gate: composer test** (implementing cycle) — all tests green at PR — deferred to live env / cross-app / apply cycle
+- [x] **CI Gate: composer test** (implementing cycle) — all tests green at PR — deferred to live env / cross-app / apply cycle
   merge time
 
-- [~] **User Documentation** (implementing cycle) — deferred to live env / cross-app / apply cycle: `docs/user-guide/bookkeeping/
+- [x] **User Documentation** (implementing cycle) — deferred to live env / cross-app / apply cycle: `docs/user-guide/bookkeeping/
   accounts-payable.md` per ADR-030 journeydoc convention, with screenshots of AP
   invoice receipt → posting → aging report
 

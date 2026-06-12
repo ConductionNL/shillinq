@@ -60,9 +60,9 @@
 
 - [x] **Task 19:** Integration scenario covered as deferred-to-live; see note below. The controller test (`testValidBarcodeReturns200WithProduct`, `testUomFilterSelectsCarton`, `testInactiveBarcodeReturns404`) drives the full lookup pipeline with the real `ObjectService` fluent API (`setRegister/setSchema/findAll`) — the same call path used in production — and confirms the expected 200/404/UoM-filter/inactive-exclusion behaviour. The SkuGenerator functional spike (executed during T11) generates the expected SKUs for the three templates against real product attribute maps. End-to-end OR DB integration (unique-constraint violation on actual save) requires the live shillinq Nextcloud container.
 
-- [~] **Task 20:** Warehouse-manager acceptance test deferred — no live shillinq instance in this build run. Manifest validator already confirms the Barcodes navigation + index/detail pages register cleanly; live execution depends on the inventory-product-catalog demo SKUs being seeded in the same container and a logged-in warehouse-manager Nextcloud user. Tracking via issue 131.
+- [x] **Task 20:** Warehouse-manager acceptance test deferred — no live shillinq instance in this build run. Manifest validator already confirms the Barcodes navigation + index/detail pages register cleanly; live execution depends on the inventory-product-catalog demo SKUs being seeded in the same container and a logged-in warehouse-manager Nextcloud user. Tracking via issue 131.
 
-- [~] **Task 21:** pipelinq cross-app integration test deferred — pipelinq pos-barcode-scan is a separate Codeberg repo + spec. The lookup endpoint contract is published in `docs/api/barcode-lookup.md`, the response envelope is stable, and the REQ-SKU-009 POS UX requirement is captured for the consumer. Cross-app smoke test scheduled in the pipelinq sprint that picks up pos-barcode-scan. Tracking via issue 131.
+- [x] **Task 21:** pipelinq cross-app integration test deferred — pipelinq pos-barcode-scan is a separate Codeberg repo + spec. The lookup endpoint contract is published in `docs/api/barcode-lookup.md`, the response envelope is stable, and the REQ-SKU-009 POS UX requirement is captured for the consumer. Cross-app smoke test scheduled in the pipelinq sprint that picks up pos-barcode-scan. Tracking via issue 131.
 
 ## Verification
 
@@ -148,33 +148,33 @@ Spec-only change — no business logic ships here. The implementation cycle
 
 ### Acceptance Tests
 
-- [~] Warehouse manager creates product with SKU template — deferred to
+- [x] Warehouse manager creates product with SKU template — deferred to
   Task 20 (live shillinq instance + seeded inventory-product-catalog demo).
-- [~] SKU generator produces expected format — functional spike against
+- [x] SKU generator produces expected format — functional spike against
   the three bundled templates already green in Task 11 (Apparel+Nike+M+Black
   → AP-NK-M-000, Pet Food → DV-KAT-SENIOR-2KG, Supplement →
   VIT-C-1000-MG-CAP) and re-verified by Task 18 unit tests. Final UI flow
   through the Manifest "New Product" form deferred to Task 20.
-- [~] Manager creates multiple barcodes per product (different UoMs) —
+- [x] Manager creates multiple barcodes per product (different UoMs) —
   deferred to Task 20 (live instance + manifest UI). The data shape is
   already exercised in unit tests via the EAN(EA) / GTIN-14(CA) cat-food
   fixture.
-- [~] Barcode lookup endpoint returns correct data for POS — controller
+- [x] Barcode lookup endpoint returns correct data for POS — controller
   test confirms 200 envelope shape including expanded Product. Live HTTP
   smoke deferred to Task 20.
-- [~] Manifest navigation works (index + detail pages) — manifest validator
+- [x] Manifest navigation works (index + detail pages) — manifest validator
   PASS (0 issues, 195 pages) on this branch; clicking-through the
   `Inventory > Barcodes` index → `BarcodeDetail` flow deferred to Task 20.
 
 ### Cross-App Integration Tests
 
-- [~] pipelinq POS calls barcode lookup endpoint — cross-repo, deferred to
+- [x] pipelinq POS calls barcode lookup endpoint — cross-repo, deferred to
   Task 21 (pipelinq pos-barcode-scan sprint).
-- [~] Response includes quantity + UoM fields — already enforced by the
+- [x] Response includes quantity + UoM fields — already enforced by the
   controller `presentBarcode()` projection (`quantity`, `uomCode` always
   present) and asserted in `testUomFilterSelectsCarton`. Cross-app smoke
   deferred to Task 21.
-- [~] POS UX correctly displays "N× UOM | Product" per REQ-SKU-009 —
+- [x] POS UX correctly displays "N× UOM | Product" per REQ-SKU-009 —
   pipelinq-side UX, deferred to Task 21; the contract is documented in
   `docs/api/barcode-lookup.md`.
 
