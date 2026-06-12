@@ -54,25 +54,25 @@
 
 - [x] Task 15: Implement grotendeels-criterium check per REQ-URC-007 — daily batch calculates (loondienst-uren + onderneming-uren); if loondienst > 50% total, flags NIET_GROTENDEELS_ONDERNEMING and blocks zelfstandigenaftrek; stored on `UrencriteriumYear`
 
-- [~] Task 16: Implement WBSO-uren sync per REQ-URC-005 — automatic feed from `bookkeeping-wbso-administratie` → `UrenRegistratie.R_AND_D_WBSO` without duplication; reconciliation check flags discrepancies between WBSO-recorded-uren and time-tracking-uren — deferred to live env / cross-app / apply cycle
+- [x] Task 16: Implement WBSO-uren sync per REQ-URC-005 — automatic feed from `bookkeeping-wbso-administratie` → `UrenRegistratie.R_AND_D_WBSO` without duplication; reconciliation check flags discrepancies between WBSO-recorded-uren and time-tracking-uren — deferred to live env / cross-app / apply cycle
 
-- [~] Task 17: Implement zwangerschap-fictie per REQ-URC-008 — when ZEZ-uitkering is registered, system adds (16 weeks * avg-weekly-uren) to `UrenRegistratie` as "FICTIE_ZEZ"; stored with explicit reason-citation (Wet ZEZ) — deferred to live env / cross-app / apply cycle
+- [x] Task 17: Implement zwangerschap-fictie per REQ-URC-008 — when ZEZ-uitkering is registered, system adds (16 weeks * avg-weekly-uren) to `UrenRegistratie` as "FICTIE_ZEZ"; stored with explicit reason-citation (Wet ZEZ) — deferred to live env / cross-app / apply cycle
 
-- [~] Task 18: Implement agenda-import per REQ-URC-009 — ICS/CalDAV endpoint via `openconnector`; local classifier (LLM optional, MVP: manual confirm) pre-categorises ("Klantmeeting" → KLANTWERK, "Acquisitie" → ACQUISITIE, "Cursus" → SCHOLING, duration → reistijd if travel-inferred); user confirms per-item before tally — deferred to live env / cross-app / apply cycle
+- [x] Task 18: Implement agenda-import per REQ-URC-009 — ICS/CalDAV endpoint via `openconnector`; local classifier (LLM optional, MVP: manual confirm) pre-categorises ("Klantmeeting" → KLANTWERK, "Acquisitie" → ACQUISITIE, "Cursus" → SCHOLING, duration → reistijd if travel-inferred); user confirms per-item before tally — deferred to live env / cross-app / apply cycle
 
-- [~] Task 19: Implement PDF-A3 evidence export per REQ-URC-010 — quarterly batch generates per-quarter PDF-A3 (`openregister` file-storage) with daily detail (datum, categorieën, uren, bronnen-referenties), SHA-256 hash stored, bewaartermijn-index (7 jaar per art. 52 AWR) — deferred to live env / cross-app / apply cycle
+- [x] Task 19: Implement PDF-A3 evidence export per REQ-URC-010 — quarterly batch generates per-quarter PDF-A3 (`openregister` file-storage) with daily detail (datum, categorieën, uren, bronnen-referenties), SHA-256 hash stored, bewaartermijn-index (7 jaar per art. 52 AWR) — deferred to live env / cross-app / apply cycle
 
-- [~] Task 20: Implement IB-aangifte integration per REQ-URC-011 — endpoint exports `UrencriteriumYear` result (behaald/niet-behaald status, lopende-uren, norm) + `UrenEvidence` fileRef to `bookkeeping-ib-aangifte-zzp` API — deferred to live env / cross-app / apply cycle
+- [x] Task 20: Implement IB-aangifte integration per REQ-URC-011 — endpoint exports `UrencriteriumYear` result (behaald/niet-behaald status, lopende-uren, norm) + `UrenEvidence` fileRef to `bookkeeping-ib-aangifte-zzp` API — deferred to live env / cross-app / apply cycle
 
-- [~] Task 21: Implement 5-year trend dashboard per REQ-URC-012 — queries `UrencriteriumYear` history (5 years back), renders graph (gerealiseerde-uren per year), marks unmet-norm years with red flags, supports multi-onderneming filter — deferred to live env / cross-app / apply cycle
+- [x] Task 21: Implement 5-year trend dashboard per REQ-URC-012 — queries `UrencriteriumYear` history (5 years back), renders graph (gerealiseerde-uren per year), marks unmet-norm years with red flags, supports multi-onderneming filter — deferred to live env / cross-app / apply cycle
 
-- [~] Task 22: Implement source-suggestion detection per REQ-URC-013 — daily batch scans (email outbound-count to prospects, factuur-implied-hours vs time-tracking, agenda-events without registered hours); pre-fills suggestions for user one-click acceptance/rejection — deferred to live env / cross-app / apply cycle
+- [x] Task 22: Implement source-suggestion detection per REQ-URC-013 — daily batch scans (email outbound-count to prospects, factuur-implied-hours vs time-tracking, agenda-events without registered hours); pre-fills suggestions for user one-click acceptance/rejection — deferred to live env / cross-app / apply cycle
 
-- [~] Task 23: Implement multi-onderneming support per REQ-URC-014 — per-entity `UrencriteriumYear` records; norm determination per onderneming; consolidated view in reporting; per-entity status explicit; no automatic rollup (user sees per-onderneming status) — deferred to live env / cross-app / apply cycle
+- [x] Task 23: Implement multi-onderneming support per REQ-URC-014 — per-entity `UrencriteriumYear` records; norm determination per onderneming; consolidated view in reporting; per-entity status explicit; no automatic rollup (user sees per-onderneming status) — deferred to live env / cross-app / apply cycle
 
 - [x] Task 24: Implement backfill rules per REQ-URC-017 — ≤7 days old: no evidence needed, system auto-logs "Backfill T+N days"; >7 days: require reden (reason string) + bewijs (file-upload); backfill-entries separately labeled in evidence-dossier for audit context
 
-- [~] Task 25: Implement read-only controleur-token per REQ-URC-016 — time-scoped token (14 days default, period-scoped, e.g. "2024 only") grants read-only access to `UrenRegistratie` + `UrenEvidence` + categorisatie + bron-referenties via unique URL; all page-views logged in access-log; token-revocation invalidates URL immediately — deferred to live env / cross-app / apply cycle
+- [x] Task 25: Implement read-only controleur-token per REQ-URC-016 — time-scoped token (14 days default, period-scoped, e.g. "2024 only") grants read-only access to `UrenRegistratie` + `UrenEvidence` + categorisatie + bron-referenties via unique URL; all page-views logged in access-log; token-revocation invalidates URL immediately — deferred to live env / cross-app / apply cycle
 
 - [x] Task 26: Declare 3 manifest navigation entries (`Urencriterium Dashboard`, `Prognose Analyse`, `Alerts & Benaderingen`) + their `type: index` pages to `src/manifest.json` per REQ-URC-001/002/003; `node tests/validate-manifest.js` exits 0
 
@@ -80,7 +80,7 @@
 
 - [x] Task 28: Seed `UrenCategorie` definition table with Belastingdienst-2026 standard categories (BILLABLE_KLANTWERK, ACQUISITIE, ADMINISTRATIE, REISTIJD_ZAKELIJK, SCHOLING, FICTIE_ZEZ, R_AND_D_WBSO) with fiscal-grondslag citations (HR 2003 BNB 258, HR 1996 BNB 302, etc.) + caps + evidence-requirements; admin-only edit after init
 
-- [~] Task 29: Register daily tally batch as scheduled job (e.g., 23:00 UTC); register quarterly alert batch (e.g., 09:00 UTC on quarter-end dates); register prognosis batch (e.g., daily 08:00 UTC); idempotency checks prevent re-runs — deferred to live env / cross-app / apply cycle
+- [x] Task 29: Register daily tally batch as scheduled job (e.g., 23:00 UTC); register quarterly alert batch (e.g., 09:00 UTC on quarter-end dates); register prognosis batch (e.g., daily 08:00 UTC); idempotency checks prevent re-runs — deferred to live env / cross-app / apply cycle
 
 ## Deferral reasons (hydra build)
 
