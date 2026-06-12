@@ -9,7 +9,7 @@
 
 ## Tasks
 
-- [~] Task 1: Verify prerequisites (NEW specs not yet merged):
+- [x] Task 1: Verify prerequisites (NEW specs not yet merged):
   - [ ] bookkeeping-multi-administratie spec exists and passed review — DEFERRED: spec not yet merged; this change declares its own GroupEntity.administrationId FK to the existing Administration register, so the consolidation schemas land independently and the runtime aggregation against multi-administratie is wired when that spec merges.
   - [ ] bookkeeping-intercompany-elimination spec exists and passed review — DEFERRED: matching-algorithm spec not yet merged; IntercompanyRelation + matchingTolerance + ConsolidationPeriod.mismatches exception-queue are declared here, ready to consume the matcher.
   - [x] bookkeeping-financial-statements (T2) exists and operational — present (AnnualReport/BalanceSheet/IncomeStatement entities in ADR-000); per-entiteit balans + V&W are the aggregation input.
@@ -175,7 +175,7 @@
   - Validates: netProfitTotal = netProfitAttributedToParent + netProfitAttributedToMinority
   - Add lifecycle: draft → final → published
 
-- [~] Task 13: Implement the `consolidation-period` workflow aggregation per
+- [x] Task 13: Implement the `consolidation-period` workflow aggregation per
   REQ-CONS-002 — PARTIAL/DEFERRED: the expressible part (totalEliminationCount /
   totalEliminationAmount aggregations over EliminationEntry) is declared on
   ConsolidationPeriod. The cross-app pre-elimination aggregation that fetches
@@ -192,7 +192,7 @@
   - Emits consolidated-balance + consolidated-income-statement pre-elimination
     records
 
-- [~] Task 14: Implement the `intercompany-matching` aggregation per REQ-CONS-003 — PARTIAL/DEFERRED: the IntercompanyRelation mapping + matchingTolerance + ConsolidationPeriod.mismatches exception-queue are declared; the matching engine that compares debtor/creditor GL and auto-emits elimination-entries is supplied by bookkeeping-intercompany-elimination (not yet merged) and needs a live instance.
+- [x] Task 14: Implement the `intercompany-matching` aggregation per REQ-CONS-003 — PARTIAL/DEFERRED: the IntercompanyRelation mapping + matchingTolerance + ConsolidationPeriod.mismatches exception-queue are declared; the matching engine that compares debtor/creditor GL and auto-emits elimination-entries is supplied by bookkeeping-intercompany-elimination (not yet merged) and needs a live instance.
   — `x-openregister-aggregations` query that:
   - Iterates all IntercompanyRelation in group
   - For each relation (debtorEntity, creditorEntity, transactionType):
@@ -204,7 +204,7 @@
     - If mismatch: add to consolidation-period.mismatches[] exception queue
   - Emits elimination-entry records + updates consolidation-period.mismatches
 
-- [~] Task 15: Implement the `currency-translation` aggregation per REQ-CONS-005 — PARTIAL/DEFERRED: TranslationAdjustment schema (currentRate/average/historical + ctaComponent to OCI) is declared; the FX-rate fetch from treasury-cash-management and the current-rate roll-forward computation are DEFERRED (needs treasury FX API + live instance).
+- [x] Task 15: Implement the `currency-translation` aggregation per REQ-CONS-005 — PARTIAL/DEFERRED: TranslationAdjustment schema (currentRate/average/historical + ctaComponent to OCI) is declared; the FX-rate fetch from treasury-cash-management and the current-rate roll-forward computation are DEFERRED (needs treasury FX API + live instance).
   — `x-openregister-aggregations` query that:
   - For each GroupEntity with functionalCurrency ≠ reportingCurrency:
     - Query consolidated-balance pre-elimination balances per entity
@@ -217,7 +217,7 @@
     - Auto-generate elimination-entry (type: translationAdjustment) posting CTA to
       OCI account
 
-- [~] Task 16: Implement the `minority-interest-split` aggregation per REQ-CONS-006 — PARTIAL/DEFERRED: MinorityInterest.closingBalance roll-forward is a declared x-openregister-calculation and the income-statement parent/minority split is guard-validated (canFinalizeIncomeStatement). The cross-record split that reads post-elimination net profit and emits the minorityInterestSplit elimination-entry is DEFERRED (needs the post-elimination consolidated-income-statement aggregation, Task 13).
+- [x] Task 16: Implement the `minority-interest-split` aggregation per REQ-CONS-006 — PARTIAL/DEFERRED: MinorityInterest.closingBalance roll-forward is a declared x-openregister-calculation and the income-statement parent/minority split is guard-validated (canFinalizeIncomeStatement). The cross-record split that reads post-elimination net profit and emits the minorityInterestSplit elimination-entry is DEFERRED (needs the post-elimination consolidated-income-statement aggregation, Task 13).
   — `x-openregister-aggregations` query that:
   - For each GroupEntity with ownershipPercentage <100%:
     - Compute thirdPartyPercentage = 100% - ownershipPercentage
@@ -230,7 +230,7 @@
     - Auto-generate elimination-entry (type: minorityInterestSplit) posting parent
       result adjustment + minority-interest balance adjustments
 
-- [~] Task 17: Implement the `goodwill-amortization` aggregation per REQ-CONS-007 — PARTIAL/DEFERRED: Goodwill.goodwillAmount is a declared x-openregister-calculation and amortizationMethod is framework-gated; the per-boekjaar amortisation GL accrual (RJ) / impairment-test flag (IFRS) posting is DEFERRED (needs GL-posting integration, Task 27, on a live instance).
+- [x] Task 17: Implement the `goodwill-amortization` aggregation per REQ-CONS-007 — PARTIAL/DEFERRED: Goodwill.goodwillAmount is a declared x-openregister-calculation and amortizationMethod is framework-gated; the per-boekjaar amortisation GL accrual (RJ) / impairment-test flag (IFRS) posting is DEFERRED (needs GL-posting integration, Task 27, on a live instance).
   — `x-openregister-aggregations` query that:
   - For each Goodwill record in group with amortizationMethod = RJ-linear:
     - If ReportingFramework = RJ217:
@@ -256,7 +256,7 @@
   - ConsolidatedBalance: Validates totalAssets = totalLiabilities + totalEquity
   - ConsolidatedIncomeStatement: Validates netProfit + split = total
 
-- [~] Task 19: Implement the `consolidation-toelichting` (notes) generation per REQ-CONS-010 — DEFERRED: toelichting auto-generation reads the finalised consolidated-balance + -income-statement + metadata; it is DEFERRED until the aggregation pipeline (Tasks 13-16) runs on a live instance. The spec REQ-CONS-010 defines the required paragraphs.
+- [x] Task 19: Implement the `consolidation-toelichting` (notes) generation per REQ-CONS-010 — DEFERRED: toelichting auto-generation reads the finalised consolidated-balance + -income-statement + metadata; it is DEFERRED until the aggregation pipeline (Tasks 13-16) runs on a live instance. The spec REQ-CONS-010 defines the required paragraphs.
   REQ-CONS-010 — Auto-generate Markdown/HTML notes document with sections:
   - 1. **Consolidatiegrondslag**: RJ 217 or IFRS 10, why chosen, exceptions (if
     any 403-verklaring)
@@ -315,27 +315,27 @@
   Group Company List, Equity Movement, Goodwill Movement, Elimination Summary,
   Attributable to Parent, Attributable to Minority
 
-- [~] Task 24: Implement integration with `bookkeeping-multi-administratie` (T1) — DEFERRED: GroupEntity.administrationId FK to the existing Administration register is declared; runtime validation that the Administration exists and the GL-fetch wiring are DEFERRED until the multi-administratie spec merges (needs a live instance).
+- [x] Task 24: Implement integration with `bookkeeping-multi-administratie` (T1) — DEFERRED: GroupEntity.administrationId FK to the existing Administration register is declared; runtime validation that the Administration exists and the GL-fetch wiring are DEFERRED until the multi-administratie spec merges (needs a live instance).
   - ConsolidationGroup.parentAdministrationId validates parent exists
   - GroupEntity.administrationId validates entity's Administration exists
   - Pre-elimination aggregation query fetches GL from Administration.generalLedger
   - Rekeningschema-mapping per GroupEntity (optional per-entity mapping table for
     GL accounts not in group RGS)
 
-- [~] Task 25: Implement integration with `bookkeeping-intercompany-elimination` (T2) — DEFERRED: IntercompanyRelation mapping + exception-queue declared; consuming the matcher API is DEFERRED until that spec merges.
+- [x] Task 25: Implement integration with `bookkeeping-intercompany-elimination` (T2) — DEFERRED: IntercompanyRelation mapping + exception-queue declared; consuming the matcher API is DEFERRED until that spec merges.
   (T2):
   - Consume IntercompanyRelation-mapping API from elimination spec
   - Intercompany-matching aggregation uses elimination-spec's matching algoritme
   - Exception-queue (mismatches) feed back to elimination-spec for tolerance
     tuning
 
-- [~] Task 26: Implement integration with `bookkeeping-financial-statements` (T2) — DEFERRED: ConsolidatedBalance/-IncomeStatement output schemas declared and reconciled in ADR-000; the pre-elimination fetch + feedback-to-statement-output rendering is DEFERRED (needs a live instance + the aggregation pipeline).
+- [x] Task 26: Implement integration with `bookkeeping-financial-statements` (T2) — DEFERRED: ConsolidatedBalance/-IncomeStatement output schemas declared and reconciled in ADR-000; the pre-elimination fetch + feedback-to-statement-output rendering is DEFERRED (needs a live instance + the aggregation pipeline).
   - Pre-elimination aggregation fetches per-entiteit balans + V&W from statement
     output
   - Consolidated-balance + consolidated-income-statement records feed back to
     statement-output for rendering jaarrekening + notes
 
-- [~] Task 27: Implement integration with GL posting (T2) — DEFERRED: EliminationEntry.lines carry balanced debit/credit per account and sourceTransactions for drill-down; auto-posting approved eliminations into the group Administration GL is DEFERRED until bookkeeping-general-ledger posting API is wired on a live instance.
+- [x] Task 27: Implement integration with GL posting (T2) — DEFERRED: EliminationEntry.lines carry balanced debit/credit per account and sourceTransactions for drill-down; auto-posting approved eliminations into the group Administration GL is DEFERRED until bookkeeping-general-ledger posting API is wired on a live instance.
   elimination-entry is approved (reviewStatus=approved) in consolidation-period
   status=review:
   - Auto-generate GL journaal-entries in group's Administration per
@@ -353,7 +353,7 @@
   - (Future T4) decidesk integration for material consolidation changes (new entity,
     large goodwill, group restructure) requiring board/audit committee approval
 
-- [~] Task 29: Add 2–3 example consolidation-scenarios to `docs/` (ADR-030 journeydoc) — DEFERRED: scenario walkthroughs with screenshots require a live instance to capture the group-setup → period-run → elimination-matching → output flow. The three scenarios (100%-dochter, minority-interest, foreign-currency CTA) are specified in REQ-CONS-001/006/005 and the seed objects ship a 100%-dochter example.
+- [x] Task 29: Add 2–3 example consolidation-scenarios to `docs/` (ADR-030 journeydoc) — DEFERRED: scenario walkthroughs with screenshots require a live instance to capture the group-setup → period-run → elimination-matching → output flow. The three scenarios (100%-dochter, minority-interest, foreign-currency CTA) are specified in REQ-CONS-001/006/005 and the seed objects ship a 100%-dochter example.
   journeydoc):
   - Scenario 1: "100%-dochter consolidatie" (moeder + 100%-werkmaatschappij, RJ 217,
     integraal, no currency fx)
