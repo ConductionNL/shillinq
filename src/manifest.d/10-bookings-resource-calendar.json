@@ -117,12 +117,12 @@
 			}
 		},
 		{
-			"id": "BookingsCalendar",
+			"id": "BookingsCalendarView",
 			"route": "/bookings/calendar/:calendarId",
 			"type": "custom",
 			"title": "Calendar View",
 			"component": "BookingsCalendar",
-			"_note": "Per-resource month/week/day calendar grid with conflict highlighting (REQ-006). Custom because the time-grid layout and slot:clicked / booking:selected interaction model do not fit the declarative index/detail page types. Resolved against registry.js kind:page."
+			"_note": "Per-resource month/week/day calendar grid with conflict highlighting (REQ-006). Custom because the time-grid layout and slot:clicked / booking:selected interaction model do not fit the declarative index/detail page types. Resolved against registry.js kind:page. Page id renamed from BookingsCalendar — that id belongs to the param-less Verkoop calendar page (bookings-resource-calendar.json fragment); the two collided and shadowed each other."
 		},
 		{
 			"id": "BookingsForm",

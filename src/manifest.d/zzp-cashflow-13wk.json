@@ -46,27 +46,6 @@
 	],
 	"pages": [
 		{
-			"id": "CashflowDashboard",
-			"route": "/cashflow/dashboard",
-			"type": "index",
-			"title": "Cashflow Dashboard",
-			"config": {
-				"register": "shillinq",
-				"schema": "CashflowWeek",
-				"columns": [
-					{ "key": "weeknummer", "label": "Week", "sortable": true },
-					{ "key": "weekStart", "label": "Week start", "sortable": true },
-					{ "key": "inflows_totaal", "label": "Inflows", "sortable": true },
-					{ "key": "outflows_totaal", "label": "Outflows", "sortable": true },
-					{ "key": "nettoMutatie", "label": "Net change", "sortable": true },
-					{ "key": "eindSaldo", "label": "Closing balance", "sortable": true },
-					{ "key": "bufferStatus", "label": "Buffer status", "sortable": true }
-				],
-				"defaultSort": "weeknummer",
-				"detailRoute": "CashflowWeekDetail"
-			}
-		},
-		{
 			"id": "CashflowWeekDetail",
 			"route": "/cashflow/dashboard/:id",
 			"type": "detail",
@@ -97,26 +76,6 @@
 			}
 		},
 		{
-			"id": "CashflowRecurring",
-			"route": "/cashflow/recurring",
-			"type": "index",
-			"title": "Recurring Costs",
-			"config": {
-				"register": "shillinq",
-				"schema": "CashflowRecurring",
-				"columns": [
-					{ "key": "label", "label": "Label", "sortable": true },
-					{ "key": "categorie", "label": "Category", "sortable": true },
-					{ "key": "richting", "label": "Direction", "sortable": true },
-					{ "key": "frequentie", "label": "Frequency", "sortable": true },
-					{ "key": "standaardBedrag", "label": "Amount", "sortable": true },
-					{ "key": "geldigVan", "label": "Valid from", "sortable": true }
-				],
-				"defaultSort": "label",
-				"detailRoute": "CashflowRecurringDetail"
-			}
-		},
-		{
 			"id": "CashflowRecurringDetail",
 			"route": "/cashflow/recurring/:id",
 			"type": "detail",
@@ -142,24 +101,6 @@
 			}
 		},
 		{
-			"id": "CashflowBufferPolicy",
-			"route": "/cashflow/buffer-policy",
-			"type": "index",
-			"title": "Buffer Policy",
-			"config": {
-				"register": "shillinq",
-				"schema": "CashflowBufferPolicy",
-				"columns": [
-					{ "key": "policy", "label": "Policy", "sortable": true },
-					{ "key": "berekendeBuffer", "label": "Buffer", "sortable": true },
-					{ "key": "alertVooralarm", "label": "Pre-alert", "sortable": true },
-					{ "key": "alertOndergrens", "label": "Critical", "sortable": true }
-				],
-				"defaultSort": "policy",
-				"detailRoute": "CashflowBufferPolicyDetail"
-			}
-		},
-		{
 			"id": "CashflowBufferPolicyDetail",
 			"route": "/cashflow/buffer-policy/:id",
 			"type": "detail",
@@ -175,22 +116,6 @@
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
 				"indexRoute": "CashflowBufferPolicy"
-			}
-		},
-		{
-			"id": "CashflowScenarios",
-			"route": "/cashflow/scenarios",
-			"type": "index",
-			"title": "Scenarios",
-			"config": {
-				"register": "shillinq",
-				"schema": "CashflowScenario",
-				"columns": [
-					{ "key": "naam", "label": "Name", "sortable": true },
-					{ "key": "createdAt", "label": "Created", "sortable": true }
-				],
-				"defaultSort": "createdAt",
-				"detailRoute": "CashflowScenarioDetail"
 			}
 		},
 		{
