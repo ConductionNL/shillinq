@@ -246,6 +246,22 @@ import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashbo
 import ExternalAdaptersStatus from './views/external-adapters/ExternalAdaptersStatus.vue'
 import ExternalAdapterDetail from './views/external-adapters/ExternalAdapterDetail.vue'
 
+// financial-dashboard-graphs: the Financial overview widgets are
+// imperative — the KPI strip, the four charts and the two
+// open-invoice tables all derive their series client-side from a
+// shared fetch-once data layer (GL classification by accountType,
+// month bucketing, CashflowWeek roll-up), and margin / billable
+// carry a €/% resp. total/% view toggle. None of that fits the
+// declarative `stats-block` / `chart` / `table` widget types, so
+// they are registered as kind:"widget" components and wired into
+// the Dashboard page through its `slots` map (ADR-024 / ADR-036).
+import FinanceKpisWidget from './components/dashboard/financial/FinanceKpisWidget.vue'
+import TurnoverChartWidget from './components/dashboard/financial/TurnoverChartWidget.vue'
+import MarginChartWidget from './components/dashboard/financial/MarginChartWidget.vue'
+import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
+import BillableHoursChartWidget from './components/dashboard/financial/BillableHoursChartWidget.vue'
+import OpenInvoicesTableWidget from './components/dashboard/financial/OpenInvoicesTableWidget.vue'
+
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
@@ -308,4 +324,12 @@ export default {
 	// Shillinq W8: External Connections admin pages (index + per-adapter detail).
 	ExternalAdaptersStatus: { kind: 'page', component: ExternalAdaptersStatus },
 	ExternalAdapterDetail: { kind: 'page', component: ExternalAdapterDetail },
+
+	// financial-dashboard-graphs: Financial overview dashboard widgets.
+	FinanceKpisWidget: { kind: 'widget', component: FinanceKpisWidget },
+	TurnoverChartWidget: { kind: 'widget', component: TurnoverChartWidget },
+	MarginChartWidget: { kind: 'widget', component: MarginChartWidget },
+	CashflowChartWidget: { kind: 'widget', component: CashflowChartWidget },
+	BillableHoursChartWidget: { kind: 'widget', component: BillableHoursChartWidget },
+	OpenInvoicesTableWidget: { kind: 'widget', component: OpenInvoicesTableWidget },
 }
