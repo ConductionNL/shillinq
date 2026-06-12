@@ -33,7 +33,7 @@
 				type="text"
 				required
 				maxlength="255"
-				data-testid="bk-form-title" />
+				data-testid="bk-form-title">
 		</div>
 		<div class="bk-form__field">
 			<label :for="ids.start">{{ label('Start time') }}</label>
@@ -42,7 +42,7 @@
 				v-model="form.startTime"
 				type="datetime-local"
 				required
-				data-testid="bk-form-start" />
+				data-testid="bk-form-start">
 		</div>
 		<div class="bk-form__field">
 			<label :for="ids.end">{{ label('End time') }}</label>
@@ -51,7 +51,7 @@
 				v-model="form.endTime"
 				type="datetime-local"
 				required
-				data-testid="bk-form-end" />
+				data-testid="bk-form-end">
 		</div>
 		<div class="bk-form__field">
 			<label :for="ids.attendee">{{ label('Attendee') }}</label>
@@ -61,21 +61,30 @@
 				type="text"
 				required
 				maxlength="255"
-				data-testid="bk-form-attendee" />
+				data-testid="bk-form-attendee">
 		</div>
 		<fieldset class="bk-form__field bk-form__status">
 			<legend>{{ label('Status') }}</legend>
 			<label>
-				<input v-model="form.status" type="radio" value="pending" data-testid="bk-form-status-pending" />
+				<input v-model="form.status"
+					type="radio"
+					value="pending"
+					data-testid="bk-form-status-pending">
 				{{ label('Pending') }}
 			</label>
 			<label>
-				<input v-model="form.status" type="radio" value="confirmed" data-testid="bk-form-status-confirmed" />
+				<input v-model="form.status"
+					type="radio"
+					value="confirmed"
+					data-testid="bk-form-status-confirmed">
 				{{ label('Confirmed') }}
 			</label>
 		</fieldset>
 
-		<p v-if="error" class="bk-form__error" role="alert" data-testid="bk-form-error">
+		<p v-if="error"
+			class="bk-form__error"
+			role="alert"
+			data-testid="bk-form-error">
 			{{ error }}
 		</p>
 

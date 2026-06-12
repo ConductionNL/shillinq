@@ -61,8 +61,12 @@
 				{{ t('shillinq', 'Update InventoryStock to physical count (reconcile)') }}
 			</label>
 
-			<div v-if="error" class="count-op__error" role="alert">{{ error }}</div>
-			<div v-if="successMessage" class="count-op__success" role="status">{{ successMessage }}</div>
+			<div v-if="error" class="count-op__error" role="alert">
+				{{ error }}
+			</div>
+			<div v-if="successMessage" class="count-op__success" role="status">
+				{{ successMessage }}
+			</div>
 
 			<div class="count-op__actions">
 				<button type="submit" :disabled="submitting">

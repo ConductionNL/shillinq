@@ -1,11 +1,19 @@
 <template>
-	<div :class="['wsw', 'wsw-widget']" :data-wsw-dark="dark ? '1' : '0'" role="form" :aria-label="tr('Book an appointment')">
-		<h2 class="wsw__title">{{ tr('Book an appointment') }}</h2>
+	<div :class="['wsw', 'wsw-widget']"
+		:data-wsw-dark="dark ? '1' : '0'"
+		role="form"
+		:aria-label="tr('Book an appointment')">
+		<h2 class="wsw__title">
+			{{ tr('Book an appointment') }}
+		</h2>
 
 		<!-- Configuration / fatal error -->
 		<div v-if="fatalError" class="wsw__notice wsw__notice--error" role="alert">
 			{{ fatalError }}
-			<button v-if="retryable" class="wsw__button wsw__button--secondary" type="button" @click="reload">
+			<button v-if="retryable"
+				class="wsw__button wsw__button--secondary"
+				type="button"
+				@click="reload">
 				{{ tr('Try again') }}
 			</button>
 		</div>
@@ -20,8 +28,13 @@
 			<div v-if="step === 'select'">
 				<div class="wsw__field">
 					<label class="wsw__label" :for="ids.service">{{ tr('Service') }}</label>
-					<select :id="ids.service" v-model="selectedService" class="wsw__select" @change="onServiceChange">
-						<option value="">{{ tr('Choose a service') }}</option>
+					<select :id="ids.service"
+						v-model="selectedService"
+						class="wsw__select"
+						@change="onServiceChange">
+						<option value="">
+							{{ tr('Choose a service') }}
+						</option>
 						<option v-for="s in services" :key="s.serviceSlug" :value="s.serviceSlug">
 							{{ s.name }} ({{ s.durationMinutes }} {{ tr('minutes') }}<span v-if="s.price != null"> · {{ formatPrice(s) }}</span>)
 						</option>
@@ -30,14 +43,26 @@
 
 				<div class="wsw__field">
 					<label class="wsw__label" :for="ids.date">{{ tr('Date') }}</label>
-					<input :id="ids.date" v-model="selectedDate" class="wsw__input" type="date" :min="today" @change="onDateChange">
+					<input :id="ids.date"
+						v-model="selectedDate"
+						class="wsw__input"
+						type="date"
+						:min="today"
+						@change="onDateChange">
 				</div>
 
 				<div v-if="selectedService && selectedDate" class="wsw__field">
 					<span class="wsw__label">{{ tr('Available times') }}</span>
-					<div v-if="loadingSlots" class="wsw__tz">…</div>
-					<div v-else-if="slots.length === 0" class="wsw__tz">{{ tr('No times available for this day') }}</div>
-					<div v-else class="wsw__slots" role="listbox" :aria-label="tr('Available times')">
+					<div v-if="loadingSlots" class="wsw__tz">
+						…
+					</div>
+					<div v-else-if="slots.length === 0" class="wsw__tz">
+						{{ tr('No times available for this day') }}
+					</div>
+					<div v-else
+						class="wsw__slots"
+						role="listbox"
+						:aria-label="tr('Available times')">
 						<button
 							v-for="slot in slots"
 							:key="slot.startTime"
@@ -49,10 +74,15 @@
 							{{ formatTime(slot.startTime) }}
 						</button>
 					</div>
-					<p class="wsw__tz">{{ tr('Time') }}: {{ tzLabel }}</p>
+					<p class="wsw__tz">
+						{{ tr('Time') }}: {{ tzLabel }}
+					</p>
 				</div>
 
-				<button class="wsw__button" type="button" :disabled="!selectedSlot" @click="step = 'details'">
+				<button class="wsw__button"
+					type="button"
+					:disabled="!selectedSlot"
+					@click="step = 'details'">
 					{{ tr('Your details') }}
 				</button>
 			</div>
@@ -61,28 +91,51 @@
 			<div v-else-if="step === 'details'">
 				<div class="wsw__field">
 					<label class="wsw__label" :for="ids.name">{{ tr('Name') }}</label>
-					<input :id="ids.name" v-model.trim="customer.name" class="wsw__input" type="text" maxlength="255" required>
+					<input :id="ids.name"
+						v-model.trim="customer.name"
+						class="wsw__input"
+						type="text"
+						maxlength="255"
+						required>
 					<span v-if="touched.name && !nameValid" class="wsw__error">{{ tr('Please enter your name') }}</span>
 				</div>
 				<div class="wsw__field">
 					<label class="wsw__label" :for="ids.email">{{ tr('Email') }}</label>
-					<input :id="ids.email" v-model.trim="customer.email" class="wsw__input" type="email" required @blur="touched.email = true">
+					<input :id="ids.email"
+						v-model.trim="customer.email"
+						class="wsw__input"
+						type="email"
+						required
+						@blur="touched.email = true">
 					<span v-if="touched.email && !emailValid" class="wsw__error">{{ tr('Please enter a valid email address') }}</span>
 				</div>
 				<div class="wsw__field">
 					<label class="wsw__label" :for="ids.phone">{{ tr('Phone (optional)') }}</label>
-					<input :id="ids.phone" v-model.trim="customer.phone" class="wsw__input" type="tel" @blur="touched.phone = true">
+					<input :id="ids.phone"
+						v-model.trim="customer.phone"
+						class="wsw__input"
+						type="tel"
+						@blur="touched.phone = true">
 					<span v-if="touched.phone && !phoneValid" class="wsw__error">{{ tr('Please enter a valid phone number') }}</span>
 				</div>
 				<div class="wsw__field">
 					<label class="wsw__label" :for="ids.notes">{{ tr('Notes (optional)') }}</label>
-					<textarea :id="ids.notes" v-model="customer.notes" class="wsw__textarea" maxlength="500" rows="3"></textarea>
+					<textarea :id="ids.notes"
+						v-model="customer.notes"
+						class="wsw__textarea"
+						maxlength="500"
+						rows="3" />
 				</div>
 
-				<button class="wsw__button" type="button" :disabled="!formValid" @click="step = 'review'">
+				<button class="wsw__button"
+					type="button"
+					:disabled="!formValid"
+					@click="step = 'review'">
 					{{ tr('Review your booking') }}
 				</button>
-				<button class="wsw__button wsw__button--secondary" type="button" @click="step = 'select'">{{ tr('Back') }}</button>
+				<button class="wsw__button wsw__button--secondary" type="button" @click="step = 'select'">
+					{{ tr('Back') }}
+				</button>
 			</div>
 
 			<!-- Review + confirm -->
@@ -92,10 +145,19 @@
 				<p><strong>{{ tr('Time') }}:</strong> {{ selectedSlot ? formatTime(selectedSlot.startTime) : '' }} ({{ tzLabel }})</p>
 				<p><strong>{{ tr('Name') }}:</strong> {{ customer.name }}</p>
 
-				<div v-if="submitError" class="wsw__notice wsw__notice--error" role="alert">{{ submitError }}</div>
+				<div v-if="submitError" class="wsw__notice wsw__notice--error" role="alert">
+					{{ submitError }}
+				</div>
 
-				<button class="wsw__button" type="button" :disabled="submitting" @click="submit">{{ tr('Confirm booking') }}</button>
-				<button class="wsw__button wsw__button--secondary" type="button" @click="step = 'details'">{{ tr('Back') }}</button>
+				<button class="wsw__button"
+					type="button"
+					:disabled="submitting"
+					@click="submit">
+					{{ tr('Confirm booking') }}
+				</button>
+				<button class="wsw__button wsw__button--secondary" type="button" @click="step = 'details'">
+					{{ tr('Back') }}
+				</button>
 			</div>
 		</template>
 	</div>
@@ -199,10 +261,13 @@ export default {
 			const base = (this.apiBase || '').replace(/\/$/, '')
 			return `${base}/index.php/apps/shillinq/api/widget/${encodeURIComponent(this.businessId)}/${path}`
 		},
+		/**
+		 * @spec exclude request-header plumbing for the widget API client, no business behaviour
+		 */
 		headers() {
 			return {
 				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${this.apiKey}`,
+				Authorization: `Bearer ${this.apiKey}`,
 			}
 		},
 		formatPrice(s) {

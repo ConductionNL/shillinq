@@ -121,9 +121,13 @@
 				<h3>{{ t('shillinq', 'Disputes') }}</h3>
 				<dl class="vp-detail__dl">
 					<dt>{{ t('shillinq', 'Raised this period') }}</dt>
-					<dd data-testid="vp-dispute-count">{{ scorecard.disputeCount || 0 }}</dd>
+					<dd data-testid="vp-dispute-count">
+						{{ scorecard.disputeCount || 0 }}
+					</dd>
 					<dt>{{ t('shillinq', 'Avg. resolution days') }}</dt>
-					<dd data-testid="vp-avg-resolution">{{ scorecard.averageResolutionDays || 0 }}</dd>
+					<dd data-testid="vp-avg-resolution">
+						{{ scorecard.averageResolutionDays || 0 }}
+					</dd>
 				</dl>
 			</section>
 

@@ -26,7 +26,9 @@
 			<code>{{ plaintextKey }}</code>
 		</div>
 
-		<div v-if="message" class="shillinq-widget-keys__message">{{ message }}</div>
+		<div v-if="message" class="shillinq-widget-keys__message">
+			{{ message }}
+		</div>
 	</div>
 </template>
 

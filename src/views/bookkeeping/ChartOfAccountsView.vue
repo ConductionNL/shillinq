@@ -49,7 +49,7 @@ import axios from '@nextcloud/axios'
 import AccountNode from '../../components/wbso/AccountNode.vue'
 
 export default {
-	name: 'WbsoChartOfAccountsView',
+	name: 'ChartOfAccountsView',
 
 	components: {
 		NcAppContent,

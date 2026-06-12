@@ -58,14 +58,18 @@
 					<th>{{ t('shillinq', 'Due date') }}</th>
 					<th>{{ t('shillinq', 'Customer') }}</th>
 					<th>{{ t('shillinq', 'Billing model') }}</th>
-					<th class="num">{{ t('shillinq', 'Gross') }}</th>
+					<th class="num">
+						{{ t('shillinq', 'Gross') }}
+					</th>
 					<th>{{ t('shillinq', 'Status') }}</th>
 					<th>{{ t('shillinq', 'Actions') }}</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr v-if="!invoices.length">
-					<td colspan="8" class="admin-invoice-list__empty">{{ t('shillinq', 'No invoices found') }}</td>
+					<td colspan="8" class="admin-invoice-list__empty">
+						{{ t('shillinq', 'No invoices found') }}
+					</td>
 				</tr>
 				<tr v-for="inv in invoices" :key="inv.id || inv.invoiceNumber">
 					<td>{{ inv.invoiceNumber }}</td>
@@ -73,12 +77,20 @@
 					<td>{{ inv.dueDate }}</td>
 					<td>{{ inv.customerId }}</td>
 					<td>{{ inv.billingModel }}</td>
-					<td class="num">€ {{ formatMoney(inv.grossAmount) }}</td>
+					<td class="num">
+						€ {{ formatMoney(inv.grossAmount) }}
+					</td>
 					<td>{{ inv.status }}</td>
 					<td class="admin-invoice-list__actions">
-						<router-link :to="`/invoice/${inv.id}`">{{ t('shillinq', 'View') }}</router-link>
-						<button type="button" :disabled="inv.status !== 'draft'" @click="post(inv)">{{ t('shillinq', 'Post') }}</button>
-						<button type="button" @click="pdf(inv)">{{ t('shillinq', 'PDF') }}</button>
+						<router-link :to="`/invoice/${inv.id}`">
+							{{ t('shillinq', 'View') }}
+						</router-link>
+						<button type="button" :disabled="inv.status !== 'draft'" @click="post(inv)">
+							{{ t('shillinq', 'Post') }}
+						</button>
+						<button type="button" @click="pdf(inv)">
+							{{ t('shillinq', 'PDF') }}
+						</button>
 					</td>
 				</tr>
 			</tbody>

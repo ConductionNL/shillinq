@@ -22,10 +22,18 @@
 					<th>#</th>
 					<th>{{ t('shillinq', 'Source') }}</th>
 					<th>{{ t('shillinq', 'Description') }}</th>
-					<th class="num">{{ t('shillinq', 'Units') }}</th>
-					<th class="num">{{ t('shillinq', 'Rate') }}</th>
-					<th class="num">{{ t('shillinq', 'Cost') }}</th>
-					<th class="num">{{ t('shillinq', 'VAT') }}</th>
+					<th class="num">
+						{{ t('shillinq', 'Units') }}
+					</th>
+					<th class="num">
+						{{ t('shillinq', 'Rate') }}
+					</th>
+					<th class="num">
+						{{ t('shillinq', 'Cost') }}
+					</th>
+					<th class="num">
+						{{ t('shillinq', 'VAT') }}
+					</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -33,10 +41,18 @@
 					<td>{{ line.lineNumber }}</td>
 					<td>{{ sourceLabel(line.sourceType) }}</td>
 					<td>{{ line.description }}</td>
-					<td class="num">{{ formatUnits(line.billableUnits) }}</td>
-					<td class="num">{{ formatRate(line.rateApplied) }}</td>
-					<td class="num">€ {{ formatMoney(line.costAmount) }}</td>
-					<td class="num">{{ line.vatRate }}%</td>
+					<td class="num">
+						{{ formatUnits(line.billableUnits) }}
+					</td>
+					<td class="num">
+						{{ formatRate(line.rateApplied) }}
+					</td>
+					<td class="num">
+						€ {{ formatMoney(line.costAmount) }}
+					</td>
+					<td class="num">
+						{{ line.vatRate }}%
+					</td>
 				</tr>
 			</tbody>
 		</table>

@@ -54,9 +54,15 @@
 					:aria-label="t('shillinq', 'Quantity to pick')">
 			</label>
 
-			<div v-if="error" class="pick-op__error" role="alert">{{ error }}</div>
-			<div v-if="warning" class="pick-op__warning" role="alert">{{ warning }}</div>
-			<div v-if="successMessage" class="pick-op__success" role="status">{{ successMessage }}</div>
+			<div v-if="error" class="pick-op__error" role="alert">
+				{{ error }}
+			</div>
+			<div v-if="warning" class="pick-op__warning" role="alert">
+				{{ warning }}
+			</div>
+			<div v-if="successMessage" class="pick-op__success" role="status">
+				{{ successMessage }}
+			</div>
 
 			<div class="pick-op__actions">
 				<button type="submit" :disabled="submitting">

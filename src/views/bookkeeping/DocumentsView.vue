@@ -69,7 +69,10 @@
 							<span :data-status="row.status">{{ translateStatus(row.status) }}</span>
 						</td>
 						<td>
-							<a v-if="row.fileReference" :href="row.fileReference" target="_blank" rel="noopener">
+							<a v-if="row.fileReference"
+								:href="row.fileReference"
+								target="_blank"
+								rel="noopener">
 								{{ row.fileReference }}
 							</a>
 							<span v-else>—</span>
@@ -95,7 +98,7 @@ import { generateOcsUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 
 export default {
-	name: 'WbsoDocumentsView',
+	name: 'DocumentsView',
 
 	components: {
 		NcAppContent,

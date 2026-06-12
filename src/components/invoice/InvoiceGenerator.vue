@@ -70,7 +70,10 @@
 				</label>
 				<label v-if="needsFixedFee">
 					{{ t('shillinq', 'Fixed fee (€)') }}
-					<input v-model.number="fixedFeeEuros" type="number" min="0" step="0.01">
+					<input v-model.number="fixedFeeEuros"
+						type="number"
+						min="0"
+						step="0.01">
 				</label>
 				<label v-if="needsMilestone">
 					{{ t('shillinq', 'Milestone ID') }}
@@ -103,12 +106,20 @@
 			</div>
 
 			<div class="invoice-generator__actions">
-				<button type="submit" :disabled="busy">{{ t('shillinq', 'Save as Draft') }}</button>
-				<button type="button" :disabled="busy" @click="onPreviewPdf">{{ t('shillinq', 'Preview PDF') }}</button>
-				<button type="button" :disabled="busy || !draftId" @click="onPost">{{ t('shillinq', 'Post to AR') }}</button>
+				<button type="submit" :disabled="busy">
+					{{ t('shillinq', 'Save as Draft') }}
+				</button>
+				<button type="button" :disabled="busy" @click="onPreviewPdf">
+					{{ t('shillinq', 'Preview PDF') }}
+				</button>
+				<button type="button" :disabled="busy || !draftId" @click="onPost">
+					{{ t('shillinq', 'Post to AR') }}
+				</button>
 			</div>
 
-			<p v-if="error" class="invoice-generator__error" role="alert">{{ error }}</p>
+			<p v-if="error" class="invoice-generator__error" role="alert">
+				{{ error }}
+			</p>
 		</form>
 	</section>
 </template>

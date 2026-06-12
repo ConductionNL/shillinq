@@ -57,11 +57,15 @@
 				<table v-else class="segment-pnl-dashboard__table" :data-segment="activeSegment">
 					<thead>
 						<tr>
-							<th scope="col">{{ groupLabel }}</th>
+							<th scope="col">
+								{{ groupLabel }}
+							</th>
 							<th scope="col" class="segment-pnl-dashboard__amount-col">
 								{{ t('shillinq', 'Amount') }}
 							</th>
-							<th v-if="hasHierarchy" scope="col">{{ t('shillinq', 'Parent') }}</th>
+							<th v-if="hasHierarchy" scope="col">
+								{{ t('shillinq', 'Parent') }}
+							</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -79,12 +83,16 @@
 								:class="{ 'segment-pnl-dashboard__amount-cell--negative': row.amount < 0 }">
 								{{ formatAmount(row.amount) }}
 							</td>
-							<td v-if="hasHierarchy">{{ row.parent || '—' }}</td>
+							<td v-if="hasHierarchy">
+								{{ row.parent || '—' }}
+							</td>
 						</tr>
 					</tbody>
 					<tfoot>
 						<tr>
-							<th scope="row">{{ t('shillinq', 'Total') }}</th>
+							<th scope="row">
+								{{ t('shillinq', 'Total') }}
+							</th>
 							<td class="segment-pnl-dashboard__amount-cell">
 								{{ formatAmount(total) }}
 							</td>
