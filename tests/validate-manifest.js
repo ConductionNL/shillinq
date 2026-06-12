@@ -34,12 +34,25 @@ const REPO_ROOT = path.resolve(__dirname, '..')
 
 const MANIFEST_PATH = path.join(REPO_ROOT, 'src', 'manifest.json')
 
+// The manifest's own $schema declares which schema generation it is
+// written against (v2 since the CnAppRoot manifest-shell migration).
+// Validating a v2 manifest against the v1 schema produced ~480 phantom
+// errors (v2-only field types, sidebarProps tab shapes, actions), so the
+// candidates must point at the schema file the manifest actually names.
+const SCHEMA_BASENAME = (() => {
+	try {
+		const declared = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8')).$schema || ''
+		const base = declared.split('/').pop()
+		return base && base.endsWith('.json') ? base : 'app-manifest-v2.schema.json'
+	} catch (_) {
+		return 'app-manifest-v2.schema.json'
+	}
+})()
+
 const SCHEMA_CANDIDATES = [
 	process.env.APP_MANIFEST_SCHEMA,
-	path.join(REPO_ROOT, 'node_modules', '@conduction', 'nextcloud-vue', 'src', 'schemas', 'app-manifest.schema.json'),
-	path.join(REPO_ROOT, '..', 'nextcloud-vue', 'src', 'schemas', 'app-manifest.schema.json'),
-	'/tmp/worktrees/nextcloud-vue-manifest-v1/src/schemas/app-manifest.schema.json',
-	'/tmp/worktrees/nextcloud-vue-page-type-extensions/src/schemas/app-manifest.schema.json',
+	path.join(REPO_ROOT, 'node_modules', '@conduction', 'nextcloud-vue', 'src', 'schemas', SCHEMA_BASENAME),
+	path.join(REPO_ROOT, '..', 'nextcloud-vue', 'src', 'schemas', SCHEMA_BASENAME),
 ].filter(Boolean)
 
 function findSchemaPath() {

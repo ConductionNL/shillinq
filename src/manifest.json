@@ -73,8 +73,7 @@
 					"label": "EMU-rapportage",
 					"icon": "ChartBarOutline",
 					"route": "EmuRapportage",
-					"order": 20,
-					"featureFlag": "gov-emu"
+					"order": 20
 				},
 				{
 					"id": "Journals",
@@ -193,8 +192,7 @@
 					"label": "Waterschapsbelastingen",
 					"icon": "WaterOutline",
 					"route": "Waterschapsbelastingen",
-					"order": 40,
-					"featureFlag": "gov-waterschap"
+					"order": 40
 				},
 				{
 					"id": "Customers",
@@ -295,13 +293,6 @@
 					"order": 836
 				},
 				{
-					"id": "Iv3Reports",
-					"label": "IV3 Reports",
-					"icon": "FileChartOutline",
-					"route": "Iv3Reports",
-					"order": 84
-				},
-				{
 					"id": "XBRLTaxonomies",
 					"label": "XBRL Taxonomies",
 					"icon": "FileTreeOutline",
@@ -320,8 +311,7 @@
 					"label": "R&D Subsidies",
 					"icon": "FlaskOutline",
 					"route": "RDSubsidies",
-					"order": 86,
-					"featureFlag": "mkb-r-d-subsidies"
+					"order": 86
 				},
 				{
 					"id": "XBRLMappingValidation",
@@ -335,8 +325,7 @@
 					"label": "WBSO Tags",
 					"icon": "TagCheckOutline",
 					"route": "WBSOTags",
-					"order": 87,
-					"featureFlag": "mkb-r-d-subsidies"
+					"order": 87
 				},
 				{
 					"id": "FiscalYears",
@@ -350,8 +339,7 @@
 					"label": "WBSO Export Dashboard",
 					"icon": "FileExportOutline",
 					"route": "WBSOExport",
-					"order": 88,
-					"featureFlag": "mkb-r-d-subsidies"
+					"order": 88
 				},
 				{
 					"id": "YearEndCloseChecklist",
@@ -368,47 +356,39 @@
 					"order": 89
 				},
 				{
-					"id": "Dimensions",
-					"label": "Dimensions",
-					"icon": "ChartBubble",
-					"order": 90,
-					"children": [
-						{
-							"id": "CostCenters",
-							"label": "Cost Centers",
-							"icon": "OfficeBuilding",
-							"route": "CostCenters",
-							"order": 10
-						},
-						{
-							"id": "KostenDragers",
-							"label": "Kostendragers",
-							"icon": "CubeOutline",
-							"route": "KostenDragers",
-							"order": 20
-						},
-						{
-							"id": "Projects",
-							"label": "Projects",
-							"icon": "BriefcaseOutline",
-							"route": "Projects",
-							"order": 30
-						},
-						{
-							"id": "CostProjects",
-							"label": "Cost Projects",
-							"icon": "BriefcaseClockOutline",
-							"route": "CostProjects",
-							"order": 35
-						},
-						{
-							"id": "AllocationRules",
-							"label": "Allocation Rules",
-							"icon": "TransferRight",
-							"route": "AllocationRules",
-							"order": 40
-						}
-					]
+					"id": "CostCenters",
+					"label": "Cost Centers",
+					"icon": "OfficeBuilding",
+					"route": "CostCenters",
+					"order": 90
+				},
+				{
+					"id": "KostenDragers",
+					"label": "Kostendragers",
+					"icon": "CubeOutline",
+					"route": "KostenDragers",
+					"order": 90
+				},
+				{
+					"id": "Projects",
+					"label": "Projects",
+					"icon": "BriefcaseOutline",
+					"route": "Projects",
+					"order": 90
+				},
+				{
+					"id": "CostProjects",
+					"label": "Cost Projects",
+					"icon": "BriefcaseClockOutline",
+					"route": "CostProjects",
+					"order": 90
+				},
+				{
+					"id": "AllocationRules",
+					"label": "Allocation Rules",
+					"icon": "TransferRight",
+					"route": "AllocationRules",
+					"order": 91
 				},
 				{
 					"id": "SbrXbrlFilings",
@@ -505,7 +485,6 @@
 				{
 					"id": "StockLevelsDashboard",
 					"label": "Stock Levels Dashboard",
-					"labelNl": "Voorraad-dashboard",
 					"icon": "ChartBarOutline",
 					"route": "StockLevelsDashboard",
 					"order": 50
@@ -513,7 +492,6 @@
 				{
 					"id": "StockLevels",
 					"label": "Stock Levels",
-					"labelNl": "Voorraadniveaus",
 					"icon": "WarehouseOutline",
 					"route": "StockLevels",
 					"order": 51
@@ -521,7 +499,6 @@
 				{
 					"id": "StockByLocation",
 					"label": "Stock by Location",
-					"labelNl": "Voorraad per locatie",
 					"icon": "MapMarkerOutline",
 					"route": "StockByLocation",
 					"order": 52
@@ -529,7 +506,6 @@
 				{
 					"id": "ReserveStock",
 					"label": "Reserve Stock",
-					"labelNl": "Gereserveerde voorraad",
 					"icon": "BookmarkOutline",
 					"route": "ReserveStock",
 					"order": 53
@@ -544,7 +520,6 @@
 				{
 					"id": "InventoryValuation",
 					"label": "Valuation",
-					"labelNl": "Voorraadwaardering",
 					"icon": "ScaleBalance",
 					"route": "InventoryValuation",
 					"order": 90
@@ -566,7 +541,6 @@
 				{
 					"id": "InventoryGLConfig",
 					"label": "Posting Configuratie",
-					"labelNl": "Boekingsconfiguratie",
 					"icon": "BankTransferOutline",
 					"route": "InventoryGLConfig",
 					"order": 95
@@ -574,7 +548,6 @@
 				{
 					"id": "InventoryPostingHistory",
 					"label": "Posting Historie",
-					"labelNl": "Boekingshistorie",
 					"icon": "BookOpenVariantOutline",
 					"route": "InventoryPostingHistory",
 					"order": 96
@@ -586,13 +559,6 @@
 			"label": "Belastingen",
 			"icon": "icon-category-monitoring",
 			"order": 50,
-			"visibility": {
-				"field": "administrationType",
-				"in": [
-					"mkb",
-					"zzp"
-				]
-			},
 			"children": [
 				{
 					"id": "KorStatus",
@@ -637,14 +603,6 @@
 					"order": 55
 				},
 				{
-					"id": "VATReconciliation",
-					"label": "VAT Reconciliation",
-					"icon": "FileCertificateOutline",
-					"route": "VATReconciliation",
-					"order": 56,
-					"hiddenFromMenu": true
-				},
-				{
 					"id": "IcpOpgaaf",
 					"label": "ICP-opgaaf",
 					"icon": "EarthArrowRight",
@@ -663,88 +621,53 @@
 					"label": "Urenregistratie",
 					"icon": "ClockOutline",
 					"route": "Urenregistratie",
-					"order": 80,
-					"visibility": {
-						"field": "administrationType",
-						"in": [
-							"zzp"
-						]
-					}
-				},
+					"order": 80				},
 				{
 					"id": "ZzpAftrek",
 					"label": "ZZP-aftrek",
 					"icon": "AccountCashOutline",
 					"route": "ZzpAftrek",
-					"order": 90,
-					"visibility": {
-						"field": "administrationType",
-						"in": [
-							"zzp"
-						]
-					}
-				},
+					"order": 90				},
 				{
 					"id": "IbAangifte",
 					"label": "IB-aangifte",
 					"icon": "FileExportOutline",
 					"route": "IbAangifte",
-					"order": 100,
-					"visibility": {
-						"field": "administrationType",
-						"in": [
-							"zzp"
-						]
-					}
+					"order": 100				},
+				{
+					"id": "TaxProvisions",
+					"label": "Belastinglatentie",
+					"icon": "CurrencyEur",
+					"route": "TaxProvisions",
+					"order": 110
 				},
 				{
-					"id": "UitgesteldeBelastingen",
-					"label": "Uitgestelde belastingen",
+					"id": "TemporaryDifferences",
+					"label": "Tijdelijke verschillen",
 					"icon": "ScaleBalance",
-					"order": 110,
-					"visibility": {
-						"field": "administrationType",
-						"in": [
-							"mkb"
-						]
-					},
-					"children": [
-						{
-							"id": "TaxProvisions",
-							"label": "Belastinglatentie",
-							"icon": "CurrencyEur",
-							"route": "TaxProvisions",
-							"order": 10
-						},
-						{
-							"id": "TemporaryDifferences",
-							"label": "Tijdelijke verschillen",
-							"icon": "ScaleBalance",
-							"route": "TemporaryDifferences",
-							"order": 20
-						},
-						{
-							"id": "DeferredTaxMovements",
-							"label": "Mutatieoverzicht",
-							"icon": "ArrowUpDown",
-							"route": "DeferredTaxMovements",
-							"order": 30
-						},
-						{
-							"id": "TaxLossCarryForwards",
-							"label": "Compensabele verliezen",
-							"icon": "AccountGroup",
-							"route": "TaxLossCarryForwards",
-							"order": 40
-						},
-						{
-							"id": "TaxRateReconciliations",
-							"label": "ETR-aansluiting",
-							"icon": "ChartBar",
-							"route": "TaxRateReconciliations",
-							"order": 50
-						}
-					]
+					"route": "TemporaryDifferences",
+					"order": 111
+				},
+				{
+					"id": "DeferredTaxMovements",
+					"label": "Mutatieoverzicht",
+					"icon": "ArrowUpDown",
+					"route": "DeferredTaxMovements",
+					"order": 112
+				},
+				{
+					"id": "TaxLossCarryForwards",
+					"label": "Compensabele verliezen",
+					"icon": "AccountGroup",
+					"route": "TaxLossCarryForwards",
+					"order": 113
+				},
+				{
+					"id": "TaxRateReconciliations",
+					"label": "ETR-aansluiting",
+					"icon": "ChartBar",
+					"route": "TaxRateReconciliations",
+					"order": 114
 				}
 			]
 		},
@@ -768,14 +691,6 @@
 			"label": "Overheid",
 			"icon": "icon-category-organization",
 			"order": 30,
-			"visibility": {
-				"field": "administrationType",
-				"in": [
-					"gemeente",
-					"provincie",
-					"waterschap"
-				]
-			},
 			"children": [
 				{
 					"id": "Iv3Aanlevering",
@@ -878,83 +793,67 @@
 					"order": 40
 				},
 				{
-					"id": "ENSIA",
-					"label": "ENSIA Zelfevaluatie",
-					"icon": "ShieldCheckOutline",
-					"order": 45,
-					"children": [
-						{
-							"id": "ENSIACycles",
-							"label": "ENSIA Cycles",
-							"icon": "CalendarCheckOutline",
-							"route": "ENSIACycles",
-							"order": 10
-						},
-						{
-							"id": "ENSIAEvaluations",
-							"label": "Evaluations",
-							"icon": "ClipboardQuestionOutline",
-							"route": "ENSIAEvaluations",
-							"order": 20
-						},
-						{
-							"id": "ENSIAFindings",
-							"label": "Findings",
-							"icon": "AlertCircleOutline",
-							"route": "ENSIAFindings",
-							"order": 30
-						},
-						{
-							"id": "ENSIAAuditTrail",
-							"label": "Audit Trail",
-							"icon": "ClipboardCheckOutline",
-							"route": "ENSIAAuditTrail",
-							"order": 40
-						},
-						{
-							"id": "ENSIACollegeVerklaring",
-							"label": "College Verklaring",
-							"icon": "FileSignOutline",
-							"route": "ENSIACollegeVerklaring",
-							"order": 50
-						}
-					]
+					"id": "ENSIACycles",
+					"label": "ENSIA Cycles",
+					"icon": "CalendarCheckOutline",
+					"route": "ENSIACycles",
+					"order": 45
 				},
 				{
-					"id": "DBA",
-					"label": "DBA compliance",
-					"icon": "BriefcaseAccountOutline",
-					"order": 50,
-					"children": [
-						{
-							"id": "DBAIntakeWizard",
-							"label": "DBA Intake Wizard",
-							"icon": "ClipboardListOutline",
-							"route": "DBAIntakeWizard",
-							"order": 10
-						},
-						{
-							"id": "DBAPortfolioDashboard",
-							"label": "DBA Portfolio Dashboard",
-							"icon": "ChartDonutVariant",
-							"route": "DBAPortfolioDashboard",
-							"order": 20
-						},
-						{
-							"id": "DBAEvidenceBrowser",
-							"label": "Evidence Browser",
-							"icon": "FolderLockOutline",
-							"route": "DBAEvidenceBrowser",
-							"order": 30
-						},
-						{
-							"id": "DBAModelovereenkomstRegister",
-							"label": "Modelovereenkomst Register",
-							"icon": "FileDocumentMultipleOutline",
-							"route": "DBAModelovereenkomstRegister",
-							"order": 40
-						}
-					]
+					"id": "ENSIAEvaluations",
+					"label": "ENSIA Evaluations",
+					"icon": "ClipboardQuestionOutline",
+					"route": "ENSIAEvaluations",
+					"order": 45
+				},
+				{
+					"id": "ENSIAFindings",
+					"label": "ENSIA Findings",
+					"icon": "AlertCircleOutline",
+					"route": "ENSIAFindings",
+					"order": 45
+				},
+				{
+					"id": "ENSIAAuditTrail",
+					"label": "ENSIA Audit Trail",
+					"icon": "ClipboardCheckOutline",
+					"route": "ENSIAAuditTrail",
+					"order": 46
+				},
+				{
+					"id": "ENSIACollegeVerklaring",
+					"label": "ENSIA College Verklaring",
+					"icon": "FileSignOutline",
+					"route": "ENSIACollegeVerklaring",
+					"order": 46
+				},
+				{
+					"id": "DBAIntakeWizard",
+					"label": "DBA Intake Wizard",
+					"icon": "ClipboardListOutline",
+					"route": "DBAIntakeWizard",
+					"order": 50
+				},
+				{
+					"id": "DBAPortfolioDashboard",
+					"label": "DBA Portfolio Dashboard",
+					"icon": "ChartDonutVariant",
+					"route": "DBAPortfolioDashboard",
+					"order": 51
+				},
+				{
+					"id": "DBAEvidenceBrowser",
+					"label": "DBA Evidence Browser",
+					"icon": "FolderLockOutline",
+					"route": "DBAEvidenceBrowser",
+					"order": 52
+				},
+				{
+					"id": "DBAModelovereenkomstRegister",
+					"label": "DBA Modelovereenkomst Register",
+					"icon": "FileDocumentMultipleOutline",
+					"route": "DBAModelovereenkomstRegister",
+					"order": 53
 				}
 			]
 		},
@@ -987,13 +886,6 @@
 			"label": "Projects",
 			"icon": "FolderOpenOutline",
 			"order": 45,
-			"visibilityPredicate": {
-				"administrationType": [
-					"mkb",
-					"zzp"
-				],
-				"role": "project-administrator"
-			},
 			"children": [
 				{
 					"id": "ProjectenOverzicht",
@@ -1087,13 +979,6 @@
 			"label": "Cashflow",
 			"icon": "ChartLineVariant",
 			"order": 28,
-			"visibility": {
-				"field": "administrationType",
-				"in": [
-					"mkb",
-					"zzp"
-				]
-			},
 			"children": [
 				{
 					"id": "CashflowDashboard",
@@ -1122,13 +1007,6 @@
 					"icon": "RepeatVariant",
 					"route": "CashflowRecurring",
 					"order": 40
-				},
-				{
-					"id": "CashflowCalibrationReport",
-					"label": "Calibration Report",
-					"icon": "ChartBellCurveCumulative",
-					"route": "CashflowCalibrationReport",
-					"order": 50
 				}
 			]
 		},
@@ -2871,7 +2749,6 @@
 			"route": "/emu-rapportage",
 			"type": "index",
 			"title": "EMU-rapportage",
-			"featureFlag": "gov-emu",
 			"config": {
 				"register": "shillinq",
 				"schema": "Account",
@@ -2907,7 +2784,6 @@
 			"route": "/emu-rapportage/:id",
 			"type": "detail",
 			"title": "EMU-rapportage details",
-			"featureFlag": "gov-emu",
 			"config": {
 				"register": "shillinq",
 				"schema": "Account",
@@ -3881,12 +3757,10 @@
 			"route": "/waterschapsbelastingen",
 			"type": "index",
 			"title": "Waterschapsbelastingen",
-			"featureFlag": "gov-waterschap",
 			"config": {
 				"register": "shillinq",
 				"schema": "WaterschapHeffingPosting",
-				"featureFlag": "gov-waterschap",
-				"columns": [
+					"columns": [
 					{
 						"key": "heffingType",
 						"label": "Heffing type",
@@ -3922,12 +3796,10 @@
 			"route": "/waterschapsbelastingen/:id",
 			"type": "detail",
 			"title": "Heffing posting",
-			"featureFlag": "gov-waterschap",
 			"config": {
 				"register": "shillinq",
 				"schema": "WaterschapHeffingPosting",
-				"featureFlag": "gov-waterschap",
-				"fields": [
+					"fields": [
 					{
 						"key": "heffingType",
 						"label": "Heffing type",
@@ -3991,170 +3863,6 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Waterschapsbelastingen",
-				"sidebarProps": {
-					"tabs": [
-						{
-							"id": "audit",
-							"label": "Audit Trail",
-							"icon": "HistoryIcon",
-							"order": 90,
-							"widgets": [
-								{
-									"type": "data",
-									"componentName": "openregister-audit-trail",
-									"props": {
-										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
-										"collapsed": true
-									}
-								}
-							]
-						}
-					]
-				}
-			}
-		},
-		{
-			"id": "Iv3Reports",
-			"route": "/iv3-reports",
-			"type": "index",
-			"title": "IV3 Reports",
-			"config": {
-				"register": "shillinq",
-				"schema": "IV3Report",
-				"columns": [
-					{
-						"key": "reportNumber",
-						"label": "Report Number",
-						"sortable": true
-					},
-					{
-						"key": "fiscalYear",
-						"label": "Year",
-						"sortable": true
-					},
-					{
-						"key": "quarter",
-						"label": "Quarter",
-						"sortable": true
-					},
-					{
-						"key": "administrationId",
-						"label": "Administration",
-						"sortable": true
-					},
-					{
-						"key": "status",
-						"label": "Status",
-						"sortable": true
-					},
-					{
-						"key": "submissionDate",
-						"label": "Submitted",
-						"sortable": true
-					}
-				],
-				"defaultSort": "-fiscalYear",
-				"detailRoute": "Iv3ReportDetail"
-			}
-		},
-		{
-			"id": "Iv3ReportDetail",
-			"route": "/iv3-reports/:id",
-			"type": "detail",
-			"title": "IV3 Report",
-			"config": {
-				"register": "shillinq",
-				"schema": "IV3Report",
-				"fields": [
-					{
-						"key": "reportNumber",
-						"label": "Report Number",
-						"type": "string"
-					},
-					{
-						"key": "fiscalYear",
-						"label": "Year",
-						"type": "integer"
-					},
-					{
-						"key": "quarter",
-						"label": "Quarter",
-						"type": "string"
-					},
-					{
-						"key": "administrationId",
-						"label": "Administration",
-						"type": "string"
-					},
-					{
-						"key": "status",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "reportDate",
-						"label": "Report Date",
-						"type": "date-time"
-					},
-					{
-						"key": "submissionDate",
-						"label": "Submission Date",
-						"type": "date-time"
-					},
-					{
-						"key": "filedDate",
-						"label": "Filed Date",
-						"type": "date-time"
-					},
-					{
-						"key": "cbsReceiptNumber",
-						"label": "CBS Receipt Number",
-						"type": "string"
-					},
-					{
-						"key": "notes",
-						"label": "Notes",
-						"type": "string"
-					}
-				],
-				"lifecycleActions": true,
-				"relatedLists": [
-					{
-						"id": "iv3-report-lines",
-						"title": "IV3 Report Lines",
-						"schema": "IV3ReportLine",
-						"filter": {
-							"reportId": "@self.id"
-						},
-						"columns": [
-							{
-								"key": "iv3FieldCode",
-								"label": "CBS Field Code"
-							},
-							{
-								"key": "accountNumber",
-								"label": "Account"
-							},
-							{
-								"key": "debitAmount",
-								"label": "Debit (EUR)"
-							},
-							{
-								"key": "creditAmount",
-								"label": "Credit (EUR)"
-							},
-							{
-								"key": "netAmount",
-								"label": "Net (EUR)"
-							},
-							{
-								"key": "sequence",
-								"label": "Seq"
-							}
-						]
-					}
-				],
-				"indexRoute": "Iv3Reports",
 				"sidebarProps": {
 					"tabs": [
 						{
@@ -5312,8 +5020,8 @@
 			"route": "/",
 			"type": "dashboard",
 			"title": "Financial overview",
-			"description": "Live financial position of the company from the bookkeeping register",
 			"config": {
+				"description": "Live financial position of the company from the bookkeeping register",
 				"widgets": [
 					{
 						"id": "gl-transactions",
@@ -7059,90 +6767,55 @@
 		{
 			"id": "TaxFilingPrep",
 			"route": "/tax-filing-prep",
-			"type": "report",
+			"type": "index",
 			"title": "Tax Filing Prep",
 			"config": {
 				"register": "shillinq",
 				"schema": "TaxSummaryReport",
-				"dashboard": {
-					"kpis": [
-						{
-							"id": "estimated-liability",
-							"label": "Estimated Annual Liability",
-							"icon": "CalculatorOutline",
-							"aggregation": "currentEstimateByYear",
-							"field": "latestLiability",
-							"format": "currency",
-							"currency": "EUR"
-						},
-						{
-							"id": "filing-deadline",
-							"label": "Filing Deadline",
-							"icon": "CalendarClockOutline",
-							"source": "TaxRegimeConfiguration",
-							"field": "filingDeadline",
-							"format": "days-until"
-						},
-						{
-							"id": "summaries-ready",
-							"label": "Tax Summaries Ready",
-							"icon": "FileCheckOutline",
-							"aggregation": "finalizedSummaryCount",
-							"field": "count",
-							"format": "integer"
-						},
-						{
-							"id": "gl-transaction-count",
-							"label": "GL Transactions Included",
-							"icon": "DatabaseOutline",
-							"source": "TaxEstimate",
-							"field": "glTransactionCount",
-							"filter": {
-								"status": "current"
-							},
-							"format": "integer"
-						}
-					],
-					"table": {
-						"schema": "TaxSummaryReport",
-						"filter": {
-							"fiscalYear": "@currentFiscalYear"
-						},
-						"columns": [
-							{
-								"key": "taxCategory",
-								"label": "Tax Category",
-								"sortable": true
-							},
-							{
-								"key": "grossAmount",
-								"label": "Gross Amount (EUR)",
-								"sortable": true
-							},
-							{
-								"key": "deductionsAmount",
-								"label": "Deductions (EUR)",
-								"sortable": true
-							},
-							{
-								"key": "netAmount",
-								"label": "Net Amount (EUR)",
-								"sortable": true
-							},
-							{
-								"key": "status",
-								"label": "Status",
-								"sortable": true
-							},
-							{
-								"key": "snapshotDate",
-								"label": "Snapshot Date",
-								"sortable": true
-							}
-						],
-						"defaultSort": "taxCategory"
+				"description": "Per-category tax summaries feeding the annual filing. Converted from the never-rendered type=report (no such page type is registered) to a plain index — the KPI dashboard variant needs a dedicated renderer first.",
+				"filters": [
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal Year"
+					},
+					{
+						"key": "status",
+						"label": "Status"
 					}
-				}
+				],
+				"columns": [
+					{
+						"key": "taxCategory",
+						"label": "Tax Category",
+						"sortable": true
+					},
+					{
+						"key": "grossAmount",
+						"label": "Gross Amount (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "deductionsAmount",
+						"label": "Deductions (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "netAmount",
+						"label": "Net Amount (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "snapshotDate",
+						"label": "Snapshot Date",
+						"sortable": true
+					}
+				],
+				"defaultSort": "taxCategory"
 			}
 		},
 		{
@@ -8364,13 +8037,6 @@
 			"route": "/projecten",
 			"type": "index",
 			"title": "Projecten \u2014 Overzicht",
-			"visibilityPredicate": {
-				"administrationType": [
-					"mkb",
-					"zzp"
-				],
-				"role": "project-administrator"
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "Project",
@@ -8415,13 +8081,6 @@
 			"route": "/tarieven",
 			"type": "index",
 			"title": "Tarieven",
-			"visibilityPredicate": {
-				"administrationType": [
-					"mkb",
-					"zzp"
-				],
-				"role": "project-administrator"
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "RateCard",
@@ -8460,13 +8119,6 @@
 			"route": "/utilisatie",
 			"type": "dashboard",
 			"title": "Utilisatie",
-			"visibilityPredicate": {
-				"administrationType": [
-					"mkb",
-					"zzp"
-				],
-				"role": "project-administrator"
-			},
 			"config": {
 				"widgets": [
 					{
@@ -8512,12 +8164,10 @@
 			"route": "/bookkeeping/innovatiebox/ip-activa/:id",
 			"type": "detail",
 			"title": "IP-activum",
-			"featureFlag": "mkb-innovatiebox",
 			"config": {
 				"register": "shillinq",
 				"schema": "IPAssetValuation",
-				"featureFlag": "mkb-innovatiebox",
-				"fields": [
+					"fields": [
 					{
 						"key": "assetNaam",
 						"label": "Naam",
@@ -8620,12 +8270,10 @@
 			"route": "/bookkeeping/innovatiebox/:id",
 			"type": "detail",
 			"title": "Innovatiebox elektie",
-			"featureFlag": "mkb-innovatiebox",
 			"config": {
 				"register": "shillinq",
 				"schema": "InnovatieboxElection",
-				"featureFlag": "mkb-innovatiebox",
-				"fields": [
+					"fields": [
 					{
 						"key": "fiscalYear",
 						"label": "Boekjaar",
@@ -8749,11 +8397,9 @@
 			"route": "/bookkeeping/innovatiebox",
 			"type": "index",
 			"title": "Innovatiebox",
-			"featureFlag": "mkb-innovatiebox",
 			"config": {
 				"register": "shillinq",
 				"schema": "InnovatieboxElection",
-				"featureFlag": "mkb-innovatiebox",
 				"visibility": {
 					"field": "administrationType",
 					"in": [
@@ -8792,12 +8438,10 @@
 			"route": "/bookkeeping/r-d-subsidies",
 			"type": "index",
 			"title": "R&D Subsidies",
-			"featureFlag": "mkb-r-d-subsidies",
 			"config": {
 				"register": "shillinq",
 				"schema": "Subsidie",
-				"featureFlag": "mkb-r-d-subsidies",
-				"filter": {
+					"filter": {
 					"subsidieRegeling": {
 						"not": "other"
 					}
@@ -8852,12 +8496,10 @@
 			"route": "/bookkeeping/r-d-subsidies/:id",
 			"type": "detail",
 			"title": "R&D Subsidie",
-			"featureFlag": "mkb-r-d-subsidies",
 			"config": {
 				"register": "shillinq",
 				"schema": "Subsidie",
-				"featureFlag": "mkb-r-d-subsidies",
-				"fields": [
+					"fields": [
 					{
 						"key": "subsidieNumber",
 						"label": "Subsidienummer",
@@ -8993,12 +8635,10 @@
 			"route": "/bookkeeping/r-d-subsidies/:subsidieId/kostenposten/:id",
 			"type": "detail",
 			"title": "Kostenpost",
-			"featureFlag": "mkb-r-d-subsidies",
 			"config": {
 				"register": "shillinq",
 				"schema": "Kostenpost",
-				"featureFlag": "mkb-r-d-subsidies",
-				"fields": [
+					"fields": [
 					{
 						"key": "subsidieId",
 						"label": "Subsidie",
@@ -9412,13 +9052,6 @@
 			"route": "/beheer/rate-cards",
 			"type": "index",
 			"title": "Rate Cards",
-			"visibilityPredicate": {
-				"administrationType": [
-					"mkb",
-					"zzp"
-				],
-				"role": "project-administrator"
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "RateCardTemplate",
@@ -9527,13 +9160,6 @@
 			"route": "/beheer/rate-schedules",
 			"type": "index",
 			"title": "Rate Schedules",
-			"visibilityPredicate": {
-				"administrationType": [
-					"mkb",
-					"zzp"
-				],
-				"role": "project-administrator"
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "RateSchedule",
@@ -9672,13 +9298,6 @@
 			"route": "/beheer/rate-audit-trail",
 			"type": "index",
 			"title": "Rate Audit Trail",
-			"visibilityPredicate": {
-				"administrationType": [
-					"mkb",
-					"zzp"
-				],
-				"role": "project-administrator"
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "RateRecord",
@@ -10504,8 +10123,8 @@
 			"route": "/belastingen/vat-by-period",
 			"type": "index",
 			"title": "VAT by Period",
-			"description": "REQ-VAT-010 + REQ-VAT-009: lists all settlement periods for the active administration with VAT totals broken down by rate. Aggregation source: VATAuditRecord.vatByPeriod (declarative x-openregister-aggregations).",
 			"config": {
+				"description": "REQ-VAT-010 + REQ-VAT-009: lists all settlement periods for the active administration with VAT totals broken down by rate. Aggregation source: VATAuditRecord.vatByPeriod (declarative x-openregister-aggregations).",
 				"register": "shillinq",
 				"schema": "VATAuditRecord",
 				"aggregation": "vatByPeriod",
@@ -10569,8 +10188,8 @@
 			"route": "/belastingen/vat-by-period/:settlementPeriod",
 			"type": "detail",
 			"title": "VAT Reconciliation",
-			"description": "REQ-VAT-010: per-period VAT reconciliation page. Shows the contributing invoices, line-by-line VATAuditRecord entries, the four VATGLAccounts balances for the period, and a 'Ready for Filing' checklist.",
 			"config": {
+				"description": "REQ-VAT-010: per-period VAT reconciliation page. Shows the contributing invoices, line-by-line VATAuditRecord entries, the four VATGLAccounts balances for the period, and a 'Ready for Filing' checklist.",
 				"register": "shillinq",
 				"schema": "VATAuditRecord",
 				"aggregation": "vatByPeriod",
@@ -11993,14 +11612,46 @@
 				"register": "shillinq",
 				"schema": "CashflowBufferPolicy",
 				"fields": [
-					"policy",
-					"fixedAmount",
-					"monthsVasteKosten",
-					"customFormula",
-					"berekendeBuffer",
-					"alertOndergrens",
-					"alertVooralarm",
-					"administrationId"
+					{
+						"key": "policy",
+						"label": "Policy",
+						"type": "string"
+					},
+					{
+						"key": "fixedAmount",
+						"label": "Fixed amount",
+						"type": "number"
+					},
+					{
+						"key": "monthsVasteKosten",
+						"label": "Months of fixed costs",
+						"type": "number"
+					},
+					{
+						"key": "customFormula",
+						"label": "Custom formula",
+						"type": "string"
+					},
+					{
+						"key": "berekendeBuffer",
+						"label": "Calculated buffer",
+						"type": "number"
+					},
+					{
+						"key": "alertOndergrens",
+						"label": "Critical threshold",
+						"type": "number"
+					},
+					{
+						"key": "alertVooralarm",
+						"label": "Pre-alert threshold",
+						"type": "number"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
 				],
 				"description": "Configure the cash buffer threshold and two-tier alert levels. REQ-CF-009.",
 				"sidebarProps": {
@@ -12087,45 +11738,6 @@
 						"label": "Administration"
 					}
 				]
-			}
-		},
-		{
-			"id": "CashflowCalibrationReport",
-			"route": "/cashflow/calibration",
-			"type": "report",
-			"title": "Calibration Report",
-			"config": {
-				"register": "shillinq",
-				"schema": "CashflowCalibrationReport",
-				"columns": [
-					{
-						"key": "calibrationPeriod",
-						"label": "Period",
-						"sortable": true
-					},
-					{
-						"key": "generatedAt",
-						"label": "Generated"
-					},
-					{
-						"key": "ar_mape",
-						"label": "AR MAPE (%)"
-					},
-					{
-						"key": "ap_mape",
-						"label": "AP MAPE (%)"
-					},
-					{
-						"key": "recurring_mape",
-						"label": "Recurring MAPE (%)"
-					},
-					{
-						"key": "tax_mape",
-						"label": "Tax MAPE (%)"
-					}
-				],
-				"defaultSort": "calibrationPeriod",
-				"description": "Monthly post-month-end forecast-accuracy report. REQ-CF-013."
 			}
 		},
 		{
@@ -14991,7 +14603,6 @@
 			"route": "/wbso/tags",
 			"type": "index",
 			"title": "WBSO Tags",
-			"featureFlag": "mkb-r-d-subsidies",
 			"config": {
 				"register": "shillinq",
 				"schema": "WBSOTag",
@@ -15026,7 +14637,6 @@
 			"route": "/wbso/tags/:id",
 			"type": "detail",
 			"title": "WBSO Tag",
-			"featureFlag": "mkb-r-d-subsidies",
 			"config": {
 				"register": "shillinq",
 				"schema": "WBSOTag",
@@ -15119,7 +14729,6 @@
 			"route": "/wbso/activity-codes",
 			"type": "index",
 			"title": "WBSO Activity Codes",
-			"featureFlag": "mkb-r-d-subsidies",
 			"config": {
 				"register": "shillinq",
 				"schema": "WBSOActivityCode",
@@ -15159,7 +14768,6 @@
 			"route": "/wbso/activity-codes/:id",
 			"type": "detail",
 			"title": "WBSO Activity Code",
-			"featureFlag": "mkb-r-d-subsidies",
 			"config": {
 				"register": "shillinq",
 				"schema": "WBSOActivityCode",
@@ -15230,7 +14838,6 @@
 			"route": "/wbso/export",
 			"type": "index",
 			"title": "WBSO Export Dashboard",
-			"featureFlag": "mkb-r-d-subsidies",
 			"config": {
 				"register": "shillinq",
 				"schema": "WBSOExportLog",
@@ -15289,7 +14896,6 @@
 			"route": "/wbso/export/:id",
 			"type": "detail",
 			"title": "WBSO Export",
-			"featureFlag": "mkb-r-d-subsidies",
 			"config": {
 				"register": "shillinq",
 				"schema": "WBSOExportLog",
@@ -16401,83 +16007,56 @@
 		{
 			"id": "VarianceReport",
 			"route": "/bookkeeping/variance-report",
-			"type": "report",
+			"type": "index",
 			"title": "Variance Report",
 			"config": {
 				"register": "shillinq",
 				"schema": "BankReconciliation",
-				"dashboard": {
-					"kpis": [
-						{
-							"id": "total-variance",
-							"label": "Total Variance (closed)",
-							"icon": "ScaleBalance",
-							"aggregation": "varianceByAccount",
-							"field": "variance",
-							"format": "currency",
-							"currency": "EUR"
-						},
-						{
-							"id": "recon-count",
-							"label": "Closed Reconciliations",
-							"icon": "FileCheckOutline",
-							"aggregation": "reconciliationCount",
-							"field": "count",
-							"format": "integer"
-						},
-						{
-							"id": "unresolved",
-							"label": "Unresolved Items (open sessions)",
-							"icon": "HelpRhombusOutline",
-							"source": "ReconciliationMatch",
-							"aggregation": "unresolvedByRecon",
-							"field": "count",
-							"format": "integer"
-						}
-					],
-					"table": {
-						"schema": "BankReconciliation",
-						"aggregation": "varianceByPeriod",
-						"filter": {
-							"reconciliationStatus": "closed"
-						},
-						"columns": [
-							{
-								"key": "bankAccountId",
-								"label": "Bank Account",
-								"sortable": true
-							},
-							{
-								"key": "statementPeriodEnd",
-								"label": "Period End",
-								"sortable": true
-							},
-							{
-								"key": "variance",
-								"label": "Variance (EUR)",
-								"sortable": true
-							},
-							{
-								"key": "matchedCount",
-								"label": "Matched",
-								"sortable": true
-							},
-							{
-								"key": "unmatchedGLCount",
-								"label": "Unmatched GL",
-								"sortable": true
-							},
-							{
-								"key": "unmatchedBankCount",
-								"label": "Unmatched Bank",
-								"sortable": true
-							}
-						],
-						"defaultSort": "statementPeriodEnd",
-						"detailRoute": "ReconciliationDetail"
+				"description": "REQ-REC-007: variance per closed reconciliation, derived from BankReconciliation records. Converted from the never-rendered type=report (no such page type is registered) to a plain index — the KPI/aggregation dashboard variant needs a dedicated renderer first.",
+				"filters": [
+					{
+						"key": "reconciliationStatus",
+						"label": "Status"
 					},
-					"description": "REQ-REC-007: variance reporting derived from x-openregister-aggregations on BankReconciliation + ReconciliationMatch (no PHP VarianceReportService). KPIs cover variance by account; the table breaks down by period; open reconciliations are excluded per the aggregation filter."
-				}
+					{
+						"key": "bankAccountId",
+						"label": "Bank Account"
+					}
+				],
+				"columns": [
+					{
+						"key": "bankAccountId",
+						"label": "Bank Account",
+						"sortable": true
+					},
+					{
+						"key": "statementPeriodEnd",
+						"label": "Period End",
+						"sortable": true
+					},
+					{
+						"key": "variance",
+						"label": "Variance (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "matchedCount",
+						"label": "Matched",
+						"sortable": true
+					},
+					{
+						"key": "unmatchedGLCount",
+						"label": "Unmatched GL",
+						"sortable": true
+					},
+					{
+						"key": "unmatchedBankCount",
+						"label": "Unmatched Bank",
+						"sortable": true
+					}
+				],
+				"defaultSort": "statementPeriodEnd",
+				"detailRoute": "ReconciliationDetail"
 			}
 		},
 		{
