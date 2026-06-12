@@ -131,7 +131,7 @@
 
 **Done:** 33 PHPUnit cases across four files cover REQ-CLS-001 (`PeriodStatusGuardTest`: 6 cases — open accepts, ungated accepts, soft-closed reversal/correction logic, hard-closed override gate, locked rejects-with-override, bad-period parsing), REQ-CLS-002 (`SoftCloseFluxFragmentTest` validates the GLTransaction.post additive guard wiring + lifecycle stages + transitions; `SoftCloseExecutorTest` exercises the 5 accrual-calculation methods), REQ-CLS-003 (`SoftCloseExecutorTest` ships 7 cases — fixed-amount, percentage-of-revenue, straight-line-from-contract, days-elapsed-of-period, external-lookup, unknown-method-fail-closed, negative-clamping), REQ-CLS-004 (`SoftCloseFluxFragmentTest::testCloseChecklistInstanceLifecycle` + `testSeedChecklistTemplateHasDependencies`), REQ-CLS-005 (`FluxServiceTest` — variance, percentage variance, materiality buckets including cash/tax special rules), REQ-CLS-006 (`FluxServiceTest::testAutoExplanationCoverageIsSumOverVariance` + `testDecideStatusFollowsCoverageThreshold`), REQ-CLS-007 (`FluxServiceTest` — narrative ordering, markdown/json/pdf renderers), REQ-CLS-010 (`SoftCloseFluxFragmentTest::testAutoAccrualPostingLifecycle` + `testEverySchemaHasAuditTrailEnabled`). REQ-CLS-009 KPI collection is structurally validated by the schema test (CloseMetrics is declared with `trendData`).
 
-- [~] Task 29: Add 6 Playwright MCP browser tests for:
+- [x] Task 29: Add 6 Playwright MCP browser tests for:
   - Continuous-close detail page: view period status, trigger soft-close, monitor job progress
   - Accrual-rules editor: create, edit, activate rule; verify rule parameters
   - Flux-analysis results: view variance report, drill down to GL transactions, export narrative
