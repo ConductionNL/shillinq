@@ -1,7 +1,7 @@
 {
 	"menu": [
 		{
-			"id": "BookkeepingMultiCurrency",
+			"id": "Bookkeeping",
 			"label": "Bookkeeping",
 			"icon": "LedgerOutline",
 			"order": 11,

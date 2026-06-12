@@ -1,7 +1,7 @@
 {
 	"menu": [
 		{
-			"id": "BookkeepingGroup",
+			"id": "Bookkeeping",
 			"label": "Bookkeeping",
 			"icon": "BookOpenPageVariantOutline",
 			"order": 20,

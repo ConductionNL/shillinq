@@ -16,6 +16,7 @@ import pinia from './pinia.js'
 import App from './App.vue'
 import bundledManifest from './manifest.json'
 import registry from './registry.js'
+import appIcons from './icons.js'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
@@ -27,8 +28,11 @@ Vue.mixin({ methods: { t, n } })
 Vue.use(PiniaVuePlugin)
 Vue.use(VueRouter)
 
-// Register library-side icon set + lib translations once at bootstrap.
-registerIcons()
+// Register the app's MDI icon set + lib translations once at bootstrap.
+// registerIcons() merges the given map into the lib's ICON_MAP registry;
+// calling it without arguments registers nothing, which left every
+// MDI-named menu icon rendering blank.
+registerIcons(appIcons)
 try {
 	registerTranslations()
 } catch (e) {
@@ -65,16 +69,53 @@ function tryLoadTranslations() {
 const RoutePageRenderer = { ...CnPageRenderer }
 
 /**
+ * Merge an array of incoming menu items into a target array, keyed by `id`.
+ * New ids are appended; existing ids are merged in place: the first
+ * definition of `label` / `icon` / `route` / `order` wins (the base manifest
+ * loads first, so its canonical group definitions take precedence), and
+ * `children` are unioned recursively by the same rule. Fragments may
+ * therefore extend an existing group by re-declaring only its `id` plus
+ * their own `children`.
+ *
+ * @param {Array<object>} target The accumulated menu (mutated in place).
+ * @param {Array<object>} incoming Menu items from a fragment.
+ * @return {void}
+ */
+function mergeMenuItems(target, incoming) {
+	incoming.forEach((item) => {
+		const existing = target.find((t) => t.id === item.id)
+		if (!existing) {
+			target.push({ ...item, children: Array.isArray(item.children) ? [...item.children] : item.children })
+			return
+		}
+		for (const key of ['label', 'icon', 'route', 'order', 'section', 'featureFlag', 'permission', 'visibleIf', 'href', 'action']) {
+			if (existing[key] === undefined && item[key] !== undefined) {
+				existing[key] = item[key]
+			}
+		}
+		if (Array.isArray(item.children) && item.children.length > 0) {
+			if (!Array.isArray(existing.children)) {
+				existing.children = []
+			}
+			mergeMenuItems(existing.children, item.children)
+		}
+	})
+}
+
+/**
  * ADR-037: merge modular manifest fragments from src/manifest.d/*.json onto the
  * bundled base manifest. Each OpenSpec change drops its own fragment (pages/menu)
  * instead of editing the monolith src/manifest.json, so concurrent builds touch
- * disjoint files. `pages` and `menu` arrays are concatenated.
+ * disjoint files. `pages` are concatenated; `menu` items are merged by `id`
+ * (top-level and children) so fragments that re-declare an existing group
+ * (e.g. "Bookkeeping") extend it instead of duplicating it in the navigation.
  *
  * @param {object} base The bundled base manifest.
- * @return {object} The manifest with all fragment pages/menu appended.
+ * @return {object} The manifest with all fragment pages/menu merged in.
  */
 function mergeManifestFragments(base) {
-	const merged = { ...base, pages: [...(base.pages || [])], menu: [...(base.menu || [])] }
+	const merged = { ...base, pages: [...(base.pages || [])], menu: [] }
+	mergeMenuItems(merged.menu, base.menu || [])
 	// require.context is resolved at build time; src/manifest.d/ must exist (it
 	// ships with a .gitkeep). It is a no-op when the directory holds no fragments.
 	const ctx = require.context('./manifest.d/', false, /\.json$/)
@@ -84,7 +125,7 @@ function mergeManifestFragments(base) {
 			merged.pages.push(...frag.pages)
 		}
 		if (Array.isArray(frag.menu)) {
-			merged.menu.push(...frag.menu)
+			mergeMenuItems(merged.menu, frag.menu)
 		}
 	})
 	return merged

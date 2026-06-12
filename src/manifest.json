@@ -5275,84 +5275,193 @@
 			"id": "Dashboard",
 			"route": "/",
 			"type": "dashboard",
-			"title": "Dashboard",
+			"title": "Financial overview",
+			"description": "Live financial position of the company from the bookkeeping register",
 			"config": {
 				"widgets": [
 					{
-						"id": "open-items",
-						"title": "Open items",
+						"id": "gl-transactions",
+						"title": "GL transactions",
 						"type": "stats-block",
-						"iconClass": "icon-folder",
+						"iconClass": "icon-history",
 						"props": {
-							"count": 12,
-							"countLabel": "sample",
+							"countLabel": "transactions",
 							"variant": "primary"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "GLTransaction",
+							"aggregate": "count"
 						}
 					},
 					{
-						"id": "due-this-week",
-						"title": "Due this week",
+						"id": "ledger-accounts",
+						"title": "Ledger accounts",
 						"type": "stats-block",
-						"iconClass": "icon-calendar",
+						"iconClass": "icon-category-organization",
 						"props": {
-							"count": 5,
-							"countLabel": "sample",
-							"variant": "warning"
+							"countLabel": "accounts",
+							"variant": "default"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "Account",
+							"aggregate": "count"
 						}
 					},
 					{
-						"id": "completed",
-						"title": "Completed",
+						"id": "bank-accounts",
+						"title": "Bank accounts",
+						"type": "stats-block",
+						"iconClass": "icon-category-monitoring",
+						"props": {
+							"countLabel": "accounts",
+							"variant": "default"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "BankAccount",
+							"aggregate": "count"
+						}
+					},
+					{
+						"id": "bank-reconciliations",
+						"title": "Bank reconciliations",
 						"type": "stats-block",
 						"iconClass": "icon-checkmark",
 						"props": {
-							"count": 48,
-							"countLabel": "sample",
+							"countLabel": "statements",
 							"variant": "success"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "BankReconciliation",
+							"aggregate": "count"
 						}
 					},
 					{
-						"id": "team-members",
-						"title": "Team members",
+						"id": "expense-claims",
+						"title": "Expense claims",
 						"type": "stats-block",
-						"iconClass": "icon-group",
+						"iconClass": "icon-toggle-filelist",
 						"props": {
-							"count": 7,
-							"countLabel": "sample",
+							"countLabel": "claims",
+							"variant": "warning"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "ExpenseClaimEntry",
+							"aggregate": "count"
+						}
+					},
+					{
+						"id": "fixed-assets",
+						"title": "Fixed assets",
+						"type": "stats-block",
+						"iconClass": "icon-folder",
+						"props": {
+							"countLabel": "assets",
 							"variant": "default"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "FixedAsset",
+							"aggregate": "count"
+						}
+					},
+					{
+						"id": "tax-estimates",
+						"title": "Tax estimates",
+						"type": "stats-block",
+						"iconClass": "icon-quota",
+						"props": {
+							"countLabel": "estimates",
+							"variant": "warning"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "TaxEstimate",
+							"aggregate": "count"
+						}
+					},
+					{
+						"id": "trial-balances",
+						"title": "Trial balances",
+						"type": "stats-block",
+						"iconClass": "icon-category-office",
+						"props": {
+							"countLabel": "balances",
+							"variant": "success"
+						},
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "TrialBalance",
+							"aggregate": "count"
 						}
 					}
 				],
 				"layout": [
 					{
-						"id": "layout-open-items",
-						"widgetId": "open-items",
+						"id": "layout-gl-transactions",
+						"widgetId": "gl-transactions",
 						"gridX": 0,
 						"gridY": 0,
 						"gridWidth": 3,
 						"gridHeight": 2
 					},
 					{
-						"id": "layout-due-this-week",
-						"widgetId": "due-this-week",
+						"id": "layout-ledger-accounts",
+						"widgetId": "ledger-accounts",
 						"gridX": 3,
 						"gridY": 0,
 						"gridWidth": 3,
 						"gridHeight": 2
 					},
 					{
-						"id": "layout-completed",
-						"widgetId": "completed",
+						"id": "layout-bank-accounts",
+						"widgetId": "bank-accounts",
 						"gridX": 6,
 						"gridY": 0,
 						"gridWidth": 3,
 						"gridHeight": 2
 					},
 					{
-						"id": "layout-team-members",
-						"widgetId": "team-members",
+						"id": "layout-bank-reconciliations",
+						"widgetId": "bank-reconciliations",
 						"gridX": 9,
 						"gridY": 0,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": "layout-expense-claims",
+						"widgetId": "expense-claims",
+						"gridX": 0,
+						"gridY": 2,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": "layout-fixed-assets",
+						"widgetId": "fixed-assets",
+						"gridX": 3,
+						"gridY": 2,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": "layout-tax-estimates",
+						"widgetId": "tax-estimates",
+						"gridX": 6,
+						"gridY": 2,
+						"gridWidth": 3,
+						"gridHeight": 2
+					},
+					{
+						"id": "layout-trial-balances",
+						"widgetId": "trial-balances",
+						"gridX": 9,
+						"gridY": 2,
 						"gridWidth": 3,
 						"gridHeight": 2
 					}
