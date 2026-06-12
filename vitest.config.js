@@ -10,15 +10,26 @@
  * fetch envelope-unwrap, the hasOpenRegisters / isAdmin flag derivation, the
  * loading lifecycle and the save round-trip.
  *
- * This needs no DOM, so the environment is `node`. global fetch + the `OC`
- * global are mocked per-test; @nextcloud/router is aliased to a stub. Vitest
- * only collects tests/vitest/**; the PHPUnit suite under tests/Unit is
- * untouched.
+ * The W8 External-Adapters admin UIs (src/views/external-adapters/*.vue) add a
+ * second body of app-local logic worth pinning: status/summary mapping, the
+ * slug→route map, the dormant/live badge derivation and the deep-link
+ * adapterId fallback. Those `.vue` SFCs are compiled by @vitejs/plugin-vue2 so
+ * their `methods` / `computed` can be exercised as pure functions bound to a
+ * fake component instance — no DOM mount, so the environment stays `node`.
+ * The heavy `@nextcloud/vue`, `@nextcloud/axios` and `@conduction/nextcloud-vue`
+ * imports those SFCs pull in are aliased to lightweight stubs so a node-env
+ * import never touches a browser-only barrel.
+ *
+ * global fetch + the `OC` global are mocked per-test; @nextcloud/router is
+ * aliased to a stub. Vitest only collects tests/vitest/**; the PHPUnit suite
+ * under tests/Unit is untouched.
  */
 
 const path = require('path')
+const vue = require('@vitejs/plugin-vue2').default
 
 module.exports = {
+	plugins: [vue()],
 	test: {
 		environment: 'node',
 		globals: false,
@@ -31,6 +42,14 @@ module.exports = {
 			{
 				find: /^@nextcloud\/router$/,
 				replacement: path.resolve(__dirname, 'tests/vitest/stubs/nextcloud-router.js'),
+			},
+			{
+				find: /^@nextcloud\/vue$/,
+				replacement: path.resolve(__dirname, 'tests/vitest/stubs/nextcloud-vue.js'),
+			},
+			{
+				find: /^@nextcloud\/axios$/,
+				replacement: path.resolve(__dirname, 'tests/vitest/stubs/nextcloud-axios.js'),
 			},
 		],
 	},
