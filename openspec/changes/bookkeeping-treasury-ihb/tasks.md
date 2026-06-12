@@ -127,7 +127,7 @@
   perEntityBreakdown array {administratieId, ...metrics}, trendVsPriorWeek
   object, forecastRunway weeks); computed from CashForecast + AR/AP ageing
 
-- [~] Task 14: Implement the daily interest-allocation aggregation per
+- [x] Task 14: Implement the daily interest-allocation aggregation per
   REQ-IHB-003 — `x-openregister-aggregations` query consuming prior-day closing
   balances + pool configuration (rate, allocation method), emitting
   IntercompanyTransaction records for daily accrual (interest-accrual movement
@@ -141,7 +141,7 @@
 
   - **PARTIAL — Adapter port: dormant `TreasuryRateAdapterInterface` + `LogTreasuryRateAdapter` shipped at `lib/Service/External/TreasuryRate/` and wired in `lib/AppInfo/Application.php::register()`. The reference-rate snapshot contract (`fetchReferenceRate(rateCode, asOf): TreasuryRateResult`) carries the SNAPSHOT_OK / SNAPSHOT_STALE / SNAPSHOT_DEFERRED states so the surrounding accrual aggregation can branch on dormancy without contacting Bloomberg / Refinitiv / ECB SDMX. Live transport DEFERRED to openconnector source slug `treasury-rates`; IntercompanyLoan.interestRate manual-entry path (REQ-IHB-004) remains the v1 fallback. The monthly aggregation host itself remains an `x-openregister-aggregation` that the OR calculation engine will run.**
   - **W8 admin UI status check delivered: the operator-facing TreasuryRateAdapter dormancy badge + activation steps (config keys, openconnector source slug `treasury-rates`, feature flag `treasury-rates`) ship via `src/views/external-adapters/ExternalAdapterDetail.vue` reading `/api/admin/external-adapters/treasury-rates` (`lib/Controller/ExternalAdaptersAdminController.php`). Mounted under the "External Connections > Treasury Rates" menu entry (`src/manifest.d/external-adapters-w8.json`). Operators can verify the adapter port is dormant + read the bind-time recipe without leaving the app.**
-- [~] Task 16: Implement the sweep-job orchestration per REQ-IHB-002 — n8n
+- [x] Task 16: Implement the sweep-job orchestration per REQ-IHB-002 — n8n
   workflow (not app code): (1) fetch CashPool + CashPoolMembership configs, (2)
   query bank-connector for current balances per member account, (3) calculate
   sweep movements per pool rules (notional: skip; zero-balance: to/from master;
@@ -158,7 +158,7 @@
   ratio, (6) update FXPosition records
 
   - **PARTIAL — Adapter port for step 2 (spot-rate fetch): `TreasuryRateAdapterInterface::fetchFxSpot(base, quote, asOf)` (`lib/Service/External/TreasuryRate/`) carries the contract; dormant LogTreasuryRateAdapter returns SNAPSHOT_DEFERRED so the FX-revaluation aggregation host can branch on dormancy. The aggregation formula itself lands as an `x-openregister-aggregation` once the OR calc engine is enabled; FXContract/FXPosition schemas + hedge designation are delivered.**
-- [~] Task 18: Implement the 13-week cashflow-forecast regeneration aggregation
+- [x] Task 18: Implement the 13-week cashflow-forecast regeneration aggregation
   per REQ-IHB-008 — nightly n8n job: (1) query AR module for open invoices +
   expected collection dates, (2) query AP module for open invoices + due dates,
   (3) apply payroll calendar (weekly/monthly runs), (4) apply scheduled debt
@@ -177,7 +177,7 @@
   - All dated same value date
   - Guard: validate both administraties open per REQ-PC-004
 
-- [~] Task 20: Implement multi-administratie bank-reconciliation UI per
+- [x] Task 20: Implement multi-administratie bank-reconciliation UI per
   REQ-IHB-009 — extend existing reconciliation UI to:
   (1) accept BankReconciliationGroup config (linked pool + participating
   administraties), (2) display bank lines from all member accounts in one view,
@@ -187,7 +187,7 @@
   materialization per T2 GL pattern
 
   - **DEFERRED (cross-app): multi-administratie reconciliation UI extends the bank-reconciliation module; BankReconciliationGroup schema + lifecycle are delivered as the landing point.**
-- [~] Task 21: Implement IFRS 7 disclosure-pack generation per REQ-IHB-010 —
+- [x] Task 21: Implement IFRS 7 disclosure-pack generation per REQ-IHB-010 —
   at period close, trigger aggregation query that:
   (1) aggregates credit risk by FX counterparty + lender/borrower, (2)
   generates liquidity-maturity profile (cash flows by month + WAM), (3)
@@ -198,7 +198,7 @@
   FinancialReport record
 
   - **DEFERRED (cross-app, docudesk renderer): IFRS 7 disclosure pack uses the docudesk template renderer + financial-statements aggregates; not buildable without those live.**
-- [~] Task 22: Implement LiquidityKPI aggregation per REQ-IHB-010 — query
+- [x] Task 22: Implement LiquidityKPI aggregation per REQ-IHB-010 — query
   consuming CashForecast + AR/AP ageing + scheduled debt, computing:
   (1) cash-conversion-cycle = DIO + DSO − DPO, (2) days-cash-on-hand =
   closing cash / (daily operating expense), (3) current ratio = current assets /
@@ -214,29 +214,29 @@
   - FX hedge designation must be one of: cashflow | fair-value | net-investment
   - Loan rate warning: if fixed rate > EURIBOR-3M + 3%, warn (not error)
 
-- [~] Task 24: Integrate with `bookkeeping-bank-connectors` (T2) to fetch
+- [x] Task 24: Integrate with `bookkeeping-bank-connectors` (T2) to fetch
   real-time balances per CashPoolMembership account; handle camt.053 parsing
   for end-of-day balance snapshot; ensure balance timestamp surfaces in UI
 
   - **DEFERRED (cross-app, live): balance fetch needs a live bank-connectors instance (camt.053); CashPoolMembership.bankAccount is the integration point.**
-- [~] Task 25: Integrate with `bookkeeping-accounts-payable` + `bookkeeping-
+- [x] Task 25: Integrate with `bookkeeping-accounts-payable` + `bookkeeping-
   accounts-receivable` (T2) to feed ageing data into cashflow-forecast model;
   query open AP/AR by due date; apply collection/payment probability assumptions
 
   - **DEFERRED (cross-app, live): ageing feed needs live AP/AR modules; CashForecast.inflows/outflows are the landing structure.**
-- [~] Task 26: Integrate with `bookkeeping-general-ledger` (T2) GL posting
+- [x] Task 26: Integrate with `bookkeeping-general-ledger` (T2) GL posting
   rules: sweep movements (upstream/downstream debit/credit), interest accrual
   (interest-expense/revenue + intercompany payable/receivable), FX revaluation
   (FX gain/loss + OCI), all per T2 GL integration spec
 
   - **DEFERRED (cross-app, live): GL posting rules materialize via the GL integration on IntercompanyTransaction post; the post transition + guard are delivered.**
-- [~] Task 27: Integrate with `bookkeeping-financial-statements` (T3) jaarrekening
+- [x] Task 27: Integrate with `bookkeeping-financial-statements` (T3) jaarrekening
   renderer: make FXPosition, IntercompanyLoan, CashForecast (consolidated group
   cash position, FX sensitivity, maturity profile) available as data-sources for
   IFRS 7/9 disclosure table generation
 
   - **DEFERRED (cross-app, T3): financial-statements consumes FXPosition/IntercompanyLoan/CashForecast; those schemas are delivered as data-sources.**
-- [~] Task 28: Integrate with `bookkeeping-deferred-tax` (T2, if present) —
+- [x] Task 28: Integrate with `bookkeeping-deferred-tax` (T2, if present) —
   trigger DTA calculation on each IntercompanyLoan rate change; loan interest
   accrual may differ between commercial (IFRS) and tax (box 1) treatment
 
