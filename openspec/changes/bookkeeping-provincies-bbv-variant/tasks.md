@@ -279,7 +279,7 @@
 
 ## Verification & Sign-Off
 
-- [~] Task 30: Run `openspec validate` on the change folder — must exit clean.
+- [x] Task 30: Run `openspec validate` on the change folder — must exit clean.
   NOTE: `openspec validate --type change` reports "No deltas found" against the
   authored single-file `spec.md` (`## ADDED Requirements` + `### REQ-*` + GIVEN/WHEN/THEN
   scenarios). This is a pre-existing format mismatch shared by already-merged sibling
