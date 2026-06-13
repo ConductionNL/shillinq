@@ -10942,6 +10942,161 @@
 						"enforce": true
 					}
 				}
+			},
+			"FxRate": {
+				"slug": "FxRate",
+				"icon": "CurrencyEur",
+				"version": "0.1.0",
+				"title": "FX Rate",
+				"description": "Foreign exchange rate for a (transactionCurrency, baseCurrency, date, source) tuple. Orientation: 1 transactionCurrency = rate × baseCurrency, matching GLLine.fxRate — no reciprocation needed. ECB rates are stored inverted (our rate = 1 / ECB published rate) per REQ-MC-002.",
+				"type": "object",
+				"x-schema-org": "schema:ExchangeRateSpecification",
+				"required": [
+					"transactionCurrency",
+					"baseCurrency",
+					"date",
+					"rate",
+					"source"
+				],
+				"properties": {
+					"transactionCurrency": {
+						"type": "string",
+						"description": "The currency being converted FROM (the foreign/quote currency on a GL line). ISO 4217.",
+						"minLength": 3,
+						"maxLength": 3,
+						"example": "USD"
+					},
+					"baseCurrency": {
+						"type": "string",
+						"description": "The currency being converted TO (the administration's base currency). ISO 4217.",
+						"minLength": 3,
+						"maxLength": 3,
+						"example": "EUR"
+					},
+					"date": {
+						"type": "string",
+						"format": "date",
+						"description": "The day this rate applies to.",
+						"example": "2026-07-15"
+					},
+					"rate": {
+						"type": "number",
+						"description": "Rate: 1 transactionCurrency = rate × baseCurrency. Same orientation as GLLine.fxRate. A USD/EUR row for '1 USD = 0.9259 EUR' stores rate: 0.9259. ECB feed inverted on ingest: our rate = 1 / ECB rate, rounded to ≥6 decimal places.",
+						"exclusiveMinimum": 0,
+						"example": 0.925926
+					},
+					"source": {
+						"type": "string",
+						"description": "Origin of the rate.",
+						"enum": [
+							"ecb",
+							"manual",
+							"internal-policy"
+						],
+						"example": "ecb"
+					},
+					"manualOverrideReason": {
+						"type": "string",
+						"description": "Required when source = manual. Explains the business reason for overriding the ECB rate (e.g. internal hedge contract).",
+						"nullable": true,
+						"example": "Internal hedge contract 2026-H1"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "Optional — when set, this rate applies only to the specified administration; when null the rate is global.",
+						"nullable": true,
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-unique": [
+					[
+						"transactionCurrency",
+						"baseCurrency",
+						"date",
+						"source",
+						"administrationId"
+					]
+				],
+				"x-openregister-preconditions": {
+					"save": {
+						"conditions": [
+							{
+								"when": {
+									"field": "source",
+									"equals": "manual"
+								},
+								"require": {
+									"field": "manualOverrideReason",
+									"notEmpty": true
+								},
+								"error": "manualOverrideReason is required when source is manual"
+							}
+						]
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Rate is valid and may be used for new GL postings."
+						},
+						"superseded": {
+							"label": "Superseded",
+							"description": "A newer rate for the same tuple has been stored; this rate is retained for audit trail."
+						}
+					},
+					"transitions": {
+						"supersede": {
+							"from": "active",
+							"to": "superseded",
+							"label": "Supersede",
+							"description": "Mark this rate as superseded when a corrected rate is stored for the same tuple."
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"countBySource": {
+						"field": "source",
+						"operation": "count",
+						"description": "Number of FX rate records per source (ecb, manual, internal-policy).",
+						"groupBy": "source"
+					},
+					"latestRatePerPair": {
+						"field": "date",
+						"operation": "max",
+						"description": "Most recent rate date per (transactionCurrency, baseCurrency) pair.",
+						"groupBy": [
+							"transactionCurrency",
+							"baseCurrency"
+						]
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						}
+					}
+				}
 			}
 		},
 		"SisaReport": {
