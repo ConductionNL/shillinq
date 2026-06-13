@@ -296,7 +296,8 @@ class InitializeSettings implements IRepairStep
      * @return void
      *
      * @spec openspec/changes/bookkeeping-consultancy-project-accounting/tasks.md#task-16
-     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-110, REQ-CPA-111, REQ-CPA-112)
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md
+     *       (REQ-CPA-110, REQ-CPA-111, REQ-CPA-112)
      */
     private function seedConsultancyProjectAccountingTemplates(IOutput $output): void
     {
@@ -917,12 +918,7 @@ class InitializeSettings implements IRepairStep
                 continue;
             }
 
-            $administrationId = (string) (
-                $administration['administrationCode'] ??
-                $administration['id'] ??
-                $administration['uuid'] ??
-                ''
-            );
+            $administrationId = (string) ($administration['administrationCode'] ?? $administration['id'] ?? $administration['uuid'] ?? '');
             if ($administrationId === '') {
                 continue;
             }
