@@ -31,6 +31,7 @@
     "@conduction/nextcloud-vue": "^1.0.0-beta.101",
     "@nextcloud/axios": "~2.5.2",
     "@nextcloud/dialogs": "^3.2.0",
+    "@nextcloud/event-bus": "^3.3.3",
     "@nextcloud/initial-state": "^2.2.0",
     "@nextcloud/l10n": "^2.0.1",
     "@nextcloud/router": "^2.0.1",
@@ -66,6 +67,7 @@
     "@vue/eslint-config-typescript": "^13.0.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
+    "babel-loader": "^10.1.1",
     "css-loader": "~7.1.1",
     "eslint": "^8.56.0",
     "eslint-config-standard": "^17.1.0",
@@ -77,6 +79,7 @@
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-promise": "^6.6.0",
     "eslint-plugin-vue": "^9.21.1",
+    "node-polyfill-webpack-plugin": "^4.0.0",
     "postcss-html": "^1.8.1",
     "sass": "^1.99.0",
     "sass-loader": "^16.0.8",
@@ -84,12 +87,14 @@
     "stylelint": "^15.11.0",
     "stylelint-config-recommended-scss": "^13.1.0",
     "stylelint-config-recommended-vue": "^1.1.0",
+    "ts-loader": "^9.6.0",
     "typescript": "^5.0.2",
     "vitest": "^1.6.1",
     "vue-eslint-parser": "^9.4.3",
     "vue-loader": "^15.11.1 <16.0.0",
     "vue-template-compiler": "^2.7.16",
     "webpack": "^5.94.0",
-    "webpack-cli": "^6.0.1"
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.4"
   }
 }

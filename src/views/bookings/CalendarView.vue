@@ -10,7 +10,9 @@
 <template>
 	<div class="calendar-view" data-testid="calendar-view">
 		<header class="calendar-view__toolbar">
-			<h2 class="calendar-view__title">{{ headerLabel }}</h2>
+			<h2 class="calendar-view__title">
+				{{ headerLabel }}
+			</h2>
 			<div class="calendar-view__view-switch">
 				<button
 					v-for="v in views"
@@ -27,8 +29,13 @@
 
 		<!-- MONTH VIEW -->
 		<div v-if="currentView === 'month'" class="calendar-view__month" data-testid="calendar-month-grid">
-			<div v-for="day in monthDays" :key="day.iso" class="calendar-view__cell" :data-date="day.iso">
-				<div class="calendar-view__cell-date">{{ day.day }}</div>
+			<div v-for="day in monthDays"
+				:key="day.iso"
+				class="calendar-view__cell"
+				:data-date="day.iso">
+				<div class="calendar-view__cell-date">
+					{{ day.day }}
+				</div>
 				<button
 					v-for="booking in bookingsForDay(day.iso)"
 					:key="bookingId(booking)"
@@ -45,7 +52,9 @@
 		<!-- WEEK VIEW -->
 		<div v-else-if="currentView === 'week'" class="calendar-view__week" data-testid="calendar-week-grid">
 			<div v-for="day in weekDays" :key="day.iso" class="calendar-view__week-column">
-				<div class="calendar-view__cell-date">{{ day.label }}</div>
+				<div class="calendar-view__cell-date">
+					{{ day.label }}
+				</div>
 				<button
 					v-for="hour in hours"
 					:key="`${day.iso}-${hour}`"

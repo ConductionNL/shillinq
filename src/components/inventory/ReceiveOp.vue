@@ -49,8 +49,12 @@
 					:aria-label="t('shillinq', 'Quantity received')">
 			</label>
 
-			<div v-if="error" class="receive-op__error" role="alert">{{ error }}</div>
-			<div v-if="successMessage" class="receive-op__success" role="status">{{ successMessage }}</div>
+			<div v-if="error" class="receive-op__error" role="alert">
+				{{ error }}
+			</div>
+			<div v-if="successMessage" class="receive-op__success" role="status">
+				{{ successMessage }}
+			</div>
 
 			<div class="receive-op__actions">
 				<button type="submit" :disabled="submitting">

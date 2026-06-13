@@ -38,10 +38,18 @@
 				<select
 					v-model="adjustment.type"
 					:aria-label="t('shillinq', 'Adjustment type')">
-					<option value="AR_PROJECTION_OVERRIDE">{{ t('shillinq', 'AR Override') }}</option>
-					<option value="RECURRING_COST_ADJUSTMENT">{{ t('shillinq', 'Recurring Adjustment') }}</option>
-					<option value="NEW_REVENUE">{{ t('shillinq', 'New Revenue') }}</option>
-					<option value="BUFFER_POLICY_OVERRIDE">{{ t('shillinq', 'Buffer Override') }}</option>
+					<option value="AR_PROJECTION_OVERRIDE">
+						{{ t('shillinq', 'AR Override') }}
+					</option>
+					<option value="RECURRING_COST_ADJUSTMENT">
+						{{ t('shillinq', 'Recurring Adjustment') }}
+					</option>
+					<option value="NEW_REVENUE">
+						{{ t('shillinq', 'New Revenue') }}
+					</option>
+					<option value="BUFFER_POLICY_OVERRIDE">
+						{{ t('shillinq', 'Buffer Override') }}
+					</option>
 				</select>
 
 				<input
@@ -72,9 +80,15 @@
 					v-if="adjustment.type === 'RECURRING_COST_ADJUSTMENT'"
 					v-model="adjustment.adjustmentType"
 					:aria-label="t('shillinq', 'Adjustment direction')">
-					<option value="PAUSE">{{ t('shillinq', 'Pause') }}</option>
-					<option value="INCREASE">{{ t('shillinq', 'Increase') }}</option>
-					<option value="DECREASE">{{ t('shillinq', 'Decrease') }}</option>
+					<option value="PAUSE">
+						{{ t('shillinq', 'Pause') }}
+					</option>
+					<option value="INCREASE">
+						{{ t('shillinq', 'Increase') }}
+					</option>
+					<option value="DECREASE">
+						{{ t('shillinq', 'Decrease') }}
+					</option>
 				</select>
 
 				<input
@@ -120,7 +134,9 @@
 		</fieldset>
 
 		<div class="scenario-creator__actions">
-			<button type="submit">{{ t('shillinq', 'Calculate') }}</button>
+			<button type="submit">
+				{{ t('shillinq', 'Calculate') }}
+			</button>
 		</div>
 	</form>
 </template>

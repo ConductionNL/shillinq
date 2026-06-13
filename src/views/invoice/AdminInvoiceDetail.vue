@@ -14,7 +14,9 @@
 	<section class="admin-invoice-detail">
 		<header>
 			<h2>{{ t('shillinq', 'Invoice') }} {{ invoice.invoiceNumber }}</h2>
-			<router-link to="/invoice">{{ t('shillinq', 'Back to list') }}</router-link>
+			<router-link to="/invoice">
+				{{ t('shillinq', 'Back to list') }}
+			</router-link>
 		</header>
 
 		<dl class="admin-invoice-detail__meta">
@@ -31,7 +33,7 @@
 
 		<InvoiceLineItemReview :lines="lines" :summary="invoice.summary || invoice" />
 
-		<section class="admin-invoice-detail__audit" v-if="auditTrail.length">
+		<section v-if="auditTrail.length" class="admin-invoice-detail__audit">
 			<h3>{{ t('shillinq', 'Audit trail') }}</h3>
 			<ul>
 				<li v-for="(event, idx) in auditTrail" :key="idx">
@@ -41,8 +43,12 @@
 		</section>
 
 		<div class="admin-invoice-detail__actions">
-			<button type="button" :disabled="invoice.status !== 'draft'" @click="post">{{ t('shillinq', 'Post to AR') }}</button>
-			<button type="button" @click="pdf">{{ t('shillinq', 'Export PDF') }}</button>
+			<button type="button" :disabled="invoice.status !== 'draft'" @click="post">
+				{{ t('shillinq', 'Post to AR') }}
+			</button>
+			<button type="button" @click="pdf">
+				{{ t('shillinq', 'Export PDF') }}
+			</button>
 		</div>
 	</section>
 </template>

@@ -26,7 +26,9 @@
 					v-model="selectedScenarioId"
 					class="cashflow-dashboard__scenario-switcher"
 					:aria-label="t('shillinq', 'Switch scenario')">
-					<option value="baseline">{{ t('shillinq', 'Baseline') }}</option>
+					<option value="baseline">
+						{{ t('shillinq', 'Baseline') }}
+					</option>
 					<option
 						v-for="scenario in scenarios"
 						:key="scenario.scenarioId"
@@ -48,7 +50,7 @@
 			<slot name="chart" />
 		</div>
 
-		<div class="cashflow-dashboard__week-detail" v-if="selectedWeek">
+		<div v-if="selectedWeek" class="cashflow-dashboard__week-detail">
 			<h3>{{ t('shillinq', 'Week') }} {{ selectedWeek.weeknummer }}</h3>
 			<ul>
 				<li>{{ t('shillinq', 'Inflows AR') }}: {{ selectedWeek.inflows_ar_geprognosticeerd }}</li>

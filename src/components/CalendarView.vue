@@ -71,7 +71,7 @@
 
 		<!-- Week view: 7 columns x 24 hourly rows -->
 		<div v-else-if="view === 'week'" class="bk-calendar__grid bk-calendar__grid--week" data-testid="bk-calendar-week">
-			<div class="bk-calendar__hour-axis-cell" aria-hidden="true"></div>
+			<div class="bk-calendar__hour-axis-cell" aria-hidden="true" />
 			<div v-for="(day, idx) in weekCells" :key="`whdr-${idx}`" class="bk-calendar__week-header">
 				<div class="bk-calendar__weekday">
 					{{ weekdayHeaders[idx] }}
@@ -80,8 +80,8 @@
 					{{ day.dayOfMonth }}
 				</div>
 			</div>
-			<template v-for="h in hoursOfDay" :key="`hrow-${h}`">
-				<div class="bk-calendar__hour-axis">
+			<template v-for="h in hoursOfDay">
+				<div :key="`hrow-${h}`" class="bk-calendar__hour-axis">
 					{{ formatHourLabel(h) }}
 				</div>
 				<div

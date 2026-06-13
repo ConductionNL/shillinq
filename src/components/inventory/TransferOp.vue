@@ -59,8 +59,12 @@
 					:aria-label="t('shillinq', 'Quantity to transfer')">
 			</label>
 
-			<div v-if="error" class="transfer-op__error" role="alert">{{ error }}</div>
-			<div v-if="successMessage" class="transfer-op__success" role="status">{{ successMessage }}</div>
+			<div v-if="error" class="transfer-op__error" role="alert">
+				{{ error }}
+			</div>
+			<div v-if="successMessage" class="transfer-op__success" role="status">
+				{{ successMessage }}
+			</div>
 
 			<div class="transfer-op__actions">
 				<button type="submit" :disabled="submitting">

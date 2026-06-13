@@ -100,7 +100,7 @@ import { generateOcsUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 
 export default {
-	name: 'WbsoTransactionsView',
+	name: 'TransactionsView',
 
 	components: {
 		NcAppContent,

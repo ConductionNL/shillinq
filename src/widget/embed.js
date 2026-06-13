@@ -16,7 +16,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  */
 
-import { createApp } from 'vue'
+import Vue from 'vue'
 import SelfServiceWidget from './SelfServiceWidget.vue'
 import './widget.css'
 
@@ -55,15 +55,32 @@ export function mount(el, config) {
 
 	applyTheme(el, config)
 
-	const app = createApp(SelfServiceWidget, {
-		businessId: String(config.businessId),
-		apiKey: String(config.apiKey),
-		apiBase: String(config.apiBase || ''),
-		lang: String(config.lang || 'en'),
-		dark: Boolean(config.dark || false),
+	// Vue 2 has no createApp; mount an isolated root instance per
+	// container and expose a Vue-3-shaped { unmount } handle so the
+	// web-component teardown keeps working unchanged.
+	const mountPoint = document.createElement('div')
+	el.appendChild(mountPoint)
+	const vm = new Vue({
+		render: (h) => h(SelfServiceWidget, {
+			props: {
+				businessId: String(config.businessId),
+				apiKey: String(config.apiKey),
+				apiBase: String(config.apiBase || ''),
+				lang: String(config.lang || 'en'),
+				dark: Boolean(config.dark || false),
+			},
+		}),
 	})
-	app.mount(el)
-	return app
+	vm.$mount(mountPoint)
+	return {
+		vm,
+		unmount() {
+			vm.$destroy()
+			if (vm.$el && vm.$el.parentNode) {
+				vm.$el.parentNode.removeChild(vm.$el)
+			}
+		},
+	}
 }
 
 /**
@@ -92,6 +109,7 @@ export const BookingWidget = {
  * Web component: <nextcloud-booking-widget business-id api-key api-base lang primary-color dark>.
  */
 export class NextcloudBookingWidgetElement extends HTMLElement {
+
 	connectedCallback() {
 		const mountPoint = document.createElement('div')
 		this.appendChild(mountPoint)
@@ -111,6 +129,7 @@ export class NextcloudBookingWidgetElement extends HTMLElement {
 			this._app = null
 		}
 	}
+
 }
 
 // Register globals + custom element for script-tag embeds.
