@@ -1,194 +1,65 @@
 {
 	"components": {
 		"schemas": {
-			"Account": {
-				"slug": "Account",
-				"icon": "BankOutline",
-				"version": "0.2.0",
-				"title": "Account",
-				"description": "Chart-of-accounts entry conforming to the Dutch RGS (Referentie Grootboek Schema) standard (REQ-WBSO-001). Master data; queried by every Transaction and report. Hierarchy is capped at five levels and circular references are forbidden by schema constraint.",
-				"x-schema-org": "schema:Thing",
-				"x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs/bookkeeping-financial-administration/spec.md#req-wbso-001",
-				"x-openregister-audit-trail": {
-					"enabled": true,
-					"description": "Account changes (renames, status flips, parent-account relocations) MUST be audit-trail-immutable per REQ-WBSO-004 / ADR-022 — every change influences downstream GL reporting and tax aggregations."
-				},
-				"x-openregister-constraint": {
-					"hierarchyDepthMax": 5,
-					"hierarchyParentField": "parentAccountNumber",
-					"hierarchyKeyField": "accountNumber",
-					"hierarchyScopeField": "administrationId",
-					"description": "Enforces REQ-WBSO-001 — chart-of-accounts depth is capped at five levels per administration; circular references are detected by the same walker."
-				},
-				"x-openregister-relations": {
-					"parent": {
-						"localField": "parentAccountNumber",
-						"relatedSchema": "Account",
-						"relatedField": "accountNumber",
-						"cardinality": "many-to-one",
-						"scopeField": "administrationId",
-						"requireRelatedStatus": "active",
-						"description": "FK to the parent account (REQ-WBSO-001); the parent MUST live in the same administration and be in `status=active`."
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"read"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						},
-						"administrator": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						}
-					}
-				},
-				"type": "object",
-				"required": [
-					"accountNumber",
-					"name",
-					"accountType",
-					"status",
-					"currency",
-					"administrationId"
-				],
-				"properties": {
-					"accountNumber": {
-						"type": "string",
-						"description": "RGS-style code (REQ-WBSO-001). Unique per administration.",
-						"example": "1000"
-					},
-					"name": {
-						"type": "string",
-						"description": "Human-readable account name.",
-						"example": "Kas en bank"
-					},
-					"accountType": {
-						"type": "string",
-						"enum": [
-							"assets",
-							"liabilities",
-							"equity",
-							"revenue",
-							"expenses"
-						],
-						"description": "Semantic category per the Dutch Accounting Standard (REQ-WBSO-001)."
-					},
-					"parentAccountNumber": {
-						"type": "string",
-						"description": "FK to the parent Account.accountNumber in the same administration; null when the account is a root (REQ-WBSO-001).",
-						"nullable": true,
-						"example": "1"
-					},
-					"status": {
-						"type": "string",
-						"enum": [
-							"active",
-							"blocked",
-							"archived"
-						],
-						"default": "active",
-						"description": "Operational status (REQ-WBSO-001). Only `active` accounts can serve as parents."
-					},
-					"currency": {
-						"type": "string",
-						"enum": [
-							"EUR"
-						],
-						"default": "EUR",
-						"description": "ISO 4217 currency code. Phase 1 is EUR-only (REQ-WBSO-001)."
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration entity (REQ-WBSO-001)."
-					},
-					"description": {
-						"type": "string",
-						"description": "Free-text notes on the account purpose.",
-						"nullable": true
-					},
-					"vatApplicable": {
-						"type": "boolean",
-						"default": false,
-						"description": "Whether VAT applies to transactions on this account."
-					}
-				}
-			},
-			"Transaction": {
-				"slug": "Transaction",
-				"icon": "ReceiptTextOutline",
+			"WbsoBeschikking": {
+				"slug": "WbsoBeschikking",
+				"icon": "CertificateOutline",
 				"version": "0.1.0",
-				"title": "Transaction",
-				"description": "Financial event (invoice, receipt, journal-entry, credit-note, debit-note) recorded by a bookkeeper (REQ-WBSO-002). State machine: `draft → posted → (terminal)` and `draft → reversed`. Posted transactions are immutable; reversals are recorded as new transactions linked through the audit trail (REQ-WBSO-008).",
-				"x-schema-org": "schema:AccountingTransaction",
-				"x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs/bookkeeping-financial-administration/spec.md#req-wbso-002",
+				"title": "WBSO Beschikking",
+				"description": "RVO grant decision (beschikking) awarding S&O (Speur- en Ontwikkelingswerk) hours for a WBSO project (REQ-WBSO-001). Records the granted ceiling of S&O hours and the hourly rate against which the realisatie (SoUurregistratie) and the closing WbsoMededeling are validated. The granted hours form the immutable ceiling that the mededeling realisatie may never exceed (REQ-WBSO-005).",
+				"x-schema-org": "schema:GovernmentPermit",
+				"x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md#req-wbso-001",
 				"x-openregister-audit-trail": {
 					"enabled": true,
-					"description": "Transaction changes MUST be audit-trail-immutable per REQ-WBSO-004 / ADR-022. Posted records carry the booked state of the books; mutating them would violate the audit trail."
+					"description": "Beschikking changes (rate corrections, granted-hour adjustments, state flips) MUST be audit-trail-immutable per ADR-022 — the granted ceiling governs every downstream realisatie and the closing mededeling."
 				},
 				"x-openregister-lifecycle": {
-					"stateField": "status",
-					"initial": "draft",
+					"field": "state",
+					"initialState": "granted",
 					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Entered but not yet posted; can be edited and deleted by bookkeepers (REQ-WBSO-002 / REQ-WBSO-008)."
+						"granted": {
+							"label": "Granted",
+							"description": "Active RVO grant; S&O hours may be booked against this beschikking (REQ-WBSO-001)."
 						},
-						"posted": {
-							"label": "Posted",
-							"description": "Recorded against the GL — immutable (REQ-WBSO-008)."
+						"expired": {
+							"label": "Expired",
+							"description": "The grant period has ended; no further realisatie may be booked (REQ-WBSO-001)."
 						},
-						"reversed": {
-							"label": "Reversed",
-							"description": "Counter-entry created by an administrator. Both the original and this reversal remain in the audit trail (REQ-WBSO-008)."
+						"withdrawn": {
+							"label": "Withdrawn",
+							"description": "The grant was withdrawn by RVO; the beschikking no longer authorises any S&O hours (REQ-WBSO-001)."
 						}
 					},
 					"transitions": {
-						"post": {
-							"from": "draft",
-							"to": "posted",
-							"label": "Post transaction",
-							"description": "Validate and post the transaction. GL posting is deferred to tier-2 `bookkeeping-general-ledger` (REQ-WBSO-008).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\WbsoTransactionGuard::canPost"
+						"expire": {
+							"from": "granted",
+							"to": "expired",
+							"label": "Expire beschikking",
+							"description": "Close the grant once its period has elapsed (REQ-WBSO-001)."
 						},
-						"reverse": {
-							"from": "posted",
-							"to": "reversed",
-							"label": "Reverse transaction",
-							"description": "Reverse a posted transaction. Requires an approval-workflow gate (administrator or auditor approval — REQ-WBSO-008 / ADR-022).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\WbsoTransactionGuard::canReverse",
-							"approvalWorkflow": "transaction-reversal"
+						"withdraw": {
+							"from": "granted",
+							"to": "withdrawn",
+							"label": "Withdraw beschikking",
+							"description": "Record an RVO withdrawal of the grant (REQ-WBSO-001)."
 						}
 					}
 				},
 				"x-openregister-relations": {
-					"administration": {
-						"localField": "administrationId",
-						"relatedSchema": "Administration",
-						"relatedField": "administrationNumber",
+					"project": {
+						"localField": "projectNumber",
+						"relatedSchema": "WbsoBeschikking",
+						"relatedField": "projectNumber",
 						"cardinality": "many-to-one",
-						"description": "FK to the Administration entity (REQ-WBSO-002 / ADR-022)."
+						"scopeField": "administrationId",
+						"description": "Links the beschikking to its WBSO project (REQ-WBSO-001). The S&O realisatie and mededeling are scoped to the same project."
 					}
 				},
 				"x-openregister-rbac": {
 					"roles": {
 						"bookkeeper": {
 							"permissions": [
-								"create",
-								"read",
-								"update"
-							],
-							"writeStateScope": [
-								"draft"
+								"read"
 							]
 						},
 						"auditor": {
@@ -200,153 +71,276 @@
 							"permissions": [
 								"create",
 								"read",
-								"update",
-								"reverse"
+								"update"
 							]
 						}
 					}
 				},
 				"type": "object",
 				"required": [
-					"transactionNumber",
-					"transactionType",
-					"transactionDate",
-					"amount",
-					"description",
-					"status",
-					"administrationId"
+					"administrationId",
+					"beschikkingNumber",
+					"projectNumber",
+					"grantedSoHours"
 				],
 				"properties": {
-					"transactionNumber": {
+					"administrationId": {
 						"type": "string",
-						"description": "Unique transaction identifier (e.g. INV-2026-001). Unique per administration.",
-						"example": "INV-2026-001"
+						"description": "FK to the Administration entity that owns this beschikking (REQ-WBSO-001)."
 					},
-					"transactionType": {
+					"beschikkingNumber": {
 						"type": "string",
-						"enum": [
-							"invoice",
-							"receipt",
-							"journal-entry",
-							"credit-note",
-							"debit-note"
-						],
-						"description": "Operational classification (REQ-WBSO-002)."
+						"description": "RVO beschikking number identifying the grant decision (REQ-WBSO-001). Unique per administration.",
+						"example": "WBSO-2026-000123"
 					},
-					"transactionDate": {
+					"rvoReference": {
+						"type": "string",
+						"description": "RVO case reference for the grant application/decision (REQ-WBSO-001).",
+						"example": "RVO/2026/SO/000123"
+					},
+					"projectNumber": {
+						"type": "string",
+						"description": "WBSO project number the granted S&O hours belong to (REQ-WBSO-001).",
+						"example": "PRJ-2026-007"
+					},
+					"periodStart": {
 						"type": "string",
 						"format": "date",
-						"description": "ISO-8601 date the transaction occurred — MUST fall in the active fiscal year.",
-						"example": "2026-01-15"
+						"description": "Start of the grant period (REQ-WBSO-001).",
+						"example": "2026-01-01"
 					},
-					"amount": {
+					"periodEnd": {
+						"type": "string",
+						"format": "date",
+						"description": "End of the grant period (REQ-WBSO-001).",
+						"example": "2026-12-31"
+					},
+					"grantedSoHours": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Ceiling of S&O hours granted by RVO. The closing mededeling realisatie may never exceed this value (REQ-WBSO-001 / REQ-WBSO-005).",
+						"example": 1200
+					},
+					"soHourlyRate": {
 						"type": "number",
 						"minimum": 0,
 						"multipleOf": 0.01,
-						"description": "Amount in EUR (REQ-WBSO-002). Reversals carry a negative-mirroring sibling record per REQ-WBSO-008 — the originating row's amount is always non-negative.",
-						"example": 1500.00
+						"description": "Statutory S&O hourly rate applied to the granted hours (REQ-WBSO-001).",
+						"example": 29.00
 					},
-					"description": {
-						"type": "string",
-						"description": "Human-readable description of the transaction.",
-						"example": "Invoice from supplier ABC"
-					},
-					"status": {
+					"state": {
 						"type": "string",
 						"enum": [
-							"draft",
-							"posted",
-							"reversed"
+							"granted",
+							"expired",
+							"withdrawn"
 						],
-						"default": "draft",
-						"description": "Lifecycle state (REQ-WBSO-002 / REQ-WBSO-008)."
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration entity (REQ-WBSO-002)."
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time",
-						"description": "Timestamp of creation. Set by the server.",
-						"readOnly": true
-					},
-					"createdBy": {
-						"type": "string",
-						"description": "Nextcloud user id of the creator. Set by the server.",
-						"readOnly": true
-					},
-					"reversalOfTransactionId": {
-						"type": "string",
-						"description": "When `status=reversed`, the id of the original posted transaction this row reverses (REQ-WBSO-008).",
-						"nullable": true
-					},
-					"reversalReason": {
-						"type": "string",
-						"description": "Free-text reason captured by the administrator at reverse-time (REQ-WBSO-008).",
-						"nullable": true
+						"default": "granted",
+						"description": "Lifecycle state of the grant (REQ-WBSO-001)."
 					}
 				}
 			},
-			"Document": {
-				"slug": "Document",
-				"icon": "FileDocumentOutline",
+			"SoUurregistratie": {
+				"slug": "SoUurregistratie",
+				"icon": "ClockOutline",
 				"version": "0.1.0",
-				"title": "Document",
-				"description": "Bookkeeping document metadata (invoice PDF, receipt scan, contract, tax form, bank statement, memo) (REQ-WBSO-003). Files live in docudesk; this record stores the metadata and lifecycle (draft → filed → archived per REQ-WBSO-007 / REQ-WBSO-009).",
-				"x-schema-org": "schema:DigitalDocument",
-				"x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs/bookkeeping-financial-administration/spec.md#req-wbso-003",
+				"title": "S&O Uurregistratie",
+				"description": "S&O (Speur- en Ontwikkelingswerk) hour registration booked by a Nextcloud employee against a WBSO beschikking (REQ-WBSO-002). The employee is the Nextcloud identity, not an app-local person schema (ADR-022). Daily hours are capped at 24. Confirmed registrations accumulate into the realisatie that the WbsoMededeling reports against the granted ceiling.",
+				"x-schema-org": "schema:Action",
+				"x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md#req-wbso-002",
 				"x-openregister-audit-trail": {
 					"enabled": true,
-					"description": "Document lifecycle transitions MUST be audit-trail-immutable per REQ-WBSO-004 / ADR-022. Archived documents MUST remain in the audit trail even when the file is purged from docudesk (REQ-WBSO-009)."
+					"description": "S&O hour registrations MUST be audit-trail-immutable per ADR-022 — locked registrations form the realisatie reported in the WBSO mededeling."
 				},
 				"x-openregister-lifecycle": {
-					"stateField": "status",
-					"initial": "draft",
+					"field": "state",
+					"initialState": "draft",
 					"states": {
 						"draft": {
 							"label": "Draft",
-							"description": "Created but not yet filed. May be edited and deleted by the owner (REQ-WBSO-003)."
+							"description": "Entered but not yet confirmed; editable by the booking employee (REQ-WBSO-002)."
 						},
-						"filed": {
-							"label": "Filed",
-							"description": "Approved and locked. Counts toward statutory retention (REQ-WBSO-007)."
+						"confirmed": {
+							"label": "Confirmed",
+							"description": "Confirmed by the employee and counted toward the realisatie (REQ-WBSO-002)."
 						},
-						"archived": {
-							"label": "Archived",
-							"description": "Past the seven-year retention window. The file MAY be purged from docudesk; the metadata row remains for audit (REQ-WBSO-009)."
+						"locked": {
+							"label": "Locked",
+							"description": "Locked once the period mededeling is submitted; no further edits (REQ-WBSO-002)."
 						}
 					},
 					"transitions": {
-						"file": {
+						"confirm": {
 							"from": "draft",
-							"to": "filed",
-							"label": "File document",
-							"description": "File a draft document for compliance. Requires `fileReference` to be set and a bookkeeping-approver to approve the transition (REQ-WBSO-007 / ADR-022).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\WbsoDocumentGuard::canFile",
-							"approvalWorkflow": "document-filing"
+							"to": "confirmed",
+							"label": "Confirm hours",
+							"description": "Confirm the booked S&O hours so they count toward the realisatie (REQ-WBSO-002)."
 						},
-						"archive": {
-							"from": "filed",
-							"to": "archived",
-							"label": "Archive document",
-							"description": "Archive a filed document past the seven-year retention boundary. Requires an auditor or compliance-officer approval (REQ-WBSO-009 / ADR-022).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\WbsoDocumentGuard::canArchive",
-							"approvalWorkflow": "document-archival",
-							"timeBased": {
-								"from": "filedAt",
-								"durationDays": 2557
-							}
+						"lock": {
+							"from": "confirmed",
+							"to": "locked",
+							"label": "Lock hours",
+							"description": "Lock confirmed hours when the period mededeling is submitted (REQ-WBSO-002)."
 						}
 					}
 				},
 				"x-openregister-relations": {
-					"administration": {
-						"localField": "administrationId",
-						"relatedSchema": "Administration",
-						"relatedField": "administrationNumber",
+					"beschikking": {
+						"localField": "beschikkingNumber",
+						"relatedSchema": "WbsoBeschikking",
+						"relatedField": "beschikkingNumber",
 						"cardinality": "many-to-one",
-						"description": "FK to the Administration entity."
+						"scopeField": "administrationId",
+						"description": "FK to the beschikking the hours are booked against (REQ-WBSO-002)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"employee": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							],
+							"writeStateScope": [
+								"draft"
+							]
+						},
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						}
+					}
+				},
+				"type": "object",
+				"required": [
+					"administrationId",
+					"employeeId",
+					"hours"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration entity that owns this registration (REQ-WBSO-002)."
+					},
+					"employeeId": {
+						"type": "string",
+						"description": "Nextcloud user id of the employee who performed the S&O work (REQ-WBSO-002 / ADR-022). The Nextcloud identity is reused, not an app-local person schema.",
+						"example": "alice"
+					},
+					"beschikkingNumber": {
+						"type": "string",
+						"description": "RVO beschikking number the hours are booked against (REQ-WBSO-002).",
+						"example": "WBSO-2026-000123"
+					},
+					"workDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date the S&O work was performed (REQ-WBSO-002).",
+						"example": "2026-02-03"
+					},
+					"hours": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 24,
+						"description": "S&O hours booked on the work date. Capped at 24 hours per day (REQ-WBSO-002).",
+						"example": 6
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the S&O activity performed (REQ-WBSO-002).",
+						"nullable": true
+					},
+					"state": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"confirmed",
+							"locked"
+						],
+						"default": "draft",
+						"description": "Lifecycle state of the registration (REQ-WBSO-002)."
+					}
+				}
+			},
+			"WbsoMededeling": {
+				"slug": "WbsoMededeling",
+				"icon": "FileSendOutline",
+				"version": "0.1.0",
+				"title": "WBSO Mededeling",
+				"description": "WBSO realisatie mededeling reporting the realised S&O hours for a beschikking period to RVO (REQ-WBSO-003). The realised hours may never exceed the beschikking's granted ceiling — the submit and resubmit transitions are guarded by WbsoMededeligGuard::canSubmit which enforces this ceiling (REQ-WBSO-005).",
+				"x-schema-org": "schema:Report",
+				"x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md#req-wbso-003",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "Mededeling submissions MUST be audit-trail-immutable per ADR-022 — the mededeling is the statutory realisatie report filed with RVO."
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Draft",
+							"description": "Realisatie being assembled; editable by the bookkeeper (REQ-WBSO-003)."
+						},
+						"submitted": {
+							"label": "Submitted",
+							"description": "Submitted to RVO and awaiting acceptance (REQ-WBSO-003)."
+						},
+						"accepted": {
+							"label": "Accepted",
+							"description": "Accepted by RVO (REQ-WBSO-003)."
+						},
+						"rejected": {
+							"label": "Rejected",
+							"description": "Rejected by RVO; may be corrected and resubmitted (REQ-WBSO-003)."
+						}
+					},
+					"transitions": {
+						"submit": {
+							"from": "draft",
+							"to": "submitted",
+							"label": "Submit mededeling",
+							"description": "Submit the realisatie mededeling to RVO. Guarded to ensure the realised S&O hours never exceed the beschikking's granted ceiling (REQ-WBSO-003 / REQ-WBSO-005).",
+							"requires": "OCA\\Shillinq\\Lifecycle\\WbsoMededelingGuard::canSubmit"
+						},
+						"resubmit": {
+							"from": "rejected",
+							"to": "submitted",
+							"label": "Resubmit mededeling",
+							"description": "Resubmit a corrected mededeling after an RVO rejection. Re-applies the realisatie-ceiling guard (REQ-WBSO-003 / REQ-WBSO-005).",
+							"requires": "OCA\\Shillinq\\Lifecycle\\WbsoMededelingGuard::canSubmit"
+						},
+						"accept": {
+							"from": "submitted",
+							"to": "accepted",
+							"label": "Accept mededeling",
+							"description": "Record RVO acceptance of the mededeling (REQ-WBSO-003)."
+						},
+						"reject": {
+							"from": "submitted",
+							"to": "rejected",
+							"label": "Reject mededeling",
+							"description": "Record RVO rejection of the mededeling (REQ-WBSO-003)."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"beschikking": {
+						"localField": "beschikkingNumber",
+						"relatedSchema": "WbsoBeschikking",
+						"relatedField": "beschikkingNumber",
+						"cardinality": "many-to-one",
+						"scopeField": "administrationId",
+						"description": "FK to the beschikking whose realisatie this mededeling reports (REQ-WBSO-003)."
 					}
 				},
 				"x-openregister-rbac": {
@@ -363,8 +357,7 @@
 						},
 						"auditor": {
 							"permissions": [
-								"read",
-								"archive"
+								"read"
 							]
 						},
 						"administrator": {
@@ -372,93 +365,49 @@
 								"create",
 								"read",
 								"update",
-								"file",
-								"archive"
+								"submit"
 							]
 						}
 					}
 				},
 				"type": "object",
 				"required": [
-					"documentType",
-					"documentNumber",
-					"documentDate",
-					"status",
-					"administrationId"
+					"administrationId",
+					"beschikkingNumber",
+					"realisedSoHours"
 				],
 				"properties": {
-					"documentType": {
+					"administrationId": {
 						"type": "string",
-						"enum": [
-							"invoice",
-							"receipt",
-							"contract",
-							"tax-form",
-							"bank-statement",
-							"memo"
-						],
-						"description": "Document classification (REQ-WBSO-003)."
+						"description": "FK to the Administration entity that owns this mededeling (REQ-WBSO-003)."
 					},
-					"documentNumber": {
+					"beschikkingNumber": {
 						"type": "string",
-						"description": "Unique document identifier per administration.",
-						"example": "DOC-INV-2026-001"
+						"description": "RVO beschikking number whose realisatie this mededeling reports (REQ-WBSO-003).",
+						"example": "WBSO-2026-000123"
 					},
-					"documentDate": {
+					"realisedSoHours": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Total realised S&O hours reported to RVO. May never exceed the beschikking's granted ceiling (REQ-WBSO-003 / REQ-WBSO-005).",
+						"example": 1100
+					},
+					"reportingPeriodEnd": {
 						"type": "string",
 						"format": "date",
-						"description": "ISO-8601 date the document was issued or created.",
-						"example": "2026-01-15"
+						"description": "End date of the reporting period covered by this mededeling (REQ-WBSO-003).",
+						"example": "2026-12-31"
 					},
-					"status": {
+					"state": {
 						"type": "string",
 						"enum": [
 							"draft",
-							"filed",
-							"archived"
+							"submitted",
+							"accepted",
+							"rejected"
 						],
 						"default": "draft",
-						"description": "Lifecycle state (REQ-WBSO-007 / REQ-WBSO-009)."
-					},
-					"fileReference": {
-						"type": "string",
-						"description": "URI pointing to the file in docudesk storage (e.g. `docudesk://invoices/inv-2026-001.pdf`). Required to transition draft → filed (REQ-WBSO-007).",
-						"nullable": true,
-						"example": "docudesk://invoices/inv-2026-001.pdf"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration entity."
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time",
-						"description": "Timestamp of creation. Set by the server.",
-						"readOnly": true
-					},
-					"createdBy": {
-						"type": "string",
-						"description": "Nextcloud user id of the creator. Set by the server.",
-						"readOnly": true
-					},
-					"filedAt": {
-						"type": "string",
-						"format": "date-time",
-						"description": "Timestamp when the document transitioned to `filed`. Set by the server on the `file` transition (REQ-WBSO-007).",
-						"nullable": true,
-						"readOnly": true
-					},
-					"archivedAt": {
-						"type": "string",
-						"format": "date-time",
-						"description": "Timestamp when the document transitioned to `archived`. Set by the server on the `archive` transition (REQ-WBSO-009).",
-						"nullable": true,
-						"readOnly": true
-					},
-					"archivalReason": {
-						"type": "string",
-						"description": "Free-text reason captured by the auditor at archive-time (REQ-WBSO-009).",
-						"nullable": true
+						"description": "Lifecycle state of the mededeling (REQ-WBSO-003)."
 					}
 				}
 			}
@@ -468,152 +417,92 @@
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "Account",
-				"slug": "account-wbso-1000-kas-en-bank",
+				"schema": "WbsoBeschikking",
+				"slug": "wbso-beschikking-2026-000123",
 				"_synthetic": true
 			},
-			"accountNumber": "1000",
-			"name": "Kas en bank",
-			"accountType": "assets",
-			"parentAccountNumber": "1",
-			"status": "active",
-			"currency": "EUR",
 			"administrationId": "adm-consultancy-nl",
-			"description": "Cash and bank deposits (RGS code 1000).",
-			"vatApplicable": false
+			"beschikkingNumber": "WBSO-2026-000123",
+			"rvoReference": "RVO/2026/SO/000123",
+			"projectNumber": "PRJ-2026-007",
+			"periodStart": "2026-01-01",
+			"periodEnd": "2026-12-31",
+			"grantedSoHours": 1200,
+			"soHourlyRate": 29.00,
+			"state": "granted"
 		},
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "Account",
-				"slug": "account-wbso-4100-omzet-diensten",
+				"schema": "WbsoBeschikking",
+				"slug": "wbso-beschikking-2026-000456",
 				"_synthetic": true
 			},
-			"accountNumber": "4100",
-			"name": "Omzet diensten",
-			"accountType": "revenue",
-			"parentAccountNumber": "4",
-			"status": "active",
-			"currency": "EUR",
 			"administrationId": "adm-consultancy-nl",
-			"description": "Service revenue (RGS code 4100).",
-			"vatApplicable": true
+			"beschikkingNumber": "WBSO-2026-000456",
+			"rvoReference": "RVO/2026/SO/000456",
+			"projectNumber": "PRJ-2026-011",
+			"periodStart": "2026-01-01",
+			"periodEnd": "2026-06-30",
+			"grantedSoHours": 600,
+			"soHourlyRate": 29.00,
+			"state": "granted"
 		},
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "Account",
-				"slug": "account-wbso-6000-huisvestingskosten",
+				"schema": "SoUurregistratie",
+				"slug": "wbso-uurregistratie-2026-02-03-alice",
 				"_synthetic": true
 			},
-			"accountNumber": "6000",
-			"name": "Huisvestingskosten",
-			"accountType": "expenses",
-			"parentAccountNumber": "6",
-			"status": "active",
-			"currency": "EUR",
 			"administrationId": "adm-consultancy-nl",
-			"description": "Housing and office costs (RGS code 6000).",
-			"vatApplicable": true
+			"employeeId": "alice",
+			"beschikkingNumber": "WBSO-2026-000123",
+			"workDate": "2026-02-03",
+			"hours": 6,
+			"description": "Prototype work on the experimental indexing engine.",
+			"state": "confirmed"
 		},
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "Account",
-				"slug": "account-wbso-2000-eigen-vermogen",
+				"schema": "SoUurregistratie",
+				"slug": "wbso-uurregistratie-2026-02-04-bob",
 				"_synthetic": true
 			},
-			"accountNumber": "2000",
-			"name": "Eigen vermogen",
-			"accountType": "equity",
-			"parentAccountNumber": "2",
-			"status": "active",
-			"currency": "EUR",
 			"administrationId": "adm-consultancy-nl",
-			"description": "Owner's equity (RGS code 2000).",
-			"vatApplicable": false
+			"employeeId": "bob",
+			"beschikkingNumber": "WBSO-2026-000456",
+			"workDate": "2026-02-04",
+			"hours": 8,
+			"description": "Research into the novel compression algorithm.",
+			"state": "draft"
 		},
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "Account",
-				"slug": "account-wbso-1500-crediteuren",
+				"schema": "WbsoMededeling",
+				"slug": "wbso-mededeling-2026-000123",
 				"_synthetic": true
 			},
-			"accountNumber": "1500",
-			"name": "Crediteuren",
-			"accountType": "liabilities",
-			"parentAccountNumber": "1",
-			"status": "active",
-			"currency": "EUR",
 			"administrationId": "adm-consultancy-nl",
-			"description": "Accounts payable (RGS code 1500).",
-			"vatApplicable": false
+			"beschikkingNumber": "WBSO-2026-000123",
+			"realisedSoHours": 1100,
+			"reportingPeriodEnd": "2026-12-31",
+			"state": "draft"
 		},
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "Transaction",
-				"slug": "txn-wbso-inv-2026-001",
+				"schema": "WbsoMededeling",
+				"slug": "wbso-mededeling-2026-000456",
 				"_synthetic": true
 			},
-			"transactionNumber": "INV-2026-001",
-			"transactionType": "invoice",
-			"transactionDate": "2026-01-15",
-			"amount": 1500.00,
-			"description": "Sample posted invoice to Customer ABC",
-			"status": "posted",
 			"administrationId": "adm-consultancy-nl",
-			"createdBy": "system"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "Transaction",
-				"slug": "txn-wbso-rec-2026-001-draft",
-				"_synthetic": true
-			},
-			"transactionNumber": "REC-2026-001",
-			"transactionType": "receipt",
-			"transactionDate": "2026-01-20",
-			"amount": 250.00,
-			"description": "Sample draft receipt — office supplies",
-			"status": "draft",
-			"administrationId": "adm-consultancy-nl",
-			"createdBy": "system"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "Transaction",
-				"slug": "txn-wbso-inv-2026-001-rev",
-				"_synthetic": true
-			},
-			"transactionNumber": "INV-2026-001-REV",
-			"transactionType": "credit-note",
-			"transactionDate": "2026-01-25",
-			"amount": 1500.00,
-			"description": "Reversal of INV-2026-001",
-			"status": "reversed",
-			"administrationId": "adm-consultancy-nl",
-			"reversalOfTransactionId": "txn-wbso-inv-2026-001",
-			"reversalReason": "Customer ABC disputed scope; reversal issued for re-invoicing.",
-			"createdBy": "system"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "Document",
-				"slug": "doc-wbso-inv-2026-001",
-				"_synthetic": true
-			},
-			"documentType": "invoice",
-			"documentNumber": "DOC-INV-2026-001",
-			"documentDate": "2026-01-15",
-			"status": "filed",
-			"fileReference": "docudesk://invoices/inv-2026-001.pdf",
-			"administrationId": "adm-consultancy-nl",
-			"createdBy": "system"
+			"beschikkingNumber": "WBSO-2026-000456",
+			"realisedSoHours": 600,
+			"reportingPeriodEnd": "2026-06-30",
+			"state": "submitted"
 		}
 	]
 }

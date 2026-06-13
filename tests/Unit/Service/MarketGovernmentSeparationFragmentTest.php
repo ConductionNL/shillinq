@@ -217,13 +217,23 @@ final class MarketGovernmentSeparationFragmentTest extends TestCase
         $merged            = $this->merge($base, $frag);
         $schemas           = $merged['components']['schemas'];
 
-        // New schemas present.
+        // The three Phase-1 WMO fact schemas are present.
         self::assertArrayHasKey('CommercialActivity', $schemas);
         self::assertArrayHasKey('IntegralCostPrice', $schemas);
         self::assertArrayHasKey('ActivityCostAllocation', $schemas);
 
-        // Three schemas added, none removed.
-        self::assertSame(($schemaCountBefore + 3), count($schemas));
+        // Additive union: the merged set grows by exactly the number of fragment
+        // schemas not already present in the base, and no base schema is dropped.
+        // The fragment ships the full WMO schema set (the three Phase-1 fact
+        // schemas plus the later-phase ACM/audit/benchmark schemas), so the delta
+        // is computed from the fragment rather than hard-coded, to stay correct as
+        // the consolidated monolith absorbs schemas over time.
+        $fragSchemaKeys = array_keys($frag['components']['schemas']);
+        $netNew         = count(array_diff($fragSchemaKeys, array_keys($base['components']['schemas'])));
+        self::assertSame(($schemaCountBefore + $netNew), count($schemas));
+        foreach ($fragSchemaKeys as $fragName) {
+            self::assertArrayHasKey($fragName, $schemas, "$fragName must be present after the fragment merge");
+        }
 
         // Every pre-existing schema survives the merge (including the reused AllocationRule).
         foreach (array_keys($base['components']['schemas']) as $name) {

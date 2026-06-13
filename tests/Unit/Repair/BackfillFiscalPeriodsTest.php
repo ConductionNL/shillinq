@@ -352,12 +352,23 @@ class BackfillFiscalPeriodsTest extends TestCase
             /**
              * Records the save instead of persisting.
              *
-             * @param array<string,mixed> $object   The record being saved.
-             * @param string              $register The register slug.
-             * @param string              $schema   The schema slug.
+             * Mirrors the real OpenRegister ObjectService::saveObject signature,
+             * which the repair step calls with the installer-context bypass flags
+             * `_rbac: false` / `_multitenancy: false` (named args).
+             *
+             * @param array<string,mixed> $object        The record being saved.
+             * @param string              $register      The register slug.
+             * @param string              $schema        The schema slug.
+             * @param bool                $_rbac         RBAC enforcement flag.
+             * @param bool                $_multitenancy Multi-tenancy flag.
              */
-            public function saveObject(array $object, string $register, string $schema): void
-            {
+            public function saveObject(
+                array $object,
+                string $register,
+                string $schema,
+                bool $_rbac=true,
+                bool $_multitenancy=true
+            ): void {
                 $this->saves[] = ['object' => $object, 'register' => $register, 'schema' => $schema];
             }
         };
