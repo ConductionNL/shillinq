@@ -652,6 +652,23 @@
 							"region": "NL-WEST",
 							"channel": "ONLINE"
 						}
+					},
+					"ozbCategorie": {
+						"type": "array",
+						"description": "OZB category flags enabling the Iv3-OZB aggregation to split OZB-postings by eigenaars/gebruikers-deel and woning/niet-woning per REQ-CBSE-004. Null on non-OZB lines.",
+						"items": {
+							"type": "string",
+							"enum": [
+								"eigenaars-woning",
+								"eigenaars-niet-woning",
+								"gebruikers-woning",
+								"gebruikers-niet-woning"
+							]
+						},
+						"nullable": true,
+						"example": [
+							"eigenaars-woning"
+						]
 					}
 				},
 				"x-openregister-relations": {
@@ -812,6 +829,67 @@
 							"relation": "projectRelation",
 							"parentField": "parentCode",
 							"depth": 4
+						}
+					},
+					"iv3DetailByTaakveldCategorie": {
+						"description": "Iv3-detail roll-up grouping GLLine records by (periodId, taakveld, categorie) summing (debit - credit) per REQ-CBSE-002. Joins GLLine → Account → BbvAccountMapping for taakveld + iv3Categorie. Sum across all categorieën per taakveld MUST equal the base IV3 total for that taakveld (€0 tolerance). Quarterly cadence; docudesk template: iv3-detail-2026.csv; openconnector source: cbs-iv3-detail.",
+						"sourceSchema": "GLLine",
+						"groupBy": [
+							"periodId",
+							"BbvAccountMapping.taakveld",
+							"BbvAccountMapping.iv3Categorie"
+						],
+						"filter": {
+							"eliminationFlag": false,
+							"GLTransaction.state": "posted"
+						},
+						"join": {
+							"from": "GLLine.accountNumber",
+							"through": "BbvAccountMapping",
+							"on": "BbvAccountMapping.accountNumber",
+							"select": [
+								"BbvAccountMapping.taakveld",
+								"BbvAccountMapping.iv3Categorie"
+							]
+						},
+						"operations": {
+							"netBedrag": {
+								"operation": "expression",
+								"expression": "SUM(CASE WHEN side = 'debit' THEN amount ELSE -amount END)",
+								"description": "Net bedrag (debit minus credit) in EUR for this taakveld-categorie combination."
+							}
+						},
+						"outputChannel": {
+							"docudeskTemplate": "iv3-detail-2026.csv",
+							"openconnectorSource": "cbs-iv3-detail",
+							"cadence": "quarterly"
+						}
+					},
+					"iv3OzbByCategorieHeffing": {
+						"description": "Iv3-OZB roll-up grouping OZB-postings by (periodId, ozbCategorie) per REQ-CBSE-004. Filters to GLLine records where ozbCategorie is set. Produces separate totals per ozbCategorie value. CSV output per CBS Iv3-OZB layout; openconnector source: cbs-iv3-ozb.",
+						"sourceSchema": "GLLine",
+						"groupBy": [
+							"periodId",
+							"ozbCategorie"
+						],
+						"filter": {
+							"eliminationFlag": false,
+							"GLTransaction.state": "posted",
+							"ozbCategorie": {
+								"operator": "isNotNull"
+							}
+						},
+						"operations": {
+							"netBedrag": {
+								"operation": "expression",
+								"expression": "SUM(CASE WHEN side = 'debit' THEN amount ELSE -amount END)",
+								"description": "Net OZB bedrag (debit minus credit) in EUR per ozbCategorie."
+							}
+						},
+						"outputChannel": {
+							"docudeskTemplate": "iv3-ozb-2026.csv",
+							"openconnectorSource": "cbs-iv3-ozb",
+							"cadence": "periodic"
 						}
 					}
 				}
@@ -2376,6 +2454,47 @@
 							"on": "BbvAccountMapping.accountNumber",
 							"select": "BbvAccountMapping.iv3Bucket"
 						}
+					},
+					"emuBestandSaldo": {
+						"description": "EMU-bestand aggregation consuming the ESA-2010 classifier declared in bookkeeping-emu-reporting (REQ-EMU-002) and the EMU-bijlage inclusion/exclusion rules per REQ-CBSE-005. The reported EMU-saldo MUST equal the EMU-reporting saldo to the cent (€0 tolerance). XML output per CBS EMU layout; openconnector source: cbs-emu-bestand.",
+						"sourceSchema": "GLLine",
+						"join": {
+							"from": "GLLine.accountNumber",
+							"through": "EsaClassifier",
+							"on": "EsaClassifier.accountNumber",
+							"select": [
+								"EsaClassifier.esa2010Code",
+								"EsaClassifier.includedInEmu"
+							]
+						},
+						"filter": {
+							"eliminationFlag": false,
+							"GLTransaction.state": "posted",
+							"EsaClassifier.includedInEmu": true,
+							"periodId": {
+								"from": "EmuReportingPeriod",
+								"where": {
+									"year": "@self.reportingYear",
+									"quarter": "@self.reportingQuarter"
+								},
+								"select": "id"
+							}
+						},
+						"groupBy": [
+							"EsaClassifier.esa2010Code"
+						],
+						"operations": {
+							"emuSaldo": {
+								"operation": "expression",
+								"expression": "SUM(CASE WHEN side = 'debit' THEN amount ELSE -amount END)",
+								"description": "EMU-saldo per ESA-2010 code in EUR. Aggregate equals total EMU-saldo for the period."
+							}
+						},
+						"outputChannel": {
+							"docudeskTemplate": "emu-bestand-2026.xml",
+							"openconnectorSource": "cbs-emu-bestand",
+							"cadence": "quarterly-and-annual"
+						}
 					}
 				},
 				"x-openregister-rbac": {
@@ -2408,6 +2527,233 @@
 								"gemeente",
 								"provincie",
 								"waterschap"
+							]
+						}
+					}
+				}
+			},
+			"kernGegevensConfig": {
+				"slug": "kernGegevensConfig",
+				"icon": "ChartBarOutline",
+				"version": "0.1.0",
+				"title": "Kerngegevens Configuratie",
+				"description": "Administration-level configuration record holding the denominators required for the CBS Kerngegevens jaarstaten computation per REQ-CBSE-003. Operators set these values yearly; the aggregation surfaces a 'denominator last updated' warning when any value is >12 months old.",
+				"x-schema-org": "schema:Dataset",
+				"type": "object",
+				"required": [
+					"administrationId",
+					"fiscalYearId",
+					"inwonerAantal"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration (gemeente/provincie/waterschap) that this config belongs to.",
+						"example": "gem-a"
+					},
+					"fiscalYearId": {
+						"type": "string",
+						"description": "FK to the FiscalYear for which these denominators apply.",
+						"example": "fy-2026"
+					},
+					"inwonerAantal": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Number of inhabitants per CBS Kerngegevens denominator. Used to compute lasten per inwoner, baten per inwoner, etc.",
+						"example": 50000
+					},
+					"oppervlak": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Total surface area of the administration in km². Used for oppervlak-based denominators.",
+						"nullable": true,
+						"example": 123.5
+					},
+					"gewogenOppervlak": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Weighted surface area in km² (land + water weighted factor). Used for gewogen-oppervlak denominators.",
+						"nullable": true,
+						"example": 98.2
+					},
+					"bestuursOmvang": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Number of elected council seats (raadsleden / statenleden). Used for bestuursomvang-based ratios.",
+						"nullable": true,
+						"example": 39
+					},
+					"ambtenarenAantal": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "FTE count of civil servants. Used for personeelslasten per fte denominator.",
+						"nullable": true,
+						"example": 450
+					},
+					"lastUpdatedAt": {
+						"type": "string",
+						"format": "date",
+						"description": "Date the operator last updated these denominators. Aggregation surfaces a warning when >12 months old per REQ-CBSE-003.",
+						"nullable": true,
+						"example": "2026-01-15"
+					}
+				},
+				"x-openregister-calculations": {
+					"denominatorStaleWarning": {
+						"expression": "@self.lastUpdatedAt != null ? dateDiffDays(today(), @self.lastUpdatedAt) > 365 : true",
+						"type": "boolean",
+						"description": "True when denominators have not been updated in the past 12 months. Surfaces a warning in the Kerngegevens bestand UI per REQ-CBSE-003.",
+						"example": false
+					}
+				},
+				"x-openregister-aggregations": {
+					"kerngegevensRatios": {
+						"description": "Kerngegevens jaarstaten aggregation consuming the closed fiscal-year jaarrekening and the administration-level kernGegevensConfig denominators per REQ-CBSE-003. Produces lasten per inwoner, baten per inwoner. Annual cadence; XML output; openconnector source: cbs-kerngegevens.",
+						"sourceSchema": "GLLine",
+						"join": [
+							{
+								"from": "GLLine.accountNumber",
+								"through": "Account",
+								"on": "Account.accountNumber",
+								"select": [
+									"Account.accountType"
+								]
+							},
+							{
+								"schema": "kernGegevensConfig",
+								"condition": "kernGegevensConfig.administrationId = GLLine.administrationId AND kernGegevensConfig.fiscalYearId = @parent.fiscalYearId",
+								"select": [
+									"kernGegevensConfig.inwonerAantal",
+									"kernGegevensConfig.oppervlak",
+									"kernGegevensConfig.gewogenOppervlak"
+								]
+							}
+						],
+						"filter": {
+							"eliminationFlag": false,
+							"GLTransaction.state": "posted",
+							"administrationId": "@self.administrationId",
+							"fiscalYearId": "@self.fiscalYearId"
+						},
+						"operations": {
+							"totalLasten": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "Account.accountType = 'expenses' AND GLLine.side = 'debit'",
+								"description": "Total lasten (expenditure) for the fiscal year."
+							},
+							"totalBaten": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "Account.accountType = 'revenue' AND GLLine.side = 'credit'",
+								"description": "Total baten (revenue) for the fiscal year."
+							},
+							"lastenPerInwoner": {
+								"operation": "expression",
+								"expression": "totalLasten / kernGegevensConfig.inwonerAantal",
+								"description": "Lasten per inwoner ratio in EUR."
+							},
+							"batenPerInwoner": {
+								"operation": "expression",
+								"expression": "totalBaten / kernGegevensConfig.inwonerAantal",
+								"description": "Baten per inwoner ratio in EUR."
+							}
+						},
+						"outputChannel": {
+							"docudeskTemplate": "kerngegevens-2026.xml",
+							"openconnectorSource": "cbs-kerngegevens",
+							"cadence": "annual"
+						}
+					}
+				},
+				"x-openregister-scheduled-workflows": {
+					"quarterly-cbs-iv3-detail-submission": {
+						"name": "Quarterly CBS Iv3-detail submission",
+						"description": "Generates and submits the Iv3-detail bestand for all closed administrations on a quarterly schedule per REQ-CBSE-002. Triggers the iv3DetailByTaakveldCategorie aggregation on GLLine, renders via docudesk template iv3-detail-2026.csv, and submits via openconnector source cbs-iv3-detail.",
+						"cron": "0 2 1 */3 *",
+						"source": "cbs-iv3-detail",
+						"register": "shillinq",
+						"schema": "kernGegevensConfig",
+						"enabled": true,
+						"filter": {
+							"administrationType": [
+								"gemeente",
+								"provincie",
+								"waterschap"
+							]
+						}
+					},
+					"quarterly-cbs-iv3-ozb-submission": {
+						"name": "Quarterly CBS Iv3-OZB submission",
+						"description": "Generates and submits the Iv3-OZB bestand for all closed administrations on a periodic schedule per REQ-CBSE-004. Triggers the iv3OzbByCategorieHeffing aggregation on GLLine, renders via docudesk template iv3-ozb-2026.csv, and submits via openconnector source cbs-iv3-ozb.",
+						"cron": "0 4 1 */3 *",
+						"source": "cbs-iv3-ozb",
+						"register": "shillinq",
+						"schema": "kernGegevensConfig",
+						"enabled": true,
+						"filter": {
+							"administrationType": [
+								"gemeente",
+								"provincie",
+								"waterschap"
+							]
+						}
+					},
+					"annual-cbs-kerngegevens-submission": {
+						"name": "Annual CBS Kerngegevens jaarstaten submission",
+						"description": "Generates and submits the Kerngegevens jaarstaten bestand annually after jaarrekening-close per REQ-CBSE-003. Triggers the kerngegevensRatios aggregation, renders via docudesk template kerngegevens-2026.xml, and submits via openconnector source cbs-kerngegevens.",
+						"cron": "0 6 1 4 *",
+						"trigger": {
+							"event": "bookkeeping-period-close:jaarrekeningClosed",
+							"description": "Annual trigger fires on jaarrekening-close lifecycle event from T3 bookkeeping-financial-statements per design D5.",
+							"fallbackCron": "0 6 1 4 *"
+						},
+						"source": "cbs-kerngegevens",
+						"register": "shillinq",
+						"schema": "kernGegevensConfig",
+						"enabled": true,
+						"filter": {
+							"administrationType": [
+								"gemeente",
+								"provincie",
+								"waterschap"
+							]
+						}
+					},
+					"annual-cbs-emu-bestand-submission": {
+						"name": "Annual CBS EMU-bestand submission",
+						"description": "Generates and submits the EMU-bestand annually and quarterly per REQ-CBSE-005. Consumes the emuBestandSaldo aggregation on Iv3Export, renders via docudesk template emu-bestand-2026.xml, and submits via openconnector source cbs-emu-bestand.",
+						"cron": "0 8 1 4 *",
+						"trigger": {
+							"event": "bookkeeping-period-close:jaarrekeningClosed",
+							"description": "Annual trigger fires on jaarrekening-close lifecycle event from T3. Quarterly runs are also triggered by the base IV3 quarterly workflow.",
+							"fallbackCron": "0 8 1 4 *"
+						},
+						"source": "cbs-emu-bestand",
+						"register": "shillinq",
+						"schema": "kernGegevensConfig",
+						"enabled": true,
+						"filter": {
+							"administrationType": [
+								"gemeente",
+								"provincie",
+								"waterschap"
+							]
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bbv-controller": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
 							]
 						}
 					}
