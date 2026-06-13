@@ -14867,6 +14867,157 @@
 						}
 					}
 				}
+			},
+			"ProvincialeFondsPosting": {
+				"slug": "ProvincialeFondsPosting",
+				"icon": "BankOutline",
+				"version": "0.1.0",
+				"title": "Provinciale Fonds Posting",
+				"description": "Sector-specific posting for provinciale fondsen: provinciefonds, algemene uitkering, decentralisatie-uitkering, and integratie-uitkering. On transition to 'posted', materialises a balanced 2-line GLTransaction per T1 REQ-GL-001 with sourceReference back to this posting. Does NOT carry its own ledger lines per design D3.",
+				"x-schema-org": "schema:Invoice",
+				"type": "object",
+				"required": [
+					"fondsType",
+					"uitkeringJaar",
+					"uitkeringBedrag",
+					"administrationId",
+					"state"
+				],
+				"properties": {
+					"fondsType": {
+						"type": "string",
+						"enum": [
+							"provinciefonds",
+							"algemene-uitkering",
+							"decentralisatie-uitkering",
+							"integratie-uitkering"
+						],
+						"description": "Type of provinciale fonds uitkering per REQ-PRB-004.",
+						"example": "provinciefonds"
+					},
+					"uitkeringJaar": {
+						"type": "integer",
+						"description": "Fiscal year for this uitkering.",
+						"example": 2026
+					},
+					"uitkeringBedrag": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Total uitkering amount in EUR. This amount is materialised into a balanced GLTransaction on post per REQ-PRB-004.",
+						"example": 50000.0
+					},
+					"uitkeringBeschikking": {
+						"type": "string",
+						"description": "Beschikkingnummer of the uitkering (official reference number from the relevant ministry).",
+						"nullable": true,
+						"example": "BZK-2026-00123"
+					},
+					"journalEntryId": {
+						"type": "string",
+						"description": "FK to the materialised GLTransaction.id. Set by the lifecycle engine on transition to 'posted'. Null until posted.",
+						"nullable": true,
+						"example": "txn-pfp-2026-001"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the provincie Administration owning this fonds posting.",
+						"example": "adm-provincie-1"
+					},
+					"debitAccountNumber": {
+						"type": "string",
+						"description": "Account to debit in the materialised GLTransaction (e.g. liquid assets account for the uitkering receivable).",
+						"nullable": true,
+						"example": "1210"
+					},
+					"creditAccountNumber": {
+						"type": "string",
+						"description": "Account to credit in the materialised GLTransaction (e.g. uitkering inkomstenrekening per fondsType).",
+						"nullable": true,
+						"example": "8310"
+					},
+					"state": {
+						"type": "string",
+						"enum": [
+							"draft",
+							"posted",
+							"reversed"
+						],
+						"default": "draft",
+						"description": "Current lifecycle state of the fonds posting.",
+						"example": "draft"
+					},
+					"description": {
+						"type": "string",
+						"description": "Optional operator-authored description or reference.",
+						"nullable": true,
+						"example": "Provinciefonds algemene uitkering 2026 Q1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "state",
+					"initialState": "draft",
+					"states": {
+						"draft": {
+							"label": "Concept",
+							"description": "Fonds posting is being prepared; no GL impact yet."
+						},
+						"posted": {
+							"label": "Geboekt",
+							"description": "Posting is confirmed; a balanced 2-line GLTransaction has been materialised per REQ-GL-001."
+						},
+						"reversed": {
+							"label": "Gestorneerd",
+							"description": "Posting has been reversed; a contra-GLTransaction has been materialised."
+						}
+					},
+					"transitions": {
+						"post": {
+							"from": "draft",
+							"to": "posted",
+							"label": "Boek uitkering",
+							"description": "Materialise a balanced 2-line GLTransaction (debit assets, credit inkomsten) for the uitkeringBedrag and set journalEntryId."
+						},
+						"reverse": {
+							"from": "posted",
+							"to": "reversed",
+							"label": "Storneer uitkering",
+							"description": "Materialise a contra-GLTransaction to reverse the original posting."
+						}
+					},
+					"hooks": {
+						"onPost": {
+							"trigger": "state:posted",
+							"description": "Materialise a balanced 2-line GLTransaction per T1 REQ-GL-001. Debit debitAccountNumber for uitkeringBedrag, credit creditAccountNumber for uitkeringBedrag. Set sourceReference to ProvincialeFondsPosting.id. Write journalEntryId FK back to this record. Idempotency key: (administrationId, id) prevents re-posting on repair-step re-run.",
+							"action": "x-openregister-materialise-gl-transaction",
+							"actionParameters": {
+								"debitField": "debitAccountNumber",
+								"creditField": "creditAccountNumber",
+								"amountField": "uitkeringBedrag",
+								"currency": "EUR",
+								"sourceReference": "@self.id",
+								"journalEntryIdField": "journalEntryId",
+								"idempotencyKey": "(administrationId, id)"
+							}
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"totalByFondsType": {
+						"description": "Total uitkering bedrag per fondsType for the administration, excluding reversed postings. Used by the provinciale fondsen index page.",
+						"filter": "state != 'reversed'",
+						"groupBy": "fondsType",
+						"operations": {
+							"totalUitkering": {
+								"field": "uitkeringBedrag",
+								"operation": "sum"
+							},
+							"count": {
+								"field": "id",
+								"operation": "count"
+							}
+						}
+					}
+				}
 			}
 		},
 		"SisaReport": {
