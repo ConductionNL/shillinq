@@ -14328,6 +14328,545 @@
 						}
 					}
 				}
+			},
+			"BankStatementLine": {
+				"slug": "BankStatementLine",
+				"icon": "TableRowPlusAfter",
+				"version": "0.1.0",
+				"title": "Bank Statement Line",
+				"description": "A single transaction row in a bank statement. Created during statement import for each transaction in a CAMT.053, MT940, or CSV file. x-openregister-audit: true per REQ-BR-001.",
+				"type": "object",
+				"x-schema-org": "schema:MonetaryAmount",
+				"x-openregister-audit": true,
+				"required": [
+					"statementId",
+					"lineNumber",
+					"valueDate",
+					"amount",
+					"currency",
+					"matchState",
+					"administrationId"
+				],
+				"properties": {
+					"statementId": {
+						"type": "string",
+						"description": "FK to the parent BankStatement.",
+						"example": "bs-uuid-1"
+					},
+					"lineNumber": {
+						"type": "integer",
+						"description": "Sequential line number within the statement (1-based).",
+						"example": 1
+					},
+					"valueDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Value date (ISO 8601 date) of the bank transaction.",
+						"example": "2026-04-03"
+					},
+					"amount": {
+						"type": "number",
+						"format": "float",
+						"description": "Transaction amount. Positive = credit (incoming); negative = debit (outgoing). CAMT convention per REQ-BR-003.",
+						"example": 500.0
+					},
+					"currency": {
+						"type": "string",
+						"description": "ISO 4217 currency code.",
+						"minLength": 3,
+						"maxLength": 3,
+						"example": "EUR",
+						"default": "EUR"
+					},
+					"counterpartyName": {
+						"type": "string",
+						"description": "Name of the counterparty as reported in the statement.",
+						"example": "Acme B.V.",
+						"nullable": true
+					},
+					"counterpartyIban": {
+						"type": "string",
+						"description": "IBAN of the counterparty, if present.",
+						"example": "NL91ABNA0417164300",
+						"nullable": true
+					},
+					"reference": {
+						"type": "string",
+						"description": "Payment reference (e.g. invoice number, kenmerk).",
+						"example": "INV-C-2026-0001",
+						"nullable": true
+					},
+					"narrative": {
+						"type": "string",
+						"description": "Free-text transaction description from the bank.",
+						"example": "Factuur INV-C-2026-0001 Acme B.V.",
+						"nullable": true
+					},
+					"rawPayload": {
+						"type": "string",
+						"description": "The raw XML/text snippet from the source statement for audit purposes.",
+						"nullable": true
+					},
+					"matchState": {
+						"type": "string",
+						"description": "Current matching state of the line per REQ-BR-006 / REQ-BR-007.",
+						"enum": [
+							"unmatched",
+							"candidate",
+							"confirmed",
+							"routed-to-suspense"
+						],
+						"example": "unmatched",
+						"default": "unmatched"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this line (inherited from statement).",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"stateField": "matchState",
+					"states": [
+						"unmatched",
+						"candidate",
+						"confirmed",
+						"routed-to-suspense"
+					],
+					"transitions": {
+						"emit-candidate": {
+							"from": "unmatched",
+							"to": "candidate",
+							"trigger": "aggregation-result",
+							"description": "Matching aggregation emits a candidate ReconciliationMatch for this line."
+						},
+						"confirm-match": {
+							"from": "candidate",
+							"to": "confirmed",
+							"trigger": "operator-or-auto-confirm",
+							"description": "Operator confirms (or autoConfirm=true triggers) the candidate match per REQ-BR-006."
+						},
+						"reject-candidate": {
+							"from": "candidate",
+							"to": "unmatched",
+							"trigger": "operator-reject",
+							"description": "Operator rejects the candidate; line returns to unmatched for re-evaluation."
+						},
+						"route-to-suspense": {
+							"from": [
+								"unmatched",
+								"candidate"
+							],
+							"to": "routed-to-suspense",
+							"trigger": "operator-action",
+							"description": "Operator marks line as \"unmatched final\". Lifecycle materialises a GLTransaction to the designated suspense account per REQ-BR-007. Declarative per ADR-031."
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"statement": {
+						"localField": "statementId",
+						"relatedSchema": "BankStatement",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The parent bank statement."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read",
+								"update"
+							]
+						},
+						"treasurer": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"MatchingRule": {
+				"slug": "MatchingRule",
+				"icon": "RuleOutline",
+				"version": "0.1.0",
+				"title": "Matching Rule",
+				"description": "Operator-authored rule declaring predicates for auto-matching bank statement lines against AP/AR invoices or GL transactions. Predicates are consumed by an x-openregister-aggregations query (REQ-BR-004). No MatchingService.php. x-openregister-audit: true per REQ-BR-001.",
+				"type": "object",
+				"x-schema-org": "schema:Rule",
+				"x-openregister-audit": true,
+				"required": [
+					"ruleName",
+					"priority",
+					"targetType",
+					"predicates",
+					"autoConfirm",
+					"administrationId",
+					"lifecycleState"
+				],
+				"properties": {
+					"ruleName": {
+						"type": "string",
+						"description": "Human-readable name for this matching rule.",
+						"example": "Exact amount + reference match"
+					},
+					"priority": {
+						"type": "integer",
+						"description": "Evaluation priority. Lower value = evaluated first. Per REQ-BR-004.",
+						"example": 10,
+						"default": 100
+					},
+					"targetType": {
+						"type": "string",
+						"description": "The type of object this rule matches against.",
+						"enum": [
+							"ap-invoice",
+							"ar-invoice",
+							"gl-transaction",
+							"customer",
+							"vendor"
+						],
+						"example": "ar-invoice"
+					},
+					"predicates": {
+						"type": "array",
+						"description": "List of predicate objects (AND-combined per REQ-BR-005). Supported ops: exact-amount, amount-range, reference-match, counterparty-fuzzy, date-window.",
+						"items": {
+							"type": "object",
+							"properties": {
+								"op": {
+									"type": "string",
+									"enum": [
+										"exact-amount",
+										"amount-range",
+										"reference-match",
+										"counterparty-fuzzy",
+										"date-window"
+									],
+									"description": "Predicate operation type per REQ-BR-005."
+								},
+								"amount": {
+									"type": "number",
+									"description": "For exact-amount: the target amount."
+								},
+								"min": {
+									"type": "number",
+									"description": "For amount-range: minimum amount."
+								},
+								"max": {
+									"type": "number",
+									"description": "For amount-range: maximum amount."
+								},
+								"pattern": {
+									"type": "string",
+									"description": "For reference-match: regex pattern."
+								},
+								"name": {
+									"type": "string",
+									"description": "For counterparty-fuzzy: target name."
+								},
+								"threshold": {
+									"type": "number",
+									"description": "For counterparty-fuzzy: Levenshtein similarity threshold (0-1)."
+								},
+								"days": {
+									"type": "integer",
+									"description": "For date-window: max days from invoice date."
+								}
+							},
+							"required": [
+								"op"
+							]
+						},
+						"example": [
+							{
+								"op": "exact-amount",
+								"amount": 500
+							},
+							{
+								"op": "reference-match",
+								"pattern": "INV-C-2026-\\d+"
+							}
+						]
+					},
+					"autoConfirm": {
+						"type": "boolean",
+						"description": "If true, candidate matches are auto-confirmed without operator review. If false (default), operator must confirm per REQ-BR-006.",
+						"default": false
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this rule.",
+						"example": "adm-consultancy-nl"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"description": "Lifecycle state of the rule.",
+						"enum": [
+							"active",
+							"disabled",
+							"archived"
+						],
+						"example": "active",
+						"default": "active"
+					},
+					"description": {
+						"type": "string",
+						"description": "Optional operator-authored description of the rule's purpose.",
+						"nullable": true
+					},
+					"confidenceScore": {
+						"type": "number",
+						"format": "float",
+						"description": "Confidence score (0.0-1.0) assigned to matches produced by this rule.",
+						"minimum": 0.0,
+						"maximum": 1.0,
+						"example": 0.95,
+						"default": 1.0
+					}
+				},
+				"x-openregister-lifecycle": {
+					"stateField": "lifecycleState",
+					"states": [
+						"active",
+						"disabled",
+						"archived"
+					],
+					"transitions": {
+						"disable": {
+							"from": "active",
+							"to": "disabled",
+							"trigger": "operator-action",
+							"description": "Temporarily suspend rule evaluation."
+						},
+						"reactivate": {
+							"from": "disabled",
+							"to": "active",
+							"trigger": "operator-action",
+							"description": "Reactivate a disabled rule."
+						},
+						"archive": {
+							"from": [
+								"active",
+								"disabled"
+							],
+							"to": "archived",
+							"trigger": "operator-action",
+							"description": "Permanently retire the rule."
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read",
+								"create",
+								"update",
+								"delete"
+							]
+						},
+						"treasurer": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"ReconciliationMatch": {
+				"slug": "ReconciliationMatch",
+				"icon": "CheckCircleOutline",
+				"version": "0.1.0",
+				"title": "Reconciliation Match",
+				"description": "A produced match record linking one or more BankStatementLines to one or more AP/AR invoices or GL transactions. Created by the matching aggregation; confirmed or rejected by the operator or auto-confirmed per autoConfirm. N×M cardinality via bankLineRefs/targetRefs per REQ-BR-006. x-openregister-audit: true per REQ-BR-001.",
+				"type": "object",
+				"x-schema-org": "schema:Action",
+				"x-openregister-audit": true,
+				"required": [
+					"bankLineRefs",
+					"targetType",
+					"targetRefs",
+					"confidence",
+					"state",
+					"administrationId"
+				],
+				"properties": {
+					"bankLineRefs": {
+						"type": "array",
+						"description": "One or more BankStatementLine IDs covered by this match (N-side). Per REQ-BR-006.",
+						"items": {
+							"type": "string"
+						},
+						"example": [
+							"line-uuid-1"
+						]
+					},
+					"targetType": {
+						"type": "string",
+						"description": "The type of objects on the M-side of the match.",
+						"enum": [
+							"ap-invoice",
+							"ar-invoice",
+							"gl-transaction"
+						],
+						"example": "ar-invoice"
+					},
+					"targetRefs": {
+						"type": "array",
+						"description": "One or more target object IDs (AP/AR invoice, GL transaction) covered by this match (M-side). Per REQ-BR-006.",
+						"items": {
+							"type": "string"
+						},
+						"example": [
+							"invoice-uuid-1"
+						]
+					},
+					"confidence": {
+						"type": "number",
+						"format": "float",
+						"description": "Confidence score (0.0-1.0) from the matching rule that produced this candidate.",
+						"minimum": 0.0,
+						"maximum": 1.0,
+						"example": 0.95
+					},
+					"isPartial": {
+						"type": "boolean",
+						"description": "True if the bank line amount is less than the total target amount (partial payment).",
+						"default": false
+					},
+					"state": {
+						"type": "string",
+						"description": "Lifecycle state of the match per REQ-BR-006.",
+						"enum": [
+							"candidate",
+							"confirmed",
+							"rejected"
+						],
+						"example": "candidate",
+						"default": "candidate"
+					},
+					"matchingRuleId": {
+						"type": "string",
+						"description": "FK to the MatchingRule that produced this candidate.",
+						"nullable": true,
+						"example": "rule-uuid-1"
+					},
+					"confirmedBy": {
+						"type": "string",
+						"description": "Nextcloud user ID of the operator who confirmed the match.",
+						"nullable": true,
+						"example": "bookkeeper@gemeente.nl"
+					},
+					"confirmedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "ISO 8601 timestamp when the match was confirmed.",
+						"nullable": true,
+						"example": "2026-06-03T14:00:00Z"
+					},
+					"rejectedReason": {
+						"type": "string",
+						"description": "Operator-provided reason for rejecting this candidate.",
+						"nullable": true
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this match.",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"stateField": "state",
+					"states": [
+						"candidate",
+						"confirmed",
+						"rejected"
+					],
+					"transitions": {
+						"confirm": {
+							"from": "candidate",
+							"to": "confirmed",
+							"trigger": "operator-or-auto-confirm",
+							"description": "Operator confirms or autoConfirm=true auto-confirms the match. Emits CloudEvent for AP/AR lifecycle consumption per REQ-BR-006.",
+							"emits": {
+								"event": "shillinq.reconciliation.match.confirmed",
+								"payload": {
+									"matchId": "$.id",
+									"targetType": "$.targetType",
+									"targetRefs": "$.targetRefs",
+									"isPartial": "$.isPartial"
+								}
+							}
+						},
+						"reject": {
+							"from": "candidate",
+							"to": "rejected",
+							"trigger": "operator-action",
+							"description": "Operator rejects the candidate; related BankStatementLines return to unmatched."
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"candidateMatches": {
+						"description": "Per REQ-BR-009: aggregation that consumes active MatchingRule predicates and emits ReconciliationMatch candidates for each unmatched BankStatementLine. Evaluates rules in priority order (lower value first). Per ADR-031: no MatcherService.php — declared as aggregation metadata.",
+						"source": "BankStatementLine",
+						"filter": {
+							"matchState": "unmatched"
+						},
+						"joinSchema": "MatchingRule",
+						"joinFilter": {
+							"lifecycleState": "active"
+						},
+						"orderBy": "priority",
+						"groupBy": "statementId",
+						"predicateField": "predicates",
+						"confidenceField": "confidenceScore",
+						"emitSchema": "ReconciliationMatch",
+						"deduplication": "first-match-wins"
+					}
+				},
+				"x-openregister-relations": {
+					"matchingRule": {
+						"localField": "matchingRuleId",
+						"relatedSchema": "MatchingRule",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The matching rule that produced this candidate."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read",
+								"update"
+							]
+						},
+						"treasurer": {
+							"permissions": [
+								"read"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
 			}
 		},
 		"SisaReport": {
