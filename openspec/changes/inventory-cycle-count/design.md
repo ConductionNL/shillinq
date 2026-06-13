@@ -1,5 +1,8 @@
 # Design — Inventory Cycle Count / Stock-take
 
+<!-- status: pr-created -->
+<!-- pr: https://codeberg.org/Conduction/shillinq/pulls/294 -->
+
 ## Context
 
 Dutch SMBs use cycle counts to manage shrinkage, obsolescence, and counting errors. 

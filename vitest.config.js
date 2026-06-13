@@ -35,10 +35,31 @@ module.exports = {
 		globals: false,
 		include: ['tests/vitest/**/*.spec.{js,ts}'],
 		exclude: ['tests/e2e/**', 'tests/integration/**', 'tests/Unit/**', 'src/**', 'node_modules/**'],
+		// Inline pinia + vue-demi so vite's transform pipeline (and the
+		// resolve.alias below that pins vue-demi to its Vue 2.7 entry) actually
+		// applies to them. Externalised node_modules ESM is resolved by node's
+		// native loader, which ignores resolve.alias and picks vue-demi's Vue 3
+		// default entry — the one missing the `hasInjectionContext` export.
+		server: {
+			deps: {
+				inline: ['pinia', 'vue-demi'],
+			},
+		},
 	},
 	resolve: {
 		alias: [
 			{ find: '@', replacement: path.resolve(__dirname, 'src') },
+			// Pin vue-demi to its Vue 2.7 ESM entry. Pinia 2.3.x statically
+			// imports `hasInjectionContext` from vue-demi; vue-demi only exports
+			// it from its v2.7 build, and the install-time `vue-demi-switch`
+			// postinstall that rewrites lib/index.mjs does not always run under
+			// `npm ci` (or runs against the Vue 3 default), leaving the Vue 3
+			// entry in place which lacks that named export. Aliasing directly to
+			// the v2.7 entry makes resolution deterministic in CI and locally.
+			{
+				find: /^vue-demi$/,
+				replacement: path.resolve(__dirname, 'node_modules/vue-demi/lib/v2.7/index.mjs'),
+			},
 			{
 				find: /^@nextcloud\/router$/,
 				replacement: path.resolve(__dirname, 'tests/vitest/stubs/nextcloud-router.js'),

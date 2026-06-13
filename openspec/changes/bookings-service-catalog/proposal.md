@@ -1,3 +1,7 @@
+---
+kind: config
+---
+
 # Proposal: bookings-service-catalog
 
 `kind: config` per ADR-032 — service catalogue with time and pricing dimensions.
@@ -5,6 +9,34 @@ Declares `Service` schema with duration, pricing, buffers (pre/post), preparatio
 Consumes OR's relationship engine for service-to-category and service-to-resource linkage.
 No PHP service classes are authored (subject to ADR-031 exception: at most one single-method
 `ServicePricingCalculator` if declarative pricing rules prove insufficient).
+
+## Why
+
+Competitor analysis (21/21 SaaS booking platforms including Bookly, Acuity, Booksy,
+Salonized, Vagaro) shows service catalogues with duration, price, and buffer management
+are table-stakes features. Dutch SMBs — salons, consultancies, event venues, subscription
+businesses — require a structured service catalogue to price services, manage resource
+contention, and calculate staff utilisation.
+
+This is a T1 foundational capability. All booking workloads (appointment scheduling,
+resource allocation, invoice line generation) depend on `Service` existing with complete
+temporal and financial metadata. Without this register, no dependent scheduling,
+booking, or calendar spec can land.
+
+## What Changes
+
+- Declare a new `Service` register in `lib/Settings/shillinq_register.json` with 15
+  fields covering identification (name, code, description), temporal dimensions
+  (duration, prepareTime, bufferBefore, bufferAfter), pricing (basePrice, currency,
+  dynamicPricing flag), categorization (serviceCategory, resourceTypeRef), and
+  lifecycle (status, administrationId).
+- Add `x-openregister-lifecycle` for `draft → active → archived → active` state machine.
+- Add `x-openregister-unique` composite constraint on `[code, administrationId]` per REQ-SC-008.
+- Add JSON Schema `minimum: 0` validation on all temporal and pricing numeric fields.
+- Add 5 Dutch SMB seed data examples (salon haircut, consulting hour, venue rental,
+  event catering, SaaS subscription) to the `objects` array.
+- Add `Service` entity to `openspec/architecture/adr-000-data-model.md`.
+- Add capability spec `specs/bookings-service-catalog/spec.md` with 8 `REQ-SC-*` requirements.
 
 ## Summary
 

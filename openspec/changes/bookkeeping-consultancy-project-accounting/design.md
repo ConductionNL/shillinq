@@ -12,8 +12,9 @@ This change is a **T3 capability slice** per ADR-032 spec-sizing,
 introducing project accounting and departmental budget management
 alongside the existing T1 foundation (chart of accounts, general ledger).
 
-The change is **spec-only**. Implementation lands later through
-`opsx-apply` and the standard Hydra pipeline.
+**Status: pr-created.** Implementation landed via Hydra builder (issue #122).
+Schemas, seed files, repair step extension, and manifest navigation
+are all declared. No PHP service classes authored per ADR-031.
 
 ## Goals
 

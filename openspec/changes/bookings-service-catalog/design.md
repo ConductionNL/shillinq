@@ -1,5 +1,7 @@
 # Design — Service Catalogue (duration, price, buffers)
 
+**status: pr-created**
+
 ## Context
 
 Booking-enabled applications require a service catalogue to define what can be booked,

@@ -1,0 +1,33 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"description": "Openconnector source registry for Shillinq. Sources are referenced by slug from docudesk template output-channel declarations per ADR-019. Credentials and protocol mapping are managed entirely in openconnector; Shillinq holds only the source slug reference.",
+		"imported": "2026-06-03T00:00:00Z"
+	},
+	"sources": [
+		{
+			"slug": "bzk-sisa-upload-2026",
+			"title": "BZK SiSa Upload 2026",
+			"description": "Openconnector source for BZK SiSa-bijlage annual submission. Auth and protocol mapping (OAuth or PKI-cert per BZK specifiek) are openconnector-side. Shillinq references this source by slug from the sisa-bijlage-2026 docudesk template output-channel per REQ-SISA-004. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "gov-sisa",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Shillinq holds this stub to register the source slug in the OR source registry on app install. Operators configure the BZK endpoint URL, authentication method (OAuth 2.0 client credentials or PKI-cert mutual TLS per BZK specifiek), and retry policy via the openconnector admin panel.",
+				"authMethod": "oauth2-or-pki-cert",
+				"endpointPlaceholder": "https://sisa.rijksoverheid.nl/api/v1/bijlage",
+				"protocol": "HTTPS",
+				"contentType": "application/json"
+			},
+			"capabilities": [
+				"submit-sisa-bijlage",
+				"query-submission-status"
+			],
+			"auditEvent": {
+				"onSubmit": "sisa.submitted",
+				"description": "Every submission attempt triggers the sisa.submitted audit event written by the docudesk template's output-channel on response receipt per REQ-SISA-005."
+			}
+		}
+	]
+}

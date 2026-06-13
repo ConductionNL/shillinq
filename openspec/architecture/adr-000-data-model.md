@@ -266,6 +266,26 @@ _Cost-allocation rule declared as schema metadata per ADR-031 (design D2). Store
 
 > **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The earlier `AllocationRule` entry (primary spec: cost-accounting-allocation) described a generic allocation rule with `ruleType/percentage/fixedAmount/frequency/isActive/startDate/endDate` shape. This entry supersedes it for the shillinq bookkeeping tier with the T4 schema-declarative shape per ADR-031 and REQ-CC-004: `sourceAccountPattern/driver/targets/targetDimension/cadence/lifecycleState`. Key changes: (1) no PHP `AllocationService` — rule declared in schema metadata; (2) four named drivers replace free-form `ruleType`; (3) cadence routes execution to lifecycle action (per-posting) or OR ScheduledWorkflow (monthly/period-close); (4) `fixed-percentage` sum-to-100 precondition declared as `x-openregister-lifecycle.requires`. Example seeds ship in `lifecycleState: paused` under `lib/Settings/seeds/allocation-rules/`.
 
+### AnalyticalDimension
+**Schema.org:** `schema:DefinedTerm`
+_An operator-defined custom analytical dimension (e.g. region, product line, channel). Allows administrations to extend GLLine.dimensions with new dimension types without code changes per REQ-CD-001 and REQ-CD-006. Dimensions are declared as OR-managed registers; their values are stored as separate OR register instances identified by the dimension code. The GLLine.dimensions free-form map uses the dimension code as key and the value record code as value, validated via OR's relation engine — no PHP DimensionService. Lifecycle covers active → blocked → archived to govern which dimension keys may be referenced in new GLLine entries._
+**Primary spec:** bookkeeping-cost-centers-dimensions
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Unique dimension identifier used as GLLine.dimensions map keys (e.g. region, product-line); lowercase kebab-case |
+| name | string | Yes | Human-readable dimension name (e.g. Regio, Productlijn) |
+| description | string | No | Description of what this dimension captures |
+| dataType | enum | Yes | One of string, number, date — determines value validation |
+| isHierarchical | boolean | No | Whether values support parent-child relationships for hierarchical roll-up |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+| administrationId | string | Yes | FK to the Administration |
+
+**Relations:**
+- → GLLine (one-to-many, via GLLine.dimensions map entries keyed by this dimension's code)
+
+> **Reconciliation note (bookkeeping-cost-centers-dimensions, 2026-06-03):** This entry introduces `AnalyticalDimension` as a new OR-managed schema in the shillinq register. No prior `AnalyticalDimension` entity existed in this ADR. Custom dimensions are operator-extensible: an administration creates an `AnalyticalDimension` record to define a new dimension type (Region, Department, Channel) without PHP or Vue code changes per REQ-CD-001. Values for each dimension (NL, BE, DE for Region) are stored as separate OR register instances identified by the dimension code, and referenced in `GLLine.dimensions` map entries per REQ-CD-003.
+
 ### ApprovalChain
 **Schema.org:** `ApprovalChain`
 _Configurable approval workflows that define the sequence of approvers for different document types_
@@ -1824,9 +1844,11 @@ _An analytical cost center (kostenplaats) for tracking, allocating, and analysin
 |----------|------|----------|-------------|
 | code | string | Yes | Operator-assigned unique reference within the administration |
 | name | string | Yes | Human-readable cost center name |
+| description | string | No | Detailed cost center description and responsibilities per REQ-CD-002 |
 | parentCode | string | No | FK to parent CostCenter.code for hierarchy via self-relation |
-| responsibleUser | string | No | NC user id of the cost-center owner |
-| lifecycleState | enum | Yes | One of active, blocked, archived (mirrors Account lifecycle per REQ-CoA-005) |
+| responsibleUser | string | No | NC user id of the cost-center owner (maps to spec field 'manager' per REQ-CD-002) |
+| budget | number | No | Allocated annual or periodic budget amount in EUR per REQ-CD-002 |
+| lifecycleState | enum | Yes | One of active, blocked, archived (mirrors Account lifecycle per REQ-CoA-005; maps to spec field 'status') |
 | administrationId | string | Yes | FK to the Administration |
 
 **Relations:**
@@ -3164,8 +3186,11 @@ _A debit-or-credit line within a GLTransaction, encoding polarity in the `side` 
 - → CostCenter (many-to-one, via costCenterCode → CostCenter.code; additive per REQ-CC-003)
 - → KostenDrager (many-to-one, via kostenDragerCode → KostenDrager.code; additive per REQ-CC-003)
 - → Project (many-to-one, via projectCode → Project.code; additive per REQ-CC-003 + REQ-CC-007)
+- → AnalyticalDimension (many-to-one, via dimensions map keys → AnalyticalDimension.code; custom analytical dimensions validated via OR relations engine per REQ-CD-003)
 
 > **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The T1 `GLLine` schema is additively extended with four new optional fields (`costCenterCode`, `kostenDragerCode`, `projectCode`, `dimensions`) per REQ-CC-003. The existing `costCenter` field is retained as the backwards-compatible alias for `costCenterCode`. T1 single-dimension callers remain correct — the new fields are nullable and non-required. Segment P&L aggregations (`segmentPnlByCostCenter`, `segmentPnlByKostenDrager`, `segmentPnlByProject`) are declared on `GLLine` as `x-openregister-aggregations` per ADR-031 + REQ-CC-005; no PHP `SegmentReportService` is authored.
+
+> **Reconciliation note (bookkeeping-cost-centers-dimensions, 2026-06-03):** The `dimensions` free-form map in `GLLine` is further defined by the `bookkeeping-cost-centers-dimensions` spec (REQ-CD-003). Each key in `dimensions` MUST match a registered `AnalyticalDimension.code` for that administration; each value MUST resolve to an existing record code in that dimension's register. Validation is declared via OR's relation engine — no PHP DimensionValidationService. The `AnalyticalDimension` schema (new in this spec) governs the dimension type definitions; see its ADR-000 entry above. Custom analytical dimensions are operator-extensible without PHP or Vue code changes per REQ-CD-001.
 
 ### GLTransaction
 **Schema.org:** `schema:AccountingTransaction`
@@ -3250,6 +3275,7 @@ _Transaction between related entities for transfer pricing, loans, or intercompa
 **Schema.org:** `schema:Product`
 _Product tracked in inventory with stock levels and sourcing information_
 **Primary spec:** procurement-integration
+> **Additive field (inventory-lot-batch-expiry):** `requiresLotTracking` (boolean, default: false) — when true, every inbound receipt of this SKU must be assigned to an InventoryLot. Non-breaking additive field per REQ-LOT-008.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
@@ -3265,10 +3291,12 @@ _Product tracked in inventory with stock levels and sourcing information_
 | minimumStock | number | No | Minimum stock level for reordering |
 | reorderQuantity | number | No | Standard quantity to order |
 | storageLocation | string | No | Physical storage location code |
+| requiresLotTracking | boolean | No | When true, every receipt must include an InventoryLot. Default: false. |
 
 **Relations:**
 - → Supplier (many-to-one)
 - → ProcurementOrder (many-to-many)
+- ← InventoryLot (one-to-many; via InventoryLot.productSku)
 
 ### InventoryStock
 **Schema.org:** `schema:Thing`
@@ -3383,6 +3411,60 @@ _Notification record for lots approaching expiry, lots that have crossed expiry,
 > **Annotation (inventory-lot-batch-expiry, 2026-06-07):** Alert generation is the responsibility of `OCA\Shillinq\Cron\LotExpiryAlertJob` — a daily TimedJob that raises `approaching_expiry` alerts at 30-day and 7-day thresholds and `expired` alerts past `InventoryLot.expiryDate`. Idempotent via the uniqueness key (lotId, alertType, daysBeforeExpiry). Alert lifecycle is declarative — `pending → acknowledged → resolved` with the `resolve` transition stamping `resolvedDate`. Per ADR-032 the daily sweep is a `kind: code` companion to the `kind: config` schema in this same change because the declarative engine cannot express date-arithmetic thresholds across all lots.
 
 > **Annotation (inventory-lot-batch-expiry, 2026-06-07):** The existing Product schema (the shillinq catalogue slug for the spec entity 'InventoryItem') gained one additive optional field via this change: `requiresLotTracking: boolean (default: false)`. When `true`, every receipt of that SKU MUST reference an `InventoryLot` — enforced by the `OCA\Shillinq\Lifecycle\LotTrackingReceiptGuard` on `GoodsReceipt` save (REQ-LOT-008). The patch is non-breaking; existing Product objects without the field default to `false` (lot tracking disabled).
+
+### InventoryLot
+**Schema.org:** `schema:Product`
+_A discrete, homogeneous quantity of a product received together from one supplier on one date, carrying a single expiryDate. Foundation for FEFO picking and expiry alerting._
+**Primary spec:** inventory-lot-batch-expiry
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| lotNumber | string | Yes | Unique lot identifier (e.g. LOT-2026-001) |
+| batchCode | string | No | Supplier-assigned batch or charge reference |
+| productSku | string | Yes | FK to InventoryItem.sku — identifies the product |
+| manufactureDate | date | No | Date of manufacture |
+| expiryDate | date | No | Legal expiry date; drives FEFO sort (NULL-last) |
+| bestBeforeDate | date | No | Best-before quality date; may precede expiryDate |
+| quantity | number | Yes | Current available quantity in this lot (minimum: 0) |
+| unitCode | string | No | UN/CEFACT unit of measure (ZAK, BLIK, KG, ST) |
+| unitCost | number | No | Cost per unit in EUR at time of receipt |
+| warehouseLocation | string | No | Physical bin/rack location code |
+| lotStatus | enum | Yes | One of active, quarantined, expired, exhausted |
+| receivedDate | date | No | Date this lot was received into the warehouse |
+| goodsReceiptId | string | No | FK to GoodsReceipt.id — receipt event that created this lot |
+| notes | string | No | Operator-authored free text |
+
+**Lifecycle states:** `active` → `quarantined` ↔ `active`; `active`/`quarantined` → `expired` (guard: today > expiryDate); `active` → `exhausted` (guard: quantity == 0). `expired` and `exhausted` are terminal.
+
+**FEFO sort:** `x-openregister-sort: [{field: expiryDate, direction: asc, nulls: last}]` — all GET /objects/shillinq/InventoryLot responses return lots in FEFO order by default.
+
+**Relations:**
+- → InventoryItem (many-to-one; via productSku → InventoryItem.sku)
+- → GoodsReceipt (many-to-one; via goodsReceiptId, optional)
+- ← StockMovement (one-to-many; declared on StockMovement.lotId in inventory-stock-movement-ledger)
+- ← ExpiryAlert (one-to-many; via ExpiryAlert.lotId)
+
+### ExpiryAlert
+**Schema.org:** `schema:Thing`
+_Tracks approaching-expiry and missing-expiry notifications for InventoryLot records. Separate entity so multiple alerts at different thresholds can exist per lot and alert history is queryable after lot exhaustion._
+**Primary spec:** inventory-lot-batch-expiry
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| lotId | string | Yes | FK to InventoryLot.id — the lot triggering this alert |
+| alertType | enum | Yes | One of approaching_expiry, expired, missing_expiry_date |
+| daysBeforeExpiry | number | No | Days before expiry at which alert was generated |
+| alertDate | date | Yes | Date the alert was generated |
+| status | enum | Yes | One of pending, acknowledged, resolved |
+| resolvedDate | date | No | Date the alert was acknowledged or resolved |
+| recipientId | string | No | FK to Person.id — the operator notified |
+| notes | string | No | Operator acknowledgement notes |
+
+**Lifecycle states:** `pending` → `acknowledged` → `resolved`; or `pending` → `resolved` directly.
+
+**Relations:**
+- → InventoryLot (many-to-one; via lotId → InventoryLot.id, required)
+- → Person (many-to-one; via recipientId → Person.id, optional)
 
 ### InventoryValuation
 **Schema.org:** `schema:Product`
@@ -5901,6 +5983,32 @@ _Delegation of signing rights to a specific person with defined scope and limits
 **Relations:**
 - → Mandate (many-to-one)
 
+### SisaRegelingIndicator
+**Schema.org:** `schema:Report`
+_Per-regeling indicator for the annual SiSa (Single Information Single Audit) bijlage at jaarrekening. Attaches to a Subsidie of subtype specifieke-uitkering via `subsidieId` FK per ADR-022 child-register pattern — no parallel SiSa subsidie register. Records carry `regelingCode` (BZK regeling identifier, e.g. `D8`), `indicatorCode` (per controleprotocol, e.g. `D8.01`), `indicatorWaarde`, `indicatorEenheid`, `peilDatum`, `controleprotocol` version, and `fiscalYear`. Grouped by `(regelingCode, controleprotocol)` via `x-openregister-aggregations` to produce the annual SiSa-bijlage per REQ-SISA-003. Seeded from `lib/Settings/seeds/sisa-controleprotocol-2026.json` when `featureFlags.gov-sisa` is enabled per REQ-SISA-002. BZK submission rides the openconnector source `bzk-sisa-upload-2026`; every submission writes an immutable audit event of type `sisa.submitted` linked to the parent jaarrekening via the audit-trail hash chain per REQ-SISA-004 and REQ-SISA-005. See `openspec/changes/add-shillinq-sisa-reporting/specs/bookkeeping-sisa-reporting/spec.md` for the full requirement set and GIVEN/WHEN/THEN scenarios._
+**Primary spec:** bookkeeping-sisa-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| subsidieId | string | Yes | FK to parent Subsidie record (subtype specifieke-uitkering) |
+| regelingCode | string | Yes | BZK regeling identifier (e.g. D8) |
+| indicatorCode | string | Yes | Indicator code per controleprotocol (e.g. D8.01) |
+| indicatorOmschrijving | string | Yes | Human-readable indicator description from controleprotocol |
+| indicatorWaarde | number or string | Yes | Reported indicator value for the fiscal year |
+| indicatorEenheid | string | No | Unit of the indicator value (e.g. personen, euro, %) |
+| peilDatum | date | Yes | Reference date (peildatum) for indicator measurement |
+| controleprotocol | string | Yes | Version of the BZK SiSa controleprotocol (e.g. 2026) |
+| fiscalYear | integer | Yes | Fiscal year for which the indicator is reported |
+| administrationId | string | Yes | FK to Administration owning this indicator |
+| sisaSubmissionStatus | enum | No | One of: not-submitted, submitted, accepted, rejected |
+| bijlageDocumentUri | string | No | docudesk URI of the generated SiSa-bijlage document |
+| submissionAuditEventId | string | No | FK to the immutable audit event written on BZK submission |
+
+**Relations:**
+- → Subsidie (many-to-one, via subsidieId — child register of T3 specifieke-uitkering)
+
+> **Note (add-shillinq-sisa-reporting, 2026-06-03):** `SisaRegelingIndicator` is the T4-specialized entity for the annual SiSa-bijlage per BZK controleprotocol. It attaches to the existing T3 `Subsidie` register as a child via FK (ADR-022 D1); no parallel SiSa subsidie register exists. The bijlage is produced as a declarative `x-openregister-aggregations` declaration — no PHP SiSa-bijlage service (ADR-031). Controleprotocol indicators are seeded from `sisa-controleprotocol-2026.json`; the seed is version-pinned so the 2027 release ships as `sisa-controleprotocol-2027.json` alongside the existing file.
+
 ### SisaReport
 **Schema.org:** `schema:Report`
 _Single Information Single Audit (SiSa) compliance report per fiscal year for a Dutch government administration. Aggregates transaction counts, on-time settlement %, audit findings from ComplianceAuditTrail, and overall audit opinion (unqualified/qualified/adverse/disclaimer) per REQ-SISA-001 and REQ-SISA-002._
@@ -7558,6 +7666,33 @@ _Structured XBRL instance document for taxonomies (NTA7, SBR-NT). Contains facts
 **Relations:**
 - → TaxDeclaration (many-to-one)
 
+### XbrlInstance
+**Schema.org:** `schema:DigitalDocument`
+_An SBR/XBRL annual filing instance (jaarrekening, VPB, IB, kredietrapportage, SBR-Wonen) generated as a **declarative transformation** on top of the T3 `FinancialStatement`. The XBRL instance document consumes the already-balanced `FinancialStatement` and maps each line to the configured NL-taxonomie concept via an OpenRegister `Mapping` record (one per entry point + taxonomy version). This is explicitly NOT a re-aggregation of underlying `GLLine` entries — the T3 aggregation is the single source of truth; the XBRL filing must match the statement the operator already signed off. Digipoort submission routes through openconnector by source slug (ADR-022); no SOAP/WS-Security client exists in shillinq. The lifecycle (draft → validated → submitted → accepted / rejected) is declared as `x-openregister-lifecycle` per ADR-031 — no PHP `XbrlReportService`. This entry supersedes the earlier `XBRLInstance` entry (primary spec: tax-levy-management) for SBR annual reporting purposes; the `XBRLInstance` entry is retained for legacy tax-levy-management usage._
+**Primary spec:** bookkeeping-sbr-xbrl-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| instanceNumber | string | Yes | Sequential reference unique per administration + reporting period |
+| entryPoint | enum | Yes | One of kvk-jaarrekening, belastingdienst-vpb, belastingdienst-ib, sbr-banken-kredietrapportage, sbr-wonen |
+| taxonomyVersion | string | Yes | NL-taxonomie version pinned at generation (e.g. nt17, nt18); immutable after creation |
+| reportingPeriodStart | date | Yes | Start of the period covered |
+| reportingPeriodEnd | date | Yes | End of the period covered |
+| sourceStatementId | string | Yes | FK to FinancialStatement this instance derives from (transformation source, not re-aggregation) |
+| mappingId | string | Yes | FK to Mapping record that defines FinancialStatement line → NL-taxonomie concept |
+| instanceXml | string | Yes | Generated XBRL instance document as UTF-8 string |
+| instanceHash | string | Yes | SHA-256 of canonicalised XML for tamper-evidence |
+| state | enum | Yes | One of draft, validated, submitted, accepted, rejected |
+| digipoortReceiptId | string | No | Receipt ID from Digipoort; required for accepted state |
+| administrationId | string | Yes | FK to Administration (per-administration scope per design D4) |
+
+**Relations:**
+- → FinancialStatement (many-to-one, via sourceStatementId — transformation source)
+- → Mapping (many-to-one, via mappingId — NL-taxonomie line→concept map)
+- → Administration (many-to-one)
+
+> **Reconciliation note (add-shillinq-sbr-xbrl-reporting, 2026-06-03):** `XbrlInstance` is the T4 bookkeeping-tier SBR/XBRL annual filing schema registered in `lib/Settings/shillinq_register.json`. It is distinct from the earlier `XBRLInstance` entry (primary spec: tax-levy-management) which covers tax-levy XBRL documents for NTA7/SBR-NT. New SBR annual reporting declarations MUST use `XbrlInstance`. The `XBRLInstance` entry is retained for legacy tax-levy usage. Key design decisions: (D1) XBRL is a transformation over `FinancialStatement`, not a re-aggregation — single source of truth; (D2) Digipoort submission routes through openconnector Source slug — no embedded SOAP client; (D3) lifecycle declared as `x-openregister-lifecycle` — no PHP `XbrlReportService`; (D4) Mapping records are per-administration so operators may override NL-taxonomie seeds with company-specific extension concepts.
+
 ### XBRLTaxonomy
 **Schema.org:** `schema:CreativeWork`
 _XBRL (eXtensible Business Reporting Language) taxonomy definitions for structured tax reporting, compliance, and regulatory filing. Versionable register of official XBRL GL (General Ledger) taxonomy versions published annually by Belastingdienst; multiple versions coexist so historical and corrective filings retain their original mapping context. Reconciled 2026-06-09 alongside the T3 `bookkeeping-sbr-xbrl-reporting` capability (see SBRDocumentType + XBRLMapping below)._
@@ -7627,6 +7762,51 @@ _Account-to-XBRL-GL-concept mapping per REQ-SBR-004. Source = Shillinq `Account.
 - → Account (many-to-one, via sourceAccountId)
 - → XBRLTaxonomy (many-to-one, via taxonomyVersion)
 
+## Audit Trail Requirements (bookkeeping-rekenkamer-audit-pack)
+
+Per REQ-RAP-001 and ADR-022, **every bookkeeping and procurement register MUST carry
+`x-openregister-audit: true`** in its schema declaration in `lib/Settings/shillinq_register.json`.
+
+This rule applies to all T1, T2, T3, and future-tier registers declared by
+`bookkeeping-chart-of-accounts`, `accounts-payable-receivable`, `procurement-compliance`,
+and any subsequent specs. The `tests/validate-registers.js` CI check enforces this rule
+mechanically — any PR adding a new bookkeeping/procurement register without the audit flag
+will fail CI.
+
+### Five Audit Surfaces (REQ-RAP-002 through REQ-RAP-006)
+
+| Surface | Navigation entry | OR UI filter |
+|---------|-----------------|--------------|
+| Signing Audit Trail | Bookkeeping > Signing Audit Trail | `action=signing` on bookkeeping schemas |
+| Destruction Report | Bookkeeping > Destruction Report | `lifecycleStatus=marked-for-destruction,destruction-completed` |
+| Change History | Bookkeeping > Change History | All mutations on bookkeeping schemas |
+| Compliance Export | Bookkeeping > Compliance Export | PII-excluded export; RBAC: auditor group |
+| Activity Feed | Bookkeeping > Activity Feed | Nextcloud Activity app |
+
+### Destruction Schedule Lifecycle (REQ-RAP-008, Archiefwet Article 7)
+
+Financial records follow this state machine for Archiefwet-compliant disposal:
+
+```
+status: active → status: marked-for-destruction → status: destruction-completed
+```
+
+- Records are **never physically deleted** — destruction is a state transition.
+- Each transition is hash-chain certified in OR's audit trail.
+- Only users with the `compliance-officer` role may trigger destruction transitions.
+- Retention period: **7 years** (`selectielijst:5.1.1`, Archiefwet Article 7).
+
+### Anti-Pattern Forbiddance (ADR-022)
+
+The following patterns are REVIEW-BLOCKING in shillinq:
+
+- `lib/Db/Audit*.php` — home-grown audit mapper
+- `lib/Service/Audit*.php` — home-grown audit service
+- `lib/Db/EventLog*.php` or `lib/Db/ChangeLog*.php` — parallel event tables
+- Any app-local audit-event deletion logic
+
+All audit functionality flows through OpenRegister's `audit-trail-immutable` abstraction.
+
 ### BBVProgramma
 **Schema.org:** `schema:DefinedTerm`
 _A BBV programma-indeling entry grouping GL postings by taakveld (gemeente/provincie) or kostentoedeling (waterschap). The `programmaStructure` discriminator controls which classification hierarchy is used per REQ-WSB-002. Declared alongside `WaterschapHeffingPosting` in this change as the T3 `bookkeeping-bbv-compliance` spec shares the same `bbvVariant` overlay. Cross-referencing spec: `bookkeeping-waterschappen-bbv-variant` (add-shillinq-waterschappen-bbv-variant, 2026-06-01)._
@@ -7671,6 +7851,29 @@ _Sector-specific belasting posting for the three waterschapsbelastingen (watersy
 - → Account (many-to-one, via debitAccountNumber → Account.accountNumber)
 - → Account (many-to-one, via creditAccountNumber → Account.accountNumber)
 
+### ProvincialeFondsPosting
+**Schema.org:** `schema:Invoice`
+_Sector-specific posting for provinciale fondsen: provinciefonds, algemene uitkering, decentralisatie-uitkering, and integratie-uitkering. On transition to 'posted', materialises a balanced 2-line GLTransaction per T1 REQ-GL-001 with `sourceReference` pointing back to this posting. Does NOT carry its own ledger lines (design D3). The `fondsType` enum covers the four categories of provinciale uitkeringen from the Rijksoverheid. Lifecycle is declarative via `x-openregister-lifecycle` — no PHP service class. Manifest navigation behind `featureFlags.gov-provincie`. Cross-referencing spec: `bookkeeping-provincies-bbv-variant` (add-shillinq-provincies-bbv-variant, 2026-06-03)._
+**Primary spec:** bookkeeping-provincies-bbv-variant
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| fondsType | enum | Yes | One of provinciefonds, algemene-uitkering, decentralisatie-uitkering, integratie-uitkering |
+| uitkeringJaar | integer | Yes | Fiscal year for this uitkering |
+| uitkeringBedrag | number | Yes | Total uitkering amount in EUR; minimum 0; materialised into balanced GLTransaction on post |
+| uitkeringBeschikking | string | No | Beschikkingnummer (official reference number from the relevant ministry) |
+| journalEntryId | string | No | FK to the materialised GLTransaction.id; set by lifecycle engine on 'posted' |
+| administrationId | string | Yes | FK to the provincie Administration owning this fonds posting |
+| debitAccountNumber | string | No | Account to debit in materialised GLTransaction |
+| creditAccountNumber | string | No | Account to credit in materialised GLTransaction |
+| state | enum | Yes | One of draft, posted, reversed |
+| description | string | No | Operator-authored description or reference |
+
+**Relations:**
+- → GLTransaction (one-to-one, via journalEntryId; materialised on 'posted' transition)
+- → Account (many-to-one, via debitAccountNumber → Account.accountNumber)
+- → Account (many-to-one, via creditAccountNumber → Account.accountNumber)
+
 ### RetentionRule
 **Schema.org:** `schema:DefinedTerm`
 _Archiefwet 1995 + Selectielijst Gemeenten 2020 retention rule. A coded retention classifier declaring the statutory retention obligation (period, trigger, disposition) for a category of shillinq-managed records. Seeded from `selectielijst-gemeenten-2020.json`; operators MAY add administration-scoped overrides above the statutory minimum per the local archiefverordening._
@@ -7699,6 +7902,68 @@ _Archiefwet 1995 + Selectielijst Gemeenten 2020 retention rule. A coded retentio
 | customRetentionYears | integer | No | Operator extension above statutory minimum (MUST be >= retentionYears; never shorter) |
 | administrationId | string | No | Administration scope for per-organisation override rules (absent = applies to all) |
 | daysUntilRetention | integer (derived) | No | Days until rule expires per x-openregister-calculations (null for keep_indefinite) |
+
+### SalarisFeed
+**Schema.org:** `schema:DataFeed`
+_Raw salarisbureau import batch materialised before mapping to balanced JournalEntry records. Decouples "what came in" from "what got booked" and provides an audit trail for reconciliation when a batch fails halfway. Incoming batches arrive via one of four openconnector source rows (ADP / Loket / Visma / Nmbrs). The declarative `x-openregister-mappings` block converts each SalarisFeed record into a balanced `JournalEntry` of subtype `loonkosten` (loonkosten DR = nettoloon CR + sociale-premies CR + loonheffing CR + pensioen CR) without a PHP mapper service per ADR-031. Personnel records inherit the 7-year retention class from the T3 bookkeeping-archiefwet-retention spec (Selectielijst Gemeenten 2020 § 5.1.2)._
+**Primary spec:** bookkeeping-detachering-payroll-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| salarisbureauSlug | enum | Yes | FK to the openconnector source slug; one of adp-salaris-nl, loket-salaris-nl, visma-salaris-nl, nmbrs-salaris-nl |
+| loontijdvak | string | Yes | Payroll period (YYYY-MM format) |
+| employeeId | string | Yes | External employee identifier from the salarisbureau |
+| employeeName | string | No | Employee display name for reconciliation reference |
+| loonkosten | number | No | Total gross wage cost for this employee in this loontijdvak (DR side) |
+| nettoloon | number | No | Net salary (CR side) |
+| socialePremies | number | No | Employer social premiums WW/ZW/WAO (CR side) |
+| loonheffing | number | No | Wage tax withheld (CR side) |
+| pensioen | number | No | Employer pension contribution (CR side) |
+| rawPayload | object | Yes | Raw feed payload as received; stored verbatim for audit |
+| importState | enum | Yes | One of received, mapped, failed |
+| journalEntryId | string | No | Back-reference to the materialised JournalEntry |
+| administrationId | string | Yes | FK to the Administration |
+
+**Relations:**
+- → JournalEntry (many-to-one, via journalEntryId — back-reference after mapping)
+
+### OpdrachtgeversVerklaring
+**Schema.org:** `schema:DigitalDocument`
+_Wet DBA (Deregulering Beoordeling Arbeidsrelaties) position record per ZZP assignment. Records the opdrachtgever–opdrachtnemer relationship, the risicobeoordeling, and the reference to the applicable Belastingdienst model overeenkomst. The lifecycle (`concept → overeengekomen → beëindigd`) triggers the docudesk template render of the standaard opdrachtgeversverklaring on the `overeenkomen` transition — the generated document URI is written back to `verklaringDocumentUri`. No PHP DBA service per ADR-031. Personnel records inherit the 7-year retention class from the T3 bookkeeping-archiefwet-retention spec._
+**Primary spec:** bookkeeping-detachering-payroll-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| zzpId | string | Yes | External identifier for the ZZP-er |
+| zzpNaam | string | Yes | Full name of the ZZP-er |
+| opdrachtBeschrijving | string | Yes | Description of the assignment this verklaring covers |
+| looptijdStart | date | Yes | Assignment start date |
+| looptijdEind | date | Yes | Assignment end date |
+| verklaringStatus | enum | Yes | One of concept, overeengekomen, beëindigd |
+| modelOvereenkomst | string | No | URI to the Belastingdienst model overeenkomst used |
+| verklaringDocumentUri | string | No | docudesk attachment URI of the generated document |
+| risicoBeoordeling | enum | Yes | One of geen, laag, midden, hoog |
+| administrationId | string | Yes | FK to the Administration |
+
+### IB47Record
+**Schema.org:** `schema:TaxForm`
+_Annual IB47 form payload per recipient for submission to the Belastingdienst. The `ontvangerBSN` field is stored encrypted at-rest (`x-openregister-encryption`) and RBAC-restricted: only the `payroll-officer` role may read or write it; every read access is logged to audit-trail-immutable per ADR-022 (AVG + Wet op de loonbelasting requirement). Aggregation over a tax year is declarative via `x-openregister-aggregations` grouping by `(belastingjaar, opdrachtgeverId)`. The reconciliation invariant — final yearly batch totals MUST equal the sum of 12 monthly dry-runs (€0 tolerance) — is declared as an `x-openregister-aggregations.ib47ReconciliationCheck` block. Batch submission flows to the Belastingdienst via the `belastingdienst-ib47-nl` openconnector source referenced from the IB47 docudesk template output-channel per ADR-019. Personnel records inherit the 7-year retention class from the T3 bookkeeping-archiefwet-retention spec (Selectielijst Gemeenten 2020 § 5.1.2)._
+**Primary spec:** bookkeeping-detachering-payroll-administratie
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| belastingjaar | integer | Yes | Tax year this IB47 record covers |
+| opdrachtgeverId | string | Yes | FK to the Administration (opdrachtgever) that made the betalingen |
+| ontvangerNaam | string | Yes | Full name of the payment recipient |
+| ontvangerBSN | string | Yes | BSN of the recipient — encrypted at-rest; RBAC-read restricted to payroll-officer; every read logged to audit-trail-immutable |
+| ontvangerAdres | string | Yes | Full postal address of the recipient |
+| betalingenTotaal | number | Yes | Total payments to this recipient in the belastingjaar (EUR ≥ 0) |
+| betalingTypeCode | enum | Yes | Belastingdienst IB47 payment type code (1–9 per IB47 schema 2026) |
+| isDryRun | boolean | No | True = monthly dry-run; false = final yearly batch record (default false) |
+| dryRunMonth | integer | No | Month number (1–12) this dry-run covers; only meaningful when isDryRun = true |
+| administrationId | string | Yes | FK to the Administration |
+
+> **Retention note (add-shillinq-detachering-payroll-administratie, 2026-06-03):** `SalarisFeed`, `OpdrachtgeversVerklaring`, and `IB47Record` are personnel-records schemas and inherit the 7-year retention class from the T3 `bookkeeping-archiefwet-retention` spec (Selectielijst Gemeenten 2020 § 5.1.2 — dagelijkse financiële verantwoording). Each schema declares `x-openregister-lifecycle.retention.rule: "selectielijst:5.1.2"` in its register fragment. The `IB47Record.ontvangerBSN` field additionally inherits AVG (GDPR) constraints: encryption at-rest, RBAC read-restriction to `payroll-officer`, and immutable audit-trail logging on every read, consistent with `bookkeeping-archiefwet-retention` REQ-ARC-003 (AVG-stelregels).
 
 ### InnovatieboxTariff
 **Schema.org:** `schema:DefinedTerm`

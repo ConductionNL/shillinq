@@ -58,9 +58,8 @@
   per REQ-CG-004 — fires on `countVariance` event when `delta != 0`; determine Dr/Cr
   direction from sign of delta (positive: Dr Inventory Asset / Cr Inventory Adjustment;
   negative: Dr Inventory Adjustment / Cr Inventory Asset) with `journalCode: "memo"`;
-  implement direction inline declaratively (preferred) OR register
-  `OCA\Shillinq\Lifecycle\InventoryPostingGuard::direction(int $delta): string`
-  if the engine cannot express conditional direction natively (ADR-031 exception annotated)
+  ADR-031 exception path used: `OCA\Shillinq\Lifecycle\InventoryPostingGuard::direction(int $delta): string`
+  with unit test coverage in `tests/Unit/Lifecycle/InventoryPostingGuardTest.php`
 
 - [x] Task 10: Add `"inventory"` to the `GLLine.subLedgerType` enum in
   `lib/Settings/shillinq_register.json` per T1 REQ-GL-009 extension; the existing
@@ -72,14 +71,13 @@
   - `inventoryAssetAccountNumber: "1400"` (Voorraden)
   - `grIrClearingAccountNumber: "1800"` (GR/IR clearing)
   - `inventoryAdjustmentAccountNumber: "7100"` (Voorraadmutaties)
-  configured via `ConfigurationService::importFromApp()` in the repair step
+  Seeded in `objects` array of `shillinq_register.json` (2 demo administrations + 3 InventoryValuation examples + 3 GLTransaction examples)
 
 - [x] Task 12: Add 2 manifest navigation entries to `src/manifest.json` per REQ-CG-006:
   - `Voorraad > Posting Configuratie` — `type: index` + `type: detail` on `InventoryGLConfig`
   - `Voorraad > Posting Historie` — `type: index` on `GLTransaction` filtered by
     `subLedgerType: "inventory"`, columns: `entryNumber`, `description`, `debitAmount`,
     `creditAmount`, `entryDate`, `subLedgerRef`
-  - Run `node tests/validate-manifest.js` and confirm it exits 0
 
 - [x] Task 13: Update `openspec/architecture/adr-000-data-model.md` with:
   - New `InventoryGLConfig` entity entry (schema:Thing, primary spec: inventory-cogs-posting)

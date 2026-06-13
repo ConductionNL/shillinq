@@ -7,8 +7,8 @@
 	},
 	"menu": [
 		{
-			"id": "Bookkeeping",
-			"label": "Bookkeeping",
+			"id": "BookkeepingMultiCurrency",
+			"label": "Multi-currency",
 			"icon": "LedgerOutline",
 			"order": 11,
 			"children": [

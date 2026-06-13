@@ -1,5 +1,7 @@
 # Design — Provincies BBV Variant
 
+**status: pr-created**
+
 ## Context
 
 T3's `bookkeeping-bbv-compliance` declares the BBV programma-

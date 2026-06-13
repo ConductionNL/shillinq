@@ -301,4 +301,40 @@ class InitializeSettingsTest extends TestCase
         $this->repairStep->run(output: $this->output);
 
     }//end testRunSkipsSeedWhenLoadConfigurationFails()
+
+    /**
+     * Test that seedInventoryLotsDemoData is NOT called when APP_ENV != development.
+     *
+     * Demo data must never seed on production environments per REQ-LOT design.md.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-lot-batch-expiry/tasks.md#task-14
+     */
+    public function testDemoSeedSkippedWhenNotDevelopmentEnv(): void
+    {
+        putenv('APP_ENV=production');
+
+        $this->settingsService->expects($this->once())
+            ->method('isOpenRegisterAvailable')
+            ->willReturn(true);
+
+        $this->settingsService->expects($this->once())
+            ->method('loadConfigurationForced')
+            ->willReturn(['success' => true, 'version' => '0.2.0', 'skipped' => false]);
+
+        $this->settingsService->expects($this->atLeastOnce())
+            ->method('getSettings')
+            ->willReturn(['rgs_template' => 'mkb', 'administration_id' => '']);
+
+        // The demo-lot seed (which delegates to SettingsService::seedInventoryLots)
+        // must NOT run when APP_ENV != development.
+        $this->settingsService->expects($this->never())
+            ->method('seedInventoryLots');
+
+        $this->repairStep->run(output: $this->output);
+
+        putenv('APP_ENV=');
+
+    }//end testDemoSeedSkippedWhenNotDevelopmentEnv()
 }//end class

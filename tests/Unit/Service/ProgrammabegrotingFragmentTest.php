@@ -175,8 +175,23 @@ final class ProgrammabegrotingFragmentTest extends TestCase
 
         self::assertArrayHasKey('Programmabegroting', $schemas);
         self::assertArrayHasKey('Taakveld', $schemas);
-        // The merge is additive: at least the ten new schemas were added.
-        self::assertGreaterThanOrEqual($baseSchemaCount + 10, count($schemas));
+
+        // The merge is additive and non-destructive: every fragment schema is
+        // present in the merged set, no base schema is dropped, and the count
+        // grows by exactly the number of fragment schemas not already in the
+        // base. Some BBV schemas the fragment declares (Taakveld, Reserve,
+        // Voorziening, Programma, Paragraaf, Begrotingswijziging) are now also
+        // shipped by the consolidated monolith, so the net delta is computed
+        // from the fragment rather than hard-coded to ten.
+        $fragSchemaKeys = array_keys($this->fragment()['components']['schemas']);
+        $netNew         = count(array_diff($fragSchemaKeys, array_keys($base['components']['schemas'])));
+        self::assertSame($baseSchemaCount + $netNew, count($schemas));
+        foreach ($fragSchemaKeys as $fragName) {
+            self::assertArrayHasKey($fragName, $schemas, "$fragName must be present after the fragment merge");
+        }
+        foreach (array_keys($base['components']['schemas']) as $baseName) {
+            self::assertArrayHasKey($baseName, $schemas, "$baseName must survive the fragment merge");
+        }
 
     }//end testFragmentMergesAdditivelyOntoMonolith()
 

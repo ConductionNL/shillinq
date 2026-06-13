@@ -100,10 +100,13 @@ class AccountBalanceGuard
      */
     public function requireZeroBalance(array $account): bool
     {
-        // T1 check: if ObjectService itself is unavailable (OR not installed), permit
+        // T1 probe: if ObjectService itself is unavailable (OR not installed), permit
         // archive by default — no GLLine register can exist without OR (T1 state).
+        // This probe is intentionally separate from the computation resolution below
+        // so that "OR absent" (permit) and "computation failed" (deny, fail-closed)
+        // remain two distinct, independently observable outcomes.
         try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $this->container->get('OCA\OpenRegister\Service\ObjectService');
         } catch (\Throwable) {
             $this->logger->debug(
                 'AccountBalanceGuard: ObjectService not present (T1 state) — archive permitted by default',
@@ -114,7 +117,10 @@ class AccountBalanceGuard
 
         // T2+ check: compute balance via GLLine records. Fail-closed on any error
         // so a transient DB failure denies archive rather than silently permitting it.
+        // The ObjectService is resolved again inside this guarded block so a failure
+        // to resolve it for the computation path also denies (rather than permits).
         try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             // Page through all GLLine records in batches to avoid hitting the
             // default findAll() limit when an account has many postings (L1).
             $pageSize  = 500;

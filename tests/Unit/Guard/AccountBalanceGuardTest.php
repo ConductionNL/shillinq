@@ -156,12 +156,22 @@ class AccountBalanceGuardTest extends TestCase
     /**
      * requireZeroBalance is fail-closed: returns false (denies archive) on exception.
      *
+     * The first container->get() call is the T1 probe in isGLLineRegisterAvailable(),
+     * which must succeed so the guard proceeds to compute the balance. The second call
+     * is the actual computation path, where findAll() throws to trigger fail-closed.
+     *
      * @return void
      */
     public function testRequireZeroBalanceIsFailClosedOnException(): void
     {
-        $objectService = $this->buildObjectServiceStubThatThrows();
-        $this->container->method('get')->willReturn($objectService);
+        // Probe call: succeeds (empty lines) so isGLLineRegisterAvailable() returns true.
+        $probeStub = $this->buildObjectServiceStub(lines: [], closingAccounts: []);
+        // Computation call: throws so the outer try-catch returns false (fail-closed).
+        $throwStub = $this->buildObjectServiceStubThatThrows();
+
+        $this->container->expects($this->exactly(2))
+            ->method('get')
+            ->willReturnOnConsecutiveCalls($probeStub, $throwStub);
 
         $result = $this->guard->requireZeroBalance(['accountNumber' => '0001', 'administrationId' => 'adm-1']);
 
@@ -277,7 +287,9 @@ class AccountBalanceGuardTest extends TestCase
     }//end buildObjectServiceStub()
 
     /**
-     * Build an ObjectService stub that throws on findAll().
+     * Build an ObjectService stub that throws on findAll() only when filters are
+     * present (i.e. the actual balance-computation query), allowing the T1-probe
+     * call (no filters) to succeed so we reach the fail-closed catch branch.
      *
      * @return object
      */
@@ -300,6 +312,12 @@ class AccountBalanceGuardTest extends TestCase
              */
             public function findAll(array $params=[]): array
             {
+                // Allow the availability probe (no filters) to succeed so requireZeroBalance
+                // enters the balance-computation branch and can test fail-closed behavior.
+                if (empty($params['filters']) === true) {
+                    return [];
+                }
+
                 throw new \RuntimeException('DB error');
             }
         };

@@ -2,13 +2,31 @@
   "_meta": {
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
-    "source": "Wet IB 2001 art. 3.6 (urencriterium)",
+    "source": "Wet IB 2001 art. 3.6",
     "version": "2026",
-    "description": "Urencriterium thresholds per Wet IB 2001 art. 3.6 (REQ-ZZP-003/005). Statutory — operators cannot override. 1225 qualifying hours per calendar year for the urencriterium; 800-hour starters threshold for the verlaagd urencriterium.",
-    "imported": "2026-06-01T00:00:00Z"
+    "description": "Urencriterium drempelwaarden per Wet IB 2001 art. 3.6. Versioned seed: updates shipped as urencriterium-thresholds-YYYY.json per REQ-ZZP-007.",
+    "imported": "2026-06-03T00:00:00Z"
   },
   "thresholds": [
-    {"key": "urencriterium", "hours": 1225, "label": "Urencriterium", "fiscalYear": 2026, "citation": "Wet IB 2001 art. 3.6 lid 1", "effectiveFrom": "2001-01-01", "effectiveTo": null},
-    {"key": "starters", "hours": 800, "label": "Verlaagd urencriterium starters", "fiscalYear": 2026, "citation": "Wet IB 2001 art. 3.6 lid 3", "effectiveFrom": "2001-01-01", "effectiveTo": null}
+    {
+      "id": "urencriterium-default",
+      "label": "Urencriterium (standaard)",
+      "hoursRequired": 1225,
+      "description": "Minimum 1225 uren per kalenderjaar voor zelfstandigenaftrek-kwalificatie (Wet IB 2001 art. 3.6 lid 1).",
+      "appliesTo": "all",
+      "citation": "Wet IB 2001 art. 3.6 lid 1",
+      "effectiveFrom": "2001-01-01",
+      "effectiveTo": null
+    },
+    {
+      "id": "urencriterium-starters-opvolgers",
+      "label": "Urencriterium (starters-opvolgers)",
+      "hoursRequired": 800,
+      "description": "Verlaagd criterium van 800 uren voor starters-opvolgers per Wet IB 2001 art. 3.6 lid 2 (bedrijfsovername na ziekte of overlijden).",
+      "appliesTo": "starters-opvolgers",
+      "citation": "Wet IB 2001 art. 3.6 lid 2",
+      "effectiveFrom": "2001-01-01",
+      "effectiveTo": null
+    }
   ]
 }
