@@ -1,5 +1,7 @@
 # Design — Rekenkamer Audit Pack
 
+**status: pr-created**
+
 ## Context
 
 T2's `bookkeeping-audit-trail` already provides the immutable

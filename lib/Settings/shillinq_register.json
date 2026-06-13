@@ -529,6 +529,195 @@
 							]
 						}
 					}
+				},
+				"x-openregister-aggregations": {
+					"nivraBestanden": {
+						"description": "NIVRA-bestand audit-trail export for a given period. Projects every GLTransaction header, its GLLine rows, every audit event for those transactions, the period trial-balance totals, and the chart-of-accounts in effect. Output via docudesk XML template (nivra-bestand-{standardVersion}.xml). Declarative per ADR-031 — no NivraExportService. REQ-REK-002.",
+						"params": [
+							"periodId",
+							"administrationId"
+						],
+						"sources": {
+							"transactions": {
+								"schema": "GLTransaction",
+								"filter": {
+									"periodId": "@params.periodId",
+									"administrationId": "@params.administrationId",
+									"state": "posted"
+								}
+							},
+							"lines": {
+								"schema": "GLLine",
+								"joinOn": "transactionId",
+								"from": "transactions"
+							},
+							"trialBalance": {
+								"schema": "TrialBalance",
+								"filter": {
+									"fiscalYearId": "@params.periodId",
+									"administrationId": "@params.administrationId"
+								}
+							},
+							"chartOfAccounts": {
+								"schema": "Account",
+								"filter": {
+									"administrationId": "@params.administrationId"
+								}
+							},
+							"auditEvents": {
+								"source": "audit-trail-immutable",
+								"filter": {
+									"objectSchema": "GLTransaction",
+									"objectId": {
+										"in": "@transactions.id"
+									}
+								}
+							}
+						},
+						"output": {
+							"template": "docudesk://templates/shillinq/nivra-bestand-{@params.standardVersion}.xml",
+							"format": "xml"
+						},
+						"_meta": {
+							"standardVersion": "@params.standardVersion",
+							"reproducible": true,
+							"auditHashFields": [
+								"periodId",
+								"administrationId",
+								"standardVersion"
+							]
+						},
+						"auditExport": {
+							"eventType": "audit-pack.nivra.exported",
+							"fields": [
+								"operatorId",
+								"periodId",
+								"documentUri",
+								"documentSha256"
+							],
+							"enforcement": "audit-trail-immutable",
+							"description": "Every NIVRA-bestand export writes an immutable audit event with operator id, period id, document URI, and SHA-256. Enforced by OR's audit engine per REQ-REK-005 — NOT by app-local logging."
+						}
+					},
+					"steekproef": {
+						"description": "Deterministic random sample of GLTransaction records for a period. Given periodId, sampleSize, and seed, returns the same sampleSize GLTransaction ids in the same order on every run with the same seed. Exportable as a docudesk werkpapier. REQ-REK-003. If OR's aggregation engine cannot guarantee seed reproducibility across versions, the implementing cycle falls back to OCA\\Shillinq\\Audit\\SteekproefSampler::sample per ADR-031 exception path (single-method ~20-LOC PHP).",
+						"params": [
+							"periodId",
+							"sampleSize",
+							"seed",
+							"administrationId"
+						],
+						"sources": {
+							"transactions": {
+								"schema": "GLTransaction",
+								"filter": {
+									"periodId": "@params.periodId",
+									"administrationId": "@params.administrationId",
+									"state": "posted"
+								},
+								"orderBy": "transactionNumber",
+								"sampling": {
+									"method": "deterministic-seed",
+									"size": "@params.sampleSize",
+									"seed": "@params.seed",
+									"reproducible": true
+								}
+							}
+						},
+						"output": {
+							"template": "docudesk://templates/shillinq/steekproef-werkpapier.xml",
+							"format": "xml"
+						},
+						"_meta": {
+							"reproducible": true,
+							"auditHashFields": [
+								"periodId",
+								"sampleSize",
+								"seed"
+							],
+							"engineLimitFallback": "OCA\\Shillinq\\Audit\\SteekproefSampler::sample"
+						},
+						"auditExport": {
+							"eventType": "audit-pack.steekproef.exported",
+							"fields": [
+								"operatorId",
+								"periodId",
+								"documentUri",
+								"documentSha256"
+							],
+							"enforcement": "audit-trail-immutable",
+							"description": "Every steekproef export writes an immutable audit event. Enforced by OR's audit engine per REQ-REK-005."
+						}
+					},
+					"ledenraadpleging": {
+						"description": "Redacted slice of period postings for raadsleden review. Fields tagged redactFor: raadsleden are replaced by a stable SHA-256 hash. Default redacted fields: GLTransaction.description (free-text), GLLine.description (free-text), GLLine.subLedgerRef (AP/AR sub-ledger reference). Numeric and account-code fields remain intact. REQ-REK-004.",
+						"params": [
+							"periodId",
+							"administrationId"
+						],
+						"sources": {
+							"transactions": {
+								"schema": "GLTransaction",
+								"filter": {
+									"periodId": "@params.periodId",
+									"administrationId": "@params.administrationId",
+									"state": "posted"
+								}
+							},
+							"lines": {
+								"schema": "GLLine",
+								"joinOn": "transactionId",
+								"from": "transactions"
+							}
+						},
+						"redaction": {
+							"profile": "raadsleden",
+							"fields": [
+								{
+									"schema": "GLTransaction",
+									"field": "description",
+									"redactFor": [
+										"raadsleden"
+									],
+									"strategy": "sha256-hash",
+									"description": "Free-text transaction description may carry personal data (e.g. 'Salaris Jan Bakker maart 2026'). Replaced by SHA-256 hash per REQ-REK-004."
+								},
+								{
+									"schema": "GLLine",
+									"field": "description",
+									"redactFor": [
+										"raadsleden"
+									],
+									"strategy": "sha256-hash",
+									"description": "Line-level free-text description. Replaced by SHA-256 hash."
+								},
+								{
+									"schema": "GLLine",
+									"field": "subLedgerRef",
+									"redactFor": [
+										"raadsleden"
+									],
+									"strategy": "sha256-hash",
+									"description": "AP/AR sub-ledger reference may identify natural persons. Replaced by SHA-256 hash."
+								}
+							]
+						},
+						"output": {
+							"template": "docudesk://templates/shillinq/ledenraadpleging-export.xml",
+							"format": "xml"
+						},
+						"auditExport": {
+							"eventType": "audit-pack.ledenraadpleging.exported",
+							"fields": [
+								"operatorId",
+								"periodId",
+								"documentUri",
+								"documentSha256"
+							],
+							"enforcement": "audit-trail-immutable",
+							"description": "Every ledenraadpleging export writes an immutable audit event. Enforced by OR's audit engine per REQ-REK-005."
+						}
+					}
 				}
 			},
 			"GLLine": {
