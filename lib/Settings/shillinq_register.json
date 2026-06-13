@@ -4600,9 +4600,9 @@
 					},
 					"description": {
 						"type": "string",
-						"description": "Operator-readable description of the cost center per REQ-CPA-104.",
+						"description": "Detailed cost center description and responsibilities per REQ-CD-002.",
 						"nullable": true,
-						"example": "Client acquisition and account management"
+						"example": "Verantwoordelijk voor administratieve verwerking en interne rapportage"
 					},
 					"status": {
 						"type": "string",
@@ -4615,11 +4615,12 @@
 						"example": "active"
 					},
 					"budget": {
-						"type": "integer",
-						"description": "Operator-set baseline budget in integer cents (e.g. 10000000 = €100.000,00) per REQ-CPA-104. Used as input to allocatedBudget rollup (REQ-CPA-107).",
+						"type": "number",
+						"description": "Allocated annual or periodic budget amount in EUR per REQ-CD-002. Constrained to two-decimal cents via multipleOf to prevent IEEE-754 drift in variance arithmetic per REQ-RR-004.",
 						"nullable": true,
 						"minimum": 0,
-						"example": 10000000
+						"multipleOf": 0.01,
+						"example": 250000.0
 					},
 					"spentToDate": {
 						"type": "integer",
@@ -17196,6 +17197,125 @@
 						}
 					}
 				}
+			},
+			"AnalyticalDimension": {
+				"slug": "AnalyticalDimension",
+				"icon": "TagMultipleOutline",
+				"version": "0.1.0",
+				"title": "Analytical Dimension",
+				"description": "An operator-defined custom analytical dimension (e.g. region, product line, channel). Allows administrations to extend GLLine.dimensions with new dimension types without code changes per REQ-CD-001 and REQ-CD-006. Values for each dimension are stored as separate OR register instances.",
+				"x-schema-org": "schema:DefinedTerm",
+				"x-openregister-purpose": "dimension",
+				"type": "object",
+				"required": [
+					"code",
+					"name",
+					"dataType",
+					"administrationId"
+				],
+				"properties": {
+					"code": {
+						"type": "string",
+						"description": "Unique dimension identifier used as keys in GLLine.dimensions map (e.g. region, product-line). Must be lowercase kebab-case per REQ-CD-006.",
+						"pattern": "^[a-z][a-z0-9-]*$",
+						"example": "region"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable dimension name shown in the UI per REQ-CD-006.",
+						"example": "Regio"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of what this dimension captures per REQ-CD-006.",
+						"nullable": true,
+						"example": "Geographic region for segment P&L analysis"
+					},
+					"dataType": {
+						"type": "string",
+						"enum": [
+							"string",
+							"number",
+							"date"
+						],
+						"description": "Value data type determining validation of dimension values per REQ-CD-006.",
+						"example": "string"
+					},
+					"isHierarchical": {
+						"type": "boolean",
+						"default": false,
+						"description": "Whether values in this dimension support parent-child relationships for hierarchical roll-up per REQ-CD-006 + REQ-CD-007.",
+						"example": false
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this analytical dimension per REQ-CD-006.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Dimension is usable in GLLine.dimensions map entries."
+						},
+						"blocked": {
+							"label": "Blocked",
+							"description": "Readable but rejected as target of new GLLine dimension entries."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Historical only; GLLine entries with this dimension code remain queryable."
+						}
+					},
+					"transitions": {
+						"block": {
+							"from": "active",
+							"to": "blocked",
+							"label": "Block dimension",
+							"description": "Prevent new GLLine entries using this dimension key."
+						},
+						"unblock": {
+							"from": "blocked",
+							"to": "active",
+							"label": "Unblock dimension",
+							"description": "Re-enable GLLine entries using this dimension key."
+						},
+						"archive": {
+							"from": [
+								"active",
+								"blocked"
+							],
+							"to": "archived",
+							"label": "Archive dimension",
+							"description": "Move to historical archive; existing GLLine dimension entries remain queryable."
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
 			}
 		},
 		"SisaReport": {
@@ -19685,6 +19805,125 @@
 						"permissions": [
 							"read"
 						]
+					}
+				}
+			},
+			"AnalyticalDimension": {
+				"slug": "AnalyticalDimension",
+				"icon": "TagMultipleOutline",
+				"version": "0.1.0",
+				"title": "Analytical Dimension",
+				"description": "An operator-defined custom analytical dimension (e.g. region, product line, channel). Allows administrations to extend GLLine.dimensions with new dimension types without code changes per REQ-CD-001 and REQ-CD-006. Values for each dimension are stored as separate OR register instances.",
+				"x-schema-org": "schema:DefinedTerm",
+				"x-openregister-purpose": "dimension",
+				"type": "object",
+				"required": [
+					"code",
+					"name",
+					"dataType",
+					"administrationId"
+				],
+				"properties": {
+					"code": {
+						"type": "string",
+						"description": "Unique dimension identifier used as keys in GLLine.dimensions map (e.g. region, product-line). Must be lowercase kebab-case per REQ-CD-006.",
+						"pattern": "^[a-z][a-z0-9-]*$",
+						"example": "region"
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable dimension name shown in the UI per REQ-CD-006.",
+						"example": "Regio"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of what this dimension captures per REQ-CD-006.",
+						"nullable": true,
+						"example": "Geographic region for segment P&L analysis"
+					},
+					"dataType": {
+						"type": "string",
+						"enum": [
+							"string",
+							"number",
+							"date"
+						],
+						"description": "Value data type determining validation of dimension values per REQ-CD-006.",
+						"example": "string"
+					},
+					"isHierarchical": {
+						"type": "boolean",
+						"default": false,
+						"description": "Whether values in this dimension support parent-child relationships for hierarchical roll-up per REQ-CD-006 + REQ-CD-007.",
+						"example": false
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration owning this analytical dimension per REQ-CD-006.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Dimension is usable in GLLine.dimensions map entries."
+						},
+						"blocked": {
+							"label": "Blocked",
+							"description": "Readable but rejected as target of new GLLine dimension entries."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Historical only; GLLine entries with this dimension code remain queryable."
+						}
+					},
+					"transitions": {
+						"block": {
+							"from": "active",
+							"to": "blocked",
+							"label": "Block dimension",
+							"description": "Prevent new GLLine entries using this dimension key."
+						},
+						"unblock": {
+							"from": "blocked",
+							"to": "active",
+							"label": "Unblock dimension",
+							"description": "Re-enable GLLine entries using this dimension key."
+						},
+						"archive": {
+							"from": [
+								"active",
+								"blocked"
+							],
+							"to": "archived",
+							"label": "Archive dimension",
+							"description": "Move to historical archive; existing GLLine dimension entries remain queryable."
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"admin": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
 					}
 				}
 			}

@@ -266,6 +266,26 @@ _Cost-allocation rule declared as schema metadata per ADR-031 (design D2). Store
 
 > **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The earlier `AllocationRule` entry (primary spec: cost-accounting-allocation) described a generic allocation rule with `ruleType/percentage/fixedAmount/frequency/isActive/startDate/endDate` shape. This entry supersedes it for the shillinq bookkeeping tier with the T4 schema-declarative shape per ADR-031 and REQ-CC-004: `sourceAccountPattern/driver/targets/targetDimension/cadence/lifecycleState`. Key changes: (1) no PHP `AllocationService` — rule declared in schema metadata; (2) four named drivers replace free-form `ruleType`; (3) cadence routes execution to lifecycle action (per-posting) or OR ScheduledWorkflow (monthly/period-close); (4) `fixed-percentage` sum-to-100 precondition declared as `x-openregister-lifecycle.requires`. Example seeds ship in `lifecycleState: paused` under `lib/Settings/seeds/allocation-rules/`.
 
+### AnalyticalDimension
+**Schema.org:** `schema:DefinedTerm`
+_An operator-defined custom analytical dimension (e.g. region, product line, channel). Allows administrations to extend GLLine.dimensions with new dimension types without code changes per REQ-CD-001 and REQ-CD-006. Dimensions are declared as OR-managed registers; their values are stored as separate OR register instances identified by the dimension code. The GLLine.dimensions free-form map uses the dimension code as key and the value record code as value, validated via OR's relation engine — no PHP DimensionService. Lifecycle covers active → blocked → archived to govern which dimension keys may be referenced in new GLLine entries._
+**Primary spec:** bookkeeping-cost-centers-dimensions
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| code | string | Yes | Unique dimension identifier used as GLLine.dimensions map keys (e.g. region, product-line); lowercase kebab-case |
+| name | string | Yes | Human-readable dimension name (e.g. Regio, Productlijn) |
+| description | string | No | Description of what this dimension captures |
+| dataType | enum | Yes | One of string, number, date — determines value validation |
+| isHierarchical | boolean | No | Whether values support parent-child relationships for hierarchical roll-up |
+| lifecycleState | enum | Yes | One of active, blocked, archived |
+| administrationId | string | Yes | FK to the Administration |
+
+**Relations:**
+- → GLLine (one-to-many, via GLLine.dimensions map entries keyed by this dimension's code)
+
+> **Reconciliation note (bookkeeping-cost-centers-dimensions, 2026-06-03):** This entry introduces `AnalyticalDimension` as a new OR-managed schema in the shillinq register. No prior `AnalyticalDimension` entity existed in this ADR. Custom dimensions are operator-extensible: an administration creates an `AnalyticalDimension` record to define a new dimension type (Region, Department, Channel) without PHP or Vue code changes per REQ-CD-001. Values for each dimension (NL, BE, DE for Region) are stored as separate OR register instances identified by the dimension code, and referenced in `GLLine.dimensions` map entries per REQ-CD-003.
+
 ### ApprovalChain
 **Schema.org:** `ApprovalChain`
 _Configurable approval workflows that define the sequence of approvers for different document types_
@@ -1824,9 +1844,11 @@ _An analytical cost center (kostenplaats) for tracking, allocating, and analysin
 |----------|------|----------|-------------|
 | code | string | Yes | Operator-assigned unique reference within the administration |
 | name | string | Yes | Human-readable cost center name |
+| description | string | No | Detailed cost center description and responsibilities per REQ-CD-002 |
 | parentCode | string | No | FK to parent CostCenter.code for hierarchy via self-relation |
-| responsibleUser | string | No | NC user id of the cost-center owner |
-| lifecycleState | enum | Yes | One of active, blocked, archived (mirrors Account lifecycle per REQ-CoA-005) |
+| responsibleUser | string | No | NC user id of the cost-center owner (maps to spec field 'manager' per REQ-CD-002) |
+| budget | number | No | Allocated annual or periodic budget amount in EUR per REQ-CD-002 |
+| lifecycleState | enum | Yes | One of active, blocked, archived (mirrors Account lifecycle per REQ-CoA-005; maps to spec field 'status') |
 | administrationId | string | Yes | FK to the Administration |
 
 **Relations:**
@@ -3164,8 +3186,11 @@ _A debit-or-credit line within a GLTransaction, encoding polarity in the `side` 
 - → CostCenter (many-to-one, via costCenterCode → CostCenter.code; additive per REQ-CC-003)
 - → KostenDrager (many-to-one, via kostenDragerCode → KostenDrager.code; additive per REQ-CC-003)
 - → Project (many-to-one, via projectCode → Project.code; additive per REQ-CC-003 + REQ-CC-007)
+- → AnalyticalDimension (many-to-one, via dimensions map keys → AnalyticalDimension.code; custom analytical dimensions validated via OR relations engine per REQ-CD-003)
 
 > **Reconciliation note (add-shillinq-cost-centers-dimensions, 2026-06-03):** The T1 `GLLine` schema is additively extended with four new optional fields (`costCenterCode`, `kostenDragerCode`, `projectCode`, `dimensions`) per REQ-CC-003. The existing `costCenter` field is retained as the backwards-compatible alias for `costCenterCode`. T1 single-dimension callers remain correct — the new fields are nullable and non-required. Segment P&L aggregations (`segmentPnlByCostCenter`, `segmentPnlByKostenDrager`, `segmentPnlByProject`) are declared on `GLLine` as `x-openregister-aggregations` per ADR-031 + REQ-CC-005; no PHP `SegmentReportService` is authored.
+
+> **Reconciliation note (bookkeeping-cost-centers-dimensions, 2026-06-03):** The `dimensions` free-form map in `GLLine` is further defined by the `bookkeeping-cost-centers-dimensions` spec (REQ-CD-003). Each key in `dimensions` MUST match a registered `AnalyticalDimension.code` for that administration; each value MUST resolve to an existing record code in that dimension's register. Validation is declared via OR's relation engine — no PHP DimensionValidationService. The `AnalyticalDimension` schema (new in this spec) governs the dimension type definitions; see its ADR-000 entry above. Custom analytical dimensions are operator-extensible without PHP or Vue code changes per REQ-CD-001.
 
 ### GLTransaction
 **Schema.org:** `schema:AccountingTransaction`

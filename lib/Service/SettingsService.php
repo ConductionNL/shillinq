@@ -1553,6 +1553,147 @@ class SettingsService
     }//end seedProductAttributes()
 
     /**
+     * Seed example CostCenter and AnalyticalDimension records, idempotently.
+     *
+     * Imports cost-centers.json (3-5 realistic Dutch cost centers) and
+     * analytical-dimensions.json (Region, Product Line dimension definitions)
+     * from lib/Settings/seeds/dimensions/. Deduplication key is the `code` field
+     * per schema per administration — re-importing skips existing records and
+     * preserves operator edits per REQ-CD-002 + REQ-CD-006.
+     *
+     * @param string $administrationId The administration FK to stamp on seeded records.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     *
+     * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-10
+     * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-11
+     */
+    public function seedDimensions(string $administrationId): array
+    {
+        if ($this->isOpenRegisterAvailable() === false) {
+            return [
+                'success' => false,
+                'message' => 'OpenRegister is not installed or enabled.',
+            ];
+        }
+
+        if ($administrationId === '') {
+            return [
+                'success' => false,
+                'message' => 'administrationId must not be empty.',
+            ];
+        }
+
+        $seedFiles = [
+            ['file' => 'cost-centers.json', 'schema' => 'CostCenter', 'key' => 'objects'],
+            ['file' => 'analytical-dimensions.json', 'schema' => 'AnalyticalDimension', 'key' => 'objects'],
+        ];
+
+        $seeded  = 0;
+        $skipped = 0;
+
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->getRegisterSlug();
+
+            foreach ($seedFiles as $seedConfig) {
+                $seedPath = __DIR__.'/../Settings/seeds/dimensions/'.$seedConfig['file'];
+
+                if (file_exists(filename: $seedPath) === false) {
+                    $this->logger->warning(
+                        'Shillinq: dimension seed file not found at '.$seedPath
+                    );
+                    continue;
+                }
+
+                $content = file_get_contents(filename: $seedPath);
+                if ($content === false) {
+                    $this->logger->warning(
+                        'Shillinq: failed to read dimension seed file: '.$seedConfig['file']
+                    );
+                    continue;
+                }
+
+                $data = json_decode(json: $content, associative: true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $this->logger->warning(
+                        'Shillinq: failed to parse dimension seed file: '.$seedConfig['file']
+                    );
+                    continue;
+                }
+
+                $objects = ($data[$seedConfig['key']] ?? []);
+
+                foreach ($objects as $object) {
+                    $code = ($object['code'] ?? null);
+                    if ($code === null) {
+                        continue;
+                    }
+
+                    $object['administrationId'] = $administrationId;
+
+                    // ADR-022: use the real ObjectService fluent API (setRegister/setSchema/findAll);
+                    // findObjects() does not exist on OpenRegister's ObjectService.
+                    $existing = $objectService
+                        ->setRegister($registerSlug)
+                        ->setSchema($seedConfig['schema'])
+                        ->findAll(
+                            [
+                                'filters' => [
+                                    'code'             => $code,
+                                    'administrationId' => $administrationId,
+                                ],
+                                'limit'   => 1,
+                            ]
+                        );
+
+                    if (empty($existing) === false) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $objectService->saveObject(
+                        object: $object,
+                        register: $registerSlug,
+                        schema: $seedConfig['schema'],
+                    );
+                    $seeded++;
+                }//end foreach
+            }//end foreach
+
+            $this->logger->info(
+                'Shillinq: dimension seeds imported',
+                [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ]
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Dimension seeds imported successfully.',
+                'seeded'  => $seeded,
+                'skipped' => $skipped,
+            ];
+        } catch (\Exception $e) {
+            // Narrowed from \Throwable to \Exception per code-review (RR-Yellow):
+            // raw \Throwable messages can leak internal class paths into NC admin UI.
+            $this->logger->error(
+                'Shillinq: dimension seeding failed',
+                [
+                    'exception' => $e->getMessage(),
+                    'trace'     => $e->getTraceAsString(),
+                ]
+            );
+            return [
+                'success' => false,
+                'message' => 'Dimension seeding failed; check server logs for details.',
+            ];
+        }//end try
+
+    }//end seedDimensions()
+
+    /**
      * Import ProductAttribute records into OpenRegister, skipping existing ones.
      *
      * Deduplication key is (name, applicableToCategories), preserving operator
