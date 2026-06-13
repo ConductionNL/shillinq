@@ -555,6 +555,38 @@
 			]
 		},
 		{
+			"id": "Subsidies",
+			"label": "Subsidies",
+			"icon": "CashMultiple",
+			"order": 22,
+			"visibility": {
+				"field": "administrationType",
+				"in": [
+					"gemeente",
+					"provincie",
+					"waterschap",
+					"mkb",
+					"zzp"
+				]
+			},
+			"children": [
+				{
+					"id": "SubsidieAanvragen",
+					"label": "Aanvragen",
+					"icon": "FileDocumentOutline",
+					"route": "SubsidieAanvragen",
+					"order": 10
+				},
+				{
+					"id": "SubsidieTerugvorderingen",
+					"label": "Terugvorderingen",
+					"icon": "CashRefund",
+					"route": "SubsidieTerugvorderingen",
+					"order": 20
+				}
+			]
+		},
+		{
 			"id": "Belastingen",
 			"label": "Belastingen",
 			"icon": "icon-category-monitoring",
@@ -16465,6 +16497,243 @@
 						"description": "Renders an ENSIA-XSD-compliant XML payload for upload to the landelijke ENSIA-portal (REQ-ENSIA-007). The active ENSIA cyclus MUST be in college-akkoord with a signed verklaringFile."
 					}
 				]
+			}
+		},
+		{
+			"id": "SubsidieAanvragen",
+			"route": "/subsidies/aanvragen",
+			"type": "index",
+			"title": "Subsidie aanvragen",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"gemeente",
+						"provincie",
+						"waterschap",
+						"mkb",
+						"zzp"
+					]
+				},
+				"columns": [
+					{
+						"key": "subsidieNumber",
+						"label": "Subsidienummer",
+						"sortable": true
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Begunstigde / Verstrekker",
+						"sortable": true
+					},
+					{
+						"key": "regelingNaam",
+						"label": "Regeling",
+						"sortable": true
+					},
+					{
+						"key": "direction",
+						"label": "Richting",
+						"sortable": true
+					},
+					{
+						"key": "aangevraagdBedrag",
+						"label": "Aangevraagd (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-aanvraagDate",
+				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "SubsidieTerugvorderingen",
+			"route": "/subsidies/terugvorderingen",
+			"type": "index",
+			"title": "Terugvorderingen",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"defaultFilter": {
+					"state": "teruggevorderd"
+				},
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"gemeente",
+						"provincie",
+						"waterschap",
+						"mkb",
+						"zzp"
+					]
+				},
+				"columns": [
+					{
+						"key": "subsidieNumber",
+						"label": "Subsidienummer",
+						"sortable": true
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Begunstigde",
+						"sortable": true
+					},
+					{
+						"key": "teruggevorderdBedrag",
+						"label": "Terug te vorderen (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-uitbetaaldBedrag",
+				"detailRoute": "SubsidieDetail"
+			}
+		},
+		{
+			"id": "SubsidieDetail",
+			"route": "/subsidies/:id",
+			"type": "detail",
+			"title": "Subsidie",
+			"config": {
+				"register": "shillinq",
+				"schema": "Subsidie",
+				"fields": [
+					{
+						"key": "subsidieNumber",
+						"label": "Subsidienummer",
+						"type": "string"
+					},
+					{
+						"key": "direction",
+						"label": "Richting",
+						"type": "string"
+					},
+					{
+						"key": "counterpartyName",
+						"label": "Begunstigde / Verstrekker",
+						"type": "string"
+					},
+					{
+						"key": "regelingNaam",
+						"label": "Regeling",
+						"type": "string"
+					},
+					{
+						"key": "regelingArtikel",
+						"label": "Artikel",
+						"type": "string"
+					},
+					{
+						"key": "aanvraagDate",
+						"label": "Aanvraagdatum",
+						"type": "date"
+					},
+					{
+						"key": "beschikkingDate",
+						"label": "Beschikkingsdatum",
+						"type": "date"
+					},
+					{
+						"key": "vaststellingDate",
+						"label": "Vaststellingsdatum",
+						"type": "date"
+					},
+					{
+						"key": "aangevraagdBedrag",
+						"label": "Aangevraagd (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "verleendBedrag",
+						"label": "Verleend (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "vastgesteldBedrag",
+						"label": "Vastgesteld (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "uitbetaaldBedrag",
+						"label": "Uitbetaald (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "teruggevorderdBedrag",
+						"label": "Teruggevorderd (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "state",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "beschikkingUri",
+						"label": "Verleningsbeschikking",
+						"type": "link"
+					},
+					{
+						"key": "vaststellingUri",
+						"label": "Vaststellingsbeschikking",
+						"type": "link"
+					},
+					{
+						"key": "prestatieverantwoording",
+						"label": "Prestatieverantwoording",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administratie",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"relatedLists": [
+					{
+						"id": "repayment-instalments",
+						"title": "Terugbetalingstermijnen",
+						"schema": "RepaymentInstallment",
+						"filter": {
+							"subsidieId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "installmentNumber",
+								"label": "#"
+							},
+							{
+								"key": "dueDate",
+								"label": "Vervaldatum"
+							},
+							{
+								"key": "amount",
+								"label": "Bedrag (EUR)"
+							},
+							{
+								"key": "state",
+								"label": "Status"
+							},
+							{
+								"key": "paidDate",
+								"label": "Betaald op"
+							}
+						]
+					}
+				],
+				"indexRoute": "SubsidieAanvragen"
 			}
 		}
 	]
