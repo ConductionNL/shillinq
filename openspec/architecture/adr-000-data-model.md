@@ -3275,6 +3275,7 @@ _Transaction between related entities for transfer pricing, loans, or intercompa
 **Schema.org:** `schema:Product`
 _Product tracked in inventory with stock levels and sourcing information_
 **Primary spec:** procurement-integration
+> **Additive field (inventory-lot-batch-expiry):** `requiresLotTracking` (boolean, default: false) — when true, every inbound receipt of this SKU must be assigned to an InventoryLot. Non-breaking additive field per REQ-LOT-008.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
@@ -3290,10 +3291,12 @@ _Product tracked in inventory with stock levels and sourcing information_
 | minimumStock | number | No | Minimum stock level for reordering |
 | reorderQuantity | number | No | Standard quantity to order |
 | storageLocation | string | No | Physical storage location code |
+| requiresLotTracking | boolean | No | When true, every receipt must include an InventoryLot. Default: false. |
 
 **Relations:**
 - → Supplier (many-to-one)
 - → ProcurementOrder (many-to-many)
+- ← InventoryLot (one-to-many; via InventoryLot.productSku)
 
 ### InventoryStock
 **Schema.org:** `schema:Thing`
@@ -3408,6 +3411,60 @@ _Notification record for lots approaching expiry, lots that have crossed expiry,
 > **Annotation (inventory-lot-batch-expiry, 2026-06-07):** Alert generation is the responsibility of `OCA\Shillinq\Cron\LotExpiryAlertJob` — a daily TimedJob that raises `approaching_expiry` alerts at 30-day and 7-day thresholds and `expired` alerts past `InventoryLot.expiryDate`. Idempotent via the uniqueness key (lotId, alertType, daysBeforeExpiry). Alert lifecycle is declarative — `pending → acknowledged → resolved` with the `resolve` transition stamping `resolvedDate`. Per ADR-032 the daily sweep is a `kind: code` companion to the `kind: config` schema in this same change because the declarative engine cannot express date-arithmetic thresholds across all lots.
 
 > **Annotation (inventory-lot-batch-expiry, 2026-06-07):** The existing Product schema (the shillinq catalogue slug for the spec entity 'InventoryItem') gained one additive optional field via this change: `requiresLotTracking: boolean (default: false)`. When `true`, every receipt of that SKU MUST reference an `InventoryLot` — enforced by the `OCA\Shillinq\Lifecycle\LotTrackingReceiptGuard` on `GoodsReceipt` save (REQ-LOT-008). The patch is non-breaking; existing Product objects without the field default to `false` (lot tracking disabled).
+
+### InventoryLot
+**Schema.org:** `schema:Product`
+_A discrete, homogeneous quantity of a product received together from one supplier on one date, carrying a single expiryDate. Foundation for FEFO picking and expiry alerting._
+**Primary spec:** inventory-lot-batch-expiry
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| lotNumber | string | Yes | Unique lot identifier (e.g. LOT-2026-001) |
+| batchCode | string | No | Supplier-assigned batch or charge reference |
+| productSku | string | Yes | FK to InventoryItem.sku — identifies the product |
+| manufactureDate | date | No | Date of manufacture |
+| expiryDate | date | No | Legal expiry date; drives FEFO sort (NULL-last) |
+| bestBeforeDate | date | No | Best-before quality date; may precede expiryDate |
+| quantity | number | Yes | Current available quantity in this lot (minimum: 0) |
+| unitCode | string | No | UN/CEFACT unit of measure (ZAK, BLIK, KG, ST) |
+| unitCost | number | No | Cost per unit in EUR at time of receipt |
+| warehouseLocation | string | No | Physical bin/rack location code |
+| lotStatus | enum | Yes | One of active, quarantined, expired, exhausted |
+| receivedDate | date | No | Date this lot was received into the warehouse |
+| goodsReceiptId | string | No | FK to GoodsReceipt.id — receipt event that created this lot |
+| notes | string | No | Operator-authored free text |
+
+**Lifecycle states:** `active` → `quarantined` ↔ `active`; `active`/`quarantined` → `expired` (guard: today > expiryDate); `active` → `exhausted` (guard: quantity == 0). `expired` and `exhausted` are terminal.
+
+**FEFO sort:** `x-openregister-sort: [{field: expiryDate, direction: asc, nulls: last}]` — all GET /objects/shillinq/InventoryLot responses return lots in FEFO order by default.
+
+**Relations:**
+- → InventoryItem (many-to-one; via productSku → InventoryItem.sku)
+- → GoodsReceipt (many-to-one; via goodsReceiptId, optional)
+- ← StockMovement (one-to-many; declared on StockMovement.lotId in inventory-stock-movement-ledger)
+- ← ExpiryAlert (one-to-many; via ExpiryAlert.lotId)
+
+### ExpiryAlert
+**Schema.org:** `schema:Thing`
+_Tracks approaching-expiry and missing-expiry notifications for InventoryLot records. Separate entity so multiple alerts at different thresholds can exist per lot and alert history is queryable after lot exhaustion._
+**Primary spec:** inventory-lot-batch-expiry
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| lotId | string | Yes | FK to InventoryLot.id — the lot triggering this alert |
+| alertType | enum | Yes | One of approaching_expiry, expired, missing_expiry_date |
+| daysBeforeExpiry | number | No | Days before expiry at which alert was generated |
+| alertDate | date | Yes | Date the alert was generated |
+| status | enum | Yes | One of pending, acknowledged, resolved |
+| resolvedDate | date | No | Date the alert was acknowledged or resolved |
+| recipientId | string | No | FK to Person.id — the operator notified |
+| notes | string | No | Operator acknowledgement notes |
+
+**Lifecycle states:** `pending` → `acknowledged` → `resolved`; or `pending` → `resolved` directly.
+
+**Relations:**
+- → InventoryLot (many-to-one; via lotId → InventoryLot.id, required)
+- → Person (many-to-one; via recipientId → Person.id, optional)
 
 ### InventoryValuation
 **Schema.org:** `schema:Product`
