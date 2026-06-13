@@ -1,5 +1,7 @@
 # Design — EMU Reporting
 
+**status: pr-created**
+
 ## Context
 
 EMU-saldo and EMU-schuld are reported per ESA 2010 conventions,
