@@ -1,5 +1,7 @@
 # Design — SBR/XBRL Reporting
 
+**status: pr-created**
+
 ## Decisions
 
 ### D1 — XBRL is a transformation on top of `FinancialStatement`, not a re-aggregation

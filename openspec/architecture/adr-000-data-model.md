@@ -7558,6 +7558,33 @@ _Structured XBRL instance document for taxonomies (NTA7, SBR-NT). Contains facts
 **Relations:**
 - → TaxDeclaration (many-to-one)
 
+### XbrlInstance
+**Schema.org:** `schema:DigitalDocument`
+_An SBR/XBRL annual filing instance (jaarrekening, VPB, IB, kredietrapportage, SBR-Wonen) generated as a **declarative transformation** on top of the T3 `FinancialStatement`. The XBRL instance document consumes the already-balanced `FinancialStatement` and maps each line to the configured NL-taxonomie concept via an OpenRegister `Mapping` record (one per entry point + taxonomy version). This is explicitly NOT a re-aggregation of underlying `GLLine` entries — the T3 aggregation is the single source of truth; the XBRL filing must match the statement the operator already signed off. Digipoort submission routes through openconnector by source slug (ADR-022); no SOAP/WS-Security client exists in shillinq. The lifecycle (draft → validated → submitted → accepted / rejected) is declared as `x-openregister-lifecycle` per ADR-031 — no PHP `XbrlReportService`. This entry supersedes the earlier `XBRLInstance` entry (primary spec: tax-levy-management) for SBR annual reporting purposes; the `XBRLInstance` entry is retained for legacy tax-levy-management usage._
+**Primary spec:** bookkeeping-sbr-xbrl-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| instanceNumber | string | Yes | Sequential reference unique per administration + reporting period |
+| entryPoint | enum | Yes | One of kvk-jaarrekening, belastingdienst-vpb, belastingdienst-ib, sbr-banken-kredietrapportage, sbr-wonen |
+| taxonomyVersion | string | Yes | NL-taxonomie version pinned at generation (e.g. nt17, nt18); immutable after creation |
+| reportingPeriodStart | date | Yes | Start of the period covered |
+| reportingPeriodEnd | date | Yes | End of the period covered |
+| sourceStatementId | string | Yes | FK to FinancialStatement this instance derives from (transformation source, not re-aggregation) |
+| mappingId | string | Yes | FK to Mapping record that defines FinancialStatement line → NL-taxonomie concept |
+| instanceXml | string | Yes | Generated XBRL instance document as UTF-8 string |
+| instanceHash | string | Yes | SHA-256 of canonicalised XML for tamper-evidence |
+| state | enum | Yes | One of draft, validated, submitted, accepted, rejected |
+| digipoortReceiptId | string | No | Receipt ID from Digipoort; required for accepted state |
+| administrationId | string | Yes | FK to Administration (per-administration scope per design D4) |
+
+**Relations:**
+- → FinancialStatement (many-to-one, via sourceStatementId — transformation source)
+- → Mapping (many-to-one, via mappingId — NL-taxonomie line→concept map)
+- → Administration (many-to-one)
+
+> **Reconciliation note (add-shillinq-sbr-xbrl-reporting, 2026-06-03):** `XbrlInstance` is the T4 bookkeeping-tier SBR/XBRL annual filing schema registered in `lib/Settings/shillinq_register.json`. It is distinct from the earlier `XBRLInstance` entry (primary spec: tax-levy-management) which covers tax-levy XBRL documents for NTA7/SBR-NT. New SBR annual reporting declarations MUST use `XbrlInstance`. The `XBRLInstance` entry is retained for legacy tax-levy usage. Key design decisions: (D1) XBRL is a transformation over `FinancialStatement`, not a re-aggregation — single source of truth; (D2) Digipoort submission routes through openconnector Source slug — no embedded SOAP client; (D3) lifecycle declared as `x-openregister-lifecycle` — no PHP `XbrlReportService`; (D4) Mapping records are per-administration so operators may override NL-taxonomie seeds with company-specific extension concepts.
+
 ### XBRLTaxonomy
 **Schema.org:** `schema:CreativeWork`
 _XBRL (eXtensible Business Reporting Language) taxonomy definitions for structured tax reporting, compliance, and regulatory filing. Versionable register of official XBRL GL (General Ledger) taxonomy versions published annually by Belastingdienst; multiple versions coexist so historical and corrective filings retain their original mapping context. Reconciled 2026-06-09 alongside the T3 `bookkeeping-sbr-xbrl-reporting` capability (see SBRDocumentType + XBRLMapping below)._
