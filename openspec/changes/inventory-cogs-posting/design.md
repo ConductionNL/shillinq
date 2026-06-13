@@ -15,8 +15,7 @@ is declarative: the lifecycle extension fires the GL action; no PHP
 `CogsPostingService` is authored. Per ADR-022, administration-level
 account mapping is held in a dedicated `InventoryGLConfig` register.
 
-The change is **spec-only**. Implementation lands later through
-`opsx-apply` and the standard Hydra pipeline.
+**Status: pr-created.** Implemented via `opsx-apply` cycle; see PR for shillinq issue #132.
 
 ## Goals
 
