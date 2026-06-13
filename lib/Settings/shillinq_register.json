@@ -1196,6 +1196,12 @@
 						"description": "BBV regulatory variant under which this account is interpreted. 'waterschap' activates the BBVW (BBV-Waterschappen) framework per REQ-WSB-001.",
 						"nullable": true,
 						"example": "waterschap"
+					},
+					"vpbPligtig": {
+						"type": "boolean",
+						"description": "Marks this account as Vpb-pligtig per Wet modernisering Vpb-plicht (2016). When true, postings against this account contribute to the Vpb-balans aggregation (REQ-VPB-001). Default false — only accounts explicitly tagged by the bookkeeper contribute.",
+						"default": false,
+						"example": false
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -4473,6 +4479,12 @@
 						"type": "string",
 						"description": "FK to the Administration owning this cost center.",
 						"example": "adm-1"
+					},
+					"ondernemingsActiviteit": {
+						"type": "boolean",
+						"description": "Marks this cost center as an ondernemingsactiviteit per Wet modernisering Vpb-plicht (2016) and bookkeeping-market-government-separation. When true, the cost center may be referenced by a VpbBalansLink (REQ-VPB-002). Default false.",
+						"default": false,
+						"example": false
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -15018,6 +15030,516 @@
 						}
 					}
 				}
+			},
+			"IPAssetValuation": {
+				"slug": "IPAssetValuation",
+				"icon": "BulbOutline",
+				"version": "0.1.0",
+				"title": "IP Asset Valuation",
+				"description": "Immaterieel activum (IP asset) qualifying for the innovatiebox under the afpelmethode (Wet Vpb art. 12b). Applied to afpelmethode elections only — no per-asset entries are required for the forfaitair route. Per REQ-IBA-001. No PHP IP-service per ADR-031.",
+				"type": "object",
+				"x-schema-org": "schema:Intangible",
+				"required": [
+					"assetNaam",
+					"assetType",
+					"valuationBedrag",
+					"valuationDate",
+					"applicableTariff",
+					"vpbBalansLinkId",
+					"administrationId"
+				],
+				"properties": {
+					"assetNaam": {
+						"type": "string",
+						"description": "Human-readable name of the IP asset.",
+						"example": "Shillinq ML-belastingmodule v2"
+					},
+					"assetType": {
+						"type": "string",
+						"description": "Type of qualifying immaterieel activum per Wet Vpb art. 12b.",
+						"enum": [
+							"s-en-o-certificaat",
+							"octrooi",
+							"kwekersrecht",
+							"softwareprogrammatuur",
+							"model-tekening"
+						],
+						"example": "s-en-o-certificaat"
+					},
+					"wbsoVerklaringNummer": {
+						"type": "string",
+						"description": "FK to WBSO S&O-verklaring number (required when assetType is s-en-o-certificaat). References the sibling add-shillinq-wbso-sno-administratie spec.",
+						"nullable": true,
+						"example": "WBSO-2026-NL-001"
+					},
+					"octrooiNummer": {
+						"type": "string",
+						"description": "Patent registration number (required when assetType is octrooi).",
+						"nullable": true,
+						"example": "EP1234567B1"
+					},
+					"valuationBedrag": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Capitalised valuation of the IP asset in euros.",
+						"example": 250000.0
+					},
+					"valuationDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Effective valuation date.",
+						"example": "2026-01-01"
+					},
+					"applicableTariff": {
+						"type": "number",
+						"description": "Innovatiebox tariff in effect at valuationDate (from InnovatieboxTariff seed). Default 0.09 per Wet Vpb art. 12b 2026.",
+						"default": 0.09,
+						"example": 0.09
+					},
+					"vpbBalansLinkId": {
+						"type": "string",
+						"description": "FK to VpbBalansLink (REQ-VPB-002 from bookkeeping-vpb-corporate-tax). Links the IP asset to the Vpb-balans.",
+						"example": "vpb-balans-link-2026-001"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration that owns this IP asset.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-relations": {
+					"winstToerekeningen": {
+						"localField": "id",
+						"relatedSchema": "WinstToerekening",
+						"relatedField": "ipAssetId",
+						"cardinality": "one-to-many",
+						"description": "All WinstToerekening records attributed to this IP asset."
+					}
+				},
+				"x-openregister-audit-trail": {
+					"events": {
+						"tariff-application": {
+							"trigger": "onUpdate",
+							"condition": "applicableTariff changed",
+							"description": "Records tariff-application events when the applicable tariff changes on an IP asset; immutable per ADR-022.",
+							"immutable": true,
+							"fields": [
+								"assetNaam",
+								"assetType",
+								"applicableTariff",
+								"valuationDate"
+							]
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						}
+					}
+				}
+			},
+			"InnovatieboxElection": {
+				"slug": "InnovatieboxElection",
+				"icon": "VoteOutline",
+				"version": "0.1.0",
+				"title": "Innovatiebox Election",
+				"description": "Per-fiscal-year route election for the innovatiebox: forfaitair (Wet Vpb art. 12bg — 25% of operating profit capped at EUR 25 000) or afpelmethode (Wet Vpb art. 12b — explicit per-IP-asset valuation). Exactly one election per (administrationId, fiscalYear) is enforced by the aggregation. No PHP method-selector service per ADR-031.",
+				"type": "object",
+				"x-schema-org": "schema:Event",
+				"required": [
+					"administrationId",
+					"fiscalYear",
+					"route",
+					"applicableTariff"
+				],
+				"properties": {
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration that owns this election.",
+						"example": "adm-1"
+					},
+					"fiscalYear": {
+						"type": "integer",
+						"description": "Fiscal year the election applies to.",
+						"example": 2026
+					},
+					"route": {
+						"type": "string",
+						"description": "Elected innovatiebox route for this fiscal year. Mutually exclusive per (administrationId, fiscalYear).",
+						"enum": [
+							"forfaitair",
+							"afpelmethode"
+						],
+						"example": "forfaitair"
+					},
+					"applicableTariff": {
+						"type": "number",
+						"description": "Innovatiebox tariff rate for the elected fiscal year (from InnovatieboxTariff seed). Default 0.09 per Wet Vpb art. 12b 2026.",
+						"default": 0.09,
+						"example": 0.09
+					},
+					"forfaitairCapBedrag": {
+						"type": "number",
+						"description": "Statutory cap on innovation-attributed profit under the forfaitair route (Wet Vpb art. 12bg). Required when route is forfaitair. Default 25000.",
+						"default": 25000.0,
+						"nullable": true,
+						"example": 25000.0
+					},
+					"forfaitairPercentage": {
+						"type": "number",
+						"description": "Percentage of operating profit attributed to innovation under the forfaitair route (Wet Vpb art. 12bg). Required when route is forfaitair. Default 0.25.",
+						"default": 0.25,
+						"nullable": true,
+						"example": 0.25
+					},
+					"operatingProfit": {
+						"type": "number",
+						"description": "Operating profit for the fiscal year consumed by the forfaitair aggregation. Sourced from the Vpb-balans (REQ-VPB-003).",
+						"nullable": true,
+						"example": 200000.0
+					},
+					"vpbAangifteId": {
+						"type": "string",
+						"description": "Optional FK to the Vpb-aangifte record this election is attached to.",
+						"nullable": true,
+						"example": "vpb-aangifte-2026-adm-1"
+					}
+				},
+				"x-openregister-aggregations": {
+					"innovatieboxAdministratie": {
+						"description": "Computes innovation-attributed profit and Vpb impact for the elected fiscal year. Branches on InnovatieboxElection.route: forfaitair applies min(forfaitairPercentage * operatingProfit, forfaitairCapBedrag); afpelmethode sums per-asset toegerekendeWinst * applicableTariff from WinstToerekening. Per REQ-IBA-003. No PHP innovatiebox-service per ADR-031.",
+						"branchOn": "route",
+						"branches": {
+							"forfaitair": {
+								"operations": {
+									"innovationAttributedProfit": {
+										"operation": "min",
+										"operands": [
+											{
+												"operation": "multiply",
+												"fields": [
+													"forfaitairPercentage",
+													"operatingProfit"
+												]
+											},
+											"forfaitairCapBedrag"
+										],
+										"target": "innovationAttributedProfit"
+									},
+									"vpbImpact": {
+										"operation": "multiply",
+										"fields": [
+											"innovationAttributedProfit",
+											"applicableTariff"
+										],
+										"target": "vpbImpact"
+									},
+									"capApplied": {
+										"operation": "check",
+										"expression": "(forfaitairPercentage * operatingProfit) > forfaitairCapBedrag",
+										"target": "capApplied",
+										"auditEvent": "cap-application"
+									}
+								}
+							},
+							"afpelmethode": {
+								"join": {
+									"schema": "WinstToerekening",
+									"condition": "WinstToerekening.ipAssetId IN (SELECT id FROM IPAssetValuation WHERE administrationId = @self.administrationId)",
+									"filter": {
+										"administrationId": "@self.administrationId",
+										"fiscalYear": "@self.fiscalYear"
+									}
+								},
+								"operations": {
+									"totalToegerekendWinst": {
+										"field": "WinstToerekening.toegerekendeWinst",
+										"operation": "sum",
+										"target": "totalToegerekendWinst"
+									},
+									"vpbImpact": {
+										"operation": "multiply",
+										"fields": [
+											"totalToegerekendWinst",
+											"applicableTariff"
+										],
+										"target": "vpbImpact",
+										"auditEvent": "tariff-application"
+									}
+								}
+							}
+						}
+					},
+					"electionsPerAdministrationYear": {
+						"description": "Count of elections per (administrationId, fiscalYear). MUST equal exactly 1 per pair — enforces the mutual-exclusion invariant per REQ-IBA-002 and Task 10.",
+						"groupBy": [
+							"administrationId",
+							"fiscalYear"
+						],
+						"operations": {
+							"electionCount": {
+								"field": "id",
+								"operation": "count",
+								"target": "electionCount",
+								"diagnostic": "Multiple InnovatieboxElection records for administrationId={{administrationId}} fiscalYear={{fiscalYear}} — mutual exclusion violated"
+							}
+						}
+					}
+				},
+				"x-openregister-calculations": {
+					"innovationAttributedProfitDisplay": {
+						"expression": "@self.route == 'forfaitair' ? min(@self.forfaitairPercentage * @self.operatingProfit, @self.forfaitairCapBedrag) : null",
+						"type": "number",
+						"description": "Computed innovation-attributed profit for forfaitair elections. Null for afpelmethode (aggregation provides the value).",
+						"example": 25000.0
+					}
+				},
+				"x-openregister-audit-trail": {
+					"events": {
+						"route-election": {
+							"trigger": "onCreate",
+							"description": "Records the route election event with administrationId, fiscalYear, route, and applicableTariff in the immutable audit trail.",
+							"immutable": true,
+							"fields": [
+								"administrationId",
+								"fiscalYear",
+								"route",
+								"applicableTariff"
+							]
+						},
+						"route-changed": {
+							"trigger": "onUpdate",
+							"condition": "route changed",
+							"description": "Records when an election route is changed; immutable per ADR-022.",
+							"immutable": true,
+							"fields": [
+								"administrationId",
+								"fiscalYear",
+								"route",
+								"applicableTariff"
+							]
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						}
+					}
+				}
+			},
+			"InnovatieboxTariff": {
+				"slug": "InnovatieboxTariff",
+				"icon": "PercentOutline",
+				"version": "0.1.0",
+				"title": "Innovatiebox Tariff",
+				"description": "Statutory innovatiebox tariff schedule and forfaitair parameters per fiscal period. Seeded from innovatiebox-tariefen.json; a future tariff change ships as a new seed file without code changes per REQ-IBA-007.",
+				"type": "object",
+				"x-schema-org": "schema:DefinedTerm",
+				"required": [
+					"applicableTariff",
+					"effectiveFrom"
+				],
+				"properties": {
+					"effectiveFrom": {
+						"type": "integer",
+						"description": "First fiscal year for which this tariff applies (inclusive).",
+						"example": 2021
+					},
+					"effectiveTo": {
+						"type": "integer",
+						"description": "Last fiscal year for which this tariff applies (inclusive). Null means open-ended (current rate).",
+						"nullable": true,
+						"example": null
+					},
+					"applicableTariff": {
+						"type": "number",
+						"description": "Innovatiebox statutory tariff as a decimal (e.g. 0.09 for 9%).",
+						"example": 0.09
+					},
+					"forfaitairPercentage": {
+						"type": "number",
+						"description": "Forfaitair percentage of operating profit attributed to innovation (Wet Vpb art. 12bg). Default 0.25.",
+						"nullable": true,
+						"example": 0.25
+					},
+					"forfaitairCapBedrag": {
+						"type": "number",
+						"description": "Statutory cap on innovation-attributed profit under the forfaitair route in EUR (Wet Vpb art. 12bg). Default 25000.",
+						"nullable": true,
+						"example": 25000.0
+					},
+					"description": {
+						"type": "string",
+						"description": "Human-readable label for this tariff period.",
+						"nullable": true,
+						"example": "Innovatiebox tarief 2021-heden (Wet Vpb art. 12b 2026)"
+					},
+					"_meta": {
+						"type": "object",
+						"description": "Seed metadata.",
+						"properties": {
+							"source": {
+								"type": "string",
+								"description": "Legal source citation for this tariff record.",
+								"example": "Wet Vpb art. 12b/12bg"
+							}
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"read"
+							]
+						},
+						"administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						}
+					}
+				}
+			},
+			"WinstToerekening": {
+				"slug": "WinstToerekening",
+				"icon": "ChartBarOutline",
+				"version": "0.1.0",
+				"title": "Winst Toerekening",
+				"description": "Per-period profit attribution from operating profit to one or more IP assets via a configurable verdeelsleutel. Used by the afpelmethode route of the innovatiebox aggregation per REQ-IBA-004. MUST NOT be populated when InnovatieboxElection.route is forfaitair. No PHP winsttoerekening service per ADR-031.",
+				"type": "object",
+				"x-schema-org": "schema:QuantitativeValue",
+				"required": [
+					"ipAssetId",
+					"periodId",
+					"toegerekendeWinst",
+					"verdeelsleutel",
+					"administrationId"
+				],
+				"properties": {
+					"ipAssetId": {
+						"type": "string",
+						"description": "FK to IPAssetValuation.id this toerekening applies to.",
+						"example": "ip-asset-uuid-1"
+					},
+					"periodId": {
+						"type": "string",
+						"description": "FK to FiscalPeriod this toerekening covers.",
+						"example": "2026-Q1"
+					},
+					"toegerekendeWinst": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Profit attributed to the IP asset for this period in euros.",
+						"example": 60000.0
+					},
+					"verdeelsleutel": {
+						"type": "string",
+						"description": "Method used to attribute profit to the IP asset.",
+						"enum": [
+							"omzet-aandeel",
+							"r-en-d-uren",
+							"custom-formula"
+						],
+						"example": "omzet-aandeel"
+					},
+					"parameters": {
+						"type": "object",
+						"description": "Verdeelsleutel parameters. For omzet-aandeel: {totalRevenue, ipRevenue}. For r-en-d-uren: {totalHours, ipHours}. For custom-formula: arbitrary JSON.",
+						"nullable": true,
+						"example": {
+							"totalRevenue": 1000000.0,
+							"ipRevenue": 300000.0
+						}
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration that owns this toerekening.",
+						"example": "adm-1"
+					}
+				},
+				"x-openregister-calculations": {
+					"verdeelsleutelRatio": {
+						"expression": "@self.verdeelsleutel == 'omzet-aandeel' && @self.parameters.totalRevenue > 0 ? @self.parameters.ipRevenue / @self.parameters.totalRevenue : (@self.verdeelsleutel == 'r-en-d-uren' && @self.parameters.totalHours > 0 ? @self.parameters.ipHours / @self.parameters.totalHours : null)",
+						"type": "number",
+						"description": "Computed verdeelsleutel ratio for omzet-aandeel and r-en-d-uren methods. Null for custom-formula.",
+						"example": 0.3
+					}
+				},
+				"x-openregister-relations": {
+					"ipAsset": {
+						"localField": "ipAssetId",
+						"relatedSchema": "IPAssetValuation",
+						"relatedField": "id",
+						"cardinality": "many-to-one",
+						"description": "The IP asset this profit attribution belongs to."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						},
+						"administrator": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						}
+					}
+				}
 			}
 		},
 		"SisaReport": {
@@ -20198,6 +20720,150 @@
 							"documentUri"
 						],
 						"hashChainLink": "jaarrekening"
+					}
+				}
+			}
+		},
+		"VpbBalansLink": {
+			"slug": "VpbBalansLink",
+			"icon": "ScaleBalanceOutline",
+			"version": "0.1.0",
+			"title": "Vpb-balans Link",
+			"description": "Overlay register tying an ondernemingsactiviteit cost-center to its cluster of Vpb-pligtige accounts. Declared per REQ-VPB-002 from bookkeeping-vpb-corporate-tax. No PHP service — pure schema overlay per ADR-031.",
+			"type": "object",
+			"x-schema-org": "schema:Dataset",
+			"required": [
+				"costCenterId",
+				"accountNumbers",
+				"vpbPligtigVanaf",
+				"administrationId"
+			],
+			"properties": {
+				"costCenterId": {
+					"type": "string",
+					"description": "FK to a CostCenter with ondernemingsActiviteit: true. The ondernemingsactiviteit whose Vpb-pligtige accounts this link declares.",
+					"example": "KC-OA-001"
+				},
+				"accountNumbers": {
+					"type": "array",
+					"description": "Array of Account.accountNumber strings identifying the Vpb-pligtige accounts belonging to this ondernemingsactiviteit. All referenced accounts MUST have vpbPligtig: true.",
+					"items": {
+						"type": "string"
+					},
+					"minItems": 1,
+					"example": [
+						"4100",
+						"4200",
+						"4300",
+						"8000",
+						"8100"
+					]
+				},
+				"vpbPligtigVanaf": {
+					"type": "string",
+					"format": "date",
+					"description": "Start date of Vpb-pligtigheid for this ondernemingsactiviteit cluster per Wet modernisering Vpb-plicht (2016). Postings before this date are excluded from the Vpb-balans.",
+					"example": "2016-01-01"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration owning this link. Scopes the link to one bookkeeping administration.",
+					"example": "adm-1"
+				},
+				"description": {
+					"type": "string",
+					"description": "Operator-authored description of the ondernemingsactiviteit Vpb cluster.",
+					"nullable": true,
+					"example": "Zwembad exploitatie — ondernemingsactiviteit per Vpb-plicht 2016"
+				}
+			},
+			"x-openregister-aggregations": {
+				"vpbBalansFiltered": {
+					"description": "Vpb-balans per ondernemingsactiviteit (REQ-VPB-003): filters GLLine rows where accountNumber is in this link's accountNumbers AND the periodId falls within a closed fiscal year (fiscalYearPeriods), groups per costCenterId, and produces Activa / Passiva / Resultaat columns. Balanced per T1 REQ-GL-005 invariant — unbalanced cost-centers surface as warnings. Output carries schema:Dataset annotation per ADR-031.",
+					"outputType": "VpbBalansFiltered",
+					"schemaOrg": "schema:Dataset",
+					"source": "GLLine",
+					"filter": {
+						"accountNumber": {
+							"operator": "in",
+							"field": "@self.accountNumbers"
+						},
+						"periodId": {
+							"operator": "in",
+							"field": "@params.fiscalYearPeriods"
+						},
+						"periodState": "closed"
+					},
+					"groupBy": "costCenterId",
+					"operations": {
+						"totalActiva": {
+							"field": "GLLine.amount",
+							"operation": "sum",
+							"condition": "GLLine.side = 'debit' AND Account[GLLine.accountNumber].accountType IN ('assets')"
+						},
+						"totalPassiva": {
+							"field": "GLLine.amount",
+							"operation": "sum",
+							"condition": "GLLine.side = 'credit' AND Account[GLLine.accountNumber].accountType IN ('liabilities', 'equity')"
+						},
+						"totalResultaat": {
+							"field": "GLLine.debit - GLLine.credit",
+							"operation": "sum",
+							"condition": "Account[GLLine.accountNumber].accountType IN ('revenue', 'expenses')"
+						}
+					},
+					"invariants": [
+						{
+							"id": "balance-check",
+							"description": "Per REQ-GL-005 (T1 balance invariant): totalActiva MUST equal totalPassiva + totalResultaat per ondernemingsactiviteit. Unbalanced cost-centers surface as warnings, not hard failures, per REQ-VPB-003.",
+							"expression": "abs(totalActiva - (totalPassiva + totalResultaat)) < 0.005",
+							"severity": "warning"
+						},
+						{
+							"id": "orphaned-vpb-pligt",
+							"description": "Per REQ-VPB-003 + REQ-VPB-002: every Account with vpbPligtig: true in this administration MUST appear in at least one VpbBalansLink.accountNumbers. Accounts not referenced by any link are orphaned Vpb-pligtige accounts and surface as warnings in the Vpb menu detail view (REQ-VPB-002 + Task 11).",
+							"expression": "Account.filter(a => a.vpbPligtig AND a.administrationId = @self.administrationId).every(a => @self.accountNumbers.includes(a.accountNumber))",
+							"severity": "warning"
+						}
+					],
+					"sbrPayloadBinding": {
+						"description": "SBR payload binding for Vpb-aangifte transmission. The VpbBalansFiltered aggregation output maps to Belastingdienst Vpb XSD fields. Actual transmission rides the T4-base bookkeeping-sbr-xbrl-reporting SBR endpoint per REQ-VPB-004 and ADR-019 — no new SBR client is declared here.",
+						"endpoint": "bookkeeping-sbr-xbrl-reporting",
+						"entryPoint": "belastingdienst-vpb",
+						"xsdReference": "vpb-aangifte-{{ fiscalYear }}.xsd",
+						"fieldMapping": {
+							"VpbAangifte.FiscaalJaar": "@params.fiscalYear",
+							"VpbAangifte.AdministratieId": "administrationId",
+							"VpbAangifte.CostCenterId": "costCenterId",
+							"VpbAangifte.Activa": "totalActiva",
+							"VpbAangifte.Passiva": "totalPassiva",
+							"VpbAangifte.Resultaat": "totalResultaat"
+						}
+					}
+				}
+			},
+			"x-openregister-relations": {
+				"costCenter": {
+					"localField": "costCenterId",
+					"relatedSchema": "CostCenter",
+					"relatedField": "code",
+					"cardinality": "many-to-one",
+					"description": "FK to the ondernemingsactiviteit cost-center. CostCenter.ondernemingsActiviteit MUST be true per REQ-VPB-002."
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
 					}
 				}
 			}
