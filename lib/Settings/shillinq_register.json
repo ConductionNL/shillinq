@@ -22039,6 +22039,287 @@
 					}
 				}
 			}
+		},
+		"SoProject": {
+			"slug": "SoProject",
+			"icon": "FlaskOutline",
+			"version": "0.1.0",
+			"title": "S&O-project",
+			"description": "WBSO S&O-project registered with RvO per Wet vermindering afdracht loonbelasting hoofdstuk VA. Carries the RvO project link (rvoProjectNummer, sEnOCertificaatNummer) and a cost-center FK for bookkeeping integration. No app-local PHP service per ADR-031. Per REQ-WBSO-001.",
+			"x-schema-org": "schema:Project",
+			"type": "object",
+			"required": [
+				"projectNaam",
+				"rvoProjectNummer",
+				"looptijdStart",
+				"looptijdEind",
+				"status",
+				"administrationId"
+			],
+			"properties": {
+				"projectNaam": {
+					"type": "string",
+					"description": "Naam van het S&O-project zoals opgegeven bij de RvO-aanvraag.",
+					"example": "Ontwikkeling van een AI-gestuurde planningsmodule"
+				},
+				"rvoProjectNummer": {
+					"type": "string",
+					"description": "Projectnummer toegekend door RvO bij de WBSO-beschikking.",
+					"example": "2026/0001"
+				},
+				"sEnOCertificaatNummer": {
+					"type": "string",
+					"nullable": true,
+					"description": "S&O-certificaatnummer afgegeven door RvO.",
+					"example": "CERT-2026-0042"
+				},
+				"looptijdStart": {
+					"type": "string",
+					"format": "date",
+					"description": "Startdatum van de S&O-projectlooptijd.",
+					"example": "2026-01-01"
+				},
+				"looptijdEind": {
+					"type": "string",
+					"format": "date",
+					"description": "Einddatum van de S&O-projectlooptijd.",
+					"example": "2026-12-31"
+				},
+				"costCenterId": {
+					"type": "string",
+					"nullable": true,
+					"description": "FK to CostCenter from the bookkeeping-cost-centers-dimensions T4-base capability.",
+					"example": "cc-innovatie-2026"
+				},
+				"status": {
+					"type": "string",
+					"enum": [
+						"aangevraagd",
+						"toegekend",
+						"afgerond"
+					],
+					"description": "Status van de WBSO-aanvraag / het project.",
+					"example": "toegekend"
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration owning this S&O-project.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"payroll-officer": {
+						"permissions": [
+							"read"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
+		},
+		"SoUrenStaat": {
+			"slug": "SoUrenStaat",
+			"icon": "ClockCheckOutline",
+			"version": "0.1.0",
+			"title": "S&O-uren-staat",
+			"description": "Per-medewerker per-week per-project S&O-urenstaat voor WBSO-administratie. Lifecycle draft → goedgekeurd → afgesloten met approval-workflow op de goedgekeurd-transitie per ADR-022. RBAC beperkt lezen tot bookkeeper / payroll-officer / auditor. Per REQ-WBSO-002.",
+			"x-schema-org": "schema:Action",
+			"type": "object",
+			"required": [
+				"soProjectId",
+				"medewerkerId",
+				"weekISO",
+				"aantalUren",
+				"taakOmschrijving",
+				"state",
+				"administrationId"
+			],
+			"properties": {
+				"soProjectId": {
+					"type": "string",
+					"description": "FK to SoProject.id — het S&O-project waarvoor de uren zijn gemaakt.",
+					"example": "sop-2026-001"
+				},
+				"medewerkerId": {
+					"type": "string",
+					"description": "Referentie naar een Nextcloud-gebruiker (uid) of een Detachering-record-id (FK naar het sibling add-shillinq-detachering-payroll-administratie capability).",
+					"example": "user-jan.de.vries"
+				},
+				"weekISO": {
+					"type": "string",
+					"pattern": "^\\d{4}-W(0[1-9]|[1-4][0-9]|5[0-3])$",
+					"description": "ISO-8601 weekaanduiding waarop de S&O-uren zijn gemaakt.",
+					"example": "2026-W14"
+				},
+				"aantalUren": {
+					"type": "number",
+					"minimum": 0,
+					"multipleOf": 0.25,
+					"description": "Aantal S&O-uren in de gegeven week (minimaal 0, kwartieren — veelvoud van 0.25).",
+					"example": 32.5
+				},
+				"taakOmschrijving": {
+					"type": "string",
+					"description": "Omschrijving van de uitgevoerde S&O-werkzaamheden.",
+					"example": "Ontwerp en implementatie van het AI-planningsalgoritme"
+				},
+				"state": {
+					"type": "string",
+					"enum": [
+						"draft",
+						"goedgekeurd",
+						"afgesloten"
+					],
+					"description": "Status van de urenstaat in de goedkeurings-workflow.",
+					"example": "draft"
+				},
+				"sEnOUurloon": {
+					"type": "number",
+					"minimum": 0,
+					"nullable": true,
+					"description": "S&O-uurloon van de medewerker ten behoeve van de afdrachtvermindering-berekening (REQ-WBSO-006). Vastgelegd per urenstaat als snapshot op het moment van invullen.",
+					"example": 48.5
+				},
+				"administrationId": {
+					"type": "string",
+					"description": "FK to the Administration owning this urenstaat.",
+					"example": "adm-1"
+				}
+			},
+			"x-openregister-lifecycle": {
+				"field": "state",
+				"initial": "draft",
+				"states": {
+					"draft": "Urenstaat in concept — nog niet goedgekeurd.",
+					"goedgekeurd": "Urenstaat goedgekeurd door projectleider — telt mee in mededeling-aggregaties.",
+					"afgesloten": "Urenstaat definitief afgesloten na kwartaalrapportage."
+				},
+				"transitions": {
+					"goedkeuren": {
+						"from": "draft",
+						"to": "goedgekeurd",
+						"label": "Goedkeuren",
+						"description": "Urenstaat goedkeuren — vereist approval-workflow per ADR-022.",
+						"requires": {
+							"approvalWorkflow": true,
+							"approverRole": "project-leider"
+						}
+					},
+					"afsluiten": {
+						"from": "goedgekeurd",
+						"to": "afgesloten",
+						"label": "Afsluiten",
+						"description": "Urenstaat definitief afsluiten na kwartaalrapportage."
+					}
+				},
+				"auditTrail": "audit-trail-immutable"
+			},
+			"x-openregister-aggregations": {
+				"mededeling": {
+					"description": "Sommeert goedgekeurde S&O-uren per kwartaal per project voor de RvO-mededeling (REQ-WBSO-003). Alleen urenstaten met state ≠ draft worden meegeteld.",
+					"groupBy": [
+						"soProjectId",
+						"kwartaal"
+					],
+					"filter": {
+						"state": {
+							"not": "draft"
+						}
+					},
+					"fields": {
+						"kwartaal": {
+							"expression": "YEAR(weekISO) + '-Q' + QUARTER(weekISO)",
+							"description": "Kwartaal afgeleid van weekISO (bijv. 2026-Q1)."
+						},
+						"totaalUren": {
+							"operation": "sum",
+							"field": "aantalUren",
+							"label": "Totaal S&O-uren"
+						},
+						"aantalUrenstaatRegels": {
+							"operation": "count",
+							"label": "Aantal uren-staat regels"
+						}
+					}
+				},
+				"jaarrapport": {
+					"description": "Sommeert alle vier kwartaalmededelingen per jaar per project voor het RvO-jaarrapport (REQ-WBSO-004). De som van jaarrapport.totaalUren MOET gelijk zijn aan de som van de vier kwartaalmededelingen.",
+					"groupBy": [
+						"soProjectId",
+						"jaar"
+					],
+					"filter": {
+						"state": {
+							"not": "draft"
+						}
+					},
+					"fields": {
+						"jaar": {
+							"expression": "YEAR(weekISO)",
+							"description": "Jaar afgeleid van weekISO."
+						},
+						"totaalUren": {
+							"operation": "sum",
+							"field": "aantalUren",
+							"label": "Totaal S&O-uren per jaar"
+						}
+					}
+				}
+			},
+			"x-openregister-calculations": {
+				"projectedAfdrachtvermindering": {
+					"description": "Berekent de geprojecteerde afdrachtvermindering loonheffing per urenstaat: aantalUren × sEnOUurloon × actueelAfdrachtPercentage (32% standaard / 40% starters per RvO 2026). Dit is de GEPROJECTEERDE waarde — de RvO-mededeling is de GEZAGHEBBENDE waarde voor de loonaangifte. Beide worden naast elkaar getoond met een reconciliatie-waarschuwing per REQ-WBSO-006.",
+					"expression": "aantalUren * sEnOUurloon * (afdrachtType == 'starters' ? 0.40 : 0.32)",
+					"outputField": "projectedAfdrachtvermindering",
+					"outputType": "number",
+					"readOnly": true,
+					"reconciliationField": "rvoMededelingAfdracht",
+					"reconciliationWarningThreshold": 0.02
+				},
+				"rvoMededelingAfdracht": {
+					"description": "De gezaghebbende afdrachtvermindering zoals teruggekoppeld door RvO via de openconnector-bron. Wordt naast projectedAfdrachtvermindering getoond (REQ-WBSO-006).",
+					"outputField": "rvoMededelingAfdracht",
+					"outputType": "number",
+					"readOnly": true,
+					"source": "openconnector",
+					"sourceSlug": "rvo-wbso-mededeling-submission"
+				}
+			},
+			"x-openregister-rbac": {
+				"roles": {
+					"bookkeeper": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"payroll-officer": {
+						"permissions": [
+							"create",
+							"read",
+							"update"
+						]
+					},
+					"auditor": {
+						"permissions": [
+							"read"
+						]
+					}
+				}
+			}
 		}
 	},
 	"mappings": {
