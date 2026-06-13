@@ -1,5 +1,7 @@
 # Design — Year-End Close
 
+**Status:** pr-created
+
 ## Context
 
 Year-end close is the transition from one fiscal year to the next,
