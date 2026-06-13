@@ -53,6 +53,14 @@ return [
         ['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
         ['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
 
+        // Booking notification trigger configuration (organizer, per booking).
+        ['name' => 'bookingNotification#getBookingTriggers',    'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'GET'],
+        ['name' => 'bookingNotification#updateBookingTriggers', 'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'PATCH'],
+
+        // Admin notification monitor dashboard.
+        ['name' => 'bookingNotification#getNotificationMonitor', 'url' => '/api/admin/notification-monitor', 'verb' => 'GET'],
+        ['name' => 'bookingNotification#disableAllTriggers',     'url' => '/api/admin/notification-monitor/disable-all', 'verb' => 'POST'],
+
         // Prometheus metrics endpoint.
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
         // Pipelinq customer-bridge metrics (slice 11). Prometheus exposition

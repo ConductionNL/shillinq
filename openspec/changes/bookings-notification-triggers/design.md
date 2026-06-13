@@ -1,5 +1,7 @@
 # Design — Booking Notification Triggers
 
+<!-- status: pr-created -->
+
 ## Context
 
 The Bookings app manages appointment scheduling but lacks automated customer
