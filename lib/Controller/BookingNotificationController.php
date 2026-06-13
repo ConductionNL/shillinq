@@ -90,11 +90,10 @@ class BookingNotificationController extends Controller
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $registerSlug  = $this->settingsService->getRegisterSlug();
 
-            $triggers = $objectService->findObjects(
-                register: $registerSlug,
-                schema: 'BookingNotificationTrigger',
-                params: ['bookingId' => $id, '_limit' => 100]
-            );
+            $triggers = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('BookingNotificationTrigger')
+                ->findAll(['filters' => ['bookingId' => $id], 'limit' => 100]);
 
             return new JSONResponse(['triggers' => $triggers]);
         } catch (\Throwable $e) {
@@ -172,21 +171,18 @@ class BookingNotificationController extends Controller
             $weekStart  = (new \DateTimeImmutable('-7 days', new \DateTimeZone('UTC')))->format('c');
             $monthStart = (new \DateTimeImmutable('-30 days', new \DateTimeZone('UTC')))->format('c');
 
-            $todayDeliveries = $objectService->findObjects(
-                register: $registerSlug,
-                schema: 'NotificationDelivery',
-                params: ['sentAt[gte]' => $todayStart, '_limit' => 1000]
-            );
-            $weekDeliveries  = $objectService->findObjects(
-                register: $registerSlug,
-                schema: 'NotificationDelivery',
-                params: ['sentAt[gte]' => $weekStart, '_limit' => 5000]
-            );
-            $monthDeliveries = $objectService->findObjects(
-                register: $registerSlug,
-                schema: 'NotificationDelivery',
-                params: ['sentAt[gte]' => $monthStart, '_limit' => 10000]
-            );
+            $todayDeliveries = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('NotificationDelivery')
+                ->findAll(['filters' => ['sentAt[gte]' => $todayStart], 'limit' => 1000]);
+            $weekDeliveries  = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('NotificationDelivery')
+                ->findAll(['filters' => ['sentAt[gte]' => $weekStart], 'limit' => 5000]);
+            $monthDeliveries = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('NotificationDelivery')
+                ->findAll(['filters' => ['sentAt[gte]' => $monthStart], 'limit' => 10000]);
 
             $recentFailures = array_filter(
                 $todayDeliveries,
@@ -228,11 +224,10 @@ class BookingNotificationController extends Controller
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $registerSlug  = $this->settingsService->getRegisterSlug();
 
-            $triggers = $objectService->findObjects(
-                register: $registerSlug,
-                schema: 'BookingNotificationTrigger',
-                params: ['active' => true, '_limit' => 1000]
-            );
+            $triggers = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('BookingNotificationTrigger')
+                ->findAll(['filters' => ['active' => true], 'limit' => 1000]);
 
             $disabled = 0;
             foreach ($triggers as $trigger) {

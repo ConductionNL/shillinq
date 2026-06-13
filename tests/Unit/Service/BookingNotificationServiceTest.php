@@ -406,7 +406,9 @@ class BookingNotificationServiceTest extends TestCase
     {
         // phpcs:disable
         $objectService = new class {
-            public function findObjects(string $register, string $schema, array $params): array
+            public function setRegister(string $register): static { return $this; }
+            public function setSchema(string $schema): static { return $this; }
+            public function findAll(array $config=[]): array
             {
                 return [];
             }

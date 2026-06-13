@@ -158,7 +158,9 @@ class BookingNotificationControllerTest extends TestCase
 
         // phpcs:disable
         $objectService = new class {
-            public function findObjects(string $register, string $schema, array $params): array
+            public function setRegister(string $register): static { return $this; }
+            public function setSchema(string $schema): static { return $this; }
+            public function findAll(array $config=[]): array
             {
                 return [['id' => 'trig-1', 'eventType' => 'created', 'active' => true]];
             }
@@ -208,7 +210,9 @@ class BookingNotificationControllerTest extends TestCase
     {
         // phpcs:disable
         $objectService = new class {
-            public function findObjects(string $register, string $schema, array $params): array
+            public function setRegister(string $register): static { return $this; }
+            public function setSchema(string $schema): static { return $this; }
+            public function findAll(array $config=[]): array
             {
                 return [];
             }
@@ -237,7 +241,9 @@ class BookingNotificationControllerTest extends TestCase
     {
         // phpcs:disable
         $objectService = new class {
-            public function findObjects(string $register, string $schema, array $params): array
+            public function setRegister(string $register): static { return $this; }
+            public function setSchema(string $schema): static { return $this; }
+            public function findAll(array $config=[]): array
             {
                 return [['id' => 'trig-1', 'active' => true], ['id' => 'trig-2', 'active' => true]];
             }

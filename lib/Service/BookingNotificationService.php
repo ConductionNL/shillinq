@@ -432,14 +432,10 @@ class BookingNotificationService
                 $registerSlug = 'shillinq';
             }
 
-            $results = $objectService->findObjects(
-                register: $registerSlug,
-                schema: 'NotificationOptOut',
-                params: [
-                    'recipient' => $recipient,
-                    '_limit'    => 1,
-                ]
-            );
+            $results = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('NotificationOptOut')
+                ->findAll(['filters' => ['recipient' => $recipient], 'limit' => 1]);
 
             if (empty($results) === true) {
                 return false;
@@ -501,15 +497,18 @@ class BookingNotificationService
             // Check per-booking hourly limit.
             if ($bookingId !== '') {
                 $hourStart  = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d\TH:00:00\Z');
-                $bookingHit = $objectService->findObjects(
-                    register: $registerSlug,
-                    schema: 'NotificationDelivery',
-                    params: [
-                        'bookingId'   => $bookingId,
-                        'sentAt[gte]' => $hourStart,
-                        '_limit'      => ($rateLimitPerBooking + 1),
-                    ]
-                );
+                $bookingHit = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('NotificationDelivery')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'bookingId'   => $bookingId,
+                                'sentAt[gte]' => $hourStart,
+                            ],
+                            'limit'   => ($rateLimitPerBooking + 1),
+                        ]
+                    );
 
                 if (count($bookingHit) >= $rateLimitPerBooking) {
                     return true;
@@ -519,15 +518,18 @@ class BookingNotificationService
             // Check per-organizer daily limit.
             if ($organizerId !== '') {
                 $dayStart     = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d\T00:00:00\Z');
-                $organizerHit = $objectService->findObjects(
-                    register: $registerSlug,
-                    schema: 'NotificationDelivery',
-                    params: [
-                        'organizerId' => $organizerId,
-                        'sentAt[gte]' => $dayStart,
-                        '_limit'      => ($rateLimitPerOrganizer + 1),
-                    ]
-                );
+                $organizerHit = $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema('NotificationDelivery')
+                    ->findAll(
+                        [
+                            'filters' => [
+                                'organizerId' => $organizerId,
+                                'sentAt[gte]' => $dayStart,
+                            ],
+                            'limit'   => ($rateLimitPerOrganizer + 1),
+                        ]
+                    );
 
                 if (count($organizerHit) >= $rateLimitPerOrganizer) {
                     return true;
@@ -578,17 +580,20 @@ class BookingNotificationService
                 new \DateTimeZone('UTC')
             ))->format('c');
 
-            $existing = $objectService->findObjects(
-                register: $registerSlug,
-                schema: 'NotificationDelivery',
-                params: [
-                    'bookingId'   => $bookingId,
-                    'recipient'   => $recipient,
-                    'triggerType' => $triggerType,
-                    'sentAt[gte]' => $windowStart,
-                    '_limit'      => 1,
-                ]
-            );
+            $existing = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('NotificationDelivery')
+                ->findAll(
+                    [
+                        'filters' => [
+                            'bookingId'   => $bookingId,
+                            'recipient'   => $recipient,
+                            'triggerType' => $triggerType,
+                            'sentAt[gte]' => $windowStart,
+                        ],
+                        'limit'   => 1,
+                    ]
+                );
 
             return empty($existing) === false;
         } catch (\Throwable $e) {
@@ -679,15 +684,18 @@ class BookingNotificationService
                 $registerSlug = 'shillinq';
             }
 
-            return $objectService->findObjects(
-                register: $registerSlug,
-                schema: 'BookingNotificationTrigger',
-                params: [
-                    'eventType' => $eventType,
-                    'active'    => true,
-                    '_limit'    => 100,
-                ]
-            );
+            return $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('BookingNotificationTrigger')
+                ->findAll(
+                    [
+                        'filters' => [
+                            'eventType' => $eventType,
+                            'active'    => true,
+                        ],
+                        'limit'   => 100,
+                    ]
+                );
         } catch (\Throwable $e) {
             $this->logger->error(
                 'Shillinq: failed to load notification triggers',
@@ -718,24 +726,38 @@ class BookingNotificationService
             }
 
             if ($triggerId !== '') {
-                $template = $objectService->findObject(
+                // ADR-022: use the real ObjectService API (find/findAll);
+                // findObject()/findObjects() do not exist on OpenRegister's ObjectService.
+                $template = $objectService->find(
+                    id: $triggerId,
                     register: $registerSlug,
-                    schema: 'BookingNotificationTemplate',
-                    id: $triggerId
+                    schema: 'BookingNotificationTemplate'
                 );
                 if ($template !== null) {
-                    return $template;
+                    return $template->jsonSerialize();
                 }
             }
 
             // Fallback: find active template matching the event type.
-            $results = $objectService->findObjects(
-                register: $registerSlug,
-                schema: 'BookingNotificationTemplate',
-                params: ['trigger' => $eventType, 'active' => true, '_limit' => 1]
-            );
+            $results = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('BookingNotificationTemplate')
+                ->findAll(
+                    [
+                        'filters' => [
+                            'trigger' => $eventType,
+                            'active'  => true,
+                        ],
+                        'limit'   => 1,
+                    ]
+                );
 
-            return ($results[0] ?? []);
+            $first = ($results[0] ?? []);
+            if ($first instanceof \OCA\OpenRegister\Db\ObjectEntity) {
+                return $first->jsonSerialize();
+            }
+
+            return $first;
         } catch (\Throwable $e) {
             $this->logger->warning(
                 'Shillinq: failed to load notification template',
