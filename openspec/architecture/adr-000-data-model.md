@@ -5901,6 +5901,32 @@ _Delegation of signing rights to a specific person with defined scope and limits
 **Relations:**
 - → Mandate (many-to-one)
 
+### SisaRegelingIndicator
+**Schema.org:** `schema:Report`
+_Per-regeling indicator for the annual SiSa (Single Information Single Audit) bijlage at jaarrekening. Attaches to a Subsidie of subtype specifieke-uitkering via `subsidieId` FK per ADR-022 child-register pattern — no parallel SiSa subsidie register. Records carry `regelingCode` (BZK regeling identifier, e.g. `D8`), `indicatorCode` (per controleprotocol, e.g. `D8.01`), `indicatorWaarde`, `indicatorEenheid`, `peilDatum`, `controleprotocol` version, and `fiscalYear`. Grouped by `(regelingCode, controleprotocol)` via `x-openregister-aggregations` to produce the annual SiSa-bijlage per REQ-SISA-003. Seeded from `lib/Settings/seeds/sisa-controleprotocol-2026.json` when `featureFlags.gov-sisa` is enabled per REQ-SISA-002. BZK submission rides the openconnector source `bzk-sisa-upload-2026`; every submission writes an immutable audit event of type `sisa.submitted` linked to the parent jaarrekening via the audit-trail hash chain per REQ-SISA-004 and REQ-SISA-005. See `openspec/changes/add-shillinq-sisa-reporting/specs/bookkeeping-sisa-reporting/spec.md` for the full requirement set and GIVEN/WHEN/THEN scenarios._
+**Primary spec:** bookkeeping-sisa-reporting
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| subsidieId | string | Yes | FK to parent Subsidie record (subtype specifieke-uitkering) |
+| regelingCode | string | Yes | BZK regeling identifier (e.g. D8) |
+| indicatorCode | string | Yes | Indicator code per controleprotocol (e.g. D8.01) |
+| indicatorOmschrijving | string | Yes | Human-readable indicator description from controleprotocol |
+| indicatorWaarde | number or string | Yes | Reported indicator value for the fiscal year |
+| indicatorEenheid | string | No | Unit of the indicator value (e.g. personen, euro, %) |
+| peilDatum | date | Yes | Reference date (peildatum) for indicator measurement |
+| controleprotocol | string | Yes | Version of the BZK SiSa controleprotocol (e.g. 2026) |
+| fiscalYear | integer | Yes | Fiscal year for which the indicator is reported |
+| administrationId | string | Yes | FK to Administration owning this indicator |
+| sisaSubmissionStatus | enum | No | One of: not-submitted, submitted, accepted, rejected |
+| bijlageDocumentUri | string | No | docudesk URI of the generated SiSa-bijlage document |
+| submissionAuditEventId | string | No | FK to the immutable audit event written on BZK submission |
+
+**Relations:**
+- → Subsidie (many-to-one, via subsidieId — child register of T3 specifieke-uitkering)
+
+> **Note (add-shillinq-sisa-reporting, 2026-06-03):** `SisaRegelingIndicator` is the T4-specialized entity for the annual SiSa-bijlage per BZK controleprotocol. It attaches to the existing T3 `Subsidie` register as a child via FK (ADR-022 D1); no parallel SiSa subsidie register exists. The bijlage is produced as a declarative `x-openregister-aggregations` declaration — no PHP SiSa-bijlage service (ADR-031). Controleprotocol indicators are seeded from `sisa-controleprotocol-2026.json`; the seed is version-pinned so the 2027 release ships as `sisa-controleprotocol-2027.json` alongside the existing file.
+
 ### SisaReport
 **Schema.org:** `schema:Report`
 _Single Information Single Audit (SiSa) compliance report per fiscal year for a Dutch government administration. Aggregates transaction counts, on-time settlement %, audit findings from ComplianceAuditTrail, and overall audit opinion (unqualified/qualified/adverse/disclaimer) per REQ-SISA-001 and REQ-SISA-002._
