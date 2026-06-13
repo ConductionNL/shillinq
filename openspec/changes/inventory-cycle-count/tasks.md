@@ -1,10 +1,7 @@
 # Tasks — Inventory Cycle Count
 
-> **Spec-only change.** Per `proposal.md` Scope, implementation code is deliberately 
-> out of scope here. The tasks below describe the work an `opsx-apply` cycle will 
-> execute against the `inventory-cycle-count` spec — they are recorded now so the spec-
-> review gate, dependency planning, and tier-cascade impact are all visible at proposal 
-> time. No source files are edited by this change itself.
+> **Implementation applied.** All 15 tasks below have been implemented by the Hydra
+> builder in PR feature/133/inventory-cycle-count.
 
 ## Tasks
 
