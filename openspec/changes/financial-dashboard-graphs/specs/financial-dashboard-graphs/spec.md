@@ -7,7 +7,7 @@ financial position of the company as graphs and work queues instead
 of artifact counts: KPI strip, turnover, margin, cashflow, billable
 hours, and open debiteuren/crediteuren tables.
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Financial KPI strip
 
