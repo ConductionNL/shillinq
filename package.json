@@ -8,7 +8,9 @@
   },
   "scripts": {
     "build": "NODE_ENV=production webpack --config webpack.config.js --progress",
+    "postbuild": "[ -d ../openregister/custom_apps/shillinq/js ] && cp -r js/. ../openregister/custom_apps/shillinq/js/ || true",
     "dev": "NODE_ENV=development webpack --config webpack.config.js --progress",
+    "postdev": "[ -d ../openregister/custom_apps/shillinq/js ] && cp -r js/. ../openregister/custom_apps/shillinq/js/ || true",
     "watch": "NODE_ENV=development webpack --config webpack.config.js --progress --watch",
     "lint": "eslint src",
     "lint-fix": "npm run lint -- --fix",

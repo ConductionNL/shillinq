@@ -653,19 +653,22 @@
 					"label": "Urenregistratie",
 					"icon": "ClockOutline",
 					"route": "Urenregistratie",
-					"order": 80				},
+					"order": 80
+				},
 				{
 					"id": "ZzpAftrek",
 					"label": "ZZP-aftrek",
 					"icon": "AccountCashOutline",
 					"route": "ZzpAftrek",
-					"order": 90				},
+					"order": 90
+				},
 				{
 					"id": "IbAangifte",
 					"label": "IB-aangifte",
 					"icon": "FileExportOutline",
 					"route": "IbAangifte",
-					"order": 100				},
+					"order": 100
+				},
 				{
 					"id": "TaxProvisions",
 					"label": "Belastinglatentie",
@@ -1109,7 +1112,8 @@
 					}
 				],
 				"defaultSort": "sku",
-				"detailRoute": "ProductDetail"
+				"detailRoute": "ProductDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1202,7 +1206,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1236,7 +1241,8 @@
 					}
 				],
 				"defaultSort": "name",
-				"detailRoute": "ProductAttributeDetail"
+				"detailRoute": "ProductAttributeDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1304,7 +1310,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1358,7 +1365,8 @@
 					}
 				],
 				"defaultSort": "productSku",
-				"detailRoute": "BarcodeDetail"
+				"detailRoute": "BarcodeDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1436,7 +1444,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1481,7 +1490,8 @@
 				],
 				"defaultSort": "expiryDate",
 				"defaultSortDirection": "asc",
-				"detailRoute": "InventoryLotDetail"
+				"detailRoute": "InventoryLotDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1585,7 +1595,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1625,7 +1636,8 @@
 				],
 				"defaultSort": "alertDate",
 				"defaultSortDirection": "desc",
-				"detailRoute": "ExpiryAlertDetail"
+				"detailRoute": "ExpiryAlertDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1699,7 +1711,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1748,7 +1761,8 @@
 					}
 				],
 				"defaultSort": "productId",
-				"detailRoute": "InventoryValuationDetail"
+				"detailRoute": "InventoryValuationDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1836,7 +1850,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1901,7 +1916,8 @@
 						"label": "Administration"
 					}
 				],
-				"description": "Real-time stock-on-hand snapshot per Product per Location. Shows quantityOnHand (physical), quantityReserved (allocated), quantityAvailable (computed as on-hand minus reserved). Edit individual records to adjust stock manually; downstream StockMove postings update these values declaratively."
+				"description": "Real-time stock-on-hand snapshot per Product per Location. Shows quantityOnHand (physical), quantityReserved (allocated), quantityAvailable (computed as on-hand minus reserved). Edit individual records to adjust stock manually; downstream StockMove postings update these values declaratively.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -1990,7 +2006,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -2046,7 +2063,8 @@
 						"label": "Product"
 					}
 				],
-				"description": "Stock pivoted on location. Pick a location filter to see only that warehouse / store; default sort groups all rows by location so warehouse managers see their full inventory at a glance."
+				"description": "Stock pivoted on location. Pick a location filter to see only that warehouse / store; default sort groups all rows by location so warehouse managers see their full inventory at a glance.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -2107,7 +2125,8 @@
 						"value": 0
 					}
 				},
-				"description": "Stock records with a non-zero reservation. Lets the operator see at a glance which products are allocated to pending orders / production plans across all locations, sorted by largest reservation first."
+				"description": "Stock records with a non-zero reservation. Lets the operator see at a glance which products are allocated to pending orders / production plans across all locations, sorted by largest reservation first.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -2141,7 +2160,8 @@
 					}
 				],
 				"defaultSort": "code",
-				"detailRoute": "CostCenterDetail"
+				"detailRoute": "CostCenterDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
 		{
@@ -2206,7 +2226,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
 		{
@@ -2240,7 +2261,8 @@
 					}
 				],
 				"defaultSort": "code",
-				"detailRoute": "KostenDragerDetail"
+				"detailRoute": "KostenDragerDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
 		{
@@ -2305,7 +2327,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
 		{
@@ -2339,7 +2362,8 @@
 					}
 				],
 				"defaultSort": "code",
-				"detailRoute": "ProjectDetail"
+				"detailRoute": "ProjectDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
 		{
@@ -2493,7 +2517,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
 		{
@@ -2532,7 +2557,8 @@
 					}
 				],
 				"defaultSort": "projectNumber",
-				"detailRoute": "CostProjectDetail"
+				"detailRoute": "CostProjectDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
 		{
@@ -2635,7 +2661,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
 		{
@@ -2674,7 +2701,8 @@
 					}
 				],
 				"defaultSort": "name",
-				"detailRoute": "AllocationRuleDetail"
+				"detailRoute": "AllocationRuleDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
 		{
@@ -2764,7 +2792,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
 		{
@@ -2798,7 +2827,7 @@
 					},
 					{
 						"key": "emuSaldo",
-						"label": "EMU-saldo (\u20ac)",
+						"label": "EMU-saldo (€)",
 						"sortable": true
 					},
 					{
@@ -2808,7 +2837,8 @@
 					}
 				],
 				"defaultSort": "period",
-				"detailRoute": "EmuRapportageDetail"
+				"detailRoute": "EmuRapportageDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -2842,12 +2872,12 @@
 					},
 					{
 						"key": "emuSaldo",
-						"label": "EMU-saldo (\u20ac)",
+						"label": "EMU-saldo (€)",
 						"type": "number"
 					},
 					{
 						"key": "emuSchuld",
-						"label": "EMU-schuld (\u20ac)",
+						"label": "EMU-schuld (€)",
 						"type": "number"
 					},
 					{
@@ -2891,7 +2921,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -2956,7 +2987,8 @@
 					}
 				],
 				"defaultSort": "-reportingPeriodEnd",
-				"detailRoute": "SbrXbrlFilingDetail"
+				"detailRoute": "SbrXbrlFilingDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -3064,7 +3096,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -3111,7 +3144,8 @@
 				],
 				"defaultSort": "-currentCalendarYear",
 				"detailRoute": "KorStatusDetail",
-				"widget": "kor-status"
+				"widget": "kor-status",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -3195,7 +3229,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -3234,7 +3269,8 @@
 					}
 				],
 				"defaultSort": "connectionNumber",
-				"detailRoute": "BankConnectionDetail"
+				"detailRoute": "BankConnectionDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/bank-connections"
 			}
 		},
 		{
@@ -3361,7 +3397,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/bank-connections"
 			}
 		},
 		{
@@ -3411,7 +3448,8 @@
 				],
 				"defaultSort": "periodEnd",
 				"detailRoute": "BankReconciliationDetail",
-				"description": "Bank statements imported via CAMT.053, MT940, or manual CSV upload. Operators reconcile lines against AR/AP invoices or route to suspense (REQ-BR-002/REQ-BR-010)."
+				"description": "Bank statements imported via CAMT.053, MT940, or manual CSV upload. Operators reconcile lines against AR/AP invoices or route to suspense (REQ-BR-002/REQ-BR-010).",
+				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bank-statements"
 			}
 		},
 		{
@@ -3630,7 +3668,7 @@
 										"uriField": "sourceDocumentUri",
 										"appField": "sourceDocumentApp",
 										"role": "statement",
-										"fallbackMessage": "Source document unreachable \u2014 docudesk may be unavailable; retry later."
+										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
 									}
 								}
 							]
@@ -3652,7 +3690,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bank-statements"
 			}
 		},
 		{
@@ -3697,7 +3736,8 @@
 				],
 				"defaultSort": "priority",
 				"detailRoute": "MatchingRuleDetail",
-				"description": "Operator-authored matching rules consumed by the ReconciliationMatch aggregation (REQ-BR-004/REQ-BR-005/REQ-BR-010). Lower priority = earlier evaluation."
+				"description": "Operator-authored matching rules consumed by the ReconciliationMatch aggregation (REQ-BR-004/REQ-BR-005/REQ-BR-010). Lower priority = earlier evaluation.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/matching-rules"
 			}
 		},
 		{
@@ -3781,7 +3821,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/matching-rules"
 			}
 		},
 		{
@@ -3792,7 +3833,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "WaterschapHeffingPosting",
-					"columns": [
+				"columns": [
 					{
 						"key": "heffingType",
 						"label": "Heffing type",
@@ -3820,7 +3861,8 @@
 					}
 				],
 				"defaultSort": "-aanslagJaar",
-				"detailRoute": "WaterschapsbelastingenDetail"
+				"detailRoute": "WaterschapsbelastingenDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -3831,7 +3873,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "WaterschapHeffingPosting",
-					"fields": [
+				"fields": [
 					{
 						"key": "heffingType",
 						"label": "Heffing type",
@@ -3914,7 +3956,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -3961,7 +4004,8 @@
 					}
 				],
 				"defaultSort": "-reportingYear",
-				"detailRoute": "Iv3RapportagesDetail"
+				"detailRoute": "Iv3RapportagesDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -4055,7 +4099,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -4184,14 +4229,30 @@
 							"limit": 10
 						},
 						"columns": [
-							{ "key": "reportingQuarter", "label": "Periode" },
-							{ "key": "state", "label": "Status" },
-							{ "key": "generatedAt", "label": "Gegenereerd" },
-							{ "key": "submittedAt", "label": "Ingediend" },
-							{ "key": "iv3Version", "label": "Versie" }
+							{
+								"key": "reportingQuarter",
+								"label": "Periode"
+							},
+							{
+								"key": "state",
+								"label": "Status"
+							},
+							{
+								"key": "generatedAt",
+								"label": "Gegenereerd"
+							},
+							{
+								"key": "submittedAt",
+								"label": "Ingediend"
+							},
+							{
+								"key": "iv3Version",
+								"label": "Versie"
+							}
 						]
 					}
-				]
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -4235,7 +4296,8 @@
 					}
 				],
 				"defaultSort": "-postingDate",
-				"detailRoute": "GeneralLedgerDetail"
+				"detailRoute": "GeneralLedgerDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/general-ledger"
 			}
 		},
 		{
@@ -4348,7 +4410,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/general-ledger"
 			}
 		},
 		{
@@ -4392,7 +4455,8 @@
 					}
 				],
 				"defaultSort": "-entryDate",
-				"detailRoute": "JournalDetail"
+				"detailRoute": "JournalDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/journals"
 			}
 		},
 		{
@@ -4487,7 +4551,7 @@
 										"uriField": "sourceDocumentUri",
 										"appField": "sourceDocumentApp",
 										"role": "receipt",
-										"fallbackMessage": "Source document unreachable \u2014 docudesk may be unavailable; retry later."
+										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
 									}
 								}
 							]
@@ -4509,7 +4573,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/journals"
 			}
 		},
 		{
@@ -4543,7 +4608,8 @@
 					}
 				],
 				"defaultSort": "accountNumber",
-				"detailRoute": "ChartOfAccountsDetail"
+				"detailRoute": "ChartOfAccountsDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/chart-of-accounts"
 			}
 		},
 		{
@@ -4577,7 +4643,8 @@
 					}
 				],
 				"defaultSort": "deelnemerNaam",
-				"detailRoute": "GRDeelnemerDetail"
+				"detailRoute": "GRDeelnemerDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -4641,7 +4708,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -4670,7 +4738,8 @@
 					}
 				],
 				"defaultSort": "lineNumber",
-				"detailRoute": "GRVerdeelsleutelDetail"
+				"detailRoute": "GRVerdeelsleutelDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -4728,7 +4797,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -4762,7 +4832,8 @@
 					}
 				],
 				"defaultSort": "accountNumber",
-				"aggregation": "consolidatedTrialBalance"
+				"aggregation": "consolidatedTrialBalance",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -4846,7 +4917,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/chart-of-accounts"
 			}
 		},
 		{
@@ -4895,7 +4967,8 @@
 					}
 				],
 				"defaultSort": "assetNumber",
-				"detailRoute": "FixedAssetDetail"
+				"detailRoute": "FixedAssetDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/fixed-assets"
 			}
 		},
 		{
@@ -5044,7 +5117,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/fixed-assets"
 			}
 		},
 		{
@@ -5052,6 +5126,7 @@
 			"route": "/",
 			"type": "dashboard",
 			"title": "Financial overview",
+			"actionsComponent": "FinancialDashboardActions",
 			"slots": {
 				"widget-finance-kpis": "FinanceKpisWidget",
 				"widget-turnover-chart": "TurnoverChartWidget",
@@ -5062,7 +5137,38 @@
 				"widget-open-creditors": "OpenInvoicesTableWidget"
 			},
 			"config": {
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/financial-overview",
 				"description": "Live financial position of the company from the bookkeeping register",
+				"dateRange": {
+					"enabled": true,
+					"showHeaderPicker": false,
+					"persistKey": "shillinq-financial-range",
+					"default": {
+						"preset": "year"
+					},
+					"presets": [
+						{
+							"id": "quarter",
+							"label": "Last 3 months",
+							"days": 91
+						},
+						{
+							"id": "half-year",
+							"label": "Last 6 months",
+							"days": 183
+						},
+						{
+							"id": "year",
+							"label": "Last 12 months",
+							"days": 365
+						},
+						{
+							"id": "two-year",
+							"label": "Last 24 months",
+							"days": 730
+						}
+					]
+				},
 				"widgets": [
 					{
 						"id": "finance-kpis",
@@ -5128,7 +5234,8 @@
 						"gridX": 0,
 						"gridY": 2,
 						"gridWidth": 6,
-						"gridHeight": 4
+						"gridHeight": 4,
+						"dateChip": true
 					},
 					{
 						"id": "layout-margin-chart",
@@ -5136,7 +5243,8 @@
 						"gridX": 6,
 						"gridY": 2,
 						"gridWidth": 6,
-						"gridHeight": 4
+						"gridHeight": 4,
+						"dateChip": true
 					},
 					{
 						"id": "layout-cashflow-chart",
@@ -5144,7 +5252,8 @@
 						"gridX": 0,
 						"gridY": 6,
 						"gridWidth": 6,
-						"gridHeight": 4
+						"gridHeight": 4,
+						"dateChip": true
 					},
 					{
 						"id": "layout-billable-hours-chart",
@@ -5152,7 +5261,8 @@
 						"gridX": 6,
 						"gridY": 6,
 						"gridWidth": 6,
-						"gridHeight": 4
+						"gridHeight": 4,
+						"dateChip": true
 					},
 					{
 						"id": "layout-open-debtors",
@@ -5209,7 +5319,8 @@
 					}
 				],
 				"defaultSort": "-reportDate",
-				"detailRoute": "BalanceSheetDetail"
+				"detailRoute": "BalanceSheetDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/balance-sheet"
 			}
 		},
 		{
@@ -5288,7 +5399,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/balance-sheet"
 			}
 		},
 		{
@@ -5327,7 +5439,8 @@
 					}
 				],
 				"defaultSort": "-reportDate",
-				"detailRoute": "TrialBalanceDetail"
+				"detailRoute": "TrialBalanceDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/trial-balance"
 			}
 		},
 		{
@@ -5401,7 +5514,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/trial-balance"
 			}
 		},
 		{
@@ -5471,7 +5585,8 @@
 						"type": "string"
 					}
 				],
-				"defaultSort": "accountNumber"
+				"defaultSort": "accountNumber",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -5500,7 +5615,8 @@
 					}
 				],
 				"defaultSort": "name",
-				"detailRoute": "ConsolidationsDetail"
+				"detailRoute": "ConsolidationsDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -5564,7 +5680,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -5603,7 +5720,8 @@
 					}
 				],
 				"defaultSort": "-reportDate",
-				"detailRoute": "ConsolidatedReportDetail"
+				"detailRoute": "ConsolidatedReportDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -5672,7 +5790,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -5721,7 +5840,8 @@
 					}
 				],
 				"defaultSort": "-transactionDate",
-				"detailRoute": "IntercompanyTransactionDetail"
+				"detailRoute": "IntercompanyTransactionDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -5835,7 +5955,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -5879,7 +6000,8 @@
 					}
 				],
 				"defaultSort": "consolidationGroupId",
-				"detailRoute": "EliminationRuleDetail"
+				"detailRoute": "EliminationRuleDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -5947,7 +6069,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -5991,7 +6114,8 @@
 					}
 				],
 				"defaultSort": "-fiscalYear",
-				"detailRoute": "SisaRapportagesDetail"
+				"detailRoute": "SisaRapportagesDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -6065,7 +6189,7 @@
 					},
 					{
 						"key": "remediationOverdueCount",
-						"label": "Achterstallige remedi\u00ebringen",
+						"label": "Achterstallige remediëringen",
 						"type": "integer"
 					},
 					{
@@ -6115,7 +6239,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -6149,7 +6274,7 @@
 					},
 					{
 						"key": "remediationStatus",
-						"label": "Remedi\u00ebringsstatus",
+						"label": "Remediëringsstatus",
 						"sortable": true
 					},
 					{
@@ -6159,7 +6284,8 @@
 					}
 				],
 				"defaultSort": "-fiscalYear",
-				"detailRoute": "ComplianceAuditTrailDetail"
+				"detailRoute": "ComplianceAuditTrailDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -6213,17 +6339,17 @@
 					},
 					{
 						"key": "remediationDueDate",
-						"label": "Remedi\u00ebring v\u00f3\u00f3r",
+						"label": "Remediëring vóór",
 						"type": "date"
 					},
 					{
 						"key": "remediationStatus",
-						"label": "Remedi\u00ebringsstatus",
+						"label": "Remediëringsstatus",
 						"type": "string"
 					},
 					{
 						"key": "remediationCompletionDate",
-						"label": "Remedi\u00ebring voltooid op",
+						"label": "Remediëring voltooid op",
 						"type": "date"
 					},
 					{
@@ -6263,7 +6389,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -6302,7 +6429,8 @@
 					}
 				],
 				"defaultSort": "-issuedDate",
-				"detailRoute": "ManagementLetterDetail"
+				"detailRoute": "ManagementLetterDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -6351,7 +6479,7 @@
 					},
 					{
 						"key": "remediationRecommendations",
-						"label": "Remedi\u00eberingsaanbevelingen",
+						"label": "Remediëeringsaanbevelingen",
 						"type": "string"
 					},
 					{
@@ -6386,7 +6514,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -6425,7 +6554,8 @@
 					}
 				],
 				"defaultSort": "-signingTimestamp",
-				"detailRoute": "AuditDocumentDetail"
+				"detailRoute": "AuditDocumentDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -6515,7 +6645,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -6559,7 +6690,8 @@
 					}
 				],
 				"defaultSort": "selectielijstCode",
-				"detailRoute": "BewaartermijnenDetail"
+				"detailRoute": "BewaartermijnenDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -6652,14 +6784,15 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
 			"id": "BewaartermijnenDashboard",
 			"route": "/administratie/bewaartermijnen/dashboard",
 			"type": "dashboard",
-			"title": "Bewaartermijnen \u2014 Dashboard",
+			"title": "Bewaartermijnen — Dashboard",
 			"config": {
 				"widgets": [
 					{
@@ -6690,7 +6823,8 @@
 						"gridWidth": 4,
 						"gridHeight": 2
 					}
-				]
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -6776,7 +6910,8 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "taxCategory"
+				"defaultSort": "taxCategory",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -6820,7 +6955,8 @@
 					}
 				],
 				"defaultSort": "-snapshotDate",
-				"detailRoute": "TaxEstimatesDetail"
+				"detailRoute": "TaxEstimatesDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -6934,7 +7070,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -7040,7 +7177,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -7079,7 +7217,8 @@
 					}
 				],
 				"defaultSort": "vendorNumber",
-				"detailRoute": "VendorDetail"
+				"detailRoute": "VendorDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/vendors"
 			}
 		},
 		{
@@ -7178,7 +7317,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/vendors"
 			}
 		},
 		{
@@ -7227,7 +7367,8 @@
 					}
 				],
 				"defaultSort": "dueDate",
-				"detailRoute": "APInvoiceDetail"
+				"detailRoute": "APInvoiceDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills"
 			}
 		},
 		{
@@ -7322,7 +7463,7 @@
 										"uriField": "sourceDocumentUri",
 										"appField": "sourceDocumentApp",
 										"role": "invoice",
-										"fallbackMessage": "Source document unreachable \u2014 docudesk may be unavailable; retry later."
+										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
 									}
 								}
 							]
@@ -7344,7 +7485,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills"
 			}
 		},
 		{
@@ -7379,7 +7521,8 @@
 					}
 				],
 				"defaultSort": "agingBucket",
-				"description": "AP aging report grouping open invoices by vendor and aging bucket per REQ-AP-009. Excludes paid and voided invoices."
+				"description": "AP aging report grouping open invoices by vendor and aging bucket per REQ-AP-009. Excludes paid and voided invoices.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -7418,7 +7561,8 @@
 					}
 				],
 				"defaultSort": "runDate",
-				"detailRoute": "PaymentRunDetail"
+				"detailRoute": "PaymentRunDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -7494,7 +7638,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -7533,7 +7678,8 @@
 					}
 				],
 				"defaultSort": "customerNumber",
-				"detailRoute": "CustomerDetail"
+				"detailRoute": "CustomerDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/customers"
 			}
 		},
 		{
@@ -7637,7 +7783,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/customers"
 			}
 		},
 		{
@@ -7681,7 +7828,8 @@
 					}
 				],
 				"defaultSort": "dueDate",
-				"detailRoute": "ARInvoiceDetail"
+				"detailRoute": "ARInvoiceDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices"
 			}
 		},
 		{
@@ -7811,7 +7959,7 @@
 										"uriField": "sourceDocumentUri",
 										"appField": "sourceDocumentApp",
 										"role": "invoice",
-										"fallbackMessage": "Source document unreachable \u2014 docudesk may be unavailable; retry later."
+										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
 									}
 								}
 							]
@@ -7833,7 +7981,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices"
 			}
 		},
 		{
@@ -7868,7 +8017,8 @@
 					}
 				],
 				"defaultSort": "agingBucket",
-				"description": "AR aging report grouping open invoices by customer and aging bucket per REQ-AR-008. Excludes paid, voided, and written-off invoices."
+				"description": "AR aging report grouping open invoices by customer and aging bucket per REQ-AR-008. Excludes paid, voided, and written-off invoices.",
+				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices"
 			}
 		},
 		{
@@ -7912,7 +8062,8 @@
 					}
 				],
 				"defaultSort": "dispatchedAt",
-				"detailRoute": "DunningTimelineDetail"
+				"detailRoute": "DunningTimelineDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices"
 			}
 		},
 		{
@@ -7990,14 +8141,15 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices"
 			}
 		},
 		{
 			"id": "ProjectenOverzicht",
 			"route": "/projecten",
 			"type": "index",
-			"title": "Projecten \u2014 Overzicht",
+			"title": "Projecten — Overzicht",
 			"config": {
 				"register": "shillinq",
 				"schema": "Project",
@@ -8034,7 +8186,8 @@
 					}
 				],
 				"defaultSort": "projectNumber",
-				"detailRoute": "ProjectDetail"
+				"detailRoute": "ProjectDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
 		{
@@ -8072,7 +8225,8 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "level"
+				"defaultSort": "level",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -8098,7 +8252,7 @@
 							{
 								"min": 0.5,
 								"color": "warning",
-								"label": "Gemiddeld (50\u201380%)"
+								"label": "Gemiddeld (50–80%)"
 							},
 							{
 								"min": 0,
@@ -8117,7 +8271,8 @@
 						"gridWidth": 12,
 						"gridHeight": 6
 					}
-				]
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -8128,7 +8283,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "IPAssetValuation",
-					"fields": [
+				"fields": [
 					{
 						"key": "assetNaam",
 						"label": "Naam",
@@ -8223,7 +8378,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -8234,7 +8390,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "InnovatieboxElection",
-					"fields": [
+				"fields": [
 					{
 						"key": "fiscalYear",
 						"label": "Boekjaar",
@@ -8350,7 +8506,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -8391,7 +8548,8 @@
 					}
 				],
 				"defaultSort": "-fiscalYear",
-				"detailRoute": "InnovatieboxElectionDetail"
+				"detailRoute": "InnovatieboxElectionDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -8402,7 +8560,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Subsidie",
-					"filter": {
+				"filter": {
 					"subsidieRegeling": {
 						"not": "other"
 					}
@@ -8449,7 +8607,8 @@
 					}
 				],
 				"defaultSort": "-aanvraagDate",
-				"detailRoute": "RDSubsidieDetail"
+				"detailRoute": "RDSubsidieDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -8460,7 +8619,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Subsidie",
-					"fields": [
+				"fields": [
 					{
 						"key": "subsidieNumber",
 						"label": "Subsidienummer",
@@ -8588,7 +8747,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -8599,7 +8759,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Kostenpost",
-					"fields": [
+				"fields": [
 					{
 						"key": "subsidieId",
 						"label": "Subsidie",
@@ -8672,7 +8832,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -8711,7 +8872,8 @@
 					}
 				],
 				"defaultSort": "-yearNumber",
-				"detailRoute": "FiscalYearDetail"
+				"detailRoute": "FiscalYearDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
 		{
@@ -8805,7 +8967,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
 		{
@@ -8852,7 +9015,8 @@
 							"closing"
 						]
 					}
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
 		{
@@ -8906,7 +9070,8 @@
 					}
 				],
 				"defaultSort": "-entryDate",
-				"detailRoute": "ClosingEntryDetail"
+				"detailRoute": "ClosingEntryDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
 		{
@@ -9005,7 +9170,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
 		{
@@ -9039,7 +9205,8 @@
 					}
 				],
 				"defaultSort": "name",
-				"detailRoute": "RateCardDetail"
+				"detailRoute": "RateCardDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -9113,7 +9280,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -9162,7 +9330,8 @@
 					}
 				],
 				"defaultSort": "effectiveDate",
-				"detailRoute": "RateScheduleDetail"
+				"detailRoute": "RateScheduleDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -9251,7 +9420,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -9295,7 +9465,8 @@
 					}
 				],
 				"defaultSort": "lookupDate",
-				"detailRoute": "RateRecordDetail"
+				"detailRoute": "RateRecordDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -9398,7 +9569,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -9472,7 +9644,8 @@
 						"type": "boolean"
 					}
 				],
-				"detailRoute": "ReceiptDetail"
+				"detailRoute": "ReceiptDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -9575,7 +9748,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -9664,7 +9838,8 @@
 						]
 					}
 				],
-				"detailRoute": "ExpenseClaimDetail"
+				"detailRoute": "ExpenseClaimDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -9780,7 +9955,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -9826,7 +10002,7 @@
 					},
 					{
 						"key": "ratePerKm",
-						"label": "Rate (\u20ac/km)",
+						"label": "Rate (€/km)",
 						"sortable": true,
 						"type": "number"
 					},
@@ -9871,7 +10047,8 @@
 						"type": "boolean"
 					}
 				],
-				"detailRoute": "MileageLogDetail"
+				"detailRoute": "MileageLogDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -9915,7 +10092,7 @@
 					},
 					{
 						"key": "ratePerKm",
-						"label": "Rate (\u20ac/km)",
+						"label": "Rate (€/km)",
 						"type": "number"
 					},
 					{
@@ -9964,7 +10141,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -9998,7 +10176,8 @@
 					}
 				],
 				"defaultSort": "periodYear",
-				"detailRoute": "BtwAangifteDetail"
+				"detailRoute": "BtwAangifteDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -10076,7 +10255,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -10141,7 +10321,8 @@
 				],
 				"defaultSort": "settlementPeriod",
 				"defaultSortDirection": "desc",
-				"detailRoute": "VATReconciliation"
+				"detailRoute": "VATReconciliation",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -10306,7 +10487,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -10335,7 +10517,8 @@
 					}
 				],
 				"defaultSort": "periodYear",
-				"detailRoute": "IcpOpgaafDetail"
+				"detailRoute": "IcpOpgaafDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -10388,7 +10571,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -10422,7 +10606,8 @@
 					}
 				],
 				"defaultSort": "periodYear",
-				"detailRoute": "BtwCorrectieDetail"
+				"detailRoute": "BtwCorrectieDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -10480,7 +10665,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -10514,7 +10700,8 @@
 						"zzp"
 					]
 				},
-				"defaultSort": "workDate"
+				"defaultSort": "workDate",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -10554,7 +10741,8 @@
 					]
 				},
 				"defaultSort": "year",
-				"detailRoute": "ZzpAftrekDetail"
+				"detailRoute": "ZzpAftrekDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -10632,7 +10820,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -10666,7 +10855,8 @@
 						"zzp"
 					]
 				},
-				"defaultSort": "year"
+				"defaultSort": "year",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -10708,7 +10898,8 @@
 					}
 				],
 				"defaultSort": "accountNumber",
-				"detailRoute": "BbvMappingDetail"
+				"detailRoute": "BbvMappingDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -10794,7 +10985,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -10839,7 +11031,8 @@
 					}
 				],
 				"defaultSort": "periodYear",
-				"detailRoute": "BcfClaimDetail"
+				"detailRoute": "BcfClaimDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -10902,7 +11095,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -10925,7 +11119,8 @@
 						"type": "line-with-threshold",
 						"title": "Schatkist-positie"
 					}
-				]
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -10959,7 +11154,8 @@
 					}
 				],
 				"defaultSort": "subsidieNumber",
-				"detailRoute": "SubsidieDetail"
+				"detailRoute": "SubsidieDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -11022,7 +11218,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -11054,7 +11251,8 @@
 					}
 				],
 				"defaultSort": "subsidieNumber",
-				"detailRoute": "SubsidieDetail"
+				"detailRoute": "SubsidieDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -11086,7 +11284,8 @@
 					}
 				],
 				"defaultSort": "subsidieNumber",
-				"detailRoute": "SubsidieDetail"
+				"detailRoute": "SubsidieDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -11149,7 +11348,8 @@
 						"key": "administrationId",
 						"label": "Administration"
 					}
-				]
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -11331,7 +11531,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -11387,7 +11588,8 @@
 						"label": "Auto PO"
 					}
 				],
-				"description": "Items currently below their reorder point, grouped by administration. Dismiss by snoozing or placing an order."
+				"description": "Items currently below their reorder point, grouped by administration. Dismiss by snoozing or placing an order.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -11447,7 +11649,8 @@
 						"gridWidth": 4,
 						"gridHeight": 2
 					}
-				]
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -11515,7 +11718,8 @@
 						"gridWidth": 8,
 						"gridHeight": 3
 					}
-				]
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/cashflow/overview"
 			}
 		},
 		{
@@ -11561,7 +11765,8 @@
 						"key": "administrationId",
 						"label": "Administration"
 					}
-				]
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/cashflow/overview"
 			}
 		},
 		{
@@ -11634,7 +11839,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/cashflow/overview"
 			}
 		},
 		{
@@ -11698,7 +11904,8 @@
 						"key": "administrationId",
 						"label": "Administration"
 					}
-				]
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/cashflow/overview"
 			}
 		},
 		{
@@ -11733,7 +11940,8 @@
 				],
 				"defaultSort": "naam",
 				"detailRoute": "DunningLadderDetail",
-				"description": "Configure the multi-stage dunning ladder per customer group. REQ-CCD-001."
+				"description": "Configure the multi-stage dunning ladder per customer group. REQ-CCD-001.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -11802,7 +12010,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -11842,7 +12051,8 @@
 				],
 				"defaultSort": "klantId",
 				"detailRoute": "DunningKlantOverrideDetail",
-				"description": "Per-customer exceptions on the base ladder (overheid extended terms, VIP skip stage 4/5). REQ-CCD-001."
+				"description": "Per-customer exceptions on the base ladder (overheid extended terms, VIP skip stage 4/5). REQ-CCD-001.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -11926,7 +12136,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -11966,7 +12177,8 @@
 				],
 				"defaultSort": "uitgevoerdOp",
 				"detailRoute": "DunningRunDetail",
-				"description": "Per-invoice per-stage execution log with evidence trail. Immutable post-execute. REQ-CCD-002."
+				"description": "Per-invoice per-stage execution log with evidence trail. Immutable post-execute. REQ-CCD-002.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -12080,7 +12292,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -12115,7 +12328,8 @@
 				],
 				"defaultSort": "factuurId",
 				"detailRoute": "IncassoKostenDetail",
-				"description": "BIK staffel + wettelijke rente per invoice (REQ-CCD-003)."
+				"description": "BIK staffel + wettelijke rente per invoice (REQ-CCD-003).",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -12183,7 +12397,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -12223,7 +12438,8 @@
 				],
 				"defaultSort": "factuurId",
 				"detailRoute": "OninbareAfschrijvingDetail",
-				"description": "Write-offs + BTW-teruggaaf voorbereiding per art. 29 OB. REQ-CCD-010."
+				"description": "Write-offs + BTW-teruggaaf voorbereiding per art. 29 OB. REQ-CCD-010.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -12297,7 +12513,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
 		{
@@ -12347,7 +12564,8 @@
 				],
 				"defaultSort": "poNumber",
 				"detailRoute": "PurchaseOrderDetail",
-				"description": "Purchase orders driving the 3-way match. Member 02 of bookkeeping-purchase-order-3way owns the controller + create flow."
+				"description": "Purchase orders driving the 3-way match. Member 02 of bookkeeping-purchase-order-3way owns the controller + create flow.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -12466,7 +12684,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -12511,7 +12730,8 @@
 				],
 				"defaultSort": "receivedAt",
 				"detailRoute": "GoodsReceiptDetail",
-				"description": "Goods Receipt Notes (GRN) \u2014 physical receipt against POs. Member 04 owns the capture flow."
+				"description": "Goods Receipt Notes (GRN) — physical receipt against POs. Member 04 owns the capture flow.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -12600,7 +12820,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -12645,7 +12866,8 @@
 				],
 				"defaultSort": "dueDate",
 				"detailRoute": "SupplierInvoiceDetail",
-				"description": "Read-only stub at slice-01. Member 05 owns UBL/Peppol/OCR ingestion."
+				"description": "Read-only stub at slice-01. Member 05 owns UBL/Peppol/OCR ingestion.",
+				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills"
 			}
 		},
 		{
@@ -12759,7 +12981,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills"
 			}
 		},
 		{
@@ -12804,7 +13027,8 @@
 				],
 				"defaultSort": "createdAt",
 				"detailRoute": "ThreeWayMatchDetail",
-				"description": "3-way match outcomes. Member 06 owns the matching engine."
+				"description": "3-way match outcomes. Member 06 owns the matching engine.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -12903,7 +13127,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -12954,7 +13179,8 @@
 				],
 				"defaultSort": "createdAt",
 				"detailRoute": "ThreeWayMatchDetail",
-				"description": "Filtered view of 3-way matches that need operator action (price/quantity/missing-GRN/missing-PO/fraud-alert exceptions). Member 08 owns the exception workflow."
+				"description": "Filtered view of 3-way matches that need operator action (price/quantity/missing-GRN/missing-PO/fraud-alert exceptions). Member 08 owns the exception workflow.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
 		{
@@ -13082,7 +13308,7 @@
 					}
 				],
 				"defaultSort": "-created",
-				"description": "Pre-filtered OR audit-log view of records transitioning to marked-for-destruction or destruction-completed per REQ-RAP-003 / REQ-RAP-008. Serves as legal proof of Archiefwet-compliant disposal \u2014 every row links to the OR hash-chain entry certifying the transition. Use this surface for external auditor compliance verification."
+				"description": "Pre-filtered OR audit-log view of records transitioning to marked-for-destruction or destruction-completed per REQ-RAP-003 / REQ-RAP-008. Serves as legal proof of Archiefwet-compliant disposal — every row links to the OR hash-chain entry certifying the transition. Use this surface for external auditor compliance verification."
 			}
 		},
 		{
@@ -13184,7 +13410,7 @@
 						"admin"
 					]
 				},
-				"description": "Compliance Export API surface per REQ-RAP-005 \u2014 RBAC-scoped to the auditor group; non-auditor callers receive 403. Server filters PII fields (email, phone, address, displayName, firstName, lastName, birthDate, socialSecurityNumber, taxId, personId, ipAddress) before rendering CSV/XLSX/JSON. Every export request is itself recorded in the OR audit trail per REQ-RAP-005 scenario 3."
+				"description": "Compliance Export API surface per REQ-RAP-005 — RBAC-scoped to the auditor group; non-auditor callers receive 403. Server filters PII fields (email, phone, address, displayName, firstName, lastName, birthDate, socialSecurityNumber, taxId, personId, ipAddress) before rendering CSV/XLSX/JSON. Every export request is itself recorded in the OR audit trail per REQ-RAP-005 scenario 3."
 			}
 		},
 		{
@@ -13276,7 +13502,8 @@
 					}
 				],
 				"defaultSort": "-periodId",
-				"detailRoute": "TaxProvisionDetail"
+				"detailRoute": "TaxProvisionDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -13359,7 +13586,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -13413,7 +13641,8 @@
 					}
 				],
 				"defaultSort": "accountNumber",
-				"detailRoute": "TemporaryDifferenceDetail"
+				"detailRoute": "TemporaryDifferenceDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -13447,7 +13676,7 @@
 					},
 					{
 						"key": "commercialCarryingAmount",
-						"label": "Commerci\u00eble boekwaarde (cent)",
+						"label": "Commerciële boekwaarde (cent)",
 						"type": "number"
 					},
 					{
@@ -13516,7 +13745,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -13560,7 +13790,8 @@
 					}
 				],
 				"defaultSort": "-periodId",
-				"detailRoute": "DeferredTaxMovementDetail"
+				"detailRoute": "DeferredTaxMovementDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -13658,7 +13889,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -13707,7 +13939,8 @@
 					}
 				],
 				"defaultSort": "-originatingYear",
-				"detailRoute": "TaxLossCarryForwardDetail"
+				"detailRoute": "TaxLossCarryForwardDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -13795,7 +14028,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -13844,7 +14078,8 @@
 					}
 				],
 				"defaultSort": "-periodId",
-				"detailRoute": "TaxRateReconciliationDetail"
+				"detailRoute": "TaxRateReconciliationDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -13922,7 +14157,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
 			}
 		},
 		{
@@ -13966,7 +14202,8 @@
 					}
 				],
 				"defaultSort": "administrationId",
-				"detailRoute": "InventoryGLConfigDetail"
+				"detailRoute": "InventoryGLConfigDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -14034,7 +14271,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -14080,7 +14318,8 @@
 						"sortable": true
 					}
 				],
-				"defaultSort": "entryDate"
+				"defaultSort": "entryDate",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},
 		{
@@ -14124,7 +14363,8 @@
 					}
 				],
 				"defaultSort": "planName",
-				"detailRoute": "PensionPlanDetail"
+				"detailRoute": "PensionPlanDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -14313,7 +14553,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -14362,7 +14603,8 @@
 					}
 				],
 				"defaultSort": "-valuationDate",
-				"detailRoute": "ActuarialValuationDetail"
+				"detailRoute": "ActuarialValuationDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -14556,7 +14798,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -14590,7 +14833,8 @@
 					}
 				],
 				"defaultSort": "wbsoCode",
-				"detailRoute": "WBSOTagDetail"
+				"detailRoute": "WBSOTagDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -14682,7 +14926,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -14721,7 +14966,8 @@
 					}
 				],
 				"defaultSort": "activityCode",
-				"detailRoute": "WBSOActivityCodeDetail"
+				"detailRoute": "WBSOActivityCodeDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -14791,7 +15037,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -14849,7 +15096,8 @@
 						"type": "create",
 						"description": "Select date range, format (CSV/PDF/XML), and filters to generate a new WBSO export for RVO submission."
 					}
-				]
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -15006,7 +15254,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -15035,7 +15284,8 @@
 					}
 				],
 				"defaultSort": "-valuationDate",
-				"detailRoute": "PensionDisclosureTableDetail"
+				"detailRoute": "PensionDisclosureTableDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -15099,7 +15349,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/people-projects/overview"
 			}
 		},
 		{
@@ -15144,7 +15395,8 @@
 					}
 				],
 				"defaultSort": "-publicationDate",
-				"detailRoute": "XBRLTaxonomyDetail"
+				"detailRoute": "XBRLTaxonomyDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -15245,7 +15497,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -15290,7 +15543,8 @@
 					}
 				],
 				"defaultSort": "filingDeadline",
-				"detailRoute": "SBRDocumentDetail"
+				"detailRoute": "SBRDocumentDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -15414,7 +15668,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -15455,7 +15710,8 @@
 					}
 				],
 				"defaultSort": "sourceAccountId",
-				"detailRoute": "XBRLMappingDetail"
+				"detailRoute": "XBRLMappingDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -15523,7 +15779,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
 			}
 		},
 		{
@@ -15588,7 +15845,8 @@
 				],
 				"defaultSort": "statementDate",
 				"detailRoute": "ReconciliationDetail",
-				"description": "Bank reconciliation sessions per REQ-REC-001. Each row is one account+period; click through to match, classify unresolved items, and produce a signed-off ReconciliationReport (REQ-REC-006)."
+				"description": "Bank reconciliation sessions per REQ-REC-001. Each row is one account+period; click through to match, classify unresolved items, and produce a signed-off ReconciliationReport (REQ-REC-006).",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
 		{
@@ -15823,7 +16081,7 @@
 											"reconId": ":id",
 											"resolutionStatus": null
 										},
-										"description": "Unresolved items for this session \u2014 bulk-classify via the resolution endpoint (REQ-REC-004).",
+										"description": "Unresolved items for this session — bulk-classify via the resolution endpoint (REQ-REC-004).",
 										"bulkActions": [
 											{
 												"id": "mark-timing",
@@ -15855,7 +16113,7 @@
 									"type": "static",
 									"componentName": "reconciliation-closure-summary",
 									"props": {
-										"description": "REQ-REC-006: pre-close summary \u2014 matched count, unmatched GL/bank counts, total variance, and sign-off comment field. Verifier MUST supply sign-off before the verify transition.",
+										"description": "REQ-REC-006: pre-close summary — matched count, unmatched GL/bank counts, total variance, and sign-off comment field. Verifier MUST supply sign-off before the verify transition.",
 										"fields": [
 											"matchedCount",
 											"unmatchedGLCount",
@@ -15884,7 +16142,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
 		{
@@ -15941,7 +16200,7 @@
 						"payload": {
 							"resolutionStatus": "timing"
 						},
-						"description": "Bulk REQ-REC-004 classification \u2014 operator supplies one reason for the whole selection."
+						"description": "Bulk REQ-REC-004 classification — operator supplies one reason for the whole selection."
 					},
 					{
 						"id": "bulk-classify-pending",
@@ -15962,7 +16221,8 @@
 						}
 					}
 				],
-				"description": "REQ-REC-008: unresolved items across all open reconciliations, grouped by session. Bulk-classify multiple items at once with a shared reason."
+				"description": "REQ-REC-008: unresolved items across all open reconciliations, grouped by session. Bulk-classify multiple items at once with a shared reason.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
 		{
@@ -16017,7 +16277,8 @@
 					}
 				],
 				"defaultSort": "statementPeriodEnd",
-				"detailRoute": "ReconciliationDetail"
+				"detailRoute": "ReconciliationDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
 		{
@@ -16102,7 +16363,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
 		{
@@ -16114,17 +16376,46 @@
 				"register": "shillinq",
 				"schema": "DBAOpdracht",
 				"columns": [
-					{ "key": "opdrachtNaam", "label": "Opdracht", "sortable": true },
-					{ "key": "klantId", "label": "Klant", "sortable": true },
-					{ "key": "startDatum", "label": "Startdatum", "sortable": true },
-					{ "key": "intakeStatus", "label": "Intake-status", "sortable": true },
-					{ "key": "risicoNiveau", "label": "Risico-niveau", "sortable": true },
-					{ "key": "actueleRisicoscore", "label": "Score", "sortable": true },
-					{ "key": "openFlags", "label": "Open flags", "sortable": true }
+					{
+						"key": "opdrachtNaam",
+						"label": "Opdracht",
+						"sortable": true
+					},
+					{
+						"key": "klantId",
+						"label": "Klant",
+						"sortable": true
+					},
+					{
+						"key": "startDatum",
+						"label": "Startdatum",
+						"sortable": true
+					},
+					{
+						"key": "intakeStatus",
+						"label": "Intake-status",
+						"sortable": true
+					},
+					{
+						"key": "risicoNiveau",
+						"label": "Risico-niveau",
+						"sortable": true
+					},
+					{
+						"key": "actueleRisicoscore",
+						"label": "Score",
+						"sortable": true
+					},
+					{
+						"key": "openFlags",
+						"label": "Open flags",
+						"sortable": true
+					}
 				],
 				"defaultSort": "-startDatum",
 				"detailRoute": "DBAIntakeWizardDetail",
-				"createAction": "POST:/api/dba/intake"
+				"createAction": "POST:/api/dba/intake",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16136,25 +16427,90 @@
 				"register": "shillinq",
 				"schema": "DBAOpdracht",
 				"fields": [
-					{ "key": "opdrachtNaam", "label": "Opdracht", "type": "string" },
-					{ "key": "klantId", "label": "Klant", "type": "string" },
-					{ "key": "startDatum", "label": "Startdatum", "type": "date" },
-					{ "key": "verwachteEindDatum", "label": "Verwachte einddatum", "type": "date" },
-					{ "key": "feitelijkeEindDatum", "label": "Feitelijke einddatum", "type": "date" },
-					{ "key": "modelOvereenkomstId", "label": "Modelovereenkomst", "type": "string" },
-					{ "key": "intakeStatus", "label": "Intake-status", "type": "string" },
-					{ "key": "intakeDatum", "label": "Intake-datum", "type": "date" },
-					{ "key": "actueleRisicoscore", "label": "Risico-score", "type": "integer" },
-					{ "key": "risicoNiveau", "label": "Risico-niveau", "type": "string" },
-					{ "key": "openFlags", "label": "Open flags", "type": "integer" },
-					{ "key": "wbaBeoordelingResultaat", "label": "WBA-uitkomst", "type": "string" },
-					{ "key": "wbaGeldigTot", "label": "WBA geldig tot", "type": "date" },
-					{ "key": "intermediairMode", "label": "Tussenkomst (intermediair)", "type": "boolean" },
-					{ "key": "perspectief", "label": "Perspectief", "type": "string" },
-					{ "key": "retentieDeadline", "label": "Retentie-deadline (AWR)", "type": "date" }
+					{
+						"key": "opdrachtNaam",
+						"label": "Opdracht",
+						"type": "string"
+					},
+					{
+						"key": "klantId",
+						"label": "Klant",
+						"type": "string"
+					},
+					{
+						"key": "startDatum",
+						"label": "Startdatum",
+						"type": "date"
+					},
+					{
+						"key": "verwachteEindDatum",
+						"label": "Verwachte einddatum",
+						"type": "date"
+					},
+					{
+						"key": "feitelijkeEindDatum",
+						"label": "Feitelijke einddatum",
+						"type": "date"
+					},
+					{
+						"key": "modelOvereenkomstId",
+						"label": "Modelovereenkomst",
+						"type": "string"
+					},
+					{
+						"key": "intakeStatus",
+						"label": "Intake-status",
+						"type": "string"
+					},
+					{
+						"key": "intakeDatum",
+						"label": "Intake-datum",
+						"type": "date"
+					},
+					{
+						"key": "actueleRisicoscore",
+						"label": "Risico-score",
+						"type": "integer"
+					},
+					{
+						"key": "risicoNiveau",
+						"label": "Risico-niveau",
+						"type": "string"
+					},
+					{
+						"key": "openFlags",
+						"label": "Open flags",
+						"type": "integer"
+					},
+					{
+						"key": "wbaBeoordelingResultaat",
+						"label": "WBA-uitkomst",
+						"type": "string"
+					},
+					{
+						"key": "wbaGeldigTot",
+						"label": "WBA geldig tot",
+						"type": "date"
+					},
+					{
+						"key": "intermediairMode",
+						"label": "Tussenkomst (intermediair)",
+						"type": "boolean"
+					},
+					{
+						"key": "perspectief",
+						"label": "Perspectief",
+						"type": "string"
+					},
+					{
+						"key": "retentieDeadline",
+						"label": "Retentie-deadline (AWR)",
+						"type": "date"
+					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "DBAIntakeWizard"
+				"indexRoute": "DBAIntakeWizard",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16166,13 +16522,30 @@
 				"register": "shillinq",
 				"schema": "DBAPortfolioRisico",
 				"columns": [
-					{ "key": "ondernemingId", "label": "Onderneming", "sortable": true },
-					{ "key": "peilDatum", "label": "Peildatum", "sortable": true },
-					{ "key": "actieveOpdrachten", "label": "Actieve opdrachten", "sortable": true },
-					{ "key": "overallRisico", "label": "Portfolio-risico", "sortable": true }
+					{
+						"key": "ondernemingId",
+						"label": "Onderneming",
+						"sortable": true
+					},
+					{
+						"key": "peilDatum",
+						"label": "Peildatum",
+						"sortable": true
+					},
+					{
+						"key": "actieveOpdrachten",
+						"label": "Actieve opdrachten",
+						"sortable": true
+					},
+					{
+						"key": "overallRisico",
+						"label": "Portfolio-risico",
+						"sortable": true
+					}
 				],
 				"defaultSort": "-peilDatum",
-				"detailRoute": "DBAPortfolioDashboardDetail"
+				"detailRoute": "DBAPortfolioDashboardDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16184,16 +16557,49 @@
 				"register": "shillinq",
 				"schema": "DBAPortfolioRisico",
 				"fields": [
-					{ "key": "ondernemingId", "label": "Onderneming", "type": "string" },
-					{ "key": "peilDatum", "label": "Peildatum", "type": "date" },
-					{ "key": "actieveOpdrachten", "label": "Actieve opdrachten", "type": "integer" },
-					{ "key": "concentratie", "label": "Concentratie", "type": "object" },
-					{ "key": "langjarigeRelaties", "label": "Langjarige relaties", "type": "array" },
-					{ "key": "exclusieveRelaties", "label": "Exclusieve relaties", "type": "integer" },
-					{ "key": "multipleEngagementConcern", "label": "Multiple-engagement concerns", "type": "array" },
-					{ "key": "overallRisico", "label": "Portfolio-risico", "type": "string" }
+					{
+						"key": "ondernemingId",
+						"label": "Onderneming",
+						"type": "string"
+					},
+					{
+						"key": "peilDatum",
+						"label": "Peildatum",
+						"type": "date"
+					},
+					{
+						"key": "actieveOpdrachten",
+						"label": "Actieve opdrachten",
+						"type": "integer"
+					},
+					{
+						"key": "concentratie",
+						"label": "Concentratie",
+						"type": "object"
+					},
+					{
+						"key": "langjarigeRelaties",
+						"label": "Langjarige relaties",
+						"type": "array"
+					},
+					{
+						"key": "exclusieveRelaties",
+						"label": "Exclusieve relaties",
+						"type": "integer"
+					},
+					{
+						"key": "multipleEngagementConcern",
+						"label": "Multiple-engagement concerns",
+						"type": "array"
+					},
+					{
+						"key": "overallRisico",
+						"label": "Portfolio-risico",
+						"type": "string"
+					}
 				],
-				"indexRoute": "DBAPortfolioDashboard"
+				"indexRoute": "DBAPortfolioDashboard",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16205,13 +16611,30 @@
 				"register": "shillinq",
 				"schema": "DBAEvidenceDossier",
 				"columns": [
-					{ "key": "opdrachtId", "label": "Opdracht", "sortable": true },
-					{ "key": "compleetheidScore", "label": "Compleetheid", "sortable": true },
-					{ "key": "bewaarTermijn", "label": "Bewaartermijn", "sortable": false },
-					{ "key": "archiveDate", "label": "Archief-datum", "sortable": true }
+					{
+						"key": "opdrachtId",
+						"label": "Opdracht",
+						"sortable": true
+					},
+					{
+						"key": "compleetheidScore",
+						"label": "Compleetheid",
+						"sortable": true
+					},
+					{
+						"key": "bewaarTermijn",
+						"label": "Bewaartermijn",
+						"sortable": false
+					},
+					{
+						"key": "archiveDate",
+						"label": "Archief-datum",
+						"sortable": true
+					}
 				],
 				"defaultSort": "-archiveDate",
-				"detailRoute": "DBAEvidenceBrowserDetail"
+				"detailRoute": "DBAEvidenceBrowserDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16223,16 +16646,49 @@
 				"register": "shillinq",
 				"schema": "DBAEvidenceDossier",
 				"fields": [
-					{ "key": "opdrachtId", "label": "Opdracht", "type": "string" },
-					{ "key": "stukken", "label": "Stukken", "type": "array" },
-					{ "key": "compleetheidScore", "label": "Compleetheid (0-1)", "type": "number" },
-					{ "key": "ontbrekendeStukken", "label": "Ontbrekende stukken", "type": "array" },
-					{ "key": "emailArchiveOptIn", "label": "E-mail archief opt-in (AVG)", "type": "boolean" },
-					{ "key": "emailArchiveConsentRecordId", "label": "Consent-record", "type": "string" },
-					{ "key": "bewaarTermijn", "label": "Bewaartermijn", "type": "string" },
-					{ "key": "archiveDate", "label": "Archief-datum (delete-eligible)", "type": "date" }
+					{
+						"key": "opdrachtId",
+						"label": "Opdracht",
+						"type": "string"
+					},
+					{
+						"key": "stukken",
+						"label": "Stukken",
+						"type": "array"
+					},
+					{
+						"key": "compleetheidScore",
+						"label": "Compleetheid (0-1)",
+						"type": "number"
+					},
+					{
+						"key": "ontbrekendeStukken",
+						"label": "Ontbrekende stukken",
+						"type": "array"
+					},
+					{
+						"key": "emailArchiveOptIn",
+						"label": "E-mail archief opt-in (AVG)",
+						"type": "boolean"
+					},
+					{
+						"key": "emailArchiveConsentRecordId",
+						"label": "Consent-record",
+						"type": "string"
+					},
+					{
+						"key": "bewaarTermijn",
+						"label": "Bewaartermijn",
+						"type": "string"
+					},
+					{
+						"key": "archiveDate",
+						"label": "Archief-datum (delete-eligible)",
+						"type": "date"
+					}
 				],
-				"indexRoute": "DBAEvidenceBrowser"
+				"indexRoute": "DBAEvidenceBrowser",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16244,15 +16700,40 @@
 				"register": "shillinq",
 				"schema": "DBAModelovereenkomst",
 				"columns": [
-					{ "key": "naam", "label": "Naam", "sortable": true },
-					{ "key": "bron", "label": "Bron", "sortable": true },
-					{ "key": "versie", "label": "Versie", "sortable": true },
-					{ "key": "goedkeuringDatum", "label": "Goedgekeurd", "sortable": true },
-					{ "key": "geldigTot", "label": "Geldig tot", "sortable": true },
-					{ "key": "actueleVersie", "label": "Actueel", "sortable": true }
+					{
+						"key": "naam",
+						"label": "Naam",
+						"sortable": true
+					},
+					{
+						"key": "bron",
+						"label": "Bron",
+						"sortable": true
+					},
+					{
+						"key": "versie",
+						"label": "Versie",
+						"sortable": true
+					},
+					{
+						"key": "goedkeuringDatum",
+						"label": "Goedgekeurd",
+						"sortable": true
+					},
+					{
+						"key": "geldigTot",
+						"label": "Geldig tot",
+						"sortable": true
+					},
+					{
+						"key": "actueleVersie",
+						"label": "Actueel",
+						"sortable": true
+					}
 				],
 				"defaultSort": "-goedkeuringDatum",
-				"detailRoute": "DBAModelovereenkomstRegisterDetail"
+				"detailRoute": "DBAModelovereenkomstRegisterDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16264,18 +16745,59 @@
 				"register": "shillinq",
 				"schema": "DBAModelovereenkomst",
 				"fields": [
-					{ "key": "naam", "label": "Naam", "type": "string" },
-					{ "key": "bron", "label": "Bron", "type": "string" },
-					{ "key": "publicatieURL", "label": "Publicatie-URL", "type": "string" },
-					{ "key": "goedkeuringDatum", "label": "Goedkeuringsdatum", "type": "date" },
-					{ "key": "geldigTot", "label": "Geldig tot", "type": "date" },
-					{ "key": "essentieleBepalingen", "label": "Essentiele bepalingen", "type": "array" },
-					{ "key": "versie", "label": "Versie", "type": "string" },
-					{ "key": "actueleVersie", "label": "Actuele versie", "type": "boolean" },
-					{ "key": "fileRef", "label": "Bestand", "type": "string" },
-					{ "key": "sha256", "label": "SHA-256", "type": "string" }
+					{
+						"key": "naam",
+						"label": "Naam",
+						"type": "string"
+					},
+					{
+						"key": "bron",
+						"label": "Bron",
+						"type": "string"
+					},
+					{
+						"key": "publicatieURL",
+						"label": "Publicatie-URL",
+						"type": "string"
+					},
+					{
+						"key": "goedkeuringDatum",
+						"label": "Goedkeuringsdatum",
+						"type": "date"
+					},
+					{
+						"key": "geldigTot",
+						"label": "Geldig tot",
+						"type": "date"
+					},
+					{
+						"key": "essentieleBepalingen",
+						"label": "Essentiele bepalingen",
+						"type": "array"
+					},
+					{
+						"key": "versie",
+						"label": "Versie",
+						"type": "string"
+					},
+					{
+						"key": "actueleVersie",
+						"label": "Actuele versie",
+						"type": "boolean"
+					},
+					{
+						"key": "fileRef",
+						"label": "Bestand",
+						"type": "string"
+					},
+					{
+						"key": "sha256",
+						"label": "SHA-256",
+						"type": "string"
+					}
 				],
-				"indexRoute": "DBAModelovereenkomstRegister"
+				"indexRoute": "DBAModelovereenkomstRegister",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16287,14 +16809,35 @@
 				"register": "shillinq",
 				"schema": "ENSIAJaarcyclus",
 				"columns": [
-					{ "key": "jaar", "label": "Year", "sortable": true },
-					{ "key": "organisatie.naam", "label": "Organisation", "sortable": false },
-					{ "key": "status", "label": "Status", "sortable": true },
-					{ "key": "vraagSetVersion", "label": "Question set", "sortable": false },
-					{ "key": "deadlineMinister", "label": "Deadline minister", "sortable": true }
+					{
+						"key": "jaar",
+						"label": "Year",
+						"sortable": true
+					},
+					{
+						"key": "organisatie.naam",
+						"label": "Organisation",
+						"sortable": false
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "vraagSetVersion",
+						"label": "Question set",
+						"sortable": false
+					},
+					{
+						"key": "deadlineMinister",
+						"label": "Deadline minister",
+						"sortable": true
+					}
 				],
 				"defaultSort": "-jaar",
-				"detailRoute": "ENSIACycleDetail"
+				"detailRoute": "ENSIACycleDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16306,18 +16849,66 @@
 				"register": "shillinq",
 				"schema": "ENSIAJaarcyclus",
 				"fields": [
-					{ "key": "jaar", "label": "Year", "type": "number" },
-					{ "key": "organisatie.naam", "label": "Organisation", "type": "string" },
-					{ "key": "organisatie.kvk", "label": "KvK", "type": "string" },
-					{ "key": "status", "label": "Status", "type": "string" },
-					{ "key": "verantwoordingsdomeinen", "label": "Domains", "type": "array" },
-					{ "key": "vraagSetVersion", "label": "Question set version", "type": "string" },
-					{ "key": "startDatum", "label": "Start date", "type": "date" },
-					{ "key": "deadlineColleges", "label": "Deadline college", "type": "date" },
-					{ "key": "deadlineMinister", "label": "Deadline minister", "type": "date" },
-					{ "key": "procesEigenaar", "label": "Process owner", "type": "string" },
-					{ "key": "verklaringFile", "label": "Verklaring document", "type": "string" },
-					{ "key": "submittedAt", "label": "Submitted at", "type": "date-time" }
+					{
+						"key": "jaar",
+						"label": "Year",
+						"type": "number"
+					},
+					{
+						"key": "organisatie.naam",
+						"label": "Organisation",
+						"type": "string"
+					},
+					{
+						"key": "organisatie.kvk",
+						"label": "KvK",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "verantwoordingsdomeinen",
+						"label": "Domains",
+						"type": "array"
+					},
+					{
+						"key": "vraagSetVersion",
+						"label": "Question set version",
+						"type": "string"
+					},
+					{
+						"key": "startDatum",
+						"label": "Start date",
+						"type": "date"
+					},
+					{
+						"key": "deadlineColleges",
+						"label": "Deadline college",
+						"type": "date"
+					},
+					{
+						"key": "deadlineMinister",
+						"label": "Deadline minister",
+						"type": "date"
+					},
+					{
+						"key": "procesEigenaar",
+						"label": "Process owner",
+						"type": "string"
+					},
+					{
+						"key": "verklaringFile",
+						"label": "Verklaring document",
+						"type": "string"
+					},
+					{
+						"key": "submittedAt",
+						"label": "Submitted at",
+						"type": "date-time"
+					}
 				],
 				"indexRoute": "ENSIACycles",
 				"sidebarProps": {
@@ -16339,7 +16930,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16351,16 +16943,45 @@
 				"register": "shillinq",
 				"schema": "Evaluatievraag",
 				"columns": [
-					{ "key": "domein", "label": "Domain", "sortable": true },
-					{ "key": "onderwerp", "label": "Topic", "sortable": true },
-					{ "key": "vraagCode", "label": "Question code", "sortable": true },
-					{ "key": "antwoord", "label": "Answer", "sortable": false },
-					{ "key": "volwassenheidsScore", "label": "Maturity score", "sortable": true },
-					{ "key": "peerReviewStatus", "label": "Peer review status", "sortable": true },
-					{ "key": "beantwoorder", "label": "Answerer", "sortable": false }
+					{
+						"key": "domein",
+						"label": "Domain",
+						"sortable": true
+					},
+					{
+						"key": "onderwerp",
+						"label": "Topic",
+						"sortable": true
+					},
+					{
+						"key": "vraagCode",
+						"label": "Question code",
+						"sortable": true
+					},
+					{
+						"key": "antwoord",
+						"label": "Answer",
+						"sortable": false
+					},
+					{
+						"key": "volwassenheidsScore",
+						"label": "Maturity score",
+						"sortable": true
+					},
+					{
+						"key": "peerReviewStatus",
+						"label": "Peer review status",
+						"sortable": true
+					},
+					{
+						"key": "beantwoorder",
+						"label": "Answerer",
+						"sortable": false
+					}
 				],
 				"defaultSort": "vraagCode",
-				"detailRoute": "ENSIAEvaluationDetail"
+				"detailRoute": "ENSIAEvaluationDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16372,23 +16993,91 @@
 				"register": "shillinq",
 				"schema": "Evaluatievraag",
 				"fields": [
-					{ "key": "cyclusId", "label": "Cycle", "type": "string" },
-					{ "key": "domein", "label": "Domain", "type": "string" },
-					{ "key": "onderwerp", "label": "Topic", "type": "string" },
-					{ "key": "vraagCode", "label": "Question code", "type": "string" },
-					{ "key": "vraagtekst", "label": "Question text", "type": "string" },
-					{ "key": "antwoordType", "label": "Answer type", "type": "string" },
-					{ "key": "antwoord", "label": "Answer", "type": "string" },
-					{ "key": "volwassenheidsScore", "label": "Maturity score", "type": "number" },
-					{ "key": "normniveau", "label": "VNG norm level", "type": "number" },
-					{ "key": "toelichting", "label": "Explanation", "type": "string" },
-					{ "key": "bewijsstukken", "label": "Evidence", "type": "array" },
-					{ "key": "beantwoorder", "label": "Answerer", "type": "string" },
-					{ "key": "peerReviewer", "label": "Peer reviewer", "type": "string" },
-					{ "key": "peerReviewStatus", "label": "Peer review status", "type": "string" },
-					{ "key": "peerReviewCommentaar", "label": "Peer review comment", "type": "string" },
-					{ "key": "peerReviewedAt", "label": "Peer reviewed at", "type": "date-time" },
-					{ "key": "reden", "label": "Change reason", "type": "string" }
+					{
+						"key": "cyclusId",
+						"label": "Cycle",
+						"type": "string"
+					},
+					{
+						"key": "domein",
+						"label": "Domain",
+						"type": "string"
+					},
+					{
+						"key": "onderwerp",
+						"label": "Topic",
+						"type": "string"
+					},
+					{
+						"key": "vraagCode",
+						"label": "Question code",
+						"type": "string"
+					},
+					{
+						"key": "vraagtekst",
+						"label": "Question text",
+						"type": "string"
+					},
+					{
+						"key": "antwoordType",
+						"label": "Answer type",
+						"type": "string"
+					},
+					{
+						"key": "antwoord",
+						"label": "Answer",
+						"type": "string"
+					},
+					{
+						"key": "volwassenheidsScore",
+						"label": "Maturity score",
+						"type": "number"
+					},
+					{
+						"key": "normniveau",
+						"label": "VNG norm level",
+						"type": "number"
+					},
+					{
+						"key": "toelichting",
+						"label": "Explanation",
+						"type": "string"
+					},
+					{
+						"key": "bewijsstukken",
+						"label": "Evidence",
+						"type": "array"
+					},
+					{
+						"key": "beantwoorder",
+						"label": "Answerer",
+						"type": "string"
+					},
+					{
+						"key": "peerReviewer",
+						"label": "Peer reviewer",
+						"type": "string"
+					},
+					{
+						"key": "peerReviewStatus",
+						"label": "Peer review status",
+						"type": "string"
+					},
+					{
+						"key": "peerReviewCommentaar",
+						"label": "Peer review comment",
+						"type": "string"
+					},
+					{
+						"key": "peerReviewedAt",
+						"label": "Peer reviewed at",
+						"type": "date-time"
+					},
+					{
+						"key": "reden",
+						"label": "Change reason",
+						"type": "string"
+					}
 				],
 				"indexRoute": "ENSIAEvaluations",
 				"sidebarProps": {
@@ -16410,7 +17099,8 @@
 							]
 						}
 					]
-				}
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16422,14 +17112,35 @@
 				"register": "shillinq",
 				"schema": "Bevinding",
 				"columns": [
-					{ "key": "type", "label": "Type", "sortable": true },
-					{ "key": "beschrijving", "label": "Description", "sortable": false },
-					{ "key": "status", "label": "Status", "sortable": true },
-					{ "key": "verantwoordelijke", "label": "Owner", "sortable": true },
-					{ "key": "streefDatum", "label": "Target date", "sortable": true }
+					{
+						"key": "type",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "beschrijving",
+						"label": "Description",
+						"sortable": false
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "verantwoordelijke",
+						"label": "Owner",
+						"sortable": true
+					},
+					{
+						"key": "streefDatum",
+						"label": "Target date",
+						"sortable": true
+					}
 				],
 				"defaultSort": "-streefDatum",
-				"detailRoute": "ENSIAFindingDetail"
+				"detailRoute": "ENSIAFindingDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16441,19 +17152,64 @@
 				"register": "shillinq",
 				"schema": "Bevinding",
 				"fields": [
-					{ "key": "cyclusId", "label": "Cycle", "type": "string" },
-					{ "key": "vraagId", "label": "Question", "type": "string" },
-					{ "key": "type", "label": "Type", "type": "string" },
-					{ "key": "beschrijving", "label": "Description", "type": "string" },
-					{ "key": "impact", "label": "Impact", "type": "string" },
-					{ "key": "kans", "label": "Probability", "type": "string" },
-					{ "key": "mitigatieActie", "label": "Mitigation action", "type": "string" },
-					{ "key": "verantwoordelijke", "label": "Owner", "type": "string" },
-					{ "key": "streefDatum", "label": "Target date", "type": "date" },
-					{ "key": "status", "label": "Status", "type": "string" },
-					{ "key": "redenAcceptatie", "label": "Acceptance reason", "type": "string" }
+					{
+						"key": "cyclusId",
+						"label": "Cycle",
+						"type": "string"
+					},
+					{
+						"key": "vraagId",
+						"label": "Question",
+						"type": "string"
+					},
+					{
+						"key": "type",
+						"label": "Type",
+						"type": "string"
+					},
+					{
+						"key": "beschrijving",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "impact",
+						"label": "Impact",
+						"type": "string"
+					},
+					{
+						"key": "kans",
+						"label": "Probability",
+						"type": "string"
+					},
+					{
+						"key": "mitigatieActie",
+						"label": "Mitigation action",
+						"type": "string"
+					},
+					{
+						"key": "verantwoordelijke",
+						"label": "Owner",
+						"type": "string"
+					},
+					{
+						"key": "streefDatum",
+						"label": "Target date",
+						"type": "date"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "redenAcceptatie",
+						"label": "Acceptance reason",
+						"type": "string"
+					}
 				],
-				"indexRoute": "ENSIAFindings"
+				"indexRoute": "ENSIAFindings",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16464,12 +17220,36 @@
 			"config": {
 				"source": "/index.php/apps/openregister/api/audit-trails?objectTypes=ENSIAJaarcyclus,Evaluatievraag,Bevinding&action=create,update,delete,lifecycle",
 				"columns": [
-					{ "key": "created", "label": "Timestamp", "sortable": true },
-					{ "key": "user", "label": "Actor", "sortable": true },
-					{ "key": "schema", "label": "Record type", "sortable": true },
-					{ "key": "objectId", "label": "Record", "sortable": false },
-					{ "key": "action", "label": "Action", "sortable": true },
-					{ "key": "summary", "label": "Change", "sortable": false }
+					{
+						"key": "created",
+						"label": "Timestamp",
+						"sortable": true
+					},
+					{
+						"key": "user",
+						"label": "Actor",
+						"sortable": true
+					},
+					{
+						"key": "schema",
+						"label": "Record type",
+						"sortable": true
+					},
+					{
+						"key": "objectId",
+						"label": "Record",
+						"sortable": false
+					},
+					{
+						"key": "action",
+						"label": "Action",
+						"sortable": true
+					},
+					{
+						"key": "summary",
+						"label": "Change",
+						"sortable": false
+					}
 				],
 				"defaultSort": "-created",
 				"description": "Read-only ENSIA audit-trail view for external IT auditors per REQ-ENSIA-008. Shows every create/update/delete/lifecycle event across ENSIAJaarcyclus + Evaluatievraag + Bevinding with before/after diff rendering. Post-peer-review edits carry a `reden` field enforced by ENSIAValidationGuard."
@@ -16496,7 +17276,8 @@
 						"title": "Export ENSIA-portal XML",
 						"description": "Renders an ENSIA-XSD-compliant XML payload for upload to the landelijke ENSIA-portal (REQ-ENSIA-007). The active ENSIA cyclus MUST be in college-akkoord with a signed verklaringFile."
 					}
-				]
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"
 			}
 		},
 		{
@@ -16550,7 +17331,8 @@
 					}
 				],
 				"defaultSort": "-aanvraagDate",
-				"detailRoute": "SubsidieDetail"
+				"detailRoute": "SubsidieDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -16597,7 +17379,8 @@
 					}
 				],
 				"defaultSort": "-uitbetaaldBedrag",
-				"detailRoute": "SubsidieDetail"
+				"detailRoute": "SubsidieDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
 		{
@@ -16733,7 +17516,8 @@
 						]
 					}
 				],
-				"indexRoute": "SubsidieAanvragen"
+				"indexRoute": "SubsidieAanvragen",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		}
 	]

@@ -261,6 +261,7 @@ import MarginChartWidget from './components/dashboard/financial/MarginChartWidge
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
 import BillableHoursChartWidget from './components/dashboard/financial/BillableHoursChartWidget.vue'
 import OpenInvoicesTableWidget from './components/dashboard/financial/OpenInvoicesTableWidget.vue'
+import FinancialDashboardActions from './components/dashboard/financial/FinancialDashboardActions.vue'
 
 export default {
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
@@ -332,4 +333,9 @@ export default {
 	CashflowChartWidget: { kind: 'widget', component: CashflowChartWidget },
 	BillableHoursChartWidget: { kind: 'widget', component: BillableHoursChartWidget },
 	OpenInvoicesTableWidget: { kind: 'widget', component: OpenInvoicesTableWidget },
+
+	// financial-dashboard-actions: quick-access header buttons (Import bill /
+	// Create invoice / Import bank) registered as kind:"widget" so the manifest
+	// actionsComponent field resolves to this entry via CnPageRenderer.
+	FinancialDashboardActions: { kind: 'widget', component: FinancialDashboardActions },
 }

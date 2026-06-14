@@ -43,6 +43,28 @@ export function lastMonths(count, now = new Date()) {
 }
 
 /**
+ * All month keys (`YYYY-MM`) from the month containing `from` through
+ * the month containing `to`, ascending. Capped at 60 months.
+ *
+ * @param {string} from ISO-8601 lower bound.
+ * @param {string} to ISO-8601 upper bound.
+ * @return {string[]}
+ */
+export function monthsInRange(from, to) {
+	if (!from || !to) return []
+	const start = new Date(`${from.slice(0, 10)}T00:00:00`)
+	const end = new Date(`${to.slice(0, 10)}T00:00:00`)
+	if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return []
+	const months = []
+	let d = new Date(start.getFullYear(), start.getMonth(), 1)
+	while (d <= end && months.length < 60) {
+		months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+		d = new Date(d.getFullYear(), d.getMonth() + 1, 1)
+	}
+	return months
+}
+
+/**
  * Human label for a `YYYY-MM` key (e.g. `Jan ’26`), localised via
  * Intl in the browser's language.
  *
