@@ -1610,7 +1610,27 @@
         "Over budget": "Boven budget",
         "External project reference": "Externe projectreferentie",
         "No OpenProject provider configured — reference stored but not resolved": "Geen OpenProject-provider geconfigureerd — referentie opgeslagen maar niet omgezet",
-        "Manual Journals": "Memoriaalboekingen"
+        "Manual Journals": "Memoriaalboekingen",
+        "Signing audit trail (federated view)": "Audittrail ondertekening (federatieve weergave)",
+        "Document signing delegated to docudesk": "Documentondertekening gedelegeerd aan docudesk",
+        "Governance sign-off delegated to decidesk": "Bestuurlijk aftekenen gedelegeerd aan decidesk",
+        "Signing status": "Ondertekeningsstatus",
+        "Signing request reference": "Ondertekeningsverzoek-referentie",
+        "Signed document": "Ondertekend document",
+        "Decision reference": "Besluitreferentie",
+        "Decision outcome": "Besluituitkomst",
+        "eIDAS provider": "eIDAS-provider",
+        "eIDAS level": "eIDAS-niveau",
+        "Signing requested": "Ondertekening aangevraagd",
+        "Signing in progress": "Ondertekening in behandeling",
+        "Signing signed": "Ondertekend",
+        "Signing declined": "Geweigerd",
+        "Signing expired": "Verlopen",
+        "Decision pending": "In behandeling",
+        "Decision approved": "Goedgekeurd",
+        "Decision rejected": "Afgewezen",
+        "Request signing via docudesk": "Ondertekening aanvragen via docudesk",
+        "Request governance sign-off via decidesk": "Bestuurlijk aftekenen aanvragen via decidesk"
     },
     "plurals": ""
 }

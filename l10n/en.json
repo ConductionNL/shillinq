@@ -1608,7 +1608,27 @@
         "Over budget": "Over budget",
         "External project reference": "External project reference",
         "No OpenProject provider configured — reference stored but not resolved": "No OpenProject provider configured — reference stored but not resolved",
-        "Manual Journals": "Manual Journals"
+        "Manual Journals": "Manual Journals",
+        "Signing audit trail (federated view)": "Signing audit trail (federated view)",
+        "Document signing delegated to docudesk": "Document signing delegated to docudesk",
+        "Governance sign-off delegated to decidesk": "Governance sign-off delegated to decidesk",
+        "Signing status": "Signing status",
+        "Signing request reference": "Signing request reference",
+        "Signed document": "Signed document",
+        "Decision reference": "Decision reference",
+        "Decision outcome": "Decision outcome",
+        "eIDAS provider": "eIDAS provider",
+        "eIDAS level": "eIDAS level",
+        "Signing requested": "Signing requested",
+        "Signing in progress": "Signing in progress",
+        "Signing signed": "Signed",
+        "Signing declined": "Declined",
+        "Signing expired": "Expired",
+        "Decision pending": "Pending",
+        "Decision approved": "Approved",
+        "Decision rejected": "Rejected",
+        "Request signing via docudesk": "Request signing via docudesk",
+        "Request governance sign-off via decidesk": "Request governance sign-off via decidesk"
     },
     "plurals": ""
 }
