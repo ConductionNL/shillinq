@@ -4,6 +4,13 @@
 
   Quick-access header buttons on the Financial overview dashboard.
   Wired as the Dashboard page actionsComponent in manifest.json.
+
+  The "Create invoice" button launches the InvoiceQuickDraftModal
+  (shillinq-invoice-quick-draft) instead of navigating to the AR index,
+  so the bookkeeper drafts a one-line invoice without losing the
+  dashboard context. The modal lives in its own file under src/modals/
+  (hydra gate-13 modal isolation) and is hosted here because this
+  component owns the launch button.
 -->
 <template>
 	<div class="financial-dashboard-actions">
@@ -13,7 +20,7 @@
 			</template>
 			{{ t('shillinq', 'Import bill') }}
 		</NcButton>
-		<NcButton type="primary" @click="goTo('AccountsReceivable')">
+		<NcButton type="primary" data-testid="fda-create-invoice" @click="showInvoiceQuickDraftModal = true">
 			<template #icon>
 				<FileDocumentPlus :size="20" />
 			</template>
@@ -25,6 +32,10 @@
 			</template>
 			{{ t('shillinq', 'Import bank') }}
 		</NcButton>
+
+		<InvoiceQuickDraftModal
+			:open="showInvoiceQuickDraftModal"
+			@close="showInvoiceQuickDraftModal = false" />
 	</div>
 </template>
 
@@ -33,6 +44,7 @@ import { NcButton } from '@nextcloud/vue'
 import InboxArrowDown from 'vue-material-design-icons/InboxArrowDown.vue'
 import FileDocumentPlus from 'vue-material-design-icons/FileDocumentPlus.vue'
 import BankTransferIn from 'vue-material-design-icons/BankTransferIn.vue'
+import InvoiceQuickDraftModal from '../../../modals/InvoiceQuickDraftModal.vue'
 
 export default {
 	name: 'FinancialDashboardActions',
@@ -41,6 +53,12 @@ export default {
 		InboxArrowDown,
 		FileDocumentPlus,
 		BankTransferIn,
+		InvoiceQuickDraftModal,
+	},
+	data() {
+		return {
+			showInvoiceQuickDraftModal: false,
+		}
 	},
 	methods: {
 		goTo(routeName) {
