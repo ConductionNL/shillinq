@@ -485,12 +485,13 @@ class InitializeSettings implements IRepairStep
             try {
                 $existing = $objectService
                     ->setRegister($registerSlug)
-                    ->setSchema('CostCenter')
+                    ->setSchema('AnalyticalDimension')
                     ->findAll(
                         [
                             'filters' => [
                                 'code'             => $code,
                                 'administrationId' => $administrationId,
+                                'dimensionType'    => 'cost-center',
                             ],
                             'limit'   => 1,
                         ]
@@ -506,13 +507,14 @@ class InitializeSettings implements IRepairStep
             }
 
             $costCenter['administrationId'] = $administrationId;
+            $costCenter['dimensionType']    = 'cost-center';
             unset($costCenter['@self']);
 
             try {
                 $objectService->saveObject(
                     object: $costCenter,
                     register: $registerSlug,
-                    schema: 'CostCenter',
+                    schema: 'AnalyticalDimension',
                 );
                 $seeded++;
             } catch (\Throwable $e) {

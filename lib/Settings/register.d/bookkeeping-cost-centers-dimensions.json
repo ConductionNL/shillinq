@@ -1,8 +1,8 @@
 {
 	"_meta": {
 		"adr": "ADR-037",
-		"change": "bookkeeping-cost-centers-dimensions",
-		"description": "Operator-extensible AnalyticalDimension register + GLLine segment P&L roll-up aggregations. Lands the parts of bookkeeping-cost-centers-dimensions/tasks.md that the prior consultancy-project-accounting build deferred (Tasks 7, 9, 10). CostCenter + Project schemas already live in shillinq_register.json; GLLine.dimensions field already declared there too. This fragment adds the AnalyticalDimension schema, segment-P&L aggregations on GLLine (per-cost-center, per-project, per-dimension), and 3 cost-center + 2 project + 2 analytical-dimension seed objects.",
+		"change": "bookkeeping-cost-centers-dimensions + unify-analytical-dimensions",
+		"description": "ONE canonical AnalyticalDimension register (discriminated by dimensionType: cost-center / cost-object / custom) replacing the prior CostCenter + KostenDrager + AnalyticalDimension triple. REQ-ADIM-001..008: dimensionType discriminator, cost-center-specific props (budget/spentToDate/allocatedBudget/organizationId/responsibleUser/ondernemingsActiviteit), shared hierarchy (parentCode) + lifecycle for all types, re-homed aggregations (segmentPnl/spentToDate/allocatedBudget scoped to cost-center; byCostCenter/byCostCenterHierarchy/byCostObject/byAnalyticalDimension on GLLine), idempotent migration via UnifyAnalyticalDimensions. Seeds carry dimensionType so greenfield installs land the unified shape. GLLine FK relations re-targeted (REQ-ADIM-101). Nav filtered views + label unification (REQ-ADIM-103).",
 		"license": "AGPL-3.0-or-later",
 		"copyright": "Conduction B.V."
 	},
@@ -11,33 +11,114 @@
 			"AnalyticalDimension": {
 				"slug": "AnalyticalDimension",
 				"icon": "ChartBoxOutline",
-				"version": "0.1.0",
+				"version": "0.2.0",
 				"title": "Analytical Dimension",
-				"description": "Operator-defined custom analytical dimension (Region, Product Line, Department, etc.) per REQ-CD-006. Each declared dimension becomes a key in GLLine.dimensions and surfaces as a filter / group-by in the segment P&L aggregations declared on GLLine. The OR relations engine validates that GLLine.dimensions keys reference an active AnalyticalDimension.code per administration.",
+				"description": "ONE canonical operator-extensible analytical dimension register, discriminated by dimensionType (cost-center / cost-object / custom) per REQ-ADIM-001. Replaces the prior CostCenter (kostenplaats), KostenDrager (kostendrager), and custom AnalyticalDimension registers. Cost-center rows carry budget + spentToDate + allocatedBudget + ondernemingsActiviteit; cost-object rows carry hierarchy without budget; custom rows carry dataType / isHierarchical / referenceSchema metadata. All types share code / name / parentCode / lifecycleState / administrationId. CRUD is exclusively via OpenRegister's generic object surface (ADR-022).",
 				"x-schema-org": "schema:DefinedTerm",
+				"x-openregister-purpose": "dimension",
 				"type": "object",
 				"required": [
 					"code",
 					"name",
-					"dataType",
+					"dimensionType",
 					"administrationId",
 					"lifecycleState"
 				],
 				"properties": {
 					"code": {
 						"type": "string",
-						"description": "Stable operator-facing dimension code, unique per administration. Referenced as a key in GLLine.dimensions.",
-						"example": "REGION"
+						"description": "Stable operator-facing dimension code, unique per (administrationId, dimensionType). Referenced as a key in GLLine.dimensions (custom), GLLine.costCenterCode (cost-center), GLLine.kostenDragerCode (cost-object), VpbBalansLink.costCenterId (cost-center with ondernemingsActiviteit). Preserved byte-for-byte by the UnifyAnalyticalDimensions migration per REQ-ADIM-007.",
+						"example": "KC-100"
 					},
 					"name": {
 						"type": "string",
 						"description": "Human-readable dimension name shown in the operator UI and segment P&L drill-down.",
-						"example": "Region"
+						"example": "Sales Utrecht"
 					},
 					"description": {
 						"type": "string",
 						"nullable": true,
 						"description": "Optional long-form description of the dimension and its intended use."
+					},
+					"dimensionType": {
+						"type": "string",
+						"enum": [
+							"cost-center",
+							"cost-object",
+							"custom"
+						],
+						"description": "Discriminator. cost-center = kostenplaats (carries budget / ondernemingsActiviteit surface); cost-object = kostendrager (hierarchy without budget); custom = operator-defined dimension (carries dataType / isHierarchical / referenceSchema metadata). Required on every row per REQ-ADIM-001."
+					},
+					"parentCode": {
+						"type": "string",
+						"nullable": true,
+						"description": "FK to parent AnalyticalDimension.code (within the same dimensionType and administrationId) for hierarchy navigation per REQ-CC-002. Drives the byCostCenterHierarchy / byCostObject roll-up aggregations.",
+						"example": "KC-000"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"enum": [
+							"active",
+							"blocked",
+							"archived"
+						],
+						"default": "active",
+						"description": "Operator-managed activation state. Archived dimensions remain referenced from historical GL lines but cannot be selected on new postings."
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "Owning administratie. Dimensions are scoped per administration; the same code MAY exist with different dimensionTypes across administrations.",
+						"example": "adm-1"
+					},
+					"status": {
+						"type": "string",
+						"description": "Convenience alias of lifecycleState for active/inactive integrations per REQ-CPA-104. Applies to cost-center rows only; cost-object and custom rows should use lifecycleState directly.",
+						"enum": [
+							"active",
+							"inactive"
+						],
+						"nullable": true,
+						"example": "active"
+					},
+					"budget": {
+						"type": "number",
+						"description": "Allocated annual or periodic budget amount in EUR per REQ-CD-002. Applies only when dimensionType = cost-center. Constrained to two-decimal cents via multipleOf to prevent IEEE-754 drift.",
+						"nullable": true,
+						"minimum": 0,
+						"multipleOf": 0.01,
+						"example": 250000.0
+					},
+					"spentToDate": {
+						"type": "integer",
+						"description": "Derived via x-openregister-aggregations: sum of GLLine.amount where costCenterCode = @self.code AND side = debit per REQ-CPA-106. Applies only when dimensionType = cost-center. Read-only.",
+						"nullable": true,
+						"readOnly": true,
+						"example": 4500000
+					},
+					"allocatedBudget": {
+						"type": "integer",
+						"description": "Derived via x-openregister-calculations: budget + sum(children.allocatedBudget) recursively per REQ-CPA-107. Applies only when dimensionType = cost-center. Read-only.",
+						"nullable": true,
+						"readOnly": true,
+						"example": 15000000
+					},
+					"organizationId": {
+						"type": "string",
+						"description": "FK to the Organization owning this dimension per REQ-CPA-104. Typically meaningful for cost-center and cost-object rows.",
+						"nullable": true,
+						"example": "org-conduction-bv"
+					},
+					"responsibleUser": {
+						"type": "string",
+						"description": "Nextcloud user id of the dimension owner. Applies to cost-center and cost-object rows.",
+						"nullable": true,
+						"example": "jan.manager"
+					},
+					"ondernemingsActiviteit": {
+						"type": "boolean",
+						"description": "Marks this cost-center dimension as an ondernemingsactiviteit per Wet modernisering Vpb-plicht (2016). When true, the dimension MAY be referenced by a VpbBalansLink (REQ-VPB-002). Only meaningful when dimensionType = cost-center. Default false.",
+						"default": false,
+						"example": false
 					},
 					"dataType": {
 						"type": "string",
@@ -48,55 +129,177 @@
 							"date",
 							"reference"
 						],
-						"description": "JSON value type for the dimension. `reference` indicates the value MUST be a slug of another register (operator picks the target register via referenceRegister/referenceSchema below)."
+						"description": "JSON value type for the dimension. Required only when dimensionType = custom. reference indicates the value MUST be a slug of another register (operator picks the target via referenceRegister/referenceSchema). Not applicable to cost-center or cost-object rows.",
+						"nullable": true
 					},
 					"isHierarchical": {
 						"type": "boolean",
 						"default": false,
-						"description": "When true, the dimension supports parent-child roll-up via a `parentCode` self-relation on the dimension values. Drives drill-down navigation."
+						"description": "When true, the dimension supports parent-child roll-up via the parentCode self-relation. Drives drill-down navigation. Most meaningful for custom dimensions; cost-center and cost-object hierarchy is always via parentCode."
 					},
 					"referenceRegister": {
 						"type": "string",
 						"nullable": true,
-						"description": "When dataType=`reference`, the slug of the register the dimension value references (typically `shillinq`)."
+						"description": "When dataType=reference, the slug of the register the dimension value references (typically shillinq). Applies to custom dimensions only."
 					},
 					"referenceSchema": {
 						"type": "string",
 						"nullable": true,
-						"description": "When dataType=`reference`, the slug of the schema the dimension value references (e.g. `Contact`, `Project`)."
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "Owning administratie. Dimensions are scoped per administration; the same dimension code MAY exist with different metadata across administrations."
-					},
-					"lifecycleState": {
-						"type": "string",
-						"enum": [
-							"active",
-							"archived"
-						],
-						"default": "active",
-						"description": "Operator-managed activation state. Archived dimensions remain referenced from historical GLLine.dimensions but cannot be selected on new postings."
+						"description": "When dataType=reference, the slug of the schema the dimension value references (e.g. Contact, Project). Applies to custom dimensions only."
 					},
 					"sortOrder": {
 						"type": "integer",
 						"default": 0,
-						"description": "Display order in the operator UI."
+						"description": "Display order in the operator UI. Most meaningful for custom dimensions."
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Usable for GL line dimension tagging."
+						},
+						"blocked": {
+							"label": "Blocked",
+							"description": "Readable but rejected as target of new GL line dimension tags."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Historical only; no new dimension tags."
+						}
+					},
+					"transitions": {
+						"block": {
+							"from": "active",
+							"to": "blocked",
+							"label": "Block dimension",
+							"description": "Prevent new GL line tagging against this dimension."
+						},
+						"unblock": {
+							"from": "blocked",
+							"to": "active",
+							"label": "Unblock dimension",
+							"description": "Re-enable GL line tagging against this dimension."
+						},
+						"archive": {
+							"from": [
+								"active",
+								"blocked"
+							],
+							"to": "archived",
+							"label": "Archive dimension",
+							"description": "Move to historical archive; GL lines with this code remain queryable."
+						}
 					}
 				},
 				"x-openregister-relations": {
+					"parentDimension": {
+						"localField": "parentCode",
+						"relatedSchema": "AnalyticalDimension",
+						"relatedField": "code",
+						"cardinality": "many-to-one",
+						"description": "Self-relation enabling hierarchical navigation within a dimensionType per REQ-CC-002. A cost-center parents a cost-center; a cost-object parents a cost-object."
+					},
 					"referenceTarget": {
-						"description": "When dataType=`reference`, the dimension value MUST resolve to an object of (referenceRegister, referenceSchema). Validated by the OR relations engine.",
+						"description": "When dataType=reference (custom dimensions only), the dimension value MUST resolve to an object of (referenceRegister, referenceSchema). Validated by the OR relations engine.",
 						"sourceField": "referenceSchema",
 						"relatedSchema": "@self.referenceSchema",
 						"cardinality": "0..1"
+					}
+				},
+				"x-openregister-aggregations": {
+					"segmentPnl": {
+						"description": "Segment P&L for this dimension (cost-center rows only): sum of GLLine amounts whose costCenterCode equals this record's code, including child cost-centers rolled up via parentCode per REQ-CC-005. Consumes GLLine.costCenterCode = @self.code with eliminationFlag = false. Scoped dimensionType = cost-center.",
+						"join": {
+							"schema": "GLLine",
+							"condition": "GLLine.costCenterCode = @self.code AND GLLine.eliminationFlag = false"
+						},
+						"groupBy": [
+							"GLLine.fiscalYearId",
+							"GLLine.accountNumber"
+						],
+						"operations": {
+							"totalDebit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'credit'"
+							}
+						}
+					},
+					"segmentPnlByCostObject": {
+						"description": "Segment P&L for this dimension (cost-object rows only): sum of GLLine amounts whose kostenDragerCode equals this record's code per REQ-CC-005. Replaces the retired KostenDrager.segmentPnl. Scoped dimensionType = cost-object.",
+						"join": {
+							"schema": "GLLine",
+							"condition": "GLLine.kostenDragerCode = @self.code AND GLLine.eliminationFlag = false"
+						},
+						"groupBy": [
+							"GLLine.fiscalYearId",
+							"GLLine.accountNumber"
+						],
+						"operations": {
+							"totalDebit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'debit'"
+							},
+							"totalCredit": {
+								"field": "GLLine.amount",
+								"operation": "sum",
+								"condition": "GLLine.side = 'credit'"
+							}
+						}
+					},
+					"spentToDate": {
+						"description": "Sum of GL debit postings tagged to this cost-center dimension (recursive over descendant cost-centers via parentCode self-relation) per REQ-CPA-106. Excludes eliminated intercompany lines. Scoped dimensionType = cost-center.",
+						"operation": "sum",
+						"field": "amount",
+						"source": {
+							"register": "@register",
+							"schema": "GLLine"
+						},
+						"filter": {
+							"costCenterCode": "@self.code OR @descendant.code",
+							"side": "debit",
+							"eliminationFlag": false
+						},
+						"recursiveOver": "parentCode"
+					}
+				},
+				"x-openregister-calculations": {
+					"allocatedBudget": {
+						"description": "Roll-up budget for cost-center dimensions per REQ-CPA-107: this dimension's own budget plus the allocatedBudget of every child cost-center reached via the parentCode self-relation (recursive descent). Applies only when dimensionType = cost-center.",
+						"type": "integer",
+						"formula": "(@self.budget ?? 0) + sum(@children(parentCode).allocatedBudget ?? 0)"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
 					}
 				}
 			},
 			"GLLine": {
 				"x-openregister-aggregations": {
 					"byCostCenter": {
-						"description": "Per-cost-center roll-up of posted GL amounts within an administration per REQ-CD-004. Surfaces segment P&L per CostCenter.code (joined to CostCenter.name for the drill-down). Declared declaratively per ADR-031 — no PHP SegmentReportService walks the GL.",
+						"description": "Per-cost-center roll-up of posted GL amounts within an administration per REQ-CD-004. Surfaces segment P&L per AnalyticalDimension[dimensionType=cost-center].code (joined to name for drill-down). Declared declaratively per ADR-031 — no PHP SegmentReportService. Re-targeted from CostCenter to AnalyticalDimension per REQ-ADIM-101.",
 						"source": "GLLine",
 						"groupBy": [
 							"costCenterCode"
@@ -105,11 +308,14 @@
 							"administrationId": "@self.administrationId"
 						},
 						"join": {
-							"through": "CostCenter",
-							"on": "CostCenter.code",
+							"through": "AnalyticalDimension",
+							"on": "AnalyticalDimension.code",
+							"filter": {
+								"dimensionType": "cost-center"
+							},
 							"select": [
-								"CostCenter.name",
-								"CostCenter.parentCode"
+								"AnalyticalDimension.name",
+								"AnalyticalDimension.parentCode"
 							]
 						},
 						"sum": [
@@ -117,20 +323,47 @@
 						]
 					},
 					"byCostCenterHierarchy": {
-						"description": "Hierarchical roll-up of GL amounts per CostCenter.parentCode tree per REQ-CD-007. Child cost-center sums propagate to parents through the self-relation; drives drill-down navigation in the segment P&L view. Declarative (ADR-031).",
+						"description": "Hierarchical roll-up of GL amounts per AnalyticalDimension[dimensionType=cost-center].parentCode tree per REQ-CD-007. Child cost-center sums propagate to parents through the self-relation; drives drill-down navigation. Declarative (ADR-031). Re-targeted from CostCenter to AnalyticalDimension per REQ-ADIM-101.",
 						"source": "GLLine",
 						"groupBy": [
-							"CostCenter.parentCode"
+							"AnalyticalDimension.parentCode"
 						],
 						"filter": {
 							"administrationId": "@self.administrationId"
 						},
 						"join": {
-							"through": "CostCenter",
-							"on": "CostCenter.code",
+							"through": "AnalyticalDimension",
+							"on": "AnalyticalDimension.code",
+							"filter": {
+								"dimensionType": "cost-center"
+							},
 							"select": [
-								"CostCenter.parentCode",
-								"CostCenter.name"
+								"AnalyticalDimension.parentCode",
+								"AnalyticalDimension.name"
+							]
+						},
+						"sum": [
+							"amount"
+						]
+					},
+					"byCostObject": {
+						"description": "Per-cost-object (kostendrager) roll-up of posted GL amounts per REQ-CD-004. Replaces the retired KostenDrager.segmentPnl. Joins GLLine.kostenDragerCode to AnalyticalDimension[dimensionType=cost-object].code. Declarative (ADR-031) per REQ-ADIM-004.",
+						"source": "GLLine",
+						"groupBy": [
+							"kostenDragerCode"
+						],
+						"filter": {
+							"administrationId": "@self.administrationId"
+						},
+						"join": {
+							"through": "AnalyticalDimension",
+							"on": "AnalyticalDimension.code",
+							"filter": {
+								"dimensionType": "cost-object"
+							},
+							"select": [
+								"AnalyticalDimension.name",
+								"AnalyticalDimension.parentCode"
 							]
 						},
 						"sum": [
@@ -159,13 +392,20 @@
 						]
 					},
 					"byAnalyticalDimension": {
-						"description": "Per-custom-dimension roll-up of posted GL amounts per REQ-CD-006. Each registered AnalyticalDimension contributes a group-by key drawn from GLLine.dimensions[code]. Drives the operator-extensible segment P&L surface; new dimensions appear automatically without PHP/Vue edits.",
+						"description": "Per-custom-dimension roll-up of posted GL amounts per REQ-CD-006. Each registered AnalyticalDimension[dimensionType=custom] contributes a group-by key drawn from GLLine.dimensions[code]. Drives the operator-extensible segment P&L surface; new custom dimensions appear automatically without PHP/Vue edits. Scoped dimensionType = custom per REQ-ADIM-004.",
 						"source": "GLLine",
 						"groupBy": [
 							"dimensions.*"
 						],
 						"filter": {
 							"administrationId": "@self.administrationId"
+						},
+						"join": {
+							"through": "AnalyticalDimension",
+							"on": "AnalyticalDimension.code",
+							"filter": {
+								"dimensionType": "custom"
+							}
 						},
 						"sum": [
 							"amount"
@@ -185,6 +425,7 @@
 			"code": "REGION",
 			"name": "Region",
 			"description": "Geographic region (e.g. Noord-Holland, Zuid-Holland). Surfaces regional P&L per municipality / branch.",
+			"dimensionType": "custom",
 			"dataType": "string",
 			"isHierarchical": false,
 			"administrationId": "adm-default",
@@ -200,6 +441,7 @@
 			"code": "PRODUCT_LINE",
 			"name": "Product Line",
 			"description": "Product line (e.g. Hosting, Consulting, Training). Surfaces product-mix P&L for revenue-side analytics.",
+			"dimensionType": "custom",
 			"dataType": "string",
 			"isHierarchical": true,
 			"administrationId": "adm-default",
@@ -209,12 +451,13 @@
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "CostCenter",
+				"schema": "AnalyticalDimension",
 				"slug": "cc-admin-amsterdam"
 			},
 			"code": "CC-ADM-AMS",
 			"name": "Administratie Amsterdam",
 			"description": "Administrative back-office, Amsterdam location.",
+			"dimensionType": "cost-center",
 			"status": "active",
 			"organizationId": "org-conduction-bv",
 			"responsibleUser": "manager.admin@conduction.nl",
@@ -224,12 +467,13 @@
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "CostCenter",
+				"schema": "AnalyticalDimension",
 				"slug": "cc-sales-utrecht"
 			},
 			"code": "CC-SLS-UTR",
 			"name": "Sales Utrecht",
 			"description": "Sales team based in Utrecht (Randstad-Oost coverage).",
+			"dimensionType": "cost-center",
 			"status": "active",
 			"organizationId": "org-conduction-bv",
 			"responsibleUser": "manager.sales@conduction.nl",
@@ -239,12 +483,13 @@
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "CostCenter",
+				"schema": "AnalyticalDimension",
 				"slug": "cc-logistics-rotterdam"
 			},
 			"code": "CC-LOG-RTM",
 			"name": "Logistics Rotterdam",
 			"description": "Logistics + fulfilment hub in Rotterdam.",
+			"dimensionType": "cost-center",
 			"status": "active",
 			"organizationId": "org-conduction-bv",
 			"responsibleUser": "manager.logistics@conduction.nl",

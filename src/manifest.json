@@ -357,17 +357,23 @@
 				},
 				{
 					"id": "CostCenters",
-					"label": "Cost Centers",
+					"label": "Cost centers",
+					"i18n": {
+						"nl": "Kostenplaatsen"
+					},
 					"icon": "OfficeBuilding",
 					"route": "CostCenters",
 					"order": 90
 				},
 				{
 					"id": "KostenDragers",
-					"label": "Kostendragers",
+					"label": "Cost objects",
+					"i18n": {
+						"nl": "Kostendragers"
+					},
 					"icon": "CubeOutline",
 					"route": "KostenDragers",
-					"order": 90
+					"order": 91
 				},
 				{
 					"id": "Projects",
@@ -2133,10 +2139,16 @@
 			"id": "CostCenters",
 			"route": "/bookkeeping/dimensions/cost-centers",
 			"type": "index",
-			"title": "Cost Centers",
+			"title": "Cost centers",
+			"i18n": {
+				"nl": "Kostenplaatsen"
+			},
 			"config": {
 				"register": "shillinq",
-				"schema": "CostCenter",
+				"schema": "AnalyticalDimension",
+				"filters": {
+					"dimensionType": "cost-center"
+				},
 				"columns": [
 					{
 						"key": "code",
@@ -2154,6 +2166,11 @@
 						"sortable": true
 					},
 					{
+						"key": "budget",
+						"label": "Budget",
+						"sortable": true
+					},
+					{
 						"key": "lifecycleState",
 						"label": "Status",
 						"sortable": true
@@ -2168,10 +2185,13 @@
 			"id": "CostCenterDetail",
 			"route": "/bookkeeping/dimensions/cost-centers/:id",
 			"type": "detail",
-			"title": "Cost Center",
+			"title": "Cost center",
+			"i18n": {
+				"nl": "Kostenplaats"
+			},
 			"config": {
 				"register": "shillinq",
-				"schema": "CostCenter",
+				"schema": "AnalyticalDimension",
 				"fields": [
 					{
 						"key": "code",
@@ -2184,13 +2204,34 @@
 						"type": "string"
 					},
 					{
-						"key": "parentCode",
-						"label": "Parent Cost Center",
+						"key": "dimensionType",
+						"label": "Type",
 						"type": "string"
 					},
 					{
+						"key": "parentCode",
+						"label": "Parent cost center",
+						"type": "string"
+					},
+					{
+						"key": "budget",
+						"label": "Budget",
+						"type": "number"
+					},
+					{
+						"key": "spentToDate",
+						"label": "Spent to date",
+						"type": "number",
+						"readOnly": true
+					},
+					{
+						"key": "ondernemingsActiviteit",
+						"label": "Ondernemingsactiviteit (Vpb)",
+						"type": "boolean"
+					},
+					{
 						"key": "responsibleUser",
-						"label": "Responsible User",
+						"label": "Responsible user",
 						"type": "string"
 					},
 					{
@@ -2234,10 +2275,16 @@
 			"id": "KostenDragers",
 			"route": "/bookkeeping/dimensions/kostendragers",
 			"type": "index",
-			"title": "Kostendragers",
+			"title": "Cost objects",
+			"i18n": {
+				"nl": "Kostendragers"
+			},
 			"config": {
 				"register": "shillinq",
-				"schema": "KostenDrager",
+				"schema": "AnalyticalDimension",
+				"filters": {
+					"dimensionType": "cost-object"
+				},
 				"columns": [
 					{
 						"key": "code",
@@ -2269,10 +2316,13 @@
 			"id": "KostenDragerDetail",
 			"route": "/bookkeeping/dimensions/kostendragers/:id",
 			"type": "detail",
-			"title": "Kostendrager",
+			"title": "Cost object",
+			"i18n": {
+				"nl": "Kostendrager"
+			},
 			"config": {
 				"register": "shillinq",
-				"schema": "KostenDrager",
+				"schema": "AnalyticalDimension",
 				"fields": [
 					{
 						"key": "code",
@@ -2285,13 +2335,18 @@
 						"type": "string"
 					},
 					{
+						"key": "dimensionType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
 						"key": "parentCode",
-						"label": "Parent Kostendrager",
+						"label": "Parent cost object",
 						"type": "string"
 					},
 					{
 						"key": "responsibleUser",
-						"label": "Responsible User",
+						"label": "Responsible user",
 						"type": "string"
 					},
 					{
@@ -2306,7 +2361,7 @@
 					}
 				],
 				"lifecycleActions": true,
-				"aggregation": "segmentPnl",
+				"aggregation": "segmentPnlByCostObject",
 				"indexRoute": "KostenDragers",
 				"sidebarProps": {
 					"tabs": [
