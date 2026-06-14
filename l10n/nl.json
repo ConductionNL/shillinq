@@ -1557,7 +1557,33 @@
         "_%n invoice outstanding_::_%n invoices outstanding_": [
             "%n openstaande factuur",
             "%n openstaande facturen"
-        ]
+        ],
+        "Recurring Invoices": "Periodieke facturen",
+        "Recurring invoice profile": "Periodiek factuurprofiel",
+        "Profile name": "Profielnaam",
+        "e.g. Hosting Acme": "bijv. Hosting Acme",
+        "Nextcloud contact reference": "Nextcloud-contactreferentie",
+        "Frequency": "Frequentie",
+        "Interval": "Interval",
+        "Invoice day": "Factuurdag",
+        "Start date": "Startdatum",
+        "Payment terms (days)": "Betaaltermijn (dagen)",
+        "Issue mode": "Uitgiftemodus",
+        "Use {period}, {month} and {year} tokens in the description — they expand per generated period.": "Gebruik {period}, {month} en {year} in de omschrijving — deze worden per gegenereerde periode ingevuld.",
+        "Description (e.g. Hosting {month} {year})": "Omschrijving (bijv. Hosting {month} {year})",
+        "Next invoice preview": "Voorbeeld volgende factuur",
+        "Per period (net)": "Per periode (netto)",
+        "Save profile": "Profiel opslaan",
+        "Weekly": "Wekelijks",
+        "Quarterly": "Per kwartaal",
+        "Semi-annually": "Halfjaarlijks",
+        "Annually": "Jaarlijks",
+        "Draft for review": "Concept ter beoordeling",
+        "Auto-issue": "Automatisch uitgeven",
+        "Recurring profile created.": "Periodiek profiel aangemaakt.",
+        "Recurring profile updated.": "Periodiek profiel bijgewerkt.",
+        "Failed to save recurring profile.": "Periodiek profiel opslaan mislukt.",
+        "Failed to load recurring profile.": "Periodiek profiel laden mislukt."
     },
     "plurals": ""
 }
