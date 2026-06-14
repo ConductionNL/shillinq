@@ -5,9 +5,11 @@
  *
  * Pure-logic generator for ACM rapportages (ACM-standaardformulier-mo-2024).
  * Aggregates commercial activities, integrale-kostprijs records, allocations
- * and ABB-besluiten for a reporting period into a single signed-and-submittable
- * report record. Generates JSON/XML serialisations and the digital-signature
- * envelope per REQ-WMO-006 §digital signature.
+ * and ABB-besluiten for a reporting period into a submittable report record.
+ * Generates JSON/XML serialisations.
+ *
+ * Signing is delegated to docudesk via ADR-019 integration registry
+ * (REQ-SIGN-001). No PKI signing is performed here.
  *
  * Side-effect-free: takes plain arrays and returns plain arrays / strings; the
  * caller persists the resulting record via OR ObjectService.
@@ -125,6 +127,7 @@ class AcmReportGenerator
             'samenvatting'       => ($input['samenvatting'] ?? null),
             'manualOverrides'    => (int) ($input['manualOverrides'] ?? 0),
             'abbList'            => $abbSummaries,
+            // Deprecated legacy fields — retained for array shape compatibility; see REQ-SIGN-004.
             'ondertekenaar'      => null,
             'ondertekendOp'      => null,
             'signatureFingerprint' => null,
@@ -160,40 +163,6 @@ class AcmReportGenerator
         return abs($sum - $omzetSumLedger) <= $tolerance;
 
     }//end reconcileOmzet()
-
-    /**
-     * Apply digital signature, locking the report into ready-for-submission state (REQ-WMO-006 §digital signature).
-     *
-     * @param array<string,mixed> $report      The draft report.
-     * @param string              $userId      Concerncontroller user-id.
-     * @param string              $fingerprint PKI certificate fingerprint.
-     *
-     * @return array<string,mixed> Signed report (status=ready-for-submission).
-     *
-     * @throws InvalidArgumentException When the report is not in draft state.
-     */
-    public function sign(array $report, string $userId, string $fingerprint): array
-    {
-        if ((string) ($report['status'] ?? '') !== 'draft') {
-            throw new InvalidArgumentException('Only draft reports can be signed (current: ' . (string) ($report['status'] ?? '') . ')');
-        }
-
-        if (trim($userId) === '') {
-            throw new InvalidArgumentException('Signer user-id is required');
-        }
-
-        if (trim($fingerprint) === '') {
-            throw new InvalidArgumentException('Signature fingerprint is required');
-        }
-
-        $report['ondertekenaar']        = $userId;
-        $report['ondertekendOp']        = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
-        $report['signatureFingerprint'] = $fingerprint;
-        $report['status']               = 'ready-for-submission';
-
-        return $report;
-
-    }//end sign()
 
     /**
      * Submit a signed report (REQ-WMO-006 §submit). Status flips to `verzonden`.
