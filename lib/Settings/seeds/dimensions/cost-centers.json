@@ -6,9 +6,10 @@
 		"description": "Example cost center seed records for Dutch organisations. 3 top-level cost centers demonstrating the code/name/parentCode hierarchy per REQ-CD-002. Shipped as lifecycleState: active — operators may archive or extend."
 	},
 	"register": "shillinq",
-	"schema": "CostCenter",
+	"schema": "AnalyticalDimension",
 	"objects": [
 		{
+			"dimensionType": "cost-center",
 			"code": "CC-001",
 			"name": "Administratie, Amsterdam",
 			"description": "Centrale administratie en financiële verwerking — hoofdkantoor Amsterdam per REQ-CD-002.",
@@ -18,6 +19,7 @@
 			"lifecycleState": "active"
 		},
 		{
+			"dimensionType": "cost-center",
 			"code": "CC-010",
 			"name": "Verkoop, Utrecht",
 			"description": "Regionale verkoopafdeling Utrecht — verantwoordelijk voor klantrelaties in de regio Midden-Nederland.",
@@ -27,6 +29,7 @@
 			"lifecycleState": "active"
 		},
 		{
+			"dimensionType": "cost-center",
 			"code": "CC-020",
 			"name": "Logistiek, Rotterdam",
 			"description": "Logistiek distributiecentrum Rotterdam — verantwoordelijk voor opslag, transport en distributie.",
@@ -36,6 +39,7 @@
 			"lifecycleState": "active"
 		},
 		{
+			"dimensionType": "cost-center",
 			"code": "CC-030",
 			"name": "IT & Systemen, Amsterdam",
 			"description": "IT-afdeling en systeembeheer — infrastructuur, applicatiebeheer en helpdesk.",
@@ -45,6 +49,7 @@
 			"lifecycleState": "active"
 		},
 		{
+			"dimensionType": "cost-center",
 			"code": "CC-040",
 			"name": "HR & Personeelszaken, Amsterdam",
 			"description": "Personeelszaken en HR-administratie — werving, opleiding en arbeidsrelaties.",

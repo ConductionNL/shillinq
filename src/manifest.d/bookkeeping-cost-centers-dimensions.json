@@ -2,8 +2,8 @@
 	"_meta": {
 		"spdx-license": "EUPL-1.2",
 		"spdx-copyright": "2026 Conduction B.V.",
-		"change": "bookkeeping-cost-centers-dimensions",
-		"description": "Manifest navigation + index/detail pages for Analytical Dimensions (REQ-CD-005, REQ-CD-006). CostCenters / Projects already live in src/manifest.json from prior consultancy-project-accounting + cost-centers builds — this fragment only adds the AnalyticalDimension nav + pages that were the remaining gap in bookkeeping-cost-centers-dimensions/tasks.md (Task 12)."
+		"change": "bookkeeping-cost-centers-dimensions + unify-analytical-dimensions",
+		"description": "Manifest navigation + index/detail pages for the unified AnalyticalDimension register (REQ-ADIM-103). Three filtered views: CostCenters (dimensionType=cost-center), KostenDragers (dimensionType=cost-object), AnalyticalDimensions (dimensionType=custom). CostCenters / KostenDragers / Projects nav items already live in src/manifest.json; this fragment adds the AnalyticalDimensions (custom) nav leaf + its index/detail pages, plus the SegmentPnLDashboard. Labels unified per EN-primary convention: Cost centers / Kostenplaatsen, Cost objects / Kostendragers, Analytical dimensions / Analytische dimensies."
 	},
 	"menu": [
 		{
@@ -14,7 +14,10 @@
 			"children": [
 				{
 					"id": "AnalyticalDimensions",
-					"label": "Analytical Dimensions",
+					"label": "Analytical dimensions",
+					"i18n": {
+						"nl": "Analytische dimensies"
+					},
 					"icon": "ChartBoxOutline",
 					"route": "AnalyticalDimensions",
 					"order": 92
@@ -34,10 +37,16 @@
 			"id": "AnalyticalDimensions",
 			"route": "/bookkeeping/dimensions/analytical-dimensions",
 			"type": "index",
-			"title": "Analytical Dimensions",
+			"title": "Analytical dimensions",
+			"i18n": {
+				"nl": "Analytische dimensies"
+			},
 			"config": {
 				"register": "shillinq",
 				"schema": "AnalyticalDimension",
+				"filters": {
+					"dimensionType": "custom"
+				},
 				"columns": [
 					{ "key": "code", "label": "Code", "sortable": true },
 					{ "key": "name", "label": "Name", "sortable": true },
@@ -46,7 +55,7 @@
 					{ "key": "lifecycleState", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "sortOrder",
-				"filters": [
+				"filterOptions": [
 					{ "key": "lifecycleState", "label": "Status" },
 					{ "key": "dataType", "label": "Data type" }
 				],
@@ -57,7 +66,10 @@
 			"id": "AnalyticalDimensionDetail",
 			"route": "/bookkeeping/dimensions/analytical-dimensions/:id",
 			"type": "detail",
-			"title": "Analytical Dimension",
+			"title": "Analytical dimension",
+			"i18n": {
+				"nl": "Analytische dimensie"
+			},
 			"config": {
 				"register": "shillinq",
 				"schema": "AnalyticalDimension",
@@ -65,6 +77,7 @@
 					{ "key": "code", "label": "Code", "type": "string" },
 					{ "key": "name", "label": "Name", "type": "string" },
 					{ "key": "description", "label": "Description", "type": "text" },
+					{ "key": "dimensionType", "label": "Type", "type": "string" },
 					{ "key": "dataType", "label": "Data type", "type": "string" },
 					{ "key": "isHierarchical", "label": "Hierarchical", "type": "boolean" },
 					{ "key": "referenceRegister", "label": "Reference register", "type": "string" },

@@ -78,6 +78,11 @@ class WbsoAdministratieController extends Controller
      * @return JSONResponse
      *
      * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs.md
+     *
+     * @no-admin-idor-exempt read-only WBSO realisatie summary; administration scope
+     *   is validated against the caller's membership by OpenRegister's ObjectService
+     *   RBAC layer (REQ-WBSO-004) — the administration_id input is format-validated
+     *   and all data reads are multitenancy-scoped server-side before return.
      */
     #[NoAdminRequired]
     public function realisatie(): JSONResponse

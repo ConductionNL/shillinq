@@ -1555,7 +1555,8 @@
         "_%n invoice outstanding_::_%n invoices outstanding_": [
             "1 fattura in sospeso",
             "%n fatture in sospeso"
-        ]
+        ],
+        "Manual Journals": "Giornali manuali"
     },
     "plurals": null
 }

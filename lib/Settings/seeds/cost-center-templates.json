@@ -11,9 +11,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-sales"
       },
+      "dimensionType": "cost-center",
       "code": "CC-001",
       "name": "Sales",
       "description": "Client acquisition and account management",
@@ -32,9 +33,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-sales-account-mgmt"
       },
+      "dimensionType": "cost-center",
       "code": "CC-001-01",
       "name": "Account Management",
       "description": "Existing customer relationship management",
@@ -53,9 +55,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-sales-new-business"
       },
+      "dimensionType": "cost-center",
       "code": "CC-001-02",
       "name": "New Business",
       "description": "Outbound lead generation and proposal authoring",
@@ -74,9 +77,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-engineering"
       },
+      "dimensionType": "cost-center",
       "code": "CC-002",
       "name": "Engineering",
       "description": "Product engineering and software development",
@@ -95,9 +99,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-engineering-backend"
       },
+      "dimensionType": "cost-center",
       "code": "CC-002-01",
       "name": "Backend Engineering",
       "description": "Server-side product engineering",
@@ -116,9 +121,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-engineering-frontend"
       },
+      "dimensionType": "cost-center",
       "code": "CC-002-02",
       "name": "Frontend Engineering",
       "description": "Client-side and UI engineering",
@@ -137,9 +143,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-engineering-devops"
       },
+      "dimensionType": "cost-center",
       "code": "CC-002-03",
       "name": "DevOps",
       "description": "Infrastructure and release engineering",
@@ -158,9 +165,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-operations"
       },
+      "dimensionType": "cost-center",
       "code": "CC-003",
       "name": "Operations",
       "description": "Delivery, support and client services",
@@ -179,9 +187,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-operations-support"
       },
+      "dimensionType": "cost-center",
       "code": "CC-003-01",
       "name": "Customer Support",
       "description": "First and second line client support",
@@ -200,9 +209,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-operations-delivery"
       },
+      "dimensionType": "cost-center",
       "code": "CC-003-02",
       "name": "Delivery",
       "description": "Project delivery and client onboarding",
@@ -221,9 +231,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-finance"
       },
+      "dimensionType": "cost-center",
       "code": "CC-004",
       "name": "Finance",
       "description": "Bookkeeping, treasury and reporting",
@@ -242,9 +253,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-administration"
       },
+      "dimensionType": "cost-center",
       "code": "CC-005",
       "name": "Administration",
       "description": "HR, legal and office administration",
@@ -263,9 +275,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-administration-hr"
       },
+      "dimensionType": "cost-center",
       "code": "CC-005-01",
       "name": "Human Resources",
       "description": "Recruitment, onboarding and people operations",
@@ -284,9 +297,10 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "CostCenter",
+        "schema": "AnalyticalDimension",
         "slug": "cc-administration-legal"
       },
+      "dimensionType": "cost-center",
       "code": "CC-005-02",
       "name": "Legal and Compliance",
       "description": "Contract management, privacy, and compliance reporting",
