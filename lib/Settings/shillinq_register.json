@@ -4995,274 +4995,12 @@
 					}
 				}
 			},
-			"CostProject": {
-				"slug": "CostProject",
-				"icon": "BriefcaseClockOutline",
-				"version": "0.1.0",
-				"title": "Cost Project",
-				"description": "Analytical project register for consultancy and departmental project accounting per REQ-CPA-101..115. Captures the management-accounting view of a project (authorised budget, estimated costs, costs incurred to date, lifecycle) — distinct from the RJ 270 revenue-recognition Project register. Costs and P&L are derived from GL via x-openregister-aggregations; budget rollup via x-openregister-calculations. No PHP service authored per ADR-031.",
-				"x-schema-org": "schema:Project",
-				"x-openregister-purpose": "analytical",
-				"type": "object",
-				"required": [
-					"projectNumber",
-					"name",
-					"totalBudget",
-					"totalEstimatedCosts",
-					"lifecycleState"
-				],
-				"properties": {
-					"projectNumber": {
-						"type": "string",
-						"description": "Operator-assigned unique project reference within the administration per REQ-CPA-101.",
-						"example": "CP-2026-001"
-					},
-					"name": {
-						"type": "string",
-						"description": "Human-readable project name.",
-						"example": "Service Engagement Template"
-					},
-					"description": {
-						"type": "string",
-						"description": "Project description / scope per REQ-CPA-101.",
-						"nullable": true,
-						"example": "Standard template for service contract delivery"
-					},
-					"startDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Project activation date per REQ-CPA-101.",
-						"nullable": true,
-						"example": "2026-01-15"
-					},
-					"endDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Target close date per REQ-CPA-101.",
-						"nullable": true,
-						"example": "2026-12-31"
-					},
-					"totalBudget": {
-						"type": "integer",
-						"description": "Authorised spend ceiling in integer cents per REQ-CPA-101 (e.g. 5000000 = €50.000,00).",
-						"minimum": 0,
-						"example": 5000000
-					},
-					"totalEstimatedCosts": {
-						"type": "integer",
-						"description": "Project-manager estimate of total project costs in integer cents per REQ-CPA-101.",
-						"minimum": 0,
-						"example": 4500000
-					},
-					"costsIncurredToDate": {
-						"type": "integer",
-						"description": "Derived via x-openregister-aggregations: sum of GLLine.amount where subLedgerType='cost-project' AND subLedgerRef=@self.id AND Account.accountType='expenses' per REQ-CPA-105. Integer cents. Read-only.",
-						"readOnly": true,
-						"nullable": true,
-						"minimum": 0,
-						"example": 1500000
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this cost project per REQ-CPA-101.",
-						"nullable": true,
-						"example": "adm-1"
-					},
-					"organizationId": {
-						"type": "string",
-						"description": "FK to the customer / owner Organization per REQ-CPA-101.",
-						"nullable": true,
-						"example": "org-1"
-					},
-					"costCenterCode": {
-						"type": "string",
-						"description": "FK to CostCenter.code — associates project to a department per REQ-CPA-101.",
-						"nullable": true,
-						"example": "CC-002"
-					},
-					"lifecycleState": {
-						"type": "string",
-						"description": "Current lifecycle state per REQ-CPA-102.",
-						"enum": [
-							"draft",
-							"active",
-							"on-hold",
-							"closed",
-							"archived"
-						],
-						"default": "draft",
-						"example": "active"
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Project is being prepared; not yet authorised for spend tracking."
-						},
-						"active": {
-							"label": "Active",
-							"description": "Project is in execution; GL postings may reference this project."
-						},
-						"on-hold": {
-							"label": "On hold",
-							"description": "Project is paused; no new GL postings reference this project."
-						},
-						"closed": {
-							"label": "Closed",
-							"description": "Project is complete; final cost snapshot taken."
-						},
-						"archived": {
-							"label": "Archived",
-							"description": "Historical only; remains queryable per 7-year retention rule (REQ-CPA-115)."
-						}
-					},
-					"transitions": {
-						"activate": {
-							"from": "draft",
-							"to": "active",
-							"label": "Activate project",
-							"description": "Move project from draft to active execution per REQ-CPA-102."
-						},
-						"putOnHold": {
-							"from": "active",
-							"to": "on-hold",
-							"label": "Put project on hold",
-							"description": "Pause project per REQ-CPA-102."
-						},
-						"reactivate": {
-							"from": "on-hold",
-							"to": "active",
-							"label": "Reactivate project",
-							"description": "Resume project from on-hold per REQ-CPA-102."
-						},
-						"close": {
-							"from": "active",
-							"to": "closed",
-							"label": "Close project",
-							"description": "Close project; final cost snapshot taken per REQ-CPA-102."
-						},
-						"archive": {
-							"from": "closed",
-							"to": "archived",
-							"label": "Archive project",
-							"description": "Move closed project to archive (typically 12 months post-close) per REQ-CPA-102."
-						}
-					},
-					"retention": {
-						"rule": "selectielijst:5.1.2",
-						"years": 7,
-						"description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-115)."
-					}
-				},
-				"x-openregister-relations": {
-					"costCenter": {
-						"localField": "costCenterCode",
-						"relatedSchema": "AnalyticalDimension",
-						"relatedField": "code",
-						"cardinality": "many-to-one",
-						"description": "Association of project to a cost-center dimension (AnalyticalDimension.dimensionType=cost-center) per REQ-CPA-101. Re-targeted from the retired CostCenter per REQ-ADIM-101."
-					},
-					"projectBudgets": {
-						"localField": "id",
-						"relatedSchema": "ProjectBudget",
-						"relatedField": "projectId",
-						"cardinality": "one-to-many",
-						"description": "Period-level budget allocations for this project per REQ-CPA-103."
-					}
-				},
-				"x-openregister-aggregations": {
-					"costsIncurredToDate": {
-						"description": "Sum of GL expense-account postings tagged to this cost project via subLedgerType='cost-project' AND subLedgerRef=@self.id per REQ-CPA-105. Integer cents.",
-						"operation": "sum",
-						"field": "amount",
-						"source": {
-							"register": "@register",
-							"schema": "GLLine"
-						},
-						"filter": {
-							"subLedgerType": "cost-project",
-							"subLedgerRef": "@self.id",
-							"account.accountType": "expenses"
-						}
-					},
-					"profitAndLoss": {
-						"description": "Project P&L per REQ-CPA-108: revenue minus expense across GL lines tagged to this cost project.",
-						"operation": "derived",
-						"fields": {
-							"revenue": {
-								"operation": "sum",
-								"field": "amount",
-								"source": {
-									"register": "@register",
-									"schema": "GLLine"
-								},
-								"filter": {
-									"subLedgerType": "cost-project",
-									"subLedgerRef": "@self.id",
-									"account.accountType": "revenue"
-								}
-							},
-							"expense": {
-								"operation": "sum",
-								"field": "amount",
-								"source": {
-									"register": "@register",
-									"schema": "GLLine"
-								},
-								"filter": {
-									"subLedgerType": "cost-project",
-									"subLedgerRef": "@self.id",
-									"account.accountType": "expenses"
-								}
-							},
-							"profitAndLoss": {
-								"formula": "@self.profitAndLoss.revenue - @self.profitAndLoss.expense"
-							}
-						}
-					}
-				},
-				"x-openregister-calculations": {
-					"budgetVariance": {
-						"description": "Budget variance: totalBudget - costsIncurredToDate (positive = under budget, negative = over budget). Integer cents.",
-						"type": "integer",
-						"formula": "(@self.totalBudget ?? 0) - (@self.costsIncurredToDate ?? 0)"
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						},
-						"project-administrator": {
-							"permissions": [
-								"create",
-								"read",
-								"update",
-								"delete"
-							],
-							"description": "Full cost-project management; visibility predicate: administrationType ∈ {mkb, zzp}."
-						}
-					}
-				}
-			},
 			"ProjectBudget": {
 				"slug": "ProjectBudget",
 				"icon": "CashCheck",
 				"version": "0.1.0",
 				"title": "Project Budget",
-				"description": "Period-level budget allocation for a CostProject per REQ-CPA-103. Captures the lifecycle pending → approved → allocated → spent.",
+				"description": "Period-level budget allocation for a AnalyticalDimension (dimensionType=project) per REQ-CPA-103. Captures the lifecycle pending → approved → allocated → spent.",
 				"x-schema-org": "schema:MonetaryAmount",
 				"x-openregister-purpose": "analytical",
 				"type": "object",
@@ -5299,7 +5037,7 @@
 					},
 					"projectId": {
 						"type": "string",
-						"description": "FK to CostProject.id per REQ-CPA-103.",
+						"description": "FK to the analytical dimension (AnalyticalDimension with dimensionType=project) for this budget allocation per REQ-CPA-103. Formerly CostProject.id — retargeted to AnalyticalDimension by retire-cost-project.",
 						"example": "cp-1"
 					},
 					"fiscalPeriod": {
@@ -5368,12 +5106,12 @@
 					}
 				},
 				"x-openregister-relations": {
-					"costProject": {
+					"analyticalDimension": {
 						"localField": "projectId",
-						"relatedSchema": "CostProject",
+						"relatedSchema": "AnalyticalDimension",
 						"relatedField": "id",
 						"cardinality": "many-to-one",
-						"description": "Parent CostProject for this allocation per REQ-CPA-103."
+						"description": "Parent AnalyticalDimension (dimensionType=project) for this allocation per REQ-CPA-103. Formerly CostProject; retargeted to AnalyticalDimension by retire-cost-project."
 					}
 				},
 				"x-openregister-rbac": {
@@ -6681,7 +6419,7 @@
 					"costProjectId": {
 						"type": "string",
 						"nullable": true,
-						"description": "Optional FK to CostProject.id for analytical project-cost tracking per REQ-CPA-101. Independent of projectId (which targets the RJ 270 revenue-recognition Project register).",
+						"description": "Optional FK to an AnalyticalDimension (dimensionType=project) for analytical project-cost tracking per REQ-CPA-101. Formerly CostProject.id — retargeted to AnalyticalDimension by retire-cost-project. Independent of projectId (which targets the RJ 270 revenue-recognition Project register).",
 						"example": "cp-1"
 					},
 					"taskId": {
