@@ -36,17 +36,6 @@
 					}
 				}
 			},
-			"Product": {
-				"slug": "Product",
-				"properties": {
-					"requiresLotTracking": {
-						"type": "boolean",
-						"default": false,
-						"description": "REQ-LOT-008: when true, every receipt of this SKU MUST be assigned to a lot (InventoryLot). Additive optional field — existing Product objects without this field are treated as false (lot tracking disabled). Drives the goods-receipt guard in inventory-lot-batch-expiry.",
-						"example": false
-					}
-				}
-			},
 			"InventoryLot": {
 				"slug": "InventoryLot",
 				"icon": "BarcodeOutline",
@@ -65,7 +54,7 @@
 				],
 				"required": [
 					"lotNumber",
-					"productSku",
+					"productId",
 					"quantity",
 					"lotStatus"
 				],
@@ -82,10 +71,17 @@
 						"description": "Supplier-assigned batch reference (often printed on the package). Distinct from lotNumber, which is the warehouse-assigned identifier.",
 						"example": "PF-KAT-A001"
 					},
+					"productId": {
+						"type": "string",
+						"description": "FK to pipelinq Product (productId). Required. Resolved via ?expand=productId via ADR-019 integration registry.",
+						"example": "pipelinq-product-id-001"
+					},
 					"productSku": {
 						"type": "string",
-						"description": "FK to Product.sku (inventory-product-catalog) identifying the product this lot contains per REQ-LOT-002. Resolves via ?expand=productSku.",
-						"example": "DV-KAT-SENIOR-2KG"
+						"nullable": true,
+						"readOnly": true,
+						"description": "TRANSITIONAL ALIAS: deprecated — use productId. Retained for 3-way-match fallback only. Will be removed after pipelinq-product-vendor-master is confirmed live.",
+						"deprecated": true
 					},
 					"manufactureDate": {
 						"type": "string",
@@ -280,12 +276,12 @@
 				},
 				"x-openregister-relations": {
 					"product": {
-						"localField": "productSku",
-						"relatedSchema": "Product",
-						"relatedField": "sku",
+						"localField": "productId",
+						"relatedSchema": "pipelinq:Product",
+						"relatedField": "id",
 						"cardinality": "many-to-one",
 						"required": true,
-						"description": "REQ-LOT-003: FK to the parent Product (catalogue entity, shillinq slug). ?expand=productSku resolves the catalogue row."
+						"description": "REQ-LOT-003: FK to the pipelinq Product (catalogue entity). ?expand=productId resolves via ADR-019 integration registry."
 					},
 					"goodsReceipt": {
 						"localField": "goodsReceiptId",

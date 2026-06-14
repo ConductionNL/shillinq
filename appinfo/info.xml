@@ -82,6 +82,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\Load_CBS_Seeds_Step</step>
             <step>OCA\Shillinq\Repair\Load_SBR_XBRL_Seeds_Step</step>
             <step>OCA\Shillinq\Repair\Load_DBA_Seeds_Step</step>
+            <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
         </post-migration>
     </repair-steps>
 
