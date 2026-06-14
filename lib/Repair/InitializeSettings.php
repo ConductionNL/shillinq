@@ -90,7 +90,7 @@ class InitializeSettings implements IRepairStep
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
-     * Phase 7b: seeds CostProject + CostCenter consultancy templates per REQ-CPA-110/111/112.
+     * Phase 7b: seeds project-flavoured AnalyticalDimension (dimensionType=project) + CostCenter consultancy templates per REQ-CPA-110/111/112. Formerly seeded CostProject (retired by retire-cost-project per REQ-RCP-003).
      * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
      * Phase 9: seeds ReimbursementPolicy + PassThroughMarkupRule master-data records per REQ-ERP-004 / REQ-ERP-005.
      * Phase 10: seeds demo Barcode records (EAN/GTIN/SSCC/UPC/internal) per REQ-SKU-011.
@@ -335,7 +335,12 @@ class InitializeSettings implements IRepairStep
     }//end seedConsultancyProjectAccountingTemplates()
 
     /**
-     * Import CostProject seed records from project-templates.json idempotently.
+     * Import project-flavoured AnalyticalDimension seed records from
+     * project-templates.json idempotently.
+     *
+     * Formerly seeded CostProject objects; retargeted to AnalyticalDimension
+     * (dimensionType=project) by retire-cost-project per REQ-RCP-003.
+     * Deduplication key: projectNumber + administrationId on AnalyticalDimension.
      *
      * @param IOutput $output           The output interface for progress reporting.
      * @param object  $objectService    The OR ObjectService instance.
@@ -345,6 +350,7 @@ class InitializeSettings implements IRepairStep
      * @return void
      *
      * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-110)
+     * @spec openspec/changes/retire-cost-project/specs/retire-cost-project/spec.md (REQ-RCP-003)
      */
     private function seedConsultancyProjectTemplates(
         IOutput $output,
@@ -354,25 +360,25 @@ class InitializeSettings implements IRepairStep
     ): void {
         $seedPath = __DIR__.'/../Settings/seeds/project-templates.json';
         if (file_exists($seedPath) === false) {
-            $output->warning('Shillinq: CostProject seed file not found, skipping');
+            $output->warning('Shillinq: project template seed file not found, skipping');
             return;
         }
 
         $content = file_get_contents($seedPath);
         if ($content === false) {
-            $output->warning('Shillinq: failed to read CostProject seed file, skipping');
+            $output->warning('Shillinq: failed to read project template seed file, skipping');
             return;
         }
 
         $data = json_decode($content, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $output->warning('Shillinq: failed to parse CostProject seed file: '.json_last_error_msg());
+            $output->warning('Shillinq: failed to parse project template seed file: '.json_last_error_msg());
             return;
         }
 
         $projects = ($data['projects'] ?? []);
         if (empty($projects) === true) {
-            $output->info('Shillinq: CostProject seed file contains no projects, skipping');
+            $output->info('Shillinq: project template seed file contains no projects, skipping');
             return;
         }
 
@@ -386,20 +392,23 @@ class InitializeSettings implements IRepairStep
             }
 
             try {
+                // Deduplication: check by projectNumber + administrationId on AnalyticalDimension
+                // (dimensionType=project) — formerly checked CostProject (retired per REQ-RCP-003).
                 $existing = $objectService
                     ->setRegister($registerSlug)
-                    ->setSchema('CostProject')
+                    ->setSchema('AnalyticalDimension')
                     ->findAll(
                         [
                             'filters' => [
                                 'projectNumber'    => $projectNumber,
                                 'administrationId' => $administrationId,
+                                'dimensionType'    => 'project',
                             ],
                             'limit'   => 1,
                         ]
                     );
             } catch (\Throwable $e) {
-                $output->warning('Shillinq: CostProject lookup failed for '.$projectNumber.': '.$e->getMessage());
+                $output->warning('Shillinq: project template lookup failed for '.$projectNumber.': '.$e->getMessage());
                 continue;
             }
 
@@ -410,23 +419,23 @@ class InitializeSettings implements IRepairStep
 
             $project['administrationId'] = $administrationId;
             // Strip the @self envelope before persistence — @self is a seed-file convention
-            // not a CostProject schema field. Cast away to avoid OR slug collisions on re-seed.
-            unset($project['@self']);
+            // not an AnalyticalDimension schema field.
+            unset($project['@self'], $project['_meta']);
 
             try {
                 $objectService->saveObject(
                     object: $project,
                     register: $registerSlug,
-                    schema: 'CostProject',
+                    schema: 'AnalyticalDimension',
                 );
                 $seeded++;
             } catch (\Throwable $e) {
-                $output->warning('Shillinq: CostProject save failed for '.$projectNumber.': '.$e->getMessage());
+                $output->warning('Shillinq: project template save failed for '.$projectNumber.': '.$e->getMessage());
             }
         }//end foreach
 
         $output->info(
-            'CostProject templates seeded: '.$seeded.' created, '.$skipped.' skipped (already exist).'
+            'Project templates seeded (AnalyticalDimension, dimensionType=project): '.$seeded.' created, '.$skipped.' skipped (already exist).'
         );
 
     }//end seedConsultancyProjectTemplates()
