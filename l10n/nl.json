@@ -1573,7 +1573,8 @@
         "Under budget": "Onder budget",
         "Over budget": "Boven budget",
         "External project reference": "Externe projectreferentie",
-        "No OpenProject provider configured — reference stored but not resolved": "Geen OpenProject-provider geconfigureerd — referentie opgeslagen maar niet omgezet"
+        "No OpenProject provider configured — reference stored but not resolved": "Geen OpenProject-provider geconfigureerd — referentie opgeslagen maar niet omgezet",
+        "Manual Journals": "Memoriaalboekingen"
     },
     "plurals": ""
 }

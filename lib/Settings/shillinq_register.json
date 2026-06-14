@@ -333,10 +333,12 @@
 				"x-openregister-notifications": {
 					"onNewStatement": {
 						"trigger": "onCreate",
-						"recipient": {
-							"resolver": "bank-connection-operator",
-							"fallback": "administration-treasurer"
-						},
+						"recipients": [
+							{
+								"resolver": "bank-connection-operator",
+								"fallback": "administration-treasurer"
+							}
+						],
 						"channels": [
 							"in-app",
 							"email"
@@ -3850,40 +3852,40 @@
 						"description": "Notify vat-administrator when KOR is activated for the administration.",
 						"recipients": {
 							"role": "vat-administrator",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "KOR geactiveerd",
-						"message": "KOR-vrijstelling is geactiveerd voor administratie @self.administrationId voor jaar @self.currentCalendarYear."
+						"message": "KOR-vrijstelling is geactiveerd voor administratie {{administrationId}} voor jaar {{currentCalendarYear}}."
 					},
 					"onThresholdWarning": {
 						"trigger": "lifecycle.warnThreshold",
 						"description": "Notify vat-administrator when YTD revenue reaches the warning threshold (80%).",
 						"recipients": {
 							"role": "vat-administrator",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "KOR-drempelwaarschuwing",
-						"message": "KOR-omzet bedraagt €@self.ytdRevenue (@self.ytdRevenue / @self.thresholdAmount * 100% van de drempel). Actie aanbevolen."
+						"message": "KOR-omzet bedraagt €{{ytdRevenue}} ({{ytdRevenue}} / {{thresholdAmount}} * 100% van de drempel). Actie aanbevolen."
 					},
 					"onThresholdExceeded": {
 						"trigger": "lifecycle.exceedThreshold",
 						"description": "Notify vat-administrator when YTD revenue reaches or exceeds the full KOR threshold.",
 						"recipients": {
 							"role": "vat-administrator",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "KOR-drempel overschreden",
-						"message": "KOR-omzetdrempel van €@self.thresholdAmount is overschreden (ytdRevenue: €@self.ytdRevenue). Opt-out vereist; er wordt een journaalpost aangemaakt ter beoordeling."
+						"message": "KOR-omzetdrempel van €{{thresholdAmount}} is overschreden (ytdRevenue: €{{ytdRevenue}}). Opt-out vereist; er wordt een journaalpost aangemaakt ter beoordeling."
 					},
 					"onOptOut": {
 						"trigger": "lifecycle.optOutFromExceeded,lifecycle.optOutFromOptedIn",
 						"description": "Notify vat-administrator when the administration opts out of KOR.",
 						"recipients": {
 							"role": "vat-administrator",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "KOR opt-out",
-						"message": "Administratie @self.administrationId heeft de KOR verlaten. Controleer de aangemaakte journaalpost (state: pending) voor BTW-correcties."
+						"message": "Administratie {{administrationId}} heeft de KOR verlaten. Controleer de aangemaakte journaalpost (state: pending) voor BTW-correcties."
 					}
 				},
 				"x-openregister-widgets": {
@@ -7384,10 +7386,10 @@
 						"description": "Notify all administration admins when a fiscal year is reopened. A reopened closed year is a high-stakes audit event.",
 						"recipients": {
 							"role": "admin",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "Boekjaar heropend",
-						"message": "Boekjaar @self.yearNumber is heropend door @self.reopenedBy. Reden: @self.reopenReason"
+						"message": "Boekjaar {{yearNumber}} is heropend door {{reopenedBy}}. Reden: {{reopenReason}}"
 					}
 				}
 			},
@@ -9269,7 +9271,7 @@
 						"onTransition": {
 							"pause": {
 								"notificationType": "inventory-rule-paused",
-								"recipient": "{alertRecipients}",
+								"recipients": ["{alertRecipients}"],
 								"channels": [
 									"{alertChannel}"
 								],
@@ -9330,7 +9332,7 @@
 							"condition": "null OR past"
 						},
 						"notificationType": "inventory-low-stock",
-						"recipient": "{alertRecipients}",
+						"recipients": ["{alertRecipients}"],
 						"channels": [
 							"{alertChannel}"
 						],
@@ -13375,7 +13377,7 @@
 						},
 						"onVastgesteld": {
 							"trigger": "lifecycle:vaststellen",
-							"recipient": "subsidie-coordinator",
+							"recipients": ["subsidie-coordinator"],
 							"channels": [
 								"in-app"
 							],
@@ -13384,7 +13386,7 @@
 						},
 						"onUitbetaald": {
 							"trigger": "lifecycle:uitbetalen",
-							"recipient": "subsidie-coordinator",
+							"recipients": ["subsidie-coordinator"],
 							"channels": [
 								"in-app"
 							],
@@ -13588,7 +13590,7 @@
 				"x-openregister-notifications": {
 					"onOverdue": {
 						"trigger": "lifecycle:markOverdue",
-						"recipient": "subsidie-coordinator",
+						"recipients": ["subsidie-coordinator"],
 						"channels": [
 							"in-app",
 							"email"
@@ -16483,25 +16485,25 @@
 				"x-openregister-notifications": {
 					"onCriteriumMet": {
 						"trigger": "calculation-crossing:qualifiesForUrencriterium",
-						"condition": "@self.qualifiesForUrencriterium === true",
+						"condition": "qualifiesForUrencriterium === true",
 						"description": "Notify zzp-administrator when 1225-urencriterium is met. REQ-ZZP-004.",
 						"recipients": {
 							"role": "zzp-administrator",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "Urencriterium gehaald",
-						"message": "Het urencriterium voor @self.taxYear is gehaald (@self.ytdQualifyingHours uren). Zelfstandigenaftrek is van toepassing."
+						"message": "Het urencriterium voor {{taxYear}} is gehaald ({{ytdQualifyingHours}} uren). Zelfstandigenaftrek is van toepassing."
 					},
 					"onCriteriumAtRisk": {
 						"trigger": "scheduled:monthly",
-						"condition": "@self.ytdQualifyingHours * (12 / currentMonth()) < 1225",
+						"condition": "ytdQualifyingHours * (12 / currentMonth()) < 1225",
 						"description": "Monthly projection: warn zzp-administrator when projected EOY qualifying hours < 1225. REQ-ZZP-004.",
 						"recipients": {
 							"role": "zzp-administrator",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "Dreigend onderschrijden urencriterium",
-						"message": "Projectie einde jaar: @projected uur (< 1225). Dreigend onderschrijden urencriterium @self.taxYear."
+						"message": "Projectie einde jaar: {{projected}} uur (< 1225). Dreigend onderschrijden urencriterium {{taxYear}}."
 					}
 				},
 				"x-openregister-widgets": {
@@ -22992,10 +22994,12 @@
 			"x-openregister-notifications": {
 				"onSisaSubmitted": {
 					"trigger": "onAuditEvent:sisa.submitted",
-					"recipient": {
-						"resolver": "administration-financial-officer",
-						"fallback": "administration-owner"
-					},
+					"recipients": [
+						{
+							"resolver": "administration-financial-officer",
+							"fallback": "administration-owner"
+						}
+					],
 					"channels": [
 						"in-app",
 						"email"

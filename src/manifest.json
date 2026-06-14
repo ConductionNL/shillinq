@@ -84,7 +84,7 @@
 				},
 				{
 					"id": "Journals",
-					"label": "Journals",
+					"label": "Manual Journals",
 					"icon": "BookEditOutline",
 					"route": "Journals",
 					"order": 22
@@ -4332,7 +4332,7 @@
 			"id": "Journals",
 			"route": "/journals",
 			"type": "index",
-			"title": "Journals",
+			"title": "Manual Journals",
 			"config": {
 				"register": "shillinq",
 				"schema": "JournalEntry",
@@ -11069,70 +11069,6 @@
 				],
 				"defaultSort": "subsidieNumber",
 				"detailRoute": "SubsidieDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
-			}
-		},
-		{
-			"id": "SubsidieDetail",
-			"route": "/subsidies/overzicht/:id",
-			"type": "detail",
-			"title": "Subsidie",
-			"config": {
-				"register": "shillinq",
-				"schema": "Subsidie",
-				"fields": [
-					{
-						"key": "subsidieNumber",
-						"label": "Nummer",
-						"type": "string"
-					},
-					{
-						"key": "subsidieName",
-						"label": "Naam",
-						"type": "string"
-					},
-					{
-						"key": "granteeOrganization",
-						"label": "Ontvanger",
-						"type": "string"
-					},
-					{
-						"key": "awardAmount",
-						"label": "Toegekend bedrag",
-						"type": "number"
-					},
-					{
-						"key": "state",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "hasRepaymentPlan",
-						"label": "Afbetalingsregeling",
-						"type": "boolean"
-					}
-				],
-				"indexRoute": "SubsidiesOverzicht",
-				"sidebarProps": {
-					"tabs": [
-						{
-							"id": "audit",
-							"label": "Audit Trail",
-							"icon": "HistoryIcon",
-							"order": 90,
-							"widgets": [
-								{
-									"type": "data",
-									"componentName": "openregister-audit-trail",
-									"props": {
-										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
-										"collapsed": true
-									}
-								}
-							]
-						}
-					]
-				},
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},
