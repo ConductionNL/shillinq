@@ -104,6 +104,8 @@
 	},
 	"removals": [
 		"Consolidations",
-		"Verplichtingen"
+		"Verplichtingen",
+		"CostProjects",
+		"ProjectenOverzicht"
 	]
 }

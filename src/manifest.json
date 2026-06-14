@@ -10,43 +10,50 @@
 			"label": "Dashboard",
 			"icon": "icon-category-dashboard",
 			"route": "Dashboard",
-			"order": 10
+			"order": 10,
+			"children": []
 		},
 		{
 			"id": "BankingTreasury",
 			"label": "Banking & Treasury",
 			"icon": "BankOutline",
-			"order": 25
+			"order": 25,
+			"children": []
 		},
 		{
 			"id": "Sales",
 			"label": "Sales",
 			"icon": "CartOutline",
-			"order": 30
+			"order": 30,
+			"children": []
 		},
 		{
 			"id": "Purchasing",
 			"label": "Purchasing & Inventory",
 			"icon": "CartArrowDownOutline",
-			"order": 35
+			"order": 35,
+			"children": []
 		},
 		{
 			"id": "Payroll",
 			"label": "People & Projects",
 			"icon": "TableAccountOutline",
-			"order": 55
+			"order": 55,
+			"children": []
 		},
 		{
 			"id": "PublicSector",
 			"label": "Public sector",
 			"icon": "OfficeBuildingOutline",
-			"order": 60
+			"order": 60,
+			"children": []
 		},
 		{
 			"id": "ExternalConnections",
 			"label": "External Connections",
 			"icon": "SwapHorizontalBoldOutline",
-			"order": 80
+			"order": 80,
+			"children": []
 		},
 		{
 			"id": "Bookkeeping",
@@ -380,13 +387,6 @@
 					"label": "Projects",
 					"icon": "BriefcaseOutline",
 					"route": "Projects",
-					"order": 90
-				},
-				{
-					"id": "CostProjects",
-					"label": "Cost Projects",
-					"icon": "BriefcaseClockOutline",
-					"route": "CostProjects",
 					"order": 90
 				},
 				{
@@ -904,7 +904,8 @@
 			"icon": "icon-info",
 			"href": "https://shillinq.conduction.nl",
 			"section": "footer",
-			"order": 90
+			"order": 90,
+			"children": []
 		},
 		{
 			"id": "FeaturesRoadmapMenu",
@@ -912,7 +913,8 @@
 			"icon": "icon-toggle",
 			"route": "FeaturesRoadmap",
 			"section": "footer",
-			"order": 91
+			"order": 91,
+			"children": []
 		},
 		{
 			"id": "Settings",
@@ -920,7 +922,8 @@
 			"icon": "icon-settings",
 			"route": "Settings",
 			"section": "settings",
-			"order": 99
+			"order": 99,
+			"children": []
 		},
 		{
 			"id": "Projecten",
@@ -2550,150 +2553,6 @@
 						"id": "wip-history",
 						"title": "WIP-historie",
 						"schema": "WipBalance",
-						"foreignKey": "projectId"
-					}
-				],
-				"sidebarProps": {
-					"tabs": [
-						{
-							"id": "audit",
-							"label": "Audit Trail",
-							"icon": "HistoryIcon",
-							"order": 90,
-							"widgets": [
-								{
-									"type": "data",
-									"componentName": "openregister-audit-trail",
-									"props": {
-										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
-										"collapsed": true
-									}
-								}
-							]
-						}
-					]
-				},
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
-			}
-		},
-		{
-			"id": "CostProjects",
-			"route": "/bookkeeping/dimensions/cost-projects",
-			"type": "index",
-			"title": "Cost Projects",
-			"config": {
-				"register": "shillinq",
-				"schema": "CostProject",
-				"columns": [
-					{
-						"key": "projectNumber",
-						"label": "Project Number",
-						"sortable": true
-					},
-					{
-						"key": "name",
-						"label": "Name",
-						"sortable": true
-					},
-					{
-						"key": "totalBudget",
-						"label": "Budget",
-						"sortable": true
-					},
-					{
-						"key": "costsIncurredToDate",
-						"label": "Costs to Date",
-						"sortable": true
-					},
-					{
-						"key": "lifecycleState",
-						"label": "Status",
-						"sortable": true
-					}
-				],
-				"defaultSort": "projectNumber",
-				"detailRoute": "CostProjectDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
-			}
-		},
-		{
-			"id": "CostProjectDetail",
-			"route": "/bookkeeping/dimensions/cost-projects/:id",
-			"type": "detail",
-			"title": "Cost Project",
-			"config": {
-				"register": "shillinq",
-				"schema": "CostProject",
-				"fields": [
-					{
-						"key": "projectNumber",
-						"label": "Project Number",
-						"type": "string"
-					},
-					{
-						"key": "name",
-						"label": "Project Name",
-						"type": "string"
-					},
-					{
-						"key": "description",
-						"label": "Description",
-						"type": "string"
-					},
-					{
-						"key": "lifecycleState",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "startDate",
-						"label": "Start Date",
-						"type": "date"
-					},
-					{
-						"key": "endDate",
-						"label": "End Date",
-						"type": "date"
-					},
-					{
-						"key": "totalBudget",
-						"label": "Budget",
-						"type": "number"
-					},
-					{
-						"key": "totalEstimatedCosts",
-						"label": "Estimated Costs",
-						"type": "number"
-					},
-					{
-						"key": "costsIncurredToDate",
-						"label": "Costs to Date",
-						"type": "number"
-					},
-					{
-						"key": "costCenterCode",
-						"label": "Cost Center",
-						"type": "string"
-					},
-					{
-						"key": "organizationId",
-						"label": "Organization",
-						"type": "string"
-					},
-					{
-						"key": "administrationId",
-						"label": "Administration",
-						"type": "string"
-					}
-				],
-				"lifecycleActions": true,
-				"aggregation": "profitAndLoss",
-				"indexRoute": "CostProjects",
-				"related": [
-					{
-						"id": "project-budgets",
-						"title": "Project Budgets",
-						"schema": "ProjectBudget",
 						"foreignKey": "projectId"
 					}
 				],
