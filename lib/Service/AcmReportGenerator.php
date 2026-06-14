@@ -66,6 +66,8 @@ class AcmReportGenerator
      * } $input Inputs.
      *
      * @return array<string,mixed> ACMReport record matching the schema.
+     *
+     * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-8
      */
     public function compose(array $input): array
     {

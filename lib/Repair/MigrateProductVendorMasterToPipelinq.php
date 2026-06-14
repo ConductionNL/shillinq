@@ -1,7 +1,24 @@
 <?php
+
 /**
+ * Migrate Product/Vendor Master to Pipelinq Repair Step
+ *
+ * Idempotent migration step: exports shillinq Product + ProductAttribute +
+ * VendorMaster data to app-config key `shillinq_pvm_export` for pipelinq
+ * ingest, then rewires existing stock/PO/AP objects to use productId +
+ * VendorFinancialProfile.
+ *
+ * @category Repair
+ * @package  OCA\Shillinq\Repair
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V.
  */
 
 declare(strict_types=1);
