@@ -1555,7 +1555,23 @@
         "_%n invoice outstanding_::_%n invoices outstanding_": [
             "%n invoice outstanding",
             "%n invoices outstanding"
-        ]
+        ],
+        "Total budget": "Total budget",
+        "Total estimated costs": "Total estimated costs",
+        "Budget variance": "Budget variance",
+        "Project number": "Project number",
+        "Start date": "Start date",
+        "End date": "End date",
+        "Linked OpenProject project": "Linked OpenProject project",
+        "OpenProject project reference": "OpenProject project reference",
+        "Link to OpenProject": "Link to OpenProject",
+        "Project-flavoured cost center": "Project-flavoured cost center",
+        "Costs incurred (from GL)": "Costs incurred (from GL)",
+        "Budget vs actuals": "Budget vs actuals",
+        "Under budget": "Under budget",
+        "Over budget": "Over budget",
+        "External project reference": "External project reference",
+        "No OpenProject provider configured — reference stored but not resolved": "No OpenProject provider configured — reference stored but not resolved"
     },
     "plurals": ""
 }
