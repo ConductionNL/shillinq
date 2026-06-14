@@ -84,7 +84,7 @@
 				},
 				{
 					"id": "Journals",
-					"label": "Journals",
+					"label": "Manual Journals",
 					"icon": "BookEditOutline",
 					"route": "Journals",
 					"order": 22
@@ -4332,7 +4332,7 @@
 			"id": "Journals",
 			"route": "/journals",
 			"type": "index",
-			"title": "Journals",
+			"title": "Manual Journals",
 			"config": {
 				"register": "shillinq",
 				"schema": "JournalEntry",

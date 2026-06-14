@@ -1571,7 +1571,8 @@
         "Under budget": "Under budget",
         "Over budget": "Over budget",
         "External project reference": "External project reference",
-        "No OpenProject provider configured — reference stored but not resolved": "No OpenProject provider configured — reference stored but not resolved"
+        "No OpenProject provider configured — reference stored but not resolved": "No OpenProject provider configured — reference stored but not resolved",
+        "Manual Journals": "Manual Journals"
     },
     "plurals": ""
 }
