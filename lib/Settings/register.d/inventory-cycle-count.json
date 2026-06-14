@@ -537,10 +537,10 @@
 					},
 					"product": {
 						"localField": "sku",
-						"relatedSchema": "Product",
-						"relatedField": "sku",
+						"relatedSchema": "pipelinq:Product",
+						"relatedField": "id",
 						"cardinality": "many-to-one",
-						"description": "FK to the counted product."
+						"description": "FK to the pipelinq counted product. Resolved via ADR-019 integration registry."
 					},
 					"location": {
 						"localField": "locationId",

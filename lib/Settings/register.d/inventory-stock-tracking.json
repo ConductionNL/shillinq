@@ -17,23 +17,30 @@
 				"type": "object",
 				"x-openregister-unique": [
 					[
-						"productSku",
+						"productId",
 						"locationCode",
 						"administrationId"
 					]
 				],
 				"required": [
-					"productSku",
+					"productId",
 					"locationCode",
 					"quantityOnHand",
 					"status",
 					"administrationId"
 				],
 				"properties": {
+					"productId": {
+						"type": "string",
+						"description": "FK to pipelinq Product (productId). Required. Resolved via ADR-019 integration registry (shillinq → pipelinq). Local denormalised caches (status, unitCost) are refreshed from the registry but stock-keeping + GL posting work offline on cached values.",
+						"example": "pipelinq-product-id-001"
+					},
 					"productSku": {
 						"type": "string",
-						"description": "FK to Product.sku (inventory-product-catalog). Required. Cardinality many-to-one — one Product has 0..N InventoryStock rows (one per location).",
-						"example": "LAPTOP-DELL-XPS13"
+						"nullable": true,
+						"readOnly": true,
+						"description": "TRANSITIONAL ALIAS: deprecated — use productId. Retained for 3-way-match fallback only. Will be removed after pipelinq-product-vendor-master is confirmed live.",
+						"deprecated": true
 					},
 					"locationCode": {
 						"type": "string",
@@ -106,11 +113,11 @@
 				},
 				"x-openregister-relations": {
 					"product": {
-						"localField": "productSku",
-						"relatedSchema": "Product",
-						"relatedField": "sku",
+						"localField": "productId",
+						"relatedSchema": "pipelinq:Product",
+						"relatedField": "id",
 						"cardinality": "many-to-one",
-						"description": "Product master record (inventory-product-catalog). Required. ?expand=product resolves the Product row for the operator UI; downstream stock-by-product reporting traverses this relation."
+						"description": "pipelinq Product master record. ?expand=productId resolves via ADR-019 integration registry."
 					}
 				},
 				"x-openregister-calculations": {

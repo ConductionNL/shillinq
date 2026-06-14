@@ -120,6 +120,8 @@
 		"CountTemplates",
 		"NotificationTriggers",
 		"NotificationMonitor",
-		"SmsReminderChannels"
+		"SmsReminderChannels",
+		"Products",
+		"ProductAttributes"
 	]
 }

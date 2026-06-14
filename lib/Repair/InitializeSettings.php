@@ -168,7 +168,9 @@ class InitializeSettings implements IRepairStep
             $this->registerIntercompanyMonthlyMatchingWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
             $this->seedComplianceReferenceData(output: $output);
-            $this->seedProductAttributeTemplates(output: $output);
+            // Removed: seedProductAttributeTemplates — ProductAttribute data migrated to pipelinq.
+            // @see MigrateProductVendorMasterToPipelinq (shillinq-product-vendor-to-pipelinq change).
+            // $this->seedProductAttributeTemplates(output: $output);
             $this->seedReimbursementPolicies(output: $output);
             $this->seedPassThroughMarkupRules(output: $output);
             $this->seedInventoryBarcodeDemo(output: $output);

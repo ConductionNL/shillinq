@@ -527,7 +527,7 @@
               "ap-invoice": { "register": "shillinq", "schema": "APInvoice", "matchOn": ["invoiceNumber", "totalAmount", "vendorId"] },
               "gl-transaction": { "register": "shillinq", "schema": "GLTransaction", "matchOn": ["transactionDate", "amount"] },
               "customer": { "register": "shillinq", "schema": "CustomerMaster", "matchOn": ["name", "iban"] },
-              "vendor": { "register": "shillinq", "schema": "VendorMaster", "matchOn": ["name", "iban"] }
+              "vendor": { "register": "shillinq", "schema": "VendorFinancialProfile", "matchOn": ["name", "iban"] }
             },
             "emits": {
               "register": "shillinq",
