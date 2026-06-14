@@ -48,6 +48,14 @@ webpackConfig.resolve = {
 		'vue$': path.resolve(__dirname, 'node_modules/vue'),
 		'pinia$': path.resolve(__dirname, 'node_modules/pinia'),
 		'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
+		// Pin vue-demi to its Vue 2.7 ESM entry. pinia 2.3.x and @vueuse
+		// statically import `hasInjectionContext` / `TransitionGroup` from
+		// vue-demi, which only exist in its Vue 2.7 build. The install-time
+		// `vue-demi-switch` postinstall that rewrites lib/index.mjs does not
+		// reliably run under `npm ci`, leaving vue-demi's Vue 3 default entry
+		// in place and breaking the production build. Aliasing directly to the
+		// v2.7 entry makes the build deterministic in CI and locally.
+		'vue-demi$': path.resolve(__dirname, 'node_modules/vue-demi/lib/v2.7/index.mjs'),
 	},
 }
 

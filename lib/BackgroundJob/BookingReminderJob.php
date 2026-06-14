@@ -142,16 +142,21 @@ class BookingReminderJob extends TimedJob
             $windowStart = $now->modify('+'.($windowMinutes - self::MATCH_TOLERANCE_MINUTES).' minutes');
             $windowEnd   = $now->modify('+'.($windowMinutes + self::MATCH_TOLERANCE_MINUTES).' minutes');
 
-            $bookings = $objectService->findObjects(
-                register: $registerSlug,
-                schema: 'Booking',
-                params: [
-                    'status'         => 'confirmed',
-                    'startTime[gte]' => $windowStart->format('c'),
-                    'startTime[lte]' => $windowEnd->format('c'),
-                    '_limit'         => 500,
-                ]
-            );
+            // ADR-022: use the real ObjectService fluent API (setRegister/setSchema/findAll);
+            // findObjects() does not exist on OpenRegister's ObjectService.
+            $bookings = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema('Booking')
+                ->findAll(
+                    [
+                        'filters' => [
+                            'status'         => 'confirmed',
+                            'startTime[gte]' => $windowStart->format('c'),
+                            'startTime[lte]' => $windowEnd->format('c'),
+                        ],
+                        'limit'   => 500,
+                    ]
+                );
 
             $fired = 0;
             foreach ($bookings as $booking) {

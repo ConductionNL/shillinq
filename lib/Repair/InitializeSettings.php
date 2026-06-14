@@ -172,7 +172,13 @@ class InitializeSettings implements IRepairStep
             $this->seedReimbursementPolicies(output: $output);
             $this->seedPassThroughMarkupRules(output: $output);
             $this->seedInventoryBarcodeDemo(output: $output);
-            $this->seedInventoryLotsDemo(output: $output);
+            // REQ-LOT (inventory-lot-batch-expiry design.md §"Demo seed"):
+            // demo inventory lots must only be seeded in development/demo
+            // environments, never on production. Gate behind APP_ENV.
+            if (\getenv('APP_ENV') === 'development') {
+                $this->seedInventoryLotsDemo(output: $output);
+            }
+
             $this->seedInventoryValuationExamples(output: $output);
             $this->seedInventoryStockExamples(output: $output);
             $this->seedInventoryGLConfig(output: $output);
@@ -290,7 +296,8 @@ class InitializeSettings implements IRepairStep
      * @return void
      *
      * @spec openspec/changes/bookkeeping-consultancy-project-accounting/tasks.md#task-16
-     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-110, REQ-CPA-111, REQ-CPA-112)
+     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md
+     *       (REQ-CPA-110, REQ-CPA-111, REQ-CPA-112)
      */
     private function seedConsultancyProjectAccountingTemplates(IOutput $output): void
     {
@@ -538,7 +545,7 @@ class InitializeSettings implements IRepairStep
 
         $result = $this->settingsService->seedSelectielijst();
 
-        if ($result['success'] === true) {
+        if (($result['success'] ?? false) === true) {
             $seeded  = ($result['seeded'] ?? 0);
             $skipped = ($result['skipped'] ?? 0);
             $output->info(
@@ -546,7 +553,7 @@ class InitializeSettings implements IRepairStep
             );
         }
 
-        if ($result['success'] !== true) {
+        if (($result['success'] ?? false) !== true) {
             $message = ($result['message'] ?? 'unknown error');
             $output->warning('Selectielijst seeding issue: '.$message);
         }
@@ -855,7 +862,6 @@ class InitializeSettings implements IRepairStep
 
     }//end seedComplianceReferenceData()
 
-
     /**
      * Seed the default RGS → BBV account mapping for every existing municipal
      * administration (REQ-BBV-006). The seed is per-administration scoped: a
@@ -912,12 +918,7 @@ class InitializeSettings implements IRepairStep
                 continue;
             }
 
-            $administrationId = (string) (
-                $administration['administrationCode']
-                ?? $administration['id']
-                ?? $administration['uuid']
-                ?? ''
-            );
+            $administrationId = (string) ($administration['administrationCode'] ?? $administration['id'] ?? $administration['uuid'] ?? '');
             if ($administrationId === '') {
                 continue;
             }
@@ -1772,7 +1773,6 @@ class InitializeSettings implements IRepairStep
 
     }//end seedWmoCommercialActivities()
 
-
     /**
      * Seed NL-taxonomie SBR/XBRL mapping templates idempotently
      * (REQ-SBR-005, REQ-SBR-006).
@@ -1899,7 +1899,6 @@ class InitializeSettings implements IRepairStep
         );
 
     }//end seedSbrMappings()
-
 
     /**
      * Seed FixedAsset + DepreciationSchedule demo records idempotently

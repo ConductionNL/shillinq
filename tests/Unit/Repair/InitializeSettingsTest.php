@@ -327,9 +327,10 @@ class InitializeSettingsTest extends TestCase
             ->method('getSettings')
             ->willReturn(['rgs_template' => 'mkb', 'administration_id' => '']);
 
-        // seedInventoryLotsDemoData must NOT be called when APP_ENV != development.
+        // The demo-lot seed (which delegates to SettingsService::seedInventoryLots)
+        // must NOT run when APP_ENV != development.
         $this->settingsService->expects($this->never())
-            ->method('seedInventoryLotsDemoData');
+            ->method('seedInventoryLots');
 
         $this->repairStep->run(output: $this->output);
 

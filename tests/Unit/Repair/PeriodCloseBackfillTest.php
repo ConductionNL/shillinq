@@ -422,14 +422,25 @@ class PeriodCloseBackfillTest extends TestCase
             /**
              * Records a saveObject call.
              *
-             * @param array<string,mixed> $object   The record.
-             * @param string              $register The register slug.
-             * @param string              $schema   The schema slug.
+             * Mirrors the real OpenRegister ObjectService::saveObject signature,
+             * which the repair step calls with the installer-context bypass flags
+             * `_rbac: false` / `_multitenancy: false` (named args).
+             *
+             * @param array<string,mixed> $object        The record.
+             * @param string              $register      The register slug.
+             * @param string              $schema        The schema slug.
+             * @param bool                $_rbac         RBAC enforcement flag.
+             * @param bool                $_multitenancy Multi-tenancy flag.
              *
              * @return array<string,mixed> The recorded record (echo).
              */
-            public function saveObject(array $object, string $register, string $schema): array
-            {
+            public function saveObject(
+                array $object,
+                string $register,
+                string $schema,
+                bool $_rbac=true,
+                bool $_multitenancy=true
+            ): array {
                 $this->saved[] = $object;
                 $this->savedCount++;
                 return $object;
