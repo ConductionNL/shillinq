@@ -263,7 +263,19 @@ import BillableHoursChartWidget from './components/dashboard/financial/BillableH
 import OpenInvoicesTableWidget from './components/dashboard/financial/OpenInvoicesTableWidget.vue'
 import FinancialDashboardActions from './components/dashboard/financial/FinancialDashboardActions.vue'
 
+// recurring-invoicing (REQ-RIN-008, Task 15): the create/edit modal for a
+// RecurringInvoiceProfile is a bespoke multi-line form with period-token
+// preview and an inline next-invoice projection — none of which the
+// generic schema-driven create form can author. It is launched from the
+// Recurring Invoices index page's "New recurring profile" action
+// (src/manifest.d/recurring-invoicing.json, type:"modal") so it must be
+// resolvable by component id; registered here as a kind:"modal" and
+// modal-isolated under src/modals/ (hydra gate-13).
+import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
+
 export default {
+	RecurringInvoiceProfileModal: { kind: 'modal', component: RecurringInvoiceProfileModal },
+
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
 	MobileScannerTransfer: { kind: 'page', component: TransferPage },

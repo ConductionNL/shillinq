@@ -1,20 +1,9 @@
-# Spec: recurring-invoicing
+# recurring-invoicing Specification
 
-**Status:** proposed
-**Scope:** shillinq
-**Tier:** T2 (operations)
-**Depends on:**
-- `bookkeeping-accounts-receivable-core` (`ARInvoice` target record; merged spec)
-- `bookkeeping-quote-order-invoice` (CHAINED: no-gap numbering REQ-QOI-007, BTW per line REQ-QOI-006, UBL/Peppol delivery REQ-QOI-008)
-- `shillinq-notifications` (x-openregister-notifications rule conventions)
-- `ar-invoice-payment-links` (soft: generated invoices carry payment links like any invoice)
-- `bookkeeping-sepa-direct-debit` (CHAINED soft: `sepaCollection` flag feeds the DD batch flow)
-
-## ADDED Requirements
-
-@e2e exclude unbuilt UI: recurring profiles index, detail/preview, and create/edit modal not yet implemented
-
-### REQ-RIN-001: The system SHALL store recurring billing definitions as an OpenRegister-managed `RecurringInvoiceProfile` schema with the customer referencing the Nextcloud addressbook
+## Purpose
+TBD - created by archiving change recurring-invoicing. Update Purpose after archive.
+## Requirements
+### Requirement: REQ-RIN-001 — The system SHALL store recurring billing definitions as an OpenRegister-managed `RecurringInvoiceProfile` schema with the customer referencing the Nextcloud addressbook
 
 The `RecurringInvoiceProfile` schema MUST be declared in the ADR-037
 register fragment `lib/Settings/register.d/recurring-invoicing.json` (NOT
@@ -48,12 +37,13 @@ OpenRegister's generic object surface (ADR-022).
 - **THEN** it MUST be persisted in `draft` with `nextRunDate` computed, and no invoice MUST exist yet
 
 #### Scenario: Customer is a Nextcloud contact, not an invented schema
+@e2e exclude schema-shape assertion verified by the register fragment + validate-registers, not observable UI behaviour
 
 - **GIVEN** the register fragment of this change
 - **WHEN** its schema declarations are inspected
 - **THEN** only `RecurringInvoiceProfile` MUST be declared — no Customer/Party/Subscription-customer schema — and `customerReference` MUST hold the NC addressbook contact reference
 
-### REQ-RIN-002: Generation SHALL produce an ordinary `ARInvoice` per period through the existing invoicing surfaces, scheduled by OpenRegister — no app-local cron and no parallel invoice type
+### Requirement: REQ-RIN-002 — Generation SHALL produce an ordinary `ARInvoice` per period through the existing invoicing surfaces, scheduled by OpenRegister — no app-local cron and no parallel invoice type
 
 A scheduled workflow MUST be declared on the profile schema (filter:
 `status = active AND nextRunDate <= today`, evaluated at least daily by
@@ -81,24 +71,27 @@ via the real OR ObjectService API; it MUST contain no numbering, tax, or
 delivery logic of its own.
 
 #### Scenario: Due profile generates one ordinary invoice
+@e2e exclude backend generation verified by RecurringInvoiceGeneratorTest (unit)
 
 - **GIVEN** an active monthly profile with `nextRunDate = today` and one line "Hosting {month} {year}", EUR 99.00, VAT 21%
 - **WHEN** the scheduled generation runs
 - **THEN** one `ARInvoice` MUST exist with the description expanded for the current period, EUR 20.79 VAT computed by the standard engine, `recurringProfileId` and `billingPeriod` set, and `nextRunDate` MUST have advanced one month
 
 #### Scenario: Generated invoice is downstream-indistinguishable
+@e2e exclude downstream dunning/ageing parity is backend behaviour, not a recurring-specific UI flow
 
 - **GIVEN** a generated invoice that goes unpaid past its due date
 - **WHEN** the existing dunning cadence evaluates
 - **THEN** the invoice MUST enter dunning exactly as a manually created invoice would, with no recurring-specific code path
 
 #### Scenario: Reviewer confirms no app-local scheduler
+@e2e exclude static code-scan assertion (no TimedJob/registerJob), enforced by gate review not e2e
 
 - **GIVEN** the shillinq codebase after this change
 - **WHEN** scanned for TimedJob/cron registrations or invalid `IRegistrationContext::registerJob` calls introduced by this change
 - **THEN** none MUST exist; scheduling lives in the declared OR workflow
 
-### REQ-RIN-003: `nextRunDate` SHALL be a declared calculation with pinned month-end clamping, computed on civil dates in the administration's timezone
+### Requirement: REQ-RIN-003 — `nextRunDate` SHALL be a declared calculation with pinned month-end clamping, computed on civil dates in the administration's timezone
 
 `nextRunDate` MUST be declared via `x-openregister-calculations` from
 `frequency`, `interval`, `invoiceDay`, and the last generated
@@ -111,18 +104,23 @@ delivery logic of its own.
   never UTC timestamps (a DST shift MUST NOT move an invoice day).
 
 #### Scenario: Invoice day 31 clamps in short months
+@e2e exclude nextRunDate clamping verified by RecurringInvoiceGeneratorTest (unit)
 
 - **GIVEN** an active monthly profile with `invoiceDay = 31` whose last generated period is January 2027
 - **WHEN** `nextRunDate` is computed
 - **THEN** it MUST be 2027-02-28
 
 #### Scenario: Clamped month does not stick
+@e2e exclude nextRunDate clamping verified by RecurringInvoiceGeneratorTest (unit)
 
 - **GIVEN** the same profile after the February 2027 invoice generated on the 28th
 - **WHEN** `nextRunDate` is computed for March
 - **THEN** it MUST be 2027-03-31 (clamping is per-month, not destructive)
 
-### REQ-RIN-004: Generation SHALL be idempotent per profile and billing period, with bounded, explicit catch-up after downtime
+### Requirement: REQ-RIN-004 — Generation SHALL be idempotent per profile and billing period, with bounded, explicit catch-up after downtime
+
+Generation MUST be idempotent on the (profile, billing period) key, and
+catch-up after downtime MUST be bounded and explicit.
 
 - The pair (`recurringProfileId`, `billingPeriod`) is the idempotency key:
   if a non-cancelled invoice already exists for it, generation for that
@@ -134,24 +132,27 @@ delivery logic of its own.
   silently mass-issue.
 
 #### Scenario: Double-fired job generates nothing twice
+@e2e exclude idempotency verified by RecurringInvoiceGeneratorTest (unit)
 
 - **GIVEN** a profile whose July 2026 invoice was generated
 - **WHEN** the scheduled workflow fires again for the same period (replay, overlapping run)
 - **THEN** no second invoice for `billingPeriod = 2026-07` MUST exist
 
 #### Scenario: Auto-issue catch-up is bounded
+@e2e exclude bounded catch-up is scheduled backend behaviour verified at unit/integration level
 
 - **GIVEN** an active auto-issue monthly profile and three missed periods after an outage
 - **WHEN** the next scheduled run executes
 - **THEN** exactly one missed period MUST be auto-issued, and the two older periods MUST be listed on the profile detail awaiting explicit operator action
 
 #### Scenario: Cancelled invoice allows regeneration
+@e2e exclude regeneration unblock verified by RecurringInvoiceGeneratorTest (unit)
 
 - **GIVEN** a generated draft for `2026-07` that the operator cancelled because of a wrong price
 - **WHEN** the operator corrects the profile and triggers generation for that period
 - **THEN** a new invoice for `2026-07` MUST be generated (the cancelled one does not block the key)
 
-### REQ-RIN-005: Profiles SHALL follow a declarative lifecycle — draft → active → paused → ended — where resume never silently back-generates
+### Requirement: REQ-RIN-005 — Profiles SHALL follow a declarative lifecycle — draft → active → paused → ended — where resume never silently back-generates
 
 The lifecycle MUST be declared via `x-openregister-lifecycle`:
 
@@ -167,24 +168,30 @@ The lifecycle MUST be declared via `x-openregister-lifecycle`:
   terminal; a new profile is created for re-engagements.
 
 #### Scenario: Pause stops generation
+@e2e exclude lifecycle gating is backend scheduled behaviour, asserted via Newman not UI e2e
 
 - **GIVEN** an active profile paused on the 15th with `nextRunDate` on the 1st of next month
 - **WHEN** the scheduled workflow evaluates next month
 - **THEN** no invoice MUST be generated while the profile is `paused`
 
 #### Scenario: Resume skips the gap explicitly
+@e2e exclude resume skip-list is backend scheduled behaviour, asserted via Newman not UI e2e
 
 - **GIVEN** a profile paused for three months and then resumed
 - **WHEN** resume executes
 - **THEN** `nextRunDate` MUST point at the next upcoming period, and the three skipped periods MUST be listed on the profile detail for optional manual generation — none auto-generated
 
 #### Scenario: Occurrence count ends the profile
+@e2e exclude occurrence-count ending verified by RecurringInvoiceGeneratorTest (unit)
 
 - **GIVEN** an active profile with `occurrenceCount = 12` and 11 invoices generated
 - **WHEN** the 12th invoice is generated
 - **THEN** the profile MUST transition to `ended` and no further `nextRunDate` MUST be scheduled
 
-### REQ-RIN-006: Optional annual indexation SHALL adjust unit prices transparently at each start-date anniversary
+### Requirement: REQ-RIN-006 — Optional annual indexation SHALL adjust unit prices transparently at each start-date anniversary
+
+When `indexationPercent` is set, the system MUST adjust unit prices once
+per start-date anniversary before generation.
 
 When `indexationPercent` is set:
 
@@ -198,12 +205,13 @@ When `indexationPercent` is set:
   invoices.
 
 #### Scenario: Anniversary applies the indexation once
+@e2e exclude indexation is declarative/backend behaviour, deferred executor step, not UI
 
 - **GIVEN** an active profile started 2026-03-01 with `indexationPercent = 3.0` and a line at EUR 100.00
 - **WHEN** the March 2027 generation cycle runs
 - **THEN** the line MUST be EUR 103.00 with an `indexationHistory` entry recording 3.0% and 100.00 → 103.00, the March invoice MUST use the new price, and a re-run MUST NOT index to 106.09
 
-### REQ-RIN-007: Recurring-billing events SHALL be notified via the x-openregister-notifications dialect — never imperative dispatch
+### Requirement: REQ-RIN-007 — Recurring-billing events SHALL be notified via the x-openregister-notifications dialect — never imperative dispatch
 
 The fragment MUST declare rules per ADR-031 and the
 `shillinq-notifications` conventions, subjects in `nl` + `en`,
@@ -226,18 +234,20 @@ No app-local dispatch code, listeners, or reminder background jobs
 (gate-18).
 
 #### Scenario: Review-mode draft notifies the owner
+@e2e exclude notification dispatch is the OR x-openregister-notifications dialect, not app UI
 
 - **GIVEN** a draft-for-review profile owned by alice generates its July draft
 - **WHEN** the OR notification engine evaluates the rules
 - **THEN** alice MUST receive a notification naming the profile and period, with the subject available in both `nl` and `en`
 
 #### Scenario: No imperative dispatch code exists
+@e2e exclude static code-scan assertion enforced by gate-18, not e2e
 
 - **GIVEN** the shillinq codebase after this change
 - **WHEN** scanned for app-local notification dispatch or reminder jobs introduced by this change
 - **THEN** none MUST exist; all rules live in the `x-openregister-notifications` declarations (gate-18)
 
-### REQ-RIN-008: The UI SHALL ship as ADR-037 manifest pages with an exact next-invoice preview, and all strings SHALL use ENGLISH source keys
+### Requirement: REQ-RIN-008 — The UI SHALL ship as ADR-037 manifest pages with an exact next-invoice preview, and all strings SHALL use ENGLISH source keys
 
 The frontend MUST ship as the ADR-037 manifest fragment
 `src/manifest.d/recurring-invoicing.json`:
@@ -268,6 +278,7 @@ ENGLISH source keys with Dutch translations in the same change (e.g.
 - **THEN** it MUST render the expanded description for the next period, EUR 99.00 + EUR 20.79 VAT = EUR 119.79, and the computed due date — matching what generation would produce byte-for-byte in the document fields
 
 #### Scenario: Auto-issue requires a rendered preview
+@e2e exclude preview-gated activation depends on the chained activate lifecycle; deferred, not yet wired to e2e
 
 - **GIVEN** a draft profile with `issueMode = auto-issue` whose preview has never been rendered
 - **WHEN** activation is attempted
@@ -278,3 +289,4 @@ ENGLISH source keys with Dutch translations in the same change (e.g.
 - **GIVEN** a user with locale `nl`
 - **WHEN** the profiles index is rendered
 - **THEN** labels MUST appear in Dutch, resolved from English source keys present in `l10n/en.json` and `l10n/nl.json`, and no Dutch source keys MUST exist in `t('shillinq', …)` calls
+
