@@ -395,21 +395,35 @@
 					},
 					"approvalStatus": {
 						"type": "string",
-						"description": "Valuation lifecycle status (REQ-PEN-002).",
+						"description": "Actuarial valuation lifecycle status (REQ-PEN-002). CONSUMED from decidesk Decision outcome (REQ-SIGN-002); the approvalStatus is driven by decisionOutcome — shillinq does not own the approval transition.",
 						"enum": ["draft", "approved", "locked"],
 						"default": "draft",
-						"example": "draft"
+						"example": "draft",
+						"x-mirror-of": "decidesk-decision"
 					},
 					"approvedBy": {
 						"type": "string",
-						"description": "Name/email of the approver.",
-						"nullable": true
+						"description": "Name/email of the approver — mirrored from the decidesk Decision record.",
+						"nullable": true,
+						"x-mirror-of": "decidesk-decision"
 					},
 					"approvedAt": {
 						"type": "string",
 						"format": "date-time",
-						"description": "Timestamp of approval.",
-						"nullable": true
+						"description": "Timestamp of approval — mirrored from the decidesk Decision outcome.",
+						"nullable": true,
+						"x-mirror-of": "decidesk-decision"
+					},
+					"decisionRef": {
+						"type": "string",
+						"nullable": true,
+						"description": "Decidesk Decision id for the actuaris sign-off (REQ-SIGN-002). Written only by the decidesk registry callback."
+					},
+					"decisionOutcome": {
+						"type": "string",
+						"enum": ["pending", "approved", "rejected"],
+						"nullable": true,
+						"description": "Mirror of the decidesk decision outcome (REQ-SIGN-002). Written only by the registry callback."
 					},
 					"administrationId": {
 						"type": "string",
@@ -455,6 +469,24 @@
 							"label": "Return to draft",
 							"description": "Return an approved-but-not-locked valuation to draft for correction."
 						}
+					}
+				},
+				"x-openregister-notifications": {
+					"decisionApproved": {
+						"trigger": "updated",
+						"conditions": {"decisionOutcome": "approved"},
+						"recipients": [{"kind": "field", "field": "owner"}, {"kind": "acl", "permission": "manage"}],
+						"subject": {"nl": "Actuariële waardering goedgekeurd", "en": "Actuarial valuation approved"},
+						"body": {"nl": "De actuariële waardering per {{valuationDate}} is goedgekeurd via decidesk.", "en": "The actuarial valuation as of {{valuationDate}} was approved via decidesk."},
+						"metadataOnly": true
+					},
+					"decisionRejected": {
+						"trigger": "updated",
+						"conditions": {"decisionOutcome": "rejected"},
+						"recipients": [{"kind": "field", "field": "owner"}, {"kind": "acl", "permission": "manage"}],
+						"subject": {"nl": "Actuariële waardering afgewezen", "en": "Actuarial valuation rejected"},
+						"body": {"nl": "De actuariële waardering per {{valuationDate}} is afgewezen via decidesk.", "en": "The actuarial valuation as of {{valuationDate}} was rejected via decidesk."},
+						"metadataOnly": true
 					}
 				}
 			},

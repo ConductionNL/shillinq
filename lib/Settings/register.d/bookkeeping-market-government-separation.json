@@ -1104,7 +1104,47 @@
 					"signatureFingerprint": {
 						"type": "string",
 						"nullable": true,
-						"description": "PKI certificate fingerprint."
+						"description": "Deprecated — retained for legacy provenance (REQ-SIGN-009). Superseded by signingRequestRef / signingStatus.",
+						"x-delegated-to": "docudesk",
+						"deprecated": true
+					},
+					"signingRequestRef": {
+						"type": "string",
+						"nullable": true,
+						"description": "Docudesk signingRequest id. Written only by the docudesk registry callback (REQ-SIGN-001). Format: `legacy-local:<fingerprint>` for pre-delegation records (REQ-SIGN-009)."
+					},
+					"signingStatus": {
+						"type": "string",
+						"enum": ["requested", "in-progress", "signed", "declined", "expired"],
+						"nullable": true,
+						"description": "Mirror of the docudesk signing status (REQ-SIGN-001). Written only by the registry callback."
+					},
+					"signingProvider": {
+						"type": "string",
+						"nullable": true,
+						"description": "eIDAS provider, read back from docudesk for the dossier."
+					},
+					"signingLevel": {
+						"type": "string",
+						"enum": ["simple", "advanced", "qualified"],
+						"nullable": true,
+						"description": "eIDAS level, read back from docudesk."
+					},
+					"signedDocumentRef": {
+						"type": "string",
+						"nullable": true,
+						"description": "NC Files reference to the signed artifact produced by docudesk (link, not re-stored)."
+					},
+					"decisionRef": {
+						"type": "string",
+						"nullable": true,
+						"description": "Decidesk Decision id for the concerncontroller sign-off (REQ-SIGN-002). Written only by the decidesk registry callback."
+					},
+					"decisionOutcome": {
+						"type": "string",
+						"enum": ["pending", "approved", "rejected"],
+						"nullable": true,
+						"description": "Mirror of the decidesk decision outcome (REQ-SIGN-002)."
 					},
 					"verzondenAanAcm": {
 						"type": "boolean",
@@ -1173,8 +1213,8 @@
 					"signReport": {
 						"trigger": "beforeTransition",
 						"transitions": ["ready-for-submission"],
-						"description": "On transition draft -> ready-for-submission, apply the concerncontroller's digital signature (NC certificate / PKI fingerprint) and write ondertekenaar + ondertekendOp + signatureFingerprint (REQ-WMO-006 §digital signature).",
-						"handler": "OCA\\Shillinq\\Service\\AcmReportGenerator::sign"
+						"description": "On transition draft -> ready-for-submission, raises a docudesk signingRequest via the ADR-019 integration registry (REQ-SIGN-001). No PKI signing is performed in shillinq. The transition is OUTCOME-DRIVEN: it fires only when signingStatus==signed and/or decisionOutcome==approved (REQ-SIGN-003).",
+						"handler": "OCA\\Shillinq\\Service\\Signing\\SigningDelegationService::requestSignature"
 					},
 					"submitReport": {
 						"trigger": "afterTransition",
@@ -1186,6 +1226,40 @@
 						"trigger": "afterCreate",
 						"description": "Wire annual ACM-rapport generation into the bookkeeping-financial-reporting T4 jaarrekening-generator: when an annual ACMReport (period ending in -YTD) is created, the financial-reporting export pipeline includes the WMO-bijlage produced by WmoJaarrekeningBijlageService (REQ-WMO-004 wiring, P1-15).",
 						"handler": "OCA\\Shillinq\\Service\\WmoJaarrekeningBijlageService::compose"
+					}
+				},
+				"x-openregister-notifications": {
+					"signingStatusSigned": {
+						"trigger": "updated",
+						"conditions": {"signingStatus": "signed"},
+						"recipients": [{"kind": "field", "field": "owner"}, {"kind": "acl", "permission": "manage"}],
+						"subject": {"nl": "ACM-rapport ondertekend door docudesk", "en": "ACM report signed via docudesk"},
+						"body": {"nl": "Het ACM-rapport voor periode {{period}} is ondertekend.", "en": "The ACM report for period {{period}} has been signed."},
+						"metadataOnly": true
+					},
+					"signingStatusDeclined": {
+						"trigger": "updated",
+						"conditions": {"signingStatus": "declined"},
+						"recipients": [{"kind": "field", "field": "owner"}, {"kind": "acl", "permission": "manage"}],
+						"subject": {"nl": "Ondertekening ACM-rapport geweigerd", "en": "ACM report signing declined"},
+						"body": {"nl": "De handtekening voor het ACM-rapport periode {{period}} is geweigerd.", "en": "The signature request for ACM report period {{period}} was declined."},
+						"metadataOnly": true
+					},
+					"decisionOutcomeApproved": {
+						"trigger": "updated",
+						"conditions": {"decisionOutcome": "approved"},
+						"recipients": [{"kind": "field", "field": "owner"}, {"kind": "acl", "permission": "manage"}],
+						"subject": {"nl": "ACM-rapport goedgekeurd door concerncontroller", "en": "ACM report approved by concerncontroller"},
+						"body": {"nl": "Het ACM-rapport voor periode {{period}} is goedgekeurd via decidesk.", "en": "The ACM report for period {{period}} was approved via decidesk."},
+						"metadataOnly": true
+					},
+					"decisionOutcomeRejected": {
+						"trigger": "updated",
+						"conditions": {"decisionOutcome": "rejected"},
+						"recipients": [{"kind": "field", "field": "owner"}, {"kind": "acl", "permission": "manage"}],
+						"subject": {"nl": "ACM-rapport afgewezen door concerncontroller", "en": "ACM report rejected by concerncontroller"},
+						"body": {"nl": "Het ACM-rapport voor periode {{period}} is afgewezen via decidesk.", "en": "The ACM report for period {{period}} was rejected via decidesk."},
+						"metadataOnly": true
 					}
 				}
 			},

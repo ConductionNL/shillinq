@@ -103,6 +103,7 @@
 		"DBA": "Compliance"
 	},
 	"removals": [
+		"BookkeepingSigningTrail",
 		"Consolidations",
 		"Verplichtingen",
 		"CostProjects",

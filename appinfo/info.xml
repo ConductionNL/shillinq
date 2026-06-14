@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.9.0</version>
+    <version>0.9.1</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -83,6 +83,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\Load_SBR_XBRL_Seeds_Step</step>
             <step>OCA\Shillinq\Repair\Load_DBA_Seeds_Step</step>
             <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
+            <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
         </post-migration>
     </repair-steps>
 
