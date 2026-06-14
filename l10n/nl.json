@@ -1557,7 +1557,23 @@
         "_%n invoice outstanding_::_%n invoices outstanding_": [
             "%n openstaande factuur",
             "%n openstaande facturen"
-        ]
+        ],
+        "Total budget": "Totaal budget",
+        "Total estimated costs": "Totaal geraamde kosten",
+        "Budget variance": "Budgetafwijking",
+        "Project number": "Projectnummer",
+        "Start date": "Startdatum",
+        "End date": "Einddatum",
+        "Linked OpenProject project": "Gekoppeld OpenProject-project",
+        "OpenProject project reference": "OpenProject-projectreferentie",
+        "Link to OpenProject": "Koppelen aan OpenProject",
+        "Project-flavoured cost center": "Projectkostenplaats",
+        "Costs incurred (from GL)": "Gemaakte kosten (vanuit grootboek)",
+        "Budget vs actuals": "Budget vs. werkelijk",
+        "Under budget": "Onder budget",
+        "Over budget": "Boven budget",
+        "External project reference": "Externe projectreferentie",
+        "No OpenProject provider configured — reference stored but not resolved": "Geen OpenProject-provider geconfigureerd — referentie opgeslagen maar niet omgezet"
     },
     "plurals": ""
 }
