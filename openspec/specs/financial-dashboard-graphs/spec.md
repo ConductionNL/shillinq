@@ -1,14 +1,8 @@
 # financial-dashboard-graphs Specification
 
 ## Purpose
-
-The Financial overview dashboard (route `/`) presents the live
-financial position of the company as graphs and work queues instead
-of artifact counts: KPI strip, turnover, margin, cashflow, billable
-hours, and open debiteuren/crediteuren tables.
-
+TBD - created by archiving change financial-dashboard-graphs. Update Purpose after archive.
 ## Requirements
-
 ### Requirement: Financial KPI strip
 
 The dashboard SHALL render a full-width KPI strip with six metrics
@@ -152,3 +146,4 @@ cashflow forecast.
   administration
 - **WHEN** the operator runs `scripts/seed-demo-financials.py`
 - **THEN** every dashboard widget renders non-empty data
+

@@ -18,6 +18,12 @@
  *   - Save creates a draft ARInvoice
  *   - Receivables widget refreshes after save
  *
+ * @e2e shillinq-invoice-quick-draft::create-invoice-opens-the-quick-draft-modal
+ * @e2e shillinq-invoice-quick-draft::selecting-a-customer-pre-fills-the-due-date
+ * @e2e shillinq-invoice-quick-draft::adding-a-line-updates-the-totals
+ * @e2e shillinq-invoice-quick-draft::save-creates-a-draft-arinvoice
+ * @e2e shillinq-invoice-quick-draft::receivables-widget-refreshes-after-save
+ *
  * Authored defensively for dev-container topologies: when no customers
  * are seeded the customer picker is empty and save stays disabled — the
  * modal shell must still render and the gating must hold.

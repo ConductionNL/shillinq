@@ -333,10 +333,12 @@
 				"x-openregister-notifications": {
 					"onNewStatement": {
 						"trigger": "onCreate",
-						"recipient": {
-							"resolver": "bank-connection-operator",
-							"fallback": "administration-treasurer"
-						},
+						"recipients": [
+							{
+								"resolver": "bank-connection-operator",
+								"fallback": "administration-treasurer"
+							}
+						],
 						"channels": [
 							"in-app",
 							"email"
@@ -832,7 +834,7 @@
 					},
 					"dimensions": {
 						"type": "object",
-						"description": "Free-form key-to-value map for custom analytical dimensions. Each key MUST match a registered custom dimension register declared with x-openregister-purpose: dimension; each value MUST resolve to an existing record code in that register. Validation is declared via OR relations engine per REQ-CC-003.",
+						"description": "Free-form key-to-value map for custom analytical dimensions (AnalyticalDimension.dimensionType=custom). Each key MUST match an AnalyticalDimension.code where dimensionType=custom; each value MUST resolve to an existing record code in that register. Validation is declared via OR relations engine per REQ-CC-003 + REQ-ADIM-101.",
 						"nullable": true,
 						"additionalProperties": {
 							"type": "string"
@@ -877,17 +879,17 @@
 					},
 					"costCenterRelation": {
 						"localField": "costCenterCode",
-						"relatedSchema": "CostCenter",
+						"relatedSchema": "AnalyticalDimension",
 						"relatedField": "code",
 						"cardinality": "many-to-one",
-						"description": "FK to CostCenter.code for dimension-tagged analytical reporting per REQ-CC-003."
+						"description": "FK to AnalyticalDimension.code (dimensionType=cost-center) for dimension-tagged analytical reporting per REQ-CC-003 + REQ-ADIM-101. Field name and stored values unchanged; register re-targeted from the retired CostCenter to the unified AnalyticalDimension."
 					},
 					"kostenDragerRelation": {
 						"localField": "kostenDragerCode",
-						"relatedSchema": "KostenDrager",
+						"relatedSchema": "AnalyticalDimension",
 						"relatedField": "code",
 						"cardinality": "many-to-one",
-						"description": "FK to KostenDrager.code for cost-unit analytical reporting per REQ-CC-003."
+						"description": "FK to AnalyticalDimension.code (dimensionType=cost-object) for cost-unit analytical reporting per REQ-CC-003 + REQ-ADIM-101. Field name and stored values unchanged; register re-targeted from the retired KostenDrager to the unified AnalyticalDimension."
 					},
 					"projectRelation": {
 						"localField": "projectCode",
@@ -916,7 +918,7 @@
 						}
 					},
 					"segmentPnlByCostCenter": {
-						"description": "Segment P&L roll-up keyed by costCenterCode and fiscalYearId. Aggregates debit and credit amounts per cost center, rolling child cost centers up to their parent via the CostCenter self-relation per REQ-CC-005. Consumed by launchpad widgets via runtime GraphQL and by CostCenter detail pages.",
+						"description": "Segment P&L roll-up keyed by costCenterCode and fiscalYearId. Aggregates debit and credit amounts per cost center, rolling child cost centers up to their parent via the AnalyticalDimension(dimensionType=cost-center) self-relation per REQ-CC-005 + REQ-ADIM-101. Consumed by launchpad widgets via runtime GraphQL. Re-targeted from CostCenter to AnalyticalDimension (field name and stored values unchanged).",
 						"filter": {
 							"eliminationFlag": false,
 							"costCenterCode": {
@@ -951,7 +953,7 @@
 						}
 					},
 					"segmentPnlByKostenDrager": {
-						"description": "Segment P&L roll-up keyed by kostenDragerCode and fiscalYearId. Mirrors the cost-center aggregation for the kostendrager dimension per REQ-CC-005.",
+						"description": "Segment P&L roll-up keyed by kostenDragerCode and fiscalYearId. Mirrors the cost-center aggregation for the cost-object dimension per REQ-CC-005 + REQ-ADIM-004. Re-targeted from the retired KostenDrager register to AnalyticalDimension(dimensionType=cost-object). Field name and stored values unchanged.",
 						"filter": {
 							"eliminationFlag": false,
 							"kostenDragerCode": {
@@ -3850,40 +3852,40 @@
 						"description": "Notify vat-administrator when KOR is activated for the administration.",
 						"recipients": {
 							"role": "vat-administrator",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "KOR geactiveerd",
-						"message": "KOR-vrijstelling is geactiveerd voor administratie @self.administrationId voor jaar @self.currentCalendarYear."
+						"message": "KOR-vrijstelling is geactiveerd voor administratie {{administrationId}} voor jaar {{currentCalendarYear}}."
 					},
 					"onThresholdWarning": {
 						"trigger": "lifecycle.warnThreshold",
 						"description": "Notify vat-administrator when YTD revenue reaches the warning threshold (80%).",
 						"recipients": {
 							"role": "vat-administrator",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "KOR-drempelwaarschuwing",
-						"message": "KOR-omzet bedraagt €@self.ytdRevenue (@self.ytdRevenue / @self.thresholdAmount * 100% van de drempel). Actie aanbevolen."
+						"message": "KOR-omzet bedraagt €{{ytdRevenue}} ({{ytdRevenue}} / {{thresholdAmount}} * 100% van de drempel). Actie aanbevolen."
 					},
 					"onThresholdExceeded": {
 						"trigger": "lifecycle.exceedThreshold",
 						"description": "Notify vat-administrator when YTD revenue reaches or exceeds the full KOR threshold.",
 						"recipients": {
 							"role": "vat-administrator",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "KOR-drempel overschreden",
-						"message": "KOR-omzetdrempel van €@self.thresholdAmount is overschreden (ytdRevenue: €@self.ytdRevenue). Opt-out vereist; er wordt een journaalpost aangemaakt ter beoordeling."
+						"message": "KOR-omzetdrempel van €{{thresholdAmount}} is overschreden (ytdRevenue: €{{ytdRevenue}}). Opt-out vereist; er wordt een journaalpost aangemaakt ter beoordeling."
 					},
 					"onOptOut": {
 						"trigger": "lifecycle.optOutFromExceeded,lifecycle.optOutFromOptedIn",
 						"description": "Notify vat-administrator when the administration opts out of KOR.",
 						"recipients": {
 							"role": "vat-administrator",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "KOR opt-out",
-						"message": "Administratie @self.administrationId heeft de KOR verlaten. Controleer de aangemaakte journaalpost (state: pending) voor BTW-correcties."
+						"message": "Administratie {{administrationId}} heeft de KOR verlaten. Controleer de aangemaakte journaalpost (state: pending) voor BTW-correcties."
 					}
 				},
 				"x-openregister-widgets": {
@@ -4572,372 +4574,6 @@
 					}
 				}
 			},
-			"CostCenter": {
-				"slug": "CostCenter",
-				"icon": "OfficeBuilding",
-				"version": "0.1.0",
-				"title": "Cost Center",
-				"description": "An analytical cost center (kostenplaats) for tracking, allocating, and analysing departmental or functional expenses. Declared as an OR-managed register per REQ-CC-001 and REQ-CC-002. Hierarchy is navigable via the parentCode self-relation.",
-				"x-schema-org": "schema:Organization",
-				"x-openregister-purpose": "dimension",
-				"type": "object",
-				"required": [
-					"code",
-					"name",
-					"lifecycleState",
-					"administrationId"
-				],
-				"properties": {
-					"code": {
-						"type": "string",
-						"description": "Operator-assigned unique reference within the administration per REQ-CC-002.",
-						"example": "KC-100"
-					},
-					"name": {
-						"type": "string",
-						"description": "Human-readable cost center name.",
-						"example": "Sales"
-					},
-					"description": {
-						"type": "string",
-						"description": "Detailed cost center description and responsibilities per REQ-CD-002.",
-						"nullable": true,
-						"example": "Verantwoordelijk voor administratieve verwerking en interne rapportage"
-					},
-					"status": {
-						"type": "string",
-						"description": "Convenience alias of lifecycleState for active/inactive integrations per REQ-CPA-104.",
-						"enum": [
-							"active",
-							"inactive"
-						],
-						"nullable": true,
-						"example": "active"
-					},
-					"budget": {
-						"type": "number",
-						"description": "Allocated annual or periodic budget amount in EUR per REQ-CD-002. Constrained to two-decimal cents via multipleOf to prevent IEEE-754 drift in variance arithmetic per REQ-RR-004.",
-						"nullable": true,
-						"minimum": 0,
-						"multipleOf": 0.01,
-						"example": 250000.0
-					},
-					"spentToDate": {
-						"type": "integer",
-						"description": "Derived via x-openregister-aggregations: sum of GLLine.amount where costCenterCode = @self.code AND side = 'debit' per REQ-CPA-106. Read-only.",
-						"nullable": true,
-						"readOnly": true,
-						"example": 4500000
-					},
-					"allocatedBudget": {
-						"type": "integer",
-						"description": "Derived via x-openregister-calculations: budget + sum(children.allocatedBudget) recursively per REQ-CPA-107. Read-only.",
-						"nullable": true,
-						"readOnly": true,
-						"example": 15000000
-					},
-					"organizationId": {
-						"type": "string",
-						"description": "FK to the Organization owning this cost center per REQ-CPA-104.",
-						"nullable": true,
-						"example": "org-1"
-					},
-					"parentCode": {
-						"type": "string",
-						"description": "FK to parent CostCenter.code for hierarchy navigation via x-openregister-relations self-relation per REQ-CC-002.",
-						"nullable": true,
-						"example": "KC-000"
-					},
-					"responsibleUser": {
-						"type": "string",
-						"description": "Nextcloud user id of the cost-center owner.",
-						"nullable": true,
-						"example": "jan.manager"
-					},
-					"lifecycleState": {
-						"type": "string",
-						"description": "Current lifecycle state mirroring Account.lifecycleState per REQ-CoA-005 and REQ-CC-002.",
-						"enum": [
-							"active",
-							"blocked",
-							"archived"
-						],
-						"default": "active",
-						"example": "active"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this cost center.",
-						"example": "adm-1"
-					},
-					"ondernemingsActiviteit": {
-						"type": "boolean",
-						"description": "Marks this cost center as an ondernemingsactiviteit per Wet modernisering Vpb-plicht (2016) and bookkeeping-market-government-separation. When true, the cost center may be referenced by a VpbBalansLink (REQ-VPB-002). Default false.",
-						"default": false,
-						"example": false
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "active",
-					"states": {
-						"active": {
-							"label": "Active",
-							"description": "Usable for GL line dimension tagging."
-						},
-						"blocked": {
-							"label": "Blocked",
-							"description": "Readable but rejected as target of new GL line dimension tags."
-						},
-						"archived": {
-							"label": "Archived",
-							"description": "Historical only; no new dimension tags."
-						}
-					},
-					"transitions": {
-						"block": {
-							"from": "active",
-							"to": "blocked",
-							"label": "Block cost center",
-							"description": "Prevent new GL line tagging against this cost center."
-						},
-						"unblock": {
-							"from": "blocked",
-							"to": "active",
-							"label": "Unblock cost center",
-							"description": "Re-enable GL line tagging against this cost center."
-						},
-						"archive": {
-							"from": [
-								"active",
-								"blocked"
-							],
-							"to": "archived",
-							"label": "Archive cost center",
-							"description": "Move to historical archive; GL lines with this code remain queryable."
-						}
-					}
-				},
-				"x-openregister-relations": {
-					"parentCostCenter": {
-						"localField": "parentCode",
-						"relatedSchema": "CostCenter",
-						"relatedField": "code",
-						"cardinality": "many-to-one",
-						"description": "Self-relation enabling hierarchical cost-center navigation per REQ-CC-002."
-					}
-				},
-				"x-openregister-aggregations": {
-					"segmentPnl": {
-						"description": "Segment P&L for this cost center: sum of GLLine amounts whose costCenterCode equals this record's code, including child cost centers rolled up via parentCode. Consumed by the CostCenter detail page per REQ-CC-005.",
-						"join": {
-							"schema": "GLLine",
-							"condition": "GLLine.costCenterCode = @self.code AND GLLine.eliminationFlag = false"
-						},
-						"groupBy": [
-							"GLLine.fiscalYearId",
-							"GLLine.accountNumber"
-						],
-						"operations": {
-							"totalDebit": {
-								"field": "GLLine.amount",
-								"operation": "sum",
-								"condition": "GLLine.side = 'debit'"
-							},
-							"totalCredit": {
-								"field": "GLLine.amount",
-								"operation": "sum",
-								"condition": "GLLine.side = 'credit'"
-							}
-						}
-					},
-					"spentToDate": {
-						"description": "Sum of GL debit postings tagged to this cost center (recursive over descendant cost centers reached via parentCode self-relation) per REQ-CPA-106. Excludes eliminated intercompany lines.",
-						"operation": "sum",
-						"field": "amount",
-						"source": {
-							"register": "@register",
-							"schema": "GLLine"
-						},
-						"filter": {
-							"costCenterCode": "@self.code OR @descendant.code",
-							"side": "debit",
-							"eliminationFlag": false
-						},
-						"recursiveOver": "parentCode"
-					}
-				},
-				"x-openregister-calculations": {
-					"allocatedBudget": {
-						"description": "Roll-up budget per REQ-CPA-107: this cost center's own budget plus the allocatedBudget of every child cost center reached via the parentCode self-relation (recursive descent). Leaves return their own budget; non-leaves return budget + sum(children.allocatedBudget).",
-						"type": "integer",
-						"formula": "(@self.budget ?? 0) + sum(@children(parentCode).allocatedBudget ?? 0)"
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"KostenDrager": {
-				"slug": "KostenDrager",
-				"icon": "CubeOutline",
-				"version": "0.1.0",
-				"title": "Kostendrager",
-				"description": "An analytical cost unit (kostendrager / cost object) for tracking costs per product, service, or cost bearer per Dutch GAAP. Same shape as CostCenter; the distinction is semantic per REQ-CC-002. Hierarchy navigable via parentCode self-relation.",
-				"x-schema-org": "schema:Product",
-				"x-openregister-purpose": "dimension",
-				"type": "object",
-				"required": [
-					"code",
-					"name",
-					"lifecycleState",
-					"administrationId"
-				],
-				"properties": {
-					"code": {
-						"type": "string",
-						"description": "Operator-assigned unique reference within the administration per REQ-CC-002.",
-						"example": "KD-001"
-					},
-					"name": {
-						"type": "string",
-						"description": "Human-readable kostendrager name.",
-						"example": "Product A"
-					},
-					"parentCode": {
-						"type": "string",
-						"description": "FK to parent KostenDrager.code for hierarchy navigation per REQ-CC-002.",
-						"nullable": true,
-						"example": "KD-000"
-					},
-					"responsibleUser": {
-						"type": "string",
-						"description": "Nextcloud user id of the kostendrager owner.",
-						"nullable": true,
-						"example": "lisa.product"
-					},
-					"lifecycleState": {
-						"type": "string",
-						"description": "Current lifecycle state per REQ-CC-002.",
-						"enum": [
-							"active",
-							"blocked",
-							"archived"
-						],
-						"default": "active",
-						"example": "active"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this kostendrager.",
-						"example": "adm-1"
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "active",
-					"states": {
-						"active": {
-							"label": "Active",
-							"description": "Usable for GL line dimension tagging."
-						},
-						"blocked": {
-							"label": "Blocked",
-							"description": "Readable but rejected as target of new GL line tags."
-						},
-						"archived": {
-							"label": "Archived",
-							"description": "Historical only; no new dimension tags."
-						}
-					},
-					"transitions": {
-						"block": {
-							"from": "active",
-							"to": "blocked",
-							"label": "Block kostendrager",
-							"description": "Prevent new GL line tagging against this kostendrager."
-						},
-						"unblock": {
-							"from": "blocked",
-							"to": "active",
-							"label": "Unblock kostendrager",
-							"description": "Re-enable GL line tagging against this kostendrager."
-						},
-						"archive": {
-							"from": [
-								"active",
-								"blocked"
-							],
-							"to": "archived",
-							"label": "Archive kostendrager",
-							"description": "Move to historical archive."
-						}
-					}
-				},
-				"x-openregister-relations": {
-					"parentKostenDrager": {
-						"localField": "parentCode",
-						"relatedSchema": "KostenDrager",
-						"relatedField": "code",
-						"cardinality": "many-to-one",
-						"description": "Self-relation enabling hierarchical kostendrager navigation per REQ-CC-002."
-					}
-				},
-				"x-openregister-aggregations": {
-					"segmentPnl": {
-						"description": "Segment P&L for this kostendrager: sum of GLLine amounts whose kostenDragerCode equals this record's code per REQ-CC-005.",
-						"join": {
-							"schema": "GLLine",
-							"condition": "GLLine.kostenDragerCode = @self.code AND GLLine.eliminationFlag = false"
-						},
-						"groupBy": [
-							"GLLine.fiscalYearId",
-							"GLLine.accountNumber"
-						],
-						"operations": {
-							"totalDebit": {
-								"field": "GLLine.amount",
-								"operation": "sum",
-								"condition": "GLLine.side = 'debit'"
-							},
-							"totalCredit": {
-								"field": "GLLine.amount",
-								"operation": "sum",
-								"condition": "GLLine.side = 'credit'"
-							}
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
 			"Project": {
 				"slug": "Project",
 				"icon": "FolderOpenOutline",
@@ -5361,274 +4997,12 @@
 					}
 				}
 			},
-			"CostProject": {
-				"slug": "CostProject",
-				"icon": "BriefcaseClockOutline",
-				"version": "0.1.0",
-				"title": "Cost Project",
-				"description": "Analytical project register for consultancy and departmental project accounting per REQ-CPA-101..115. Captures the management-accounting view of a project (authorised budget, estimated costs, costs incurred to date, lifecycle) — distinct from the RJ 270 revenue-recognition Project register. Costs and P&L are derived from GL via x-openregister-aggregations; budget rollup via x-openregister-calculations. No PHP service authored per ADR-031.",
-				"x-schema-org": "schema:Project",
-				"x-openregister-purpose": "analytical",
-				"type": "object",
-				"required": [
-					"projectNumber",
-					"name",
-					"totalBudget",
-					"totalEstimatedCosts",
-					"lifecycleState"
-				],
-				"properties": {
-					"projectNumber": {
-						"type": "string",
-						"description": "Operator-assigned unique project reference within the administration per REQ-CPA-101.",
-						"example": "CP-2026-001"
-					},
-					"name": {
-						"type": "string",
-						"description": "Human-readable project name.",
-						"example": "Service Engagement Template"
-					},
-					"description": {
-						"type": "string",
-						"description": "Project description / scope per REQ-CPA-101.",
-						"nullable": true,
-						"example": "Standard template for service contract delivery"
-					},
-					"startDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Project activation date per REQ-CPA-101.",
-						"nullable": true,
-						"example": "2026-01-15"
-					},
-					"endDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Target close date per REQ-CPA-101.",
-						"nullable": true,
-						"example": "2026-12-31"
-					},
-					"totalBudget": {
-						"type": "integer",
-						"description": "Authorised spend ceiling in integer cents per REQ-CPA-101 (e.g. 5000000 = €50.000,00).",
-						"minimum": 0,
-						"example": 5000000
-					},
-					"totalEstimatedCosts": {
-						"type": "integer",
-						"description": "Project-manager estimate of total project costs in integer cents per REQ-CPA-101.",
-						"minimum": 0,
-						"example": 4500000
-					},
-					"costsIncurredToDate": {
-						"type": "integer",
-						"description": "Derived via x-openregister-aggregations: sum of GLLine.amount where subLedgerType='cost-project' AND subLedgerRef=@self.id AND Account.accountType='expenses' per REQ-CPA-105. Integer cents. Read-only.",
-						"readOnly": true,
-						"nullable": true,
-						"minimum": 0,
-						"example": 1500000
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this cost project per REQ-CPA-101.",
-						"nullable": true,
-						"example": "adm-1"
-					},
-					"organizationId": {
-						"type": "string",
-						"description": "FK to the customer / owner Organization per REQ-CPA-101.",
-						"nullable": true,
-						"example": "org-1"
-					},
-					"costCenterCode": {
-						"type": "string",
-						"description": "FK to CostCenter.code — associates project to a department per REQ-CPA-101.",
-						"nullable": true,
-						"example": "CC-002"
-					},
-					"lifecycleState": {
-						"type": "string",
-						"description": "Current lifecycle state per REQ-CPA-102.",
-						"enum": [
-							"draft",
-							"active",
-							"on-hold",
-							"closed",
-							"archived"
-						],
-						"default": "draft",
-						"example": "active"
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Project is being prepared; not yet authorised for spend tracking."
-						},
-						"active": {
-							"label": "Active",
-							"description": "Project is in execution; GL postings may reference this project."
-						},
-						"on-hold": {
-							"label": "On hold",
-							"description": "Project is paused; no new GL postings reference this project."
-						},
-						"closed": {
-							"label": "Closed",
-							"description": "Project is complete; final cost snapshot taken."
-						},
-						"archived": {
-							"label": "Archived",
-							"description": "Historical only; remains queryable per 7-year retention rule (REQ-CPA-115)."
-						}
-					},
-					"transitions": {
-						"activate": {
-							"from": "draft",
-							"to": "active",
-							"label": "Activate project",
-							"description": "Move project from draft to active execution per REQ-CPA-102."
-						},
-						"putOnHold": {
-							"from": "active",
-							"to": "on-hold",
-							"label": "Put project on hold",
-							"description": "Pause project per REQ-CPA-102."
-						},
-						"reactivate": {
-							"from": "on-hold",
-							"to": "active",
-							"label": "Reactivate project",
-							"description": "Resume project from on-hold per REQ-CPA-102."
-						},
-						"close": {
-							"from": "active",
-							"to": "closed",
-							"label": "Close project",
-							"description": "Close project; final cost snapshot taken per REQ-CPA-102."
-						},
-						"archive": {
-							"from": "closed",
-							"to": "archived",
-							"label": "Archive project",
-							"description": "Move closed project to archive (typically 12 months post-close) per REQ-CPA-102."
-						}
-					},
-					"retention": {
-						"rule": "selectielijst:5.1.2",
-						"years": 7,
-						"description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-115)."
-					}
-				},
-				"x-openregister-relations": {
-					"costCenter": {
-						"localField": "costCenterCode",
-						"relatedSchema": "CostCenter",
-						"relatedField": "code",
-						"cardinality": "many-to-one",
-						"description": "Association of project to a cost center / department per REQ-CPA-101."
-					},
-					"projectBudgets": {
-						"localField": "id",
-						"relatedSchema": "ProjectBudget",
-						"relatedField": "projectId",
-						"cardinality": "one-to-many",
-						"description": "Period-level budget allocations for this project per REQ-CPA-103."
-					}
-				},
-				"x-openregister-aggregations": {
-					"costsIncurredToDate": {
-						"description": "Sum of GL expense-account postings tagged to this cost project via subLedgerType='cost-project' AND subLedgerRef=@self.id per REQ-CPA-105. Integer cents.",
-						"operation": "sum",
-						"field": "amount",
-						"source": {
-							"register": "@register",
-							"schema": "GLLine"
-						},
-						"filter": {
-							"subLedgerType": "cost-project",
-							"subLedgerRef": "@self.id",
-							"account.accountType": "expenses"
-						}
-					},
-					"profitAndLoss": {
-						"description": "Project P&L per REQ-CPA-108: revenue minus expense across GL lines tagged to this cost project.",
-						"operation": "derived",
-						"fields": {
-							"revenue": {
-								"operation": "sum",
-								"field": "amount",
-								"source": {
-									"register": "@register",
-									"schema": "GLLine"
-								},
-								"filter": {
-									"subLedgerType": "cost-project",
-									"subLedgerRef": "@self.id",
-									"account.accountType": "revenue"
-								}
-							},
-							"expense": {
-								"operation": "sum",
-								"field": "amount",
-								"source": {
-									"register": "@register",
-									"schema": "GLLine"
-								},
-								"filter": {
-									"subLedgerType": "cost-project",
-									"subLedgerRef": "@self.id",
-									"account.accountType": "expenses"
-								}
-							},
-							"profitAndLoss": {
-								"formula": "@self.profitAndLoss.revenue - @self.profitAndLoss.expense"
-							}
-						}
-					}
-				},
-				"x-openregister-calculations": {
-					"budgetVariance": {
-						"description": "Budget variance: totalBudget - costsIncurredToDate (positive = under budget, negative = over budget). Integer cents.",
-						"type": "integer",
-						"formula": "(@self.totalBudget ?? 0) - (@self.costsIncurredToDate ?? 0)"
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						},
-						"project-administrator": {
-							"permissions": [
-								"create",
-								"read",
-								"update",
-								"delete"
-							],
-							"description": "Full cost-project management; visibility predicate: administrationType ∈ {mkb, zzp}."
-						}
-					}
-				}
-			},
 			"ProjectBudget": {
 				"slug": "ProjectBudget",
 				"icon": "CashCheck",
 				"version": "0.1.0",
 				"title": "Project Budget",
-				"description": "Period-level budget allocation for a CostProject per REQ-CPA-103. Captures the lifecycle pending → approved → allocated → spent.",
+				"description": "Period-level budget allocation for a AnalyticalDimension (dimensionType=project) per REQ-CPA-103. Captures the lifecycle pending → approved → allocated → spent.",
 				"x-schema-org": "schema:MonetaryAmount",
 				"x-openregister-purpose": "analytical",
 				"type": "object",
@@ -5665,7 +5039,7 @@
 					},
 					"projectId": {
 						"type": "string",
-						"description": "FK to CostProject.id per REQ-CPA-103.",
+						"description": "FK to the analytical dimension (AnalyticalDimension with dimensionType=project) for this budget allocation per REQ-CPA-103. Formerly CostProject.id — retargeted to AnalyticalDimension by retire-cost-project.",
 						"example": "cp-1"
 					},
 					"fiscalPeriod": {
@@ -5734,12 +5108,12 @@
 					}
 				},
 				"x-openregister-relations": {
-					"costProject": {
+					"analyticalDimension": {
 						"localField": "projectId",
-						"relatedSchema": "CostProject",
+						"relatedSchema": "AnalyticalDimension",
 						"relatedField": "id",
 						"cardinality": "many-to-one",
-						"description": "Parent CostProject for this allocation per REQ-CPA-103."
+						"description": "Parent AnalyticalDimension (dimensionType=project) for this allocation per REQ-CPA-103. Formerly CostProject; retargeted to AnalyticalDimension by retire-cost-project."
 					}
 				},
 				"x-openregister-rbac": {
@@ -7047,7 +6421,7 @@
 					"costProjectId": {
 						"type": "string",
 						"nullable": true,
-						"description": "Optional FK to CostProject.id for analytical project-cost tracking per REQ-CPA-101. Independent of projectId (which targets the RJ 270 revenue-recognition Project register).",
+						"description": "Optional FK to an AnalyticalDimension (dimensionType=project) for analytical project-cost tracking per REQ-CPA-101. Formerly CostProject.id — retargeted to AnalyticalDimension by retire-cost-project. Independent of projectId (which targets the RJ 270 revenue-recognition Project register).",
 						"example": "cp-1"
 					},
 					"taskId": {
@@ -7472,7 +6846,7 @@
 							"from": "closing",
 							"to": "closed",
 							"label": "Complete year-end close",
-							"description": "Completes the year-end close. Emits an opening-balance JournalEntry for the next FiscalYear (balance-sheet accounts only; P&L accounts excluded per REQ-YEC-004). Auto-creates next FiscalYear record in state open if absent. Fires CloudEvents per dimension register (CostCenter, KostenDrager, Project) for dimensional rollover; each subscriber carries active dimensions forward and skips archived per REQ-YEC-005. The transition is gated by the closing checklist (REQ-YEC-006) declared in `requirePreconditions`; CFO override via `overrideChecklist: true` is audit-trailed.",
+							"description": "Completes the year-end close. Emits an opening-balance JournalEntry for the next FiscalYear (balance-sheet accounts only; P&L accounts excluded per REQ-YEC-004). Auto-creates next FiscalYear record in state open if absent. Fires CloudEvents per dimension register (AnalyticalDimension, Project) for dimensional rollover; each subscriber carries active dimensions forward and skips archived per REQ-YEC-005. Re-targeted from the retired CostCenter + KostenDrager to the unified AnalyticalDimension per REQ-ADIM-101. The transition is gated by the closing checklist (REQ-YEC-006) declared in `requirePreconditions`; CFO override via `overrideChecklist: true` is audit-trailed.",
 							"requirePreconditions": [
 								{
 									"id": "trial-balance-verified",
@@ -7604,13 +6978,12 @@
 						},
 						"onCloseDimensionRollover": {
 							"trigger": "transition:close",
-							"description": "Fire CloudEvents for dimensional rollover on closing -> closed per REQ-YEC-005. CostCenter, KostenDrager, and Project subscribers carry active dimensions forward; archived dimensions skipped.",
+							"description": "Fire CloudEvents for dimensional rollover on closing -> closed per REQ-YEC-005. AnalyticalDimension (all dimensionTypes: cost-center, cost-object, custom) and Project subscribers carry active dimensions forward; archived dimensions skipped. Re-targeted from the retired CostCenter + KostenDrager registers to the unified AnalyticalDimension per REQ-ADIM-101.",
 							"action": "x-openregister-emit-cloudevents",
 							"actionParameters": {
 								"eventType": "nl.conduction.shillinq.fiscal-year.dimension-rollover",
 								"targets": [
-									"CostCenter",
-									"KostenDrager",
+									"AnalyticalDimension",
 									"Project"
 								],
 								"filter": {
@@ -8013,10 +7386,10 @@
 						"description": "Notify all administration admins when a fiscal year is reopened. A reopened closed year is a high-stakes audit event.",
 						"recipients": {
 							"role": "admin",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "Boekjaar heropend",
-						"message": "Boekjaar @self.yearNumber is heropend door @self.reopenedBy. Reden: @self.reopenReason"
+						"message": "Boekjaar {{yearNumber}} is heropend door {{reopenedBy}}. Reden: {{reopenReason}}"
 					}
 				}
 			},
@@ -9898,7 +9271,7 @@
 						"onTransition": {
 							"pause": {
 								"notificationType": "inventory-rule-paused",
-								"recipient": "{alertRecipients}",
+								"recipients": ["{alertRecipients}"],
 								"channels": [
 									"{alertChannel}"
 								],
@@ -9959,7 +9332,7 @@
 							"condition": "null OR past"
 						},
 						"notificationType": "inventory-low-stock",
-						"recipient": "{alertRecipients}",
+						"recipients": ["{alertRecipients}"],
 						"channels": [
 							"{alertChannel}"
 						],
@@ -14004,7 +13377,7 @@
 						},
 						"onVastgesteld": {
 							"trigger": "lifecycle:vaststellen",
-							"recipient": "subsidie-coordinator",
+							"recipients": ["subsidie-coordinator"],
 							"channels": [
 								"in-app"
 							],
@@ -14013,7 +13386,7 @@
 						},
 						"onUitbetaald": {
 							"trigger": "lifecycle:uitbetalen",
-							"recipient": "subsidie-coordinator",
+							"recipients": ["subsidie-coordinator"],
 							"channels": [
 								"in-app"
 							],
@@ -14217,7 +13590,7 @@
 				"x-openregister-notifications": {
 					"onOverdue": {
 						"trigger": "lifecycle:markOverdue",
-						"recipient": "subsidie-coordinator",
+						"recipients": ["subsidie-coordinator"],
 						"channels": [
 							"in-app",
 							"email"
@@ -17112,25 +16485,25 @@
 				"x-openregister-notifications": {
 					"onCriteriumMet": {
 						"trigger": "calculation-crossing:qualifiesForUrencriterium",
-						"condition": "@self.qualifiesForUrencriterium === true",
+						"condition": "qualifiesForUrencriterium === true",
 						"description": "Notify zzp-administrator when 1225-urencriterium is met. REQ-ZZP-004.",
 						"recipients": {
 							"role": "zzp-administrator",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "Urencriterium gehaald",
-						"message": "Het urencriterium voor @self.taxYear is gehaald (@self.ytdQualifyingHours uren). Zelfstandigenaftrek is van toepassing."
+						"message": "Het urencriterium voor {{taxYear}} is gehaald ({{ytdQualifyingHours}} uren). Zelfstandigenaftrek is van toepassing."
 					},
 					"onCriteriumAtRisk": {
 						"trigger": "scheduled:monthly",
-						"condition": "@self.ytdQualifyingHours * (12 / currentMonth()) < 1225",
+						"condition": "ytdQualifyingHours * (12 / currentMonth()) < 1225",
 						"description": "Monthly projection: warn zzp-administrator when projected EOY qualifying hours < 1225. REQ-ZZP-004.",
 						"recipients": {
 							"role": "zzp-administrator",
-							"scope": "@self.administrationId"
+							"scope": "administrationId"
 						},
 						"title": "Dreigend onderschrijden urencriterium",
-						"message": "Projectie einde jaar: @projected uur (< 1225). Dreigend onderschrijden urencriterium @self.taxYear."
+						"message": "Projectie einde jaar: {{projected}} uur (< 1225). Dreigend onderschrijden urencriterium {{taxYear}}."
 					}
 				},
 				"x-openregister-widgets": {
@@ -23621,10 +22994,12 @@
 			"x-openregister-notifications": {
 				"onSisaSubmitted": {
 					"trigger": "onAuditEvent:sisa.submitted",
-					"recipient": {
-						"resolver": "administration-financial-officer",
-						"fallback": "administration-owner"
-					},
+					"recipients": [
+						{
+							"resolver": "administration-financial-officer",
+							"fallback": "administration-owner"
+						}
+					],
 					"channels": [
 						"in-app",
 						"email"
@@ -23685,7 +23060,7 @@
 			"properties": {
 				"costCenterId": {
 					"type": "string",
-					"description": "FK to a CostCenter with ondernemingsActiviteit: true. The ondernemingsactiviteit whose Vpb-pligtige accounts this link declares.",
+					"description": "FK to AnalyticalDimension.code (dimensionType=cost-center) with ondernemingsActiviteit: true. The ondernemingsactiviteit whose Vpb-pligtige accounts this link declares. Re-targeted from the retired CostCenter to the unified AnalyticalDimension per REQ-ADIM-102; stored values unchanged.",
 					"example": "KC-OA-001"
 				},
 				"accountNumbers": {
@@ -23789,10 +23164,10 @@
 			"x-openregister-relations": {
 				"costCenter": {
 					"localField": "costCenterId",
-					"relatedSchema": "CostCenter",
+					"relatedSchema": "AnalyticalDimension",
 					"relatedField": "code",
 					"cardinality": "many-to-one",
-					"description": "FK to the ondernemingsactiviteit cost-center. CostCenter.ondernemingsActiviteit MUST be true per REQ-VPB-002."
+					"description": "FK to the ondernemingsactiviteit cost-center dimension. AnalyticalDimension.dimensionType MUST be cost-center AND AnalyticalDimension.ondernemingsActiviteit MUST be true per REQ-VPB-002 + REQ-ADIM-102. Re-targeted from the retired CostCenter to the unified AnalyticalDimension; stored costCenterId values unchanged."
 				}
 			},
 			"x-openregister-rbac": {
@@ -23860,7 +23235,7 @@
 				"costCenterId": {
 					"type": "string",
 					"nullable": true,
-					"description": "FK to CostCenter from the bookkeeping-cost-centers-dimensions T4-base capability.",
+					"description": "FK to AnalyticalDimension.code (dimensionType=cost-center) from the bookkeeping-cost-centers-dimensions base capability. Re-targeted from the retired CostCenter per REQ-ADIM-102.",
 					"example": "cc-innovatie-2026"
 				},
 				"status": {

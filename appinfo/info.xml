@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -75,6 +75,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <post-migration>
             <step>OCA\Shillinq\Repair\InitializeSettings</step>
             <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
+            <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>
+            <step>OCA\Shillinq\Repair\RetireCostProjectStep</step>
             <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
             <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
             <step>OCA\Shillinq\Repair\Load_CBS_Seeds_Step</step>

@@ -20,18 +20,6 @@
 					}
 				}
 			},
-			"CostCenter": {
-				"x-openspec-extend": true,
-				"description": "ADR-037 additive extension: declares the `ondernemingsActiviteit` boolean flag a VpbBalansLink references (REQ-VPB-002). Owned at proposal-time by sibling change add-shillinq-market-government-separation; this fragment makes the flag visible to the Vpb-balans grouping when the sibling change has not yet landed.",
-				"properties": {
-					"ondernemingsActiviteit": {
-						"type": "boolean",
-						"description": "Whether this cost-center represents an ondernemingsactiviteit (commercial activity) subject to Vpb-plicht per Wet markt en overheid + Wet modernisering Vpb-plicht (2016). Defaults to false. VpbBalansLink.costCenterId MUST reference a cost-center with this flag set to true (REQ-VPB-002).",
-						"default": false,
-						"example": false
-					}
-				}
-			},
 			"VpbBalansLink": {
 				"slug": "VpbBalansLink",
 				"icon": "BankTransferIn",
@@ -173,9 +161,10 @@
 				"x-openregister-relations": {
 					"costCenter": {
 						"type": "many-to-one",
-						"target": "CostCenter",
+						"target": "AnalyticalDimension",
 						"foreignKey": "costCenterId",
 						"constraint": {
+							"dimensionType": "cost-center",
 							"ondernemingsActiviteit": true
 						}
 					}

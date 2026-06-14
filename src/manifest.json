@@ -10,43 +10,50 @@
 			"label": "Dashboard",
 			"icon": "icon-category-dashboard",
 			"route": "Dashboard",
-			"order": 10
+			"order": 10,
+			"children": []
 		},
 		{
 			"id": "BankingTreasury",
 			"label": "Banking & Treasury",
 			"icon": "BankOutline",
-			"order": 25
+			"order": 25,
+			"children": []
 		},
 		{
 			"id": "Sales",
 			"label": "Sales",
 			"icon": "CartOutline",
-			"order": 30
+			"order": 30,
+			"children": []
 		},
 		{
 			"id": "Purchasing",
 			"label": "Purchasing & Inventory",
 			"icon": "CartArrowDownOutline",
-			"order": 35
+			"order": 35,
+			"children": []
 		},
 		{
 			"id": "Payroll",
 			"label": "People & Projects",
 			"icon": "TableAccountOutline",
-			"order": 55
+			"order": 55,
+			"children": []
 		},
 		{
 			"id": "PublicSector",
 			"label": "Public sector",
 			"icon": "OfficeBuildingOutline",
-			"order": 60
+			"order": 60,
+			"children": []
 		},
 		{
 			"id": "ExternalConnections",
 			"label": "External Connections",
 			"icon": "SwapHorizontalBoldOutline",
-			"order": 80
+			"order": 80,
+			"children": []
 		},
 		{
 			"id": "Bookkeeping",
@@ -77,7 +84,7 @@
 				},
 				{
 					"id": "Journals",
-					"label": "Journals",
+					"label": "Manual Journals",
 					"icon": "BookEditOutline",
 					"route": "Journals",
 					"order": 22
@@ -357,30 +364,29 @@
 				},
 				{
 					"id": "CostCenters",
-					"label": "Cost Centers",
+					"label": "Cost centers",
+					"i18n": {
+						"nl": "Kostenplaatsen"
+					},
 					"icon": "OfficeBuilding",
 					"route": "CostCenters",
 					"order": 90
 				},
 				{
 					"id": "KostenDragers",
-					"label": "Kostendragers",
+					"label": "Cost objects",
+					"i18n": {
+						"nl": "Kostendragers"
+					},
 					"icon": "CubeOutline",
 					"route": "KostenDragers",
-					"order": 90
+					"order": 91
 				},
 				{
 					"id": "Projects",
 					"label": "Projects",
 					"icon": "BriefcaseOutline",
 					"route": "Projects",
-					"order": 90
-				},
-				{
-					"id": "CostProjects",
-					"label": "Cost Projects",
-					"icon": "BriefcaseClockOutline",
-					"route": "CostProjects",
 					"order": 90
 				},
 				{
@@ -898,7 +904,8 @@
 			"icon": "icon-info",
 			"href": "https://shillinq.conduction.nl",
 			"section": "footer",
-			"order": 90
+			"order": 90,
+			"children": []
 		},
 		{
 			"id": "FeaturesRoadmapMenu",
@@ -906,7 +913,8 @@
 			"icon": "icon-toggle",
 			"route": "FeaturesRoadmap",
 			"section": "footer",
-			"order": 91
+			"order": 91,
+			"children": []
 		},
 		{
 			"id": "Settings",
@@ -914,7 +922,8 @@
 			"icon": "icon-settings",
 			"route": "Settings",
 			"section": "settings",
-			"order": 99
+			"order": 99,
+			"children": []
 		},
 		{
 			"id": "Projecten",
@@ -2133,10 +2142,16 @@
 			"id": "CostCenters",
 			"route": "/bookkeeping/dimensions/cost-centers",
 			"type": "index",
-			"title": "Cost Centers",
+			"title": "Cost centers",
+			"i18n": {
+				"nl": "Kostenplaatsen"
+			},
 			"config": {
 				"register": "shillinq",
-				"schema": "CostCenter",
+				"schema": "AnalyticalDimension",
+				"filters": {
+					"dimensionType": "cost-center"
+				},
 				"columns": [
 					{
 						"key": "code",
@@ -2154,6 +2169,11 @@
 						"sortable": true
 					},
 					{
+						"key": "budget",
+						"label": "Budget",
+						"sortable": true
+					},
+					{
 						"key": "lifecycleState",
 						"label": "Status",
 						"sortable": true
@@ -2168,10 +2188,13 @@
 			"id": "CostCenterDetail",
 			"route": "/bookkeeping/dimensions/cost-centers/:id",
 			"type": "detail",
-			"title": "Cost Center",
+			"title": "Cost center",
+			"i18n": {
+				"nl": "Kostenplaats"
+			},
 			"config": {
 				"register": "shillinq",
-				"schema": "CostCenter",
+				"schema": "AnalyticalDimension",
 				"fields": [
 					{
 						"key": "code",
@@ -2184,13 +2207,34 @@
 						"type": "string"
 					},
 					{
-						"key": "parentCode",
-						"label": "Parent Cost Center",
+						"key": "dimensionType",
+						"label": "Type",
 						"type": "string"
 					},
 					{
+						"key": "parentCode",
+						"label": "Parent cost center",
+						"type": "string"
+					},
+					{
+						"key": "budget",
+						"label": "Budget",
+						"type": "number"
+					},
+					{
+						"key": "spentToDate",
+						"label": "Spent to date",
+						"type": "number",
+						"readOnly": true
+					},
+					{
+						"key": "ondernemingsActiviteit",
+						"label": "Ondernemingsactiviteit (Vpb)",
+						"type": "boolean"
+					},
+					{
 						"key": "responsibleUser",
-						"label": "Responsible User",
+						"label": "Responsible user",
 						"type": "string"
 					},
 					{
@@ -2234,10 +2278,16 @@
 			"id": "KostenDragers",
 			"route": "/bookkeeping/dimensions/kostendragers",
 			"type": "index",
-			"title": "Kostendragers",
+			"title": "Cost objects",
+			"i18n": {
+				"nl": "Kostendragers"
+			},
 			"config": {
 				"register": "shillinq",
-				"schema": "KostenDrager",
+				"schema": "AnalyticalDimension",
+				"filters": {
+					"dimensionType": "cost-object"
+				},
 				"columns": [
 					{
 						"key": "code",
@@ -2269,10 +2319,13 @@
 			"id": "KostenDragerDetail",
 			"route": "/bookkeeping/dimensions/kostendragers/:id",
 			"type": "detail",
-			"title": "Kostendrager",
+			"title": "Cost object",
+			"i18n": {
+				"nl": "Kostendrager"
+			},
 			"config": {
 				"register": "shillinq",
-				"schema": "KostenDrager",
+				"schema": "AnalyticalDimension",
 				"fields": [
 					{
 						"key": "code",
@@ -2285,13 +2338,18 @@
 						"type": "string"
 					},
 					{
+						"key": "dimensionType",
+						"label": "Type",
+						"type": "string"
+					},
+					{
 						"key": "parentCode",
-						"label": "Parent Kostendrager",
+						"label": "Parent cost object",
 						"type": "string"
 					},
 					{
 						"key": "responsibleUser",
-						"label": "Responsible User",
+						"label": "Responsible user",
 						"type": "string"
 					},
 					{
@@ -2306,7 +2364,7 @@
 					}
 				],
 				"lifecycleActions": true,
-				"aggregation": "segmentPnl",
+				"aggregation": "segmentPnlByCostObject",
 				"indexRoute": "KostenDragers",
 				"sidebarProps": {
 					"tabs": [
@@ -2495,150 +2553,6 @@
 						"id": "wip-history",
 						"title": "WIP-historie",
 						"schema": "WipBalance",
-						"foreignKey": "projectId"
-					}
-				],
-				"sidebarProps": {
-					"tabs": [
-						{
-							"id": "audit",
-							"label": "Audit Trail",
-							"icon": "HistoryIcon",
-							"order": 90,
-							"widgets": [
-								{
-									"type": "data",
-									"componentName": "openregister-audit-trail",
-									"props": {
-										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
-										"collapsed": true
-									}
-								}
-							]
-						}
-					]
-				},
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
-			}
-		},
-		{
-			"id": "CostProjects",
-			"route": "/bookkeeping/dimensions/cost-projects",
-			"type": "index",
-			"title": "Cost Projects",
-			"config": {
-				"register": "shillinq",
-				"schema": "CostProject",
-				"columns": [
-					{
-						"key": "projectNumber",
-						"label": "Project Number",
-						"sortable": true
-					},
-					{
-						"key": "name",
-						"label": "Name",
-						"sortable": true
-					},
-					{
-						"key": "totalBudget",
-						"label": "Budget",
-						"sortable": true
-					},
-					{
-						"key": "costsIncurredToDate",
-						"label": "Costs to Date",
-						"sortable": true
-					},
-					{
-						"key": "lifecycleState",
-						"label": "Status",
-						"sortable": true
-					}
-				],
-				"defaultSort": "projectNumber",
-				"detailRoute": "CostProjectDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
-			}
-		},
-		{
-			"id": "CostProjectDetail",
-			"route": "/bookkeeping/dimensions/cost-projects/:id",
-			"type": "detail",
-			"title": "Cost Project",
-			"config": {
-				"register": "shillinq",
-				"schema": "CostProject",
-				"fields": [
-					{
-						"key": "projectNumber",
-						"label": "Project Number",
-						"type": "string"
-					},
-					{
-						"key": "name",
-						"label": "Project Name",
-						"type": "string"
-					},
-					{
-						"key": "description",
-						"label": "Description",
-						"type": "string"
-					},
-					{
-						"key": "lifecycleState",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "startDate",
-						"label": "Start Date",
-						"type": "date"
-					},
-					{
-						"key": "endDate",
-						"label": "End Date",
-						"type": "date"
-					},
-					{
-						"key": "totalBudget",
-						"label": "Budget",
-						"type": "number"
-					},
-					{
-						"key": "totalEstimatedCosts",
-						"label": "Estimated Costs",
-						"type": "number"
-					},
-					{
-						"key": "costsIncurredToDate",
-						"label": "Costs to Date",
-						"type": "number"
-					},
-					{
-						"key": "costCenterCode",
-						"label": "Cost Center",
-						"type": "string"
-					},
-					{
-						"key": "organizationId",
-						"label": "Organization",
-						"type": "string"
-					},
-					{
-						"key": "administrationId",
-						"label": "Administration",
-						"type": "string"
-					}
-				],
-				"lifecycleActions": true,
-				"aggregation": "profitAndLoss",
-				"indexRoute": "CostProjects",
-				"related": [
-					{
-						"id": "project-budgets",
-						"title": "Project Budgets",
-						"schema": "ProjectBudget",
 						"foreignKey": "projectId"
 					}
 				],
@@ -4418,7 +4332,7 @@
 			"id": "Journals",
 			"route": "/journals",
 			"type": "index",
-			"title": "Journals",
+			"title": "Manual Journals",
 			"config": {
 				"register": "shillinq",
 				"schema": "JournalEntry",
@@ -6853,6 +6767,88 @@
 						"widgets": [
 							{
 								"type": "version-info"
+							}
+						]
+					},
+					{
+						"id": "governance-compliance",
+						"title": "Governance & Compliance",
+						"links": [
+							{
+								"id": "AllocationRules",
+								"label": "Allocation Rules",
+								"route": "AllocationRules"
+							},
+							{
+								"id": "BookkeepingAuditTrail",
+								"label": "Audit Trail",
+								"route": "BookkeepingAuditTrail"
+							},
+							{
+								"id": "BookkeepingChangeHistory",
+								"label": "Change History",
+								"route": "BookkeepingChangeHistory"
+							},
+							{
+								"id": "BookkeepingActivityFeed",
+								"label": "Activity Feed",
+								"route": "BookkeepingActivityFeed"
+							},
+							{
+								"id": "BookkeepingDestructionReport",
+								"label": "Destruction report",
+								"route": "BookkeepingDestructionReport"
+							},
+							{
+								"id": "BookkeepingComplianceExport",
+								"label": "Compliance Export",
+								"route": "BookkeepingComplianceExport"
+							},
+							{
+								"id": "Bewaartermijnen",
+								"label": "Bewaartermijnen",
+								"route": "Bewaartermijnen"
+							}
+						]
+					},
+					{
+						"id": "templates-notifications",
+						"title": "Templates & Notifications",
+						"links": [
+							{
+								"id": "ConfirmationTemplates",
+								"label": "Confirmation Templates",
+								"route": "ConfirmationTemplates"
+							},
+							{
+								"id": "ReminderTemplates",
+								"label": "Reminder Templates",
+								"route": "ReminderTemplates"
+							},
+							{
+								"id": "CancellationTemplates",
+								"label": "Cancellation Templates",
+								"route": "CancellationTemplates"
+							},
+							{
+								"id": "CountTemplates",
+								"label": "Count Templates",
+								"route": "CountTemplates"
+							},
+							{
+								"id": "NotificationTriggers",
+								"label": "Notification Triggers",
+								"route": "NotificationTriggers"
+							},
+							{
+								"id": "NotificationMonitor",
+								"label": "Notification Monitor",
+								"route": "NotificationMonitor"
+							},
+							{
+								"id": "SmsReminderChannels",
+								"label": "SMS Reminder Channels",
+								"route": "SmsReminderChannels"
 							}
 						]
 					}
@@ -11155,70 +11151,6 @@
 				],
 				"defaultSort": "subsidieNumber",
 				"detailRoute": "SubsidieDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
-			}
-		},
-		{
-			"id": "SubsidieDetail",
-			"route": "/subsidies/overzicht/:id",
-			"type": "detail",
-			"title": "Subsidie",
-			"config": {
-				"register": "shillinq",
-				"schema": "Subsidie",
-				"fields": [
-					{
-						"key": "subsidieNumber",
-						"label": "Nummer",
-						"type": "string"
-					},
-					{
-						"key": "subsidieName",
-						"label": "Naam",
-						"type": "string"
-					},
-					{
-						"key": "granteeOrganization",
-						"label": "Ontvanger",
-						"type": "string"
-					},
-					{
-						"key": "awardAmount",
-						"label": "Toegekend bedrag",
-						"type": "number"
-					},
-					{
-						"key": "state",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "hasRepaymentPlan",
-						"label": "Afbetalingsregeling",
-						"type": "boolean"
-					}
-				],
-				"indexRoute": "SubsidiesOverzicht",
-				"sidebarProps": {
-					"tabs": [
-						{
-							"id": "audit",
-							"label": "Audit Trail",
-							"icon": "HistoryIcon",
-							"order": 90,
-							"widgets": [
-								{
-									"type": "data",
-									"componentName": "openregister-audit-trail",
-									"props": {
-										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
-										"collapsed": true
-									}
-								}
-							]
-						}
-					]
-				},
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		},

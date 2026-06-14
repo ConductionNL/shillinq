@@ -428,6 +428,10 @@ return [
         ['name' => 'wbsoDocumentApi#archive', 'url' => '/api/v1/documents/{id}/archive', 'verb' => 'POST'],
         ['name' => 'wbsoDocumentApi#show', 'url' => '/api/v1/documents/{id}', 'verb' => 'GET'],
 
+        // WBSO realisatie summary endpoint (REQ-WBSO-010) — read-only per-beschikking
+        // granted-vs-realised S&O hours; scoped to one administration via query param.
+        ['name' => 'wbsoAdministratie#realisatie', 'url' => '/api/wbso/realisatie', 'verb' => 'GET'],
+
         // DBA compliance marker endpoints (dba-compliance-marker, T19/T17/T21/T22/T23/T25/T26/T27/T28).
         // All marked NoAdminRequired; per-object IDOR check is in the controller body
         // (ensureAdministrationAccess) per ADR-005.
