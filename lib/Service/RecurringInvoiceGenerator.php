@@ -63,6 +63,8 @@ use RuntimeException;
 /**
  * Generates ordinary ARInvoice records from due RecurringInvoiceProfile
  * records and advances their schedule.
+ *
+ * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
  */
 class RecurringInvoiceGenerator
 {
@@ -138,8 +140,6 @@ class RecurringInvoiceGenerator
      * re-advanced. A cancelled invoice for the same key unblocks regeneration.
      *
      * @param array<string,mixed> $profile The RecurringInvoiceProfile object.
-     * @param string|null         $asOf    Override "today" (Y-m-d) for tests;
-     *                                      null uses the current civil date.
      *
      * @return array<string,mixed> Result: ['invoice' => array|null,
      *                             'profile' => array, 'created' => bool,
@@ -149,14 +149,14 @@ class RecurringInvoiceGenerator
      *
      * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
      */
-    public function generateForProfile(array $profile, ?string $asOf=null): array
+    public function generateForProfile(array $profile): array
     {
         $profileId = (string) ($profile['id'] ?? $profile['uuid'] ?? '');
         if ($profileId === '') {
             throw new RuntimeException('RecurringInvoiceProfile is missing an id');
         }
 
-        $billingPeriod = self::dueBillingPeriod($profile);
+        $billingPeriod = self::dueBillingPeriod(profile: $profile);
 
         // Idempotency: a non-cancelled invoice for this (profile, period)
         // makes the run a no-op (REQ-RIN-004).
@@ -171,9 +171,9 @@ class RecurringInvoiceGenerator
         }
 
         $language    = (string) ($profile['documentLanguage'] ?? 'en');
-        $periodStart = self::periodStartDate($profile, $billingPeriod);
-        $issueDate   = self::clampedInvoiceDate($profile, $billingPeriod);
-        $dueDate     = self::addDays($issueDate, (int) ($profile['paymentTermsDays'] ?? 30));
+        $periodStart = self::periodStartDate(billingPeriod: $billingPeriod);
+        $issueDate   = self::clampedInvoiceDate(profile: $profile, billingPeriod: $billingPeriod);
+        $dueDate     = self::addDays(date: $issueDate, days: (int) ($profile['paymentTermsDays'] ?? 30));
 
         $invoicePayload = self::buildArInvoicePayload(
             profile: $profile,
@@ -261,7 +261,7 @@ class RecurringInvoiceGenerator
             }
 
             try {
-                $results[] = $this->generateForProfile(profile: $profile, asOf: $today);
+                $results[] = $this->generateForProfile(profile: $profile);
             } catch (\Throwable $e) {
                 $this->logger->error(
                     'RecurringInvoiceGenerator: scheduled run failed for a profile',
@@ -289,6 +289,8 @@ class RecurringInvoiceGenerator
      * @param string              $language      Document language for tokens.
      *
      * @return array<string,mixed> The ARInvoice payload.
+     *
+     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
      */
     public static function buildArInvoicePayload(
         array $profile,
@@ -299,10 +301,13 @@ class RecurringInvoiceGenerator
         string $dueDate,
         string $language
     ): array {
-        $lines   = [];
-        $net     = 0.0;
-        $vat     = 0.0;
-        $rawLines = (is_array($profile['lines'] ?? null) === true) ? $profile['lines'] : [];
+        $lines    = [];
+        $net      = 0.0;
+        $vat      = 0.0;
+        $rawLines = [];
+        if (is_array($profile['lines'] ?? null) === true) {
+            $rawLines = $profile['lines'];
+        }
 
         $lineNumber = 1;
         foreach ($rawLines as $raw) {
@@ -313,9 +318,9 @@ class RecurringInvoiceGenerator
             $lineVat   = ($lineNet * ($vatRate / 100));
 
             $description = self::expandTokens(
-                (string) ($raw['description'] ?? ''),
-                $periodStart,
-                $language
+                description: (string) ($raw['description'] ?? ''),
+                periodStart: $periodStart,
+                language: $language
             );
 
             $lines[] = [
@@ -330,24 +335,29 @@ class RecurringInvoiceGenerator
             $net += $lineNet;
             $vat += $lineVat;
             $lineNumber++;
-        }
+        }//end foreach
 
         $net = round($net, 2);
         $vat = round($vat, 2);
 
+        $lifecycleState = 'draft';
+        if (($profile['issueMode'] ?? 'draft-for-review') === 'auto-issue') {
+            $lifecycleState = 'issued';
+        }
+
         return [
-            'customerId'        => (string) ($profile['customerReference'] ?? ''),
-            'administrationId'  => ($profile['administrationId'] ?? null),
-            'invoiceDate'       => $issueDate,
-            'dueDate'           => $dueDate,
-            'currency'          => (string) ($profile['currency'] ?? 'EUR'),
-            'netAmount'         => $net,
-            'vatAmount'         => $vat,
-            'grossAmount'       => round(($net + $vat), 2),
-            'lifecycleState'    => (($profile['issueMode'] ?? 'draft-for-review') === 'auto-issue') ? 'issued' : 'draft',
+            'customerId'         => (string) ($profile['customerReference'] ?? ''),
+            'administrationId'   => ($profile['administrationId'] ?? null),
+            'invoiceDate'        => $issueDate,
+            'dueDate'            => $dueDate,
+            'currency'           => (string) ($profile['currency'] ?? 'EUR'),
+            'netAmount'          => $net,
+            'vatAmount'          => $vat,
+            'grossAmount'        => round(($net + $vat), 2),
+            'lifecycleState'     => $lifecycleState,
             'recurringProfileId' => $profileId,
-            'billingPeriod'     => $billingPeriod,
-            'lines'             => $lines,
+            'billingPeriod'      => $billingPeriod,
+            'lines'              => $lines,
         ];
 
     }//end buildArInvoicePayload()
@@ -361,18 +371,24 @@ class RecurringInvoiceGenerator
      * @param string $language    Document language (en/nl).
      *
      * @return string The expanded description.
+     *
+     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
      */
     public static function expandTokens(string $description, string $periodStart, string $language): string
     {
-        $date  = self::immutable($periodStart);
+        $date = self::immutable(value: $periodStart);
         if ($date === null) {
             return $description;
         }
 
         $monthNum  = (int) $date->format('n');
         $year      = $date->format('Y');
-        $monthName = ($language === 'nl') ? (self::MONTHS_NL[$monthNum] ?? '') : (self::MONTHS_EN[$monthNum] ?? '');
-        $period    = $monthName.' '.$year;
+        $monthName = self::MONTHS_EN[$monthNum];
+        if ($language === 'nl') {
+            $monthName = self::MONTHS_NL[$monthNum];
+        }
+
+        $period = $monthName.' '.$year;
 
         return strtr(
             $description,
@@ -392,6 +408,8 @@ class RecurringInvoiceGenerator
      * @param array<string,mixed> $profile The profile.
      *
      * @return string The period key (Y-m).
+     *
+     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
      */
     public static function dueBillingPeriod(array $profile): string
     {
@@ -400,7 +418,7 @@ class RecurringInvoiceGenerator
         $last      = (string) ($profile['lastBillingPeriod'] ?? '');
 
         if ($last === '') {
-            $start = self::immutable((string) ($profile['startDate'] ?? ''));
+            $start = self::immutable(value: (string) ($profile['startDate'] ?? ''));
             if ($start === null) {
                 return (new DateTimeImmutable('today'))->format('Y-m');
             }
@@ -408,12 +426,12 @@ class RecurringInvoiceGenerator
             return $start->format('Y-m');
         }
 
-        $lastStart = self::immutable($last.'-01');
+        $lastStart = self::immutable(value: $last.'-01');
         if ($lastStart === null) {
             return $last;
         }
 
-        $next = self::addPeriod($lastStart, $frequency, $interval);
+        $next = self::addPeriod(date: $lastStart, frequency: $frequency, interval: $interval);
         return $next->format('Y-m');
 
     }//end dueBillingPeriod()
@@ -421,14 +439,15 @@ class RecurringInvoiceGenerator
     /**
      * Period start date (Y-m-d, first of the period) for a billing-period key.
      *
-     * @param array<string,mixed> $profile       The profile.
-     * @param string              $billingPeriod The period key (Y-m).
+     * @param string $billingPeriod The period key (Y-m).
      *
      * @return string Period start date (Y-m-d).
+     *
+     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
      */
-    public static function periodStartDate(array $profile, string $billingPeriod): string
+    public static function periodStartDate(string $billingPeriod): string
     {
-        $start = self::immutable($billingPeriod.'-01');
+        $start = self::immutable(value: $billingPeriod.'-01');
         if ($start === null) {
             return (new DateTimeImmutable('today'))->format('Y-m-d');
         }
@@ -445,11 +464,13 @@ class RecurringInvoiceGenerator
      * @param string              $billingPeriod The period key (Y-m).
      *
      * @return string Invoice date (Y-m-d).
+     *
+     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
      */
     public static function clampedInvoiceDate(array $profile, string $billingPeriod): string
     {
         $invoiceDay = max(1, min(31, (int) ($profile['invoiceDay'] ?? 1)));
-        $base       = self::immutable($billingPeriod.'-01');
+        $base       = self::immutable(value: $billingPeriod.'-01');
         if ($base === null) {
             return (new DateTimeImmutable('today'))->format('Y-m-d');
         }
@@ -477,6 +498,8 @@ class RecurringInvoiceGenerator
      * @param string $lastBillingPeriod Last generated period (Y-m) or ''.
      *
      * @return string nextRunDate (Y-m-d), or '' when undeterminable.
+     *
+     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
      */
     public static function nextRunDate(
         string $frequency,
@@ -492,7 +515,7 @@ class RecurringInvoiceGenerator
             // No period generated yet — next run is the start period's
             // clamped invoice day. Weekly cadences advance from the literal
             // start date and ignore invoiceDay (a day-of-month concept).
-            $start = self::immutable($startDate);
+            $start = self::immutable(value: $startDate);
             if ($start === null) {
                 return '';
             }
@@ -501,30 +524,32 @@ class RecurringInvoiceGenerator
                 return $start->format('Y-m-d');
             }
 
-            return self::clampDay($start, $invoiceDay)->format('Y-m-d');
+            return self::clampDay(date: $start, day: $invoiceDay)->format('Y-m-d');
         }
 
         if ($frequency === 'weekly') {
             // Weekly advances 7 * interval days from the last period's start;
             // the lastBillingPeriod for weekly is the start date itself, so
             // resolve it from startDate when the key is month-shaped.
-            $weekBase = (preg_match('/^\d{4}-\d{2}-\d{2}$/', $lastBillingPeriod) === 1)
-                ? self::immutable($lastBillingPeriod)
-                : self::immutable($startDate);
+            $weekBase = self::immutable(value: $startDate);
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $lastBillingPeriod) === 1) {
+                $weekBase = self::immutable(value: $lastBillingPeriod);
+            }
+
             if ($weekBase === null) {
                 return '';
             }
 
-            return self::addPeriod($weekBase, 'weekly', $interval)->format('Y-m-d');
+            return self::addPeriod(date: $weekBase, frequency: 'weekly', interval: $interval)->format('Y-m-d');
         }
 
-        $lastStart = self::immutable($lastBillingPeriod.'-01');
+        $lastStart = self::immutable(value: $lastBillingPeriod.'-01');
         if ($lastStart === null) {
             return '';
         }
 
-        $nextPeriod = self::addPeriod($lastStart, $frequency, $interval);
-        return self::clampDay($nextPeriod, $invoiceDay)->format('Y-m-d');
+        $nextPeriod = self::addPeriod(date: $lastStart, frequency: $frequency, interval: $interval);
+        return self::clampDay(date: $nextPeriod, day: $invoiceDay)->format('Y-m-d');
 
     }//end nextRunDate()
 
@@ -591,10 +616,12 @@ class RecurringInvoiceGenerator
      * @param int    $days Days to add (>= 0).
      *
      * @return string The resulting date (Y-m-d).
+     *
+     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
      */
     public static function addDays(string $date, int $days): string
     {
-        $base = self::immutable($date);
+        $base = self::immutable(value: $date);
         if ($base === null) {
             return $date;
         }
@@ -617,8 +644,12 @@ class RecurringInvoiceGenerator
             return null;
         }
 
-        $normalised = (strlen($value) === 7) ? ($value.'-01') : $value;
-        $date       = DateTimeImmutable::createFromFormat('!Y-m-d', $normalised);
+        $normalised = $value;
+        if (strlen($value) === 7) {
+            $normalised = $value.'-01';
+        }
+
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $normalised);
         if ($date === false) {
             return null;
         }
@@ -733,5 +764,4 @@ class RecurringInvoiceGenerator
         return $register;
 
     }//end register()
-
 }//end class

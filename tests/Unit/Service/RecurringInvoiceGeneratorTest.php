@@ -48,8 +48,6 @@ require_once __DIR__.'/InMemoryObjectService.php';
  */
 final class RecurringInvoiceGeneratorTest extends TestCase
 {
-
-
     /**
      * Build a generator wired to an in-memory ObjectService.
      *
@@ -64,7 +62,7 @@ final class RecurringInvoiceGeneratorTest extends TestCase
 
         $appConfig = $this->createStub(IAppConfig::class);
         $appConfig->method('getValueString')->willReturnCallback(
-            static function (string $app, string $key, string $default = ''): string {
+            static function (string $app, string $key, string $default=''): string {
                 return $default;
             }
         );
@@ -77,7 +75,6 @@ final class RecurringInvoiceGeneratorTest extends TestCase
 
     }//end makeGenerator()
 
-
     /**
      * A monthly hosting profile fixture.
      *
@@ -85,7 +82,7 @@ final class RecurringInvoiceGeneratorTest extends TestCase
      *
      * @return array<string,mixed>
      */
-    private function profile(array $overrides = []): array
+    private function profile(array $overrides=[]): array
     {
         return array_merge(
             [
@@ -115,7 +112,6 @@ final class RecurringInvoiceGeneratorTest extends TestCase
 
     }//end profile()
 
-
     /**
      * Token expansion localizes the month name to the document language.
      *
@@ -138,9 +134,8 @@ final class RecurringInvoiceGeneratorTest extends TestCase
 
     }//end testTokenExpansionLocalized()
 
-
     /**
-     * invoiceDay 31 clamps to the last day of short months and does not stick.
+     * The invoiceDay 31 clamps to the last day of short months and does not stick.
      *
      * @return void
      */
@@ -164,7 +159,6 @@ final class RecurringInvoiceGeneratorTest extends TestCase
         );
 
     }//end testNextRunDateClampsAndDoesNotStick()
-
 
     /**
      * Cadence multipliers advance the right number of months / weeks.
@@ -196,7 +190,6 @@ final class RecurringInvoiceGeneratorTest extends TestCase
 
     }//end testNextRunDateCadences()
 
-
     /**
      * A due profile generates one ordinary ARInvoice with provenance fields
      * and standard inclusive BTW, and advances nextRunDate one month.
@@ -208,7 +201,7 @@ final class RecurringInvoiceGeneratorTest extends TestCase
         $os        = new InMemoryObjectService();
         $generator = $this->makeGenerator($os);
 
-        $result = $generator->generateForProfile($this->profile(), '2027-01-05');
+        $result = $generator->generateForProfile($this->profile());
 
         $this->assertTrue($result['created']);
         $this->assertSame('2027-01', $result['billingPeriod']);
@@ -233,9 +226,8 @@ final class RecurringInvoiceGeneratorTest extends TestCase
 
     }//end testDueProfileGeneratesOrdinaryInvoice()
 
-
     /**
-     * auto-issue profiles produce an issued (not draft) invoice.
+     * Auto-issue profiles produce an issued (not draft) invoice.
      *
      * @return void
      */
@@ -245,14 +237,12 @@ final class RecurringInvoiceGeneratorTest extends TestCase
         $generator = $this->makeGenerator($os);
 
         $result = $generator->generateForProfile(
-            $this->profile(['issueMode' => 'auto-issue']),
-            '2027-01-05'
+            $this->profile(['issueMode' => 'auto-issue'])
         );
 
         $this->assertSame('issued', $result['invoice']['lifecycleState']);
 
     }//end testAutoIssueProducesIssuedInvoice()
-
 
     /**
      * Regeneration for the same (profile, period) is a no-op (idempotent).
@@ -265,18 +255,17 @@ final class RecurringInvoiceGeneratorTest extends TestCase
         $generator = $this->makeGenerator($os);
         $profile   = $this->profile();
 
-        $first = $generator->generateForProfile($profile, '2027-01-05');
+        $first = $generator->generateForProfile($profile);
         $this->assertTrue($first['created']);
 
         // Re-run with the ORIGINAL (un-advanced) profile — same billingPeriod
         // key — must find the existing invoice and not create another.
-        $second = $generator->generateForProfile($profile, '2027-01-05');
+        $second = $generator->generateForProfile($profile);
         $this->assertFalse($second['created']);
         $this->assertSame($first['invoice']['id'], $second['invoice']['id']);
         $this->assertCount(1, $os->dump('ARInvoice'));
 
     }//end testRegenerationIsIdempotent()
-
 
     /**
      * A cancelled invoice for the period unblocks regeneration.
@@ -299,15 +288,14 @@ final class RecurringInvoiceGeneratorTest extends TestCase
         );
         $generator = $this->makeGenerator($os);
 
-        $result = $generator->generateForProfile($this->profile(), '2027-01-05');
+        $result = $generator->generateForProfile($this->profile());
         $this->assertTrue($result['created']);
         $this->assertNotSame('inv-cancelled', $result['invoice']['id']);
 
     }//end testCancelledInvoiceUnblocksRegeneration()
 
-
     /**
-     * occurrenceCount ending: the last occurrence ends the profile.
+     * The occurrenceCount ending: the last occurrence ends the profile.
      *
      * @return void
      */
@@ -317,15 +305,13 @@ final class RecurringInvoiceGeneratorTest extends TestCase
         $generator = $this->makeGenerator($os);
 
         $result = $generator->generateForProfile(
-            $this->profile(['remainingOccurrences' => 1]),
-            '2027-01-05'
+            $this->profile(['remainingOccurrences' => 1])
         );
 
         $this->assertSame(0, $result['profile']['remainingOccurrences']);
         $this->assertSame('ended', $result['profile']['status']);
 
     }//end testOccurrenceCountEndsProfile()
-
 
     /**
      * The first due period for a never-generated profile is its start period.
@@ -341,6 +327,4 @@ final class RecurringInvoiceGeneratorTest extends TestCase
         );
 
     }//end testDueBillingPeriodFirstRun()
-
-
 }//end class
