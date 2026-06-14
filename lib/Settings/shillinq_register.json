@@ -832,7 +832,7 @@
 					},
 					"dimensions": {
 						"type": "object",
-						"description": "Free-form key-to-value map for custom analytical dimensions. Each key MUST match a registered custom dimension register declared with x-openregister-purpose: dimension; each value MUST resolve to an existing record code in that register. Validation is declared via OR relations engine per REQ-CC-003.",
+						"description": "Free-form key-to-value map for custom analytical dimensions (AnalyticalDimension.dimensionType=custom). Each key MUST match an AnalyticalDimension.code where dimensionType=custom; each value MUST resolve to an existing record code in that register. Validation is declared via OR relations engine per REQ-CC-003 + REQ-ADIM-101.",
 						"nullable": true,
 						"additionalProperties": {
 							"type": "string"
@@ -877,17 +877,17 @@
 					},
 					"costCenterRelation": {
 						"localField": "costCenterCode",
-						"relatedSchema": "CostCenter",
+						"relatedSchema": "AnalyticalDimension",
 						"relatedField": "code",
 						"cardinality": "many-to-one",
-						"description": "FK to CostCenter.code for dimension-tagged analytical reporting per REQ-CC-003."
+						"description": "FK to AnalyticalDimension.code (dimensionType=cost-center) for dimension-tagged analytical reporting per REQ-CC-003 + REQ-ADIM-101. Field name and stored values unchanged; register re-targeted from the retired CostCenter to the unified AnalyticalDimension."
 					},
 					"kostenDragerRelation": {
 						"localField": "kostenDragerCode",
-						"relatedSchema": "KostenDrager",
+						"relatedSchema": "AnalyticalDimension",
 						"relatedField": "code",
 						"cardinality": "many-to-one",
-						"description": "FK to KostenDrager.code for cost-unit analytical reporting per REQ-CC-003."
+						"description": "FK to AnalyticalDimension.code (dimensionType=cost-object) for cost-unit analytical reporting per REQ-CC-003 + REQ-ADIM-101. Field name and stored values unchanged; register re-targeted from the retired KostenDrager to the unified AnalyticalDimension."
 					},
 					"projectRelation": {
 						"localField": "projectCode",
@@ -916,7 +916,7 @@
 						}
 					},
 					"segmentPnlByCostCenter": {
-						"description": "Segment P&L roll-up keyed by costCenterCode and fiscalYearId. Aggregates debit and credit amounts per cost center, rolling child cost centers up to their parent via the CostCenter self-relation per REQ-CC-005. Consumed by launchpad widgets via runtime GraphQL and by CostCenter detail pages.",
+						"description": "Segment P&L roll-up keyed by costCenterCode and fiscalYearId. Aggregates debit and credit amounts per cost center, rolling child cost centers up to their parent via the AnalyticalDimension(dimensionType=cost-center) self-relation per REQ-CC-005 + REQ-ADIM-101. Consumed by launchpad widgets via runtime GraphQL. Re-targeted from CostCenter to AnalyticalDimension (field name and stored values unchanged).",
 						"filter": {
 							"eliminationFlag": false,
 							"costCenterCode": {
@@ -951,7 +951,7 @@
 						}
 					},
 					"segmentPnlByKostenDrager": {
-						"description": "Segment P&L roll-up keyed by kostenDragerCode and fiscalYearId. Mirrors the cost-center aggregation for the kostendrager dimension per REQ-CC-005.",
+						"description": "Segment P&L roll-up keyed by kostenDragerCode and fiscalYearId. Mirrors the cost-center aggregation for the cost-object dimension per REQ-CC-005 + REQ-ADIM-004. Re-targeted from the retired KostenDrager register to AnalyticalDimension(dimensionType=cost-object). Field name and stored values unchanged.",
 						"filter": {
 							"eliminationFlag": false,
 							"kostenDragerCode": {
@@ -4572,372 +4572,6 @@
 					}
 				}
 			},
-			"CostCenter": {
-				"slug": "CostCenter",
-				"icon": "OfficeBuilding",
-				"version": "0.1.0",
-				"title": "Cost Center",
-				"description": "An analytical cost center (kostenplaats) for tracking, allocating, and analysing departmental or functional expenses. Declared as an OR-managed register per REQ-CC-001 and REQ-CC-002. Hierarchy is navigable via the parentCode self-relation.",
-				"x-schema-org": "schema:Organization",
-				"x-openregister-purpose": "dimension",
-				"type": "object",
-				"required": [
-					"code",
-					"name",
-					"lifecycleState",
-					"administrationId"
-				],
-				"properties": {
-					"code": {
-						"type": "string",
-						"description": "Operator-assigned unique reference within the administration per REQ-CC-002.",
-						"example": "KC-100"
-					},
-					"name": {
-						"type": "string",
-						"description": "Human-readable cost center name.",
-						"example": "Sales"
-					},
-					"description": {
-						"type": "string",
-						"description": "Detailed cost center description and responsibilities per REQ-CD-002.",
-						"nullable": true,
-						"example": "Verantwoordelijk voor administratieve verwerking en interne rapportage"
-					},
-					"status": {
-						"type": "string",
-						"description": "Convenience alias of lifecycleState for active/inactive integrations per REQ-CPA-104.",
-						"enum": [
-							"active",
-							"inactive"
-						],
-						"nullable": true,
-						"example": "active"
-					},
-					"budget": {
-						"type": "number",
-						"description": "Allocated annual or periodic budget amount in EUR per REQ-CD-002. Constrained to two-decimal cents via multipleOf to prevent IEEE-754 drift in variance arithmetic per REQ-RR-004.",
-						"nullable": true,
-						"minimum": 0,
-						"multipleOf": 0.01,
-						"example": 250000.0
-					},
-					"spentToDate": {
-						"type": "integer",
-						"description": "Derived via x-openregister-aggregations: sum of GLLine.amount where costCenterCode = @self.code AND side = 'debit' per REQ-CPA-106. Read-only.",
-						"nullable": true,
-						"readOnly": true,
-						"example": 4500000
-					},
-					"allocatedBudget": {
-						"type": "integer",
-						"description": "Derived via x-openregister-calculations: budget + sum(children.allocatedBudget) recursively per REQ-CPA-107. Read-only.",
-						"nullable": true,
-						"readOnly": true,
-						"example": 15000000
-					},
-					"organizationId": {
-						"type": "string",
-						"description": "FK to the Organization owning this cost center per REQ-CPA-104.",
-						"nullable": true,
-						"example": "org-1"
-					},
-					"parentCode": {
-						"type": "string",
-						"description": "FK to parent CostCenter.code for hierarchy navigation via x-openregister-relations self-relation per REQ-CC-002.",
-						"nullable": true,
-						"example": "KC-000"
-					},
-					"responsibleUser": {
-						"type": "string",
-						"description": "Nextcloud user id of the cost-center owner.",
-						"nullable": true,
-						"example": "jan.manager"
-					},
-					"lifecycleState": {
-						"type": "string",
-						"description": "Current lifecycle state mirroring Account.lifecycleState per REQ-CoA-005 and REQ-CC-002.",
-						"enum": [
-							"active",
-							"blocked",
-							"archived"
-						],
-						"default": "active",
-						"example": "active"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this cost center.",
-						"example": "adm-1"
-					},
-					"ondernemingsActiviteit": {
-						"type": "boolean",
-						"description": "Marks this cost center as an ondernemingsactiviteit per Wet modernisering Vpb-plicht (2016) and bookkeeping-market-government-separation. When true, the cost center may be referenced by a VpbBalansLink (REQ-VPB-002). Default false.",
-						"default": false,
-						"example": false
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "active",
-					"states": {
-						"active": {
-							"label": "Active",
-							"description": "Usable for GL line dimension tagging."
-						},
-						"blocked": {
-							"label": "Blocked",
-							"description": "Readable but rejected as target of new GL line dimension tags."
-						},
-						"archived": {
-							"label": "Archived",
-							"description": "Historical only; no new dimension tags."
-						}
-					},
-					"transitions": {
-						"block": {
-							"from": "active",
-							"to": "blocked",
-							"label": "Block cost center",
-							"description": "Prevent new GL line tagging against this cost center."
-						},
-						"unblock": {
-							"from": "blocked",
-							"to": "active",
-							"label": "Unblock cost center",
-							"description": "Re-enable GL line tagging against this cost center."
-						},
-						"archive": {
-							"from": [
-								"active",
-								"blocked"
-							],
-							"to": "archived",
-							"label": "Archive cost center",
-							"description": "Move to historical archive; GL lines with this code remain queryable."
-						}
-					}
-				},
-				"x-openregister-relations": {
-					"parentCostCenter": {
-						"localField": "parentCode",
-						"relatedSchema": "CostCenter",
-						"relatedField": "code",
-						"cardinality": "many-to-one",
-						"description": "Self-relation enabling hierarchical cost-center navigation per REQ-CC-002."
-					}
-				},
-				"x-openregister-aggregations": {
-					"segmentPnl": {
-						"description": "Segment P&L for this cost center: sum of GLLine amounts whose costCenterCode equals this record's code, including child cost centers rolled up via parentCode. Consumed by the CostCenter detail page per REQ-CC-005.",
-						"join": {
-							"schema": "GLLine",
-							"condition": "GLLine.costCenterCode = @self.code AND GLLine.eliminationFlag = false"
-						},
-						"groupBy": [
-							"GLLine.fiscalYearId",
-							"GLLine.accountNumber"
-						],
-						"operations": {
-							"totalDebit": {
-								"field": "GLLine.amount",
-								"operation": "sum",
-								"condition": "GLLine.side = 'debit'"
-							},
-							"totalCredit": {
-								"field": "GLLine.amount",
-								"operation": "sum",
-								"condition": "GLLine.side = 'credit'"
-							}
-						}
-					},
-					"spentToDate": {
-						"description": "Sum of GL debit postings tagged to this cost center (recursive over descendant cost centers reached via parentCode self-relation) per REQ-CPA-106. Excludes eliminated intercompany lines.",
-						"operation": "sum",
-						"field": "amount",
-						"source": {
-							"register": "@register",
-							"schema": "GLLine"
-						},
-						"filter": {
-							"costCenterCode": "@self.code OR @descendant.code",
-							"side": "debit",
-							"eliminationFlag": false
-						},
-						"recursiveOver": "parentCode"
-					}
-				},
-				"x-openregister-calculations": {
-					"allocatedBudget": {
-						"description": "Roll-up budget per REQ-CPA-107: this cost center's own budget plus the allocatedBudget of every child cost center reached via the parentCode self-relation (recursive descent). Leaves return their own budget; non-leaves return budget + sum(children.allocatedBudget).",
-						"type": "integer",
-						"formula": "(@self.budget ?? 0) + sum(@children(parentCode).allocatedBudget ?? 0)"
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
-			"KostenDrager": {
-				"slug": "KostenDrager",
-				"icon": "CubeOutline",
-				"version": "0.1.0",
-				"title": "Kostendrager",
-				"description": "An analytical cost unit (kostendrager / cost object) for tracking costs per product, service, or cost bearer per Dutch GAAP. Same shape as CostCenter; the distinction is semantic per REQ-CC-002. Hierarchy navigable via parentCode self-relation.",
-				"x-schema-org": "schema:Product",
-				"x-openregister-purpose": "dimension",
-				"type": "object",
-				"required": [
-					"code",
-					"name",
-					"lifecycleState",
-					"administrationId"
-				],
-				"properties": {
-					"code": {
-						"type": "string",
-						"description": "Operator-assigned unique reference within the administration per REQ-CC-002.",
-						"example": "KD-001"
-					},
-					"name": {
-						"type": "string",
-						"description": "Human-readable kostendrager name.",
-						"example": "Product A"
-					},
-					"parentCode": {
-						"type": "string",
-						"description": "FK to parent KostenDrager.code for hierarchy navigation per REQ-CC-002.",
-						"nullable": true,
-						"example": "KD-000"
-					},
-					"responsibleUser": {
-						"type": "string",
-						"description": "Nextcloud user id of the kostendrager owner.",
-						"nullable": true,
-						"example": "lisa.product"
-					},
-					"lifecycleState": {
-						"type": "string",
-						"description": "Current lifecycle state per REQ-CC-002.",
-						"enum": [
-							"active",
-							"blocked",
-							"archived"
-						],
-						"default": "active",
-						"example": "active"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this kostendrager.",
-						"example": "adm-1"
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "active",
-					"states": {
-						"active": {
-							"label": "Active",
-							"description": "Usable for GL line dimension tagging."
-						},
-						"blocked": {
-							"label": "Blocked",
-							"description": "Readable but rejected as target of new GL line tags."
-						},
-						"archived": {
-							"label": "Archived",
-							"description": "Historical only; no new dimension tags."
-						}
-					},
-					"transitions": {
-						"block": {
-							"from": "active",
-							"to": "blocked",
-							"label": "Block kostendrager",
-							"description": "Prevent new GL line tagging against this kostendrager."
-						},
-						"unblock": {
-							"from": "blocked",
-							"to": "active",
-							"label": "Unblock kostendrager",
-							"description": "Re-enable GL line tagging against this kostendrager."
-						},
-						"archive": {
-							"from": [
-								"active",
-								"blocked"
-							],
-							"to": "archived",
-							"label": "Archive kostendrager",
-							"description": "Move to historical archive."
-						}
-					}
-				},
-				"x-openregister-relations": {
-					"parentKostenDrager": {
-						"localField": "parentCode",
-						"relatedSchema": "KostenDrager",
-						"relatedField": "code",
-						"cardinality": "many-to-one",
-						"description": "Self-relation enabling hierarchical kostendrager navigation per REQ-CC-002."
-					}
-				},
-				"x-openregister-aggregations": {
-					"segmentPnl": {
-						"description": "Segment P&L for this kostendrager: sum of GLLine amounts whose kostenDragerCode equals this record's code per REQ-CC-005.",
-						"join": {
-							"schema": "GLLine",
-							"condition": "GLLine.kostenDragerCode = @self.code AND GLLine.eliminationFlag = false"
-						},
-						"groupBy": [
-							"GLLine.fiscalYearId",
-							"GLLine.accountNumber"
-						],
-						"operations": {
-							"totalDebit": {
-								"field": "GLLine.amount",
-								"operation": "sum",
-								"condition": "GLLine.side = 'debit'"
-							},
-							"totalCredit": {
-								"field": "GLLine.amount",
-								"operation": "sum",
-								"condition": "GLLine.side = 'credit'"
-							}
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			},
 			"Project": {
 				"slug": "Project",
 				"icon": "FolderOpenOutline",
@@ -5526,10 +5160,10 @@
 				"x-openregister-relations": {
 					"costCenter": {
 						"localField": "costCenterCode",
-						"relatedSchema": "CostCenter",
+						"relatedSchema": "AnalyticalDimension",
 						"relatedField": "code",
 						"cardinality": "many-to-one",
-						"description": "Association of project to a cost center / department per REQ-CPA-101."
+						"description": "Association of project to a cost-center dimension (AnalyticalDimension.dimensionType=cost-center) per REQ-CPA-101. Re-targeted from the retired CostCenter per REQ-ADIM-101."
 					},
 					"projectBudgets": {
 						"localField": "id",
@@ -7472,7 +7106,7 @@
 							"from": "closing",
 							"to": "closed",
 							"label": "Complete year-end close",
-							"description": "Completes the year-end close. Emits an opening-balance JournalEntry for the next FiscalYear (balance-sheet accounts only; P&L accounts excluded per REQ-YEC-004). Auto-creates next FiscalYear record in state open if absent. Fires CloudEvents per dimension register (CostCenter, KostenDrager, Project) for dimensional rollover; each subscriber carries active dimensions forward and skips archived per REQ-YEC-005. The transition is gated by the closing checklist (REQ-YEC-006) declared in `requirePreconditions`; CFO override via `overrideChecklist: true` is audit-trailed.",
+							"description": "Completes the year-end close. Emits an opening-balance JournalEntry for the next FiscalYear (balance-sheet accounts only; P&L accounts excluded per REQ-YEC-004). Auto-creates next FiscalYear record in state open if absent. Fires CloudEvents per dimension register (AnalyticalDimension, Project) for dimensional rollover; each subscriber carries active dimensions forward and skips archived per REQ-YEC-005. Re-targeted from the retired CostCenter + KostenDrager to the unified AnalyticalDimension per REQ-ADIM-101. The transition is gated by the closing checklist (REQ-YEC-006) declared in `requirePreconditions`; CFO override via `overrideChecklist: true` is audit-trailed.",
 							"requirePreconditions": [
 								{
 									"id": "trial-balance-verified",
@@ -7604,13 +7238,12 @@
 						},
 						"onCloseDimensionRollover": {
 							"trigger": "transition:close",
-							"description": "Fire CloudEvents for dimensional rollover on closing -> closed per REQ-YEC-005. CostCenter, KostenDrager, and Project subscribers carry active dimensions forward; archived dimensions skipped.",
+							"description": "Fire CloudEvents for dimensional rollover on closing -> closed per REQ-YEC-005. AnalyticalDimension (all dimensionTypes: cost-center, cost-object, custom) and Project subscribers carry active dimensions forward; archived dimensions skipped. Re-targeted from the retired CostCenter + KostenDrager registers to the unified AnalyticalDimension per REQ-ADIM-101.",
 							"action": "x-openregister-emit-cloudevents",
 							"actionParameters": {
 								"eventType": "nl.conduction.shillinq.fiscal-year.dimension-rollover",
 								"targets": [
-									"CostCenter",
-									"KostenDrager",
+									"AnalyticalDimension",
 									"Project"
 								],
 								"filter": {
@@ -23685,7 +23318,7 @@
 			"properties": {
 				"costCenterId": {
 					"type": "string",
-					"description": "FK to a CostCenter with ondernemingsActiviteit: true. The ondernemingsactiviteit whose Vpb-pligtige accounts this link declares.",
+					"description": "FK to AnalyticalDimension.code (dimensionType=cost-center) with ondernemingsActiviteit: true. The ondernemingsactiviteit whose Vpb-pligtige accounts this link declares. Re-targeted from the retired CostCenter to the unified AnalyticalDimension per REQ-ADIM-102; stored values unchanged.",
 					"example": "KC-OA-001"
 				},
 				"accountNumbers": {
@@ -23789,10 +23422,10 @@
 			"x-openregister-relations": {
 				"costCenter": {
 					"localField": "costCenterId",
-					"relatedSchema": "CostCenter",
+					"relatedSchema": "AnalyticalDimension",
 					"relatedField": "code",
 					"cardinality": "many-to-one",
-					"description": "FK to the ondernemingsactiviteit cost-center. CostCenter.ondernemingsActiviteit MUST be true per REQ-VPB-002."
+					"description": "FK to the ondernemingsactiviteit cost-center dimension. AnalyticalDimension.dimensionType MUST be cost-center AND AnalyticalDimension.ondernemingsActiviteit MUST be true per REQ-VPB-002 + REQ-ADIM-102. Re-targeted from the retired CostCenter to the unified AnalyticalDimension; stored costCenterId values unchanged."
 				}
 			},
 			"x-openregister-rbac": {
@@ -23860,7 +23493,7 @@
 				"costCenterId": {
 					"type": "string",
 					"nullable": true,
-					"description": "FK to CostCenter from the bookkeeping-cost-centers-dimensions T4-base capability.",
+					"description": "FK to AnalyticalDimension.code (dimensionType=cost-center) from the bookkeeping-cost-centers-dimensions base capability. Re-targeted from the retired CostCenter per REQ-ADIM-102.",
 					"example": "cc-innovatie-2026"
 				},
 				"status": {
