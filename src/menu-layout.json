@@ -106,6 +106,20 @@
 		"Consolidations",
 		"Verplichtingen",
 		"CostProjects",
-		"ProjectenOverzicht"
+		"ProjectenOverzicht",
+		"AllocationRules",
+		"BookkeepingAuditTrail",
+		"BookkeepingChangeHistory",
+		"BookkeepingActivityFeed",
+		"BookkeepingDestructionReport",
+		"BookkeepingComplianceExport",
+		"Bewaartermijnen",
+		"ConfirmationTemplates",
+		"ReminderTemplates",
+		"CancellationTemplates",
+		"CountTemplates",
+		"NotificationTriggers",
+		"NotificationMonitor",
+		"SmsReminderChannels"
 	]
 }
