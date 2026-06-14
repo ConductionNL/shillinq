@@ -48,18 +48,28 @@ by adding `"Projects"` to the `removals` array in `src/menu-layout.json`. The
 `CostProjects` leaf (schema `CostProject`, the distinct analytical
 management-accounting register) MUST NOT be affected.
 
+**IMPLEMENTATION NOTE (2026-06-15):** The retire-cost-project change (merged
+before this change) added `"ProjectenOverzicht"` and `"CostProjects"` to
+`menu-layout.json` removals, which changes the disposition. The `ProjectenOverzicht`
+leaf (People & Projects → Overview) was the intended canonical home per the original
+spec, but it is now removed by retire-cost-project. The `Bookkeeping > Projects`
+leaf is therefore the ONLY remaining nav home for the `Project` schema —
+REQ-NAVIA-002 is satisfied (exactly one home) but the canonical home is
+`Bookkeeping > Projects`, not `Projecten > ProjectenOverzicht` as originally
+specified. Adding `"Projects"` to removals would orphan `Project` entirely
+(zero nav homes). Do NOT add `"Projects"` to removals.
+
 #### Scenario: Only one Project nav entry remains
-- **Given** the `menu-layout.json` `removals` array contains `"Projects"`
-- **When** `applyMenuRelocations` runs after all manifest.d fragments merge
-- **Then** the Bookkeeping `Projects` menu leaf is absent and the only
-  navigation home for the `Project` schema is People & Projects →
-  `ProjectenOverzicht`
+- **Given** the `menu-layout.json` `removals` array contains `"ProjectenOverzicht"` and `"CostProjects"` (added by retire-cost-project)
+- **When** `applyMenuRemovals` runs after all manifest.d fragments merge
+- **Then** the `ProjectenOverzicht` leaf and `CostProjects` leaf are absent and
+  the only navigation home for the `Project` schema is `Bookkeeping > Projects`
 
 #### Scenario: CostProjects is untouched
-- **Given** the `Projects` removal is applied
+- **Given** the `Projects` removal is NOT applied (ProjectenOverzicht is removed instead)
 - **When** the Bookkeeping menu renders
-- **Then** the `CostProjects` leaf (schema `CostProject`) is still present and
-  unchanged
+- **Then** the `CostProjects` leaf (schema `CostProject`) is absent (removed via
+  retire-cost-project) and `Bookkeeping > Projects` (schema `Project`) remains
 
 ### Requirement: REQ-NAVIA-003 — The system SHALL keep the `Projects` page routable for deep links after its menu entry is removed
 
