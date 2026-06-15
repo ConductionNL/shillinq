@@ -16,6 +16,8 @@ Lease accounting covers the recognition of Right-of-Use (RoU) assets and lease l
 
 ### REQ-LA-001: When a lease transitions to `active`, the system SHALL generate the opening RoU asset and lease liability
 
+The system SHALL satisfy this requirement: When a lease transitions to `active`, the system SHALL generate the opening RoU asset and lease liability.
+
 At the moment a `lease-contract` transitions from `draft` to `active`:
 
 1. **Compute present value of unavoidable payments**: using the lease's IBR and the payment schedule (frequency, base amount, indexation, extension-options marked "reasonably certain"), compute the PV of all future contractual payments
@@ -81,6 +83,8 @@ The schedule is generated and stored when a lease transitions to `active`. It is
 
 ### REQ-LA-003: Periodic month-end posting SHALL generate GL lines for interest, principal payment, and depreciation
 
+The system SHALL satisfy this requirement: Periodic month-end posting SHALL generate GL lines for interest, principal payment, and depreciation.
+
 At the end of each fiscal period (monthly, quarterly, as configured), the system:
 
 1. Identifies all active leases with a payment due in that period
@@ -108,6 +112,8 @@ The journal entries are batched and routed through an approval gate (optional or
 
 ### REQ-LA-004: The system SHALL track payment currency and FX rates for non-functional-currency leases
 
+The system SHALL satisfy this requirement: The system SHALL track payment currency and FX rates for non-functional-currency leases.
+
 If a lease's `payment-currency` differs from the company's functional currency (e.g., a EUR company paying a USD lease), the `lease-payment-schedule` must carry:
 
 - `payment-currency` (e.g., USD)
@@ -130,6 +136,8 @@ If a lease's `payment-currency` differs from the company's functional currency (
 
 ### REQ-LA-005: Restoration obligations SHALL be included in the opening RoU asset and recognized as a non-current liability
 
+The system SHALL satisfy this requirement: Restoration obligations SHALL be included in the opening RoU asset and recognized as a non-current liability.
+
 If a lease specifies a restoration obligation (e.g., return the building to original condition, estimated cost EUR 75,000, discount rate 4.5%), the opening RoU asset includes:
 
 - PV of restoration obligation = estimated-cost / (1 + discount-rate)^months
@@ -148,6 +156,8 @@ The restoration obligation is posted to a separate GL account (subtype=`lease-re
     - Cr. Lease restoration obligation 59,100
 
 ### REQ-LA-006: Prepaid or accrued rent SHALL be factored into the opening RoU asset balance
+
+The system SHALL satisfy this requirement: Prepaid or accrued rent SHALL be factored into the opening RoU asset balance.
 
 If a lease has prepaid rent (e.g., the lessor required 3 months' rent upfront) or accrued rent (e.g., rent is payable in arrears but there's a timing difference), the opening RoU asset adjusts:
 

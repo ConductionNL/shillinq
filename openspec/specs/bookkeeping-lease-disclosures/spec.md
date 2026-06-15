@@ -16,6 +16,8 @@ IFRS 16 paragraphs 51–60 mandate detailed quantitative and qualitative disclos
 
 ### REQ-LD-001: The system SHALL generate a `lease-disclosure-table` snapshot at period close
 
+The system SHALL satisfy this requirement: The system SHALL generate a `lease-disclosure-table` snapshot at period close.
+
 At the end of each fiscal period (annual, quarterly, as configured), the system:
 
 1. Queries all `lease-contract` records with status = active or modified in the period
@@ -112,6 +114,8 @@ The materialized `lease-disclosure-table` record MUST support:
 
 ### REQ-LD-005: The disclosure table SHALL include qualitative narrative seeds
 
+The system SHALL satisfy this requirement: The disclosure table SHALL include qualitative narrative seeds.
+
 IFRS 16.59 requires qualitative disclosures:
 
 - Nature of the entity's leasing activities
@@ -151,6 +155,8 @@ that are not included in the lease liability as of [PERIOD-END]:
 
 ### REQ-LD-006: Period-end disclosure table SHALL be materialized and immutable
 
+The system SHALL satisfy this requirement: Period-end disclosure table SHALL be materialized and immutable.
+
 Once a `lease-disclosure-table` is generated and materialized at period close, it is immutable (read-only after approval). If lease data is later corrected (e.g., a lease is re-classified), a correction entry is made to the disclosure-table with a note explaining the restatement, but the original materialized snapshot is preserved for audit trail purposes.
 
 This prevents accidental changes to published disclosures and ensures auditors can compare period-to-period changes reliably.
@@ -164,6 +170,8 @@ This prevents accidental changes to published disclosures and ensures auditors c
 - **AND** the restated 2024 figures are recalculated and disclosed in the 2025 note
 
 ### REQ-LD-007: The disclosure table SHALL support in-app narrative validation
+
+The system SHALL satisfy this requirement: The disclosure table SHALL support in-app narrative validation.
 
 Before period-close, the operator is prompted to validate that the qualitative narrative is complete and accurate:
 

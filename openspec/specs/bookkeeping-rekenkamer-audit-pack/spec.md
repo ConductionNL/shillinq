@@ -16,6 +16,8 @@ This specification defines the requirements for bookkeeping rekenkamer audit pac
 
 ### REQ-RAP-001: Every financial and procurement register SHALL declare `x-openregister-audit: true` to enable OR's audit-trail-immutable abstraction
 
+The system SHALL satisfy this requirement: Every financial and procurement register SHALL declare `x-openregister-audit: true` to enable OR's audit-trail-immutable abstraction.
+
 Every register declared by T1 (`Account`, `GLTransaction`, `GLLine`, `JournalEntry`),
 T2 (`APInvoice`, `ARInvoice`, `PurchaseOrder`, `Tender`, `Bid`), and T3
 (`Payment`, `Receipt`, `ApprovalRequest`) MUST carry `x-openregister-audit: true`
@@ -133,6 +135,8 @@ transitions) for bookkeeping objects. The UI MUST display:
 
 ### REQ-RAP-005: Shillinq SHALL expose a Compliance Export API for external auditors
 
+The system SHALL satisfy this requirement: Shillinq SHALL expose a Compliance Export API for external auditors.
+
 `GET /index.php/apps/shillinq/api/audit/export` with query parameters
 `from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|xlsx|json&scope=all|subject-id`
 MUST query the OR audit trail, filter out PII fields, and render an export file.
@@ -244,6 +248,8 @@ objects they have read access to.
 
 ### REQ-RAP-008: Destruction schedule lifecycle transitions SHALL be audited and certified
 
+The system SHALL satisfy this requirement: Destruction schedule lifecycle transitions SHALL be audited and certified.
+
 Records eligible for destruction (per Archiefwet, >7 years) follow a state machine:
 
 ```
@@ -279,6 +285,8 @@ the approval creates the destruction order which is itself an audited transition
 
 ### REQ-RAP-009: GDPR/AVG subject access requests SHALL be supported with PII-excluded audit export
 
+The system SHALL satisfy this requirement: GDPR/AVG subject access requests SHALL be supported with PII-excluded audit export.
+
 When a data subject (employee, contractor, vendor) requests their personal data
 (article 15 GDPR), the system MUST export audit events where they are the actor
 or the subject, excluding direct PII fields (see REQ-RAP-005 exclusion list).
@@ -302,6 +310,8 @@ accountability per article 5(1)(a) "transparency").
   for any records linked to that vendor, with timestamp + actor + legal basis.
 
 ### REQ-RAP-010: App-local audit tables, services, and loggers SHALL be explicitly forbidden
+
+The system SHALL satisfy this requirement: App-local audit tables, services, and loggers SHALL be explicitly forbidden.
 
 Per ADR-022 anti-pattern enumeration, the following patterns are REVIEW-BLOCKING:
 

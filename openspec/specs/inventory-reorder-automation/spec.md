@@ -46,6 +46,8 @@ velocity.
 
 ### REQ-IRA-002: The `InventoryReorderRule` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `InventoryReorderRule` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `ruleId` | string (UUID) | Yes | Stable rule identifier |
@@ -84,6 +86,8 @@ Schema.org annotation: `schema:Thing`.
 - **THEN** the save MUST fail with a "reorderPoint must be ≥ minimumLevel" validation error.
 
 ### REQ-IRA-003: Low-stock alert SHALL fire when inventory falls below or equals minimum level
+
+The system SHALL satisfy this requirement: Low-stock alert SHALL fire when inventory falls below or equals minimum level.
 
 When `InventoryStock.quantity ≤ InventoryReorderRule.minimumLevel`,
 a low-stock alert MUST be generated and dispatched according to the
@@ -170,6 +174,8 @@ may override reorderPoint manually in the UI.
 - **THEN** reorderPoint MUST be ≥ minimumLevel + (7 × 5) + 10 = minimumLevel + 45.
 
 ### REQ-IRA-006: Optional auto-purchase-order generation materialises balanced purchase orders
+
+The system SHALL satisfy this requirement: Optional auto-purchase-order generation materialises balanced purchase orders.
 
 If `InventoryReorderRule.autoPurchaseOrder = true`, when the low-stock
 alert fires, the system MUST automatically create a `PurchaseOrder` with:

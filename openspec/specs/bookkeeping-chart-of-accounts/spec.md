@@ -107,6 +107,8 @@ OpenRegister's relation engine; no app-local join code.
 
 ### REQ-CoA-004: The `Account` schema SHALL declare a canonical Schema.org annotation
 
+The system SHALL ensure the `Account` schema declares a canonical Schema.org annotation.
+
 For interoperability with shared catalogues and the MCP discovery
 endpoint, the schema MUST carry a Schema.org type annotation (per
 shillinq config.yaml `rules.specs`). The canonical mapping is
@@ -264,6 +266,8 @@ purpose" convention).
   by REQ-CoA-005.
 
 ### REQ-CoA-009: Each administration SHALL designate exactly one account as the closing account
+
+The system SHALL ensure each administration designates exactly one account as the closing account.
 
 The `isClosingAccount` boolean field MAY be true on at most one
 `Account` record per administration (uniqueness constraint scoped to

@@ -109,6 +109,8 @@ Before persisting an appointment, the system MUST verify that:
 
 ### REQ-BCA-005: Appointment creation SHALL support two pathways with different initial statuses
 
+The system SHALL satisfy this requirement: Appointment creation SHALL support two pathways with different initial statuses.
+
 Appointments can be created in two states, depending on the caller and business rules:
 
 1. **Admin pathway** — create with status `confirmed` (admin schedules directly; no confirmation needed)

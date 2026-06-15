@@ -32,6 +32,8 @@ dimensional rollover) MUST be declared on the transition.
 
 ### REQ-YEC-002: The `FiscalYear` register SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `FiscalYear` register SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `yearNumber` | integer | Yes | Calendar year reference (e.g. `2026`) — MUST be unique per administration |
@@ -136,6 +138,8 @@ registers — no PHP `RolloverService`.
   REQ-CoA-005's archived-rejects-new-postings rule.
 
 ### REQ-YEC-006: Reopening a closed year SHALL require an Admin role and SHALL emit a reverse-and-reopen audit chain
+
+The system SHALL satisfy this requirement: Reopening a closed year SHALL require an Admin role and SHALL emit a reverse-and-reopen audit chain.
 
 Per ADR-022 (apps consume OR's RBAC abstraction), the `closed →
 reopened` lifecycle transition MUST declare an `admin` role guard

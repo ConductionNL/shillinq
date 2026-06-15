@@ -16,6 +16,8 @@ This specification defines the requirements for bookkeeping waterschappen bbv va
 
 ### REQ-WSB-001: The system SHALL support a `bbvVariant: 'waterschap'` overlay on the existing BBV-compliance register
 
+The system SHALL satisfy this requirement: The system SHALL support a `bbvVariant: 'waterschap'` overlay on the existing BBV-compliance register.
+
 The `Account`, `BBVProgramma`, and any other schemas declared by the
 T3 `bookkeeping-bbv-compliance` spec MUST gain an optional
 `bbvVariant` field (enum `gemeente | waterschap | provincie`,
@@ -41,6 +43,8 @@ regulatory framework. Variants MUST be schema overlays per ADR-031
 - **THEN** the save MUST fail with an enum-violation error.
 
 ### REQ-WSB-002: The system SHALL declare the BBVW programma-indeling per `kostentoedeling` rather than per `taakveld`
+
+The system SHALL satisfy this requirement: The system SHALL declare the BBVW programma-indeling per `kostentoedeling` rather than per `taakveld`.
 
 BBVW groups postings by `kostentoedeling` (the BBVW handleiding's
 canonical cost-attribution buckets — watersysteembeheer,
@@ -82,6 +86,8 @@ repair-step re-run per the T1 pattern (REQ-CoA-007).
 
 ### REQ-WSB-004: The system SHALL declare a `WaterschapHeffingPosting` register for the three sector-specific belastingen
 
+The system SHALL satisfy this requirement: The system SHALL declare a `WaterschapHeffingPosting` register for the three sector-specific belastingen.
+
 Waterschapsbelastingen consist of three distinct heffingen:
 `watersysteemheffing`, `zuiveringsheffing`, and
 `verontreinigingsheffing`. Each MUST be expressible as a posting
@@ -107,6 +113,8 @@ REQ-GL-001.
   `sourceReference`.
 
 ### REQ-WSB-005: The system SHALL apply the BBVW-specific EMU-saldo exclusion rules in the EMU computation
+
+The system SHALL satisfy this requirement: The system SHALL apply the BBVW-specific EMU-saldo exclusion rules in the EMU computation.
 
 Per the EMU-bijlage waterschappen handleiding, certain heffingen
 and reserveringen are **excluded** from the waterschap EMU-saldo

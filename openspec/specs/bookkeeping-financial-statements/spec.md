@@ -55,6 +55,8 @@ T4's e-transmission capability will populate via additional calculations.
 
 ### REQ-FS-002: The `BalanceSheet` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `BalanceSheet` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `reportDate` | datetime | Yes | Snapshot date of the balance sheet (typically fiscal-year-end) |
@@ -111,6 +113,8 @@ action on fiscal-year close.
   (except audit-related metadata).
 
 ### REQ-FS-004: Balance-sheet composition SHALL be a declarative aggregation grouping GL entries by account type
+
+The system SHALL satisfy this requirement: Balance-sheet composition SHALL be a declarative aggregation grouping GL entries by account type.
 
 When a `BalanceSheet` transitions from `draft` to `final`, the aggregation
 MUST compute:
@@ -229,6 +233,8 @@ or per ADR-031 exception via single-method `OCA\Shillinq\Consolidation\Consolida
 
 ### REQ-FS-007: Financial-statement publication workflow SHALL consume OR's publication extension; no shillinq publisher service
 
+The system SHALL satisfy this requirement: Financial-statement publication workflow SHALL consume OR's publication extension; no shillinq publisher service.
+
 When a `BalanceSheet`, `TrialBalance`, or `ConsolidatedReport` transitions from
 `final` to `published`, the publication workflow runs via OR's publication
 extension (per ADR-022) or per ADR-031 exception via single-method `ConsolidationGuard`.
@@ -260,6 +266,8 @@ No PHP publisher service in shillinq; symmetric to AP/AR pattern.
   immutable thereafter.
 
 ### REQ-FS-008: Manifest navigation SHALL declare 4 entries: Balance Sheet, Trial Balance, Consolidations, Consolidated Report
+
+The system SHALL satisfy this requirement: Manifest navigation SHALL declare 4 entries: Balance Sheet, Trial Balance, Consolidations, Consolidated Report.
 
 Add to `src/manifest.json` four navigation menu entries with their corresponding
 `type: index` and `type: detail` pages:

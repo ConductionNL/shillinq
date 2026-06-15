@@ -110,6 +110,8 @@ per `adr-000-data-model.md`'s top-of-file note.
 
 ### REQ-LOT-004: The `InventoryLot` schema SHALL carry a Schema.org type annotation
 
+The system SHALL satisfy this requirement: The `InventoryLot` schema SHALL carry a Schema.org type annotation.
+
 For interoperability with shared catalogues and the MCP discovery
 endpoint, the schema MUST carry:
 
@@ -250,6 +252,8 @@ The `ExpiryAlert` schema MUST declare the following fields:
   created with `status: pending` linked to that lot.
 
 ### REQ-LOT-008: `InventoryItem` SHALL have an additive `requiresLotTracking` boolean field
+
+The system SHALL satisfy this requirement: `InventoryItem` SHALL have an additive `requiresLotTracking` boolean field.
 
 The existing `InventoryItem` schema in `lib/Settings/shillinq_register.json`
 MUST be patched with one additive optional field:

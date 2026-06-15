@@ -97,6 +97,8 @@ canonical four-column shape: opening Dr / opening Cr / movement Dr
 
 ### REQ-TB-003: The trial balance output SHALL satisfy the debit-credit balance invariant as a schema-declared assertion
 
+The system SHALL satisfy this requirement: The trial balance output SHALL satisfy the debit-credit balance invariant as a schema-declared assertion.
+
 The sum of all `closing.debit` across all accounts in the requested
 period MUST equal the sum of all `closing.credit`. This invariant
 MUST be declared as a schema invariant on the aggregation output
@@ -197,6 +199,8 @@ MUST default to the currently-open `FiscalPeriod` from the
 - **THEN** the page MUST default to `period=2026-Q2`.
 
 ### REQ-TB-006: The trial balance SHALL support multi-period comparison via repeated aggregation calls, not a separate report-builder
+
+The system SHALL satisfy this requirement: The trial balance SHALL support multi-period comparison via repeated aggregation calls, not a separate report-builder.
 
 When a consumer requests N periods of comparative trial balance
 data, the renderer MUST issue N independent aggregation calls (or

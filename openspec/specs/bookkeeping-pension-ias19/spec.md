@@ -124,6 +124,8 @@ and MUST NEVER be reclassified to P&L in future periods per IAS 19 §122.
 
 ### Requirement: REQ-PEN-005 Asset ceiling per IFRIC 14 on net pension asset
 
+The system SHALL satisfy this requirement: REQ-PEN-005 Asset ceiling per IFRIC 14 on net pension asset.
+
 If the actuarial valuation results in a net pension **asset** (plan assets
 > DBO), the system MUST apply the asset ceiling per IFRIC 14 §5–7: the
 net asset is limited to the present value of future contribution reductions
@@ -261,6 +263,8 @@ WITHOUT any DBO measurement, PUC calculation, or sensitivity analysis.
 - **AND** the system BLOCKS any attempt to enter DBO or methodology fields for DC plans (enum enforcement on `planType`)
 
 ### Requirement: REQ-PEN-009 Past service cost direct P&L on plan amendment date
+
+The system SHALL satisfy this requirement: REQ-PEN-009 Past service cost direct P&L on plan amendment date.
 
 When a plan amendment (regelingwijziging) occurs with material effect on
 DBO (e.g., raising retirement age), the past service cost MUST be posted

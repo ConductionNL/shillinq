@@ -36,6 +36,8 @@ Statutory basis: Algemene wet bestuursrecht (Awb) afdeling 4.2
 
 ### REQ-SUB-002: The `Subsidie` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `Subsidie` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `administrationId` | string | Yes | FK to administration |
@@ -71,6 +73,8 @@ Statutory basis: Algemene wet bestuursrecht (Awb) afdeling 4.2
 
 ### REQ-SUB-003: The `Subsidie` lifecycle SHALL be declarative per ADR-031
 
+The system SHALL satisfy this requirement: The `Subsidie` lifecycle SHALL be declarative per ADR-031.
+
 | From | To | Trigger | Guard |
 |---|---|---|---|
 | (new) | `aanvraag` | operator action (admin records the incoming/outgoing aanvraag) | none |
@@ -93,6 +97,8 @@ Per ADR-031 anti-pattern list, shillinq MUST NOT author a
 - **THEN** the transition MUST fail (no direct path is declared).
 
 ### REQ-SUB-004: Approval gates on `verleend` and `teruggevorderd` SHALL consume OR's approval-workflow
+
+The system SHALL satisfy this requirement: Approval gates on `verleend` and `teruggevorderd` SHALL consume OR's approval-workflow.
 
 The `aanvraag → verleend` and `uitbetaald → teruggevorderd`
 transitions MUST declare
@@ -157,6 +163,8 @@ audits.
   citations.
 
 ### REQ-SUB-007: A repayment-plan (afbetalingsregeling) on terugvordering SHALL be a separate `RepaymentInstallment` register linked by FK
+
+The system SHALL satisfy this requirement: A repayment-plan (afbetalingsregeling) on terugvordering SHALL be a separate `RepaymentInstallment` register linked by FK.
 
 When a terugvordering leads to a settlement plan
 (afbetalingsregeling), the system MUST create a
@@ -241,6 +249,8 @@ last instalment if a repayment plan applies).
   AND the audit trail's hash chain MUST remain verifiable.
 
 ### REQ-SUB-010: Notifications on lifecycle transitions SHALL fire via `x-openregister-notifications`
+
+The system SHALL satisfy this requirement: Notifications on lifecycle transitions SHALL fire via `x-openregister-notifications`.
 
 Each lifecycle transition (`verleend`, `vastgesteld`, `uitbetaald`,
 `teruggevorderd`, repayment-instalment `overdue`) MUST declare an

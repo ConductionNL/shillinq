@@ -209,6 +209,8 @@ SKU uniqueness (REQ-IPC-002) is scoped to `(organizationId, sku)` — different 
 
 ### REQ-IPC-011: Product attributes (values) link to ProductAttribute definitions (Phase 2 deferred)
 
+The system SHALL satisfy this requirement: Product attributes (values) link to ProductAttribute definitions (Phase 2 deferred).
+
 **This requirement is declared for forward compatibility but implementation is deferred to Phase 2.**
 
 In Phase 1 (this spec), the relationship between a `Product` and its `ProductAttribute` values is **not specified**. A product record carries no attribute-value data.

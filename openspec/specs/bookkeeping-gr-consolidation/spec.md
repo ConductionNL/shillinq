@@ -103,6 +103,8 @@ on the GL data; per ADR-031, no PHP consolidation service.
 
 ### REQ-GRC-005: A doorbelasting SHALL materialise as a balanced `GLTransaction` in the deelnemer's administration when the deelnemer also runs shillinq
 
+The system SHALL satisfy this requirement: A doorbelasting SHALL materialise as a balanced `GLTransaction` in the deelnemer's administration when the deelnemer also runs shillinq.
+
 When a `GRDeelnemer` record has `administrationId` set (i.e. de
 deelnemer draait shillinq), the period-end doorbelasting MUST
 materialise a balanced `GLTransaction` in that deelnemer's

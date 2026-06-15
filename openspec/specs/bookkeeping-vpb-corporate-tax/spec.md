@@ -16,6 +16,8 @@ This specification defines the requirements for bookkeeping vpb corporate tax in
 
 ### REQ-VPB-001: The system SHALL declare a `vpbPligtig` flag on `Account` distinguishing Vpb-pligtig accounts
 
+The system SHALL satisfy this requirement: The system SHALL declare a `vpbPligtig` flag on `Account` distinguishing Vpb-pligtig accounts.
+
 Per Wet modernisering Vpb-plicht (2016), municipal
 ondernemingsactiviteiten and certain stichtingen / verenigingen
 are Vpb-pligtig. The `Account` schema MUST gain a

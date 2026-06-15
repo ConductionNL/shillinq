@@ -13,6 +13,8 @@ This specification defines the requirements for bookkeeping cost centers dimensi
 
 ### REQ-CC-001: The system SHALL store analytical dimensions as OpenRegister-managed registers declared in the app manifest
 
+The system SHALL satisfy this requirement: The system SHALL store analytical dimensions as OpenRegister-managed registers declared in the app manifest.
+
 Cost centers, kostendragers (cost units), projects, and any custom
 analytical dimension MUST be declared as registers in
 `lib/Settings/shillinq_register.json` and surfaced through
@@ -42,6 +44,8 @@ than write a parallel dimension table).
   dimensions, with no shillinq PHP edits.
 
 ### REQ-CC-002: The `CostCenter` schema SHALL declare a fixed minimum field set with hierarchy
+
+The system SHALL satisfy this requirement: The `CostCenter` schema SHALL declare a fixed minimum field set with hierarchy.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -99,6 +103,8 @@ written in PHP.
 
 ### REQ-CC-004: Cost allocation rules SHALL be declared as schema metadata per ADR-031, not authored as service classes
 
+The system SHALL satisfy this requirement: Cost allocation rules SHALL be declared as schema metadata per ADR-031, not authored as service classes.
+
 A cost-allocation rule (e.g. "spread overhead 1000-1099 across
 KC-100/KC-200/KC-300 by 50/30/20") MUST be declared as an
 `AllocationRule` register record. The schema MUST capture:
@@ -149,6 +155,8 @@ ADR-031). No PHP `AllocationService.allocate()` ever runs the rule.
   transaction balanced.
 
 ### REQ-CC-005: The system SHALL expose a segment P&L derived from dimension-tagged GL lines via `x-openregister-aggregations`
+
+The system SHALL satisfy this requirement: The system SHALL expose a segment P&L derived from dimension-tagged GL lines via `x-openregister-aggregations`.
 
 Per ADR-031, segment P&L (P&L broken down by cost-center / project
 / custom dimension) MUST be declared as an

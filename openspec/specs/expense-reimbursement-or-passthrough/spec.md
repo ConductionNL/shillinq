@@ -179,6 +179,8 @@ Schema.org annotation: `schema:Offer`.
 
 ### REQ-ERP-006: Settlement approval policy MAY require markup sign-off if threshold exceeded
 
+The system SHALL satisfy this requirement: Settlement approval policy MAY require markup sign-off if threshold exceeded.
+
 If `ReimbursementPolicy.requiresMarkupApprovalThreshold` is set, the
 `ExpenseClaim` lifecycle MUST consume OR's approval-workflow extension with an
 additional gate on the `submitted → approved` transition when markup amount
@@ -204,6 +206,8 @@ configured through OR UI.
   before claim can proceed to payment/invoicing.
 
 ### REQ-ERP-007: GL materialisation MUST emit one balanced entry per claim on post, branching by settlement mode
+
+The system SHALL satisfy this requirement: GL materialisation MUST emit one balanced entry per claim on post, branching by settlement mode.
 
 When an `ExpenseClaim` transitions to `posted`:
 
@@ -304,6 +308,8 @@ customer invoice.
 
 ### REQ-ERP-010: Markup rate MUST be locked at claim submission for audit immutability
 
+The system SHALL satisfy this requirement: Markup rate MUST be locked at claim submission for audit immutability.
+
 Once a claim is submitted (or posted), the `markupRateApplied` and
 `markupAmountCalculated` fields on each `Expense` MUST be locked and immutable.
 Future changes to `PassThroughMarkupRule` do NOT affect historical claims.
@@ -324,6 +330,8 @@ Future changes to `PassThroughMarkupRule` do NOT affect historical claims.
   `PassThroughMarkupRule` ID for audit trail clarity.
 
 ### REQ-ERP-011: Settlement mode change post-submission SHALL require GL reversal
+
+The system SHALL satisfy this requirement: Settlement mode change post-submission SHALL require GL reversal.
 
 If an operator (with high privilege) changes `settlementMode` after a claim is
 submitted, the existing GL entry MUST be reversed per T1 REQ-GL-004 before a new

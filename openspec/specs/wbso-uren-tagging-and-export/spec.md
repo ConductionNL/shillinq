@@ -53,6 +53,8 @@ schema.
 
 ### REQ-WBSO-002: The `WBSOTag` schema SHALL declare the official WBSO project codes
 
+The system SHALL satisfy this requirement: The `WBSOTag` schema SHALL declare the official WBSO project codes.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `wbsoCode` | string (enum) | Yes | Official WBSO code: SO, TWO, SMART, or custom per WBSO legislation |
@@ -77,6 +79,8 @@ Schema.org annotation: `schema:DefinedTerm`.
 - **THEN** validation MUST pass (not hardcoded enumeration).
 
 ### REQ-WBSO-003: The `WBSOActivityCode` schema SHALL declare allowed and restricted activity categories per RVO rules
+
+The system SHALL satisfy this requirement: The `WBSOActivityCode` schema SHALL declare allowed and restricted activity categories per RVO rules.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -146,6 +150,8 @@ ELSE
   required"); the operator MUST select an activity code to proceed.
 
 ### REQ-WBSO-005: The `WBSOExportLog` schema SHALL track all export operations and their RVO validation status
+
+The system SHALL satisfy this requirement: The `WBSOExportLog` schema SHALL track all export operations and their RVO validation status.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|

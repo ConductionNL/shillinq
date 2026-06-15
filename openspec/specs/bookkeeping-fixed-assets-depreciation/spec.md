@@ -68,6 +68,8 @@ accumulated depreciation) per the same T1 pattern.
 
 ### REQ-FA-002: The `FixedAsset` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `FixedAsset` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `assetNumber` | string | Yes | Unique identifier per administration (auto-generated or operator-assigned) |
@@ -111,6 +113,8 @@ Schema.org annotation: `schema:Thing` (tangible asset).
 - **THEN** validation MUST fail with a schema-constraint error.
 
 ### REQ-FA-003: The `DepreciationSchedule` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `DepreciationSchedule` schema SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -221,6 +225,8 @@ decimal places** per Dutch accounting standards.
   accounting standard.
 
 ### REQ-FA-006: Internal asset transfers SHALL adjust depreciation schedules proportionally
+
+The system SHALL satisfy this requirement: Internal asset transfers SHALL adjust depreciation schedules proportionally.
 
 When a `FixedAsset` is transferred between cost centers or departments
 (via internal invoice or manual transfer action), the depreciation

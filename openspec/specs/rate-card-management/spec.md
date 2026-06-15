@@ -49,6 +49,8 @@ declarative aggregation per REQ-RATE-005.
 
 ### REQ-RATE-002: The `RateCardTemplate` schema SHALL declare a minimum field set
 
+The system SHALL satisfy this requirement: The `RateCardTemplate` schema SHALL declare a minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `templateId` | string | Yes | Unique rate-card template identifier |
@@ -69,6 +71,8 @@ Schema.org annotation: `schema:Thing`.
 - **THEN** validation MUST pass.
 
 ### REQ-RATE-003: The `RateCardVersion` schema SHALL declare a minimum field set with effective-date window
+
+The system SHALL satisfy this requirement: The `RateCardVersion` schema SHALL declare a minimum field set with effective-date window.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -96,6 +100,8 @@ Schema.org annotation: `schema:Thing`.
 - **THEN** V1 SHALL still be applicable; lookup must succeed.
 
 ### REQ-RATE-004: The `RateSchedule` schema SHALL declare tier-specific rates with effective-date lifecycle
+
+The system SHALL satisfy this requirement: The `RateSchedule` schema SHALL declare tier-specific rates with effective-date lifecycle.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|

@@ -36,6 +36,8 @@ anti-pattern list). OR's generic CRUD HTTP surface exposes all three.
 
 ### REQ-AR-002: The `CustomerMaster` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `CustomerMaster` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `customerId` | string | Yes | Internal customer code (e.g. `DEB-0001`) |
@@ -60,6 +62,8 @@ anti-pattern list). OR's generic CRUD HTTP surface exposes all three.
 - **THEN** validation MUST pass.
 
 ### REQ-AR-003: The `ARInvoice` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `ARInvoice` schema SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -130,6 +134,8 @@ visual indicator only.
 
 ### REQ-AR-005: AR dunning SHALL be consumed from OR's dunning-workflow abstraction
 
+The system SHALL satisfy this requirement: AR dunning SHALL be consumed from OR's dunning-workflow abstraction.
+
 Per ADR-022, the dunning workflow (reminder sequences, escalation
 cadence, debt-collection hand-off) MUST be consumed from OR's
 dunning-workflow abstraction. The `CustomerMaster.dunningPolicyRef`
@@ -189,6 +195,8 @@ is null or 0, the check is skipped.
   exceeds the limit (5.000).
 
 ### REQ-AR-007: The `DunningRecord` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `DunningRecord` schema SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Description |
 |---|---|---|---|

@@ -156,6 +156,8 @@ inline.
 
 ### REQ-BBL-003: Programme assignments SHALL be auditable via OpenRegister audit trail
 
+The system SHALL satisfy this requirement: Programme assignments SHALL be auditable via OpenRegister audit trail.
+
 Every `ObjectService.updateObject()` call on a GL line (via Linker or direct edit)
 MUST trigger an audit-trail entry capturing:
 

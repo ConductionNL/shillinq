@@ -16,6 +16,8 @@ This specification defines the requirements for bookkeeping bank connectors in t
 
 ### REQ-BC-001: PSD2 AIS aggregator integrations SHALL be consumed from openconnector per ADR-022
 
+The system SHALL satisfy this requirement: PSD2 AIS aggregator integrations SHALL be consumed from openconnector per ADR-022.
+
 PSD2 Account Information Service (AIS) connectivity to licensed EU aggregators
 (Tink, Klarna Kosma, Plaid-EU, Yapily, etc.) MUST be consumed from openconnector
 as configured `Source` records — shillinq MUST NOT embed an aggregator HTTP
@@ -72,6 +74,8 @@ the consent reference only, which is non-credential metadata.
 
 ### REQ-BC-003: Aggregator credentials and shillinq-level connector settings SHALL live in Nextcloud AppConfig, not in a shillinq table
 
+The system SHALL satisfy this requirement: Aggregator credentials and shillinq-level connector settings SHALL live in Nextcloud AppConfig, not in a shillinq table.
+
 The shillinq-level configuration for bank connectors (e.g. "default aggregator
 for new administrations", "notification recipient for consent renewals") MUST
 be stored in Nextcloud's `IAppConfig` via the existing shillinq
@@ -108,6 +112,8 @@ records in shillinq. The workflow SHALL NOT live in a `BankPollingJob extends Ti
 
 ### REQ-BC-005: Bank connection lifecycle SHALL implement a five-state machine with declarative time-based expiry warning
 
+The system SHALL satisfy this requirement: Bank connection lifecycle SHALL implement a five-state machine with declarative time-based expiry warning.
+
 The `BankConnection` lifecycle is declared via `x-openregister-lifecycle` on
 the register schema with five states and automatic time-based transition:
 
@@ -131,6 +137,8 @@ via `x-openregister-notifications` to the configured renewal recipient.
   to the configured recipient.
 
 ### REQ-BC-006: Consent-renewal action SHALL hand off to openconnector SCA endpoint
+
+The system SHALL satisfy this requirement: Consent-renewal action SHALL hand off to openconnector SCA endpoint.
 
 When an operator clicks the consent-renewal action on a connection in `expiring`
 or `expired` state, the UI redirects to openconnector's SCA endpoint, which

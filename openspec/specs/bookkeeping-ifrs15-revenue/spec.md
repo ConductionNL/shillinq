@@ -134,6 +134,8 @@ per administration). Each re-estimation MUST:
 
 ### REQ-IFRS15-004: Allocation of transaction price MUST default to relative stand-alone selling price (SSP) method, with residual-method support and recalculation on modification
 
+The system SHALL satisfy this requirement: Allocation of transaction price MUST default to relative stand-alone selling price (SSP) method, with residual-method support and recalculation on modification.
+
 `PriceAllocation` records the allocation of the total transaction price across
 performance obligations per IFRS 15.73-79. The allocation method MUST be one of:
 
@@ -469,6 +471,8 @@ All disclosure data MUST be:
     delivery; costs capitalised as contract-setup labor per IFRS 15.91"
 
 ### REQ-IFRS15-011: System MUST support contract-group (combination of contracts) treatment per IFRS 15.17
+
+The system SHALL satisfy this requirement: System MUST support contract-group (combination of contracts) treatment per IFRS 15.17.
 
 A `Contract` MAY declare a `contractGroupId` to indicate that it is combined with
 other contracts for revenue recognition purposes per IFRS 15.17 (when contracts are:

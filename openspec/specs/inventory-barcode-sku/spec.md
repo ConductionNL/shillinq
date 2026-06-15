@@ -130,6 +130,8 @@ per `adr-000-data-model.md`'s top-of-file note.
 
 ### REQ-SKU-005: The `Barcode` schema SHALL enforce barcode uniqueness per unit-of-measure within a product
 
+The system SHALL satisfy this requirement: The `Barcode` schema SHALL enforce barcode uniqueness per unit-of-measure within a product.
+
 A single product (identified by `productSku`) MAY have multiple barcodes
 (e.g., one EAN for units, one GTIN-14 for cartons). However, each
 barcode-UoM combination MUST be unique within the product.
@@ -183,6 +185,8 @@ objects without these fields remain valid.
 - **THEN** the product MUST be saved successfully.
 
 ### REQ-SKU-007: The system SHALL expose a barcode lookup endpoint for POS scanning
+
+The system SHALL satisfy this requirement: The system SHALL expose a barcode lookup endpoint for POS scanning.
 
 An HTTP endpoint `GET /index.php/apps/shillinq/api/barcode/lookup/{code}`
 MUST be implemented to support POS terminal barcode scanning.
@@ -239,6 +243,8 @@ MUST be implemented to support POS terminal barcode scanning.
 - **THEN** the response MUST return the GTIN-14 barcode for the carton.
 
 ### REQ-SKU-008: Inactive barcodes SHALL NOT be returned by the lookup endpoint
+
+The system SHALL satisfy this requirement: Inactive barcodes SHALL NOT be returned by the lookup endpoint.
 
 A barcode with `isActive: false` represents a deprecated code (e.g., old
 supplier barcode, legacy internal code no longer in use). The barcode

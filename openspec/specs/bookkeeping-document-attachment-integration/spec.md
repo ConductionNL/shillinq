@@ -16,6 +16,8 @@ This specification defines the requirements for bookkeeping document attachment 
 
 ### REQ-DA-001: Source-document attachment for every bookkeeping object SHALL consume docudesk via a foreign-key URI; no file storage in shillinq
 
+The system SHALL satisfy this requirement: Source-document attachment for every bookkeeping object SHALL consume docudesk via a foreign-key URI; no file storage in shillinq.
+
 Per ADR-022, source documents (PDF invoices, scanned receipts,
 bank statements, contracts) MUST be stored in docudesk and
 referenced from bookkeeping registers via a foreign-key URI. The
@@ -130,6 +132,8 @@ docudesk's responsibility. The declaration is metadata so:
   does not match expected role 'invoice'").
 
 ### REQ-DA-004: Bookkeeping flow SHALL NOT block on docudesk transient unavailability; the URI persists, audit records the gap
+
+The system SHALL satisfy this requirement: Bookkeeping flow SHALL NOT block on docudesk transient unavailability; the URI persists, audit records the gap.
 
 When docudesk is unreachable at the moment a bookkeeping object is
 saved with a `sourceDocumentUri`, the save MUST succeed (the URI

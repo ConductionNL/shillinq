@@ -46,6 +46,8 @@ and T3 liquidity reporting (per-currency cash position).
 
 ### REQ-MC-002: The `BankAccount` schema extension SHALL declare `primaryCurrency` and support multi-currency operations
 
+The system SHALL satisfy this requirement: The `BankAccount` schema extension SHALL declare `primaryCurrency` and support multi-currency operations.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `primaryCurrency` | string | No | ISO 4217 currency code (e.g., EUR, USD, GBP); default EUR if null |
@@ -69,6 +71,8 @@ Schema.org annotation: existing `schema:BankAccount`.
 - **THEN** validation MUST pass; system treats as EUR on read.
 
 ### REQ-MC-003: The `CurrencyBalance` schema SHALL track per-currency balance snapshots per account
+
+The system SHALL satisfy this requirement: The `CurrencyBalance` schema SHALL track per-currency balance snapshots per account.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|

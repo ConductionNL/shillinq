@@ -213,6 +213,8 @@ total deferred-tax impact.
 
 ### REQ-DGAAP-007: Version management and effective dates SHALL support retrospective and modified-retrospective application
 
+The system SHALL satisfy this requirement: Version management and effective dates SHALL support retrospective and modified-retrospective application.
+
 When an accounting standard changes (e.g., RJ 271 revised effective 2027-01-01 with new
 VPL-regeling treatment), the group-accountant MUST be able to:
 
@@ -258,6 +260,8 @@ for audit evidence review.
   supporting sheets).
 
 ### REQ-DGAAP-009: Multi-entity consolidation with mixed frameworks SHALL automatically convert RJ subsidiaries to IFRS
+
+The system SHALL satisfy this requirement: Multi-entity consolidation with mixed frameworks SHALL automatically convert RJ subsidiaries to IFRS.
 
 When a Nederlandse holding consolideert 7 dochters (3 IFRS-rapporterend, 4 RJ-rapporterend),
 the system MUST:

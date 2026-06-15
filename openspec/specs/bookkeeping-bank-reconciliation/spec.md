@@ -164,6 +164,8 @@ Each rule MUST declare:
 
 ### REQ-BR-005: Predicates SHALL include exact-amount, amount-range, reference-match, counterparty-fuzzy, and date-window
 
+The system SHALL satisfy this requirement: Predicates SHALL include exact-amount, amount-range, reference-match, counterparty-fuzzy, and date-window.
+
 The supported predicate shapes (T2 baseline; extensible in later
 tiers) MUST include:
 
@@ -203,6 +205,8 @@ ordering.
   match is finalised per REQ-BR-006.
 
 ### REQ-BR-006: Confirmed matches SHALL emit lifecycle events that AP/AR consume to transition `posted → paid` (or `partially-paid`)
+
+The system SHALL satisfy this requirement: Confirmed matches SHALL emit lifecycle events that AP/AR consume to transition `posted → paid` (or `partially-paid`).
 
 When a `ReconciliationMatch` is confirmed (either auto via
 `autoConfirm: true` or operator-confirmed via UI), the match

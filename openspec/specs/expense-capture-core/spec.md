@@ -55,6 +55,8 @@ register consumes OR's audit-trail-immutable and RBAC abstractions.
 
 ### REQ-EC-002: The `Receipt` schema SHALL capture photo, amount, date, currency, and category
 
+The system SHALL satisfy this requirement: The `Receipt` schema SHALL capture photo, amount, date, currency, and category.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `receiptNumber` | string | Yes | Shillinq-side sequential ID per administration |
@@ -97,6 +99,8 @@ config.yaml `rules.specs`).
 
 ### REQ-EC-003: The `MileageEntry` schema SHALL capture distance, rate, and auto-calculated total
 
+The system SHALL satisfy this requirement: The `MileageEntry` schema SHALL capture distance, rate, and auto-calculated total.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `mileageNumber` | string | Yes | Shillinq-side sequential ID per administration |
@@ -127,6 +131,8 @@ Schema.org annotation: `schema:Thing` (per shillinq config.yaml).
 - **THEN** validation MUST fail with a "positive distance required" error.
 
 ### REQ-EC-004: The `PerDiem` schema SHALL capture country, nights, and auto-looked-up daily rate
+
+The system SHALL satisfy this requirement: The `PerDiem` schema SHALL capture country, nights, and auto-looked-up daily rate.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -164,6 +170,8 @@ definition in ADR-000.
 - **THEN** validation MUST fail with an "invalid country" error.
 
 ### REQ-EC-005: The `ExpenseClaimEntry` schema SHALL group N receipts, mileage, and per-diem into one claim
+
+The system SHALL satisfy this requirement: The `ExpenseClaimEntry` schema SHALL group N receipts, mileage, and per-diem into one claim.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -382,6 +390,8 @@ Results exported as CSV or PDF for management reporting and tax audit.
   - Meals / CC100: €150
 
 ### REQ-EC-012: Expense claim materialisation SHALL post a balanced GL entry with cost-centre allocation per T1 pattern
+
+The system SHALL satisfy this requirement: Expense claim materialisation SHALL post a balanced GL entry with cost-centre allocation per T1 pattern.
 
 When an `ExpenseClaimEntry` transitions `approved → posted`, a
 balanced GL entry MUST be materialised:

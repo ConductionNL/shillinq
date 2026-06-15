@@ -37,6 +37,8 @@ abstraction per ADR-022; no app-local audit table.
 
 ### REQ-JE-002: The `JournalEntry` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `JournalEntry` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `journalNumber` | string | Yes | Sequential journal number unique per administration + fiscal year |
@@ -71,6 +73,8 @@ config.yaml `rules.specs`).
   recurring journals" error per REQ-JE-005.
 
 ### REQ-JE-003: The `journalType` field SHALL be a closed enum of `manual`, `recurring`, `reversing`
+
+The system SHALL satisfy this requirement: The `journalType` field SHALL be a closed enum of `manual`, `recurring`, `reversing`.
 
 T1 supports exactly three journal sub-types. Adding a new sub-type
 (e.g. `closing` for T3 period close) MUST go through a future

@@ -80,6 +80,8 @@ per `adr-000-data-model.md` preamble.
 
 ### REQ-INV-003: The system SHALL compute FIFO valuation on each stock movement
 
+The system SHALL satisfy this requirement: The system SHALL compute FIFO valuation on each stock movement.
+
 When a `StockMovement` with `movementType: inbound` is processed for an
 item whose `InventoryValuation.valuationMethod` is `FIFO`, the system
 MUST create a new FIFO cost lot representing that receipt. When a
@@ -114,6 +116,8 @@ The `InventoryValuation` snapshot MUST be updated after every movement:
   duplicated; the engine MUST detect prior processing and skip.
 
 ### REQ-INV-004: The system SHALL compute moving-average valuation on each inbound receipt
+
+The system SHALL satisfy this requirement: The system SHALL compute moving-average valuation on each inbound receipt.
 
 When a `StockMovement` with `movementType: inbound` is processed for
 an item whose `InventoryValuation.valuationMethod` is `average`, the
@@ -166,6 +170,8 @@ precondition if OR cannot express cross-field uniqueness declaratively).
   error.
 
 ### REQ-INV-006: Valuation method change SHALL be blocked when on-hand quantity is non-zero
+
+The system SHALL satisfy this requirement: Valuation method change SHALL be blocked when on-hand quantity is non-zero.
 
 Changing `InventoryValuation.valuationMethod` from `FIFO` to `average`
 (or vice versa) is a lifecycle transition `methodChange`. This

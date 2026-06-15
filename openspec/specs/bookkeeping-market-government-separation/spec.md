@@ -301,6 +301,12 @@ This requirement is **deferred to Phase 3** but specified here for architecture.
 
 This ensures IKP-tarieven and ABB-exemptions carry formal bestuurlijke legitimatie and are auditable to the raad.
 
+#### Scenario: ABB blocked from raadsbesluit without linked raadsvoorstel
+
+- **GIVEN** the Phase 3 governance coupling is available and an ABB has no linked raadsvoorstel-id
+- **WHEN** an operator attempts to transition the ABB to status=raadsbesluit
+- **THEN** the system SHALL refuse the transition and require a linked raadsvoorstel-id, with the raad-decision's signature, timestamp and griffier-handtekening inherited into the WMO audit trail
+
 ### REQ-WMO-010: The system SHALL provide an immutable audit trail meeting ACM-onderzoek standards
 
 All WMO-mutations (CommercialActivity create/update, IntegralCostPrice calculation, ActivityCostAllocation override, AlgemeenBelangBesluit state-change, ACMReport generation, CrossSubsidyAlert creation/resolution) SHALL be logged to an immutable `WMOAuditLog` register per `bookkeeping-audit-trail` cross-cutting spec, with:

@@ -357,6 +357,12 @@ English (`src/locales/en_US.json`) and Dutch (`src/locales/nl_NL.json`) translat
 }
 ```
 
+#### Scenario: Dutch cancellation strings resolve
+
+- **GIVEN** the app loads with the Dutch locale (`nl_NL`)
+- **WHEN** a cancellation screen renders
+- **THEN** the listed translation keys resolve to their Dutch values (e.g. "Cancellation" → "Annulering", "Refund Status" → "Restitutiestatus")
+
 ---
 
 ## Conformance

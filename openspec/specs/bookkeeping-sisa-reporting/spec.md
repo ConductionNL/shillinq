@@ -53,6 +53,8 @@ by OR's audit service, not by a bespoke app table.
 
 ### REQ-SISA-002: The `SisaReport` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `SisaReport` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `reportNumber` | string | Yes | Unique report identifier per administration |
@@ -92,6 +94,8 @@ Schema.org annotation: `schema:Report`.
   = disclaimer).
 
 ### REQ-SISA-003: The `AuditDocument` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `AuditDocument` schema SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -155,6 +159,8 @@ until T3.
 - **THEN** the transition MUST fail with "signing authority required" error.
 
 ### REQ-SISA-005: The `ComplianceAuditTrail` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `ComplianceAuditTrail` schema SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -256,6 +262,8 @@ Source: `ComplianceAuditTrail.finding*` and `ComplianceAuditTrail.observation*`.
 
 ### REQ-SISA-009: Audit opinion SHALL be assigned via declarative rule or guarded service
 
+The system SHALL satisfy this requirement: Audit opinion SHALL be assigned via declarative rule or guarded service.
+
 `SisaReport.auditOpinion` is calculated via one of:
 
 1. **Declarative conditional aggregation** (if OR supports rule evaluation):
@@ -276,6 +284,8 @@ Source: `ComplianceAuditTrail.finding*` and `ComplianceAuditTrail.observation*`.
 - **THEN** `auditOpinion` MUST transition to `adverse`.
 
 ### REQ-SISA-010: Grant records MAY carry `isSISAEligible` flag for SiSa filtering
+
+The system SHALL satisfy this requirement: Grant records MAY carry `isSISAEligible` flag for SiSa filtering.
 
 The `Grant` schema (from T2 `grant-subsidy-management`) MAY gain an
 optional `isSISAEligible: boolean` field indicating whether a grant

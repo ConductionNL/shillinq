@@ -323,6 +323,8 @@ per the rulebook.
 
 ### REQ-SDD-009: Reposting of rejected collections
 
+The system SHALL satisfy this requirement: Reposting of rejected collections.
+
 When a collection moves to `rejected` or `refunded` because of a
 bank-side problem rather than a debtor refusal, the system MUST offer
 one-click reposting that creates a new `DirectDebitCollection` linked

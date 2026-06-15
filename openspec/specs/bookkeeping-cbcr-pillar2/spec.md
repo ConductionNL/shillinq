@@ -45,6 +45,8 @@ GloBE calculatieservice.
 
 ### Requirement: REQ-CBC-001 Drempelwaarde-detectie EUR 750M
 
+The system SHALL satisfy this requirement: REQ-CBC-001 Drempelwaarde-detectie EUR 750M.
+
 Het systeem MOET op basis van geconsolideerde groepsopbrengsten van het
 voorgaande boekjaar automatisch detecteren of de groep onder CbCR / Pillar 2 valt,
 conform Wet Vpb art. 29b en Wet Minimumbelasting 2024.
@@ -63,6 +65,8 @@ conform Wet Vpb art. 29b en Wet Minimumbelasting 2024.
 
 ### Requirement: REQ-CBC-002 CbCR-aggregatie per jurisdictie
 
+The system SHALL satisfy this requirement: REQ-CBC-002 CbCR-aggregatie per jurisdictie.
+
 Het systeem MOET per jurisdictie per fiscaal jaar de zeven verplichte
 CbCR-velden aggregeren over alle `group-entity-registry` records in die jurisdictie.
 
@@ -80,6 +84,8 @@ CbCR-velden aggregeren over alle `group-entity-registry` records in die jurisdic
 
 ### Requirement: REQ-CBC-003 GloBE income met 35 verplichte correcties
 
+The system SHALL satisfy this requirement: REQ-CBC-003 GloBE income met 35 verplichte correcties.
+
 Het systeem MOET per jurisdictie de GloBE income berekenen door op de
 commerciële winst de OESO-voorgeschreven correcties toe te passen (artikelen
 3.2–3.5 GloBE Model Rules / EU-richtlijn).
@@ -96,6 +102,8 @@ commerciële winst de OESO-voorgeschreven correcties toe te passen (artikelen
 - **AND** wordt `globeIncome` berekend en getoond met opbouwregels voor reconciliatie
 
 ### Requirement: REQ-CBC-004 ETR per jurisdictie berekenen
+
+The system SHALL satisfy this requirement: REQ-CBC-004 ETR per jurisdictie berekenen.
 
 Het systeem MOET per jurisdictie per jaar de Effective Tax Rate berekenen als
 adjusted covered taxes / GloBE income, met begrenzing op 0% (geen negatieve ETR).
@@ -118,6 +126,8 @@ adjusted covered taxes / GloBE income, met begrenzing op 0% (geen negatieve ETR)
 
 ### Requirement: REQ-CBC-005 Substance-based income exclusion (SBIE)
 
+The system SHALL satisfy this requirement: REQ-CBC-005 Substance-based income exclusion (SBIE).
+
 Het systeem MOET de SBIE berekenen als percentage van loonkosten + percentage
 van tangible assets, met de overgangspercentages tijdens de transition window.
 
@@ -134,6 +144,8 @@ van tangible assets, met de overgangspercentages tijdens de transition window.
   tax rate
 
 ### Requirement: REQ-CBC-006 QDMTT-prioriteit boven IIR
+
+The system SHALL satisfy this requirement: REQ-CBC-006 QDMTT-prioriteit boven IIR.
 
 Bij een NL-resident groepsentiteit met laagbelaste winst MOET het systeem de
 QDMTT-heffing in NL toepassen vóór een eventuele IIR-claim van een hoger-gelegen
@@ -154,6 +166,8 @@ moedermaatschappij in een ander land.
 
 ### Requirement: REQ-CBC-007 Safe harbour testen toepassen
 
+The system SHALL satisfy this requirement: REQ-CBC-007 Safe harbour testen toepassen.
+
 Het systeem MOET per jurisdictie testen of een transitional CbCR Safe Harbour
 van toepassing is (de minimis / simplified ETR / routine profits), en bij positief
 resultaat de volledige Pillar 2 berekening vervangen door een vereenvoudigde aangifte.
@@ -169,6 +183,8 @@ resultaat de volledige Pillar 2 berekening vervangen door een vereenvoudigde aan
 - **AND** verschijnt dit in de GIR met de safe-harbour-claim
 
 ### Requirement: REQ-CBC-008 XML/XBRL-export CbCR conform OESO-schema
+
+The system SHALL satisfy this requirement: REQ-CBC-008 XML/XBRL-export CbCR conform OESO-schema.
 
 Het systeem MOET het CbCR-rapport exporteren in het OESO CbC XML-schema v2.0
 (of nieuwer), klaar voor SBR/Digipoort-indiening bij de Belastingdienst.
@@ -186,6 +202,8 @@ Het systeem MOET het CbCR-rapport exporteren in het OESO CbC XML-schema v2.0
   `belastingdienstReference` wordt opgeslagen
 
 ### Requirement: REQ-CBC-009 GIR (GloBE Information Return) genereren
+
+The system SHALL satisfy this requirement: REQ-CBC-009 GIR (GloBE Information Return) genereren.
 
 Het systeem MOET een GIR genereren met alle jurisdictie-computaties,
 safe-harbour-toepassingen, top-up-tax-toewijzingen (IIR/UTPR/QDMTT-credit),
@@ -205,6 +223,8 @@ en deze indienen volgens het OESO GIR XML/XBRL-schema.
   gevestigd is (typisch UPE-jurisdictie of designated filing entity)
 
 ### Requirement: REQ-CBC-010 Aansluiting met geconsolideerde jaarrekening
+
+The system SHALL satisfy this requirement: REQ-CBC-010 Aansluiting met geconsolideerde jaarrekening.
 
 Het systeem MOET een complete reconciliatie produceren tussen het CbCR-totaal
 en de geconsolideerde jaarrekening: omzet, profit before tax, en tax expense

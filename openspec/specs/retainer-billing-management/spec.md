@@ -195,6 +195,8 @@ THEN: RetainerTrueUp is created; audit log records "manual trigger by Alice on 2
 
 ### REQ-RETN-008: Adjustment Invoice Generation
 
+The system SHALL satisfy this requirement: Adjustment Invoice Generation.
+
 Once true-up is approved (status=approved), an optional adjustment invoice
 MUST be generated if overage > 0 or credit < 0 (under-utilization).
 

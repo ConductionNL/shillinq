@@ -16,6 +16,8 @@ This specification defines the requirements for bookkeeping wbso sno administrat
 
 ### REQ-WBSO-001: The system SHALL declare an `SoProject` register for S&O-projecten with an RvO link
 
+The system SHALL satisfy this requirement: The system SHALL declare an `SoProject` register for S&O-projecten with an RvO link.
+
 Per Wet vermindering afdracht loonbelasting hoofdstuk VA (WBSO),
 S&O-werk MUST be administered per project + per employee. The
 `SoProject` register (schema.org type: `schema:Project`) MUST
@@ -36,6 +38,8 @@ register — no PHP S&O service.
   referenceable from the hours administration (REQ-WBSO-002).
 
 ### REQ-WBSO-002: The system SHALL declare an `SoUrenStaat` register for per-employee per-week per-project hours administration
+
+The system SHALL satisfy this requirement: The system SHALL declare an `SoUrenStaat` register for per-employee per-week per-project hours administration.
 
 The `SoUrenStaat` register (schema.org type: `schema:Action`)
 MUST declare records with fields: `soProjectId` (FK to
@@ -59,6 +63,8 @@ ADR-022 on the `goedgekeurd` transition.
 
 ### REQ-WBSO-003: The system SHALL produce an RvO mededeling per quarter as a docudesk document
 
+The system SHALL satisfy this requirement: The system SHALL produce an RvO mededeling per quarter as a docudesk document.
+
 Per RvO WBSO regulation, a mededeling of actually realised S&O
 hours + loonkosten per quarter MUST be reported to RvO. The
 mededeling MUST be generated as a docudesk document populated
@@ -76,6 +82,8 @@ project. Per ADR-031, no PHP mededeling renderer.
 
 ### REQ-WBSO-004: The system SHALL produce an RvO kwartaalrapportage + jaarrapport via docudesk
 
+The system SHALL satisfy this requirement: The system SHALL produce an RvO kwartaalrapportage + jaarrapport via docudesk.
+
 In addition to the mededeling, a kwartaalrapportage (operational
 progress per project) and a jaarrapport (annual close +
 results) MUST be generated as docudesk documents from the same
@@ -90,6 +98,8 @@ MUST go through docudesk; no app-local renderer.
   to the sum of the four kwartaalmededelingen.
 
 ### REQ-WBSO-005: RvO submissions SHALL ride openconnector sources — no app-local HTTP
+
+The system SHALL satisfy this requirement: RvO submissions SHALL ride openconnector sources — no app-local HTTP.
 
 Per ADR-019, every RvO submission (mededeling, kwartaalrapportage,
 jaarrapport) MUST go through an openconnector source row.

@@ -25,6 +25,8 @@ This specification defines the requirements for bookkeeping audit trail in the S
 
 ### REQ-AT-001: Every bookkeeping register SHALL declare `x-openregister-audit: true`
 
+The system SHALL satisfy this requirement: Every bookkeeping register SHALL declare `x-openregister-audit: true`.
+
 Every T1 and T2 register declared in `lib/Settings/shillinq_register.json`
 MUST carry `x-openregister-audit: true` (or the OR-canonical equivalent
 field). This activates OR's immutable audit trail (append-only hash-chained
@@ -56,6 +58,8 @@ anti-pattern list).
 - **THEN** no such classes or routes SHALL exist.
 
 ### REQ-AT-002: Every bookkeeping object's lifecycle transition SHALL produce an audit event
+
+The system SHALL satisfy this requirement: Every bookkeeping object's lifecycle transition SHALL produce an audit event.
 
 For every bookkeeping register with an `x-openregister-lifecycle` block,
 each lifecycle transition MUST produce an audit event in OR's immutable
@@ -112,6 +116,8 @@ entry points to OR's existing audit-log UI surface.
 
 ### REQ-AT-004: Every bookkeeping `type: detail` manifest page SHALL declare the OR audit-log side panel
 
+The system SHALL satisfy this requirement: Every bookkeeping `type: detail` manifest page SHALL declare the OR audit-log side panel.
+
 Per ADR-024, every `type: detail` page entry for bookkeeping registers
 in `src/manifest.json` MUST declare the OR audit-log side panel
 (integration panel) filtered to the object's UUID. This allows
@@ -127,6 +133,8 @@ individual object without navigating away from the detail page.
   `matched → approved`, and `approved → posted` transitions.
 
 ### REQ-AT-005: Audit retention SHALL be governed by OR per ADR-022
+
+The system SHALL satisfy this requirement: Audit retention SHALL be governed by OR per ADR-022.
 
 The retention period for bookkeeping audit events is 7 years
 (Belastingdienst requirement, per Archiefwet). This retention policy

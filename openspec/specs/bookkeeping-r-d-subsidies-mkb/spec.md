@@ -13,6 +13,8 @@ This specification defines the requirements for bookkeeping r d subsidies mkb in
 
 ### REQ-RDS-001: The system SHALL declare a `subsidieRegeling` enum on the existing Subsidie register for the R&D regelingen
 
+The system SHALL satisfy this requirement: The system SHALL declare a `subsidieRegeling` enum on the existing Subsidie register for the R&D regelingen.
+
 The T3 `Subsidie` register (from
 `bookkeeping-subsidie-verantwoording`) MUST gain a
 `subsidieRegeling` enum field with values `mit | sbir |
@@ -77,6 +79,8 @@ No PHP report renderer.
 
 ### REQ-RDS-004: Per-regeling audit-pack SHALL be assembled per regeling requirements via docudesk templates
 
+The system SHALL satisfy this requirement: Per-regeling audit-pack SHALL be assembled per regeling requirements via docudesk templates.
+
 Each R&D regeling has its own audit-trail requirements — EU
 Horizon requires an `Audit Certificate` with explicit timesheet
 evidence; MIT requires a declaration from the WBSO / S&O
@@ -95,6 +99,8 @@ URI per ADR-022). No PHP audit-pack builder.
   kostenpost, a URI reference to the related S&O-uren-staat.
 
 ### REQ-RDS-005: Budget monitoring per regeling SHALL surface warnings when a kostencategorie max is at risk of being exceeded
+
+The system SHALL satisfy this requirement: Budget monitoring per regeling SHALL surface warnings when a kostencategorie max is at risk of being exceeded.
 
 Each R&D regeling has per-kostencategorie sub-maxima (e.g.
 Horizon indirect-25% is bound to 25% of direct costs). An

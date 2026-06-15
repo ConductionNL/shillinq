@@ -35,6 +35,8 @@ Once set, the mode applies to all future opdrachtnen under that administration.
 
 ### REQ-DBA-001: Intake verplicht before first factuur, with eenmalig skip-rule
 
+The system SHALL satisfy this requirement: Intake verplicht before first factuur, with eenmalig skip-rule.
+
 When a new opdracht is registered in shillinq, the DBA intake is deferred until the
 operator attempts to send the first factuur. At that point, the intake MUST be enforced;
 no factuur MAY be transmitted without completed intake.
@@ -148,6 +150,8 @@ when omzetconcentratie > 70% on a single klant (12-month rolling), or when langj
 
 ### REQ-DBA-006: Multiple engagement signaal voor zelfde concern
 
+The system SHALL satisfy this requirement: Multiple engagement signaal voor zelfde concern.
+
 When an ondernemer creates multiple opdrachten for juridisch gerelateerde entities
 (same concern via KvK uiteindelijk-belanghebbende), Shillinq SHALL flag this as high risk.
 
@@ -210,6 +214,8 @@ herbeoordeling request on the intake's anniversary.
 - **AND** if no response within 30 days, flag MUST be generated: `HERBEOORDELING_OVERDUE`
 
 ### REQ-DBA-010: Opdrachtgever-perspektief (inhuur-flow)
+
+The system SHALL satisfy this requirement: Opdrachtgever-perspektief (inhuur-flow).
 
 When shillinq is used by an MKB-opdrachtgever to hire a ZZP'er, a mirror DBA-inhuur-intake
 SHALL be enforced before PO/inkoopfactuur is created.
