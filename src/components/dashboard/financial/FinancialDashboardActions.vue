@@ -14,7 +14,7 @@
 -->
 <template>
 	<div class="financial-dashboard-actions">
-		<NcButton @click="goTo('SupplierInvoices')">
+		<NcButton data-testid="fda-import-bill" @click="showBillImportModal = true">
 			<template #icon>
 				<InboxArrowDown :size="20" />
 			</template>
@@ -36,6 +36,10 @@
 		<InvoiceQuickDraftModal
 			:open="showInvoiceQuickDraftModal"
 			@close="showInvoiceQuickDraftModal = false" />
+
+		<BillImportModal
+			:open="showBillImportModal"
+			@close="showBillImportModal = false" />
 	</div>
 </template>
 
@@ -45,6 +49,7 @@ import InboxArrowDown from 'vue-material-design-icons/InboxArrowDown.vue'
 import FileDocumentPlus from 'vue-material-design-icons/FileDocumentPlus.vue'
 import BankTransferIn from 'vue-material-design-icons/BankTransferIn.vue'
 import InvoiceQuickDraftModal from '../../../modals/InvoiceQuickDraftModal.vue'
+import BillImportModal from '../../../modals/BillImportModal.vue'
 
 export default {
 	name: 'FinancialDashboardActions',
@@ -54,10 +59,12 @@ export default {
 		FileDocumentPlus,
 		BankTransferIn,
 		InvoiceQuickDraftModal,
+		BillImportModal,
 	},
 	data() {
 		return {
 			showInvoiceQuickDraftModal: false,
+			showBillImportModal: false,
 		}
 	},
 	methods: {

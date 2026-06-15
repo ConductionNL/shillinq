@@ -1,5 +1,14 @@
 {
     "translations": {
+        "Import bill": "Inkoopfactuur importeren",
+        "Upload supplier invoice": "Inkoopfactuur uploaden",
+        "Drag and drop a UBL XML or CSV file": "Sleep een UBL-XML- of CSV-bestand hierheen",
+        "PDF OCR extraction is not yet available. Please upload a UBL/e-invoice XML or CSV.": "PDF-OCR-extractie is nog niet beschikbaar. Upload een UBL/e-factuur-XML of CSV.",
+        "This invoice number already exists for this supplier": "Dit factuurnummer bestaat al voor deze leverancier",
+        "Supplier": "Leverancier",
+        "Invoice number": "Factuurnummer",
+        "Bill imported.": "Inkoopfactuur geïmporteerd.",
+        "Unsupported file. Upload a UBL/e-invoice XML or CSV.": "Niet-ondersteund bestand. Upload een UBL/e-factuur-XML of CSV.",
         "Action": "Actie",
         "Created": "Aangemaakt",
         "Date": "Datum",
