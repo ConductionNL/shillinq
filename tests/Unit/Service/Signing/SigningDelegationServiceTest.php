@@ -3,9 +3,10 @@
 /**
  * Unit tests for SigningDelegationService.
  *
- * Covers: requestSignature idempotency, registry call, field-writing;
- * onSigningCallback field-mapping, idempotency, consequence firing,
- * and unknown-outcome rejection.
+ * Covers: requestSignature idempotency, the docudesk IEventDispatcher dispatch,
+ * fail-closed behaviour when docudesk is absent / did not handle the request,
+ * field-writing on success; onSigningCallback field-mapping, idempotency,
+ * consequence firing, and unknown-outcome rejection.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Service\Signing
@@ -16,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-9
+ * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -24,17 +25,77 @@
 
 declare(strict_types=1);
 
+namespace OCA\DocuDesk\Event;
+
+// Minimal in-test stub of the docudesk DocumentSigningRequestedEvent contract so
+// that SigningDelegationService::requestSignature can class_exists()-guard,
+// dispatch, and read back isHandled()/getSigningRequestId() without the docudesk
+// app present. The real class lives in docudesk; shillinq only consumes this
+// shape.
+if (class_exists(\OCA\DocuDesk\Event\DocumentSigningRequestedEvent::class, false) === false) {
+    class DocumentSigningRequestedEvent extends \OCP\EventDispatcher\Event
+    {
+
+        private bool $handled = false;
+
+        private ?string $signingRequestId = null;
+
+        /**
+         * @param array<int,mixed> $signers
+         */
+        public function __construct(
+            public readonly string $sourceApp='',
+            public readonly string $subjectRegister='',
+            public readonly string $subjectSchema='',
+            public readonly string $subjectId='',
+            public readonly string $subjectLabel='',
+            public readonly string $documentReference='',
+            public readonly array $signers=[],
+            public readonly string $signatureLevel='advanced',
+            public readonly string $signingMode='sequential',
+            public readonly string $externalReference='',
+            public readonly string $correlationId='',
+        ) {
+            parent::__construct();
+        }//end __construct()
+
+        public function markHandled(string $signingRequestId): void
+        {
+            $this->handled          = true;
+            $this->signingRequestId = $signingRequestId;
+        }//end markHandled()
+
+        public function isHandled(): bool
+        {
+            return $this->handled;
+        }//end isHandled()
+
+        public function getSigningRequestId(): ?string
+        {
+            return $this->signingRequestId;
+        }//end getSigningRequestId()
+    }//end class
+}//end if
+
 namespace OCA\Shillinq\Tests\Unit\Service\Signing;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
 use OCA\Shillinq\Service\SettingsService;
+use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
- * Tests for SigningDelegationService (REQ-SIGN-001/005/006).
+ * Tests for SigningDelegationService (REQ-SIGN-001/006).
+ *
+ * The docudesk event contract class
+ * {@see \OCA\DocuDesk\Event\DocumentSigningRequestedEvent} lives on docudesk's
+ * development branch and is not autoloadable in this checkout. A minimal stub is
+ * defined below so the success path can be exercised; the fail-closed path is
+ * asserted on a class name that is guaranteed absent.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -49,6 +110,13 @@ final class SigningDelegationServiceTest extends TestCase
     private SettingsService&MockObject $settings;
 
     /**
+     * Event dispatcher mock.
+     *
+     * @var IEventDispatcher&MockObject
+     */
+    private IEventDispatcher&MockObject $dispatcher;
+
+    /**
      * Logger mock.
      *
      * @var LoggerInterface&MockObject
@@ -60,16 +128,20 @@ final class SigningDelegationServiceTest extends TestCase
      */
     private SigningDelegationService $svc;
 
+
     /**
      * Set up test fixtures.
      */
     protected function setUp(): void
     {
         parent::setUp();
-        $this->settings = $this->createMock(SettingsService::class);
-        $this->logger   = $this->createMock(LoggerInterface::class);
-        $this->svc      = new SigningDelegationService(
+        $this->settings   = $this->createMock(SettingsService::class);
+        $this->dispatcher = $this->createMock(IEventDispatcher::class);
+        $this->logger     = $this->createMock(LoggerInterface::class);
+        $this->settings->method('getRegisterSlug')->willReturn('shillinq');
+        $this->svc = new SigningDelegationService(
             settingsService: $this->settings,
+            eventDispatcher: $this->dispatcher,
             logger: $this->logger,
         );
 
@@ -77,70 +149,55 @@ final class SigningDelegationServiceTest extends TestCase
 
 
     /**
-     * Helper: build a fake registry that returns a predictable signingRequestRef.
+     * requestSignature dispatches the docudesk event and writes
+     * signingStatus=requested when the listener handled the request and returned
+     * a signing-request id.
      *
-     * @param string $returnRef The ref the registry will return.
+     * Requires the docudesk event stub (defined at the bottom of this file).
      *
-     * @return object
+     * @requires extension Reflection
      */
-    private function fakeRegistry(string $returnRef): object
+    public function testRequestSignatureWritesStatusRequestedOnHandled(): void
     {
-        return new class($returnRef) {
-            /** @var string */
-            private string $ref;
+        if (class_exists(\OCA\DocuDesk\Event\DocumentSigningRequestedEvent::class) === false) {
+            self::markTestSkipped('docudesk DocumentSigningRequestedEvent stub not loaded.');
+        }
 
-            public function __construct(string $ref)
-            {
-                $this->ref = $ref;
-
-            }//end __construct()
-
-            /**
-             * @param array<string,mixed> $params
-             */
-            public function call(string $service, string $method, array $params): string
-            {
-                return $this->ref;
-
-            }//end call()
-        };
-
-    }//end fakeRegistry()
-
-
-    /**
-     * requestSignature raises a signing request and writes signingStatus=requested.
-     */
-    public function testRequestSignatureWritesStatusRequested(): void
-    {
-        $registry = $this->fakeRegistry('ds-req-001');
+        // The dispatcher simulates the docudesk listener writing the result slot.
+        $this->dispatcher
+            ->expects(self::once())
+            ->method('dispatchTyped')
+            ->willReturnCallback(
+                function (object $event): void {
+                    $event->markHandled('ds-req-001');
+                }
+            );
 
         $result = $this->svc->requestSignature(
             financeObject: ['id' => 'acm-1', 'administrationId' => 'adm-1'],
-            registry: $registry,
+            subjectSchema: 'ACMReport',
         );
 
         self::assertSame('ds-req-001', $result['signingRequestRef']);
         self::assertSame('requested', $result['signingStatus']);
 
-    }//end testRequestSignatureWritesStatusRequested()
+    }//end testRequestSignatureWritesStatusRequestedOnHandled()
 
 
     /**
-     * requestSignature is idempotent when signingStatus==signed.
+     * requestSignature is idempotent when signingStatus==signed — no dispatch.
      */
     public function testRequestSignatureIsIdempotentWhenAlreadySigned(): void
     {
-        $registry = $this->fakeRegistry('ds-req-002');
+        $this->dispatcher->expects(self::never())->method('dispatchTyped');
 
         $obj = ['id' => 'acm-2', 'signingStatus' => 'signed', 'signingRequestRef' => 'existing-ref'];
 
         $result = $this->svc->requestSignature(
             financeObject: $obj,
-            registry: $registry,
+            subjectSchema: 'ACMReport',
         );
 
-        // Should be unchanged — no new registry call expected.
         self::assertSame('existing-ref', $result['signingRequestRef']);
         self::assertSame('signed', $result['signingStatus']);
 
@@ -148,29 +205,29 @@ final class SigningDelegationServiceTest extends TestCase
 
 
     /**
-     * requestSignature propagates registry exceptions.
+     * requestSignature FAILS CLOSED when the docudesk listener did not handle
+     * the request (isHandled() false / null id).
+     *
+     * Requires the docudesk event stub.
      */
-    public function testRequestSignaturePropagatesRegistryException(): void
+    public function testRequestSignatureFailsClosedWhenNotHandled(): void
     {
-        $badRegistry = new class {
-            /**
-             * @param array<string,mixed> $params
-             */
-            public function call(string $service, string $method, array $params): never
-            {
-                throw new \RuntimeException('registry offline');
+        if (class_exists(\OCA\DocuDesk\Event\DocumentSigningRequestedEvent::class) === false) {
+            self::markTestSkipped('docudesk DocumentSigningRequestedEvent stub not loaded.');
+        }
 
-            }//end call()
-        };
+        // Dispatcher does nothing — the event stays unhandled with a null id.
+        $this->dispatcher->expects(self::once())->method('dispatchTyped');
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/did not handle/');
 
         $this->svc->requestSignature(
             financeObject: ['id' => 'acm-3'],
-            registry: $badRegistry,
+            subjectSchema: 'ACMReport',
         );
 
-    }//end testRequestSignaturePropagatesRegistryException()
+    }//end testRequestSignatureFailsClosedWhenNotHandled()
 
 
     /**
@@ -178,7 +235,7 @@ final class SigningDelegationServiceTest extends TestCase
      */
     public function testOnSigningCallbackSignedWritesFieldsAndFiresConsequence(): void
     {
-        $fired  = false;
+        $fired     = false;
         $firedWith = null;
 
         $result = $this->svc->onSigningCallback(

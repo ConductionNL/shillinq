@@ -32,6 +32,7 @@ use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
 use OCA\Shillinq\Listener\SignoffDecisionConcludedListener;
+use OCA\Shillinq\Listener\SigningConcludedListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
 use OCA\Shillinq\Listener\VerplichtingTransitionListener;
@@ -541,6 +542,25 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: \OCA\Decidesk\Event\DecisionConcludedEvent::class,
             listener: SignoffDecisionConcludedListener::class
+        );
+
+        // Change shillinq-signing-via-events (REQ-SIGN-001/006) — consume the
+        // terminal DOCUMENT e-signature outcome docudesk publishes via
+        // OCA\DocuDesk\Event\SigningConcludedEvent. The document signing REQUEST
+        // is dispatched synchronously from SigningDelegationService
+        // (DocumentSigningRequestedEvent via IEventDispatcher, fail-closed when
+        // docudesk is absent — shillinq NEVER signs on local authority); this
+        // listener projects the signed/declined/expired/cancelled outcome back
+        // onto the originating finance object (ACMReport / AnnualReport /
+        // ManagementLetter) and fires the LOCAL submission/GL consequence (the
+        // accounting consequence stays in shillinq) exactly once on `signed`.
+        // The listener filters to getSourceApp()==='shillinq' and is inert when
+        // docudesk is not installed (the event never fires). Registering by the
+        // docudesk event FQCN is safe even when the class is not autoloadable —
+        // NC only needs the string key.
+        $context->registerEventListener(
+            event: \OCA\DocuDesk\Event\SigningConcludedEvent::class,
+            listener: SigningConcludedListener::class
         );
 
     }//end register()
