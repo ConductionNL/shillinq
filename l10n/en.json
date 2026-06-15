@@ -1,5 +1,14 @@
 {
     "translations": {
+        "Import bill": "Import bill",
+        "Upload supplier invoice": "Upload supplier invoice",
+        "Drag and drop a UBL XML or CSV file": "Drag and drop a UBL XML or CSV file",
+        "PDF OCR extraction is not yet available. Please upload a UBL/e-invoice XML or CSV.": "PDF OCR extraction is not yet available. Please upload a UBL/e-invoice XML or CSV.",
+        "This invoice number already exists for this supplier": "This invoice number already exists for this supplier",
+        "Supplier": "Supplier",
+        "Invoice number": "Invoice number",
+        "Bill imported.": "Bill imported.",
+        "Unsupported file. Upload a UBL/e-invoice XML or CSV.": "Unsupported file. Upload a UBL/e-invoice XML or CSV.",
         "Payment requests": "Payment requests",
         "Payment request": "Payment request",
         "Payment link": "Payment link",

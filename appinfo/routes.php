@@ -446,6 +446,17 @@ return [
         ['name' => 'dBA#inhuurIntake', 'url' => '/api/dba/inhuur-intake', 'verb' => 'POST'],
         ['name' => 'dBA#auditReport', 'url' => '/api/dba/audit-report/{opdrachtId}', 'verb' => 'GET'],
 
+        // Supplier invoice import modal (shillinq-bill-import-modal,
+        // REQ-BIM-001 / REQ-BIM-004). Accepts a multipart `file` upload
+        // (or JSON contents+format) and ingests a UBL/e-invoice XML or CSV
+        // supplier invoice through the deterministic SupplierInvoiceService
+        // (no OCR). PDF uploads are honestly deferred (HTTP 422,
+        // deferred: pdf-ocr) — no OCR engine is bundled with this change.
+        // #[NoAdminRequired]; the administration is resolved server-side
+        // (ADR-005 IDOR-safe). Declared before the SPA catch-all so
+        // Symfony route ordering matches it first per ADR-016.
+        ['name' => 'supplierInvoiceImport#import', 'url' => '/api/v1/supplier-invoices/import', 'verb' => 'POST'],
+
         // Bank statement import (shillinq-bank-statement-wizard, REQ-BSW-004).
         // The real import endpoint behind the BankStatementWizard: accepts a
         // CAMT.053 / MT940 / CSV file (multipart upload or JSON body), parses it
