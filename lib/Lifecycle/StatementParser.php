@@ -154,8 +154,12 @@ class StatementParser
     /**
      * Parse a CAMT.053 (ISO 20022) statement into normalised line maps.
      *
-     * XXE-safe: the XML is loaded via simplexml_load_string which, on PHP 8 with
-     * libxml >= 2.9, does not resolve external entities by default.
+     * XXE-safe (defence in depth): inputs declaring a DOCTYPE or an ENTITY are
+     * rejected outright before parsing, and the XML is loaded with LIBXML_NONET
+     * only. The previous LIBXML_NOENT flag was REMOVED because it *enables*
+     * external/internal entity substitution (XXE risk, CWE-611); without it
+     * simplexml_load_string never expands declared entities, so a file:///…
+     * payload can never leak host file contents into a BankStatementLine.
      *
      * @param string $contents Raw CAMT.053 XML.
      *
@@ -163,8 +167,14 @@ class StatementParser
      */
     private function parseCamt053(string $contents): array
     {
+        // Reject any DOCTYPE/ENTITY declaration before touching the parser
+        // (XXE hardening — fail closed with the empty-return discipline).
+        if (stripos($contents, '<!DOCTYPE') !== false || stripos($contents, '<!ENTITY') !== false) {
+            return [];
+        }
+
         $previous = libxml_use_internal_errors(true);
-        $xml      = simplexml_load_string($contents, \SimpleXMLElement::class, (LIBXML_NONET | LIBXML_NOENT));
+        $xml      = simplexml_load_string($contents, \SimpleXMLElement::class, LIBXML_NONET);
         libxml_use_internal_errors($previous);
         if ($xml === false) {
             return [];
