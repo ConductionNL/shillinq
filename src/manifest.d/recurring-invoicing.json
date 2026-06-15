@@ -1,0 +1,176 @@
+{
+    "_meta": {
+        "spdx-license": "EUPL-1.2",
+        "spdx-copyright": "2026 Conduction B.V.",
+        "change": "recurring-invoicing",
+        "adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+        "description": "Recurring Invoicing (Periodieke Facturen) — navigation + index/detail pages for RecurringInvoiceProfile, plus the create/edit modal launched from the index. Generated invoices are ordinary ARInvoice records; the detail page lists them via the recurringProfileId provenance filter (REQ-RIN-008)."
+    },
+    "menu": [
+        {
+            "id": "RecurringInvoicing",
+            "label": "Recurring Invoices",
+            "icon": "CalendarSync",
+            "route": "RecurringInvoiceProfiles",
+            "order": 46
+        }
+    ],
+    "pages": [
+        {
+            "id": "RecurringInvoiceProfiles",
+            "route": "/bookkeeping/recurring-invoices",
+            "type": "index",
+            "title": "Recurring Invoices",
+            "config": {
+                "register": "shillinq",
+                "schema": "RecurringInvoiceProfile",
+                "columns": [
+                    {
+                        "key": "name",
+                        "label": "Profile",
+                        "sortable": true
+                    },
+                    {
+                        "key": "customerReference",
+                        "label": "Customer",
+                        "sortable": true
+                    },
+                    {
+                        "key": "frequency",
+                        "label": "Frequency",
+                        "sortable": true
+                    },
+                    {
+                        "key": "nextRunDate",
+                        "label": "Next run",
+                        "sortable": true
+                    },
+                    {
+                        "key": "perPeriodNetAmount",
+                        "label": "Per period (net)",
+                        "sortable": false
+                    },
+                    {
+                        "key": "status",
+                        "label": "Status",
+                        "sortable": true
+                    }
+                ],
+                "defaultSort": "nextRunDate",
+                "detailRoute": "RecurringInvoiceProfileDetail",
+                "actions": [
+                    {
+                        "id": "new-recurring-profile",
+                        "label": "New recurring profile",
+                        "icon": "CalendarSync",
+                        "type": "modal",
+                        "modal": "RecurringInvoiceProfileModal",
+                        "description": "Define a new recurring billing profile: customer, lines with period tokens, frequency, invoice day, issue mode and payment terms."
+                    }
+                ],
+                "documentationUrl": "https://shillinq.conduction.nl/guides/recurring-invoices"
+            }
+        },
+        {
+            "id": "RecurringInvoiceProfileDetail",
+            "route": "/bookkeeping/recurring-invoices/:id",
+            "type": "detail",
+            "title": "Recurring Invoice Profile",
+            "config": {
+                "register": "shillinq",
+                "schema": "RecurringInvoiceProfile",
+                "fields": [
+                    {
+                        "key": "name",
+                        "label": "Profile name",
+                        "type": "string"
+                    },
+                    {
+                        "key": "customerReference",
+                        "label": "Customer",
+                        "type": "string"
+                    },
+                    {
+                        "key": "frequency",
+                        "label": "Frequency",
+                        "type": "string"
+                    },
+                    {
+                        "key": "interval",
+                        "label": "Interval",
+                        "type": "integer"
+                    },
+                    {
+                        "key": "invoiceDay",
+                        "label": "Invoice day",
+                        "type": "integer"
+                    },
+                    {
+                        "key": "startDate",
+                        "label": "Start date",
+                        "type": "date"
+                    },
+                    {
+                        "key": "nextRunDate",
+                        "label": "Next run",
+                        "type": "date"
+                    },
+                    {
+                        "key": "lastBillingPeriod",
+                        "label": "Last billed period",
+                        "type": "string"
+                    },
+                    {
+                        "key": "issueMode",
+                        "label": "Issue mode",
+                        "type": "string"
+                    },
+                    {
+                        "key": "deliveryChannel",
+                        "label": "Delivery channel",
+                        "type": "string"
+                    },
+                    {
+                        "key": "paymentTermsDays",
+                        "label": "Payment terms (days)",
+                        "type": "integer"
+                    },
+                    {
+                        "key": "indexationPercent",
+                        "label": "Indexation %",
+                        "type": "number"
+                    },
+                    {
+                        "key": "lastRunStatus",
+                        "label": "Last run status",
+                        "type": "string"
+                    },
+                    {
+                        "key": "status",
+                        "label": "Status",
+                        "type": "string"
+                    }
+                ],
+                "relatedObjects": [
+                    {
+                        "id": "generated-invoices",
+                        "label": "Generated invoices",
+                        "componentName": "openregister-related-list",
+                        "componentProps": {
+                            "register": "shillinq",
+                            "schema": "ARInvoice",
+                            "filterField": "recurringProfileId",
+                            "columns": [
+                                "invoiceNumber",
+                                "billingPeriod",
+                                "invoiceDate",
+                                "grossAmount",
+                                "lifecycleState"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
