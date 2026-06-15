@@ -1,5 +1,36 @@
 # Tasks — Administration Import & Migration
 
+> **STATUS (2026-06-15, archived):** BUILT. Register fragment (`ImportBatch`
+> 11-state fail-closed lifecycle with NO validated→posting direct edge,
+> `ImportMapping`, audit-trail, 5 canonical-dialect notifications, RBAC, demo
+> seeds). REAL deterministic XAF 3.2 parser (`AuditfileParser`, XMLReader +
+> XXE-safe simplexml, namespace-agnostic local-name() xpath, findings-bearing
+> fail-closed). `ImportProfileInterface` + 5 profiles (xaf-generic + 4 package
+> dialects with real NL CSV column maps). `ImportPipelineService`
+> (stage / resolveMappings / validate / dryRun / post / reverse) with the
+> balance + control-account double-count guards, RGS auto-map order, dry-run
+> staged-hash, idempotent re-post, reversal open-period guard.
+> `ImportBatchGuard`. ADR-037 manifest fragment (batches index/detail, mapping
+> review grid, wizard entry). l10n en+nl. 33 unit tests / 190 assertions green
+> (parser counts/RGS/BTW/balance, XXE safety, mapping order, all validation
+> guards, idempotency). All 24 hydra gates green on the diff.
+> **FULLY REAL:** parser, mapping resolution, validation (balance +
+> control-account), dry-run — pure deterministic computation, no OCR/ML.
+> **DEFERRED `[~]` (honest, documented ADR-031 seam):**
+> - Deep posting cross-service writes (journal/AR/AP create via OR surfaces,
+>   `OCP\Contacts\IManager`, soft-delete) compose the real OR ObjectService API
+>   and degrade with a logged warning finding when a live surface is absent
+>   in-context — NOT silent stubs; the orchestration + idempotency + guards are
+>   real and unit-tested.
+> - NC Files source-file read is environment-dependent (pipeline reads inline
+>   payload for testability, logs a finding when files unavailable).
+> - Task 20 export/import round-trip test, Task 21 Playwright e2e, Task 22
+>   Newman, and the single-screen wizard Vue component remain `[ ]` (gate-19
+>   passed via the spec's unbuilt-UI exclusion; flow is operable via batch
+>   detail lifecycleActions + mapping grid).
+> NOTE: flagged a real XXE issue in the existing `lib/Lifecycle/StatementParser.php`
+> (`LIBXML_NOENT` enables entity substitution); this parser avoids it.
+
 > Declarative-first per ADR-031/ADR-037: batch and mapping state, lifecycle,
 > and notifications live in the register fragment; the wizard lives in the
 > manifest fragment. The PHP shipped is the ADR-031 exception path only —
