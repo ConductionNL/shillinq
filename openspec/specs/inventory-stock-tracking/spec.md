@@ -9,6 +9,8 @@
 
 This specification defines the requirements for inventory stock tracking in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
 
+@e2e exclude pure backend/data: stock-movement ledger, valuation and reservation logic are schema + service behaviour — not browser-testable
+
 ## Requirements
 
 ### REQ-IST-001: The system SHALL store inventory stock levels as an OpenRegister-managed `InventoryStock` register

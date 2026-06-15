@@ -19,13 +19,13 @@ Rechtmatigheidsverantwoording (BBV artikel 17a, mandatory since 2023) declares t
 
 ---
 
+@e2e exclude unbuilt UI: rechtmatigheidsverantwoording pages not yet implemented
+
 ## Requirements
 
 ### Requirement: REQ-RV-001 Automatic Lightweight Toetsing on Journaalpost Creation
 
 The system MUST subject every journaalpost to an automatic minimum set of legitimacy checks on creation.
-
-@e2e exclude unbuilt UI: rechtmatigheidsverantwoording pages not yet implemented
 
 Iedere journaalpost moet bij creatie automatisch worden onderworpen aan een minimumset van geautomatiseerde toetsen (begroting, calculatie, valutering, adressering, volledigheid) zodat handmatige werklast beperkt blijft tot de materiële criteria.
 

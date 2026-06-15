@@ -9,6 +9,8 @@
 
 This specification defines the requirements for bookkeeping cost centers dimensions in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
 
+@e2e exclude pure backend/data: dimension registers, allocation rules and roll-up aggregation are schema + OR-relation-engine behaviour — not browser-testable
+
 ## Requirements
 
 ### REQ-CC-001: The system SHALL store analytical dimensions as OpenRegister-managed registers declared in the app manifest

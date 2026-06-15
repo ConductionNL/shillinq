@@ -10,6 +10,8 @@
 
 This specification defines the requirements for bookkeeping bank reconciliation in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
 
+@e2e exclude pure backend/data: statement import, matching rules and reconciliation are schema + service + ledger behaviour — not browser-testable
+
 ## Requirements
 
 ### REQ-BR-001: Bank reconciliation SHALL be declared as `BankStatement` + `BankStatementLine` + `ReconciliationMatch` + `MatchingRule` registers, not parallel storage

@@ -9,6 +9,8 @@
 
 This specification defines the requirements for bookkeeping year end close in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
 
+@e2e exclude pure backend/data: year-end close postings, reversals and lock behaviour are schema + service + ledger behaviour — not browser-testable
+
 ## Requirements
 
 ### REQ-YEC-001: The fiscal-year close SHALL be expressed as a declarative lifecycle transition on a `FiscalYear` register

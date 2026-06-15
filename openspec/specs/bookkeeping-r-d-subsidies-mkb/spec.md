@@ -9,6 +9,8 @@
 
 This specification defines the requirements for bookkeeping r d subsidies mkb in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
 
+@e2e exclude pure backend/data: subsidy categorisation, audit-pack generation and progress reporting are schema + aggregation behaviour — not browser-testable
+
 ## Requirements
 
 ### REQ-RDS-001: The system SHALL declare a `subsidieRegeling` enum on the existing Subsidie register for the R&D regelingen
