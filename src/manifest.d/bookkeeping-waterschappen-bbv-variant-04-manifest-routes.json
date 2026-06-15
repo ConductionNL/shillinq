@@ -41,11 +41,11 @@
 		{
 			"id": "BBVComplianceDashboard",
 			"route": "/bbv-dashboard",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "BBV Compliance Dashboard",
+			"component": "BBVComplianceDashboard",
 			"config": {
-				"register": "shillinq",
-				"widgets": []
+				"register": "shillinq"
 			}
 		},
 		{

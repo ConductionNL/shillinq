@@ -109,7 +109,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         $appId = 'shillinq';
 
         // Idempotency guard.
-        $status = $this->config->getAppValue(app: $appId, key: 'shillinq_pvm_migration_status', default: '');
+        $status = $this->config->getAppValue($appId, 'shillinq_pvm_migration_status', '');
         if ($status === 'completed') {
             $output->info('MigrateProductVendorMasterToPipelinq: already completed — skipping.');
             return;
@@ -137,7 +137,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
                 return;
             }
 
-            $this->config->setAppValue(app: $appId, key: 'shillinq_pvm_export', value: $encoded);
+            $this->config->setAppValue($appId, 'shillinq_pvm_export', $encoded);
             $output->info(
                 'MigrateProductVendorMasterToPipelinq: export written to app-config key shillinq_pvm_export. '
                 . 'Products: ' . \count(value: $exportPayload['products'] ?? [])
@@ -146,7 +146,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
             );
 
             // Step 3: Mark migration as completed so the step is a no-op on re-runs.
-            $this->config->setAppValue(app: $appId, key: 'shillinq_pvm_migration_status', value: 'completed');
+            $this->config->setAppValue($appId, 'shillinq_pvm_migration_status', 'completed');
             $output->info('MigrateProductVendorMasterToPipelinq: completed successfully.');
         } catch (\Throwable $e) {
             // Fail-closed: log and leave shillinq state untouched. Do NOT mark completed.
@@ -392,7 +392,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
     private function searchContactByProperty(string $property, string $value): ?string
     {
         try {
-            $results = $this->contactsManager->search(pattern: $value, searchProperties: [$property]);
+            $results = $this->contactsManager->search($value, [$property]);
             if (is_array($results) === false || count($results) !== 1) {
                 // Zero or multiple matches — not unambiguous.
                 return null;
@@ -425,7 +425,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
     private function searchContactByNameAndIban(string $name, string $iban): ?string
     {
         try {
-            $results = $this->contactsManager->search(pattern: $name, searchProperties: ['FN']);
+            $results = $this->contactsManager->search($name, ['FN']);
             if (is_array($results) === false || $results === []) {
                 return null;
             }
