@@ -15,7 +15,7 @@
 				"type": "object",
 				"x-openregister-unique": [
 					[
-						"productSku",
+						"productId",
 						"barcodeType",
 						"uomCode"
 					]
@@ -24,7 +24,7 @@
 					"barcode",
 					"barcodeType",
 					"format",
-					"productSku",
+					"productId",
 					"uomCode",
 					"quantity"
 				],
@@ -51,10 +51,17 @@
 						"description": "The specific barcode format for disambiguation within a type (e.g. EAN-13, EAN-8, GTIN-14, UPC-A, SSCC-18, INTERNAL).",
 						"example": "EAN-13"
 					},
+					"productId": {
+						"type": "string",
+						"description": "FK to pipelinq Product (productId). Required. Resolved via ADR-019 integration registry.",
+						"example": "pipelinq-product-id-001"
+					},
 					"productSku": {
 						"type": "string",
-						"description": "FK to Product.sku — the product this barcode identifies (inventory-product-catalog). Required.",
-						"example": "DV-KAT-SENIOR-2KG"
+						"nullable": true,
+						"readOnly": true,
+						"description": "TRANSITIONAL ALIAS: deprecated — use productId. Retained for 3-way-match fallback only. Will be removed after pipelinq-product-vendor-master is confirmed live.",
+						"deprecated": true
 					},
 					"uomCode": {
 						"type": "string",
@@ -88,11 +95,11 @@
 				},
 				"x-openregister-relations": {
 					"product": {
-						"localField": "productSku",
-						"relatedSchema": "Product",
-						"relatedField": "sku",
+						"localField": "productId",
+						"relatedSchema": "pipelinq:Product",
+						"relatedField": "id",
 						"cardinality": "many-to-one",
-						"description": "The Product this barcode identifies (inventory-product-catalog). Resolvable via ?expand=productSku per REQ-SKU-004."
+						"description": "The pipelinq Product this barcode identifies. Resolvable via ?expand=productId per REQ-SKU-004 via ADR-019 integration registry."
 					}
 				},
 				"x-openregister-rbac": {
@@ -123,28 +130,6 @@
 							]
 						}
 					}
-				}
-			}
-		},
-		"Product": {
-			"properties": {
-				"skuTemplate": {
-					"type": "string",
-					"nullable": true,
-					"description": "Additive (inventory-barcode-sku, REQ-SKU-006). Reference to a SKU generation template ID in sku-templates.json (e.g. RETAIL_APPAREL_TEMPLATE). Optional; existing items without it remain valid.",
-					"example": "PET_FOOD_TEMPLATE"
-				},
-				"defaultBarcode": {
-					"type": "string",
-					"nullable": true,
-					"description": "Additive (inventory-barcode-sku, REQ-SKU-006). The barcode value of the default barcode scanned at POS for this product. Optional. When set, SHOULD match the `barcode` of an active `Barcode` record with isDefault=true.",
-					"example": "5410317126589"
-				},
-				"barcodeFormat": {
-					"type": "string",
-					"nullable": true,
-					"description": "Additive (inventory-barcode-sku, REQ-SKU-006). Preferred format for new barcodes on this product (e.g. EAN-13, GTIN-14). Optional.",
-					"example": "EAN-13"
 				}
 			}
 		}

@@ -34,7 +34,7 @@
 					"costCenterId": {
 						"type": "string",
 						"nullable": true,
-						"description": "FK to CostCenter.id (add-shillinq-cost-centers-dimensions). Optional dimension on the snapshot per ADR-000.",
+						"description": "FK to AnalyticalDimension.code (dimensionType=cost-center). Optional cost-center dimension on the snapshot per ADR-000 + REQ-ADIM-101. Re-targeted from the retired CostCenter per REQ-ADIM-202.",
 						"example": "CC-MAGAZIJN-001"
 					},
 					"quantity": {
@@ -109,17 +109,17 @@
 				"x-openregister-relations": {
 					"product": {
 						"localField": "productId",
-						"relatedSchema": "Product",
-						"relatedField": "sku",
+						"relatedSchema": "pipelinq:Product",
+						"relatedField": "id",
 						"cardinality": "many-to-one",
-						"description": "Product master record (inventory-product-catalog). One InventoryValuation snapshot per (productId, warehouse, status=active). REQ-INV-002 + ADR-000."
+						"description": "pipelinq Product master record. One InventoryValuation snapshot per (productId, warehouse, status=active). REQ-INV-002 + ADR-000 + ADR-019."
 					},
 					"costCenter": {
 						"localField": "costCenterId",
-						"relatedSchema": "CostCenter",
-						"relatedField": "id",
+						"relatedSchema": "AnalyticalDimension",
+						"relatedField": "code",
 						"cardinality": "many-to-one",
-						"description": "Optional CostCenter dimension on the snapshot (add-shillinq-cost-centers-dimensions). Used for per-cost-centre inventory value reporting. REQ-INV-002 + ADR-000."
+						"description": "Optional cost-center dimension on the snapshot (AnalyticalDimension.dimensionType=cost-center). Used for per-cost-centre inventory value reporting. REQ-INV-002 + ADR-000 + REQ-ADIM-101. Re-targeted from the retired CostCenter; stored costCenterId values unchanged."
 					}
 				},
 				"x-openregister-lifecycle": {

@@ -1555,7 +1555,8 @@
         "_%n invoice outstanding_::_%n invoices outstanding_": [
             "1 Rechnung ausstehend",
             "%n Rechnungen ausstehend"
-        ]
+        ],
+        "Manual Journals": "Manuelle Buchungssätze"
     },
     "plurals": null
 }

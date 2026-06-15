@@ -428,6 +428,10 @@ return [
         ['name' => 'wbsoDocumentApi#archive', 'url' => '/api/v1/documents/{id}/archive', 'verb' => 'POST'],
         ['name' => 'wbsoDocumentApi#show', 'url' => '/api/v1/documents/{id}', 'verb' => 'GET'],
 
+        // WBSO realisatie summary endpoint (REQ-WBSO-010) — read-only per-beschikking
+        // granted-vs-realised S&O hours; scoped to one administration via query param.
+        ['name' => 'wbsoAdministratie#realisatie', 'url' => '/api/wbso/realisatie', 'verb' => 'GET'],
+
         // DBA compliance marker endpoints (dba-compliance-marker, T19/T17/T21/T22/T23/T25/T26/T27/T28).
         // All marked NoAdminRequired; per-object IDOR check is in the controller body
         // (ensureAdministrationAccess) per ADR-005.
@@ -441,6 +445,38 @@ return [
         ['name' => 'dBA#evidenceConsent', 'url' => '/api/dba/evidence/consent', 'verb' => 'POST'],
         ['name' => 'dBA#inhuurIntake', 'url' => '/api/dba/inhuur-intake', 'verb' => 'POST'],
         ['name' => 'dBA#auditReport', 'url' => '/api/dba/audit-report/{opdrachtId}', 'verb' => 'GET'],
+
+        // Supplier invoice import modal (shillinq-bill-import-modal,
+        // REQ-BIM-001 / REQ-BIM-004). Accepts a multipart `file` upload
+        // (or JSON contents+format) and ingests a UBL/e-invoice XML or CSV
+        // supplier invoice through the deterministic SupplierInvoiceService
+        // (no OCR). PDF uploads are honestly deferred (HTTP 422,
+        // deferred: pdf-ocr) — no OCR engine is bundled with this change.
+        // #[NoAdminRequired]; the administration is resolved server-side
+        // (ADR-005 IDOR-safe). Declared before the SPA catch-all so
+        // Symfony route ordering matches it first per ADR-016.
+        ['name' => 'supplierInvoiceImport#import', 'url' => '/api/v1/supplier-invoices/import', 'verb' => 'POST'],
+
+        // Bank statement import (shillinq-bank-statement-wizard, REQ-BSW-004).
+        // The real import endpoint behind the BankStatementWizard: accepts a
+        // CAMT.053 / MT940 / CSV file (multipart upload or JSON body), parses it
+        // with StatementParser, and creates one BankStatement + one
+        // BankStatementLine per parsed line scoped to the server-resolved
+        // administration. #[NoAdminRequired] with the administration resolved
+        // server-side (IDOR-safe per ADR-005). Static segment only — declared
+        // before the SPA catch-all so Symfony matches it first per ADR-016.
+        ['name' => 'bankStatementImport#import', 'url' => '/api/v1/bank-statements/import', 'verb' => 'POST'],
+
+        // AR invoice payment-request webhook (ar-invoice-payment-links, REQ-APL-004).
+        // The GENERALIZED, shared payment webhook surface: one route, one
+        // signature-verification implementation, one PaymentReconciliationService,
+        // serving BOTH PaymentRequest (AR invoice payment links) AND DepositPayment
+        // (booking deposits) — never a fork. Public route (gateways are
+        // unauthenticated callers) but signature-gated inside the controller
+        // (#[PublicPage] + HMAC over the raw body, fail-closed). The {gateway}
+        // placeholder selects mollie / stripe. Declared before the SPA catch-all so
+        // Symfony matches it first per ADR-016.
+        ['name' => 'paymentRequestWebhook#handle', 'url' => '/api/v1/payment-requests/webhook/{gateway}', 'verb' => 'POST'],
 
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).

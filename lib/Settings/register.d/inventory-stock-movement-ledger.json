@@ -376,10 +376,10 @@
 				"x-openregister-relations": {
 					"product": {
 						"localField": "itemId",
-						"relatedSchema": "Product",
-						"relatedField": "sku",
+						"relatedSchema": "pipelinq:Product",
+						"relatedField": "id",
 						"cardinality": "many-to-one",
-						"description": "FK to the moved Product (inventory-product-catalog). ?expand=itemId resolves the catalogue row."
+						"description": "FK to the pipelinq Product (inventory-product-catalog). ?expand=itemId resolves via ADR-019 integration registry."
 					},
 					"sourceLocation": {
 						"localField": "sourceLocationId",

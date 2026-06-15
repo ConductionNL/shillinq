@@ -103,7 +103,26 @@
 		"DBA": "Compliance"
 	},
 	"removals": [
+		"BookkeepingSigningTrail",
 		"Consolidations",
-		"Verplichtingen"
+		"Verplichtingen",
+		"CostProjects",
+		"ProjectenOverzicht",
+		"AllocationRules",
+		"BookkeepingAuditTrail",
+		"BookkeepingChangeHistory",
+		"BookkeepingActivityFeed",
+		"BookkeepingDestructionReport",
+		"BookkeepingComplianceExport",
+		"Bewaartermijnen",
+		"ConfirmationTemplates",
+		"ReminderTemplates",
+		"CancellationTemplates",
+		"CountTemplates",
+		"NotificationTriggers",
+		"NotificationMonitor",
+		"SmsReminderChannels",
+		"Products",
+		"ProductAttributes"
 	]
 }

@@ -198,6 +198,17 @@
 						"type": "object",
 						"nullable": true,
 						"description": "Shareholder structure snapshot relevant to disclosure (free-form per administration)."
+					},
+					"decisionRef": {
+						"type": "string",
+						"nullable": true,
+						"description": "Decidesk Decision id for the AV/board adoption (REQ-SIGN-002). Written only by the decidesk registry callback."
+					},
+					"decisionOutcome": {
+						"type": "string",
+						"enum": ["pending", "approved", "rejected"],
+						"nullable": true,
+						"description": "Mirror of the adoption Decision outcome (REQ-SIGN-002). The vaststellen transition is OUTCOME-DRIVEN — fires only when decisionOutcome==approved."
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -249,14 +260,14 @@
 							"from": "opgemaakt",
 							"to": "vastgesteld",
 							"label": "Vaststellen door AV",
-							"description": "AV approves directly where no accountantsverklaring is verplicht (klein/micro; REQ-T9-007/REQ-T9-009).",
+							"description": "AV approves directly where no accountantsverklaring is verplicht (klein/micro; REQ-T9-007/REQ-T9-009). OUTCOME-DRIVEN per REQ-SIGN-003: requires adoption decisionOutcome==approved from decidesk.",
 							"requires": "OCA\\Shillinq\\Lifecycle\\AnnualReportGuard::canVaststellen"
 						},
 						"vaststellen": {
 							"from": "in-review",
 							"to": "vastgesteld",
 							"label": "Vaststellen na review",
-							"description": "AV approves after accountant sign-off; an accountantsverklaring MUST be attached for middelgroot+ (REQ-T9-007/REQ-T9-010).",
+							"description": "AV approves after accountant sign-off; an accountantsverklaring MUST be attached for middelgroot+ (REQ-T9-007/REQ-T9-010). OUTCOME-DRIVEN per REQ-SIGN-003: requires adoption decisionOutcome==approved from decidesk.",
 							"requires": "OCA\\Shillinq\\Lifecycle\\AnnualReportGuard::canVaststellen"
 						},
 						"deponeren": {
@@ -346,6 +357,24 @@
 								"read"
 							]
 						}
+					}
+				},
+				"x-openregister-notifications": {
+					"adoptionApproved": {
+						"trigger": "updated",
+						"conditions": {"decisionOutcome": "approved"},
+						"recipients": [{"kind": "field", "field": "owner"}, {"kind": "acl", "permission": "manage"}],
+						"subject": {"nl": "Jaarrekening vastgesteld door de AV", "en": "Annual report adopted by the general meeting"},
+						"body": {"nl": "De jaarrekening voor boekjaar {{boekjaarEind}} is vastgesteld via decidesk.", "en": "The annual report for fiscal year {{boekjaarEind}} was adopted via decidesk."},
+						"metadataOnly": true
+					},
+					"adoptionRejected": {
+						"trigger": "updated",
+						"conditions": {"decisionOutcome": "rejected"},
+						"recipients": [{"kind": "field", "field": "owner"}, {"kind": "acl", "permission": "manage"}],
+						"subject": {"nl": "Vaststelling jaarrekening afgewezen", "en": "Annual report adoption rejected"},
+						"body": {"nl": "De vaststelling van de jaarrekening voor boekjaar {{boekjaarEind}} is afgewezen via decidesk.", "en": "The adoption of the annual report for fiscal year {{boekjaarEind}} was rejected via decidesk."},
+						"metadataOnly": true
 					}
 				}
 			},

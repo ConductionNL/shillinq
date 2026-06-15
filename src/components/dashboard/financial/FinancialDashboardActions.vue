@@ -4,27 +4,44 @@
 
   Quick-access header buttons on the Financial overview dashboard.
   Wired as the Dashboard page actionsComponent in manifest.json.
+
+  The "Create invoice" button launches the InvoiceQuickDraftModal
+  (shillinq-invoice-quick-draft) instead of navigating to the AR index,
+  so the bookkeeper drafts a one-line invoice without losing the
+  dashboard context. The modal lives in its own file under src/modals/
+  (hydra gate-13 modal isolation) and is hosted here because this
+  component owns the launch button.
 -->
 <template>
 	<div class="financial-dashboard-actions">
-		<NcButton @click="goTo('SupplierInvoices')">
+		<NcButton data-testid="fda-import-bill" @click="showBillImportModal = true">
 			<template #icon>
 				<InboxArrowDown :size="20" />
 			</template>
 			{{ t('shillinq', 'Import bill') }}
 		</NcButton>
-		<NcButton type="primary" @click="goTo('AccountsReceivable')">
+		<NcButton type="primary" data-testid="fda-create-invoice" @click="showInvoiceQuickDraftModal = true">
 			<template #icon>
 				<FileDocumentPlus :size="20" />
 			</template>
 			{{ t('shillinq', 'Create invoice') }}
 		</NcButton>
-		<NcButton @click="goTo('BankReconciliation')">
+		<NcButton data-testid="fda-import-bank" @click="showBankStatementWizard = true">
 			<template #icon>
 				<BankTransferIn :size="20" />
 			</template>
 			{{ t('shillinq', 'Import bank') }}
 		</NcButton>
+
+		<InvoiceQuickDraftModal
+			:open="showInvoiceQuickDraftModal"
+			@close="showInvoiceQuickDraftModal = false" />
+		<BillImportModal
+			:open="showBillImportModal"
+			@close="showBillImportModal = false" />
+		<BankStatementWizard
+			:open="showBankStatementWizard"
+			@close="showBankStatementWizard = false" />
 	</div>
 </template>
 
@@ -33,6 +50,9 @@ import { NcButton } from '@nextcloud/vue'
 import InboxArrowDown from 'vue-material-design-icons/InboxArrowDown.vue'
 import FileDocumentPlus from 'vue-material-design-icons/FileDocumentPlus.vue'
 import BankTransferIn from 'vue-material-design-icons/BankTransferIn.vue'
+import InvoiceQuickDraftModal from '../../../modals/InvoiceQuickDraftModal.vue'
+import BillImportModal from '../../../modals/BillImportModal.vue'
+import BankStatementWizard from '../../../modals/BankStatementWizard.vue'
 
 export default {
 	name: 'FinancialDashboardActions',
@@ -41,6 +61,16 @@ export default {
 		InboxArrowDown,
 		FileDocumentPlus,
 		BankTransferIn,
+		InvoiceQuickDraftModal,
+		BillImportModal,
+		BankStatementWizard,
+	},
+	data() {
+		return {
+			showInvoiceQuickDraftModal: false,
+			showBillImportModal: false,
+			showBankStatementWizard: false,
+		}
 	},
 	methods: {
 		goTo(routeName) {
