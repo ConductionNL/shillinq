@@ -5,13 +5,13 @@
 **Tier:** T1 (phase 2)
 **Depends on:** `bookings-create-appointment` (approved), `bookings-service-catalog` (approved)
 
-## Preamble
+## Purpose
 
 This specification defines the `CancellationPolicy` register and extends the `Appointment` register with cancellation fields, enabling operators to enforce minimum-notice policies, late-cancellation fees, and no-show charges. All requirements use RFC 2119 language (MUST, SHOULD, MAY).
 
 ---
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude unbuilt UI: cancellation policies pages not yet implemented
 
@@ -356,6 +356,12 @@ English (`src/locales/en_US.json`) and Dutch (`src/locales/nl_NL.json`) translat
   "Failed": "Mislukt"
 }
 ```
+
+#### Scenario: Dutch cancellation strings resolve
+
+- **GIVEN** the app loads with the Dutch locale (`nl_NL`)
+- **WHEN** a cancellation screen renders
+- **THEN** the listed translation keys resolve to their Dutch values (e.g. "Cancellation" → "Annulering", "Refund Status" → "Restitutiestatus")
 
 ---
 

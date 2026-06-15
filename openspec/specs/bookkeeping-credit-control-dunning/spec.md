@@ -7,7 +7,11 @@
 `../bookkeeping-general-ledger/spec.md` (GL posting), `../bookkeeping-btw-aangifte/spec.md` (BTW-teruggaaf),
 `../docudesk/spec.md` (dunning-templates), `../openconnector/spec.md` (API integrations)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping credit control dunning in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: dunning/credit control pages not yet implemented
 
@@ -273,6 +277,8 @@ Periodic updates (e.g., monthly) refresh scores; dunning-run does NOT re-fetch.
 
 ### REQ-CCD-008: Optionele overdraft-actie stage 5 SHALL POST dossier-bundel to incassobureau-API
 
+The system SHALL satisfy this requirement: Optionele overdraft-actie stage 5 SHALL POST dossier-bundel to incassobureau-API.
+
 At stage 5 (day 90, overdraft incasso), operator can trigger:
 
 ```
@@ -303,6 +309,8 @@ API-error (network, 4xx/5xx) MUST queue for retry; operator notified.
   updates for that invoice MUST FAIL with "Invoice in_incasso; dunning-actions locked".
 
 ### REQ-CCD-009: Optionele PostNL aangetekende-post SHALL send stage 4 ingebrekestelling via PostNL Track & Trace API
+
+The system SHALL satisfy this requirement: Optionele PostNL aangetekende-post SHALL send stage 4 ingebrekestelling via PostNL Track & Trace API.
 
 If PostNL integration is enabled, stage 4 (ingebrekestelling) can be configured
 to dispatch via aangetekende post:
@@ -353,6 +361,8 @@ Upon operator action "Afschrijven oninbaar":
   MUST become `written_off`.
 
 ### REQ-CCD-011: Anti-pattern-detector SHALL halt escalation if admin-error detected
+
+The system SHALL satisfy this requirement: Anti-pattern-detector SHALL halt escalation if admin-error detected.
 
 If a customer has paid 1+ invoices successfully in the prior 90 days AND a dunning
 trigger arises from a single admin-error scenario (wrong IBAN, missing payment-reference),

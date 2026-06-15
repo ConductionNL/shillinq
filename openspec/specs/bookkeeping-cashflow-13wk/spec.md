@@ -9,12 +9,18 @@
 - `openconnector` PSD2 API (existing)
 - `pipelinq` CRM API (existing)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping cashflow 13wk in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: cashflow dashboard pages not yet implemented
 
 
 ### REQ-CF-000: Cashflow forecast horizon SHALL be a 13-week rolling window per IAS 7 + RJ 360
+
+The system SHALL satisfy this requirement: Cashflow forecast horizon SHALL be a 13-week rolling window per IAS 7 + RJ 360.
 
 The forecast is expressed as one `CashflowForecastHorizon` register per administration, containing 13 weekly slots (`CashflowWeek` records) covering the next 13 calendar weeks (91 days). The window rolls forward every Monday 02:00 UTC: week-1 is archived, week-13 is appended.
 
@@ -162,7 +168,15 @@ The `CashflowARProjection` register SHALL track one record per open AR invoice, 
 - M:1 with `ARInvoice` (read-only FK)
 - M:1 with `CashflowForecastHorizon`
 
+#### Scenario: AR projection records expected receipt date and confidence
+
+- **GIVEN** an open AR invoice with `vervalDatum: "2026-05-15"` and a customer betalingsgedrag offset of +13 days at confidence 0.75
+- **WHEN** a `CashflowARProjection` is created for the invoice
+- **THEN** the record SHALL store `verwachtOntvangstDatum: "2026-05-28"`, `verwachtOntvangstWeek: "2026-w22"` and `betrouwbaarheidScore: 0.75`
+
 ### REQ-CF-005: Recurring costs automatic scheduling with lifecycle + CPI indexing
+
+The system SHALL satisfy this requirement: Recurring costs automatic scheduling with lifecycle + CPI indexing.
 
 Recurring cost items (huur, verzekering, abonnementen, DGA-loon, pension) are defined once in a `CashflowRecurring` registry and auto-expanded into the 13-week horizon based on frequency, activation window, and optional annual indexing.
 
@@ -204,6 +218,8 @@ Recurring cost items (huur, verzekering, abonnementen, DGA-loon, pension) are de
 - **AND** amount for July 2024 shall remain €620 (no retroactive reindex)
 
 ### REQ-CF-006: AP scheduling from open invoices + due-date projection
+
+The system SHALL satisfy this requirement: AP scheduling from open invoices + due-date projection.
 
 All open `APTransaction` (accounts-payable invoices) within the 13-week horizon are automatically scheduled based on `dueDate` or `paymentTerms`, grouped by week, and summed into `outflows_ap_geprognosticeerd` per `CashflowWeek`.
 

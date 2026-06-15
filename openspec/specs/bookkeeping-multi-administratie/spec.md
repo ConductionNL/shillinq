@@ -5,12 +5,18 @@
 **Tier:** T1 (foundational refactor)
 **Depends on:** none (foundational; blocks all T1–T4 downstream specs)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping multi administratie in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/schema: multi-administration setup — not browser-testable
 
 
 ### REQ-MA-001: Administratie-isolatie van alle financiële data
+
+The system SHALL satisfy this requirement: Administratie-isolatie van alle financiële data.
 
 Geen enkele financiële entiteit mag zonder `administratie`-veld bestaan; queries
 respecteren altijd de actieve administratie-context.
@@ -41,6 +47,8 @@ respecteren altijd de actieve administratie-context.
   (or localized equivalent).
 
 ### REQ-MA-002: Per-administratie rekeningschema en boekjaar
+
+The system SHALL satisfy this requirement: Per-administratie rekeningschema en boekjaar.
 
 Iedere administratie heeft een eigen chart-of-accounts en eigen boekjaar-cyclus,
 onafhankelijk van andere administraties.
@@ -76,6 +84,8 @@ onafhankelijk van andere administraties.
 
 ### REQ-MA-003: Multi-tenant gebruikersrechten met administratie-switcher
 
+The system SHALL satisfy this requirement: Multi-tenant gebruikersrechten met administratie-switcher.
+
 Een gebruiker kan tot meerdere administraties toegang hebben met verschillende rollen
 per administratie. In-session switching is mogelijk zonder re-login.
 
@@ -107,6 +117,8 @@ per administratie. In-session switching is mogelijk zonder re-login.
 
 ### REQ-MA-004: Intercompany-journaalpost met sluitende boeking aan beide kanten
 
+The system SHALL satisfy this requirement: Intercompany-journaalpost met sluitende boeking aan beide kanten.
+
 Een intercompany-boeking moet automatisch in beide administraties dezelfde mutatie
 spiegelen.
 
@@ -132,6 +144,8 @@ spiegelen.
   (`afwijking_bedrag` field) en biedt een correctievoorstel (manual review workflow).
 
 ### REQ-MA-005: Consolidatie-mapping en eliminatie-hooks
+
+The system SHALL satisfy this requirement: Consolidatie-mapping en eliminatie-hooks.
 
 Iedere dochteradministratie kan haar grootboekrekeningen mappen naar de
 moederrekeningen voor consolidatiedoeleinden, met eliminatie van intercompany-mutaties.
@@ -164,6 +178,8 @@ moederrekeningen voor consolidatiedoeleinden, met eliminatie van intercompany-mu
   gepresenteerd.
 
 ### REQ-MA-006: Migratie tussen administraties (asset transfer)
+
+The system SHALL satisfy this requirement: Migratie tussen administraties (asset transfer).
 
 Een vast actief, een contract of een werknemer moet van administratie A naar
 administratie B kunnen worden overgedragen met behoud van historie.
@@ -199,6 +215,8 @@ administratie B kunnen worden overgedragen met behoud van historie.
 
 ### REQ-MA-007: Per-administratie backup en data-export
 
+The system SHALL satisfy this requirement: Per-administratie backup en data-export.
+
 Iedere administratie moet onafhankelijk geback-upt en geëxporteerd kunnen worden.
 
 #### Scenario: Full administratie export in Auditfile XAF
@@ -228,6 +246,8 @@ Iedere administratie moet onafhankelijk geback-upt en geëxporteerd kunnen worde
   schedules are independent.
 
 ### REQ-MA-008: Fiscale eenheid VPB en BTW
+
+The system SHALL satisfy this requirement: Fiscale eenheid VPB en BTW.
 
 Administraties die fiscaal in één eenheid zitten moeten dit kunnen aanduiden voor
 correcte BTW- en VPB-rapportage.
@@ -261,6 +281,8 @@ correcte BTW- en VPB-rapportage.
 
 ### REQ-MA-009: Per-administratie audit-trail met cross-administratie viewer
 
+The system SHALL satisfy this requirement: Per-administratie audit-trail met cross-administratie viewer.
+
 Audit-logs zijn per administratie, maar gebruikers met multi-administratie-toegang
 kunnen cross-administratie rapportages opvragen.
 
@@ -283,6 +305,8 @@ kunnen cross-administratie rapportages opvragen.
   or flagged per administratie for clarity.
 
 ### REQ-MA-010: Administratie-aanmaak via wizard met template-overname
+
+The system SHALL satisfy this requirement: Administratie-aanmaak via wizard met template-overname.
 
 Het aanmaken van een nieuwe administratie moet binnen 5 minuten kunnen met sensibele
 defaults via wizard.

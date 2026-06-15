@@ -5,7 +5,13 @@
 **Tier:** T1 (foundational)
 **Depends on:** inventory-product-catalog
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory stock tracking in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+@e2e exclude pure backend/data: stock-movement ledger, valuation and reservation logic are schema + service behaviour — not browser-testable
+
+## Requirements
 
 ### REQ-IST-001: The system SHALL store inventory stock levels as an OpenRegister-managed `InventoryStock` register
 
@@ -121,6 +127,8 @@ Every `InventoryStock` record MUST carry a `location` FK pointing to a Location 
 
 ### REQ-IST-006: Unit cost SHALL be recorded at the time of receipt for standard costing
 
+The system SHALL satisfy this requirement: Unit cost SHALL be recorded at the time of receipt for standard costing.
+
 The `unitCost` field on `InventoryStock` records the **standard or average cost per unit** at the time of most recent receipt (or manual adjustment). This cost is used for P&L (COGS = issued quantity × unitCost) and balance sheet valuation (inventory value = on-hand quantity × unitCost).
 
 FIFO, weighted-average, or other costing variance calculations are performed downstream in the financial-reporting tier; this spec declares the snapshot cost only.
@@ -207,6 +215,8 @@ Seed data MUST reference products from the `inventory-product-catalog` seed (lap
 
 ### REQ-IST-011: Status field MUST mirror Product.status for query efficiency
 
+The system SHALL satisfy this requirement: Status field MUST mirror Product.status for query efficiency.
+
 Every `InventoryStock` record carries a `status` field (active/discontinued) that mirrors the linked Product's status. This avoids a JOIN when filtering "show me only active stock" queries.
 
 The `status` MUST be populated at `InventoryStock` creation time (from Product.status) and updated if the product is later marked discontinued. Enforcement is delegated to the application layer or downstream specs.
@@ -225,6 +235,8 @@ The `status` MUST be populated at `InventoryStock` creation time (from Product.s
 
 ### REQ-IST-012: Last restock date MUST be set on receipt or manual adjustment
 
+The system SHALL satisfy this requirement: Last restock date MUST be set on receipt or manual adjustment.
+
 The `lastRestockDate` field records the timestamp of the most recent stock movement (receipt, adjustment, or transfer IN) that increased `quantityOnHand`. This supports "aging" queries (e.g., "which locations haven't received stock in 30 days?") and replenishment planning.
 
 #### Scenario: Receipt updates last restock date
@@ -240,6 +252,8 @@ The `lastRestockDate` field records the timestamp of the most recent stock movem
 - **THEN** `lastRestockDate` MUST be updated to the adjustment timestamp.
 
 ### REQ-IST-013: Reserved and in-transit quantities MUST NOT exceed on-hand or reasonable limits
+
+The system SHALL satisfy this requirement: Reserved and in-transit quantities MUST NOT exceed on-hand or reasonable limits.
 
 Application-level validation (deferred to implementation) SHOULD prevent:
 - `quantityReserved > quantityOnHand` (overstocking on reserve).

@@ -7,7 +7,11 @@
 foundation), `../bookkeeping-chart-of-accounts/spec.md` (GL account base),
 `../budget-planning-control/spec.md` (Budget register)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping provincies bbv variant in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: BBV variant pages not yet implemented
 
@@ -151,6 +155,8 @@ inline.
   be in the future"; no GL lines MUST be updated.
 
 ### REQ-BBL-003: Programme assignments SHALL be auditable via OpenRegister audit trail
+
+The system SHALL satisfy this requirement: Programme assignments SHALL be auditable via OpenRegister audit trail.
 
 Every `ObjectService.updateObject()` call on a GL line (via Linker or direct edit)
 MUST trigger an audit-trail entry capturing:

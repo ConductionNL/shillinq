@@ -5,7 +5,11 @@
 **Tier:** T3 (treasury & cash management)
 **Depends on:** `../add-shillinq-chart-of-accounts/spec.md` (T1 BankAccount foundation)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping multi currency in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pending playwright spec: currency balances index/detail pages are declared in src/manifest.d/bookkeeping-multi-currency.json (REQ-MC-005) but no Playwright spec ships in this change; covered by a follow-up tests/e2e/bookkeeping-multi-currency.spec.ts.
 
@@ -42,6 +46,8 @@ and T3 liquidity reporting (per-currency cash position).
 
 ### REQ-MC-002: The `BankAccount` schema extension SHALL declare `primaryCurrency` and support multi-currency operations
 
+The system SHALL satisfy this requirement: The `BankAccount` schema extension SHALL declare `primaryCurrency` and support multi-currency operations.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `primaryCurrency` | string | No | ISO 4217 currency code (e.g., EUR, USD, GBP); default EUR if null |
@@ -65,6 +71,8 @@ Schema.org annotation: existing `schema:BankAccount`.
 - **THEN** validation MUST pass; system treats as EUR on read.
 
 ### REQ-MC-003: The `CurrencyBalance` schema SHALL track per-currency balance snapshots per account
+
+The system SHALL satisfy this requirement: The `CurrencyBalance` schema SHALL track per-currency balance snapshots per account.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|

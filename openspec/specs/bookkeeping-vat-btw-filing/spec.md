@@ -5,7 +5,11 @@
 **Tier:** T3 (operations + NL compliance core)
 **Depends on:** bookkeeping-general-ledger (T1), bookkeeping-period-close (T2)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping vat btw filing in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: BTW filing index page not yet implemented
 

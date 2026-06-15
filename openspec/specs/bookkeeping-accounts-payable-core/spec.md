@@ -8,7 +8,11 @@
 `./bookkeeping-document-attachment-integration/spec.md` (docudesk FK contract),
 `./bookkeeping-bank-reconciliation/spec.md` (payment matching)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping accounts payable core in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/schema: AP register declarations, schema constraints, SEPA XML generation — not browser-testable
 
@@ -52,6 +56,8 @@ upload (PDF/attachment) is the T2 intake path.
 
 ### REQ-AP-002: The `Payee` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `Payee` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `vendorNumber` | string | Yes | Stable identifier per administration |
@@ -86,6 +92,8 @@ Schema.org annotation: `schema:Organization`.
 - **THEN** validation MUST pass (valid Dutch IBAN format).
 
 ### REQ-AP-003: The `APTransaction` schema SHALL declare a fixed minimum field set with line breakdown
+
+The system SHALL satisfy this requirement: The `APTransaction` schema SHALL declare a fixed minimum field set with line breakdown.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -293,6 +301,8 @@ RETURN {
   - Row 4: 2026-06-05, +15 days, €1000, Vendor-A (upcoming)
 
 ### REQ-AP-009: Payment matching SHALL transition AP invoices from issued → paid via bank-reconciliation confirmation
+
+The system SHALL satisfy this requirement: Payment matching SHALL transition AP invoices from issued → paid via bank-reconciliation confirmation.
 
 When `bookkeeping-bank-reconciliation` emits a `ReconciliationMatch` candidate
 matching an `APTransaction`, the operator MUST be able to confirm the match via

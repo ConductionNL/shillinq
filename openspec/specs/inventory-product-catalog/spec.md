@@ -5,7 +5,11 @@
 **Tier:** T1 (foundational)
 **Depends on:** none
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory product catalog in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: product catalog index/detail pages not yet implemented
 
@@ -204,6 +208,8 @@ SKU uniqueness (REQ-IPC-002) is scoped to `(organizationId, sku)` — different 
 - **THEN** only `org-A`'s `LAPTOP-001` MUST be returned; `org-B`'s version MUST be hidden.
 
 ### REQ-IPC-011: Product attributes (values) link to ProductAttribute definitions (Phase 2 deferred)
+
+The system SHALL satisfy this requirement: Product attributes (values) link to ProductAttribute definitions (Phase 2 deferred).
 
 **This requirement is declared for forward compatibility but implementation is deferred to Phase 2.**
 

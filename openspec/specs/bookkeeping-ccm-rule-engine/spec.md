@@ -10,7 +10,11 @@
 - `bookkeeping-vendor-master` (master-data integrity rule data)
 - `bookkeeping-payments` (payment-instruction interception for block-mode rules)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping ccm rule engine in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend: continuous close rule engine — not browser-testable
 
@@ -60,6 +64,8 @@ Every rule MUST be version-controlled in its `version_history` chain; changes to
 - **THEN** the default MUST be grounded in published forensic-accounting research (e.g., Nigrini 1996, or Durtschi-Hillison-Pacini 2004, cited in the rule's documentation)
 
 ### REQ-CCM-002: The rule DSL SHALL be a constrained JSON expression language with deterministic evaluation (no `eval()`, no arbitrary code execution)
+
+The system SHALL satisfy this requirement: The rule DSL SHALL be a constrained JSON expression language with deterministic evaluation (no `eval()`, no arbitrary code execution).
 
 Rules are expressed as JSON-serializable expressions using a fixed set of
 operators. The DSL is compiled to an abstract syntax tree (AST) on first
@@ -125,6 +131,8 @@ code execution.
 
 ### REQ-CCM-003: Synchronous rules MUST add ≤100ms latency to journal posting at the 95th percentile; asynchronous rules SHALL complete nightly by 06:00 local time
 
+The system SHALL satisfy this requirement: Synchronous rules MUST add ≤100ms latency to journal posting at the 95th percentile; asynchronous rules SHALL complete nightly by 06:00 local time.
+
 **Synchronous evaluation** (sync-block, sync-warn modes):
 
 - Triggered during the `bookkeeping-journal-entries` post transaction.
@@ -154,6 +162,8 @@ code execution.
 - **THEN** all async rules MUST be evaluated + findings created by 06:00; if forecast shows miss, ops is notified by 02:00 with cluster-scale recommendations
 
 ### REQ-CCM-004: Every finding SHALL capture immutable evidence (before/after, actor, approver chain) at fire time and SHALL transition through a four-state workflow (open → under-investigation / dismissed / escalated)
+
+The system SHALL satisfy this requirement: Every finding SHALL capture immutable evidence (before/after, actor, approver chain) at fire time and SHALL transition through a four-state workflow (open → under-investigation / dismissed / escalated).
 
 A **`ccm-finding`** register entry is created on every rule fire. It captures:
 
@@ -213,6 +223,8 @@ open → under-investigation → {dismissed-with-rationale | confirmed-control-d
 
 ### REQ-CCM-005: Segregation-of-duties violations SHALL be detected by comparing user function-code assignments against the SoD matrix
 
+The system SHALL satisfy this requirement: Segregation-of-duties violations SHALL be detected by comparing user function-code assignments against the SoD matrix.
+
 The **SoD matrix** (`ccm-segregation-matrix`) defines function-code conflicts:
 
 | Property | Type | Purpose |
@@ -246,6 +258,8 @@ The **SoD matrix** (`ccm-segregation-matrix`) defines function-code conflicts:
 - **THEN** the finding can be dismissed with rationale "Compensated by CFO monthly review of payment log" (rationale references the control)
 
 ### REQ-CCM-006: The system SHALL generate a monthly or quarterly audit-committee report with executive summary, rule-firing trends, SoD compliance scorecard, and optional SOX 404 deficiency log
+
+The system SHALL satisfy this requirement: The system SHALL generate a monthly or quarterly audit-committee report with executive summary, rule-firing trends, SoD compliance scorecard, and optional SOX 404 deficiency log.
 
 The **`ccm-audit-committee-report`** register captures the period-end
 deliverable:
@@ -290,6 +304,8 @@ deliverable:
 - **THEN** the finding MUST be included in `sox_deficiencies` array with a filled `deficiency_type` (e.g., "significant_deficiency") and `rating` (e.g., "major"), along with a `remediation_plan` field (mandatory for inclusion)
 
 ### REQ-CCM-007: The rule library SHALL ship with 60 seed rules covering eight control families (segregation-of-duties, duplicate-detection, anomalous-amount, timing, master-data, approval-bypass, manual-journal, value-chain)
+
+The system SHALL satisfy this requirement: The rule library SHALL ship with 60 seed rules covering eight control families (segregation-of-duties, duplicate-detection, anomalous-amount, timing, master-data, approval-bypass, manual-journal, value-chain).
 
 **Segregation-of-duties (7 rules):**
 - SoD-01: Same-user-created-and-paid-vendor (VENDOR-CREATE + PAYMENT-RELEASE)
@@ -369,6 +385,8 @@ Each seed rule ships with DSL logic, parameter defaults, severity, evaluation mo
 
 ### REQ-CCM-008: The system SHALL notify the rule owner (typically internal-audit or CFO) when a critical or high-severity finding is created, and SHALL auto-escalate critical findings to the CFO after 24 hours of inactivity
 
+The system SHALL satisfy this requirement: The system SHALL notify the rule owner (typically internal-audit or CFO) when a critical or high-severity finding is created, and SHALL auto-escalate critical findings to the CFO after 24 hours of inactivity.
+
 **Notification on finding creation:**
 - In-app notification to the `assignee` (default: `rule_owner`): "Finding created: {rule_name}, {title}. Assigned to you. Please review and triage."
 - Optional: n8n integration (out-of-scope for base capability) can push to Slack/Teams/email for out-of-app visibility.
@@ -388,6 +406,8 @@ Each seed rule ships with DSL logic, parameter defaults, severity, evaluation mo
 - **THEN** the auto-escalation job MUST set `status=escalated`, `escalated_to=cfo@example.com`, and notify the CFO
 
 ### REQ-CCM-009: All rules, findings, and audit-committee reports SHALL have immutable audit trails per `bookkeeping-audit-trail`, with every state change capturing actor, timestamp, before/after diff, and hash-chain verification
+
+The system SHALL satisfy this requirement: All rules, findings, and audit-committee reports SHALL have immutable audit trails per `bookkeeping-audit-trail`, with every state change capturing actor, timestamp, before/after diff, and hash-chain verification.
 
 Per ADR-022, all six register schemas (`ccm-rule`, `ccm-finding`,
 `ccm-segregation-matrix`, `ccm-user-function-assignment`, `ccm-baseline`,

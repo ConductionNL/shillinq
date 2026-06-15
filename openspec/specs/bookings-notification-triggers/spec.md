@@ -5,12 +5,18 @@
 **Tier:** T2 (customer-facing feature)
 **Depends on:** none
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookings notification triggers in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: notification config modal not yet implemented
 
 
 ### REQ-BNT-001: Four trigger types SHALL be supported for booking lifecycle events
+
+The system SHALL satisfy this requirement: Four trigger types SHALL be supported for booking lifecycle events.
 
 Booking notifications are triggered by four events:
 - `booking.created` — when a new booking is made
@@ -56,6 +62,8 @@ Each trigger type MUST carry an event payload containing:
 
 ### REQ-BNT-002: Notification templates SHALL support variable substitution for booking context
 
+The system SHALL satisfy this requirement: Notification templates SHALL support variable substitution for booking context.
+
 Notification templates are stored as `BookingNotificationTemplate` register
 entities with fields:
 - `name` — template identifier (e.g., "Booking Confirmation")
@@ -93,6 +101,8 @@ Variables not present in the booking MUST be rendered as empty string, not error
 - **THEN** the subject MUST render as "Locatie: " (empty, not error)
 
 ### REQ-BNT-003: Notifications SHALL target recipients based on configurable rules
+
+The system SHALL satisfy this requirement: Notifications SHALL target recipients based on configurable rules.
 
 Each trigger defines a `recipients` rule list, evaluated in order:
 ```yaml
@@ -133,6 +143,8 @@ evaluated against the booking object. If condition is false, the rule is skipped
 
 ### REQ-BNT-004: Notifications SHALL be routed through openconnector channel adapters
 
+The system SHALL satisfy this requirement: Notifications SHALL be routed through openconnector channel adapters.
+
 When a notification is sent, the dispatcher:
 1. Selects the recipient address (email, phone, or chat ID)
 2. Iterates through the preferred channels in priority order
@@ -169,6 +181,8 @@ POST /openconnector/api/notifications/send
 
 ### REQ-BNT-005: Every notification dispatch SHALL be recorded in audit trail
 
+The system SHALL satisfy this requirement: Every notification dispatch SHALL be recorded in audit trail.
+
 Per ADR-022, every notification send is recorded as a named audit event in
 OpenRegister with fields:
 - `objectType` — "NotificationDelivery"
@@ -198,6 +212,8 @@ The audit record MUST be tamper-evident (hash-chained per OR standard).
 - **THEN** the audit event MUST record status "failed", failureReason: "SMTP connection timeout", retryCount: 3
 
 ### REQ-BNT-006: Rate-limiting SHALL prevent notification storms
+
+The system SHALL satisfy this requirement: Rate-limiting SHALL prevent notification storms.
 
 Notifications are rate-limited to prevent bulk sends on misconfiguration:
 - Maximum 10 notifications per booking per hour (calendar hour, UTC)
@@ -254,6 +270,8 @@ the app settings modal, accessible by admins only.
 
 ### REQ-BNT-008: Admin dashboard SHALL monitor trigger activity and allow disable/reset
 
+The system SHALL satisfy this requirement: Admin dashboard SHALL monitor trigger activity and allow disable/reset.
+
 An admin dashboard surface (Settings > Bookings > Notification Monitor)
 displays:
 - Total notifications sent today/week/month
@@ -272,6 +290,8 @@ The dashboard MUST load in <2s and refresh data every 5 minutes.
 - **THEN** the dashboard MUST display send counts, failure alerts, and enable the disable-all toggle
 
 ### REQ-BNT-009: Recipient preferences and opt-out MUST be checked before send
+
+The system SHALL satisfy this requirement: Recipient preferences and opt-out MUST be checked before send.
 
 Before sending a notification:
 1. Check if recipient has opted out of notifications globally or by trigger type

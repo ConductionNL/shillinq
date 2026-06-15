@@ -5,7 +5,7 @@
 **Tier:** T1 (booking foundation)
 **Depends on:** `bookings-resource-calendar`
 
-## Preamble
+## Purpose
 
 This specification defines the `AvailabilityRule`, `ResourceBreak`, and `BookingConstraint` registers, enabling per-resource configuration of working hours, recurring breaks (lunch/coffee), advance-notice windows, pre/post buffer times, cancellation deadlines, and blackout-date holidays. Together these three schemas form the declarative source-of-truth for "when can this resource be booked?".
 
@@ -13,7 +13,7 @@ The three-schema split keeps the rule header (resource FK + status + effective d
 
 ---
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude unbuilt UI: availability-rules pages not yet implemented
 

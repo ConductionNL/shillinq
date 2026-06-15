@@ -6,7 +6,11 @@
 **Depends on:** T1 general-ledger (`../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md`),
 T2 document-attachment (`./bookkeeping-document-attachment-integration/spec.md`)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping ensia zelfevaluatie in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: ENSIA menu entry declared in manifest but page not yet implemented
 
