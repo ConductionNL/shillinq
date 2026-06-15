@@ -27,7 +27,7 @@ test.describe('notification triggers — admin index page renders', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + NOTIFICATION_TRIGGERS_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')
 		if (await wizard.isVisible().catch(() => false)) {
@@ -53,7 +53,7 @@ test.describe('notification monitor — admin dashboard renders', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + NOTIFICATION_MONITOR_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 	})
 
 	/**
@@ -89,7 +89,7 @@ test.describe('notification config modal — per-booking override', () => {
 		// the triggers index (which the modal's launcher references) and
 		// assert the page reaches an interactive state.
 		await page.goto(APP + NOTIFICATION_TRIGGERS_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// The shillinq layout ships a navigation; assert the main region
 		// rendered so the modal harness can be wired later without a

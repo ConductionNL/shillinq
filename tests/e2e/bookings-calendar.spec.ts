@@ -81,7 +81,13 @@ test.describe('shillinq — bookings calendar smoke', () => {
 		expect([200, 503]).toContain(res.status())
 		if (res.status() === 200) {
 			const body = await res.json()
-			expect(Array.isArray(body) || Array.isArray(body?.data)).toBe(true)
+			// CalendarController::index() returns { calendars: [...] }; accept
+			// that canonical shape as well as a bare array / { data: [...] }.
+			expect(
+				Array.isArray(body)
+				|| Array.isArray(body?.data)
+				|| Array.isArray(body?.calendars),
+			).toBe(true)
 		}
 	})
 })
