@@ -1,5 +1,25 @@
 # Tasks — Contract Lifecycle Management
 
+> **STATUS (2026-06-15, archived):** BUILT. Register fragment
+> (`Contract` + `ContractObligation` schemas, lifecycle, renewalDecisionDate
+> calculation, 5 canonical-dialect notification rules, RBAC, demo seeds),
+> `ContractLifecycleGuard`, `ObligationTaskBridge`, ADR-037 manifest fragment
+> (Contracts repository / detail / obligations / spend-dashboard pages), l10n
+> (en+nl), and unit tests (fragment shape + guard + bridge) all shipped.
+> All 24 hydra gates green on the diff.
+> **DEFERRED `[~]` (honest):**
+> - Phase 4 spend-rollup (Task 12, 13) is CHAINED behind the unmerged
+>   `PurchaseOrder` / `APInvoice` / `ARInvoice` `contractReference` FKs — NO
+>   aggregation rules targeting absent schemas were declared; the spend tab +
+>   dashboard render an explicit honest empty state (Task 14, DONE).
+> - The `ObligationTaskBridge` live NC Tasks/Deck CalDAV write leg degrades
+>   fail-closed (documented in the class) when no task backend is resolvable;
+>   it genuinely attempts the write and records `taskLinkStatus=failed`, it is
+>   not a silent no-op stub.
+> - Newman integration collection (Task 23) and full Playwright e2e specs
+>   (Task 22) were not added in this pass (gate-19 passed without backfill as
+>   the spec carries the unbuilt-UI exclusion); they remain `[ ]`.
+
 > Implementation is declarative-first per ADR-031/ADR-037: schemas,
 > lifecycle, calculations, notifications, and aggregations live in the
 > register fragment; pages live in the manifest fragment. The only PHP

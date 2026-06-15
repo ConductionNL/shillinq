@@ -13,9 +13,7 @@
 
 ## ADDED Requirements
 
-@e2e exclude unbuilt UI: invoice payment panel and payment-requests overview pages not yet implemented
-
-### REQ-APL-001: The system SHALL track invoice payment attempts as an OpenRegister-managed `PaymentRequest` schema that stores no PCI data
+### Requirement: REQ-APL-001 — The system SHALL track invoice payment attempts as an OpenRegister-managed PaymentRequest schema that stores no PCI data
 
 The `PaymentRequest` schema MUST be declared in the ADR-037 register
 fragment `lib/Settings/register.d/ar-invoice-payment-links.json` with
@@ -50,7 +48,7 @@ references, mirroring `bookings-deposits` REQ-DP-001.
 - **WHEN** a payment request is created for it
 - **THEN** the request MUST carry `amount = 1210.00` and the invoice's currency, in state `pending`
 
-### REQ-APL-002: The payment link SHALL be a declarative calculation resolving to the OpenConnector hosted payment UI, valid only while the request is pending and the invoice unpaid
+### Requirement: REQ-APL-002 — The payment link SHALL be a declarative calculation resolving to the OpenConnector hosted payment UI, valid only while the request is pending and the invoice unpaid
 
 Same construction as `bookings-deposits` REQ-DP-005: the schema MUST
 declare a `paymentLink` calculation generating a customer-facing URL that
@@ -74,7 +72,7 @@ second charge.
 - **WHEN** the invoice detail payment panel renders
 - **THEN** the `paymentLink` action MUST be hidden and the request MUST no longer be `pending`
 
-### REQ-APL-003: The payment link SHALL be embedded in the invoice email, the invoice PDF/UBL payment-means block, and dunning reminders
+### Requirement: REQ-APL-003 — The payment link SHALL be embedded in the invoice email, the invoice PDF/UBL payment-means block, and dunning reminders
 
 - The invoice email template MUST include the payment link (button + plain
   URL) when a pending request exists.
@@ -101,7 +99,7 @@ second charge.
 - **WHEN** a dunning reminder is generated (once `bookkeeping-credit-control-dunning` is live)
 - **THEN** a fresh pending request MUST be created and its link embedded; the expired link MUST NOT appear
 
-### REQ-APL-004: Webhook handling, reconciliation, and polling SHALL be ONE shared surface for deposits and invoice payment requests — never a fork [CHAINED: bookings-deposits]
+### Requirement: REQ-APL-004 — Webhook handling, reconciliation, and polling SHALL be ONE shared surface for deposits and invoice payment requests (never a fork; CHAINED bookings-deposits)
 
 There MUST be exactly one gateway webhook surface
 (`/apps/shillinq/api/webhooks/payments/{gateway}`), one
@@ -146,7 +144,7 @@ between `DepositPayment` and `PaymentRequest`:
 - **WHEN** the shared polling fallback runs and the gateway reports the intent as paid
 - **THEN** the request MUST transition to `captured` through the same reconciliation path as the webhook
 
-### REQ-APL-005: A captured payment SHALL settle the invoice through the existing AR lifecycle, with failures surfaced as `captured_unapplied` — never silently dropped
+### Requirement: REQ-APL-005 — A captured payment SHALL settle the invoice through the existing AR lifecycle, with failures surfaced as captured_unapplied and never silently dropped
 
 On `captured`, the reconciliation service MUST trigger the `ARInvoice`'s
 existing lifecycle transition to `paid` (AR core REQ-AR-004 — that
@@ -169,7 +167,7 @@ overview, and offer refund via the adapter's existing refund call.
 - **WHEN** the capture webhook reconciles
 - **THEN** the request MUST enter `captured_unapplied`, appear in the overview's exception filter, and offer a refund action through OpenConnector
 
-### REQ-APL-006: Settlement of the invoice by any other means SHALL void open payment requests, and captured requests SHALL carry the gateway payout reference for bank-reconciliation auto-matching
+### Requirement: REQ-APL-006 — Settlement of the invoice by any other means SHALL void open payment requests, and captured requests SHALL carry the gateway payout reference for bank-reconciliation auto-matching
 
 - Any `ARInvoice` settlement transition (paid via bank match, credit note
   covering the balance, write-off) MUST immediately void all `pending`
@@ -196,7 +194,7 @@ overview, and offer refund via the adapter's existing refund call.
 - **WHEN** the bank statement line for the EUR 2,395.80 payout is auto-matched
 - **THEN** the match MUST link the payout line to the three captured requests via the settlement reference and surface the EUR 24.20 fee for posting
 
-### REQ-APL-007: Payment outcomes SHALL be notified via the x-openregister-notifications dialect — never imperative dispatch
+### Requirement: REQ-APL-007 — Payment outcomes SHALL be notified via the x-openregister-notifications dialect — never imperative dispatch
 
 The fragment MUST declare `updated`-trigger rules with field-change
 conditions on `PaymentRequest.state` per ADR-031 and the
@@ -227,7 +225,7 @@ code, listeners, or reminder jobs (gate-18).
 - **WHEN** scanned for app-local notification dispatch or legacy notification dialect introduced by this change
 - **THEN** none MUST exist (gate-18)
 
-### REQ-APL-008: The UI SHALL ship as ADR-037 manifest pages with ENGLISH i18n source keys
+### Requirement: REQ-APL-008 — The UI SHALL ship as ADR-037 manifest pages with ENGLISH i18n source keys
 
 The frontend MUST ship as the ADR-037 manifest fragment
 `src/manifest.d/ar-invoice-payment-links.json`:

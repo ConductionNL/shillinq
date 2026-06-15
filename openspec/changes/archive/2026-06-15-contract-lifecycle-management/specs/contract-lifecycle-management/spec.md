@@ -12,9 +12,7 @@
 
 ## ADDED Requirements
 
-@e2e exclude unbuilt UI: contract repository, detail, obligations, and spend dashboard pages not yet implemented
-
-### REQ-CLM-001: The system SHALL store contracts as an OpenRegister-managed `Contract` schema with the counterparty referencing a Nextcloud addressbook contact
+### Requirement: REQ-CLM-001 — The system SHALL store contracts as an OpenRegister-managed `Contract` schema with the counterparty referencing a Nextcloud addressbook contact
 
 The `Contract` schema MUST be declared in the ADR-037 register fragment
 `lib/Settings/register.d/contract-lifecycle-management.json` (NOT the
@@ -65,7 +63,7 @@ generic object surface (ADR-022).
 - **WHEN** the record is read
 - **THEN** `renewalDecisionDate` MUST equal `2026-10-02` and MUST be declared as an `x-openregister-calculations` field (no PHP recomputation service)
 
-### REQ-CLM-002: Contracts SHALL transition through a declarative lifecycle: draft → active → expiring → expired, with renewed and terminated exits
+### Requirement: REQ-CLM-002 — Contracts SHALL transition through a declarative lifecycle: draft → active → expiring → expired, with renewed and terminated exits
 
 The lifecycle MUST be declared via `x-openregister-lifecycle` on the
 `Contract` schema (ADR-031 — no `ContractStateService`):
@@ -94,7 +92,7 @@ The lifecycle MUST be declared via `x-openregister-lifecycle` on the
 - **WHEN** a transition to `terminated` is attempted with empty `terminationReason`
 - **THEN** the transition MUST be rejected and no state change MUST be persisted
 
-### REQ-CLM-003: Obligations SHALL be stored as `ContractObligation` records and surfaced as Nextcloud Tasks / Deck cards via a thin, fail-closed bridge
+### Requirement: REQ-CLM-003 — Obligations SHALL be stored as `ContractObligation` records and surfaced as Nextcloud Tasks / Deck cards via a thin, fail-closed bridge
 
 The `ContractObligation` schema MUST be declared in the same ADR-037
 fragment with `x-openregister-audit: true`:
@@ -144,7 +142,7 @@ Surfacing rules (per ADR-022 / "content types belong in leaves"):
 - **WHEN** the obligation deadline notification rule is evaluated (REQ-CLM-004)
 - **THEN** the deadline notification MUST still be delivered, because the rule reads the register row's `dueDate` and `status`, not the task
 
-### REQ-CLM-004: Renewal and obligation deadlines SHALL be notified through the x-openregister-notifications dialect — never imperative dispatch
+### Requirement: REQ-CLM-004 — Renewal and obligation deadlines SHALL be notified through the x-openregister-notifications dialect — never imperative dispatch
 
 Per ADR-031 and the `shillinq-notifications` conventions, the fragment MUST
 declare `x-openregister-notifications` rules consumed by the OpenRegister
@@ -195,7 +193,7 @@ Rules:
 - **WHEN** scanned for app-local notification dispatch (`INotificationManager` dispatch in services/listeners, reminder background jobs, legacy notification dialect in `lib/Settings/*register*.json`)
 - **THEN** no such code or legacy dialect MUST exist; all rules live in the `x-openregister-notifications` declarations (gate-18)
 
-### REQ-CLM-005: Contract documents SHALL live in Nextcloud Files and be referenced from the register — link, don't store
+### Requirement: REQ-CLM-005 — Contract documents SHALL live in Nextcloud Files and be referenced from the register (link, don't store)
 
 Per ADR-022 and the `bookkeeping-document-attachment-integration` contract:
 
@@ -220,7 +218,7 @@ Per ADR-022 and the `bookkeeping-document-attachment-integration` contract:
 - **WHEN** scanned for upload endpoints, blob columns, or an attachment register introduced by this change
 - **THEN** none MUST exist; only file references are stored
 
-### REQ-CLM-006: The spend dashboard SHALL report committed vs invoiced vs contracted value per contract through declarative aggregations over existing bookkeeping registers (CHAINED)
+### Requirement: REQ-CLM-006 — The spend dashboard SHALL report committed vs invoiced vs contracted value per contract through declarative aggregations over existing bookkeeping registers (CHAINED)
 
 Spend figures MUST be declared as `x-openregister-aggregations` — no PHP
 report service (ADR-031):
@@ -261,7 +259,7 @@ honest empty state ("no linked spend data"), never stub figures.
 - **WHEN** the contract detail spend panel is rendered
 - **THEN** an over-commitment flag MUST be shown with the delta (12,000)
 
-### REQ-CLM-007: Lease contracts SHALL become a specialization by link — the `lease-contract` register stays canonical, with zero regression
+### Requirement: REQ-CLM-007 — Lease contracts MUST become a specialization by link so the lease-contract register stays canonical with zero regression
 
 - A generic `Contract` of `contractType = lease` MAY carry
   `specializationReference` → a `bookkeeping-lease-contracts`
@@ -287,7 +285,7 @@ honest empty state ("no linked spend data"), never stub figures.
 - **WHEN** the `bookkeeping-lease-contracts` schema declaration and its tests are inspected
 - **THEN** they MUST be byte-identical to before this change, and an unwrapped `lease-contract` record MUST remain fully functional
 
-### REQ-CLM-008: The contract repository UI SHALL provide search, filtering, and the lifecycle views as ADR-037 manifest pages
+### Requirement: REQ-CLM-008 — The contract repository UI SHALL provide search, filtering, and the lifecycle views as ADR-037 manifest pages
 
 The frontend MUST ship as the ADR-037 manifest fragment
 `src/manifest.d/contract-lifecycle-management.json` (no bespoke router
@@ -320,7 +318,7 @@ Modals/dialogs MUST live in their own files under `src/modals/` /
 - **WHEN** the "expiring soon" filter is applied
 - **THEN** only the first contract MUST be listed
 
-### REQ-CLM-009: All new UI strings SHALL use ENGLISH source keys with `nl` and `en` catalogs
+### Requirement: REQ-CLM-009 — All new UI strings SHALL use ENGLISH source keys with `nl` and `en` catalogs
 
 Per the fleet i18n convention, every new translatable string MUST use the
 English source string as the i18n key (e.g.
