@@ -13,9 +13,7 @@
 
 ## ADDED Requirements
 
-@e2e exclude unbuilt UI: import wizard, batch list/detail, and mapping grid pages not yet implemented
-
-### REQ-AIM-001: The system SHALL track every migration as an OpenRegister-managed `ImportBatch` with the source file living in Nextcloud Files
+### Requirement: REQ-AIM-001 — The system SHALL track every migration as an OpenRegister-managed ImportBatch with the source file living in Nextcloud Files
 
 The `ImportBatch` schema MUST be declared in the ADR-037 register fragment
 `lib/Settings/register.d/administration-import-migration.json` (NOT the
@@ -50,7 +48,7 @@ OpenRegister's generic object surface (ADR-022); no parallel PHP model.
 - **WHEN** scanned for app-local import tables, upload endpoints storing blobs, or a parallel PHP entity/Mapper for batches
 - **THEN** none MUST exist; batch state lives only in the `ImportBatch` register
 
-### REQ-AIM-002: Import SHALL progress through a declarative, fail-closed lifecycle with dry-run as a mandatory state before posting
+### Requirement: REQ-AIM-002 — Import SHALL progress through a declarative, fail-closed lifecycle with dry-run as a mandatory state before posting
 
 The lifecycle MUST be declared via `x-openregister-lifecycle` on
 `ImportBatch` (ADR-031):
@@ -89,7 +87,7 @@ dry_run_complete → posting → posted | posting_failed → reversed`
 - **WHEN** parsing is started
 - **THEN** the initiating request MUST return immediately with the batch in `parsing`, the parse MUST run via OR's background machinery using stream parsing, and the batch MUST reach `staged` with `stagedCounts` populated
 
-### REQ-AIM-003: The system SHALL parse standard XML Auditfile Financieel (XAF 3.2) and the four package dialects through import profiles
+### Requirement: REQ-AIM-003 — The system SHALL parse standard XML Auditfile Financieel (XAF 3.2) and the four package dialects through import profiles
 
 `lib/Service/Import/AuditfileParser.php` MUST stream-parse (XMLReader, no
 DOM load, XXE-safe) standard XAF 3.2, extracting: company data, the ledger
@@ -127,7 +125,7 @@ fixture file exercised in unit tests.
 - **WHEN** imported into an empty administration via the `xaf-generic` profile
 - **THEN** the resulting trial balance at the migration date MUST equal the source administration's trial balance
 
-### REQ-AIM-004: Source accounts SHALL be mapped to the Shillinq chart via `ImportMapping` rows with RGS-based auto-suggestion; unmapped accounts block posting
+### Requirement: REQ-AIM-004 — Source accounts SHALL be mapped to the Shillinq chart via ImportMapping rows with RGS-based auto-suggestion, and unmapped accounts MUST block posting
 
 The `ImportMapping` schema MUST be declared in the same fragment:
 
@@ -167,7 +165,7 @@ reusable on later batches (the accountant-with-50-clients case).
 - **WHEN** a new batch for another administration selects that profile
 - **THEN** matching source codes MUST resolve as `profile-default`, leaving only new accounts for review
 
-### REQ-AIM-005: Posting SHALL create exactly one balanced opening journal per batch through the existing journal-entry surface
+### Requirement: REQ-AIM-005 — Posting SHALL create exactly one balanced opening journal per batch through the existing journal-entry surface
 
 The opening balance MUST be posted as a single journal entry of type
 `opening-balance` at `migrationDate`, composed by the pipeline but written
@@ -189,7 +187,7 @@ imported; equity arrives as part of the balance positions.
 - **WHEN** validation runs
 - **THEN** an error-severity finding MUST block posting until the operator changes the migration date or the period is open
 
-### REQ-AIM-006: Open AR/AP items SHALL be imported as real `ARInvoice` / AP invoice records whose totals exactly equal the control-account opening amounts
+### Requirement: REQ-AIM-006 — Open AR/AP items SHALL be imported as real ARInvoice / AP invoice records whose totals exactly equal the control-account opening amounts
 
 Imported open items MUST be created through the existing AR/AP object
 surfaces with: original source invoice number, invoice date, due date,
@@ -227,7 +225,7 @@ balance, and likewise for AP (the double-count/missing-item guard).
 - **WHEN** the administration later issues its first native invoice
 - **THEN** the native invoice MUST receive the next number of Shillinq's own sequence, unaffected by imported numbers
 
-### REQ-AIM-007: Relations SHALL be imported as Nextcloud addressbook contacts with financial masters referencing the contact — never an invented party schema
+### Requirement: REQ-AIM-007 — Relations SHALL be imported as Nextcloud addressbook contacts with financial masters referencing the contact, never an invented party schema
 
 Per the fleet convention (a counterparty is a Nextcloud entity):
 
@@ -255,7 +253,7 @@ Per the fleet convention (a counterparty is a Nextcloud entity):
 - **WHEN** the relation with the same KvK is posted
 - **THEN** the master row MUST link the existing contact and the contact's phone number MUST remain unchanged
 
-### REQ-AIM-008: A persisted dry-run report SHALL show the exact would-be result before anything is posted
+### Requirement: REQ-AIM-008 — A persisted dry-run report SHALL show the exact would-be result before anything is posted
 
 The `dry_run_complete` state MUST persist a `dryRunReport` on the batch
 containing: the full would-be opening journal (per mapped account), the
@@ -278,7 +276,7 @@ dry-run reported (same staged payload, same mappings) or fail to
 - **WHEN** posting is attempted
 - **THEN** the pipeline MUST detect the staged-state change, refuse to post, and require a fresh validation + dry-run
 
-### REQ-AIM-009: Posting SHALL be idempotent and reversible in one action while the period is open
+### Requirement: REQ-AIM-009 — Posting SHALL be idempotent and reversible in one action while the period is open
 
 - Every batch MUST carry a computed `idempotencyKey` (source files + scope
   + administration); posting a key that already posted MUST be a no-op
@@ -312,7 +310,7 @@ dry-run reported (same staged payload, same mappings) or fail to
 - **WHEN** reversal is attempted
 - **THEN** it MUST be rejected with a message pointing to correction-journal practice
 
-### REQ-AIM-010: Import progress SHALL be notified via the x-openregister-notifications dialect, the wizard SHALL ship as ADR-037 manifest pages, and all strings SHALL use ENGLISH source keys
+### Requirement: REQ-AIM-010 — Import progress SHALL be notified via the x-openregister-notifications dialect, the wizard SHALL ship as ADR-037 manifest pages, and all strings SHALL use ENGLISH source keys
 
 Per ADR-031 and the `shillinq-notifications` conventions, the fragment MUST
 declare `updated`-trigger rules with field-change conditions on
