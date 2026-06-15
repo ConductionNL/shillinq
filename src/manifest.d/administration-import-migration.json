@@ -1,0 +1,229 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "administration-import-migration",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-004 NcSelect inputLabel + modal-isolation gates.",
+		"description": "Tier 2 — Administration Import & Migration navigation per REQ-AIM-010. Adds the 'Import & migration' menu with the import wizard, batch list, batch detail (reports + reversal action via lifecycleActions), and the mapping review grid, bound to the canonical ImportBatch / ImportMapping schemas. The multi-step wizard (upload via NC Files picker → profile selection → mapping review → validation findings → dry-run report → post) is described as a sequence over the batch detail + mapping grid; the single-screen wizard host references a custom component noted as deferred until the wizard component lands."
+	},
+	"menu": [
+		{
+			"id": "ImportMigration",
+			"label": "Import & migration",
+			"icon": "DatabaseImportOutline",
+			"order": 60,
+			"children": [
+				{
+					"id": "ImportWizard",
+					"label": "Import wizard",
+					"icon": "ImportOutline",
+					"route": "ImportWizard",
+					"order": 10
+				},
+				{
+					"id": "ImportBatches",
+					"label": "Import batches",
+					"icon": "DatabaseImportOutline",
+					"route": "ImportBatches",
+					"order": 20
+				},
+				{
+					"id": "ImportMappings",
+					"label": "Mapping",
+					"icon": "SwapHorizontalBoldOutline",
+					"route": "ImportMappings",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ImportWizard",
+			"route": "/import/wizard",
+			"type": "custom",
+			"title": "Import wizard",
+			"config": {
+				"component": "ImportWizard",
+				"x-deferred": "The single-screen multi-step wizard host (upload via NC Files picker → profile selection → mapping review → validation findings → dry-run report → post) references a custom ImportWizard.vue component that is DEFERRED until the wizard component lands. Until then the same flow is fully operable as a sequence: create an ImportBatch (ImportBatches → new), review accounts in the Mapping grid (ImportMappings), then drive the lifecycle (validate → dry-run → post) from the batch detail's lifecycleActions and read the validation/dry-run reports in its tabs.",
+				"steps": [
+					{"id": "upload", "label": "Upload files", "description": "Select the XAF auditfile and any companion CSVs from Nextcloud Files (link, not copied)."},
+					{"id": "profile", "label": "Source system", "description": "Choose the source package profile (xaf-generic / e-boekhouden / exact-online / moneybird / snelstart)."},
+					{"id": "mapping", "label": "Mapping review", "description": "Review RGS-auto and profile-default rows, confirm suggestions, resolve unmapped accounts.", "route": "ImportMappings"},
+					{"id": "validation", "label": "Validation", "description": "Run validation; error findings block posting.", "route": "ImportBatchDetail"},
+					{"id": "dry-run", "label": "Dry-run", "description": "Generate the would-be result report; mandatory before posting.", "route": "ImportBatchDetail"},
+					{"id": "post", "label": "Post", "description": "Post the opening journal, open items, and relations.", "route": "ImportBatchDetail"}
+				]
+			}
+		},
+		{
+			"id": "ImportBatches",
+			"route": "/import/batches",
+			"type": "index",
+			"title": "Import batches",
+			"config": {
+				"register": "shillinq",
+				"schema": "ImportBatch",
+				"columns": [
+					{"key": "sourceSystem", "label": "Source system", "sortable": true},
+					{"key": "administrationId", "label": "Administration", "sortable": true},
+					{"key": "migrationDate", "label": "Migration date", "sortable": true},
+					{"key": "mappingProfile", "label": "Mapping profile", "sortable": false},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "migrationDate",
+				"detailRoute": "ImportBatchDetail"
+			}
+		},
+		{
+			"id": "ImportBatchDetail",
+			"route": "/import/batches/:id",
+			"type": "detail",
+			"title": "Import batch",
+			"config": {
+				"register": "shillinq",
+				"schema": "ImportBatch",
+				"fields": [
+					{"key": "sourceSystem", "label": "Source system", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "sourceFiles", "label": "Source files", "type": "array"},
+					{"key": "migrationDate", "label": "Migration date", "type": "date"},
+					{"key": "scope", "label": "Scope", "type": "object"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "stagedCounts", "label": "Staged counts", "type": "object"},
+					{"key": "idempotencyKey", "label": "Idempotency key", "type": "string"},
+					{"key": "mappingProfile", "label": "Mapping profile", "type": "string"},
+					{"key": "owner", "label": "Owner", "type": "string"}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ImportBatches",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "validation",
+							"label": "Validation findings",
+							"icon": "AlertCircleOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-object-field",
+									"props": {
+										"register": "shillinq",
+										"schema": "ImportBatch",
+										"field": "validationReport"
+									}
+								}
+							]
+						},
+						{
+							"id": "dryRun",
+							"label": "Dry-run report",
+							"icon": "FileDocumentCheckOutline",
+							"order": 20,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-object-field",
+									"props": {
+										"register": "shillinq",
+										"schema": "ImportBatch",
+										"field": "dryRunReport"
+									}
+								}
+							]
+						},
+						{
+							"id": "mappings",
+							"label": "Mappings",
+							"icon": "SwapHorizontalBoldOutline",
+							"order": 30,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-related-objects",
+									"props": {
+										"register": "shillinq",
+										"schema": "ImportMapping",
+										"filter": {"batchReference": ":id"}
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ImportMappings",
+			"route": "/import/mappings",
+			"type": "index",
+			"title": "Mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "ImportMapping",
+				"columns": [
+					{"key": "sourceCode", "label": "Source code", "sortable": true},
+					{"key": "sourceName", "label": "Source name", "sortable": true},
+					{"key": "sourceRgsCode", "label": "RGS code", "sortable": true},
+					{"key": "targetAccount", "label": "Target account", "sortable": true},
+					{"key": "mappingSource", "label": "Mapping source", "sortable": true},
+					{"key": "confirmed", "label": "Confirmed", "sortable": true}
+				],
+				"filters": [
+					{
+						"key": "mappingSource",
+						"inputLabel": "Filter by mapping source",
+						"type": "select",
+						"options": ["rgs-auto", "profile-default", "manual", "unmapped"]
+					},
+					{
+						"key": "confirmed",
+						"inputLabel": "Filter by confirmation",
+						"type": "select",
+						"options": ["true", "false"]
+					}
+				],
+				"defaultSort": "sourceCode",
+				"detailRoute": "ImportMappingDetail"
+			}
+		},
+		{
+			"id": "ImportMappingDetail",
+			"route": "/import/mappings/:id",
+			"type": "detail",
+			"title": "Import mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "ImportMapping",
+				"fields": [
+					{"key": "batchReference", "label": "Batch", "type": "string"},
+					{"key": "sourceCode", "label": "Source code", "type": "string"},
+					{"key": "sourceName", "label": "Source name", "type": "string"},
+					{"key": "sourceRgsCode", "label": "RGS code", "type": "string"},
+					{"key": "targetAccount", "label": "Target account", "type": "string"},
+					{"key": "mappingSource", "label": "Mapping source", "type": "string"},
+					{"key": "confirmed", "label": "Confirmed", "type": "boolean"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"indexRoute": "ImportMappings"
+			}
+		}
+	]
+}

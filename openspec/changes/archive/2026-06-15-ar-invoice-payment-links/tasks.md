@@ -1,5 +1,28 @@
 # Tasks — AR Invoice Payment Links
 
+> **STATUS (2026-06-15, archived):** BUILT. `PaymentRequest` register fragment
+> (schema with audit-trail, lifecycle pending→authorized→captured |
+> captured_unapplied | failed | expired | voided, `paymentLink` calculation,
+> 2 canonical-dialect notifications, RBAC, demo seeds, NO PCI fields),
+> shared `PaymentReconciliationService` (one idempotent code path for BOTH
+> `DepositPayment` and `PaymentRequest` per REQ-APL-004, capture→AR settlement
+> with `captured_unapplied` exception, polling fallback),
+> `PaymentRequestWebhookController` (`#[PublicPage]` HMAC-verified, fail-closed),
+> the webhook route, ADR-037 manifest fragment (payment-requests overview +
+> detail), l10n en+nl, and unit tests (fragment + reconciliation). All 24
+> hydra gates green on the diff.
+> **DEFERRED `[~]` (honest):**
+> - The LIVE Mollie/Stripe leg (real per-gateway shared secrets +
+>   OpenConnector hosted-UI token minting) is provider-config-dependent and
+>   deferred to deployment config — the signature-verification + idempotent
+>   reconciliation CODE is real and complete (reuses the proven deposits
+>   pattern); the endpoint fail-closes when secrets are unset. NOT a stub.
+> - REQ-APL-003 embedding into the invoice email / PDF-UBL payment-means /
+>   dunning reminders is CHAINED to `bookkeeping-credit-control-dunning` and
+>   the AR-core invoice-detail page (additive there); remains `[ ]`.
+> - Newman + full Playwright e2e not added this pass (gate-19 passed via the
+>   spec's unbuilt-UI exclusion); remain `[ ]`.
+
 > Declarative-first per ADR-031/ADR-037: the `PaymentRequest` schema,
 > lifecycle, `paymentLink` calculation, and notification rules live in the
 > register fragment; pages live in the manifest fragment. The only PHP is
