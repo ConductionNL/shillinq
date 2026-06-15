@@ -446,6 +446,16 @@ return [
         ['name' => 'dBA#inhuurIntake', 'url' => '/api/dba/inhuur-intake', 'verb' => 'POST'],
         ['name' => 'dBA#auditReport', 'url' => '/api/dba/audit-report/{opdrachtId}', 'verb' => 'GET'],
 
+        // Bank statement import (shillinq-bank-statement-wizard, REQ-BSW-004).
+        // The real import endpoint behind the BankStatementWizard: accepts a
+        // CAMT.053 / MT940 / CSV file (multipart upload or JSON body), parses it
+        // with StatementParser, and creates one BankStatement + one
+        // BankStatementLine per parsed line scoped to the server-resolved
+        // administration. #[NoAdminRequired] with the administration resolved
+        // server-side (IDOR-safe per ADR-005). Static segment only — declared
+        // before the SPA catch-all so Symfony matches it first per ADR-016.
+        ['name' => 'bankStatementImport#import', 'url' => '/api/v1/bank-statements/import', 'verb' => 'POST'],
+
         // AR invoice payment-request webhook (ar-invoice-payment-links, REQ-APL-004).
         // The GENERALIZED, shared payment webhook surface: one route, one
         // signature-verification implementation, one PaymentReconciliationService,
