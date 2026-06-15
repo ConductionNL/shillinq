@@ -457,6 +457,27 @@ return [
         // Symfony route ordering matches it first per ADR-016.
         ['name' => 'supplierInvoiceImport#import', 'url' => '/api/v1/supplier-invoices/import', 'verb' => 'POST'],
 
+        // Bank statement import (shillinq-bank-statement-wizard, REQ-BSW-004).
+        // The real import endpoint behind the BankStatementWizard: accepts a
+        // CAMT.053 / MT940 / CSV file (multipart upload or JSON body), parses it
+        // with StatementParser, and creates one BankStatement + one
+        // BankStatementLine per parsed line scoped to the server-resolved
+        // administration. #[NoAdminRequired] with the administration resolved
+        // server-side (IDOR-safe per ADR-005). Static segment only — declared
+        // before the SPA catch-all so Symfony matches it first per ADR-016.
+        ['name' => 'bankStatementImport#import', 'url' => '/api/v1/bank-statements/import', 'verb' => 'POST'],
+
+        // AR invoice payment-request webhook (ar-invoice-payment-links, REQ-APL-004).
+        // The GENERALIZED, shared payment webhook surface: one route, one
+        // signature-verification implementation, one PaymentReconciliationService,
+        // serving BOTH PaymentRequest (AR invoice payment links) AND DepositPayment
+        // (booking deposits) — never a fork. Public route (gateways are
+        // unauthenticated callers) but signature-gated inside the controller
+        // (#[PublicPage] + HMAC over the raw body, fail-closed). The {gateway}
+        // placeholder selects mollie / stripe. Declared before the SPA catch-all so
+        // Symfony matches it first per ADR-016.
+        ['name' => 'paymentRequestWebhook#handle', 'url' => '/api/v1/payment-requests/webhook/{gateway}', 'verb' => 'POST'],
+
         // SPA catch-all — same controller as the index route; must use a distinct route name
         // (duplicate names replace the earlier route in Symfony, which breaks GET /).
         ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
