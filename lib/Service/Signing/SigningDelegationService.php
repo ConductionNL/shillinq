@@ -3,11 +3,15 @@
 /**
  * Signing Delegation Service — ADR-031 integration exception path
  *
- * Raises docudesk signingRequests via the ADR-019 integration registry and
- * consumes the signed/declined/expired callback to write the document-signing
- * consumer field set on the originating finance object (REQ-SIGN-001/005).
- * No PKI signing is performed here; shillinq only requests and consumes.
- * Idempotent: a repeated callback for an already-signed object is a no-op.
+ * Raises docudesk document e-signature requests via the docudesk
+ * IEventDispatcher event contract (DocumentSigningRequestedEvent, synchronous,
+ * in-process) and consumes the signed/declined/expired/cancelled outcome —
+ * delivered by a SigningConcludedEvent listener — to write the
+ * document-signing consumer field set on the originating finance object
+ * (REQ-SIGN-001/006). No PKI signing is performed here; shillinq only requests
+ * and consumes. Idempotent: a repeated callback for an already-signed object is
+ * a no-op. Fail-closed: if docudesk is not installed or did not handle the
+ * request, shillinq throws and NEVER marks a document signed on local authority.
  *
  * @category Service
  * @package  OCA\Shillinq\Service\Signing
@@ -18,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-6
+ * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,17 +34,22 @@ namespace OCA\Shillinq\Service\Signing;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Service\SettingsService;
+use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
- * ADR-031 exception-path: raises a docudesk signingRequest via the ADR-019
- * integration registry; consumes the outcome to drive the ACMReport lifecycle
- * and the existing GL/submission consequence.
+ * ADR-031 exception-path: raises a docudesk document signing request via the
+ * docudesk IEventDispatcher event contract; consumes the
+ * signed/declined/expired/cancelled outcome to drive the finance lifecycle and
+ * the existing GL/submission consequence.
  *
- * Cross-app calls go exclusively through the integration registry — no
- * hard-coded hostnames (REQ-SIGN-005).
+ * Transport is the synchronous, in-process docudesk event contract
+ * (DocumentSigningRequestedEvent dispatched via IEventDispatcher,
+ * SigningConcludedEvent consumed by a listener) — no hard-coded hostnames and
+ * no phantom integration registry (REQ-SIGN-001).
  *
- * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-6
+ * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
  */
 class SigningDelegationService
 {
@@ -55,38 +64,57 @@ class SigningDelegationService
     /**
      * Constructor.
      *
-     * @param SettingsService $settingsService Shillinq settings (register slug).
-     * @param LoggerInterface $logger          Logger.
+     * @param SettingsService  $settingsService Shillinq settings (register slug).
+     * @param IEventDispatcher $eventDispatcher Event dispatcher for the docudesk contract.
+     * @param LoggerInterface  $logger          Logger.
      */
     public function __construct(
         private readonly SettingsService $settingsService,
+        private readonly IEventDispatcher $eventDispatcher,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
 
 
     /**
-     * Raise a docudesk signingRequest for a finance object (REQ-SIGN-001).
+     * Raise a docudesk document signing request for a finance object (REQ-SIGN-001).
      *
-     * Opens a docudesk signingRequest through the ADR-019 integration registry.
-     * Sets signingStatus=requested and stores the returned signingRequestRef on
-     * the finance object. The method returns the updated object array ready for
-     * the caller to persist via OR ObjectService (ADR-022).
+     * Dispatches the synchronous, in-process docudesk
+     * {@see \OCA\DocuDesk\Event\DocumentSigningRequestedEvent} via IEventDispatcher.
+     * The dispatch is guarded by class_exists so that, when docudesk is not
+     * installed, shillinq FAILS CLOSED (throws) instead of silently marking a
+     * document signed. After dispatch the synchronous result is read back: the
+     * request is only accepted when the docudesk listener marked the event
+     * handled and returned a signing-request id. Sets signingStatus=requested
+     * and stores the returned signingRequestRef on the finance object. Returns
+     * the updated object for the caller to persist via OR ObjectService
+     * (ADR-022).
      *
      * No PKI signing is performed here.
      *
-     * @param array<string,mixed> $financeObject The finance object (ACMReport etc.).
-     * @param object              $registry       The ADR-019 integration registry.
-     * @param string              $documentClass  Document class hint for docudesk (e.g. 'acm-report').
+     * @param array<string,mixed> $financeObject    The finance object (ACMReport etc.).
+     * @param string              $subjectSchema    The finance schema slug (e.g. 'ACMReport').
+     * @param string              $documentClass    Document class hint for docudesk (e.g. 'acm-report').
+     * @param string              $documentReference NC Files reference to the document to sign (optional).
+     * @param array<int,mixed>    $signers          Signer descriptors for the signing chain (optional).
+     * @param string              $signatureLevel   eIDAS level hint (simple|advanced|qualified).
+     * @param string              $signingMode      docudesk signing mode hint (e.g. 'sequential').
      *
      * @return array<string,mixed> Updated finance object with signingStatus=requested.
      *
-     * @throws InvalidArgumentException When the object already has a terminal signing status.
+     * @throws RuntimeException When docudesk is not installed or did not handle the request (fail-closed).
      *
-     * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-6
+     * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
      */
-    public function requestSignature(array $financeObject, object $registry, string $documentClass='document'): array
-    {
+    public function requestSignature(
+        array $financeObject,
+        string $subjectSchema='document',
+        string $documentClass='document',
+        string $documentReference='',
+        array $signers=[],
+        string $signatureLevel='advanced',
+        string $signingMode='sequential'
+    ): array {
         $currentStatus = (string) ($financeObject['signingStatus'] ?? '');
 
         if ($currentStatus === 'signed') {
@@ -94,28 +122,53 @@ class SigningDelegationService
             return $financeObject;
         }
 
-        // Raise the signingRequest via the ADR-019 registry (no raw HTTP).
-        $signingRef = null;
-        try {
-            $signingRef = $registry->call('docudesk', 'createSigningRequest', [
-                'documentClass'   => $documentClass,
-                'objectRef'       => (string) ($financeObject['id'] ?? $financeObject['_id'] ?? ''),
-                'administrationId' => (string) ($financeObject['administrationId'] ?? ''),
-            ]);
-        } catch (\Throwable $e) {
+        // Fail closed when docudesk is not installed — never sign on local authority.
+        if (class_exists(\OCA\DocuDesk\Event\DocumentSigningRequestedEvent::class) === false) {
             $this->logger->warning(
-                'SigningDelegationService: registry call to docudesk failed',
-                ['exception' => $e->getMessage()]
+                'SigningDelegationService: docudesk not installed — signing cannot be delegated (fail closed)'
             );
-            // Fail-soft: propagate so the caller can surface a user-visible error.
-            throw $e;
+            throw new RuntimeException('docudesk is not installed; document signing request cannot be raised.');
         }
 
-        $financeObject['signingRequestRef'] = is_string($signingRef) ? $signingRef : null;
+        $subjectId    = (string) ($financeObject['id'] ?? $financeObject['_id'] ?? '');
+        $subjectLabel = (string) ($financeObject['name'] ?? $financeObject['title'] ?? $subjectId);
+        $docReference = $documentReference;
+        if ($docReference === '') {
+            $docReference = (string) ($financeObject['documentReference'] ?? $financeObject['pdfRef'] ?? '');
+        }
+
+        $event = new \OCA\DocuDesk\Event\DocumentSigningRequestedEvent(
+            sourceApp: 'shillinq',
+            subjectRegister: $this->settingsService->getRegisterSlug(),
+            subjectSchema: $subjectSchema,
+            subjectId: $subjectId,
+            subjectLabel: $subjectLabel,
+            documentReference: $docReference,
+            signers: $signers,
+            signatureLevel: $signatureLevel,
+            signingMode: $signingMode,
+            externalReference: $subjectId,
+            correlationId: '',
+        );
+
+        $this->eventDispatcher->dispatchTyped($event);
+
+        // Read back the synchronous result the docudesk listener wrote.
+        $signingRequestId = $event->getSigningRequestId();
+        if ($event->isHandled() === false || $signingRequestId === null || $signingRequestId === '') {
+            $this->logger->warning(
+                'SigningDelegationService: docudesk did not handle the signing request (fail closed)',
+                ['subjectSchema' => $subjectSchema, 'subjectId' => $subjectId, 'documentClass' => $documentClass]
+            );
+            throw new RuntimeException('docudesk did not handle the document signing request.');
+        }
+
+        $financeObject['signingRequestRef'] = $signingRequestId;
         $financeObject['signingStatus']     = 'requested';
 
-        $this->logger->info('SigningDelegationService: signingRequest raised', [
+        $this->logger->info('SigningDelegationService: signingRequest raised via docudesk event', [
             'signingRequestRef' => $financeObject['signingRequestRef'],
+            'documentClass'     => $documentClass,
         ]);
 
         return $financeObject;
@@ -124,28 +177,30 @@ class SigningDelegationService
 
 
     /**
-     * Consume a docudesk signed/declined/expired callback (REQ-SIGN-005).
+     * Consume a docudesk signed/declined/expired callback (REQ-SIGN-001/006).
      *
-     * Writes the document-signing consumer field set onto the finance object.
-     * On 'signed', triggers the accounting consequence (GL/submission gate)
-     * through the caller's consequence callback — shillinq does not advance
-     * the lifecycle itself; the consequence callback does (REQ-SIGN-006).
+     * Invoked by {@see \OCA\Shillinq\Listener\SigningConcludedListener} when
+     * docudesk dispatches a SigningConcludedEvent for a shillinq subject. Writes
+     * the document-signing consumer field set onto the finance object. On
+     * 'signed', triggers the accounting consequence (GL/submission gate) through
+     * the caller's consequence callback — shillinq does not advance the lifecycle
+     * itself; the consequence callback does (REQ-SIGN-006).
      *
      * Idempotent: if the object's signingStatus is already a terminal value
      * matching the incoming outcome, the method returns the unchanged object
      * and does NOT fire the consequence a second time.
      *
-     * @param array<string,mixed> $financeObject        The finance object to update.
-     * @param string              $outcome              'signed' | 'declined' | 'expired'.
-     * @param string              $signingRequestRef    The docudesk signingRequest id.
-     * @param string|null         $signingProvider      eIDAS provider (nullable).
-     * @param string|null         $signingLevel         eIDAS level (nullable).
-     * @param string|null         $signedDocumentRef    NC Files ref to the signed artifact.
-     * @param callable|null       $consequenceCallback  Called on 'signed' outcome to fire the GL consequence.
+     * @param array<string,mixed> $financeObject       The finance object to update.
+     * @param string              $outcome             'signed' | 'declined' | 'expired'.
+     * @param string              $signingRequestRef   The docudesk signingRequest id.
+     * @param string|null         $signingProvider     eIDAS provider (nullable).
+     * @param string|null         $signingLevel        eIDAS level (nullable).
+     * @param string|null         $signedDocumentRef   NC Files ref to the signed artifact.
+     * @param callable|null       $consequenceCallback Called on 'signed' outcome to fire the GL consequence.
      *
      * @return array<string,mixed> Updated finance object.
      *
-     * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-6
+     * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
      */
     public function onSigningCallback(
         array $financeObject,
