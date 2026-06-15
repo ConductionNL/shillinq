@@ -6,7 +6,11 @@
 **Depends on:** `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md` (T1 GL),
 `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-chart-of-accounts/spec.md` (account hierarchy)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping zzp tax regime in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: tax filing dashboard pages not yet implemented
 

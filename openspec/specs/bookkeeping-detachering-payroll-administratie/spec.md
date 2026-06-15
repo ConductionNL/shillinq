@@ -6,7 +6,7 @@
 **Depends on:** bookkeeping-accounts-payable-core  
 **Kind:** config
 
-## Summary
+## Purpose
 
 Implement detachering (ZZP/freelance staffing) and payroll bridge: salarisbureau feed imports (ADP/Loket/Visma/Nmbrs) via openconnector + Wet DBA opdrachtgeversverklaring register + IB47 freelance filing.
 

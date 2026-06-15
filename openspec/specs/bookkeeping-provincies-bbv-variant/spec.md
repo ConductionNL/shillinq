@@ -7,7 +7,11 @@
 foundation), `../bookkeeping-chart-of-accounts/spec.md` (GL account base),
 `../budget-planning-control/spec.md` (Budget register)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping provincies bbv variant in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: BBV variant pages not yet implemented
 

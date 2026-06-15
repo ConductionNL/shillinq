@@ -5,7 +5,11 @@
 **Tier:** T2 (inventory operations)  
 **Depends on:** inventory-stock-movement-ledger
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory lot batch expiry in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: lot/batch expiry pages not yet implemented
 

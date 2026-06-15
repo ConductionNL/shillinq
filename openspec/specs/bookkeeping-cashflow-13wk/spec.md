@@ -9,7 +9,11 @@
 - `openconnector` PSD2 API (existing)
 - `pipelinq` CRM API (existing)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping cashflow 13wk in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: cashflow dashboard pages not yet implemented
 

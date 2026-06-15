@@ -6,7 +6,11 @@
 **Depends on:** `inventory-stock-tracking` (InventoryStock register exists with per-location granularity),
 `catalog-purchase-management` (PurchaseOrder register and supplier integration)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory reorder automation in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: reorder rule pages not yet implemented
 

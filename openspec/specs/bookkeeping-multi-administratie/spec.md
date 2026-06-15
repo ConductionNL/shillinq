@@ -5,7 +5,11 @@
 **Tier:** T1 (foundational refactor)
 **Depends on:** none (foundational; blocks all T1–T4 downstream specs)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping multi administratie in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/schema: multi-administration setup — not browser-testable
 

@@ -7,7 +7,11 @@
 `../add-shillinq-general-ledger/specs/bookkeeping-general-ledger/spec.md` (T1 GL posting),
 `../add-shillinq-accounts-receivable-core/specs/accounts-receivable-core/spec.md` (T2 AR posting)
 
-## EXTENDED & ADDED Requirements
+## Purpose
+
+This specification defines the requirements for expense reimbursement or passthrough in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/schema: expense reimbursement flow — not browser-testable
 

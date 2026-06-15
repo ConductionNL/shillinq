@@ -5,11 +5,11 @@
 **Tier:** T4-specialized (advanced / specialized lease accounting)
 **Depends on:** bookkeeping-lease-contracts
 
-## Summary
+## Purpose
 
 IFRS 16 provides exemptions for short-term leases (≤12 months at commencement) and low-value leases (asset fair value ≤ ~USD 5,000). Leases eligible for exemption are expensed straight-line over the lease term instead of being capitalized. This spec defines the policy elections, contract-by-contract application, and expense posting.
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude pure backend/compliance: lease exemptions — not browser-testable
 

@@ -5,11 +5,11 @@
 **Tier:** T4-specialized (advanced / specialized lease accounting)
 **Depends on:** bookkeeping-lease-contracts, bookkeeping-general-ledger (T1), bookkeeping-fixed-assets-depreciation (T4-base)
 
-## Summary
+## Purpose
 
 Lease accounting covers the recognition of Right-of-Use (RoU) assets and lease liabilities at commencement, the automatic generation of payment schedules, periodic interest and depreciation posting, and the integration with the GL and fixed-asset engines.
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude pure backend/compliance: IFRS 16 lease accounting — not browser-testable
 

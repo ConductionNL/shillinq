@@ -6,7 +6,11 @@
 **Depends on:** `../billable-categories-and-tags/spec.md` (project metadata tagging),
 `../add-shillinq-general-ledger/spec.md` (T1 GL foundation)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for wbso uren tagging and export in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: WBSO tags dashboard not yet implemented
 

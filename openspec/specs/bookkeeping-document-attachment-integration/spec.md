@@ -5,7 +5,11 @@
 **Tier:** T2 (compliance + operations)
 **Depends on:** none (defines a cross-app contract; consumed by T1 + other T2 specs)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping document attachment integration in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: attachment detail page not yet implemented
 

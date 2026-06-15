@@ -6,7 +6,11 @@
 **Depends on:** `inventory-stock-tracking` (T2 baseline for `InventoryStock`),
 `cost-accounting-allocation` (T2 GL impact via variance posting)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory cycle count in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/schema: cycle count register — not browser-testable
 

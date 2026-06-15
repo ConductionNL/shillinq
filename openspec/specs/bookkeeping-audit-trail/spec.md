@@ -14,7 +14,11 @@ requirements and the Belastingdienst-mandated 7-year retention period.
 Per ADR-022, all audit-trail functionality MUST come from OpenRegister.
 An app-local audit table is explicitly forbidden.
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping audit trail in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/data: audit hash chain, immutable log — not browser-testable
 

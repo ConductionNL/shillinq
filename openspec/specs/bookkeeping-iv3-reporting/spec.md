@@ -5,7 +5,11 @@
 **Tier:** T3 (operations + NL compliance core)
 **Depends on:** bookkeeping-bbv-compliance (T3), bookkeeping-period-close (T2)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping iv3 reporting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: IV3 reporting pages not yet implemented
 

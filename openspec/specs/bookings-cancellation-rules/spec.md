@@ -5,13 +5,13 @@
 **Tier:** T1 (phase 2)
 **Depends on:** `bookings-create-appointment` (approved), `bookings-service-catalog` (approved)
 
-## Preamble
+## Purpose
 
 This specification defines the `CancellationPolicy` register and extends the `Appointment` register with cancellation fields, enabling operators to enforce minimum-notice policies, late-cancellation fees, and no-show charges. All requirements use RFC 2119 language (MUST, SHOULD, MAY).
 
 ---
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude unbuilt UI: cancellation policies pages not yet implemented
 

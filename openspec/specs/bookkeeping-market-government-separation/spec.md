@@ -5,7 +5,11 @@
 **Tier:** T4 (advanced engine)
 **Depends on:** bookkeeping-bbv-compliance (T3), bookkeeping-cost-centers-dimensions (T4), bookkeeping-general-ledger (T1)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping market government separation in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: market/government separation pages not yet implemented
 

@@ -5,7 +5,7 @@
 **Status:** draft
 **Applies to:** Nextcloud Booking
 
-## Overview
+## Purpose
 
 Declared templates for automated booking emails: confirmation,
 reminder, cancellation. Operators customize branding (logo, colors,

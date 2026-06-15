@@ -5,7 +5,11 @@
 **Tier:** T4-specialized (MKB / innovation — Vpb)
 **Depends on:** bookkeeping-bbv-compliance, bookkeeping-market-government-separation
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping vpb corporate tax in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: VPB corporate tax — not browser-testable
 

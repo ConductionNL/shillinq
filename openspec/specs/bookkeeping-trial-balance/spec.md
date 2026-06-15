@@ -5,7 +5,11 @@
 **Tier:** T2 (compliance + operations)
 **Depends on:** `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md` (T1 GL)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping trial balance in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: trial balance drill-through page not yet implemented
 

@@ -5,7 +5,7 @@
 **Status:** draft
 **Applies to:** Nextcloud Booking
 
-## Overview
+## Purpose
 
 Configurable SMS reminder channels for booking reminders with pluggable
 provider support (MessageBird, Twilio). Operators configure SMS channel,

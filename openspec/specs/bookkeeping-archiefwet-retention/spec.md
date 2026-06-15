@@ -5,7 +5,7 @@
 **Tier**: T3 (operations + NL compliance core)
 **Depends on**: bookkeeping-general-ledger (T1)
 
-## Overview
+## Purpose
 
 Records retention enforcement per Archiefwet 1995 and Selectielijst Gemeenten 2020. Declares retention rules for every record type in Shillinq (T1, T2, T3), consumed by OR's lifecycle retention abstraction per ADR-022.
 
@@ -17,7 +17,7 @@ Records retention enforcement per Archiefwet 1995 and Selectielijst Gemeenten 20
 - Operator-overrideable retention per administration
 - Enforcement (purge/archive/anonymise) by OR engine
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude pure backend/compliance: data retention logic — not browser-testable
 

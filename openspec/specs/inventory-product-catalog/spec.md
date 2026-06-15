@@ -5,7 +5,11 @@
 **Tier:** T1 (foundational)
 **Depends on:** none
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory product catalog in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: product catalog index/detail pages not yet implemented
 

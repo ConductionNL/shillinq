@@ -6,7 +6,11 @@
 **Depends on:** `../bookkeeping-chart-of-accounts/spec.md` (T1 accounts),
 `../bookkeeping-general-ledger/spec.md` (T1 GL transactions)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping financial statements in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: financial statements — not browser-testable
 

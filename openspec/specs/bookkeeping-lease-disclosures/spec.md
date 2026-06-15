@@ -5,11 +5,11 @@
 **Tier:** T4-specialized (advanced / specialized lease accounting)
 **Depends on:** bookkeeping-lease-contracts, bookkeeping-lease-accounting, bookkeeping-lease-reassessment, bookkeeping-lease-exemptions
 
-## Summary
+## Purpose
 
 IFRS 16 paragraphs 51–60 mandate detailed quantitative and qualitative disclosures about leases. The disclosure-table register materializes this information at period close, allowing one-click export to XBRL and audit-ready PDF reports.
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude unbuilt UI: lease disclosures pages not yet implemented
 

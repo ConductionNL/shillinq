@@ -5,7 +5,11 @@
 **Tier:** T2 (inventory operations)  
 **Depends on:** inventory-product-catalog
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory barcode sku in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: barcode/SKU inventory pages not yet implemented
 

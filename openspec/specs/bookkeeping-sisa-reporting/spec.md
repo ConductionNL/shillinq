@@ -7,7 +7,11 @@
 `../add-shillinq-audit-trail/specs/bookkeeping-audit-trail/spec.md` (document versioning),
 `../add-shillinq-grant-subsidy-management/specs/grant-subsidy-management/spec.md` (grant eligibility)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping sisa reporting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: SISA compliance audit page not yet implemented
 

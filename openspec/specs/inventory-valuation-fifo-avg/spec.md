@@ -5,7 +5,11 @@
 **Tier:** inventory sub-ledger
 **Depends on:** inventory-stock-movement-ledger, add-shillinq-general-ledger
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory valuation fifo avg in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: valuation index/detail pages not yet implemented
 

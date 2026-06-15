@@ -10,7 +10,11 @@
 `../bookkeeping-accounts-payable/spec.md` (AP cut-off),
 `../bookkeeping-accounts-receivable/spec.md` (AR cut-off)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping continuous close in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend: soft-close flux logic — not browser-testable
 

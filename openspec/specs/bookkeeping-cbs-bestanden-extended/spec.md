@@ -6,7 +6,7 @@
 **Depends on:** bookkeeping-iv3-reporting  
 **Kind:** config
 
-## Summary
+## Purpose
 
 Add extended CBS (Centraal Bureau voor de Statistiek) statistical file exports beyond the baseline IV3: Iv3-detail, Kerngegevens jaarstaten, Iv3-OZB, EMU-bestand, periodieke statistiekleveringen. Each is a transformation aggregation + docudesk template + openconnector source row.
 

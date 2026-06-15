@@ -6,7 +6,11 @@
 **Depends on:** `inventory-stock-tracking` (InventoryStock queries),
 optional: `add-shillinq-general-ledger` (GL integration for transfers)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory multi warehouse in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/schema: multi-warehouse register — not browser-testable
 

@@ -5,7 +5,11 @@
 **Tier:** T1 (foundational data model)
 **Depends on:** none
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookings service catalog in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/schema: service catalogue register — not browser-testable
 

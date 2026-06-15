@@ -10,7 +10,11 @@
 - `bookkeeping-vendor-master` (master-data integrity rule data)
 - `bookkeeping-payments` (payment-instruction interception for block-mode rules)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping ccm rule engine in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend: continuous close rule engine — not browser-testable
 

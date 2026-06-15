@@ -5,7 +5,11 @@
 **Tier:** T2 (customer-facing feature)
 **Depends on:** none
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookings notification triggers in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: notification config modal not yet implemented
 

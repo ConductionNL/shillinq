@@ -5,7 +5,7 @@
 **Tier:** cross-cutting integration (not in canonical 5-tier roadmap; see ADR-001)  
 **Depends on:** bookkeeping-obligation-financial-administration (T2), supplier-performance-management  
 
-## Summary
+## Purpose
 
 TenderNed Integratie enables Shillinq to automatically import publicly awarded procurement contracts from TenderNed (Dutch central platform, Logius) and manifest them as financial obligations (Verplichting) with real-time budget-impact visibility and milestone-based execution tracking. The integration supports two roles: aanbestedende dienst (public buyer organization) and inschrijvende leverancier (private vendor organization), each with role-specific workflows and visibility constraints.
 

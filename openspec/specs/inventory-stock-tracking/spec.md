@@ -5,7 +5,11 @@
 **Tier:** T1 (foundational)
 **Depends on:** inventory-product-catalog
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory stock tracking in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 ### REQ-IST-001: The system SHALL store inventory stock levels as an OpenRegister-managed `InventoryStock` register
 

@@ -14,7 +14,11 @@
 
 ---
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for zzp urencriterium tracker in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: zzp urencriterium tracker pages not yet implemented
 

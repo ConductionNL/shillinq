@@ -6,7 +6,11 @@
 **Depends on:** `./bookkeeping-trial-balance/spec.md` (T2 trial-balance — pre-close
 preview), `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md` (T1 GL)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping period close in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: period-close index/detail pages not yet implemented
 

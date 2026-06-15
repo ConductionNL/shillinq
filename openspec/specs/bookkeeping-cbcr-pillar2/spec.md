@@ -14,7 +14,7 @@
 
 ---
 
-## Overview
+## Purpose
 
 Deze spec introduceert volledige CbCR (BEPS Action 13, Wet Vpb 29b–29h) en
 Pillar 2 (OESO GloBE Model Rules, Wet minimumbelasting 2024) rapportage

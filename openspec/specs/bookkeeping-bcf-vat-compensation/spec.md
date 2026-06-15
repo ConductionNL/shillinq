@@ -5,7 +5,7 @@
 **Tier**: T3 (operations + NL compliance core)
 **Depends on**: bookkeeping-vat-btw-filing (T3), bookkeeping-bbv-compliance (T3)
 
-## Overview
+## Purpose
 
 BTW Compensatiefonds (BCF) claim administration for Dutch municipalities. Municipalities recover compensable VAT from the fund via quarterly claim submissions per Wet HOF.
 
@@ -17,7 +17,7 @@ BTW Compensatiefonds (BCF) claim administration for Dutch municipalities. Munici
 - Quarterly submission via DigiKoppeling source
 - Claim settlement tracking
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude pure backend/compliance: BCF VAT compensation — not browser-testable
 

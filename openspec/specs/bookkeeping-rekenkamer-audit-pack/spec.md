@@ -5,7 +5,11 @@
 **Tier:** T2/T3 (compliance + operations + governance)
 **Depends on:** bookkeeping-chart-of-accounts, accounts-payable-receivable, procurement-compliance
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping rekenkamer audit pack in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: rekenkamer audit pack pages not yet implemented
 

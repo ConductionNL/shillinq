@@ -5,13 +5,13 @@
 **Tier:** T2
 **Depends on:** `obligation-financial-administration` (approved), `rate-card-engine` (approved), `retainer-billing-engine` (approved)
 
-## Preamble
+## Purpose
 
 This specification defines invoice generation from approved time entries and expense records, supporting multiple billing models (T&M, fixed-fee, milestone, retainer, mixed). It extends the `Invoice` and `InvoiceLine` registers with time/expense tracking, rate card integration, and GL posting. All requirements use RFC 2119 language (MUST, SHOULD, MAY).
 
 ---
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude unbuilt UI: invoice-from-time-and-expense pages not yet implemented
 

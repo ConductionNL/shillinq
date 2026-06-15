@@ -6,7 +6,11 @@
 **Depends on:** `../bookkeeping-fixed-assets-depreciation/spec.md` (FixedAsset base),
 `../bookkeeping-vpb-corporate-tax/spec.md` (Vpb-aangifte integration)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping investeringsaftrek in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: investeringsaftrek — not browser-testable
 

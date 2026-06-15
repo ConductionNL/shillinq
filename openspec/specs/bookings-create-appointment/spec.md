@@ -5,7 +5,11 @@
 **Tier:** T1 (core feature)
 **Depends on:** bookings-resource-calendar, bookings-service-catalog
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookings create appointment in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: appointment creation pages not yet implemented
 

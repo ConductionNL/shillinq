@@ -5,11 +5,11 @@
 **Tier:** T4-specialized (advanced / specialized lease accounting)
 **Depends on:** bookkeeping-lease-contracts, bookkeeping-lease-accounting
 
-## Summary
+## Purpose
 
 Over the life of a lease, modifications and remeasurement events occur: a lessee extends the term, the IBR changes, the lessor adjusts payment terms, or indexation clauses trigger a recalculation. Each event is captured in a `lease-reassessment-event` record with before/after snapshots, supporting evidence, and GL postings.
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude pure backend/compliance: lease reassessment — not browser-testable
 

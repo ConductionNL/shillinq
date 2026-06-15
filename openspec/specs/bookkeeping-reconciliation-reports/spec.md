@@ -7,7 +7,11 @@
 `../bookkeeping-accounts-receivable-core/spec.md` (AR invoices),
 `../bookkeeping-accounts-payable-core/spec.md` (AP invoices)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping reconciliation reports in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: reconciliation reports pages not yet implemented
 

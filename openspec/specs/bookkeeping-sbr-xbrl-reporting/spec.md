@@ -6,7 +6,11 @@
 **Depends on:** `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md` (T1 GL),
 `../add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md` (T2 chart mapping)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping sbr xbrl reporting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: SBR/XBRL taxonomy pages not yet implemented
 

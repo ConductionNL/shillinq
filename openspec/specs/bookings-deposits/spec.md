@@ -8,7 +8,7 @@
 
 ---
 
-## Overview
+## Purpose
 
 This spec defines the capability to collect partial or full deposits from customers at booking confirmation via Mollie or Stripe (routed through OpenConnector). Deposits are materialized as Shillinq `ARInvoice` records for accounting and tax compliance. The feature is declarative per ADR-031: all deposit rules, payment-link generation, and invoice creation logic are `x-openregister-lifecycle` and `x-openregister-calculations` metadata, not PHP code.
 

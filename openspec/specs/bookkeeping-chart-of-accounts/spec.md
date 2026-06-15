@@ -5,7 +5,11 @@
 **Tier:** T1 (foundation)
 **Depends on:** none
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping chart of accounts in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 ### REQ-CoA-001: The system SHALL store the chart of accounts as an OpenRegister-managed `Account` register
 

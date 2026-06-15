@@ -5,7 +5,7 @@
 **Status:** draft
 **Applies to:** Shillinq
 
-## Overview
+## Purpose
 
 Automated reporting pipeline for Dutch decentrale overheden under Wet Houdbare Overheidsfinanciën (Wet Hof). Converts BBV accrual-basis general ledger to cash-basis EMU-saldo via macro-rules (Wet Hof art. 3) and transaction-level adjustments. Generates quarterly EMU-saldo aangifte (kwartaalenquête) and annual bruto EMU-schuld position. Includes automatic CBS XBRL indiening (via openconnector), reconciliation with BBV jaarrekening, and afwijkingsalert on referentiewaarde overschrijding.
 

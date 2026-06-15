@@ -5,7 +5,11 @@
 **Tier:** T1 (foundation)
 **Depends on:** bookkeeping-general-ledger (which depends on bookkeeping-chart-of-accounts)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping journal entries in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: journal entry index/detail pages not yet implemented
 

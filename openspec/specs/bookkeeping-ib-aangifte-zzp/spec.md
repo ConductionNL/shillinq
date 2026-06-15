@@ -14,7 +14,7 @@
 
 ---
 
-## Overview
+## Purpose
 
 This spec enables ZZP'ers and small entrepreneurs to automatically assemble, validate, and submit their annual income tax return (P-formulier) in compliance with Wet inkomstenbelasting 2001 (Wet IB), Algemene wet inzake rijksbelastingen (AWR), and Dutch Belastingplan annual updates.
 

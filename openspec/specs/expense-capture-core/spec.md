@@ -6,7 +6,11 @@
 **Depends on:** `../add-shillinq-general-ledger/specs/bookkeeping-general-ledger/spec.md` (T1 GL),
 `../add-shillinq-multi-currency/specs/multi-currency/spec.md` (FX conversion)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for expense capture core in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: expense capture pages not yet implemented
 

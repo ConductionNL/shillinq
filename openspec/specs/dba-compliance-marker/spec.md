@@ -5,7 +5,11 @@
 **Tier:** T2 (compliance + operations)
 **Depends on:** AP/AR (optional: factuurfrequentie-monitoring), OpenRegister lifecycle/calculations/aggregations (ADR-031)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for dba compliance marker in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: DBA compliance intake/monitoring pages not yet implemented
 

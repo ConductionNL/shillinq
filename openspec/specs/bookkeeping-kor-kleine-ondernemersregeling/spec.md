@@ -5,7 +5,11 @@
 **Tier:** T3 (operations + NL compliance core)
 **Depends on:** bookkeeping-vat-btw-filing (T3)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping kor kleine ondernemersregeling in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: KOR page not yet implemented
 

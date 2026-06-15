@@ -5,7 +5,7 @@
 **Tier:** T2 (billing + operations)  
 **Depends on:** rate-card-engine
 
-## Overview
+## Purpose
 
 The retainer-billing-management capability enables monthly retainer pools
 per client/project with automatic drawdown tracking from time entries,

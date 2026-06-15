@@ -7,7 +7,11 @@
 `../bookkeeping-bank-connectors/spec.md` (pain.008 submission, pain.002/camt.054 ingestion),
 `../add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md` (bank account + receivable accounts)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping sepa direct debit in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: SEPA direct debit pages not yet implemented
 

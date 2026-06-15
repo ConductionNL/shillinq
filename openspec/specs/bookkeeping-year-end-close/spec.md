@@ -5,7 +5,11 @@
 **Tier:** T4 (advanced engine)
 **Depends on:** bookkeeping-period-close (T3)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping year end close in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 ### REQ-YEC-001: The fiscal-year close SHALL be expressed as a declarative lifecycle transition on a `FiscalYear` register
 

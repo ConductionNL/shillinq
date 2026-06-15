@@ -6,7 +6,11 @@
 **Depends on:** `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-chart-of-accounts/spec.md` (T1 chart of accounts),
 `./bookkeeping-audit-trail/spec.md` (T2 audit trail)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping schatkistbankieren in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: schatkistbankieren treasury pages not yet implemented
 

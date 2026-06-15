@@ -5,7 +5,11 @@
 **Tier:** T3 (operations + NL compliance core)
 **Depends on:** bookkeeping-general-ledger (T1)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping subsidie verantwoording in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: subsidie verantwoording — not browser-testable
 

@@ -5,7 +5,11 @@
 **Tier:** T4-specialized (MKB / innovation)
 **Depends on:** bookkeeping-cost-centers-dimensions
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping wbso sno administratie in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: WBSO SNO admin — not browser-testable
 

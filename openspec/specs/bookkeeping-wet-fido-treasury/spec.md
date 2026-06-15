@@ -13,7 +13,7 @@
 
 ---
 
-## Overview
+## Purpose
 
 This spec introduces complete Wet Fido (Wet Financiering Decentrale Overheden) and
 local Treasurystatuut compliance for Shillinq. The system enforces two hard

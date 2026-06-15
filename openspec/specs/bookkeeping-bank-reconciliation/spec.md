@@ -6,7 +6,11 @@
 **Depends on:** `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md` (T1 GL),
 `./bookkeeping-document-attachment-integration/spec.md` (docudesk FK contract for statement archival)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping bank reconciliation in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 ### REQ-BR-001: Bank reconciliation SHALL be declared as `BankStatement` + `BankStatementLine` + `ReconciliationMatch` + `MatchingRule` registers, not parallel storage
 

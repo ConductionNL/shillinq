@@ -5,11 +5,11 @@
 **Tier:** T4-specialized (advanced / specialized lease accounting)
 **Depends on:** bookkeeping-general-ledger (T1)
 
-## Summary
+## Purpose
 
 The lease-contract register is the master record for every lease under IFRS 16 that a shillinq customer owns. It captures the contractual terms (lessor, commencement date, payment terms, extension/termination options, IBR, classification), integrates with docudesk for source contract PDFs, and routes complex contracts through an optional classification wizard.
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude unbuilt UI: lease register detail via OR API, page not yet implemented
 

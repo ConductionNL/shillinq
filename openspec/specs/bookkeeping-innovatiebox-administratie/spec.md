@@ -5,7 +5,11 @@
 **Tier:** T4-specialized (MKB + R&D-intensive scale-ups)
 **Depends on:** bookkeeping-cost-centers-dimensions, bookkeeping-chart-of-accounts, bookkeeping-vpb-corporate-tax, bookkeeping-wbso-sno-administratie, bookkeeping-payroll
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping innovatiebox administratie in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: innovatiebox admin — not browser-testable
 

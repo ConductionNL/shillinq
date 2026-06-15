@@ -5,7 +5,11 @@
 **Tier:** T4-specialized (NL gov sector)
 **Depends on:** bookkeeping-bbv-compliance
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping waterschappen bbv variant in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: waterschappen BBV variant — not browser-testable
 

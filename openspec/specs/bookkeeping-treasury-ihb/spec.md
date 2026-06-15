@@ -10,7 +10,11 @@
 `../add-shillinq-accounts-receivable-core/spec.md` (T2 AR ageing),
 `../add-shillinq-financial-statements/specs/bookkeeping-financial-statements/spec.md` (T3 IFRS disclosure)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping treasury ihb in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: treasury IHB entries page not yet implemented
 

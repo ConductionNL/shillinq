@@ -7,7 +7,11 @@
 `../../specs/bookkeeping-quote-order-invoice/spec.md` (contract origination),
 `../../specs/bookkeeping-consultancy-project-accounting/spec.md` (input-method cost sourcing)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping ifrs15 revenue in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: IFRS 15 revenue recognition — not browser-testable
 

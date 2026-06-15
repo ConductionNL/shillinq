@@ -8,7 +8,7 @@
 
 ---
 
-## Overview
+## Purpose
 
 This spec defines the capability to automatically consume authorized deposit amounts when a booking transitions to invoicing (at completion or checkout). When a booking moves from `confirmed` to `completed`, a final `Invoice` is created in Shillinq with a negative line item (credit) for the deposit amount, reducing the customer's outstanding balance. Deposit-to-invoice reconciliation is bidirectional and auditable through Shillinq's AR module.
 

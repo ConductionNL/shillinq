@@ -6,7 +6,7 @@
 **Depends on:** bookkeeping-programmabegroting, bookkeeping-bbv-compliance, bookkeeping-rekenkamer-audit-pack  
 **Feeds:** bookkeeping-sisa-reporting, bookkeeping-jaarrekening-publication
 
-## Overview
+## Purpose
 
 This specification defines the BADO audit framework as a declarative, machine-
 readable capability within Shillinq. It covers:

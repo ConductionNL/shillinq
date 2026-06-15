@@ -5,7 +5,11 @@
 **Tier:** T4 (advanced engine)
 **Depends on:** bookkeeping-bank-reconciliation (T2)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping bank connectors in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: bank connector OAuth/SCA pages not yet implemented
 

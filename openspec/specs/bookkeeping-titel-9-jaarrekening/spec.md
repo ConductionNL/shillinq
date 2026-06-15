@@ -7,7 +7,11 @@
 
 ---
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping titel 9 jaarrekening in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: Titel 9 jaarrekening — not browser-testable
 

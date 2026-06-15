@@ -5,7 +5,11 @@
 **Tier:** T1 (foundation)
 **Depends on:** bookkeeping-chart-of-accounts
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping general ledger in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: GL index/detail pages not yet implemented
 

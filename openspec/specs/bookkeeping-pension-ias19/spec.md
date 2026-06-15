@@ -13,7 +13,7 @@
 
 ---
 
-## Overview
+## Purpose
 
 This spec introduces complete IAS 19 / RJ 271 defined-benefit (DB) and
 defined-contribution (DC) pension accounting for Shillinq. The system

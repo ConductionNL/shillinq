@@ -7,7 +7,11 @@
 `../add-shillinq-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md` (Invoice + Counterparty),
 `../add-shillinq-vat-btw-filing/specs/bookkeeping-vat-btw-filing/spec.md` (BTW-aangifte excludes OSS accounts)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping btw oss eu in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: BTW OSS EU filing — not browser-testable
 

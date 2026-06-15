@@ -5,7 +5,11 @@
 **Tier:** T4 (advanced engine)
 **Depends on:** bookkeeping-general-ledger (T1)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping cost centers dimensions in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 ### REQ-CC-001: The system SHALL store analytical dimensions as OpenRegister-managed registers declared in the app manifest
 

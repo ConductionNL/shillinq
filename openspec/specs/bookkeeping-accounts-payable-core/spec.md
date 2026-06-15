@@ -8,7 +8,11 @@
 `./bookkeeping-document-attachment-integration/spec.md` (docudesk FK contract),
 `./bookkeeping-bank-reconciliation/spec.md` (payment matching)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping accounts payable core in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/schema: AP register declarations, schema constraints, SEPA XML generation — not browser-testable
 

@@ -5,7 +5,11 @@
 **Tier:** T3 (operations + NL compliance core)
 **Depends on:** bookkeeping-chart-of-accounts (T1), bookkeeping-general-ledger (T1)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping bbv compliance in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: BBV reporting — not browser-testable; referred UI unbuilt
 

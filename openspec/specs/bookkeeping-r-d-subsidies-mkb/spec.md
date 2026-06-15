@@ -5,7 +5,11 @@
 **Tier:** T4-specialized (MKB / innovation)
 **Depends on:** bookkeeping-subsidie-verantwoording
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping r d subsidies mkb in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 ### REQ-RDS-001: The system SHALL declare a `subsidieRegeling` enum on the existing Subsidie register for the R&D regelingen
 

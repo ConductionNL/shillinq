@@ -7,7 +7,11 @@
 `../bookkeeping-general-ledger/spec.md` (GL posting), `../bookkeeping-btw-aangifte/spec.md` (BTW-teruggaaf),
 `../docudesk/spec.md` (dunning-templates), `../openconnector/spec.md` (API integrations)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping credit control dunning in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: dunning/credit control pages not yet implemented
 

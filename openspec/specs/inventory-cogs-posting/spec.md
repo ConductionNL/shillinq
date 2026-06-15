@@ -10,7 +10,11 @@ REQ-GL-003 `subLedgerType`),
 `inventory-valuation-fifo-avg` (provides `InventoryValuation.unitCost`
 for the posting amount)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory cogs posting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: COGS posting configuration page not yet implemented
 

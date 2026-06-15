@@ -6,7 +6,11 @@
 **Depends on:** `inventory-stock-tracking` (InventoryStock updates),
 `add-shillinq-general-ledger` (GL materialisation for receipt/issue COGS)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory stock movement ledger in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: stock movements index page not yet implemented
 

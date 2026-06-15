@@ -7,7 +7,11 @@
 `../bookkeeping-financial-statements/spec.md` (RJ + IFRS statement generation),
 `../bookkeeping-consolidation/spec.md` (multi-entity framework conversion)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping ifrs rj dual gaap in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: IFRS/RJ dual GAAP pages not yet implemented
 

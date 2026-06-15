@@ -6,7 +6,11 @@
 **Depends on:** `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md` (T1 GL),
 `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-chart-of-accounts/spec.md` (asset accounts)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping fixed assets depreciation in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: fixed assets index page not yet implemented
 
