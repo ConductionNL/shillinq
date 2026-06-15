@@ -17,7 +17,7 @@ const APP = '/apps/shillinq'
 test.describe('shillinq — SPA smoke (v0.1.0 shell)', () => {
 	test('app mounts and stays on shillinq route', async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss any first-run wizard overlays.
 		const wizard = page.locator('#firstrunwizard')
@@ -32,9 +32,14 @@ test.describe('shillinq — SPA smoke (v0.1.0 shell)', () => {
 		// 2. The Shillinq page title must be set (renders after Vue mounts + l10n).
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 
-		// 3. The sidebar must contain a link pointing at the shillinq Settings page.
+		// 3. The sidebar must contain a link pointing at the shillinq Settings
+		// page. The lib renders it inside the collapsed `cn-app-nav__settings-list`
+		// footer (revealed by a toggle), so it is attached but not visible until
+		// the user opens that list — assert presence via the stable nav testid
+		// rather than viewport visibility (the .first() href match used to grab
+		// the off-screen settings cog and flake on toBeVisible).
 		await expect(
-			page.locator('a[href*="/apps/shillinq/settings"]').first(),
-		).toBeVisible({ timeout: 10_000 })
+			page.locator('[data-testid="cn-nav-entry-Settings"]'),
+		).toBeAttached({ timeout: 10_000 })
 	})
 })

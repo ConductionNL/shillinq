@@ -21,7 +21,7 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')
 		if (await wizard.isVisible().catch(() => false)) {
@@ -35,7 +35,7 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	 */
 	test('cashflow dashboard route mounts', async ({ page }) => {
 		await page.goto(APP + '/cashflow/dashboard')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/cashflow/dashboard')
 	})
 
@@ -44,7 +44,7 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	 */
 	test('scenarios route mounts', async ({ page }) => {
 		await page.goto(APP + '/cashflow/scenarios')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/cashflow/scenarios')
 	})
 
@@ -53,7 +53,7 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	 */
 	test('buffer-policy route mounts', async ({ page }) => {
 		await page.goto(APP + '/cashflow/buffer-policy')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/cashflow/buffer-policy')
 	})
 
@@ -62,7 +62,7 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	 */
 	test('recurring costs route mounts', async ({ page }) => {
 		await page.goto(APP + '/cashflow/recurring')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/cashflow/recurring')
 	})
 
@@ -71,7 +71,7 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	 */
 	test('calibration report route mounts', async ({ page }) => {
 		await page.goto(APP + '/cashflow/calibration')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/cashflow/calibration')
 	})
 
@@ -80,7 +80,7 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	 */
 	test('dashboard exposes 13-week chart widget slot', async ({ page }) => {
 		await page.goto(APP + '/cashflow/dashboard')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		// Either a chart canvas, a manifest-rendered widget container, or the
 		// CashflowDashboard skeleton's chart slot must be present.
 		const chartCandidates = page.locator('[data-widget="cashflow-13week-chart"], canvas, [data-widget-id="cashflow-13week-chart"]')
@@ -92,7 +92,7 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	 */
 	test('dashboard exposes an Export PDF affordance', async ({ page }) => {
 		await page.goto(APP + '/cashflow/dashboard')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		const exportBtn = page.getByRole('button', { name: /export.*pdf/i })
 		await expect(exportBtn.first()).toBeVisible({ timeout: 10_000 })
 	})
@@ -102,7 +102,7 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	 */
 	test('scenarios index exposes a create action', async ({ page }) => {
 		await page.goto(APP + '/cashflow/scenarios')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		const createBtn = page.getByRole('button', { name: /create|add|new/i })
 		await expect(createBtn.first()).toBeVisible({ timeout: 10_000 })
 	})
@@ -112,7 +112,7 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	 */
 	test('recurring costs index exposes a create action', async ({ page }) => {
 		await page.goto(APP + '/cashflow/recurring')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		const createBtn = page.getByRole('button', { name: /create|add|new/i })
 		await expect(createBtn.first()).toBeVisible({ timeout: 10_000 })
 	})
@@ -122,7 +122,7 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	 */
 	test('crisis banner is conditionally rendered (no fatal when absent)', async ({ page }) => {
 		await page.goto(APP + '/cashflow/dashboard')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		// The crisis banner is conditional. Either it is absent (no negative
 		// forecast in fixtures) or it carries the role="alert" attribute.
 		const banner = page.locator('[role="alert"]')

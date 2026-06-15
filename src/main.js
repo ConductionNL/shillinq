@@ -293,6 +293,22 @@ tryLoadTranslations()
 const pageTypesProp = { ...defaultPageTypes }
 const registryProp = { ...registry }
 
+// Flat `{ name: component }` map of every registry component, derived from
+// the kind-tagged `registry`. The published `@conduction/nextcloud-vue` beta
+// resolves a page's `component` / `headerComponent` / `actionsComponent` and a
+// dashboard widget's custom `widgetKey` against the `customComponents` prop,
+// NOT the kind-tagged `registry`. Without this map every custom page (the
+// bookings calendar, the confirmation portal, the WBSO views, …) renders an
+// empty `cn-page` shell AND custom action/widget components (e.g. the Dashboard
+// `actionsComponent: FinancialDashboardActions`) silently disappear. Flatten
+// ALL kinds (page + widget + …) so every name a manifest can reference resolves.
+// Mirrors the procest / docudesk / opencatalogi wiring.
+const customComponentsProp = Object.fromEntries(
+	Object.entries(registry)
+		.filter(([, entry]) => entry && entry.component)
+		.map(([name, entry]) => [name, entry.component]),
+)
+
 new Vue({
 	pinia,
 	router,
@@ -301,6 +317,7 @@ new Vue({
 			manifest: mergedManifest,
 			pageTypes: pageTypesProp,
 			registry: registryProp,
+			customComponents: customComponentsProp,
 		},
 	}),
 }).$mount('#content')

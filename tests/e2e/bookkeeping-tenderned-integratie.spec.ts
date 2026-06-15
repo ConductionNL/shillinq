@@ -41,7 +41,7 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 
 	test('TenderNed Aanbestedingen index — mounts on /inkoop/tenderned', async ({ page }) => {
 		await page.goto(APP + '/inkoop/tenderned')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		expect(page.url()).toContain('/apps/shillinq')
@@ -51,7 +51,7 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 
 	test('Verplichtingen index — mounts on /inkoop/verplichtingen', async ({ page }) => {
 		await page.goto(APP + '/inkoop/verplichtingen')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		expect(page.url()).toContain('/apps/shillinq')
@@ -63,7 +63,7 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 		// inschrijvers (REQ-008). The manifest declares `config.filters.bron`
 		// = "tenderned" so vendors only see their own contracted obligations.
 		await page.goto(APP + '/inkoop/mijn-contracten')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		expect(page.url()).toContain('/apps/shillinq')
@@ -72,7 +72,7 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 
 	test('Inkoop navigation entry is reachable from the shillinq shell', async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		// The manifest registers the "Inkoop" cluster with the three children;

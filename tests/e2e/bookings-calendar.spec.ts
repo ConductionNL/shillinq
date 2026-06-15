@@ -29,7 +29,7 @@ const APP = '/apps/shillinq'
 test.describe('shillinq — bookings calendar smoke', () => {
 	test('SPA mounts and bookings calendar components are registered @spec REQ-006', async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss any first-run wizard overlays.
 		const wizard = page.locator('#firstrunwizard')
@@ -81,7 +81,13 @@ test.describe('shillinq — bookings calendar smoke', () => {
 		expect([200, 503]).toContain(res.status())
 		if (res.status() === 200) {
 			const body = await res.json()
-			expect(Array.isArray(body) || Array.isArray(body?.data)).toBe(true)
+			// CalendarController::index() returns { calendars: [...] }; accept
+			// that canonical shape as well as a bare array / { data: [...] }.
+			expect(
+				Array.isArray(body)
+				|| Array.isArray(body?.data)
+				|| Array.isArray(body?.calendars),
+			).toBe(true)
 		}
 	})
 })

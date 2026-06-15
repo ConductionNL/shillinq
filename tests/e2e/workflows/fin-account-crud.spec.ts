@@ -44,7 +44,7 @@ test.describe('shillinq finance — ledger Account full CRUD with persistence', 
 
 	test('the shillinq SPA mounts in an authenticated session', async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 	})
 

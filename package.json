@@ -48,10 +48,12 @@
   "overrides": {
     "libxmljs2": "^0.37.0",
     "apexcharts": "4.7.0",
-    "@nextcloud/axios": "~2.5.2"
+    "@nextcloud/axios": "~2.5.2",
+    "minimatch": "^3.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.26.9",
+    "@vitest/coverage-v8": "^1.6.1",
     "@babel/eslint-parser": "^7.16.5",
     "@cyclonedx/cyclonedx-npm": "^4.2.1",
     "@eslint/config-helpers": "^0.4.2",

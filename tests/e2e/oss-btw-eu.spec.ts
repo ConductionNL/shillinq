@@ -24,7 +24,7 @@ const APP = '/apps/shillinq'
 test.describe('shillinq — OSS SPA smoke', () => {
 	test('OSS navigation entries are reachable in the manifest shell', async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss any first-run wizard overlays.
 		const wizard = page.locator('#firstrunwizard')
@@ -39,7 +39,7 @@ test.describe('shillinq — OSS SPA smoke', () => {
 		// The OSS Returns index page is registered by the manifest fragment; the
 		// SPA route must resolve without redirecting away from shillinq.
 		await page.goto(APP + '/bookkeeping/oss/returns')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 	})
 })

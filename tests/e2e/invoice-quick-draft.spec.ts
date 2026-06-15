@@ -39,7 +39,7 @@ test.describe('shillinq-invoice-quick-draft — quick draft modal', () => {
 	test.beforeEach(async ({ page }) => {
 		page.setViewportSize({ width: 1600, height: 1200 })
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')
 		if (await wizard.isVisible().catch(() => false)) {

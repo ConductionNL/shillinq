@@ -42,7 +42,7 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 		// integration panel mounts as a CnSettingsSection inside
 		// AdminRoot.vue (src/views/settings/AdminRoot.vue).
 		await page.goto(SHILLINQ_ADMIN_SETTINGS)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss the first-run wizard if it pops up — common on a
 		// fresh dev instance.
@@ -112,7 +112,7 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 			await save.click()
 			// Wait for the spinner to settle. The "Saving…" label
 			// disappears once the request completes.
-			await page.waitForLoadState('networkidle')
+			await page.waitForLoadState('domcontentloaded')
 		}
 
 		// Endpoint persists in the form after Save.
@@ -156,7 +156,7 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 		// The panel renders a feedback area on success or error; the
 		// test asserts only that the click was reached without an
 		// unhandled error so the UI affordance is wired end-to-end.
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await expect(testButton).toBeVisible()
 	})
 
@@ -182,11 +182,11 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 		const save = page.getByRole('button', { name: /Save/i }).first()
 		if (await save.isVisible().catch(() => false)) {
 			await save.click()
-			await page.waitForLoadState('networkidle')
+			await page.waitForLoadState('domcontentloaded')
 		}
 
 		await page.reload()
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		const reloadedEndpoint = page.getByLabel(/API endpoint/i).first()
 		if (await reloadedEndpoint.isVisible().catch(() => false)) {

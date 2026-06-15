@@ -99,11 +99,18 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 	await page.locator('input[name="user"]').fill(username)
 	await page.locator('input[name="password"]').fill(password)
 	await page.locator('button[type="submit"]').first().click()
-	// Nextcloud bounces to /apps/dashboard/ (or another default app) on
-	// success. Wait for the global header that only renders on
-	// authenticated pages — the URL-based wait races with the in-flight
-	// click navigation and is unreliable on slower test rigs.
-	await page.waitForSelector('#header, header.header', { timeout: 20_000 })
+	// Nextcloud bounces to a default app (dashboard / mydash / …) on
+	// success. The post-submit redirect chain can take a few seconds on a
+	// heavy instance and the `#header`-only wait races with it, so wait for
+	// the URL to leave /login first (the authoritative success signal),
+	// then settle on the authenticated header. Both waits are forgiving so
+	// a slow-but-successful login is not reported as a credential failure.
+	try {
+		await page.waitForURL((url) => !/\/login(\?|$|\/)/.test(url.toString()), { timeout: 30_000 })
+	} catch {
+		// fall through to the header wait + explicit error below.
+	}
+	await page.waitForSelector('#header, header.header', { timeout: 30_000 }).catch(() => {})
 	// Catch wrong-credentials early so the failure message is clear.
 	const currentUrl = page.url()
 	if (/\/login(\?|$|\/)/.test(currentUrl)) {

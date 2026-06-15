@@ -14,6 +14,7 @@
 	<CnAppRoot
 		:manifest="manifest"
 		:page-types="pageTypes"
+		:custom-components="customComponents"
 		:registry="registry"
 		app-id="shillinq"
 		:translate="translateForApp"
@@ -76,6 +77,20 @@ export default {
 		 * Empty for shillinq — see src/registry.js.
 		 */
 		registry: {
+			type: Object,
+			default: () => ({}),
+		},
+		/**
+		 * Flat `{ name: component }` map of every registry component (pages,
+		 * widgets, …), derived from the kind-tagged `registry` in main.js. The
+		 * published `@conduction/nextcloud-vue` beta resolves a page's
+		 * `component` / `headerComponent` / `actionsComponent` and a custom
+		 * dashboard widget against this `customComponents` prop (not the
+		 * kind-tagged `registry`), so without it every custom page renders an
+		 * empty `cn-page` shell and custom action/widget components disappear.
+		 * Mirrors the procest / docudesk / opencatalogi wiring. See main.js.
+		 */
+		customComponents: {
 			type: Object,
 			default: () => ({}),
 		},

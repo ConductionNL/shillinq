@@ -36,7 +36,7 @@ test.describe('retire-cost-project — navigation contract', () => {
 
 	test('CostProjects nav entry is absent after retirement (REQ-RCP-004)', async ({ page }) => {
 		await page.goto(APP)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss any first-run wizard overlay.
 		const wizard = page.locator('#firstrunwizard')
@@ -64,14 +64,14 @@ test.describe('retire-cost-project — navigation contract', () => {
 			expect(response.status()).not.toBe(404)
 		}
 		// The SPA must still mount (no blank white page or error boundary).
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		const body = await page.locator('body').innerText().catch(() => '')
 		expect(body.toLowerCase()).not.toContain('page not found')
 	})
 
 	test('Projects (RJ 270) has exactly one nav home and ProjectenOverzicht is absent (REQ-RCP-004)', async ({ page }) => {
 		await page.goto(APP)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss any first-run wizard overlay.
 		const wizard = page.locator('#firstrunwizard')
@@ -98,7 +98,7 @@ test.describe('retire-cost-project — navigation contract', () => {
 	test('AnalyticalDimensions index page mounts and accepts project-type filter (REQ-RCP-001)', async ({ page }) => {
 		// Navigate to the AnalyticalDimensions / Dimensions page (cost-centers surface).
 		await page.goto(APP + '/dimensions')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss any first-run wizard overlay.
 		const wizard = page.locator('#firstrunwizard')

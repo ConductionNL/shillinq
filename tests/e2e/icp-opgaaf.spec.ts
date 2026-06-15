@@ -34,7 +34,7 @@ const APP = '/apps/shillinq'
 test.describe('shillinq — ICP-opgaaf SPA smoke', () => {
 	test('ICP-opgaaf navigation entry is reachable in the manifest shell', async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss any first-run wizard overlays.
 		const wizard = page.locator('#firstrunwizard')
@@ -49,7 +49,7 @@ test.describe('shillinq — ICP-opgaaf SPA smoke', () => {
 		// The ICP-opgaaf index page is registered by the manifest; navigation
 		// must resolve without redirecting away from shillinq.
 		await page.goto(APP + '/belastingen/icp-opgaaf')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 	})
 })

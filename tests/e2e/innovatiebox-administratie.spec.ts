@@ -27,7 +27,7 @@ const APP = '/apps/shillinq'
 test.describe('shillinq — Innovatiebox Administratie SPA smoke', () => {
 	test('Innovatiebox navigation entries resolve in the manifest shell', async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss any first-run wizard overlays.
 		const wizard = page.locator('#firstrunwizard')
@@ -43,14 +43,14 @@ test.describe('shillinq — Innovatiebox Administratie SPA smoke', () => {
 		// submenu. The page should mount whether the feature flag is on or off:
 		// when off, the manifest renders an empty list; the SPA must not bounce.
 		await page.goto(APP + '/bookkeeping/innovatiebox')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 
 		// IP-activa (afpelmethode) detail route — registered by the manifest
 		// behind the same mkb-innovatiebox flag; with no fixture loaded the
 		// page renders an empty/not-found state but the SPA route resolves.
 		await page.goto(APP + '/bookkeeping/innovatiebox/ip-activa/none')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 
 		// The page title remains the shillinq SPA title (Vue router did not

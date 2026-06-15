@@ -33,7 +33,7 @@ const APP = '/apps/shillinq'
 test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')
 		if (await wizard.isVisible().catch(() => false)) {
@@ -52,7 +52,7 @@ test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
 		// heavy form-validation + auto-allocation flow needs a live OR with
 		// the Contract schema imported.
 		await page.goto(APP + '/ifrs-15/contracts')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
@@ -63,7 +63,7 @@ test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
 		// the SPA route mount; the chart's 60-month forecast + segment filter
 		// require the RevenueWaterfall aggregation seeded against a live OR.
 		await page.goto(APP + '/ifrs-15/revenue-waterfall')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
@@ -74,7 +74,7 @@ test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
 		// route mount; the bar chart + drill-down need a live OR with
 		// ContractAsset / ContractLiability rows derived nightly.
 		await page.goto(APP + '/ifrs-15/contract-balances')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
@@ -87,7 +87,7 @@ test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
 		// modal workflow requires the live VariableConsiderationAdjustment
 		// schema + an authoriser role for the pending-approval step.
 		await page.goto(APP + '/ifrs-15/contract-modifications')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
@@ -99,11 +99,11 @@ test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
 		// PerformanceObligation rows that feed the disclosure are declared
 		// here and reachable via these routes. Smoke here is the SPA mount.
 		await page.goto(APP + '/ifrs-15/contract-cost-assets')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 
 		await page.goto(APP + '/ifrs-15/performance-obligations')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })

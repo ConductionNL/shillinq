@@ -26,7 +26,7 @@ const APP = '/apps/shillinq'
 test.describe('shillinq — Trial Balance SPA smoke', () => {
 	test('Trial Balance navigation entries resolve in the manifest shell', async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss any first-run wizard overlays.
 		const wizard = page.locator('#firstrunwizard')
@@ -41,13 +41,13 @@ test.describe('shillinq — Trial Balance SPA smoke', () => {
 		// The TrialBalance (period snapshot) index page is registered by the
 		// manifest; the SPA route must resolve without redirecting away.
 		await page.goto(APP + '/financial-statements/trial-balance')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 
 		// The TrialBalanceLines (per-account breakdown) index page is also
 		// registered by the manifest; same SPA contract.
 		await page.goto(APP + '/financial-statements/trial-balance-lines')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
 
 		// The page title remains the shillinq SPA title (Vue router did not

@@ -25,7 +25,7 @@ test.describe('bookings calendar — month/week/day views render', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + CALENDAR_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')
 		if (await wizard.isVisible().catch(() => false)) {
@@ -102,7 +102,7 @@ test.describe('booking form — REQ-007 validation + happy/conflict paths', () =
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + CALENDAR_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')
 		if (await wizard.isVisible().catch(() => false)) {

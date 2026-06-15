@@ -48,7 +48,7 @@ test.describe('bookkeeping-period-close — Tier-2 manifest pages', () => {
 
 	test('Period Close index — page mounts on /bookkeeping/period-close', async ({ page }) => {
 		await page.goto(APP + INDEX_PATH)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		// URL must stay on the shillinq surface.
@@ -60,7 +60,7 @@ test.describe('bookkeeping-period-close — Tier-2 manifest pages', () => {
 
 	test('Period Close detail — custom component mounts on /bookkeeping/period-close/:id', async ({ page }) => {
 		await page.goto(APP + DETAIL_PATH)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		expect(page.url()).toContain('/apps/shillinq')

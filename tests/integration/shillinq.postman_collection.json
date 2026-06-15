@@ -5,6 +5,21 @@
 		"description": "Integration test collection for the shillinq Nextcloud app.\nReplace this with your actual API tests.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Nextcloud rejects API requests without the OCS-APIRequest header",
+					"// (or a CSRF requesttoken) with 412 'CSRF check failed'. Inject it on",
+					"// every request from this collection so individual requests need not",
+					"// each declare it. upsert() overrides any per-request value.",
+					"pm.request.headers.upsert({ key: 'OCS-APIRequest', value: 'true' });"
+				]
+			}
+		}
+	],
 	"auth": {
 		"type": "basic",
 		"basic": [

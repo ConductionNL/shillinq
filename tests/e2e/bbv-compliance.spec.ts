@@ -43,7 +43,7 @@ test.describe('BBV — Iv3-aanlevering dashboard shell', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + ROUTE_IV3_AANLEVERING)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 	})
 
@@ -68,7 +68,7 @@ test.describe('BBV — Iv3-rapportages index shell', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + ROUTE_IV3_RAPPORTAGES)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 	})
 
@@ -84,7 +84,7 @@ test.describe('BBV — BBV-mapping index shell', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + ROUTE_BBV_MAPPING)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 	})
 

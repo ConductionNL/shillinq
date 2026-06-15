@@ -21,7 +21,7 @@
 			"id": "BookingsCalendar",
 			"route": "/verkoop/boekingen-kalender",
 			"type": "custom",
-			"customComponent": "BookingsCalendarPage",
+			"component": "BookingsCalendarPage",
 			"title": "Boekingenkalender"
 		}
 	]

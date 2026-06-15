@@ -20,7 +20,7 @@ test.describe('inventory mobile scanner — manifest pages mount', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')
 		if (await wizard.isVisible().catch(() => false)) {
@@ -34,7 +34,7 @@ test.describe('inventory mobile scanner — manifest pages mount', () => {
 	 */
 	test('mobile scanner home route mounts', async ({ page }) => {
 		await page.goto(APP + '/inventory/mobile')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/inventory/mobile')
 	})
 
@@ -43,7 +43,7 @@ test.describe('inventory mobile scanner — manifest pages mount', () => {
 	 */
 	test('receive route mounts', async ({ page }) => {
 		await page.goto(APP + '/inventory/mobile/receive')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/inventory/mobile/receive')
 	})
 
@@ -52,7 +52,7 @@ test.describe('inventory mobile scanner — manifest pages mount', () => {
 	 */
 	test('transfer route mounts', async ({ page }) => {
 		await page.goto(APP + '/inventory/mobile/transfer')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/inventory/mobile/transfer')
 	})
 
@@ -61,7 +61,7 @@ test.describe('inventory mobile scanner — manifest pages mount', () => {
 	 */
 	test('pick route mounts', async ({ page }) => {
 		await page.goto(APP + '/inventory/mobile/pick')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/inventory/mobile/pick')
 	})
 
@@ -70,7 +70,7 @@ test.describe('inventory mobile scanner — manifest pages mount', () => {
 	 */
 	test('count route mounts', async ({ page }) => {
 		await page.goto(APP + '/inventory/mobile/count')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/inventory/mobile/count')
 	})
 
