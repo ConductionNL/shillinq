@@ -3,11 +3,14 @@
 /**
  * Sign-off Decision Service — ADR-031 integration exception path
  *
- * Raises decidesk Decisions (signature-as-method) via the ADR-019 integration
- * registry and consumes the approved/rejected outcome to write the governance
- * decision consumer field set on the originating finance object
- * (REQ-SIGN-002/005). No approval logic is implemented here; shillinq only
- * requests and consumes. Idempotent: a repeated callback is a no-op.
+ * Raises decidesk Decisions (signature-as-method) via the decidesk
+ * IEventDispatcher event contract (DecisionRequestedEvent, synchronous,
+ * in-process) and consumes the approved/rejected outcome — delivered by a
+ * DecisionConcludedEvent listener — to write the governance decision consumer
+ * field set on the originating finance object (REQ-SIGN-002/005). No approval
+ * logic is implemented here; shillinq only requests and consumes. Idempotent:
+ * a repeated callback is a no-op. Fail-closed: if decidesk is not installed or
+ * did not handle the request, shillinq throws and never auto-approves.
  *
  * @category Service
  * @package  OCA\Shillinq\Service\Signing
@@ -18,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-7
+ * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,17 +33,22 @@ namespace OCA\Shillinq\Service\Signing;
 
 use InvalidArgumentException;
 use OCA\Shillinq\Service\SettingsService;
+use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * ADR-031 exception-path: raises a decidesk Decision (signature-as-method)
- * via the ADR-019 integration registry; consumes the approved/rejected outcome
- * to drive the finance lifecycle and the existing GL consequence.
+ * via the decidesk IEventDispatcher event contract; consumes the
+ * approved/rejected outcome to drive the finance lifecycle and the existing GL
+ * consequence.
  *
- * All decidesk calls go through the integration registry — no hard-coded
- * hostnames (REQ-SIGN-005).
+ * Transport is the synchronous, in-process decidesk event contract
+ * (DecisionRequestedEvent dispatched via IEventDispatcher, DecisionConcludedEvent
+ * consumed by a listener) — no hard-coded hostnames and no phantom integration
+ * registry (REQ-SIGN-005).
  *
- * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-7
+ * @spec openspec/changes/shillinq-delegation-via-events/tasks.md
  */
 class SignoffDecisionService
 {
@@ -55,35 +63,43 @@ class SignoffDecisionService
     /**
      * Constructor.
      *
-     * @param SettingsService $settingsService Shillinq settings (register slug).
-     * @param LoggerInterface $logger          Logger.
+     * @param SettingsService  $settingsService Shillinq settings (register slug).
+     * @param IEventDispatcher $eventDispatcher Event dispatcher for the decidesk contract.
+     * @param LoggerInterface  $logger          Logger.
      */
     public function __construct(
         private readonly SettingsService $settingsService,
+        private readonly IEventDispatcher $eventDispatcher,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
 
-
     /**
      * Raise a decidesk Decision for governance sign-off (REQ-SIGN-002).
      *
-     * Opens a decidesk Decision (signature-as-method) through the ADR-019
-     * integration registry. Sets decisionOutcome=pending and stores the
-     * returned decisionRef. Returns the updated object for the caller to
-     * persist via OR ObjectService (ADR-022).
+     * Dispatches the synchronous, in-process decidesk
+     * {@see \OCA\Decidesk\Event\DecisionRequestedEvent} via IEventDispatcher.
+     * The dispatch is guarded by class_exists so that, when decidesk is not
+     * installed, shillinq FAILS CLOSED (throws) instead of silently advancing.
+     * After dispatch the synchronous result is read back: the decision is only
+     * accepted when the decidesk listener marked the event handled and returned
+     * a decision id. Sets decisionOutcome=pending and stores the returned
+     * decisionRef. Returns the updated object for the caller to persist via OR
+     * ObjectService (ADR-022).
      *
      * No approval logic is implemented in shillinq.
      *
      * @param array<string,mixed> $financeObject The finance object (ACMReport/ActuarialValuation/AnnualReport).
-     * @param object              $registry       The ADR-019 integration registry.
-     * @param string              $decisionType   Decision type hint for decidesk (e.g. 'sign-off', 'adoption').
+     * @param string              $subjectSchema The finance schema slug (e.g. 'ACMReport').
+     * @param string              $decisionType  Decision type hint for decidesk (e.g. 'sign-off', 'adoption').
      *
      * @return array<string,mixed> Updated finance object with decisionOutcome=pending.
      *
-     * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-7
+     * @throws RuntimeException When decidesk is not installed or did not handle the request (fail-closed).
+     *
+     * @spec openspec/changes/shillinq-delegation-via-events/tasks.md
      */
-    public function requestSignoff(array $financeObject, object $registry, string $decisionType='sign-off'): array
+    public function requestSignoff(array $financeObject, string $subjectSchema, string $decisionType='sign-off'): array
     {
         $currentOutcome = (string) ($financeObject['decisionOutcome'] ?? '');
 
@@ -92,39 +108,66 @@ class SignoffDecisionService
             return $financeObject;
         }
 
-        // Raise the Decision via the ADR-019 registry (no raw HTTP).
-        $decisionRef = null;
-        try {
-            $decisionRef = $registry->call('decidesk', 'createDecision', [
-                'decisionType'    => $decisionType,
-                'method'          => 'signature',
-                'objectRef'       => (string) ($financeObject['id'] ?? $financeObject['_id'] ?? ''),
-                'administrationId' => (string) ($financeObject['administrationId'] ?? ''),
-            ]);
-        } catch (\Throwable $e) {
+        // Fail closed when decidesk is not installed — never auto-approve.
+        if (class_exists(\OCA\Decidesk\Event\DecisionRequestedEvent::class) === false) {
             $this->logger->warning(
-                'SignoffDecisionService: registry call to decidesk failed',
-                ['exception' => $e->getMessage()]
+                'SignoffDecisionService: decidesk not installed — sign-off cannot be delegated (fail closed)'
             );
-            throw $e;
+            throw new RuntimeException('decidesk is not installed; sign-off decision cannot be raised.');
         }
 
-        $financeObject['decisionRef']     = is_string($decisionRef) ? $decisionRef : null;
+        $subjectId    = (string) ($financeObject['id'] ?? $financeObject['_id'] ?? '');
+        $subjectLabel = (string) ($financeObject['name'] ?? $financeObject['title'] ?? $subjectId);
+
+        $event = new \OCA\Decidesk\Event\DecisionRequestedEvent(
+            sourceApp: 'shillinq',
+            subjectRegister: $this->settingsService->getRegisterSlug(),
+            subjectSchema: $subjectSchema,
+            subjectId: $subjectId,
+            subjectLabel: $subjectLabel,
+            decisionType: $decisionType,
+            actorId: '',
+            payload: [
+                'title'        => $subjectLabel,
+                'text'         => 'Governance sign-off requested by shillinq for '.$subjectSchema.' '.$subjectId.'.',
+                'decisionDate' => gmdate('Y-m-d\TH:i:s\Z'),
+            ],
+            externalReference: $subjectId,
+            correlationId: '',
+        );
+
+        $this->eventDispatcher->dispatchTyped($event);
+
+        // Read back the synchronous result the decidesk listener wrote.
+        $decisionId = $event->getDecisionId();
+        if ($event->isHandled() === false || $decisionId === null || $decisionId === '') {
+            $this->logger->warning(
+                'SignoffDecisionService: decidesk did not handle the decision request (fail closed)',
+                ['subjectSchema' => $subjectSchema, 'subjectId' => $subjectId]
+            );
+            throw new RuntimeException('decidesk did not handle the sign-off decision request.');
+        }
+
+        $financeObject['decisionRef']     = $decisionId;
         $financeObject['decisionOutcome'] = 'pending';
 
-        $this->logger->info('SignoffDecisionService: Decision raised', [
-            'decisionRef'  => $financeObject['decisionRef'],
-            'decisionType' => $decisionType,
-        ]);
+        $this->logger->info(
+                'SignoffDecisionService: Decision raised via decidesk event',
+                [
+                    'decisionRef'  => $decisionId,
+                    'decisionType' => $decisionType,
+                ]
+                );
 
         return $financeObject;
 
     }//end requestSignoff()
 
-
     /**
-     * Consume a decidesk approved/rejected decision callback (REQ-SIGN-005).
+     * Consume a decidesk approved/rejected decision outcome (REQ-SIGN-005).
      *
+     * Invoked by {@see \OCA\Shillinq\Listener\SignoffDecisionConcludedListener}
+     * when decidesk dispatches a DecisionConcludedEvent for a shillinq subject.
      * Writes the governance-decision consumer field set onto the finance object.
      * On 'approved', triggers the accounting consequence through the caller's
      * consequence callback — shillinq does not own the approval transition
@@ -141,7 +184,7 @@ class SignoffDecisionService
      *
      * @return array<string,mixed> Updated finance object.
      *
-     * @spec openspec/changes/shillinq-delegate-signing/tasks.md#task-7
+     * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md
      */
     public function onDecisionCallback(
         array $financeObject,
@@ -169,14 +212,15 @@ class SignoffDecisionService
             $consequenceCallback($financeObject);
         }
 
-        $this->logger->info('SignoffDecisionService: callback consumed', [
-            'outcome'     => $outcome,
-            'decisionRef' => $decisionRef,
-        ]);
+        $this->logger->info(
+                'SignoffDecisionService: callback consumed',
+                [
+                    'outcome'     => $outcome,
+                    'decisionRef' => $decisionRef,
+                ]
+                );
 
         return $financeObject;
 
     }//end onDecisionCallback()
-
-
 }//end class

@@ -31,6 +31,7 @@ use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
+use OCA\Shillinq\Listener\SignoffDecisionConcludedListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
 use OCA\Shillinq\Listener\VerplichtingTransitionListener;
@@ -522,6 +523,24 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: OpdrachtUitvoeringTransitionListener::class
+        );
+
+        // Change shillinq-delegation-via-events (REQ-SIGN-005/006) — consume
+        // the terminal governance-decision outcome decidesk publishes via
+        // OCA\Decidesk\Event\DecisionConcludedEvent. The sign-off DECISION
+        // request is dispatched synchronously from SignoffDecisionService
+        // (DecisionRequestedEvent via IEventDispatcher, fail-closed when
+        // decidesk is absent); this listener projects the approved/rejected
+        // outcome back onto the originating finance object (ACMReport /
+        // ActuarialValuation / AnnualReport) and fires the LOCAL GL /
+        // lifecycle consequence (the accounting consequence stays in
+        // shillinq). The listener filters to getSourceApp()==='shillinq' and
+        // is inert when decidesk is not installed (the event never fires).
+        // Registering by the decidesk event FQCN is safe even when the class
+        // is not autoloadable — NC only needs the string key.
+        $context->registerEventListener(
+            event: \OCA\Decidesk\Event\DecisionConcludedEvent::class,
+            listener: SignoffDecisionConcludedListener::class
         );
 
     }//end register()
