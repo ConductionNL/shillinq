@@ -36,7 +36,7 @@ test.describe('recurring-invoicing — profile create modal', () => {
 	test.beforeEach(async ({ page }) => {
 		page.setViewportSize({ width: 1600, height: 1200 })
 		await page.goto(APP + '/#/bookkeeping/recurring-invoices')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')
 		if (await wizard.isVisible().catch(() => false)) {

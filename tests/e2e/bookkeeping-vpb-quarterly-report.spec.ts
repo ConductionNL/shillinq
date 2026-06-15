@@ -53,7 +53,7 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax quarterly statement SP
 
 	test('Quarterly statement index — mounts on /bookkeeping/vpb/reports (REQ-VPB-009)', async ({ page }) => {
 		await page.goto(APP + '/bookkeeping/vpb/reports')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		// SPA route resolved by the manifest shell — with no GL postings yet
@@ -69,7 +69,7 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax quarterly statement SP
 		// account-hierarchy headers; the SPA route must resolve and the
 		// shillinq title must persist.
 		await page.goto(APP + '/bookkeeping/vpb/reports/2026/1')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		expect(page.url()).toContain('/apps/shillinq')
@@ -82,7 +82,7 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax quarterly statement SP
 		// warning on the quarterly report. Smoke: route resolves, SPA
 		// stays mounted under /apps/shillinq.
 		await page.goto(APP + '/bookkeeping/vpb/settings')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		expect(page.url()).toContain('/apps/shillinq')

@@ -12,11 +12,12 @@
 			"route": "/budget-mappings/:id",
 			"type": "custom",
 			"title": "Budget Mapping",
+			"component": "BudgetBBVMappingDetail",
+			"_note": "Bespoke detail page (GL + BBV-programme pickers, live allocation feedback, audit-trail sidebar, confirm-gated delete) — does not fit the built-in detail type. Resolved against registry.js kind:page BudgetBBVMappingDetail. The component name is the top-level `component` field (resolved against the customComponents map / kind:page registry); the prior `config.customComponent` form was never read by the renderer, so the page rendered an empty cn-page shell.",
 			"config": {
 				"register": "shillinq",
 				"schema": "BudgetBBVMapping",
-				"indexRoute": "BudgetBBVMappings",
-				"customComponent": "BudgetBBVMappingDetail"
+				"indexRoute": "BudgetBBVMappings"
 			}
 		},
 		{
@@ -24,11 +25,12 @@
 			"route": "/budget-mappings/by-programme/:id",
 			"type": "custom",
 			"title": "Budget Mapping",
+			"component": "BudgetBBVMappingDetail",
+			"_note": "Backward-compat alias (slice-05 BBVProgrammeTable drill-through navigates by router name). Same bespoke component as BudgetBBVMappingDetail; resolved against registry.js kind:page.",
 			"config": {
 				"register": "shillinq",
 				"schema": "BudgetBBVMapping",
-				"indexRoute": "BudgetBBVMappings",
-				"customComponent": "BudgetBBVMappingDetail"
+				"indexRoute": "BudgetBBVMappings"
 			}
 		}
 	]

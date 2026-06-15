@@ -48,7 +48,7 @@ async function dismissOverlays(page: Page): Promise<void> {
  */
 async function openAdapterStatus(page: Page): Promise<void> {
 	await page.goto(`${APP}/external-adapters`)
-	await page.waitForLoadState('networkidle')
+	await page.waitForLoadState('domcontentloaded')
 	await dismissOverlays(page)
 	await expect(page).toHaveURL(/external-adapters/, { timeout: 10_000 })
 }

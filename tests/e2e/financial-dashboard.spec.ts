@@ -33,7 +33,7 @@ test.describe('financial-dashboard-graphs — Financial overview', () => {
 	test.beforeEach(async ({ page }) => {
 		page.setViewportSize({ width: 1600, height: 1200 })
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss any first-run wizard overlay.
 		const wizard = page.locator('#firstrunwizard')

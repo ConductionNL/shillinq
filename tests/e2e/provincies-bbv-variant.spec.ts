@@ -73,7 +73,7 @@ test.describe('Provincies BBV — Compliance Dashboard shell', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + DASHBOARD_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 	})
 
@@ -151,7 +151,7 @@ test.describe('Provincies BBV — Budget-to-Programme Linker index', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + LINKER_INDEX_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 	})
 
@@ -234,7 +234,7 @@ test.describe('Provincies BBV — Linker detail (single GL-line edit)', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + LINKER_DETAIL_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 	})
 
@@ -262,7 +262,7 @@ test.describe('Provincies BBV — Linker detail (single GL-line edit)', () => {
 		const back = page.getByTestId('bbv-linker-detail-back')
 		if (await back.isVisible().catch(() => false)) {
 			await back.click()
-			await page.waitForLoadState('networkidle')
+			await page.waitForLoadState('domcontentloaded')
 			expect(page.url()).toMatch(/budget-to-programme/)
 		}
 	})
@@ -276,7 +276,7 @@ test.describe('Provincies BBV — admin settings refresh interval', () => {
 	 */
 	test('Dashboard Refresh Interval dropdown is present and saveable in admin settings', async ({ page }) => {
 		await page.goto(APP + '/admin')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		// The Shillinq AdminSettings.vue exposes the refresh-interval

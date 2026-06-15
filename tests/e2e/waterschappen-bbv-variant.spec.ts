@@ -60,7 +60,7 @@ test.describe('BBV dashboard — widget shell renders', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + DASHBOARD_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 	})
 
@@ -110,7 +110,7 @@ test.describe('BBV dashboard — widget shell renders', () => {
 			await openButton.click()
 			// Drill-in lands on the BudgetBBVMappings list filtered by
 			// programmeCode (slice 06 wiring).
-			await page.waitForLoadState('networkidle')
+			await page.waitForLoadState('domcontentloaded')
 			expect(page.url()).toMatch(/budget-mappings|bbv-dashboard/)
 		}
 	})
@@ -121,7 +121,7 @@ test.describe('BBV mapping index — search + add + row click', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + MAPPING_INDEX_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 	})
 
@@ -168,7 +168,7 @@ test.describe('BBV mapping index — search + add + row click', () => {
 			.first()
 		if (await addCta.isVisible().catch(() => false)) {
 			await addCta.click()
-			await page.waitForLoadState('networkidle')
+			await page.waitForLoadState('domcontentloaded')
 			expect(page.url()).toMatch(/budget-mappings\/new|budget-mappings\/[^/]+$/)
 		}
 	})
@@ -179,7 +179,7 @@ test.describe('BBV mapping detail — create flow', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto(APP + MAPPING_NEW_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 	})
 
@@ -274,7 +274,7 @@ test.describe('BBV mapping detail — edit flow', () => {
 		// when the underlying record is absent (OR returns 404 and the
 		// detail handles the empty-form path).
 		await page.goto(APP + MAPPING_INDEX_ROUTE + '/edit-stub')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		await expect(page.getByTestId('budget-bbv-mapping-detail'))
@@ -297,7 +297,7 @@ test.describe('BBV mapping detail — edit flow', () => {
 	 */
 	test('audit-trail surface is reachable from the detail page sidebar', async ({ page }) => {
 		await page.goto(APP + MAPPING_INDEX_ROUTE + '/edit-stub')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		// The bespoke detail page uses the manifest detail wrapper which
@@ -318,7 +318,7 @@ test.describe('BBV scoping + validation', () => {
 	 */
 	test('dashboard fiscal-year selector is present and accepts a change', async ({ page }) => {
 		await page.goto(APP + DASHBOARD_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		const year = page.getByTestId('bbv-dashboard-year')
@@ -346,7 +346,7 @@ test.describe('BBV scoping + validation', () => {
 	 */
 	test('allocation input enforces the 0..100 bound at the HTML level', async ({ page }) => {
 		await page.goto(APP + MAPPING_NEW_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		const alloc = page.getByTestId('bbv-mapping-detail-allocation')
@@ -369,7 +369,7 @@ test.describe('BBV scoping + validation', () => {
 	 */
 	test('effective-window fields declare date input types', async ({ page }) => {
 		await page.goto(APP + MAPPING_NEW_ROUTE)
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		const from = page.getByTestId('bbv-mapping-detail-effective-from')

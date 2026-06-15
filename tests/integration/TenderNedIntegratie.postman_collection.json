@@ -5,6 +5,21 @@
 		"description": "Newman integration tests for bookkeeping-tenderned-integratie. Exercises the four REQ-NNN flows end-to-end against a live Nextcloud + OpenRegister instance:\n\n- REQ-001 — import a TenderNed dossier into a concept Verplichting (POST /objects/.../TenderNedAanbesteding, POST /objects/.../Verplichting bron=tenderned/status=concept).\n- REQ-002 — auto-promote an awarded dossier (PATCH the aanbesteding to status=gegund and observe the linked Verplichting becoming active via OR lifecycle / shillinq listeners).\n- REQ-004 — block OpdrachtUitvoering completion without a bewijsstuk (POST without bewijsstukken should 4xx or remain in 'in-progress').\n- REQ-006 — buyer-only completion gate: a vendor cannot mark the eindoplevering as completed (PATCH with vendor-user 4xx).\n\nThere are NO bespoke shillinq HTTP controllers for this change (Task 9: declarative OR CRUD + lifecycle transitions only); the collection therefore drives the OR /api/objects surface and asserts the schema's lifecycle/guard behaviour. The Guard preconditions are also unit-tested via PHPUnit — this Newman run is the live end-to-end smoke.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Nextcloud rejects API requests without the OCS-APIRequest header",
+					"// (or a CSRF requesttoken) with 412 'CSRF check failed'. Inject it on",
+					"// every request from this collection so individual requests need not",
+					"// each declare it. upsert() overrides any per-request value.",
+					"pm.request.headers.upsert({ key: 'OCS-APIRequest', value: 'true' });"
+				]
+			}
+		}
+	],
 	"auth": {
 		"type": "basic",
 		"basic": [

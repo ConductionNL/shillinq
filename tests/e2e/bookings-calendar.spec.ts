@@ -29,7 +29,7 @@ const APP = '/apps/shillinq'
 test.describe('shillinq — bookings calendar smoke', () => {
 	test('SPA mounts and bookings calendar components are registered @spec REQ-006', async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss any first-run wizard overlays.
 		const wizard = page.locator('#firstrunwizard')

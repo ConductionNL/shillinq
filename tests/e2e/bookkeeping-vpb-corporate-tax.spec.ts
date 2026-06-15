@@ -55,7 +55,7 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 
 	test('Tax deadlines index — mounts on /bookkeeping/vpb/deadlines (REQ-VPB-005)', async ({ page }) => {
 		await page.goto(APP + '/bookkeeping/vpb/deadlines')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		// SPA route resolved by the manifest shell — no bounce to /login or
@@ -69,7 +69,7 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 		// state but the SPA route resolves; the bounce-out guard is the
 		// behaviour under test for Gate-19.
 		await page.goto(APP + '/bookkeeping/vpb/deadlines/none')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		expect(page.url()).toContain('/apps/shillinq')
@@ -77,7 +77,7 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 
 	test('Tax payments index — mounts on /bookkeeping/vpb/payments (REQ-VPB-007)', async ({ page }) => {
 		await page.goto(APP + '/bookkeeping/vpb/payments')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		expect(page.url()).toContain('/apps/shillinq')
@@ -86,7 +86,7 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 
 	test('Tax payment detail — mounts on /bookkeeping/vpb/payments/:id (REQ-VPB-008)', async ({ page }) => {
 		await page.goto(APP + '/bookkeeping/vpb/payments/none')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		expect(page.url()).toContain('/apps/shillinq')
@@ -94,7 +94,7 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 
 	test('Vpb navigation cluster is reachable from the shillinq shell (REQ-VPB-016)', async ({ page }) => {
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
 		// The manifest registers the "Corporate tax (Vpb)" cluster with four

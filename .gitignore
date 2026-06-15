@@ -20,6 +20,7 @@
 
 /coverage/
 /coverage-frontend/
+/coverage-vitest/
 
 # Quality reports
 /quality-reports/

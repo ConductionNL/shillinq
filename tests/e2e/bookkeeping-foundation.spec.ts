@@ -41,7 +41,7 @@ test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 
 	test('Chart of Accounts (Grootboekschema) — index page mounts on /chart-of-accounts', async ({ page }) => {
 		await page.goto(APP + '/chart-of-accounts')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		// Dismiss any first-run wizard overlay.
 		const wizard = page.locator('#firstrunwizard')
@@ -59,7 +59,7 @@ test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 
 	test('General Ledger (Grootboek) — index page mounts on /general-ledger', async ({ page }) => {
 		await page.goto(APP + '/general-ledger')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')
 		if (await wizard.isVisible().catch(() => false)) {
@@ -73,7 +73,7 @@ test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 
 	test('Journals (Journaalposten) — index page mounts on /journals', async ({ page }) => {
 		await page.goto(APP + '/journals')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')
 		if (await wizard.isVisible().catch(() => false)) {
@@ -88,7 +88,7 @@ test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 	test('Journals navigation entry is reachable from the Shillinq shell', async ({ page }) => {
 		// Start at the app root.
 		await page.goto(APP + '/')
-		await page.waitForLoadState('networkidle')
+		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')
 		if (await wizard.isVisible().catch(() => false)) {

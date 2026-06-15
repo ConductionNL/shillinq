@@ -5,6 +5,21 @@
 		"description": "Newman integration tests for the bookings-resource-calendar change (#117). Exercises REQ-005 / REQ-004 end-to-end against a live Nextcloud + OpenRegister instance: list calendars, read a single calendar, list bookings in a date range, create a non-conflicting booking (201), and re-create the same window to assert the 409 conflict response.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Nextcloud rejects API requests without the OCS-APIRequest header",
+					"// (or a CSRF requesttoken) with 412 'CSRF check failed'. Inject it on",
+					"// every request from this collection so individual requests need not",
+					"// each declare it. upsert() overrides any per-request value.",
+					"pm.request.headers.upsert({ key: 'OCS-APIRequest', value: 'true' });"
+				]
+			}
+		}
+	],
 	"auth": {
 		"type": "basic",
 		"basic": [
