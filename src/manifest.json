@@ -4,6 +4,18 @@
 	"dependencies": [
 		"openregister"
 	],
+	"observability": {
+		"health": {
+			"statusCodePolicy": "adr006",
+			"checks": [
+				{ "id": "database", "type": "database", "severity": "critical" },
+				{ "id": "openregister", "type": "orAvailable", "severity": "degraded" }
+			]
+		},
+		"metrics": [
+			{ "name": "customer_bridge", "type": "gauge", "source": { "kind": "provider" }, "help": "Pipelinq customer-bridge integration counters and gauges" }
+		]
+	},
 	"menu": [
 		{
 			"id": "Dashboard",

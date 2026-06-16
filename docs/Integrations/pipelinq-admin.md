@@ -76,12 +76,23 @@ bearer token is never logged.
 When the integration is wired the following series are populated by the
 `CustomerBridgeMetricsService` and exposed at:
 
-* `GET /apps/shillinq/api/metrics` — JSON snapshot (existing endpoint,
-  now carries a `pipelinq:` block).
-* `GET /apps/shillinq/api/metrics/pipelinq` — canonical Prometheus
-  exposition format (`text/plain; version=0.0.4`).
+* `GET /apps/shillinq/api/metrics` — **Prometheus text exposition**
+  (`text/plain; version=0.0.4`), admin-gated. Since the OpenRegister
+  AppHost adoption this is the single canonical metrics endpoint: the
+  customer-bridge series below are merged into the engine-owned exposition
+  via the `CustomerBridgeMetricsService` `IMetricsProvider`, alongside the
+  implicit `shillinq_info` and `shillinq_up` gauges.
 
-Both endpoints are admin-gated. The Prometheus series are:
+> **Breaking change (AppHost adoption).** `GET /api/metrics` previously
+> returned a JSON snapshot (`{app, metrics, pipelinq}`) — an ADR-006
+> contract violation. It now returns Prometheus 0.0.4 text. Any external
+> dashboard that polled the JSON shape must switch to scraping the
+> Prometheus output. The former separate `GET /api/metrics/pipelinq`
+> Prometheus endpoint has been removed: its series now live in the main
+> `/api/metrics` exposition.
+
+The Prometheus series are (names unchanged from the previous
+`/api/metrics/pipelinq` exposition):
 
 * `shillinq_pipelinq_contact_success_total` — Contact reads that
   succeeded (cache hit or live fetch).

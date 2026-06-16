@@ -1,19 +1,8 @@
----
-status: proposed
----
-
-# Shillinq AppHost Adoption (Observability + Boilerplate)
+# apphost-adoption Specification
 
 ## Purpose
-
-Shillinq's health, metrics, dashboard, preferences, and settings endpoints run on the OpenRegister AppHost generics. This adoption *fixes* two ADR-006 contract violations (JSON metrics exposition; a zero-check hardcoded health endpoint) and migrates the genuinely imperative customer-bridge metrics onto the provider escape hatch.
-
-**Cross-references**: `openregister/openspec/changes/apphost-observability-engine/specs/apphost-observability/spec.md`, `openregister/openspec/changes/apphost-boilerplate-controllers/`
-
----
-
+TBD - created by archiving change adopt-apphost. Update Purpose after archive.
 ## Requirements
-
 ### Requirement: Health Endpoint With Real Checks
 
 Shillinq SHALL serve `GET /apps/shillinq/api/health` through the AppHost engine with a `database` check (critical) and an `orAvailable` check (severity `degraded`), replacing the hardcoded `{"status":"ok"}` literal. The endpoint SHALL remain publicly accessible (ADR-006) and follow the `adr006` status-code policy.
@@ -75,19 +64,22 @@ The pipelinq customer-bridge counters and circuit-breaker/in-flight state (genui
 - **THEN** the response MUST still be valid Prometheus exposition containing the implicit series, without a 500
 - @e2e exclude API-only endpoint — covered by the OR AppHost Newman contract collection
 
-### Requirement: Boilerplate Endpoints Served By AppHost Generics
+### Requirement: Mechanical Boilerplate Served By AppHost Generics
 
-The dashboard page + SPA catch-all, per-user preferences (`GET`/`PUT /api/preferences/{key}`), settings (`GET`/`POST /api/settings`, `POST /api/settings/load`), admin-settings form, settings section, and deep-link registration SHALL be served by the AppHost generic classes via `Bootstrap::register()` and `Routes::standard($extra)`, with unchanged URLs, route names, and user-observable behaviour; the local boilerplate copies SHALL be deleted. App-specific routes, listeners, adapter-port bindings, and the seeding logic in `SettingsService`/`InitializeSettings` SHALL be preserved.
+The dashboard page + SPA catch-all (`dashboard#page` / `dashboard#catchAll`), the admin-settings form, and the settings section SHALL be served by the AppHost generic classes (aliased in `Application::register()`; info.xml references the generic settings classes), with unchanged URLs, route names, and user-observable behaviour; the local `DashboardController`, `AdminSettings`, and `SettingsSection` copies SHALL be deleted. The canonical route set SHALL be emitted by `Routes::standard($extra)` with every shillinq-specific route passed as `$extra`. App-specific routes, listeners, adapter-port bindings, the notifier, and the seeding logic in `SettingsService` / `InitializeSettings` SHALL be preserved.
+
+Bespoke plumbing that the current OR engine cannot reproduce SHALL be KEPT and resolve to shillinq's own classes via the canonical route names: `PreferencesController` (no `GenericPreferencesController` ships in OR `development`), `SettingsController` + `SettingsService` (bespoke `shillinq_register.json` + `register.d/*.json` fragment-merge config loading, which the generic `importFromApp` does not reproduce), `InitializeSettings` (13-phase domain seeding + ScheduledWorkflow registration), and `DeepLinkRegistrationListener` (dynamic register-slug resolution from app config). `Bootstrap::register()` SHALL NOT be used, because it would alias those onto the generics and change their behaviour.
 
 #### Scenario: App UI is unaffected by the generic controllers
 
-- **GIVEN** the AppHost generics serve the dashboard, preferences, and settings routes
+- **GIVEN** the AppHost generics serve the dashboard + admin-settings routes and shillinq's kept controllers serve settings + preferences
 - **WHEN** a user opens the shillinq SPA (including a deep link through the catch-all) and an admin opens the shillinq admin settings
-- **THEN** the app MUST render and behave exactly as before adoption — proven by the existing 107-test behavioural Playwright suite running green against the adopted build
+- **THEN** the app MUST render and behave exactly as before adoption — proven by the existing behavioural Playwright suite running green against the adopted build
 
-#### Scenario: Settings API parity
+#### Scenario: Settings API parity via the kept controller
 
-- **GIVEN** the generic settings controller is aliased in place of the deleted local copy
+- **GIVEN** the canonical `settings#index|create|load` routes resolve to shillinq's KEPT `SettingsController` + `SettingsService`
 - **WHEN** `GET /api/settings` and `POST /api/settings/load` are called by an admin
-- **THEN** the responses MUST match the pre-adoption contract (register/schema configuration resolution and OR availability), with admin-only posture preserved
-- @e2e exclude API-only endpoint — covered by the OR AppHost Newman contract collection
+- **THEN** the responses MUST match the pre-adoption contract exactly (the `register` / `rgs_template` / `administration_id` keys, the fragment-merge register import, and OR availability), with admin-only posture preserved
+- @e2e exclude API-only endpoint — covered by the existing shillinq unit + behavioural suites
+
