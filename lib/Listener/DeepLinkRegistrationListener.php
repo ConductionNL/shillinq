@@ -36,6 +36,7 @@ use OCP\IAppConfig;
  * @implements IEventListener<Event>
  *
  * @spec openspec/changes/add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md
+ * @spec openspec/changes/shillinq-ap-push-notifications/specs/bookkeeping-accounts-payable-core/spec.md
  */
 class DeepLinkRegistrationListener implements IEventListener
 {
@@ -67,6 +68,7 @@ class DeepLinkRegistrationListener implements IEventListener
      * @return void
      *
      * @spec openspec/changes/add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md
+     * @spec openspec/changes/shillinq-ap-push-notifications/specs/bookkeeping-accounts-payable-core/spec.md
      */
     public function handle(Event $event): void
     {
@@ -86,6 +88,17 @@ class DeepLinkRegistrationListener implements IEventListener
             registerSlug: $registerSlug,
             schemaSlug: 'account',
             urlTemplate: '/apps/shillinq/chart-of-accounts/{uuid}'
+        );
+
+        // Register deep link for the APTransaction (accounts-payable invoice)
+        // schema. Targets the APInvoiceDetail route declared in src/manifest.json
+        // (/bookkeeping/accounts-payable/:id, schema APTransaction). This is the
+        // route the "Open invoice" web-push notification action deeplinks to.
+        $event->register(
+            appId: 'shillinq',
+            registerSlug: $registerSlug,
+            schemaSlug: 'APTransaction',
+            urlTemplate: '/apps/shillinq/bookkeeping/accounts-payable/{uuid}'
         );
 
     }//end handle()

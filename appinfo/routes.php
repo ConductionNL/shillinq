@@ -1,15 +1,42 @@
 <?php
 
+/**
+ * Shillinq route table.
+ *
+ * AppHost adoption (adopt-apphost): the canonical fleet-skeleton routes
+ * (`dashboard#page`, `dashboard#catchAll`, `settings#index|create|load`,
+ * `preferences#getPreference|setPreference`, `metrics#index`, `health#index`)
+ * are provided by `\OCA\OpenRegister\AppHost\Routes::standard()` — their names,
+ * URLs and verbs are unchanged, so info.xml navigation + every probe/scrape URL
+ * keeps resolving. The `dashboard`/`health`/`metrics` controllers resolve to
+ * the engine generics (aliased in Application::register()); the `settings` and
+ * `preferences` controllers resolve to shillinq's KEPT bespoke controllers
+ * (fragment-merge config loading + per-user preferences — see Application.php).
+ *
+ * Every shillinq-specific route is passed as `$extra`; `Routes::standard()`
+ * inserts them BEFORE the SPA catch-all so they keep priority.
+ *
+ * The former JSON `GET /api/metrics` (ADR-006 violation) and the redundant
+ * `GET /api/metrics/pipelinq` Prometheus alias are removed: the customer-bridge
+ * series are now merged into the engine-owned `GET /api/metrics` Prometheus
+ * exposition via the CustomerBridgeMetricsService IMetricsProvider.
+ *
+ * @category AppInfo
+ * @package  OCA\Shillinq\AppInfo
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
-return [
-    'routes' => [
-        // Dashboard + Settings.
-        ['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
-        ['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
-        ['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
-        ['name' => 'settings#load',  'url' => '/api/settings/load', 'verb' => 'POST'],
-
+return \OCA\OpenRegister\AppHost\Routes::standard([
         // Pipelinq integration connection settings — bookings-pipelinq-customer-bridge
         // member 01. GET returns endpoint + hasToken flag (never the token itself);
         // POST persists endpoint + optional token (absent token preserves current
@@ -49,10 +76,6 @@ return [
         ['name' => 'externalAdaptersAdmin#index', 'url' => '/api/admin/external-adapters', 'verb' => 'GET'],
         ['name' => 'externalAdaptersAdmin#show', 'url' => '/api/admin/external-adapters/{id}', 'verb' => 'GET'],
 
-        // Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog).
-        ['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
-        ['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
-
         // Booking notification trigger configuration (organizer, per booking).
         ['name' => 'bookingNotification#getBookingTriggers',    'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'GET'],
         ['name' => 'bookingNotification#updateBookingTriggers', 'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'PATCH'],
@@ -60,15 +83,6 @@ return [
         // Admin notification monitor dashboard.
         ['name' => 'bookingNotification#getNotificationMonitor', 'url' => '/api/admin/notification-monitor', 'verb' => 'GET'],
         ['name' => 'bookingNotification#disableAllTriggers',     'url' => '/api/admin/notification-monitor/disable-all', 'verb' => 'POST'],
-
-        // Prometheus metrics endpoint.
-        ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
-        // Pipelinq customer-bridge metrics (slice 11). Prometheus exposition
-        // format; pulls from CustomerBridgeMetricsService for the contact /
-        // timeline / retry / dead-letter / circuit-breaker series.
-        ['name' => 'metrics#pipelinq', 'url' => '/api/metrics/pipelinq', 'verb' => 'GET'],
-        // Health check endpoint.
-        ['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
 
         // Trial balance (Tier 2): read-only per-account period aggregation.
         ['name' => 'trialBalance#index', 'url' => '/api/trial-balance', 'verb' => 'GET'],
@@ -477,9 +491,4 @@ return [
         // placeholder selects mollie / stripe. Declared before the SPA catch-all so
         // Symfony matches it first per ADR-016.
         ['name' => 'paymentRequestWebhook#handle', 'url' => '/api/v1/payment-requests/webhook/{gateway}', 'verb' => 'POST'],
-
-        // SPA catch-all — same controller as the index route; must use a distinct route name
-        // (duplicate names replace the earlier route in Symfony, which breaks GET /).
-        ['name' => 'dashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
-    ],
-];
+]);

@@ -463,6 +463,106 @@
 						}
 					}
 				},
+				"x-openregister-notifications": {
+					"approvalNeeded": {
+						"trigger": {
+							"type": "updated",
+							"condition": {
+								"field": "state",
+								"operator": "equals",
+								"value": "received"
+							}
+						},
+						"enabled": true,
+						"originApp": "shillinq",
+						"channels": [
+							"nc-notification",
+							"web-push"
+						],
+						"recipients": [
+							{
+								"kind": "groups",
+								"groups": [
+									"shillinq-finance"
+								]
+							}
+						],
+						"subject": {
+							"nl": "Goedkeuring nodig: {{invoiceNumber}}",
+							"en": "Approval needed: {{invoiceNumber}}"
+						},
+						"message": {
+							"nl": "Deze inkoopfactuur staat in Shillinq. Openen?",
+							"en": "This supplier invoice is in Shillinq. Open it?"
+						},
+						"actions": [
+							{
+								"label": {
+									"nl": "Factuur openen",
+									"en": "Open invoice"
+								},
+								"primary": true,
+								"target": {
+									"kind": "object-detail"
+								}
+							}
+						]
+					},
+					"overdue": {
+						"trigger": {
+							"type": "scheduled",
+							"intervalSec": 86400,
+							"filter": {
+								"all": [
+									{
+										"field": "state",
+										"operator": "notIn",
+										"values": ["paid", "written-off", "voided"]
+									},
+									{
+										"field": "dueDate",
+										"operator": "before",
+										"value": "now"
+									}
+								]
+							}
+						},
+						"enabled": true,
+						"originApp": "shillinq",
+						"channels": [
+							"nc-notification",
+							"web-push"
+						],
+						"recipients": [
+							{
+								"kind": "groups",
+								"groups": [
+									"shillinq-finance"
+								]
+							}
+						],
+						"subject": {
+							"nl": "Factuur over de vervaldatum: {{invoiceNumber}}",
+							"en": "Invoice overdue: {{invoiceNumber}}"
+						},
+						"message": {
+							"nl": "Deze factuur is vervallen in Shillinq. Openen?",
+							"en": "This invoice is overdue in Shillinq. Open it?"
+						},
+						"actions": [
+							{
+								"label": {
+									"nl": "Factuur openen",
+									"en": "Open invoice"
+								},
+								"primary": true,
+								"target": {
+									"kind": "object-detail"
+								}
+							}
+						]
+					}
+				},
 				"x-openregister-rbac": {
 					"roles": {
 						"bookkeeper": {"permissions": ["create", "read", "update"]},

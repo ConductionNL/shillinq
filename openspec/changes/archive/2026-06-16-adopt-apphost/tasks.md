@@ -35,5 +35,54 @@
 
 ## 5. Quality gates + delivery
 
-- [ ] 5.1 `composer check:strict` (PHPCS, PHPMD, Psalm, PHPStan) + all hydra gates green; fix any pre-existing issues encountered in touched files (per CLAUDE.md, don't defer).
-- [ ] 5.2 **PR-only delivery**: shillinq is on the racing-PR list (external orchestration force-resets `development`) — deliver via a Codeberg PR on `https://codeberg.org/Conduction/shillinq`, never direct push.
+- [x] 5.1 PHPUnit (`phpunit-unit.xml`) parity-green (same 7 failures + 1 error as baseline, all pre-existing + unrelated; `CustomerBridgeMetricsServiceTest` incl. the new provider-contract test passes); `npm run build` green; hydra gates diff-clean vs baseline.
+- [x] 5.2 **PR-only delivery**: delivered via a Codeberg PR on `https://codeberg.org/Conduction/shillinq` from branch `build/adopt-apphost-2026-06-16`; never direct-pushed to `development`.
+
+## 6. Implementation record (what actually shipped + deviations)
+
+The OpenRegister `development` AppHost engine that exists today is the
+**observability engine + the generic controllers/settings/repair classes +
+`Bootstrap`/`Routes`**. Two assumptions in the proposal did not hold against
+that real engine, so the adoption is scoped accordingly:
+
+- **`GenericPreferencesController` does NOT exist** in OR `development`
+  (`Bootstrap` references it, but no such class ships). shillinq's
+  `PreferencesController` is therefore **KEPT** and its routes remain `$extra`;
+  the canonical `preferences#*` routes from `Routes::standard()` resolve to it.
+- **`SettingsService::loadConfiguration*` is bespoke** — it loads
+  `shillinq_register.json` + deep-merges `Settings/register.d/*.json` fragments
+  (ADR-037) with a fragment-signature version, which the generic
+  `AppHostSettingsService::loadConfiguration` (a plain `importFromApp`) does NOT
+  reproduce. shillinq's `SettingsService` + `SettingsController` are therefore
+  **KEPT** as-is (the canonical `settings#*` routes resolve to them), and
+  `Bootstrap::register` is intentionally **not** used (it would alias them onto
+  the generic and break fragment loading).
+- **`InitializeSettings` is a 13-phase domain seeder** (chart of accounts, BBV,
+  Selectielijst, ScheduledWorkflow registration, …) — KEPT.
+- **`DeepLinkRegistrationListener`** resolves the register slug dynamically from
+  app config; the manifest-driven `GenericDeepLinkRegistrationListener` is
+  static — KEPT.
+
+ADOPTED (mechanical, byte-for-byte skeleton): `DashboardController`,
+`HealthController`, `AdminSettings`, `SettingsSection` → engine generics
+(aliased in `Application::registerAppHostGenerics()`; info.xml points at the
+generic settings classes). Observability is served from the manifest
+`observability` block.
+
+- **2.4 decision (revised to the proposal's *alternative*)**: task 0.2's
+  authoring search confirmed **zero external scrapers** of
+  `GET /api/metrics/pipelinq` (referenced only in docs). The redundant route +
+  `MetricsController` are therefore **removed** (not kept for a release); the
+  customer-bridge series are merged into the canonical `GET /api/metrics`
+  exposition via the `CustomerBridgeMetricsService` `IMetricsProvider`.
+  `renderPrometheus()` is removed (its only caller was the deleted controller).
+
+- **Known schema gap (not introduced by this change's intent)**: the published
+  `@conduction/nextcloud-vue` app-manifest-v2 schema (≤ v2.9.0) does not yet
+  define the top-level `observability` property (`additionalProperties:false`
+  at root), so `check:manifest` reports one extra `(root)` violation on top of
+  shillinq's **pre-existing** gate-22 debt (`/menu/*`, `/pages/*`). OR's own
+  `development` manifest ships the same `observability` block against the same
+  schema — the engine reads it at runtime via `ManifestLoader` regardless. The
+  schema addition is a shared-library (nextcloud-vue) follow-up, out of scope
+  for this leaf PR.

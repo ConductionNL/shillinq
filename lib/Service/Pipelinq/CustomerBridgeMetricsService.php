@@ -8,8 +8,9 @@
  * (success/cache hit at DEBUG, transient failure + circuit-breaker
  * transitions at WARNING, permanent failures at ERROR). This service is
  * the OPS-VISIBILITY counterpart: it keeps lightweight in-memory + cached
- * counters so an admin dashboard (or the Prometheus endpoint exposed by
- * {@see \OCA\Shillinq\Controller\MetricsController}) can answer:
+ * counters so an admin dashboard (or the engine-owned Prometheus endpoint
+ * `GET /api/metrics`, into which these series are merged via this service's
+ * {@see IMetricsProvider} implementation) can answer:
  *
  *   - How many publishes succeeded vs failed over the last interval?
  *   - How many calls retried, and at what depth?
@@ -50,15 +51,27 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Pipelinq;
 
+use OCA\OpenRegister\AppHost\IMetricsProvider;
+use OCA\OpenRegister\AppHost\Observability\MetricSample;
 use OCP\ICache;
 use OCP\ICacheFactory;
 
 /**
  * Aggregates counters and gauges for the pipelinq customer-bridge integration.
  *
+ * AppHost adoption (adopt-apphost): also the app's {@see IMetricsProvider} —
+ * registered under the alias `OCA\OpenRegister\AppHost\IMetricsProvider::shillinq`
+ * (ADR-035 discovery), so the `{"kind":"provider"}` descriptor in the manifest
+ * `observability.metrics` block merges these series into the engine-owned
+ * Prometheus exposition served by GenericMetricsController at `GET /api/metrics`.
+ * The series carry over sample-for-sample from the retired bespoke
+ * `renderPrometheus()` exposition (the engine adds the `shillinq_` prefix, so
+ * sample names here omit it).
+ *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
+ * @spec openspec/changes/adopt-apphost/specs/apphost-adoption/spec.md
  */
-final class CustomerBridgeMetricsService
+final class CustomerBridgeMetricsService implements IMetricsProvider
 {
     /**
      * Cache namespace shared by every counter so a flush wipes the lot.
@@ -357,47 +370,59 @@ final class CustomerBridgeMetricsService
     }//end reset()
 
     /**
-     * Format the snapshot as Prometheus text exposition (one line per series).
+     * Produce the AppHost {@see MetricSample} set for the engine renderer.
      *
-     * Counters use the `_total` suffix per the Prometheus naming convention.
-     * Strings (circuit-breaker state) are emitted as labelled gauges with
-     * value 1 so a dashboard can `label_values()` over them.
+     * Carries over every series the retired bespoke {@see renderPrometheus()}
+     * exposition emitted, sample-for-sample. The engine's PrometheusRenderer
+     * prefixes each sample name with the app id (`shillinq_`), so the names
+     * here drop that prefix: `pipelinq_contact_success_total` renders as
+     * `shillinq_pipelinq_contact_success_total`, exactly the pre-adoption name.
+     * The circuit-breaker state is a labelled gauge with value 1 so a dashboard
+     * can `label_values()` over it (unchanged contract).
      *
-     * @return string Prometheus exposition text.
+     * @return MetricSample[] The provider's samples.
      *
-     * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
+     * @spec openspec/changes/adopt-apphost/specs/apphost-adoption/spec.md
      */
-    public function renderPrometheus(): string
+    public function metrics(): array
     {
         $snapshot = $this->snapshot();
-        $lines    = [];
 
+        // [snapshot-key => [metric-name-without-app-prefix, prometheus-type]].
         $map = [
-            self::COUNTER_CONTACT_SUCCESS           => ['shillinq_pipelinq_contact_success_total', 'counter'],
-            self::COUNTER_CONTACT_FALLBACK          => ['shillinq_pipelinq_contact_fallback_total', 'counter'],
-            self::COUNTER_CONTACT_CACHE_HIT         => ['shillinq_pipelinq_contact_cache_hit_total', 'counter'],
-            self::COUNTER_CONTACT_CACHE_STALE       => ['shillinq_pipelinq_contact_cache_stale_total', 'counter'],
-            self::COUNTER_TIMELINE_PUBLISH_SUCCESS  => ['shillinq_pipelinq_timeline_publish_success_total', 'counter'],
-            self::COUNTER_TIMELINE_PUBLISH_DEFERRED => ['shillinq_pipelinq_timeline_publish_deferred_total', 'counter'],
-            self::COUNTER_PERMANENT_FAILURE         => ['shillinq_pipelinq_permanent_failure_total', 'counter'],
-            self::COUNTER_RETRY_ATTEMPTS            => ['shillinq_pipelinq_retry_attempts_total', 'counter'],
-            self::GAUGE_RETRY_DEPTH_MAX             => ['shillinq_pipelinq_retry_depth_max', 'gauge'],
-            self::GAUGE_DEAD_LETTER_COUNT           => ['shillinq_pipelinq_dead_letter_count', 'gauge'],
+            self::COUNTER_CONTACT_SUCCESS           => ['pipelinq_contact_success_total', 'counter'],
+            self::COUNTER_CONTACT_FALLBACK          => ['pipelinq_contact_fallback_total', 'counter'],
+            self::COUNTER_CONTACT_CACHE_HIT         => ['pipelinq_contact_cache_hit_total', 'counter'],
+            self::COUNTER_CONTACT_CACHE_STALE       => ['pipelinq_contact_cache_stale_total', 'counter'],
+            self::COUNTER_TIMELINE_PUBLISH_SUCCESS  => ['pipelinq_timeline_publish_success_total', 'counter'],
+            self::COUNTER_TIMELINE_PUBLISH_DEFERRED => ['pipelinq_timeline_publish_deferred_total', 'counter'],
+            self::COUNTER_PERMANENT_FAILURE         => ['pipelinq_permanent_failure_total', 'counter'],
+            self::COUNTER_RETRY_ATTEMPTS            => ['pipelinq_retry_attempts_total', 'counter'],
+            self::GAUGE_RETRY_DEPTH_MAX             => ['pipelinq_retry_depth_max', 'gauge'],
+            self::GAUGE_DEAD_LETTER_COUNT           => ['pipelinq_dead_letter_count', 'gauge'],
         ];
 
+        $samples = [];
         foreach ($map as $key => [$metric, $type]) {
-            $value   = (int) ($snapshot[$key] ?? 0);
-            $lines[] = '# TYPE '.$metric.' '.$type;
-            $lines[] = $metric.' '.$value;
+            $samples[] = MetricSample::single(
+                name: $metric,
+                type: $type,
+                help: 'Pipelinq customer-bridge '.str_replace('_', ' ', $metric),
+                value: (int) ($snapshot[$key] ?? 0)
+            );
         }
 
-        $state   = (string) ($snapshot[self::GAUGE_CIRCUIT_STATE] ?? CircuitBreaker::STATE_CLOSED);
-        $lines[] = '# TYPE shillinq_pipelinq_circuit_state gauge';
-        $lines[] = sprintf('shillinq_pipelinq_circuit_state{state="%s"} 1', $state);
+        $state     = (string) ($snapshot[self::GAUGE_CIRCUIT_STATE] ?? CircuitBreaker::STATE_CLOSED);
+        $samples[] = new MetricSample(
+            name: 'pipelinq_circuit_state',
+            type: 'gauge',
+            help: 'Pipelinq customer-bridge circuit-breaker state',
+            samples: [['labels' => ['state' => $state], 'value' => 1]]
+        );
 
-        return implode("\n", $lines)."\n";
+        return $samples;
 
-    }//end renderPrometheus()
+    }//end metrics()
 
     /**
      * Increment a counter by 1 (best-effort).
