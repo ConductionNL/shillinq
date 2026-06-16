@@ -30,6 +30,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service\Pipelinq;
 
+use OCA\OpenRegister\AppHost\IMetricsProvider;
+use OCA\OpenRegister\AppHost\Observability\MetricSample;
 use OCA\Shillinq\Service\Pipelinq\CircuitBreaker;
 use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCP\ICache;
@@ -283,26 +285,72 @@ final class CustomerBridgeMetricsServiceTest extends TestCase
     }//end testReset()
 
     /**
-     * Prometheus exposition carries the right metric names + TYPE headers.
+     * AppHost adoption — the service is the app's IMetricsProvider, and
+     * metrics() carries every series of the retired bespoke Prometheus
+     * exposition sample-for-sample. The engine's PrometheusRenderer adds the
+     * `shillinq_` app prefix, so the sample names here drop it (a
+     * `pipelinq_contact_success_total` sample renders as
+     * `shillinq_pipelinq_contact_success_total`, the pre-adoption name).
      *
      * @return void
+     *
+     * @spec openspec/changes/adopt-apphost/specs/apphost-adoption/spec.md
      */
-    public function testPrometheusExposition(): void
+    public function testMetricsProviderContract(): void
     {
         $svc = $this->service();
+        self::assertInstanceOf(IMetricsProvider::class, $svc);
+
         $svc->recordContactSuccess(fromCache: false);
         $svc->recordTimelinePublishDeferred();
+        $svc->recordRetryAttempt(attempt: 3);
+        $svc->recordDeadLetterCount(count: 2);
         $svc->recordCircuitState(state: CircuitBreaker::STATE_HALF_OPEN);
 
-        $text = $svc->renderPrometheus();
+        $samples = $svc->metrics();
+        self::assertContainsOnlyInstancesOf(MetricSample::class, $samples);
 
-        self::assertStringContainsString('# TYPE shillinq_pipelinq_contact_success_total counter', $text);
-        self::assertStringContainsString('shillinq_pipelinq_contact_success_total 1', $text);
-        self::assertStringContainsString('shillinq_pipelinq_timeline_publish_deferred_total 1', $text);
-        self::assertStringContainsString('# TYPE shillinq_pipelinq_circuit_state gauge', $text);
-        self::assertStringContainsString('shillinq_pipelinq_circuit_state{state="half_open"} 1', $text);
-        // Body terminates with a newline (Prometheus exposition requirement).
-        self::assertStringEndsWith("\n", $text);
+        // Index the samples by name + collapse single-point gauges/counters to
+        // a scalar value for an exact, sample-for-sample assertion.
+        $byName = [];
+        foreach ($samples as $sample) {
+            $byName[$sample->name] = $sample;
+        }
 
-    }//end testPrometheusExposition()
+        // All eleven carried-over series are present, unprefixed.
+        $expectedNames = [
+            'pipelinq_contact_success_total',
+            'pipelinq_contact_fallback_total',
+            'pipelinq_contact_cache_hit_total',
+            'pipelinq_contact_cache_stale_total',
+            'pipelinq_timeline_publish_success_total',
+            'pipelinq_timeline_publish_deferred_total',
+            'pipelinq_permanent_failure_total',
+            'pipelinq_retry_attempts_total',
+            'pipelinq_retry_depth_max',
+            'pipelinq_dead_letter_count',
+            'pipelinq_circuit_state',
+        ];
+        foreach ($expectedNames as $name) {
+            self::assertArrayHasKey($name, $byName, sprintf('series "%s" must be carried over', $name));
+        }
+
+        // Counters keep their `_total` suffix + counter type.
+        self::assertSame('counter', $byName['pipelinq_contact_success_total']->type);
+        self::assertSame(1, $byName['pipelinq_contact_success_total']->samples[0]['value']);
+        self::assertSame(1, $byName['pipelinq_timeline_publish_deferred_total']->samples[0]['value']);
+        self::assertSame(1, $byName['pipelinq_retry_attempts_total']->samples[0]['value']);
+
+        // Gauges.
+        self::assertSame('gauge', $byName['pipelinq_retry_depth_max']->type);
+        self::assertSame(3, $byName['pipelinq_retry_depth_max']->samples[0]['value']);
+        self::assertSame(2, $byName['pipelinq_dead_letter_count']->samples[0]['value']);
+
+        // Circuit state is a labelled gauge with value 1 (unchanged contract).
+        $circuit = $byName['pipelinq_circuit_state'];
+        self::assertSame('gauge', $circuit->type);
+        self::assertSame(['state' => CircuitBreaker::STATE_HALF_OPEN], $circuit->samples[0]['labels']);
+        self::assertSame(1, $circuit->samples[0]['value']);
+
+    }//end testMetricsProviderContract()
 }//end class

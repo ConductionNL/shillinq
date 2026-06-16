@@ -23,6 +23,13 @@
  * mount with empty series and the tables show their empty state —
  * the widget shells must still render. Assertions that need data
  * are conditional on the seeded marker (a non-empty debtors table).
+ *
+ * AppHost adoption (adopt-apphost): the dashboard route `/` is now served
+ * by the OpenRegister AppHost GenericDashboardController. This suite driving
+ * the SPA shell + dashboard widgets unchanged is the behavioural proof that
+ * the generic controller is a drop-in for the deleted local DashboardController.
+ *
+ * @e2e apphost-adoption::app-ui-is-unaffected-by-the-generic-controllers
  */
 
 import { test, expect } from '@playwright/test'

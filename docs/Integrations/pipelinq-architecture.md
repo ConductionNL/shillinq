@@ -73,8 +73,8 @@ All sources live in `lib/Service/Pipelinq/`, `lib/Listener/`,
 | `LoggingTimelineRetryQueue`            | 07    | Default binding. Logs the deferral + updates the dead-letter-count gauge.                            |
 | Persistent retry queue + background job | 09   | Replaces the logging binding with a durable queue + `BackgroundJob` worker. Drains the dead-letter. |
 | Integration e2e tests                  | 10    | Playwright + Newman coverage of the round-trip — contact load, lifecycle publish, retry, recovery.  |
-| `CustomerBridgeMetricsService`         | 11    | Counters + gauges in `ICache`. Snapshot + Prometheus exposition.                                   |
-| `MetricsController::pipelinq()`        | 11    | `GET /api/metrics/pipelinq` Prometheus endpoint.                                                    |
+| `CustomerBridgeMetricsService`         | 11    | Counters + gauges in `ICache`. `snapshot()` + the AppHost `IMetricsProvider` (`metrics(): MetricSample[]`).                          |
+| AppHost `GET /api/metrics`             | —     | Engine-owned Prometheus exposition (GenericMetricsController). Merges the provider series + implicit `shillinq_info`/`shillinq_up`.   |
 
 ## 3. Sequence — Contact read
 
@@ -225,10 +225,17 @@ unbounded upstream string.
 
 The `CustomerBridgeMetricsService` aggregates counters / gauges in
 `ICache` so the values survive request boundaries. It is wired
-NULL-safely into the adapter, the listener, and the metrics controller —
-when the service is bound, both the JSON and the Prometheus endpoints
-report live values; when it is not, the legacy JSON shape is preserved
-and the Prometheus body is a single comment line.
+NULL-safely into the adapter and the listener.
+
+Since the OpenRegister AppHost adoption it is also the app's
+`IMetricsProvider` (registered under the alias
+`OCA\OpenRegister\AppHost\IMetricsProvider::shillinq`): its `metrics()`
+method emits the series below as `MetricSample` objects, and the manifest
+`observability.metrics` `{"kind":"provider"}` descriptor merges them into
+the engine-owned Prometheus exposition at `GET /api/metrics` (the AppHost
+PrometheusRenderer adds the `shillinq_` prefix). The former bespoke JSON
+`GET /api/metrics` (an ADR-006 violation) and the redundant
+`GET /api/metrics/pipelinq` Prometheus endpoint have both been removed.
 
 Available series (see the [admin guide](./pipelinq-admin.md#5-observability)
 for the full list):
