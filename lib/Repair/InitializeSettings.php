@@ -429,6 +429,8 @@ class InitializeSettings implements IRepairStep
                     object: $project,
                     register: $registerSlug,
                     schema: 'AnalyticalDimension',
+                    // System seed inside a no-session repair step — bypass RBAC.
+                    _rbac: false,
                 );
                 $seeded++;
             } catch (\Throwable $e) {
@@ -526,6 +528,8 @@ class InitializeSettings implements IRepairStep
                     object: $costCenter,
                     register: $registerSlug,
                     schema: 'AnalyticalDimension',
+                    // System seed inside a no-session repair step — bypass RBAC.
+                    _rbac: false,
                 );
                 $seeded++;
             } catch (\Throwable $e) {
@@ -1037,6 +1041,11 @@ class InitializeSettings implements IRepairStep
                     object: $threshold,
                     register: $registerSlug,
                     schema: 'KorThreshold',
+                    // System seeding runs inside a repair step with no user
+                    // session, so the acting identity is Anonymous. Bypass RBAC
+                    // (as OpenRegister's own config import does) — otherwise the
+                    // KorThreshold schema's create permission denies the seed.
+                    _rbac: false,
                 );
                 $seeded++;
             }//end foreach
@@ -1484,6 +1493,8 @@ class InitializeSettings implements IRepairStep
                     object: $policy,
                     register: $registerSlug,
                     schema: 'ReimbursementPolicy',
+                    // System seed inside a no-session repair step — bypass RBAC.
+                    _rbac: false,
                 );
                 $seeded++;
             }//end foreach
@@ -1585,6 +1596,8 @@ class InitializeSettings implements IRepairStep
                     object: $rule,
                     register: $registerSlug,
                     schema: 'PassThroughMarkupRule',
+                    // System seed inside a no-session repair step — bypass RBAC.
+                    _rbac: false,
                 );
                 $seeded++;
             }//end foreach
