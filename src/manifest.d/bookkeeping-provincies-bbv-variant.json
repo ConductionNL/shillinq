@@ -1,0 +1,415 @@
+{
+	"menu": [
+		{
+			"id": "BbvProvincie",
+			"label": "BBV Provincie",
+			"icon": "MapOutline",
+			"order": 75,
+			"visibilityPredicate": {
+				"administrationType": [
+					"provincie"
+				]
+			},
+			"children": [
+				{
+					"id": "BbvComplianceDashboard",
+					"label": "BBV Compliance Dashboard",
+					"icon": "ChartBoxOutline",
+					"route": "BbvComplianceDashboard",
+					"order": 10
+				},
+				{
+					"id": "BudgetToProgrammeLinker",
+					"label": "Budget Links",
+					"icon": "LinkVariant",
+					"route": "BudgetToProgrammeLinker",
+					"order": 20
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "BbvComplianceDashboard",
+			"route": "/bbv-provincie/compliance-dashboard",
+			"type": "report",
+			"title": "BBV Compliance Dashboard",
+			"visibility": {
+				"field": "administrationType",
+				"in": [
+					"provincie"
+				]
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "Budget",
+				"dashboard": {
+					"kpis": [
+						{
+							"id": "total-budget",
+							"label": "Total budget",
+							"icon": "CashMultiple",
+							"source": "Budget",
+							"field": "totalAmount",
+							"aggregate": "sum",
+							"filter": {
+								"fiscalYear": "@currentFiscalYear"
+							},
+							"format": "currency",
+							"currency": "EUR"
+						},
+						{
+							"id": "committed",
+							"label": "Committed",
+							"icon": "FileSignOutline",
+							"source": "GLLine",
+							"aggregation": "programmeBudgetVsActuals",
+							"field": "netSpent",
+							"filter": {
+								"side": "credit"
+							},
+							"format": "currency",
+							"currency": "EUR"
+						},
+						{
+							"id": "spent",
+							"label": "Spent",
+							"icon": "CartOutline",
+							"source": "GLLine",
+							"aggregation": "programmeBudgetVsActuals",
+							"field": "spent",
+							"format": "currency",
+							"currency": "EUR"
+						},
+						{
+							"id": "remaining",
+							"label": "Remaining",
+							"icon": "WalletOutline",
+							"source": "Budget",
+							"field": "totalAmount",
+							"aggregate": "sum",
+							"format": "currency",
+							"currency": "EUR",
+							"trafficLight": {
+								"green": {
+									"min": 0.15
+								},
+								"yellow": {
+									"min": 0,
+									"max": 0.15
+								},
+								"red": {
+									"max": 0
+								}
+							}
+						}
+					],
+					"charts": [
+						{
+							"id": "budget-vs-actuals",
+							"type": "bar",
+							"title": "Budget vs. actuals",
+							"orientation": "horizontal",
+							"groupBy": "programmaStructure",
+							"series": [
+								{
+									"label": "Budget",
+									"source": "Budget",
+									"field": "totalAmount",
+									"aggregate": "sum"
+								},
+								{
+									"label": "Spent",
+									"source": "GLLine",
+									"aggregation": "programmeBudgetVsActuals",
+									"field": "spent"
+								}
+							]
+						},
+						{
+							"id": "spend-trend",
+							"type": "line",
+							"title": "Trend",
+							"xAxis": "periodId",
+							"series": [
+								{
+									"label": "Cumulative spend",
+									"source": "GLLine",
+									"aggregation": "programmeBudgetVsActuals",
+									"field": "spent",
+									"cumulative": true,
+									"zeroFill": true
+								}
+							]
+						}
+					],
+					"exceptions": {
+						"title": "Exceptions",
+						"variant": "error",
+						"emptyState": "No overspends",
+						"source": "Budget",
+						"linkRoute": "BudgetToProgrammeLinker",
+						"rule": {
+							"remaining": {
+								"operator": "lt",
+								"value": 0
+							}
+						},
+						"sort": {
+							"field": "remaining",
+							"direction": "asc"
+						},
+						"columns": [
+							{
+								"key": "programmaStructure",
+								"label": "Programme"
+							},
+							{
+								"key": "totalAmount",
+								"label": "Budget"
+							},
+							{
+								"key": "spent",
+								"label": "Spent"
+							},
+							{
+								"key": "committed",
+								"label": "Committed"
+							},
+							{
+								"key": "overspent",
+								"label": "Overspent"
+							}
+						]
+					},
+					"filters": [
+						{
+							"key": "programmaStructure",
+							"label": "Programme",
+							"type": "multi-select",
+							"options": [
+								"ruimte",
+								"mobiliteit",
+								"water",
+								"milieu",
+								"cultuur",
+								"economie",
+								"bestuur"
+							]
+						},
+						{
+							"key": "fiscalYear",
+							"label": "Fiscal year",
+							"type": "select",
+							"source": "Budget",
+							"field": "fiscalYear"
+						},
+						{
+							"key": "status",
+							"label": "Budget status",
+							"type": "multi-select",
+							"options": [
+								"approved",
+								"provisional",
+								"amended"
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "BudgetToProgrammeLinker",
+			"route": "/bbv-provincie/budget-to-programme",
+			"type": "index",
+			"title": "Budget Links",
+			"visibility": {
+				"field": "administrationType",
+				"in": [
+					"provincie"
+				]
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"selectable": true,
+				"defaultSort": "accountNumber",
+				"pageSize": 50,
+				"mappingStatus": {
+					"unmappedField": "programmaStructure",
+					"label": "Unmapped GL lines",
+					"thresholds": {
+						"red": 30,
+						"yellow": 10
+					}
+				},
+				"columns": [
+					{
+						"key": "accountNumber",
+						"label": "Account number",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"sortable": true
+					},
+					{
+						"key": "programmaStructure",
+						"label": "Current programme",
+						"sortable": true
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "accountType",
+						"label": "Account type",
+						"type": "select",
+						"options": [
+							"assets",
+							"liabilities",
+							"revenue",
+							"expenses"
+						]
+					},
+					{
+						"key": "programmaStructure",
+						"label": "Programme",
+						"type": "select",
+						"options": [
+							"ruimte",
+							"mobiliteit",
+							"water",
+							"milieu",
+							"cultuur",
+							"economie",
+							"bestuur",
+							"unmapped"
+						]
+					},
+					{
+						"key": "assignmentStatus",
+						"label": "Assignment status",
+						"type": "select",
+						"options": [
+							"mapped",
+							"unmapped"
+						]
+					}
+				],
+				"bulkActions": [
+					{
+						"id": "link-to-programme",
+						"label": "Link to Programme",
+						"icon": "LinkVariant",
+						"requiresSelection": true,
+						"dialog": {
+							"title": "Link to Programme",
+							"submitLabel": "Link",
+							"cancelLabel": "Cancel",
+							"fields": [
+								{
+									"key": "programmaStructure",
+									"label": "Target programme",
+									"type": "select",
+									"required": true,
+									"options": [
+										"ruimte",
+										"mobiliteit",
+										"water",
+										"milieu",
+										"cultuur",
+										"economie",
+										"bestuur"
+									]
+								},
+								{
+									"key": "programmaAssignedAt",
+									"label": "Effective date",
+									"type": "date",
+									"required": true,
+									"default": "@today",
+									"maxDate": "@today"
+								}
+							]
+						}
+					}
+				],
+				"detailRoute": "BudgetToProgrammeLinkerDetail"
+			}
+		},
+		{
+			"id": "BudgetToProgrammeLinkerDetail",
+			"route": "/bbv-provincie/budget-to-programme/:id",
+			"type": "detail",
+			"title": "GL line",
+			"visibility": {
+				"field": "administrationType",
+				"in": [
+					"provincie"
+				]
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"fields": [
+					{
+						"key": "accountNumber",
+						"label": "Account number",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"type": "number"
+					},
+					{
+						"key": "side",
+						"label": "Side",
+						"type": "string"
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "programmaStructure",
+						"label": "Programme",
+						"type": "enum",
+						"options": [
+							"ruimte",
+							"mobiliteit",
+							"water",
+							"milieu",
+							"cultuur",
+							"economie",
+							"bestuur"
+						]
+					},
+					{
+						"key": "programmaAssignedAt",
+						"label": "Assigned at",
+						"type": "string"
+					}
+				],
+				"indexRoute": "BudgetToProgrammeLinker"
+			}
+		}
+	]
+}

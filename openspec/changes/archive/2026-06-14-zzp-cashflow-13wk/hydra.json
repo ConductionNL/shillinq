@@ -1,0 +1,8 @@
+{
+  "spec_slug": "zzp-cashflow-13wk",
+  "title": "13-Weeks Rolling Cashflow Forecast voor ZZP",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": null
+}

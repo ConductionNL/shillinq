@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "spdx-license": "CC0-1.0",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Regeling Vaststelling Taakvelden (BZK Iv3-informatievoorschrift), provincie-bijlage",
+    "overheidslaag": "provincie",
+    "iv3Version": "2025-1.0",
+    "effectiveDate": "2025-01-01",
+    "description": "BBV taakveldenstructuur voor provincies per Iv3-informatievoorschrift. 14 provinciale taakvelden grouped in 7 hoofdfuncties; conform Besluit BBV bijlage IV (provincies). Volledige catalogus wordt via openconnector geimporteerd (REQ-BBV-001).",
+    "url": "https://www.referentiegrootboekschema.nl"
+  },
+  "taakvelden": [
+    {"code": "0.1", "naam": "Provinciale Staten", "hoofdfunctie": 0, "hoofdfunctieNaam": "Bestuur", "omschrijvingIv3": "Activiteiten van Provinciale Staten als algemene volksvertegenwoordiging.", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "0.2", "naam": "Gedeputeerde Staten", "hoofdfunctie": 0, "hoofdfunctieNaam": "Bestuur", "omschrijvingIv3": "Activiteiten van het college van Gedeputeerde Staten.", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "0.3", "naam": "Kabinetszaken commissaris van de Koning", "hoofdfunctie": 0, "hoofdfunctieNaam": "Bestuur", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "0.10", "naam": "Mutaties reserves", "hoofdfunctie": 0, "hoofdfunctieNaam": "Bestuur", "omschrijvingIv3": "Resultaatbestemming: dotaties en onttrekkingen aan reserves.", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "1.1", "naam": "Verkeer en vervoer", "hoofdfunctie": 1, "hoofdfunctieNaam": "Verkeer en vervoer", "omschrijvingIv3": "Provinciale wegen, openbaar vervoer en mobiliteitsbeleid.", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "1.2", "naam": "Waterwegen", "hoofdfunctie": 1, "hoofdfunctieNaam": "Verkeer en vervoer", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "2.1", "naam": "Waterhuishouding", "hoofdfunctie": 2, "hoofdfunctieNaam": "Water", "omschrijvingIv3": "Beheer regionale wateren, waterkwaliteit en kustlijn.", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "3.1", "naam": "Milieu", "hoofdfunctie": 3, "hoofdfunctieNaam": "Milieu", "omschrijvingIv3": "Milieubeheer, vergunningverlening, bodem en luchtkwaliteit.", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "4.1", "naam": "Recreatie en natuur", "hoofdfunctie": 4, "hoofdfunctieNaam": "Recreatie en natuur", "omschrijvingIv3": "Natuurbeheer, ecologische hoofdstructuur, recreatie en landschap.", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "5.1", "naam": "Economische zaken en innovatie", "hoofdfunctie": 5, "hoofdfunctieNaam": "Economische zaken", "omschrijvingIv3": "Regionale economie, MKB-beleid, innovatiebevordering en arbeidsmarkt.", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "6.1", "naam": "Cultuur en maatschappij", "hoofdfunctie": 6, "hoofdfunctieNaam": "Cultuur en maatschappij", "omschrijvingIv3": "Cultureel erfgoed, bibliotheken, sport en jeugd.", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "7.1", "naam": "Ruimtelijke ordening en stedelijke vernieuwing", "hoofdfunctie": 7, "hoofdfunctieNaam": "Ruimte", "omschrijvingIv3": "Ruimtelijk beleid, omgevingsvisie, woningbouw en gebiedsontwikkeling.", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "7.2", "naam": "Landelijk gebied", "hoofdfunctie": 7, "hoofdfunctieNaam": "Ruimte", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"},
+    {"code": "0.61", "naam": "Opcenten motorrijtuigenbelasting", "hoofdfunctie": 0, "hoofdfunctieNaam": "Bestuur", "omschrijvingIv3": "Opbrengst opcenten op motorrijtuigenbelasting (provincie-specifiek).", "overheidslaag": "provincie", "geldigVanaf": "2025-01-01"}
+  ]
+}

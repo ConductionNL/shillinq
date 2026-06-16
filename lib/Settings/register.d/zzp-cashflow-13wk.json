@@ -1,0 +1,1440 @@
+{
+	"info": {
+		"version": "0.1.0-zzp-cashflow-13wk"
+	},
+	"_meta": {
+		"x-spec": "openspec/changes/zzp-cashflow-13wk/specs/bookkeeping-cashflow-13wk/spec.md",
+		"description": "13-weeks rolling cashflow forecast for ZZP'ers and small MKB (REQ-CF-000..017). Declarative per ADR-031; merged additively per ADR-037. Field naming normalised to the app-wide administrationId convention (the spec's administrazioneId/amministrazioneId variants are typos)."
+	},
+	"components": {
+		"schemas": {
+			"CashflowForecastHorizon": {
+				"slug": "CashflowForecastHorizon",
+				"icon": "ChartTimelineVariant",
+				"version": "0.1.0",
+				"title": "Cashflow Forecast Horizon",
+				"description": "The 13-week rolling cashflow window for one administration (REQ-CF-000/001). Rolls forward every Monday 02:00 UTC: week-1 is archived, week-13 is appended. Categorisation follows IAS 7 / RJ 360 (operationeel / investering / financiering).",
+				"x-schema-org": "schema:MonetaryAmount",
+				"x-openregister-purpose": "transaction",
+				"x-spec": "openspec/changes/zzp-cashflow-13wk/specs/bookkeeping-cashflow-13wk/spec.md",
+				"type": "object",
+				"required": [
+					"horizonId",
+					"ondernemingId",
+					"horizonStart",
+					"horizonEind",
+					"rolledOp",
+					"openingSaldo",
+					"administrationId",
+					"lifecycleState"
+				],
+				"properties": {
+					"horizonId": {
+						"type": "string",
+						"description": "Unique identifier (UUID) of the horizon (REQ-CF-001).",
+						"example": "hor-2026-w22-adm1"
+					},
+					"ondernemingId": {
+						"type": "string",
+						"description": "Denormalised reference to the onderneming/corporation this horizon belongs to (REQ-CF-001).",
+						"example": "ond-zzp-c001"
+					},
+					"horizonStart": {
+						"type": "string",
+						"format": "date",
+						"description": "First day of the 13-week window (a Monday) (REQ-CF-001).",
+						"example": "2026-05-25"
+					},
+					"horizonEind": {
+						"type": "string",
+						"format": "date",
+						"description": "Last day of the window (Sunday, +90 days) (REQ-CF-001).",
+						"example": "2026-08-23"
+					},
+					"rolledOp": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp of the last weekly roll (REQ-CF-001).",
+						"example": "2026-05-25T02:00:00Z"
+					},
+					"openingSaldo": {
+						"type": "object",
+						"description": "Opening balance breakdown across the operational account and the three spaardoel buckets (REQ-CF-001/014).",
+						"required": [
+							"zakelijkeRekening",
+							"spaardoel_btw",
+							"spaardoel_ib",
+							"spaardoel_buffer",
+							"totaal"
+						],
+						"properties": {
+							"zakelijkeRekening": {
+								"type": "number",
+								"description": "Operational business account balance in EUR.",
+								"example": 14820.0
+							},
+							"spaardoel_btw": {
+								"type": "number",
+								"description": "BTW reserve bucket in EUR (trust money owed to the Belastingdienst).",
+								"example": 3200.0
+							},
+							"spaardoel_ib": {
+								"type": "number",
+								"description": "IB/VPB reserve bucket in EUR.",
+								"example": 5800.0
+							},
+							"spaardoel_buffer": {
+								"type": "number",
+								"description": "Emergency buffer bucket in EUR (1-3 months fixed costs).",
+								"example": 8200.0
+							},
+							"totaal": {
+								"type": "number",
+								"description": "Sum of all four balances in EUR.",
+								"example": 32020.0
+							}
+						}
+					},
+					"modelVersie": {
+						"type": "string",
+						"description": "Forecast model version string (REQ-CF-017).",
+						"example": "v4.1-klantspecifiek-betaalgedrag"
+					},
+					"kalibratieScore": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 1,
+						"description": "Overall prior-month forecast accuracy (0-1, MAPE-weighted) (REQ-CF-001/013).",
+						"example": 0.94
+					},
+					"crisisModeActief": {
+						"type": "boolean",
+						"default": false,
+						"description": "True when a negative saldo is predicted within the next 4 weeks; triggers daily recompute (REQ-CF-010)."
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (tenant scope) (REQ-CF-001).",
+						"example": "adm-consultancy-nl"
+					},
+					"lifecycleState": {
+						"type": "string",
+						"enum": [
+							"active",
+							"rolling",
+							"archived"
+						],
+						"default": "active",
+						"description": "Lifecycle state of the horizon (REQ-CF-001)."
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Current live horizon. Aggregations compute the 13 weeks against it."
+						},
+						"rolling": {
+							"label": "Rolling",
+							"description": "Transient state held while the Monday roll archives week-1 and appends week-13. Idempotent: re-running the same Monday's roll does not duplicate."
+						},
+						"archived": {
+							"label": "Archived",
+							"description": "Superseded by a newer horizon. Remains queryable for audit; excluded from default listings."
+						}
+					},
+					"transitions": {
+						"roll": {
+							"from": "active",
+							"to": "rolling",
+							"label": "Start weekly roll"
+						},
+						"rollComplete": {
+							"from": "rolling",
+							"to": "active",
+							"label": "Finish weekly roll"
+						},
+						"archive": {
+							"from": "active",
+							"to": "archived",
+							"label": "Archive superseded horizon"
+						}
+					}
+				},
+				"x-openregister-relations": {
+					"weeks": {
+						"localField": "horizonId",
+						"relatedSchema": "CashflowWeek",
+						"relatedField": "horizonId",
+						"cardinality": "one-to-many",
+						"description": "The 13 weekly slots of this horizon (REQ-CF-001/002)."
+					},
+					"arProjections": {
+						"localField": "horizonId",
+						"relatedSchema": "CashflowARProjection",
+						"relatedField": "horizonId",
+						"cardinality": "one-to-many",
+						"description": "AR receipt projections feeding the horizon's inflows (REQ-CF-001/004)."
+					},
+					"apSchedule": {
+						"localField": "horizonId",
+						"relatedSchema": "CashflowAPSchedule",
+						"relatedField": "horizonId",
+						"cardinality": "one-to-many",
+						"description": "AP payment schedule feeding the horizon's outflows (REQ-CF-001/006)."
+					},
+					"scenarios": {
+						"localField": "horizonId",
+						"relatedSchema": "CashflowScenario",
+						"relatedField": "horizonId",
+						"cardinality": "one-to-many",
+						"description": "What-if scenarios branched from this horizon (REQ-CF-011)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"cashflow-manager": {
+							"permissions": ["create", "read", "update"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"countByLifecycleState": {
+						"field": "lifecycleState",
+						"operation": "count",
+						"groupBy": "lifecycleState",
+						"description": "Number of horizons per lifecycle state."
+					}
+				}
+			},
+			"CashflowWeek": {
+				"slug": "CashflowWeek",
+				"icon": "CalendarWeekOutline",
+				"version": "0.1.0",
+				"title": "Cashflow Week",
+				"description": "One weekly slot in the 13-week horizon with inflows/outflows by category and computed ending saldo (REQ-CF-002). nettoMutatie = inflows_totaal - outflows_totaal; eindSaldo = openingSaldo + nettoMutatie.",
+				"x-schema-org": "schema:MonetaryAmount",
+				"x-openregister-purpose": "transaction",
+				"x-spec": "openspec/changes/zzp-cashflow-13wk/specs/bookkeeping-cashflow-13wk/spec.md",
+				"type": "object",
+				"required": [
+					"weekId",
+					"horizonId",
+					"weeknummer",
+					"weekStart",
+					"weekEind",
+					"openingSaldo",
+					"inflows_ar_geprognosticeerd",
+					"inflows_totaal",
+					"outflows_ap_geprognosticeerd",
+					"outflows_totaal",
+					"nettoMutatie",
+					"eindSaldo",
+					"administrationId"
+				],
+				"properties": {
+					"weekId": {
+						"type": "string",
+						"description": "Unique identifier (UUID) of the week slot (REQ-CF-002).",
+						"example": "wk-2026-w22-hor1"
+					},
+					"horizonId": {
+						"type": "string",
+						"description": "FK to the parent CashflowForecastHorizon (REQ-CF-002).",
+						"example": "hor-2026-w22-adm1"
+					},
+					"weeknummer": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 53,
+						"description": "ISO 8601 week number (REQ-CF-002).",
+						"example": 22
+					},
+					"weekStart": {
+						"type": "string",
+						"format": "date",
+						"description": "Monday of the week (REQ-CF-002).",
+						"example": "2026-05-25"
+					},
+					"weekEind": {
+						"type": "string",
+						"format": "date",
+						"description": "Sunday of the week (REQ-CF-002).",
+						"example": "2026-05-31"
+					},
+					"openingSaldo": {
+						"type": "number",
+						"description": "Opening balance for the week (previous week's eindSaldo or horizon opening) (REQ-CF-002).",
+						"example": 32020.0
+					},
+					"inflows_ar_geprognosticeerd": {
+						"type": "number",
+						"description": "Projected AR receipts, customer-specific betalingsgedrag-based (REQ-CF-002/003).",
+						"example": 11500.0
+					},
+					"inflows_ar_gerealiseerd": {
+						"type": "number",
+						"description": "Actual AR receipts from bankfeed, filled post-settlement (REQ-CF-002/012).",
+						"example": 0.0
+					},
+					"inflows_pipeline": {
+						"type": "number",
+						"description": "Probabilistic pipeline revenue (deal.amount x deal.probability) (REQ-CF-002).",
+						"example": 0.0
+					},
+					"inflows_overig": {
+						"type": "number",
+						"description": "Interest, refunds, other inflows (REQ-CF-002).",
+						"example": 0.0
+					},
+					"inflows_totaal": {
+						"type": "number",
+						"description": "Sum of all inflows for the week (REQ-CF-002).",
+						"example": 11500.0
+					},
+					"outflows_ap_geprognosticeerd": {
+						"type": "number",
+						"description": "Projected AP payments, due-date scheduled (REQ-CF-002/006).",
+						"example": 2100.0
+					},
+					"outflows_recurring_huur": {
+						"type": "number",
+						"description": "Recurring rent for the week (REQ-CF-002/005).",
+						"example": 0.0
+					},
+					"outflows_recurring_verzekering": {
+						"type": "number",
+						"description": "Recurring insurance for the week (REQ-CF-002/005).",
+						"example": 0.0
+					},
+					"outflows_recurring_abonnementen": {
+						"type": "number",
+						"description": "Recurring subscriptions/software for the week (REQ-CF-002/005).",
+						"example": 0.0
+					},
+					"outflows_recurring_dga_loon": {
+						"type": "number",
+						"description": "DGA salary withdrawal for the week (REQ-CF-002/005).",
+						"example": 0.0
+					},
+					"outflows_recurring_lijfrentepremie": {
+						"type": "number",
+						"description": "Pension/annuity contribution for the week (REQ-CF-002/005).",
+						"example": 0.0
+					},
+					"outflows_btw_afdracht": {
+						"type": "number",
+						"description": "Quarterly BTW settlement, if due this week (REQ-CF-002/007).",
+						"example": 0.0
+					},
+					"outflows_ib_aanslag": {
+						"type": "number",
+						"description": "Annual IB/VPB settlement, if due this week (REQ-CF-002/008).",
+						"example": 0.0
+					},
+					"outflows_investeringen": {
+						"type": "number",
+						"description": "Capital expenditure for the week (REQ-CF-002).",
+						"example": 0.0
+					},
+					"outflows_totaal": {
+						"type": "number",
+						"description": "Sum of all outflows for the week (REQ-CF-002).",
+						"example": 2100.0
+					},
+					"nettoMutatie": {
+						"type": "number",
+						"description": "inflows_totaal - outflows_totaal (REQ-CF-002).",
+						"example": 9400.0
+					},
+					"eindSaldo": {
+						"type": "number",
+						"description": "openingSaldo + nettoMutatie (REQ-CF-002).",
+						"example": 41420.0
+					},
+					"bufferStatus": {
+						"type": "string",
+						"enum": [
+							"BOVEN_BUFFER",
+							"VOORALARM",
+							"CRISIS"
+						],
+						"description": "Buffer status per the active buffer policy (REQ-CF-002/009)."
+					},
+					"alerts": {
+						"type": "array",
+						"description": "Alert records raised for this week (REQ-CF-009/010).",
+						"items": {
+							"type": "object",
+							"required": ["type", "severity"],
+							"properties": {
+								"type": {
+									"type": "string",
+									"description": "Alert type, e.g. BUFFER_ONDERSCHRIJDING.",
+									"example": "BUFFER_ONDERSCHRIJDING"
+								},
+								"severity": {
+									"type": "string",
+									"enum": ["RED", "YELLOW"],
+									"description": "Alert severity."
+								},
+								"suggestedActions": {
+									"type": "array",
+									"description": "Ranked, concrete action suggestions.",
+									"items": {
+										"type": "string"
+									}
+								}
+							}
+						}
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (tenant scope) (REQ-CF-002).",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-relations": {
+					"horizon": {
+						"localField": "horizonId",
+						"relatedSchema": "CashflowForecastHorizon",
+						"relatedField": "horizonId",
+						"cardinality": "many-to-one",
+						"description": "The horizon this week belongs to (REQ-CF-002)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"cashflow-manager": {
+							"permissions": ["create", "read", "update"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"inflowsArByWeek": {
+						"field": "inflows_ar_geprognosticeerd",
+						"operation": "sum",
+						"groupBy": "weeknummer",
+						"description": "Projected AR inflows summed per week (REQ-CF-002 weekly aggregation). Feeds the bar chart inflows series."
+					},
+					"outflowsByWeek": {
+						"field": "outflows_totaal",
+						"operation": "sum",
+						"groupBy": "weeknummer",
+						"description": "Total outflows summed per week (REQ-CF-006/007). Feeds the bar chart outflows series."
+					},
+					"countByBufferStatus": {
+						"field": "bufferStatus",
+						"operation": "count",
+						"groupBy": "bufferStatus",
+						"description": "Number of weeks per buffer status, for alert badges (REQ-CF-009)."
+					}
+				}
+			},
+			"CashflowARProjection": {
+				"slug": "CashflowARProjection",
+				"icon": "CashClock",
+				"version": "0.1.0",
+				"title": "Cashflow AR Projection",
+				"description": "One record per open AR invoice projecting the expected receipt date from customer-specific betalingsgedrag history rather than the contractual due date (REQ-CF-003/004).",
+				"x-schema-org": "schema:Invoice",
+				"x-openregister-purpose": "transaction",
+				"x-spec": "openspec/changes/zzp-cashflow-13wk/specs/bookkeeping-cashflow-13wk/spec.md",
+				"type": "object",
+				"required": [
+					"projId",
+					"horizonId",
+					"arInvoiceId",
+					"factuurDatum",
+					"vervalDatum",
+					"openstaandBedrag",
+					"verwachtOntvangstDatum",
+					"administrationId"
+				],
+				"properties": {
+					"projId": {
+						"type": "string",
+						"description": "Unique identifier (UUID) (REQ-CF-004).",
+						"example": "arproj-fact-2026-0247"
+					},
+					"horizonId": {
+						"type": "string",
+						"description": "FK to CashflowForecastHorizon (REQ-CF-004).",
+						"example": "hor-2026-w22-adm1"
+					},
+					"arInvoiceId": {
+						"type": "string",
+						"description": "FK to the AR invoice (read-only; from bookkeeping-accounts-receivable-core) (REQ-CF-004).",
+						"example": "fact-2026-0247"
+					},
+					"klantId": {
+						"type": "string",
+						"description": "Denormalised customer identifier for reporting (REQ-CF-004).",
+						"example": "klant-acme-bv"
+					},
+					"factuurDatum": {
+						"type": "string",
+						"format": "date",
+						"description": "Invoice issuance date (REQ-CF-004).",
+						"example": "2026-04-15"
+					},
+					"vervalDatum": {
+						"type": "string",
+						"format": "date",
+						"description": "Contractual due date (REQ-CF-004).",
+						"example": "2026-05-15"
+					},
+					"openstaandBedrag": {
+						"type": "number",
+						"description": "Outstanding amount in EUR (REQ-CF-004).",
+						"example": 8400.0
+					},
+					"verwachtOntvangstDatum": {
+						"type": "string",
+						"format": "date",
+						"description": "Projected receipt date = vervalDatum + mean betalingsgedrag offset (REQ-CF-003/004).",
+						"example": "2026-05-28"
+					},
+					"verwachtOntvangstWeek": {
+						"type": "string",
+						"description": "ISO week string of the projected receipt (REQ-CF-004).",
+						"example": "2026-w22"
+					},
+					"betalingsHistorie_gemiddeldeAfwijking": {
+						"type": "string",
+						"description": "Mean offset from due date as a signed-days string (REQ-CF-004).",
+						"example": "+13 days"
+					},
+					"betalingsHistorie_facturen12mnd": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Count of settled invoices in the 12-month sample (REQ-CF-003/004).",
+						"example": 9
+					},
+					"betalingsHistorie_betaaldVoorVerval": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Count of invoices paid on or before the due date (REQ-CF-004).",
+						"example": 2
+					},
+					"betrouwbaarheidScore": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 1,
+						"description": "Confidence score = min(1.0, count/12); below 5 samples this is marked LAAG (REQ-CF-003/004).",
+						"example": 0.75
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (tenant scope) (REQ-CF-004).",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-relations": {
+					"horizon": {
+						"localField": "horizonId",
+						"relatedSchema": "CashflowForecastHorizon",
+						"relatedField": "horizonId",
+						"cardinality": "many-to-one",
+						"description": "The horizon this projection feeds (REQ-CF-004)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"cashflow-manager": {
+							"permissions": ["create", "read", "update"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"projectedReceiptsByWeek": {
+						"field": "openstaandBedrag",
+						"operation": "sum",
+						"groupBy": "verwachtOntvangstWeek",
+						"description": "Sum of outstanding AR amounts grouped by projected receipt week (REQ-CF-002/003). This is the source aggregation for CashflowWeek.inflows_ar_geprognosticeerd."
+					}
+				}
+			},
+			"CashflowAPSchedule": {
+				"slug": "CashflowAPSchedule",
+				"icon": "CashMinus",
+				"version": "0.1.0",
+				"title": "Cashflow AP Schedule",
+				"description": "One record per scheduled AP outflow within the horizon, derived from open AP invoices' due dates (REQ-CF-006).",
+				"x-schema-org": "schema:Invoice",
+				"x-openregister-purpose": "transaction",
+				"x-spec": "openspec/changes/zzp-cashflow-13wk/specs/bookkeeping-cashflow-13wk/spec.md",
+				"type": "object",
+				"required": [
+					"schedId",
+					"horizonId",
+					"apTransactionId",
+					"vervalDatum",
+					"geplandeBetaalDatum",
+					"bedrag",
+					"administrationId"
+				],
+				"properties": {
+					"schedId": {
+						"type": "string",
+						"description": "Unique identifier (UUID) (REQ-CF-006).",
+						"example": "apsched-kpn-2026-05"
+					},
+					"horizonId": {
+						"type": "string",
+						"description": "FK to CashflowForecastHorizon (REQ-CF-006).",
+						"example": "hor-2026-w22-adm1"
+					},
+					"apTransactionId": {
+						"type": "string",
+						"description": "FK to the AP invoice/transaction (read-only; from bookkeeping-accounts-payable-core) (REQ-CF-006).",
+						"example": "ap-2026-0184"
+					},
+					"leverancierNaam": {
+						"type": "string",
+						"description": "Supplier/creditor name (denormalised) (REQ-CF-006).",
+						"example": "KPN Zakelijk"
+					},
+					"vervalDatum": {
+						"type": "string",
+						"format": "date",
+						"description": "AP invoice due date (REQ-CF-006).",
+						"example": "2026-05-30"
+					},
+					"geplandeBetaalDatum": {
+						"type": "string",
+						"format": "date",
+						"description": "Planned payment date (defaults to vervalDatum) (REQ-CF-006).",
+						"example": "2026-05-30"
+					},
+					"bedrag": {
+						"type": "number",
+						"description": "Amount to pay in EUR (REQ-CF-006).",
+						"example": 184.0
+					},
+					"categorie": {
+						"type": "string",
+						"enum": [
+							"LEVERANCIER",
+							"RECURRING",
+							"BTW",
+							"IB",
+							"INVESTERING",
+							"OVERIG"
+						],
+						"description": "Outflow category for charting (REQ-CF-006)."
+					},
+					"betalingsmethode": {
+						"type": "string",
+						"enum": [
+							"AUTOMATISCHE_INCASSO_SEPA",
+							"BANKTRANSFER",
+							"IDEAL",
+							"OVERIG"
+						],
+						"description": "Payment method (REQ-CF-006)."
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (tenant scope) (REQ-CF-006).",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-relations": {
+					"horizon": {
+						"localField": "horizonId",
+						"relatedSchema": "CashflowForecastHorizon",
+						"relatedField": "horizonId",
+						"cardinality": "many-to-one",
+						"description": "The horizon this AP schedule feeds (REQ-CF-006)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"cashflow-manager": {
+							"permissions": ["create", "read", "update"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"scheduledPaymentsByCategory": {
+						"field": "bedrag",
+						"operation": "sum",
+						"groupBy": "categorie",
+						"description": "Sum of scheduled AP outflows grouped by category (REQ-CF-006). Feeds CashflowWeek.outflows_ap_geprognosticeerd."
+					}
+				}
+			},
+			"CashflowRecurring": {
+				"slug": "CashflowRecurring",
+				"icon": "Sync",
+				"version": "0.1.0",
+				"title": "Cashflow Recurring Cost",
+				"description": "A declarative recurring inflow/outflow stream (huur, verzekering, abonnementen, DGA-loon, lijfrentepremie, leasing) auto-expanded into the 13-week horizon by frequency, activation window and optional CPI indexing (REQ-CF-005). The CashflowRecurringGuard validates the definition on save (ADR-031 exception).",
+				"x-schema-org": "schema:MonetaryAmount",
+				"x-openregister-purpose": "configuration",
+				"x-spec": "openspec/changes/zzp-cashflow-13wk/specs/bookkeeping-cashflow-13wk/spec.md",
+				"type": "object",
+				"required": [
+					"recurId",
+					"ondernemingId",
+					"label",
+					"categorie",
+					"richting",
+					"frequentie",
+					"standaardBedrag",
+					"geldigVan",
+					"administrationId"
+				],
+				"properties": {
+					"recurId": {
+						"type": "string",
+						"description": "Unique identifier (UUID) (REQ-CF-005).",
+						"example": "rec-huur-kantoor"
+					},
+					"ondernemingId": {
+						"type": "string",
+						"description": "FK to the onderneming/corporation (REQ-CF-005).",
+						"example": "ond-zzp-c001"
+					},
+					"label": {
+						"type": "string",
+						"description": "Human-readable name (REQ-CF-005).",
+						"example": "Huur kantoorruimte De Werkfabriek"
+					},
+					"categorie": {
+						"type": "string",
+						"enum": [
+							"RECURRING_HUUR",
+							"RECURRING_VERZEKERING",
+							"RECURRING_ABONNEMENTEN",
+							"RECURRING_SOFTWARE",
+							"RECURRING_DGA_LOON",
+							"RECURRING_LIJFRENTEPREMIE",
+							"RECURRING_LEASING",
+							"RECURRING_OVERIG"
+						],
+						"description": "Recurring category (REQ-CF-005)."
+					},
+					"richting": {
+						"type": "string",
+						"enum": ["IN", "OUT"],
+						"description": "Direction: inflow or outflow (REQ-CF-005)."
+					},
+					"frequentie": {
+						"type": "string",
+						"enum": [
+							"WEKELIJKS",
+							"TWEEWEKELIJKS",
+							"MAANDELIJKS",
+							"KWARTAALS",
+							"JAARLIJKS"
+						],
+						"description": "Recurrence frequency (REQ-CF-005)."
+					},
+					"dagVanMaand": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 31,
+						"description": "Day of month for monthly recurrence; null for other frequencies (REQ-CF-005).",
+						"example": 1
+					},
+					"maandVanJaar": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 12,
+						"description": "Month for annual recurrence; null for other frequencies (REQ-CF-005).",
+						"example": 7
+					},
+					"standaardBedrag": {
+						"type": "number",
+						"description": "Base amount in EUR (REQ-CF-005).",
+						"example": 850.0
+					},
+					"indexatieRegel": {
+						"type": "string",
+						"enum": ["FIXED", "CPI_AFGELOPEN_JAAR"],
+						"default": "FIXED",
+						"description": "Indexation rule: fixed amount or annual CBS-CPI update (REQ-CF-005)."
+					},
+					"geldigVan": {
+						"type": "string",
+						"format": "date",
+						"description": "Effective start date; weeks before this are ignored (REQ-CF-005).",
+						"example": "2024-09-01"
+					},
+					"geldigTot": {
+						"type": "string",
+						"format": "date",
+						"description": "Expiration date; null if indefinite; weeks after this are ignored (REQ-CF-005).",
+						"example": "2026-12-31"
+					},
+					"accountNumberExpense": {
+						"type": "string",
+						"description": "GL account code (FK to Account.accountNumber) used on settlement (REQ-CF-005).",
+						"example": "4300"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (tenant scope) (REQ-CF-005).",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "richting",
+					"initialState": "OUT",
+					"states": {
+						"IN": {
+							"label": "Inflow",
+							"description": "Recurring money coming in."
+						},
+						"OUT": {
+							"label": "Outflow",
+							"description": "Recurring money going out."
+						}
+					},
+					"preconditions": {
+						"save": "OCA\\Shillinq\\Guard\\CashflowRecurringGuard::validateOnSave"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"cashflow-manager": {
+							"permissions": ["create", "read", "update"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"countByCategorie": {
+						"field": "categorie",
+						"operation": "count",
+						"groupBy": "categorie",
+						"description": "Number of recurring items per category (REQ-CF-005)."
+					}
+				}
+			},
+			"CashflowBufferPolicy": {
+				"slug": "CashflowBufferPolicy",
+				"icon": "ShieldCheckOutline",
+				"version": "0.1.0",
+				"title": "Cashflow Buffer Policy",
+				"description": "Operator-configured minimum cash reserve with two-tier alerts: vooralarm at 150% (yellow) and ondergrens at 50% (red) of the calculated buffer (REQ-CF-009).",
+				"x-schema-org": "schema:MonetaryAmount",
+				"x-openregister-purpose": "configuration",
+				"x-spec": "openspec/changes/zzp-cashflow-13wk/specs/bookkeeping-cashflow-13wk/spec.md",
+				"type": "object",
+				"required": [
+					"policyId",
+					"ondernemingId",
+					"policy",
+					"berekendeBuffer",
+					"alertOndergrens",
+					"alertVooralarm",
+					"administrationId"
+				],
+				"properties": {
+					"policyId": {
+						"type": "string",
+						"description": "Unique identifier (UUID) (REQ-CF-009).",
+						"example": "buf-adm1"
+					},
+					"ondernemingId": {
+						"type": "string",
+						"description": "FK to the onderneming/corporation (REQ-CF-009).",
+						"example": "ond-zzp-c001"
+					},
+					"policy": {
+						"type": "string",
+						"enum": [
+							"MIN_FIXED_AMOUNT",
+							"MIN_MONTHS_VASTE_KOSTEN",
+							"CUSTOM_FORMULA"
+						],
+						"description": "Buffer calculation policy (REQ-CF-009)."
+					},
+					"berekendeBuffer": {
+						"type": "number",
+						"description": "Calculated buffer threshold in EUR (REQ-CF-009).",
+						"example": 5200.0
+					},
+					"alertOndergrens": {
+						"type": "number",
+						"description": "Red critical threshold (= berekendeBuffer x 0.50) (REQ-CF-009).",
+						"example": 2600.0
+					},
+					"alertVooralarm": {
+						"type": "number",
+						"description": "Yellow pre-alert threshold (= berekendeBuffer x 1.50) (REQ-CF-009).",
+						"example": 7800.0
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (tenant scope) (REQ-CF-009).",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"cashflow-manager": {
+							"permissions": ["create", "read", "update"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"countByPolicy": {
+						"field": "policy",
+						"operation": "count",
+						"groupBy": "policy",
+						"description": "Number of buffer policies per policy type (REQ-CF-009)."
+					}
+				}
+			},
+			"CashflowScenario": {
+				"slug": "CashflowScenario",
+				"icon": "Sitemap",
+				"version": "0.1.0",
+				"title": "Cashflow Scenario",
+				"description": "An immutable what-if snapshot of a horizon with one or more adjustments, re-computed for comparison against the baseline (REQ-CF-011). Scenarios are data, not stored logic (ADR-031).",
+				"x-schema-org": "schema:Action",
+				"x-openregister-purpose": "transaction",
+				"x-spec": "openspec/changes/zzp-cashflow-13wk/specs/bookkeeping-cashflow-13wk/spec.md",
+				"type": "object",
+				"required": [
+					"scenarioId",
+					"horizonId",
+					"naam",
+					"aanpassingen",
+					"createdAt",
+					"administrationId"
+				],
+				"properties": {
+					"scenarioId": {
+						"type": "string",
+						"description": "Unique identifier (UUID) (REQ-CF-011).",
+						"example": "scn-acme-no-pay"
+					},
+					"horizonId": {
+						"type": "string",
+						"description": "FK to the parent CashflowForecastHorizon (REQ-CF-011).",
+						"example": "hor-2026-w22-adm1"
+					},
+					"naam": {
+						"type": "string",
+						"description": "Scenario name (REQ-CF-011).",
+						"example": "Acme betaalt niet EUR 8.400"
+					},
+					"description": {
+						"type": "string",
+						"description": "Scenario description (REQ-CF-011).",
+						"example": "Stress test: largest debtor defaults this quarter."
+					},
+					"aanpassingen": {
+						"type": "array",
+						"description": "Array of adjustment rules (AR_PROJECTION_OVERRIDE, RECURRING_COST_ADJUSTMENT, NEW_REVENUE, BUFFER_POLICY_OVERRIDE) (REQ-CF-011).",
+						"items": {
+							"type": "object",
+							"required": ["type"],
+							"properties": {
+								"type": {
+									"type": "string",
+									"enum": [
+										"AR_PROJECTION_OVERRIDE",
+										"RECURRING_COST_ADJUSTMENT",
+										"NEW_REVENUE",
+										"BUFFER_POLICY_OVERRIDE"
+									],
+									"description": "Adjustment type (REQ-CF-011)."
+								},
+								"arInvoiceId": {
+									"type": "string",
+									"description": "Target AR invoice for AR_PROJECTION_OVERRIDE."
+								},
+								"weekShift": {
+									"type": "integer",
+									"description": "Number of weeks to shift the receipt for AR_PROJECTION_OVERRIDE."
+								},
+								"kansVanBetaling": {
+									"type": "number",
+									"minimum": 0,
+									"maximum": 1,
+									"description": "Probability of payment for AR_PROJECTION_OVERRIDE."
+								},
+								"recurId": {
+									"type": "string",
+									"description": "Target recurring item for RECURRING_COST_ADJUSTMENT."
+								},
+								"adjustmentType": {
+									"type": "string",
+									"enum": ["PAUSE", "INCREASE", "DECREASE"],
+									"description": "Adjustment for RECURRING_COST_ADJUSTMENT."
+								},
+								"weeks": {
+									"type": "array",
+									"items": { "type": "integer" },
+									"description": "Affected week numbers for RECURRING_COST_ADJUSTMENT."
+								},
+								"name": {
+									"type": "string",
+									"description": "Deal/project name for NEW_REVENUE."
+								},
+								"amount": {
+									"type": "number",
+									"description": "Amount for NEW_REVENUE."
+								},
+								"probability": {
+									"type": "number",
+									"minimum": 0,
+									"maximum": 1,
+									"description": "Close probability for NEW_REVENUE."
+								},
+								"expectedReceiptWeek": {
+									"type": "integer",
+									"description": "Expected receipt week number for NEW_REVENUE."
+								},
+								"recurringMonthly": {
+									"type": "number",
+									"description": "Associated monthly cost for NEW_REVENUE."
+								},
+								"bufferAmount": {
+									"type": "number",
+									"description": "Override buffer for BUFFER_POLICY_OVERRIDE."
+								}
+							}
+						}
+					},
+					"resultaat": {
+						"type": "object",
+						"description": "Computed forecast results, populated after recalculation (REQ-CF-011).",
+						"properties": {
+							"minBufferWeek": {
+								"type": "string",
+								"description": "ISO week of the minimum saldo.",
+								"example": "2026-w26"
+							},
+							"minBufferBedrag": {
+								"type": "number",
+								"description": "Minimum saldo across the horizon in EUR.",
+								"example": 100.0
+							},
+							"onderschrijdingBuffer": {
+								"type": "boolean",
+								"description": "True if any week breaches the buffer ondergrens."
+							},
+							"actiesuggesties": {
+								"type": "array",
+								"items": { "type": "string" },
+								"description": "Ranked action suggestions for this scenario."
+							}
+						}
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Scenario creation timestamp (REQ-CF-011).",
+						"example": "2026-05-25T09:14:00Z"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (tenant scope) (REQ-CF-011).",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-relations": {
+					"horizon": {
+						"localField": "horizonId",
+						"relatedSchema": "CashflowForecastHorizon",
+						"relatedField": "horizonId",
+						"cardinality": "many-to-one",
+						"description": "The horizon this scenario branches from (REQ-CF-011)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"cashflow-manager": {
+							"permissions": ["create", "read", "update"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"countByHorizon": {
+						"field": "horizonId",
+						"operation": "count",
+						"groupBy": "horizonId",
+						"description": "Number of scenarios per horizon (REQ-CF-011)."
+					}
+				}
+			},
+			"CashflowCalibrationReport": {
+				"slug": "CashflowCalibrationReport",
+				"icon": "ChartBellCurveCumulative",
+				"version": "0.1.0",
+				"title": "Cashflow Calibration Report",
+				"description": "Post-month-end forecast accuracy report comparing actual vs forecast by category (MAPE), used to recalibrate betalingsgedrag and pipeline-conversion models (REQ-CF-013).",
+				"x-schema-org": "schema:Report",
+				"x-openregister-purpose": "transaction",
+				"x-spec": "openspec/changes/zzp-cashflow-13wk/specs/bookkeeping-cashflow-13wk/spec.md",
+				"type": "object",
+				"required": [
+					"reportId",
+					"horizonId",
+					"calibrationPeriod",
+					"generatedAt",
+					"ar_mape",
+					"ap_mape",
+					"recurring_mape",
+					"tax_mape",
+					"administrationId"
+				],
+				"properties": {
+					"reportId": {
+						"type": "string",
+						"description": "Unique identifier (UUID) (REQ-CF-013).",
+						"example": "calib-2026-05"
+					},
+					"horizonId": {
+						"type": "string",
+						"description": "FK to CashflowForecastHorizon (REQ-CF-013).",
+						"example": "hor-2026-w22-adm1"
+					},
+					"calibrationPeriod": {
+						"type": "string",
+						"description": "Period evaluated, YYYY-MM (REQ-CF-013).",
+						"example": "2026-05"
+					},
+					"generatedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp of the calibration run (REQ-CF-013).",
+						"example": "2026-06-01T09:00:00Z"
+					},
+					"ar_mape": {
+						"type": "number",
+						"description": "MAPE for AR projections (%) (REQ-CF-013).",
+						"example": 1.9
+					},
+					"ap_mape": {
+						"type": "number",
+						"description": "MAPE for AP projections (%) (REQ-CF-013).",
+						"example": 1.7
+					},
+					"recurring_mape": {
+						"type": "number",
+						"description": "MAPE for recurring costs (%) (REQ-CF-013).",
+						"example": 0.0
+					},
+					"tax_mape": {
+						"type": "number",
+						"description": "MAPE for tax projections (%) (REQ-CF-013).",
+						"example": 0.0
+					},
+					"betalingsgedragUpdates": {
+						"type": "array",
+						"description": "Customers with re-calculated offsets (REQ-CF-013).",
+						"items": {
+							"type": "object",
+							"properties": {
+								"klantId": { "type": "string" },
+								"nieuweGemiddeldeAfwijking": { "type": "string" },
+								"nieuweBetrouwbaarheid": { "type": "number" }
+							}
+						}
+					},
+					"pipelineConversionUpdates": {
+						"type": "array",
+						"description": "Deals with re-calibrated probability (REQ-CF-013).",
+						"items": {
+							"type": "object",
+							"properties": {
+								"dealNaam": { "type": "string" },
+								"oudeKans": { "type": "number" },
+								"nieuweKans": { "type": "number" }
+							}
+						}
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration (tenant scope) (REQ-CF-013).",
+						"example": "adm-consultancy-nl"
+					}
+				},
+				"x-openregister-relations": {
+					"horizon": {
+						"localField": "horizonId",
+						"relatedSchema": "CashflowForecastHorizon",
+						"relatedField": "horizonId",
+						"cardinality": "many-to-one",
+						"description": "The horizon this report calibrates (REQ-CF-013)."
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"cashflow-manager": {
+							"permissions": ["read"]
+						},
+						"bookkeeper": {
+							"permissions": ["read"]
+						},
+						"auditor": {
+							"permissions": ["read"]
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"avgArMapeByPeriod": {
+						"field": "ar_mape",
+						"operation": "avg",
+						"groupBy": "calibrationPeriod",
+						"description": "Average AR MAPE per calibration period, for the accuracy trend (REQ-CF-013)."
+					}
+				}
+			}
+		}
+	},
+	"objects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CashflowForecastHorizon",
+				"slug": "cf-horizon-erik-consultancy-w22"
+			},
+			"horizonId": "hor-2026-w22-erik",
+			"ondernemingId": "ond-zzp-c001",
+			"horizonStart": "2026-05-25",
+			"horizonEind": "2026-08-23",
+			"rolledOp": "2026-05-25T02:00:00Z",
+			"openingSaldo": {
+				"zakelijkeRekening": 45000.0,
+				"spaardoel_btw": 8200.0,
+				"spaardoel_ib": 12500.0,
+				"spaardoel_buffer": 6800.0,
+				"totaal": 72500.0
+			},
+			"modelVersie": "v4.1-klantspecifiek-betaalgedrag",
+			"kalibratieScore": 0.97,
+			"crisisModeActief": false,
+			"administrationId": "adm-consultancy-nl",
+			"lifecycleState": "active"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CashflowWeek",
+				"slug": "cf-week-erik-w22"
+			},
+			"weekId": "wk-2026-w22-erik",
+			"horizonId": "hor-2026-w22-erik",
+			"weeknummer": 22,
+			"weekStart": "2026-05-25",
+			"weekEind": "2026-05-31",
+			"openingSaldo": 72500.0,
+			"inflows_ar_geprognosticeerd": 12500.0,
+			"inflows_ar_gerealiseerd": 0.0,
+			"inflows_pipeline": 0.0,
+			"inflows_overig": 0.0,
+			"inflows_totaal": 12500.0,
+			"outflows_ap_geprognosticeerd": 2100.0,
+			"outflows_recurring_huur": 1200.0,
+			"outflows_recurring_verzekering": 185.0,
+			"outflows_recurring_abonnementen": 240.0,
+			"outflows_recurring_dga_loon": 3500.0,
+			"outflows_recurring_lijfrentepremie": 0.0,
+			"outflows_btw_afdracht": 0.0,
+			"outflows_ib_aanslag": 0.0,
+			"outflows_investeringen": 0.0,
+			"outflows_totaal": 7225.0,
+			"nettoMutatie": 5275.0,
+			"eindSaldo": 77775.0,
+			"bufferStatus": "BOVEN_BUFFER",
+			"alerts": [],
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CashflowARProjection",
+				"slug": "cf-arproj-erik-acme"
+			},
+			"projId": "arproj-fact-2026-0247",
+			"horizonId": "hor-2026-w22-erik",
+			"arInvoiceId": "fact-2026-0247",
+			"klantId": "klant-acme-bv",
+			"factuurDatum": "2026-04-15",
+			"vervalDatum": "2026-05-15",
+			"openstaandBedrag": 8400.0,
+			"verwachtOntvangstDatum": "2026-05-28",
+			"verwachtOntvangstWeek": "2026-w22",
+			"betalingsHistorie_gemiddeldeAfwijking": "+13 days",
+			"betalingsHistorie_facturen12mnd": 9,
+			"betalingsHistorie_betaaldVoorVerval": 2,
+			"betrouwbaarheidScore": 0.75,
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CashflowAPSchedule",
+				"slug": "cf-apsched-erik-kpn"
+			},
+			"schedId": "apsched-kpn-2026-05",
+			"horizonId": "hor-2026-w22-erik",
+			"apTransactionId": "ap-2026-0184",
+			"leverancierNaam": "KPN Zakelijk",
+			"vervalDatum": "2026-05-30",
+			"geplandeBetaalDatum": "2026-05-30",
+			"bedrag": 184.0,
+			"categorie": "LEVERANCIER",
+			"betalingsmethode": "AUTOMATISCHE_INCASSO_SEPA",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CashflowRecurring",
+				"slug": "cf-recurring-erik-huur"
+			},
+			"recurId": "rec-huur-kantoor",
+			"ondernemingId": "ond-zzp-c001",
+			"label": "Huur kantoor",
+			"categorie": "RECURRING_HUUR",
+			"richting": "OUT",
+			"frequentie": "MAANDELIJKS",
+			"dagVanMaand": 1,
+			"standaardBedrag": 1200.0,
+			"indexatieRegel": "FIXED",
+			"geldigVan": "2024-09-01",
+			"accountNumberExpense": "4300",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CashflowRecurring",
+				"slug": "cf-recurring-erik-bav"
+			},
+			"recurId": "rec-bav-verzekering",
+			"ondernemingId": "ond-zzp-c001",
+			"label": "BAV-verzekering",
+			"categorie": "RECURRING_VERZEKERING",
+			"richting": "OUT",
+			"frequentie": "JAARLIJKS",
+			"maandVanJaar": 7,
+			"standaardBedrag": 620.0,
+			"indexatieRegel": "CPI_AFGELOPEN_JAAR",
+			"geldigVan": "2024-07-01",
+			"accountNumberExpense": "4310",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CashflowBufferPolicy",
+				"slug": "cf-buffer-erik"
+			},
+			"policyId": "buf-erik",
+			"ondernemingId": "ond-zzp-c001",
+			"policy": "MIN_MONTHS_VASTE_KOSTEN",
+			"berekendeBuffer": 7500.0,
+			"alertOndergrens": 3750.0,
+			"alertVooralarm": 11250.0,
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CashflowScenario",
+				"slug": "cf-scenario-erik-acme-no-pay"
+			},
+			"scenarioId": "scn-acme-no-pay",
+			"horizonId": "hor-2026-w22-erik",
+			"naam": "Acme betaalt niet EUR 8.400",
+			"description": "Stress test: largest debtor defaults this quarter.",
+			"aanpassingen": [
+				{
+					"type": "AR_PROJECTION_OVERRIDE",
+					"arInvoiceId": "fact-2026-0247",
+					"weekShift": 100,
+					"kansVanBetaling": 0
+				}
+			],
+			"resultaat": {
+				"minBufferWeek": "2026-w26",
+				"minBufferBedrag": 64100.0,
+				"onderschrijdingBuffer": false,
+				"actiesuggesties": [
+					"Stuur aanmaning fase 2 naar Acme BV.",
+					"Overweeg rekening-courant aan te vragen voor de zomerperiode."
+				]
+			},
+			"createdAt": "2026-05-25T09:14:00Z",
+			"administrationId": "adm-consultancy-nl"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "CashflowCalibrationReport",
+				"slug": "cf-calib-erik-2026-05"
+			},
+			"reportId": "calib-2026-05",
+			"horizonId": "hor-2026-w22-erik",
+			"calibrationPeriod": "2026-05",
+			"generatedAt": "2026-06-01T09:00:00Z",
+			"ar_mape": 1.9,
+			"ap_mape": 1.7,
+			"recurring_mape": 0.0,
+			"tax_mape": 0.0,
+			"betalingsgedragUpdates": [
+				{
+					"klantId": "klant-acme-bv",
+					"nieuweGemiddeldeAfwijking": "+12 days",
+					"nieuweBetrouwbaarheid": 0.83
+				}
+			],
+			"pipelineConversionUpdates": [],
+			"administrationId": "adm-consultancy-nl"
+		}
+	]
+}

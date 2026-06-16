@@ -1,0 +1,8 @@
+{
+  "spec_slug": "bookkeeping-wbso-sno-administratie",
+  "title": "WBSO S&O Administratie",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": null
+}

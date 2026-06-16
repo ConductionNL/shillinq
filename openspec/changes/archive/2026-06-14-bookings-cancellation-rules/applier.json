@@ -1,0 +1,17 @@
+{
+  "ran": true,
+  "pass": false,
+  "blocking": [
+    {
+      "file": "l10n/en.json, l10n/nl.json",
+      "severity": "critical",
+      "note": "pr-state.json reports mergeable=false; diff confirms raw git conflict markers in both l10n files \u2014 files are not valid JSON and cannot be merged into development"
+    }
+  ],
+  "turns": 7,
+  "cost_usd": 0.2759,
+  "cost_eur": 0.2538,
+  "pr": 279,
+  "commit": "ea31f41",
+  "timestamp": "2026-06-07T10:55:36.963430+00:00"
+}

@@ -1,0 +1,180 @@
+{
+	"menu": [
+		{
+			"id": "Inventory",
+			"label": "Inventory",
+			"icon": "icon-category-customization",
+			"order": 22,
+			"children": [
+				{
+					"id": "StockMovements",
+					"label": "Stock Movements",
+					"icon": "SwapHorizontalBoldOutline",
+					"route": "StockMovements",
+					"order": 45
+				},
+				{
+					"id": "StockLedger",
+					"label": "Stock Ledger",
+					"icon": "BookOpenVariantOutline",
+					"route": "StockLedger",
+					"order": 46
+				},
+				{
+					"id": "ReservedStock",
+					"label": "Reserved Stock",
+					"icon": "LockOutline",
+					"route": "ReservedStock",
+					"order": 47
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "StockMovements",
+			"route": "/inventory/stock-movements",
+			"type": "index",
+			"title": "Stock Movements",
+			"config": {
+				"register": "shillinq",
+				"schema": "StockMove",
+				"columns": [
+					{ "key": "movementNumber", "label": "Movement #", "sortable": true },
+					{ "key": "draftedAt", "label": "Drafted", "sortable": true },
+					{ "key": "postedAt", "label": "Posted", "sortable": true },
+					{ "key": "movementType", "label": "Type", "sortable": true },
+					{ "key": "itemId", "label": "Item", "sortable": true },
+					{ "key": "quantity", "label": "Quantity", "sortable": true },
+					{ "key": "sourceLocationId", "label": "From", "sortable": true },
+					{ "key": "destinationLocationId", "label": "To", "sortable": true },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true },
+					{ "key": "movementReason", "label": "Reason", "sortable": true }
+				],
+				"filters": [
+					{ "key": "movementType", "label": "Type", "type": "enum",
+						"options": ["receipt", "transfer", "issue", "manufacture", "repack"] },
+					{ "key": "lifecycleState", "label": "Status", "type": "enum",
+						"options": ["draft", "posted", "cancelled"] },
+					{ "key": "sourceLocationId", "label": "Source Location", "type": "string" },
+					{ "key": "destinationLocationId", "label": "Destination Location", "type": "string" },
+					{ "key": "draftedAt", "label": "Date Range", "type": "dateRange" }
+				],
+				"defaultSort": "draftedAt",
+				"defaultSortDirection": "desc",
+				"detailRoute": "StockMovementDetail",
+				"description": "Immutable double-entry ledger of every receipt, transfer, issue, manufacture and repack per REQ-SM-008. Posted moves are locked — cancellation emits an offsetting move so the original row stays auditable."
+			}
+		},
+		{
+			"id": "StockMovementDetail",
+			"route": "/inventory/stock-movements/:id",
+			"type": "detail",
+			"title": "Stock Movement",
+			"config": {
+				"register": "shillinq",
+				"schema": "StockMove",
+				"fields": [
+					{ "key": "movementNumber", "label": "Movement #", "type": "string" },
+					{ "key": "movementType", "label": "Type", "type": "string" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" },
+					{ "key": "itemId", "label": "Item", "type": "string" },
+					{ "key": "quantity", "label": "Quantity", "type": "number" },
+					{ "key": "unitCost", "label": "Unit Cost", "type": "money" },
+					{ "key": "sourceLocationId", "label": "Source", "type": "string" },
+					{ "key": "destinationLocationId", "label": "Destination", "type": "string" },
+					{ "key": "movementReason", "label": "Reason", "type": "string" },
+					{ "key": "referenceDocumentUri", "label": "Reference Document", "type": "uri" },
+					{ "key": "notes", "label": "Notes", "type": "string" },
+					{ "key": "draftedAt", "label": "Drafted At", "type": "datetime" },
+					{ "key": "postedAt", "label": "Posted At", "type": "datetime" },
+					{ "key": "cancelledAt", "label": "Cancelled At", "type": "datetime" },
+					{ "key": "locked", "label": "Locked", "type": "boolean" },
+					{ "key": "glTransactionId", "label": "GL Transaction", "type": "string" },
+					{ "key": "offsetOfMoveId", "label": "Offset Of", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "StockMovements",
+				"description": "Detail view per REQ-SM-008. Posted moves show the materialised GLTransaction link; cancellation creates an offsetting move rather than patching the original (REQ-SM-003)."
+			}
+		},
+		{
+			"id": "StockLedger",
+			"route": "/inventory/stock-ledger",
+			"type": "index",
+			"title": "Stock Ledger",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"columns": [
+					{ "key": "sku", "label": "Item", "sortable": true },
+					{ "key": "locationId", "label": "Location", "sortable": true },
+					{ "key": "quantity", "label": "On Hand", "sortable": true },
+					{ "key": "reservedQuantity", "label": "Reserved", "sortable": true },
+					{ "key": "available", "label": "Available", "sortable": false,
+						"computed": "quantity - reservedQuantity" },
+					{ "key": "lastMovementDate", "label": "Last Movement", "sortable": true }
+				],
+				"filters": [
+					{ "key": "sku", "label": "Item", "type": "string" },
+					{ "key": "locationId", "label": "Location", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"defaultSort": "lastMovementDate",
+				"defaultSortDirection": "desc",
+				"detailRoute": "StockLedgerTrace",
+				"description": "Per REQ-SM-005 — every InventoryStock row drills down to the chronological run of posted, non-cancelled StockMoves that comprise its current balance, with cumulative running totals matching `quantity` exactly."
+			}
+		},
+		{
+			"id": "StockLedgerTrace",
+			"route": "/inventory/stock-ledger/:id",
+			"type": "custom",
+			"title": "Stock Ledger Trace",
+			"component": "StockLedgerTrace",
+			"config": {
+				"endpoint": "/index.php/apps/shillinq/api/stock-ledger/trace",
+				"description": "Server-side computed drill-down per REQ-SM-005. Renders the on-hand / reserved / available header and a chronological table (movementNumber, postedAt, type, +/- quantity, runningTotal). Operator can trace any quantity discrepancy back to a specific posted StockMove."
+			}
+		},
+		{
+			"id": "ReservedStock",
+			"route": "/inventory/reserved-stock",
+			"type": "index",
+			"title": "Reserved Stock",
+			"config": {
+				"register": "shillinq",
+				"schema": "StockMove",
+				"filterPreset": {
+					"lifecycleState": "draft"
+				},
+				"columns": [
+					{ "key": "movementNumber", "label": "Movement #", "sortable": true },
+					{ "key": "sourceLocationId", "label": "Source Location", "sortable": true },
+					{ "key": "itemId", "label": "Item", "sortable": true },
+					{ "key": "quantity", "label": "Reserved Qty", "sortable": true },
+					{ "key": "draftedAt", "label": "Reserved Since", "sortable": true },
+					{ "key": "movementType", "label": "Intended Type", "sortable": true }
+				],
+				"filters": [
+					{ "key": "sourceLocationId", "label": "Source Location", "type": "string" },
+					{ "key": "itemId", "label": "Item", "type": "string" }
+				],
+				"groupBy": "sourceLocationId",
+				"defaultSort": "draftedAt",
+				"defaultSortDirection": "asc",
+				"detailRoute": "StockMovementDetail",
+				"alerts": [
+					{
+						"id": "highReservationRatio",
+						"condition": "reservedRatioForLocation > 0.5",
+						"label": "Alert: High reservation ratio",
+						"description": "Per REQ-SM-009 — when the SUM of draft-move reservations exceeds 50% of the InventoryStock.quantity for a location, the row is flagged so the operator knows future allocations are at risk."
+					}
+				],
+				"description": "All draft StockMoves currently holding reservations against source InventoryStock per REQ-SM-008 + REQ-SM-009. Grouped by source location; age (time in draft) + operator name visible from the row."
+			}
+		}
+	]
+}

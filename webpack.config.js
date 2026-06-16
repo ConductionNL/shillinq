@@ -23,6 +23,15 @@ webpackConfig.entry = {
 		import: path.join(__dirname, 'src', 'settings.js'),
 		filename: appId + '-settings.js',
 	},
+	// REQ-WSW-004: embeddable booking self-service widget — script-tag
+	// bundle (`widget.js`). The npm package (widget/) and web-component
+	// entrypoints re-import the same loader, so this is the single
+	// authoritative bundle for all four embed methods.
+	widget: {
+		import: path.join(__dirname, 'src', 'components', 'widget', 'WidgetEmbed.js'),
+		filename: 'widget.js',
+		library: { name: 'BookingWidget', type: 'umd', export: 'default' },
+	},
 }
 
 // Use local source when available (monorepo dev), otherwise fall back to npm package
@@ -39,6 +48,14 @@ webpackConfig.resolve = {
 		'vue$': path.resolve(__dirname, 'node_modules/vue'),
 		'pinia$': path.resolve(__dirname, 'node_modules/pinia'),
 		'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
+		// Pin vue-demi to its Vue 2.7 ESM entry. pinia 2.3.x and @vueuse
+		// statically import `hasInjectionContext` / `TransitionGroup` from
+		// vue-demi, which only exist in its Vue 2.7 build. The install-time
+		// `vue-demi-switch` postinstall that rewrites lib/index.mjs does not
+		// reliably run under `npm ci`, leaving vue-demi's Vue 3 default entry
+		// in place and breaking the production build. Aliasing directly to the
+		// v2.7 entry makes the build deterministic in CI and locally.
+		'vue-demi$': path.resolve(__dirname, 'node_modules/vue-demi/lib/v2.7/index.mjs'),
 	},
 }
 
@@ -51,6 +68,22 @@ webpackConfig.module = {
 		{
 			test: /\.css$/,
 			use: ['style-loader', 'css-loader'],
+		},
+		{
+			// SCSS used by the aliased @conduction/nextcloud-vue components
+			// (CnCard, CnDataTable, CnAppRoot internals, …) when building
+			// against the monorepo-dev source tree.
+			test: /\.scss$/,
+			use: ['style-loader', 'css-loader', 'sass-loader'],
+		},
+		{
+			// Image assets referenced by library components (e.g. Leaflet
+			// marker icons pulled in transitively).
+			test: /\.(png|jpe?g|gif|svg)$/,
+			type: 'asset/resource',
+			generator: {
+				filename: 'img/[name][ext]',
+			},
 		},
 	],
 }

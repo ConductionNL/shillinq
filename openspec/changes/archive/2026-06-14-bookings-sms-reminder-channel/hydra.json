@@ -1,0 +1,10 @@
+{
+  "spec_slug": "bookings-sms-reminder-channel",
+  "title": "Booking SMS Reminder Channel",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [
+    "bookings-notification-triggers"
+  ],
+  "issue": null
+}

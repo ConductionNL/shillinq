@@ -1,0 +1,11 @@
+{
+	"label": "Bookkeeping",
+	"position": 3,
+	"collapsible": true,
+	"collapsed": true,
+	"link": {
+		"type": "generated-index",
+		"title": "Bookkeeping user guide",
+		"description": "Day-to-day bookkeeping flows in Shillinq — IFRS 15 revenue recognition (contract entry, performance obligations, revenue waterfall, contract balances, disclosure pack), the BBV compliance dashboards and programme mapping for Dutch public-sector administrations (provincies, waterschappen, gemeenten), plus the surrounding tier-2 capabilities."
+	}
+}

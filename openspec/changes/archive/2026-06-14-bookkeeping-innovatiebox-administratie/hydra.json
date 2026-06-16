@@ -1,0 +1,8 @@
+{
+  "spec_slug": "bookkeeping-innovatiebox-administratie",
+  "title": "Innovatiebox Administratie",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": null
+}

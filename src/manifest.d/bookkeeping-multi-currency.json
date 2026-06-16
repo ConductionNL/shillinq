@@ -1,0 +1,115 @@
+{
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"label": "Bookkeeping",
+			"icon": "LedgerOutline",
+			"order": 11,
+			"children": [
+				{
+					"id": "BankAccounts",
+					"label": "Bank Accounts",
+					"icon": "Bank",
+					"route": "BankAccounts",
+					"order": 26
+				},
+				{
+					"id": "CurrencyBalances",
+					"label": "Currency Balances",
+					"icon": "CurrencyUsd",
+					"route": "CurrencyBalances",
+					"order": 27
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "BankAccounts",
+			"route": "/bookkeeping/bank-accounts",
+			"type": "index",
+			"title": "Bank Accounts",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankAccount",
+				"columns": [
+					{"key": "accountName", "label": "Account", "sortable": true},
+					{"key": "iban", "label": "IBAN", "sortable": true},
+					{"key": "bankName", "label": "Bank", "sortable": true},
+					{"key": "primaryCurrency", "label": "Primary Currency", "sortable": true},
+					{"key": "lifecycleState", "label": "Status", "sortable": true}
+				],
+				"filters": [
+					{"key": "primaryCurrency", "label": "Currency", "type": "select", "options": ["EUR", "USD", "GBP"]},
+					{"key": "lifecycleState", "label": "Status", "type": "select", "options": ["active", "closed", "frozen"]}
+				],
+				"defaultSort": "accountName",
+				"detailRoute": "BankAccountDetail"
+			}
+		},
+		{
+			"id": "BankAccountDetail",
+			"route": "/bookkeeping/bank-accounts/:id",
+			"type": "detail",
+			"title": "Bank Account",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankAccount",
+				"fields": [
+					{"key": "accountName", "label": "Account name", "type": "string"},
+					{"key": "iban", "label": "IBAN", "type": "string"},
+					{"key": "bic", "label": "BIC", "type": "string"},
+					{"key": "bankName", "label": "Bank", "type": "string"},
+					{"key": "primaryCurrency", "label": "Primary Currency", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "lifecycleState", "label": "Status", "type": "string"},
+					{"key": "notes", "label": "Notes", "type": "string"}
+				],
+				"indexRoute": "BankAccounts"
+			}
+		},
+		{
+			"id": "CurrencyBalances",
+			"route": "/bookkeeping/currency-balances",
+			"type": "index",
+			"title": "Currency Balances",
+			"config": {
+				"register": "shillinq",
+				"schema": "CurrencyBalance",
+				"columns": [
+					{"key": "accountId", "label": "Account", "sortable": true},
+					{"key": "currency", "label": "Currency", "sortable": true},
+					{"key": "balance", "label": "Balance", "sortable": true, "type": "money"},
+					{"key": "previousBalance", "label": "Previous Balance", "sortable": true, "type": "money"},
+					{"key": "lastUpdated", "label": "Last Updated", "sortable": true}
+				],
+				"filters": [
+					{"key": "accountId", "label": "Account", "type": "text"},
+					{"key": "currency", "label": "Currency", "type": "select", "options": ["EUR", "USD", "GBP"]}
+				],
+				"defaultSort": "lastUpdated",
+				"detailRoute": "CurrencyBalanceDetail"
+			}
+		},
+		{
+			"id": "CurrencyBalanceDetail",
+			"route": "/bookkeeping/currency-balances/:id",
+			"type": "detail",
+			"title": "Currency Balance",
+			"config": {
+				"register": "shillinq",
+				"schema": "CurrencyBalance",
+				"fields": [
+					{"key": "balanceId", "label": "Balance ID", "type": "string"},
+					{"key": "accountId", "label": "Account", "type": "string"},
+					{"key": "currency", "label": "Currency", "type": "string"},
+					{"key": "balance", "label": "Balance", "type": "number"},
+					{"key": "previousBalance", "label": "Previous Balance", "type": "number"},
+					{"key": "lastUpdated", "label": "Last Updated", "type": "string"},
+					{"key": "notes", "label": "Notes", "type": "string"}
+				],
+				"indexRoute": "CurrencyBalances"
+			}
+		}
+	]
+}

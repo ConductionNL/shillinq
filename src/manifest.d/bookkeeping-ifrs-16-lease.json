@@ -1,0 +1,138 @@
+{
+	"menu": [
+		{
+			"id": "Ifrs16Leases",
+			"label": "IFRS 16 Leases",
+			"icon": "FileSign",
+			"order": 80,
+			"children": [
+				{
+					"id": "LeaseRegister",
+					"label": "Lease Register",
+					"icon": "FileSign",
+					"route": "LeaseRegister",
+					"order": 10
+				},
+				{
+					"id": "LeaseReassessmentEvents",
+					"label": "Reassessment Events",
+					"icon": "FileDocumentEditOutline",
+					"route": "LeaseReassessmentEvents",
+					"order": 20
+				},
+				{
+					"id": "LeaseDisclosures",
+					"label": "Annual Disclosures",
+					"icon": "TableLarge",
+					"route": "LeaseDisclosures",
+					"order": 30
+				},
+				{
+					"id": "LeaseExemptions",
+					"label": "Exemption Policy",
+					"icon": "ShieldCheckOutline",
+					"route": "LeaseExemptions",
+					"order": 40
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "LeaseRegister",
+			"route": "/ifrs-16/leases",
+			"type": "index",
+			"title": "Lease Register",
+			"config": {
+				"register": "shillinq",
+				"schema": "LeaseContract",
+				"columns": [
+					{ "key": "leaseNumber", "label": "Lease Number", "sortable": true },
+					{ "key": "description", "label": "Description", "sortable": false },
+					{ "key": "assetClass", "label": "Asset Class", "sortable": true },
+					{ "key": "commencementDate", "label": "Lease Commencement", "sortable": true },
+					{ "key": "ibrPercent", "label": "Incremental Borrowing Rate", "sortable": true },
+					{ "key": "classification", "label": "Classification", "sortable": true },
+					{ "key": "status", "label": "State", "sortable": true }
+				],
+				"defaultSort": "leaseNumber",
+				"detailRoute": "LeaseDetail"
+			}
+		},
+		{
+			"id": "LeaseDetail",
+			"route": "/ifrs-16/leases/:id",
+			"type": "detail",
+			"title": "Lease Contract",
+			"config": {
+				"register": "shillinq",
+				"schema": "LeaseContract",
+				"fields": [
+					{ "key": "leaseNumber", "label": "Lease Number", "type": "string" },
+					{ "key": "counterparty", "label": "Lessor", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "assetClass", "label": "Asset Class", "type": "string" },
+					{ "key": "commencementDate", "label": "Lease Commencement", "type": "string" },
+					{ "key": "endDate", "label": "End Date", "type": "string" },
+					{ "key": "nonCancellableTermMonths", "label": "Lease Term", "type": "number" },
+					{ "key": "paymentFrequency", "label": "Payment Schedule", "type": "string" },
+					{ "key": "basePaymentAmount", "label": "Payment Amount", "type": "number" },
+					{ "key": "ibrPercent", "label": "Incremental Borrowing Rate", "type": "number" },
+					{ "key": "classification", "label": "Classification", "type": "string" },
+					{ "key": "status", "label": "State", "type": "string" }
+				]
+			}
+		},
+		{
+			"id": "LeaseReassessmentEvents",
+			"route": "/ifrs-16/reassessment-events",
+			"type": "index",
+			"title": "Reassessment Events",
+			"config": {
+				"register": "shillinq",
+				"schema": "LeaseReassessmentEvent",
+				"columns": [
+					{ "key": "reassessmentNumber", "label": "Reassessment Event", "sortable": true },
+					{ "key": "eventType", "label": "Event Type", "sortable": true },
+					{ "key": "leaseContract", "label": "Lease Number", "sortable": true },
+					{ "key": "eventDate", "label": "Event Date", "sortable": true },
+					{ "key": "rouAssetAdjustment", "label": "RoU Impact", "sortable": true },
+					{ "key": "approvalStatus", "label": "Approval", "sortable": true }
+				],
+				"defaultSort": "eventDate"
+			}
+		},
+		{
+			"id": "LeaseDisclosures",
+			"route": "/ifrs-16/disclosures",
+			"type": "index",
+			"title": "IFRS 16 Disclosure",
+			"config": {
+				"register": "shillinq",
+				"schema": "LeaseDisclosureTable",
+				"columns": [
+					{ "key": "fiscalPeriod", "label": "Period", "sortable": true },
+					{ "key": "totalLeaseLiabilityCurrent", "label": "Lease Liability", "sortable": true },
+					{ "key": "totalRouDepreciationInPeriod", "label": "Depreciation", "sortable": true },
+					{ "key": "totalInterestExpense", "label": "Interest Accrued", "sortable": true }
+				],
+				"defaultSort": "fiscalPeriod"
+			}
+		},
+		{
+			"id": "LeaseExemptions",
+			"route": "/ifrs-16/exemptions",
+			"type": "index",
+			"title": "Exemption",
+			"config": {
+				"register": "shillinq",
+				"schema": "LeasePortfolioExemption",
+				"columns": [
+					{ "key": "policyEffectiveDate", "label": "Effective Date", "sortable": true },
+					{ "key": "lowValueThreshold", "label": "Low-Value Lease", "sortable": true }
+				],
+				"defaultSort": "policyEffectiveDate"
+			}
+		}
+	]
+}

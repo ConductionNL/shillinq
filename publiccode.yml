@@ -1,0 +1,65 @@
+publiccodeYmlVersion: "0.4"
+
+name: Shillinq
+url: "https://github.com/ConductionNL/shillinq"
+softwareVersion: "0.1.2"
+releaseDate: "2026-05-26"
+developmentStatus: beta
+softwareType: "standalone/other"
+
+platforms:
+  - nextcloud
+
+categories:
+  - financial-reporting
+  - accounting
+
+description:
+  en:
+    shortDescription: >
+      Invoicing and financial administration for Nextcloud.
+    longDescription: >
+      Shillinq provides invoicing and financial administration capabilities within
+      Nextcloud. It supports creating and managing invoices, tracking payments,
+      and administering financial records. Built on Open Register, it integrates
+      with Nextcloud's collaboration ecosystem and is designed to meet Dutch
+      government and SME financial administration requirements.
+    features:
+      - Invoice creation and management
+      - Payment tracking
+      - Financial record administration
+      - Integration with Nextcloud collaboration tools
+
+  nl:
+    shortDescription: >
+      Facturatie en financiële administratie voor Nextcloud.
+    longDescription: >
+      Shillinq biedt facturatie- en financiële administratiemogelijkheden binnen
+      Nextcloud. Het ondersteunt het aanmaken en beheren van facturen, het bijhouden
+      van betalingen en het administreren van financiële gegevens. Gebouwd op Open
+      Register integreert het met het Nextcloud-ecosysteem en is ontworpen om te
+      voldoen aan de financiële administratievereisten van de Nederlandse overheid
+      en het MKB.
+    features:
+      - Facturen aanmaken en beheren
+      - Betalingen bijhouden
+      - Financiële administratie
+      - Integratie met Nextcloud-samenwerkingstools
+
+legal:
+  license: EUPL-1.2
+  mainCopyrightOwner: "Conduction B.V."
+  repoOwner: "Conduction B.V."
+
+maintenance:
+  type: community
+  contacts:
+    - name: Conduction B.V.
+      email: info@conduction.nl
+      affiliation: Conduction B.V.
+
+localisation:
+  localisationReady: true
+  availableLanguages:
+    - nl
+    - en

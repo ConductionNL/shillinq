@@ -21,9 +21,72 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\AppInfo;
 
+use OCA\Shillinq\Listener\AppointmentCreatedListener;
+use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
+use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
+use OCA\Shillinq\Listener\DBAFactuurMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
-use OCA\Shillinq\Repair\InitializeSettings;
+use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
+use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
+use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
+use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
+use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
+use OCA\Shillinq\Listener\SignoffDecisionConcludedListener;
+use OCA\Shillinq\Listener\SigningConcludedListener;
+use OCA\Shillinq\Listener\StockMoveTransitionedListener;
+use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
+use OCA\Shillinq\Listener\VerplichtingTransitionListener;
+use OCA\Shillinq\Notification\Notifier;
+use OCA\Shillinq\Service\Dunning\CreditScoreFetchAdapterInterface;
+use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
+use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
+use OCA\Shillinq\Service\Dunning\LogCreditScoreFetchAdapter;
+use OCA\Shillinq\Service\Dunning\LogDunningChannelAdapter;
+use OCA\Shillinq\Service\Dunning\LogIncassoBureauAdapter;
+use OCA\Shillinq\Service\Dunning\LogPostNLAdapter;
+use OCA\Shillinq\Service\Dunning\PostNLAdapterInterface;
+use OCA\Shillinq\Service\External\Sisa\BzkSisaUploadAdapterInterface;
+use OCA\Shillinq\Service\External\Sisa\LogBzkSisaUploadAdapter;
+use OCA\Shillinq\Service\External\Cbs\CbsBestandenAdapterInterface;
+use OCA\Shillinq\Service\External\Cbs\CbsIv3AdapterInterface;
+use OCA\Shillinq\Service\External\Cbs\LogCbsBestandenAdapter;
+use OCA\Shillinq\Service\External\Cbs\LogCbsIv3Adapter;
+use OCA\Shillinq\Service\External\CcmRuleEngine\CcmRuleEngineAdapterInterface;
+use OCA\Shillinq\Service\External\CcmRuleEngine\LogCcmRuleEngineAdapter;
+use OCA\Shillinq\Service\External\CsrdEsrsXbrl\CsrdEsrsXbrlAdapterInterface;
+use OCA\Shillinq\Service\External\CsrdEsrsXbrl\LogCsrdEsrsXbrlAdapter;
+use OCA\Shillinq\Service\External\DepositPayment\DepositPaymentAdapterInterface;
+use OCA\Shillinq\Service\External\DepositPayment\LogDepositPaymentAdapter;
+use OCA\Shillinq\Service\External\Digipoort\DigipoortSbrAdapterInterface;
+use OCA\Shillinq\Service\External\Digipoort\LogDigipoortSbrAdapter;
+use OCA\Shillinq\Service\External\Ib47\Ib47AdapterInterface;
+use OCA\Shillinq\Service\External\Ib47\LogIb47Adapter;
+use OCA\Shillinq\Service\External\Kvk\KvkHandelsregisterAdapterInterface;
+use OCA\Shillinq\Service\External\Kvk\LogKvkHandelsregisterAdapter;
+use OCA\Shillinq\Service\External\Mollie\LogMolliePaymentAdapter;
+use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
+use OCA\Shillinq\Service\External\Bunq\BunqBankConnectorAdapterInterface;
+use OCA\Shillinq\Service\External\Bunq\LogBunqBankConnectorAdapter;
+use OCA\Shillinq\Service\External\Uwv\LogUwvLoonaangifteAdapter;
+use OCA\Shillinq\Service\External\Uwv\UwvLoonaangifteAdapterInterface;
+use OCA\Shillinq\Service\External\RvO\LogRvOAanvraagAdapter;
+use OCA\Shillinq\Service\External\RvO\RvOAanvraagAdapterInterface;
+use OCA\Shillinq\Service\External\Salarisbureau\LogSalarisbureauAdapter;
+use OCA\Shillinq\Service\External\Salarisbureau\SalarisbureauAdapterInterface;
+use OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter;
+use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
+use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
+use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
+use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
+use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
+use OCA\Shillinq\Service\DoorsnijdingsVerbodValidator;
+use OCA\Shillinq\Service\InnovatieboxAuditEventLogger;
+use OCP\IAppConfig;
+use Psr\Container\ContainerInterface;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
+use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -64,8 +127,441 @@ class Application extends App implements IBootstrap
             listener: DeepLinkRegistrationListener::class
         );
 
-        // Initialize register and schemas on install/upgrade.
-        $context->registerRepairStep(InitializeSettings::class);
+        // Bookings-confirm-flow REQ-BCF-001/010 — issue a ConfirmationToken
+        // + dispatch the confirmation email when a new Appointment record is
+        // created with status `pending_confirmation` (customer self-service).
+        // Admin-created bookings start `confirmed` and the listener ignores
+        // them. Idempotent: OR fires the event once per saveObject.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: AppointmentCreatedListener::class
+        );
+
+        // Inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
+        // — dispatch posted StockMove records into the valuation engine
+        // (FIFO or moving-average per the InventoryValuation.valuationMethod)
+        // and post a balanced COGS GLTransaction on outbound moves.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: StockMoveTransitionedListener::class
+        );
+
+        // Bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004) —
+        // openconnector publishes a `PeppolInboundMessage` OR record for
+        // every received Peppol message. This listener filters on the
+        // documentType=Invoice slice of those events and dispatches the
+        // UBL payload into SupplierInvoiceService::ingestUBLInvoice().
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: PeppolInboundUblInvoiceListener::class
+        );
+
+        // Bookings-pipelinq-customer-bridge slice 07 — when a new
+        // Appointment carries a non-empty `pipelinqContactId`, publish a
+        // `booking.created` event to pipelinq's klantbeeld-360 timeline.
+        // The synchronous publish uses the shared retry + circuit
+        // breaker; a failure hands the event to TimelineRetryQueue so the
+        // booking commit is never blocked. ADR-032 chain member 7 of 11.
+        //
+        // Slice 09 swaps the slice-07 LoggingTimelineRetryQueue stub for
+        // the PersistentTimelineRetryQueue: failed publishes now write a
+        // TimelinePublishRetryEntry OR record + add a
+        // PipelinqTimelineRetryJob tick to the IJobList. The job retries
+        // with exponential backoff (1m/5m/30m) and dead-letters into
+        // TimelineDeadLetter on exhaustion (D3 in the giant).
+        $context->registerService(
+            TimelineRetryQueue::class,
+            static function ($c): TimelineRetryQueue {
+                return $c->get(PersistentTimelineRetryQueue::class);
+            }
+        );
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: BookingCreatedTimelinePublishListener::class
+        );
+
+        // Bookings-pipelinq-customer-bridge slice 08 — extend the timeline
+        // publish pattern to every booking lifecycle transition
+        // (confirmed / cancelled / completed). The `cancellationReason`
+        // is forwarded into the timeline metadata when present. A 401
+        // from pipelinq is treated as permanent: the admin notifier port
+        // surfaces an alert ("Invalid pipelinq API token") and the event
+        // is NOT requeued — retrying with the same invalid token would
+        // only repeat the failure. Until slice 09 lands the persistent
+        // notification surface, the default binding is the logging-only
+        // {@see LoggingPipelinqAdminNotifier}. ADR-032 chain member 8 of
+        // 11.
+        $context->registerService(
+            PipelinqAdminNotifier::class,
+            static function ($c): PipelinqAdminNotifier {
+                return $c->get(LoggingPipelinqAdminNotifier::class);
+            }
+        );
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: BookingLifecycleTransitionListener::class
+        );
+
+        // Bookkeeping-waterschappen-bbv-variant slice 08 — invalidate the
+        // BBV-compliance cache when a GL transaction header or line is
+        // created or updated. The slice-02 x-openregister-aggregations
+        // block on BBVProgramme materialises totalBudget / ytdSpend /
+        // utilization / complianceStatus over those very lines, and
+        // ComplianceService caches the per-programme envelope for 1h
+        // (REQ-BBVW-006). The listener drops the cache namespace so the
+        // next dashboard render repopulates from the engine. Fail-soft:
+        // a cache hiccup never blocks a GL write (giant D3).
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: GLTransactionComplianceCacheListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectUpdatedEvent::class,
+            listener: GLTransactionComplianceCacheListener::class
+        );
+
+        // Bookkeeping-innovatiebox-administratie — append an immutable
+        // InnovatieboxAuditEvent per relevant lifecycle transition on the
+        // three innovatiebox subject schemas (NexusCalculation,
+        // IBProfitAttribution, CarryForwardLoss). Captures *.created,
+        // IBProfitAttribution.finalized (vso_locked: false -> true) and
+        // IBProfitAttribution.amendment_attempt_blocked when an update
+        // arrives on a VSO-locked year (REQ-IBA-008). Tasks 5.1-5.3.
+        // Fail-soft: the listener never bubbles an error into OR's write
+        // path; a logging failure becomes a Psr warning.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: InnovatieboxAuditTrailListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectUpdatedEvent::class,
+            listener: InnovatieboxAuditTrailListener::class
+        );
+
+        // bookkeeping-reconciliation-reports (T4) — REQ-REC-010. T2's
+        // bookkeeping-bank-reconciliation engine confirms a
+        // ReconciliationMatch by transitioning its status to `confirmed`;
+        // the listener stamps the T4-side fields (reconId, matchAlgorithm,
+        // matchedAt, glTransactionId/arInvoiceId/apTransactionId, etc.) on
+        // the same record so the open BankReconciliation session sees the
+        // outcome within 1s. Fail-soft: never blocks the T2 write.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ReconciliationMatchToReportListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: ReconciliationMatchToReportListener::class
+        );
+
+        // Wire the DoorsnijdingsVerbodValidator with the optional audit
+        // logger so every validateNoDuplication run emits a
+        // DoorsnijdingsVerbod.check_run event (task 5.4, REQ-IBA-008).
+        // The constructor's third argument is nullable so the existing
+        // unit tests can build the validator without the OR event chain.
+        $context->registerService(
+            DoorsnijdingsVerbodValidator::class,
+            static function (ContainerInterface $c): DoorsnijdingsVerbodValidator {
+                return new DoorsnijdingsVerbodValidator(
+                    $c,
+                    $c->get(IAppConfig::class),
+                    $c->get(InnovatieboxAuditEventLogger::class),
+                );
+            }
+        );
+
+        // bookkeeping-credit-control-dunning tasks 19/20/21 — wire the
+        // narrow ports used by CreditScoreService + DunningRunService to the
+        // log-backed default bindings. The openconnector-backed bindings
+        // (Graydon/Creditsafe/Atradius, Bos/Atradius Collections/Intrum,
+        // PostNL Track & Trace) swap these in production via the same
+        // registerService call.
+        $context->registerService(
+            CreditScoreFetchAdapterInterface::class,
+            static function ($c): CreditScoreFetchAdapterInterface {
+                return $c->get(LogCreditScoreFetchAdapter::class);
+            }
+        );
+        $context->registerService(
+            DunningChannelAdapterInterface::class,
+            static function ($c): DunningChannelAdapterInterface {
+                return $c->get(LogDunningChannelAdapter::class);
+            }
+        );
+        $context->registerService(
+            IncassoBureauAdapterInterface::class,
+            static function ($c): IncassoBureauAdapterInterface {
+                return $c->get(LogIncassoBureauAdapter::class);
+            }
+        );
+        $context->registerService(
+            PostNLAdapterInterface::class,
+            static function ($c): PostNLAdapterInterface {
+                return $c->get(LogPostNLAdapter::class);
+            }
+        );
+
+        // External-API adapter ports — every binding below is dormant by
+        // default (log-only), so the regulatory-filing lifecycles can
+        // advance into `submitted` without contacting an external party.
+        // Override each binding in a downstream Application::register()
+        // (or via a runtime configuration hook) once the matching
+        // openconnector source slug + credential is provisioned.
+        //
+        // - CBS Bestanden (bookkeeping-cbs-bestanden-extended)
+        // - CBS Iv3 (bookkeeping-cbs-iv3 / provincies + gemeenten Iv3)
+        // - BZK SiSa (bookkeeping-sisa-reporting)
+        // - Digipoort/SBR (bookkeeping-vat-btw-filing,
+        //   bookkeeping-financial-statements,
+        //   bookkeeping-sbr-xbrl-reporting, bookkeeping-csrd-esrs)
+        // - Salarisbureau (bookkeeping-detachering-payroll-administratie,
+        //   bookkeeping-payroll-engine-nl)
+        // - RvO (bookkeeping-investeringsaftrek,
+        //   bookkeeping-wbso-sno-administratie)
+        // - Belastingdienst IB47
+        //   (bookkeeping-detachering-payroll-administratie,
+        //   bookkeeping-btw-oss-eu).
+        $context->registerService(
+            CbsBestandenAdapterInterface::class,
+            static function ($c): CbsBestandenAdapterInterface {
+                return $c->get(LogCbsBestandenAdapter::class);
+            }
+        );
+        $context->registerService(
+            CbsIv3AdapterInterface::class,
+            static function ($c): CbsIv3AdapterInterface {
+                return $c->get(LogCbsIv3Adapter::class);
+            }
+        );
+        $context->registerService(
+            BzkSisaUploadAdapterInterface::class,
+            static function ($c): BzkSisaUploadAdapterInterface {
+                return $c->get(LogBzkSisaUploadAdapter::class);
+            }
+        );
+        $context->registerService(
+            DigipoortSbrAdapterInterface::class,
+            static function ($c): DigipoortSbrAdapterInterface {
+                return $c->get(LogDigipoortSbrAdapter::class);
+            }
+        );
+        $context->registerService(
+            SalarisbureauAdapterInterface::class,
+            static function ($c): SalarisbureauAdapterInterface {
+                return $c->get(LogSalarisbureauAdapter::class);
+            }
+        );
+        $context->registerService(
+            RvOAanvraagAdapterInterface::class,
+            static function ($c): RvOAanvraagAdapterInterface {
+                return $c->get(LogRvOAanvraagAdapter::class);
+            }
+        );
+        $context->registerService(
+            Ib47AdapterInterface::class,
+            static function ($c): Ib47AdapterInterface {
+                return $c->get(LogIb47Adapter::class);
+            }
+        );
+
+        // Wave-4 external-API ports (low-volume families):
+        //
+        // - KvK Handelsregister (bookkeeping-multi-administratie onboarding,
+        //   AR/AP debtor/creditor enrichment,
+        //   bookkeeping-consolidation-commercial deelnemingen-graaf walk).
+        // - Mollie Payments (bookings-deposits DepositPayment intent,
+        //   bookkeeping-accounts-receivable-core invoice payment links +
+        //   webhook verification).
+        // - Bunq Bank Connector (bookkeeping-bank-connectors per-Source
+        //   pull + consent-renewal action; ADR-031 ScheduledWorkflow
+        //   delegates transport to this port; no aggregator JSON path —
+        //   Bunq exposes CAMT.053 natively).
+        // - UWV Loonaangifte + Werkhervattingskas (LHAfdracht acceptance
+        //   pull + werkgever-setup sectorindeling validation).
+        $context->registerService(
+            KvkHandelsregisterAdapterInterface::class,
+            static function ($c): KvkHandelsregisterAdapterInterface {
+                return $c->get(LogKvkHandelsregisterAdapter::class);
+            }
+        );
+        $context->registerService(
+            MolliePaymentAdapterInterface::class,
+            static function ($c): MolliePaymentAdapterInterface {
+                return $c->get(LogMolliePaymentAdapter::class);
+            }
+        );
+        $context->registerService(
+            BunqBankConnectorAdapterInterface::class,
+            static function ($c): BunqBankConnectorAdapterInterface {
+                return $c->get(LogBunqBankConnectorAdapter::class);
+            }
+        );
+        $context->registerService(
+            UwvLoonaangifteAdapterInterface::class,
+            static function ($c): UwvLoonaangifteAdapterInterface {
+                return $c->get(LogUwvLoonaangifteAdapter::class);
+            }
+        );
+
+        // bookings-deposits REQ-DP-001/005/007/008 — DepositPayment
+        // lifecycle adapter port (request / status / refund). Sits one
+        // layer ABOVE MolliePaymentAdapterInterface (which is already
+        // wired): the lifecycle code never sees a Mollie vs. Stripe
+        // branch, only the projected DepositPayment lifecycle state.
+        // Dormant LogDepositPaymentAdapter returns `pending` /
+        // PAYMENT_DEFERRED with dormant=true so
+        // DepositReconciliationService::pollPending() MUST inspect the
+        // dormant flag before advancing the lifecycle. The production
+        // binding delegates to MolliePaymentAdapterInterface and
+        // projects the Mollie state onto the DepositPayment lifecycle.
+        $context->registerService(
+            DepositPaymentAdapterInterface::class,
+            static function ($c): DepositPaymentAdapterInterface {
+                return $c->get(LogDepositPaymentAdapter::class);
+            }
+        );
+
+        // bookkeeping-csrd-esrs Tasks 30/31/32 — EFRAG ESRS XBRL taxonomy
+        // mapping + mandatory-data-point validation + iXBRL instance build.
+        // Per ADR-022 the XBRL pipeline itself lives in
+        // bookkeeping-sbr-xbrl-reporting (cross-app dependency); this port
+        // is the seam. Dormant LogCsrdEsrsXbrlAdapter
+        // SAFETY-CRITICAL: validateMandatoryDataPoints() always returns
+        // VALIDATION_BLOCKED with a LOG_DEFERRED sentinel so a deferred
+        // binding cannot let an unvalidated CSRD report slip past EFRAG
+        // IG-3. The produced iXBRL instance is handed to the existing
+        // DigipoortSbrAdapterInterface (filingType: csrd-xbrl-pack) for
+        // KvK / AFM transport.
+        $context->registerService(
+            CsrdEsrsXbrlAdapterInterface::class,
+            static function ($c): CsrdEsrsXbrlAdapterInterface {
+                return $c->get(LogCsrdEsrsXbrlAdapter::class);
+            }
+        );
+
+        // bookkeeping-ccm-rule-engine REQ-CCM-002 — cross-app rule-engine
+        // delegation port. The local CcmRuleEngine (ADR-031 exception) runs
+        // v1 sync/async DSL evaluation in-process; this port is the swap-out
+        // seam for the future OpenRegister native rule engine (or a
+        // third-party evaluator). Dormant LogCcmRuleEngineAdapter returns
+        // DEFERRED + fired=false (fail-soft) so binding the openconnector
+        // source slug `ccm-rule-engine` never raises a false finding.
+        $context->registerService(
+            CcmRuleEngineAdapterInterface::class,
+            static function ($c): CcmRuleEngineAdapterInterface {
+                return $c->get(LogCcmRuleEngineAdapter::class);
+            }
+        );
+
+        // bookkeeping-treasury-ihb Tasks 14/15/17/22 — reference-rate
+        // (EURIBOR-3M / SOFR / SARON / ESTR) + FX-spot snapshots for the
+        // declarative interest-accrual, FX-revaluation, and liquidity-KPI
+        // aggregations. The dormant LogTreasuryRateAdapter returns
+        // SNAPSHOT_DEFERRED so the aggregation host stays observable until
+        // openconnector source slug `treasury-rates` (ECB SDMX / Bloomberg /
+        // Refinitiv) is bound; the IntercompanyLoan + FXPosition manual-entry
+        // path remains the v1 fallback per REQ-IHB-004.
+        $context->registerService(
+            TreasuryRateAdapterInterface::class,
+            static function ($c): TreasuryRateAdapterInterface {
+                return $c->get(LogTreasuryRateAdapter::class);
+            }
+        );
+
+        // Register the notifier for Shillinq in-app notifications (REQ-SUBV-010).
+        $context->registerNotifierService(Notifier::class);
+
+        // dba-compliance-marker T31/T32 — optional non-blocking hook into AP/AR
+        // factuur creation. The listener runs the VBAR uurtarief-toets
+        // (REQ-DBA-016) when an ARInvoice/APInvoice carries a
+        // `dbaOpdrachtId` field; it is silently inert otherwise.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: DBAFactuurMonitorListener::class
+        );
+
+        // bookkeeping-tenderned-integratie Tasks 5.1 / 5.2 / 5.3 — react to
+        // the OR object-lifecycle events that materialise the
+        // `tenderned.award.detected`, `obligation.activated`, and
+        // `milestone.completed` CloudEvents (design D4). Every listener is
+        // fail-soft: an exception is logged but never propagated back into
+        // the originating OR write path.
+        //
+        // Task 5.1 — TenderNedAwardDetectedListener auto-promotes an
+        // awarded TenderNed dossier into an active Verplichting when the
+        // winning KvK matches the tenant org (REQ-002 idempotent on
+        // bronReferentie + REQ-003 milestone plan generated from the
+        // opdrachttype template).
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: TenderNedAwardDetectedListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: TenderNedAwardDetectedListener::class
+        );
+
+        // Task 5.2 — VerplichtingTransitionListener emits the cross-app
+        // `obligation.activated` CloudEvent on auto-promoted (created
+        // active) AND manually-enriched (transitioned to active)
+        // tenderned-sourced obligations (REQ-007 budget-impact pipeline).
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: VerplichtingTransitionListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: VerplichtingTransitionListener::class
+        );
+
+        // Task 5.3 — OpdrachtUitvoeringTransitionListener emits
+        // `milestone.completed` on every completed OpdrachtUitvoering and
+        // (for the approved eindoplevering of a tenderned-sourced
+        // obligation) triggers the outbound status-sync to TenderNed
+        // (REQ-006). The buyer-side gate is enforced both server-side
+        // (RBAC + TenderNedAanbestedingGuard::canAfronden) and inside
+        // TenderNedStatusSync as a defence-in-depth tenant KvK check.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: OpdrachtUitvoeringTransitionListener::class
+        );
+
+        // Change shillinq-delegation-via-events (REQ-SIGN-005/006) — consume
+        // the terminal governance-decision outcome decidesk publishes via
+        // OCA\Decidesk\Event\DecisionConcludedEvent. The sign-off DECISION
+        // request is dispatched synchronously from SignoffDecisionService
+        // (DecisionRequestedEvent via IEventDispatcher, fail-closed when
+        // decidesk is absent); this listener projects the approved/rejected
+        // outcome back onto the originating finance object (ACMReport /
+        // ActuarialValuation / AnnualReport) and fires the LOCAL GL /
+        // lifecycle consequence (the accounting consequence stays in
+        // shillinq). The listener filters to getSourceApp()==='shillinq' and
+        // is inert when decidesk is not installed (the event never fires).
+        // Registering by the decidesk event FQCN is safe even when the class
+        // is not autoloadable — NC only needs the string key.
+        $context->registerEventListener(
+            event: \OCA\Decidesk\Event\DecisionConcludedEvent::class,
+            listener: SignoffDecisionConcludedListener::class
+        );
+
+        // Change shillinq-signing-via-events (REQ-SIGN-001/006) — consume the
+        // terminal DOCUMENT e-signature outcome docudesk publishes via
+        // OCA\DocuDesk\Event\SigningConcludedEvent. The document signing REQUEST
+        // is dispatched synchronously from SigningDelegationService
+        // (DocumentSigningRequestedEvent via IEventDispatcher, fail-closed when
+        // docudesk is absent — shillinq NEVER signs on local authority); this
+        // listener projects the signed/declined/expired/cancelled outcome back
+        // onto the originating finance object (ACMReport / AnnualReport /
+        // ManagementLetter) and fires the LOCAL submission/GL consequence (the
+        // accounting consequence stays in shillinq) exactly once on `signed`.
+        // The listener filters to getSourceApp()==='shillinq' and is inert when
+        // docudesk is not installed (the event never fires). Registering by the
+        // docudesk event FQCN is safe even when the class is not autoloadable —
+        // NC only needs the string key.
+        $context->registerEventListener(
+            event: \OCA\DocuDesk\Event\SigningConcludedEvent::class,
+            listener: SigningConcludedListener::class
+        );
 
     }//end register()
 

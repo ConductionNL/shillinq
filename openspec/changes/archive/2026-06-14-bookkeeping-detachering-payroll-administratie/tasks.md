@@ -1,0 +1,89 @@
+# Tasks — Payroll + Detachering Bridge
+
+> **Spec-only change.** Per `proposal.md` Scope, implementation code is deliberately out of scope here. The tasks below describe the work an `opsx-apply` cycle will execute against the `bookkeeping-payroll-detachering` spec — they are recorded now so the spec-review gate, dependency planning, and tier-cascade impact are all visible at proposal time. No source files are edited by this change itself.
+
+## Tasks
+
+> **Implementation note (hydra build, 2026-06-05):** Per ADR-037, the four schemas and all seed objects are declared in the register fragment `lib/Settings/register.d/bookkeeping-detachering-payroll-administratie.json` (NOT by editing the monolith `shillinq_register.json`); `SettingsService::deepMergeConfig` already unions `components.schemas` by key and `objects[]` by concatenation, so no loader change was required (covered by `PayrollDetacheringFragmentTest::testFragmentMergesAdditivelyOntoMonolith`). Tasks 5–8 that say "declare in `shillinq_register.json`" are satisfied via the fragment. The `PayrollCalculationGuard` from the design is realised as `OCA\Shillinq\Lifecycle\PayrollGuard` (canCalculate/canIssue), the ADR-031 exception seam for cross-schema SUM + statutory ceilings. `placementAgencyId` references a Supplier slug as a plain FK (no Supplier schema exists in this repo yet, so none was invented — ADR-022).
+
+- [x] Task 1: Confirmed no concrete `Employee`/`Payroll`/`Deduction`/`DeterminationLetter` register existed (the monolith carried only abstract `Deduction`/`Payroll` data-model entries with no lifecycle), and no `lib/Service/Payroll*` / `lib/Service/Deduction*` PHP classes are present. This capability carries forward the original Shillinq payroll scope under the declarative T2 envelope.
+
+- [x] Task 2: Author `specs/bookkeeping-payroll-detachering/spec.md` with `Status: proposed` / `Scope: shillinq` / `Tier: T2 (compliance + operations)` / `Depends on: bookkeeping-general-ledger, bookkeeping-accounts-payable-core-t2` header, `REQ-PAY-NNN` requirements using RFC 2119 keywords, and `#### Scenario:` blocks with GIVEN/WHEN/THEN; cite ADR-022 + ADR-031 inline for payroll calculation & deduction aggregation
+
+- [x] Task 3: Author `proposal.md` referencing the shared `nextcloud-app` spec and including Affected Projects / Scope / Risks (payroll-calculation stability, tax/SV rate sourcing, detachering classification, BSN PII handling) / Rollback / Open Questions
+
+- [x] Task 4: Author `design.md` with Reuse Analysis table, D1 (sub-ledger materialises GL), D2 (payroll calculation external/OR with PHP-guard fallback), D3 (deductions granular line items), D4 (determination letters immutable archival), D5 (tax/SV aggregations validate rates), D6 (detachering placement-fee GL handling), D7 (REST API + webhook integration, not direct DB sync), D8 (UBL declared not computed)
+
+- [x] Task 5: Declare the `Employee` schema in `lib/Settings/shillinq_register.json` with all REQ-PAY-001 fields: `employeeNumber` (unique per admin), `legalName`, `bsn` (12-digit, 11-proef validated, unique per admin), `contractType` enum (employee/freelancer/detached), `taxClassification` enum (employee/detached-worker/b2b-contractor), `taxNumber` (tax ID), `onboardingDate`, `exitDate` (nullable), `salaryScale` (reference), `placementAgencyId` (nullable FK to Supplier for detached), `contactEmail`, `contactPhone`, `administrationId` (FK to Administration)
+
+- [x] Task 6: Declare the `Payroll` schema in `lib/Settings/shillinq_register.json` with all REQ-PAY-002 fields: `payrollNumber` (unique per admin), `employeeId` (FK to Employee), `period` (YYYY-MM format), `periodStartDate`, `periodEndDate`, `grossAmount` (decimal, EUR), `netAmount` (decimal, computed via aggregation), `placementFeeAmount` (nullable, detached workers only), `placementAgencyId` (nullable FK to Supplier), `currency` (ISO 4217, default EUR), `status` (enum: draft/calculated/issued/paid), `payDate` (date), `administrationId` (FK to Administration), `glTransactionId` (nullable FK to JournalEntry)
+
+- [x] Task 7: Declare the `Deduction` schema in `lib/Settings/shillinq_register.json` with all REQ-PAY-003 fields: `payrollId` (FK to Payroll), `deductionType` enum (income-tax/social-security-employee/social-security-employer/pension/garnishment/other), `deductionName` (display name), `amount` (decimal, EUR), `rate` (percentage, e.g., 12.0), `rateSource` (statutory table reference, e.g., "statutory-2026", "court-order-NNN"), `taxYear` (YYYY format for annual aggregation), `administrationId` (FK to Administration)
+
+- [x] Task 8: Declare the `DeterminationLetter` schema in `lib/Settings/shillinq_register.json` with REQ-PAY-006 fields: `payrollId` (FK to Payroll), `letterType` enum (loonstrookje/werkgeversverklaring/salary-certificate), `generatedDate`, `year` (nullable, for werkgeversverklaring), `content` (text summary), `archiveStatus` enum (current/archived), `retentionExpiryDate` (7 years post-payroll), `administrationId` (FK to Administration)
+
+- [x] Task 9: Add `x-openregister-lifecycle` to `Payroll` schema declaring every transition in REQ-PAY-004: `draft → calculated → issued → paid`, with preconditions (e.g., "calculated" requires all deductions assigned; "issued" requires tax/SV validation pass), lifecycle actions materialising GL transaction per REQ-PAY-008 (or `PayrollCalculationGuard` fallback per ADR-031 exception if OR calculation-workflow not stable)
+
+- [x] Task 10: Declare credit-limit precondition on `Payroll.calculated` as `x-openregister-aggregations` predicate per REQ-PAY-005: verify annual deduction totals (income-tax, SV, garnishment per type) against statutory limits; block transition if exceeded with error message citing limit and overage amount
+
+- [x] Task 11: Declare annual deduction aggregations per REQ-PAY-005 as `x-openregister-aggregations` queries: `SUM(Deduction.amount WHERE deductionType IN ['income-tax','social-security-employee','social-security-employer','garnishment'] AND taxYear=X AND employeeId=Y GROUP BY deductionType)` — results queryable for tax/SV reporting without custom SQL
+
+- [x] Task 12: Implement payroll-issue GL materialisation per REQ-PAY-008 via lifecycle action: when Payroll transitions to `issued`, materialise balanced `GLTransaction` with (1) Debit `Salary Expense` per `Employee.contractType` mapping (4100 for employee, 4110 for detached, 4120 for freelancer) / Credit `Payroll Liability` or `Bank` account; (2) if detached: separate transaction for placement-fee (Debit `Placement Fee`, Credit `AP` to placement agency); captures `Payroll.glTransactionId`
+
+- [x] Task 13: Implement determination-letter generation per REQ-PAY-006 as lifecycle action on `Payroll.issued`: trigger external PDF rendering (docudesk-style template or OR template engine) to generate loonstrookje, attach PDF via OR `files` relation, create `DeterminationLetter` record with type `loonstrookje`, mark archival with 7-year retention; no template engine in Shillinq itself
+
+- [x] Task 14: Implement webhook receiver for external payroll software per REQ-PAY-009: POST endpoint at `/index.php/apps/shillinq/api/payroll/webhook` accepting CloudEvents format, validates HMAC-SHA256 signature (key from IAppConfig), creates/updates Deduction records from payload, transitions Payroll status to `calculated`, publishes audit trail, idempotent (repeat webhook with same ID = no duplicate records)
+
+- [x] Task 15: Implement payroll lifecycle event publishing per REQ-PAY-009: when Payroll transitions to `issued` / `paid`, publish CloudEvent (format: `nl.conduction.payroll.{issued,paid}`) to webhook endpoint configured in IAppConfig; webhook includes payrollId, payrollNumber, employeeId, amounts, payDate, glTransactionId; target subscribers: external HR, tax software, bank-rec system
+
+- [x] Task 16: Implement REST API exposure of Employee/Payroll/Deduction/DeterminationLetter schemas per REQ-PAY-009: OpenRegister REST API routes automatically generated, query filtering/sorting/pagination via `_filter`, `_sort`, `_limit`, `_page` per ADR-002; BSN field included in response but flagged `pii: true` in schema; relations (Employee→Payroll, Payroll→Deduction) returned as links
+
+- [x] Task 17: Implement BSN validation and PII masking per REQ-PAY-012: on Employee creation, validate BSN passes 11-proef algorithm; on API response, include BSN but mark `pii: true` in schema; on UI display, render masked format `***<last5>` by default; unmask button for admin users with explicit permission; audit trail records each unmask with actor + timestamp (per ADR-005)
+
+- [x] Task 18: Add deduction-precondition validation per REQ-PAY-004/REQ-PAY-005: implement `x-openregister-aggregations` precondition on `Payroll.calculated` transition that queries annual totals, compares against statutory limits (statutory limits loaded from seed data / configuration per tax year), rejects transition if exceeded with error message
+
+- [x] Task 19: Add detachering placement-fee handling per REQ-PAY-007: on Payroll issuance for `contractType: detached`, materialise AP transaction (vendor invoice) to `Payroll.placementAgencyId` with amount `Payroll.placementFeeAmount`, GL posting to `Placement Fee` expense account, linked to source Payroll record for reconciliation
+
+- [x] Task 20: Add 6 manifest navigation entries per REQ-PAY-011: (1) Employees (index), (2) Employee (detail), (3) Payroll (index), (4) Payroll (detail), (5) Payroll Calendar (custom grid), (6) Deductions (sub-resource of Payroll), (7) Determination Letters (index), (8) Tax/SV Reports (dashboard or custom query). Each entry includes `type: index` or `type: detail`, route template, icon, label with `t()` translation key. Update `src/manifest.json`; verify `node tests/validate-manifest.js` exits 0
+
+- [x] Task 21: Add UBL field declarations to Payroll schema per REQ-PAY-010: declare fields for T4 passthrough (NOT computed in T2): `invoiceNumber` (maps to `payrollNumber`), `invoiceDate` (maps to `generatedDate`), `buyerPartyId` (employer), `sellerPartyId` (employee), `invoiceLinesArray` (deduction line items as UBL cac:InvoiceLine) with `quantity`, `unitPrice`, `lineAmount`, `taxCategory`, `taxPercent` per UBL 2.1 standard; naming follows UBL canonical names for T4 XML emission
+
+- [x] Task 22: Add tax/SV statutory rate data to seed data per ADR-001-data-layer requirements: include 3–5 sample Deduction records with realistic 2026 rates (income-tax: 12.0%, employee SV: 12.3%, employer SV: 8.0%, pension: 2.5%, garnishment per court-order); seed data loaded on first app startup via `ConfigurationService::importFromApp()`, idempotent by slug matching
+
+- [x] Task 23: Update `openspec/architecture/adr-000-data-model.md` with `Employee`/`Payroll`/`Deduction`/`DeterminationLetter` entries: add to entity list with schema.org types (Employee → `schema:Person`, Payroll → `schema:Invoice` or custom type, Deduction → custom type, DeterminationLetter → `schema:DigitalDocument`), document relations, note detachering-specific fields, link primary spec (`bookkeeping-payroll-detachering`)
+
+- [x] Task 24: Deduplication check — verify no overlap with existing OpenRegister services: search `openregister/lib/Service/` for `PayrollService`, `DeductionService`, `EmployeeService` (should not exist); verify `ObjectService.saveObject()` + `aggregations` can handle payroll lifecycle without custom services; document findings (expected: "no overlap found, all payroll logic declarative")
+
+- [x] Task 25: Implement i18n strings per ADR-007: author `l10n/en.json` and `l10n/nl.json` with translation keys for all user-facing strings: "Employee", "Employees", "Payroll", "Deductions", "Determination letter", "Gross amount", "Net amount", "Income tax", "Social security", "Placement fee", "Issued", "Calculated", "Draft", "Paid", "Employee", "Detached worker", "Freelancer", "Salary expense", "Payroll liability", "Placement agency", "Wage", "Salary", "Work agreement", "Employment contract", "Work placement"; all keys in English, Dutch translations in `nl.json`
+
+- [x] Task 26: Add API tests per ADR-008: Newman/Postman collection in `tests/integration/` covering: POST /api/employee (create), GET /api/employee/:id (read), PUT /api/employee/:id (update, admin-only), DELETE /api/employee/:id (admin-only); POST /api/payroll (create), GET /api/payroll/:id (read), PATCH /api/payroll/:id (transition lifecycle) with 403 on non-admin, 400 on invalid transition; GET /api/payroll/webhook (error 501 on GET, 200 on POST with valid CloudEvent)
+
+- [x] Task 27: Add PHPUnit tests for payroll lifecycle per ADR-008: test cases for (1) Employee creation with BSN validation, (2) Payroll draft→calculated transition with deduction precondition validation (pass if under limit, fail if over), (3) Payroll calculated→issued transition triggers GL posting and determines-letter creation, (4) GL transaction balanced (debit + credit = 0), (5) Placement-fee AP posting for detached workers, (6) Webhook idempotency (same event twice = one record), (7) BSN PII masking on API response
+
+- [~] Task 28: Add Playwright browser tests for manifest navigation per ADR-008: test the 4 main GIVEN/WHEN/THEN scenarios from specs: (1) Create Employee with detached contract type, verify placementAgencyId field appears, (2) Create Payroll record, assign deductions, verify netAmount auto-calculated, (3) Transition Payroll calculated→issued, verify GL posting materialised, (4) Download determination letter (loonstrookje) PDF (blocked: spec-only change — Playwright e2e authored in the implementation cycle; no `payroll`/`detachering`/`employee` spec under `tests/e2e/` today)
+
+- [~] Task 29: Verify seed data loads on install via repair step: confirm `ConfigurationService::importFromApp()` is called in app bootstrap, seed data in `lib/Settings/shillinq_register.json` is loaded, 3–5 sample Employee and Payroll records appear in fresh install, test idempotency (reimport does not duplicate), test on both SQLite (dev) and PostgreSQL (prod) (blocked: wiring + seed objects shipped — `lib/Settings/register.d/bookkeeping-detachering-payroll-administratie.json` `objects[]` + `lib/Service/SettingsService.php:1376` `importFromApp` call site — but cross-DB fresh-install verification needs a live SQLite + PostgreSQL container)
+
+- [x] Task 30: Security audit per ADR-005: (1) verify all mutation endpoints (POST/PUT/DELETE) have `IGroupManager::isAdmin()` check, (2) verify API responses do NOT include raw `getMessage()` error text, (3) verify BSN is NOT logged in audit trail (use employeeId FK only), (4) verify webhook receiver validates HMAC signature, (5) verify no PII (BSN) in error responses, (6) verify XSS prevention on PDF rendering (external service owns sanitization)
+
+## Verification
+
+`openspec validate` must exit clean on the change folder. Payroll-administrator persona peer review confirms payroll flow matches Dutch SMB + staffing-agency practice (employee onboarding → payroll calculation → deductions → determination letters → GL posting → external software sync → bank reconciliation → archival). Architecture reviewer confirms ADR-022 + ADR-031 + ADR-005 compliance (no app-local payroll-calculation service; lifecycle declarative or ADR-031-exception-annotated; tax/SV validation via aggregation; BSN PII masked; manifest carries navigation). No source code changes outside `openspec/changes/bookkeeping-detachering-payroll-administratie/`.
+
+## Tests (company-wide ADR-009)
+
+Spec-only change — no business logic ships here. The implementation cycle (separate `opsx-apply`) is responsible for: PHPUnit unit tests for Employee BSN validation, Payroll lifecycle transitions, deduction precondition validation, GL materialisation, placement-fee posting, webhook idempotency, BSN PII masking (per Task 27); Playwright MCP browser tests for Employee creation (detached contract), Payroll creation+deduction assignment+lifecycle (per Task 28); `composer test` green at the implementing PR's CI gate.
+
+## Documentation (company-wide ADR-010)
+
+Spec-only change — no user-facing docs ship here. The implementation cycle authors `docs/user-guide/bookkeeping/payroll.md` and `detachering.md` per ADR-030 journeydoc convention, committing screenshots of: (1) Employee master form, (2) Payroll period creation, (3) Deduction breakdown, (4) Determination letter PDF, (5) GL posting preview. Dutch SMB scenario walkthrough: "Creating payroll for a 5-person team with mixed employment types" (2 employees, 1 detached, 1 freelancer, 1 consultant).
+
+## i18n (company-wide ADR-007)
+
+Spec-only change — no user-facing strings ship here. The implementation cycle adds Dutch (`nl_NL`) and English (`en_US`) translation strings per Task 25: all noun/verb/label strings used in forms, tables, and navigation. Verify `grep -rn "t('shillinq', '" src/` returns zero matches until i18n commit; all strings English in code, Dutch in `l10n/nl.json`.
+
+## External adapters
+
+- [x] Adapter port: dormant `SalarisbureauAdapterInterface` + `LogSalarisbureauAdapter` shipped at `lib/Service/External/Salarisbureau/` and wired in `lib/AppInfo/Application.php::register()`. The payroll-run delta to ADP RUN / Loket / Nmbrs / Visma is dispatched through this port; the log-default sanitises BSN out of per-employee rows. Production swap to an openconnector-backed binding at source slug `salarisbureau-<vendor>` is non-breaking.
+- [x] Adapter port: dormant `Ib47AdapterInterface` + `LogIb47Adapter` shipped at `lib/Service/External/Ib47/` and wired in `lib/AppInfo/Application.php::register()`. The Belastingdienst IB47 / UBD opgaaf for third-party honoraria is dispatched through this port; the log-default reduces the recipients[] array to a nature-code histogram before logging (never leak BSN). Production swap to an openconnector-backed binding at source slug `belastingdienst-ib47` is non-breaking.
+

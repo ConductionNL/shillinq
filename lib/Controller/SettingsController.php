@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 
@@ -50,10 +51,11 @@ class SettingsController extends Controller
     /**
      * Retrieve all current settings.
      *
-     * @NoAdminRequired
-     *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
      */
+    #[AuthorizedAdminSetting(Application::APP_ID)]
     public function index(): JSONResponse
     {
         return new JSONResponse(
@@ -65,7 +67,10 @@ class SettingsController extends Controller
      * Update settings with provided data.
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-1
      */
+    #[AuthorizedAdminSetting(Application::APP_ID)]
     public function create(): JSONResponse
     {
         $data   = $this->request->getParams();
@@ -86,10 +91,13 @@ class SettingsController extends Controller
      * all schema and register IDs from the import result.
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-2
      */
+    #[AuthorizedAdminSetting(Application::APP_ID)]
     public function load(): JSONResponse
     {
-        $result = $this->settingsService->loadConfiguration(force: true);
+        $result = $this->settingsService->loadConfigurationForced();
 
         return new JSONResponse($result);
     }//end load()

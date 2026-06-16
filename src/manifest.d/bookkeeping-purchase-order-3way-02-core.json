@@ -1,0 +1,38 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-purchase-order-3way-02-purchase-order-core",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Slice 02 of the bookkeeping-purchase-order-3way chain wires the two PO Vue views (create form + detail) onto custom manifest pages. The PurchaseOrders index and supporting CRUD scaffolding live in slice 01's manifest fragment; this fragment adds the bespoke 'Create Purchase Order' form and the rich detail view that surfaces the approval chain, approval history (with timestamps) and links to related GoodsReceiptNotes + ThreeWayMatches. Registered as kind=page custom components in src/registry.js. NOTE: PurchaseOrderDetail is intentionally absent from the menu children — detail pages are not nav leaves; the index page detailRoute binding drives list→detail navigation. Adding it as a nav child previously caused a duplicate top-level PurchaseOrders group and a double-active nav state (REQ-NAVIA-004/005 fix). Fragment is nested under Inkoop parent so mergeMenuItems merges at the correct depth."
+	},
+	"menu": [
+		{
+			"id": "Inkoop",
+			"children": [
+				{
+					"id": "PurchaseOrders",
+					"children": [
+						{"id": "PurchaseOrderForm", "label": "Create Purchase Order", "icon": "PlusCircle", "route": "PurchaseOrderForm", "order": 10}
+					]
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "PurchaseOrderForm",
+			"route": "/inkoop/purchase-orders/new",
+			"type": "custom",
+			"title": "Create Purchase Order",
+			"component": "PurchaseOrderForm"
+		},
+		{
+			"id": "PurchaseOrderDetail",
+			"route": "/inkoop/purchase-orders/:id",
+			"type": "custom",
+			"title": "Purchase Order",
+			"component": "PurchaseOrderDetail"
+		}
+	]
+}

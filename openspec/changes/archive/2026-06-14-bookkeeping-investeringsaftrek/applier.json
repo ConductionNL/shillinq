@@ -1,0 +1,22 @@
+{
+  "ran": true,
+  "pass": false,
+  "blocking": [
+    {
+      "file": "l10n/en.json",
+      "severity": "critical",
+      "note": "Unresolved git conflict markers (<<<<<<< HEAD / ======= / >>>>>>> origin/development) committed to branch HEAD \u2014 file is invalid JSON and will crash the localization system at runtime"
+    },
+    {
+      "file": "l10n/nl.json",
+      "severity": "critical",
+      "note": "Identical unresolved conflict markers committed to branch HEAD \u2014 Dutch locale file is also invalid JSON"
+    }
+  ],
+  "turns": 7,
+  "cost_usd": 0.2193,
+  "cost_eur": 0.2018,
+  "pr": 299,
+  "commit": "43dce07",
+  "timestamp": "2026-06-07T10:56:11.813264+00:00"
+}

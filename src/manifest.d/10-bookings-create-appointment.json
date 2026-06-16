@@ -1,0 +1,82 @@
+{
+	"menu": [
+		{
+			"id": "Verkoop",
+			"label": "Verkoop",
+			"icon": "CartOutline",
+			"order": 33,
+			"children": [
+				{
+					"id": "Afspraken",
+					"label": "Afspraken",
+					"icon": "CalendarClockOutline",
+					"route": "Afspraken",
+					"order": 10
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Afspraken",
+			"route": "/verkoop/afspraken",
+			"type": "index",
+			"title": "Afspraken",
+			"config": {
+				"register": "shillinq",
+				"schema": "Appointment",
+				"columns": [
+					{
+						"key": "appointmentId",
+						"label": "Reference",
+						"sortable": true
+					},
+					{
+						"key": "startTime",
+						"label": "Start",
+						"sortable": true
+					},
+					{
+						"key": "endTime",
+						"label": "End",
+						"sortable": true
+					},
+					{
+						"key": "serviceId",
+						"label": "Service",
+						"sortable": true
+					},
+					{
+						"key": "resourceId",
+						"label": "Resource",
+						"sortable": true
+					},
+					{
+						"key": "customerId",
+						"label": "Customer",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "startTime",
+				"detailRoute": "AfspraakDetail"
+			}
+		},
+		{
+			"id": "AfspraakDetail",
+			"route": "/verkoop/afspraken/:id",
+			"type": "custom",
+			"title": "Afspraak",
+			"component": "AfspraakDetail",
+			"config": {
+				"register": "shillinq",
+				"schema": "Appointment",
+				"indexRoute": "Afspraken"
+			}
+		}
+	]
+}

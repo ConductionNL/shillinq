@@ -1,0 +1,27 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "NL-taxonomie nt17 — Logius",
+		"variant": "belastingdienst-vpb",
+		"taxonomyVersion": "nt17",
+		"entryPoint": "belastingdienst-vpb",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the Belastingdienst Vennootschapsbelasting (Vpb) aangifte entry point (REQ-SBR-005, REQ-SBR-006). Fiscal corrections (VpbAangifte / FiscaleCorrectie owned by sibling bookkeeping-vpb-mkb) sit upstream of this mapping; the seed assumes the FinancialStatement has already had fiscal corrections applied.",
+		"imported": "2026-06-09T00:00:00Z"
+	},
+	"mapping": {
+		"slug": "map-belastingdienst-vpb-nt17",
+		"name": "Belastingdienst Vpb aangifte — NL-taxonomie nt17",
+		"entryPoint": "belastingdienst-vpb",
+		"taxonomyVersion": "nt17",
+		"records": [
+			{"financialStatementLineId": "vpb.commercieelResultaat", "taxonomyConcept": "bd-i:CommercialResult", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.fiscaleCorrecties.nietAftrekbareKosten", "taxonomyConcept": "bd-i:NonDeductibleCosts", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.fiscaleCorrecties.aftrekbeperking", "taxonomyConcept": "bd-i:DeductionLimitation", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.belastbaarBedrag", "taxonomyConcept": "bd-i:TaxableAmount", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.verschuldigdeBelasting", "taxonomyConcept": "bd-i:TaxPayable", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.voorvoegingsverlies.verrekend", "taxonomyConcept": "bd-i:LossCarryForwardUsed", "contextRef": "duration_belastingjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "vpb.innovatiebox.voordeel", "taxonomyConcept": "bd-i:InnovationBoxBenefit", "contextRef": "duration_belastingjaar", "unitRef": "EUR"}
+		]
+	}
+}

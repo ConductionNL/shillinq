@@ -1,0 +1,252 @@
+{
+	"menu": [
+		{
+			"id": "DualGaap",
+			"label": "Dual GAAP",
+			"icon": "ScaleBalance",
+			"order": 45,
+			"children": [
+				{
+					"id": "AccountingFrameworks",
+					"label": "Framework Configuration",
+					"icon": "Earth",
+					"route": "AccountingFrameworks",
+					"order": 10
+				},
+				{
+					"id": "ChartOfAccountsMappings",
+					"label": "Chart of Accounts Mapping",
+					"icon": "SwapHorizontal",
+					"route": "ChartOfAccountsMappings",
+					"order": 20
+				},
+				{
+					"id": "ReconciliationBridges",
+					"label": "Reconciliation Bridge",
+					"icon": "TransitConnectionVariant",
+					"route": "ReconciliationBridges",
+					"order": 30
+				},
+				{
+					"id": "DualTransactions",
+					"label": "Dual Ledger Explorer",
+					"icon": "TableLarge",
+					"route": "DualTransactions",
+					"order": 40
+				},
+				{
+					"id": "FrameworkElections",
+					"label": "Framework Election",
+					"icon": "GavelOutline",
+					"route": "FrameworkElections",
+					"order": 50
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "AccountingFrameworks",
+			"route": "/dual-gaap/accounting-frameworks",
+			"type": "index",
+			"title": "Framework Configuration",
+			"config": {
+				"register": "shillinq",
+				"schema": "AccountingFramework",
+				"columns": [
+					{"key": "identifier", "label": "Framework", "sortable": true},
+					{"key": "version", "label": "Version", "sortable": true},
+					{"key": "regulator", "label": "Regulator", "sortable": true},
+					{"key": "effectiveDate", "label": "Effective", "sortable": true},
+					{"key": "baseCurrencyDefault", "label": "Currency", "sortable": true}
+				],
+				"defaultSort": "identifier",
+				"detailRoute": "AccountingFrameworkDetail"
+			}
+		},
+		{
+			"id": "AccountingFrameworkDetail",
+			"route": "/dual-gaap/accounting-frameworks/:id",
+			"type": "detail",
+			"title": "Accounting Framework",
+			"config": {
+				"register": "shillinq",
+				"schema": "AccountingFramework",
+				"fields": [
+					{"key": "identifier", "label": "Framework", "type": "string"},
+					{"key": "version", "label": "Version", "type": "string"},
+					{"key": "effectiveDate", "label": "Effective date", "type": "string"},
+					{"key": "regulator", "label": "Regulator", "type": "string"},
+					{"key": "baseCurrencyDefault", "label": "Base currency", "type": "string"}
+				],
+				"indexRoute": "AccountingFrameworks"
+			}
+		},
+		{
+			"id": "ChartOfAccountsMappings",
+			"route": "/dual-gaap/coa-mappings",
+			"type": "index",
+			"title": "Chart of Accounts Mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "ChartOfAccountsMapping",
+				"columns": [
+					{"key": "sourceAccount", "label": "Source (RJ)", "sortable": true},
+					{"key": "mappingType", "label": "Cardinality", "sortable": true},
+					{"key": "allocationRule", "label": "Allocation", "sortable": true},
+					{"key": "coveragePercent", "label": "Coverage %", "sortable": true},
+					{"key": "effectiveFrom", "label": "Effective from", "sortable": true}
+				],
+				"defaultSort": "sourceAccount",
+				"detailRoute": "ChartOfAccountsMappingDetail"
+			}
+		},
+		{
+			"id": "ChartOfAccountsMappingDetail",
+			"route": "/dual-gaap/coa-mappings/:id",
+			"type": "detail",
+			"title": "Chart of Accounts Mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "ChartOfAccountsMapping",
+				"fields": [
+					{"key": "sourceAccount", "label": "Source account (RJ)", "type": "string"},
+					{"key": "mappingType", "label": "Cardinality", "type": "string"},
+					{"key": "allocationRule", "label": "Allocation rule", "type": "string"},
+					{"key": "allocationDetail", "label": "Allocation detail", "type": "string"},
+					{"key": "coveragePercent", "label": "Coverage %", "type": "number"},
+					{"key": "exceptionJustification", "label": "Exception justification", "type": "string"},
+					{"key": "approver", "label": "Approver", "type": "string"},
+					{"key": "effectiveFrom", "label": "Effective from", "type": "string"},
+					{"key": "effectiveTo", "label": "Effective to", "type": "string"}
+				],
+				"indexRoute": "ChartOfAccountsMappings"
+			}
+		},
+		{
+			"id": "ReconciliationBridges",
+			"route": "/dual-gaap/reconciliation-bridges",
+			"type": "index",
+			"title": "Reconciliation Bridge",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReconciliationBridge",
+				"columns": [
+					{"key": "period", "label": "Period", "sortable": true},
+					{"key": "metric", "label": "Metric", "sortable": true},
+					{"key": "fromFramework", "label": "From", "sortable": true},
+					{"key": "toFramework", "label": "To", "sortable": true},
+					{"key": "closingBalanceIfrs", "label": "Closing IFRS", "sortable": true}
+				],
+				"defaultSort": "period",
+				"detailRoute": "ReconciliationBridgeDetail"
+			}
+		},
+		{
+			"id": "ReconciliationBridgeDetail",
+			"route": "/dual-gaap/reconciliation-bridges/:id",
+			"type": "detail",
+			"title": "Reconciliation Bridge",
+			"config": {
+				"register": "shillinq",
+				"schema": "ReconciliationBridge",
+				"fields": [
+					{"key": "period", "label": "Period", "type": "string"},
+					{"key": "fromFramework", "label": "From framework", "type": "string"},
+					{"key": "toFramework", "label": "To framework", "type": "string"},
+					{"key": "metric", "label": "Metric", "type": "string"},
+					{"key": "openingBalanceRj", "label": "Opening RJ", "type": "number"},
+					{"key": "totalTemporaryDifferences", "label": "Temporary differences", "type": "number"},
+					{"key": "totalPermanentDifferences", "label": "Permanent differences", "type": "number"},
+					{"key": "closingBalanceIfrs", "label": "Closing IFRS", "type": "number"},
+					{"key": "approver", "label": "Approver", "type": "string"},
+					{"key": "signoffDate", "label": "Sign-off date", "type": "string"}
+				],
+				"indexRoute": "ReconciliationBridges"
+			}
+		},
+		{
+			"id": "DualTransactions",
+			"route": "/dual-gaap/dual-transactions",
+			"type": "index",
+			"title": "Dual Ledger Explorer",
+			"config": {
+				"register": "shillinq",
+				"schema": "DualTransaction",
+				"columns": [
+					{"key": "baseTransactionId", "label": "Base transaction", "sortable": true},
+					{"key": "divergenceReasonCode", "label": "Reason", "sortable": true},
+					{"key": "divergenceClassification", "label": "Type", "sortable": true},
+					{"key": "divergenceAmount", "label": "Divergence", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true}
+				],
+				"defaultSort": "baseTransactionId",
+				"detailRoute": "DualTransactionDetail"
+			}
+		},
+		{
+			"id": "DualTransactionDetail",
+			"route": "/dual-gaap/dual-transactions/:id",
+			"type": "detail",
+			"title": "Dual Transaction",
+			"config": {
+				"register": "shillinq",
+				"schema": "DualTransaction",
+				"fields": [
+					{"key": "baseTransactionId", "label": "Base transaction", "type": "string"},
+					{"key": "divergenceReasonCode", "label": "Reason code", "type": "string"},
+					{"key": "divergenceClassification", "label": "Classification", "type": "string"},
+					{"key": "divergenceAmount", "label": "Divergence amount", "type": "number"},
+					{"key": "deferredTaxEffect", "label": "Deferred-tax effect", "type": "number"},
+					{"key": "classificationOverridden", "label": "Overridden", "type": "boolean"},
+					{"key": "overrideReason", "label": "Override reason", "type": "string"},
+					{"key": "state", "label": "State", "type": "string"}
+				],
+				"indexRoute": "DualTransactions"
+			}
+		},
+		{
+			"id": "FrameworkElections",
+			"route": "/dual-gaap/framework-elections",
+			"type": "index",
+			"title": "Framework Election",
+			"config": {
+				"register": "shillinq",
+				"schema": "FrameworkElection",
+				"columns": [
+					{"key": "legalEntityId", "label": "Legal entity", "sortable": true},
+					{"key": "primaryFramework", "label": "Framework", "sortable": true},
+					{"key": "rjVariant", "label": "Variant", "sortable": true},
+					{"key": "effectiveFrom", "label": "Effective from", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true}
+				],
+				"defaultSort": "legalEntityId",
+				"detailRoute": "FrameworkElectionDetail"
+			}
+		},
+		{
+			"id": "FrameworkElectionDetail",
+			"route": "/dual-gaap/framework-elections/:id",
+			"type": "detail",
+			"title": "Framework Election",
+			"config": {
+				"register": "shillinq",
+				"schema": "FrameworkElection",
+				"fields": [
+					{"key": "legalEntityId", "label": "Legal entity", "type": "string"},
+					{"key": "primaryFramework", "label": "Primary framework", "type": "string"},
+					{"key": "rjVariant", "label": "RJ variant", "type": "string"},
+					{"key": "complyOrExplainMotivation", "label": "Comply-or-explain", "type": "string"},
+					{"key": "sizeCriteriaBalanstotaal", "label": "Balanstotaal", "type": "number"},
+					{"key": "sizeCriteriaNettoOmzet", "label": "Netto-omzet", "type": "number"},
+					{"key": "sizeCriteriaGemiddeldWerknemers", "label": "Gem. werknemers", "type": "number"},
+					{"key": "sizeCriteriaBreachYears", "label": "Breach years", "type": "number"},
+					{"key": "avaBesluitReference", "label": "AVA-besluit", "type": "string"},
+					{"key": "effectiveFrom", "label": "Effective from", "type": "string"},
+					{"key": "state", "label": "State", "type": "string"}
+				],
+				"indexRoute": "FrameworkElections"
+			}
+		}
+	]
+}

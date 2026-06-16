@@ -1,0 +1,151 @@
+{
+	"menu": [
+		{
+			"id": "VennootschapsbelastingBalans",
+			"label": "Vennootschapsbelasting",
+			"icon": "BankCheck",
+			"order": 36,
+			"featureFlag": "mkb-vpb",
+			"children": [
+				{
+					"id": "VpbPligtigeAccounts",
+					"label": "Vpb-pligtige accounts",
+					"icon": "BookmarkCheckOutline",
+					"route": "VpbPligtigeAccounts",
+					"order": 10,
+					"featureFlag": "mkb-vpb"
+				},
+				{
+					"id": "VpbBalansLinks",
+					"label": "Ondernemingsactiviteiten (Vpb-balans link)",
+					"icon": "LinkVariant",
+					"route": "VpbBalansLinks",
+					"order": 20,
+					"featureFlag": "mkb-vpb"
+				},
+				{
+					"id": "VpbBalansAangifte",
+					"label": "Vpb-balans + aangifte voorbereiding",
+					"icon": "FileDocumentMultipleOutline",
+					"route": "VpbBalansAangifte",
+					"order": 30,
+					"featureFlag": "mkb-vpb"
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "VpbPligtigeAccounts",
+			"route": "/bookkeeping/vpb-balans/accounts",
+			"type": "index",
+			"title": "Vpb-pligtige accounts",
+			"featureFlag": "mkb-vpb",
+			"config": {
+				"register": "shillinq",
+				"schema": "Account",
+				"filter": {
+					"vpbPligtig": { "equals": true }
+				},
+				"columns": [
+					{ "key": "accountNumber", "label": "Rekeningnummer", "sortable": true },
+					{ "key": "name", "label": "Naam", "sortable": true },
+					{ "key": "accountType", "label": "Soort", "sortable": true },
+					{ "key": "vpbPligtig", "label": "Vpb-pligtig", "sortable": true }
+				],
+				"search": true,
+				"filters": [
+					{ "key": "accountType", "label": "Soort" }
+				],
+				"defaultSort": "accountNumber",
+				"warnings": [
+					{
+						"id": "orphanedVpbPligt",
+						"source": "VpbBalansLink:orphanedVpbPligtigAccounts.warnings.orphanedVpbPligt",
+						"render": "callout"
+					}
+				]
+			}
+		},
+		{
+			"id": "VpbBalansLinks",
+			"route": "/bookkeeping/vpb-balans/links",
+			"type": "index",
+			"title": "Ondernemingsactiviteiten (Vpb-balans link)",
+			"featureFlag": "mkb-vpb",
+			"config": {
+				"register": "shillinq",
+				"schema": "VpbBalansLink",
+				"columns": [
+					{ "key": "costCenterId", "label": "Ondernemingsactiviteit", "sortable": true },
+					{ "key": "vpbPligtigVanaf", "label": "Vpb-pligtig vanaf", "sortable": true },
+					{ "key": "vpbPligtigTotEnMet", "label": "Vpb-pligtig t/m", "sortable": true },
+					{ "key": "accountNumbers", "label": "Aantal accounts", "sortable": false }
+				],
+				"search": true,
+				"defaultSort": "vpbPligtigVanaf",
+				"detailRoute": "VpbBalansLinkDetail"
+			}
+		},
+		{
+			"id": "VpbBalansLinkDetail",
+			"route": "/bookkeeping/vpb-balans/links/:id",
+			"type": "detail",
+			"title": "Vpb-balans link",
+			"featureFlag": "mkb-vpb",
+			"config": {
+				"register": "shillinq",
+				"schema": "VpbBalansLink",
+				"fields": [
+					{ "key": "costCenterId", "label": "Ondernemingsactiviteit (cost-center)", "type": "string" },
+					{ "key": "vpbPligtigVanaf", "label": "Vpb-pligtig vanaf", "type": "date" },
+					{ "key": "vpbPligtigTotEnMet", "label": "Vpb-pligtig t/m", "type": "date" },
+					{ "key": "accountNumbers", "label": "Vpb-pligtige accounts", "type": "array" },
+					{ "key": "toelichting", "label": "Toelichting", "type": "string" }
+				],
+				"indexRoute": "VpbBalansLinks"
+			}
+		},
+		{
+			"id": "VpbBalansAangifte",
+			"route": "/bookkeeping/vpb-balans/aangifte",
+			"type": "detail",
+			"title": "Vpb-balans + aangifte voorbereiding",
+			"featureFlag": "mkb-vpb",
+			"config": {
+				"register": "shillinq",
+				"schema": "VpbBalansLink",
+				"aggregation": "vpbBalansFiltered",
+				"docudeskTemplate": "vpb-aangifte-voorbereiding",
+				"groupBy": "costCenterId",
+				"columns": [
+					{ "key": "costCenterId", "label": "Ondernemingsactiviteit" },
+					{ "key": "activaTotal", "label": "Activa (EUR)", "type": "currency", "unit": "cents" },
+					{ "key": "passivaTotal", "label": "Passiva (EUR)", "type": "currency", "unit": "cents" },
+					{ "key": "resultaatTotal", "label": "Resultaat (EUR)", "type": "currency", "unit": "cents" },
+					{ "key": "balansSluit", "label": "Balans sluit", "type": "boolean" }
+				],
+				"warnings": [
+					{
+						"id": "unbalancedOndernemingsactiviteit",
+						"source": "vpbBalansFiltered.warnings.unbalancedOndernemingsactiviteit",
+						"render": "callout"
+					},
+					{
+						"id": "orphanedVpbPligt",
+						"source": "orphanedVpbPligtigAccounts.warnings.orphanedVpbPligt",
+						"render": "list"
+					}
+				],
+				"actions": [
+					{
+						"id": "generate-vpb-aangifte-voorbereiding",
+						"label": "Genereer Vpb-aangifte voorbereiding",
+						"docudeskTemplate": "vpb-aangifte-voorbereiding",
+						"sbrEndpoint": "bookkeeping-sbr-xbrl-reporting"
+					}
+				]
+			}
+		}
+	]
+}

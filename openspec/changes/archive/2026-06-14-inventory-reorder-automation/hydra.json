@@ -1,0 +1,10 @@
+{
+  "spec_slug": "inventory-reorder-automation",
+  "title": "Inventory Min/Max + Reorder Point",
+  "app": "shillinq",
+  "repo": "https://codeberg.org/Conduction/shillinq",
+  "depends_on": [
+    "inventory-stock-tracking"
+  ],
+  "issue": null
+}

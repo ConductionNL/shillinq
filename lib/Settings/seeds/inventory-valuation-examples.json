@@ -1,0 +1,78 @@
+{
+	"_meta": {
+		"_comment": "Example InventoryValuation seed records — REQ-INV-001 + design.md Seed Data. Loaded idempotently by InitializeSettings via SettingsService::seedInventoryValuationExamples(). Deduplicated on (productId, warehouse, status=active, administrationId).",
+		"source": "seed-example",
+		"spec": "openspec/changes/inventory-valuation-fifo-avg/specs/inventory-valuation-fifo-avg/spec.md",
+		"license": "EUPL-1.2",
+		"copyright": "2026 Conduction B.V.",
+		"spdxLicenseIdentifier": "EUPL-1.2",
+		"spdxCopyrightText": "2026 Conduction B.V. <info@conduction.nl>"
+	},
+	"valuations": [
+		{
+			"productId": "GT-10-2026",
+			"productName": "Gereedschapset 10-delig",
+			"warehouse": "Magazijn Noord",
+			"quantity": 50.0,
+			"unitCost": 12.5,
+			"totalValue": 625.0,
+			"valuationMethod": "FIFO",
+			"date": "2026-05-01T00:00:00Z",
+			"status": "active",
+			"costCenterId": "CC-MAGAZIJN-001",
+			"pendingCogs": false
+		},
+		{
+			"productId": "KP-A4-500",
+			"productName": "Kantoorpapier A4 500 vel",
+			"warehouse": "Centraal Depot",
+			"quantity": 200.0,
+			"unitCost": 3.75,
+			"totalValue": 750.0,
+			"valuationMethod": "average",
+			"date": "2026-05-01T00:00:00Z",
+			"status": "active",
+			"costCenterId": "CC-MAGAZIJN-001",
+			"pendingCogs": false
+		},
+		{
+			"productId": "HP-200-B",
+			"productName": "Hydraulische pomp HP-200",
+			"warehouse": "Magazijn Zuid",
+			"quantity": 15.0,
+			"unitCost": 89.0,
+			"totalValue": 1335.0,
+			"valuationMethod": "FIFO",
+			"date": "2026-05-01T00:00:00Z",
+			"status": "active",
+			"costCenterId": "CC-MAGAZIJN-001",
+			"pendingCogs": false
+		},
+		{
+			"productId": "SM-5L-PRO",
+			"productName": "Schoonmaakmiddel Pro 5L",
+			"warehouse": "Centraal Depot",
+			"quantity": 100.0,
+			"unitCost": 8.4,
+			"totalValue": 840.0,
+			"valuationMethod": "average",
+			"date": "2026-05-01T00:00:00Z",
+			"status": "active",
+			"costCenterId": "CC-MAGAZIJN-001",
+			"pendingCogs": false
+		},
+		{
+			"productId": "VHG-S-M",
+			"productName": "Veiligheidshandschoenen S/M",
+			"warehouse": "Magazijn Noord",
+			"quantity": 300.0,
+			"unitCost": 1.2,
+			"totalValue": 360.0,
+			"valuationMethod": "FIFO",
+			"date": "2026-05-01T00:00:00Z",
+			"status": "active",
+			"costCenterId": "CC-MAGAZIJN-001",
+			"pendingCogs": false
+		}
+	]
+}

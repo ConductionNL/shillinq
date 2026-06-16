@@ -1,0 +1,10 @@
+{
+  "spec_slug": "inventory-barcode-sku",
+  "title": "Inventory SKU + Multi-barcode per item",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [
+    "inventory-product-catalog"
+  ],
+  "issue": null
+}

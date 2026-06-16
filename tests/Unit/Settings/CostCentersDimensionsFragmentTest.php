@@ -1,0 +1,235 @@
+<?php
+
+/**
+ * Unit tests for the bookkeeping-cost-centers-dimensions register fragment (ADR-037).
+ *
+ * Verifies the fragment declares the AnalyticalDimension schema with the
+ * REQ-CD-006 fields, attaches the four segment-P&L aggregations to GLLine
+ * (REQ-CD-004, REQ-CD-007), and ships the cost-center / project / dimension
+ * seed objects so the OR RepairStep importer can pre-populate a fresh
+ * administratie with realistic Dutch examples (REQ-CD-002).
+ *
+ * @category Test
+ * @package  OCA\Shillinq\Tests\Unit\Settings
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Tests\Unit\Settings;
+
+use PHPUnit\Framework\TestCase;
+
+/**
+ * Structural tests for the cost-centers-dimensions register fragment.
+ */
+final class CostCentersDimensionsFragmentTest extends TestCase
+{
+    /**
+     * Decoded fragment data.
+     *
+     * @var array<string,mixed>
+     */
+    private array $fragment;
+
+    /**
+     * Load and decode the fragment file.
+     *
+     * @return void
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $path = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json';
+        self::assertFileExists($path, 'Register fragment must ship in lib/Settings/register.d');
+        $decoded = json_decode((string) file_get_contents($path), true);
+        self::assertIsArray($decoded, 'Fragment must be valid JSON');
+        $this->fragment = $decoded;
+    }//end setUp()
+
+    /**
+     * The fragment declares AnalyticalDimension with the REQ-CD-006 fields.
+     *
+     * @return void
+     */
+    public function testFragmentDeclaresAnalyticalDimensionWithRequiredFields(): void
+    {
+        $schemas = ($this->fragment['components']['schemas'] ?? []);
+        self::assertArrayHasKey(
+            'AnalyticalDimension',
+            $schemas,
+            'AnalyticalDimension schema MUST be declared (REQ-CD-006)'
+        );
+
+        $dim = $schemas['AnalyticalDimension'];
+        foreach (['code', 'name', 'dataType', 'administrationId', 'lifecycleState'] as $field) {
+            self::assertContains(
+                $field,
+                $dim['required'],
+                'AnalyticalDimension MUST require '.$field
+            );
+            self::assertArrayHasKey($field, $dim['properties']);
+        }
+
+        // Custom-dimension extensibility — operator chooses a value type.
+        $allowedTypes = $dim['properties']['dataType']['enum'];
+        self::assertEqualsCanonicalizing(
+            ['string', 'integer', 'decimal', 'date', 'reference'],
+            $allowedTypes,
+            'dataType enum MUST match REQ-CD-006 value-type set'
+        );
+
+        self::assertArrayHasKey('isHierarchical', $dim['properties']);
+        self::assertSame(
+            'boolean',
+            $dim['properties']['isHierarchical']['type'],
+            'isHierarchical MUST be boolean (REQ-CD-007 hierarchical roll-up)'
+        );
+    }//end testFragmentDeclaresAnalyticalDimensionWithRequiredFields()
+
+    /**
+     * The fragment attaches segment-P&L aggregations to GLLine (REQ-CD-004).
+     *
+     * The four declared aggregations cover the cost-center, project,
+     * cost-center-hierarchy, and free-form analytical-dimension roll-ups.
+     * Declared as `x-openregister-aggregations` on the GLLine partial overlay
+     * per ADR-037 (the base GLLine schema lives in shillinq_register.json).
+     *
+     * @return void
+     */
+    public function testGlLineCarriesSegmentPnlAggregations(): void
+    {
+        $schemas = ($this->fragment['components']['schemas'] ?? []);
+        self::assertArrayHasKey('GLLine', $schemas, 'GLLine overlay MUST be present');
+
+        $aggs = $schemas['GLLine']['x-openregister-aggregations'] ?? null;
+        self::assertIsArray($aggs, 'GLLine MUST declare x-openregister-aggregations');
+
+        foreach (['byCostCenter', 'byCostCenterHierarchy', 'byProject', 'byAnalyticalDimension'] as $key) {
+            self::assertArrayHasKey($key, $aggs, 'Aggregation '.$key.' MUST be declared');
+            self::assertSame('GLLine', $aggs[$key]['source'], 'Aggregation MUST source GLLine');
+            self::assertSame(['amount'], $aggs[$key]['sum'], 'Aggregation MUST sum the amount field');
+            self::assertArrayHasKey('groupBy', $aggs[$key]);
+            self::assertArrayHasKey('filter', $aggs[$key]);
+        }
+
+        // Cost-center hierarchy joins through CostCenter for parentCode resolution.
+        self::assertSame(
+            'CostCenter',
+            $aggs['byCostCenter']['join']['through'],
+            'byCostCenter MUST join through CostCenter'
+        );
+        self::assertSame(
+            'Project',
+            $aggs['byProject']['join']['through'],
+            'byProject MUST join through Project'
+        );
+
+        // Free-form dimension roll-up uses a wildcard groupBy so any operator-
+        // declared AnalyticalDimension automatically contributes a group.
+        self::assertSame(
+            ['dimensions.*'],
+            $aggs['byAnalyticalDimension']['groupBy'],
+            'byAnalyticalDimension MUST group by the dimensions.* wildcard for REQ-CD-006 extensibility'
+        );
+    }//end testGlLineCarriesSegmentPnlAggregations()
+
+    /**
+     * The fragment ships seed cost-center + project + dimension objects
+     * (REQ-CD-002) so the RepairStep importer can pre-populate a fresh
+     * administratie with realistic examples.
+     *
+     * @return void
+     */
+    public function testSeedObjectsContainRequiredExamples(): void
+    {
+        $objects = ($this->fragment['objects'] ?? []);
+        self::assertNotEmpty($objects, 'Fragment MUST ship seed objects');
+
+        $byKey = static function (array $items, string $schema, string $slug) {
+            foreach ($items as $item) {
+                $self = ($item['@self'] ?? []);
+                if (($self['schema'] ?? '') === $schema && ($self['slug'] ?? '') === $slug) {
+                    return $item;
+                }
+            }
+            return null;
+        };
+
+        // Two analytical dimensions: REGION (flat string) + PRODUCT_LINE (hierarchical).
+        $region = $byKey($objects, 'AnalyticalDimension', 'dim-region');
+        self::assertIsArray($region, 'REGION dimension seed MUST be present');
+        self::assertSame('REGION', $region['code']);
+        self::assertSame('string', $region['dataType']);
+        self::assertFalse($region['isHierarchical']);
+
+        $productLine = $byKey($objects, 'AnalyticalDimension', 'dim-productline');
+        self::assertIsArray($productLine, 'PRODUCT_LINE dimension seed MUST be present');
+        self::assertTrue($productLine['isHierarchical']);
+
+        // Three Dutch cost centers covering admin + sales + logistics.
+        foreach (['cc-admin-amsterdam', 'cc-sales-utrecht', 'cc-logistics-rotterdam'] as $slug) {
+            $cc = $byKey($objects, 'CostCenter', $slug);
+            self::assertIsArray($cc, 'CostCenter seed '.$slug.' MUST be present');
+            self::assertSame('active', $cc['lifecycleState']);
+            self::assertSame('adm-default', $cc['administrationId']);
+        }
+
+        // Two project seeds — internal-platform + WBSO research grant.
+        foreach (['proj-internal-platform', 'proj-grant-research'] as $slug) {
+            $proj = $byKey($objects, 'Project', $slug);
+            self::assertIsArray($proj, 'Project seed '.$slug.' MUST be present');
+            self::assertSame('active', $proj['lifecycleState']);
+            self::assertSame('adm-default', $proj['administrationId']);
+        }
+    }//end testSeedObjectsContainRequiredExamples()
+
+    /**
+     * The manifest fragment declares the AnalyticalDimensions nav entry +
+     * index/detail pages (REQ-CD-005), so the operator-extensible custom
+     * dimension surface is reachable from the Bookkeeping menu.
+     *
+     * @return void
+     */
+    public function testManifestFragmentDeclaresAnalyticalDimensionPages(): void
+    {
+        $path = __DIR__.'/../../../src/manifest.d/bookkeeping-cost-centers-dimensions.json';
+        self::assertFileExists($path, 'Manifest fragment MUST ship in src/manifest.d');
+
+        $decoded = json_decode((string) file_get_contents($path), true);
+        self::assertIsArray($decoded);
+
+        // Menu carries an AnalyticalDimensions child under Bookkeeping.
+        $hasNav = false;
+        foreach (($decoded['menu'] ?? []) as $menu) {
+            if (($menu['id'] ?? '') !== 'Bookkeeping') {
+                continue;
+            }
+            foreach (($menu['children'] ?? []) as $child) {
+                if (($child['id'] ?? '') === 'AnalyticalDimensions') {
+                    $hasNav = true;
+                    self::assertSame('AnalyticalDimensions', $child['route']);
+                }
+            }
+        }
+        self::assertTrue($hasNav, 'Bookkeeping menu MUST carry AnalyticalDimensions child');
+
+        // Index + detail pages cover the schema.
+        $pageIds = array_map(static fn ($p) => $p['id'] ?? '', ($decoded['pages'] ?? []));
+        self::assertContains('AnalyticalDimensions', $pageIds);
+        self::assertContains('AnalyticalDimensionDetail', $pageIds);
+
+        foreach (($decoded['pages'] ?? []) as $page) {
+            if (in_array($page['id'] ?? '', ['AnalyticalDimensions', 'AnalyticalDimensionDetail'], true)) {
+                self::assertSame('AnalyticalDimension', $page['config']['schema']);
+            }
+        }
+    }//end testManifestFragmentDeclaresAnalyticalDimensionPages()
+}//end class

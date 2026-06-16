@@ -1,0 +1,258 @@
+<?php
+
+/**
+ * DBA risk-score calculator — ADR-031 exception-path guard.
+ *
+ * Invoked by the x-openregister-calculations engine (via the `guard:` clause on
+ * DBAIntake.totaalScore) when the declarative weighted-sum with conditional
+ * boosters cannot be expressed natively. Single deterministic method, no
+ * persistence, pure arithmetic per ADR-031 §"PHP guards remain a legitimate
+ * seam". Computes the Wet DBA three-pillar score (max 60) + Deliveroo-criteria
+ * (max 40) into a 0-100 totaal, with conditional boosters for exclusiviteit +
+ * langjarigheid (REQ-DBA-003).
+ *
+ * Exception documented in
+ * openspec/changes/dba-compliance-marker/design.md §D2.
+ *
+ * @category Guard
+ * @package  OCA\Shillinq\Guard
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
+ * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Guard;
+
+use Psr\Log\LoggerInterface;
+
+/**
+ * ADR-031 exception guard for the DBA risk-score (REQ-DBA-003).
+ *
+ * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ */
+class DBAScoreCalculator
+{
+    /**
+     * Deliveroo-criteria duur-relatie point weights.
+     */
+    private const DUUR_POINTS = [
+        'MINDER_DAN_3_MAANDEN' => 2,
+        '3_TOT_6_MAANDEN' => 4,
+        '6_TOT_12_MAANDEN' => 6,
+        '1_TOT_2_JAAR' => 8,
+        'MEER_DAN_2_JAAR' => 10,
+    ];
+
+    /**
+     * Constructor.
+     *
+     * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
+     */
+    public function __construct(
+        private readonly LoggerInterface $logger,
+    ) {
+    }//end __construct()
+
+    /**
+     * Compute the full DBA risk-score (REQ-DBA-003).
+     *
+     * Sums the three pillar subtotals (max 60), adds Deliveroo-criteria (max 40),
+     * and applies conditional boosters: +5 when exclusief AND duurRelatie >= 1y;
+     * +5 when vervangbaarheid is theoretisch (vervangbaarScore < 5 AND
+     * vervangingFeitelijkScore = 10). The result is clamped to [0, 100].
+     *
+     * @param array<string,mixed> $intake A DBAIntake object as stored in OpenRegister.
+     *
+     * @return int The total score in [0, 100].
+     *
+     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     */
+    public function computeTotal(array $intake): int
+    {
+        $gezag = $this->subtotalGezag(intake: $intake);
+        $arbeid = $this->subtotalArbeid(intake: $intake);
+        $financieel = $this->subtotalFinancieel(intake: $intake);
+        $deliveroo = $this->subtotalDeliveroo(intake: $intake);
+
+        $base = $gezag + $arbeid + $financieel + $deliveroo;
+
+        $booster = 0;
+        $deliverooBlock = $this->arrayOrEmpty(value: ($intake['deliverooCriteria'] ?? []));
+        $arbeidBlock = $this->arrayOrEmpty(value: ($intake['persoonlijkeArbeid'] ?? []));
+
+        $exclusief = (bool) ($deliverooBlock['exclusief'] ?? false);
+        $duur = (string) ($deliverooBlock['duurRelatie'] ?? '');
+        if ($exclusief === true && in_array($duur, ['1_TOT_2_JAAR', 'MEER_DAN_2_JAAR'], true) === true) {
+            $booster += 5;
+        }
+
+        $vervBaar = (int) ($arbeidBlock['vervangbaarScore'] ?? 0);
+        $vervFeitelijk = (int) ($arbeidBlock['vervangingFeitelijkScore'] ?? 0);
+        if ($vervBaar < 5 && $vervFeitelijk >= 10) {
+            $booster += 5;
+        }
+
+        $total = $base + $booster;
+        if ($total < 0) {
+            $total = 0;
+        }
+        if ($total > 100) {
+            $total = 100;
+        }
+
+        $this->logger->debug(
+            'DBAScoreCalculator: computed total',
+            [
+                'gezag' => $gezag,
+                'arbeid' => $arbeid,
+                'financieel' => $financieel,
+                'deliveroo' => $deliveroo,
+                'booster' => $booster,
+                'total' => $total,
+            ]
+        );
+
+        return $total;
+    }//end computeTotal()
+
+    /**
+     * Compute the gezagsverhouding subtotal (max 20).
+     *
+     * @param array<string,mixed> $intake The DBAIntake object.
+     *
+     * @return int The subtotal in [0, 20].
+     */
+    public function subtotalGezag(array $intake): int
+    {
+        $block = $this->arrayOrEmpty(value: ($intake['gezagsverhouding'] ?? []));
+        $value = (int) ($block['kwaInstructiesScore'] ?? 0)
+            + (int) ($block['kwaResultaatVrijScore'] ?? 0)
+            + (int) ($block['deelneemtAanWerkoverlegScore'] ?? 0);
+        return $this->clamp(value: $value, min: 0, max: 20);
+    }//end subtotalGezag()
+
+    /**
+     * Compute the persoonlijke arbeid subtotal (max 20).
+     *
+     * @param array<string,mixed> $intake The DBAIntake object.
+     *
+     * @return int The subtotal in [0, 20].
+     */
+    public function subtotalArbeid(array $intake): int
+    {
+        $block = $this->arrayOrEmpty(value: ($intake['persoonlijkeArbeid'] ?? []));
+        $value = (int) ($block['vervangbaarScore'] ?? 0)
+            + (int) ($block['vervangingFeitelijkScore'] ?? 0);
+        return $this->clamp(value: $value, min: 0, max: 20);
+    }//end subtotalArbeid()
+
+    /**
+     * Compute the financieel risico subtotal (max 20).
+     *
+     * @param array<string,mixed> $intake The DBAIntake object.
+     *
+     * @return int The subtotal in [0, 20].
+     */
+    public function subtotalFinancieel(array $intake): int
+    {
+        $block = $this->arrayOrEmpty(value: ($intake['financieelRisico'] ?? []));
+        $value = (int) ($block['factuurFrequentieScore'] ?? 0)
+            + (int) ($block['betalingsRisicoScore'] ?? 0)
+            + (int) ($block['investeringEigenMiddelenScore'] ?? 0);
+        return $this->clamp(value: $value, min: 0, max: 20);
+    }//end subtotalFinancieel()
+
+    /**
+     * Compute the Deliveroo-criteria subtotal (max 40).
+     *
+     * Per HR 24-3-2023, ECLI:NL:HR:2023:443: weights each criterion to surface
+     * werknemerschap-signalen. Specialistisch werk + eigen klanten + eigen
+     * reclame reduce risk; exclusiviteit + lange duur + ontbrekend model raise it.
+     *
+     * @param array<string,mixed> $intake The DBAIntake object.
+     *
+     * @return int The subtotal in [0, 40].
+     */
+    public function subtotalDeliveroo(array $intake): int
+    {
+        $block = $this->arrayOrEmpty(value: ($intake['deliverooCriteria'] ?? []));
+
+        $score = 0;
+
+        $duur = (string) ($block['duurRelatie'] ?? '');
+        $score += self::DUUR_POINTS[$duur] ?? 0;
+
+        if ((bool) ($block['exclusief'] ?? false) === true) {
+            $score += 8;
+        }
+
+        if ((bool) ($block['aardWerkzaamhedenSpecialistisch'] ?? false) === false) {
+            $score += 6;
+        }
+        if ((bool) ($block['eigenKlanten'] ?? false) === false) {
+            $score += 6;
+        }
+        if ((bool) ($block['eigenReclame'] ?? false) === false) {
+            $score += 4;
+        }
+        if ((bool) ($block['modelovereenkomstAanwezig'] ?? false) === false) {
+            $score += 4;
+        }
+        if ((bool) ($block['feitelijkeUitvoeringVolgtContract'] ?? true) === false) {
+            $score += 2;
+        }
+
+        return $this->clamp(value: $score, min: 0, max: 40);
+    }//end subtotalDeliveroo()
+
+    /**
+     * Coerce a value to an array, returning an empty array when not array-shaped.
+     *
+     * @param mixed $value Any value (typically an OR sub-object).
+     *
+     * @return array<string,mixed> An array shape.
+     */
+    private function arrayOrEmpty(mixed $value): array
+    {
+        if (is_array($value) === true) {
+            /** @var array<string,mixed> $value */
+            return $value;
+        }
+        if (is_object($value) === true) {
+            $arr = (array) $value;
+            /** @var array<string,mixed> $arr */
+            return $arr;
+        }
+        return [];
+    }//end arrayOrEmpty()
+
+    /**
+     * Clamp a value to a [min, max] range.
+     *
+     * @param int $value Input value.
+     * @param int $min   Lower bound.
+     * @param int $max   Upper bound.
+     *
+     * @return int The clamped value.
+     */
+    private function clamp(int $value, int $min, int $max): int
+    {
+        if ($value < $min) {
+            return $min;
+        }
+        if ($value > $max) {
+            return $max;
+        }
+        return $value;
+    }//end clamp()
+}//end class

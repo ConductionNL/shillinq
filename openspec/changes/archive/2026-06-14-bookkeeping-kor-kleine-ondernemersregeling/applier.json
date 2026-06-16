@@ -1,0 +1,17 @@
+{
+  "ran": true,
+  "pass": false,
+  "blocking": [
+    {
+      "file": "Conduction/shillinq",
+      "severity": "critical",
+      "note": "PR has unresolvable merge conflicts with development (mergeable=false in pr-state.json); orchestrator must escalate to rebuild:queued"
+    }
+  ],
+  "turns": 7,
+  "cost_usd": 0.2536,
+  "cost_eur": 0.2333,
+  "pr": 289,
+  "commit": "8a6b919",
+  "timestamp": "2026-06-07T10:56:20.204421+00:00"
+}

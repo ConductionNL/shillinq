@@ -1,0 +1,28 @@
+{
+	"menu": [
+		{
+			"id": "Verkoop",
+			"label": "Verkoop",
+			"icon": "CartOutline",
+			"order": 33,
+			"children": [
+				{
+					"id": "BookingsCalendar",
+					"label": "Boekingenkalender",
+					"icon": "CalendarOutline",
+					"route": "BookingsCalendar",
+					"order": 12
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "BookingsCalendar",
+			"route": "/verkoop/boekingen-kalender",
+			"type": "custom",
+			"component": "BookingsCalendarPage",
+			"title": "Boekingenkalender"
+		}
+	]
+}

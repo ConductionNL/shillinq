@@ -1,0 +1,764 @@
+{
+  "_spdx": {
+    "SPDX-FileCopyrightText": "2026 Conduction B.V.",
+    "SPDX-License-Identifier": "EUPL-1.2"
+  },
+  "_meta": {
+    "description": "Docudesk template registry for Shillinq. Templates are registered here and rendered by the docudesk integration (ADR-022).",
+    "idempotency": "templateId"
+  },
+  "templates": [
+    {
+      "templateId": "vpb-aangifte-innovatiebox-sectie",
+      "title": "Vpb-aangifte — Innovatiebox sectie",
+      "description": "Innovatiebox-sectie voor de Vpb-aangifte voorbereiding (REQ-IBA-006). Rendert per kwalificerend immaterieel activum de kwalificerende winst voor/na nexus, de nexusbreuk, het toegepaste tarief (0.09) en de Vpb-impact; het totaal levert de bijdrage aan Vpb-aangifte regel 23. Voor forfaitaire keuze wordt een enkele regel met het plafond (EUR 25.000) getoond. Gevoed door de innovatieboxAdministratie aggregatie op IBProfitAttribution.",
+      "register": "shillinq",
+      "schema": "IBProfitAttribution",
+      "aggregation": "innovatieboxAdministratie",
+      "sections": [
+        {
+          "sectionId": "innovatiebox-per-activum",
+          "title": "Innovatiebox per activum ({{boekjaar}})",
+          "sourceSchema": "IBProfitAttribution",
+          "joinField": "administrationId",
+          "columns": [
+            {
+              "key": "naam",
+              "label": "Kwalificerend activum"
+            },
+            {
+              "key": "methode",
+              "label": "Methode"
+            },
+            {
+              "key": "kwalificerende_winst_voor_nexus",
+              "label": "Kwalificerende winst voor nexus (EUR)",
+              "type": "currency"
+            },
+            {
+              "key": "nexusbreuk_toegepast",
+              "label": "Nexusbreuk",
+              "type": "percentage"
+            },
+            {
+              "key": "kwalificerende_winst_na_nexus",
+              "label": "Kwalificerende winst na nexus (EUR)",
+              "type": "currency"
+            },
+            {
+              "key": "effectief_tarief",
+              "label": "Tarief",
+              "type": "percentage"
+            },
+            {
+              "key": "vpb_op_innovatiedeel",
+              "label": "Vpb-impact (EUR)",
+              "type": "currency"
+            }
+          ],
+          "totals": [
+            {
+              "label": "Totaal — bijdrage Vpb-aangifte regel 23",
+              "field": "vpb_op_innovatiedeel",
+              "operation": "sum"
+            }
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit de Shillinq innovatiebox-administratie aggregatie (REQ-IBA-006). Bronnen: Wet Vpb art. 12b/12bd/12bg, OECD BEPS Action 5."
+    },
+    {
+      "templateId": "innovatiebox-administratie-summary",
+      "title": "Innovatiebox administratie — overzicht",
+      "description": "Intern overzicht en bijlage voor de Belastingdienst VSO-onderbouwing (REQ-IBA-008): lijst van kwalificerende activa met status en toegangsticket, nexusbreuk per activum, en het voortwenteling-verliesschema per activum.",
+      "register": "shillinq",
+      "schema": "QualifyingAsset",
+      "aggregation": "innovatieboxAdministratie",
+      "sections": [
+        {
+          "sectionId": "ib-assets",
+          "title": "Kwalificerende immateriele activa",
+          "sourceSchema": "QualifyingAsset",
+          "joinField": "administrationId",
+          "columns": [
+            {
+              "key": "naam",
+              "label": "Activum"
+            },
+            {
+              "key": "type",
+              "label": "Type"
+            },
+            {
+              "key": "status",
+              "label": "Status"
+            }
+          ]
+        },
+        {
+          "sectionId": "ib-carry-forward",
+          "title": "Voortwenteling verlies per activum",
+          "sourceSchema": "CarryForwardLoss",
+          "joinField": "administrationId",
+          "columns": [
+            {
+              "key": "qualifying_asset_id",
+              "label": "Activum"
+            },
+            {
+              "key": "ontstaansboekjaar",
+              "label": "Ontstaansjaar"
+            },
+            {
+              "key": "negatief_kwalificerend_resultaat",
+              "label": "Verlies (EUR)",
+              "type": "currency"
+            },
+            {
+              "key": "saldo_open",
+              "label": "Saldo open (EUR)",
+              "type": "currency"
+            },
+            {
+              "key": "status",
+              "label": "Status"
+            }
+          ]
+        }
+      ],
+      "footer": "Innovatiebox-administratie overzicht voor interne review en VSO-onderbouwing (REQ-IBA-005, REQ-IBA-008). Bronnen: Wet Vpb art. 12ba/12be."
+    },
+    {
+      "templateId": "rd-subsidie-horizon-periodic-report",
+      "title": "EU Horizon — Periodic Report",
+      "description": "EU Horizon Periodic Report layout per EC Grant Agreement. Groups approved kostenposten per Horizon kostencategorie (personnel/subcontracting/other-direct/indirect-25-percent) and periodId. Sourced from the Subsidie voortgangsrapportage aggregation. Per REQ-RDS-003.",
+      "register": "shillinq",
+      "schema": "Subsidie",
+      "aggregation": "voortgangsrapportage",
+      "condition": "subsidieRegeling == 'eu-horizon'",
+      "sections": [
+        {
+          "sectionId": "horizon-header",
+          "title": "EU Horizon Periodic Report — {{regelingNaam}}",
+          "fields": [
+            {
+              "key": "subsidieNumber",
+              "label": "Grant reference",
+              "type": "string"
+            },
+            {
+              "key": "counterpartyName",
+              "label": "Granting authority",
+              "type": "string"
+            },
+            {
+              "key": "regelingNaam",
+              "label": "Programme",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "sectionId": "horizon-kosten-per-periode",
+          "title": "Eligible costs per category and period",
+          "columns": [
+            {
+              "key": "kostencategorie",
+              "label": "Cost category"
+            },
+            {
+              "key": "periodId",
+              "label": "Period"
+            },
+            {
+              "key": "totalAmount",
+              "label": "Total (EUR)",
+              "type": "currency"
+            }
+          ],
+          "totals": [
+            {
+              "label": "Total direct costs",
+              "field": "totalAmount",
+              "condition": "kostencategorie != 'indirect-25-percent'",
+              "operation": "sum"
+            },
+            {
+              "label": "Indirect costs (25% flat rate)",
+              "field": "totalAmount",
+              "condition": "kostencategorie == 'indirect-25-percent'",
+              "operation": "sum"
+            }
+          ]
+        },
+        {
+          "sectionId": "horizon-budget-bewaking",
+          "title": "Budget monitoring",
+          "fields": [
+            {
+              "key": "horizonDirectCosts",
+              "label": "Direct costs (base for 25% indirect)",
+              "type": "currency"
+            },
+            {
+              "key": "horizonIndirect25MaxBedrag",
+              "label": "Indirect-25% maximum",
+              "type": "currency"
+            },
+            {
+              "key": "horizonIndirect25UsageBedrag",
+              "label": "Indirect-25% used",
+              "type": "currency"
+            },
+            {
+              "key": "horizonIndirect25UsagePercent",
+              "label": "Indirect-25% usage",
+              "type": "percentage"
+            },
+            {
+              "key": "horizonIndirect25Warning",
+              "label": "Warning (>=90%)",
+              "type": "boolean"
+            }
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit Shillinq R&D Subsidies — EU Horizon voortgangsrapportage (REQ-RDS-003)."
+    },
+    {
+      "templateId": "rd-subsidie-mit-voortgangsrapport",
+      "title": "MIT — Voortgangsrapport",
+      "description": "MIT voortgangsrapport per RVO vereisten. Groups approved kostenposten per MIT kostencategorie and periodId. Per REQ-RDS-003.",
+      "register": "shillinq",
+      "schema": "Subsidie",
+      "aggregation": "voortgangsrapportage",
+      "condition": "subsidieRegeling == 'mit'",
+      "sections": [
+        {
+          "sectionId": "mit-header",
+          "title": "MIT Voortgangsrapport — {{regelingNaam}}",
+          "fields": [
+            {
+              "key": "subsidieNumber",
+              "label": "MIT referentienummer",
+              "type": "string"
+            },
+            {
+              "key": "counterpartyName",
+              "label": "Subsidieverstrekker",
+              "type": "string"
+            },
+            {
+              "key": "regelingNaam",
+              "label": "MIT regeling",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "sectionId": "mit-kosten-overzicht",
+          "title": "Kostenoverzicht per categorie en periode",
+          "columns": [
+            {
+              "key": "kostencategorie",
+              "label": "Kostencategorie"
+            },
+            {
+              "key": "periodId",
+              "label": "Periode"
+            },
+            {
+              "key": "totalAmount",
+              "label": "Totaal (EUR)",
+              "type": "currency"
+            },
+            {
+              "key": "count",
+              "label": "Aantal kostenposten"
+            }
+          ],
+          "totals": [
+            {
+              "label": "Totale subsidiabele kosten",
+              "field": "totalAmount",
+              "operation": "sum"
+            }
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit Shillinq R&D Subsidies — MIT voortgangsrapportage (REQ-RDS-003)."
+    },
+    {
+      "templateId": "rd-subsidie-efro-progress-dossier",
+      "title": "EFRO/REACT-EU — Progress Dossier",
+      "description": "EFRO/REACT-EU progress dossier per managing authority vereisten. Groups approved kostenposten per EFRO kostencategorie. Per REQ-RDS-003.",
+      "register": "shillinq",
+      "schema": "Subsidie",
+      "aggregation": "voortgangsrapportage",
+      "condition": "subsidieRegeling == 'efro' || subsidieRegeling == 'react-eu'",
+      "sections": [
+        {
+          "sectionId": "efro-header",
+          "title": "EFRO Progress Dossier — {{regelingNaam}}",
+          "fields": [
+            {
+              "key": "subsidieNumber",
+              "label": "EFRO projectnummer",
+              "type": "string"
+            },
+            {
+              "key": "counterpartyName",
+              "label": "Managing Authority",
+              "type": "string"
+            },
+            {
+              "key": "regelingNaam",
+              "label": "EFRO programma",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "sectionId": "efro-kosten-per-categorie",
+          "title": "Kosten per categorie en periode",
+          "columns": [
+            {
+              "key": "kostencategorie",
+              "label": "Kostencategorie"
+            },
+            {
+              "key": "periodId",
+              "label": "Periode"
+            },
+            {
+              "key": "totalAmount",
+              "label": "Totaal (EUR)",
+              "type": "currency"
+            }
+          ],
+          "totals": [
+            {
+              "label": "Totale subsidiabele kosten",
+              "field": "totalAmount",
+              "operation": "sum"
+            }
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit Shillinq R&D Subsidies — EFRO/REACT-EU progress dossier (REQ-RDS-003)."
+    },
+    {
+      "templateId": "rd-subsidie-horizon-audit-pack",
+      "title": "EU Horizon — Audit Certificate Pack",
+      "description": "EU Horizon Audit Certificate pack assembling OR audit-trail-immutable + kostendossier + S&O-uren-staten URI refs per personnel kostenpost. Per REQ-RDS-004.",
+      "register": "shillinq",
+      "schema": "Subsidie",
+      "aggregation": "voortgangsrapportage",
+      "condition": "subsidieRegeling == 'eu-horizon'",
+      "auditSource": "audit-trail-immutable",
+      "sections": [
+        {
+          "sectionId": "horizon-audit-header",
+          "title": "EU Horizon Audit Certificate — {{subsidieNumber}}",
+          "fields": [
+            {
+              "key": "subsidieNumber",
+              "label": "Grant reference",
+              "type": "string"
+            },
+            {
+              "key": "regelingNaam",
+              "label": "Programme",
+              "type": "string"
+            },
+            {
+              "key": "counterpartyName",
+              "label": "Granting authority",
+              "type": "string"
+            },
+            {
+              "key": "vaststellingDate",
+              "label": "Settlement date",
+              "type": "date"
+            }
+          ]
+        },
+        {
+          "sectionId": "horizon-audit-personnel-timesheets",
+          "title": "Personnel costs — timesheet evidence",
+          "filter": {
+            "kostencategorie": "personnel"
+          },
+          "columns": [
+            {
+              "key": "description",
+              "label": "Employee / role"
+            },
+            {
+              "key": "periodId",
+              "label": "Period"
+            },
+            {
+              "key": "amount",
+              "label": "Amount (EUR)",
+              "type": "currency"
+            },
+            {
+              "key": "soUrenStaatUri",
+              "label": "S&O-uren-staat URI",
+              "type": "uri"
+            }
+          ]
+        },
+        {
+          "sectionId": "horizon-audit-trail",
+          "title": "Audit trail (immutable)",
+          "auditTrail": true
+        },
+        {
+          "sectionId": "horizon-audit-kostendossier",
+          "title": "Kostendossier — alle goedgekeurde kostenposten",
+          "filter": {
+            "state": "approved"
+          },
+          "columns": [
+            {
+              "key": "kostencategorie",
+              "label": "Kostencategorie"
+            },
+            {
+              "key": "periodId",
+              "label": "Periode"
+            },
+            {
+              "key": "amount",
+              "label": "Bedrag (EUR)",
+              "type": "currency"
+            },
+            {
+              "key": "attachmentUri",
+              "label": "Bijlage URI",
+              "type": "uri"
+            }
+          ],
+          "totals": [
+            {
+              "label": "Totaal subsidiabele kosten",
+              "field": "amount",
+              "operation": "sum"
+            }
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit Shillinq R&D Subsidies — EU Horizon Audit Certificate Pack (REQ-RDS-004). S&O-uren-staten URI-refs afkomstig uit Shillinq WBSO-administratie."
+    },
+    {
+      "templateId": "rd-subsidie-mit-declaration",
+      "title": "MIT — Verklaring S&O / WBSO-administratie",
+      "description": "MIT subsidie declaration template referencing the WBSO/S&O administration records. Per REQ-RDS-004.",
+      "register": "shillinq",
+      "schema": "Subsidie",
+      "aggregation": "voortgangsrapportage",
+      "condition": "subsidieRegeling == 'mit'",
+      "auditSource": "audit-trail-immutable",
+      "sections": [
+        {
+          "sectionId": "mit-declaration-header",
+          "title": "MIT Verklaring — {{subsidieNumber}}",
+          "fields": [
+            {
+              "key": "subsidieNumber",
+              "label": "MIT referentienummer",
+              "type": "string"
+            },
+            {
+              "key": "regelingNaam",
+              "label": "MIT regeling",
+              "type": "string"
+            },
+            {
+              "key": "vastgesteldBedrag",
+              "label": "Vastgesteld bedrag (EUR)",
+              "type": "currency"
+            }
+          ]
+        },
+        {
+          "sectionId": "mit-wbso-reference",
+          "title": "WBSO/S&O-administratie referentie",
+          "filter": {
+            "kostencategorie": "personnel"
+          },
+          "columns": [
+            {
+              "key": "description",
+              "label": "Activiteit"
+            },
+            {
+              "key": "periodId",
+              "label": "Periode"
+            },
+            {
+              "key": "amount",
+              "label": "Bedrag (EUR)",
+              "type": "currency"
+            },
+            {
+              "key": "attachmentUri",
+              "label": "S&O-verklaring URI",
+              "type": "uri"
+            }
+          ]
+        }
+      ],
+      "footer": "Gegenereerd vanuit Shillinq R&D Subsidies — MIT declaratie (REQ-RDS-004)."
+    },
+    {
+      "templateId": "rd-subsidie-efro-procurement-dossier",
+      "title": "EFRO — Aanbestedingsdossier",
+      "description": "EFRO procurement dossier per EFRO-vereisten. Per REQ-RDS-004.",
+      "register": "shillinq",
+      "schema": "Subsidie",
+      "aggregation": "voortgangsrapportage",
+      "condition": "subsidieRegeling == 'efro' || subsidieRegeling == 'react-eu'",
+      "auditSource": "audit-trail-immutable",
+      "sections": [
+        {
+          "sectionId": "efro-procurement-header",
+          "title": "EFRO Aanbestedingsdossier — {{subsidieNumber}}",
+          "fields": [
+            {
+              "key": "subsidieNumber",
+              "label": "EFRO projectnummer",
+              "type": "string"
+            },
+            {
+              "key": "regelingNaam",
+              "label": "EFRO programma",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "sectionId": "efro-external-services-procurement",
+          "title": "Inkoop derden — aanbestedingsdocumentatie",
+          "filter": {
+            "kostencategorie": "external-services"
+          },
+          "columns": [
+            {
+              "key": "description",
+              "label": "Opdracht"
+            },
+            {
+              "key": "amount",
+              "label": "Bedrag (EUR)",
+              "type": "currency"
+            },
+            {
+              "key": "attachmentUri",
+              "label": "Aanbestedingsdocument URI",
+              "type": "uri"
+            }
+          ]
+        },
+        {
+          "sectionId": "efro-audit-trail",
+          "title": "Audit trail (immutable)",
+          "auditTrail": true
+        }
+      ],
+      "footer": "Gegenereerd vanuit Shillinq R&D Subsidies — EFRO aanbestedingsdossier (REQ-RDS-004)."
+    },
+    {
+      "templateId": "tpl-dunning-stage1-nl",
+      "title": "Dunning stage 1 — Vriendelijke reminder",
+      "description": "Stage 1 dunning template — vriendelijke herinnering op de vervaldatum. Toon: vriendelijk. REQ-CCD-002.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "mergeFields": [
+        "klantNaam",
+        "factuurNummer",
+        "factuurDatum",
+        "openstaandBedrag",
+        "vervaldatum",
+        "IBAN",
+        "betaaltermijn"
+      ],
+      "tone": "vriendelijk",
+      "subject": "Vriendelijke herinnering — factuur {{factuurNummer}}",
+      "body": "Beste {{klantNaam}},\n\nWellicht heeft u onze factuur {{factuurNummer}} van {{factuurDatum}} ter waarde van €{{openstaandBedrag}} over het hoofd gezien — de vervaldatum was {{vervaldatum}}. U kunt het bedrag overmaken naar {{IBAN}} onder vermelding van het factuurnummer.\n\nVragen? Reageer gerust op deze e-mail.\n\nMet vriendelijke groet,\nDe ondernemer"
+    },
+    {
+      "templateId": "tpl-dunning-stage2-nl",
+      "title": "Dunning stage 2 — Herinnering",
+      "description": "Stage 2 dunning template — herinnering 14 dagen na vervaldatum. Toon: zakelijk. REQ-CCD-002.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "mergeFields": [
+        "klantNaam",
+        "factuurNummer",
+        "factuurDatum",
+        "openstaandBedrag",
+        "vervaldatum",
+        "IBAN",
+        "betaaltermijn"
+      ],
+      "tone": "zakelijk",
+      "subject": "Herinnering — factuur {{factuurNummer}}",
+      "body": "Beste {{klantNaam}},\n\nFactuur {{factuurNummer}} van {{factuurDatum}} ter waarde van €{{openstaandBedrag}} staat sinds {{vervaldatum}} open. Wij verzoeken u vriendelijk het bedrag binnen 7 dagen te voldoen op IBAN {{IBAN}} onder vermelding van het factuurnummer.\n\nMochten er onduidelijkheden zijn, laat het ons dan weten.\n\nMet vriendelijke groet,\nDe ondernemer"
+    },
+    {
+      "templateId": "tpl-dunning-stage3-nl",
+      "title": "Dunning stage 3 — Aanmaning + 14-dagen-brief (B2C)",
+      "description": "Stage 3 dunning template — aanmaning op dag 30. Voor B2C-debiteuren MOET de wettelijke 14-dagen-brief in de body staan (art. 6:96 lid 6 BW). REQ-CCD-006.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "mergeFields": [
+        "klantNaam",
+        "factuurNummer",
+        "factuurDatum",
+        "openstaandBedrag",
+        "vervaldatum",
+        "IBAN",
+        "betaaltermijn",
+        "incassokosten",
+        "rente"
+      ],
+      "tone": "formeel",
+      "subject": "Aanmaning — factuur {{factuurNummer}} (€{{openstaandBedrag}})",
+      "body": "Geachte {{klantNaam}},\n\nUw factuur {{factuurNummer}} van {{factuurDatum}} ter waarde van €{{openstaandBedrag}} staat sinds {{vervaldatum}} open. U krijgt 14 dagen om de factuur alsnog te voldoen zonder dat incassokosten of rente verschuldigd worden. Na deze termijn kunnen incassokosten (€{{incassokosten}}) en wettelijke rente (€{{rente}}) verschuldigd zijn.\n\nU kunt het bedrag overmaken naar {{IBAN}} onder vermelding van het factuurnummer.\n\nMet vriendelijke groet,\nDe ondernemer\n\n— Deze brief geldt als wettelijke aanmaning conform art. 6:96 lid 6 BW (Wet Incassokosten). —"
+    },
+    {
+      "templateId": "tpl-dunning-stage4-nl",
+      "title": "Dunning stage 4 — Ingebrekestelling (aangetekend)",
+      "description": "Stage 4 dunning template — ingebrekestelling op dag 60 via aangetekende post (PostNL Track & Trace). Toon: juridisch. REQ-CCD-009.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "mergeFields": [
+        "klantNaam",
+        "factuurNummer",
+        "factuurDatum",
+        "openstaandBedrag",
+        "vervaldatum",
+        "IBAN",
+        "incassokosten",
+        "rente",
+        "totaalVerschuldigd"
+      ],
+      "tone": "juridisch",
+      "subject": "Ingebrekestelling — factuur {{factuurNummer}}",
+      "body": "Geachte {{klantNaam}},\n\nHierbij stellen wij u formeel in gebreke met betrekking tot factuur {{factuurNummer}} van {{factuurDatum}} ter waarde van €{{openstaandBedrag}}, vervallen op {{vervaldatum}}.\n\nOndanks meerdere herinneringen is betaling uitgebleven. Op grond van art. 6:83 BW bent u in verzuim. Het totaal verschuldigde bedrag inclusief incassokosten (€{{incassokosten}}) en wettelijke rente (€{{rente}}) bedraagt thans €{{totaalVerschuldigd}}.\n\nWij sommeren u dit bedrag binnen 7 dagen na dagtekening van deze brief te voldoen op IBAN {{IBAN}}. Indien betaling uitblijft zullen wij de vordering ter incasso uit handen geven, met alle verdere kosten van dien.\n\nHoogachtend,\nDe ondernemer"
+    },
+    {
+      "templateId": "tpl-dunning-stage5-nl",
+      "title": "Dunning stage 5 — Overdracht incassobureau",
+      "description": "Stage 5 dunning template — kennisgeving van overdracht aan incassobureau op dag 90. REQ-CCD-008.",
+      "register": "shillinq",
+      "schema": "DunningRun",
+      "mergeFields": [
+        "klantNaam",
+        "factuurNummer",
+        "totaalVerschuldigd",
+        "incassobureauNaam"
+      ],
+      "tone": "juridisch",
+      "subject": "Overdracht incassobureau — factuur {{factuurNummer}}",
+      "body": "Geachte {{klantNaam}},\n\nDe vordering met betrekking tot factuur {{factuurNummer}} ter waarde van €{{totaalVerschuldigd}} is per heden overgedragen aan {{incassobureauNaam}}. Alle verdere correspondentie en betaling dient via genoemd bureau te worden afgehandeld.\n\nHoogachtend,\nDe ondernemer"
+    },
+    {
+      "templateId": "vpb-aangifte-voorbereiding",
+      "title": "Vpb-aangifte voorbereiding",
+      "description": "Vpb-aangifte voorbereidingsdocument per ondernemingsactiviteit (REQ-VPB-004, add-shillinq-vpb-corporate-tax). Rendert de Vpb-balans (Activa / Passiva / Resultaat) van de vpbBalansFiltered aggregatie en de bijbehorende SBR-payload binding tegen de Belastingdienst Vpb XSD voor het geselecteerde boekjaar. De daadwerkelijke aangifte-transmissie verloopt via het T4-base bookkeeping-sbr-xbrl-reporting SBR-eindpunt (Digipoort/SBR) per ADR-019; deze template publiceert uitsluitend het voorbereidingsdocument + payload-binding. Per ADR-031 is er geen PHP Vpb-aangifte service. De template-versie volgt de Vpb XSD-versie per boekjaar; meerdere versies kunnen naast elkaar bestaan.",
+      "register": "shillinq",
+      "schema": "VpbBalansLink",
+      "aggregation": "vpbBalansFiltered",
+      "sbrPayloadBinding": {
+        "endpoint": "bookkeeping-sbr-xbrl-reporting",
+        "berichtsoort": "Vpb",
+        "xsd": "https://www.sbr-nl.nl/sites/default/files/bestanden/taxonomie/BD/Vpb",
+        "xsdVersion": "{{vpbXsdVersion}}",
+        "transmissionPath": "T4-base bookkeeping-sbr-xbrl-reporting SBR endpoint (Digipoort, eHerkenning EH3+); no new SBR client per ADR-019",
+        "fields": [
+          { "key": "fiscaalNummer", "source": "Belastingplichtige.fiscaalNummer" },
+          { "key": "boekjaar", "source": "VpbBalansLink.vpbPligtigVanaf -> fiscalYear" },
+          { "key": "activaTotaal", "source": "vpbBalansFiltered.activaTotal", "type": "currency", "unit": "cents" },
+          { "key": "passivaTotaal", "source": "vpbBalansFiltered.passivaTotal", "type": "currency", "unit": "cents" },
+          { "key": "resultaatTotaal", "source": "vpbBalansFiltered.resultaatTotal", "type": "currency", "unit": "cents" }
+        ],
+        "validate": "SBR payload MUST validate against the Belastingdienst Vpb XSD for the selected boekjaar before transmission; XSD validation failures block submission and surface to the operator."
+      },
+      "sections": [
+        {
+          "sectionId": "vpb-balans-per-ondernemingsactiviteit",
+          "title": "Vpb-balans per ondernemingsactiviteit ({{boekjaar}})",
+          "sourceSchema": "VpbBalansLink",
+          "joinAggregation": "vpbBalansFiltered",
+          "groupBy": "costCenterId",
+          "columns": [
+            { "key": "costCenterId", "label": "Ondernemingsactiviteit" },
+            { "key": "vpbPligtigVanaf", "label": "Vpb-pligtig vanaf", "type": "date" },
+            { "key": "activaTotal", "label": "Activa (EUR)", "type": "currency", "unit": "cents" },
+            { "key": "passivaTotal", "label": "Passiva (EUR)", "type": "currency", "unit": "cents" },
+            { "key": "resultaatTotal", "label": "Resultaat (EUR)", "type": "currency", "unit": "cents" },
+            { "key": "balansSluit", "label": "Balans sluit", "type": "boolean" }
+          ],
+          "warnings": [
+            {
+              "warningId": "unbalancedOndernemingsactiviteit",
+              "source": "vpbBalansFiltered.warnings.unbalancedOndernemingsactiviteit",
+              "render": "callout"
+            },
+            {
+              "warningId": "orphanedVpbPligt",
+              "source": "orphanedVpbPligtigAccounts.warnings.orphanedVpbPligt",
+              "render": "list"
+            }
+          ],
+          "totals": [
+            { "key": "activaTotal", "label": "Activa totaal", "operation": "sum", "type": "currency", "unit": "cents" },
+            { "key": "passivaTotal", "label": "Passiva totaal", "operation": "sum", "type": "currency", "unit": "cents" },
+            { "key": "resultaatTotal", "label": "Resultaat totaal", "operation": "sum", "type": "currency", "unit": "cents" }
+          ]
+        }
+      ]
+    },
+    {
+      "templateId": "wbso-sno-document-storage",
+      "title": "WBSO/SNO Bookkeeping Document Storage",
+      "description": "Generic document-storage template for bookkeeping documents declared by the bookkeeping-financial-administration spec (REQ-WBSO-003 / REQ-WBSO-007 / REQ-WBSO-009). Bound to the Document register so each upload from the Documents view persists as a `docudesk://` URI under one of the six supported documentTypes (invoice, receipt, contract, tax-form, bank-statement, memo). The template enforces draft → filed → archived lifecycle metadata in the rendered envelope, and surfaces the auditor-visible `filedAt` / `archivedAt` timestamps.",
+      "register": "shillinq",
+      "schema": "Document",
+      "supportedDocumentTypes": [
+        "invoice",
+        "receipt",
+        "contract",
+        "tax-form",
+        "bank-statement",
+        "memo"
+      ],
+      "lifecycleStates": [
+        "draft",
+        "filed",
+        "archived"
+      ],
+      "sections": [
+        {
+          "sectionId": "document-header",
+          "title": "{{documentType}} {{documentNumber}}",
+          "sourceSchema": "Document",
+          "joinField": "administrationId",
+          "columns": [
+            { "key": "documentNumber", "label": "Document number" },
+            { "key": "documentType", "label": "Type" },
+            { "key": "documentDate", "label": "Document date", "type": "date" },
+            { "key": "status", "label": "Status" },
+            { "key": "fileReference", "label": "File reference" },
+            { "key": "filedAt", "label": "Filed at", "type": "datetime" },
+            { "key": "archivedAt", "label": "Archived at", "type": "datetime" }
+          ]
+        }
+      ]
+    }
+  ]
+}

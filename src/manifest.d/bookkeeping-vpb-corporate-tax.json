@@ -1,0 +1,208 @@
+{
+	"menu": [
+		{
+			"id": "Vpb",
+			"label": "Corporate tax (Vpb)",
+			"icon": "BankOutline",
+			"order": 35,
+			"children": [
+				{
+					"id": "VpbDeadlines",
+					"label": "Tax deadlines",
+					"icon": "CalendarClock",
+					"route": "VpbDeadlines",
+					"order": 10
+				},
+				{
+					"id": "VpbPayments",
+					"label": "Tax payments",
+					"icon": "CashMultiple",
+					"route": "VpbPayments",
+					"order": 20
+				},
+				{
+					"id": "VpbReports",
+					"label": "Quarterly statement",
+					"icon": "FileChartOutline",
+					"route": "VpbReports",
+					"order": 30
+				},
+				{
+					"id": "VpbSettings",
+					"label": "Vpb settings",
+					"icon": "CogOutline",
+					"route": "VpbSettings",
+					"order": 40
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "VpbDeadlines",
+			"route": "/bookkeeping/vpb/deadlines",
+			"type": "index",
+			"title": "Tax deadlines",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxDeadline",
+				"columns": [
+					{ "key": "deadlineDate", "label": "Deadline date", "sortable": true },
+					{ "key": "deadlineType", "label": "Deadline type", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "fiscalYear", "label": "Fiscal year", "sortable": true },
+					{ "key": "quarter", "label": "Quarter", "sortable": true },
+					{ "key": "relatedPeriodId", "label": "Related period", "sortable": true }
+				],
+				"search": true,
+				"filters": [
+					{ "key": "deadlineType", "label": "Deadline type" },
+					{ "key": "status", "label": "Status" },
+					{ "key": "fiscalYear", "label": "Fiscal year" },
+					{ "key": "quarter", "label": "Quarter" }
+				],
+				"defaultSort": "deadlineDate",
+				"detailRoute": "VpbDeadlineDetail"
+			}
+		},
+		{
+			"id": "VpbDeadlineDetail",
+			"route": "/bookkeeping/vpb/deadlines/:id",
+			"type": "detail",
+			"title": "Tax deadline",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxDeadline",
+				"fields": [
+					{ "key": "deadlineDate", "label": "Deadline date", "type": "string" },
+					{ "key": "deadlineType", "label": "Deadline type", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "fiscalYear", "label": "Fiscal year", "type": "number" },
+					{ "key": "quarter", "label": "Quarter", "type": "number" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "relatedPeriodId", "label": "Related period", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"indexRoute": "VpbDeadlines"
+			}
+		},
+		{
+			"id": "VpbPayments",
+			"route": "/bookkeeping/vpb/payments",
+			"type": "index",
+			"title": "Tax payments",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxPaymentTracking",
+				"columns": [
+					{ "key": "paymentDate", "label": "Payment date", "sortable": true },
+					{ "key": "paymentType", "label": "Payment type", "sortable": true },
+					{ "key": "amount", "label": "Amount", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "linkedGLAccount", "label": "Linked account", "sortable": true }
+				],
+				"search": true,
+				"filters": [
+					{ "key": "paymentType", "label": "Payment type" },
+					{ "key": "status", "label": "Status" }
+				],
+				"defaultSort": "paymentDate",
+				"detailRoute": "VpbPaymentDetail"
+			}
+		},
+		{
+			"id": "VpbPaymentDetail",
+			"route": "/bookkeeping/vpb/payments/:id",
+			"type": "detail",
+			"title": "Tax payment",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxPaymentTracking",
+				"fields": [
+					{ "key": "paymentDate", "label": "Payment date", "type": "string" },
+					{ "key": "paymentType", "label": "Payment type", "type": "string" },
+					{ "key": "amount", "label": "Amount", "type": "number" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "linkedGLAccount", "label": "Linked account", "type": "string" },
+					{ "key": "relatedDeadlineId", "label": "Related deadline", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"indexRoute": "VpbPayments"
+			}
+		},
+		{
+			"id": "VpbReports",
+			"route": "/bookkeeping/vpb/reports",
+			"type": "index",
+			"title": "Quarterly statement",
+			"config": {
+				"register": "shillinq",
+				"schema": "QuarterlyTaxStatement",
+				"columns": [
+					{ "key": "fiscalYear", "label": "Fiscal year", "sortable": true },
+					{ "key": "quarter", "label": "Quarter", "sortable": true },
+					{ "key": "revenue", "label": "Revenue", "sortable": true },
+					{ "key": "operatingExpenses", "label": "Operating expenses", "sortable": true },
+					{ "key": "netTaxableIncome", "label": "Net taxable income", "sortable": true },
+					{ "key": "untaggedCount", "label": "Untagged postings", "sortable": true }
+				],
+				"defaultSort": "fiscalYear"
+			}
+		},
+		{
+			"id": "VpbSettings",
+			"route": "/bookkeeping/vpb/settings",
+			"type": "settings",
+			"title": "Vpb settings",
+			"config": {
+				"saveEndpoint": "/index.php/apps/shillinq/api/settings",
+				"sections": [
+					{
+						"id": "vpb-reminders",
+						"title": "Deadline reminders",
+						"fields": [
+							{
+								"key": "vpb_reminder_days",
+								"label": "Reminder windows (days before)",
+								"type": "string",
+								"help": "Comma-separated days before a deadline to send a reminder. Defaults to 7,1."
+							}
+						]
+					},
+					{
+						"id": "vpb-tax-treatment",
+						"title": "Tax treatment categories",
+						"fields": [
+							{
+								"key": "vpb_treatment_normal",
+								"label": "Normal",
+								"type": "string",
+								"help": "Ordinary deductible business expense or revenue."
+							},
+							{
+								"key": "vpb_treatment_deductible",
+								"label": "Deductible",
+								"type": "string",
+								"help": "Tax-benefit item (R&D, green investment)."
+							},
+							{
+								"key": "vpb_treatment_non_deductible",
+								"label": "Non-deductible",
+								"type": "string",
+								"help": "Disallowed expense (gifts, entertainment, personal use)."
+							},
+							{
+								"key": "vpb_treatment_special",
+								"label": "Special",
+								"type": "string",
+								"help": "Subject to special rules (dividend received, transfer pricing)."
+							}
+						]
+					}
+				]
+			}
+		}
+	]
+}

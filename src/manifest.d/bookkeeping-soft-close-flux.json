@@ -1,0 +1,185 @@
+{
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"label": "Bookkeeping",
+			"icon": "icon-category-organization",
+			"order": 20,
+			"children": [
+				{
+					"id": "ContinuousClose",
+					"label": "Continuous Close",
+					"icon": "Restore",
+					"route": "ContinuousClose",
+					"order": 66
+				},
+				{
+					"id": "AccrualRules",
+					"label": "Accrual Rules",
+					"icon": "CalendarSync",
+					"route": "AccrualRules",
+					"order": 67
+				},
+				{
+					"id": "FluxAnalysis",
+					"label": "Flux Analysis",
+					"icon": "ChartLine",
+					"route": "FluxAnalysis",
+					"order": 68
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ContinuousClose",
+			"route": "/bookkeeping/continuous-close",
+			"type": "index",
+			"title": "Continuous Close",
+			"config": {
+				"register": "shillinq",
+				"schema": "PeriodStatus",
+				"columns": [
+					{"key": "administrationId", "label": "Administration", "sortable": true},
+					{"key": "periodYear", "label": "Year", "sortable": true},
+					{"key": "periodMonth", "label": "Month", "sortable": true},
+					{"key": "stage", "label": "Stage", "sortable": true},
+					{"key": "softClosedAt", "label": "Soft-closed at", "sortable": true},
+					{"key": "hardClosedAt", "label": "Hard-closed at", "sortable": true},
+					{"key": "auditedAt", "label": "Audited at", "sortable": true},
+					{"key": "lockedAt", "label": "Locked at", "sortable": true}
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "ContinuousCloseDetail"
+			}
+		},
+		{
+			"id": "ContinuousCloseDetail",
+			"route": "/bookkeeping/continuous-close/:id",
+			"type": "detail",
+			"title": "Continuous Close",
+			"config": {
+				"register": "shillinq",
+				"schema": "PeriodStatus",
+				"sections": [
+					{"id": "identity", "label": "Identity", "fields": ["administrationId", "periodYear", "periodMonth"]},
+					{"id": "stage", "label": "Stage", "fields": ["stage", "softClosedAt", "hardClosedAt", "auditedAt", "lockedAt"]},
+					{"id": "history", "label": "Stage history", "fields": ["stageChangeHistory"]},
+					{"id": "restrictions", "label": "Posting restrictions", "fields": ["postingRestrictionsPerStage", "ownerPerStage"]}
+				],
+				"lifecycle": {
+					"field": "stage",
+					"transitions": [
+						{
+							"action": "executeNow",
+							"label": "Run soft-close now",
+							"endpoint": "/api/v2/soft-close/:administrationId/execute-now",
+							"method": "POST",
+							"visibleWhen": {"stage": "open"},
+							"requiresRole": "soft-close-operator"
+						}
+					]
+				},
+				"indexRoute": "ContinuousClose"
+			}
+		},
+		{
+			"id": "AccrualRules",
+			"route": "/bookkeeping/accrual-rules",
+			"type": "index",
+			"title": "Accrual Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "AutoAccrualRule",
+				"columns": [
+					{"key": "ruleName", "label": "Rule", "sortable": true},
+					{"key": "administrationId", "label": "Administration", "sortable": true},
+					{"key": "targetGLAccount", "label": "Target GL", "sortable": true},
+					{"key": "contraGLAccount", "label": "Contra GL", "sortable": true},
+					{"key": "calculationMethod", "label": "Method", "sortable": true},
+					{"key": "reversalPattern", "label": "Reversal", "sortable": true},
+					{"key": "frequency", "label": "Frequency", "sortable": true},
+					{"key": "lifecycleState", "label": "State", "sortable": true}
+				],
+				"defaultSort": "ruleName",
+				"detailRoute": "AccrualRuleDetail"
+			}
+		},
+		{
+			"id": "AccrualRuleDetail",
+			"route": "/bookkeeping/accrual-rules/:id",
+			"type": "detail",
+			"title": "Accrual Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "AutoAccrualRule",
+				"sections": [
+					{"id": "identity", "label": "Identity", "fields": ["ruleName", "administrationId", "lifecycleState"]},
+					{"id": "gl", "label": "GL accounts", "fields": ["targetGLAccount", "contraGLAccount"]},
+					{"id": "calculation", "label": "Calculation", "fields": ["calculationMethod", "calculationParameters"]},
+					{"id": "reversal", "label": "Reversal & cadence", "fields": ["reversalPattern", "frequency", "ruleVersion"]}
+				],
+				"indexRoute": "AccrualRules"
+			}
+		},
+		{
+			"id": "FluxAnalysis",
+			"route": "/bookkeeping/flux-analysis",
+			"type": "index",
+			"title": "Flux Analysis",
+			"config": {
+				"register": "shillinq",
+				"schema": "FluxRun",
+				"columns": [
+					{"key": "administrationId", "label": "Administration", "sortable": true},
+					{"key": "periodId", "label": "Period", "sortable": true},
+					{"key": "scope", "label": "Scope", "sortable": true},
+					{"key": "comparisonBasis", "label": "Basis", "sortable": true},
+					{"key": "runTimestamp", "label": "Run at", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "runTimestamp",
+				"detailRoute": "FluxRunDetail"
+			}
+		},
+		{
+			"id": "FluxRunDetail",
+			"route": "/bookkeeping/flux-analysis/:id",
+			"type": "detail",
+			"title": "Flux Run",
+			"config": {
+				"register": "shillinq",
+				"schema": "FluxRun",
+				"sections": [
+					{"id": "identity", "label": "Identity", "fields": ["administrationId", "periodId", "scope", "scopeFilter"]},
+					{"id": "basis", "label": "Comparison & materiality", "fields": ["comparisonBasis", "materialityAbsoluteCents", "materialityPercentage"]},
+					{"id": "result", "label": "Result", "fields": ["status", "runTimestamp", "resultSummary"]}
+				],
+				"links": [
+					{
+						"id": "narrative-md",
+						"label": "Export narrative (Markdown)",
+						"description": "Render the flux narrative ranked by absolute variance (REQ-CLS-007).",
+						"endpoint": "/api/v2/flux-runs/:id/narrative?format=markdown",
+						"method": "GET"
+					},
+					{
+						"id": "narrative-pdf",
+						"label": "Export narrative (PDF)",
+						"description": "1-page board-pack ready narrative (REQ-CLS-007).",
+						"endpoint": "/api/v2/flux-runs/:id/narrative?format=pdf",
+						"method": "GET"
+					},
+					{
+						"id": "narrative-json",
+						"label": "Export narrative (JSON)",
+						"description": "Board-pack embedding format (REQ-CLS-007).",
+						"endpoint": "/api/v2/flux-runs/:id/narrative?format=json",
+						"method": "GET"
+					}
+				],
+				"indexRoute": "FluxAnalysis"
+			}
+		}
+	]
+}

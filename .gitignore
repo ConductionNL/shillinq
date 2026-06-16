@@ -20,6 +20,7 @@
 
 /coverage/
 /coverage-frontend/
+/coverage-vitest/
 
 # Quality reports
 /quality-reports/
@@ -88,3 +89,24 @@ openspec/test-site-results/**/*.jpg
 openspec/test-site-results/**/*.jpeg
 openspec/test-site-results/**/*.gif
 openspec/test-site-results/**/*.webp
+
+# SBOM is published as release asset (see SECURITY.md), not stored in repo
+sbom.cdx.json
+bom-php.cdx.json
+bom-npm.cdx.json
+
+# Docusaurus documentation site (docs/)
+/docs/node_modules/
+/docs/build/
+/docs/.docusaurus/
+/docs/.cache-loader/
+# Generated translation files — re-enable when a Dutch translation pass ships
+/docs/i18n/nl/
+
+# Playwright (tests/e2e/)
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# Hydra builder internal state — emitted by run-hydra-gates.sh
+task-audit.json

@@ -1,0 +1,133 @@
+{
+	"menu": [
+		{
+			"id": "Verkoop",
+			"label": "Verkoop",
+			"icon": "CartOutline",
+			"order": 33,
+			"children": [
+				{
+					"id": "Annuleringsbeleid",
+					"label": "Annuleringsbeleid",
+					"icon": "CalendarRemoveOutline",
+					"route": "Annuleringsbeleid",
+					"order": 20
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Annuleringsbeleid",
+			"route": "/verkoop/annuleringsbeleid",
+			"type": "index",
+			"title": "Annuleringsbeleid",
+			"config": {
+				"register": "shillinq",
+				"schema": "CancellationPolicy",
+				"columns": [
+					{
+						"key": "policyId",
+						"label": "Reference",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "minNoticeDays",
+						"label": "Min. notice (days)",
+						"sortable": true
+					},
+					{
+						"key": "noShowFee",
+						"label": "No-show fee",
+						"sortable": true
+					},
+					{
+						"key": "refundPolicy",
+						"label": "Refund method",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "AnnuleringsbeleidDetail"
+			}
+		},
+		{
+			"id": "AnnuleringsbeleidDetail",
+			"route": "/verkoop/annuleringsbeleid/:id",
+			"type": "detail",
+			"title": "Annuleringsbeleid",
+			"config": {
+				"register": "shillinq",
+				"schema": "CancellationPolicy",
+				"fields": [
+					{
+						"key": "policyId",
+						"label": "Reference",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "minNoticeDays",
+						"label": "Minimum notice (days)",
+						"type": "number"
+					},
+					{
+						"key": "rescheduleWindowDays",
+						"label": "Reschedule window (days)",
+						"type": "number"
+					},
+					{
+						"key": "noShowFee",
+						"label": "No-show fee",
+						"type": "number"
+					},
+					{
+						"key": "cardHoldRequired",
+						"label": "Card hold required",
+						"type": "boolean"
+					},
+					{
+						"key": "refundPolicy",
+						"label": "Refund method",
+						"type": "string"
+					},
+					{
+						"key": "linkedService",
+						"label": "Linked service",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Annuleringsbeleid"
+			}
+		}
+	]
+}

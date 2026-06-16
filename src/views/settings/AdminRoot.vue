@@ -16,12 +16,16 @@
 		</CnVersionInfoCard>
 
 		<Settings v-if="storesReady" />
+
+		<PipelinqIntegration v-if="storesReady" />
 	</div>
 </template>
 
 <script>
+import { loadState } from '@nextcloud/initial-state'
 import { CnVersionInfoCard } from '@conduction/nextcloud-vue'
 import Settings from './Settings.vue'
+import PipelinqIntegration from './PipelinqIntegration.vue'
 import { initializeStores } from '../../store/store.js'
 
 export default {
@@ -29,13 +33,20 @@ export default {
 	components: {
 		CnVersionInfoCard,
 		Settings,
+		PipelinqIntegration,
 	},
 	data() {
 		return {
 			storesReady: false,
-			appVersion: document.getElementById('shillinq-settings')?.dataset?.version || 'Unknown',
+			appVersion: loadState('shillinq', 'version', 'Unknown'),
 		}
 	},
+	/**
+	 * Bring up the Pinia stores (object + settings) so the embedded Settings
+	 * form can read register data, then reveal it.
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-5
+	 */
 	async created() {
 		await initializeStores()
 		this.storesReady = true

@@ -1,0 +1,264 @@
+{
+	"menu": [
+		{
+			"id": "EuFondsen",
+			"label": "EU-fondsen",
+			"icon": "EarthBox",
+			"order": 33,
+			"children": [
+				{
+					"id": "EuProjecten",
+					"label": "EU-projecten",
+					"icon": "EarthBox",
+					"route": "EuProjecten",
+					"order": 10
+				},
+				{
+					"id": "EuDeclaraties",
+					"label": "Declaraties",
+					"icon": "CashMultiple",
+					"route": "EuDeclaraties",
+					"order": 20
+				},
+				{
+					"id": "EuBewijsstukken",
+					"label": "Bewijsstukken",
+					"icon": "FileCertificateOutline",
+					"route": "EuBewijsstukken",
+					"order": 30
+				},
+				{
+					"id": "EuOnregelmatigheden",
+					"label": "Onregelmatigheden",
+					"icon": "AlertOctagonOutline",
+					"route": "EuOnregelmatigheden",
+					"order": 40
+				},
+				{
+					"id": "EuAuditPortaal",
+					"label": "Audit-portaal",
+					"icon": "ClipboardTextClockOutline",
+					"route": "EuAuditPortaal",
+					"order": 50
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "EuProjecten",
+			"route": "/eu-fondsen/projecten",
+			"type": "index",
+			"title": "EU-projecten",
+			"config": {
+				"register": "shillinq",
+				"schema": "EuProject",
+				"columns": [
+					{ "key": "cciNumber", "label": "CCI-nummer", "sortable": true },
+					{ "key": "programmeName", "label": "Programma", "sortable": true },
+					{ "key": "fonds", "label": "Fonds", "sortable": true },
+					{ "key": "beneficiaryOrganization", "label": "Begunstigde", "sortable": true },
+					{ "key": "totalEligibleBudget", "label": "Budget", "sortable": true },
+					{ "key": "projectStatus", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "cciNumber",
+				"detailRoute": "EuProjectDetail"
+			}
+		},
+		{
+			"id": "EuProjectDetail",
+			"route": "/eu-fondsen/projecten/:id",
+			"type": "detail",
+			"title": "EU-project",
+			"config": {
+				"register": "shillinq",
+				"schema": "EuProject",
+				"fields": [
+					{ "key": "cciNumber", "label": "CCI-nummer", "type": "string" },
+					{ "key": "fonds", "label": "Fonds", "type": "string" },
+					{ "key": "programmeName", "label": "Programma", "type": "string" },
+					{ "key": "priorityAxis", "label": "Prioriteit-as", "type": "string" },
+					{ "key": "specificObjective", "label": "Specifiek doel", "type": "string" },
+					{ "key": "beneficiaryOrganization", "label": "Begunstigde", "type": "string" },
+					{ "key": "managingAuthority", "label": "Managementautoriteit", "type": "string" },
+					{ "key": "euCoFundingRate", "label": "EU co-financiering", "type": "number" },
+					{ "key": "totalEligibleBudget", "label": "Subsidiabel budget", "type": "number" },
+					{ "key": "startDate", "label": "Startdatum", "type": "string" },
+					{ "key": "endDate", "label": "Einddatum", "type": "string" },
+					{ "key": "projectStatus", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "EuProjecten"
+			}
+		},
+		{
+			"id": "EuDeclaraties",
+			"route": "/eu-fondsen/declaraties",
+			"type": "index",
+			"title": "Declaraties",
+			"config": {
+				"register": "shillinq",
+				"schema": "EuExpenditure",
+				"columns": [
+					{ "key": "euProjectId", "label": "Project", "sortable": true },
+					{ "key": "costCategory", "label": "Kostencategorie", "sortable": true },
+					{ "key": "grossAmount", "label": "Bruto", "sortable": true },
+					{ "key": "vatTreatment", "label": "BTW", "sortable": true },
+					{ "key": "declaredAmount", "label": "Gedeclareerd", "sortable": true },
+					{ "key": "declarationPeriod", "label": "Periode", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "declarationPeriod",
+				"detailRoute": "EuDeclaratieDetail"
+			}
+		},
+		{
+			"id": "EuDeclaratieDetail",
+			"route": "/eu-fondsen/declaraties/:id",
+			"type": "detail",
+			"title": "Declaratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "EuExpenditure",
+				"fields": [
+					{ "key": "euProjectId", "label": "Project", "type": "string" },
+					{ "key": "costCategory", "label": "Kostencategorie", "type": "string" },
+					{ "key": "description", "label": "Omschrijving", "type": "string" },
+					{ "key": "grossAmount", "label": "Bruto bedrag", "type": "number" },
+					{ "key": "vatTreatment", "label": "BTW-behandeling", "type": "string" },
+					{ "key": "declaredAmount", "label": "Gedeclareerd bedrag", "type": "number" },
+					{ "key": "euCoFundingAmount", "label": "EU co-financiering", "type": "number" },
+					{ "key": "declarationPeriod", "label": "Declaratie-periode", "type": "string" },
+					{ "key": "procurementRequired", "label": "Aanbestedingsplichtig", "type": "boolean" },
+					{ "key": "eligibilityConfirmed", "label": "Eligibility bevestigd", "type": "boolean" },
+					{ "key": "supportingDocumentsCount", "label": "Bewijsstukken", "type": "number" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "EuDeclaraties"
+			}
+		},
+		{
+			"id": "EuBewijsstukken",
+			"route": "/eu-fondsen/bewijsstukken",
+			"type": "index",
+			"title": "Bewijsstukken",
+			"config": {
+				"register": "shillinq",
+				"schema": "SupportingDocument",
+				"columns": [
+					{ "key": "documentType", "label": "Type", "sortable": true },
+					{ "key": "euExpenditureId", "label": "Uitgave", "sortable": true },
+					{ "key": "certifiedTrueCopyStatus", "label": "Gewaarmerkt", "sortable": true },
+					{ "key": "retentionUntilDate", "label": "Bewaard tot", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "documentType",
+				"detailRoute": "EuBewijsstukDetail"
+			}
+		},
+		{
+			"id": "EuBewijsstukDetail",
+			"route": "/eu-fondsen/bewijsstukken/:id",
+			"type": "detail",
+			"title": "Bewijsstuk",
+			"config": {
+				"register": "shillinq",
+				"schema": "SupportingDocument",
+				"fields": [
+					{ "key": "documentType", "label": "Document-type", "type": "string" },
+					{ "key": "euExpenditureId", "label": "Uitgave", "type": "string" },
+					{ "key": "euProjectId", "label": "Project", "type": "string" },
+					{ "key": "sourceUri", "label": "Bron-URI (docudesk)", "type": "string" },
+					{ "key": "sha256Hash", "label": "SHA-256 hash", "type": "string" },
+					{ "key": "retentionUntilDate", "label": "Bewaard tot", "type": "string" },
+					{ "key": "accessibilityLevel", "label": "Toegankelijkheid", "type": "string" },
+					{ "key": "certifiedTrueCopyStatus", "label": "Gewaarmerkt afschrift", "type": "boolean" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "EuBewijsstukken"
+			}
+		},
+		{
+			"id": "EuOnregelmatigheden",
+			"route": "/eu-fondsen/onregelmatigheden",
+			"type": "index",
+			"title": "Onregelmatigheden",
+			"config": {
+				"register": "shillinq",
+				"schema": "IrregularityReport",
+				"columns": [
+					{ "key": "euProjectId", "label": "Project", "sortable": true },
+					{ "key": "detectionDate", "label": "Datum", "sortable": true },
+					{ "key": "detectionSource", "label": "Bron", "sortable": true },
+					{ "key": "nature", "label": "Aard", "sortable": true },
+					{ "key": "amountConcerned", "label": "Bedrag", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "detectionDate",
+				"detailRoute": "EuOnregelmatigheidDetail"
+			}
+		},
+		{
+			"id": "EuOnregelmatigheidDetail",
+			"route": "/eu-fondsen/onregelmatigheden/:id",
+			"type": "detail",
+			"title": "Onregelmatigheid",
+			"config": {
+				"register": "shillinq",
+				"schema": "IrregularityReport",
+				"fields": [
+					{ "key": "euProjectId", "label": "Project", "type": "string" },
+					{ "key": "detectionDate", "label": "Detectiedatum", "type": "string" },
+					{ "key": "detectionSource", "label": "Detectiebron", "type": "string" },
+					{ "key": "nature", "label": "Aard", "type": "string" },
+					{ "key": "amountConcerned", "label": "Betrokken bedrag", "type": "number" },
+					{ "key": "imsReportable", "label": "IMS-meldplichtig", "type": "boolean" },
+					{ "key": "recoveryAmount", "label": "Terug te vorderen", "type": "number" },
+					{ "key": "imsReference", "label": "IMS-referentie", "type": "string" },
+					{ "key": "imsSubmittedAt", "label": "Gemeld aan EC", "type": "string" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "EuOnregelmatigheden"
+			}
+		},
+		{
+			"id": "EuAuditPortaal",
+			"route": "/eu-fondsen/audit-portaal",
+			"type": "index",
+			"title": "Audit-portaal",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditTrail",
+				"columns": [
+					{ "key": "timestamp", "label": "Tijdstip", "sortable": true },
+					{ "key": "euProjectId", "label": "Project", "sortable": true },
+					{ "key": "euExpenditureId", "label": "Uitgave", "sortable": true },
+					{ "key": "eventType", "label": "Gebeurtenis", "sortable": true },
+					{ "key": "actorRole", "label": "Rol", "sortable": true }
+				],
+				"defaultSort": "timestamp",
+				"detailRoute": "EuAuditTrailDetail"
+			}
+		},
+		{
+			"id": "EuAuditTrailDetail",
+			"route": "/eu-fondsen/audit-portaal/:id",
+			"type": "detail",
+			"title": "Audit-trail",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditTrail",
+				"fields": [
+					{ "key": "timestamp", "label": "Tijdstip", "type": "string" },
+					{ "key": "euProjectId", "label": "Project", "type": "string" },
+					{ "key": "euExpenditureId", "label": "Uitgave", "type": "string" },
+					{ "key": "eventType", "label": "Gebeurtenis", "type": "string" },
+					{ "key": "actorRole", "label": "Rol", "type": "string" },
+					{ "key": "actorOrganisation", "label": "Organisatie", "type": "string" },
+					{ "key": "justification", "label": "Motivatie", "type": "string" },
+					{ "key": "auditEvidenceUri", "label": "Bewijs-URI", "type": "string" }
+				],
+				"indexRoute": "EuAuditPortaal"
+			}
+		}
+	]
+}

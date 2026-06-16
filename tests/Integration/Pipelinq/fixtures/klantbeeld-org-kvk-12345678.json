@@ -1,0 +1,63 @@
+{
+	"externalId": "org-kvk-12345678",
+	"summary": {
+		"lifetimeValueEur": 12450.00,
+		"openOrders": 2,
+		"openInvoicesEur": 850.00,
+		"lastInteractionAt": "2026-05-12T14:08:00Z",
+		"churnRisk": "low"
+	},
+	"segments": [
+		"retail-bakery",
+		"netherlands"
+	],
+	"recentInteractions": [
+		{
+			"channel": "email",
+			"subject": "Quarterly review",
+			"at": "2026-05-12T14:08:00Z"
+		},
+		{
+			"channel": "phone",
+			"subject": "Bulk order quote",
+			"at": "2026-04-30T10:15:00Z"
+		}
+	],
+	"transactions": [
+		{
+			"date": "2026-05-23",
+			"description": "Invoice INV-2026-0103",
+			"amount": 850.00,
+			"currency": "EUR",
+			"status": "open"
+		},
+		{
+			"date": "2026-04-12",
+			"description": "Invoice INV-2026-0089",
+			"amount": 1240.50,
+			"currency": "EUR",
+			"status": "paid"
+		},
+		{
+			"date": "2026-03-04",
+			"description": "Invoice INV-2026-0061",
+			"amount": 720.00,
+			"currency": "EUR",
+			"status": "paid"
+		},
+		{
+			"date": "2026-02-01",
+			"description": "Invoice INV-2026-0033",
+			"amount": 1980.00,
+			"currency": "EUR",
+			"status": "paid"
+		},
+		{
+			"date": "2026-01-09",
+			"description": "Invoice INV-2026-0007",
+			"amount": 540.25,
+			"currency": "EUR",
+			"status": "paid"
+		}
+	]
+}

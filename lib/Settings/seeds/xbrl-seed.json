@@ -1,0 +1,70 @@
+{
+  "xbrlTaxonomies": [
+    {
+      "taxonomyId": "xbrl-gl-2026",
+      "name": "XBRL GL 2026 — Belastingdienst Official",
+      "taxonomyVersion": "2026-01",
+      "publicationDate": "2025-12-15",
+      "effectiveDate": "2026-01-01",
+      "expiryDate": null,
+      "status": "active",
+      "description": "Official XBRL GL 2026 taxonomy published by Belastingdienst for Dutch annual financial reporting (jaarverslag en belastingaangifte)."
+    },
+    {
+      "taxonomyId": "xbrl-gl-2025",
+      "name": "XBRL GL 2025 — Belastingdienst Official",
+      "taxonomyVersion": "2025-01",
+      "publicationDate": "2024-12-15",
+      "effectiveDate": "2025-01-01",
+      "expiryDate": "2026-12-31",
+      "status": "active",
+      "description": "Official XBRL GL 2025 taxonomy published by Belastingdienst. Retained for prior-year reference and multi-year filings."
+    }
+  ],
+  "sbrDocumentTypes": [
+    {
+      "name": "Jaarverslag (Annual Report)",
+      "code": "JAARVERSLAG",
+      "description": "Annual financial statement filing for all applicable Dutch entities per Handboek voor het Financieel Jaarverslag.",
+      "applicableEntityTypes": ["BV", "NV", "Eenmanszaak"],
+      "filingDeadline": "2026-05-31",
+      "requiredFields": ["assets", "liabilities", "equity", "revenue", "expenses"],
+      "submissionEndpoint": "https://belastingdienst.nl/xbrl-filing/submit",
+      "authMethod": "oauth2",
+      "status": "active",
+      "administrationId": "default",
+      "filingState": "draft"
+    },
+    {
+      "name": "Belastingaangifte (Tax Filing)",
+      "code": "BELASTINGAANGIFTE",
+      "description": "Mandatory annual tax filing for Dutch entities submitted to Belastingdienst.",
+      "applicableEntityTypes": ["BV", "NV", "Eenmanszaak", "CV"],
+      "filingDeadline": "2026-04-30",
+      "requiredFields": ["taxableIncome", "taxLiability", "deductions"],
+      "submissionEndpoint": "https://belastingdienst.nl/tax-filing/submit",
+      "authMethod": "oauth2",
+      "status": "active",
+      "administrationId": "default",
+      "filingState": "draft"
+    }
+  ],
+  "xbrlMappings": [
+    {
+      "sourceAccountId": "account-1000",
+      "targetXBRLConcept": "http://xbrl.gl/concept/CurrentAssets",
+      "taxonomyVersion": "2026-01",
+      "mappingDate": "2026-01-01",
+      "status": "active",
+      "notes": "Standard mapping for current assets (vlottende activa) per RGS 3.5 classification."
+    },
+    {
+      "sourceAccountId": "account-4000",
+      "targetXBRLConcept": "http://xbrl.gl/concept/OperatingRevenue",
+      "taxonomyVersion": "2026-01",
+      "mappingDate": "2026-01-01",
+      "status": "active",
+      "notes": "Standard mapping for operating revenue (omzet) per RGS 3.5 classification."
+    }
+  ]
+}

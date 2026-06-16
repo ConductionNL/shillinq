@@ -1,0 +1,26 @@
+{
+	"externalId": "org-kvk-12345678",
+	"entries": [
+		{
+			"entryId": "tle-001",
+			"type": "booking.created",
+			"at": "2026-05-22T10:00:00Z",
+			"summary": "Booking apt-001 created for Bakkerij de Zon B.V.",
+			"sourceApp": "shillinq"
+		},
+		{
+			"entryId": "tle-002",
+			"type": "booking.confirmed",
+			"at": "2026-05-22T10:05:00Z",
+			"summary": "Booking apt-001 confirmed by customer.",
+			"sourceApp": "shillinq"
+		},
+		{
+			"entryId": "tle-003",
+			"type": "invoice.issued",
+			"at": "2026-05-23T09:00:00Z",
+			"summary": "Invoice INV-2026-0103 issued (€ 850.00).",
+			"sourceApp": "shillinq"
+		}
+	]
+}

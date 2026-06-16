@@ -1,0 +1,300 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-multi-administratie",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Declarative manifest-v2 navigation for the multi-administratie layer (Task 23). Adds index/detail pages under the existing Administratie menu for Administration, AdministrationMembership, IntercompanyJournalEntry, ConsolidationMapping and AdministrationMigration. Pages are pure config rendered by the nc-vue manifest shell (createObjectStore against the shillinq register) — no Vue components, no router (ADR-024 / manifest-v2)."
+	},
+	"menu": [
+		{
+			"id": "MultiAdministratie",
+			"label": "Administraties",
+			"icon": "OfficeBuildingOutline",
+			"order": 29,
+			"children": [
+				{
+					"id": "AdministrationSwitcher",
+					"label": "Administratie wisselen",
+					"icon": "SwapHorizontal",
+					"route": "AdministrationSwitcher",
+					"order": 1
+				},
+				{
+					"id": "Administraties",
+					"label": "Administraties",
+					"icon": "OfficeBuilding",
+					"route": "Administraties",
+					"order": 5
+				},
+				{
+					"id": "AdministratieLidmaatschappen",
+					"label": "Toegang & rollen",
+					"icon": "AccountMultipleOutline",
+					"route": "AdministratieLidmaatschappen",
+					"order": 6
+				},
+				{
+					"id": "IntercompanyBoekingen",
+					"label": "Intercompany journaalposten",
+					"icon": "SwapHorizontal",
+					"route": "IntercompanyBoekingen",
+					"order": 7
+				},
+				{
+					"id": "ConsolidatieMappings",
+					"label": "Consolidatie mapping",
+					"icon": "Sitemap",
+					"route": "ConsolidatieMappings",
+					"order": 8
+				},
+				{
+					"id": "AdministratieMigraties",
+					"label": "Activaoverdracht",
+					"icon": "TransferRight",
+					"route": "AdministratieMigraties",
+					"order": 9
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "AdministrationSwitcher",
+			"route": "/administratie/wisselen",
+			"type": "custom",
+			"kind": "page",
+			"component": "AdministrationSwitcherPage",
+			"title": "Administratie wisselen"
+		},
+		{
+			"id": "Administraties",
+			"route": "/administratie/administraties",
+			"type": "index",
+			"title": "Administraties",
+			"config": {
+				"register": "shillinq",
+				"schema": "Administration",
+				"columns": [
+					{ "key": "administrationCode", "label": "Code", "sortable": true },
+					{ "key": "name", "label": "Naam", "sortable": true },
+					{ "key": "legalForm", "label": "Rechtsvorm", "sortable": true },
+					{ "key": "kvkNumber", "label": "KvK", "sortable": true },
+					{ "key": "vatRegime", "label": "BTW-regime", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "backupSchedule", "label": "Backup", "sortable": true }
+				],
+				"defaultSort": "administrationCode",
+				"detailRoute": "AdministratieDetail"
+			}
+		},
+		{
+			"id": "AdministratieDetail",
+			"route": "/administratie/administraties/:id",
+			"type": "detail",
+			"title": "Administratie",
+			"config": {
+				"register": "shillinq",
+				"schema": "Administration",
+				"fields": [
+					{ "key": "administrationCode", "label": "Administratiecode", "type": "string" },
+					{ "key": "name", "label": "Naam", "type": "string" },
+					{ "key": "legalForm", "label": "Rechtsvorm", "type": "string" },
+					{ "key": "kvkNumber", "label": "KvK-nummer", "type": "string" },
+					{ "key": "rsin", "label": "RSIN", "type": "string" },
+					{ "key": "vatNumber", "label": "BTW-nummer", "type": "string" },
+					{ "key": "payrollTaxNumber", "label": "Loonheffingsnummer", "type": "string" },
+					{ "key": "parentAdministrationId", "label": "Moederadministratie", "type": "string" },
+					{ "key": "childAdministrationIds", "label": "Dochteradministraties", "type": "array" },
+					{ "key": "consolidateIntoId", "label": "Consolideren in", "type": "string" },
+					{ "key": "consolidationMethod", "label": "Consolidatiemethode", "type": "string" },
+					{ "key": "fiscalUnitVpbId", "label": "Fiscale eenheid (VPB)", "type": "string" },
+					{ "key": "fiscalUnitVatId", "label": "Fiscale eenheid (BTW)", "type": "string" },
+					{ "key": "fiscalYearStartMonth", "label": "Boekjaar startmaand", "type": "number" },
+					{ "key": "nonCalendarFiscalYear", "label": "Afwijkend boekjaar", "type": "boolean" },
+					{ "key": "presentationCurrency", "label": "Presentatievaluta", "type": "string" },
+					{ "key": "vatRegime", "label": "BTW-regime", "type": "string" },
+					{ "key": "vatFilingFrequency", "label": "BTW-aangiftefrequentie", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "backupSchedule", "label": "Backup planning", "type": "string" },
+					{ "key": "dataRetentionYears", "label": "Gegevensretentie (jaren)", "type": "number" },
+					{ "key": "defaultLanguage", "label": "Standaardtaal", "type": "string" }
+				],
+				"indexRoute": "Administraties"
+			}
+		},
+		{
+			"id": "AdministratieLidmaatschappen",
+			"route": "/administratie/lidmaatschappen",
+			"type": "index",
+			"title": "Toegang & rollen",
+			"config": {
+				"register": "shillinq",
+				"schema": "AdministrationMembership",
+				"columns": [
+					{ "key": "userId", "label": "Gebruiker", "sortable": true },
+					{ "key": "administrationId", "label": "Administratie", "sortable": true },
+					{ "key": "role", "label": "Rol", "sortable": true },
+					{ "key": "mayPostJournalEntries", "label": "Mag boeken", "sortable": false },
+					{ "key": "mayCloseFiscalYear", "label": "Mag afsluiten", "sortable": false }
+				],
+				"defaultSort": "administrationId",
+				"detailRoute": "AdministratieLidmaatschapDetail"
+			}
+		},
+		{
+			"id": "AdministratieLidmaatschapDetail",
+			"route": "/administratie/lidmaatschappen/:id",
+			"type": "detail",
+			"title": "Toegang & rol",
+			"config": {
+				"register": "shillinq",
+				"schema": "AdministrationMembership",
+				"fields": [
+					{ "key": "userId", "label": "Gebruiker", "type": "string" },
+					{ "key": "administrationId", "label": "Administratie", "type": "string" },
+					{ "key": "role", "label": "Rol", "type": "string" },
+					{ "key": "ledgerAccessRestriction", "label": "Grootboekbeperking", "type": "array" },
+					{ "key": "mayPostJournalEntries", "label": "Mag journaalposten boeken", "type": "boolean" },
+					{ "key": "mayCloseFiscalYear", "label": "Mag jaarafsluiting doen", "type": "boolean" },
+					{ "key": "validFrom", "label": "Geldig van", "type": "string" },
+					{ "key": "validUntil", "label": "Geldig tot", "type": "string" }
+				],
+				"indexRoute": "AdministratieLidmaatschappen"
+			}
+		},
+		{
+			"id": "IntercompanyBoekingen",
+			"route": "/administratie/intercompany",
+			"type": "index",
+			"title": "Intercompany journaalposten",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyJournalEntry",
+				"columns": [
+					{ "key": "intercompanyNumber", "label": "IC-nummer", "sortable": true },
+					{ "key": "date", "label": "Datum", "sortable": true },
+					{ "key": "kind", "label": "Soort", "sortable": true },
+					{ "key": "sourceAdministrationId", "label": "Bron", "sortable": true },
+					{ "key": "destinationAdministrationId", "label": "Doel", "sortable": true },
+					{ "key": "amount", "label": "Bedrag", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "date",
+				"detailRoute": "IntercompanyBoekingDetail"
+			}
+		},
+		{
+			"id": "IntercompanyBoekingDetail",
+			"route": "/administratie/intercompany/:id",
+			"type": "detail",
+			"title": "Intercompany journaalpost",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyJournalEntry",
+				"fields": [
+					{ "key": "intercompanyNumber", "label": "IC-nummer", "type": "string" },
+					{ "key": "date", "label": "Datum", "type": "string" },
+					{ "key": "kind", "label": "Soort", "type": "string" },
+					{ "key": "sourceAdministrationId", "label": "Bronadministratie", "type": "string" },
+					{ "key": "destinationAdministrationId", "label": "Doeladministratie", "type": "string" },
+					{ "key": "sourceJournalEntryId", "label": "Bron-journaalpost", "type": "string" },
+					{ "key": "destinationJournalEntryId", "label": "Doel-journaalpost", "type": "string" },
+					{ "key": "amount", "label": "Bedrag", "type": "number" },
+					{ "key": "currency", "label": "Valuta", "type": "string" },
+					{ "key": "vatTreatment", "label": "BTW-behandeling", "type": "string" },
+					{ "key": "eliminateOnConsolidation", "label": "Elimineren bij consolidatie", "type": "boolean" },
+					{ "key": "eliminationAccount", "label": "Eliminatierekening", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "varianceAmount", "label": "Afwijking", "type": "number" }
+				],
+				"indexRoute": "IntercompanyBoekingen"
+			}
+		},
+		{
+			"id": "ConsolidatieMappings",
+			"route": "/administratie/consolidatie-mappings",
+			"type": "index",
+			"title": "Consolidatie mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationMapping",
+				"columns": [
+					{ "key": "name", "label": "Naam", "sortable": true },
+					{ "key": "sourceAdministrationId", "label": "Bron", "sortable": true },
+					{ "key": "destinationAdministrationId", "label": "Doel", "sortable": true },
+					{ "key": "currencyTranslationMethod", "label": "Valutamethode", "sortable": true }
+				],
+				"defaultSort": "name",
+				"detailRoute": "ConsolidatieMappingDetail"
+			}
+		},
+		{
+			"id": "ConsolidatieMappingDetail",
+			"route": "/administratie/consolidatie-mappings/:id",
+			"type": "detail",
+			"title": "Consolidatie mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationMapping",
+				"fields": [
+					{ "key": "name", "label": "Naam", "type": "string" },
+					{ "key": "sourceAdministrationId", "label": "Bronadministratie", "type": "string" },
+					{ "key": "destinationAdministrationId", "label": "Doeladministratie", "type": "string" },
+					{ "key": "rules", "label": "Mappingregels", "type": "array" },
+					{ "key": "intercompanyEliminationAccount", "label": "IC-eliminatierekening", "type": "string" },
+					{ "key": "currencyTranslationMethod", "label": "Valutaomrekeningsmethode", "type": "string" },
+					{ "key": "validFrom", "label": "Geldig van", "type": "string" }
+				],
+				"indexRoute": "ConsolidatieMappings"
+			}
+		},
+		{
+			"id": "AdministratieMigraties",
+			"route": "/administratie/migraties",
+			"type": "index",
+			"title": "Activaoverdracht",
+			"config": {
+				"register": "shillinq",
+				"schema": "AdministrationMigration",
+				"columns": [
+					{ "key": "migrationNumber", "label": "Nummer", "sortable": true },
+					{ "key": "date", "label": "Datum", "sortable": true },
+					{ "key": "kind", "label": "Soort", "sortable": true },
+					{ "key": "sourceAdministrationId", "label": "Bron", "sortable": true },
+					{ "key": "destinationAdministrationId", "label": "Doel", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "migrationNumber",
+				"detailRoute": "AdministratieMigratieDetail"
+			}
+		},
+		{
+			"id": "AdministratieMigratieDetail",
+			"route": "/administratie/migraties/:id",
+			"type": "detail",
+			"title": "Activaoverdracht",
+			"config": {
+				"register": "shillinq",
+				"schema": "AdministrationMigration",
+				"fields": [
+					{ "key": "migrationNumber", "label": "Nummer", "type": "string" },
+					{ "key": "date", "label": "Datum", "type": "string" },
+					{ "key": "kind", "label": "Soort", "type": "string" },
+					{ "key": "sourceAdministrationId", "label": "Bronadministratie", "type": "string" },
+					{ "key": "destinationAdministrationId", "label": "Doeladministratie", "type": "string" },
+					{ "key": "objectIds", "label": "Overgedragen objecten", "type": "array" },
+					{ "key": "bookValueTransferred", "label": "Boekwaarde", "type": "number" },
+					{ "key": "marketValueTransferred", "label": "Marktwaarde", "type": "number" },
+					{ "key": "resultImpact", "label": "Verschil naar resultaat", "type": "number" },
+					{ "key": "fiscalTreatment", "label": "Fiscale behandeling", "type": "string" },
+					{ "key": "legalBasis", "label": "Juridische grondslag", "type": "string" },
+					{ "key": "sourceJournalEntryId", "label": "Bron-journaalpost", "type": "string" },
+					{ "key": "destinationJournalEntryId", "label": "Doel-journaalpost", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "AdministratieMigraties"
+			}
+		}
+	]
+}

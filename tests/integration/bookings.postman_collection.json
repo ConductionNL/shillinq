@@ -1,0 +1,249 @@
+{
+	"info": {
+		"_postman_id": "shillinq-bookings-resource-calendar",
+		"name": "Shillinq Bookings Resource Calendar",
+		"description": "Newman integration tests for the bookings-resource-calendar change (#117). Exercises REQ-005 / REQ-004 end-to-end against a live Nextcloud + OpenRegister instance: list calendars, read a single calendar, list bookings in a date range, create a non-conflicting booking (201), and re-create the same window to assert the 409 conflict response.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Nextcloud rejects API requests without the OCS-APIRequest header",
+					"// (or a CSRF requesttoken) with 412 'CSRF check failed'. Inject it on",
+					"// every request from this collection so individual requests need not",
+					"// each declare it. upsert() overrides any per-request value.",
+					"pm.request.headers.upsert({ key: 'OCS-APIRequest', value: 'true' });"
+				]
+			}
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{ "key": "username", "value": "{{admin_user}}", "type": "string" },
+			{ "key": "password", "value": "{{admin_password}}", "type": "string" }
+		]
+	},
+	"variable": [
+		{ "key": "base_url", "value": "http://localhost:8080", "type": "string" },
+		{ "key": "admin_user", "value": "admin", "type": "string" },
+		{ "key": "admin_password", "value": "admin", "type": "string" },
+		{ "key": "calendar_id", "value": "cal-001", "type": "string" },
+		{ "key": "test_window_start", "value": "2027-06-21T14:00:00Z", "type": "string" },
+		{ "key": "test_window_end", "value": "2027-06-21T14:30:00Z", "type": "string" }
+	],
+	"item": [
+		{
+			"name": "GET /api/v2/calendars",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/json" }],
+				"url": {
+					"raw": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars",
+					"host": ["{{base_url}}"],
+					"path": ["index.php", "apps", "shillinq", "api", "v2", "calendars"]
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+						"pm.test('contains calendars array', function () {",
+						"    const body = pm.response.json();",
+						"    pm.expect(body.calendars).to.be.an('array');",
+						"});"
+					],
+					"type": "text/javascript"
+				}
+			}]
+		},
+		{
+			"name": "GET /api/v2/calendars filtered by resource",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/json" }],
+				"url": {
+					"raw": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars?resource=res-001",
+					"host": ["{{base_url}}"],
+					"path": ["index.php", "apps", "shillinq", "api", "v2", "calendars"],
+					"query": [{ "key": "resource", "value": "res-001" }]
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"pm.test('200 OK with calendars for res-001', function () {",
+						"    pm.response.to.have.status(200);",
+						"    const body = pm.response.json();",
+						"    body.calendars.forEach(c => pm.expect(c.resource).to.eql('res-001'));",
+						"});"
+					],
+					"type": "text/javascript"
+				}
+			}]
+		},
+		{
+			"name": "GET /api/v2/calendars/{id}",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/json" }],
+				"url": {
+					"raw": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}",
+					"host": ["{{base_url}}"],
+					"path": ["index.php", "apps", "shillinq", "api", "v2", "calendars", "{{calendar_id}}"]
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"pm.test('200 with calendar payload', function () {",
+						"    pm.response.to.have.status(200);",
+						"    const body = pm.response.json();",
+						"    pm.expect(body.id).to.eql(pm.variables.get('calendar_id'));",
+						"    pm.expect(body.timeZone).to.be.a('string');",
+						"});"
+					],
+					"type": "text/javascript"
+				}
+			}]
+		},
+		{
+			"name": "GET /api/v2/calendars/{id}/bookings with range",
+			"request": {
+				"method": "GET",
+				"header": [{ "key": "Accept", "value": "application/json" }],
+				"url": {
+					"raw": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}/bookings?start=2026-05-21&end=2026-05-31",
+					"host": ["{{base_url}}"],
+					"path": ["index.php", "apps", "shillinq", "api", "v2", "calendars", "{{calendar_id}}", "bookings"],
+					"query": [
+						{ "key": "start", "value": "2026-05-21" },
+						{ "key": "end", "value": "2026-05-31" }
+					]
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"pm.test('200 with bookings sorted by startTime', function () {",
+						"    pm.response.to.have.status(200);",
+						"    const body = pm.response.json();",
+						"    pm.expect(body.bookings).to.be.an('array');",
+						"    for (let i = 1; i < body.bookings.length; i++) {",
+						"        pm.expect(body.bookings[i].startTime >= body.bookings[i - 1].startTime).to.be.true;",
+						"    }",
+						"});"
+					],
+					"type": "text/javascript"
+				}
+			}]
+		},
+		{
+			"name": "POST /api/v2/calendars/{id}/bookings (201 success)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "OCS-APIRequest", "value": "true" }
+				],
+				"url": {
+					"raw": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}/bookings",
+					"host": ["{{base_url}}"],
+					"path": ["index.php", "apps", "shillinq", "api", "v2", "calendars", "{{calendar_id}}", "bookings"]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Newman: integration test (clean slot)\",\n  \"startTime\": \"{{test_window_start}}\",\n  \"endTime\": \"{{test_window_end}}\",\n  \"attendee\": \"Newman Tester\",\n  \"status\": \"confirmed\"\n}"
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"pm.test('201 Created on no-conflict slot', function () {",
+						"    pm.response.to.have.status(201);",
+						"    const body = pm.response.json();",
+						"    pm.expect(body.bookingId).to.be.a('string').and.to.not.equal('');",
+						"    pm.expect(body.startTime).to.eql(pm.variables.get('test_window_start'));",
+						"});"
+					],
+					"type": "text/javascript"
+				}
+			}]
+		},
+		{
+			"name": "POST /api/v2/calendars/{id}/bookings (409 conflict)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "OCS-APIRequest", "value": "true" }
+				],
+				"url": {
+					"raw": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}/bookings",
+					"host": ["{{base_url}}"],
+					"path": ["index.php", "apps", "shillinq", "api", "v2", "calendars", "{{calendar_id}}", "bookings"]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Newman: integration test (same slot)\",\n  \"startTime\": \"{{test_window_start}}\",\n  \"endTime\": \"{{test_window_end}}\",\n  \"attendee\": \"Newman Conflict\",\n  \"status\": \"confirmed\"\n}"
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"pm.test('409 Conflict when slot is taken', function () {",
+						"    pm.response.to.have.status(409);",
+						"    const body = pm.response.json();",
+						"    pm.expect(body.error).to.eql('conflict');",
+						"    pm.expect(body.conflicts).to.be.an('array').and.to.have.lengthOf.at.least(1);",
+						"});"
+					],
+					"type": "text/javascript"
+				}
+			}]
+		},
+		{
+			"name": "POST /api/v2/calendars/{id}/bookings (400 short duration)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "OCS-APIRequest", "value": "true" }
+				],
+				"url": {
+					"raw": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}/bookings",
+					"host": ["{{base_url}}"],
+					"path": ["index.php", "apps", "shillinq", "api", "v2", "calendars", "{{calendar_id}}", "bookings"]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Newman: too short\",\n  \"startTime\": \"2027-06-21T16:00:00Z\",\n  \"endTime\": \"2027-06-21T16:05:00Z\",\n  \"attendee\": \"Short\",\n  \"status\": \"pending\"\n}"
+				}
+			},
+			"event": [{
+				"listen": "test",
+				"script": {
+					"exec": [
+						"pm.test('400 Bad Request for <15 minute duration', function () {",
+						"    pm.response.to.have.status(400);",
+						"    pm.expect(pm.response.json().error).to.include('15 minutes');",
+						"});"
+					],
+					"type": "text/javascript"
+				}
+			}]
+		}
+	]
+}

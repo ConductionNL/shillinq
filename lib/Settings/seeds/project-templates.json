@@ -1,0 +1,93 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Conduction consultancy defaults",
+    "description": "Default project-flavoured AnalyticalDimension templates (service engagement / product development / internal optimization) for consultancy and professional-services administrations. Formerly CostProject seeds — retargeted to AnalyticalDimension (dimensionType=project) by retire-cost-project per REQ-RCP-003. Operator overrides per administration — these are starting-point defaults only. Amounts are indicative; actual budgets vary by sector and administration. Money values are in integer cents (e.g. 5000000 = €50.000,00).",
+    "imported": "2026-06-14T00:00:00Z",
+    "note": "administrationId left null; the repair-step phase stamps it from app config (administration_id) before persistence. Idempotent on projectNumber + administrationId."
+  },
+  "projects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "template-service-engagement"
+      },
+      "code": "CP-TEMPLATE-SVC-001",
+      "projectNumber": "CP-TEMPLATE-SVC-001",
+      "name": "Service Engagement Template",
+      "description": "Standard template for service contract delivery. Use as starting point for new client engagements (advice, retainer, integration support). Adjust totalBudget and totalEstimatedCosts per engagement scope.",
+      "dimensionType": "project",
+      "startDate": null,
+      "endDate": null,
+      "totalBudget": 5000000,
+      "totalEstimatedCosts": 4500000,
+      "administrationId": null,
+      "organizationId": null,
+      "parentCode": null,
+      "externalProjectRef": null,
+      "lifecycleState": "active",
+      "_meta": {
+        "source": "seeded",
+        "template": "project-templates",
+        "variant": "service-engagement",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "template-product-development"
+      },
+      "code": "CP-TEMPLATE-PROD-001",
+      "projectNumber": "CP-TEMPLATE-PROD-001",
+      "name": "Product Development Template",
+      "description": "Standard template for internal product / SaaS development projects. Use as starting point for new product builds (feature work, platform investment). Adjust totalBudget and totalEstimatedCosts per release scope.",
+      "dimensionType": "project",
+      "startDate": null,
+      "endDate": null,
+      "totalBudget": 12000000,
+      "totalEstimatedCosts": 11000000,
+      "administrationId": null,
+      "organizationId": null,
+      "parentCode": null,
+      "externalProjectRef": null,
+      "lifecycleState": "active",
+      "_meta": {
+        "source": "seeded",
+        "template": "project-templates",
+        "variant": "product-development",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "template-internal-optimization"
+      },
+      "code": "CP-TEMPLATE-INT-001",
+      "projectNumber": "CP-TEMPLATE-INT-001",
+      "name": "Internal Optimization Template",
+      "description": "Standard template for internal optimization projects (process improvement, tooling upgrade, training). Use as starting point for back-office investments. Adjust totalBudget and totalEstimatedCosts per scope.",
+      "dimensionType": "project",
+      "startDate": null,
+      "endDate": null,
+      "totalBudget": 2500000,
+      "totalEstimatedCosts": 2200000,
+      "administrationId": null,
+      "organizationId": null,
+      "parentCode": null,
+      "externalProjectRef": null,
+      "lifecycleState": "active",
+      "_meta": {
+        "source": "seeded",
+        "template": "project-templates",
+        "variant": "internal-optimization",
+        "version": "2026"
+      }
+    }
+  ]
+}

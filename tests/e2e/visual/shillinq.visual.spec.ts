@@ -1,0 +1,33 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Conduction B.V.
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * Visual-regression baselines for Shillinq's key surfaces (GAP-5).
+ *
+ * Run:    npx playwright test --project visual
+ * Update: npx playwright test --project visual --update-snapshots
+ *
+ * Baselines live in tests/e2e/visual/<spec>-snapshots/ and ARE committed.
+ * See _visual-helpers.ts for the platform-rendering caveat.
+ */
+import { test } from '@playwright/test'
+import { shootSurface } from './_visual-helpers'
+
+const APP = '/index.php/apps/shillinq'
+
+test.describe('Shillinq — visual baselines', () => {
+	test('dashboard', async ({ page }) => {
+		await shootSurface(page, `${APP}/#/`, 'dashboard.png')
+	})
+
+	// New W8 external-adapter admin surfaces. The status index + a detail
+	// activation panel; baseline their chrome. Adapter status is dormant-by-
+	// default + static, so the shots are deterministic.
+	test('external adapters status', async ({ page }) => {
+		await shootSurface(page, `${APP}/external-adapters`, 'external-adapters-status.png')
+	})
+
+	test('external adapter detail', async ({ page }) => {
+		await shootSurface(page, `${APP}/external-adapters/digipoort-sbr`, 'external-adapter-detail.png')
+	})
+})
