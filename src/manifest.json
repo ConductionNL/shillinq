@@ -377,9 +377,6 @@
 				{
 					"id": "CostCenters",
 					"label": "Cost centers",
-					"i18n": {
-						"nl": "Kostenplaatsen"
-					},
 					"icon": "OfficeBuilding",
 					"route": "CostCenters",
 					"order": 90
@@ -387,9 +384,6 @@
 				{
 					"id": "KostenDragers",
 					"label": "Cost objects",
-					"i18n": {
-						"nl": "Kostendragers"
-					},
 					"icon": "CubeOutline",
 					"route": "KostenDragers",
 					"order": 91
@@ -563,16 +557,6 @@
 			"label": "Subsidies",
 			"icon": "CashMultiple",
 			"order": 22,
-			"visibility": {
-				"field": "administrationType",
-				"in": [
-					"gemeente",
-					"provincie",
-					"waterschap",
-					"mkb",
-					"zzp"
-				]
-			},
 			"children": [
 				{
 					"id": "SubsidieAanvragen",
@@ -1903,9 +1887,6 @@
 			"route": "/bookkeeping/dimensions/cost-centers",
 			"type": "index",
 			"title": "Cost centers",
-			"i18n": {
-				"nl": "Kostenplaatsen"
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "AnalyticalDimension",
@@ -1949,9 +1930,6 @@
 			"route": "/bookkeeping/dimensions/cost-centers/:id",
 			"type": "detail",
 			"title": "Cost center",
-			"i18n": {
-				"nl": "Kostenplaats"
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "AnalyticalDimension",
@@ -2039,9 +2017,6 @@
 			"route": "/bookkeeping/dimensions/kostendragers",
 			"type": "index",
 			"title": "Cost objects",
-			"i18n": {
-				"nl": "Kostendragers"
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "AnalyticalDimension",
@@ -2080,9 +2055,6 @@
 			"route": "/bookkeeping/dimensions/kostendragers/:id",
 			"type": "detail",
 			"title": "Cost object",
-			"i18n": {
-				"nl": "Kostendrager"
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "AnalyticalDimension",
