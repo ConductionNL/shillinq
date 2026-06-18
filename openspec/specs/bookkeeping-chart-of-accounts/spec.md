@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-chart-of-accounts
 
 **Status:** proposed

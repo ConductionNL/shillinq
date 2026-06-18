@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Capability Spec: Booking Deposits at Booking Time
 
 **Status:** proposed  

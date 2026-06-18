@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Retainer Billing Management
 
 **Status:** proposed  

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-btw-oss-eu
 
 **Status:** proposed

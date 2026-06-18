@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: IB Aangifte (Income Tax Return) Assembly for ZZP
 
 **Status:** proposed  

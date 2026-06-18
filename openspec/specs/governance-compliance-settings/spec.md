@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # governance-compliance-settings Specification
 
 ## Purpose
-TBD - created by archiving change shillinq-config-to-settings. Update Purpose after archive.
+Relocates the governance-config and audit-log leaves out of the top-level transactional navigation into a Settings "Governance & Compliance" section while keeping every page directly routable via deep links. The relocated audit-trail, change-history, activity-feed, destruction-report, and compliance-export surfaces remain strictly read-only, and AllocationRules stays pure rule metadata with no allocation service execution introduced by the move.
 ## Requirements
 ### Requirement: REQ-GOVSET-001 — The system SHALL relocate the governance-config and audit-log leaves out of top-level navigation into a Settings "Governance & Compliance" section, keeping every page routable
 

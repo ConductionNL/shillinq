@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-ensia-zelfevaluatie
 
 **Status:** proposed

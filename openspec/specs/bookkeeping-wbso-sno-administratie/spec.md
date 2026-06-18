@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-wbso-sno-administratie
 
 **Status:** proposed

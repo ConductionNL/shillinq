@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: IAS 19 Employee Benefit Pension Accounting (RJ 271)
 
 **Status:** proposed  

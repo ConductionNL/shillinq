@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-product-catalog
 
 **Status:** proposed

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Bookings Specification
 
 **Status**: proposal  

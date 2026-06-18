@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # shillinq-bank-statement-wizard Specification
 
 ## Purpose
-TBD - created by archiving change shillinq-bank-statement-wizard. Update Purpose after archive.
+Provides a dashboard-launched modal wizard that guides a bookkeeper through importing a bank statement (CAMT.053, MT940, or CSV) without leaving the Financial overview. The wizard offers format-specific export guidance and a PSD2 discoverability link, maps the statement IBAN to a GL account with remembered mappings, posts the file to a server-administration-scoped import endpoint that persists the statement and its lines, and shows an import summary before refreshing the dashboard payables and receivables widgets.
 ## Requirements
 ### Requirement: REQ-BSW-001 — Entry point launches the wizard
 

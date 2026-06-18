@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-kor-kleine-ondernemersregeling
 
 **Status:** proposed

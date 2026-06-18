@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # shillinq-invoice-quick-draft Specification
 
 ## Purpose
-TBD - created by archiving change shillinq-invoice-quick-draft. Update Purpose after archive.
+Provides a dashboard-launched modal for quickly drafting an accounts-receivable invoice without leaving the Financial overview. Selecting a customer drives default GL account and due date, line items show live net, VAT, and gross totals, and saving creates a draft ARInvoice through the OpenRegister object API before refreshing the receivables widget; last-used line details are remembered per customer with a 90-day expiry.
 ## Requirements
 ### Requirement: Quick-draft launch from the Financial overview
 

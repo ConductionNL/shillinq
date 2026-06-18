@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-lease-reassessment
 
 **Status:** proposed

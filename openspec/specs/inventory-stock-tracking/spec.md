@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-stock-tracking
 
 **Status:** implemented

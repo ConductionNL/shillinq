@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-cycle-count
 
 **Status:** proposed

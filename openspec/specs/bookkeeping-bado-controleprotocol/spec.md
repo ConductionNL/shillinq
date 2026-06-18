@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Specification: BADO Audit Protocol & Tolerance Matrix
 
 **Status:** proposed  

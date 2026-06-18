@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-reconciliation-reports
 
 **Status:** proposed

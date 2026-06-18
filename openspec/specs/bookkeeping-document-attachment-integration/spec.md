@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-document-attachment-integration
 
 **Status:** proposed

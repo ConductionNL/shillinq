@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-consultancy-project-accounting
 
 **Status:** proposed

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-gr-consolidation
 
 **Status:** proposed

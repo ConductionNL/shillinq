@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Specs — IAS 37 / RJ 252 Provisions, Contingent Liabilities and Contingent Assets
 
 **Status:** proposed  

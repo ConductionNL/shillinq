@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # shillinq-bill-import-modal Specification
 
 ## Purpose
-TBD - created by archiving change shillinq-bill-import-modal. Update Purpose after archive.
+Provides a dashboard-launched modal for importing supplier invoices from UBL/e-invoice XML or CSV files, parsed deterministically server-side into SupplierInvoice records without leaving the Financial overview. PDF uploads are honestly routed to a deferred OCR path rather than fabricating extractions; the review step pre-fills parsed values and gates save on required fields, duplicate invoices are rejected with an inline warning, and a successful import refreshes the dashboard payables widget.
 ## Requirements
 ### Requirement: REQ-BIM-001 — The system SHALL provide a dashboard-launched upload step that accepts a UBL/e-invoice XML or CSV supplier-invoice file (PDF accepted but routed to the honest OCR-deferral path)
 

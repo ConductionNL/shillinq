@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-vpb-corporate-tax
 
 **Status:** proposed

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-waterschappen-bbv-variant
 
 **Status:** proposed

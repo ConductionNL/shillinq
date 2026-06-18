@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # apphost-adoption Specification
 
 ## Purpose
-TBD - created by archiving change adopt-apphost. Update Purpose after archive.
+Serves shillinq's health and Prometheus metrics endpoints through the OpenRegister AppHost engine, so operators get real database and OpenRegister availability checks and admin-only Prometheus exposition instead of hardcoded placeholders. Exposes the imperative pipelinq customer-bridge counters and circuit-breaker state via a registered metrics provider, and lets the AppHost generic classes serve the dashboard, admin settings, and canonical routes while preserving shillinq's bespoke settings, preferences, seeding, and deep-link plumbing.
 ## Requirements
 ### Requirement: Health Endpoint With Real Checks
 

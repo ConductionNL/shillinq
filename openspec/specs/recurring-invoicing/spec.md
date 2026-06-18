@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # recurring-invoicing Specification
 
 ## Purpose
-TBD - created by archiving change recurring-invoicing. Update Purpose after archive.
+Manages recurring billing definitions as OpenRegister-managed profiles that reference Nextcloud addressbook contacts and generate ordinary AR invoices per period through a scheduled OpenRegister workflow, with no app-local cron or parallel invoice type. The capability covers declarative next-run-date calculation with month-end clamping, idempotent generation with bounded catch-up after downtime, a draft-to-ended profile lifecycle, optional annual price indexation, declarative notifications, and a manifest-driven UI with an exact next-invoice preview.
 ## Requirements
 ### Requirement: REQ-RIN-001 — The system SHALL store recurring billing definitions as an OpenRegister-managed `RecurringInvoiceProfile` schema with the customer referencing the Nextcloud addressbook
 

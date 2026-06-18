@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookings-self-service-widget
 
 **Status:** proposed

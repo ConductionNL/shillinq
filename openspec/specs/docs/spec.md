@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # docs Specification
 
 **Status**: in-progress

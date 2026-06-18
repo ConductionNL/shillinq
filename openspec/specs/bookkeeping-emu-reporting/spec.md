@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: EMU-saldo & EMU-schuld Reporting
 
 **Scope:** bookkeeping-emu-reporting

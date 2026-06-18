@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: zzp-urencriterium-tracker
 
 **Status:** proposed  

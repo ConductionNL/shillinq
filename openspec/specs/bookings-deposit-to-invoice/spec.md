@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Capability Spec: Booking Deposit-to-Invoice Flow
 
 **Status:** proposed  

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookings-notification-triggers
 
 **Status:** proposed

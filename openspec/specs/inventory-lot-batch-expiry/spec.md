@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-lot-batch-expiry
 
 **Status:** proposed  

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-trial-balance
 
 **Status:** proposed

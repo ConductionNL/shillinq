@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Country-by-Country Reporting (CbCR) & OESO Pillar Two (Global Minimum Tax)
 
 **Status:** proposed  

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-subsidie-verantwoording
 
 **Status:** proposed

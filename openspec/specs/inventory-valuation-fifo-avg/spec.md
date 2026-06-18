@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-valuation-fifo-avg
 
 **Status:** proposed

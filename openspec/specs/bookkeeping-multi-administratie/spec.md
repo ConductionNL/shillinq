@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-multi-administratie
 
 **Status:** proposed

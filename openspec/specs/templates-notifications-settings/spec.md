@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # templates-notifications-settings Specification
 
 ## Purpose
-TBD - created by archiving change shillinq-config-to-settings. Update Purpose after archive.
+Consolidates the scattered template and notification-configuration leaves from the bookings and inventory groups into a single Settings "Templates & Notifications" section while keeping every page directly routable via deep links and leaving the source manifest fragments unchanged. The relocation preserves each page's read/write posture: the NotificationMonitor stays a read-only delivery view, and the template, trigger, and SMS-channel pages remain editable configuration.
 ## Requirements
 ### Requirement: REQ-TMPLSET-001 — The system SHALL consolidate the scattered template and notification-config leaves into a single Settings "Templates & Notifications" section, keeping every page routable
 

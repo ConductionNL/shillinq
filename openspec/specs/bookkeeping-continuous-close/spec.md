@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-continuous-close
 
 **Status:** proposed
