@@ -4774,7 +4774,12 @@
 			"title": "Financial overview",
 			"actionsComponent": "FinancialDashboardActions",
 			"slots": {
-				"widget-finance-kpis": "FinanceKpisWidget",
+				"widget-turnover": "FinanceKpiCardWidget",
+				"widget-margin": "FinanceKpiCardWidget",
+				"widget-debtors": "FinanceKpiCardWidget",
+				"widget-creditors": "FinanceKpiCardWidget",
+				"widget-billable": "FinanceKpiCardWidget",
+				"widget-cash": "FinanceKpiCardWidget",
 				"widget-turnover-chart": "TurnoverChartWidget",
 				"widget-margin-chart": "MarginChartWidget",
 				"widget-cashflow-chart": "CashflowChartWidget",
@@ -4817,8 +4822,33 @@
 				},
 				"widgets": [
 					{
-						"id": "finance-kpis",
-						"title": "Key figures",
+						"id": "turnover",
+						"title": "Turnover (YTD)",
+						"type": "custom"
+					},
+					{
+						"id": "margin",
+						"title": "Margin (YTD)",
+						"type": "custom"
+					},
+					{
+						"id": "debtors",
+						"title": "Open debtors",
+						"type": "custom"
+					},
+					{
+						"id": "creditors",
+						"title": "Open creditors",
+						"type": "custom"
+					},
+					{
+						"id": "billable",
+						"title": "Billable this month",
+						"type": "custom"
+					},
+					{
+						"id": "cash",
+						"title": "Cash position",
 						"type": "custom"
 					},
 					{
@@ -4866,11 +4896,56 @@
 				],
 				"layout": [
 					{
-						"id": "layout-finance-kpis",
-						"widgetId": "finance-kpis",
+						"id": "layout-turnover",
+						"widgetId": "turnover",
 						"gridX": 0,
 						"gridY": 0,
-						"gridWidth": 12,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "layout-margin",
+						"widgetId": "margin",
+						"gridX": 4,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "layout-debtors",
+						"widgetId": "debtors",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "layout-creditors",
+						"widgetId": "creditors",
+						"gridX": 0,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "layout-billable",
+						"widgetId": "billable",
+						"gridX": 4,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "layout-cash",
+						"widgetId": "cash",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
 						"gridHeight": 2,
 						"showTitle": false
 					},
@@ -4878,7 +4953,7 @@
 						"id": "layout-turnover-chart",
 						"widgetId": "turnover-chart",
 						"gridX": 0,
-						"gridY": 2,
+						"gridY": 4,
 						"gridWidth": 6,
 						"gridHeight": 4,
 						"dateChip": true
@@ -4887,7 +4962,7 @@
 						"id": "layout-margin-chart",
 						"widgetId": "margin-chart",
 						"gridX": 6,
-						"gridY": 2,
+						"gridY": 4,
 						"gridWidth": 6,
 						"gridHeight": 4,
 						"dateChip": true
@@ -4896,7 +4971,7 @@
 						"id": "layout-cashflow-chart",
 						"widgetId": "cashflow-chart",
 						"gridX": 0,
-						"gridY": 6,
+						"gridY": 8,
 						"gridWidth": 6,
 						"gridHeight": 4,
 						"dateChip": true
@@ -4905,7 +4980,7 @@
 						"id": "layout-billable-hours-chart",
 						"widgetId": "billable-hours-chart",
 						"gridX": 6,
-						"gridY": 6,
+						"gridY": 8,
 						"gridWidth": 6,
 						"gridHeight": 4,
 						"dateChip": true
@@ -4914,7 +4989,7 @@
 						"id": "layout-open-debtors",
 						"widgetId": "open-debtors",
 						"gridX": 0,
-						"gridY": 10,
+						"gridY": 12,
 						"gridWidth": 6,
 						"gridHeight": 5
 					},
@@ -4922,7 +4997,7 @@
 						"id": "layout-open-creditors",
 						"widgetId": "open-creditors",
 						"gridX": 6,
-						"gridY": 10,
+						"gridY": 12,
 						"gridWidth": 6,
 						"gridHeight": 5
 					}

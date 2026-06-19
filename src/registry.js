@@ -255,7 +255,7 @@ import ExternalAdapterDetail from './views/external-adapters/ExternalAdapterDeta
 // declarative `stats-block` / `chart` / `table` widget types, so
 // they are registered as kind:"widget" components and wired into
 // the Dashboard page through its `slots` map (ADR-024 / ADR-036).
-import FinanceKpisWidget from './components/dashboard/financial/FinanceKpisWidget.vue'
+import FinanceKpiCardWidget from './components/dashboard/financial/FinanceKpiCardWidget.vue'
 import TurnoverChartWidget from './components/dashboard/financial/TurnoverChartWidget.vue'
 import MarginChartWidget from './components/dashboard/financial/MarginChartWidget.vue'
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
@@ -339,7 +339,7 @@ export default {
 	ExternalAdapterDetail: { kind: 'page', component: ExternalAdapterDetail },
 
 	// financial-dashboard-graphs: Financial overview dashboard widgets.
-	FinanceKpisWidget: { kind: 'widget', component: FinanceKpisWidget },
+	FinanceKpiCardWidget: { kind: 'widget', component: FinanceKpiCardWidget },
 	TurnoverChartWidget: { kind: 'widget', component: TurnoverChartWidget },
 	MarginChartWidget: { kind: 'widget', component: MarginChartWidget },
 	CashflowChartWidget: { kind: 'widget', component: CashflowChartWidget },
