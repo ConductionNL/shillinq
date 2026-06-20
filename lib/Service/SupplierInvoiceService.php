@@ -302,6 +302,11 @@ class SupplierInvoiceService
         // Round to multipleOf 0.01 to match the slice-01 schema constraint.
         $clampedConfidence = (float) (round($clampedConfidence * 100) / 100);
 
+        $ocrProcessedAt = trim((string) ($context['ocrProcessedAt'] ?? ''));
+        if ($ocrProcessedAt === '') {
+            $ocrProcessedAt = $this->nowIso();
+        }
+
         $record = array_merge(
             $normalised,
             [
@@ -309,7 +314,7 @@ class SupplierInvoiceService
                 'sourceFormat'       => self::SOURCE_FORMAT_PDF,
                 'ocrConfidenceScore' => $clampedConfidence,
                 'pdfSourceUri'       => trim((string) ($context['pdfSourceUri'] ?? '')),
-                'ocrProcessedAt'     => trim((string) ($context['ocrProcessedAt'] ?? '')) ?: $this->nowIso(),
+                'ocrProcessedAt'     => $ocrProcessedAt,
                 'statusCode'         => self::STATUS_RECEIVED,
                 'createdAt'          => $this->nowIso(),
             ]
@@ -575,7 +580,7 @@ class SupplierInvoiceService
             throw new RuntimeException('UBL Invoice XML is empty');
         }
 
-        // libxml ≥ 2.9 disables external-entity loading by default (PHP 8);
+        // Libxml ≥ 2.9 disables external-entity loading by default (PHP 8);
         // simplexml_load_string is XXE-safe in our supported runtime
         // ([[nc-security-defaults]]).
         $xml = simplexml_load_string($ublXml);
@@ -677,7 +682,10 @@ class SupplierInvoiceService
         }
 
         $idNode    = $node->xpath('cbc:ID');
-        $rawLineId = (is_array($idNode) === true && isset($idNode[0]) === true) ? trim((string) $idNode[0]) : '';
+        $rawLineId = '';
+        if (is_array($idNode) === true && isset($idNode[0]) === true) {
+            $rawLineId = trim((string) $idNode[0]);
+        }
 
         $description   = $this->xpathFirst(xml: $node, paths: ['cac:Item/cbc:Description', 'cac:Item/cbc:Name']);
         $productCode   = $this->xpathFirst(xml: $node, paths: ['cac:Item/cac:SellersItemIdentification/cbc:ID']);
@@ -690,10 +698,18 @@ class SupplierInvoiceService
         );
         // UBL Percent is expressed in whole-percent (21.0); store as the
         // fraction the rest of the app already uses (0.21).
-        $vatRateFraction = ($vatRate > 0.0) ? ($vatRate / 100.0) : 0.0;
+        $vatRateFraction = 0.0;
+        if ($vatRate > 0.0) {
+            $vatRateFraction = ($vatRate / 100.0);
+        }
+
+        $resolvedLineNumber = $lineNumber;
+        if ($rawLineId !== '' && ctype_digit($rawLineId) === true) {
+            $resolvedLineNumber = (int) $rawLineId;
+        }
 
         return [
-            'lineNumber'    => ($rawLineId !== '' && ctype_digit($rawLineId) === true) ? (int) $rawLineId : $lineNumber,
+            'lineNumber'    => $resolvedLineNumber,
             'productCode'   => trim($productCode),
             'description'   => trim($description),
             'quantity'      => $quantity,

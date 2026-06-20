@@ -105,7 +105,7 @@ class WbsoTransactionApiController extends Controller
         try {
             $rows = $this->transactions->listTransactions(administrationId: $administrationId, filters: $filters);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to load transactions', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to load transactions', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse(
@@ -144,7 +144,7 @@ class WbsoTransactionApiController extends Controller
         try {
             $row = $this->transactions->getTransaction(administrationId: $administrationId, transactionId: $id);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to load transaction', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to load transaction', context: ['exception' => $e->getMessage()]);
         }
 
         if ($row === null) {
@@ -189,7 +189,7 @@ class WbsoTransactionApiController extends Controller
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to create transaction', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to create transaction', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse($row, Http::STATUS_CREATED);
@@ -230,7 +230,7 @@ class WbsoTransactionApiController extends Controller
         } catch (RuntimeException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to post transaction', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to post transaction', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse($row, Http::STATUS_OK);
@@ -273,12 +273,16 @@ class WbsoTransactionApiController extends Controller
                 reason: $reason,
             );
         } catch (InvalidArgumentException $e) {
-            $status = ($e->getMessage() === 'Transaction not found') ? Http::STATUS_NOT_FOUND : Http::STATUS_BAD_REQUEST;
+            $status = Http::STATUS_BAD_REQUEST;
+            if ($e->getMessage() === 'Transaction not found') {
+                $status = Http::STATUS_NOT_FOUND;
+            }
+
             return new JSONResponse(['error' => $e->getMessage()], $status);
         } catch (RuntimeException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to reverse transaction', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to reverse transaction', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse($row, Http::STATUS_CREATED);

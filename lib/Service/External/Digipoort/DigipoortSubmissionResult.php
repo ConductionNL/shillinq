@@ -51,7 +51,7 @@ final class DigipoortSubmissionResult
         public readonly string $deliveryStatus,
         public readonly string $kenmerk,
         public readonly bool $dormant,
-        public readonly array $extras = [],
+        public readonly array $extras=[],
     ) {
     }//end __construct()
 }//end class

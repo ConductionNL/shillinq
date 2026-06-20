@@ -152,10 +152,12 @@ class RgsAccountMapper
             $accounts = $objectService
                 ->setRegister($registerSlug)
                 ->setSchema('Account')
-                ->findAll([
-                    'filters' => ['administrationId' => $administrationId],
-                    'limit' => 5000,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => ['administrationId' => $administrationId],
+                            'limit'   => 5000,
+                        ]
+                        );
         } catch (\Throwable $e) {
             return ['success' => false, 'suggestions' => [], 'skipped' => 0, 'message' => $e->getMessage()];
         }
@@ -177,13 +179,13 @@ class RgsAccountMapper
             }
         }
 
-        $rgsRows = array_map(fn($row) => $this->toArray($row), $rgsRekeningen);
+        $rgsRows = array_map(fn($row) => $this->toArray(object: $row), $rgsRekeningen);
 
         $suggestions = [];
         $skipped     = 0;
 
         foreach ($accounts as $account) {
-            $accountRow = $this->toArray($account);
+            $accountRow = $this->toArray(object: $account);
 
             if (empty($accountRow['rgsDecentraalCode']) === false) {
                 $skipped++;
@@ -233,16 +235,16 @@ class RgsAccountMapper
             if ($accountReference !== '' && (string) ($rgsRow['referentienummer'] ?? '') === $accountReference) {
                 $confidence = 100;
                 $reason     = 'exact-referentienummer';
-            } elseif ($accountCode !== '' && (string) ($rgsRow['rgsDecentraalCode'] ?? '') === $accountCode) {
+            } else if ($accountCode !== '' && (string) ($rgsRow['rgsDecentraalCode'] ?? '') === $accountCode) {
                 $confidence = 95;
                 $reason     = 'exact-rgsDecentraalCode';
-            } elseif ($accountCode !== '' && (string) ($rgsRow['rgsCode'] ?? '') === $accountCode) {
+            } else if ($accountCode !== '' && (string) ($rgsRow['rgsCode'] ?? '') === $accountCode) {
                 $confidence = 80;
                 $reason     = 'exact-rgsCode';
-            } elseif ($accountName !== '') {
+            } else if ($accountName !== '') {
                 $candidateName = mb_strtolower((string) ($rgsRow['omschrijvingKort'] ?? $rgsRow['naam'] ?? ''));
                 if ($candidateName !== '') {
-                    $similarity = $this->similarityPercent($accountName, $candidateName);
+                    $similarity = $this->similarityPercent(left: $accountName, right: $candidateName);
                     if ($similarity >= 50) {
                         $confidence = (int) round($similarity * 0.70);
                         $reason     = 'fuzzy-name-match-'.((int) $similarity).'%';

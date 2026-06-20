@@ -105,8 +105,8 @@ class IntegralCostPriceCalculator
                 continue;
             }
 
-            $kp = (string) ($line['kostenplaats'] ?? $line['kostenplaatsCode'] ?? '');
-            $kd = (string) ($line['kostendrager'] ?? $line['kostendragerCode'] ?? '');
+            $kp   = (string) ($line['kostenplaats'] ?? $line['kostenplaatsCode'] ?? '');
+            $kd   = (string) ($line['kostendrager'] ?? $line['kostendragerCode'] ?? '');
             $kind = (string) ($line['accountKind'] ?? $line['kind'] ?? '');
 
             if ($kp !== $kostenplaats || $kd !== $kostendrager) {
@@ -120,12 +120,12 @@ class IntegralCostPriceCalculator
             $amount = (float) ($line['amount'] ?? $line['bedrag'] ?? 0);
             if ($amount < 0) {
                 // Credit notes / reversals are subtracted (sign-preserved).
-                $totalCents += $this->toCents($amount);
+                $totalCents += $this->toCents(amount: $amount);
                 continue;
             }
 
-            $totalCents += $this->toCents($amount);
-        }
+            $totalCents += $this->toCents(amount: $amount);
+        }//end foreach
 
         return $totalCents;
 
@@ -138,9 +138,9 @@ class IntegralCostPriceCalculator
      * carry the BBV taakveld 0.4 overhead, the rule's per-bucket ratios distribute
      * it to the activity's overhead components.
      *
-     * @param int                            $corporateOverheadCents Corporate overhead pool in cents.
-     * @param array<string,mixed>            $rule                   The OverheadDistributionRule.
-     * @param string                         $kostendrager           Kostendrager code (filter ratios to this drager).
+     * @param int                 $corporateOverheadCents Corporate overhead pool in cents.
+     * @param array<string,mixed> $rule                   The OverheadDistributionRule.
+     * @param string              $kostendrager           Kostendrager code (filter ratios to this drager).
      *
      * @return array<string,int> Per-bucket overhead in cents (huisvesting, ict, directieEnStaf, facilitair, custom).
      */
@@ -174,9 +174,9 @@ class IntegralCostPriceCalculator
                 $ratio = 1.0;
             }
 
-            $bucketCents     = (int) round($corporateOverheadCents * $ratio, 0, PHP_ROUND_HALF_EVEN);
+            $bucketCents      = (int) round($corporateOverheadCents * $ratio, 0, PHP_ROUND_HALF_EVEN);
             $buckets[$bucket] = ($buckets[$bucket] ?? 0) + $bucketCents;
-        }
+        }//end foreach
 
         return $buckets;
 
@@ -261,7 +261,7 @@ class IntegralCostPriceCalculator
         }
 
         if ($omzetEur !== null) {
-            $omzetCents = $this->toCents($omzetEur);
+            $omzetCents = $this->toCents(amount: $omzetEur);
             return $omzetCents >= $totaleKostenCents;
         }
 
@@ -273,25 +273,12 @@ class IntegralCostPriceCalculator
     /**
      * Compose a full IntegralCostPrice record (REQ-WMO-002).
      *
-     * @param array{
-     *   commercialActivityId: string,
-     *   periode: string,
-     *   administrationId: string,
-     *   kostenplaats: string,
-     *   kostendrager: string,
-     *   glLines?: array,
-     *   corporateOverheadCents?: int,
-     *   overheadRule?: array,
-     *   investedBookValueCents?: int,
-     *   waccRate?: float,
-     *   winstopslagRate?: float,
-     *   periodFraction?: float,
-     *   verkochteEenheden?: float,
-     *   eenheidLabel?: string,
-     *   gehanteerdTarief?: float,
-     *   omzetEur?: float,
-     *   status?: string
-     * } $input Calculation inputs.
+     * @param array<string,mixed> $input Calculation inputs (commercialActivityId,
+     *                                   periode, administrationId, kostenplaats,
+     *                                   kostendrager, glLines, corporateOverheadCents,
+     *                                   overheadRule, investedBookValueCents, waccRate,
+     *                                   winstopslagRate, periodFraction, verkochteEenheden,
+     *                                   eenheidLabel, gehanteerdTarief, omzetEur, status).
      *
      * @return array<string,mixed> IKP record matching the schema.
      */
@@ -333,22 +320,39 @@ class IntegralCostPriceCalculator
         $verkochteEenheden   = (float) ($input['verkochteEenheden'] ?? 0);
         $kostprijsPerEenheid = $this->calculateKostprijsPerEenheid(totaleKostenCents: $totaleKostenCents, verkochteEenheden: $verkochteEenheden);
 
-        $gehanteerdTarief = isset($input['gehanteerdTarief']) ? (float) $input['gehanteerdTarief'] : null;
+        $gehanteerdTarief = null;
+        if (isset($input['gehanteerdTarief']) === true) {
+            $gehanteerdTarief = (float) $input['gehanteerdTarief'];
+        }
 
         $marge           = null;
         $margePercentage = null;
         if ($gehanteerdTarief !== null && $kostprijsPerEenheid !== null) {
-            $marge           = round(($gehanteerdTarief - $kostprijsPerEenheid), 4);
-            $base            = ($kostprijsPerEenheid > 0.0 ? $kostprijsPerEenheid : 1.0);
+            $marge = round(($gehanteerdTarief - $kostprijsPerEenheid), 4);
+            $base  = 1.0;
+            if ($kostprijsPerEenheid > 0.0) {
+                $base = $kostprijsPerEenheid;
+            }
+
             $margePercentage = round((($marge / $base) * 100), 4);
+        }
+
+        $omzetEur = null;
+        if (isset($input['omzetEur']) === true) {
+            $omzetEur = (float) $input['omzetEur'];
         }
 
         $compliant = $this->isCompliant(
             gehanteerdTarief: $gehanteerdTarief,
             kostprijsPerEenheid: $kostprijsPerEenheid,
             totaleKostenCents: $totaleKostenCents,
-            omzetEur: isset($input['omzetEur']) ? (float) $input['omzetEur'] : null
+            omzetEur: $omzetEur
         );
+
+        $verkochteEenhedenOut = null;
+        if ($verkochteEenheden > 0.0) {
+            $verkochteEenhedenOut = $verkochteEenheden;
+        }
 
         return [
             'commercialActivityId' => (string) $input['commercialActivityId'],
@@ -356,15 +360,15 @@ class IntegralCostPriceCalculator
             'berekendOp'           => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeImmutable::ATOM),
             'status'               => (string) ($input['status'] ?? 'voorlopig'),
             'componenten'          => [
-                'directeLoonkosten'    => $this->fromCents($loonkostenCents),
-                'directeMaterialen'    => $this->fromCents($materialenCents),
-                'directeAfschrijvingen' => $this->fromCents($afschrijvingenCents),
-                'indirecteOverhead'    => array_map(fn (int $c): float => $this->fromCents($c), $overheadBuckets),
-                'vermogenskosten'      => $this->fromCents($vermogensCents),
-                'winstopslag'          => $this->fromCents($winstopslagCents),
+                'directeLoonkosten'     => $this->fromCents(cents: $loonkostenCents),
+                'directeMaterialen'     => $this->fromCents(cents: $materialenCents),
+                'directeAfschrijvingen' => $this->fromCents(cents: $afschrijvingenCents),
+                'indirecteOverhead'     => array_map(fn (int $c): float => $this->fromCents(cents: $c), $overheadBuckets),
+                'vermogenskosten'       => $this->fromCents(cents: $vermogensCents),
+                'winstopslag'           => $this->fromCents(cents: $winstopslagCents),
             ],
-            'totaleKosten'         => $this->fromCents($totaleKostenCents),
-            'verkochteEenheden'    => ($verkochteEenheden > 0.0 ? $verkochteEenheden : null),
+            'totaleKosten'         => $this->fromCents(cents: $totaleKostenCents),
+            'verkochteEenheden'    => $verkochteEenhedenOut,
             'eenheidLabel'         => ($input['eenheidLabel'] ?? null),
             'kostprijsPerEenheid'  => $kostprijsPerEenheid,
             'gehanteerdTarief'     => $gehanteerdTarief,
@@ -375,5 +379,4 @@ class IntegralCostPriceCalculator
         ];
 
     }//end compose()
-
 }//end class

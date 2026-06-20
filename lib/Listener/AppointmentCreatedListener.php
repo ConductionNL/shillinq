@@ -50,8 +50,6 @@ use Throwable;
  */
 class AppointmentCreatedListener implements IEventListener
 {
-
-
     /**
      * Construct the listener with DI dependencies.
      *
@@ -63,7 +61,6 @@ class AppointmentCreatedListener implements IEventListener
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Handle an ObjectCreatedEvent.
@@ -85,7 +82,7 @@ class AppointmentCreatedListener implements IEventListener
             }
 
             $schema = (string) $entity->getSchema();
-            if ($this->isAppointmentSchema($schema) === false) {
+            if ($this->isAppointmentSchema(schema: $schema) === false) {
                 return;
             }
 
@@ -124,7 +121,6 @@ class AppointmentCreatedListener implements IEventListener
 
     }//end handle()
 
-
     /**
      * Whether the supplied schema string identifies the Appointment schema
      * — schema strings may be plain slugs or numeric IDs depending on OR
@@ -140,6 +136,4 @@ class AppointmentCreatedListener implements IEventListener
         return ($normalised === 'appointment' || str_ends_with($normalised, '/appointment'));
 
     }//end isAppointmentSchema()
-
-
 }//end class

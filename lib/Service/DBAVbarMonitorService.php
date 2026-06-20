@@ -58,8 +58,8 @@ class DBAVbarMonitorService
     /**
      * Result codes for `assess()`.
      */
-    public const RESULT_OK = 'OK';
-    public const RESULT_WARN = 'WARN';
+    public const RESULT_OK    = 'OK';
+    public const RESULT_WARN  = 'WARN';
     public const RESULT_BLOCK = 'BLOCK';
 
     /**
@@ -70,8 +70,8 @@ class DBAVbarMonitorService
      *   - WARN: rate < threshold and compliance-mode is soft/intermediair;
      *   - BLOCK: rate < threshold and compliance-mode is hard.
      *
-     * @param int    $bedragCents     Factuurbedrag (eurocenten).
-     * @param float  $uren            Aantal gefactureerde uren.
+     * @param int    $bedragCents      Factuurbedrag (eurocenten).
+     * @param float  $uren             Aantal gefactureerde uren.
      * @param string $administrationId Per-administration scoping.
      *
      * @return array<string,mixed> { result, uurtariefCents, vbarGrensCents, message }
@@ -81,24 +81,24 @@ class DBAVbarMonitorService
     public function assess(int $bedragCents, float $uren, string $administrationId): array
     {
         $vbarGrens = DBAConstants::vbarGrensCents($this->appConfig, Application::APP_ID, $administrationId);
-        $mode = DBAConstants::complianceMode($this->appConfig, Application::APP_ID, $administrationId);
+        $mode      = DBAConstants::complianceMode($this->appConfig, Application::APP_ID, $administrationId);
 
         if ($uren <= 0.0 || $bedragCents <= 0) {
             return [
-                'result' => self::RESULT_OK,
+                'result'         => self::RESULT_OK,
                 'uurtariefCents' => null,
                 'vbarGrensCents' => $vbarGrens,
-                'message' => 'Onvoldoende data voor VBAR-toets (uren of bedrag = 0).',
+                'message'        => 'Onvoldoende data voor VBAR-toets (uren of bedrag = 0).',
             ];
         }
 
         $uurtarief = (int) round($bedragCents / $uren);
         if ($uurtarief >= $vbarGrens) {
             return [
-                'result' => self::RESULT_OK,
+                'result'         => self::RESULT_OK,
                 'uurtariefCents' => $uurtarief,
                 'vbarGrensCents' => $vbarGrens,
-                'message' => sprintf(
+                'message'        => sprintf(
                     'Effectief uurtarief EUR %.2f voldoet aan VBAR-rechtsvermoeden-grens EUR %.2f.',
                     $uurtarief / 100,
                     $vbarGrens / 100
@@ -106,12 +106,16 @@ class DBAVbarMonitorService
             ];
         }
 
-        $result = ($mode === DBAConstants::COMPLIANCE_MODE_HARD) ? self::RESULT_BLOCK : self::RESULT_WARN;
+        $result = self::RESULT_WARN;
+        if ($mode === DBAConstants::COMPLIANCE_MODE_HARD) {
+            $result = self::RESULT_BLOCK;
+        }
+
         return [
-            'result' => $result,
+            'result'         => $result,
             'uurtariefCents' => $uurtarief,
             'vbarGrensCents' => $vbarGrens,
-            'message' => sprintf(
+            'message'        => sprintf(
                 'Effectief uurtarief EUR %.2f onder VBAR-rechtsvermoeden-grens EUR %.2f.',
                 $uurtarief / 100,
                 $vbarGrens / 100
@@ -125,11 +129,11 @@ class DBAVbarMonitorService
      * Idempotent: a single OPEN flag per (opdrachtId, factuurId) is enforced via
      * a details-payload check.
      *
-     * @param string $opdrachtId        FK to DBAOpdracht.
-     * @param string $administrationId  Administration scoping.
-     * @param string $factuurId         The factuur that triggered the check.
-     * @param int    $uurtariefCents    The computed effective rate.
-     * @param int    $vbarGrensCents    The threshold applied.
+     * @param string $opdrachtId       FK to DBAOpdracht.
+     * @param string $administrationId Administration scoping.
+     * @param string $factuurId        The factuur that triggered the check.
+     * @param int    $uurtariefCents   The computed effective rate.
+     * @param int    $vbarGrensCents   The threshold applied.
      *
      * @return bool True when a flag record was written.
      *
@@ -158,16 +162,24 @@ class DBAVbarMonitorService
         }
 
         try {
-            $existing = $objectService->setRegister($register)->setSchema('DBARisicoflag')->findAll([
-                'filters' => [
-                    'opdrachtId' => $opdrachtId,
-                    'type' => 'VBAR_GRENS_ONDERSCHREDEN',
-                    'status' => 'OPEN',
-                ],
-                'limit' => 10,
-            ]);
+            $existing = $objectService->setRegister($register)->setSchema('DBARisicoflag')->findAll(
+                    [
+                        'filters' => [
+                            'opdrachtId' => $opdrachtId,
+                            'type'       => 'VBAR_GRENS_ONDERSCHREDEN',
+                            'status'     => 'OPEN',
+                        ],
+                        'limit'   => 10,
+                    ]
+                    );
             foreach ($existing as $entity) {
-                $arr = is_array($entity) ? $entity : (method_exists($entity, 'getObject') ? $entity->getObject() : null);
+                $arr = null;
+                if (is_array($entity) === true) {
+                    $arr = $entity;
+                } else if (method_exists($entity, 'getObject') === true) {
+                    $arr = $entity->getObject();
+                }
+
                 if (is_array($arr) === true
                     && (string) (($arr['details'] ?? [])['factuurId'] ?? '') === $factuurId
                 ) {
@@ -179,26 +191,29 @@ class DBAVbarMonitorService
                 'DBAVbarMonitorService: idempotency check failed.',
                 ['exception' => $e->getMessage()]
             );
-        }
+        }//end try
 
         try {
-            $objectService->setRegister($register)->setSchema('DBARisicoflag')->saveObject([
-                'administrationId' => $administrationId,
-                'opdrachtId' => $opdrachtId,
-                'type' => 'VBAR_GRENS_ONDERSCHREDEN',
-                'detectieMoment' => (new DateTimeImmutable())->format('c'),
-                'ernst' => 'MIDDEN',
-                'details' => [
-                    'factuurId' => $factuurId,
-                    'uurtariefCents' => $uurtariefCents,
-                    'vbarGrensCents' => $vbarGrensCents,
-                    'peiljaar' => DBAConstants::VBAR_GRENS_PEILJAAR,
-                ],
-                'fiscaleBron' => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil '.DBAConstants::VBAR_GRENS_PEILJAAR.')',
-                'actieSuggestie' => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast (motivatie EUR-grens uitzondering).',
-                'status' => 'OPEN',
-                'weergegevenAanGebruiker' => true,
-            ]);
+            $objectService->setRegister($register)->setSchema('DBARisicoflag')->saveObject(
+                    [
+                        'administrationId'        => $administrationId,
+                        'opdrachtId'              => $opdrachtId,
+                        'type'                    => 'VBAR_GRENS_ONDERSCHREDEN',
+                        'detectieMoment'          => (new DateTimeImmutable())->format('c'),
+                        'ernst'                   => 'MIDDEN',
+                        'details'                 => [
+                            'factuurId'      => $factuurId,
+                            'uurtariefCents' => $uurtariefCents,
+                            'vbarGrensCents' => $vbarGrensCents,
+                            'peiljaar'       => DBAConstants::VBAR_GRENS_PEILJAAR,
+                        ],
+                        'fiscaleBron'             => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil '.DBAConstants::VBAR_GRENS_PEILJAAR.')',
+                        'actieSuggestie'          => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast '
+                            .'(motivatie EUR-grens uitzondering).',
+                        'status'                  => 'OPEN',
+                        'weergegevenAanGebruiker' => true,
+                    ]
+                    );
             return true;
         } catch (Throwable $e) {
             $this->logger->error(
@@ -206,6 +221,6 @@ class DBAVbarMonitorService
                 ['exception' => $e->getMessage()]
             );
             return false;
-        }
+        }//end try
     }//end emitFlag()
 }//end class

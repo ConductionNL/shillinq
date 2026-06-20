@@ -37,9 +37,9 @@ class InvoicePdfGenerator
     /**
      * Generate the renderable invoice payload.
      *
-     * @param array<string,mixed>            $invoice  BillableInvoice record.
-     * @param array<int,array<string,mixed>> $lines    BillableInvoiceLine records.
-     * @param array<string,mixed>            $creditor Creditor (issuing party) details.
+     * @param array<string,mixed>            $invoice   BillableInvoice record.
+     * @param array<int,array<string,mixed>> $lines     BillableInvoiceLine records.
+     * @param array<string,mixed>            $creditor  Creditor (issuing party) details.
      * @param array<string,mixed>            $recipient Recipient details.
      *
      * @return array{filename:string,html:string,mimeType:string}
@@ -47,8 +47,8 @@ class InvoicePdfGenerator
     public function generatePdf(
         array $invoice,
         array $lines,
-        array $creditor = [],
-        array $recipient = []
+        array $creditor=[],
+        array $recipient=[]
     ): array {
         $invoiceNumber = (string) ($invoice['invoiceNumber'] ?? 'INVOICE');
         $html          = $this->renderHtml(invoice: $invoice, lines: $lines, creditor: $creditor, recipient: $recipient);
@@ -76,26 +76,32 @@ class InvoicePdfGenerator
     {
         $rows = '';
         foreach ($lines as $line) {
+            if (isset($line['rateApplied']['rateCents']) === true) {
+                $rateValue = ((int) $line['rateApplied']['rateCents']) / 100;
+            } else {
+                $rateValue = 0.0;
+            }
+
             $rows .= sprintf(
                 '<tr><td>%d</td><td>%s</td><td class="num">%s</td><td class="num">€ %s</td><td class="num">€ %s</td><td class="num">%s%%</td></tr>',
                 (int) ($line['lineNumber'] ?? 0),
                 htmlspecialchars((string) ($line['description'] ?? ''), ENT_QUOTES),
-                $this->fmt((float) ($line['billableUnits'] ?? 0)),
-                $this->fmtMoney(isset($line['rateApplied']['rateCents']) ? ((int) $line['rateApplied']['rateCents']) / 100 : 0.0),
-                $this->fmtMoney((float) ($line['costAmount'] ?? 0)),
-                $this->fmt((float) ($line['vatRate'] ?? 21))
+                $this->fmt(value: (float) ($line['billableUnits'] ?? 0)),
+                $this->fmtMoney(value: $rateValue),
+                $this->fmtMoney(value: (float) ($line['costAmount'] ?? 0)),
+                $this->fmt(value: (float) ($line['vatRate'] ?? 21))
             );
         }
 
-        $summary = $invoice['summary'] ?? [];
+        $summary   = $invoice['summary'] ?? [];
         $breakdown = '';
         foreach (($summary['breakdown'] ?? []) as $group) {
             $breakdown .= sprintf(
                 '<tr><td>BTW %s%%</td><td class="num">€ %s</td><td class="num">€ %s</td><td class="num">€ %s</td></tr>',
-                $this->fmt((float) $group['rate']),
-                $this->fmtMoney((float) $group['net']),
-                $this->fmtMoney((float) $group['vat']),
-                $this->fmtMoney((float) $group['gross'])
+                $this->fmt(value: (float) $group['rate']),
+                $this->fmtMoney(value: (float) $group['net']),
+                $this->fmtMoney(value: (float) $group['vat']),
+                $this->fmtMoney(value: (float) $group['gross'])
             );
         }
 
@@ -140,9 +146,9 @@ class InvoicePdfGenerator
             htmlspecialchars((string) ($invoice['dueDate'] ?? ''), ENT_QUOTES),
             $rows,
             $breakdown,
-            $this->fmtMoney((float) ($invoice['netAmount'] ?? 0)),
-            $this->fmtMoney((float) ($invoice['vatAmount'] ?? 0)),
-            $this->fmtMoney((float) ($invoice['grossAmount'] ?? 0)),
+            $this->fmtMoney(value: (float) ($invoice['netAmount'] ?? 0)),
+            $this->fmtMoney(value: (float) ($invoice['vatAmount'] ?? 0)),
+            $this->fmtMoney(value: (float) ($invoice['grossAmount'] ?? 0)),
             htmlspecialchars((string) ($invoice['paymentTerms'] ?? 'net 30'), ENT_QUOTES),
             htmlspecialchars((string) ($invoice['notes'] ?? ''), ENT_QUOTES),
             date('Y-m-d H:i')
@@ -176,5 +182,4 @@ class InvoicePdfGenerator
         return rtrim(rtrim($s, '0'), ',');
 
     }//end fmt()
-
 }//end class

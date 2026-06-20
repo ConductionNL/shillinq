@@ -66,7 +66,6 @@ final class UrenAlertService
         'KRITIEK'  => 3,
     ];
 
-
     /**
      * Construct the service.
      *
@@ -76,7 +75,6 @@ final class UrenAlertService
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Decide whether the given Y-m-d is a quarter-end date.
@@ -92,7 +90,6 @@ final class UrenAlertService
         return in_array(substr($datum, 5), self::QUARTER_END_MD, true);
 
     }//end isKwartaalEinde()
-
 
     /**
      * Whether the transition from old → new drempel-status is an omslag worth alerting on.
@@ -118,11 +115,10 @@ final class UrenAlertService
 
     }//end isOmslag()
 
-
     /**
      * Build a quarterly informative alert for an onderneming.
      *
-     * @param array<string, mixed> $year UrencriteriumYear record.
+     * @param array<string, mixed> $year  UrencriteriumYear record.
      * @param string               $datum Quarter-end Y-m-d.
      *
      * @return array<string, mixed> UrenAlert shape.
@@ -149,16 +145,15 @@ final class UrenAlertService
         $this->logger->info(
             'UrenAlertService: quarter-end alert built',
             [
-                'ondernemingId'         => $alert['ondernemingId'],
-                'datum'                 => $datum,
-                'drempelStatus'         => ($year['drempelStatus'] ?? null),
+                'ondernemingId' => $alert['ondernemingId'],
+                'datum'         => $datum,
+                'drempelStatus' => ($year['drempelStatus'] ?? null),
             ]
         );
 
         return $alert;
 
     }//end bouwKwartaalAlert()
-
 
     /**
      * Build an omslag alert (status drop).
@@ -180,8 +175,13 @@ final class UrenAlertService
             );
         }
 
-        $type     = ($newStatus === 'KRITIEK') ? 'OMSLAG_KRITIEK' : 'OMSLAG_RISICO';
-        $urgentie = ($newStatus === 'KRITIEK') ? 'KRITIEK' : 'WAARSCHUWING';
+        if ($newStatus === 'KRITIEK') {
+            $type     = 'OMSLAG_KRITIEK';
+            $urgentie = 'KRITIEK';
+        } else {
+            $type     = 'OMSLAG_RISICO';
+            $urgentie = 'WAARSCHUWING';
+        }
 
         $alert = $this->seedAlert(
             year: $year,
@@ -190,7 +190,7 @@ final class UrenAlertService
             aanleidingDatum: gmdate('Y-m-d')
         );
 
-        $alert['oorzaak']               = sprintf(
+        $alert['oorzaak'] = sprintf(
             'Prognose-omslag van %s naar %s',
             $oldStatus,
             $newStatus
@@ -200,7 +200,6 @@ final class UrenAlertService
         return $alert;
 
     }//end bouwOmslagAlert()
-
 
     /**
      * Generate handelingsperspectief acties from the year-state. Returns ≥3 acties.
@@ -252,7 +251,6 @@ final class UrenAlertService
 
     }//end handelingsperspectief()
 
-
     /**
      * Build the canonical alert seed (type, urgentie, etc) shared across alert kinds.
      *
@@ -282,6 +280,4 @@ final class UrenAlertService
         ];
 
     }//end seedAlert()
-
-
 }//end class

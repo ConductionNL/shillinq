@@ -58,7 +58,6 @@ class DepreciationCalculator
      */
     public const FLOAT_PRECISION_FALLBACK = 2;
 
-
     /**
      * Round a value to the requested Float Precision (REQ-FA-005).
      *
@@ -84,7 +83,6 @@ class DepreciationCalculator
         return round($value, $precision);
 
     }//end applyFloatPrecision()
-
 
     /**
      * Yearly depreciation amount for a DepreciationSchedule period (REQ-FA-007).
@@ -160,7 +158,6 @@ class DepreciationCalculator
 
     }//end yearlyDepreciation()
 
-
     /**
      * Gain/loss on disposal at retirement (REQ-FA-008).
      *
@@ -171,9 +168,9 @@ class DepreciationCalculator
      * retirement (no P&L impact beyond removing the asset and its
      * accumulated depreciation from the balance sheet).
      *
-     * @param array<string,mixed> $asset           FixedAsset record (including any salvageProceeds).
-     * @param string              $referenceDate   Reference date for the book-value snapshot.
-     * @param int|null            $floatPrecision  Float Precision for the rounding (REQ-FA-005).
+     * @param array<string,mixed> $asset          FixedAsset record (including any salvageProceeds).
+     * @param string              $referenceDate  Reference date for the book-value snapshot.
+     * @param int|null            $floatPrecision Float Precision for the rounding (REQ-FA-005).
      *
      * @return float Gain (positive) or loss (negative) on disposal.
      *
@@ -188,7 +185,6 @@ class DepreciationCalculator
 
     }//end gainOrLossOnDisposal()
 
-
     /**
      * Compute the proportional split allocations for an internal transfer (REQ-FA-006).
      *
@@ -202,14 +198,17 @@ class DepreciationCalculator
      * @param float               $splitPercentage Fraction (0..1) of the asset transferred (e.g. 0.30 for 30%).
      * @param int|null            $floatPrecision  Float Precision (REQ-FA-005).
      *
-     * @return array{original:array{purchaseCost:float, residualValue:float},split:array{purchaseCost:float, residualValue:float, transferSourceAssetRef:?string}}
+     * @return array{
+     *     original:array{purchaseCost:float, residualValue:float},
+     *     split:array{purchaseCost:float, residualValue:float, transferSourceAssetRef:?string}
+     * }
      *
      * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md#REQ-FA-006
      */
     public function splitTransferAllocations(array $asset, float $splitPercentage, ?int $floatPrecision=null): array
     {
-        $clamped = max(0.0, min(1.0, $splitPercentage));
-        $cost    = (float) ($asset['acquisitionCost'] ?? ($asset['purchaseCost'] ?? 0));
+        $clamped  = max(0.0, min(1.0, $splitPercentage));
+        $cost     = (float) ($asset['acquisitionCost'] ?? ($asset['purchaseCost'] ?? 0));
         $residual = (float) ($asset['residualValue'] ?? 0);
 
         $splitCost     = $this->applyFloatPrecision(value: ($cost * $clamped), floatPrecision: $floatPrecision);
@@ -218,20 +217,25 @@ class DepreciationCalculator
         $originalCost     = $this->applyFloatPrecision(value: ($cost - $splitCost), floatPrecision: $floatPrecision);
         $originalResidual = $this->applyFloatPrecision(value: ($residual - $splitResidual), floatPrecision: $floatPrecision);
 
+        if (isset($asset['id']) === true) {
+            $transferSourceAssetRef = (string) $asset['id'];
+        } else {
+            $transferSourceAssetRef = null;
+        }
+
         return [
             'original' => [
-                'purchaseCost'   => $originalCost,
-                'residualValue'  => $originalResidual,
+                'purchaseCost'  => $originalCost,
+                'residualValue' => $originalResidual,
             ],
-            'split' => [
+            'split'    => [
                 'purchaseCost'           => $splitCost,
                 'residualValue'          => $splitResidual,
-                'transferSourceAssetRef' => (isset($asset['id']) === true ? (string) $asset['id'] : null),
+                'transferSourceAssetRef' => $transferSourceAssetRef,
             ],
         ];
 
     }//end splitTransferAllocations()
-
 
     /**
      * Convert a money amount to integer cents.

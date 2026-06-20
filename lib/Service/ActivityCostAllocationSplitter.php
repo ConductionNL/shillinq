@@ -122,7 +122,7 @@ class ActivityCostAllocationSplitter
             }
 
             return $rule;
-        }
+        }//end foreach
 
         return null;
 
@@ -136,16 +136,20 @@ class ActivityCostAllocationSplitter
      * SHOULD equal 1.0; the splitter reconciles any rounding drift onto the
      * largest split to preserve balance.
      *
-     * @param float                           $originalAmount Original transaction amount in EUR (signed).
-     * @param array<string,mixed>             $rule           The geldende OverheadDistributionRule.
+     * @param float               $originalAmount Original transaction amount in EUR (signed).
+     * @param array<string,mixed> $rule           The geldende OverheadDistributionRule.
      *
      * @return array<int,array<string,mixed>> Balanced split records.
      */
     public function calculateSplits(float $originalAmount, array $rule): array
     {
-        $originalCents = $this->toCents($originalAmount);
-        $sign          = ($originalCents < 0 ? -1 : 1);
-        $absCents      = abs($originalCents);
+        $originalCents = $this->toCents(amount: $originalAmount);
+        $sign          = 1;
+        if ($originalCents < 0) {
+            $sign = -1;
+        }
+
+        $absCents = abs($originalCents);
 
         $rawSplits = (array) ($rule['splits'] ?? $rule['verdeelsleutel'] ?? []);
         if ($rawSplits === []) {
@@ -177,7 +181,7 @@ class ActivityCostAllocationSplitter
             $records[] = [
                 'kostendrager' => (string) ($split['kostendrager'] ?? $split['kostendragerCode'] ?? ''),
                 'ratio'        => $ratio,
-                'amount'       => $this->fromCents($partCents * $sign),
+                'amount'       => $this->fromCents(cents: ($partCents * $sign)),
                 'grootboek'    => ($split['grootboek'] ?? $split['glAccount'] ?? null),
                 'dimensie'     => (string) ($split['dimensie'] ?? 'MO'),
             ];
@@ -189,14 +193,14 @@ class ActivityCostAllocationSplitter
             }
 
             $idx++;
-        }
+        }//end foreach
 
         // Reconcile rounding drift onto the largest split.
         if ($allocated !== $absCents && $records !== []) {
             $drift   = ($absCents - $allocated);
             $largest = $records[$largestIndex];
-            $largestAmountCents = $this->toCents($largest['amount']) + ($drift * $sign);
-            $records[$largestIndex]['amount'] = $this->fromCents($largestAmountCents);
+            $largestAmountCents = $this->toCents(amount: $largest['amount']) + ($drift * $sign);
+            $records[$largestIndex]['amount'] = $this->fromCents(cents: $largestAmountCents);
         }
 
         return $records;
@@ -206,16 +210,10 @@ class ActivityCostAllocationSplitter
     /**
      * Compose an `ActivityCostAllocation` record for a journal entry (REQ-WMO-003).
      *
-     * @param array{
-     *   journalEntryId: string,
-     *   commercialActivityId: string,
-     *   originalAmount: float,
-     *   rule: array<string,mixed>,
-     *   postingDate: string,
-     *   administrationId: string,
-     *   glLineId?: string,
-     *   materialised?: bool
-     * } $input Composition inputs.
+     * @param array<string,mixed> $input Composition inputs (journalEntryId,
+     *                                   commercialActivityId, originalAmount, rule,
+     *                                   postingDate, administrationId, glLineId,
+     *                                   materialised).
      *
      * @return array<string,mixed> An allocation record matching the schema.
      */
@@ -250,12 +248,8 @@ class ActivityCostAllocationSplitter
      * the original allocation's id. The original SHALL be marked
      * `status=overridden` separately by the caller.
      *
-     * @param array{
-     *   originalAllocation: array<string,mixed>,
-     *   approvedBy: array<int,string>,
-     *   reason: string,
-     *   newSplits: array<int,array<string,mixed>>
-     * } $input Override inputs.
+     * @param array<string,mixed> $input Override inputs (originalAllocation,
+     *                                   approvedBy, reason, newSplits).
      *
      * @return array<string,mixed> Replacement allocation record.
      *
@@ -275,9 +269,9 @@ class ActivityCostAllocationSplitter
             throw new InvalidArgumentException('Handmatige override requires a non-empty reason');
         }
 
-        $original    = (array) $input['originalAllocation'];
-        $now         = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
-        $originalId  = (string) ($original['id'] ?? $original['_id'] ?? '');
+        $original   = (array) $input['originalAllocation'];
+        $now        = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
+        $originalId = (string) ($original['id'] ?? $original['_id'] ?? '');
 
         return [
             'journalEntryId'       => (string) ($original['journalEntryId'] ?? ''),
@@ -327,17 +321,21 @@ class ActivityCostAllocationSplitter
                 continue;
             }
 
+            $side = 'credit';
+            if ($amount >= 0) {
+                $side = 'debit';
+            }
+
             $entries[] = [
-                'grootboek'    => (string) ($split['grootboek'] ?? ($glAccountClass . ((string) ($split['dimensie'] ?? 'MO')))),
+                'grootboek'    => (string) ($split['grootboek'] ?? ($glAccountClass.((string) ($split['dimensie'] ?? 'MO')))),
                 'amount'       => $amount,
                 'kostendrager' => (string) ($split['kostendrager'] ?? ''),
                 'dimensie'     => (string) ($split['dimensie'] ?? 'MO'),
-                'side'         => ($amount >= 0 ? 'debit' : 'credit'),
+                'side'         => $side,
             ];
-        }
+        }//end foreach
 
         return $entries;
 
     }//end materialiseSplits()
-
 }//end class

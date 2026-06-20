@@ -72,7 +72,7 @@ final class SigningConcludedListener implements IEventListener
     private const SUBJECT_SCHEMAS = ['ACMReport', 'AnnualReport', 'ManagementLetter'];
 
     /**
-     * docudesk statuses that map to a terminal shillinq signingStatus. A
+     * Docudesk statuses that map to a terminal shillinq signingStatus. A
      * `cancelled` request is, like an `expired` one, a non-completing terminal
      * outcome that must not open the submission gate, so it maps to `expired`.
      *
@@ -103,7 +103,6 @@ final class SigningConcludedListener implements IEventListener
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Handle a docudesk SigningConcludedEvent.
@@ -169,13 +168,19 @@ final class SigningConcludedListener implements IEventListener
             // and fires the consequence exactly once on 'signed'; a repeated
             // conclusion is a no-op and $consequence stays empty.
             $consequence = [];
-            $updated     = $this->signingService->onSigningCallback(
+            if ($signedDocumentRef !== '') {
+                $signedDocumentValue = $signedDocumentRef;
+            } else {
+                $signedDocumentValue = null;
+            }
+
+            $updated = $this->signingService->onSigningCallback(
                 $financeObject,
                 $outcome,
                 $signingRequestRef,
                 null,
                 null,
-                ($signedDocumentRef !== '' ? $signedDocumentRef : null),
+                $signedDocumentValue,
                 function (array $object) use ($schema, $outcome, &$consequence): array {
                     $object      = $this->applyAccountingConsequence(schema: $schema, object: $object, outcome: $outcome);
                     $consequence = $this->consequenceDelta(object: $object, outcome: $outcome);
@@ -214,7 +219,6 @@ final class SigningConcludedListener implements IEventListener
 
     }//end handle()
 
-
     /**
      * Resolve the subject id from the concluded event — prefer the
      * externalReference we sent on the request, fall back to subjectId.
@@ -233,7 +237,6 @@ final class SigningConcludedListener implements IEventListener
         return (string) ($event->getSubjectId() ?? '');
 
     }//end resolveSubjectId()
-
 
     /**
      * Resolve the finance object the concluded signing request belongs to.
@@ -268,7 +271,6 @@ final class SigningConcludedListener implements IEventListener
 
     }//end resolveFinanceObject()
 
-
     /**
      * Apply the local accounting consequence on a completed signature
      * (REQ-SIGN-006). The consequence stays in shillinq: on `signed` the finance
@@ -291,7 +293,7 @@ final class SigningConcludedListener implements IEventListener
         // the existing OR write path. shillinq owns no signing engine — it
         // records the docudesk outcome and opens its own downstream gate
         // (submission) exactly once.
-        $object['signedAt']            = gmdate('Y-m-d\TH:i:s\Z');
+        $object['signedAt']           = gmdate('Y-m-d\TH:i:s\Z');
         $object['submissionGateOpen'] = true;
 
         $this->logger->info(
@@ -305,7 +307,6 @@ final class SigningConcludedListener implements IEventListener
         return $object;
 
     }//end applyAccountingConsequence()
-
 
     /**
      * Extract the accounting-consequence fields written by
@@ -334,7 +335,6 @@ final class SigningConcludedListener implements IEventListener
 
     }//end consequenceDelta()
 
-
     /**
      * Find a finance object by id within a schema, returning a plain array.
      *
@@ -359,7 +359,6 @@ final class SigningConcludedListener implements IEventListener
 
     }//end findObject()
 
-
     /**
      * Persist the mirror updates onto the finance object via OR.
      *
@@ -378,7 +377,6 @@ final class SigningConcludedListener implements IEventListener
             ->updateObject($id, $updates);
 
     }//end persist()
-
 
     /**
      * Normalise an OR find result to a plain array.
@@ -405,6 +403,4 @@ final class SigningConcludedListener implements IEventListener
         return null;
 
     }//end toArray()
-
-
 }//end class

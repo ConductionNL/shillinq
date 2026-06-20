@@ -80,10 +80,11 @@ class LeaseReassessmentService
      * soft — the persisted LeaseReassessmentEvent remains the source of
      * truth for the audit trail.
      *
-     * @param ContainerInterface              $container       DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig                      $appConfig       App config for the register slug.
-     * @param LeaseAmortizationCalculator     $calculator      Pure-logic IFRS 16 arithmetic helper.
-     * @param LoggerInterface                 $logger          Logger (no stack traces to client).
+     * @param ContainerInterface               $container       DI container — OR's ObjectService is fetched
+     *                                                          lazily.
+     * @param IAppConfig                       $appConfig       App config for the register slug.
+     * @param LeaseAmortizationCalculator      $calculator      Pure-logic IFRS 16 arithmetic helper.
+     * @param LoggerInterface                  $logger          Logger (no stack traces to client).
      * @param LeaseDecideskWebhookService|null $decideskWebhook Optional decidesk webhook delivery service.
      */
     public function __construct(
@@ -91,7 +92,7 @@ class LeaseReassessmentService
         private readonly IAppConfig $appConfig,
         private readonly LeaseAmortizationCalculator $calculator,
         private readonly LoggerInterface $logger,
-        private readonly ?LeaseDecideskWebhookService $decideskWebhook = null,
+        private readonly ?LeaseDecideskWebhookService $decideskWebhook=null,
     ) {
     }//end __construct()
 
@@ -103,11 +104,11 @@ class LeaseReassessmentService
      * stream, and the RoU asset is adjusted catch-up by the liability delta
      * (IFRS 16.42).
      *
-     * @param string $leaseContractId      The LeaseContract id or slug.
-     * @param string $administrationId     Administration scope (server-resolved, ADR-005).
-     * @param float  $newPaymentAmount     The indexed payment per period (decimal money).
-     * @param string $triggerDescription   Free-text business reason recorded on the event.
-     * @param string $approver             Approver person id (organisations.person-id FK).
+     * @param string $leaseContractId    The LeaseContract id or slug.
+     * @param string $administrationId   Administration scope (server-resolved, ADR-005).
+     * @param float  $newPaymentAmount   The indexed payment per period (decimal money).
+     * @param string $triggerDescription Free-text business reason recorded on the event.
+     * @param string $approver           Approver person id (organisations.person-id FK).
      *
      * @return array<string,mixed>|null The persisted event payload, or null when out of scope.
      *
@@ -117,8 +118,8 @@ class LeaseReassessmentService
         string $leaseContractId,
         string $administrationId,
         float $newPaymentAmount,
-        string $triggerDescription = '',
-        string $approver = '',
+        string $triggerDescription='',
+        string $approver='',
     ): ?array {
         $lease = $this->fetchLease(leaseContractId: $leaseContractId, administrationId: $administrationId);
         if ($lease === null) {
@@ -128,12 +129,18 @@ class LeaseReassessmentService
         $newLease = $lease;
         $newLease['basePaymentAmount'] = $newPaymentAmount;
 
+        if ($triggerDescription !== '') {
+            $resolvedTriggerDescription = $triggerDescription;
+        } else {
+            $resolvedTriggerDescription = 'Indexation clause triggered';
+        }
+
         return $this->persistEvent(
             eventType: 'indexation-remeasurement',
             lease: $lease,
             newLease: $newLease,
             remeasurementApproach: 'catch-up-adjustment',
-            triggerDescription: ($triggerDescription !== '' ? $triggerDescription : 'Indexation clause triggered'),
+            triggerDescription: $resolvedTriggerDescription,
             approver: $approver,
             administrationId: $administrationId,
         );
@@ -148,11 +155,11 @@ class LeaseReassessmentService
      * post-event liability. The schedule itself is regenerated from
      * fromSequence by LeasePaymentScheduleService once the event is approved.
      *
-     * @param string                          $leaseContractId       The LeaseContract id or slug.
-     * @param string                          $administrationId      Administration scope.
-     * @param array<int,array<string,mixed>>  $updatedExtensionOptions The new extension-options array.
-     * @param string                          $triggerDescription    Free-text business reason.
-     * @param string                          $approver              Approver person id.
+     * @param string                         $leaseContractId         The LeaseContract id or slug.
+     * @param string                         $administrationId        Administration scope.
+     * @param array<int,array<string,mixed>> $updatedExtensionOptions The new extension-options array.
+     * @param string                         $triggerDescription      Free-text business reason.
+     * @param string                         $approver                Approver person id.
      *
      * @return array<string,mixed>|null The persisted event payload.
      *
@@ -162,8 +169,8 @@ class LeaseReassessmentService
         string $leaseContractId,
         string $administrationId,
         array $updatedExtensionOptions,
-        string $triggerDescription = '',
-        string $approver = '',
+        string $triggerDescription='',
+        string $approver='',
     ): ?array {
         $lease = $this->fetchLease(leaseContractId: $leaseContractId, administrationId: $administrationId);
         if ($lease === null) {
@@ -173,12 +180,18 @@ class LeaseReassessmentService
         $newLease = $lease;
         $newLease['extensionOptions'] = $updatedExtensionOptions;
 
+        if ($triggerDescription !== '') {
+            $resolvedTriggerDescription = $triggerDescription;
+        } else {
+            $resolvedTriggerDescription = 'Extension-option likelihood revised';
+        }
+
         return $this->persistEvent(
             eventType: 'extension-option-reassessment',
             lease: $lease,
             newLease: $newLease,
             remeasurementApproach: 'catch-up-adjustment',
-            triggerDescription: ($triggerDescription !== '' ? $triggerDescription : 'Extension-option likelihood revised'),
+            triggerDescription: $resolvedTriggerDescription,
             approver: $approver,
             administrationId: $administrationId,
         );
@@ -194,12 +207,12 @@ class LeaseReassessmentService
      * `catch-up-adjustment`, matching the most common case where the same
      * underlying asset's scope is modified mid-term.
      *
-     * @param string                $leaseContractId    The LeaseContract id or slug.
-     * @param string                $administrationId   Administration scope.
-     * @param array<string,mixed>   $newTerms           Field overrides to apply on the lease snapshot.
-     * @param string                $approach           catch-up-adjustment|prospective|separate-lease.
-     * @param string                $triggerDescription Free-text business reason.
-     * @param string                $approver           Approver person id.
+     * @param string              $leaseContractId    The LeaseContract id or slug.
+     * @param string              $administrationId   Administration scope.
+     * @param array<string,mixed> $newTerms           Field overrides to apply on the lease snapshot.
+     * @param string              $approach           catch-up-adjustment|prospective|separate-lease.
+     * @param string              $triggerDescription Free-text business reason.
+     * @param string              $approver           Approver person id.
      *
      * @return array<string,mixed>|null The persisted event payload.
      *
@@ -209,28 +222,34 @@ class LeaseReassessmentService
         string $leaseContractId,
         string $administrationId,
         array $newTerms,
-        string $approach = 'catch-up-adjustment',
-        string $triggerDescription = '',
-        string $approver = '',
+        string $approach='catch-up-adjustment',
+        string $triggerDescription='',
+        string $approver='',
     ): ?array {
         $lease = $this->fetchLease(leaseContractId: $leaseContractId, administrationId: $administrationId);
         if ($lease === null) {
             return null;
         }
 
-        $approach = in_array($approach, ['catch-up-adjustment', 'prospective', 'separate-lease'], true) === true
-            ? $approach
-            : 'catch-up-adjustment';
+        if (in_array($approach, ['catch-up-adjustment', 'prospective', 'separate-lease'], true) === false) {
+            $approach = 'catch-up-adjustment';
+        }
 
-        $newLease = array_merge($lease, $newTerms);
+        $newLease  = array_merge($lease, $newTerms);
         $eventType = $this->resolveModificationEventType(newTerms: $newTerms);
+
+        if ($triggerDescription !== '') {
+            $resolvedTriggerDescription = $triggerDescription;
+        } else {
+            $resolvedTriggerDescription = 'Lease terms modified';
+        }
 
         return $this->persistEvent(
             eventType: $eventType,
             lease: $lease,
             newLease: $newLease,
             remeasurementApproach: $approach,
-            triggerDescription: ($triggerDescription !== '' ? $triggerDescription : 'Lease terms modified'),
+            triggerDescription: $resolvedTriggerDescription,
             approver: $approver,
             administrationId: $administrationId,
         );
@@ -258,8 +277,8 @@ class LeaseReassessmentService
         string $leaseContractId,
         string $administrationId,
         float $recoverableValue,
-        string $triggerDescription = '',
-        string $approver = '',
+        string $triggerDescription='',
+        string $approver='',
     ): ?array {
         $lease = $this->fetchLease(leaseContractId: $leaseContractId, administrationId: $administrationId);
         if ($lease === null) {
@@ -269,24 +288,30 @@ class LeaseReassessmentService
         // Impairment freezes the liability and writes down only the RoU asset.
         $opening = $this->calculator->openingBalances(lease: $lease);
 
-        $preEventLiabilityCents  = $this->calculator->toCents(amount: $opening['liability']);
-        $preEventRouCents        = $this->calculator->toCents(amount: $opening['rouAsset']);
-        $postEventRouCents       = $this->calculator->toCents(amount: $recoverableValue);
-        $rouDeltaCents           = ($postEventRouCents - $preEventRouCents);
-        $plImpactCents           = -$rouDeltaCents;
+        $preEventLiabilityCents = $this->calculator->toCents(amount: $opening['liability']);
+        $preEventRouCents       = $this->calculator->toCents(amount: $opening['rouAsset']);
+        $postEventRouCents      = $this->calculator->toCents(amount: $recoverableValue);
+        $rouDeltaCents          = ($postEventRouCents - $preEventRouCents);
+        $plImpactCents          = -$rouDeltaCents;
+
+        if ($triggerDescription !== '') {
+            $resolvedTriggerDescription = $triggerDescription;
+        } else {
+            $resolvedTriggerDescription = 'Impairment write-down';
+        }
 
         $eventPayload = [
-            'eventType'                => 'impairment',
-            'remeasurementApproach'    => 'catch-up-adjustment',
-            'oldContractSnapshot'      => $this->snapshotLease(lease: $lease),
-            'newContractSnapshot'      => $this->snapshotLease(lease: $lease),
-            'preEventLeaseLiability'   => $opening['liability'],
-            'postEventLeaseLiability'  => $opening['liability'],
-            'rouAssetAdjustment'       => $this->calculator->fromCents(cents: $rouDeltaCents),
-            'plImpact'                 => $this->calculator->fromCents(cents: $plImpactCents),
-            'triggerDescription'       => ($triggerDescription !== '' ? $triggerDescription : 'Impairment write-down'),
-            'approver'                 => $approver,
-            'glLines'                  => $this->buildImpairmentGlLines(rouDeltaCents: $rouDeltaCents),
+            'eventType'                   => 'impairment',
+            'remeasurementApproach'       => 'catch-up-adjustment',
+            'oldContractSnapshot'         => $this->snapshotLease(lease: $lease),
+            'newContractSnapshot'         => $this->snapshotLease(lease: $lease),
+            'preEventLeaseLiability'      => $opening['liability'],
+            'postEventLeaseLiability'     => $opening['liability'],
+            'rouAssetAdjustment'          => $this->calculator->fromCents(cents: $rouDeltaCents),
+            'plImpact'                    => $this->calculator->fromCents(cents: $plImpactCents),
+            'triggerDescription'          => $resolvedTriggerDescription,
+            'approver'                    => $approver,
+            'glLines'                     => $this->buildImpairmentGlLines(rouDeltaCents: $rouDeltaCents),
             'rouAdjustmentMagnitudeCents' => abs($rouDeltaCents),
         ];
 
@@ -320,13 +345,13 @@ class LeaseReassessmentService
      * approach freezes the existing carrying amount and only updates the future
      * schedule (no RoU adjustment recorded here).
      *
-     * @param string                $eventType             One of the REQ-LR-001 enum values.
-     * @param array<string,mixed>   $lease                 The pre-event lease snapshot.
-     * @param array<string,mixed>   $newLease              The post-event lease snapshot.
-     * @param string                $remeasurementApproach catch-up-adjustment|prospective|separate-lease.
-     * @param string                $triggerDescription    Free-text business reason.
-     * @param string                $approver              Approver person id.
-     * @param string                $administrationId      Administration scope.
+     * @param string              $eventType             One of the REQ-LR-001 enum values.
+     * @param array<string,mixed> $lease                 The pre-event lease snapshot.
+     * @param array<string,mixed> $newLease              The post-event lease snapshot.
+     * @param string              $remeasurementApproach catch-up-adjustment|prospective|separate-lease.
+     * @param string              $triggerDescription    Free-text business reason.
+     * @param string              $approver              Approver person id.
+     * @param string              $administrationId      Administration scope.
      *
      * @return array<string,mixed>|null The persisted event payload.
      */
@@ -349,7 +374,11 @@ class LeaseReassessmentService
         // Catch-up: RoU mirrors the liability delta (no gain/loss).
         // Prospective: RoU unchanged, the delta is absorbed by future periods.
         // Separate-lease: this event records the split; the new lease is created by the caller.
-        $rouDeltaCents = ($remeasurementApproach === 'catch-up-adjustment') ? $liabilityDeltaCents : 0;
+        if ($remeasurementApproach === 'catch-up-adjustment') {
+            $rouDeltaCents = $liabilityDeltaCents;
+        } else {
+            $rouDeltaCents = 0;
+        }
 
         $payload = [
             'eventType'                   => $eventType,
@@ -399,9 +428,11 @@ class LeaseReassessmentService
         int $preEventLiabilityCents,
     ): array {
         $sourceLease = $this->resolveSourceLease(lease: $lease);
-        $status      = ($payload['rouAdjustmentMagnitudeCents'] > self::DECIDESK_THRESHOLD_CENTS)
-            ? 'pending-approval'
-            : 'approved';
+        if ($payload['rouAdjustmentMagnitudeCents'] > self::DECIDESK_THRESHOLD_CENTS) {
+            $status = 'pending-approval';
+        } else {
+            $status = 'approved';
+        }
 
         unset($payload['rouAdjustmentMagnitudeCents']);
 
@@ -444,7 +475,7 @@ class LeaseReassessmentService
                     'exception'       => $e->getMessage(),
                 ]
             );
-        }
+        }//end try
 
         return $row;
 
@@ -453,7 +484,7 @@ class LeaseReassessmentService
     /**
      * Resolve the modification event-type from the field deltas.
      *
-     * payment-modification when only basePaymentAmount changes; term-modification
+     * Payment-modification when only basePaymentAmount changes; term-modification
      * when nonCancellableTermMonths changes; scope-modification otherwise (the
      * IFRS 16.44 default for any other field change).
      *
@@ -695,14 +726,18 @@ class LeaseReassessmentService
                         ],
                     ]
                 );
-            $count = is_array($existing) === true ? count($existing) : 0;
+            if (is_array($existing) === true) {
+                $count = count($existing);
+            } else {
+                $count = 0;
+            }
         } catch (\Throwable $e) {
             $this->logger->warning(
                 'LeaseReassessmentService: failed to count prior events',
                 ['sourceLease' => $sourceLease, 'exception' => $e->getMessage()]
             );
             $count = 0;
-        }
+        }//end try
 
         return sprintf('%s-reassess-%03d', $leaseNumber, ($count + 1));
 
@@ -788,7 +823,6 @@ class LeaseReassessmentService
         return $register;
 
     }//end register()
-
 
     /**
      * Best-effort decidesk webhook delivery for material reassessment events.

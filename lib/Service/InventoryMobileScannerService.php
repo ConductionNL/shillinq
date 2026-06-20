@@ -107,7 +107,7 @@ class InventoryMobileScannerService
      *
      * @return array{deltas: list<array<string,mixed>>, serverTimestamp: string}
      */
-    public function downloadDeltas(?string $since, string $administrationId, int $limit = 500): array
+    public function downloadDeltas(?string $since, string $administrationId, int $limit=500): array
     {
         $serverTimestamp = $this->nowIso();
         $deltas          = [];
@@ -139,8 +139,8 @@ class InventoryMobileScannerService
                 );
 
             foreach ($records as $record) {
-                $row = $this->stockToArray($record);
-                if ($since !== null && $since !== '' && $this->isStrictlyAfter($since, ($row['lastModified'] ?? '')) === true) {
+                $row = $this->stockToArray(record: $record);
+                if ($since !== null && $since !== '' && $this->isStrictlyAfter(since: $since, candidate: ($row['lastModified'] ?? '')) === true) {
                     continue;
                 }
 
@@ -152,7 +152,7 @@ class InventoryMobileScannerService
                 ['exception' => $e->getMessage()]
             );
             return ['deltas' => [], 'serverTimestamp' => $serverTimestamp];
-        }
+        }//end try
 
         return ['deltas' => $deltas, 'serverTimestamp' => $serverTimestamp];
 
@@ -250,13 +250,13 @@ class InventoryMobileScannerService
     /**
      * Process a single operation from a sync batch.
      *
-     * @param array<string,mixed> $op              Client-submitted operation row.
-     * @param string              $userId          Authenticated user id.
-     * @param list<string>        $roles           User roles.
+     * @param array<string,mixed> $op               Client-submitted operation row.
+     * @param string              $userId           Authenticated user id.
+     * @param list<string>        $roles            User roles.
      * @param string              $administrationId Tenant scope.
-     * @param object              $objectService   Lazy-resolved OR ObjectService.
-     * @param string              $registerSlug    Shillinq register slug.
-     * @param string              $serverTimestamp ISO 8601 server timestamp.
+     * @param object              $objectService    Lazy-resolved OR ObjectService.
+     * @param string              $registerSlug     Shillinq register slug.
+     * @param string              $serverTimestamp  ISO 8601 server timestamp.
      *
      * @return array<string,mixed> Per-operation ACK.
      */
@@ -290,10 +290,10 @@ class InventoryMobileScannerService
 
         if ($duplicate !== null) {
             return [
-                'transactionId'  => $transactionId,
-                'status'         => 'duplicate',
-                'serverAckedAt'  => ($duplicate['ackedAt'] ?? $serverTimestamp),
-                'reason'         => 'transactionId already processed',
+                'transactionId' => $transactionId,
+                'status'        => 'duplicate',
+                'serverAckedAt' => ($duplicate['ackedAt'] ?? $serverTimestamp),
+                'reason'        => 'transactionId already processed',
             ];
         }
 
@@ -459,7 +459,7 @@ class InventoryMobileScannerService
             return null;
         }
 
-        $row = $this->toArray($existing[0]);
+        $row = $this->toArray(record: $existing[0]);
 
         $occurredAt = (string) ($row['occurredAt'] ?? '');
         if ($occurredAt === '') {
@@ -535,11 +535,11 @@ class InventoryMobileScannerService
         string $administrationId,
         string $serverTimestamp,
     ): void {
-        $type           = (string) ($op['type'] ?? '');
-        $sku            = (string) ($op['sku'] ?? '');
-        $location       = (string) ($op['location'] ?? '');
-        $quantity       = (float) ($op['quantity'] ?? 0);
-        $transactionId  = (string) ($op['transactionId'] ?? '');
+        $type          = (string) ($op['type'] ?? '');
+        $sku           = (string) ($op['sku'] ?? '');
+        $location      = (string) ($op['location'] ?? '');
+        $quantity      = (float) ($op['quantity'] ?? 0);
+        $transactionId = (string) ($op['transactionId'] ?? '');
 
         if ($type === 'receive') {
             $this->mutateStock(
@@ -566,7 +566,7 @@ class InventoryMobileScannerService
                 schema: 'GoodsReceipt',
             );
             return;
-        }
+        }//end if
 
         if ($type === 'transfer') {
             $toLocation = (string) ($op['toLocation'] ?? '');
@@ -604,7 +604,7 @@ class InventoryMobileScannerService
                 schema: 'InventoryTransfer',
             );
             return;
-        }
+        }//end if
 
         if ($type === 'pick') {
             $this->mutateStock(
@@ -632,12 +632,12 @@ class InventoryMobileScannerService
                 schema: 'OrderPick',
             );
             return;
-        }
+        }//end if
 
         if ($type === 'count') {
-            $physical   = (float) ($op['physicalQuantity'] ?? 0);
-            $reconcile  = (bool) ($op['reconcile'] ?? false);
-            $systemQty  = $this->readSystemQuantity(
+            $physical  = (float) ($op['physicalQuantity'] ?? 0);
+            $reconcile = (bool) ($op['reconcile'] ?? false);
+            $systemQty = $this->readSystemQuantity(
                 objectService: $objectService,
                 registerSlug: $registerSlug,
                 administrationId: $administrationId,
@@ -730,9 +730,9 @@ class InventoryMobileScannerService
             return;
         }
 
-        $current     = $this->toArray($existing[0]);
-        $currentQty  = (float) ($current['quantity'] ?? 0);
-        $nextQty     = max(0.0, ($currentQty + $delta));
+        $current    = $this->toArray(record: $existing[0]);
+        $currentQty = (float) ($current['quantity'] ?? 0);
+        $nextQty    = max(0.0, ($currentQty + $delta));
         $current['quantity']     = $nextQty;
         $current['lastModified'] = $serverTimestamp;
 
@@ -781,7 +781,7 @@ class InventoryMobileScannerService
             return 0.0;
         }
 
-        $row = $this->toArray($existing[0]);
+        $row = $this->toArray(record: $existing[0]);
         return (float) ($row['quantity'] ?? 0);
 
     }//end readSystemQuantity()
@@ -813,9 +813,9 @@ class InventoryMobileScannerService
         string $status,
         ?string $rejectionReason,
     ): void {
-        $type        = (string) ($op['type'] ?? '');
-        $quantity    = ($op['quantity'] ?? null);
-        $delta       = null;
+        $type     = (string) ($op['type'] ?? '');
+        $quantity = ($op['quantity'] ?? null);
+        $delta    = null;
         if (is_numeric($quantity) === true) {
             $delta = (float) $quantity;
             if ($type === 'pick') {
@@ -862,7 +862,7 @@ class InventoryMobileScannerService
      * Robust against missing or unparseable timestamps: when either side is
      * unparseable, the candidate is kept (false return).
      *
-     * @param string $since    The since= cut-off (client-supplied).
+     * @param string $since     The since= cut-off (client-supplied).
      * @param string $candidate The record's lastModified timestamp.
      *
      * @return bool
@@ -918,7 +918,7 @@ class InventoryMobileScannerService
      */
     private function stockToArray(mixed $record): array
     {
-        $row = $this->toArray($record);
+        $row = $this->toArray(record: $record);
         return [
             'sku'          => (string) ($row['sku'] ?? ''),
             'location'     => (string) ($row['location'] ?? ''),
@@ -928,5 +928,4 @@ class InventoryMobileScannerService
         ];
 
     }//end stockToArray()
-
 }//end class

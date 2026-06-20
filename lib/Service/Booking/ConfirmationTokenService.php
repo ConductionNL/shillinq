@@ -70,7 +70,6 @@ class ConfirmationTokenService
      */
     public const DEFAULT_DEADLINE_SECONDS = (48 * 60 * 60);
 
-
     /**
      * Construct the service with DI dependencies.
      *
@@ -94,7 +93,6 @@ class ConfirmationTokenService
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Issue a fresh token for an appointment.
@@ -125,7 +123,7 @@ class ConfirmationTokenService
             'createdBy'     => $createdBy,
         ];
 
-        $record = $this->saveToken($payload);
+        $record = $this->saveToken(token: $payload);
         return [
             'tokenId'   => $tokenId,
             'plaintext' => $plaintext,
@@ -134,19 +132,18 @@ class ConfirmationTokenService
 
     }//end issueToken()
 
-
     /**
      * Generate a token + persist it + send the confirmation email. Used by
      * appointment.create flow (REQ-BCF-001/003).
      *
      * @param array<string, mixed> $appointment Appointment record (must
-     *                                         contain `appointmentId`,
-     *                                         `startTime`, `endTime`;
-     *                                         `customerId`, `serviceName`,
-     *                                         `customerEmail` optional).
+     *                                          contain `appointmentId`,
+     *                                          `startTime`, `endTime`;
+     *                                          `customerId`, `serviceName`,
+     *                                          `customerEmail` optional).
      * @param array<string, mixed> $customer    Customer descriptor — at
-     *                                         minimum `id` and `email`.
-     *                                         Optional `userId`, `name`.
+     *                                          minimum `id` and `email`.
+     *                                          Optional `userId`, `name`.
      *
      * @return array{tokenId:string,sent:bool} Outcome — `sent` is FALSE
      *         when openconnector is unavailable (email is logged for
@@ -162,8 +159,8 @@ class ConfirmationTokenService
             ];
         }
 
-        $issued     = $this->issueToken($appointmentId);
-        $confirmUrl = $this->buildConfirmUrl($appointmentId, $issued['plaintext']);
+        $issued     = $this->issueToken(appointmentId: $appointmentId);
+        $confirmUrl = $this->buildConfirmUrl(appointmentId: $appointmentId, plaintext: $issued['plaintext']);
         $context    = [
             'serviceName'    => (string) ($appointment['serviceName'] ?? 'Appointment'),
             'location'       => (string) ($appointment['location'] ?? ''),
@@ -190,7 +187,6 @@ class ConfirmationTokenService
 
     }//end issueAndSend()
 
-
     /**
      * Validate a presented (plaintext) token against the active token for
      * the given appointment without mutating any state.
@@ -212,7 +208,7 @@ class ConfirmationTokenService
             ];
         }
 
-        $token = $this->findActiveTokenForAppointment($appointmentId);
+        $token = $this->findActiveTokenForAppointment(appointmentId: $appointmentId);
         if ($token === null) {
             return [
                 'ok'     => false,
@@ -263,7 +259,6 @@ class ConfirmationTokenService
 
     }//end validate()
 
-
     /**
      * Mark the given token as redeemed.
      *
@@ -273,13 +268,12 @@ class ConfirmationTokenService
      */
     public function markRedeemed(array $token): array
     {
-        $now             = $this->nowIso();
-        $token['status'] = 'redeemed';
+        $now = $this->nowIso();
+        $token['status']     = 'redeemed';
         $token['redeemedAt'] = $now;
-        return $this->saveToken($token);
+        return $this->saveToken(token: $token);
 
     }//end markRedeemed()
-
 
     /**
      * Revoke the active token for an appointment (REQ-BCF-006). Returns the
@@ -291,16 +285,15 @@ class ConfirmationTokenService
      */
     public function revokeActiveForAppointment(string $appointmentId): ?array
     {
-        $token = $this->findActiveTokenForAppointment($appointmentId);
+        $token = $this->findActiveTokenForAppointment(appointmentId: $appointmentId);
         if ($token === null) {
             return null;
         }
 
         $token['status'] = 'revoked';
-        return $this->saveToken($token);
+        return $this->saveToken(token: $token);
 
     }//end revokeActiveForAppointment()
-
 
     /**
      * Resend the confirmation email — revoke current token, issue a new one
@@ -309,7 +302,7 @@ class ConfirmationTokenService
      * @param array<string, mixed> $appointment Appointment record.
      * @param array<string, mixed> $customer    Customer descriptor.
      * @param string               $actor       User id that triggered resend
-     *                                         (the customer or an admin).
+     *                                          (the customer or an admin).
      *
      * @return array{tokenId:string,sent:bool} Outcome — same shape as
      *         {@see ConfirmationTokenService::issueAndSend()}.
@@ -324,9 +317,9 @@ class ConfirmationTokenService
             ];
         }
 
-        $this->revokeActiveForAppointment($appointmentId);
-        $issued     = $this->issueToken($appointmentId, $actor);
-        $confirmUrl = $this->buildConfirmUrl($appointmentId, $issued['plaintext']);
+        $this->revokeActiveForAppointment(appointmentId: $appointmentId);
+        $issued     = $this->issueToken(appointmentId: $appointmentId, createdBy: $actor);
+        $confirmUrl = $this->buildConfirmUrl(appointmentId: $appointmentId, plaintext: $issued['plaintext']);
         $context    = [
             'serviceName'    => (string) ($appointment['serviceName'] ?? 'Appointment'),
             'location'       => (string) ($appointment['location'] ?? ''),
@@ -353,7 +346,6 @@ class ConfirmationTokenService
 
     }//end resend()
 
-
     /**
      * Build the absolute web-portal URL pre-loaded with a plaintext token.
      *
@@ -369,7 +361,6 @@ class ConfirmationTokenService
         return $this->urls->getAbsoluteURL($relative);
 
     }//end buildConfirmUrl()
-
 
     /**
      * Locate the active ConfirmationToken for an appointment (REQ-BCF-006
@@ -390,29 +381,30 @@ class ConfirmationTokenService
             $records       = $objectService
                 ->setRegister($this->settings->getRegisterSlug())
                 ->setSchema('ConfirmationToken')
-                ->findAll([
-                    'filters' => [
-                        'appointmentId' => $appointmentId,
-                        'status'        => 'active',
-                    ],
-                    'limit' => 5,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => [
+                                'appointmentId' => $appointmentId,
+                                'status'        => 'active',
+                            ],
+                            'limit'   => 5,
+                        ]
+                        );
         } catch (Throwable $e) {
             $this->logger->error(
                 'ConfirmationTokenService: lookup failed',
                 ['exception' => $e->getMessage(), 'appointmentId' => $appointmentId]
             );
             return null;
-        }
+        }//end try
 
         foreach ($records as $record) {
-            return $this->toArray($record);
+            return $this->toArray(object: $record);
         }
 
         return null;
 
     }//end findActiveTokenForAppointment()
-
 
     /**
      * Persist a token record via OR's saveObject contract.
@@ -436,7 +428,7 @@ class ConfirmationTokenService
                 register: $this->settings->getRegisterSlug(),
                 schema: 'ConfirmationToken',
             );
-            return $this->toArray($saved);
+            return $this->toArray(object: $saved);
         } catch (Throwable $e) {
             $this->logger->error(
                 'ConfirmationTokenService: save failed',
@@ -446,7 +438,6 @@ class ConfirmationTokenService
         }
 
     }//end saveToken()
-
 
     /**
      * Dispatch the confirmation email through openconnector when available
@@ -473,11 +464,11 @@ class ConfirmationTokenService
         }
 
         $payload = [
-            'to'         => $email,
-            'subject'    => 'Confirmation needed: '.((string) ($appointment['serviceName'] ?? 'your appointment'))
+            'to'          => $email,
+            'subject'     => 'Confirmation needed: '.((string) ($appointment['serviceName'] ?? 'your appointment'))
                             .' on '.((string) ($appointment['startTime'] ?? '')),
-            'template'   => 'BookingConfirmationTemplate',
-            'variables'  => [
+            'template'    => 'BookingConfirmationTemplate',
+            'variables'   => [
                 'customerName'    => (string) ($customer['name'] ?? ''),
                 'appointmentDate' => (string) ($appointment['startTime'] ?? ''),
                 'confirmUrl'      => $confirmUrl,
@@ -519,7 +510,6 @@ class ConfirmationTokenService
 
     }//end dispatchEmail()
 
-
     /**
      * Generate a sortable token id (tok-YYYYMMDDHHMMSS-rrrr).
      *
@@ -530,7 +520,6 @@ class ConfirmationTokenService
         return 'tok-'.gmdate('YmdHis').'-'.bin2hex(random_bytes(2));
 
     }//end buildTokenId()
-
 
     /**
      * Current server time as ISO 8601 UTC.
@@ -544,7 +533,6 @@ class ConfirmationTokenService
             ->format('Y-m-d\TH:i:s\Z');
 
     }//end nowIso()
-
 
     /**
      * Normalise an OR record (Entity, array, or JSON-serialisable) into a
@@ -581,6 +569,4 @@ class ConfirmationTokenService
         return [];
 
     }//end toArray()
-
-
 }//end class

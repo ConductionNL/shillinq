@@ -51,7 +51,6 @@ final class PeppolBisOrderMapper
      */
     private const PROFILE_ID = 'urn:fdc:peppol.eu:poacc:bis:order_only:3';
 
-
     /**
      * Map a persisted PurchaseOrder into a UBL 2.1 Order XML string.
      *
@@ -60,10 +59,10 @@ final class PeppolBisOrderMapper
      * projectCode, notes). Missing optional fields fall back to empty UBL
      * elements so the document still validates structurally.
      *
-     * @param array<string,mixed> $purchaseOrder   The persisted PurchaseOrder record.
-     * @param string              $buyerParticipantId   Buyer Peppol participant id (`scheme:identifier`).
+     * @param array<string,mixed> $purchaseOrder         The persisted PurchaseOrder record.
+     * @param string              $buyerParticipantId    Buyer Peppol participant id (`scheme:identifier`).
      * @param string              $supplierParticipantId Supplier Peppol participant id (`scheme:identifier`).
-     * @param string              $issueDate       ISO date (Y-m-d) the order is issued.
+     * @param string              $issueDate             ISO date (Y-m-d) the order is issued.
      *
      * @return string The UBL 2.1 Order XML document.
      */
@@ -77,10 +76,10 @@ final class PeppolBisOrderMapper
         $currency = (string) ($purchaseOrder['currency'] ?? 'EUR');
         $lines    = (array) ($purchaseOrder['lines'] ?? []);
 
-        $totalAmount    = (float) ($purchaseOrder['totalAmount'] ?? 0);
-        $notes          = trim((string) ($purchaseOrder['notes'] ?? ''));
-        $costCenter     = trim((string) ($purchaseOrder['costCenter'] ?? ''));
-        $projectCode    = trim((string) ($purchaseOrder['projectCode'] ?? ''));
+        $totalAmount = (float) ($purchaseOrder['totalAmount'] ?? 0);
+        $notes       = trim((string) ($purchaseOrder['notes'] ?? ''));
+        $costCenter  = trim((string) ($purchaseOrder['costCenter'] ?? ''));
+        $projectCode = trim((string) ($purchaseOrder['projectCode'] ?? ''));
 
         [$buyerScheme, $buyerId]       = $this->splitParticipantId(participantId: $buyerParticipantId);
         [$supplierScheme, $supplierId] = $this->splitParticipantId(participantId: $supplierParticipantId);
@@ -152,7 +151,6 @@ final class PeppolBisOrderMapper
 
     }//end toUblOrderXml()
 
-
     /**
      * Render one OrderLine.
      *
@@ -197,7 +195,6 @@ final class PeppolBisOrderMapper
 
     }//end renderLine()
 
-
     /**
      * Split a Peppol participant id into (scheme, identifier).
      *
@@ -229,7 +226,6 @@ final class PeppolBisOrderMapper
 
     }//end splitParticipantId()
 
-
     /**
      * Render a single text element with proper XML escaping.
      *
@@ -244,7 +240,6 @@ final class PeppolBisOrderMapper
 
     }//end element()
 
-
     /**
      * Escape a value for an XML attribute (entities + quotes).
      *
@@ -257,7 +252,6 @@ final class PeppolBisOrderMapper
         return htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
 
     }//end attr()
-
 
     /**
      * Escape a value for an XML text node.
@@ -272,7 +266,6 @@ final class PeppolBisOrderMapper
 
     }//end escape()
 
-
     /**
      * Render a money amount as a UBL-conform decimal string (2 fraction digits).
      *
@@ -285,7 +278,6 @@ final class PeppolBisOrderMapper
         return number_format($amount, 2, '.', '');
 
     }//end money()
-
 
     /**
      * Render a numeric value as a UBL-conform decimal string (up to 4 fraction
@@ -305,6 +297,4 @@ final class PeppolBisOrderMapper
         return $formatted;
 
     }//end number()
-
-
 }//end class

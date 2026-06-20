@@ -66,8 +66,6 @@ use Psr\Log\LoggerInterface;
  */
 class ENSIAValidationGuard
 {
-
-
     /**
      * Construct the guard with lazy DI of OR's ObjectService.
      *
@@ -87,7 +85,6 @@ class ENSIAValidationGuard
     ) {
     }//end __construct()
 
-
     /**
      * Resolve the configured OpenRegister register slug for shillinq.
      *
@@ -103,7 +100,6 @@ class ENSIAValidationGuard
         return $slug;
 
     }//end getRegisterSlug()
-
 
     /**
      * Lazy-load OR's ObjectService through the DI container.
@@ -124,7 +120,6 @@ class ENSIAValidationGuard
         }
 
     }//end getObjectService()
-
 
     /**
      * Precondition guarding the ENSIAJaarcyclus peer-review → college-akkoord
@@ -192,7 +187,6 @@ class ENSIAValidationGuard
 
     }//end collegeAkkoordAllowed()
 
-
     /**
      * Precondition enforcing REQ-ENSIA-003 maturity-evidence rule on an
      * Evaluatievraag persist.
@@ -241,7 +235,6 @@ class ENSIAValidationGuard
 
     }//end maturityEvidenceSatisfied()
 
-
     /**
      * Precondition enforcing REQ-ENSIA-008 post-peer-review reden requirement
      * on an Evaluatievraag persist.
@@ -283,6 +276,4 @@ class ENSIAValidationGuard
         return true;
 
     }//end postPeerReviewReasonRequired()
-
-
 }//end class

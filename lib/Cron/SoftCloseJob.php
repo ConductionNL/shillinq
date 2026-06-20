@@ -70,9 +70,9 @@ class SoftCloseJob extends TimedJob
         private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
     ) {
-        parent::__construct($time);
-        $this->setInterval(self::INTERVAL_SECONDS);
-        $this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
+        parent::__construct(time: $time);
+        $this->setInterval(seconds: self::INTERVAL_SECONDS);
+        $this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
 
     }//end __construct()
 
@@ -116,11 +116,11 @@ class SoftCloseJob extends TimedJob
                         'SoftCloseJob: soft-close run failed',
                         ['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
                     );
-                }
-            }
+                }//end try
+            }//end foreach
         } catch (Throwable $e) {
             $this->logger->error('SoftCloseJob: top-level failure', ['exception' => $e->getMessage()]);
-        }
+        }//end try
 
     }//end run()
 

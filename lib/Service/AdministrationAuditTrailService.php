@@ -72,10 +72,11 @@ class AdministrationAuditTrailService
     /**
      * Constructor.
      *
-     * @param ContainerInterface             $container DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig                     $appConfig App config for the register slug.
-     * @param AdministrationContextService   $context   Multi-tenant RBAC resolver.
-     * @param LoggerInterface                $logger    Logger.
+     * @param ContainerInterface           $container DI container — OR's ObjectService is fetched
+     *                                                lazily.
+     * @param IAppConfig                   $appConfig App config for the register slug.
+     * @param AdministrationContextService $context   Multi-tenant RBAC resolver.
+     * @param LoggerInterface              $logger    Logger.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -103,7 +104,7 @@ class AdministrationAuditTrailService
     public function queryForAdministration(
         string $administrationId,
         string $schema,
-        int $limit = self::DEFAULT_PAGE_SIZE
+        int $limit=self::DEFAULT_PAGE_SIZE
     ): ?array {
         if ($administrationId === '' || $schema === '') {
             return null;
@@ -133,7 +134,7 @@ class AdministrationAuditTrailService
      * no row from an administratie outside `accessibleAdministrationIds()` is
      * ever included (REQ-MA-001).
      *
-     * @param string $schema             The schema to pull audit rows from.
+     * @param string $schema                 The schema to pull audit rows from.
      * @param int    $perAdministrationLimit Per-administratie row cap (defaults to 500).
      *
      * @return array<int,array<string,mixed>>
@@ -142,7 +143,7 @@ class AdministrationAuditTrailService
      */
     public function queryAcrossAccessibleAdministrations(
         string $schema,
-        int $perAdministrationLimit = self::DEFAULT_PER_ADMINISTRATION_LIMIT
+        int $perAdministrationLimit=self::DEFAULT_PER_ADMINISTRATION_LIMIT
     ): array {
         if ($schema === '') {
             return [];
@@ -150,7 +151,7 @@ class AdministrationAuditTrailService
 
         $aggregated = [];
         foreach ($this->context->accessibleAdministrationIds() as $administrationId) {
-            $rows = $this->fetchByAdministration(
+            $rows       = $this->fetchByAdministration(
                 administrationId: $administrationId,
                 schema: $schema,
                 limit: $perAdministrationLimit
@@ -222,6 +223,7 @@ class AdministrationAuditTrailService
                     if ($leftStamp === '' && is_array($left) === true) {
                         $leftStamp = (string) ($left[$key] ?? '');
                     }
+
                     if ($rightStamp === '' && is_array($right) === true) {
                         $rightStamp = (string) ($right[$key] ?? '');
                     }
@@ -230,9 +232,11 @@ class AdministrationAuditTrailService
                 if ($leftStamp === '' && $rightStamp === '') {
                     return 0;
                 }
+
                 if ($leftStamp === '') {
                     return 1;
                 }
+
                 if ($rightStamp === '') {
                     return -1;
                 }
@@ -277,7 +281,7 @@ class AdministrationAuditTrailService
                 ]
             );
             return [];
-        }
+        }//end try
 
         $rows = [];
         foreach ($entities as $entity) {

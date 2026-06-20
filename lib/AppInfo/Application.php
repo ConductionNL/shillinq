@@ -263,7 +263,7 @@ class Application extends App implements IBootstrap
             listener: InnovatieboxAuditTrailListener::class
         );
 
-        // bookkeeping-reconciliation-reports (T4) — REQ-REC-010. T2's
+        // Bookkeeping-reconciliation-reports (T4) — REQ-REC-010. T2's
         // bookkeeping-bank-reconciliation engine confirms a
         // ReconciliationMatch by transitioning its status to `confirmed`;
         // the listener stamps the T4-side fields (reconId, matchAlgorithm,
@@ -288,14 +288,14 @@ class Application extends App implements IBootstrap
             DoorsnijdingsVerbodValidator::class,
             static function (ContainerInterface $c): DoorsnijdingsVerbodValidator {
                 return new DoorsnijdingsVerbodValidator(
-                    $c,
-                    $c->get(IAppConfig::class),
-                    $c->get(InnovatieboxAuditEventLogger::class),
+                    container: $c,
+                    appConfig: $c->get(IAppConfig::class),
+                    auditLogger: $c->get(InnovatieboxAuditEventLogger::class),
                 );
             }
         );
 
-        // bookkeeping-credit-control-dunning tasks 19/20/21 — wire the
+        // Bookkeeping-credit-control-dunning tasks 19/20/21 — wire the
         // narrow ports used by CreditScoreService + DunningRunService to the
         // log-backed default bindings. The openconnector-backed bindings
         // (Graydon/Creditsafe/Atradius, Bos/Atradius Collections/Intrum,
@@ -337,15 +337,15 @@ class Application extends App implements IBootstrap
         // - CBS Iv3 (bookkeeping-cbs-iv3 / provincies + gemeenten Iv3)
         // - BZK SiSa (bookkeeping-sisa-reporting)
         // - Digipoort/SBR (bookkeeping-vat-btw-filing,
-        //   bookkeeping-financial-statements,
-        //   bookkeeping-sbr-xbrl-reporting, bookkeeping-csrd-esrs)
+        // bookkeeping-financial-statements,
+        // bookkeeping-sbr-xbrl-reporting, bookkeeping-csrd-esrs)
         // - Salarisbureau (bookkeeping-detachering-payroll-administratie,
-        //   bookkeeping-payroll-engine-nl)
+        // bookkeeping-payroll-engine-nl)
         // - RvO (bookkeeping-investeringsaftrek,
-        //   bookkeeping-wbso-sno-administratie)
+        // bookkeeping-wbso-sno-administratie)
         // - Belastingdienst IB47
-        //   (bookkeeping-detachering-payroll-administratie,
-        //   bookkeeping-btw-oss-eu).
+        // (bookkeeping-detachering-payroll-administratie,
+        // bookkeeping-btw-oss-eu).
         $context->registerService(
             CbsBestandenAdapterInterface::class,
             static function ($c): CbsBestandenAdapterInterface {
@@ -392,17 +392,17 @@ class Application extends App implements IBootstrap
         // Wave-4 external-API ports (low-volume families):
         //
         // - KvK Handelsregister (bookkeeping-multi-administratie onboarding,
-        //   AR/AP debtor/creditor enrichment,
-        //   bookkeeping-consolidation-commercial deelnemingen-graaf walk).
+        // AR/AP debtor/creditor enrichment,
+        // bookkeeping-consolidation-commercial deelnemingen-graaf walk).
         // - Mollie Payments (bookings-deposits DepositPayment intent,
-        //   bookkeeping-accounts-receivable-core invoice payment links +
-        //   webhook verification).
+        // bookkeeping-accounts-receivable-core invoice payment links +
+        // webhook verification).
         // - Bunq Bank Connector (bookkeeping-bank-connectors per-Source
-        //   pull + consent-renewal action; ADR-031 ScheduledWorkflow
-        //   delegates transport to this port; no aggregator JSON path —
-        //   Bunq exposes CAMT.053 natively).
+        // pull + consent-renewal action; ADR-031 ScheduledWorkflow
+        // delegates transport to this port; no aggregator JSON path —
+        // Bunq exposes CAMT.053 natively).
         // - UWV Loonaangifte + Werkhervattingskas (LHAfdracht acceptance
-        //   pull + werkgever-setup sectorindeling validation).
+        // pull + werkgever-setup sectorindeling validation).
         $context->registerService(
             KvkHandelsregisterAdapterInterface::class,
             static function ($c): KvkHandelsregisterAdapterInterface {
@@ -428,7 +428,7 @@ class Application extends App implements IBootstrap
             }
         );
 
-        // bookings-deposits REQ-DP-001/005/007/008 — DepositPayment
+        // Bookings-deposits REQ-DP-001/005/007/008 — DepositPayment
         // lifecycle adapter port (request / status / refund). Sits one
         // layer ABOVE MolliePaymentAdapterInterface (which is already
         // wired): the lifecycle code never sees a Mollie vs. Stripe
@@ -446,7 +446,7 @@ class Application extends App implements IBootstrap
             }
         );
 
-        // bookkeeping-csrd-esrs Tasks 30/31/32 — EFRAG ESRS XBRL taxonomy
+        // Bookkeeping-csrd-esrs Tasks 30/31/32 — EFRAG ESRS XBRL taxonomy
         // mapping + mandatory-data-point validation + iXBRL instance build.
         // Per ADR-022 the XBRL pipeline itself lives in
         // bookkeeping-sbr-xbrl-reporting (cross-app dependency); this port
@@ -464,7 +464,7 @@ class Application extends App implements IBootstrap
             }
         );
 
-        // bookkeeping-ccm-rule-engine REQ-CCM-002 — cross-app rule-engine
+        // Bookkeeping-ccm-rule-engine REQ-CCM-002 — cross-app rule-engine
         // delegation port. The local CcmRuleEngine (ADR-031 exception) runs
         // v1 sync/async DSL evaluation in-process; this port is the swap-out
         // seam for the future OpenRegister native rule engine (or a
@@ -478,7 +478,7 @@ class Application extends App implements IBootstrap
             }
         );
 
-        // bookkeeping-treasury-ihb Tasks 14/15/17/22 — reference-rate
+        // Bookkeeping-treasury-ihb Tasks 14/15/17/22 — reference-rate
         // (EURIBOR-3M / SOFR / SARON / ESTR) + FX-spot snapshots for the
         // declarative interest-accrual, FX-revaluation, and liquidity-KPI
         // aggregations. The dormant LogTreasuryRateAdapter returns
@@ -496,7 +496,7 @@ class Application extends App implements IBootstrap
         // Register the notifier for Shillinq in-app notifications (REQ-SUBV-010).
         $context->registerNotifierService(Notifier::class);
 
-        // dba-compliance-marker T31/T32 — optional non-blocking hook into AP/AR
+        // Dba-compliance-marker T31/T32 — optional non-blocking hook into AP/AR
         // factuur creation. The listener runs the VBAR uurtarief-toets
         // (REQ-DBA-016) when an ARInvoice/APInvoice carries a
         // `dbaOpdrachtId` field; it is silently inert otherwise.
@@ -505,7 +505,7 @@ class Application extends App implements IBootstrap
             listener: DBAFactuurMonitorListener::class
         );
 
-        // bookkeeping-tenderned-integratie Tasks 5.1 / 5.2 / 5.3 — react to
+        // Bookkeeping-tenderned-integratie Tasks 5.1 / 5.2 / 5.3 — react to
         // the OR object-lifecycle events that materialise the
         // `tenderned.award.detected`, `obligation.activated`, and
         // `milestone.completed` CloudEvents (design D4). Every listener is

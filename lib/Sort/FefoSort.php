@@ -64,9 +64,9 @@ class FefoSort
         usort(
             $lots,
             static function (array $left, array $right): int {
-                $leftExpiry  = ($left['expiryDate'] ?? null);
-                $rightExpiry = ($right['expiryDate'] ?? null);
-                $leftMissing = ($leftExpiry === null || $leftExpiry === '');
+                $leftExpiry   = ($left['expiryDate'] ?? null);
+                $rightExpiry  = ($right['expiryDate'] ?? null);
+                $leftMissing  = ($leftExpiry === null || $leftExpiry === '');
                 $rightMissing = ($rightExpiry === null || $rightExpiry === '');
                 if ($leftMissing === true && $rightMissing === true) {
                     return 0;

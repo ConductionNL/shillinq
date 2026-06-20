@@ -91,12 +91,16 @@ class FxRateAdminController extends Controller
     public function status(): JSONResponse
     {
         $jobClass     = FxRateImportJob::class;
-        $lastRunEpoch = $this->resolveLastRunEpoch($jobClass);
+        $lastRunEpoch = $this->resolveLastRunEpoch(jobClass: $jobClass);
         $dormant      = $this->isAdapterDormant();
 
-        $iso = ($lastRunEpoch !== null
-            ? (new DateTimeImmutable('@'.$lastRunEpoch))->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM)
-            : null);
+        if ($lastRunEpoch !== null) {
+            $iso = (new DateTimeImmutable('@'.$lastRunEpoch))
+                ->setTimezone(new DateTimeZone('UTC'))
+                ->format(DateTimeInterface::ATOM);
+        } else {
+            $iso = null;
+        }
 
         $statusKey = 'ok';
         if ($lastRunEpoch === null) {
@@ -147,6 +151,7 @@ class FxRateAdminController extends Controller
             if (($job instanceof IJob) === false) {
                 continue;
             }
+
             $lr = (int) $job->getLastRun();
             if ($lr > 0 && ($best === null || $lr > $best)) {
                 $best = $lr;

@@ -79,8 +79,8 @@ class DBAFlagGenerationJob extends TimedJob
      * of monthly cadence AND amount-coefficient-of-variation < 0.04.
      *
      * @param array<int,array<string,mixed>> $facturen List of factuur rows with
-     *                                                   `factuurDatum` (Y-m-d) and
-     *                                                   `bedragCents` (int eurocenten).
+     *                                                 `factuurDatum` (Y-m-d) and
+     *                                                 `bedragCents` (int eurocenten).
      *
      * @return bool True when the pattern triggers a flag.
      *
@@ -92,35 +92,40 @@ class DBAFlagGenerationJob extends TimedJob
             return false;
         }
 
-        $dates = [];
+        $dates   = [];
         $amounts = [];
         foreach ($facturen as $row) {
-            $dateStr = (string) ($row['factuurDatum'] ?? '');
+            $dateStr     = (string) ($row['factuurDatum'] ?? '');
             $amountCents = (int) ($row['bedragCents'] ?? 0);
             if ($dateStr === '' || $amountCents <= 0) {
                 continue;
             }
+
             try {
-                $dates[] = new DateTimeImmutable($dateStr);
+                $dates[]   = new DateTimeImmutable($dateStr);
                 $amounts[] = $amountCents;
             } catch (Throwable) {
                 continue;
             }
         }
+
         if (count($dates) < DBAConstants::VASTE_MAANDFACTUUR_MIN_MAANDEN) {
             return false;
         }
+
         // Sort by date ascending.
         usort($dates, fn(DateTimeImmutable $a, DateTimeImmutable $b): int => $a <=> $b);
         $intervals = [];
         for ($i = 1; $i < count($dates); $i++) {
             $intervals[] = (int) $dates[$i - 1]->diff($dates[$i])->days;
         }
+
         if (count($intervals) === 0) {
             return false;
         }
+
         $avgInterval = array_sum($intervals) / count($intervals);
-        $tolerance = DBAConstants::VASTE_MAANDFACTUUR_DAG_TOLERANTIE;
+        $tolerance   = DBAConstants::VASTE_MAANDFACTUUR_DAG_TOLERANTIE;
         // ~30-day cadence: each interval within 28..32 days (allowing the tolerance).
         $monthly = (30 - $tolerance) <= $avgInterval && $avgInterval <= (30 + $tolerance);
         if ($monthly === false) {
@@ -132,13 +137,15 @@ class DBAFlagGenerationJob extends TimedJob
         if ($mean <= 0.0) {
             return false;
         }
+
         $variance = 0.0;
         foreach ($amounts as $amount) {
             $variance += (($amount - $mean) ** 2);
         }
+
         $variance /= count($amounts);
-        $stdev = sqrt($variance);
-        $cv = $stdev / $mean;
+        $stdev     = sqrt($variance);
+        $cv        = $stdev / $mean;
 
         return $cv < DBAConstants::VASTE_MAANDFACTUUR_VARIATIE_MAX;
     }//end detectVasteMaandfactuur()
@@ -146,9 +153,9 @@ class DBAFlagGenerationJob extends TimedJob
     /**
      * Detect VBAR uurtarief-onderschrijding (REQ-DBA-016).
      *
-     * @param int $bedragCents     Factuurbedrag in eurocenten.
-     * @param float $uren          Aantal gefactureerde uren.
-     * @param int $vbarGrensCents  VBAR-grens (eurocenten).
+     * @param int   $bedragCents    Factuurbedrag in eurocenten.
+     * @param float $uren           Aantal gefactureerde uren.
+     * @param int   $vbarGrensCents VBAR-grens (eurocenten).
      *
      * @return bool True when the effective hourly rate falls below threshold.
      *
@@ -159,6 +166,7 @@ class DBAFlagGenerationJob extends TimedJob
         if ($uren <= 0.0 || $bedragCents <= 0) {
             return false;
         }
+
         $effectiefCents = (int) round($bedragCents / $uren);
         return $effectiefCents < $vbarGrensCents;
     }//end detectVbarGrensOnderschreden()
@@ -166,8 +174,8 @@ class DBAFlagGenerationJob extends TimedJob
     /**
      * Detect MODELOVEREENKOMST_VERLOPEN (REQ-DBA-002).
      *
-     * @param string|null      $geldigTot The model's geldigTot date (Y-m-d) or null.
-     * @param DateTimeImmutable $now      Reference "now".
+     * @param string|null       $geldigTot The model's geldigTot date (Y-m-d) or null.
+     * @param DateTimeImmutable $now       Reference "now".
      *
      * @return bool True when the model's geldigheid has expired.
      *
@@ -178,11 +186,13 @@ class DBAFlagGenerationJob extends TimedJob
         if ($geldigTot === null || $geldigTot === '') {
             return false;
         }
+
         try {
             $expiry = new DateTimeImmutable($geldigTot);
         } catch (Throwable) {
             return false;
         }
+
         return $now > $expiry;
     }//end detectModelovereenkomstVerlopen()
 
@@ -192,7 +202,7 @@ class DBAFlagGenerationJob extends TimedJob
      * Contractually vervangbaar (vervangbaarScore < 5) AND vervanging never
      * happened (vervangingFeitelijkScore >= 10), with relation duration >= 18 months.
      *
-     * @param int   $vervangbaarScore        Contractuele vervangbaarheid (0-10).
+     * @param int   $vervangbaarScore         Contractuele vervangbaarheid (0-10).
      * @param int   $vervangingFeitelijkScore Feitelijke vervanging (0-10).
      * @param float $duurInMaanden            Relatieduur in maanden.
      *
@@ -205,14 +215,15 @@ class DBAFlagGenerationJob extends TimedJob
         if ($duurInMaanden < (float) DBAConstants::VERVANGBAARHEID_THEORETISCH_MIN_MAANDEN) {
             return false;
         }
+
         return $vervangbaarScore < 5 && $vervangingFeitelijkScore >= 10;
     }//end detectVervangbaarheidTheoretisch()
 
     /**
      * Detect LANGJARIGE_HOOFDRELATIE (REQ-DBA-005).
      *
-     * @param float $duurInJaren    Relatieduur (jaren).
-     * @param float $omzetAandeel   Omzetaandeel (0-1).
+     * @param float $duurInJaren  Relatieduur (jaren).
+     * @param float $omzetAandeel Omzetaandeel (0-1).
      *
      * @return bool True when the relation qualifies as langjarige hoofdrelatie.
      *
@@ -227,7 +238,7 @@ class DBAFlagGenerationJob extends TimedJob
     /**
      * Detect HERBEOORDELING_OVERDUE (REQ-DBA-009).
      *
-     * @param string|null      $intakeDatum Y-m-d of last intake.
+     * @param string|null       $intakeDatum Y-m-d of last intake.
      * @param DateTimeImmutable $now         Reference "now".
      *
      * @return bool True when intake is older than 12 months + 30 days grace.
@@ -239,11 +250,13 @@ class DBAFlagGenerationJob extends TimedJob
         if ($intakeDatum === null || $intakeDatum === '') {
             return false;
         }
+
         try {
             $intake = new DateTimeImmutable($intakeDatum);
         } catch (Throwable) {
             return false;
         }
+
         $deadline = $intake->modify('+'.DBAConstants::HERBEOORDELING_TRIGGER_MAANDEN.' months')
             ->modify('+'.DBAConstants::HERBEOORDELING_GRACE_DAGEN.' days');
         return $now > $deadline;
@@ -275,8 +288,8 @@ class DBAFlagGenerationJob extends TimedJob
             return;
         }
 
-        $register = $this->resolveRegister();
-        $now = new DateTimeImmutable();
+        $register  = $this->resolveRegister();
+        $now       = new DateTimeImmutable();
         $generated = 0;
 
         try {
@@ -309,7 +322,8 @@ class DBAFlagGenerationJob extends TimedJob
                     details: ['intakeDatum' => (string) ($opdracht['intakeDatum'] ?? '')],
                     bron: 'REQ-DBA-009; Wet DBA jaarlijkse herbeoordeling',
                     actie: 'Vraag een herbeoordeling van de DBA-intake aan de ondernemer.'
-                ) === true) {
+                ) === true
+                ) {
                     $generated++;
                 }
             }
@@ -318,7 +332,7 @@ class DBAFlagGenerationJob extends TimedJob
             $modelId = (string) ($opdracht['modelOvereenkomstId'] ?? '');
             if ($modelId !== '') {
                 try {
-                    $model = $objectService->setRegister($register)->setSchema('DBAModelovereenkomst')->find($modelId);
+                    $model    = $objectService->setRegister($register)->setSchema('DBAModelovereenkomst')->find($modelId);
                     $modelArr = $this->toArray(entity: $model);
                     if ($modelArr !== null
                         && $this->detectModelovereenkomstVerlopen(
@@ -335,7 +349,8 @@ class DBAFlagGenerationJob extends TimedJob
                             details: ['modelId' => $modelId, 'geldigTot' => (string) ($modelArr['geldigTot'] ?? '')],
                             bron: 'REQ-DBA-002; Belastingdienst modelovereenkomst-policy',
                             actie: 'Kies een actueel modelovereenkomst en update de opdracht.'
-                        ) === true) {
+                        ) === true
+                        ) {
                             $generated++;
                         }
                     }
@@ -344,8 +359,8 @@ class DBAFlagGenerationJob extends TimedJob
                         'Shillinq DBAFlagGenerationJob: skipping model lookup',
                         ['modelId' => $modelId, 'exception' => $e->getMessage()]
                     );
-                }
-            }
+                }//end try
+            }//end if
 
             // WBA verlopen?
             $wbaGeldigTot = (string) ($opdracht['wbaGeldigTot'] ?? '');
@@ -361,11 +376,12 @@ class DBAFlagGenerationJob extends TimedJob
                     details: ['wbaGeldigTot' => $wbaGeldigTot],
                     bron: 'REQ-DBA-013; Belastingdienst WBA-policy (1 jaar geldigheid)',
                     actie: 'Vraag een nieuwe WBA-beoordeling aan.'
-                ) === true) {
+                ) === true
+                ) {
                     $generated++;
                 }
             }
-        }
+        }//end foreach
 
         $this->logger->info(
             sprintf('Shillinq DBAFlagGenerationJob: generated %d flags', $generated)
@@ -382,16 +398,24 @@ class DBAFlagGenerationJob extends TimedJob
     private function toArray(mixed $entity): ?array
     {
         if (is_array($entity) === true) {
-            /** @var array<string,mixed> $entity */
+            /*
+             * @var array<string,mixed> $entity
+             */
+
             return $entity;
         }
+
         if (is_object($entity) === true && method_exists($entity, 'getObject') === true) {
             $data = $entity->getObject();
             if (is_array($data) === true) {
-                /** @var array<string,mixed> $data */
+                /*
+                 * @var array<string,mixed> $data
+                 */
+
                 return $data;
             }
         }
+
         return null;
     }//end toArray()
 
@@ -420,14 +444,16 @@ class DBAFlagGenerationJob extends TimedJob
         string $actie,
     ): bool {
         try {
-            $existing = $objectService->setRegister($register)->setSchema('DBARisicoflag')->findAll([
-                'filters' => [
-                    'opdrachtId' => (string) ($opdracht['@self']['id'] ?? ($opdracht['id'] ?? '')),
-                    'type' => $type,
-                    'status' => 'OPEN',
-                ],
-                'limit' => 1,
-            ]);
+            $existing = $objectService->setRegister($register)->setSchema('DBARisicoflag')->findAll(
+                    [
+                        'filters' => [
+                            'opdrachtId' => (string) ($opdracht['@self']['id'] ?? ($opdracht['id'] ?? '')),
+                            'type'       => $type,
+                            'status'     => 'OPEN',
+                        ],
+                        'limit'   => 1,
+                    ]
+                    );
         } catch (Throwable $e) {
             $this->logger->warning(
                 'Shillinq DBAFlagGenerationJob: idempotency check failed',
@@ -442,18 +468,20 @@ class DBAFlagGenerationJob extends TimedJob
         }
 
         try {
-            $objectService->setRegister($register)->setSchema('DBARisicoflag')->saveObject([
-                'administrationId' => (string) ($opdracht['administrationId'] ?? ''),
-                'opdrachtId' => (string) ($opdracht['@self']['id'] ?? ($opdracht['id'] ?? '')),
-                'type' => $type,
-                'detectieMoment' => (new DateTimeImmutable())->format('c'),
-                'ernst' => $ernst,
-                'details' => $details,
-                'fiscaleBron' => $bron,
-                'actieSuggestie' => $actie,
-                'status' => 'OPEN',
-                'weergegevenAanGebruiker' => true,
-            ]);
+            $objectService->setRegister($register)->setSchema('DBARisicoflag')->saveObject(
+                    [
+                        'administrationId'        => (string) ($opdracht['administrationId'] ?? ''),
+                        'opdrachtId'              => (string) ($opdracht['@self']['id'] ?? ($opdracht['id'] ?? '')),
+                        'type'                    => $type,
+                        'detectieMoment'          => (new DateTimeImmutable())->format('c'),
+                        'ernst'                   => $ernst,
+                        'details'                 => $details,
+                        'fiscaleBron'             => $bron,
+                        'actieSuggestie'          => $actie,
+                        'status'                  => 'OPEN',
+                        'weergegevenAanGebruiker' => true,
+                    ]
+                    );
             return true;
         } catch (Throwable $e) {
             $this->logger->error(
@@ -461,7 +489,7 @@ class DBAFlagGenerationJob extends TimedJob
                 ['exception' => $e->getMessage(), 'type' => $type]
             );
             return false;
-        }
+        }//end try
     }//end emitFlag()
 
     /**
@@ -472,6 +500,10 @@ class DBAFlagGenerationJob extends TimedJob
     private function resolveRegister(): string
     {
         $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        return ($register === '') ? 'shillinq' : $register;
+        if ($register === '') {
+            return 'shillinq';
+        }
+
+        return $register;
     }//end resolveRegister()
 }//end class

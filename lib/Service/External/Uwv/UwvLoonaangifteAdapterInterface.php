@@ -112,7 +112,7 @@ interface UwvLoonaangifteAdapterInterface
      *                         + `extras.gediff` (gedifferentieerde premie?
      *                         applicable per-werkgever).
      */
-    public function lookupSector(string $sectorCode, int $peiljaar, array $context = []): UwvStatusResult;
+    public function lookupSector(string $sectorCode, int $peiljaar, array $context=[]): UwvStatusResult;
 
     /**
      * Whether the adapter is dormant — i.e. wired but not contacting

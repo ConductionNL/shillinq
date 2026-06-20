@@ -126,6 +126,8 @@ class PurchaseOrderApprovalService
      *                                                            (server-authoritative).
      * @param LoggerInterface              $logger                Logger (no sensitive
      *                                                            payloads).
+     * @param ApprovalActivityEmitter|null $activityEmitter       Optional emitter for
+     *                                                            approval activity events.
      *
      * @return void
      */
@@ -135,7 +137,7 @@ class PurchaseOrderApprovalService
         private readonly AdministrationContextService $administrationContext,
         private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
-        private readonly ?ApprovalActivityEmitter $activityEmitter = null,
+        private readonly ?ApprovalActivityEmitter $activityEmitter=null,
     ) {
 
     }//end __construct()
@@ -260,7 +262,7 @@ class PurchaseOrderApprovalService
                     summaryHint: $summary,
                     comment:     (string) ($comment ?? '')
                 );
-            } elseif ($decision === self::DECISION_REJECTED) {
+            } else if ($decision === self::DECISION_REJECTED) {
                 $this->activityEmitter->emitApprovalRejected(
                     objectType:  self::SCHEMA_PURCHASE_ORDER,
                     objectId:    $purchaseOrderId,

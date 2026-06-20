@@ -95,7 +95,9 @@ class LogDepositPaymentAdapter implements DepositPaymentAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-psp-bound',
-                'note'   => 'Override DepositPaymentAdapterInterface in Application::register() to a production implementation that delegates to MolliePaymentAdapterInterface (already wired) or a sibling PSP adapter; the Mollie connector slug `mollie-payments` covers Tasks 17/18/27 of bookings-deposits.',
+                'note'   => 'Override DepositPaymentAdapterInterface in Application::register() to a production implementation '
+                    .'that delegates to MolliePaymentAdapterInterface (already wired) or a sibling PSP adapter; '
+                    .'the Mollie connector slug `mollie-payments` covers Tasks 17/18/27 of bookings-deposits.',
             ],
         );
     }//end requestPayment()
@@ -134,7 +136,8 @@ class LogDepositPaymentAdapter implements DepositPaymentAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-psp-bound',
-                'note'   => 'DepositReconciliationService::pollPending() MUST inspect the dormant flag before advancing the record. The dormant adapter never advances the lifecycle.',
+                'note'   => 'DepositReconciliationService::pollPending() MUST inspect the dormant flag before advancing '
+                    .'the record. The dormant adapter never advances the lifecycle.',
             ],
         );
     }//end fetchStatus()
@@ -173,13 +176,19 @@ class LogDepositPaymentAdapter implements DepositPaymentAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-psp-bound',
-                'note'   => 'No actual refund was dispatched. The lifecycle MAY still materialise the CreditNote per REQ-DP-008 (the deferred refund is treated as an operator-approved void); the credit note carries `paymentRefundDeferred: true` for later reconciliation.',
+                'note'   => 'No actual refund was dispatched. The lifecycle MAY still materialise the CreditNote per '
+                    .'REQ-DP-008 (the deferred refund is treated as an operator-approved void); the credit note carries '
+                    .'`paymentRefundDeferred: true` for later reconciliation.',
             ],
         );
     }//end initiateRefund()
 
     /**
+     * Report whether this adapter is dormant (logs only, no outbound PSP).
+     *
      * @inheritDoc
+     *
+     * @return bool Always true for the dormant log adapter.
      */
     public function isDormant(): bool
     {

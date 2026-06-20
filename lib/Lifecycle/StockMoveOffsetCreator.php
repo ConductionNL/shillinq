@@ -62,8 +62,6 @@ use Psr\Log\LoggerInterface;
  */
 class StockMoveOffsetCreator
 {
-
-
     /**
      * Construct the service.
      *
@@ -78,7 +76,6 @@ class StockMoveOffsetCreator
     ) {
 
     }//end __construct()
-
 
     /**
      * Emit the offsetting StockMove for a posted-cancel transition.
@@ -151,7 +148,6 @@ class StockMoveOffsetCreator
 
     }//end emitOffset()
 
-
     /**
      * Query whether an offset for the supplied original already exists.
      *
@@ -189,7 +185,6 @@ class StockMoveOffsetCreator
 
     }//end offsetAlreadyExists()
 
-
     /**
      * Resolve the OpenRegister register slug, defaulting to 'shillinq'.
      *
@@ -205,6 +200,4 @@ class StockMoveOffsetCreator
         return $register;
 
     }//end register()
-
-
 }//end class

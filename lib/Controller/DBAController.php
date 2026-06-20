@@ -63,14 +63,14 @@ class DBAController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest             $request   Nextcloud request.
-     * @param ContainerInterface   $container DI container for ObjectService.
-     * @param IAppConfig           $appConfig App config.
-     * @param IUserSession         $userSession User session.
-     * @param DBAScoreCalculator   $scoreCalc Score calculator guard.
-     * @param DBAOpdrachtGuard     $opdrachtGuard Save-precondition guard.
-     * @param DBAVbarMonitorService $vbarMonitor VBAR monitor service.
-     * @param LoggerInterface      $logger    Logger.
+     * @param IRequest              $request       Nextcloud request.
+     * @param ContainerInterface    $container     DI container for ObjectService.
+     * @param IAppConfig            $appConfig     App config.
+     * @param IUserSession          $userSession   User session.
+     * @param DBAScoreCalculator    $scoreCalc     Score calculator guard.
+     * @param DBAOpdrachtGuard      $opdrachtGuard Save-precondition guard.
+     * @param DBAVbarMonitorService $vbarMonitor   VBAR monitor service.
+     * @param LoggerInterface       $logger        Logger.
      */
     public function __construct(
         IRequest $request,
@@ -98,18 +98,21 @@ class DBAController extends Controller
         if ($this->userSession->getUser() === null) {
             return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
         }
-        $body = $this->jsonBody();
-        $total = $this->scoreCalc->computeTotal($body);
-        $band = DBAConstants::bandFromScore($total);
 
-        return new JSONResponse([
-            'totaalScore' => $total,
-            'risicoNiveau' => $band,
-            'gezagsverhouding' => $this->scoreCalc->subtotalGezag($body),
-            'persoonlijkeArbeid' => $this->scoreCalc->subtotalArbeid($body),
-            'financieelRisico' => $this->scoreCalc->subtotalFinancieel($body),
-            'deliverooCriteria' => $this->scoreCalc->subtotalDeliveroo($body),
-        ]);
+        $body  = $this->jsonBody();
+        $total = $this->scoreCalc->computeTotal($body);
+        $band  = DBAConstants::bandFromScore($total);
+
+        return new JSONResponse(
+                [
+                    'totaalScore'        => $total,
+                    'risicoNiveau'       => $band,
+                    'gezagsverhouding'   => $this->scoreCalc->subtotalGezag($body),
+                    'persoonlijkeArbeid' => $this->scoreCalc->subtotalArbeid($body),
+                    'financieelRisico'   => $this->scoreCalc->subtotalFinancieel($body),
+                    'deliverooCriteria'  => $this->scoreCalc->subtotalDeliveroo($body),
+                ]
+                );
     }//end scoreIntake()
 
     /**
@@ -122,7 +125,7 @@ class DBAController extends Controller
     #[NoAdminRequired]
     public function saveIntake(): JSONResponse
     {
-        $body = $this->jsonBody();
+        $body       = $this->jsonBody();
         $opdrachtId = (string) ($body['opdrachtId'] ?? '');
         if ($opdrachtId === '') {
             return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
@@ -138,15 +141,16 @@ class DBAController extends Controller
         if ($opdracht === null) {
             return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
+
         $this->ensureAdministrationAccess(opdracht: $opdracht);
 
         $total = $this->scoreCalc->computeTotal($body);
-        $band = DBAConstants::bandFromScore($total);
+        $band  = DBAConstants::bandFromScore($total);
 
-        $body['totaalScore'] = $total;
-        $body['interpretatie'] = $band;
-        $body['ingevuldDoor'] = (string) (($this->userSession->getUser()?->getUID()) ?? '');
-        $body['ingevuldOp'] ??= (new DateTimeImmutable())->format('Y-m-d');
+        $body['totaalScore']      = $total;
+        $body['interpretatie']    = $band;
+        $body['ingevuldDoor']     = (string) (($this->userSession->getUser()?->getUID()) ?? '');
+        $body['ingevuldOp']     ??= (new DateTimeImmutable())->format('Y-m-d');
         $body['administrationId'] = (string) ($opdracht['administrationId'] ?? '');
 
         try {
@@ -156,10 +160,16 @@ class DBAController extends Controller
             return $this->error(message: 'Opslaan intake mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
         }
 
-        $opdracht['intakeStatus'] = 'INTAKE_VOLTOOID';
-        $opdracht['intakeDatum'] = $body['ingevuldOp'];
+        if (($body['verkortType'] ?? false) === true) {
+            $risicoNiveau = 'VERKORT_LAGE_DREMPEL';
+        } else {
+            $risicoNiveau = $band;
+        }
+
+        $opdracht['intakeStatus']       = 'INTAKE_VOLTOOID';
+        $opdracht['intakeDatum']        = $body['ingevuldOp'];
         $opdracht['actueleRisicoscore'] = $total;
-        $opdracht['risicoNiveau'] = ($body['verkortType'] ?? false) === true ? 'VERKORT_LAGE_DREMPEL' : $band;
+        $opdracht['risicoNiveau']       = $risicoNiveau;
         try {
             $os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
         } catch (Throwable $e) {
@@ -182,12 +192,13 @@ class DBAController extends Controller
         if ($this->userSession->getUser() === null) {
             return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
         }
-        $body = $this->jsonBody();
+
+        $body        = $this->jsonBody();
         $bedragCents = (int) ($body['bedragCents'] ?? 0);
-        $uren = (float) ($body['uren'] ?? 0.0);
-        $opdrachtId = (string) ($body['opdrachtId'] ?? '');
+        $uren        = (float) ($body['uren'] ?? 0.0);
+        $opdrachtId  = (string) ($body['opdrachtId'] ?? '');
         $administrationId = (string) ($body['administrationId'] ?? '');
-        $factuurId = (string) ($body['factuurId'] ?? '');
+        $factuurId        = (string) ($body['factuurId'] ?? '');
 
         $result = $this->vbarMonitor->assess(bedragCents: $bedragCents, uren: $uren, administrationId: $administrationId);
 
@@ -217,9 +228,9 @@ class DBAController extends Controller
     #[NoAdminRequired]
     public function uploadWba(): JSONResponse
     {
-        $body = $this->jsonBody();
+        $body       = $this->jsonBody();
         $opdrachtId = (string) ($body['opdrachtId'] ?? '');
-        $resultaat = (string) ($body['wbaBeoordelingResultaat'] ?? '');
+        $resultaat  = (string) ($body['wbaBeoordelingResultaat'] ?? '');
         if ($opdrachtId === '' || $resultaat === '') {
             return $this->error(message: 'opdrachtId + wbaBeoordelingResultaat vereist', code: Http::STATUS_BAD_REQUEST);
         }
@@ -228,21 +239,24 @@ class DBAController extends Controller
         if ($os === null) {
             return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
         }
+
         $register = $this->register();
         $opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
         if ($opdracht === null) {
             return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
+
         $this->ensureAdministrationAccess(opdracht: $opdracht);
 
         $opdracht['wbaBeoordelingResultaat'] = $resultaat;
-        $opdracht['wbaGeldigTot'] = (new DateTimeImmutable())
+        $opdracht['wbaGeldigTot']            = (new DateTimeImmutable())
             ->modify('+'.DBAConstants::WBA_GELDIGHEID_DAGEN.' days')->format('Y-m-d');
         try {
             $updated = $os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
         } catch (Throwable $e) {
             return $this->error(message: 'WBA-upload mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
         }
+
         return new JSONResponse(['opdracht' => $updated]);
     }//end uploadWba()
 
@@ -256,34 +270,39 @@ class DBAController extends Controller
     #[NoAdminRequired]
     public function beeindigen(): JSONResponse
     {
-        $body = $this->jsonBody();
+        $body       = $this->jsonBody();
         $opdrachtId = (string) ($body['opdrachtId'] ?? '');
-        $einddatum = (string) ($body['feitelijkeEindDatum'] ?? '');
+        $einddatum  = (string) ($body['feitelijkeEindDatum'] ?? '');
         if ($opdrachtId === '' || $einddatum === '') {
             return $this->error(message: 'opdrachtId + feitelijkeEindDatum vereist', code: Http::STATUS_BAD_REQUEST);
         }
+
         $os = $this->objectService();
         if ($os === null) {
             return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
         }
+
         $register = $this->register();
         $opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
         if ($opdracht === null) {
             return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
+
         $this->ensureAdministrationAccess(opdracht: $opdracht);
 
-        $opdracht['intakeStatus'] = 'BEEINDIGD';
+        $opdracht['intakeStatus']        = 'BEEINDIGD';
         $opdracht['feitelijkeEindDatum'] = $einddatum;
         $retentie = $this->opdrachtGuard->computeRetentieDeadline($einddatum);
         if ($retentie !== null) {
             $opdracht['retentieDeadline'] = $retentie;
         }
+
         try {
             $updated = $os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
         } catch (Throwable $e) {
             return $this->error(message: 'Beeindiging mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
         }
+
         return new JSONResponse(['opdracht' => $updated, 'retentieDeadline' => $retentie]);
     }//end beeindigen()
 
@@ -300,20 +319,28 @@ class DBAController extends Controller
         if ($this->userSession->getUser() === null) {
             return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
         }
+
         $body = $this->jsonBody();
         $mode = (string) ($body['mode'] ?? '');
         $administrationId = (string) ($body['administrationId'] ?? '');
-        if (in_array($mode, [
-            DBAConstants::COMPLIANCE_MODE_SOFT,
-            DBAConstants::COMPLIANCE_MODE_HARD,
-            DBAConstants::COMPLIANCE_MODE_INTERMEDIAIR,
-        ], true) === false) {
+        if (in_array(
+                $mode,
+                [
+                    DBAConstants::COMPLIANCE_MODE_SOFT,
+                    DBAConstants::COMPLIANCE_MODE_HARD,
+                    DBAConstants::COMPLIANCE_MODE_INTERMEDIAIR,
+                ],
+                true
+                ) === false
+        ) {
             return $this->error(message: 'Ongeldige compliance-mode', code: Http::STATUS_BAD_REQUEST);
         }
+
         $key = DBAConstants::CONFIG_PREFIX.'compliance_mode';
         if ($administrationId !== '') {
             $key .= '.'.$administrationId;
         }
+
         $this->appConfig->setValueString(Application::APP_ID, $key, $mode);
         return new JSONResponse(['mode' => $mode, 'administrationId' => $administrationId]);
     }//end setMode()
@@ -328,21 +355,24 @@ class DBAController extends Controller
     #[NoAdminRequired]
     public function setTussenkomstMode(): JSONResponse
     {
-        $body = $this->jsonBody();
+        $body       = $this->jsonBody();
         $opdrachtId = (string) ($body['opdrachtId'] ?? '');
-        $enabled = (bool) ($body['intermediairMode'] ?? false);
+        $enabled    = (bool) ($body['intermediairMode'] ?? false);
         if ($opdrachtId === '') {
             return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
         }
+
         $os = $this->objectService();
         if ($os === null) {
             return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
         }
+
         $register = $this->register();
         $opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
         if ($opdracht === null) {
             return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
+
         $this->ensureAdministrationAccess(opdracht: $opdracht);
         $opdracht['intermediairMode'] = $enabled;
         try {
@@ -350,6 +380,7 @@ class DBAController extends Controller
         } catch (Throwable $e) {
             return $this->error(message: 'Tussenkomst-mode opslaan mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
         }
+
         return new JSONResponse(['opdracht' => $updated]);
     }//end setTussenkomstMode()
 
@@ -363,32 +394,37 @@ class DBAController extends Controller
     #[NoAdminRequired]
     public function evidenceConsent(): JSONResponse
     {
-        $body = $this->jsonBody();
+        $body      = $this->jsonBody();
         $dossierId = (string) ($body['dossierId'] ?? '');
-        $optIn = (bool) ($body['optIn'] ?? false);
+        $optIn     = (bool) ($body['optIn'] ?? false);
         $consentId = (string) ($body['consentRecordId'] ?? '');
         if ($dossierId === '') {
             return $this->error(message: 'dossierId vereist', code: Http::STATUS_BAD_REQUEST);
         }
+
         $os = $this->objectService();
         if ($os === null) {
             return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
         }
+
         $register = $this->register();
-        $dossier = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAEvidenceDossier', id: $dossierId);
+        $dossier  = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAEvidenceDossier', id: $dossierId);
         if ($dossier === null) {
             return $this->error(message: 'Dossier niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
+
         $this->ensureAdministrationAccess(opdracht: $dossier);
         $dossier['emailArchiveOptIn'] = $optIn;
         if ($optIn === true && $consentId !== '') {
             $dossier['emailArchiveConsentRecordId'] = $consentId;
         }
+
         try {
             $updated = $os->saveObject(object: $dossier, register: $register, schema: 'DBAEvidenceDossier');
         } catch (Throwable $e) {
             return $this->error(message: 'Consent opslaan mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
         }
+
         return new JSONResponse(['dossier' => $updated]);
     }//end evidenceConsent()
 
@@ -404,20 +440,23 @@ class DBAController extends Controller
     #[NoAdminRequired]
     public function inhuurIntake(): JSONResponse
     {
-        $body = $this->jsonBody();
+        $body       = $this->jsonBody();
         $opdrachtId = (string) ($body['opdrachtId'] ?? '');
         if ($opdrachtId === '') {
             return $this->error(message: 'opdrachtId vereist', code: Http::STATUS_BAD_REQUEST);
         }
+
         $os = $this->objectService();
         if ($os === null) {
             return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
         }
+
         $register = $this->register();
         $opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
         if ($opdracht === null) {
             return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
+
         $this->ensureAdministrationAccess(opdracht: $opdracht);
         $opdracht['perspectief'] = 'OPDRACHTGEVER';
         try {
@@ -425,6 +464,7 @@ class DBAController extends Controller
         } catch (Throwable $e) {
             $this->logger->warning('Inhuur-intake perspectief update failed', ['exception' => $e->getMessage()]);
         }
+
         return $this->saveIntake();
     }//end inhuurIntake()
 
@@ -448,61 +488,83 @@ class DBAController extends Controller
         if ($os === null) {
             return $this->error(message: 'OpenRegister niet beschikbaar', code: Http::STATUS_SERVICE_UNAVAILABLE);
         }
+
         $register = $this->register();
         $opdracht = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAOpdracht', id: $opdrachtId);
         if ($opdracht === null) {
             return $this->error(message: 'Opdracht niet gevonden', code: Http::STATUS_NOT_FOUND);
         }
+
         $this->ensureAdministrationAccess(opdracht: $opdracht);
 
         $intake = null;
         try {
-            $intakeRows = $os->setRegister($register)->setSchema('DBAIntake')->findAll([
-                'filters' => ['opdrachtId' => $opdrachtId],
-                'limit' => 1,
-            ]);
+            $intakeRows = $os->setRegister($register)->setSchema('DBAIntake')->findAll(
+                    [
+                        'filters' => ['opdrachtId' => $opdrachtId],
+                        'limit'   => 1,
+                    ]
+                    );
             foreach ($intakeRows as $row) {
-                $intake = is_array($row) ? $row : (method_exists($row, 'getObject') ? $row->getObject() : null);
+                if (is_array($row) === true) {
+                    $intake = $row;
+                } else if (method_exists($row, 'getObject') === true) {
+                    $intake = $row->getObject();
+                } else {
+                    $intake = null;
+                }
+
                 break;
             }
         } catch (Throwable $e) {
             $this->logger->warning('Audit-report intake fetch failed', ['exception' => $e->getMessage()]);
-        }
+        }//end try
 
         $flags = [];
         try {
-            $flagRows = $os->setRegister($register)->setSchema('DBARisicoflag')->findAll([
-                'filters' => ['opdrachtId' => $opdrachtId],
-                'limit' => 500,
-            ]);
+            $flagRows = $os->setRegister($register)->setSchema('DBARisicoflag')->findAll(
+                    [
+                        'filters' => ['opdrachtId' => $opdrachtId],
+                        'limit'   => 500,
+                    ]
+                    );
             foreach ($flagRows as $row) {
-                $arr = is_array($row) ? $row : (method_exists($row, 'getObject') ? $row->getObject() : null);
+                if (is_array($row) === true) {
+                    $arr = $row;
+                } else if (method_exists($row, 'getObject') === true) {
+                    $arr = $row->getObject();
+                } else {
+                    $arr = null;
+                }
+
                 if (is_array($arr) === true) {
                     $flags[] = $arr;
                 }
             }
         } catch (Throwable $e) {
             $this->logger->warning('Audit-report flags fetch failed', ['exception' => $e->getMessage()]);
-        }
+        }//end try
 
-        $dossier = null;
+        $dossier   = null;
         $dossierId = (string) ($opdracht['evidenceDossierId'] ?? '');
         if ($dossierId !== '') {
             $dossier = $this->findEntityOrNull(objectService: $os, register: $register, schema: 'DBAEvidenceDossier', id: $dossierId);
         }
 
         $payload = [
-            'opdracht' => $opdracht,
-            'intake' => $intake,
-            'flags' => $flags,
-            'evidenceDossier' => $dossier,
-            'generatedAt' => (new DateTimeImmutable())->format('c'),
-            'fiscaleGrondslag' => 'Wet DBA, BW art. 7:610, Deliveroo-arrest HR 24-3-2023, AWR art. 52, VBAR (peil '.DBAConstants::VBAR_GRENS_PEILJAAR.')',
+            'opdracht'         => $opdracht,
+            'intake'           => $intake,
+            'flags'            => $flags,
+            'evidenceDossier'  => $dossier,
+            'generatedAt'      => (new DateTimeImmutable())->format('c'),
+            'fiscaleGrondslag' => 'Wet DBA, BW art. 7:610, Deliveroo-arrest HR 24-3-2023, AWR art. 52, VBAR (peil '
+                .DBAConstants::VBAR_GRENS_PEILJAAR.')',
         ];
-        $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $json    = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         if ($json === false) {
             return $this->error(message: 'Rapport-rendering mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
         }
+
         $hash = hash('sha256', $json);
         $payload['sha256'] = $hash;
 
@@ -515,6 +577,7 @@ class DBAController extends Controller
                 contentType: 'application/json',
             );
         }
+
         return new JSONResponse($payload);
     }//end auditReport()
 
@@ -529,8 +592,13 @@ class DBAController extends Controller
         if ($raw === '') {
             return [];
         }
+
         $data = json_decode($raw, true);
-        return is_array($data) ? $data : [];
+        if (is_array($data) === true) {
+            return $data;
+        }
+
+        return [];
     }//end jsonBody()
 
     /**
@@ -554,7 +622,11 @@ class DBAController extends Controller
     private function register(): string
     {
         $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        return ($register === '') ? 'shillinq' : $register;
+        if ($register === '') {
+            return 'shillinq';
+        }
+
+        return $register;
     }//end register()
 
     /**
@@ -587,24 +659,36 @@ class DBAController extends Controller
         try {
             $entity = $objectService->setRegister($register)->setSchema($schema)->find($id);
         } catch (Throwable $e) {
-            $this->logger->warning('DBA controller: find failed', [
-                'schema' => $schema,
-                'id' => $id,
-                'exception' => $e->getMessage(),
-            ]);
+            $this->logger->warning(
+                    'DBA controller: find failed',
+                    [
+                        'schema'    => $schema,
+                        'id'        => $id,
+                        'exception' => $e->getMessage(),
+                    ]
+                    );
             return null;
         }
+
         if (is_array($entity) === true) {
-            /** @var array<string,mixed> $entity */
+            /*
+             * @var array<string,mixed> $entity
+             */
+
             return $entity;
         }
+
         if (is_object($entity) === true && method_exists($entity, 'getObject') === true) {
             $data = $entity->getObject();
             if (is_array($data) === true) {
-                /** @var array<string,mixed> $data */
+                /*
+                 * @var array<string,mixed> $data
+                 */
+
                 return $data;
             }
         }
+
         return null;
     }//end findEntityOrNull()
 
@@ -628,11 +712,15 @@ class DBAController extends Controller
             $this->logger->warning('DBA controller: anonymous request rejected');
             return;
         }
+
         // Real check would call AdministrationMembership::isMember($user, $administrationId).
         // Until the implementation cycle wires it, we log the guarded access.
-        $this->logger->debug('DBA controller: administration access', [
-            'user' => $user->getUID(),
-            'administrationId' => $administrationId,
-        ]);
+        $this->logger->debug(
+                'DBA controller: administration access',
+                [
+                    'user'             => $user->getUID(),
+                    'administrationId' => $administrationId,
+                ]
+                );
     }//end ensureAdministrationAccess()
 }//end class

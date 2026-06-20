@@ -39,7 +39,6 @@ namespace OCA\Shillinq\Service\Notification;
  */
 interface NotificationCounterStoreInterface
 {
-
     /**
      * Read the current count for the key.
      *
@@ -48,7 +47,6 @@ interface NotificationCounterStoreInterface
      * @return int Current count (0 when absent).
      */
     public function get(string $key): int;
-
 
     /**
      * Atomically increment the count for the key and return the new value.
@@ -60,7 +58,6 @@ interface NotificationCounterStoreInterface
      */
     public function increment(string $key, int $ttl=0): int;
 
-
     /**
      * Reset the count for the key.
      *
@@ -71,6 +68,4 @@ interface NotificationCounterStoreInterface
      * @return void
      */
     public function reset(string $key): void;
-
-
 }//end interface

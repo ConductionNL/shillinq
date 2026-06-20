@@ -67,9 +67,9 @@ class EmuQuarterlyDraftJob extends TimedJob
     /**
      * Construct the job with a daily interval.
      *
-     * @param ITimeFactory        $time                 The Nextcloud time factory.
-     * @param EmuReportingService $emuReportingService  The EMU service (classifier + pipeline orchestration).
-     * @param LoggerInterface     $logger               Logger for diagnostics.
+     * @param ITimeFactory        $time                The Nextcloud time factory.
+     * @param EmuReportingService $emuReportingService The EMU service (classifier + pipeline orchestration).
+     * @param LoggerInterface     $logger              Logger for diagnostics.
      */
     public function __construct(
         ITimeFactory $time,
@@ -171,7 +171,7 @@ class EmuQuarterlyDraftJob extends TimedJob
                 'EmuQuarterlyDraftJob: failed to evaluate quarterly EMU draft',
                 ['exception' => $e->getMessage()]
             );
-        }
+        }//end try
 
     }//end run()
 }//end class

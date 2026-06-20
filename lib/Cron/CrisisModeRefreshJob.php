@@ -55,7 +55,6 @@ class CrisisModeRefreshJob extends TimedJob
      */
     private const INTERVAL_SECONDS = 86400;
 
-
     /**
      * Constructor.
      *
@@ -76,7 +75,6 @@ class CrisisModeRefreshJob extends TimedJob
         $this->setAllowParallelRuns(allow: false);
 
     }//end __construct()
-
 
     /**
      * Re-run aggregations on each horizon flagged as crisis.
@@ -161,7 +159,6 @@ class CrisisModeRefreshJob extends TimedJob
 
     }//end run()
 
-
     /**
      * Defensive field extractor.
      *
@@ -184,6 +181,4 @@ class CrisisModeRefreshJob extends TimedJob
         return null;
 
     }//end extractField()
-
-
 }//end class

@@ -68,7 +68,7 @@ class LogRvOAanvraagAdapter implements RvOAanvraagAdapterInterface
         unset($sanitised['attachmentBytes']);
 
         $aanvraagnummer = 'rvo-log-'.bin2hex(random_bytes(8));
-        $scheme = (string) ($payload['scheme'] ?? 'unknown');
+        $scheme         = (string) ($payload['scheme'] ?? 'unknown');
         $this->logger->info(
             'Shillinq RvO aanvraag deferred (no outbound connector bound)',
             [
@@ -84,13 +84,19 @@ class LogRvOAanvraagAdapter implements RvOAanvraagAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `rvo-aanvraag` (eHerkenning Level 3 + Mijn-RvO REST endpoint for the relevant scheme: wbso/sno/kia/eia/mia/vamil) and override RvOAanvraagAdapterInterface in Application::register() to enable real transport.',
+                'note'   => 'Bind openconnector source slug `rvo-aanvraag` (eHerkenning Level 3 + Mijn-RvO REST '
+                    .'endpoint for the relevant scheme: wbso/sno/kia/eia/mia/vamil) and override '
+                    .'RvOAanvraagAdapterInterface in Application::register() to enable real transport.',
                 'scheme' => $scheme,
             ],
         );
     }//end submit()
 
     /**
+     * Report whether this adapter is dormant.
+     *
+     * @return bool True when no outbound connector is bound.
+     *
      * @inheritDoc
      */
     public function isDormant(): bool

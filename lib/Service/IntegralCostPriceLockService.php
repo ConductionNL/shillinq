@@ -45,17 +45,11 @@ class IntegralCostPriceLockService
     /**
      * Aggregate monthly voorlopig records into a single definitief record (REQ-WMO-002).
      *
-     * @param array{
-     *   commercialActivityId: string,
-     *   fiscalYear: string,
-     *   voorlopigRecords: array<int,array<string,mixed>>,
-     *   signedBy: string,
-     *   signatureFingerprint?: string,
-     *   administrationId: string,
-     *   gehanteerdTarief?: float,
-     *   verkochteEenheden?: float,
-     *   eenheidLabel?: string
-     * } $input Lock inputs.
+     * @param array<string,mixed> $input Lock inputs (commercialActivityId,
+     *                                   fiscalYear, voorlopigRecords, signedBy,
+     *                                   signatureFingerprint, administrationId,
+     *                                   gehanteerdTarief, verkochteEenheden,
+     *                                   eenheidLabel).
      *
      * @return array<string,mixed> Definitief IKP record.
      *
@@ -75,7 +69,7 @@ class IntegralCostPriceLockService
 
         $fiscalYear = (string) ($input['fiscalYear'] ?? '');
         if (preg_match('/^[0-9]{4}$/', $fiscalYear) !== 1) {
-            throw new InvalidArgumentException('Invalid fiscalYear (expected YYYY): ' . $fiscalYear);
+            throw new InvalidArgumentException('Invalid fiscalYear (expected YYYY): '.$fiscalYear);
         }
 
         $loonkostenSum     = 0.0;
@@ -113,13 +107,20 @@ class IntegralCostPriceLockService
             $kostprijsPerEenheid = round(($totaleKostenSum / $verkochteEenheden), 4);
         }
 
-        $gehanteerdTarief = isset($input['gehanteerdTarief']) ? (float) $input['gehanteerdTarief'] : null;
+        $gehanteerdTarief = null;
+        if (isset($input['gehanteerdTarief']) === true) {
+            $gehanteerdTarief = (float) $input['gehanteerdTarief'];
+        }
 
         $marge           = null;
         $margePercentage = null;
         if ($gehanteerdTarief !== null && $kostprijsPerEenheid !== null) {
-            $marge           = round(($gehanteerdTarief - $kostprijsPerEenheid), 4);
-            $base            = ($kostprijsPerEenheid > 0.0 ? $kostprijsPerEenheid : 1.0);
+            $marge = round(($gehanteerdTarief - $kostprijsPerEenheid), 4);
+            $base  = 1.0;
+            if ($kostprijsPerEenheid > 0.0) {
+                $base = $kostprijsPerEenheid;
+            }
+
             $margePercentage = round((($marge / $base) * 100), 4);
         }
 
@@ -130,21 +131,26 @@ class IntegralCostPriceLockService
 
         $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
+        $verkochteEenhedenOut = null;
+        if ($verkochteEenheden > 0.0) {
+            $verkochteEenhedenOut = $verkochteEenheden;
+        }
+
         return [
             'commercialActivityId' => (string) $input['commercialActivityId'],
-            'periode'              => $fiscalYear . '-YTD',
+            'periode'              => $fiscalYear.'-YTD',
             'berekendOp'           => $now->format(DateTimeImmutable::ATOM),
             'status'               => 'definitief',
             'componenten'          => [
-                'directeLoonkosten'    => round($loonkostenSum, 2),
-                'directeMaterialen'    => round($materialenSum, 2),
+                'directeLoonkosten'     => round($loonkostenSum, 2),
+                'directeMaterialen'     => round($materialenSum, 2),
                 'directeAfschrijvingen' => round($afschrijvingenSum, 2),
-                'indirecteOverhead'    => array_map(fn (float $v): float => round($v, 2), $overheadBuckets),
-                'vermogenskosten'      => round($vermogensSum, 2),
-                'winstopslag'          => round($winstopslagSum, 2),
+                'indirecteOverhead'     => array_map(fn (float $v): float => round($v, 2), $overheadBuckets),
+                'vermogenskosten'       => round($vermogensSum, 2),
+                'winstopslag'           => round($winstopslagSum, 2),
             ],
             'totaleKosten'         => round($totaleKostenSum, 2),
-            'verkochteEenheden'    => ($verkochteEenheden > 0.0 ? $verkochteEenheden : null),
+            'verkochteEenheden'    => $verkochteEenhedenOut,
             'eenheidLabel'         => ($input['eenheidLabel'] ?? null),
             'kostprijsPerEenheid'  => $kostprijsPerEenheid,
             'gehanteerdTarief'     => $gehanteerdTarief,
@@ -173,7 +179,7 @@ class IntegralCostPriceLockService
         }
 
         try {
-            $lockDate = new DateTimeImmutable(((int) $fiscalYear + 1) . '-03-31');
+            $lockDate = new DateTimeImmutable(((int) $fiscalYear + 1).'-03-31');
             $now      = new DateTimeImmutable($today);
         } catch (\Throwable) {
             return false;
@@ -182,5 +188,4 @@ class IntegralCostPriceLockService
         return $now >= $lockDate;
 
     }//end shouldLock()
-
 }//end class

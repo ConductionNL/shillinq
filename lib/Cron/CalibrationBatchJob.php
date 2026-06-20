@@ -54,7 +54,6 @@ class CalibrationBatchJob extends TimedJob
      */
     private const INTERVAL_SECONDS = 2592000;
 
-
     /**
      * Constructor.
      *
@@ -75,7 +74,6 @@ class CalibrationBatchJob extends TimedJob
         $this->setAllowParallelRuns(allow: false);
 
     }//end __construct()
-
 
     /**
      * Generate one calibration report per active horizon.
@@ -127,7 +125,7 @@ class CalibrationBatchJob extends TimedJob
                             'filters' => [
                                 'reportId' => $reportId,
                             ],
-                            'limit'    => 1,
+                            'limit'   => 1,
                         ]
                     );
 
@@ -143,15 +141,15 @@ class CalibrationBatchJob extends TimedJob
                     ->setSchema('CashflowCalibrationReport')
                     ->saveObject(
                         object: [
-                            'reportId'           => $reportId,
-                            'horizonId'          => $horizonId,
-                            'calibrationPeriod'  => $period,
-                            'generatedAt'        => $generatedAt,
-                            'ar_mape'            => 0.0,
-                            'ap_mape'            => 0.0,
-                            'recurring_mape'     => 0.0,
-                            'tax_mape'           => 0.0,
-                            'administrationId'   => $admin,
+                            'reportId'          => $reportId,
+                            'horizonId'         => $horizonId,
+                            'calibrationPeriod' => $period,
+                            'generatedAt'       => $generatedAt,
+                            'ar_mape'           => 0.0,
+                            'ap_mape'           => 0.0,
+                            'recurring_mape'    => 0.0,
+                            'tax_mape'          => 0.0,
+                            'administrationId'  => $admin,
                         ]
                     );
 
@@ -169,7 +167,6 @@ class CalibrationBatchJob extends TimedJob
         }//end try
 
     }//end run()
-
 
     /**
      * Defensive field extractor.
@@ -193,6 +190,4 @@ class CalibrationBatchJob extends TimedJob
         return null;
 
     }//end extractField()
-
-
 }//end class

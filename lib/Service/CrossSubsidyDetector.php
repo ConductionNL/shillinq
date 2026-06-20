@@ -54,14 +54,14 @@ class CrossSubsidyDetector
     /**
      * Scenario thresholds (configurable per administration when wired to ConfigService).
      */
-    public const LOSS_FINANCING_MONTHS                = 2;
-    public const OMZET_SPIKE_RATIO                    = 1.25;
+    public const LOSS_FINANCING_MONTHS = 2;
+    public const OMZET_SPIKE_RATIO     = 1.25;
     public const OVERHEAD_UNDER_ALLOCATION_FLOOR_RATIO = 0.01;
-    public const ABB_STALE_YEARS                      = 2;
-    public const MANUAL_OVERRIDE_RATIO                = 0.05;
+    public const ABB_STALE_YEARS       = 2;
+    public const MANUAL_OVERRIDE_RATIO = 0.05;
     public const OVERHEAD_UNDERSCHATTING_DIRECT_GROWTH = 0.20;
-    public const BEVOORDELING_DISCOUNT_THRESHOLD      = 0.85;
-    public const ESCALATION_WEEKS                     = 4;
+    public const BEVOORDELING_DISCOUNT_THRESHOLD       = 0.85;
+    public const ESCALATION_WEEKS = 4;
 
     /**
      * Default user-id used as the open-alert assignee.
@@ -80,7 +80,7 @@ class CrossSubsidyDetector
     /**
      * Detect loss-financing alert: IKP-marge < 0 for N consecutive months (REQ-WMO-007 §1).
      *
-     * @param array<int,array<string,mixed>> $ikpHistory       Recent IKP records (most-recent first).
+     * @param array<int,array<string,mixed>> $ikpHistory        Recent IKP records (most-recent first).
      * @param int                            $consecutiveMonths Required consecutive negative-marge months.
      *
      * @return bool True when the loss-financing scenario triggers.
@@ -128,8 +128,13 @@ class CrossSubsidyDetector
      *
      * @return bool True when omzet jumped >= spikeRatio without an IKP update in the same FY.
      */
-    public function detectOmzetSpikeNoIkpUpdate(float $currentYearOmzet, float $priorYearOmzet, ?string $lastIkpPeriod, string $today, float $spikeRatio=self::OMZET_SPIKE_RATIO): bool
-    {
+    public function detectOmzetSpikeNoIkpUpdate(
+        float $currentYearOmzet,
+        float $priorYearOmzet,
+        ?string $lastIkpPeriod,
+        string $today,
+        float $spikeRatio=self::OMZET_SPIKE_RATIO
+    ): bool {
         if ($priorYearOmzet <= 0.0) {
             return false;
         }
@@ -184,10 +189,10 @@ class CrossSubsidyDetector
     /**
      * Detect ABB-stale: exempted activity whose ABB has not been evaluated in > N years (REQ-WMO-007 §4).
      *
-     * @param array<string,mixed> $activity      The CommercialActivity.
-     * @param array<string,mixed> $abb           The linked AlgemeenBelangBesluit.
-     * @param string              $today         Today's ISO date.
-     * @param int                 $staleYears    Stale-after threshold in years (default 2).
+     * @param array<string,mixed> $activity   The CommercialActivity.
+     * @param array<string,mixed> $abb        The linked AlgemeenBelangBesluit.
+     * @param string              $today      Today's ISO date.
+     * @param int                 $staleYears Stale-after threshold in years (default 2).
      *
      * @return bool True when the ABB is stale.
      */
@@ -227,8 +232,11 @@ class CrossSubsidyDetector
      *
      * @return bool True when the override rate exceeds the threshold.
      */
-    public function detectManualOverrideAccumulation(int $manualOverrideCount, int $totalAllocations, float $ratioThreshold=self::MANUAL_OVERRIDE_RATIO): bool
-    {
+    public function detectManualOverrideAccumulation(
+        int $manualOverrideCount,
+        int $totalAllocations,
+        float $ratioThreshold=self::MANUAL_OVERRIDE_RATIO
+    ): bool {
         if ($totalAllocations <= 0) {
             return false;
         }
@@ -248,8 +256,13 @@ class CrossSubsidyDetector
      *
      * @return bool True when direct costs grew but overhead did not.
      */
-    public function detectOverheadOnderschatting(float $currentDirectCosts, float $priorDirectCosts, float $currentOverhead, float $priorOverhead, float $growthThreshold=self::OVERHEAD_UNDERSCHATTING_DIRECT_GROWTH): bool
-    {
+    public function detectOverheadOnderschatting(
+        float $currentDirectCosts,
+        float $priorDirectCosts,
+        float $currentOverhead,
+        float $priorOverhead,
+        float $growthThreshold=self::OVERHEAD_UNDERSCHATTING_DIRECT_GROWTH
+    ): bool {
         if ($priorDirectCosts <= 0.0) {
             return false;
         }
@@ -278,8 +291,12 @@ class CrossSubsidyDetector
      *
      * @return bool True when the price is suspiciously below market.
      */
-    public function detectBevoordelingRisk(float $gehanteerdTarief, float $kostprijsPerEenheid, array $benchmarks, float $discountThreshold=self::BEVOORDELING_DISCOUNT_THRESHOLD): bool
-    {
+    public function detectBevoordelingRisk(
+        float $gehanteerdTarief,
+        float $kostprijsPerEenheid,
+        array $benchmarks,
+        float $discountThreshold=self::BEVOORDELING_DISCOUNT_THRESHOLD
+    ): bool {
         if ($gehanteerdTarief < $kostprijsPerEenheid) {
             // Caller already raises a non-compliant alert for this.
             return false;
@@ -325,8 +342,14 @@ class CrossSubsidyDetector
      *
      * @return array<string,mixed> AlertLog record matching the schema.
      */
-    public function composeAlert(string $alertType, string $commercialActivityId, string $severity, string $administrationId, array $detectionContext=[], string $assignedTo=self::DEFAULT_ASSIGNEE): array
-    {
+    public function composeAlert(
+        string $alertType,
+        string $commercialActivityId,
+        string $severity,
+        string $administrationId,
+        array $detectionContext=[],
+        string $assignedTo=self::DEFAULT_ASSIGNEE
+    ): array {
         return [
             'alertType'            => $alertType,
             'commercialActivityId' => $commercialActivityId,
@@ -368,7 +391,7 @@ class CrossSubsidyDetector
             return false;
         }
 
-        $threshold = $generated->add(new DateInterval('P' . (self::ESCALATION_WEEKS * 7) . 'D'));
+        $threshold = $generated->add(new DateInterval('P'.(self::ESCALATION_WEEKS * 7).'D'));
         return $now >= $threshold;
 
     }//end shouldEscalate()
@@ -393,9 +416,9 @@ class CrossSubsidyDetector
     /**
      * Resolve an open alert (REQ-WMO-007 §resolution).
      *
-     * @param array<string,mixed> $alert       The current AlertLog record.
-     * @param string              $resolution  One of `reviewed-no-action` / `remediated`.
-     * @param string              $notes       Operator's motivation.
+     * @param array<string,mixed> $alert      The current AlertLog record.
+     * @param string              $resolution One of `reviewed-no-action` / `remediated`.
+     * @param string              $notes      Operator's motivation.
      *
      * @return array<string,mixed> Updated AlertLog with resolution status + notes.
      *
@@ -404,7 +427,7 @@ class CrossSubsidyDetector
     public function resolve(array $alert, string $resolution, string $notes): array
     {
         if (in_array($resolution, ['reviewed-no-action', 'remediated'], true) === false) {
-            throw new \InvalidArgumentException('Invalid resolution status: ' . $resolution);
+            throw new \InvalidArgumentException('Invalid resolution status: '.$resolution);
         }
 
         if (trim($notes) === '') {
@@ -417,5 +440,4 @@ class CrossSubsidyDetector
         return $alert;
 
     }//end resolve()
-
 }//end class

@@ -46,7 +46,6 @@ use Psr\Log\LoggerInterface;
  */
 class WbsoTransactionGuard
 {
-
     /**
      * Construct the guard.
      *

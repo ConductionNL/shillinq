@@ -44,7 +44,6 @@ use Psr\Log\LoggerInterface;
  */
 class PayrollUpaHandoffService
 {
-
     /**
      * Construct the service.
      *

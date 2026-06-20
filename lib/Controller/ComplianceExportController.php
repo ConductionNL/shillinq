@@ -122,7 +122,7 @@ class ComplianceExportController extends Controller
             return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
         }
 
-        $uid       = $user->getUID();
+        $uid         = $user->getUID();
         $adminBypass = $this->groupManager->isAdmin($uid);
         $isAuditor   = $this->groupManager->isInGroup($uid, self::AUDITOR_GROUP);
         if ($adminBypass !== true && $isAuditor !== true) {
@@ -137,7 +137,11 @@ class ComplianceExportController extends Controller
         $scope  = (string) $this->request->getParam('scope', ComplianceExportService::SCOPE_ALL);
         $format = (string) $this->request->getParam('format', ComplianceExportService::FORMAT_CSV);
         $actor  = $this->request->getParam('actor');
-        $actorFilter = (is_string($actor) === true && $actor !== '') ? $actor : null;
+        if (is_string($actor) === true && $actor !== '') {
+            $actorFilter = $actor;
+        } else {
+            $actorFilter = null;
+        }
 
         try {
             $envelope = $this->complianceExportService->generateExport(
@@ -220,6 +224,7 @@ class ComplianceExportController extends Controller
                 $auditService->recordEvent($payload);
                 return;
             }
+
             if (method_exists($auditService, 'log') === true) {
                 $auditService->log($payload);
                 return;

@@ -37,8 +37,6 @@ namespace OCA\Shillinq\Service\Import;
  */
 interface ImportProfileInterface
 {
-
-
     /**
      * The ImportBatch.sourceSystem enum value this profile handles.
      *
@@ -47,7 +45,6 @@ interface ImportProfileInterface
      * @spec openspec/changes/administration-import-migration/tasks.md#task-7
      */
     public function sourceSystem(): string;
-
 
     /**
      * Normalise the parsed ledger-account list for this dialect.
@@ -64,7 +61,6 @@ interface ImportProfileInterface
      * @spec openspec/changes/administration-import-migration/tasks.md#task-7
      */
     public function normalizeLedgerAccounts(array $parsed): array;
-
 
     /**
      * The CSV column map for the artifacts this package omits from its XAF.
@@ -83,7 +79,6 @@ interface ImportProfileInterface
      */
     public function mapCsvColumns(string $artifact): array;
 
-
     /**
      * Apply this dialect's quirks to the full parsed structure.
      *
@@ -98,6 +93,4 @@ interface ImportProfileInterface
      * @spec openspec/changes/administration-import-migration/tasks.md#task-7
      */
     public function applyDialectQuirks(array $parsed): array;
-
-
 }//end interface

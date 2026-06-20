@@ -136,15 +136,21 @@ class ApprovalActivityEmitter
      *
      * @return void
      */
-    public function emitApprovalRequested(string $objectType, string $objectId, string $actorUid = '', string $summaryHint = ''): void
+    public function emitApprovalRequested(string $objectType, string $objectId, string $actorUid='', string $summaryHint=''): void
     {
+        if ($summaryHint !== '') {
+            $label = $summaryHint;
+        } else {
+            $label = $objectId;
+        }
+
         $this->publish(
             event:       self::EVENT_APPROVAL_REQUESTED,
             objectType:  $objectType,
             objectId:    $objectId,
             actorUid:    $actorUid,
-            summary:     sprintf('Approval requested for %s', $summaryHint !== '' ? $summaryHint : $objectId),
-            parameters:  ['object' => $summaryHint !== '' ? $summaryHint : $objectId]
+            summary:     sprintf('Approval requested for %s', $label),
+            parameters:  ['object' => $label]
         );
 
     }//end emitApprovalRequested()
@@ -160,15 +166,21 @@ class ApprovalActivityEmitter
      *
      * @return void
      */
-    public function emitApprovalApproved(string $objectType, string $objectId, string $actorUid, string $summaryHint = '', string $comment = ''): void
+    public function emitApprovalApproved(string $objectType, string $objectId, string $actorUid, string $summaryHint='', string $comment=''): void
     {
+        if ($summaryHint !== '') {
+            $label = $summaryHint;
+        } else {
+            $label = $objectId;
+        }
+
         $this->publish(
             event:       self::EVENT_APPROVAL_APPROVED,
             objectType:  $objectType,
             objectId:    $objectId,
             actorUid:    $actorUid,
-            summary:     sprintf('%s approved %s', $actorUid, $summaryHint !== '' ? $summaryHint : $objectId),
-            parameters:  ['actor' => $actorUid, 'object' => $summaryHint !== '' ? $summaryHint : $objectId, 'comment' => $comment]
+            summary:     sprintf('%s approved %s', $actorUid, $label),
+            parameters:  ['actor' => $actorUid, 'object' => $label, 'comment' => $comment]
         );
 
     }//end emitApprovalApproved()
@@ -184,15 +196,21 @@ class ApprovalActivityEmitter
      *
      * @return void
      */
-    public function emitApprovalRejected(string $objectType, string $objectId, string $actorUid, string $summaryHint = '', string $reason = ''): void
+    public function emitApprovalRejected(string $objectType, string $objectId, string $actorUid, string $summaryHint='', string $reason=''): void
     {
+        if ($summaryHint !== '') {
+            $label = $summaryHint;
+        } else {
+            $label = $objectId;
+        }
+
         $this->publish(
             event:       self::EVENT_APPROVAL_REJECTED,
             objectType:  $objectType,
             objectId:    $objectId,
             actorUid:    $actorUid,
-            summary:     sprintf('%s rejected %s: %s', $actorUid, $summaryHint !== '' ? $summaryHint : $objectId, $reason),
-            parameters:  ['actor' => $actorUid, 'object' => $summaryHint !== '' ? $summaryHint : $objectId, 'reason' => $reason]
+            summary:     sprintf('%s rejected %s: %s', $actorUid, $label, $reason),
+            parameters:  ['actor' => $actorUid, 'object' => $label, 'reason' => $reason]
         );
 
     }//end emitApprovalRejected()
@@ -207,15 +225,21 @@ class ApprovalActivityEmitter
      *
      * @return void
      */
-    public function emitDocumentSigned(string $objectType, string $objectId, string $actorUid, string $summaryHint = ''): void
+    public function emitDocumentSigned(string $objectType, string $objectId, string $actorUid, string $summaryHint=''): void
     {
+        if ($summaryHint !== '') {
+            $label = $summaryHint;
+        } else {
+            $label = $objectId;
+        }
+
         $this->publish(
             event:       self::EVENT_DOCUMENT_SIGNED,
             objectType:  $objectType,
             objectId:    $objectId,
             actorUid:    $actorUid,
-            summary:     sprintf('%s signed %s', $actorUid, $summaryHint !== '' ? $summaryHint : $objectId),
-            parameters:  ['actor' => $actorUid, 'object' => $summaryHint !== '' ? $summaryHint : $objectId]
+            summary:     sprintf('%s signed %s', $actorUid, $label),
+            parameters:  ['actor' => $actorUid, 'object' => $label]
         );
 
     }//end emitDocumentSigned()
@@ -231,15 +255,21 @@ class ApprovalActivityEmitter
      *
      * @return void
      */
-    public function emitDecisionMade(string $objectType, string $objectId, string $actorUid, string $newStatus, string $summaryHint = ''): void
+    public function emitDecisionMade(string $objectType, string $objectId, string $actorUid, string $newStatus, string $summaryHint=''): void
     {
+        if ($summaryHint !== '') {
+            $label = $summaryHint;
+        } else {
+            $label = $objectId;
+        }
+
         $this->publish(
             event:       self::EVENT_DECISION_MADE,
             objectType:  $objectType,
             objectId:    $objectId,
             actorUid:    $actorUid,
-            summary:     sprintf('%s made decision on %s: %s', $actorUid, $summaryHint !== '' ? $summaryHint : $objectId, $newStatus),
-            parameters:  ['actor' => $actorUid, 'object' => $summaryHint !== '' ? $summaryHint : $objectId, 'status' => $newStatus]
+            summary:     sprintf('%s made decision on %s: %s', $actorUid, $label, $newStatus),
+            parameters:  ['actor' => $actorUid, 'object' => $label, 'status' => $newStatus]
         );
 
     }//end emitDecisionMade()
@@ -250,12 +280,12 @@ class ApprovalActivityEmitter
      * Failure is logged but not raised — the OR audit-trail still captures
      * the lifecycle transition, so the Activity surface is best-effort.
      *
-     * @param string              $event       Event subject id (REQ-RAP-006 table).
-     * @param string              $objectType  OR schema slug.
-     * @param string              $objectId    Object UUID.
-     * @param string              $actorUid    Actor UID ('' = current session).
-     * @param string              $summary     1-line human summary.
-     * @param array<string,mixed> $parameters  Subject parameters.
+     * @param string              $event      Event subject id (REQ-RAP-006 table).
+     * @param string              $objectType OR schema slug.
+     * @param string              $objectId   Object UUID.
+     * @param string              $actorUid   Actor UID ('' = current session).
+     * @param string              $summary    1-line human summary.
+     * @param array<string,mixed> $parameters Subject parameters.
      *
      * @return void
      */
@@ -265,7 +295,11 @@ class ApprovalActivityEmitter
             $effectiveActor = $actorUid;
             if ($effectiveActor === '') {
                 $user = $this->userSession->getUser();
-                $effectiveActor = $user !== null ? $user->getUID() : 'system';
+                if ($user !== null) {
+                    $effectiveActor = $user->getUID();
+                } else {
+                    $effectiveActor = 'system';
+                }
             }
 
             $activity = $this->activityManager->generateEvent();
@@ -293,7 +327,7 @@ class ApprovalActivityEmitter
                     'exception'  => $e->getMessage(),
                 ]
             );
-        }
+        }//end try
 
     }//end publish()
 }//end class

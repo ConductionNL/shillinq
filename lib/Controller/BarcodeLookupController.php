@@ -237,7 +237,7 @@ class BarcodeLookupController extends Controller
             return null;
         }
 
-        // findMany returns array<int, array<string, mixed>>; reset() on a
+        // FindMany returns array<int, array<string, mixed>>; reset() on a
         // non-empty result is guaranteed to return the first element record.
         return $items[array_key_first($items)];
 

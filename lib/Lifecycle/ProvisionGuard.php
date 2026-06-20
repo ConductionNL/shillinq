@@ -107,7 +107,6 @@ class ProvisionGuard
     ) {
     }//end __construct()
 
-
     /**
      * Returns true iff the Provision may leave `draft` and become `active`.
      *
@@ -225,7 +224,6 @@ class ProvisionGuard
 
     }//end canActivateProvision()
 
-
     /**
      * Returns true iff a ProvisionMovement may transition from `open` to `closed`.
      *
@@ -283,7 +281,6 @@ class ProvisionGuard
 
     }//end canCloseMovement()
 
-
     /**
      * Returns true when the herstructureringsvoorziening linked detail satisfies
      * IAS 37 §72 timeliness (detailedPlanDate ≤ balanceDate) and §75 communication
@@ -330,7 +327,6 @@ class ProvisionGuard
 
     }//end canActivateHerstructurering()
 
-
     /**
      * Returns true when the claims-voorziening linked detail carries the
      * required legal advice memo FK (REQ-PROV-006).
@@ -363,7 +359,6 @@ class ProvisionGuard
 
     }//end canActivateClaims()
 
-
     /**
      * Materiality test per REQ-PROV-018: bestEstimate > EUR 100K OR > 1% of
      * priorYearBalanceTotal.
@@ -395,7 +390,6 @@ class ProvisionGuard
         return false;
 
     }//end isMaterial()
-
 
     /**
      * Resolve the object under transition, preferring the supplied in-flight
@@ -435,7 +429,6 @@ class ProvisionGuard
 
     }//end resolveObject()
 
-
     /**
      * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
      *
@@ -451,6 +444,4 @@ class ProvisionGuard
         return $register;
 
     }//end resolveRegister()
-
-
 }//end class

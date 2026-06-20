@@ -155,8 +155,8 @@ class WbsoAccountService
             return null;
         }
 
-        $target            = $byNumber[$accountNumber];
-        $target['parent']  = $byNumber[(string) ($target['parentAccountNumber'] ?? '')] ?? null;
+        $target           = $byNumber[$accountNumber];
+        $target['parent'] = $byNumber[(string) ($target['parentAccountNumber'] ?? '')] ?? null;
         $target['children'] = [];
         foreach ($byNumber as $candidate) {
             if (($candidate['parentAccountNumber'] ?? null) === $accountNumber) {
@@ -329,10 +329,12 @@ class WbsoAccountService
             $seen[$cursor] = true;
             $depth++;
             if ($depth > self::HIERARCHY_MAX_DEPTH) {
-                throw new InvalidArgumentException(sprintf(
+                throw new InvalidArgumentException(
+                        sprintf(
                     'Hierarchy depth must not exceed %d levels',
                     self::HIERARCHY_MAX_DEPTH
-                ));
+                )
+                        );
             }
 
             $next = (string) ($byNumber[$cursor]['parentAccountNumber'] ?? '');
@@ -341,7 +343,7 @@ class WbsoAccountService
             }
 
             $cursor = $next;
-        }
+        }//end while
 
     }//end assertHierarchy()
 

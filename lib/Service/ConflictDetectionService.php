@@ -63,10 +63,10 @@ class ConflictDetectionService
     /**
      * Construct the service with DI dependencies.
      *
-     * @param ContainerInterface  $container DI container for lazy ObjectService resolution.
-     * @param SettingsService     $settings  Shillinq settings (register slug, OR availability).
-     * @param TransactionalGuard  $guard     Transaction / row-lock facade (production-wired with IDBConnection).
-     * @param LoggerInterface     $logger    Logger for fail-closed diagnostics.
+     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+     * @param SettingsService    $settings  Shillinq settings (register slug, OR availability).
+     * @param TransactionalGuard $guard     Transaction / row-lock facade (production-wired with IDBConnection).
+     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
      *
      * @return void
      */
@@ -77,7 +77,6 @@ class ConflictDetectionService
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Return existing bookings that overlap a proposed window on a resource.
@@ -147,7 +146,7 @@ class ConflictDetectionService
             // Fail closed — treat as no-conflict-detected so the caller can
             // surface a 503; we never silently pass an unverifiable check.
             throw new \RuntimeException('Conflict detection lookup failed', 0, $e);
-        }
+        }//end try
 
         $conflicts = [];
         foreach ($records as $record) {
@@ -198,12 +197,11 @@ class ConflictDetectionService
                     'status'    => $status,
                 ];
             }
-        }
+        }//end foreach
 
         return $conflicts;
 
     }//end checkConflicts()
-
 
     /**
      * Acquire a database row-lock on the resource record for the duration
@@ -229,7 +227,6 @@ class ConflictDetectionService
         return $this->guard->lockResourceRow(resourceId: $resourceId);
 
     }//end lockResource()
-
 
     /**
      * Parse an ISO 8601 timestamp into a UTC DateTimeImmutable.
@@ -261,7 +258,6 @@ class ConflictDetectionService
         return $dt->setTimezone(new DateTimeZone('UTC'));
 
     }//end parseTime()
-
 
     /**
      * Normalise an OR record (Entity, array, or JSON-serialisable) into a flat array.
@@ -297,6 +293,4 @@ class ConflictDetectionService
         return [];
 
     }//end toArray()
-
-
 }//end class

@@ -423,7 +423,6 @@ class SettingsService
 
     }//end seedBbvTaakvelden()
 
-
     /**
      * Seed FixedAsset + DepreciationSchedule demo records, idempotently (REQ-FA-001..010).
      *
@@ -474,13 +473,13 @@ class SettingsService
         $depreciationSchedules = ($data['depreciationSchedules'] ?? []);
 
         try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registerSlug  = $this->getRegisterSlug();
-            $seededAssets       = 0;
-            $skippedAssets      = 0;
-            $seededSchedules    = 0;
-            $skippedSchedules   = 0;
-            $assetUuidByNumber  = [];
+            $objectService     = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug      = $this->getRegisterSlug();
+            $seededAssets      = 0;
+            $skippedAssets     = 0;
+            $seededSchedules   = 0;
+            $skippedSchedules  = 0;
+            $assetUuidByNumber = [];
 
             foreach ($fixedAssets as $asset) {
                 $asset['administrationId'] = $administrationId;
@@ -573,12 +572,12 @@ class SettingsService
             );
 
             return [
-                'success'           => true,
-                'message'           => 'FixedAsset + DepreciationSchedule demo records seeded successfully.',
-                'seededAssets'      => $seededAssets,
-                'skippedAssets'     => $skippedAssets,
-                'seededSchedules'   => $seededSchedules,
-                'skippedSchedules'  => $skippedSchedules,
+                'success'          => true,
+                'message'          => 'FixedAsset + DepreciationSchedule demo records seeded successfully.',
+                'seededAssets'     => $seededAssets,
+                'skippedAssets'    => $skippedAssets,
+                'seededSchedules'  => $seededSchedules,
+                'skippedSchedules' => $skippedSchedules,
             ];
         } catch (\Throwable $e) {
             $this->logger->error(
@@ -589,7 +588,6 @@ class SettingsService
         }//end try
 
     }//end seedFixedAssetsDemo()
-
 
     /**
      * Seed the default RGS → BBV account mapping for a municipal administration
@@ -699,9 +697,9 @@ class SettingsService
                     continue;
                 }
 
-                $record['administrationId']   = $administrationId;
-                $record['_meta']              = ($record['_meta'] ?? []);
-                $record['_meta']['source']    = 'seeded';
+                $record['administrationId'] = $administrationId;
+                $record['_meta']            = ($record['_meta'] ?? []);
+                $record['_meta']['source']  = 'seeded';
                 $record['_meta']['bbvVersion'] = ($data['_meta']['bbvVersion'] ?? '2024');
 
                 $objectService->saveObject(
@@ -758,7 +756,6 @@ class SettingsService
         }//end try
 
     }//end seedBbvAccountMappings()
-
 
     /**
      * Seed default rate-card templates from rate-card-templates.json, idempotently.
@@ -3067,9 +3064,9 @@ class SettingsService
             $registerSlug  = $this->getRegisterSlug();
 
             $files = [
-                'sportaccommodaties-gemeente.json'      => ['CommercialActivity', 'activities', 'code'],
-                'waterschap-slibruimte.json'            => ['CommercialActivity', 'activities', 'code'],
-                'abb-example-gemeente.json'             => ['AlgemeenBelangBesluit', 'besluiten', 'kenmerk'],
+                'sportaccommodaties-gemeente.json'         => ['CommercialActivity', 'activities', 'code'],
+                'waterschap-slibruimte.json'               => ['CommercialActivity', 'activities', 'code'],
+                'abb-example-gemeente.json'                => ['AlgemeenBelangBesluit', 'besluiten', 'kenmerk'],
                 'integral-cost-price-example-q1-2026.json' => ['IntegralCostPrice', 'ikp', '__ikpKey'],
             ];
 
@@ -3103,7 +3100,7 @@ class SettingsService
                     $filter = ['administrationId' => $administrationId];
                     if ($dedupeKey === '__ikpKey') {
                         $filter['commercialActivityId'] = ($record['commercialActivityId'] ?? '');
-                        $filter['periode']              = ($record['periode'] ?? '');
+                        $filter['periode'] = ($record['periode'] ?? '');
                     } else if ($dedupeKey !== '' && isset($record[$dedupeKey]) === true) {
                         $filter[$dedupeKey] = $record[$dedupeKey];
                     }

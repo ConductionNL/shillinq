@@ -40,41 +40,42 @@ final class CsrdEsrsXbrlResult
     /**
      * Construct the result value-object.
      *
-     * @param string              $status       One of MAPPED |
-     *                                          INSTANCE_BUILT |
-     *                                          VALIDATED |
-     *                                          VALIDATION_BLOCKED |
-     *                                          DEFERRED | ERROR.
-     * @param string              $documentId   Adapter-side opaque id of
-     *                                          the resulting taxonomy
-     *                                          mapping or iXBRL
-     *                                          instance (synthetic for
-     *                                          dormant).
-     * @param string              $taxonomyVersion EFRAG ESRS taxonomy
-     *                                             version, e.g.
-     *                                             `efrag-esrs-2024`.
-     * @param string              $contentType  MIME of the artefact —
-     *                                          `application/xbrl+xml`
-     *                                          for an instance,
-     *                                          `application/json` for
-     *                                          a mapping document.
-     * @param string              $payloadRef   Reference to the built
-     *                                          artefact bytes (URI
-     *                                          to docudesk, openconnector
-     *                                          handle, or empty for
-     *                                          dormant).
+     * @param string              $status           One of MAPPED |
+     *                                              INSTANCE_BUILT
+     *                                              | VALIDATED |
+     *                                              VALIDATION_BLOCKED
+     *                                              | DEFERRED |
+     *                                              ERROR.
+     * @param string              $documentId       Adapter-side opaque id of
+     *                                              the resulting taxonomy
+     *                                              mapping or iXBRL instance
+     *                                              (synthetic for dormant).
+     * @param string              $taxonomyVersion  EFRAG ESRS taxonomy
+     *                                              version, e.g.
+     *                                              `efrag-esrs-2024`.
+     * @param string              $contentType      MIME of the artefact
+     *                                              —
+     *                                              `application/xbrl+xml`
+     *                                              for an instance,
+     *                                              `application/json` for
+     *                                              a mapping document.
+     * @param string              $payloadRef       Reference to the built
+     *                                              artefact bytes (URI to
+     *                                              docudesk,
+     *                                              openconnector handle,
+     *                                              or empty for dormant).
      * @param array<int,string>   $missingMandatory ID list of mandatory
      *                                              EFRAG IG-3 data
      *                                              points still missing
      *                                              or unassured
      *                                              (populated on
      *                                              VALIDATION_BLOCKED).
-     * @param bool                $dormant      TRUE when the adapter was
-     *                                          dormant.
-     * @param array<string,mixed> $extras       Provider-specific extras
-     *                                          (mapping cache key, fact
-     *                                          count, validation
-     *                                          messages).
+     * @param bool                $dormant          TRUE when the adapter was
+     *                                              dormant.
+     * @param array<string,mixed> $extras           Provider-specific extras
+     *                                              (mapping cache key, fact
+     *                                              count, validation
+     *                                              messages).
      */
     public function __construct(
         public readonly string $status,
@@ -84,7 +85,7 @@ final class CsrdEsrsXbrlResult
         public readonly string $payloadRef,
         public readonly array $missingMandatory,
         public readonly bool $dormant,
-        public readonly array $extras = [],
+        public readonly array $extras=[],
     ) {
     }//end __construct()
 }//end class

@@ -38,26 +38,26 @@ final class CcmRuleEngineResult
     /**
      * Construct the result value-object.
      *
-     * @param string              $status      Engine-side state.
+     * @param string              $status       Engine-side state.
      * @param string              $evaluationId Engine-side opaque id of
      *                                          the evaluation
      *                                          (synthetic for dormant).
-     * @param bool                $fired       TRUE if the rule fired
-     *                                         (only meaningful on
-     *                                         EVALUATED / RULE_FIRED /
-     *                                         RULE_NOT_FIRED).
-     * @param array<string,mixed> $diagnostics Engine-emitted diagnostics
-     *                                         (operator path, captured
-     *                                         field values, fail-soft
-     *                                         note) — the structure the
-     *                                         local CcmRuleEngine
-     *                                         already returns from its
-     *                                         AST walker.
-     * @param bool                $dormant     TRUE when the adapter was
-     *                                         dormant.
-     * @param array<string,mixed> $extras      Provider-specific extras
-     *                                         (engine version, AST
-     *                                         cache key, latency).
+     * @param bool                $fired        TRUE if the rule fired
+     *                                          (only meaningful on
+     *                                          EVALUATED / RULE_FIRED
+     *                                          / RULE_NOT_FIRED).
+     * @param array<string,mixed> $diagnostics  Engine-emitted diagnostics
+     *                                          (operator path, captured
+     *                                          field values, fail-soft
+     *                                          note) — the structure
+     *                                          the local CcmRuleEngine
+     *                                          already returns from its
+     *                                          AST walker.
+     * @param bool                $dormant      TRUE when the adapter was
+     *                                          dormant.
+     * @param array<string,mixed> $extras       Provider-specific extras
+     *                                          (engine version, AST
+     *                                          cache key, latency).
      */
     public function __construct(
         public readonly string $status,
@@ -65,7 +65,7 @@ final class CcmRuleEngineResult
         public readonly bool $fired,
         public readonly array $diagnostics,
         public readonly bool $dormant,
-        public readonly array $extras = [],
+        public readonly array $extras=[],
     ) {
     }//end __construct()
 }//end class

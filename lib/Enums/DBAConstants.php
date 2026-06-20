@@ -115,16 +115,17 @@ final class DBAConstants
     /**
      * Risico-band thresholds (REQ-DBA-003).
      */
-    public const RISICO_BAND_LAAG_MAX = 24;
+    public const RISICO_BAND_LAAG_MAX        = 24;
     public const RISICO_BAND_LAAG_MIDDEN_MAX = 49;
     public const RISICO_BAND_MIDDEN_HOOG_MAX = 74;
-    /* HOOG = 75..100 */
+    // HOOG = 75..100.
+
 
     /**
      * Compliance modes (REQ-DBA-000).
      */
-    public const COMPLIANCE_MODE_SOFT = 'soft';
-    public const COMPLIANCE_MODE_HARD = 'hard';
+    public const COMPLIANCE_MODE_SOFT         = 'soft';
+    public const COMPLIANCE_MODE_HARD         = 'hard';
     public const COMPLIANCE_MODE_INTERMEDIAIR = 'intermediair';
 
     /**
@@ -144,12 +145,15 @@ final class DBAConstants
         if ($score <= self::RISICO_BAND_LAAG_MAX) {
             return 'LAAG';
         }
+
         if ($score <= self::RISICO_BAND_LAAG_MIDDEN_MAX) {
             return 'LAAG_MIDDEN';
         }
+
         if ($score <= self::RISICO_BAND_MIDDEN_HOOG_MAX) {
             return 'MIDDEN_HOOG';
         }
+
         return 'HOOG';
     }//end bandFromScore()
 
@@ -157,37 +161,43 @@ final class DBAConstants
      * Read the per-administration VBAR threshold (eurocenten), falling back to the
      * peil-2024 constant when no override is configured.
      *
-     * @param \OCP\IAppConfig $appConfig    The Nextcloud app-config.
-     * @param string          $appId        The shillinq app id.
+     * @param \OCP\IAppConfig $appConfig      The Nextcloud app-config.
+     * @param string          $appId          The shillinq app id.
      * @param string|null     $administration FK; null reads the global default.
      *
      * @return int VBAR threshold in eurocenten.
      */
-    public static function vbarGrensCents(\OCP\IAppConfig $appConfig, string $appId, ?string $administration = null): int
+    public static function vbarGrensCents(\OCP\IAppConfig $appConfig, string $appId, ?string $administration=null): int
     {
         $key = self::CONFIG_PREFIX.'vbar_grens_cents';
         if ($administration !== null) {
             $key .= '.'.$administration;
         }
+
         $value = $appConfig->getValueInt($appId, $key, self::VBAR_GRENS_EUR_CENTS);
-        return $value > 0 ? $value : self::VBAR_GRENS_EUR_CENTS;
+        if ($value > 0) {
+            return $value;
+        }
+
+        return self::VBAR_GRENS_EUR_CENTS;
     }//end vbarGrensCents()
 
     /**
      * Read the per-administration compliance mode.
      *
-     * @param \OCP\IAppConfig $appConfig    The Nextcloud app-config.
-     * @param string          $appId        The shillinq app id.
+     * @param \OCP\IAppConfig $appConfig      The Nextcloud app-config.
+     * @param string          $appId          The shillinq app id.
      * @param string|null     $administration FK; null reads the global default.
      *
      * @return string COMPLIANCE_MODE_SOFT / COMPLIANCE_MODE_HARD / COMPLIANCE_MODE_INTERMEDIAIR.
      */
-    public static function complianceMode(\OCP\IAppConfig $appConfig, string $appId, ?string $administration = null): string
+    public static function complianceMode(\OCP\IAppConfig $appConfig, string $appId, ?string $administration=null): string
     {
         $key = self::CONFIG_PREFIX.'compliance_mode';
         if ($administration !== null) {
             $key .= '.'.$administration;
         }
+
         $value = $appConfig->getValueString($appId, $key, self::COMPLIANCE_MODE_SOFT);
         return match ($value) {
             self::COMPLIANCE_MODE_HARD => self::COMPLIANCE_MODE_HARD,

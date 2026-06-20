@@ -93,6 +93,7 @@ class DunningRunExecuteGuard
             if (is_array($runs) === false || $runs === []) {
                 return false;
             }
+
             $run = $runs[0];
 
             $factuurId = (string) ($run['factuurId'] ?? '');
@@ -103,12 +104,14 @@ class DunningRunExecuteGuard
             $pauses = $objectService
                 ->setRegister($register)
                 ->setSchema('DunningPauseDispute')
-                ->findAll([
-                    'filters' => [
-                        'factuurId'      => $factuurId,
-                        'lifecycleState' => 'active',
-                    ],
-                ]);
+                ->findAll(
+                        [
+                            'filters' => [
+                                'factuurId'      => $factuurId,
+                                'lifecycleState' => 'active',
+                            ],
+                        ]
+                        );
             if (is_array($pauses) === true && $pauses !== []) {
                 $this->logger->info('Shillinq: DunningRun '.$runId.' blocked by active pause.');
                 return false;
@@ -133,8 +136,7 @@ class DunningRunExecuteGuard
         } catch (\Throwable $e) {
             $this->logger->warning('Shillinq: DunningRunExecuteGuard failed: '.$e->getMessage());
             return false;
-        }
+        }//end try
 
     }//end canExecute()
-
 }//end class

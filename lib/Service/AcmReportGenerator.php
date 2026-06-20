@@ -54,16 +54,9 @@ class AcmReportGenerator
     /**
      * Compose an ACM report record for a reporting period (REQ-WMO-006).
      *
-     * @param array{
-     *   period: string,
-     *   administrationId: string,
-     *   activities: array<int,array<string,mixed>>,
-     *   ikpRecords: array<string,array<string,mixed>>,
-     *   omzetByActivity: array<string,float>,
-     *   abbList?: array<int,array<string,mixed>>,
-     *   manualOverrides?: int,
-     *   samenvatting?: string
-     * } $input Inputs.
+     * @param array<string,mixed> $input Inputs (period, administrationId, activities,
+     *                                   ikpRecords, omzetByActivity, abbList?,
+     *                                   manualOverrides?, samenvatting?).
      *
      * @return array<string,mixed> ACMReport record matching the schema.
      *
@@ -73,7 +66,7 @@ class AcmReportGenerator
     {
         $period = (string) $input['period'];
         if (preg_match('/^[0-9]{4}-(Q[1-4]|YTD)$/', $period) !== 1) {
-            throw new InvalidArgumentException('Invalid period format: ' . $period);
+            throw new InvalidArgumentException('Invalid period format: '.$period);
         }
 
         $activities      = (array) $input['activities'];
@@ -87,15 +80,24 @@ class AcmReportGenerator
                 continue;
             }
 
-            $activityId       = (string) ($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
-            $code             = (string) ($activity['code'] ?? '');
-            $naam             = (string) ($activity['naam'] ?? '');
-            $ikp              = (array) ($ikpRecords[$activityId] ?? []);
-            $integraleCost    = (float) ($ikp['totaleKosten'] ?? 0);
-            $omzet            = (float) ($omzetByActivity[$activityId] ?? 0);
-            $ratio            = ($integraleCost > 0.0 ? round(($omzet / $integraleCost), 4) : null);
-            $compliant        = ($omzet >= $integraleCost);
-            $abbReferentie    = ((bool) ($activity['isExempted'] ?? false)) ? ((string) ($activity['exemptionBesluitId'] ?? '')) : null;
+            $activityId    = (string) ($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
+            $code          = (string) ($activity['code'] ?? '');
+            $naam          = (string) ($activity['naam'] ?? '');
+            $ikp           = (array) ($ikpRecords[$activityId] ?? []);
+            $integraleCost = (float) ($ikp['totaleKosten'] ?? 0);
+            $omzet         = (float) ($omzetByActivity[$activityId] ?? 0);
+            if ($integraleCost > 0.0) {
+                $ratio = round(($omzet / $integraleCost), 4);
+            } else {
+                $ratio = null;
+            }
+
+            $compliant = ($omzet >= $integraleCost);
+            if ((bool) ($activity['isExempted'] ?? false) === true) {
+                $abbReferentie = (string) ($activity['exemptionBesluitId'] ?? '');
+            } else {
+                $abbReferentie = null;
+            }
 
             $activiteiten[] = [
                 'commercialActivityId' => $activityId,
@@ -107,7 +109,7 @@ class AcmReportGenerator
                 'compliant'            => $compliant,
                 'abbReferentie'        => $abbReferentie,
             ];
-        }
+        }//end foreach
 
         $abbSummaries = [];
         foreach ($abbList as $abb) {
@@ -122,22 +124,22 @@ class AcmReportGenerator
         }
 
         return [
-            'period'             => $period,
-            'format'             => self::FORMAT,
-            'generatedAt'        => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
-            'activiteiten'       => $activiteiten,
-            'samenvatting'       => ($input['samenvatting'] ?? null),
-            'manualOverrides'    => (int) ($input['manualOverrides'] ?? 0),
-            'abbList'            => $abbSummaries,
+            'period'                 => $period,
+            'format'                 => self::FORMAT,
+            'generatedAt'            => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
+            'activiteiten'           => $activiteiten,
+            'samenvatting'           => ($input['samenvatting'] ?? null),
+            'manualOverrides'        => (int) ($input['manualOverrides'] ?? 0),
+            'abbList'                => $abbSummaries,
             // Deprecated legacy fields — retained for array shape compatibility; see REQ-SIGN-004.
-            'ondertekenaar'      => null,
-            'ondertekendOp'      => null,
-            'signatureFingerprint' => null,
-            'verzondenAanAcm'    => false,
-            'verzondenAanAcmOp'  => null,
+            'ondertekenaar'          => null,
+            'ondertekendOp'          => null,
+            'signatureFingerprint'   => null,
+            'verzondenAanAcm'        => false,
+            'verzondenAanAcmOp'      => null,
             'publicatieGemeenteblad' => null,
-            'administrationId'   => (string) $input['administrationId'],
-            'status'             => 'draft',
+            'administrationId'       => (string) $input['administrationId'],
+            'status'                 => 'draft',
         ];
 
     }//end compose()
@@ -145,9 +147,9 @@ class AcmReportGenerator
     /**
      * Verify totals match the source omzetByActivity sum (REQ-WMO-006 §integriteit).
      *
-     * @param array<string,mixed> $report          The composed report.
-     * @param float               $omzetSumLedger  Sum of revenue GL lines for the period.
-     * @param float               $tolerance       Cents tolerance (default 1.00 EUR).
+     * @param array<string,mixed> $report         The composed report.
+     * @param float               $omzetSumLedger Sum of revenue GL lines for the period.
+     * @param float               $tolerance      Cents tolerance (default 1.00 EUR).
      *
      * @return bool True when the report omzet matches the ledger omzet within tolerance.
      */
@@ -185,7 +187,7 @@ class AcmReportGenerator
         $report['verzondenAanAcm']        = true;
         $report['verzondenAanAcmOp']      = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
         $report['publicatieGemeenteblad'] = $publicatieGmblad;
-        $report['status']                 = 'verzonden';
+        $report['status'] = 'verzonden';
 
         return $report;
 
@@ -233,15 +235,27 @@ class AcmReportGenerator
                 continue;
             }
 
+            if ($a['kostendekkingsratio'] === null) {
+                $ratioAttr = '';
+            } else {
+                $ratioAttr = (string) $a['kostendekkingsratio'];
+            }
+
+            if ((bool) ($a['compliant'] ?? false) === true) {
+                $compliantAttr = 'true';
+            } else {
+                $compliantAttr = 'false';
+            }
+
             $lines[] = sprintf(
                 '  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s"/>',
                 htmlspecialchars((string) ($a['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
                 (float) ($a['omzet'] ?? 0),
                 (float) ($a['integraleKostprijs'] ?? 0),
-                ($a['kostendekkingsratio'] === null ? '' : (string) $a['kostendekkingsratio']),
-                ((bool) ($a['compliant'] ?? false) ? 'true' : 'false')
+                $ratioAttr,
+                $compliantAttr
             );
-        }
+        }//end foreach
 
         $body = implode("\n", $lines);
 
@@ -253,5 +267,4 @@ class AcmReportGenerator
 XML;
 
     }//end toXml()
-
 }//end class

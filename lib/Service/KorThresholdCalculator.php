@@ -335,7 +335,7 @@ class KorThresholdCalculator
             return null;
         }
 
-        // lockInEindDatum: ingangsDatum - 1 day + 3 years = end of third calendar year.
+        // LockInEindDatum: ingangsDatum - 1 day + 3 years = end of third calendar year.
         // For a 1-1 ingangsdatum, that is 31-12 of (year + 2). We model the general
         // case as +3 years - 1 day; for the canonical 1-1 start the prior day is 31-12.
         if ($month === 1 && $day === 1) {
@@ -350,8 +350,10 @@ class KorThresholdCalculator
                     $priorMonth = 12;
                     $year      -= 1;
                 }
+
                 $priorDay = (int) date('t', strtotime(sprintf('%04d-%02d-01', $year, $priorMonth)));
             }
+
             $lockInEinde = sprintf('%04d-%02d-%02d', $year, $priorMonth, $priorDay);
         }
 
@@ -362,14 +364,15 @@ class KorThresholdCalculator
             return null;
         }
 
-        $lyear  = (int) $m2[1];
-        $lmonth = (int) $m2[2];
+        $lyear      = (int) $m2[1];
+        $lmonth     = (int) $m2[2];
         $opzegMonth = ($lmonth - 2);
         $opzegYear  = $lyear;
         if ($opzegMonth < 1) {
             $opzegMonth += 12;
             $opzegYear  -= 1;
         }
+
         $vroegsteOpzeg = sprintf('%04d-%02d-01', $opzegYear, $opzegMonth);
 
         return [
@@ -423,7 +426,7 @@ class KorThresholdCalculator
     public function perLidstaatAggregate(array $invoices, array $drempelsPerLidstaat, int $year): array
     {
         $defaultDrempelCents = $this->toCents(amount: 100000);
-        $cents               = [];
+        $cents = [];
         foreach ($invoices as $invoice) {
             if ((string) ($invoice['vrijstellingsGrondslag'] ?? '') !== 'KOR_ART25_OB') {
                 continue;
@@ -484,7 +487,8 @@ class KorThresholdCalculator
         if ($isFiscaleEenheid === true) {
             return [
                 'verdict' => 'BLOCK',
-                'reden'   => 'KOR aanmelden door een fiscale eenheid is niet mogelijk; de eenheid zelf moet aanmelden, niet een individuele deelnemer.',
+                'reden'   => 'KOR aanmelden door een fiscale eenheid is niet mogelijk; '
+                    .'de eenheid zelf moet aanmelden, niet een individuele deelnemer.',
             ];
         }
 

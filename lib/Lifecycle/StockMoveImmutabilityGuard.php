@@ -61,8 +61,6 @@ use Psr\Log\LoggerInterface;
  */
 class StockMoveImmutabilityGuard
 {
-
-
     /**
      * Construct the guard with DI dependencies.
      *
@@ -77,7 +75,6 @@ class StockMoveImmutabilityGuard
     ) {
 
     }//end __construct()
-
 
     /**
      * Returns false (i.e. denies the edit) when the supplied StockMove is
@@ -112,7 +109,12 @@ class StockMoveImmutabilityGuard
             ];
             foreach ($loadBearing as $field) {
                 $before = ($current[$field] ?? null);
-                $after  = array_key_exists($field, $proposed) === true ? $proposed[$field] : $before;
+                if (array_key_exists($field, $proposed) === true) {
+                    $after = $proposed[$field];
+                } else {
+                    $after = $before;
+                }
+
                 if ($before !== $after) {
                     $this->logger->info(
                         'StockMoveImmutabilityGuard: edit denied — move is locked',
@@ -138,7 +140,6 @@ class StockMoveImmutabilityGuard
         }//end try
 
     }//end rejectLockedEdit()
-
 
     /**
      * Predicate for the `cancel` transition per REQ-SM-003. A draft move is
@@ -187,7 +188,10 @@ class StockMoveImmutabilityGuard
                     ]
                 );
 
-            $existing = is_array($existing) === true ? $existing : [];
+            if (is_array($existing) === false) {
+                $existing = [];
+            }
+
             if (count($existing) > 0) {
                 $this->logger->info(
                     'StockMoveImmutabilityGuard: cancel denied — offset already exists',
@@ -213,7 +217,6 @@ class StockMoveImmutabilityGuard
 
     }//end canCancel()
 
-
     /**
      * Resolve the OpenRegister register slug, defaulting to 'shillinq'.
      *
@@ -229,6 +232,4 @@ class StockMoveImmutabilityGuard
         return $register;
 
     }//end register()
-
-
 }//end class

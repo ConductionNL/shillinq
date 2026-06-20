@@ -1,7 +1,7 @@
 <?php
 
 /**
- * e-Boekhouden Import Profile
+ * Import profile for e-Boekhouden.
  *
  * Dialect quirks + companion-CSV column maps for e-Boekhouden.nl exports
  * (REQ-AIM-003). e-Boekhouden's XAF carries the chart of accounts and
@@ -33,14 +33,12 @@ namespace OCA\Shillinq\Service\Import\ImportProfile;
 use OCA\Shillinq\Service\Import\ImportProfileInterface;
 
 /**
- * e-Boekhouden.nl import profile (REQ-AIM-003).
+ * Import profile for e-Boekhouden.nl (REQ-AIM-003).
  *
  * @spec openspec/changes/administration-import-migration/tasks.md#task-7
  */
 class EBoekhoudenProfile implements ImportProfileInterface
 {
-
-
     /**
      * {@inheritDoc}
      *
@@ -53,7 +51,6 @@ class EBoekhoudenProfile implements ImportProfileInterface
         return 'e-boekhouden';
 
     }//end sourceSystem()
-
 
     /**
      * {@inheritDoc}
@@ -70,11 +67,10 @@ class EBoekhoudenProfile implements ImportProfileInterface
 
     }//end normalizeLedgerAccounts()
 
-
     /**
      * {@inheritDoc}
      *
-     * e-Boekhouden's "Openstaande posten" CSV header (semicolon-delimited):
+     * The e-Boekhouden "Openstaande posten" CSV header (semicolon-delimited):
      *   Relatiecode;Relatie;Factuurnummer;Factuurdatum;Vervaldatum;Bedrag;Openstaand;Soort
      *
      * @param string $artifact Artifact kind.
@@ -113,7 +109,6 @@ class EBoekhoudenProfile implements ImportProfileInterface
 
     }//end mapCsvColumns()
 
-
     /**
      * {@inheritDoc}
      *
@@ -128,6 +123,4 @@ class EBoekhoudenProfile implements ImportProfileInterface
         return $parsed;
 
     }//end applyDialectQuirks()
-
-
 }//end class
