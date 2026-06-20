@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 10
 title: Output & filing formats
 description: Reporting layers on top of a chosen GAAP — ESEF & US-GAAP XBRL, SEC Reg S-X/S-K, and AICPA SSARS engagement modes.
 ---

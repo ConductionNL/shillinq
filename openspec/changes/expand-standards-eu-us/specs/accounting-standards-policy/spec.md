@@ -52,3 +52,39 @@ operates in — SHALL be derived from existing data, introducing no per-tenant s
 
 - **WHEN** `applicableTo("US")` is called
 - **THEN** only US entries are returned (EU-wide obligations do not leak in)
+
+### Requirement: REQ-ASP-005 — Operative rule corpus (RuleCatalogue, static code)
+
+The system SHALL provide a versioned static **rule corpus** — the operative
+bookkeeping rules derived from standards and laws (invoicing/EN 16931, VAT,
+retention, ledger integrity, chart of accounts, reporting, and the
+recognition/measurement/presentation requirements of the frameworks). Rules SHALL
+be stored as per-domain JSON files under `lib/Standards/rules/` (one obligation
+per rule, each carrying `id`, `domain`, `jurisdiction`, `framework`, `source`,
+`statement`, `severity`, `machineCheckable`, `effectiveDate`, `sourceUrl`) and
+loaded/merged by `RuleCatalogue`, with globally-unique ids. The corpus is the
+machine-readable source for turning rules into specs/validations.
+
+#### Scenario: corpus loads and is queryable
+
+- **WHEN** business logic calls `RuleCatalogue::byJurisdiction("NL")`
+- **THEN** it returns NL + EU-wide + global rules, with `machineCheckable()` a subset, all ids unique
+
+### Requirement: REQ-ASP-006 — Standards machinery defines behaviour, not navigation
+
+The rule corpus, the compliance catalogue and policy resolution SHALL be consumed
+by business logic / validation / spec-generation as **reference data and
+behaviour** — they SHALL NOT add menu entries or pages. The only standards UI is
+the existing apply/order settings screen (`StandardsPolicyEditor`, a per-tenant
+*choice*). Any surfacing of rule or compliance *status* SHALL be **report-only**
+and is out of scope unless a report is explicitly required.
+
+#### Scenario: no navigation is added for reference data
+
+- **WHEN** the rule corpus or compliance catalogue is added or extended
+- **THEN** no new menu item or page is introduced — only static data + accessors consumed by behaviour
+
+#### Scenario: choice keeps its one screen
+
+- **WHEN** an administrator needs to set which frameworks apply and in what order
+- **THEN** they use the single existing `StandardsPolicyEditor` settings screen — the only standards-related UI

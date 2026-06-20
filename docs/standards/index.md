@@ -38,6 +38,12 @@ differently — which is why they are modelled separately:
 | **B. Compliance obligations** | *Additive* — meet **all** that apply (tracked per jurisdiction, not ranked) | [e-invoicing, ViDA, SAF-T, VAT](./digital-compliance.md) |
 | **C. Output / filing formats** | *Layered* on top of a chosen basis | [ESEF/XBRL, SEC, SSARS](./output-formats.md) |
 
+Beneath all three sits the **[rule corpus](./rule-corpus.md)** — 700+ granular,
+machine-readable rules (invoice content, VAT, retention, recognition, …) that the
+bookkeeping engine actually applies. The corpus and the compliance catalogue
+**define behaviour and ship as versioned static code — they add no menu or
+pages**; the only standards UI is the per-tenant apply/order screen below.
+
 ## Frameworks covered
 
 ### A — Bases of accounting (the precedence catalogue)

@@ -44,10 +44,21 @@ B compliance obligations — additive; C output formats — layered).
   compliance-rules→specs pipeline. The only per-tenant input (which jurisdictions
   an administration operates in) is derived from existing data, so no new
   per-tenant schema is introduced.
-- **Docs** (`docs/standards/`): new `eu-national-gaap`, `digital-compliance` and
-  `output-formats` pages; `public-sector` gains GASB + FASAB; `us-gaap` gains the
-  special-purpose/OCBOA section; the overview reframes the catalogue around the
-  three categories.
+- **Operative rule corpus — NEW versioned static `RuleCatalogue`**: the granular
+  "what must I do/check" rules derived from standards and laws (invoicing/EN 16931,
+  VAT, retention, ledger integrity, chart of accounts, reporting, and the
+  IFRS/US-GAAP/national recognition-measurement-presentation requirements), stored
+  as per-domain JSON under `lib/Standards/rules/` and loaded by `RuleCatalogue`.
+  Wave 1 ships **700+ sourced rules**; the corpus is the machine-readable source
+  for turning rules into validations/specs, and grows in later waves.
+- **Behaviour, not navigation (REQ-ASP-006)**: the rule corpus, the compliance
+  catalogue and policy resolution are **business logic + reference data** — they
+  add **no menu or pages**. The only standards UI is the existing apply/order
+  settings screen; any rule/compliance *status* surfacing would be report-only.
+- **Docs** (`docs/standards/`): new `eu-national-gaap`, `digital-compliance`,
+  `output-formats` and `rule-corpus` pages; `public-sector` gains GASB + FASAB;
+  `us-gaap` gains the special-purpose/OCBOA section; the overview reframes the
+  catalogue around the three categories.
 
 ## Out of scope
 
