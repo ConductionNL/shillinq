@@ -1407,6 +1407,13 @@
 						"description": "Derived (do not set directly): always null for Account (kept indefinitely). Materialised via x-openregister-calculations.",
 						"nullable": true,
 						"example": null
+					},
+					"emuAggregationHash": {
+						"type": "string",
+						"nullable": true,
+						"readOnly": true,
+						"description": "Derived (do not set directly): stable SHA-256 audit hash over the contributing-GLLine count + esaClassifier for the last EMU computation (REQ-EMU-005). Materialised via x-openregister-calculations from the emuContributors aggregate-ref.",
+						"example": null
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -1559,6 +1566,18 @@
 						}
 					}
 				},
+				"x-openregister-aggregate-refs": {
+					"emuContributors": {
+						"schema": "GLLine",
+						"register": "shillinq",
+						"metric": "count",
+						"filters": {
+							"accountNumber": "@self.accountNumber",
+							"emuInclusionRule": [ "included", "partial" ],
+							"periodState": "closed"
+						}
+					}
+				},
 				"x-openregister-calculations": {
 					"daysUntilRetention": {
 						"materialise": true,
@@ -1569,8 +1588,17 @@
 						"description": "Account records are kept indefinitely (disposition: keep_indefinite per selectielijst:5.1.1). This field always returns null for Account objects. JSON-AST: lit(null)."
 					},
 					"emuAggregationHash": {
-						"description": "Stable SHA-256 hash of the contributing GL line IDs + esaClassifier state + applied emuInclusionRule values for the last EMU computation. Same inputs always produce the same hash, enabling audit-trail reproducibility per REQ-EMU-005.",
-						"expression": "sha256(@aggregation.contributingIds + ':' + @self.esaClassifier + ':' + @params.emuInclusionRule)",
+						"materialise": true,
+						"type": "string",
+						"targetField": "emuAggregationHash",
+						"description": "Declarative (ADR-031) stable SHA-256 hash over the contributing-GLLine count + esaClassifier for this account's last EMU computation, enabling audit-trail reproducibility per REQ-EMU-005. The contributing set is folded via the emuContributors aggregate-ref (closed GLLines with emuInclusionRule in [included, partial], joined on accountNumber). Replaces the former imperative sha256(@aggregation...) string; the @params.emuInclusionRule term is dropped (not available in the calc payload) — same contributing set + sector still yields the same hash. JSON-AST: sha256(concat(@aggregate.emuContributors, ':', esaClassifier)).",
+						"expression": { "sha256": [
+							{ "concat": [
+								{ "prop": "@aggregate.emuContributors" },
+								{ "lit": ":" },
+								{ "prop": "esaClassifier" }
+							] }
+						] },
 						"nullable": true
 					}
 				}
@@ -6625,6 +6653,13 @@
 						"nullable": true,
 						"description": "Timestamp when WBSO tags were assigned — either automatically from project metadata or manually by operator (REQ-WBSO-004).",
 						"example": "2026-03-15T10:00:00Z"
+					},
+					"utilizationPercent": {
+						"type": "number",
+						"nullable": true,
+						"readOnly": true,
+						"description": "Derived (do not set directly): utilization percentage per REQ-CPA-109, materialised via x-openregister-calculations from the billable/available aggregate-refs. round((billable / max(1, available)) * 100, 1).",
+						"example": 75.0
 					}
 				},
 				"x-openregister-rbac": {
@@ -6718,15 +6753,40 @@
 						}
 					}
 				},
+				"x-openregister-aggregate-refs": {
+					"billable": {
+						"schema": "UrenRegistratie",
+						"register": "shillinq",
+						"metric": "sum",
+						"field": "hours",
+						"filters": {
+							"personId": "@self.personId",
+							"projectId": { "op": "notNull" }
+						}
+					},
+					"available": {
+						"schema": "UrenRegistratie",
+						"register": "shillinq",
+						"metric": "sum",
+						"field": "hours",
+						"filters": {
+							"personId": "@self.personId"
+						}
+					}
+				},
 				"x-openregister-calculations": {
 					"utilizationPercent": {
-						"description": "Utilization percentage per REQ-CPA-109: billableHoursThisPeriod / availableHoursThisPeriod × 100. Computed per (personId, fiscalPeriod) grouping. billableHoursThisPeriod aggregates UrenRegistratie.hours for this person in the current FiscalPeriod (where projectId or costProjectId is non-null = billable). availableHoursThisPeriod sources from the assignment's capacityHoursPerWeek × workingWeeksInPeriod (default 40 × period weeks). Clamped to [0, 100].",
+						"materialise": true,
 						"type": "number",
-						"formula": "min(100, max(0, ((@aggregate.billableHoursThisPeriod ?? 0) / max(1, (@aggregate.availableHoursThisPeriod ?? 1))) * 100))",
-						"groupBy": [
-							"personId",
-							"@period.fiscalPeriodCode"
-						]
+						"targetField": "utilizationPercent",
+						"description": "Declarative (ADR-031) utilization percentage per REQ-CPA-109: billable hours / available hours × 100, rounded to 1 decimal. billable = sum of UrenRegistratie.hours for this person where projectId is non-null (billable); available = sum of all UrenRegistratie.hours for this person — both via x-openregister-aggregate-refs. Replaces the former imperative string min/max formula. JSON-AST: round((@aggregate.billable / max(1, @aggregate.available)) * 100, 1).",
+						"expression": { "round": [
+							{ "*": [
+								{ "/": [ { "prop": "@aggregate.billable" }, { "max": [ { "lit": 1 }, { "prop": "@aggregate.available" } ] } ] },
+								{ "lit": 100 }
+							] },
+							{ "lit": 1 }
+						] }
 					}
 				}
 			},
@@ -8328,9 +8388,28 @@
 						"nullable": true
 					},
 					"multiCurrencyConversion": {
-						"description": "When currency != base (EUR), looks up the exchange rate for receiptDate from the multi-currency capability snapshot and populates amountInBaseCurrency and exchangeRate per REQ-EC-009. Prompts operator to enter manual rate if snapshot is unavailable.",
-						"expression": "@self.currency == 'EUR' ? @self.amount : @self.amount * lookup('ExchangeRate', {sourceCurrency: @self.currency, targetCurrency: 'EUR', rateDate: @self.receiptDate})",
+						"materialise": true,
+						"type": "number",
+						"description": "Declarative (ADR-031): when currency == EUR, amountInBaseCurrency = amount; otherwise amount * @ref.fxRate.rate where fxRate is the effective FxRate row for (transactionCurrency=currency, baseCurrency=EUR, date<=receiptDate) per REQ-EC-009. Replaces the former imperative lookup('ExchangeRate', ...) guard. JSON-AST: if(eq(currency,'EUR'), amount, amount * @ref.fxRate.rate).",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "currency" }, { "lit": "EUR" } ] },
+							{ "prop": "amount" },
+							{ "*": [ { "prop": "amount" }, { "prop": "@ref.fxRate.rate" } ] }
+						] },
 						"targetField": "amountInBaseCurrency",
+						"nullable": true
+					}
+				},
+				"x-openregister-references": {
+					"fxRate": {
+						"schema": "FxRate",
+						"register": "shillinq",
+						"mode": "lookup",
+						"filters": {
+							"transactionCurrency": "@self.currency",
+							"baseCurrency": "EUR"
+						},
+						"effectiveDate": { "field": "date", "op": "lte", "value": "@self.receiptDate" },
 						"nullable": true
 					}
 				},
@@ -8374,7 +8453,7 @@
 			"MileageEntry": {
 				"slug": "MileageEntry",
 				"icon": "CarOutline",
-				"version": "0.1.0",
+				"version": "0.1.2",
 				"title": "Mileage Entry",
 				"description": "Journey log capturing distance travelled, vehicle type, and applicable rate per kilometre. totalAmount is auto-calculated as distance × ratePerKm per REQ-EC-003. Linked to a parent ExpenseClaimEntry for approval and reimbursement.",
 				"x-schema-org": "schema:Thing",
@@ -8463,20 +8542,40 @@
 						"type": "string",
 						"description": "FK to the Administration owning this mileage entry.",
 						"example": "adm-consultancy-nl"
+					},
+					"country": {
+						"type": "string",
+						"description": "ISO 3166-1 alpha-2 country code of the tax jurisdiction; drives the MileageRate lookup.",
+						"example": "NL",
+						"default": "NL"
+					}
+				},
+				"x-openregister-references": {
+					"rate": {
+						"schema": "MileageRate",
+						"mode": "lookup",
+						"filters": {
+							"fiscalYear": { "year": "@self.journeyDate" },
+							"vehicleType": "@self.vehicleType",
+							"country": "@self.country"
+						},
+						"effectiveDate": { "field": "fiscalYear", "op": "lte", "value": "@self.journeyDate" },
+						"nullable": true
 					}
 				},
 				"x-openregister-calculations": {
 					"totalAmount": {
 						"materialise": true,
 						"description": "Auto-calculated: distance × ratePerKm per REQ-EC-003. Recalculated on every save while the parent claim is in draft state. JSON-AST: distance * ratePerKm.",
-						"expression": { "*": [ { "prop": "distance" }, { "prop": "ratePerKm" } ] },
+						"expression": { "*": [ { "prop": "distance" }, { "prop": "@ref.rate.ratePerKm" } ] },
 						"targetField": "totalAmount"
 					},
-					"ratePerKmLookup": {
-						"description": "Looks up the current rate per km from MileageRate master table by (fiscalYear derived from journeyDate, vehicleType, country derived from administrationId). Populates ratePerKm field. Locked at claim submission.",
-						"expression": "lookup('MileageRate', {fiscalYear: year(@self.journeyDate), vehicleType: @self.vehicleType, country: @administration.country})",
-						"targetField": "ratePerKm",
-						"nullable": true
+					"ratePerKm": {
+						"materialise": true,
+						"type": "number",
+						"description": "Declarative rate lookup (ADR-031): resolved from the MileageRate master table via the `rate` reference (fiscalYear=year(journeyDate), vehicleType, country), read as @ref.rate.ratePerKm. Replaces the former imperative lookup() guard.",
+						"expression": { "prop": "@ref.rate.ratePerKm" },
+						"targetField": "ratePerKm"
 					}
 				},
 				"x-openregister-relations": {
@@ -8613,9 +8712,11 @@
 						"expression": { "*": [ { "prop": "nightCount" }, { "prop": "dailyRate" } ] },
 						"targetField": "allowanceAmount"
 					},
-					"dailyRateLookup": {
-						"description": "Looks up the current daily rate from PerDiemRate master table by (calendarYear derived from travelStartDate, country). Populates dailyRate field. Locked at claim submission.",
-						"expression": "lookup('PerDiemRate', {calendarYear: year(@self.travelStartDate), country: @self.country})",
+					"dailyRate": {
+						"materialise": true,
+						"type": "number",
+						"description": "Declarative rate lookup (ADR-031): resolved from the PerDiemRate master table via the `rate` reference (calendarYear=year(travelStartDate), country), read as @ref.rate.dailyRate. Replaces the former imperative lookup('PerDiemRate', ...) guard. Locked at claim submission.",
+						"expression": { "prop": "@ref.rate.dailyRate" },
 						"targetField": "dailyRate",
 						"nullable": true
 					},
@@ -8630,6 +8731,19 @@
 						] },
 						"nullable": true,
 						"severity": "warning"
+					}
+				},
+				"x-openregister-references": {
+					"rate": {
+						"schema": "PerDiemRate",
+						"register": "shillinq",
+						"mode": "lookup",
+						"filters": {
+							"calendarYear": { "year": "@self.travelStartDate" },
+							"country": "@self.country"
+						},
+						"effectiveDate": { "field": "calendarYear", "op": "lte", "value": "@self.travelStartDate" },
+						"nullable": true
 					}
 				},
 				"x-openregister-relations": {
@@ -9231,6 +9345,77 @@
 								"read"
 							],
 							"description": "Read-only: employees may view applicable rates."
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
+			"ZzpDeductionAmounts": {
+				"slug": "ZzpDeductionAmounts",
+				"icon": "CashMultiple",
+				"version": "0.1.0",
+				"title": "ZZP Deduction Amounts",
+				"description": "Master data table of statutory ZZP (zelfstandige) deduction amounts per tax year per Wet IB 2001: zelfstandigenaftrek (art. 3.76), startersaftrek (art. 3.77), and the mkb-winstvrijstelling percentage (art. 3.79a). One row per taxYear; ZzpDeduction.{zelfstandigenaftrekAmount,startersaftrekAmount,mkbWinstvrijstellingPercentage} are looked up from this table via the `deduction` @ref reference and locked into the snapshot at save time.",
+				"x-schema-org": "schema:PriceSpecification",
+				"type": "object",
+				"required": [
+					"taxYear",
+					"zelfstandigenaftrek",
+					"startersaftrek",
+					"mkbWinstvrijstellingPercentage"
+				],
+				"properties": {
+					"taxYear": {
+						"type": "integer",
+						"description": "Tax year these statutory amounts apply to (e.g. 2026).",
+						"example": 2026
+					},
+					"zelfstandigenaftrek": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Zelfstandigenaftrek amount in EUR for this tax year (Wet IB 2001 art. 3.76).",
+						"example": 3750
+					},
+					"startersaftrek": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Startersaftrek amount in EUR for this tax year (Wet IB 2001 art. 3.77).",
+						"example": 2123
+					},
+					"mkbWinstvrijstellingPercentage": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 1,
+						"description": "MKB-winstvrijstelling percentage for this tax year as a fraction (e.g. 0.1231 = 12.31%) per Wet IB 2001 art. 3.79a.",
+						"example": 0.1231
+					},
+					"source": {
+						"type": "string",
+						"nullable": true,
+						"description": "Regulatory source for these amounts (e.g. 'Belastingdienst — cijfers 2026').",
+						"example": "Belastingdienst — ondernemersaftrek 2026"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Bookkeepers maintain ZZP deduction master data per tax year."
+						},
+						"employee": {
+							"permissions": [
+								"read"
+							],
+							"description": "Read-only: ZZP'ers may view applicable deduction amounts."
 						},
 						"auditor": {
 							"permissions": [
@@ -11652,26 +11837,33 @@
 						"example": "adm-sample"
 					}
 				},
+				"x-openregister-references": {
+					"asset": {
+						"schema": "FixedAsset",
+						"register": "shillinq",
+						"mode": "relatedObject",
+						"field": "assetRef",
+						"nullable": true
+					}
+				},
 				"x-openregister-calculations": {
 					"bookValue": {
-						"description": "Derived net book value per REQ-FA-003: FixedAsset.purchaseCost minus accumulatedDepreciation at period end.",
-						"formula": "relatedObject('FixedAsset', assetRef).purchaseCost - accumulatedDepreciation",
-						"precision": {
-							"source": "nextcloud-system-settings:floatPrecision",
-							"fallback": 2
-						}
+						"materialise": true,
+						"type": "number",
+						"targetField": "bookValue",
+						"description": "Declarative (ADR-031): net book value per REQ-FA-003 = FixedAsset.acquisitionCost minus accumulatedDepreciation. Reads the related FixedAsset via the `asset` reference (mode relatedObject, FK assetRef). Replaces the former imperative relatedObject('FixedAsset', ...) guard. JSON-AST: @ref.asset.acquisitionCost - accumulatedDepreciation.",
+						"expression": { "-": [ { "prop": "@ref.asset.acquisitionCost" }, { "prop": "accumulatedDepreciation" } ] }
 					},
 					"depreciationAmount": {
-						"description": "Period depreciation amount computed per depreciationMethod with Float Precision rounding per REQ-FA-005.",
-						"formula": {
-							"linear": "(relatedObject('FixedAsset', assetRef).purchaseCost - relatedObject('FixedAsset', assetRef).residualValue) * annualRate",
-							"declining-balance": "relatedObject('FixedAsset', assetRef).purchaseCost * relatedObject('FixedAsset', assetRef).declineRate",
-							"units-of-production": "(relatedObject('FixedAsset', assetRef).purchaseCost - relatedObject('FixedAsset', assetRef).residualValue) * (annualRate / relatedObject('FixedAsset', assetRef).productionUnits)"
-						},
-						"precision": {
-							"source": "nextcloud-system-settings:floatPrecision",
-							"fallback": 2
-						}
+						"materialise": true,
+						"type": "number",
+						"targetField": "depreciationAmount",
+						"description": "Declarative (ADR-031): period depreciation per depreciationMethod (REQ-FA-005). degressive = acquisitionCost * degressiveRate; otherwise (linear/none) = (acquisitionCost - residualValue) * annualRate. Reads the related FixedAsset via the `asset` reference. Replaces the former imperative relatedObject('FixedAsset', ...) guard. NOTE: the legacy formula referenced purchaseCost/declineRate/productionUnits which do not exist on FixedAsset; this maps to the real fields acquisitionCost/residualValue/degressiveRate. The units-of-production branch is omitted because FixedAsset has no productionUnits field.",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "@ref.asset.depreciationMethod" }, { "lit": "degressive" } ] },
+							{ "*": [ { "prop": "@ref.asset.acquisitionCost" }, { "prop": "@ref.asset.degressiveRate" } ] },
+							{ "*": [ { "-": [ { "prop": "@ref.asset.acquisitionCost" }, { "prop": "@ref.asset.residualValue" } ] }, { "prop": "annualRate" } ] }
+						] }
 					}
 				},
 				"x-openregister-aggregations": {
@@ -16674,6 +16866,17 @@
 						"example": 12749.51
 					}
 				},
+				"x-openregister-references": {
+					"deduction": {
+						"schema": "ZzpDeductionAmounts",
+						"register": "shillinq",
+						"mode": "lookup",
+						"filters": {
+							"taxYear": "@self.taxYear"
+						},
+						"nullable": true
+					}
+				},
 				"x-openregister-calculations": {
 					"qualifiesForUrencriterium": {
 						"materialise": true,
@@ -16687,16 +16890,37 @@
 						] }
 					},
 					"zelfstandigenaftrekAmount": {
-						"description": "Zelfstandigenaftrek from seeded zzp-deduction-amounts table for taxYear, applied when qualifiesForUrencriterium. Wet IB 2001 art. 3.76.",
-						"expression": "@self.qualifiesForUrencriterium ? lookup('ZzpDeductionAmounts', taxYear: @self.taxYear, field: 'zelfstandigenaftrek') : 0"
+						"materialise": true,
+						"type": "number",
+						"targetField": "zelfstandigenaftrekAmount",
+						"description": "Declarative (ADR-031): zelfstandigenaftrek from the ZzpDeductionAmounts master table for taxYear (read via the `deduction` reference), applied when qualifiesForUrencriterium else 0. Wet IB 2001 art. 3.76. Replaces the former imperative lookup('ZzpDeductionAmounts', ...) guard. JSON-AST: if(qualifiesForUrencriterium, @ref.deduction.zelfstandigenaftrek, 0).",
+						"expression": { "if": [
+							{ "prop": "qualifiesForUrencriterium" },
+							{ "prop": "@ref.deduction.zelfstandigenaftrek" },
+							{ "lit": 0 }
+						] }
 					},
 					"startersaftrekAmount": {
-						"description": "Startersaftrek from seeded table. Applied when isStarter AND startersClaimsThisRegime < 3 AND qualifiesForUrencriterium. Wet IB 2001 art. 3.77.",
-						"expression": "(@self.isStarter && @self.startersClaimsThisRegime < 3 && @self.qualifiesForUrencriterium) ? lookup('ZzpDeductionAmounts', taxYear: @self.taxYear, field: 'startersaftrek') : 0"
+						"materialise": true,
+						"type": "number",
+						"targetField": "startersaftrekAmount",
+						"description": "Declarative (ADR-031): startersaftrek from the ZzpDeductionAmounts master table for taxYear (read via the `deduction` reference), applied when isStarter AND startersClaimsThisRegime < 3 AND qualifiesForUrencriterium else 0. Wet IB 2001 art. 3.77. Replaces the former imperative lookup('ZzpDeductionAmounts', ...) guard.",
+						"expression": { "if": [
+							{ "and": [
+								{ "prop": "isStarter" },
+								{ "lt": [ { "prop": "startersClaimsThisRegime" }, { "lit": 3 } ] },
+								{ "prop": "qualifiesForUrencriterium" }
+							] },
+							{ "prop": "@ref.deduction.startersaftrek" },
+							{ "lit": 0 }
+						] }
 					},
 					"mkbWinstvrijstellingPercentage": {
-						"description": "MKB-winstvrijstelling percentage from seeded table for taxYear. Wet IB 2001 art. 3.79a.",
-						"expression": "lookup('ZzpDeductionAmounts', taxYear: @self.taxYear, field: 'mkbWinstvrijstellingPercentage')"
+						"materialise": true,
+						"type": "number",
+						"targetField": "mkbWinstvrijstellingPercentage",
+						"description": "Declarative (ADR-031): MKB-winstvrijstelling percentage from the ZzpDeductionAmounts master table for taxYear (read via the `deduction` reference). Wet IB 2001 art. 3.79a. Replaces the former imperative lookup('ZzpDeductionAmounts', ...) guard. JSON-AST: @ref.deduction.mkbWinstvrijstellingPercentage.",
+						"expression": { "prop": "@ref.deduction.mkbWinstvrijstellingPercentage" }
 					},
 					"mkbWinstvrijstellingAmount": {
 						"materialise": true,
