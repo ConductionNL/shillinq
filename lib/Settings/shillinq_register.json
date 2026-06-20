@@ -17738,6 +17738,327 @@
 						}
 					}
 				}
+			},
+			"SalesOrder": {
+				"slug": "SalesOrder",
+				"icon": "FileDocumentOutline",
+				"version": "0.1.0",
+				"title": "Sales Order",
+				"description": "The booking term for recognized recurring revenue. The order is the actual booking term; the contract is the legal signer (referenced by contractId as a plain string, NOT a modeled Contract entity). Holds the term [termStart, termEnd] (termEnd null = indefinite), customer, currency and lifecycle (active/ended). Recognized recurring revenue is computed per period by the chained order-revenue-recognition-engine service over its SalesOrderLines. recurring-revenue-recognition.",
+				"x-schema-org": "schema:Order",
+				"type": "object",
+				"required": [
+					"orderId",
+					"ondernemingId",
+					"administrationId",
+					"klantId",
+					"orderDate",
+					"termStart",
+					"status",
+					"currency"
+				],
+				"properties": {
+					"orderId": {
+						"type": "string",
+						"description": "Unique identifier (business key).",
+						"example": "ORDER-2026-0001"
+					},
+					"ondernemingId": {
+						"type": "string",
+						"description": "FK to the selling Corporation.",
+						"example": "00000000-0000-0000-0000-000000000000"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration tenant.",
+						"example": "00000000-0000-0000-0000-000000000000"
+					},
+					"klantId": {
+						"type": "string",
+						"description": "FK to the customer.",
+						"example": "KLANT-ACME-CONSULTING"
+					},
+					"orderDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date the order was booked.",
+						"example": "2026-01-01"
+					},
+					"termStart": {
+						"type": "string",
+						"format": "date",
+						"description": "Start of the booking term.",
+						"example": "2026-01-01"
+					},
+					"termEnd": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "End of the booking term; null = indefinite (open-ended) booking.",
+						"example": "2026-12-31"
+					},
+					"status": {
+						"type": "string",
+						"description": "Lifecycle of the booking.",
+						"enum": [
+							"active",
+							"ended"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"currency": {
+						"type": "string",
+						"minLength": 3,
+						"maxLength": 3,
+						"description": "ISO 4217 currency code.",
+						"default": "EUR",
+						"example": "EUR"
+					},
+					"contractId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Plain string reference to the legal agreement — NOT a modeled Contract entity. No referential-integrity resolution is performed against a Contract object.",
+						"example": "CONTRACT-2026-0001"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Booking is live; lines are recognized over their effective term."
+						},
+						"ended": {
+							"label": "Ended",
+							"description": "Booking term ended or order terminated; no further recognition."
+						}
+					},
+					"transitions": {
+						"end": {
+							"from": "active",
+							"to": "ended",
+							"label": "End order",
+							"description": "Booking term reached termEnd or the order was terminated."
+						}
+					}
+				},
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR audit service captures every state transition automatically (actor, timestamp, action, before/after state). No app-local event table per ADR-022 D2."
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"ondernemer": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"boekhouder": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
+			"SalesOrderLine": {
+				"slug": "SalesOrderLine",
+				"icon": "FormatListBulleted",
+				"version": "0.1.0",
+				"title": "Sales Order Line",
+				"description": "A line on a SalesOrder, tagged RECURRING or ONE_OFF, with the recognition method (OVER_TIME or POINT_IN_TIME) the chained engine uses. RECURRING lines carry a frequentie and are normalized to a monthly rate; ONE_OFF lines carry a recognitionDate and are recognized point-in-time, never as recurring revenue. Null termStart/termEnd inherit the parent order's term. recurring-revenue-recognition.",
+				"x-schema-org": "schema:OrderItem",
+				"type": "object",
+				"required": [
+					"lineId",
+					"orderId",
+					"administrationId",
+					"nature",
+					"label",
+					"amount",
+					"recognitionMethod"
+				],
+				"properties": {
+					"lineId": {
+						"type": "string",
+						"description": "Unique identifier.",
+						"example": "ORDERLINE-2026-0001-A"
+					},
+					"orderId": {
+						"type": "string",
+						"description": "FK to the parent SalesOrder.",
+						"example": "ORDER-2026-0001"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration tenant.",
+						"example": "00000000-0000-0000-0000-000000000000"
+					},
+					"nature": {
+						"type": "string",
+						"description": "Whether the line is recurring or one-off.",
+						"enum": [
+							"RECURRING",
+							"ONE_OFF"
+						],
+						"example": "RECURRING"
+					},
+					"label": {
+						"type": "string",
+						"description": "Human-readable line label.",
+						"example": "SaaS subscription"
+					},
+					"amount": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"minimum": 0,
+						"description": "Per-interval amount for RECURRING (normalized to a monthly rate via frequentie); total amount for ONE_OFF. EUR.",
+						"example": 12000.0
+					},
+					"maandWaarde": {
+						"type": "number",
+						"description": "Monthly-normalized recurring amount; derived — do not set directly. 0 for one-off lines.",
+						"example": 1000.0
+					},
+					"frequentie": {
+						"type": "string",
+						"nullable": true,
+						"description": "Recurrence frequency. Required for RECURRING lines; null for ONE_OFF. Normalized to a monthly rate by the engine (MAANDELIJKS=1, KWARTAALS=1/3, JAARLIJKS=1/12, WEKELIJKS=52/12, TWEEWEKELIJKS=26/12).",
+						"enum": [
+							"MAANDELIJKS",
+							"KWARTAALS",
+							"JAARLIJKS",
+							"WEKELIJKS",
+							"TWEEWEKELIJKS"
+						],
+						"example": "JAARLIJKS"
+					},
+					"recognitionMethod": {
+						"type": "string",
+						"description": "How the line is recognized. OVER_TIME prorates across the effective term; POINT_IN_TIME recognizes the full amount on recognitionDate.",
+						"enum": [
+							"OVER_TIME",
+							"POINT_IN_TIME"
+						],
+						"example": "OVER_TIME"
+					},
+					"recognitionDate": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Required for POINT_IN_TIME lines; the date the performance obligation is satisfied. Null for OVER_TIME lines.",
+						"example": "2026-01-15"
+					},
+					"termStart": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Line term start; inherits the parent SalesOrder's termStart when null.",
+						"example": null
+					},
+					"termEnd": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Line term end; inherits the parent SalesOrder's termEnd when null.",
+						"example": null
+					},
+					"accountNumber": {
+						"type": "string",
+						"description": "GL account code for the recognized revenue. FK to Account.accountNumber.",
+						"example": "8100"
+					}
+				},
+				"x-openregister-calculations": {
+					"maandWaarde": {
+						"description": "Monthly-normalized recurring amount: amount × frequencyFactor(frequentie), 0 for ONE_OFF lines (one-offs contribute nothing to recurring run-rate). Factors: MAANDELIJKS=1, KWARTAALS=1/3, JAARLIJKS=1/12, WEKELIJKS=52/12, TWEEWEKELIJKS=26/12. Derived — do not set directly. Pipelinq SUMs this (filtered nature=RECURRING) for its CRM run-rate tile. Expressed in OpenRegister's JSON-AST calc grammar (CalculationEvaluator) with materialise:true — the on-save listener skips calcs without it.",
+						"materialise": true,
+						"targetField": "maandWaarde",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "nature" }, { "lit": "ONE_OFF" } ] },
+							{ "lit": 0 },
+							{ "if": [
+								{ "eq": [ { "prop": "frequentie" }, { "lit": "MAANDELIJKS" } ] },
+								{ "prop": "amount" },
+								{ "if": [
+									{ "eq": [ { "prop": "frequentie" }, { "lit": "KWARTAALS" } ] },
+									{ "/": [ { "prop": "amount" }, { "lit": 3 } ] },
+									{ "if": [
+										{ "eq": [ { "prop": "frequentie" }, { "lit": "JAARLIJKS" } ] },
+										{ "/": [ { "prop": "amount" }, { "lit": 12 } ] },
+										{ "if": [
+											{ "eq": [ { "prop": "frequentie" }, { "lit": "WEKELIJKS" } ] },
+											{ "/": [ { "*": [ { "prop": "amount" }, { "lit": 52 } ] }, { "lit": 12 } ] },
+											{ "if": [
+												{ "eq": [ { "prop": "frequentie" }, { "lit": "TWEEWEKELIJKS" } ] },
+												{ "/": [ { "*": [ { "prop": "amount" }, { "lit": 26 } ] }, { "lit": 12 } ] },
+												{ "lit": 0 }
+											] }
+										] }
+									] }
+								] }
+							] }
+						] },
+						"nullable": true
+					}
+				},
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR audit service captures every state transition automatically (actor, timestamp, action, before/after state). No app-local event table per ADR-022 D2."
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"ondernemer": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"boekhouder": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				},
+				"x-openregister-relations": {
+					"order": {
+						"localField": "orderId",
+						"relatedSchema": "SalesOrder",
+						"relatedField": "orderId",
+						"cardinality": "many-to-one",
+						"description": "The parent SalesOrder this line belongs to."
+					}
+				}
 			}
 		},
 		"SisaReport": {
@@ -23358,6 +23679,80 @@
 		}
 	},
 	"objects": [
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "SalesOrder",
+				"slug": "sales-order-2026-0001"
+			},
+			"orderId": "ORDER-2026-0001",
+			"ondernemingId": "00000000-0000-0000-0000-000000000000",
+			"administrationId": "00000000-0000-0000-0000-000000000000",
+			"klantId": "KLANT-ACME-CONSULTING",
+			"orderDate": "2026-01-01",
+			"termStart": "2026-01-01",
+			"termEnd": "2026-12-31",
+			"status": "active",
+			"currency": "EUR",
+			"contractId": "CONTRACT-2026-0001"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "SalesOrderLine",
+				"slug": "sales-order-line-2026-0001-a"
+			},
+			"lineId": "ORDERLINE-2026-0001-A",
+			"orderId": "ORDER-2026-0001",
+			"administrationId": "00000000-0000-0000-0000-000000000000",
+			"nature": "RECURRING",
+			"label": "SaaS subscription",
+			"amount": 12000.0,
+			"frequentie": "JAARLIJKS",
+			"recognitionMethod": "OVER_TIME",
+			"recognitionDate": null,
+			"termStart": null,
+			"termEnd": null,
+			"accountNumber": "8100"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "SalesOrderLine",
+				"slug": "sales-order-line-2026-0001-b"
+			},
+			"lineId": "ORDERLINE-2026-0001-B",
+			"orderId": "ORDER-2026-0001",
+			"administrationId": "00000000-0000-0000-0000-000000000000",
+			"nature": "ONE_OFF",
+			"label": "Implementation fee",
+			"amount": 5000.0,
+			"frequentie": null,
+			"recognitionMethod": "POINT_IN_TIME",
+			"recognitionDate": "2026-01-15",
+			"termStart": null,
+			"termEnd": null,
+			"accountNumber": "8200"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "SalesOrderLine",
+				"slug": "sales-order-line-2026-0001-c"
+			},
+			"lineId": "ORDERLINE-2026-0001-C",
+			"orderId": "ORDER-2026-0001",
+			"administrationId": "00000000-0000-0000-0000-000000000000",
+			"nature": "RECURRING",
+			"label": "Monthly retainer",
+			"amount": 1500.0,
+			"frequentie": "MAANDELIJKS",
+			"recognitionMethod": "OVER_TIME",
+			"recognitionDate": null,
+			"termStart": null,
+			"termEnd": null,
+			"accountNumber": "8100"
+		},
 		{
 			"@self": {
 				"register": "shillinq",

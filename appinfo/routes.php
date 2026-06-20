@@ -340,6 +340,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         // IFRS 15 revenue cut-off (bookkeeping-ifrs15-revenue, REQ-IFRS15-007/008).
         ['name' => 'revenue#cutoff', 'url' => '/api/revenue/cutoff', 'verb' => 'GET'],
 
+        // Recognized recurring revenue (order-revenue-recognition-engine). Read-only
+        // period-parameterized recognition over SalesOrder/SalesOrderLine: recognized
+        // RECURRING revenue (whole-month overlap × frequency-normalized monthly rate),
+        // ARR run-rate, currency and recurring line count. #[NoAdminRequired] with a
+        // per-administrationId RBAC guard in the controller; reads are scoped via
+        // OpenRegister's ObjectService so no cross-administration leak (ADR-005).
+        ['name' => 'recognition#recurringRevenue', 'url' => '/api/recognition/recurring-revenue', 'verb' => 'GET'],
+
         // KOR drempel-bewaking (bookkeeping-kor-kleine-ondernemersregeling,
         // REQ-KOR-002, REQ-KOR-003). Read-only monitor endpoint.
         ['name' => 'kor#monitor', 'url' => '/api/kor/monitor', 'verb' => 'GET'],
