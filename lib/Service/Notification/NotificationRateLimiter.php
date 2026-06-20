@@ -58,7 +58,6 @@ final class NotificationRateLimiter
      */
     public const DECISION_RATE_LIMIT_ORGANIZER = 'rate-limit-organizer';
 
-
     /**
      * Constructor.
      *
@@ -69,14 +68,13 @@ final class NotificationRateLimiter
 
     }//end __construct()
 
-
     /**
      * Check whether a dispatch is allowed under the trigger's caps.
      *
-     * @param array<string, mixed>   $trigger    Trigger config (rateLimit* fields).
-     * @param string                 $bookingId  Booking identifier.
-     * @param string                 $organizer  Organizer identifier (email / username).
-     * @param DateTimeImmutable|null $at         Logical "now" (test injection); defaults to wall-clock UTC.
+     * @param array<string, mixed>   $trigger   Trigger config (rateLimit* fields).
+     * @param string                 $bookingId Booking identifier.
+     * @param string                 $organizer Organizer identifier (email / username).
+     * @param DateTimeImmutable|null $at        Logical "now" (test injection); defaults to wall-clock UTC.
      *
      * @return string One of DECISION_*.
      *
@@ -84,13 +82,13 @@ final class NotificationRateLimiter
      */
     public function check(array $trigger, string $bookingId, string $organizer, ?DateTimeImmutable $at=null): string
     {
-        $now           = ($at ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
-        $bookingCap    = (int) ($trigger['rateLimitPerBookingPerHour'] ?? 10);
-        $organizerCap  = (int) ($trigger['rateLimitPerOrganizerPerDay'] ?? 100);
-        $bookingKey    = $this->bookingKey(bookingId: $bookingId, now: $now);
-        $organizerKey  = $this->organizerKey(organizer: $organizer, now: $now);
-        $bookingCount  = $this->store->get(key: $bookingKey);
-        $organizerCnt  = $this->store->get(key: $organizerKey);
+        $now          = ($at ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
+        $bookingCap   = (int) ($trigger['rateLimitPerBookingPerHour'] ?? 10);
+        $organizerCap = (int) ($trigger['rateLimitPerOrganizerPerDay'] ?? 100);
+        $bookingKey   = $this->bookingKey(bookingId: $bookingId, now: $now);
+        $organizerKey = $this->organizerKey(organizer: $organizer, now: $now);
+        $bookingCount = $this->store->get(key: $bookingKey);
+        $organizerCnt = $this->store->get(key: $organizerKey);
 
         if ($bookingCap > 0 && $bookingCount >= $bookingCap) {
             return self::DECISION_RATE_LIMIT_BOOKING;
@@ -102,7 +100,6 @@ final class NotificationRateLimiter
 
         return self::DECISION_ALLOW;
     }//end check()
-
 
     /**
      * Record a dispatch under both counters (call AFTER allow + send).
@@ -120,7 +117,6 @@ final class NotificationRateLimiter
         $this->store->increment(key: $this->organizerKey(organizer: $organizer, now: $now), ttl: 86400);
     }//end record()
 
-
     /**
      * Reset both counters for one booking + organizer (admin action).
      *
@@ -137,7 +133,6 @@ final class NotificationRateLimiter
         $this->store->reset(key: $this->organizerKey(organizer: $organizer, now: $now));
     }//end reset()
 
-
     /**
      * Build the per-booking-hour key (YYYYMMDDHH bucket).
      *
@@ -151,7 +146,6 @@ final class NotificationRateLimiter
         return 'shillinq:notif:booking-hour:'.$bookingId.':'.$now->format('YmdH');
     }//end bookingKey()
 
-
     /**
      * Build the per-organizer-day key (YYYYMMDD bucket).
      *
@@ -164,6 +158,4 @@ final class NotificationRateLimiter
     {
         return 'shillinq:notif:organizer-day:'.$organizer.':'.$now->format('Ymd');
     }//end organizerKey()
-
-
 }//end class

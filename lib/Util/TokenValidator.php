@@ -73,7 +73,6 @@ final class TokenValidator
      */
     private const ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-
     /**
      * Generate a fresh URL-safe random token string.
      *
@@ -98,7 +97,6 @@ final class TokenValidator
 
     }//end generate()
 
-
     /**
      * Hash a plaintext token for storage.
      *
@@ -115,7 +113,6 @@ final class TokenValidator
         return password_hash($plaintext, PASSWORD_BCRYPT, ['cost' => self::BCRYPT_COST]);
 
     }//end hash()
-
 
     /**
      * Validate a presented token against a stored bcrypt hash.
@@ -138,7 +135,6 @@ final class TokenValidator
         return password_verify($plaintext, $hash);
 
     }//end verify()
-
 
     /**
      * Decide whether an `expiresAt` timestamp is in the past relative to
@@ -168,13 +164,12 @@ final class TokenValidator
 
     }//end isExpired()
 
-
     /**
      * Build the ISO 8601 UTC `expiresAt` for a freshly-issued token from a
      * given creation timestamp + TTL.
      *
-     * @param string $createdAt   ISO 8601 timestamp at which the token was created.
-     * @param int    $ttlSeconds  Token lifetime in seconds (defaults to 7 days).
+     * @param string $createdAt  ISO 8601 timestamp at which the token was created.
+     * @param int    $ttlSeconds Token lifetime in seconds (defaults to 7 days).
      *
      * @return string ISO 8601 UTC `expiresAt` (suffix `Z`).
      *
@@ -192,6 +187,4 @@ final class TokenValidator
         return $expires->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
 
     }//end expiresAtFor()
-
-
 }//end class

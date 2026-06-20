@@ -152,10 +152,12 @@ class RgsAccountMapper
             $accounts = $objectService
                 ->setRegister($registerSlug)
                 ->setSchema('Account')
-                ->findAll([
-                    'filters' => ['administrationId' => $administrationId],
-                    'limit' => 5000,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => ['administrationId' => $administrationId],
+                            'limit'   => 5000,
+                        ]
+                        );
         } catch (\Throwable $e) {
             return ['success' => false, 'suggestions' => [], 'skipped' => 0, 'message' => $e->getMessage()];
         }
@@ -233,13 +235,13 @@ class RgsAccountMapper
             if ($accountReference !== '' && (string) ($rgsRow['referentienummer'] ?? '') === $accountReference) {
                 $confidence = 100;
                 $reason     = 'exact-referentienummer';
-            } elseif ($accountCode !== '' && (string) ($rgsRow['rgsDecentraalCode'] ?? '') === $accountCode) {
+            } else if ($accountCode !== '' && (string) ($rgsRow['rgsDecentraalCode'] ?? '') === $accountCode) {
                 $confidence = 95;
                 $reason     = 'exact-rgsDecentraalCode';
-            } elseif ($accountCode !== '' && (string) ($rgsRow['rgsCode'] ?? '') === $accountCode) {
+            } else if ($accountCode !== '' && (string) ($rgsRow['rgsCode'] ?? '') === $accountCode) {
                 $confidence = 80;
                 $reason     = 'exact-rgsCode';
-            } elseif ($accountName !== '') {
+            } else if ($accountName !== '') {
                 $candidateName = mb_strtolower((string) ($rgsRow['omschrijvingKort'] ?? $rgsRow['naam'] ?? ''));
                 if ($candidateName !== '') {
                     $similarity = $this->similarityPercent($accountName, $candidateName);

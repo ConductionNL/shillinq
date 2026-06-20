@@ -563,7 +563,7 @@ class BbvComplianceGuard
                 ['exception' => $e->getMessage()]
             );
             return false;
-        }
+        }//end try
 
         $aanwezig = [];
         foreach ($rows as $row) {

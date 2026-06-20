@@ -66,7 +66,7 @@ class DBAFactuurMonitorListener implements IEventListener
      * Handle an AP/AR factuur-created event (REQ-DBA-004 + REQ-DBA-016).
      *
      * @param Event $event The OR ObjectCreatedEvent (typed loosely so the
-     *                      listener compiles without an OR autoloader available).
+     *                     listener compiles without an OR autoloader available).
      *
      * @return void
      *
@@ -86,8 +86,8 @@ class DBAFactuurMonitorListener implements IEventListener
         }
 
         $administrationId = (string) ($payload['administrationId'] ?? '');
-        $factuurId = (string) ($payload['@self']['id'] ?? ($payload['id'] ?? ''));
-        $bedragCents = (int) ($payload['bedragCents'] ?? ($payload['totalAmountCents'] ?? 0));
+        $factuurId        = (string) ($payload['@self']['id'] ?? ($payload['id'] ?? ''));
+        $bedragCents      = (int) ($payload['bedragCents'] ?? ($payload['totalAmountCents'] ?? 0));
         $uren = (float) ($payload['uren'] ?? ($payload['hoursBilled'] ?? 0.0));
 
         try {
@@ -114,7 +114,7 @@ class DBAFactuurMonitorListener implements IEventListener
                 'DBAFactuurMonitorListener: VBAR assess/emit failed (non-blocking).',
                 ['opdrachtId' => $opdrachtId, 'factuurId' => $factuurId, 'exception' => $e->getMessage()]
             );
-        }
+        }//end try
     }//end handle()
 
     /**
@@ -133,27 +133,36 @@ class DBAFactuurMonitorListener implements IEventListener
             if (method_exists($event, 'getObject') === true) {
                 $obj = $event->getObject();
                 if (is_array($obj) === true) {
-                    /** @var array<string,mixed> $obj */
+                    /*
+                     * @var array<string,mixed> $obj
+                     */
                     return $obj;
                 }
+
                 if (is_object($obj) === true && method_exists($obj, 'getObject') === true) {
                     $data = $obj->getObject();
                     if (is_array($data) === true) {
-                        /** @var array<string,mixed> $data */
+                        /*
+                         * @var array<string,mixed> $data
+                         */
                         return $data;
                     }
                 }
             }
+
             if (method_exists($event, 'getData') === true) {
                 $data = $event->getData();
                 if (is_array($data) === true) {
-                    /** @var array<string,mixed> $data */
+                    /*
+                     * @var array<string,mixed> $data
+                     */
                     return $data;
                 }
             }
         } catch (Throwable $e) {
             $this->logger->debug('DBAFactuurMonitorListener: extract failed', ['exception' => $e->getMessage()]);
-        }
+        }//end try
+
         return null;
     }//end extractInvoice()
 }//end class

@@ -114,10 +114,12 @@ class WbsoDocumentService
         }
 
         $documents = $this->getDocumentsByAdministration(administrationId: $administrationId);
-        return array_values(array_filter(
+        return array_values(
+                array_filter(
             $documents,
             static fn (array $row): bool => ((string) ($row['documentType'] ?? '') === $type)
-        ));
+        )
+                );
 
     }//end getDocumentsByType()
 
@@ -202,9 +204,9 @@ class WbsoDocumentService
             throw new InvalidArgumentException('Approver user id is required');
         }
 
-        $document['status']     = 'filed';
-        $document['filedAt']    = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
-        $document['filedBy']    = $approver;
+        $document['status']  = 'filed';
+        $document['filedAt'] = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
+        $document['filedBy'] = $approver;
 
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 

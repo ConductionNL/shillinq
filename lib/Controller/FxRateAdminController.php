@@ -94,9 +94,7 @@ class FxRateAdminController extends Controller
         $lastRunEpoch = $this->resolveLastRunEpoch($jobClass);
         $dormant      = $this->isAdapterDormant();
 
-        $iso = ($lastRunEpoch !== null
-            ? (new DateTimeImmutable('@'.$lastRunEpoch))->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM)
-            : null);
+        $iso = ($lastRunEpoch !== null ? (new DateTimeImmutable('@'.$lastRunEpoch))->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM) : null);
 
         $statusKey = 'ok';
         if ($lastRunEpoch === null) {
@@ -147,6 +145,7 @@ class FxRateAdminController extends Controller
             if (($job instanceof IJob) === false) {
                 continue;
             }
+
             $lr = (int) $job->getLastRun();
             if ($lr > 0 && ($best === null || $lr > $best)) {
                 $best = $lr;

@@ -106,7 +106,7 @@ class LogTreasuryRateAdapter implements TreasuryRateAdapterInterface
     public function fetchFxSpot(string $baseCurrency, string $quoteCurrency, string $asOf): TreasuryRateResult
     {
         $rateId = 'tr_fx_log_'.bin2hex(random_bytes(7));
-        $pair = $baseCurrency.'/'.$quoteCurrency;
+        $pair   = $baseCurrency.'/'.$quoteCurrency;
         $this->logger->info(
             'Shillinq Treasury fetchFxSpot deferred (no outbound connector bound)',
             [

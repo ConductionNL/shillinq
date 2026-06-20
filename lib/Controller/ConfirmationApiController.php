@@ -67,8 +67,6 @@ use Throwable;
  */
 class ConfirmationApiController extends Controller
 {
-
-
     /**
      * Construct the controller with DI dependencies.
      *
@@ -98,7 +96,6 @@ class ConfirmationApiController extends Controller
         parent::__construct(Application::APP_ID, $request);
 
     }//end __construct()
-
 
     /**
      * PATCH /api/v1/appointments/{appointmentId}/confirm
@@ -186,7 +183,6 @@ class ConfirmationApiController extends Controller
 
     }//end confirm()
 
-
     /**
      * POST /api/v1/appointments/{appointmentId}/resend-confirmation
      *
@@ -267,7 +263,6 @@ class ConfirmationApiController extends Controller
 
     }//end resend()
 
-
     /**
      * GET /api/v1/appointments/validate-confirmation-token
      *
@@ -336,8 +331,7 @@ class ConfirmationApiController extends Controller
             Http::STATUS_OK,
         );
 
-    }//end validateToken()
-
+    }//end lookupByToken()
 
     /**
      * Map a {@see ConfirmationTokenService::validate()} `reason` onto an
@@ -363,7 +357,6 @@ class ConfirmationApiController extends Controller
 
     }//end mapValidationError()
 
-
     /**
      * Load an Appointment OR record by id (REST-style business key).
      *
@@ -378,10 +371,12 @@ class ConfirmationApiController extends Controller
             $records       = $objectService
                 ->setRegister($this->settings->getRegisterSlug())
                 ->setSchema('Appointment')
-                ->findAll([
-                    'filters' => ['appointmentId' => $appointmentId],
-                    'limit'   => 1,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => ['appointmentId' => $appointmentId],
+                            'limit'   => 1,
+                        ]
+                        );
         } catch (Throwable $e) {
             $this->logger->error(
                 'ConfirmationApiController: appointment lookup failed',
@@ -397,7 +392,6 @@ class ConfirmationApiController extends Controller
         return null;
 
     }//end loadAppointment()
-
 
     /**
      * Build the customer descriptor used by ConfirmationTokenService /
@@ -422,7 +416,6 @@ class ConfirmationApiController extends Controller
         ];
 
     }//end loadCustomer()
-
 
     /**
      * Authorise the current user against an appointment. The customer of
@@ -465,7 +458,6 @@ class ConfirmationApiController extends Controller
 
     }//end isAuthorisedForAppointment()
 
-
     /**
      * Project an Appointment record into the response shape used by the
      * confirmation portal (no token hash, no internal audit fields).
@@ -489,7 +481,6 @@ class ConfirmationApiController extends Controller
 
     }//end presentAppointment()
 
-
     /**
      * Current server time as ISO 8601 UTC.
      *
@@ -502,7 +493,6 @@ class ConfirmationApiController extends Controller
             ->format('Y-m-d\TH:i:s\Z');
 
     }//end nowIso()
-
 
     /**
      * Normalise an OR record into a flat array.
@@ -538,6 +528,4 @@ class ConfirmationApiController extends Controller
         return [];
 
     }//end toArray()
-
-
 }//end class

@@ -58,7 +58,6 @@ final class UrenTallyService
      */
     private const NON_COUNTING_CATEGORIES = [];
 
-
     /**
      * Construct the service.
      *
@@ -70,7 +69,6 @@ final class UrenTallyService
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Aggregate UrenDagregistratie entries for one day.
@@ -103,10 +101,10 @@ final class UrenTallyService
                 continue;
             }
 
-            $uren     = (float) ($entry['uren'] ?? 0);
-            $capInfo  = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
-            $geteld   = $capInfo['getoldeUren'];
-            $notitie  = $capInfo['capNotitie'];
+            $uren    = (float) ($entry['uren'] ?? 0);
+            $capInfo = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
+            $geteld  = $capInfo['getoldeUren'];
+            $notitie = $capInfo['capNotitie'];
 
             $totaal += $geteld;
             $perCategorie[$categorie] = (($perCategorie[$categorie] ?? 0.0) + $geteld);
@@ -119,7 +117,7 @@ final class UrenTallyService
                     'notitie'   => $notitie,
                 ];
             }
-        }
+        }//end foreach
 
         return [
             'totaalUren'   => $totaal,
@@ -128,7 +126,6 @@ final class UrenTallyService
         ];
 
     }//end tallyDag()
-
 
     /**
      * Aggregate YTD UrenDagregistratie entries into a UrencriteriumYear patch.
@@ -157,8 +154,8 @@ final class UrenTallyService
                 continue;
             }
 
-            $uren   = (float) ($entry['uren'] ?? 0);
-            $cap    = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
+            $uren    = (float) ($entry['uren'] ?? 0);
+            $cap     = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
             $totaal += $cap['getoldeUren'];
         }
 
@@ -173,6 +170,4 @@ final class UrenTallyService
         ];
 
     }//end tallyYearToDate()
-
-
 }//end class

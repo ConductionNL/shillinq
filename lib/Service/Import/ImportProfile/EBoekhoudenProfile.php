@@ -39,8 +39,6 @@ use OCA\Shillinq\Service\Import\ImportProfileInterface;
  */
 class EBoekhoudenProfile implements ImportProfileInterface
 {
-
-
     /**
      * {@inheritDoc}
      *
@@ -53,7 +51,6 @@ class EBoekhoudenProfile implements ImportProfileInterface
         return 'e-boekhouden';
 
     }//end sourceSystem()
-
 
     /**
      * {@inheritDoc}
@@ -69,7 +66,6 @@ class EBoekhoudenProfile implements ImportProfileInterface
         return ($parsed['ledgerAccounts'] ?? []);
 
     }//end normalizeLedgerAccounts()
-
 
     /**
      * {@inheritDoc}
@@ -113,7 +109,6 @@ class EBoekhoudenProfile implements ImportProfileInterface
 
     }//end mapCsvColumns()
 
-
     /**
      * {@inheritDoc}
      *
@@ -128,6 +123,4 @@ class EBoekhoudenProfile implements ImportProfileInterface
         return $parsed;
 
     }//end applyDialectQuirks()
-
-
 }//end class

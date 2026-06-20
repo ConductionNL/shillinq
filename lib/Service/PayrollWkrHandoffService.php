@@ -44,7 +44,6 @@ use Psr\Container\ContainerInterface;
  */
 class PayrollWkrHandoffService
 {
-
     /**
      * Construct the service.
      *

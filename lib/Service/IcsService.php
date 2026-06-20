@@ -64,7 +64,6 @@ final class IcsService
      */
     private const PRODID = '-//Conduction//Shillinq Bookings//EN';
 
-
     /**
      * Construct the service with DI dependencies.
      *
@@ -79,25 +78,33 @@ final class IcsService
     ) {
     }//end __construct()
 
-
     /**
      * Generate the ICS payload for one confirmation email.
      *
-     * @param array<string, mixed>   $appointment    OR object array — at minimum
-     *                                              `appointmentId`, `startTime`,
-     *                                              `endTime`. `notes` / location
-     *                                              are optional.
-     * @param array<string, mixed>   $customer       Customer descriptor — at
-     *                                              minimum `id` and `email`.
-     *                                              `userId` (NC user) and
-     *                                              `name` recommended.
-     * @param string                 $confirmUrl     Absolute URL of the web
-     *                                              confirmation portal pre-loaded
-     *                                              with the token.
-     * @param array<string, mixed>   $context        Optional context — keys
-     *                                              `serviceName` (string),
-     *                                              `location` (string),
-     *                                              `organizerEmail` (string).
+     * @param array<string, mixed> $appointment OR object array —
+     *                                          at minimum
+     *                                          `appointmentId`,
+     *                                          `startTime`,
+     *                                          `endTime`. `notes` /
+     *                                          location are
+     *                                          optional.
+     * @param array<string, mixed> $customer    Customer descriptor
+     *                                          — at minimum `id`
+     *                                          and `email`. `userId`
+     *                                          (NC user) and `name`
+     *                                          recommended.
+     * @param string               $confirmUrl  Absolute URL of the web
+     *                                          confirmation portal
+     *                                          pre-loaded with the
+     *                                          token.
+     * @param array<string, mixed> $context     Optional context
+     *                                          — keys
+     *                                          `serviceName`
+     *                                          (string),
+     *                                          `location`
+     *                                          (string),
+     *                                          `organizerEmail`
+     *                                          (string).
      *
      * @return string The complete ICS payload, CRLF-terminated.
      */
@@ -133,7 +140,7 @@ final class IcsService
 
         $vTimeZone = $this->buildVTimezone($tzId, $start, $end);
 
-        $lines = [];
+        $lines   = [];
         $lines[] = 'BEGIN:VCALENDAR';
         $lines[] = 'VERSION:2.0';
         $lines[] = 'PRODID:'.self::PRODID;
@@ -178,7 +185,6 @@ final class IcsService
 
     }//end generateIcs()
 
-
     /**
      * Parse an ISO 8601 timestamp into UTC, returning NULL on failure.
      *
@@ -200,7 +206,6 @@ final class IcsService
 
     }//end parseUtc()
 
-
     /**
      * Compose a stable UID for the VEVENT.
      *
@@ -219,7 +224,6 @@ final class IcsService
 
     }//end buildUid()
 
-
     /**
      * Build a single-line VTIMEZONE component for the appointment timezone
      * using the year-boundary transitions surrounding the appointment.
@@ -236,7 +240,7 @@ final class IcsService
      */
     private function buildVTimezone(string $tzId, \DateTimeImmutable $start, \DateTimeImmutable $end): string
     {
-        $lines = [];
+        $lines   = [];
         $lines[] = 'BEGIN:VTIMEZONE';
         $lines[] = 'TZID:'.$tzId;
 
@@ -244,8 +248,8 @@ final class IcsService
             $tz = new \DateTimeZone($tzId);
             // Pull transitions covering the whole appointment year so the client
             // sees both STANDARD and DAYLIGHT rules for the date in question.
-            $yearStart = (int) (new \DateTimeImmutable($start->format('Y').'-01-01T00:00:00Z'))->getTimestamp();
-            $yearEnd   = (int) (new \DateTimeImmutable(((int) $start->format('Y') + 1).'-01-01T00:00:00Z'))->getTimestamp();
+            $yearStart   = (int) (new \DateTimeImmutable($start->format('Y').'-01-01T00:00:00Z'))->getTimestamp();
+            $yearEnd     = (int) (new \DateTimeImmutable(((int) $start->format('Y') + 1).'-01-01T00:00:00Z'))->getTimestamp();
             $transitions = $tz->getTransitions($yearStart, $yearEnd);
             if ($transitions === false) {
                 $transitions = [];
@@ -257,22 +261,22 @@ final class IcsService
                     break;
                 }
 
-                $component = ($transition['isdst'] === true) ? 'DAYLIGHT' : 'STANDARD';
-                $when      = (new \DateTimeImmutable('@'.$transition['ts']))->setTimezone(new \DateTimeZone('UTC'));
-                $offsetTo  = $this->formatOffset((int) $transition['offset']);
+                $component  = ($transition['isdst'] === true) ? 'DAYLIGHT' : 'STANDARD';
+                $when       = (new \DateTimeImmutable('@'.$transition['ts']))->setTimezone(new \DateTimeZone('UTC'));
+                $offsetTo   = $this->formatOffset((int) $transition['offset']);
                 $offsetFrom = $offsetTo;
-                $lines[] = 'BEGIN:'.$component;
-                $lines[] = 'TZNAME:'.(string) $transition['abbr'];
-                $lines[] = 'DTSTART:'.$when->format('Ymd\THis');
-                $lines[] = 'TZOFFSETFROM:'.$offsetFrom;
-                $lines[] = 'TZOFFSETTO:'.$offsetTo;
-                $lines[] = 'END:'.$component;
+                $lines[]    = 'BEGIN:'.$component;
+                $lines[]    = 'TZNAME:'.(string) $transition['abbr'];
+                $lines[]    = 'DTSTART:'.$when->format('Ymd\THis');
+                $lines[]    = 'TZOFFSETFROM:'.$offsetFrom;
+                $lines[]    = 'TZOFFSETTO:'.$offsetTo;
+                $lines[]    = 'END:'.$component;
                 $emitted++;
             }
 
             if ($emitted === 0) {
                 // Fixed-offset zone (e.g. UTC) — emit one STANDARD block.
-                $offset = $this->formatOffset((new \DateTimeImmutable('now', $tz))->getOffset());
+                $offset  = $this->formatOffset((new \DateTimeImmutable('now', $tz))->getOffset());
                 $lines[] = 'BEGIN:STANDARD';
                 $lines[] = 'TZNAME:'.$tzId;
                 $lines[] = 'DTSTART:19700101T000000';
@@ -301,7 +305,6 @@ final class IcsService
 
     }//end buildVTimezone()
 
-
     /**
      * Format a numeric UTC offset (in seconds) as RFC 5545 ±HHMM.
      *
@@ -319,7 +322,6 @@ final class IcsService
 
     }//end formatOffset()
 
-
     /**
      * Escape a string for RFC 5545 text values — backslash, comma,
      * semicolon, newlines.
@@ -334,6 +336,4 @@ final class IcsService
         return $value;
 
     }//end escape()
-
-
 }//end class

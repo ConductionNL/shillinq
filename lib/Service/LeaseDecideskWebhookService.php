@@ -99,7 +99,6 @@ class LeaseDecideskWebhookService
 
     }//end __construct()
 
-
     /**
      * Return the configured decidesk webhook URL.
      *
@@ -118,7 +117,6 @@ class LeaseDecideskWebhookService
 
     }//end getWebhookUrl()
 
-
     /**
      * Persist the decidesk webhook URL.
      *
@@ -135,7 +133,6 @@ class LeaseDecideskWebhookService
         );
 
     }//end setWebhookUrl()
-
 
     /**
      * Return the configured decidesk bearer token from the secrets store.
@@ -158,7 +155,6 @@ class LeaseDecideskWebhookService
         return $secret;
 
     }//end getWebhookToken()
-
 
     /**
      * Persist the decidesk bearer token in the secrets store.
@@ -190,7 +186,6 @@ class LeaseDecideskWebhookService
 
     }//end setWebhookToken()
 
-
     /**
      * Build the JSON payload for the decidesk approval webhook.
      *
@@ -206,25 +201,24 @@ class LeaseDecideskWebhookService
     public function buildPayload(array $event): array
     {
         return [
-            'source'                => Application::APP_ID,
-            'kind'                  => 'lease-reassessment-approval-request',
-            'eventId'               => ($event['id'] ?? ($event['reassessmentNumber'] ?? null)),
-            'reassessmentNumber'    => ($event['reassessmentNumber'] ?? null),
-            'eventType'             => ($event['eventType'] ?? null),
-            'leaseContractId'       => ($event['sourceLease'] ?? ($event['lease'] ?? null)),
-            'administrationId'      => ($event['administrationId'] ?? null),
-            'triggerDescription'    => ($event['triggerDescription'] ?? ''),
+            'source'                  => Application::APP_ID,
+            'kind'                    => 'lease-reassessment-approval-request',
+            'eventId'                 => ($event['id'] ?? ($event['reassessmentNumber'] ?? null)),
+            'reassessmentNumber'      => ($event['reassessmentNumber'] ?? null),
+            'eventType'               => ($event['eventType'] ?? null),
+            'leaseContractId'         => ($event['sourceLease'] ?? ($event['lease'] ?? null)),
+            'administrationId'        => ($event['administrationId'] ?? null),
+            'triggerDescription'      => ($event['triggerDescription'] ?? ''),
             'preEventLiabilityCents'  => ($event['preEventLiabilityCents'] ?? 0),
             'postEventLiabilityCents' => ($event['postEventLiabilityCents'] ?? 0),
             'rouAssetAdjustmentCents' => ($event['rouAssetAdjustmentCents'] ?? 0),
-            'plImpactCents'         => ($event['plImpactCents'] ?? 0),
-            'remeasurementApproach' => ($event['remeasurementApproach'] ?? null),
-            'approver'              => ($event['approver'] ?? null),
-            'requestedAt'           => date(format: 'c'),
+            'plImpactCents'           => ($event['plImpactCents'] ?? 0),
+            'remeasurementApproach'   => ($event['remeasurementApproach'] ?? null),
+            'approver'                => ($event['approver'] ?? null),
+            'requestedAt'             => date(format: 'c'),
         ];
 
     }//end buildPayload()
-
 
     /**
      * Determine whether the given event should be delivered to decidesk.
@@ -252,7 +246,6 @@ class LeaseDecideskWebhookService
 
     }//end shouldDeliver()
 
-
     /**
      * Deliver the approval webhook for a pending-approval event.
      *
@@ -279,7 +272,7 @@ class LeaseDecideskWebhookService
 
         $headers = ['Content-Type' => 'application/json'];
         if ($token !== '') {
-            $headers['Authorization'] = 'Bearer ' . $token;
+            $headers['Authorization'] = 'Bearer '.$token;
         }
 
         try {
@@ -311,14 +304,12 @@ class LeaseDecideskWebhookService
             $this->logger->warning(
                 'LeaseDecideskWebhookService: failed to deliver decidesk webhook',
                 [
-                    'eventId'  => ($event['id'] ?? ($event['reassessmentNumber'] ?? null)),
-                    'message'  => $e->getMessage(),
+                    'eventId' => ($event['id'] ?? ($event['reassessmentNumber'] ?? null)),
+                    'message' => $e->getMessage(),
                 ]
             );
             return false;
-        }
+        }//end try
 
     }//end deliver()
-
-
 }//end class

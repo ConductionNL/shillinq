@@ -161,7 +161,7 @@ class PeriodStatusGuard
                     ['periodId' => $periodId, 'stage' => $stage]
                 );
                 return false;
-            }
+            }//end if
 
             return true;
         } catch (\Throwable $e) {

@@ -78,7 +78,6 @@ final class UrenPrognoseService
         12 => 0.85,
     ];
 
-
     /**
      * Construct the service.
      *
@@ -88,7 +87,6 @@ final class UrenPrognoseService
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Compute a UrenPrognose record for an onderneming, given the YTD daily
@@ -134,7 +132,7 @@ final class UrenPrognoseService
         $resterend      = array_sum($perMaand);
         $totaalPrognose = ($lopende + $resterend);
 
-        $norm           = (int) ($input['doelNorm'] ?? 1225);
+        $norm            = (int) ($input['doelNorm'] ?? 1225);
         $kansBehaaldNorm = $this->kansBehaaldNorm(
             totaalPrognose: $totaalPrognose,
             norm: $norm,
@@ -163,7 +161,6 @@ final class UrenPrognoseService
         ];
 
     }//end bouwPrognose()
-
 
     /**
      * Build the 12-week (or fewer, when YTD is short) rolling window of weekly
@@ -197,7 +194,6 @@ final class UrenPrognoseService
 
     }//end bouwWeeklyWindow()
 
-
     /**
      * Mean of a weekly window. Returns 0.0 when empty.
      *
@@ -215,7 +211,6 @@ final class UrenPrognoseService
         return (array_sum($weeklyWindow) / $n);
 
     }//end weekGemiddelde()
-
 
     /**
      * Confidence score (0-1) from the coefficient of variation of the weekly window.
@@ -254,15 +249,14 @@ final class UrenPrognoseService
 
     }//end confidence()
 
-
     /**
      * Build the per-resterende-maand prognose with seasonality, vakantie, and
      * geplande-opdracht overrides applied.
      *
-     * @param string                                                       $asOf               Y-m-d.
-     * @param int                                                          $kalenderjaar       Target year.
-     * @param float                                                        $weekGemiddelde     Weekly mean hours.
-     * @param array<int, string>                                           $vakanties          ISO date ranges.
+     * @param string                                                             $asOf               Y-m-d.
+     * @param int                                                                $kalenderjaar       Target year.
+     * @param float                                                              $weekGemiddelde     Weekly mean hours.
+     * @param array<int, string>                                                 $vakanties          ISO date ranges.
      * @param array<int, array{maand: string, uren: float}|array<string, mixed>> $geplandeOpdrachten Per-maand overrides.
      *
      * @return array<string, float> Forecast hours keyed by YYYY-MM.
@@ -279,7 +273,7 @@ final class UrenPrognoseService
             return [];
         }
 
-        $startMonth     = (int) gmdate('n', $startTs);
+        $startMonth       = (int) gmdate('n', $startTs);
         $overridesByMaand = [];
         foreach ($geplandeOpdrachten as $opdracht) {
             if (is_array($opdracht) === false) {
@@ -316,12 +310,11 @@ final class UrenPrognoseService
             }
 
             $forecast[$key] = round($monthHours, 2);
-        }
+        }//end for
 
         return $forecast;
 
     }//end perMaandPrognose()
-
 
     /**
      * Resolve which months (YYYY-MM) are fully or partially blocked by vakantie ranges.
@@ -363,12 +356,11 @@ final class UrenPrognoseService
             ) {
                 $months[gmdate('Y-m', $start)] = 'full';
             }
-        }
+        }//end foreach
 
         return $months;
 
     }//end vakantieMonths()
-
 
     /**
      * Estimate the probability the norm is reached given a forecast and confidence.
@@ -401,6 +393,4 @@ final class UrenPrognoseService
         return round(($confidence * 0.1), 2);
 
     }//end kansBehaaldNorm()
-
-
 }//end class

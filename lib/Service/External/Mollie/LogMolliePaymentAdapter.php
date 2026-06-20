@@ -93,8 +93,8 @@ class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface
     /**
      * Log the webhook intent + synthesise a stub result.
      *
-     * @param string              $mollieId Mollie paymentId from inbound webhook.
-     * @param array<string,string> $headers Request headers.
+     * @param string               $mollieId Mollie paymentId from inbound webhook.
+     * @param array<string,string> $headers  Request headers.
      *
      * @return MolliePaymentResult Stubbed payment record.
      */
@@ -110,9 +110,9 @@ class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface
         $this->logger->info(
             'Shillinq Mollie verifyWebhook deferred (no outbound connector bound)',
             [
-                'molliePaymentId'    => $mollieId,
-                'headers'            => $headers,
-                'signaturePresence'  => ($signature === '' ? 'absent' : 'present'),
+                'molliePaymentId'   => $mollieId,
+                'headers'           => $headers,
+                'signaturePresence' => ($signature === '' ? 'absent' : 'present'),
             ]
         );
 

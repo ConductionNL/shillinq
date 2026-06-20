@@ -54,14 +54,14 @@ class CrossSubsidyDetector
     /**
      * Scenario thresholds (configurable per administration when wired to ConfigService).
      */
-    public const LOSS_FINANCING_MONTHS                = 2;
-    public const OMZET_SPIKE_RATIO                    = 1.25;
+    public const LOSS_FINANCING_MONTHS = 2;
+    public const OMZET_SPIKE_RATIO     = 1.25;
     public const OVERHEAD_UNDER_ALLOCATION_FLOOR_RATIO = 0.01;
-    public const ABB_STALE_YEARS                      = 2;
-    public const MANUAL_OVERRIDE_RATIO                = 0.05;
+    public const ABB_STALE_YEARS       = 2;
+    public const MANUAL_OVERRIDE_RATIO = 0.05;
     public const OVERHEAD_UNDERSCHATTING_DIRECT_GROWTH = 0.20;
-    public const BEVOORDELING_DISCOUNT_THRESHOLD      = 0.85;
-    public const ESCALATION_WEEKS                     = 4;
+    public const BEVOORDELING_DISCOUNT_THRESHOLD       = 0.85;
+    public const ESCALATION_WEEKS = 4;
 
     /**
      * Default user-id used as the open-alert assignee.
@@ -80,7 +80,7 @@ class CrossSubsidyDetector
     /**
      * Detect loss-financing alert: IKP-marge < 0 for N consecutive months (REQ-WMO-007 §1).
      *
-     * @param array<int,array<string,mixed>> $ikpHistory       Recent IKP records (most-recent first).
+     * @param array<int,array<string,mixed>> $ikpHistory        Recent IKP records (most-recent first).
      * @param int                            $consecutiveMonths Required consecutive negative-marge months.
      *
      * @return bool True when the loss-financing scenario triggers.
@@ -184,10 +184,10 @@ class CrossSubsidyDetector
     /**
      * Detect ABB-stale: exempted activity whose ABB has not been evaluated in > N years (REQ-WMO-007 §4).
      *
-     * @param array<string,mixed> $activity      The CommercialActivity.
-     * @param array<string,mixed> $abb           The linked AlgemeenBelangBesluit.
-     * @param string              $today         Today's ISO date.
-     * @param int                 $staleYears    Stale-after threshold in years (default 2).
+     * @param array<string,mixed> $activity   The CommercialActivity.
+     * @param array<string,mixed> $abb        The linked AlgemeenBelangBesluit.
+     * @param string              $today      Today's ISO date.
+     * @param int                 $staleYears Stale-after threshold in years (default 2).
      *
      * @return bool True when the ABB is stale.
      */
@@ -368,7 +368,7 @@ class CrossSubsidyDetector
             return false;
         }
 
-        $threshold = $generated->add(new DateInterval('P' . (self::ESCALATION_WEEKS * 7) . 'D'));
+        $threshold = $generated->add(new DateInterval('P'.(self::ESCALATION_WEEKS * 7).'D'));
         return $now >= $threshold;
 
     }//end shouldEscalate()
@@ -393,9 +393,9 @@ class CrossSubsidyDetector
     /**
      * Resolve an open alert (REQ-WMO-007 §resolution).
      *
-     * @param array<string,mixed> $alert       The current AlertLog record.
-     * @param string              $resolution  One of `reviewed-no-action` / `remediated`.
-     * @param string              $notes       Operator's motivation.
+     * @param array<string,mixed> $alert      The current AlertLog record.
+     * @param string              $resolution One of `reviewed-no-action` / `remediated`.
+     * @param string              $notes      Operator's motivation.
      *
      * @return array<string,mixed> Updated AlertLog with resolution status + notes.
      *
@@ -404,7 +404,7 @@ class CrossSubsidyDetector
     public function resolve(array $alert, string $resolution, string $notes): array
     {
         if (in_array($resolution, ['reviewed-no-action', 'remediated'], true) === false) {
-            throw new \InvalidArgumentException('Invalid resolution status: ' . $resolution);
+            throw new \InvalidArgumentException('Invalid resolution status: '.$resolution);
         }
 
         if (trim($notes) === '') {
@@ -417,5 +417,4 @@ class CrossSubsidyDetector
         return $alert;
 
     }//end resolve()
-
 }//end class

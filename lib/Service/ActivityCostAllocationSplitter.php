@@ -122,7 +122,7 @@ class ActivityCostAllocationSplitter
             }
 
             return $rule;
-        }
+        }//end foreach
 
         return null;
 
@@ -136,8 +136,8 @@ class ActivityCostAllocationSplitter
      * SHOULD equal 1.0; the splitter reconciles any rounding drift onto the
      * largest split to preserve balance.
      *
-     * @param float                           $originalAmount Original transaction amount in EUR (signed).
-     * @param array<string,mixed>             $rule           The geldende OverheadDistributionRule.
+     * @param float               $originalAmount Original transaction amount in EUR (signed).
+     * @param array<string,mixed> $rule           The geldende OverheadDistributionRule.
      *
      * @return array<int,array<string,mixed>> Balanced split records.
      */
@@ -189,7 +189,7 @@ class ActivityCostAllocationSplitter
             }
 
             $idx++;
-        }
+        }//end foreach
 
         // Reconcile rounding drift onto the largest split.
         if ($allocated !== $absCents && $records !== []) {
@@ -275,9 +275,9 @@ class ActivityCostAllocationSplitter
             throw new InvalidArgumentException('Handmatige override requires a non-empty reason');
         }
 
-        $original    = (array) $input['originalAllocation'];
-        $now         = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
-        $originalId  = (string) ($original['id'] ?? $original['_id'] ?? '');
+        $original   = (array) $input['originalAllocation'];
+        $now        = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
+        $originalId = (string) ($original['id'] ?? $original['_id'] ?? '');
 
         return [
             'journalEntryId'       => (string) ($original['journalEntryId'] ?? ''),
@@ -328,7 +328,7 @@ class ActivityCostAllocationSplitter
             }
 
             $entries[] = [
-                'grootboek'    => (string) ($split['grootboek'] ?? ($glAccountClass . ((string) ($split['dimensie'] ?? 'MO')))),
+                'grootboek'    => (string) ($split['grootboek'] ?? ($glAccountClass.((string) ($split['dimensie'] ?? 'MO')))),
                 'amount'       => $amount,
                 'kostendrager' => (string) ($split['kostendrager'] ?? ''),
                 'dimensie'     => (string) ($split['dimensie'] ?? 'MO'),
@@ -339,5 +339,4 @@ class ActivityCostAllocationSplitter
         return $entries;
 
     }//end materialiseSplits()
-
 }//end class

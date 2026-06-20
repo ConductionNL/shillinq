@@ -37,8 +37,6 @@ use OCA\Shillinq\Service\Import\ImportProfileInterface;
  */
 class XafGenericProfile implements ImportProfileInterface
 {
-
-
     /**
      * {@inheritDoc}
      *
@@ -51,7 +49,6 @@ class XafGenericProfile implements ImportProfileInterface
         return 'xaf-generic';
 
     }//end sourceSystem()
-
 
     /**
      * {@inheritDoc}
@@ -67,7 +64,6 @@ class XafGenericProfile implements ImportProfileInterface
         return ($parsed['ledgerAccounts'] ?? []);
 
     }//end normalizeLedgerAccounts()
-
 
     /**
      * {@inheritDoc}
@@ -88,7 +84,6 @@ class XafGenericProfile implements ImportProfileInterface
 
     }//end mapCsvColumns()
 
-
     /**
      * {@inheritDoc}
      *
@@ -103,6 +98,4 @@ class XafGenericProfile implements ImportProfileInterface
         return $parsed;
 
     }//end applyDialectQuirks()
-
-
 }//end class

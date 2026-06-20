@@ -178,12 +178,12 @@ class WidgetAuthService
             ];
         }
 
-        $window      = ((int) floor($this->time->getTime() / self::RATE_LIMIT_WINDOW_SECONDS));
-        $cacheKey    = 'widget-rl:'.$businessId.':'.$window;
-        $currentRaw  = $cache->get($cacheKey);
-        $current     = ((int) ($currentRaw ?? 0));
-        $next        = ($current + 1);
-        $retryAfter  = self::RATE_LIMIT_WINDOW_SECONDS;
+        $window     = ((int) floor($this->time->getTime() / self::RATE_LIMIT_WINDOW_SECONDS));
+        $cacheKey   = 'widget-rl:'.$businessId.':'.$window;
+        $currentRaw = $cache->get($cacheKey);
+        $current    = ((int) ($currentRaw ?? 0));
+        $next       = ($current + 1);
+        $retryAfter = self::RATE_LIMIT_WINDOW_SECONDS;
 
         if ($next > $limit) {
             return [
@@ -470,7 +470,7 @@ class WidgetAuthService
                 'Shillinq widget auth: lookup failed',
                 ['exception' => $e->getMessage()]
             );
-        }
+        }//end try
 
         return null;
 
@@ -627,7 +627,7 @@ class WidgetAuthService
                 ]
             );
             return null;
-        }
+        }//end try
 
     }//end updateObject()
 
@@ -641,14 +641,18 @@ class WidgetAuthService
     private function toArray(mixed $object): array
     {
         if (is_array($object) === true) {
-            /** @var array<string,mixed> $object */
+            /*
+             * @var array<string,mixed> $object
+             */
             return $object;
         }
 
         if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
             $serialised = $object->jsonSerialize();
             if (is_array($serialised) === true) {
-                /** @var array<string,mixed> $serialised */
+                /*
+                 * @var array<string,mixed> $serialised
+                 */
                 return $serialised;
             }
         }

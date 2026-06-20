@@ -38,8 +38,6 @@ use OCA\Shillinq\Service\Import\ImportProfileInterface;
  */
 class SnelstartProfile implements ImportProfileInterface
 {
-
-
     /**
      * {@inheritDoc}
      *
@@ -52,7 +50,6 @@ class SnelstartProfile implements ImportProfileInterface
         return 'snelstart';
 
     }//end sourceSystem()
-
 
     /**
      * {@inheritDoc}
@@ -79,7 +76,6 @@ class SnelstartProfile implements ImportProfileInterface
         return $accounts;
 
     }//end normalizeLedgerAccounts()
-
 
     /**
      * {@inheritDoc}
@@ -123,7 +119,6 @@ class SnelstartProfile implements ImportProfileInterface
 
     }//end mapCsvColumns()
 
-
     /**
      * {@inheritDoc}
      *
@@ -139,6 +134,4 @@ class SnelstartProfile implements ImportProfileInterface
         return $parsed;
 
     }//end applyDialectQuirks()
-
-
 }//end class

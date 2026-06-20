@@ -61,7 +61,7 @@ class LogBunqBankConnectorAdapter implements BunqBankConnectorAdapterInterface
      *
      * @return BunqSyncResult The dispatch outcome.
      */
-    public function pullTransactions(string $connectionReference, array $context = []): BunqSyncResult
+    public function pullTransactions(string $connectionReference, array $context=[]): BunqSyncResult
     {
         $this->logger->info(
             'Shillinq Bunq pullTransactions deferred (no outbound connector bound)',
@@ -91,7 +91,7 @@ class LogBunqBankConnectorAdapter implements BunqBankConnectorAdapterInterface
      *
      * @return BunqSyncResult The dispatch outcome.
      */
-    public function renewConsent(string $connectionReference, array $context = []): BunqSyncResult
+    public function renewConsent(string $connectionReference, array $context=[]): BunqSyncResult
     {
         $this->logger->info(
             'Shillinq Bunq renewConsent deferred (no outbound connector bound)',

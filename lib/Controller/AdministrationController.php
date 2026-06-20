@@ -274,7 +274,7 @@ class AdministrationController extends Controller
                 ['exception' => $e->getMessage()]
             );
             return new JSONResponse(['error' => 'Failed to resolve writable status'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+        }//end try
 
     }//end writableStatus()
 

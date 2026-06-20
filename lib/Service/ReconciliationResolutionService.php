@@ -43,8 +43,6 @@ use Psr\Log\LoggerInterface;
  */
 class ReconciliationResolutionService
 {
-
-
     /**
      * Constructor.
      *
@@ -64,16 +62,15 @@ class ReconciliationResolutionService
     ) {
     }//end __construct()
 
-
     /**
      * Resolve one ReconciliationMatch by classifying it per REQ-REC-004.
      *
      * @param string $reconId          The parent BankReconciliation id.
      * @param string $matchId          The ReconciliationMatch id.
      * @param string $resolutionStatus One of matched/timing/pending/adjustment
-     *                                  (validated by the caller).
+     *                                 (validated by the caller).
      * @param string $resolutionReason Operator-supplied reason text
-     *                                  (audit-trailed).
+     *                                 (audit-trailed).
      * @param string $actor            Nextcloud UID of the operator.
      *
      * @return array<string,mixed> The updated ReconciliationMatch as
@@ -176,7 +173,6 @@ class ReconciliationResolutionService
 
     }//end resolveMatch()
 
-
     /**
      * Return the configured register slug, falling back to 'shillinq'.
      *
@@ -192,7 +188,6 @@ class ReconciliationResolutionService
         return $slug;
 
     }//end getRegisterSlug()
-
 
     /**
      * Normalise an OR find/update result to a plain array.
@@ -215,6 +210,4 @@ class ReconciliationResolutionService
         return null;
 
     }//end toArray()
-
-
 }//end class

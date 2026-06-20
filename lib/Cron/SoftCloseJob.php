@@ -116,11 +116,11 @@ class SoftCloseJob extends TimedJob
                         'SoftCloseJob: soft-close run failed',
                         ['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
                     );
-                }
-            }
+                }//end try
+            }//end foreach
         } catch (Throwable $e) {
             $this->logger->error('SoftCloseJob: top-level failure', ['exception' => $e->getMessage()]);
-        }
+        }//end try
 
     }//end run()
 

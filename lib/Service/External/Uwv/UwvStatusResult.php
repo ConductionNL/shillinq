@@ -54,7 +54,7 @@ final class UwvStatusResult
         public readonly string $outcome,
         public readonly string $kenmerk,
         public readonly bool $dormant,
-        public readonly array $extras = [],
+        public readonly array $extras=[],
     ) {
     }//end __construct()
 }//end class

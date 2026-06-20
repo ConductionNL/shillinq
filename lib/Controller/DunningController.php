@@ -63,12 +63,12 @@ use Psr\Log\LoggerInterface;
 class DunningController extends Controller
 {
     /**
-     * @param IRequest                     $request    NC request.
-     * @param BIKStaffelCalculator         $bik        Pure BIK + rente calculator.
-     * @param DunningRunService            $runs       Run orchestrator.
-     * @param IncassoDossierComposer       $dossier    Stage-5 dossier composer.
-     * @param AdministrationContextService $context    Admin-scope context.
-     * @param LoggerInterface              $logger     Logger.
+     * @param IRequest                     $request NC request.
+     * @param BIKStaffelCalculator         $bik     Pure BIK + rente calculator.
+     * @param DunningRunService            $runs    Run orchestrator.
+     * @param IncassoDossierComposer       $dossier Stage-5 dossier composer.
+     * @param AdministrationContextService $context Admin-scope context.
+     * @param LoggerInterface              $logger  Logger.
      */
     public function __construct(
         IRequest $request,
@@ -449,5 +449,4 @@ class DunningController extends Controller
         return new JSONResponse($bundle, Http::STATUS_OK);
 
     }//end dossier()
-
 }//end class

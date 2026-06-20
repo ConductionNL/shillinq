@@ -201,12 +201,12 @@ class CBSExportService
             $persistedLines[] = $this->saveObject(object: $line, schema: 'CBSLine');
         }
 
-        $iv3Json   = $this->generateIV3Json(
+        $iv3Json  = $this->generateIV3Json(
             submission: $persistedSubmission,
             lines: $persistedLines,
         );
-        $checksum  = 'sha256:'.hash('sha256', json_encode($iv3Json, JSON_THROW_ON_ERROR));
-        $fileUri   = sprintf(
+        $checksum = 'sha256:'.hash('sha256', json_encode($iv3Json, JSON_THROW_ON_ERROR));
+        $fileUri  = sprintf(
             'shillinq://cbs-submissions/%s/iv3.json',
             $submissionNumber,
         );
@@ -274,6 +274,7 @@ class CBSExportService
                     (string) ($line['cbsLineClassification'] ?? ''),
                 );
             }
+
             $rangeKeys[$key] = (string) ($line['cbsLineClassification'] ?? '');
         }
 
@@ -296,8 +297,8 @@ class CBSExportService
      * Includes format version, generation timestamp, submission metadata, line
      * items, and a SHA-256 integrity checksum over the canonical JSON content.
      *
-     * @param array              $submission The CBSSubmission record.
-     * @param array<int,array>   $lines      The persisted CBSLine records.
+     * @param array            $submission The CBSSubmission record.
+     * @param array<int,array> $lines      The persisted CBSLine records.
      *
      * @return array<string,mixed> The IV3-extended JSON envelope.
      */
@@ -377,6 +378,7 @@ class CBSExportService
             if (is_array($entry) === false) {
                 continue;
             }
+
             $start          = (string) ($entry['start'] ?? '');
             $end            = (string) ($entry['end'] ?? '');
             $classification = (string) ($entry['classification'] ?? '');
@@ -384,6 +386,7 @@ class CBSExportService
             if ($start === '' || $end === '' || $classification === '' || $lineNumber === '') {
                 continue;
             }
+
             $mapping[] = [
                 'start'          => $start,
                 'end'            => $end,
@@ -427,15 +430,16 @@ class CBSExportService
             if ($bucket === null) {
                 continue;
             }
+
             $key = $bucket['classification'];
             if (isset($buckets[$key]) === false) {
                 $buckets[$key] = [
-                    'classification'     => $bucket['classification'],
-                    'lineNumber'         => $bucket['lineNumber'],
-                    'accountRangeStart'  => $bucket['start'],
-                    'accountRangeEnd'    => $bucket['end'],
-                    'aggregatedAmount'   => 0,
-                    'glLineCount'        => 0,
+                    'classification'    => $bucket['classification'],
+                    'lineNumber'        => $bucket['lineNumber'],
+                    'accountRangeStart' => $bucket['start'],
+                    'accountRangeEnd'   => $bucket['end'],
+                    'aggregatedAmount'  => 0,
+                    'glLineCount'       => 0,
                 ];
             }
 
@@ -443,10 +447,10 @@ class CBSExportService
             // treats inflows (credits to revenue / debits to costs) as
             // positive contributions to the classification total, so we
             // aggregate the absolute value.
-            $amount    = (int) round(((float) ($glLine['amount'] ?? 0)) * 100);
+            $amount = (int) round(((float) ($glLine['amount'] ?? 0)) * 100);
             $buckets[$key]['aggregatedAmount'] += $amount;
             $buckets[$key]['glLineCount']      += 1;
-        }
+        }//end foreach
 
         return array_values($buckets);
 
@@ -455,8 +459,8 @@ class CBSExportService
     /**
      * Look up the mapping entry whose account-range covers an account number.
      *
-     * @param string             $accountNumber GL account number.
-     * @param array<int,array>   $mapping       The mapping table.
+     * @param string           $accountNumber GL account number.
+     * @param array<int,array> $mapping       The mapping table.
      *
      * @return array{start:string,end:string,classification:string,lineNumber:string}|null
      */
@@ -499,13 +503,14 @@ class CBSExportService
                 ->setRegister($this->register())
                 ->setSchema('CBSSubmission')
                 ->findAll(['filters' => []]);
-            $count = 0;
+            $count    = 0;
             foreach ($existing as $row) {
                 $num = (string) ($row['submissionNumber'] ?? '');
                 if (str_starts_with($num, 'CBS-'.$year.'-') === true) {
                     $count++;
                 }
             }
+
             $seq = ($count + 1);
         } catch (\Throwable $e) {
             $this->logger->warning(
@@ -513,7 +518,7 @@ class CBSExportService
                 ['exception' => $e->getMessage()]
             );
             $seq = 1;
-        }
+        }//end try
 
         return sprintf('CBS-%d-%03d', $year, $seq);
 
@@ -620,7 +625,7 @@ class CBSExportService
             foreach ($lines as $line) {
                 $glLines[] = $line;
             }
-        }
+        }//end foreach
 
         return $glLines;
 
@@ -688,7 +693,7 @@ class CBSExportService
                 ['schema' => $schema, 'exception' => $e->getMessage()]
             );
             return $object;
-        }
+        }//end try
 
     }//end saveObject()
 

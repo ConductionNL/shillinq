@@ -199,9 +199,9 @@ class PaymentReconciliationService
      *
      * @param string               $gateway The gateway slug ('mollie'|'stripe').
      * @param array<string, mixed> $event   Normalised event with at least
-     *                                       'paymentIntentId' and 'outcome'; optional
-     *                                       'errorCode', 'errorMessage',
-     *                                       'settlementReference', 'gatewayFeeAmount'.
+     *                                      'paymentIntentId' and 'outcome'; optional
+     *                                      'errorCode', 'errorMessage',
+     *                                      'settlementReference', 'gatewayFeeAmount'.
      *
      * @return array{result: string, schema: ?string} Result constant + which schema matched (or null).
      *
@@ -386,9 +386,9 @@ class PaymentReconciliationService
 
             // Trigger the existing AR lifecycle transition to paid, with the
             // PaymentRequest as payment evidence. AR core owns the GL posting.
-            $invoice['state']                = 'paid';
-            $invoice['paymentEvidenceRef']   = (string) ($request['paymentIntentId'] ?? '');
-            $invoice['settlementReference']  = (string) ($request['settlementReference'] ?? '');
+            $invoice['state'] = 'paid';
+            $invoice['paymentEvidenceRef']  = (string) ($request['paymentIntentId'] ?? '');
+            $invoice['settlementReference'] = (string) ($request['settlementReference'] ?? '');
 
             $objectService->saveObject(
                 object: $invoice,

@@ -53,11 +53,11 @@ class SoftCloseController extends Controller
     /**
      * Construct the controller.
      *
-     * @param IRequest             $request          Request object.
-     * @param SoftCloseExecutor    $softCloseExecutor Orchestration service.
-     * @param FluxService  $fluxService      Flux analysis service.
-     * @param IUserSession         $userSession      Session for the acting user id.
-     * @param LoggerInterface      $logger           Logger (no stack traces to client).
+     * @param IRequest          $request           Request object.
+     * @param SoftCloseExecutor $softCloseExecutor Orchestration service.
+     * @param FluxService       $fluxService       Flux analysis service.
+     * @param IUserSession      $userSession       Session for the acting user id.
+     * @param LoggerInterface   $logger            Logger (no stack traces to client).
      */
     public function __construct(
         IRequest $request,
@@ -156,15 +156,17 @@ class SoftCloseController extends Controller
         $basis    = (string) $this->request->getParam('comparisonBasis', 'budget');
 
         try {
-            $summary = $this->fluxService->run([
-                'administrationId'   => $administrationId,
-                'periodId'           => $periodId,
-                'scope'              => $scope,
-                'comparisonBasis'    => $basis,
-                'accounts'           => $accounts,
-                'materialityPolicy'  => $policy,
-                'runTimestamp'       => new DateTimeImmutable(),
-            ]);
+            $summary = $this->fluxService->run(
+                    [
+                        'administrationId'  => $administrationId,
+                        'periodId'          => $periodId,
+                        'scope'             => $scope,
+                        'comparisonBasis'   => $basis,
+                        'accounts'          => $accounts,
+                        'materialityPolicy' => $policy,
+                        'runTimestamp'      => new DateTimeImmutable(),
+                    ]
+                    );
 
             return new JSONResponse(['data' => $summary], Http::STATUS_OK);
         } catch (\Throwable $e) {

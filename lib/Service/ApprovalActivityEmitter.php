@@ -136,7 +136,7 @@ class ApprovalActivityEmitter
      *
      * @return void
      */
-    public function emitApprovalRequested(string $objectType, string $objectId, string $actorUid = '', string $summaryHint = ''): void
+    public function emitApprovalRequested(string $objectType, string $objectId, string $actorUid='', string $summaryHint=''): void
     {
         $this->publish(
             event:       self::EVENT_APPROVAL_REQUESTED,
@@ -160,7 +160,7 @@ class ApprovalActivityEmitter
      *
      * @return void
      */
-    public function emitApprovalApproved(string $objectType, string $objectId, string $actorUid, string $summaryHint = '', string $comment = ''): void
+    public function emitApprovalApproved(string $objectType, string $objectId, string $actorUid, string $summaryHint='', string $comment=''): void
     {
         $this->publish(
             event:       self::EVENT_APPROVAL_APPROVED,
@@ -184,7 +184,7 @@ class ApprovalActivityEmitter
      *
      * @return void
      */
-    public function emitApprovalRejected(string $objectType, string $objectId, string $actorUid, string $summaryHint = '', string $reason = ''): void
+    public function emitApprovalRejected(string $objectType, string $objectId, string $actorUid, string $summaryHint='', string $reason=''): void
     {
         $this->publish(
             event:       self::EVENT_APPROVAL_REJECTED,
@@ -207,7 +207,7 @@ class ApprovalActivityEmitter
      *
      * @return void
      */
-    public function emitDocumentSigned(string $objectType, string $objectId, string $actorUid, string $summaryHint = ''): void
+    public function emitDocumentSigned(string $objectType, string $objectId, string $actorUid, string $summaryHint=''): void
     {
         $this->publish(
             event:       self::EVENT_DOCUMENT_SIGNED,
@@ -231,7 +231,7 @@ class ApprovalActivityEmitter
      *
      * @return void
      */
-    public function emitDecisionMade(string $objectType, string $objectId, string $actorUid, string $newStatus, string $summaryHint = ''): void
+    public function emitDecisionMade(string $objectType, string $objectId, string $actorUid, string $newStatus, string $summaryHint=''): void
     {
         $this->publish(
             event:       self::EVENT_DECISION_MADE,
@@ -250,12 +250,12 @@ class ApprovalActivityEmitter
      * Failure is logged but not raised — the OR audit-trail still captures
      * the lifecycle transition, so the Activity surface is best-effort.
      *
-     * @param string              $event       Event subject id (REQ-RAP-006 table).
-     * @param string              $objectType  OR schema slug.
-     * @param string              $objectId    Object UUID.
-     * @param string              $actorUid    Actor UID ('' = current session).
-     * @param string              $summary     1-line human summary.
-     * @param array<string,mixed> $parameters  Subject parameters.
+     * @param string              $event      Event subject id (REQ-RAP-006 table).
+     * @param string              $objectType OR schema slug.
+     * @param string              $objectId   Object UUID.
+     * @param string              $actorUid   Actor UID ('' = current session).
+     * @param string              $summary    1-line human summary.
+     * @param array<string,mixed> $parameters Subject parameters.
      *
      * @return void
      */
@@ -264,7 +264,7 @@ class ApprovalActivityEmitter
         try {
             $effectiveActor = $actorUid;
             if ($effectiveActor === '') {
-                $user = $this->userSession->getUser();
+                $user           = $this->userSession->getUser();
                 $effectiveActor = $user !== null ? $user->getUID() : 'system';
             }
 
@@ -293,7 +293,7 @@ class ApprovalActivityEmitter
                     'exception'  => $e->getMessage(),
                 ]
             );
-        }
+        }//end try
 
     }//end publish()
 }//end class

@@ -111,18 +111,22 @@ class WbsoDocumentApiController extends Controller
         }
 
         if ($status !== '') {
-            $rows = array_values(array_filter(
+            $rows = array_values(
+                    array_filter(
                 $rows,
                 static fn (array $row): bool => ((string) ($row['status'] ?? '') === $status)
-            ));
+            )
+                    );
         }
 
         $filedFrom = (string) $this->request->getParam('filedFrom', '');
         if ($filedFrom !== '') {
-            $rows = array_values(array_filter(
+            $rows = array_values(
+                    array_filter(
                 $rows,
                 static fn (array $row): bool => ((string) ($row['filedAt'] ?? $row['documentDate'] ?? '') >= $filedFrom)
-            ));
+            )
+                    );
         }
 
         return new JSONResponse(
@@ -194,10 +198,10 @@ class WbsoDocumentApiController extends Controller
         }
 
         $payload = [
-            'documentType'    => (string) $this->request->getParam('documentType', ''),
-            'documentNumber'  => (string) $this->request->getParam('documentNumber', ''),
-            'documentDate'    => (string) $this->request->getParam('documentDate', ''),
-            'fileReference'   => (string) $this->request->getParam('fileReference', ''),
+            'documentType'   => (string) $this->request->getParam('documentType', ''),
+            'documentNumber' => (string) $this->request->getParam('documentNumber', ''),
+            'documentDate'   => (string) $this->request->getParam('documentDate', ''),
+            'fileReference'  => (string) $this->request->getParam('fileReference', ''),
         ];
 
         if ($payload['fileReference'] === '') {
@@ -243,7 +247,7 @@ class WbsoDocumentApiController extends Controller
             return new JSONResponse(['error' => 'Invalid document id'], Http::STATUS_BAD_REQUEST);
         }
 
-        $user = $this->userSession->getUser();
+        $user     = $this->userSession->getUser();
         $approver = $user === null ? '' : $user->getUID();
 
         try {

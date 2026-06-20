@@ -57,11 +57,12 @@ class LeaseAuditPackGenerator
     /**
      * Construct the service with lazy DI of OpenRegister's ObjectService.
      *
-     * @param ContainerInterface         $container          DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig                 $appConfig          App config for the register slug.
+     * @param ContainerInterface          $container         DI container — OR's ObjectService is
+     *                                                       fetched lazily.
+     * @param IAppConfig                  $appConfig         App config for the register slug.
      * @param LeasePaymentScheduleService $scheduleService   Schedule rows for the pack.
-     * @param LeaseDisclosureService     $disclosureService  Disclosure CSV input.
-     * @param LoggerInterface            $logger             Logger (no stack traces to client).
+     * @param LeaseDisclosureService      $disclosureService Disclosure CSV input.
+     * @param LoggerInterface             $logger            Logger (no stack traces to client).
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -105,23 +106,23 @@ class LeaseAuditPackGenerator
         $ibrEvidence = $this->extractIbrEvidence(lease: $lease);
 
         return [
-            'lease'             => $lease,
-            'leaseContractId'   => $leaseContractId,
-            'administrationId'  => $administrationId,
-            'operatorId'        => $operatorId,
-            'generatedAt'       => date('c'),
-            'sourceLease'       => $sourceLease,
-            'paymentSchedule'   => $schedule,
-            'reassessmentEvents'=> $events,
-            'ibrEvidence'       => $ibrEvidence,
-            'contents'          => $this->buildContentsIndex(
+            'lease'              => $lease,
+            'leaseContractId'    => $leaseContractId,
+            'administrationId'   => $administrationId,
+            'operatorId'         => $operatorId,
+            'generatedAt'        => date('c'),
+            'sourceLease'        => $sourceLease,
+            'paymentSchedule'    => $schedule,
+            'reassessmentEvents' => $events,
+            'ibrEvidence'        => $ibrEvidence,
+            'contents'           => $this->buildContentsIndex(
                 sourceLease: $sourceLease,
                 scheduleRowCount: count($schedule),
                 eventCount: count($events),
                 ibrEvidenceCount: count($ibrEvidence),
             ),
-            'downloadPath'      => $this->buildDownloadPath(sourceLease: $sourceLease),
-            'status'            => 'pending-pdf-pipeline',
+            'downloadPath'       => $this->buildDownloadPath(sourceLease: $sourceLease),
+            'status'             => 'pending-pdf-pipeline',
         ];
 
     }//end generate()
@@ -132,10 +133,10 @@ class LeaseAuditPackGenerator
      * Mirrors the auditor-friendly layout: index.md, lease-contract.pdf,
      * schedule.csv, ibr-evidence/, reassessments/, disclosure.csv.
      *
-     * @param string $sourceLease       The lease slug/id used in filenames.
-     * @param int    $scheduleRowCount  Count of schedule rows packed.
-     * @param int    $eventCount        Count of reassessment events packed.
-     * @param int    $ibrEvidenceCount  Count of IBR-evidence FKs.
+     * @param string $sourceLease      The lease slug/id used in filenames.
+     * @param int    $scheduleRowCount Count of schedule rows packed.
+     * @param int    $eventCount       Count of reassessment events packed.
+     * @param int    $ibrEvidenceCount Count of IBR-evidence FKs.
      *
      * @return array<int,array<string,mixed>> The contents index.
      */

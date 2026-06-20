@@ -86,9 +86,9 @@ class SoftCloseExecutor
     /**
      * Execute the nightly soft-close for a single administratie + period (REQ-CLS-002).
      *
-     * @param string             $administrationId The administration the run targets.
-     * @param string             $periodId         The yyyy-mm business period identifier.
-     * @param DateTimeImmutable  $asOf             The run timestamp (typically 'now').
+     * @param string            $administrationId The administration the run targets.
+     * @param string            $periodId         The yyyy-mm business period identifier.
+     * @param DateTimeImmutable $asOf             The run timestamp (typically 'now').
      *
      * @return array{
      *   status: string,
@@ -126,13 +126,13 @@ class SoftCloseExecutor
 
         // Step 1: execute auto-accrual rules.
         try {
-            $accrualResult              = $this->runAccrualRules(
+            $accrualResult = $this->runAccrualRules(
                 administrationId: $administrationId,
                 periodId: $periodId,
                 asOf: $asOf
             );
-            $report['accrualPostings']  = $accrualResult['postingCount'];
-            $report['postingCount']    += $accrualResult['postingCount'];
+            $report['accrualPostings'] = $accrualResult['postingCount'];
+            $report['postingCount']   += $accrualResult['postingCount'];
         } catch (\Throwable $e) {
             return $this->fail(report: $report, step: 'accruals', exception: $e, asOf: $asOf);
         }
@@ -254,9 +254,9 @@ class SoftCloseExecutor
                 return (int) round(($principal * $rate * $days) / $dayCount);
 
             case 'days-elapsed-of-period':
-                $monthly       = (int) ($parameters['monthlyAmountCents'] ?? 0);
-                $daysElapsed   = (int) ($context['daysElapsed'] ?? 0);
-                $daysInPeriod  = (int) ($context['daysInPeriod'] ?? 30);
+                $monthly      = (int) ($parameters['monthlyAmountCents'] ?? 0);
+                $daysElapsed  = (int) ($context['daysElapsed'] ?? 0);
+                $daysInPeriod = (int) ($context['daysInPeriod'] ?? 30);
                 if ($monthly <= 0 || $daysElapsed <= 0 || $daysInPeriod <= 0) {
                     return 0;
                 }
@@ -284,7 +284,7 @@ class SoftCloseExecutor
      */
     private function runAccrualRules(string $administrationId, string $periodId, DateTimeImmutable $asOf): array
     {
-        $rules = $this->findActiveRules(administrationId: $administrationId);
+        $rules   = $this->findActiveRules(administrationId: $administrationId);
         $context = [
             'daysElapsed'  => (int) $asOf->format('j'),
             'daysInPeriod' => (int) $asOf->format('t'),
@@ -544,14 +544,16 @@ class SoftCloseExecutor
         $found         = $objectService
             ->setRegister($this->register())
             ->setSchema('PeriodStatus')
-            ->findAll([
-                'filters' => [
-                    'administrationId' => $administrationId,
-                    'periodYear'       => $year,
-                    'periodMonth'      => $month,
-                ],
-                'limit' => 1,
-            ]);
+            ->findAll(
+                    [
+                        'filters' => [
+                            'administrationId' => $administrationId,
+                            'periodYear'       => $year,
+                            'periodMonth'      => $month,
+                        ],
+                        'limit'   => 1,
+                    ]
+                    );
 
         if (is_array($found) === true && $found !== []) {
             $record = (array) $found[0];
@@ -565,11 +567,11 @@ class SoftCloseExecutor
             ];
         }
 
-        $previousStage              = (string) ($record['stage'] ?? 'open');
-        $record['stage']            = 'soft-closed';
-        $record['softClosedAt']     = $asOf->format(DateTimeInterface::ATOM);
-        $history                    = (array) ($record['stageChangeHistory'] ?? []);
-        $history[]                  = [
+        $previousStage          = (string) ($record['stage'] ?? 'open');
+        $record['stage']        = 'soft-closed';
+        $record['softClosedAt'] = $asOf->format(DateTimeInterface::ATOM);
+        $history   = (array) ($record['stageChangeHistory'] ?? []);
+        $history[] = [
             'fromStage' => $previousStage,
             'toStage'   => 'soft-closed',
             'actor'     => self::SYSTEM_ACTOR,

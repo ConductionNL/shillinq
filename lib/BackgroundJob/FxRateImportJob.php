@@ -86,11 +86,11 @@ class FxRateImportJob extends TimedJob
     /**
      * Construct the FxRate import job.
      *
-     * @param ITimeFactory                  $time      Nextcloud time factory (injected by TimedJob).
-     * @param ContainerInterface            $container DI container for lazy ObjectService + TreasuryRateAdapter resolution.
-     * @param IAppConfig                    $appConfig App config for register slug + pair-list overrides.
-     * @param LoggerInterface               $logger    Structured logger.
-     * @param TreasuryRateAdapterInterface  $adapter   FX-spot adapter port (dormant in default deployment).
+     * @param ITimeFactory                 $time      Nextcloud time factory (injected by TimedJob).
+     * @param ContainerInterface           $container DI container for lazy ObjectService + TreasuryRateAdapter resolution.
+     * @param IAppConfig                   $appConfig App config for register slug + pair-list overrides.
+     * @param LoggerInterface              $logger    Structured logger.
+     * @param TreasuryRateAdapterInterface $adapter   FX-spot adapter port (dormant in default deployment).
      *
      * @spec openspec/changes/add-shillinq-multi-currency/tasks.md#task-11
      */
@@ -176,7 +176,8 @@ class FxRateImportJob extends TimedJob
                 baseCurrency: $base,
                 asOf: $asOf,
                 result: $result,
-            ) === true) {
+            ) === true
+            ) {
                 $imported++;
             } else {
                 $skipped++;
@@ -202,7 +203,7 @@ class FxRateImportJob extends TimedJob
      */
     private function previousBusinessDay(): string
     {
-        $now = new DateTimeImmutable('now', new DateTimeZone('Europe/Brussels'));
+        $now  = new DateTimeImmutable('now', new DateTimeZone('Europe/Brussels'));
         $prev = $now->modify('-1 day');
         // Skip weekends — ECB only publishes business days.
         while ((int) $prev->format('N') >= 6) {
@@ -322,7 +323,7 @@ class FxRateImportJob extends TimedJob
                             'date'                => $asOf,
                             'source'              => self::SOURCE_ECB,
                         ],
-                        'limit' => 1,
+                        'limit'   => 1,
                     ]
                 );
         } catch (\Throwable $e) {
@@ -331,7 +332,7 @@ class FxRateImportJob extends TimedJob
                 ['exception' => $e->getMessage()]
             );
             return null;
-        }
+        }//end try
 
         if (empty($matches) === true) {
             return null;
@@ -400,8 +401,8 @@ class FxRateImportJob extends TimedJob
             }
 
             [$tx, $base] = explode('/', $token, 2);
-            $tx   = strtoupper(trim($tx));
-            $base = strtoupper(trim($base));
+            $tx          = strtoupper(trim($tx));
+            $base        = strtoupper(trim($base));
             if (preg_match('/^[A-Z]{3}$/', $tx) !== 1 || preg_match('/^[A-Z]{3}$/', $base) !== 1) {
                 continue;
             }

@@ -43,8 +43,6 @@ namespace OCA\Shillinq\Service;
  */
 class BankfeedMatcher
 {
-
-
     /**
      * Match a single bank-feed transaction against candidate AR projections.
      *
@@ -57,8 +55,8 @@ class BankfeedMatcher
      *
      * Confidence = weighted average (amount 0.5, reference 0.3, date 0.2).
      *
-     * @param array<string,mixed>              $transaction      Bank-feed transaction. Expected keys: amount (float), reference (string), valueDate (Y-m-d).
-     * @param list<array<string,mixed>>        $candidateInvoices Candidate AR projections.
+     * @param array<string,mixed>       $transaction       Bank-feed transaction. Expected keys: amount (float), reference (string), valueDate (Y-m-d).
+     * @param list<array<string,mixed>> $candidateInvoices Candidate AR projections.
      *
      * @return array{arInvoiceId:?string,confidence:float} Best match + confidence, or null arInvoiceId if no match >= 0.5.
      *
@@ -74,10 +72,10 @@ class BankfeedMatcher
         $bestInvoiceId = null;
 
         foreach ($candidateInvoices as $candidate) {
-            $candAmount  = (float) ($candidate['openstaandBedrag'] ?? 0.0);
-            $candId      = (string) ($candidate['arInvoiceId'] ?? '');
-            $candKlant   = (string) ($candidate['klantId'] ?? '');
-            $candDate    = (string) ($candidate['verwachtOntvangstDatum'] ?? '');
+            $candAmount = (float) ($candidate['openstaandBedrag'] ?? 0.0);
+            $candId     = (string) ($candidate['arInvoiceId'] ?? '');
+            $candKlant  = (string) ($candidate['klantId'] ?? '');
+            $candDate   = (string) ($candidate['verwachtOntvangstDatum'] ?? '');
 
             // Amount signal — 1.0 at zero delta, 0 at >= 5% delta.
             $amountScore = 0.0;
@@ -89,8 +87,8 @@ class BankfeedMatcher
             }
 
             // Reference signal — best similarity between tx reference and id or klant.
-            $refScore1 = $this->similarity(needle: $txReference, haystack: $candId);
-            $refScore2 = $this->similarity(needle: $txReference, haystack: $candKlant);
+            $refScore1      = $this->similarity(needle: $txReference, haystack: $candId);
+            $refScore2      = $this->similarity(needle: $txReference, haystack: $candKlant);
             $referenceScore = max($refScore1, $refScore2);
 
             // Date signal — 1.0 at equal, 0 at 14-day delta.
@@ -123,7 +121,6 @@ class BankfeedMatcher
         ];
 
     }//end matchTransaction()
-
 
     /**
      * Normalised Levenshtein similarity in [0,1].
@@ -158,6 +155,4 @@ class BankfeedMatcher
         return max(0.0, (1.0 - ($distance / $maxLen)));
 
     }//end similarity()
-
-
 }//end class

@@ -135,7 +135,7 @@ class PurchaseOrderApprovalService
         private readonly AdministrationContextService $administrationContext,
         private readonly IUserSession $userSession,
         private readonly LoggerInterface $logger,
-        private readonly ?ApprovalActivityEmitter $activityEmitter = null,
+        private readonly ?ApprovalActivityEmitter $activityEmitter=null,
     ) {
 
     }//end __construct()
@@ -260,7 +260,7 @@ class PurchaseOrderApprovalService
                     summaryHint: $summary,
                     comment:     (string) ($comment ?? '')
                 );
-            } elseif ($decision === self::DECISION_REJECTED) {
+            } else if ($decision === self::DECISION_REJECTED) {
                 $this->activityEmitter->emitApprovalRejected(
                     objectType:  self::SCHEMA_PURCHASE_ORDER,
                     objectId:    $purchaseOrderId,

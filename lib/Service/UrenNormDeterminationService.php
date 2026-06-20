@@ -43,8 +43,6 @@ use Psr\Log\LoggerInterface;
  */
 final class UrenNormDeterminationService
 {
-
-
     /**
      * Construct the service.
      *
@@ -56,7 +54,6 @@ final class UrenNormDeterminationService
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Build a fully-populated UrencriteriumYear seed for a new tracker.
@@ -112,6 +109,4 @@ final class UrenNormDeterminationService
         return $seed;
 
     }//end bouwSeedRecord()
-
-
 }//end class

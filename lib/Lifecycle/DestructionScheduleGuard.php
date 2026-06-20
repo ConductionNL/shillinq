@@ -158,18 +158,23 @@ class DestructionScheduleGuard
     /**
      * Validate a proposed state transition.
      *
-     * @param string                      $from     Current state.
-     * @param string                      $to       Proposed state.
-     * @param array<string,mixed>         $record   The record being transitioned (for age check).
-     * @param array<string,mixed>         $options  Transition options:
-     *                                              - `actorRoles`: array of caller roles
-     *                                                              (e.g. ['compliance-officer']).
-     *                                              - `now`: ISO timestamp to use as "now"
-     *                                                       (for deterministic tests).
+     * @param string              $from    Current state.
+     * @param string              $to      Proposed state.
+     * @param array<string,mixed> $record  The record being transitioned (for age check).
+     * @param array<string,mixed> $options Transition options:
+     *                                     - `actorRoles`:
+     *                                     array of caller
+     *                                     roles (e.g.
+     *                                     ['compliance-officer']).
+     *                                     - `now`: ISO
+     *                                     timestamp to use as
+     *                                     "now" (for
+     *                                     deterministic
+     *                                     tests).
      *
      * @return bool True if the transition is allowed; false otherwise.
      */
-    public function canTransition(string $from, string $to, array $record, array $options = []): bool
+    public function canTransition(string $from, string $to, array $record, array $options=[]): bool
     {
         if (in_array($from, self::STATES, true) === false || in_array($to, self::STATES, true) === false) {
             return false;
@@ -219,25 +224,25 @@ class DestructionScheduleGuard
      * @param string              $to      New state.
      * @param array<string,mixed> $options Optional fields:
      *                                     - `actorUid`: actor UID (defaults
-     *                                                   to 'system').
+     *                                     to 'system').
      *                                     - `selectielijstCode`: legal basis
-     *                                                            code (e.g. "5.1.2").
+     *                                     code (e.g. "5.1.2").
      *                                     - `legalBasis`: citation
-     *                                                     (e.g. "Archiefwet Article 7").
+     *                                     (e.g. "Archiefwet Article 7").
      *
      * @return array<string,mixed>
      */
-    public function buildTransitionEvent(array $record, string $from, string $to, array $options = []): array
+    public function buildTransitionEvent(array $record, string $from, string $to, array $options=[]): array
     {
         return [
-            'action'           => sprintf('lifecycle:%s→%s', $from, $to),
-            'actor'            => (string) ($options['actorUid'] ?? 'system'),
-            'objectType'       => (string) ($record['_objectType'] ?? ($record['schema'] ?? '')),
-            'objectId'         => (string) ($record['id'] ?? ($record['uuid'] ?? '')),
+            'action'            => sprintf('lifecycle:%s→%s', $from, $to),
+            'actor'             => (string) ($options['actorUid'] ?? 'system'),
+            'objectType'        => (string) ($record['_objectType'] ?? ($record['schema'] ?? '')),
+            'objectId'          => (string) ($record['id'] ?? ($record['uuid'] ?? '')),
             'selectielijstCode' => (string) ($options['selectielijstCode'] ?? '5.1.2'),
-            'legalBasis'       => (string) ($options['legalBasis'] ?? 'Archiefwet Article 7'),
-            'timestamp'        => (string) ($options['now'] ?? date('c')),
-            'requirementId'    => 'REQ-RAP-008',
+            'legalBasis'        => (string) ($options['legalBasis'] ?? 'Archiefwet Article 7'),
+            'timestamp'         => (string) ($options['now'] ?? date('c')),
+            'requirementId'     => 'REQ-RAP-008',
         ];
 
     }//end buildTransitionEvent()

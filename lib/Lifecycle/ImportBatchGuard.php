@@ -37,8 +37,6 @@ namespace OCA\Shillinq\Lifecycle;
  */
 class ImportBatchGuard
 {
-
-
     /**
      * Whether a batch may leave draft for parsing (REQ-AIM-002).
      *
@@ -81,7 +79,6 @@ class ImportBatchGuard
 
     }//end canParse()
 
-
     /**
      * Whether a posted batch may be reversed (REQ-AIM-009).
      *
@@ -107,6 +104,4 @@ class ImportBatchGuard
         return $periodOpen === true;
 
     }//end canReverse()
-
-
 }//end class

@@ -60,7 +60,6 @@ class HorizonRollingJob extends TimedJob
      */
     private const INTERVAL_SECONDS = 604800;
 
-
     /**
      * Constructor.
      *
@@ -86,7 +85,6 @@ class HorizonRollingJob extends TimedJob
         $this->setAllowParallelRuns(allow: false);
 
     }//end __construct()
-
 
     /**
      * Roll every active horizon by one week. Orchestration only — all business
@@ -138,7 +136,6 @@ class HorizonRollingJob extends TimedJob
 
     }//end run()
 
-
     /**
      * Roll one horizon: trigger lifecycle transition active -> rolling -> active
      * and let OR's aggregation engine recompute week-13.
@@ -152,9 +149,7 @@ class HorizonRollingJob extends TimedJob
     private function rollOne(mixed $horizon, mixed $objectService, string $registerSlug): void
     {
         // Defensive: the OR object accessor varies between entity and array.
-        $horizonId = is_array($horizon) === true
-            ? ($horizon['horizonId'] ?? null)
-            : (method_exists($horizon, 'getHorizonId') === true ? $horizon->getHorizonId() : null);
+        $horizonId = is_array($horizon) === true ? ($horizon['horizonId'] ?? null) : (method_exists($horizon, 'getHorizonId') === true ? $horizon->getHorizonId() : null);
 
         if ($horizonId === null) {
             $this->logger->warning('HorizonRollingJob: horizon missing horizonId, skipping.');
@@ -174,6 +169,4 @@ class HorizonRollingJob extends TimedJob
             ->saveObject(object: $update);
 
     }//end rollOne()
-
-
 }//end class

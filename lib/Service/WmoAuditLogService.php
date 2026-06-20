@@ -109,12 +109,12 @@ class WmoAuditLogService
     {
         $eventType = (string) $input['eventType'];
         if (in_array($eventType, self::EVENT_TYPES, true) === false) {
-            throw new InvalidArgumentException('Invalid eventType: ' . $eventType);
+            throw new InvalidArgumentException('Invalid eventType: '.$eventType);
         }
 
         $entityType = (string) $input['entityType'];
         if (in_array($entityType, self::ENTITY_TYPES, true) === false) {
-            throw new InvalidArgumentException('Invalid entityType: ' . $entityType);
+            throw new InvalidArgumentException('Invalid entityType: '.$entityType);
         }
 
         $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
@@ -156,7 +156,7 @@ class WmoAuditLogService
             return false;
         }
 
-        $boundary = $logged->add(new DateInterval('P' . self::RETENTION_YEARS . 'Y'));
+        $boundary = $logged->add(new DateInterval('P'.self::RETENTION_YEARS.'Y'));
         return $now >= $boundary;
 
     }//end retentionExpiredState()
@@ -217,36 +217,36 @@ class WmoAuditLogService
      */
     public function composeHandhavingsPakketManifest(array $input): array
     {
-        $fiscalYear = (string) $input['fiscalYear'];
+        $fiscalYear  = (string) $input['fiscalYear'];
         $generatedAt = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM);
 
         return [
-            'format'            => 'ACM-handhavings-pakket-2024',
-            'generatedAt'       => $generatedAt,
-            'fiscalYear'        => $fiscalYear,
-            'administrationId'  => (string) $input['administrationId'],
-            'files'             => [
+            'format'           => 'ACM-handhavings-pakket-2024',
+            'generatedAt'      => $generatedAt,
+            'fiscalYear'       => $fiscalYear,
+            'administrationId' => (string) $input['administrationId'],
+            'files'            => [
                 'commercial-activities/' => [
                     'description' => 'Per-activity snapshots',
                     'count'       => (int) $input['activitiesCount'],
                     'pattern'     => 'commercial-activities/<activity-code>.json',
                 ],
-                'cost-prices/' => [
+                'cost-prices/'           => [
                     'description' => 'IKP records per activity per period',
                     'count'       => (int) $input['ikpCount'],
                     'pattern'     => 'cost-prices/<periode>/<activity-code>.json',
                 ],
-                'allocations/' => [
+                'allocations/'           => [
                     'description' => 'ActivityCostAllocation records',
                     'count'       => (int) $input['allocationsCount'],
                     'pattern'     => 'allocations/<periode>/<journal-entry-id>.json',
                 ],
-                'besluiten/' => [
+                'besluiten/'             => [
                     'description' => 'ABB decision PDFs / metadata',
                     'count'       => (int) $input['abbCount'],
                     'pattern'     => 'besluiten/<abb-kenmerk>.json',
                 ],
-                'audit-log/' => [
+                'audit-log/'             => [
                     'description' => 'WMOAuditLog CSV export per period',
                     'count'       => (int) $input['auditEntriesCount'],
                     'pattern'     => 'audit-log/<periode>.csv',
@@ -262,7 +262,7 @@ class WmoAuditLogService
     private function csvEscape(string $field): string
     {
         if (str_contains($field, ',') || str_contains($field, '"') || str_contains($field, "\n")) {
-            return '"' . str_replace('"', '""', $field) . '"';
+            return '"'.str_replace('"', '""', $field).'"';
         }
 
         return $field;
@@ -290,5 +290,4 @@ class WmoAuditLogService
         return $json;
 
     }//end jsonInline()
-
 }//end class

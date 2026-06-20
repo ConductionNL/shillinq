@@ -69,12 +69,13 @@ class CBSSubmissionController extends Controller
     /**
      * Construct the controller.
      *
-     * @param IRequest           $request          The request object.
-     * @param ContainerInterface $container        DI container — OR's ObjectService is fetched lazily.
-     * @param CBSExportService   $exportService    The CBS export pipeline.
-     * @param IAppConfig         $appConfig        App config for the register slug.
-     * @param IUserSession       $userSession      The session for the acting user id (auth body-guard).
-     * @param LoggerInterface    $logger           Logger for diagnostics (no stack traces to client).
+     * @param IRequest           $request       The request object.
+     * @param ContainerInterface $container     DI container — OR's ObjectService is fetched
+     *                                          lazily.
+     * @param CBSExportService   $exportService The CBS export pipeline.
+     * @param IAppConfig         $appConfig     App config for the register slug.
+     * @param IUserSession       $userSession   The session for the acting user id (auth body-guard).
+     * @param LoggerInterface    $logger        Logger for diagnostics (no stack traces to client).
      *
      * @return void
      */
@@ -189,14 +190,17 @@ class CBSSubmissionController extends Controller
         }
 
         $body  = $this->jsonBody();
-        $error = $this->requireFields(body: $body, fields: [
-            'reportingPeriodStartDate',
-            'reportingPeriodEndDate',
-            'organizationLegalName',
-            'kvkNumber',
-            'taxIdentificationNumber',
-            'administrationId',
-        ]);
+        $error = $this->requireFields(
+                body: $body,
+                fields: [
+                    'reportingPeriodStartDate',
+                    'reportingPeriodEndDate',
+                    'organizationLegalName',
+                    'kvkNumber',
+                    'taxIdentificationNumber',
+                    'administrationId',
+                ]
+                );
         if ($error !== null) {
             return $error;
         }
@@ -241,7 +245,7 @@ class CBSSubmissionController extends Controller
             return $error;
         }
 
-        $body = $this->jsonBody();
+        $body       = $this->jsonBody();
         $body['id'] = $id;
 
         if (($body['status'] ?? '') === 'validated') {
@@ -409,6 +413,7 @@ class CBSSubmissionController extends Controller
         if ($status !== '') {
             $filters['status'] = $status;
         }
+
         $admin = trim((string) $this->request->getParam('administrationId', ''));
         if ($admin !== '') {
             $filters['administrationId'] = $admin;
@@ -520,14 +525,14 @@ class CBSSubmissionController extends Controller
     /**
      * Execute a service/data call, mapping any failure to a generic 500.
      *
-     * @param string               $action  Human action label for the error log.
-     * @param callable():array     $compute The service/data call.
-     * @param array<string,mixed>  $context Log context.
-     * @param int                  $status  HTTP status on success (default 200).
+     * @param string              $action  Human action label for the error log.
+     * @param callable():array    $compute The service/data call.
+     * @param array<string,mixed> $context Log context.
+     * @param int                 $status  HTTP status on success (default 200).
      *
      * @return JSONResponse The mapped response.
      */
-    private function run(string $action, callable $compute, array $context, int $status = Http::STATUS_OK): JSONResponse
+    private function run(string $action, callable $compute, array $context, int $status=Http::STATUS_OK): JSONResponse
     {
         try {
             $result = $compute();

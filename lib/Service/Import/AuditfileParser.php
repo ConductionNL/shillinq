@@ -87,7 +87,6 @@ class AuditfileParser
 
     }//end __construct()
 
-
     /**
      * Parse a raw XAF 3.2 auditfile string into the normalised staged structure.
      *
@@ -137,8 +136,8 @@ class AuditfileParser
             return $result;
         }
 
-        $previous = libxml_use_internal_errors(true);
-        $doc      = simplexml_load_string($trimmed, \SimpleXMLElement::class, LIBXML_NONET);
+        $previous  = libxml_use_internal_errors(true);
+        $doc       = simplexml_load_string($trimmed, \SimpleXMLElement::class, LIBXML_NONET);
         $libErrors = libxml_get_errors();
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
@@ -167,14 +166,13 @@ class AuditfileParser
         $result['relations']       = $this->parseRelations(doc: $doc);
         $result['openingBalances'] = $this->parseOpeningBalances(doc: $doc);
 
-        $journalResult       = $this->parseJournals(doc: $doc);
-        $result['journals']  = $journalResult['journals'];
-        $result['findings']  = array_merge($result['findings'], $journalResult['findings']);
+        $journalResult      = $this->parseJournals(doc: $doc);
+        $result['journals'] = $journalResult['journals'];
+        $result['findings'] = array_merge($result['findings'], $journalResult['findings']);
 
         return $result;
 
     }//end parse()
-
 
     /**
      * Stream-parse a large auditfile from disk via XMLReader (no DOM load).
@@ -255,7 +253,6 @@ class AuditfileParser
 
     }//end parseFile()
 
-
     /**
      * Extract company-level identity from the auditfile.
      *
@@ -295,7 +292,6 @@ class AuditfileParser
 
     }//end parseCompany()
 
-
     /**
      * Extract the ledger account list, including RGS codes via leadReference.
      *
@@ -332,7 +328,6 @@ class AuditfileParser
         return $accounts;
 
     }//end parseLedgerAccounts()
-
 
     /**
      * Extract relations (customers / suppliers) with KvK + BTW + contact.
@@ -371,7 +366,6 @@ class AuditfileParser
 
     }//end parseRelations()
 
-
     /**
      * Extract opening-balance lines from the XAF opening-balance block.
      *
@@ -409,7 +403,6 @@ class AuditfileParser
         return $lines;
 
     }//end parseOpeningBalances()
-
 
     /**
      * Extract journals + transaction lines, recording a finding for any
@@ -481,7 +474,6 @@ class AuditfileParser
 
     }//end parseJournals()
 
-
     /**
      * Return the first xpath text match as a trimmed string, or '' if absent.
      *
@@ -500,7 +492,6 @@ class AuditfileParser
         return trim((string) $matches[0]);
 
     }//end firstString()
-
 
     /**
      * Build a structured finding.
@@ -523,7 +514,6 @@ class AuditfileParser
 
     }//end finding()
 
-
     /**
      * The empty normalised structure used as a base / fail-closed return.
      *
@@ -541,6 +531,4 @@ class AuditfileParser
         ];
 
     }//end emptyResult()
-
-
 }//end class

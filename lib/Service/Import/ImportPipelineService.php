@@ -77,7 +77,6 @@ class ImportPipelineService
      */
     public const SEVERITY_WARNING = 'warning';
 
-
     /**
      * Construct the pipeline.
      *
@@ -93,7 +92,6 @@ class ImportPipelineService
         private readonly ImportBatchGuard $guard,
     ) {
     }//end __construct()
-
 
     /**
      * Compute the idempotency key for a batch (REQ-AIM-009).
@@ -119,7 +117,6 @@ class ImportPipelineService
 
     }//end computeIdempotencyKey()
 
-
     /**
      * Compute a stable hash of the staged payload + mappings (REQ-AIM-008).
      *
@@ -138,7 +135,6 @@ class ImportPipelineService
         return hash('sha256', json_encode(['payload' => $stagingPayload, 'mappings' => $mappings], JSON_THROW_ON_ERROR));
 
     }//end computeStagedHash()
-
 
     /**
      * Parse the batch's auditfile + companion CSVs and persist staged data.
@@ -161,12 +157,12 @@ class ImportPipelineService
             return ['findings' => [$this->finding(self::SEVERITY_ERROR, 'batch-not-found', 'Import batch not found.', ['batchId' => $batchId])]];
         }
 
-        $profile = $this->profileFor(sourceSystem: (string) ($batch['sourceSystem'] ?? 'xaf-generic'));
+        $profile  = $this->profileFor(sourceSystem: (string) ($batch['sourceSystem'] ?? 'xaf-generic'));
         $findings = [];
 
-        $xml = $this->readSourceXaf(batch: $batch, findings: $findings);
-        $parsed = ($xml === null ? $this->emptyParse() : $this->parser->parse($xml));
-        $parsed = $profile->applyDialectQuirks($parsed);
+        $xml      = $this->readSourceXaf(batch: $batch, findings: $findings);
+        $parsed   = ($xml === null ? $this->emptyParse() : $this->parser->parse($xml));
+        $parsed   = $profile->applyDialectQuirks($parsed);
         $findings = array_merge($findings, ($parsed['findings'] ?? []));
 
         $stagingPayload = $this->buildStagingPayload(parsed: $parsed, profile: $profile, batch: $batch, findings: $findings);
@@ -183,7 +179,6 @@ class ImportPipelineService
         ];
 
     }//end stage()
-
 
     /**
      * Resolve account mappings for the staged batch (REQ-AIM-004).
@@ -230,15 +225,16 @@ class ImportPipelineService
 
     }//end resolveMappings()
 
-
     /**
      * Resolve a single source account to a mapping row (REQ-AIM-004).
      *
-     * @param array<string,mixed>      $account          Staged source account.
-     * @param array<string,string>     $targetByRgs      RGS code → target account code.
-     * @param array<string,string>     $profileMap       Source code → target code from a saved profile.
-     * @param string                   $administrationId Owning administration.
-     * @param string                   $batchId          Owning batch.
+     * @param array<string,mixed>  $account          Staged source account.
+     * @param array<string,string> $targetByRgs      RGS code → target account
+     *                                               code.
+     * @param array<string,string> $profileMap       Source code → target code from a saved
+     *                                               profile.
+     * @param string               $administrationId Owning administration.
+     * @param string               $batchId          Owning batch.
      *
      * @return array<string,mixed> The ImportMapping field map.
      *
@@ -251,10 +247,10 @@ class ImportPipelineService
         $rgs        = (string) ($account['rgsCode'] ?? '');
 
         $base = [
-            'batchReference'  => $batchId,
-            'sourceCode'      => $sourceCode,
-            'sourceName'      => $sourceName,
-            'sourceRgsCode'   => ($rgs !== '' ? $rgs : null),
+            'batchReference'   => $batchId,
+            'sourceCode'       => $sourceCode,
+            'sourceName'       => $sourceName,
+            'sourceRgsCode'    => ($rgs !== '' ? $rgs : null),
             'administrationId' => $administrationId,
         ];
 
@@ -279,12 +275,12 @@ class ImportPipelineService
 
     }//end resolveOne()
 
-
     /**
      * Suggest a target account by exact code match (cheap similarity heuristic).
      *
-     * @param string                $sourceCode  Source account code.
-     * @param array<string,string>  $targetByRgs RGS → target code (values are the candidate codes).
+     * @param string               $sourceCode  Source account code.
+     * @param array<string,string> $targetByRgs RGS → target code (values are the candidate
+     *                                          codes).
      *
      * @return string|null Suggested target code, or null.
      */
@@ -304,7 +300,6 @@ class ImportPipelineService
         return null;
 
     }//end suggestByCodeOrName()
-
 
     /**
      * Whether any mapping row blocks the mapping → validated transition.
@@ -330,7 +325,6 @@ class ImportPipelineService
         return false;
 
     }//end mappingsBlock()
-
 
     /**
      * Validate a staged batch (REQ-AIM-005/006/007).
@@ -399,7 +393,6 @@ class ImportPipelineService
 
     }//end validate()
 
-
     /**
      * Validate one control-account side against the staged open items.
      *
@@ -426,10 +419,10 @@ class ImportPipelineService
                     strtoupper($side).'-control-mismatch',
                     'Open items do not reconcile to the control account opening amount.',
                     [
-                        'side'           => strtoupper($side),
-                        'controlAmount'  => round($controlAmount, 2),
-                        'openItemsSum'   => round($itemSum, 2),
-                        'difference'     => round(($controlAmount - $itemSum), 2),
+                        'side'          => strtoupper($side),
+                        'controlAmount' => round($controlAmount, 2),
+                        'openItemsSum'  => round($itemSum, 2),
+                        'difference'    => round(($controlAmount - $itemSum), 2),
                     ]
                 ),
             ];
@@ -438,7 +431,6 @@ class ImportPipelineService
         return [];
 
     }//end validateControlAccount()
-
 
     /**
      * Sum the staged opening balance into (debit, credit) totals.
@@ -459,7 +451,6 @@ class ImportPipelineService
         return [$debit, $credit];
 
     }//end sumOpeningBalance()
-
 
     /**
      * Build the relation dedupe preview (KvK → BTW → email), warnings only.
@@ -500,7 +491,6 @@ class ImportPipelineService
 
     }//end dedupePreview()
 
-
     /**
      * Generate and return the dry-run report (REQ-AIM-008).
      *
@@ -529,7 +519,7 @@ class ImportPipelineService
 
         $journalLines = [];
         foreach (($staging['openingBalances'] ?? []) as $line) {
-            $sourceCode = (string) ($line['accountCode'] ?? '');
+            $sourceCode     = (string) ($line['accountCode'] ?? '');
             $journalLines[] = [
                 'sourceAccount' => $sourceCode,
                 'targetAccount' => ($targetBySource[$sourceCode] ?? null),
@@ -544,15 +534,14 @@ class ImportPipelineService
                 'type'  => 'opening-balance',
                 'lines' => $journalLines,
             ],
-            'arOpenItems' => ($staging['arOpenItems'] ?? []),
-            'apOpenItems' => ($staging['apOpenItems'] ?? []),
-            'contacts'    => $this->buildContactPreview(staging: $staging),
-            'warnings'    => $this->dedupePreview(staging: $staging),
-            'stagedHash'  => $this->computeStagedHash(stagingPayload: $staging, mappings: $mappings),
+            'arOpenItems'    => ($staging['arOpenItems'] ?? []),
+            'apOpenItems'    => ($staging['apOpenItems'] ?? []),
+            'contacts'       => $this->buildContactPreview(staging: $staging),
+            'warnings'       => $this->dedupePreview(staging: $staging),
+            'stagedHash'     => $this->computeStagedHash(stagingPayload: $staging, mappings: $mappings),
         ];
 
     }//end dryRun()
-
 
     /**
      * Build the would-be contact/master preview with dedupe outcomes.
@@ -586,7 +575,6 @@ class ImportPipelineService
         return $contacts;
 
     }//end buildContactPreview()
-
 
     /**
      * Post the batch (REQ-AIM-005/006/007/009).
@@ -667,7 +655,6 @@ class ImportPipelineService
 
     }//end post()
 
-
     /**
      * Reverse a posted batch (REQ-AIM-009).
      *
@@ -695,8 +682,8 @@ class ImportPipelineService
         $findings     = [];
         $postingRefs  = ($batch['postingRefs'] ?? []);
         $reversalRefs = [
-            'reversingJournalId'  => $this->createReversingJournal(batch: $batch, openingJournalId: ($postingRefs['openingJournalId'] ?? null), findings: $findings),
-            'softDeletedItemIds'  => $this->softDeleteAll(ids: array_merge(($postingRefs['arItemIds'] ?? []), ($postingRefs['apItemIds'] ?? [])), schema: 'ARInvoice', findings: $findings),
+            'reversingJournalId'   => $this->createReversingJournal(batch: $batch, openingJournalId: ($postingRefs['openingJournalId'] ?? null), findings: $findings),
+            'softDeletedItemIds'   => $this->softDeleteAll(ids: array_merge(($postingRefs['arItemIds'] ?? []), ($postingRefs['apItemIds'] ?? [])), schema: 'ARInvoice', findings: $findings),
             'softDeletedMasterIds' => $this->softDeleteAll(ids: ($postingRefs['masterIds'] ?? []), schema: 'CustomerMaster', findings: $findings),
         ];
 
@@ -709,11 +696,9 @@ class ImportPipelineService
 
     }//end reverse()
 
-
     // ------------------------------------------------------------------
-    //  Cross-service composition seams (ADR-031). Each degrades gracefully.
+    // Cross-service composition seams (ADR-031). Each degrades gracefully.
     // ------------------------------------------------------------------
-
 
     /**
      * Create the single balanced opening journal via the existing journal surface.
@@ -751,7 +736,6 @@ class ImportPipelineService
         }//end try
 
     }//end createOpeningJournal()
-
 
     /**
      * Create imported open items via the existing AR/AP surfaces.
@@ -793,7 +777,7 @@ class ImportPipelineService
                         ]
                     )
                 );
-                $id = $this->extractId(created: $created);
+                $id      = $this->extractId(created: $created);
                 if ($id !== null) {
                     $ids[] = $id;
                 }
@@ -806,7 +790,6 @@ class ImportPipelineService
         return $ids;
 
     }//end createOpenItems()
-
 
     /**
      * Derive the open-item lifecycle state from its due date (REQ-AIM-006).
@@ -831,7 +814,6 @@ class ImportPipelineService
         return ($ts < time() ? 'overdue' : 'issued');
 
     }//end openItemStateForDueDate()
-
 
     /**
      * Create / link relations as NC contacts + financial masters (REQ-AIM-007).
@@ -877,10 +859,10 @@ class ImportPipelineService
         try {
             $service = $this->objectService();
             foreach ($contacts as $contact) {
-                $contactId = (string) ($contact['kvk'] ?? ($contact['email'] ?? $contact['name'] ?? ''));
+                $contactId    = (string) ($contact['kvk'] ?? ($contact['email'] ?? $contact['name'] ?? ''));
                 $contactIds[] = $contactId;
                 if ($service !== null) {
-                    $created = $service->setRegister($this->register())->setSchema('CustomerMaster')->saveObject(
+                    $created  = $service->setRegister($this->register())->setSchema('CustomerMaster')->saveObject(
                         [
                             'administrationId' => ($batch['administrationId'] ?? null),
                             'contactRef'       => $contactId,
@@ -902,7 +884,6 @@ class ImportPipelineService
         return [$contactIds, $masterIds];
 
     }//end createRelations()
-
 
     /**
      * Post the reversing journal for the opening journal (REQ-AIM-009).
@@ -945,7 +926,6 @@ class ImportPipelineService
 
     }//end createReversingJournal()
 
-
     /**
      * Soft-delete a list of objects via the existing OR delete surface.
      *
@@ -981,19 +961,17 @@ class ImportPipelineService
 
     }//end softDeleteAll()
 
-
     // ------------------------------------------------------------------
-    //  Internal helpers.
+    // Internal helpers.
     // ------------------------------------------------------------------
-
 
     /**
      * Build the staged payload from the parsed structure + profile + companion CSVs.
      *
-     * @param array<string,mixed>     $parsed   Parser output.
-     * @param ImportProfileInterface  $profile  Source profile.
-     * @param array<string,mixed>     $batch    Batch data.
-     * @param array<int,mixed>        $findings Findings accumulator (by reference).
+     * @param array<string,mixed>    $parsed   Parser output.
+     * @param ImportProfileInterface $profile  Source profile.
+     * @param array<string,mixed>    $batch    Batch data.
+     * @param array<int,mixed>       $findings Findings accumulator (by reference).
      *
      * @return array<string,mixed> Staged payload.
      */
@@ -1001,22 +979,21 @@ class ImportPipelineService
     {
         unset($findings);
         return [
-            'company'         => ($parsed['company'] ?? []),
-            'ledgerAccounts'  => $profile->normalizeLedgerAccounts($parsed),
-            'relations'       => ($parsed['relations'] ?? []),
-            'openingBalances' => ($parsed['openingBalances'] ?? []),
-            'journals'        => ($parsed['journals'] ?? []),
+            'company'                => ($parsed['company'] ?? []),
+            'ledgerAccounts'         => $profile->normalizeLedgerAccounts($parsed),
+            'relations'              => ($parsed['relations'] ?? []),
+            'openingBalances'        => ($parsed['openingBalances'] ?? []),
+            'journals'               => ($parsed['journals'] ?? []),
             // AR/AP open items + control amounts come from the companion CSVs in
             // production via the profile column maps; staged here when present on
             // the batch (kept addressable for validation).
-            'arOpenItems'             => ($batch['arOpenItems'] ?? []),
-            'apOpenItems'             => ($batch['apOpenItems'] ?? []),
-            'arControlOpeningAmount'  => ($batch['arControlOpeningAmount'] ?? 0.0),
-            'apControlOpeningAmount'  => ($batch['apControlOpeningAmount'] ?? 0.0),
+            'arOpenItems'            => ($batch['arOpenItems'] ?? []),
+            'apOpenItems'            => ($batch['apOpenItems'] ?? []),
+            'arControlOpeningAmount' => ($batch['arControlOpeningAmount'] ?? 0.0),
+            'apControlOpeningAmount' => ($batch['apControlOpeningAmount'] ?? 0.0),
         ];
 
     }//end buildStagingPayload()
-
 
     /**
      * Count the staged artifacts.
@@ -1036,7 +1013,6 @@ class ImportPipelineService
         ];
 
     }//end countStaged()
-
 
     /**
      * Whether any finding is error-severity.
@@ -1058,7 +1034,6 @@ class ImportPipelineService
         return false;
 
     }//end hasErrors()
-
 
     /**
      * Select the import profile for a source system.
@@ -1087,7 +1062,6 @@ class ImportPipelineService
 
     }//end profileFor()
 
-
     /**
      * Read the batch's XAF source contents (degrades gracefully).
      *
@@ -1108,7 +1082,6 @@ class ImportPipelineService
 
     }//end readSourceXaf()
 
-
     /**
      * The empty parser structure.
      *
@@ -1127,7 +1100,6 @@ class ImportPipelineService
 
     }//end emptyParse()
 
-
     /**
      * Resolve the OR ObjectService, or null when unavailable.
      *
@@ -1143,7 +1115,6 @@ class ImportPipelineService
 
     }//end objectService()
 
-
     /**
      * The shillinq register slug.
      *
@@ -1154,7 +1125,6 @@ class ImportPipelineService
         return 'shillinq';
 
     }//end register()
-
 
     /**
      * Load a batch object via the OR ObjectService.
@@ -1180,7 +1150,6 @@ class ImportPipelineService
 
     }//end loadBatch()
 
-
     /**
      * Persist a batch object via the OR ObjectService.
      *
@@ -1200,7 +1169,6 @@ class ImportPipelineService
         }
 
     }//end persistBatch()
-
 
     /**
      * Persist a mapping row via the OR ObjectService.
@@ -1222,7 +1190,6 @@ class ImportPipelineService
 
     }//end persistMapping()
 
-
     /**
      * Load target accounts keyed by RGS code (for auto-mapping).
      *
@@ -1241,8 +1208,8 @@ class ImportPipelineService
 
             $accounts = $service->setRegister($this->register())->setSchema('Account')->findAll(['filters' => ['administrationId' => $administrationId]]);
             foreach (($accounts ?? []) as $account) {
-                $row = $this->toArray(object: $account);
-                $rgs = (string) ($row['rgsCode'] ?? '');
+                $row  = $this->toArray(object: $account);
+                $rgs  = (string) ($row['rgsCode'] ?? '');
                 $code = (string) ($row['accountNumber'] ?? ($row['code'] ?? ''));
                 if ($rgs !== '' && $code !== '') {
                     $byRgs[$rgs] = $code;
@@ -1255,7 +1222,6 @@ class ImportPipelineService
         return $byRgs;
 
     }//end loadTargetAccountsByRgs()
-
 
     /**
      * Load a saved mapping profile as source code → target code.
@@ -1279,7 +1245,7 @@ class ImportPipelineService
 
             $rows = $service->setRegister($this->register())->setSchema('ImportMapping')->findAll(['filters' => ['mappingProfile' => $name, 'confirmed' => true]]);
             foreach (($rows ?? []) as $row) {
-                $r = $this->toArray(object: $row);
+                $r   = $this->toArray(object: $row);
                 $src = (string) ($r['sourceCode'] ?? '');
                 $tgt = ($r['targetAccount'] ?? null);
                 if ($src !== '' && $tgt !== null) {
@@ -1293,7 +1259,6 @@ class ImportPipelineService
         return $map;
 
     }//end loadMappingProfile()
-
 
     /**
      * Normalise an OR object (array or entity) to an array.
@@ -1328,7 +1293,6 @@ class ImportPipelineService
 
     }//end toArray()
 
-
     /**
      * Extract the id from a saved OR object.
      *
@@ -1355,7 +1319,6 @@ class ImportPipelineService
 
     }//end extractId()
 
-
     /**
      * Build a structured finding.
      *
@@ -1376,6 +1339,4 @@ class ImportPipelineService
         ];
 
     }//end finding()
-
-
 }//end class

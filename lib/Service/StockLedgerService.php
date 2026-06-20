@@ -60,8 +60,6 @@ use Psr\Log\LoggerInterface;
  */
 class StockLedgerService
 {
-
-
     /**
      * Construct the service.
      *
@@ -76,7 +74,6 @@ class StockLedgerService
     ) {
 
     }//end __construct()
-
 
     /**
      * Recompute the on-hand quantity at a bin location for an SKU from the
@@ -95,15 +92,15 @@ class StockLedgerService
         string $administrationId,
         string $locationId,
         string $sku,
-        float $initialStock = 0.0
+        float $initialStock=0.0
     ): float {
         try {
-            $moves       = $this->postedMovesForLocation(
+            $moves    = $this->postedMovesForLocation(
                 administrationId: $administrationId,
                 locationId: $locationId,
                 sku: $sku
             );
-            $netCents    = $this->cents($initialStock);
+            $netCents = $this->cents($initialStock);
             foreach ($moves as $move) {
                 $cents = $this->cents(($move['quantity'] ?? 0));
                 if (((string) ($move['destinationLocationId'] ?? '')) === $locationId) {
@@ -131,7 +128,6 @@ class StockLedgerService
 
     }//end quantityForLocation()
 
-
     /**
      * Sum reserved quantity (draft moves whose source is this location for
      * this SKU) per REQ-SM-009.
@@ -147,12 +143,12 @@ class StockLedgerService
     public function reservedForLocation(string $administrationId, string $locationId, string $sku): float
     {
         try {
-            $moves          = $this->draftMovesForSource(
+            $moves         = $this->draftMovesForSource(
                 administrationId: $administrationId,
                 locationId: $locationId,
                 sku: $sku
             );
-            $reservedCents  = 0;
+            $reservedCents = 0;
             foreach ($moves as $move) {
                 $reservedCents += $this->cents(($move['quantity'] ?? 0));
             }
@@ -172,7 +168,6 @@ class StockLedgerService
         }//end try
 
     }//end reservedForLocation()
-
 
     /**
      * Build the drill-down trace for the Stock Ledger detail view: every
@@ -208,12 +203,12 @@ class StockLedgerService
             $trace        = [];
             $runningCents = 0;
             foreach ($moves as $move) {
-                $cents    = $this->cents(($move['quantity'] ?? 0));
-                $sign     = '+';
+                $cents     = $this->cents(($move['quantity'] ?? 0));
+                $sign      = '+';
                 $signCents = $cents;
                 if (((string) ($move['sourceLocationId'] ?? '')) === $locationId) {
-                    $sign       = '-';
-                    $signCents  = -$cents;
+                    $sign      = '-';
+                    $signCents = -$cents;
                 }
 
                 $runningCents += $signCents;
@@ -244,7 +239,6 @@ class StockLedgerService
 
     }//end traceLocation()
 
-
     /**
      * Fetch all posted, non-cancelled StockMoves touching the (sku, location)
      * pair on either side. Combines two findAll() queries (source + destination)
@@ -272,13 +266,11 @@ class StockLedgerService
         $sourceSide      = ($objectService
             ->setRegister($this->register())
             ->setSchema('StockMove')
-            ->findAll(['filters' => array_merge($base, ['sourceLocationId' => $locationId])])
-            ?? []);
+            ->findAll(['filters' => array_merge($base, ['sourceLocationId' => $locationId])]) ?? []);
         $destinationSide = ($objectService
             ->setRegister($this->register())
             ->setSchema('StockMove')
-            ->findAll(['filters' => array_merge($base, ['destinationLocationId' => $locationId])])
-            ?? []);
+            ->findAll(['filters' => array_merge($base, ['destinationLocationId' => $locationId])]) ?? []);
 
         if (is_array($sourceSide) === false) {
             $sourceSide = [];
@@ -305,7 +297,6 @@ class StockLedgerService
         return array_values($byId);
 
     }//end postedMovesForLocation()
-
 
     /**
      * Fetch all draft StockMoves whose source is this (sku, location).
@@ -335,13 +326,11 @@ class StockLedgerService
                         'lifecycleState'   => 'draft',
                     ],
                 ]
-            )
-            ?? []);
+            ) ?? []);
 
         return is_array($rows) === true ? $rows : [];
 
     }//end draftMovesForSource()
-
 
     /**
      * Convert a money/quantity value to integer cents (multipleOf 0.01).
@@ -360,7 +349,6 @@ class StockLedgerService
 
     }//end cents()
 
-
     /**
      * Convert integer cents back to a 2-decimal float.
      *
@@ -373,7 +361,6 @@ class StockLedgerService
         return ((float) $cents / 100.0);
 
     }//end fromCents()
-
 
     /**
      * Resolve the OpenRegister register slug, defaulting to 'shillinq'.
@@ -390,6 +377,4 @@ class StockLedgerService
         return $register;
 
     }//end register()
-
-
 }//end class

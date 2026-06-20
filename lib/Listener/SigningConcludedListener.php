@@ -104,7 +104,6 @@ final class SigningConcludedListener implements IEventListener
     ) {
     }//end __construct()
 
-
     /**
      * Handle a docudesk SigningConcludedEvent.
      *
@@ -214,7 +213,6 @@ final class SigningConcludedListener implements IEventListener
 
     }//end handle()
 
-
     /**
      * Resolve the subject id from the concluded event — prefer the
      * externalReference we sent on the request, fall back to subjectId.
@@ -233,7 +231,6 @@ final class SigningConcludedListener implements IEventListener
         return (string) ($event->getSubjectId() ?? '');
 
     }//end resolveSubjectId()
-
 
     /**
      * Resolve the finance object the concluded signing request belongs to.
@@ -268,7 +265,6 @@ final class SigningConcludedListener implements IEventListener
 
     }//end resolveFinanceObject()
 
-
     /**
      * Apply the local accounting consequence on a completed signature
      * (REQ-SIGN-006). The consequence stays in shillinq: on `signed` the finance
@@ -291,7 +287,7 @@ final class SigningConcludedListener implements IEventListener
         // the existing OR write path. shillinq owns no signing engine — it
         // records the docudesk outcome and opens its own downstream gate
         // (submission) exactly once.
-        $object['signedAt']            = gmdate('Y-m-d\TH:i:s\Z');
+        $object['signedAt']           = gmdate('Y-m-d\TH:i:s\Z');
         $object['submissionGateOpen'] = true;
 
         $this->logger->info(
@@ -305,7 +301,6 @@ final class SigningConcludedListener implements IEventListener
         return $object;
 
     }//end applyAccountingConsequence()
-
 
     /**
      * Extract the accounting-consequence fields written by
@@ -334,7 +329,6 @@ final class SigningConcludedListener implements IEventListener
 
     }//end consequenceDelta()
 
-
     /**
      * Find a finance object by id within a schema, returning a plain array.
      *
@@ -359,7 +353,6 @@ final class SigningConcludedListener implements IEventListener
 
     }//end findObject()
 
-
     /**
      * Persist the mirror updates onto the finance object via OR.
      *
@@ -378,7 +371,6 @@ final class SigningConcludedListener implements IEventListener
             ->updateObject($id, $updates);
 
     }//end persist()
-
 
     /**
      * Normalise an OR find result to a plain array.
@@ -405,6 +397,4 @@ final class SigningConcludedListener implements IEventListener
         return null;
 
     }//end toArray()
-
-
 }//end class

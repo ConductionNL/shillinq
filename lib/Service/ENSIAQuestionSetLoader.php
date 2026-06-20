@@ -54,8 +54,7 @@ class ENSIAQuestionSetLoader
      *
      * @var string
      */
-    private const DEFAULT_SEED = __DIR__ . '/../Settings/seeds/ensia-vng-2026.json';
-
+    private const DEFAULT_SEED = __DIR__.'/../Settings/seeds/ensia-vng-2026.json';
 
     /**
      * Construct the loader.
@@ -63,25 +62,26 @@ class ENSIAQuestionSetLoader
      * @param string|null $seedPath Optional override of the default seed
      *                              file path; primarily for unit testing.
      */
-    public function __construct(private readonly ?string $seedPath = null)
+    public function __construct(private readonly ?string $seedPath=null)
     {
 
     }//end __construct()
-
 
     /**
      * Load the question set and produce Evaluatievraag shapes for the
      * given verslagjaar + verantwoordingsdomeinen selection.
      *
-     * @param int                 $jaar             Verslagjaar (e.g. 2026).
-     * @param array<int,string>   $domeinen         Selected domains, e.g.
-     *                                              ['BIO', 'DigiD'].
-     * @param string              $cyclusId         FK to ENSIAJaarcyclus
-     *                                              stamped onto each
-     *                                              Evaluatievraag record.
-     * @param string              $administrationId FK to Administration
-     *                                              stamped onto each
-     *                                              Evaluatievraag record.
+     * @param int               $jaar             Verslagjaar (e.g. 2026).
+     * @param array<int,string> $domeinen         Selected domains, e.g.
+     *                                            ['BIO', 'DigiD'].
+     * @param string            $cyclusId         FK to ENSIAJaarcyclus
+     *                                            stamped onto each
+     *                                            Evaluatievraag
+     *                                            record.
+     * @param string            $administrationId FK to Administration
+     *                                            stamped onto each
+     *                                            Evaluatievraag
+     *                                            record.
      *
      * @return array{
      *     vraagSetVersion: string,
@@ -158,6 +158,4 @@ class ENSIAQuestionSetLoader
         ];
 
     }//end load()
-
-
 }//end class

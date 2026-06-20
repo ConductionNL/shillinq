@@ -49,8 +49,9 @@ class DoorsnijdingsVerbodValidator
     /**
      * Construct the validator with lazy DI of OpenRegister's ObjectService.
      *
-     * @param ContainerInterface              $container   DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig                      $appConfig   App config for the register slug.
+     * @param ContainerInterface                $container   DI container — OR's ObjectService is fetched
+     *                                                       lazily.
+     * @param IAppConfig                        $appConfig   App config for the register slug.
      * @param InnovatieboxAuditEventLogger|null $auditLogger Optional audit-event logger. When
      *                                                       provided, every validateNoDuplication
      *                                                       run emits a DoorsnijdingsVerbod.check_run
@@ -100,14 +101,14 @@ class DoorsnijdingsVerbodValidator
                     'boekjaar'         => $boekjaar,
                     'reason'           => ($findings !== []) ? 'doorsnijdingsverbod_duplicate' : null,
                     'details'          => [
-                        'findings'      => $findings,
-                        'total_pairs'   => count($findings),
-                        'total_bedrag'  => $totalAmount,
-                        'blocking'      => ($findings !== []),
+                        'findings'     => $findings,
+                        'total_pairs'  => count($findings),
+                        'total_bedrag' => $totalAmount,
+                        'blocking'     => ($findings !== []),
                     ],
                 ]
             );
-        }
+        }//end if
 
         return [
             'findings' => $findings,

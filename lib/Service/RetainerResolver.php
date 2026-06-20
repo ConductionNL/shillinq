@@ -123,7 +123,7 @@ class RetainerResolver
     /**
      * Find all matching records via the real OR ObjectService API.
      *
-     * @param string             $schema  Schema slug.
+     * @param string              $schema  Schema slug.
      * @param array<string,mixed> $filters Filter map.
      *
      * @return array<int,array<string,mixed>>
@@ -160,5 +160,4 @@ class RetainerResolver
         return $register;
 
     }//end register()
-
 }//end class

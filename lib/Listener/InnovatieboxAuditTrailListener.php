@@ -91,9 +91,9 @@ final class InnovatieboxAuditTrailListener implements IEventListener
     /**
      * Construct the listener.
      *
-     * @param InnovatieboxAuditEventLogger $logger        Append-only audit event writer.
-     * @param VsoLockingValidator          $vsoValidator  VSO year-lock checker (task 4.3).
-     * @param LoggerInterface              $psrLogger     Psr logger for fail-soft.
+     * @param InnovatieboxAuditEventLogger $logger       Append-only audit event writer.
+     * @param VsoLockingValidator          $vsoValidator VSO year-lock checker (task 4.3).
+     * @param LoggerInterface              $psrLogger    Psr logger for fail-soft.
      */
     public function __construct(
         private readonly InnovatieboxAuditEventLogger $logger,
@@ -173,7 +173,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                 ]
             );
             return;
-        }
+        }//end if
 
         if ($schema === self::SCHEMA_PROFIT) {
             $this->logger->record(
@@ -224,10 +224,10 @@ final class InnovatieboxAuditTrailListener implements IEventListener
                         ],
                     ]
                 );
-            }
+            }//end if
 
             return;
-        }
+        }//end if
 
         if ($schema === self::SCHEMA_LOSS) {
             $this->logger->record(

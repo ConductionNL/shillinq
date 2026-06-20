@@ -46,7 +46,6 @@ use Psr\Log\LoggerInterface;
  */
 class WbsoDocumentGuard
 {
-
     /**
      * Construct the guard.
      *

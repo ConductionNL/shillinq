@@ -66,7 +66,6 @@ use Psr\Log\LoggerInterface;
  */
 class DelegateSigningMigrationRepair implements IRepairStep
 {
-
     /**
      * Constructor.
      *
@@ -81,7 +80,6 @@ class DelegateSigningMigrationRepair implements IRepairStep
     ) {
     }//end __construct()
 
-
     /**
      * The repair-step display name shown in occ maintenance:repair output.
      *
@@ -94,7 +92,6 @@ class DelegateSigningMigrationRepair implements IRepairStep
         return 'Shillinq: backfill signing-delegation consumer fields on legacy ACMReport objects (REQ-SIGN-009)';
 
     }//end getName()
-
 
     /**
      * Run the migration. Idempotent — never duplicates fields and never
@@ -137,7 +134,6 @@ class DelegateSigningMigrationRepair implements IRepairStep
         }//end try
 
     }//end run()
-
 
     /**
      * Backfill signing-delegation consumer fields on legacy ACMReport objects.
@@ -214,6 +210,4 @@ class DelegateSigningMigrationRepair implements IRepairStep
         return ['updated' => $updated, 'skipped' => $skipped];
 
     }//end backfillAcmReports()
-
-
 }//end class

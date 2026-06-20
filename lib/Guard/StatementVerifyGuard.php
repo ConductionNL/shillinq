@@ -86,7 +86,6 @@ class StatementVerifyGuard
     ) {
     }//end __construct()
 
-
     /**
      * Return the configured register slug, falling back to 'shillinq' if
      * unset. Mirrors SettingsService::getRegisterSlug() so every guard reads
@@ -104,7 +103,6 @@ class StatementVerifyGuard
         return $slug;
 
     }//end getRegisterSlug()
-
 
     /**
      * Verify the statement closing balance against the expected GL balance
@@ -133,7 +131,7 @@ class StatementVerifyGuard
      * and the audit-trailed lifecycle event.
      *
      * @param array<string, mixed> $object The BankReconciliation object
-     *                                      array as loaded by OR.
+     *                                     array as loaded by OR.
      *
      * @return bool Always true (per REQ-REC-002) once the variance
      *              recomputation completes. Returns false only when the
@@ -198,7 +196,6 @@ class StatementVerifyGuard
 
     }//end verifyStatementBalance()
 
-
     /**
      * Reject the `in-progress → verified` transition when unresolved
      * matches remain or the sign-off comment is empty.
@@ -213,7 +210,7 @@ class StatementVerifyGuard
      * Fail-closed on any error.
      *
      * @param array<string, mixed> $object The BankReconciliation object
-     *                                      array as loaded by OR.
+     *                                     array as loaded by OR.
      *
      * @return bool True when the transition is permitted, false otherwise.
      *
@@ -267,7 +264,6 @@ class StatementVerifyGuard
 
     }//end requireResolvedAndSignedOff()
 
-
     /**
      * Convert a monetary float into integer cents per ADR-005 server
      * authority — rounded to the nearest cent to avoid IEEE-754 drift.
@@ -281,7 +277,6 @@ class StatementVerifyGuard
         return (int) round($amount * 100);
 
     }//end cents()
-
 
     /**
      * Sum SUM(GLLine.debit - GLLine.credit) in cents for the period — the
@@ -360,7 +355,6 @@ class StatementVerifyGuard
 
     }//end sumGLNetActivityCents()
 
-
     /**
      * Persist the recomputed expectedGLBalance and variance back onto the
      * BankReconciliation record.
@@ -398,10 +392,9 @@ class StatementVerifyGuard
                 'StatementVerifyGuard: variance persistence failed (non-fatal — warning surface still works)',
                 ['reconciliationId' => $id, 'exception' => $e->getMessage()]
             );
-        }
+        }//end try
 
     }//end persistVarianceFields()
-
 
     /**
      * Fetch all ReconciliationMatch records for a reconciliation session,
@@ -438,6 +431,4 @@ class StatementVerifyGuard
         return $matches;
 
     }//end findMatches()
-
-
 }//end class

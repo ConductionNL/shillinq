@@ -89,7 +89,7 @@ class ConsolidationMappingService
     public function findActiveMapping(
         string $sourceAdministrationId,
         string $destinationAdministrationId,
-        ?DateTimeImmutable $asOf = null
+        ?DateTimeImmutable $asOf=null
     ): ?array {
         if ($sourceAdministrationId === '' || $destinationAdministrationId === '') {
             return null;
@@ -120,7 +120,7 @@ class ConsolidationMappingService
                 ]
             );
             return null;
-        }
+        }//end try
 
         return $this->pickMostRecent(candidates: $candidates, asOf: $asOf);
 
@@ -285,8 +285,8 @@ class ConsolidationMappingService
      */
     public function pickMostRecent(iterable $candidates, DateTimeImmutable $asOf): ?array
     {
-        $best       = null;
-        $bestStamp  = null;
+        $best      = null;
+        $bestStamp = null;
 
         foreach ($candidates as $candidate) {
             $record = $this->extractArray(candidate: $candidate);
@@ -299,6 +299,7 @@ class ConsolidationMappingService
                 if ($best === null) {
                     $best = $record;
                 }
+
                 continue;
             }
 

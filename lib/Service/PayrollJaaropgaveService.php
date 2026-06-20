@@ -49,7 +49,6 @@ use RuntimeException;
  */
 class PayrollJaaropgaveService
 {
-
     /**
      * Construct the service.
      *
@@ -122,18 +121,18 @@ class PayrollJaaropgaveService
         $cumulatievenMatch = ($this->calculator->toCents(amount: $ytdFiscaal) === $fiscaalC);
 
         return [
-            'werknemerId'       => $werknemerId,
-            'jaar'              => $jaar,
-            'aantalPerioden'    => count($stroken),
-            'fiscaalLoonJTD'    => $fiscaalLoon,
-            'loonheffingJTD'    => $this->calculator->fromCents(cents: $loonhefC),
-            'premiesSVWgJTD'    => $this->calculator->fromCents(cents: $svWgC),
-            'zvwWgJTD'          => $this->calculator->fromCents(cents: $zvwWgC),
-            'pensioenWnJTD'     => $this->calculator->fromCents(cents: $pensWnC),
-            'pensioenWgJTD'     => $this->calculator->fromCents(cents: $pensWgC),
-            'vakantieUitbJTD'   => $this->calculator->fromCents(cents: $vakUitbC),
-            'nettoUitbetaaldJTD'=> $this->calculator->fromCents(cents: $nettoC),
-            'ytdSnapshot'       => [
+            'werknemerId'            => $werknemerId,
+            'jaar'                   => $jaar,
+            'aantalPerioden'         => count($stroken),
+            'fiscaalLoonJTD'         => $fiscaalLoon,
+            'loonheffingJTD'         => $this->calculator->fromCents(cents: $loonhefC),
+            'premiesSVWgJTD'         => $this->calculator->fromCents(cents: $svWgC),
+            'zvwWgJTD'               => $this->calculator->fromCents(cents: $zvwWgC),
+            'pensioenWnJTD'          => $this->calculator->fromCents(cents: $pensWnC),
+            'pensioenWgJTD'          => $this->calculator->fromCents(cents: $pensWgC),
+            'vakantieUitbJTD'        => $this->calculator->fromCents(cents: $vakUitbC),
+            'nettoUitbetaaldJTD'     => $this->calculator->fromCents(cents: $nettoC),
+            'ytdSnapshot'            => [
                 'fiscaalloon_ytd'              => $ytdFiscaal,
                 'vakantiegeld_reservering_ytd' => $ytdVak,
             ],
@@ -195,7 +194,7 @@ class PayrollJaaropgaveService
 
         $out = [];
         foreach ($results as $r) {
-            $row    = (array) $r;
+            $row     = (array) $r;
             $perJaar = $this->extractJaarFromPeriodeId(periodeId: (string) ($row['periodeId'] ?? ''));
             if ($perJaar !== null && $perJaar !== $jaar) {
                 continue;

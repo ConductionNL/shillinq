@@ -40,20 +40,21 @@ final class Ib47SubmissionResult
     /**
      * Construct the result value-object.
      *
-     * @param string              $deliveryStatus     ACCEPTED / REJECTED / DEFERRED.
-     * @param string              $kenmerk            Belastingdienst-side
-     *                                                submission id.
-     * @param bool                $dormant            TRUE when the adapter
-     *                                                was dormant.
-     * @param array<string,mixed> $extras             Provider-specific extras
-     *                                                (e.g. rejectedRecipients,
-     *                                                gegevensportaalUrl).
+     * @param string              $deliveryStatus ACCEPTED / REJECTED / DEFERRED.
+     * @param string              $kenmerk        Belastingdienst-side
+     *                                            submission id.
+     * @param bool                $dormant        TRUE when the adapter
+     *                                            was dormant.
+     * @param array<string,mixed> $extras         Provider-specific extras
+     *                                            (e.g.
+     *                                            rejectedRecipients,
+     *                                            gegevensportaalUrl).
      */
     public function __construct(
         public readonly string $deliveryStatus,
         public readonly string $kenmerk,
         public readonly bool $dormant,
-        public readonly array $extras = [],
+        public readonly array $extras=[],
     ) {
     }//end __construct()
 }//end class

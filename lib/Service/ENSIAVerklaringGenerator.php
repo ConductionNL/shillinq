@@ -52,14 +52,13 @@ class ENSIAVerklaringGenerator
      */
     private const TOP_FINDINGS_LIMIT = 5;
 
-
     /**
      * Render the verklaring as DOCX bytes.
      *
-     * @param array<string,mixed>            $cyclus     ENSIAJaarcyclus record.
-     * @param array<int,array<string,mixed>> $vragen     All Evaluatievraag children.
+     * @param array<string,mixed>            $cyclus      ENSIAJaarcyclus record.
+     * @param array<int,array<string,mixed>> $vragen      All Evaluatievraag children.
      * @param array<int,array<string,mixed>> $bevindingen All Bevinding children
-     *                                                   ordered by impact desc.
+     *                                                    ordered by impact desc.
      *
      * @return string Binary DOCX content.
      *
@@ -67,7 +66,7 @@ class ENSIAVerklaringGenerator
      */
     public function render(array $cyclus, array $vragen, array $bevindingen): string
     {
-        $documentXml = $this->buildDocumentXml(cyclus: $cyclus, vragen: $vragen, bevindingen: $bevindingen);
+        $documentXml  = $this->buildDocumentXml(cyclus: $cyclus, vragen: $vragen, bevindingen: $bevindingen);
         $contentTypes = $this->buildContentTypesXml();
         $rels         = $this->buildRelsXml();
         $documentRels = $this->buildDocumentRelsXml();
@@ -77,7 +76,7 @@ class ENSIAVerklaringGenerator
             throw new RuntimeException('Failed to allocate DOCX temp file');
         }
 
-        $zip = new ZipArchive();
+        $zip    = new ZipArchive();
         $opened = $zip->open($tmpFile, ZipArchive::OVERWRITE | ZipArchive::CREATE);
         if ($opened !== true) {
             unlink($tmpFile);
@@ -97,7 +96,6 @@ class ENSIAVerklaringGenerator
 
     }//end render()
 
-
     /**
      * Build the [Content_Types].xml OOXML part registry.
      *
@@ -106,15 +104,14 @@ class ENSIAVerklaringGenerator
     private function buildContentTypesXml(): string
     {
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-            . '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-            . '<Default Extension="xml" ContentType="application/xml"/>'
-            . '<Override PartName="/word/document.xml" '
-            . 'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
-            . '</Types>';
+            .'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+            .'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+            .'<Default Extension="xml" ContentType="application/xml"/>'
+            .'<Override PartName="/word/document.xml" '
+            .'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+            .'</Types>';
 
     }//end buildContentTypesXml()
-
 
     /**
      * Build the root relationships XML pointing at the document part.
@@ -124,14 +121,13 @@ class ENSIAVerklaringGenerator
     private function buildRelsXml(): string
     {
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            . '<Relationship Id="rId1" '
-            . 'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
-            . 'Target="word/document.xml"/>'
-            . '</Relationships>';
+            .'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            .'<Relationship Id="rId1" '
+            .'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
+            .'Target="word/document.xml"/>'
+            .'</Relationships>';
 
     }//end buildRelsXml()
-
 
     /**
      * Build the (empty) document-level relationships XML.
@@ -141,10 +137,9 @@ class ENSIAVerklaringGenerator
     private function buildDocumentRelsXml(): string
     {
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>';
+            .'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>';
 
     }//end buildDocumentRelsXml()
-
 
     /**
      * Build the OOXML word/document.xml body.
@@ -157,16 +152,16 @@ class ENSIAVerklaringGenerator
      */
     private function buildDocumentXml(array $cyclus, array $vragen, array $bevindingen): string
     {
-        $org    = $cyclus['organisatie'] ?? [];
+        $org     = $cyclus['organisatie'] ?? [];
         $orgNaam = (string) ($org['naam'] ?? '');
         $orgKvk  = (string) ($org['kvk'] ?? '');
         $jaar    = (string) ($cyclus['jaar'] ?? '');
 
-        $paras = [];
-        $paras[] = $this->para('College-verklaring ENSIA ' . $jaar, bold: true);
-        $paras[] = $this->para('Organisatie: ' . $orgNaam . ' (KvK ' . $orgKvk . ')');
-        $paras[] = $this->para('Verslagjaar: ' . $jaar);
-        $paras[] = $this->para('Datum opmaak: ' . (new \DateTimeImmutable('now'))->format('Y-m-d'));
+        $paras   = [];
+        $paras[] = $this->para('College-verklaring ENSIA '.$jaar, bold: true);
+        $paras[] = $this->para('Organisatie: '.$orgNaam.' (KvK '.$orgKvk.')');
+        $paras[] = $this->para('Verslagjaar: '.$jaar);
+        $paras[] = $this->para('Datum opmaak: '.(new \DateTimeImmutable('now'))->format('Y-m-d'));
         $paras[] = $this->para('');
 
         // Per-domein summary.
@@ -178,7 +173,7 @@ class ENSIAVerklaringGenerator
         $paras[] = $this->para('');
 
         // Top findings.
-        $paras[] = $this->para('Top ' . self::TOP_FINDINGS_LIMIT . ' bevindingen + mitigatieplan:', bold: true);
+        $paras[] = $this->para('Top '.self::TOP_FINDINGS_LIMIT.' bevindingen + mitigatieplan:', bold: true);
         $top     = array_slice($bevindingen, 0, self::TOP_FINDINGS_LIMIT);
         if (count($top) === 0) {
             $paras[] = $this->para('Geen openstaande bevindingen.');
@@ -202,14 +197,13 @@ class ENSIAVerklaringGenerator
         $body = implode('', $paras);
 
         return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
-            . '<w:body>'
-            . $body
-            . '</w:body>'
-            . '</w:document>';
+            .'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+            .'<w:body>'
+            .$body
+            .'</w:body>'
+            .'</w:document>';
 
     }//end buildDocumentXml()
-
 
     /**
      * Render one OOXML paragraph carrying the given text.
@@ -219,14 +213,13 @@ class ENSIAVerklaringGenerator
      *
      * @return string OOXML.
      */
-    private function para(string $text, bool $bold = false): string
+    private function para(string $text, bool $bold=false): string
     {
-        $escaped = htmlspecialchars($text, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+        $escaped  = htmlspecialchars($text, ENT_XML1 | ENT_QUOTES, 'UTF-8');
         $runProps = $bold === true ? '<w:rPr><w:b/></w:rPr>' : '';
-        return '<w:p><w:r>' . $runProps . '<w:t xml:space="preserve">' . $escaped . '</w:t></w:r></w:p>';
+        return '<w:p><w:r>'.$runProps.'<w:t xml:space="preserve">'.$escaped.'</w:t></w:r></w:p>';
 
     }//end para()
-
 
     /**
      * Build per-domein summary lines: how many questions met maturity ≥ 3.
@@ -250,7 +243,7 @@ class ENSIAVerklaringGenerator
             $norm  = $v['normniveau'] ?? null;
             if (is_int($score) === true && is_int($norm) === true && $score >= $norm) {
                 $counts[$domein]['metNorm']++;
-            } elseif ($score === null && (string) ($v['antwoord'] ?? '') === 'ja') {
+            } else if ($score === null && (string) ($v['antwoord'] ?? '') === 'ja') {
                 // ja-nee-nvt: count 'ja' as norm-met.
                 $counts[$domein]['metNorm']++;
             }
@@ -269,6 +262,4 @@ class ENSIAVerklaringGenerator
         return $lines;
 
     }//end summariseByDomein()
-
-
 }//end class

@@ -75,7 +75,7 @@ class IntegralCostPriceLockService
 
         $fiscalYear = (string) ($input['fiscalYear'] ?? '');
         if (preg_match('/^[0-9]{4}$/', $fiscalYear) !== 1) {
-            throw new InvalidArgumentException('Invalid fiscalYear (expected YYYY): ' . $fiscalYear);
+            throw new InvalidArgumentException('Invalid fiscalYear (expected YYYY): '.$fiscalYear);
         }
 
         $loonkostenSum     = 0.0;
@@ -132,16 +132,16 @@ class IntegralCostPriceLockService
 
         return [
             'commercialActivityId' => (string) $input['commercialActivityId'],
-            'periode'              => $fiscalYear . '-YTD',
+            'periode'              => $fiscalYear.'-YTD',
             'berekendOp'           => $now->format(DateTimeImmutable::ATOM),
             'status'               => 'definitief',
             'componenten'          => [
-                'directeLoonkosten'    => round($loonkostenSum, 2),
-                'directeMaterialen'    => round($materialenSum, 2),
+                'directeLoonkosten'     => round($loonkostenSum, 2),
+                'directeMaterialen'     => round($materialenSum, 2),
                 'directeAfschrijvingen' => round($afschrijvingenSum, 2),
-                'indirecteOverhead'    => array_map(fn (float $v): float => round($v, 2), $overheadBuckets),
-                'vermogenskosten'      => round($vermogensSum, 2),
-                'winstopslag'          => round($winstopslagSum, 2),
+                'indirecteOverhead'     => array_map(fn (float $v): float => round($v, 2), $overheadBuckets),
+                'vermogenskosten'       => round($vermogensSum, 2),
+                'winstopslag'           => round($winstopslagSum, 2),
             ],
             'totaleKosten'         => round($totaleKostenSum, 2),
             'verkochteEenheden'    => ($verkochteEenheden > 0.0 ? $verkochteEenheden : null),
@@ -173,7 +173,7 @@ class IntegralCostPriceLockService
         }
 
         try {
-            $lockDate = new DateTimeImmutable(((int) $fiscalYear + 1) . '-03-31');
+            $lockDate = new DateTimeImmutable(((int) $fiscalYear + 1).'-03-31');
             $now      = new DateTimeImmutable($today);
         } catch (\Throwable) {
             return false;
@@ -182,5 +182,4 @@ class IntegralCostPriceLockService
         return $now >= $lockDate;
 
     }//end shouldLock()
-
 }//end class

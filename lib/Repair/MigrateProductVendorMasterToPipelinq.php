@@ -60,15 +60,14 @@ use Psr\Log\LoggerInterface;
  */
 class MigrateProductVendorMasterToPipelinq implements IRepairStep
 {
-
     /**
      * Constructor.
      *
-     * @param IConfig          $config          NC app-config for idempotency key + export payload.
-     * @param LoggerInterface  $logger          Logger for fuzzy-match warnings and errors.
-     * @param SettingsService  $settingsService Provides the shillinq register slug.
-     * @param ContainerInterface $container     DI container for lazy OR ObjectService resolution (mirrors sibling repair steps).
-     * @param IContactsManager $contactsManager NC Contacts API for KvK/BTW/name+IBAN vendor matching.
+     * @param IConfig            $config          NC app-config for idempotency key + export payload.
+     * @param LoggerInterface    $logger          Logger for fuzzy-match warnings and errors.
+     * @param SettingsService    $settingsService Provides the shillinq register slug.
+     * @param ContainerInterface $container       DI container for lazy OR ObjectService resolution (mirrors sibling repair steps).
+     * @param IContactsManager   $contactsManager NC Contacts API for KvK/BTW/name+IBAN vendor matching.
      */
     public function __construct(
         private readonly IConfig $config,
@@ -78,7 +77,6 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         private readonly IContactsManager $contactsManager,
     ) {
     }//end __construct()
-
 
     /**
      * The repair-step display name shown in occ maintenance:repair output.
@@ -90,7 +88,6 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         return 'Export shillinq Product/VendorMaster to pipelinq ingest payload (shillinq-product-vendor-to-pipelinq)';
 
     }//end getName()
-
 
     /**
      * Run the migration. Idempotent — marks completed only when the export
@@ -125,7 +122,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
                 // OpenRegister unavailable — do NOT mark completed; re-run next upgrade.
                 $output->warning(
                     'MigrateProductVendorMasterToPipelinq: OpenRegister not available or '
-                    . 'no Product/VendorMaster data found — deferring migration.'
+                    .'no Product/VendorMaster data found — deferring migration.'
                 );
                 return;
             }
@@ -140,9 +137,9 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
             $this->config->setAppValue($appId, 'shillinq_pvm_export', $encoded);
             $output->info(
                 'MigrateProductVendorMasterToPipelinq: export written to app-config key shillinq_pvm_export. '
-                . 'Products: ' . \count(value: $exportPayload['products'] ?? [])
-                . ', ProductAttributes: ' . \count(value: $exportPayload['productAttributes'] ?? [])
-                . ', VendorMasterData: ' . \count(value: $exportPayload['vendorMasterData'] ?? [])
+                .'Products: '.\count(value: $exportPayload['products'] ?? [])
+                .', ProductAttributes: '.\count(value: $exportPayload['productAttributes'] ?? [])
+                .', VendorMasterData: '.\count(value: $exportPayload['vendorMasterData'] ?? [])
             );
 
             // Step 3: Mark migration as completed so the step is a no-op on re-runs.
@@ -151,17 +148,16 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         } catch (\Throwable $e) {
             // Fail-closed: log and leave shillinq state untouched. Do NOT mark completed.
             $this->logger->error(
-                message: 'MigrateProductVendorMasterToPipelinq failed: ' . $e->getMessage(),
+                message: 'MigrateProductVendorMasterToPipelinq failed: '.$e->getMessage(),
                 context: ['exception' => $e]
             );
             $output->warning(
                 'MigrateProductVendorMasterToPipelinq: exception — migration deferred. '
-                . 'Check Nextcloud log for details.'
+                .'Check Nextcloud log for details.'
             );
         }//end try
 
     }//end run()
-
 
     /**
      * Build the export payload from shillinq data via the OpenRegister ObjectService.
@@ -193,7 +189,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
         } catch (\Throwable $e) {
             $this->logger->warning(
-                'MigrateProductVendorMasterToPipelinq: OpenRegister ObjectService not available: ' . $e->getMessage()
+                'MigrateProductVendorMasterToPipelinq: OpenRegister ObjectService not available: '.$e->getMessage()
             );
             return null;
         }
@@ -238,8 +234,8 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         $skuToProductIdMap = [];
         foreach ($products as $product) {
             $productArr = (array) $product;
-            $sku = (string) ($productArr['sku'] ?? ($productArr['code'] ?? ''));
-            $id  = (string) ($productArr['id'] ?? ($productArr['uuid'] ?? ''));
+            $sku        = (string) ($productArr['sku'] ?? ($productArr['code'] ?? ''));
+            $id         = (string) ($productArr['id'] ?? ($productArr['uuid'] ?? ''));
             if ($sku !== '' && $id !== '') {
                 $skuToProductIdMap[$sku] = $id;
             }
@@ -250,16 +246,15 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         $productAttributesOut = array_map(static fn ($pa) => (array) $pa, $productAttributes);
 
         return [
-            'version'          => '1.0',
-            'exportedAt'       => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
-            'products'         => $productsOut,
+            'version'           => '1.0',
+            'exportedAt'        => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+            'products'          => $productsOut,
             'productAttributes' => $productAttributesOut,
-            'vendorMasterData' => $vendorMasterData,
+            'vendorMasterData'  => $vendorMasterData,
             'skuToProductIdMap' => $skuToProductIdMap,
         ];
 
     }//end buildExportPayload()
-
 
     /**
      * Read all objects of a given schema from OpenRegister via findAll.
@@ -288,23 +283,22 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
                 ->findAll(['limit' => 0]);
 
             if (is_array($objects) === false || $objects === []) {
-                $output->info('MigrateProductVendorMasterToPipelinq: no ' . $label . ' records found — exporting empty set.');
+                $output->info('MigrateProductVendorMasterToPipelinq: no '.$label.' records found — exporting empty set.');
                 return [];
             }
 
-            $output->info('MigrateProductVendorMasterToPipelinq: read ' . count($objects) . ' ' . $label . ' records.');
+            $output->info('MigrateProductVendorMasterToPipelinq: read '.count($objects).' '.$label.' records.');
             return $objects;
         } catch (\Throwable $e) {
             // Schema may not exist yet on this instance (pre-seeded state) — soft-skip.
             $this->logger->warning(
-                'MigrateProductVendorMasterToPipelinq: could not read ' . $label . ' objects: ' . $e->getMessage()
+                'MigrateProductVendorMasterToPipelinq: could not read '.$label.' objects: '.$e->getMessage()
             );
-            $output->info('MigrateProductVendorMasterToPipelinq: ' . $label . ' schema not available (' . $e->getMessage() . ') — exporting empty set.');
+            $output->info('MigrateProductVendorMasterToPipelinq: '.$label.' schema not available ('.$e->getMessage().') — exporting empty set.');
             return [];
         }//end try
 
     }//end readObjects()
-
 
     /**
      * Attempt to match a VendorMaster record to an NC Contact using the
@@ -332,7 +326,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         if ($kvkNumber !== '') {
             $uid = $this->searchContactByProperty(property: 'X-CUSTOM-KVK', value: $kvkNumber);
             if ($uid !== null) {
-                $output->info('MigrateProductVendorMasterToPipelinq: matched vendor "' . $vendorSlug . '" to contact via KvK ' . $kvkNumber . '.');
+                $output->info('MigrateProductVendorMasterToPipelinq: matched vendor "'.$vendorSlug.'" to contact via KvK '.$kvkNumber.'.');
                 return $uid;
             }
         }
@@ -341,7 +335,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         if ($btwNumber !== '') {
             $uid = $this->searchContactByProperty(property: 'X-CUSTOM-BTW', value: $btwNumber);
             if ($uid !== null) {
-                $output->info('MigrateProductVendorMasterToPipelinq: matched vendor "' . $vendorSlug . '" to contact via BTW ' . $btwNumber . '.');
+                $output->info('MigrateProductVendorMasterToPipelinq: matched vendor "'.$vendorSlug.'" to contact via BTW '.$btwNumber.'.');
                 return $uid;
             }
         }
@@ -350,7 +344,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         if ($name !== '' && $iban !== '') {
             $uid = $this->searchContactByNameAndIban(name: $name, iban: $iban);
             if ($uid !== null) {
-                $output->info('MigrateProductVendorMasterToPipelinq: matched vendor "' . $vendorSlug . '" to contact via name+IBAN.');
+                $output->info('MigrateProductVendorMasterToPipelinq: matched vendor "'.$vendorSlug.'" to contact via name+IBAN.');
                 return $uid;
             }
         }
@@ -360,7 +354,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
             $uid = $this->searchContactByProperty(property: 'FN', value: $name);
             if ($uid !== null) {
                 $this->logger->warning(
-                    'MigrateProductVendorMasterToPipelinq: fuzzy name-only match for vendor "' . $vendorSlug . '" → contact UID "' . $uid . '"; NOT auto-applied. Operator review needed.',
+                    'MigrateProductVendorMasterToPipelinq: fuzzy name-only match for vendor "'.$vendorSlug.'" → contact UID "'.$uid.'"; NOT auto-applied. Operator review needed.',
                     ['vendor' => $vendorSlug, 'name' => $name, 'candidateUid' => $uid]
                 );
             }
@@ -368,15 +362,14 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
 
         // No reliable match — return a deterministic placeholder so pipelinq ingest
         // can flag this vendor for manual contact linkage.
-        $placeholder = 'placeholder-contactsuid-' . $vendorSlug . '-' . date('Y');
+        $placeholder = 'placeholder-contactsuid-'.$vendorSlug.'-'.date('Y');
         $this->logger->warning(
-            'MigrateProductVendorMasterToPipelinq: no NC Contact match for vendor "' . $vendorSlug . '" — using placeholder: ' . $placeholder,
+            'MigrateProductVendorMasterToPipelinq: no NC Contact match for vendor "'.$vendorSlug.'" — using placeholder: '.$placeholder,
             ['vendor' => $vendorSlug]
         );
         return $placeholder;
 
     }//end resolveContactUid()
-
 
     /**
      * Search NC addressbook contacts by a vCard property name + value.
@@ -399,17 +392,16 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
             }
 
             $contact = $results[0];
-            $uid = (string) ($contact['URI'] ?? ($contact['UID'] ?? ''));
+            $uid     = (string) ($contact['URI'] ?? ($contact['UID'] ?? ''));
             return $uid !== '' ? $uid : null;
         } catch (\Throwable $e) {
             $this->logger->warning(
-                'MigrateProductVendorMasterToPipelinq: Contacts search for property=' . $property . ' value=' . $value . ' failed: ' . $e->getMessage()
+                'MigrateProductVendorMasterToPipelinq: Contacts search for property='.$property.' value='.$value.' failed: '.$e->getMessage()
             );
             return null;
         }//end try
 
     }//end searchContactByProperty()
-
 
     /**
      * Search NC addressbook for a contact matching BOTH the display name AND IBAN.
@@ -444,13 +436,12 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
             return null;
         } catch (\Throwable $e) {
             $this->logger->warning(
-                'MigrateProductVendorMasterToPipelinq: Contacts name+IBAN search failed: ' . $e->getMessage()
+                'MigrateProductVendorMasterToPipelinq: Contacts name+IBAN search failed: '.$e->getMessage()
             );
             return null;
         }//end try
 
     }//end searchContactByNameAndIban()
-
 
     /**
      * Normalise an IBAN for comparison: strip whitespace and uppercase.
@@ -464,6 +455,4 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         return strtoupper(preg_replace('/\s+/', '', $iban) ?? '');
 
     }//end normalizeIban()
-
-
 }//end class

@@ -68,7 +68,7 @@ class LogRvOAanvraagAdapter implements RvOAanvraagAdapterInterface
         unset($sanitised['attachmentBytes']);
 
         $aanvraagnummer = 'rvo-log-'.bin2hex(random_bytes(8));
-        $scheme = (string) ($payload['scheme'] ?? 'unknown');
+        $scheme         = (string) ($payload['scheme'] ?? 'unknown');
         $this->logger->info(
             'Shillinq RvO aanvraag deferred (no outbound connector bound)',
             [

@@ -83,7 +83,6 @@ use Psr\Log\LoggerInterface;
  */
 class UnifyAnalyticalDimensions implements IRepairStep
 {
-
     /**
      * Constructor.
      *
@@ -98,7 +97,6 @@ class UnifyAnalyticalDimensions implements IRepairStep
     ) {
     }//end __construct()
 
-
     /**
      * The repair-step display name shown in occ maintenance:repair output.
      *
@@ -111,7 +109,6 @@ class UnifyAnalyticalDimensions implements IRepairStep
         return 'Shillinq: fold CostCenter + KostenDrager into unified AnalyticalDimension register (dimensionType discriminator)';
 
     }//end getName()
-
 
     /**
      * Run the migration. Idempotent — never duplicates records and never
@@ -162,7 +159,6 @@ class UnifyAnalyticalDimensions implements IRepairStep
 
     }//end run()
 
-
     /**
      * Migrate all CostCenter objects into AnalyticalDimension with
      * dimensionType=cost-center.
@@ -191,8 +187,8 @@ class UnifyAnalyticalDimensions implements IRepairStep
         }
 
         foreach ($costCenters as $costCenter) {
-            $arr            = (array) $costCenter;
-            $code           = (string) ($arr['code'] ?? '');
+            $arr  = (array) $costCenter;
+            $code = (string) ($arr['code'] ?? '');
             $administrationId = (string) ($arr['administrationId'] ?? '');
 
             if ($code === '') {
@@ -207,7 +203,8 @@ class UnifyAnalyticalDimensions implements IRepairStep
                     code: $code,
                     administrationId: $administrationId,
                     dimensionType: 'cost-center'
-                ) === true) {
+                ) === true
+                ) {
                     $skipped++;
                     continue;
                 }
@@ -235,7 +232,6 @@ class UnifyAnalyticalDimensions implements IRepairStep
         return ['created' => $created, 'skipped' => $skipped];
 
     }//end migrateCostCenters()
-
 
     /**
      * Migrate all KostenDrager objects into AnalyticalDimension with
@@ -265,8 +261,8 @@ class UnifyAnalyticalDimensions implements IRepairStep
         }
 
         foreach ($kostenDragers as $kostenDrager) {
-            $arr            = (array) $kostenDrager;
-            $code           = (string) ($arr['code'] ?? '');
+            $arr  = (array) $kostenDrager;
+            $code = (string) ($arr['code'] ?? '');
             $administrationId = (string) ($arr['administrationId'] ?? '');
 
             if ($code === '') {
@@ -281,7 +277,8 @@ class UnifyAnalyticalDimensions implements IRepairStep
                     code: $code,
                     administrationId: $administrationId,
                     dimensionType: 'cost-object'
-                ) === true) {
+                ) === true
+                ) {
                     $skipped++;
                     continue;
                 }
@@ -309,18 +306,17 @@ class UnifyAnalyticalDimensions implements IRepairStep
 
     }//end migrateKostenDragers()
 
-
     /**
      * Check whether an AnalyticalDimension record already exists for the
      * given (administrationId, code, dimensionType) natural key.
      *
      * This is the idempotency guard per REQ-ADIM-007.
      *
-     * @param object $objectService  The OR ObjectService.
-     * @param string $registerSlug   The shillinq register slug.
-     * @param string $code           The dimension code to look up.
+     * @param object $objectService    The OR ObjectService.
+     * @param string $registerSlug     The shillinq register slug.
+     * @param string $code             The dimension code to look up.
      * @param string $administrationId The administration scope.
-     * @param string $dimensionType  The dimension type discriminator.
+     * @param string $dimensionType    The dimension type discriminator.
      *
      * @return bool True when a matching record already exists; false otherwise.
      */
@@ -334,19 +330,20 @@ class UnifyAnalyticalDimensions implements IRepairStep
         $existing = $objectService
             ->setRegister($registerSlug)
             ->setSchema('AnalyticalDimension')
-            ->findAll([
-                'limit'  => 1,
-                'filter' => [
-                    'code'             => $code,
-                    'administrationId' => $administrationId,
-                    'dimensionType'    => $dimensionType,
-                ],
-            ]);
+            ->findAll(
+                    [
+                        'limit'  => 1,
+                        'filter' => [
+                            'code'             => $code,
+                            'administrationId' => $administrationId,
+                            'dimensionType'    => $dimensionType,
+                        ],
+                    ]
+                    );
 
         return is_array($existing) === true && count($existing) > 0;
 
     }//end analyticalDimensionExists()
-
 
     /**
      * Build an AnalyticalDimension record from a CostCenter source array.
@@ -385,7 +382,6 @@ class UnifyAnalyticalDimensions implements IRepairStep
 
     }//end buildCostCenterRecord()
 
-
     /**
      * Build an AnalyticalDimension record from a KostenDrager source array.
      *
@@ -417,6 +413,4 @@ class UnifyAnalyticalDimensions implements IRepairStep
         return $record;
 
     }//end buildKostenDragerRecord()
-
-
 }//end class

@@ -74,6 +74,7 @@ class LogSalarisbureauAdapter implements SalarisbureauAdapterInterface
                     if (is_array($row) === false) {
                         return ['_redacted' => true];
                     }
+
                     unset($row['bsn']);
                     return $row;
                 },
@@ -81,7 +82,7 @@ class LogSalarisbureauAdapter implements SalarisbureauAdapterInterface
             );
         }
 
-        $runId = 'salarisbureau-log-'.bin2hex(random_bytes(8));
+        $runId  = 'salarisbureau-log-'.bin2hex(random_bytes(8));
         $bureau = (string) ($payload['bureau'] ?? 'unknown');
         $this->logger->info(
             'Shillinq salarisbureau payroll-run deferred (no outbound connector bound)',

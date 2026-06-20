@@ -418,7 +418,6 @@ class LeaseDisclosureService
 
     }//end exportToCSV()
 
-
     /**
      * Render the disclosure note as a self-contained HTML document for the
      * Phase-2 docudesk PDF pipeline (Task 10.2 — skeleton).
@@ -441,7 +440,7 @@ class LeaseDisclosureService
      *
      * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
      */
-    public function exportDisclosureNoteToHtml(array $disclosure, string $language = 'en'): string
+    public function exportDisclosureNoteToHtml(array $disclosure, string $language='en'): string
     {
         $lang   = ($language === 'nl' ? 'nl' : 'en');
         $labels = $this->disclosureLabels(language: $lang);
@@ -490,7 +489,6 @@ class LeaseDisclosureService
 
     }//end exportDisclosureNoteToHtml()
 
-
     /**
      * Render the disclosure note for the Phase-2 PDF pipeline (Task 10.2).
      *
@@ -511,7 +509,7 @@ class LeaseDisclosureService
      *
      * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
      */
-    public function exportDisclosureNoteToPDF(array $disclosure, string $language = 'en'): array
+    public function exportDisclosureNoteToPDF(array $disclosure, string $language='en'): array
     {
         return [
             'kind'             => 'lease-disclosure-note',
@@ -523,7 +521,6 @@ class LeaseDisclosureService
         ];
 
     }//end exportDisclosureNoteToPDF()
-
 
     /**
      * Skeleton XBRL/ESEF export for the bookkeeping-sbr-xbrl-reporting
@@ -551,26 +548,25 @@ class LeaseDisclosureService
 
         $facts = [
             // IFRS 16 RoU totals (rough mapping to the IFRS taxonomy).
-            'ifrs-full:RightofuseAssets'                          => (float) ($disclosure['totalRouAsset'] ?? 0),
-            'ifrs-full:LeaseLiabilitiesCurrent'                   => (float) ($disclosure['totalLeaseLiabilityCurrent'] ?? 0),
-            'ifrs-full:LeaseLiabilitiesNoncurrent'                => (float) ($disclosure['totalLeaseLiabilityNoncurrent'] ?? 0),
-            'ifrs-full:InterestExpenseOnLeaseLiabilities'         => (float) ($disclosure['totalInterestExpense'] ?? 0),
-            'ifrs-full:ExpenseRelatingToShorttermLeases'          => (float) ($disclosure['totalShortTermLeaseExpense'] ?? 0),
-            'ifrs-full:ExpenseRelatingToLeasesOfLowvalueAssets'   => (float) ($disclosure['totalLowValueLeaseExpense'] ?? 0),
-            'ifrs-full:ExpenseRelatingToVariableLeasePayments'    => (float) ($disclosure['totalVariableLeaseExpense'] ?? 0),
+            'ifrs-full:RightofuseAssets'                        => (float) ($disclosure['totalRouAsset'] ?? 0),
+            'ifrs-full:LeaseLiabilitiesCurrent'                 => (float) ($disclosure['totalLeaseLiabilityCurrent'] ?? 0),
+            'ifrs-full:LeaseLiabilitiesNoncurrent'              => (float) ($disclosure['totalLeaseLiabilityNoncurrent'] ?? 0),
+            'ifrs-full:InterestExpenseOnLeaseLiabilities'       => (float) ($disclosure['totalInterestExpense'] ?? 0),
+            'ifrs-full:ExpenseRelatingToShorttermLeases'        => (float) ($disclosure['totalShortTermLeaseExpense'] ?? 0),
+            'ifrs-full:ExpenseRelatingToLeasesOfLowvalueAssets' => (float) ($disclosure['totalLowValueLeaseExpense'] ?? 0),
+            'ifrs-full:ExpenseRelatingToVariableLeasePayments'  => (float) ($disclosure['totalVariableLeaseExpense'] ?? 0),
         ];
 
         return [
-            'kind'        => 'lease-disclosure-xbrl',
-            'status'      => 'pending-sbr-xbrl-reporting',
-            'contextRef'  => $contextRef,
-            'facts'       => $facts,
-            'taxonomy'    => 'ifrs-full-2024',
-            'note'        => 'Skeleton: full ESEF iXBRL wrapper + taxonomy linkbase land with the bookkeeping-sbr-xbrl-reporting change.',
+            'kind'       => 'lease-disclosure-xbrl',
+            'status'     => 'pending-sbr-xbrl-reporting',
+            'contextRef' => $contextRef,
+            'facts'      => $facts,
+            'taxonomy'   => 'ifrs-full-2024',
+            'note'       => 'Skeleton: full ESEF iXBRL wrapper + taxonomy linkbase land with the bookkeeping-sbr-xbrl-reporting change.',
         ];
 
     }//end exportToXBRL()
-
 
     /**
      * Resolve the per-language label set for the disclosure note.
@@ -605,12 +601,12 @@ class LeaseDisclosureService
 
     }//end disclosureLabels()
 
-
     /**
      * Render one labelled key→value section for the HTML disclosure note.
      *
-     * @param string                $heading Section heading (already-localised).
-     * @param array<string,mixed>   $rows    Key→value rows.
+     * @param string              $heading Section heading (already-localised).
+     * @param array<string,mixed> $rows    Key→value
+     *                                     rows.
      *
      * @return string The HTML fragment.
      */
@@ -620,7 +616,7 @@ class LeaseDisclosureService
             return '';
         }
 
-        $html = '<h2>'.htmlspecialchars(string: $heading, flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8').'</h2>';
+        $html  = '<h2>'.htmlspecialchars(string: $heading, flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8').'</h2>';
         $html .= '<table><tbody>';
         foreach ($rows as $label => $value) {
             $html .= '<tr><th scope="row">'
@@ -634,7 +630,6 @@ class LeaseDisclosureService
         return $html;
 
     }//end htmlSection()
-
 
     /**
      * Render a numeric value as a two-decimal CSV string.

@@ -191,7 +191,7 @@ class BbvSeedService
         array $rows,
         string $schema,
         string $dedupField,
-        ?string $secondaryDedupField = null
+        ?string $secondaryDedupField=null
     ): array {
         $seeded       = 0;
         $skipped      = 0;

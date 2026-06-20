@@ -73,7 +73,6 @@ class BookingDetailController extends Controller
      */
     private const HISTORY_DEFAULT_LIMIT = 5;
 
-
     /**
      * Construct the controller with DI dependencies.
      *
@@ -95,7 +94,6 @@ class BookingDetailController extends Controller
         parent::__construct(appName: Application::APP_ID, request: $request);
 
     }//end __construct()
-
 
     /**
      * GET /api/v1/bookings/{id}
@@ -181,7 +179,7 @@ class BookingDetailController extends Controller
         $offset = $this->resolveOffset();
 
         try {
-            $contact = $this->pipelinq->getContact(externalId: $pipelinqContactId);
+            $contact            = $this->pipelinq->getContact(externalId: $pipelinqContactId);
             $payload['contact'] = $this->presentContact(contact: $contact);
         } catch (PipelinqTransportException $e) {
             $this->logger->warning(
@@ -234,12 +232,11 @@ class BookingDetailController extends Controller
             $payload['klantbeeld'] = $this->presentKlantbeeld(
                 KlantbeeldResult::unavailable(limit: $limit, offset: $offset)
             );
-        }
+        }//end try
 
         return new JSONResponse($payload);
 
     }//end show()
-
 
     /**
      * Resolve the klantbeeld page limit from the query string.
@@ -260,7 +257,6 @@ class BookingDetailController extends Controller
 
     }//end resolveLimit()
 
-
     /**
      * Resolve the klantbeeld page offset from the query string.
      *
@@ -277,7 +273,6 @@ class BookingDetailController extends Controller
 
     }//end resolveOffset()
 
-
     /**
      * Look up an Appointment by its business id.
      *
@@ -292,10 +287,12 @@ class BookingDetailController extends Controller
             $records       = $objectService
                 ->setRegister($this->settings->getRegisterSlug())
                 ->setSchema('Appointment')
-                ->findAll([
-                    'filters' => ['appointmentId' => $appointmentId],
-                    'limit'   => 1,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => ['appointmentId' => $appointmentId],
+                            'limit'   => 1,
+                        ]
+                        );
         } catch (Throwable $e) {
             $this->logger->error(
                 'BookingDetailController: appointment lookup failed',
@@ -306,7 +303,7 @@ class BookingDetailController extends Controller
                 ]
             );
             return null;
-        }
+        }//end try
 
         foreach ($records as $record) {
             return $this->toArray(object: $record);
@@ -315,7 +312,6 @@ class BookingDetailController extends Controller
         return null;
 
     }//end loadAppointment()
-
 
     /**
      * Shape an Appointment row for the detail response.
@@ -338,15 +334,12 @@ class BookingDetailController extends Controller
             'endTime'           => (string) ($appointment['endTime'] ?? ''),
             'status'            => (string) ($appointment['status'] ?? ''),
             'notes'             => (string) ($appointment['notes'] ?? ''),
-            'pipelinqContactId' => ((isset($appointment['pipelinqContactId']) === true && $appointment['pipelinqContactId'] !== null)
-                ? (string) $appointment['pipelinqContactId']
-                : null),
+            'pipelinqContactId' => ((isset($appointment['pipelinqContactId']) === true && $appointment['pipelinqContactId'] !== null) ? (string) $appointment['pipelinqContactId'] : null),
             'createdAt'         => (string) ($appointment['createdAt'] ?? ''),
             'updatedAt'         => (string) ($appointment['updatedAt'] ?? ''),
         ];
 
     }//end presentBooking()
-
 
     /**
      * Shape a {@see PipelinqContact} DTO for the detail response.
@@ -369,7 +362,6 @@ class BookingDetailController extends Controller
 
     }//end presentContact()
 
-
     /**
      * Shape a {@see KlantbeeldResult} envelope for the detail response.
      *
@@ -382,13 +374,12 @@ class BookingDetailController extends Controller
      */
     private function presentKlantbeeld(KlantbeeldResult $result): array
     {
-        $serialised = $result->jsonSerialize();
+        $serialised          = $result->jsonSerialize();
         $serialised['empty'] = $result->isEmpty();
 
         return $serialised;
 
     }//end presentKlantbeeld()
-
 
     /**
      * Build a user-safe `contactError` string from an adapter exception.
@@ -420,7 +411,6 @@ class BookingDetailController extends Controller
         return 'Customer profile temporarily unavailable.';
 
     }//end sanitiseAdapterError()
-
 
     /**
      * Normalise an OR record (Entity, array, or JSON-serialisable) into a flat array.
@@ -456,6 +446,4 @@ class BookingDetailController extends Controller
         return [];
 
     }//end toArray()
-
-
 }//end class

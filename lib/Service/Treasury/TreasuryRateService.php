@@ -121,7 +121,7 @@ class TreasuryRateService
             $result = $this->syntheticDeferred($rateCode, $asOf);
         }
 
-        $snapshot = $this->resultToSnapshot($result, $rateCode, $asOf);
+        $snapshot          = $this->resultToSnapshot($result, $rateCode, $asOf);
         $this->cache[$key] = $snapshot;
         return $snapshot;
     }//end getReferenceRate()
@@ -153,7 +153,7 @@ class TreasuryRateService
             $result = $this->syntheticDeferred($pair, $asOf);
         }
 
-        $snapshot = $this->resultToSnapshot($result, $pair, $asOf);
+        $snapshot          = $this->resultToSnapshot($result, $pair, $asOf);
         $this->cache[$key] = $snapshot;
         return $snapshot;
     }//end getFxSpot()

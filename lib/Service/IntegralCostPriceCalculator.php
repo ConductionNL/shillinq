@@ -105,8 +105,8 @@ class IntegralCostPriceCalculator
                 continue;
             }
 
-            $kp = (string) ($line['kostenplaats'] ?? $line['kostenplaatsCode'] ?? '');
-            $kd = (string) ($line['kostendrager'] ?? $line['kostendragerCode'] ?? '');
+            $kp   = (string) ($line['kostenplaats'] ?? $line['kostenplaatsCode'] ?? '');
+            $kd   = (string) ($line['kostendrager'] ?? $line['kostendragerCode'] ?? '');
             $kind = (string) ($line['accountKind'] ?? $line['kind'] ?? '');
 
             if ($kp !== $kostenplaats || $kd !== $kostendrager) {
@@ -125,7 +125,7 @@ class IntegralCostPriceCalculator
             }
 
             $totalCents += $this->toCents($amount);
-        }
+        }//end foreach
 
         return $totalCents;
 
@@ -138,9 +138,9 @@ class IntegralCostPriceCalculator
      * carry the BBV taakveld 0.4 overhead, the rule's per-bucket ratios distribute
      * it to the activity's overhead components.
      *
-     * @param int                            $corporateOverheadCents Corporate overhead pool in cents.
-     * @param array<string,mixed>            $rule                   The OverheadDistributionRule.
-     * @param string                         $kostendrager           Kostendrager code (filter ratios to this drager).
+     * @param int                 $corporateOverheadCents Corporate overhead pool in cents.
+     * @param array<string,mixed> $rule                   The OverheadDistributionRule.
+     * @param string              $kostendrager           Kostendrager code (filter ratios to this drager).
      *
      * @return array<string,int> Per-bucket overhead in cents (huisvesting, ict, directieEnStaf, facilitair, custom).
      */
@@ -174,9 +174,9 @@ class IntegralCostPriceCalculator
                 $ratio = 1.0;
             }
 
-            $bucketCents     = (int) round($corporateOverheadCents * $ratio, 0, PHP_ROUND_HALF_EVEN);
+            $bucketCents      = (int) round($corporateOverheadCents * $ratio, 0, PHP_ROUND_HALF_EVEN);
             $buckets[$bucket] = ($buckets[$bucket] ?? 0) + $bucketCents;
-        }
+        }//end foreach
 
         return $buckets;
 
@@ -356,12 +356,12 @@ class IntegralCostPriceCalculator
             'berekendOp'           => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeImmutable::ATOM),
             'status'               => (string) ($input['status'] ?? 'voorlopig'),
             'componenten'          => [
-                'directeLoonkosten'    => $this->fromCents($loonkostenCents),
-                'directeMaterialen'    => $this->fromCents($materialenCents),
+                'directeLoonkosten'     => $this->fromCents($loonkostenCents),
+                'directeMaterialen'     => $this->fromCents($materialenCents),
                 'directeAfschrijvingen' => $this->fromCents($afschrijvingenCents),
-                'indirecteOverhead'    => array_map(fn (int $c): float => $this->fromCents($c), $overheadBuckets),
-                'vermogenskosten'      => $this->fromCents($vermogensCents),
-                'winstopslag'          => $this->fromCents($winstopslagCents),
+                'indirecteOverhead'     => array_map(fn (int $c): float => $this->fromCents($c), $overheadBuckets),
+                'vermogenskosten'       => $this->fromCents($vermogensCents),
+                'winstopslag'           => $this->fromCents($winstopslagCents),
             ],
             'totaleKosten'         => $this->fromCents($totaleKostenCents),
             'verkochteEenheden'    => ($verkochteEenheden > 0.0 ? $verkochteEenheden : null),
@@ -375,5 +375,4 @@ class IntegralCostPriceCalculator
         ];
 
     }//end compose()
-
 }//end class

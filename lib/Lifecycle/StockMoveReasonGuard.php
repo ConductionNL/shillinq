@@ -72,7 +72,6 @@ class StockMoveReasonGuard
         'repack',
     ];
 
-
     /**
      * Construct the guard.
      *
@@ -85,7 +84,6 @@ class StockMoveReasonGuard
     ) {
 
     }//end __construct()
-
 
     /**
      * Returns true iff the supplied StockMove carries a valid `movementReason`
@@ -134,7 +132,6 @@ class StockMoveReasonGuard
 
     }//end requireReasonOnPost()
 
-
     /**
      * Compose the allowed reason-code set: standard codes plus per-administration
      * extras read from app config (`stockmove_reason_codes_<adminId>`, CSV).
@@ -174,6 +171,4 @@ class StockMoveReasonGuard
         }//end try
 
     }//end allowedReasonCodes()
-
-
 }//end class

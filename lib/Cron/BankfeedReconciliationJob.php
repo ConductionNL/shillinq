@@ -57,7 +57,6 @@ class BankfeedReconciliationJob extends TimedJob
      */
     private const INTERVAL_SECONDS = 86400;
 
-
     /**
      * Constructor.
      *
@@ -80,7 +79,6 @@ class BankfeedReconciliationJob extends TimedJob
         $this->setAllowParallelRuns(allow: false);
 
     }//end __construct()
-
 
     /**
      * Pull bankfeed and run reconciliation.
@@ -144,7 +142,7 @@ class BankfeedReconciliationJob extends TimedJob
                     ->findAll(
                         [
                             'filters' => [
-                                'bankAccountIban' => $iban,
+                                'bankAccountIban'  => $iban,
                                 'administrationId' => $admin,
                             ],
                         ]
@@ -177,7 +175,6 @@ class BankfeedReconciliationJob extends TimedJob
 
     }//end run()
 
-
     /**
      * Defensive extractor — entity or array.
      *
@@ -200,7 +197,6 @@ class BankfeedReconciliationJob extends TimedJob
         return null;
 
     }//end extractField()
-
 
     /**
      * Coerce an OR entity or array to a plain array for the matcher.
@@ -225,6 +221,4 @@ class BankfeedReconciliationJob extends TimedJob
         return [];
 
     }//end asArray()
-
-
 }//end class

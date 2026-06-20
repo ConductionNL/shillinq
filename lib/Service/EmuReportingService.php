@@ -503,9 +503,9 @@ class EmuReportingService
     {
         $lines = ['regel;label;bedrag'];
         foreach ($tussenregels as $row) {
-            $regel  = (int) ($row['regel'] ?? 0);
-            $label  = str_replace(';', ',', (string) ($row['label'] ?? ''));
-            $bedrag = number_format((float) ($row['bedrag'] ?? 0.0), 2, '.', '');
+            $regel   = (int) ($row['regel'] ?? 0);
+            $label   = str_replace(';', ',', (string) ($row['label'] ?? ''));
+            $bedrag  = number_format((float) ($row['bedrag'] ?? 0.0), 2, '.', '');
             $lines[] = $regel.';'.$label.';'.$bedrag;
         }
 
@@ -522,9 +522,11 @@ class EmuReportingService
      * cross-app), (3) `accountNumber` prefix map provided by the caller. Returns
      * null when no source resolves — caller decides whether to fail validation.
      *
-     * @param array<string,mixed>                $item           CashFlowItem object array.
-     * @param array<string,array<string,string>> $taakveldMap    Map taakveld → iv3 (hoofdstuk/functie/categorie).
-     * @param array<string,array<string,string>> $accountMap     Map account-prefix → iv3.
+     * @param array<string,mixed>                $item        CashFlowItem object array.
+     * @param array<string,array<string,string>> $taakveldMap Map taakveld → iv3
+     *                                                        (hoofdstuk/functie/categorie).
+     * @param array<string,array<string,string>> $accountMap  Map account-prefix →
+     *                                                        iv3.
      *
      * @return array<string,string>|null Resolved iv3 object or null.
      *

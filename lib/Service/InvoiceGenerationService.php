@@ -40,14 +40,14 @@ use RuntimeException;
 class InvoiceGenerationService
 {
     /**
-     * @param ContainerInterface           $container         DI container.
-     * @param IAppConfig                   $appConfig         App config.
-     * @param LoggerInterface              $logger            Logger.
-     * @param RateCardResolver             $rateCards         Rate snapshot lookup.
-     * @param RetainerResolver             $retainers         Retainer schedule lookup.
-     * @param BillingModelEngine           $billingEngine     Pure model logic.
-     * @param InvoiceDeduplicationService  $deduper           Source-id conflict scanner.
-     * @param VATCalculationService        $vat               VAT totaller.
+     * @param ContainerInterface          $container     DI container.
+     * @param IAppConfig                  $appConfig     App config.
+     * @param LoggerInterface             $logger        Logger.
+     * @param RateCardResolver            $rateCards     Rate snapshot lookup.
+     * @param RetainerResolver            $retainers     Retainer schedule lookup.
+     * @param BillingModelEngine          $billingEngine Pure model logic.
+     * @param InvoiceDeduplicationService $deduper       Source-id conflict scanner.
+     * @param VATCalculationService       $vat           VAT totaller.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -78,10 +78,12 @@ class InvoiceGenerationService
             expenseIds: $request->expenseIds
         );
         if ($dedup['hasConflicts'] === true) {
-            throw new RuntimeException(sprintf(
+            throw new RuntimeException(
+                    sprintf(
                 'Conflict: source ids already invoiced (%s)',
                 json_encode($dedup['conflicts'])
-            ));
+            )
+                    );
         }
 
         // 2. Resolve time entries → BillingModelEngine input shape.
@@ -104,7 +106,7 @@ class InvoiceGenerationService
 
         unset($_line);
 
-        $totals = $this->vat->calculateVAT($lineDrafts);
+        $totals        = $this->vat->calculateVAT($lineDrafts);
         $invoiceNumber = $this->generateInvoiceNumber(administrationId: $request->administrationId, invoiceDate: $request->toDate);
         $dueDate       = $this->addDays($request->toDate, 30);
 
@@ -180,7 +182,7 @@ class InvoiceGenerationService
      */
     public function validateInvoice(array $invoice): array
     {
-        $errors = [];
+        $errors    = [];
         $invoiceId = (string) ($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
         $admin     = (string) ($invoice['administrationId'] ?? '');
         $timeIds   = array_map('strval', (array) ($invoice['timeEntryIds'] ?? []));
@@ -273,7 +275,7 @@ class InvoiceGenerationService
 
         // GL posting: Debit AR, Credit Revenue (by model), Credit VAT Payable.
         $revenueAccount = $this->revenueAccountFor(billingModel: (string) ($invoice['billingModel'] ?? ''));
-        $journal = [
+        $journal        = [
             'administrationId' => $admin,
             'description'      => sprintf('Invoice %s', (string) ($invoice['invoiceNumber'] ?? '')),
             'journalDate'      => (string) ($invoice['invoiceDate'] ?? ''),
@@ -293,11 +295,14 @@ class InvoiceGenerationService
         }
 
         // Patch the invoice.
-        $update = array_merge($invoice, [
-            'status'       => 'posted',
-            'posted'       => true,
-            'obligationId' => $obligationId,
-        ]);
+        $update = array_merge(
+                $invoice,
+                [
+                    'status'       => 'posted',
+                    'posted'       => true,
+                    'obligationId' => $obligationId,
+                ]
+                );
 
         $persisted = $this->saveObject(schema: 'BillableInvoice', data: $update);
         $this->logger->info(sprintf('BillableInvoice %s posted (gross €%.2f, obligation %s)', (string) ($invoice['invoiceNumber'] ?? ''), $grossCents / 100, (string) $obligationId));
@@ -346,10 +351,10 @@ class InvoiceGenerationService
     /**
      * Decide which BillingModelEngine method to invoke.
      *
-     * @param InvoiceGenerationRequest        $request     Request.
-     * @param array<int,array<string,mixed>>  $timeEntries Resolved time entries.
-     * @param array<int,array<string,mixed>>  $expenses    Resolved expenses.
-     * @param float                           $hoursLogged Total hours.
+     * @param InvoiceGenerationRequest       $request     Request.
+     * @param array<int,array<string,mixed>> $timeEntries Resolved time entries.
+     * @param array<int,array<string,mixed>> $expenses    Resolved expenses.
+     * @param float                          $hoursLogged Total hours.
      *
      * @return array<int,array<string,mixed>> Line drafts.
      */
@@ -405,7 +410,7 @@ class InvoiceGenerationService
      * Load time entries and attach rate snapshots.
      *
      * @param array<int,string> $ids        UrenRegistratie ids.
-     * @param string|null        $rateCardId Rate card to resolve against.
+     * @param string|null       $rateCardId Rate card to resolve against.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -426,9 +431,7 @@ class InvoiceGenerationService
             $hours        = (float) ($loaded['hours'] ?? ($loaded['duration'] ?? 0));
             $date         = (string) ($loaded['date'] ?? ($loaded['workDate'] ?? date('Y-m-d')));
 
-            $rate = ($rateCardId !== null)
-                ? $this->rateCards->resolveRate(rateCardId: $rateCardId, resourceType: $resourceType, date: $date)
-                : ['rateCents' => $this->toCents($loaded['hourlyRateOverride'] ?? 10000), 'currency' => 'EUR', 'rateCardVersion' => 'override', 'effectiveDate' => $date];
+            $rate = ($rateCardId !== null) ? $this->rateCards->resolveRate(rateCardId: $rateCardId, resourceType: $resourceType, date: $date) : ['rateCents' => $this->toCents($loaded['hourlyRateOverride'] ?? 10000), 'currency' => 'EUR', 'rateCardVersion' => 'override', 'effectiveDate' => $date];
 
             $entries[] = [
                 'timeEntryId'  => $id,
@@ -487,16 +490,16 @@ class InvoiceGenerationService
         $loaded = $this->find(schema: 'Milestone', id: $milestoneId);
         if ($loaded === null) {
             return [
-                'milestoneId'         => $milestoneId,
-                'milestoneName'       => 'Milestone',
+                'milestoneId'          => $milestoneId,
+                'milestoneName'        => 'Milestone',
                 'milestoneCompletedAt' => date('Y-m-d'),
                 'milestoneBudgetCents' => 0,
             ];
         }
 
         return [
-            'milestoneId'         => $milestoneId,
-            'milestoneName'       => (string) ($loaded['name'] ?? 'Milestone'),
+            'milestoneId'          => $milestoneId,
+            'milestoneName'        => (string) ($loaded['name'] ?? 'Milestone'),
             'milestoneCompletedAt' => (string) ($loaded['completedAt'] ?? date('Y-m-d')),
             'milestoneBudgetCents' => $this->toCents($loaded['budgetAmount'] ?? 0),
         ];
@@ -562,7 +565,7 @@ class InvoiceGenerationService
     {
         $existing = $this->container->get('OCA\OpenRegister\Service\ObjectService');
         try {
-            $rs = $existing->setRegister($this->register())
+            $rs    = $existing->setRegister($this->register())
                 ->setSchema('BillableInvoice')
                 ->findAll(filters: ['administrationId' => $administrationId]);
             $count = is_array($rs) === true ? count($rs) : 0;
@@ -631,7 +634,7 @@ class InvoiceGenerationService
     /**
      * Save (create or update) via the real OR ObjectService API.
      *
-     * @param string             $schema Schema slug.
+     * @param string              $schema Schema slug.
      * @param array<string,mixed> $data   Record body.
      *
      * @return array<string,mixed>
@@ -684,5 +687,4 @@ class InvoiceGenerationService
         return $register;
 
     }//end register()
-
 }//end class

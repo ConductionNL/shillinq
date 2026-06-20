@@ -95,7 +95,7 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface
      *
      * @return UwvStatusResult The lookup outcome.
      */
-    public function lookupSector(string $sectorCode, int $peiljaar, array $context = []): UwvStatusResult
+    public function lookupSector(string $sectorCode, int $peiljaar, array $context=[]): UwvStatusResult
     {
         $kenmerk = 'uwv-sector-log-'.bin2hex(random_bytes(6));
         $this->logger->info(

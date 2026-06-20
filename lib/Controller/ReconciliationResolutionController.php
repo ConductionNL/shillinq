@@ -61,20 +61,19 @@ class ReconciliationResolutionController extends Controller
      */
     private const ALLOWED_STATUSES = ['matched', 'timing', 'pending', 'adjustment'];
 
-
     /**
      * Constructor.
      *
      * @param IRequest                        $request     Inbound request.
      * @param ReconciliationResolutionService $service     Encapsulates the
-     *                                                    write logic + audit
-     *                                                    trail.
+     *                                                     write logic + audit
+     *                                                     trail.
      * @param IUserSession                    $userSession Current Nextcloud
-     *                                                    user (for audit-trail
-     *                                                    actor stamp).
+     *                                                     user (for audit-trail
+     *                                                     actor stamp).
      * @param LoggerInterface                 $logger      Logger for
-     *                                                    fail-closed
-     *                                                    diagnostics.
+     *                                                     fail-closed
+     *                                                     diagnostics.
      *
      * @return void
      */
@@ -87,7 +86,6 @@ class ReconciliationResolutionController extends Controller
         parent::__construct(appName: Application::APP_ID, request: $request);
 
     }//end __construct()
-
 
     /**
      * Resolve a single unmatched item (REQ-REC-004).
@@ -163,7 +161,6 @@ class ReconciliationResolutionController extends Controller
 
     }//end resolve()
 
-
     /**
      * Bulk-resolve a list of unmatched items (REQ-REC-008 scenario "Unmatched
      * Items page provides bulk resolution"). All matches receive the same
@@ -215,7 +212,7 @@ class ReconciliationResolutionController extends Controller
         }
 
                 $this->requireAuthenticatedSession();
-$actor   = $this->resolveActor();
+        $actor   = $this->resolveActor();
         $applied = 0;
         $failed  = [];
         foreach ($matchIdsParam as $rawId) {
@@ -244,7 +241,6 @@ $actor   = $this->resolveActor();
         );
 
     }//end bulkResolve()
-
 
     /**
      * Validate the resolutionStatus + resolutionReason payload. Returns a
@@ -276,7 +272,6 @@ $actor   = $this->resolveActor();
 
     }//end validatePayload()
 
-
     /**
      * Require an authenticated Nextcloud session (REQ-REC-004 IDOR guard).
      * Throws OCSForbiddenException when the controller is invoked outside a
@@ -297,7 +292,6 @@ $actor   = $this->resolveActor();
 
     }//end requireAuthenticatedSession()
 
-
     /**
      * Resolve the current Nextcloud actor UID for audit-trail stamping.
      * Falls back to 'system' when the session is unavailable (should not
@@ -315,6 +309,4 @@ $actor   = $this->resolveActor();
         return $user->getUID();
 
     }//end resolveActor()
-
-
 }//end class

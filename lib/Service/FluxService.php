@@ -120,16 +120,16 @@ class FluxService
      * Variances <= threshold are 'immaterial'. Variances > threshold are 'material'.
      * Variances > 10× threshold are 'highly-material'.
      *
-     * @param int                $varianceCents Signed variance in cents.
-     * @param int                $basisCents    Basis amount in cents.
+     * @param int                 $varianceCents Signed variance in cents.
+     * @param int                 $basisCents    Basis amount in cents.
      * @param array<string,mixed> $policy        The MaterialityPolicy record.
-     * @param string             $accountGroup  Account group ('operational' | 'cash' | 'tax' | 'revenue').
+     * @param string              $accountGroup  Account group ('operational' | 'cash' | 'tax' | 'revenue').
      *
      * @return string One of 'immaterial', 'material', 'highly-material'.
      *
      * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-21
      */
-    public function classifyMateriality(int $varianceCents, int $basisCents, array $policy, string $accountGroup = 'operational'): string
+    public function classifyMateriality(int $varianceCents, int $basisCents, array $policy, string $accountGroup='operational'): string
     {
         $absoluteThreshold   = (int) ($policy['absoluteThresholdCents'] ?? 0);
         $percentageThreshold = (float) ($policy['percentageThreshold'] ?? 0.0);
@@ -140,9 +140,9 @@ class FluxService
             $percentageThreshold = (float) ($specials[$accountGroup]['percentageThreshold'] ?? $percentageThreshold);
         }
 
-        $absoluteVariance      = abs($varianceCents);
+        $absoluteVariance         = abs($varianceCents);
         $percentageThresholdCents = (int) round(abs($basisCents) * $percentageThreshold);
-        $threshold             = max($absoluteThreshold, $percentageThresholdCents);
+        $threshold = max($absoluteThreshold, $percentageThresholdCents);
 
         if ($threshold <= 0) {
             // No threshold defined — treat anything non-zero as material to surface for review.
@@ -184,7 +184,7 @@ class FluxService
     /**
      * Compute the auto-explanation coverage fraction (REQ-CLS-006).
      *
-     * @param array<int,array<string,mixed>> $attributions Driver attributions.
+     * @param array<int,array<string,mixed>> $attributions  Driver attributions.
      * @param int                            $varianceCents Total variance in cents.
      *
      * @return float Coverage in [0, 1]; 0.0 when variance is zero.
@@ -240,12 +240,12 @@ class FluxService
      * Run a flux analysis for an administratie + period (REQ-CLS-005).
      *
      * @param array<string,mixed> $inputs Run inputs:
-     *   {
-     *     administrationId, periodId, scope, comparisonBasis,
-     *     accounts: [{glAccountNumber, accountGroupCode, actualCents, basisCents, attributions}],
-     *     materialityPolicy: {...},
-     *     runTimestamp?: DateTimeImmutable
-     *   }
+     *                                    {
+     *                                    administrationId, periodId, scope, comparisonBasis,
+     *                                    accounts: [{glAccountNumber, accountGroupCode, actualCents, basisCents, attributions}],
+     *                                    materialityPolicy: {...},
+     *                                    runTimestamp?: DateTimeImmutable
+     *                                    }
      *
      * @return array{
      *   fluxRunId: string,
@@ -286,46 +286,45 @@ class FluxService
             $basisCents  = (int) ($account['basisCents'] ?? 0);
             $attribs     = (array) ($account['attributions'] ?? []);
 
-            $variance     = $this->computeVarianceCents(actualCents: $actualCents, basisCents: $basisCents);
-            $percentage   = $this->computePercentageVariance(varianceCents: $variance, basisCents: $basisCents);
-            $materiality  = $this->classifyMateriality(
+            $variance    = $this->computeVarianceCents(actualCents: $actualCents, basisCents: $basisCents);
+            $percentage  = $this->computePercentageVariance(varianceCents: $variance, basisCents: $basisCents);
+            $materiality = $this->classifyMateriality(
                 varianceCents: $variance,
                 basisCents: $basisCents,
                 policy: $policy,
                 accountGroup: $group
             );
-            $coverage     = $this->computeAutoExplanationCoverage(attributions: $attribs, varianceCents: $variance);
-            $status       = $this->decideStatus(materiality: $materiality, coverage: $coverage);
-            $totalVar    += abs($variance);
+            $coverage    = $this->computeAutoExplanationCoverage(attributions: $attribs, varianceCents: $variance);
+            $status      = $this->decideStatus(materiality: $materiality, coverage: $coverage);
+            $totalVar   += abs($variance);
 
             if ($materiality !== 'immaterial') {
                 $material++;
             }
+
             if ($status === 'auto-explained') {
                 $auto++;
-            } elseif ($status === 'escalated') {
+            } else if ($status === 'escalated') {
                 $escalated++;
             }
 
             $items[] = [
-                'fluxRunId'              => $fluxRunId,
-                'glAccountNumber'        => $glAccount,
-                'budgetCents'            => $basisCents,
-                'actualCents'            => $actualCents,
-                'varianceCents'          => $variance,
-                'percentageVariance'     => $percentage,
+                'fluxRunId'                 => $fluxRunId,
+                'glAccountNumber'           => $glAccount,
+                'budgetCents'               => $basisCents,
+                'actualCents'               => $actualCents,
+                'varianceCents'             => $variance,
+                'percentageVariance'        => $percentage,
                 'materialityClassification' => $materiality,
-                'autoExplanation'        => $this->formatAutoExplanation(attributions: $attribs),
-                'autoExplanationCoverage' => $coverage,
-                'ownerExplanation'       => '',
-                'status'                 => $status,
-                'ownerEscalationSLA'     => $status === 'escalated'
-                    ? $runTimestamp->modify('+'.self::OWNER_SLA_HOURS.' hours')->format(DateTimeInterface::ATOM)
-                    : null,
-                'ownerEscalatedTo'       => $status === 'escalated' ? $this->ownerForAccount(glAccount: $glAccount, group: $group) : '',
-                'attributions'           => $attribs,
+                'autoExplanation'           => $this->formatAutoExplanation(attributions: $attribs),
+                'autoExplanationCoverage'   => $coverage,
+                'ownerExplanation'          => '',
+                'status'                    => $status,
+                'ownerEscalationSLA'        => $status === 'escalated' ? $runTimestamp->modify('+'.self::OWNER_SLA_HOURS.' hours')->format(DateTimeInterface::ATOM) : null,
+                'ownerEscalatedTo'          => $status === 'escalated' ? $this->ownerForAccount(glAccount: $glAccount, group: $group) : '',
+                'attributions'              => $attribs,
             ];
-        }
+        }//end foreach
 
         $this->persistRun(
             fluxRunId: $fluxRunId,
@@ -345,13 +344,13 @@ class FluxService
         );
 
         return [
-            'fluxRunId'           => $fluxRunId,
-            'itemCount'           => count($items),
-            'materialCount'       => $material,
-            'autoExplainedCount'  => $auto,
-            'escalatedCount'      => $escalated,
-            'totalVarianceCents'  => $totalVar,
-            'items'               => $items,
+            'fluxRunId'          => $fluxRunId,
+            'itemCount'          => count($items),
+            'materialCount'      => $material,
+            'autoExplainedCount' => $auto,
+            'escalatedCount'     => $escalated,
+            'totalVarianceCents' => $totalVar,
+            'items'              => $items,
         ];
 
     }//end run()
@@ -359,8 +358,8 @@ class FluxService
     /**
      * Aggregate run items into a flux narrative ordered by absolute variance (REQ-CLS-007).
      *
-     * @param array<int,array<string,mixed>> $items     Flux items (typically from run()['items']).
-     * @param string                         $periodId  The yyyy-mm period.
+     * @param array<int,array<string,mixed>> $items    Flux items (typically from run()['items']).
+     * @param string                         $periodId The yyyy-mm period.
      *
      * @return array{
      *   periodId: string,
@@ -375,10 +374,12 @@ class FluxService
      */
     public function buildNarrative(array $items, string $periodId): array
     {
-        $material = array_values(array_filter(
+        $material = array_values(
+                array_filter(
             $items,
             static fn (array $item): bool => ($item['materialityClassification'] ?? 'immaterial') !== 'immaterial'
-        ));
+        )
+                );
 
         usort(
             $material,
@@ -403,12 +404,12 @@ class FluxService
         }
 
         return [
-            'periodId'         => $periodId,
-            'itemCount'        => count($material),
-            'explainedCount'   => $explained,
-            'unexplainedCount' => $unexplained,
+            'periodId'          => $periodId,
+            'itemCount'         => count($material),
+            'explainedCount'    => $explained,
+            'unexplainedCount'  => $unexplained,
             'totalAdverseCents' => $adverse,
-            'rows'             => $material,
+            'rows'              => $material,
         ];
 
     }//end buildNarrative()
@@ -482,16 +483,16 @@ class FluxService
     public function renderNarrativePdfBody(array $narrative): string
     {
         $periodId = (string) ($narrative['periodId'] ?? '');
-        $out  = "Shillinq Continuous Close — Flux Narrative\n";
-        $out .= str_repeat('=', 70)."\n";
-        $out .= "Period: ".$periodId."\n";
-        $out .= "Generated: ".(new DateTimeImmutable())->format(DateTimeInterface::ATOM)."\n";
-        $out .= str_repeat('-', 70)."\n\n";
-        $out .= $this->renderNarrativeMarkdown(narrative: $narrative);
-        $out .= "\n\n".str_repeat('-', 70)."\n";
-        $out .= "Approved by:\n\n";
-        $out .= "_____________________________________   __________________\n";
-        $out .= "CFO signature                          Date\n";
+        $out      = "Shillinq Continuous Close — Flux Narrative\n";
+        $out     .= str_repeat('=', 70)."\n";
+        $out     .= "Period: ".$periodId."\n";
+        $out     .= "Generated: ".(new DateTimeImmutable())->format(DateTimeInterface::ATOM)."\n";
+        $out     .= str_repeat('-', 70)."\n\n";
+        $out     .= $this->renderNarrativeMarkdown(narrative: $narrative);
+        $out     .= "\n\n".str_repeat('-', 70)."\n";
+        $out     .= "Approved by:\n\n";
+        $out     .= "_____________________________________   __________________\n";
+        $out     .= "CFO signature                          Date\n";
         return $out;
 
     }//end renderNarrativePdfBody()
@@ -504,11 +505,11 @@ class FluxService
      *
      * @return string Formatted amount (e.g. 'EUR 1,380').
      */
-    private function formatCents(int $cents, bool $signed = false): string
+    private function formatCents(int $cents, bool $signed=false): string
     {
-        $euros = $cents / 100.0;
-        $body  = number_format(abs($euros), 0, '.', ',');
-        $sign  = $cents >= 0 ? '+' : '-';
+        $euros  = $cents / 100.0;
+        $body   = number_format(abs($euros), 0, '.', ',');
+        $sign   = $cents >= 0 ? '+' : '-';
         $prefix = $signed === true ? $sign : ($cents < 0 ? '-' : '');
         return 'EUR '.$prefix.$body;
 
@@ -525,11 +526,12 @@ class FluxService
     {
         $parts = [];
         foreach ($attributions as $attribution) {
-            $driver        = (string) ($attribution['driver'] ?? '');
-            $contribution  = (int) ($attribution['contributionCents'] ?? 0);
+            $driver       = (string) ($attribution['driver'] ?? '');
+            $contribution = (int) ($attribution['contributionCents'] ?? 0);
             if ($driver === '' || $contribution === 0) {
                 continue;
             }
+
             $parts[] = sprintf('%s %s', $driver, $this->formatCents(cents: $contribution, signed: true));
         }
 
@@ -574,8 +576,8 @@ class FluxService
     /**
      * Derive an owner identifier for an account / group.
      *
-     * @param string $glAccount   GL account number.
-     * @param string $group       Account group.
+     * @param string $glAccount GL account number.
+     * @param string $group     Account group.
      *
      * @return string Owner identifier.
      */
@@ -588,15 +590,15 @@ class FluxService
     /**
      * Persist FluxRun + FluxItem + FluxAttribution rows.
      *
-     * @param string               $fluxRunId        Run id.
-     * @param string               $administrationId Administration scope.
-     * @param string               $periodId         Period.
-     * @param string               $scope            Run scope.
-     * @param string               $comparisonBasis  Comparison basis.
-     * @param array<string,mixed>  $policy           Materiality policy.
-     * @param DateTimeImmutable    $runTimestamp     Run timestamp.
-     * @param array<int,array<string,mixed>> $items  Flux items.
-     * @param array<string,int>    $summary          Aggregated summary.
+     * @param string                         $fluxRunId        Run id.
+     * @param string                         $administrationId Administration scope.
+     * @param string                         $periodId         Period.
+     * @param string                         $scope            Run scope.
+     * @param string                         $comparisonBasis  Comparison basis.
+     * @param array<string,mixed>            $policy           Materiality policy.
+     * @param DateTimeImmutable              $runTimestamp     Run timestamp.
+     * @param array<int,array<string,mixed>> $items            Flux items.
+     * @param array<string,int>              $summary          Aggregated summary.
      *
      * @return void
      */

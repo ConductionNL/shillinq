@@ -38,8 +38,6 @@ use OCA\Shillinq\Service\Import\ImportProfileInterface;
  */
 class ExactOnlineProfile implements ImportProfileInterface
 {
-
-
     /**
      * {@inheritDoc}
      *
@@ -52,7 +50,6 @@ class ExactOnlineProfile implements ImportProfileInterface
         return 'exact-online';
 
     }//end sourceSystem()
-
 
     /**
      * {@inheritDoc}
@@ -71,7 +68,7 @@ class ExactOnlineProfile implements ImportProfileInterface
         $accounts = ($parsed['ledgerAccounts'] ?? []);
         foreach ($accounts as &$account) {
             if (isset($account['code']) === true && $account['code'] !== '') {
-                $trimmed        = ltrim((string) $account['code'], '0');
+                $trimmed         = ltrim((string) $account['code'], '0');
                 $account['code'] = ($trimmed === '' ? '0' : $trimmed);
             }
         }
@@ -80,7 +77,6 @@ class ExactOnlineProfile implements ImportProfileInterface
         return $accounts;
 
     }//end normalizeLedgerAccounts()
-
 
     /**
      * {@inheritDoc}
@@ -124,7 +120,6 @@ class ExactOnlineProfile implements ImportProfileInterface
 
     }//end mapCsvColumns()
 
-
     /**
      * {@inheritDoc}
      *
@@ -140,6 +135,4 @@ class ExactOnlineProfile implements ImportProfileInterface
         return $parsed;
 
     }//end applyDialectQuirks()
-
-
 }//end class

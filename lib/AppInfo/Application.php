@@ -337,15 +337,15 @@ class Application extends App implements IBootstrap
         // - CBS Iv3 (bookkeeping-cbs-iv3 / provincies + gemeenten Iv3)
         // - BZK SiSa (bookkeeping-sisa-reporting)
         // - Digipoort/SBR (bookkeeping-vat-btw-filing,
-        //   bookkeeping-financial-statements,
-        //   bookkeeping-sbr-xbrl-reporting, bookkeeping-csrd-esrs)
+        // bookkeeping-financial-statements,
+        // bookkeeping-sbr-xbrl-reporting, bookkeeping-csrd-esrs)
         // - Salarisbureau (bookkeeping-detachering-payroll-administratie,
-        //   bookkeeping-payroll-engine-nl)
+        // bookkeeping-payroll-engine-nl)
         // - RvO (bookkeeping-investeringsaftrek,
-        //   bookkeeping-wbso-sno-administratie)
+        // bookkeeping-wbso-sno-administratie)
         // - Belastingdienst IB47
-        //   (bookkeeping-detachering-payroll-administratie,
-        //   bookkeeping-btw-oss-eu).
+        // (bookkeeping-detachering-payroll-administratie,
+        // bookkeeping-btw-oss-eu).
         $context->registerService(
             CbsBestandenAdapterInterface::class,
             static function ($c): CbsBestandenAdapterInterface {
@@ -392,17 +392,17 @@ class Application extends App implements IBootstrap
         // Wave-4 external-API ports (low-volume families):
         //
         // - KvK Handelsregister (bookkeeping-multi-administratie onboarding,
-        //   AR/AP debtor/creditor enrichment,
-        //   bookkeeping-consolidation-commercial deelnemingen-graaf walk).
+        // AR/AP debtor/creditor enrichment,
+        // bookkeeping-consolidation-commercial deelnemingen-graaf walk).
         // - Mollie Payments (bookings-deposits DepositPayment intent,
-        //   bookkeeping-accounts-receivable-core invoice payment links +
-        //   webhook verification).
+        // bookkeeping-accounts-receivable-core invoice payment links +
+        // webhook verification).
         // - Bunq Bank Connector (bookkeeping-bank-connectors per-Source
-        //   pull + consent-renewal action; ADR-031 ScheduledWorkflow
-        //   delegates transport to this port; no aggregator JSON path —
-        //   Bunq exposes CAMT.053 natively).
+        // pull + consent-renewal action; ADR-031 ScheduledWorkflow
+        // delegates transport to this port; no aggregator JSON path —
+        // Bunq exposes CAMT.053 natively).
         // - UWV Loonaangifte + Werkhervattingskas (LHAfdracht acceptance
-        //   pull + werkgever-setup sectorindeling validation).
+        // pull + werkgever-setup sectorindeling validation).
         $context->registerService(
             KvkHandelsregisterAdapterInterface::class,
             static function ($c): KvkHandelsregisterAdapterInterface {

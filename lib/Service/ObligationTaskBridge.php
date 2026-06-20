@@ -196,8 +196,8 @@ class ObligationTaskBridge
      */
     private function writeVtodo(object $backend, string $title, string $dueDate, string $responsible): ?string
     {
-        $uid     = 'shillinq-obligation-'.bin2hex(random_bytes(8));
-        $due     = str_replace('-', '', $dueDate);
+        $uid      = 'shillinq-obligation-'.bin2hex(random_bytes(8));
+        $due      = str_replace('-', '', $dueDate);
         $attendee = ($responsible !== '') ? "\r\nATTENDEE:mailto:".$responsible : '';
 
         $vtodo  = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Conduction//Shillinq CLM//EN\r\n";

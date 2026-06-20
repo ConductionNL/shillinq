@@ -149,12 +149,12 @@ class BankStatementImportController extends Controller
                 ->setSchema('BankStatement')
                 ->saveObject(
                     [
-                        'bankConnectionId'  => 'manual-import',
-                        'statementFormat'   => $format,
-                        'statementDate'     => (new \DateTimeImmutable())->format('Y-m-d'),
-                        'transactionCount'  => $transactionCount,
-                        'administrationId'  => $admin,
-                        'glAccountId'       => $glAccountId,
+                        'bankConnectionId' => 'manual-import',
+                        'statementFormat'  => $format,
+                        'statementDate'    => (new \DateTimeImmutable())->format('Y-m-d'),
+                        'transactionCount' => $transactionCount,
+                        'administrationId' => $admin,
+                        'glAccountId'      => $glAccountId,
                     ]
                 );
 
@@ -305,5 +305,4 @@ class BankStatementImportController extends Controller
         return 'default';
 
     }//end resolveAdministrationId()
-
 }//end class

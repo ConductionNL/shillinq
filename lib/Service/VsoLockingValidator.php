@@ -92,13 +92,15 @@ class VsoLockingValidator
             $rows          = $objectService
                 ->setRegister($this->register())
                 ->setSchema('IBProfitAttribution')
-                ->findAll([
-                    'filters' => [
-                        'administrationId' => $administrationId,
-                        'boekjaar'         => $boekjaar,
-                        'vso_locked'       => true,
-                    ],
-                ]);
+                ->findAll(
+                        [
+                            'filters' => [
+                                'administrationId' => $administrationId,
+                                'boekjaar'         => $boekjaar,
+                                'vso_locked'       => true,
+                            ],
+                        ]
+                        );
         } catch (Throwable $e) {
             // Fail-soft: a transient OR fetch failure should not crash the
             // write path. Log + return "not locked" so the listener proceeds

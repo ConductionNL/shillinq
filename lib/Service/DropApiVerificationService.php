@@ -93,7 +93,7 @@ class DropApiVerificationService
         }
 
         if ($statusCode >= 500) {
-            return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API error ' . (string) $statusCode];
+            return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API error '.(string) $statusCode];
         }
 
         if ($statusCode === 404) {
@@ -101,7 +101,7 @@ class DropApiVerificationService
         }
 
         if ($statusCode !== 200) {
-            return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API HTTP ' . (string) $statusCode];
+            return ['verifiedAt' => $now, 'success' => false, 'message' => 'DROP API HTTP '.(string) $statusCode];
         }
 
         $decoded = json_decode($rawResponse, true);
@@ -121,7 +121,7 @@ class DropApiVerificationService
     /**
      * Apply a verification envelope to the ABB (REQ-WMO-005 §verification).
      *
-     * @param array<string,mixed>                            $abb          The ABB.
+     * @param array<string,mixed>                                  $abb          The ABB.
      * @param array{verifiedAt:string,success:bool,message:string} $verification Verification result.
      *
      * @return array<string,mixed> Updated ABB.
@@ -132,5 +132,4 @@ class DropApiVerificationService
         return $abb;
 
     }//end applyVerification()
-
 }//end class

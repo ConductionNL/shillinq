@@ -58,7 +58,6 @@ class ENSIAXmlExporter
      */
     private const NS = 'urn:vng:ensia:zelfevaluatie:v1';
 
-
     /**
      * Lifecycle precondition: may a cyclus be exported / submitted?
      *
@@ -82,19 +81,18 @@ class ENSIAXmlExporter
 
     }//end canExport()
 
-
     /**
      * Render the cyclus into ENSIA-XSD-compliant XML.
      *
-     * @param array<string,mixed>             $cyclus     ENSIAJaarcyclus record.
-     * @param array<int,array<string,mixed>>  $vragen     All Evaluatievraag children of the cyclus.
-     * @param string|null                     $submittedAt Optional submission timestamp override; defaults to now.
+     * @param array<string,mixed>            $cyclus      ENSIAJaarcyclus record.
+     * @param array<int,array<string,mixed>> $vragen      All Evaluatievraag children of the cyclus.
+     * @param string|null                    $submittedAt Optional submission timestamp override; defaults to now.
      *
      * @return string The XML string.
      */
-    public function render(array $cyclus, array $vragen, ?string $submittedAt = null): string
+    public function render(array $cyclus, array $vragen, ?string $submittedAt=null): string
     {
-        $doc                     = new DOMDocument('1.0', 'UTF-8');
+        $doc = new DOMDocument('1.0', 'UTF-8');
         $doc->formatOutput       = true;
         $doc->preserveWhiteSpace = false;
 
@@ -102,8 +100,8 @@ class ENSIAXmlExporter
         $doc->appendChild($root);
 
         // Organisation.
-        $org    = $cyclus['organisatie'] ?? [];
-        $orgEl  = $doc->createElement('organisatie');
+        $org   = $cyclus['organisatie'] ?? [];
+        $orgEl = $doc->createElement('organisatie');
         $orgEl->appendChild($doc->createElement('kvk', (string) ($org['kvk'] ?? '')));
         $orgEl->appendChild($doc->createElement('naam', (string) ($org['naam'] ?? '')));
         $root->appendChild($orgEl);
@@ -198,6 +196,4 @@ class ENSIAXmlExporter
         return $xml;
 
     }//end render()
-
-
 }//end class

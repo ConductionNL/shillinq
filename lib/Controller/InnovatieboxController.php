@@ -297,7 +297,7 @@ class InnovatieboxController extends Controller
                     'exception'        => $e->getMessage(),
                 ]
             );
-        }
+        }//end try
 
         return new JSONResponse(
             ['sbr' => $sbr, 'pdf' => $pdf],

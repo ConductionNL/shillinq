@@ -95,7 +95,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
     ) {
     }//end __construct()
 
-
     /**
      * Handle the T2 transition event and stamp T4 fields when the
      * subject is a ReconciliationMatch confirm.
@@ -130,7 +129,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
 
     }//end handle()
 
-
     /**
      * Extract the schema + object payload from an OR event. OR events
      * expose `getObject()` (post-write snapshot) and the schema slug via
@@ -163,7 +161,7 @@ final class ReconciliationMatchToReportListener implements IEventListener
             $rawSchema = $event->getSchema();
             if (is_string($rawSchema) === true) {
                 $schema = $rawSchema;
-            } elseif (is_object($rawSchema) === true && method_exists($rawSchema, 'getSlug') === true) {
+            } else if (is_object($rawSchema) === true && method_exists($rawSchema, 'getSlug') === true) {
                 $schema = (string) $rawSchema->getSlug();
             }
         }
@@ -175,7 +173,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
         return ['schema' => $schema, 'object' => $object];
 
     }//end extractEventPayload()
-
 
     /**
      * Decide whether this event should trigger T4-field stamping.
@@ -206,7 +203,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
         return true;
 
     }//end shouldStamp()
-
 
     /**
      * Update the ReconciliationMatch in-place with T4 fields.
@@ -244,8 +240,8 @@ final class ReconciliationMatchToReportListener implements IEventListener
             $updates['reconId'] = $reconId;
         }
 
-        $matchType      = (string) ($match['matchType'] ?? '');
-        $matchedObject  = (string) ($match['matchedObjectId'] ?? '');
+        $matchType     = (string) ($match['matchType'] ?? '');
+        $matchedObject = (string) ($match['matchedObjectId'] ?? '');
         if ($matchedObject !== '') {
             switch ($matchType) {
                 case 'ar-invoice':
@@ -282,7 +278,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
 
     }//end stampT4Fields()
 
-
     /**
      * Convert the T2 `confidence` enum (auto/manual) into the T4
      * `matchAlgorithm` enum (exact/manual). REQ-REC-005: T4 supports
@@ -297,7 +292,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
         return $confidence === 'manual' ? 'manual' : 'exact';
 
     }//end algorithmFromConfidence()
-
 
     /**
      * Resolve the open BankReconciliation session that owns this match.
@@ -318,11 +312,11 @@ final class ReconciliationMatchToReportListener implements IEventListener
             }
 
             $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $line = $objectService
+            $line          = $objectService
                 ->setRegister($this->getRegisterSlug())
                 ->setSchema('BankStatementLine')
                 ->find($lineId);
-            $line = $this->toArray($line);
+            $line          = $this->toArray($line);
             if ($line === null) {
                 return '';
             }
@@ -353,8 +347,8 @@ final class ReconciliationMatchToReportListener implements IEventListener
                 ->findAll(
                     [
                         'filters' => [
-                            'bankAccountId'       => $iban,
-                            'statementPeriodEnd'  => $periodEnd,
+                            'bankAccountId'        => $iban,
+                            'statementPeriodEnd'   => $periodEnd,
                             'reconciliationStatus' => 'in-progress',
                         ],
                         'limit'   => 1,
@@ -374,7 +368,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
         }//end try
 
     }//end resolveReconId()
-
 
     /**
      * Normalise an OR find result to a plain array.
@@ -398,7 +391,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
 
     }//end toArray()
 
-
     /**
      * Return the configured register slug, falling back to 'shillinq'.
      *
@@ -414,6 +406,4 @@ final class ReconciliationMatchToReportListener implements IEventListener
         return $slug;
 
     }//end getRegisterSlug()
-
-
 }//end class

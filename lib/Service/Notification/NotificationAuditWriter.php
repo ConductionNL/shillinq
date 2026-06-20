@@ -40,7 +40,6 @@ use DateTimeZone;
  */
 final class NotificationAuditWriter
 {
-
     /**
      * Build the audit record body for one dispatch attempt.
      *
@@ -91,7 +90,6 @@ final class NotificationAuditWriter
         return $record;
     }//end build()
 
-
     /**
      * Generate a fresh dispatch group id (UUID v4-ish).
      *
@@ -109,6 +107,4 @@ final class NotificationAuditWriter
         $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
     }//end newDispatchGroupId()
-
-
 }//end class

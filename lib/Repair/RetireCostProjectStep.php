@@ -91,7 +91,6 @@ class RetireCostProjectStep implements IRepairStep
      */
     private const MAX_COLLISION_ATTEMPTS = 99;
 
-
     /**
      * Constructor.
      *
@@ -106,7 +105,6 @@ class RetireCostProjectStep implements IRepairStep
     ) {
     }//end __construct()
 
-
     /**
      * The repair-step display name shown in occ maintenance:repair output.
      *
@@ -119,7 +117,6 @@ class RetireCostProjectStep implements IRepairStep
         return 'Shillinq: retire CostProject — convert to project-flavoured AnalyticalDimension (dimensionType=project)';
 
     }//end getName()
-
 
     /**
      * Run the migration. Idempotent and fail-safe.
@@ -162,7 +159,6 @@ class RetireCostProjectStep implements IRepairStep
         }//end try
 
     }//end run()
-
 
     /**
      * Iterate over all CostProject objects and convert each to a
@@ -213,7 +209,8 @@ class RetireCostProjectStep implements IRepairStep
                     objectService: $objectService,
                     registerSlug: $registerSlug,
                     costProjectId: $id
-                ) === true) {
+                ) === true
+                ) {
                     $skipped++;
                     continue;
                 }
@@ -276,14 +273,13 @@ class RetireCostProjectStep implements IRepairStep
 
     }//end migrateCostProjects()
 
-
     /**
      * Check whether a CostProject has already been migrated by looking for
      * an AnalyticalDimension carrying `migratedFrom = <costProjectId>`.
      *
-     * @param object $objectService  The OR ObjectService.
-     * @param string $registerSlug   The shillinq register slug.
-     * @param string $costProjectId  The source CostProject id.
+     * @param object $objectService The OR ObjectService.
+     * @param string $registerSlug  The shillinq register slug.
+     * @param string $costProjectId The source CostProject id.
      *
      * @return bool True if already migrated (skip); false if not yet migrated.
      */
@@ -293,10 +289,12 @@ class RetireCostProjectStep implements IRepairStep
             $existing = $objectService
                 ->setRegister($registerSlug)
                 ->setSchema('AnalyticalDimension')
-                ->findAll([
-                    'filters' => ['migratedFrom' => $costProjectId],
-                    'limit'   => 1,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => ['migratedFrom' => $costProjectId],
+                            'limit'   => 1,
+                        ]
+                        );
 
             return is_array($existing) === true && count($existing) > 0;
         } catch (\Throwable) {
@@ -307,7 +305,6 @@ class RetireCostProjectStep implements IRepairStep
         }
 
     }//end isAlreadyMigrated()
-
 
     /**
      * Mint a namespaced AnalyticalDimension code "CP-<projectNumber>",
@@ -324,7 +321,7 @@ class RetireCostProjectStep implements IRepairStep
      */
     private function mintCode(object $objectService, string $registerSlug, string $projectNumber, IOutput $output): ?string
     {
-        $baseCode = 'CP-'.$projectNumber;
+        $baseCode  = 'CP-'.$projectNumber;
         $candidate = $baseCode;
 
         for ($attempt = 2; $attempt <= self::MAX_COLLISION_ATTEMPTS + 1; $attempt++) {
@@ -345,7 +342,6 @@ class RetireCostProjectStep implements IRepairStep
 
     }//end mintCode()
 
-
     /**
      * Check whether an AnalyticalDimension with the given code already exists.
      *
@@ -361,10 +357,12 @@ class RetireCostProjectStep implements IRepairStep
             $existing = $objectService
                 ->setRegister($registerSlug)
                 ->setSchema('AnalyticalDimension')
-                ->findAll([
-                    'filters' => ['code' => $code],
-                    'limit'   => 1,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => ['code' => $code],
+                            'limit'   => 1,
+                        ]
+                        );
 
             return is_array($existing) === true && count($existing) > 0;
         } catch (\Throwable) {
@@ -374,7 +372,6 @@ class RetireCostProjectStep implements IRepairStep
         }
 
     }//end codeExists()
-
 
     /**
      * Build an AnalyticalDimension record from a CostProject source array,
@@ -391,12 +388,12 @@ class RetireCostProjectStep implements IRepairStep
     private function buildDimensionRecord(array $source, string $code, string $costProjectId): array
     {
         $record = [
-            'dimensionType'    => 'project',
-            'code'             => $code,
-            'name'             => (string) ($source['name'] ?? $code),
-            'administrationId' => (string) ($source['administrationId'] ?? ''),
-            'lifecycleState'   => $this->mapLifecycleState((string) ($source['lifecycleState'] ?? 'active')),
-            'migratedFrom'     => $costProjectId,
+            'dimensionType'      => 'project',
+            'code'               => $code,
+            'name'               => (string) ($source['name'] ?? $code),
+            'administrationId'   => (string) ($source['administrationId'] ?? ''),
+            'lifecycleState'     => $this->mapLifecycleState((string) ($source['lifecycleState'] ?? 'active')),
+            'migratedFrom'       => $costProjectId,
             'externalProjectRef' => null,
         ];
 
@@ -435,11 +432,9 @@ class RetireCostProjectStep implements IRepairStep
         // costsIncurredToDate is intentionally NOT copied — it is a GL-derived
         // read-time aggregation (spentToDate) on AnalyticalDimension and must
         // not be stored as a stale integer.
-
         return $record;
 
     }//end buildDimensionRecord()
-
 
     /**
      * Map a CostProject lifecycleState to the AnalyticalDimension lifecycle.
@@ -461,6 +456,4 @@ class RetireCostProjectStep implements IRepairStep
         };
 
     }//end mapLifecycleState()
-
-
 }//end class

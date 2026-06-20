@@ -41,8 +41,6 @@ namespace OCA\Shillinq\Service;
  */
 class ENSIABevindingGenerator
 {
-
-
     /**
      * Generate Bevinding records for every Evaluatievraag whose maturity
      * score is strictly below its VNG normniveau (default 3).
@@ -113,6 +111,4 @@ class ENSIABevindingGenerator
         return $findings;
 
     }//end generate()
-
-
 }//end class

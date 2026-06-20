@@ -61,8 +61,6 @@ use Psr\Log\LoggerInterface;
  */
 class StockMoveImmutabilityGuard
 {
-
-
     /**
      * Construct the guard with DI dependencies.
      *
@@ -77,7 +75,6 @@ class StockMoveImmutabilityGuard
     ) {
 
     }//end __construct()
-
 
     /**
      * Returns false (i.e. denies the edit) when the supplied StockMove is
@@ -138,7 +135,6 @@ class StockMoveImmutabilityGuard
         }//end try
 
     }//end rejectLockedEdit()
-
 
     /**
      * Predicate for the `cancel` transition per REQ-SM-003. A draft move is
@@ -213,7 +209,6 @@ class StockMoveImmutabilityGuard
 
     }//end canCancel()
 
-
     /**
      * Resolve the OpenRegister register slug, defaulting to 'shillinq'.
      *
@@ -229,6 +224,4 @@ class StockMoveImmutabilityGuard
         return $register;
 
     }//end register()
-
-
 }//end class

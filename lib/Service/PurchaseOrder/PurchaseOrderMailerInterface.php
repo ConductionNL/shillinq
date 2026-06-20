@@ -37,8 +37,6 @@ namespace OCA\Shillinq\Service\PurchaseOrder;
  */
 interface PurchaseOrderMailerInterface
 {
-
-
     /**
      * Send a PO to a supplier as PDF + email.
      *
@@ -56,6 +54,4 @@ interface PurchaseOrderMailerInterface
      * @throws \RuntimeException When the mailer cannot dispatch.
      */
     public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): void;
-
-
 }//end interface
