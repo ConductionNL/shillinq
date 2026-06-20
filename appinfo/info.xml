@@ -58,8 +58,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
     </navigations>
 
     <settings>
-        <admin>OCA\OpenRegister\AppHost\Settings\GenericAdminSettings</admin>
-        <admin-section>OCA\OpenRegister\AppHost\Settings\GenericSettingsSection</admin-section>
+        <admin>OCA\Shillinq\Settings\AdminSettings</admin>
+        <admin-section>OCA\Shillinq\Sections\SettingsSection</admin-section>
     </settings>
 
     <background-jobs>
