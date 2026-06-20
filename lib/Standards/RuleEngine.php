@@ -71,11 +71,24 @@ final class RuleEngine
                 ),
                 // A gapless sequential invoice number — presence is enforceable per-object.
                 'gl-sequential-invoice-numbering' => static fn(array $o): bool => self::present($o, 'invoiceNumber'),
+                // Buyer / customer must be identified (VAT Directive art. 226(5) / EN 16931 BT-44).
+                'vatdir-art226-5'                 => static fn(array $o): bool => self::present($o, 'customerId'),
+                'en16931-br-07'                   => static fn(array $o): bool => self::present($o, 'customerId'),
+                // The VAT amount payable must be stated (VAT Directive art. 226(10)).
+                'vatdir-art226-10'                => static fn(array $o): bool => self::numericPresent($o, 'vatAmount'),
             ],
             'GLTransaction' => [
                 // Completeness: a real double entry — at least two lines, each with an account and a non-zero, sided amount.
                 'gl-completeness-timeliness'      => static fn(array $o): bool => self::glComplete($o),
                 'gl-sequential-journal-numbering' => static fn(array $o): bool => self::present($o, 'transactionNumber'),
+                // Recorded with a posting date (chronological order / timeliness).
+                'gl-chronological-order'          => static fn(array $o): bool => self::present($o, 'postingDate'),
+                // NOTE: gl-source-document-traceability (sourceReference) is intentionally
+                // NOT enforced here. The audit shows ~127/128 transactions lack a
+                // sourceReference, so blocking post on it would break legitimate
+                // postings (opening balances, adjustments). It remains a corpus rule and
+                // an audit finding requiring data backfill — enforce only once the data
+                // populates it, to avoid breaking the bookkeeping flow.
             ],
         ];
 
