@@ -32,24 +32,30 @@ not per administration).
 Each rule: `{ id, domain, jurisdiction, framework, source, statement, severity,
 machineCheckable, effectiveDate, sourceUrl }` (see `lib/Standards/rules/SCHEMA.md`).
 
-## Wave 1 coverage (700+ rules)
+## Coverage (~1,300 rules, Waves 1 & 2)
 
 | Domain | Rules | Mostly from |
 |---|---|---|
-| invoicing | 228 | EN 16931 business rules + VAT Directive art. 220–231 |
-| measurement | 124 | IAS 2/16/36/38, IFRS 16, ASC 330/360/350, HGB §253 |
-| presentation | 83 | IAS 1 / IFRS 18, ASC 205/210/220, BW2 layouts, §266/275 HGB, PCG |
+| invoicing | 239 | EN 16931 business rules + VAT Directive art. 220–231 |
+| measurement | 225 | IAS 2/16/36/38, IFRS 9/16, ASC 330/360/350/326/815, HGB, OIC, PGC |
+| presentation | 133 | IAS 1 / IFRS 18, ASC 205/210/220, BW2, §266/275 HGB, PCG, GASB |
+| reporting | 133 | ESEF, SAF-T fields, filing deadlines, IPSAS/GASB/BBV reporting, ESRS |
+| ledger-integrity | 131 | GoBD, FEC/NF525, administratieplicht, IRC §6001, SOX, AML/KYC, cash limits |
+| recognition | 125 | IFRS 15, ASC 606, RJ 270, IAS 19/20, IFRS 3/10, IPSAS 23/47 |
+| disclosure | 115 | ESRS (E1–E5/S1–S4/G1), IFRS S1/S2, IFRS 7 |
 | vat | 82 | VAT Directive (place of supply, reverse charge, ICS, OSS/IOSS) |
-| ledger-integrity | 59 | GoBD, FEC/NF525, NL administratieplicht, IRC §6001, SOX |
-| recognition | 56 | IFRS 15, ASC 606, RJ 270 |
-| reporting | 35 | ESEF, SAF-T fields, filing deadlines |
-| retention | 32 | NL/DE/FR/BE/ES/IT/US retention periods |
-| chart-of-accounts | 14 | RGS, SKR03/04, PCG classes |
+| tax | 45 | NL loonheffingen, DE Lohnsteuer/SV, FR DSN, US payroll (941/W-2/FICA) |
+| retention | 44 | NL/DE/FR/BE/ES/IT/PT/US retention periods |
+| chart-of-accounts | 14 | RGS, SKR03/04, PCG/MAR classes |
+| classification | 11 | IFRS 9 SPPI / business-model classification |
 
-> ~450 of these are flagged `machineCheckable: true` — directly enforceable by the
-> bookkeeping engine (the rest are judgemental/disclosure rules kept for
-> traceability). The corpus grows in later waves (deeper IFRS/US-GAAP/national
-> disclosure rules, more SAF-T / e-invoicing countries).
+> ~450+ are flagged `machineCheckable: true` — directly enforceable by the
+> bookkeeping engine; the rest are judgemental/disclosure rules kept for
+> traceability. Wave 1 (713) covered invoicing/VAT/retention/integrity + IFRS/US
+> GAAP/NL-DE-FR GAAP; Wave 2 (+584) added sustainability (ESRS/IFRS S1-S2), public
+> sector (IPSAS/GASB/BBV), payroll/wage-tax, banking/AML, deeper IFRS/US-GAAP
+> (financial instruments, business combinations, employee benefits) and national
+> GAAP for IT/ES/BE + more jurisdictions. The corpus is versioned and grows.
 
 ## How business logic consumes it
 

@@ -29,10 +29,10 @@ EU + US bases of accounting: `ifrs`, `ifrs-eu`, `dutch-gaap`, `de-hgb`, `fr-pcg`
 
 ### Requirement: REQ-ASP-004 — versioned static ComplianceCatalogue (additive, not OR)
 
-Digital-compliance / tax-data obligations are regulatory **facts** (identical for
-every tenant, changing only with regulation), so the system SHALL model them as a
-**versioned static catalogue in code** (`ComplianceCatalogue`, stamped with a
-`VERSION`/`asOf`), NOT as OpenRegister config. The catalogue SHALL be read-only and
+The system SHALL model digital-compliance / tax-data obligations as a **versioned
+static catalogue in code** (`ComplianceCatalogue`, stamped with a `VERSION`/`asOf`),
+NOT as OpenRegister config — because they are regulatory **facts** (identical for
+every tenant, changing only with regulation). The catalogue SHALL be read-only and
 **additive** (every applicable obligation is met — no ranking, no precedence
 resolver) and SHALL expose query helpers for business logic (`applicableTo(country)`,
 `byType()`). The only per-tenant input — which jurisdictions an administration
