@@ -108,7 +108,7 @@ class RuleComplianceGuard
                 return false;
             }
 
-            $transaction['lines'] = $this->loadLines($id);
+            $transaction['lines'] = $this->loadLines($transaction);
 
             $violations = RuleEngine::evaluate('GLTransaction', $transaction, $this->context($transaction));
             if ($this->balanceGuard->isBalanced($id) === false) {
@@ -170,33 +170,45 @@ class RuleComplianceGuard
 
 
     /**
-     * Load the GLLine rows for a transaction.
+     * Load the GLLine rows for a transaction. Lines reference their parent via
+     * `transactionId` matching EITHER the OpenRegister id OR the human
+     * `transactionNumber`, so both are queried and merged (deduped by line id) —
+     * the same join the financial-series code uses, and the reason the balance
+     * check must also be matched on the right key.
      *
-     * @param string $transactionId The parent transaction id.
+     * @param array<string, mixed> $transaction The GL transaction.
      *
      * @return array<int, array<string, mixed>>
      */
-    private function loadLines(string $transactionId): array
+    private function loadLines(array $transaction): array
     {
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $rows          = $objectService
-            ->setRegister($this->register())
-            ->setSchema('GLLine')
-            ->findAll(['filters' => ['transactionId' => $transactionId]]);
+        $keys = array_values(array_unique(array_filter([
+            (string) ($transaction['id'] ?? $transaction['@self']['id'] ?? ''),
+            (string) ($transaction['transactionNumber'] ?? ''),
+        ])));
 
         $lines = [];
-        foreach (($rows ?? []) as $row) {
-            if (is_array($row) === true) {
-                $lines[] = $row;
-                continue;
-            }
+        foreach ($keys as $key) {
+            $rows = $objectService
+                ->setRegister($this->register())
+                ->setSchema('GLLine')
+                ->findAll(['filters' => ['transactionId' => $key]]);
 
-            if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-                $lines[] = (array) $row->jsonSerialize();
+            foreach (($rows ?? []) as $row) {
+                $line = $row;
+                if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+                    $line = (array) $row->jsonSerialize();
+                }
+
+                if (is_array($line) === true) {
+                    $lineId = (string) ($line['id'] ?? $line['@self']['id'] ?? count($lines));
+                    $lines[$lineId] = $line;
+                }
             }
         }
 
-        return $lines;
+        return array_values($lines);
 
     }//end loadLines()
 

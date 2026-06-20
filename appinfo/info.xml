@@ -155,4 +155,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
              admin UI keep working regardless. -->
         <job>OCA\Shillinq\BackgroundJob\FxRateImportJob</job>
     </background-jobs>
+
+    <commands>
+        <!-- Audit the register's bookkeeping objects against the machine-checkable
+             rule corpus (lib/Standards/RuleCatalogue + RuleEngine). Read-only. -->
+        <command>OCA\Shillinq\Command\RulesAuditCommand</command>
+    </commands>
 </info>

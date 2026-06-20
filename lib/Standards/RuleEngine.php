@@ -161,6 +161,38 @@ final class RuleEngine
 
 
     /**
+     * Object types that have at least one registered executable check.
+     *
+     * @return array<int, string>
+     */
+    public static function supportedTypes(): array
+    {
+        return array_keys(self::checks());
+
+    }//end supportedTypes()
+
+
+    /**
+     * All catalogue rule ids that have a registered executable check (across all
+     * object types) — i.e. the rules the engine can actually enforce today.
+     *
+     * @return array<int, string>
+     */
+    public static function checkedRuleIds(): array
+    {
+        $ids = [];
+        foreach (self::checks() as $byRule) {
+            foreach (array_keys($byRule) as $ruleId) {
+                $ids[$ruleId] = true;
+            }
+        }
+
+        return array_keys($ids);
+
+    }//end checkedRuleIds()
+
+
+    /**
      * Reset the memoised index (test hook).
      *
      * @return void
