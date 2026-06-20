@@ -2,12 +2,18 @@
   FinanceKpiCardWidget — a single KPI card for the Financial overview
   dashboard. One instance is mounted per KPI slot (turnover, margin,
   debtors, creditors, billable, cash); each picks its definition from
-  KPI_DEFS by the slot's widgetId. Replaces the former single
-  six-tile FinanceKpisWidget so the dashboard engine grid-places each
-  KPI as its own card (pipelinq-style), with no inner-scroll clipping.
+  KPI_DEFS by the slot's widgetId. Each KPI is its own engine-grid
+  card (icon circle + title + value + sub), pipelinq-style.
 
-  Values reuse the shared, unit-tested computeKpis()/formatEur() layer,
-  so the numbers match the charts and tables on the same page exactly.
+  Turnover / margin / billable are RANGE-DRIVEN: they aggregate over
+  the dashboard's selected date range and carry an interactive preset
+  chip (mirroring the chart widgets' chip — same shared range ref,
+  same persisted value). Open debtors / creditors / cash position are
+  point-in-time and ignore the range (no chip).
+
+  Values reuse the shared, unit-tested computeKpis()/computeRangeKpis()/
+  formatEur() layer, so the numbers match the charts and tables on the
+  same page exactly.
 
   @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
 -->
@@ -23,14 +29,32 @@
 				<span class="finance-kpi-card__value" :class="`finance-kpi-card__value--${def.variant}`">{{ value }}</span>
 				<span v-if="sub" class="finance-kpi-card__sub">{{ sub }}</span>
 			</div>
+			<div v-if="def.rangeDriven && rangeText" class="finance-kpi-card__chip">
+				<NcActions :force-menu="true" :container="false" :menu-title="t('shillinq', 'Change date range')">
+					<template #icon>
+						<span class="finance-kpi-card__chip-label" :data-testid="`finance-kpi-range-${kpiKey}`">{{ rangeText }}</span>
+					</template>
+					<NcActionButton
+						v-for="preset in presets"
+						:key="preset.id"
+						:close-after-click="true"
+						@click="pickPreset(preset)">
+						<template v-if="currentPreset === preset.id" #icon>
+							<CalendarRange :size="16" />
+						</template>
+						{{ preset.label }}
+					</NcActionButton>
+				</NcActions>
+			</div>
 		</template>
 	</div>
 </template>
 
 <script>
 import { translate as t, translatePlural as n, getCanonicalLocale } from '@nextcloud/l10n'
-import { NcLoadingIcon } from '@nextcloud/vue'
+import { NcLoadingIcon, NcActions, NcActionButton } from '@nextcloud/vue'
 import { subscribe, unsubscribe } from '@nextcloud/event-bus'
+import { inject, ref } from 'vue'
 import CashMultiple from 'vue-material-design-icons/CashMultiple.vue'
 import TrendingUp from 'vue-material-design-icons/TrendingUp.vue'
 import TrendingDown from 'vue-material-design-icons/TrendingDown.vue'
@@ -38,68 +62,77 @@ import AccountArrowLeft from 'vue-material-design-icons/AccountArrowLeft.vue'
 import AccountArrowRight from 'vue-material-design-icons/AccountArrowRight.vue'
 import ClockOutline from 'vue-material-design-icons/ClockOutline.vue'
 import Bank from 'vue-material-design-icons/Bank.vue'
+import CalendarRange from 'vue-material-design-icons/CalendarRange.vue'
 import { useFinancialData } from './useFinancialData.js'
-import { computeKpis, formatEur } from './financialSeries.js'
+import { computeKpis, computeRangeKpis, formatEur, lastMonths, monthsInRange } from './financialSeries.js'
+import { RANGE_PRESETS, RANGE_PERSIST_KEY, resolvePresetWindow, formatRange } from './financialDashboardConfig.js'
+
+/** Trailing months used when no dashboard range is active yet. */
+const FALLBACK_MONTHS = 12
 
 /**
- * Per-KPI presentation. `value`/`sub` receive the computed KPI bag and
- * return display strings; `variant` and `icon` drive the card colours.
- * `icon` may be a function of the KPI bag (sign-aware icons). The
- * English label strings are the i18n keys — kept identical to the old
- * FinanceKpisWidget so existing translations keep resolving.
+ * Per-KPI presentation. `value`/`sub` receive the relevant computed
+ * bag — the range bag (computeRangeKpis) for `rangeDriven` cards, the
+ * point-in-time bag (computeKpis) otherwise — and return display
+ * strings. `icon` may be a function of the bag (sign-aware icons);
+ * `variantOf` resolves a sign-aware colour variant. The English
+ * label strings are the i18n keys.
  */
 const KPI_DEFS = {
 	turnover: {
-		label: () => t('shillinq', 'Turnover (YTD)'),
+		label: () => t('shillinq', 'Turnover'),
 		icon: () => CashMultiple,
 		variant: 'primary',
-		value: (k) => formatEur(k.turnoverYtd),
+		rangeDriven: true,
+		value: (b) => formatEur(b.turnover),
 	},
 	margin: {
-		label: () => t('shillinq', 'Margin (YTD)'),
-		icon: (k) => (k.marginYtd < 0 ? TrendingDown : TrendingUp),
+		label: () => t('shillinq', 'Margin'),
+		icon: (b) => (b.margin < 0 ? TrendingDown : TrendingUp),
 		variant: 'success',
-		variantOf: (k) => (k.marginYtd < 0 ? 'error' : 'success'),
-		value: (k) => formatEur(k.marginYtd),
-		sub: (k) => (k.marginPctYtd !== null ? t('shillinq', '{pct}% of turnover', { pct: k.marginPctYtd }) : null),
+		variantOf: (b) => (b.margin < 0 ? 'error' : 'success'),
+		rangeDriven: true,
+		value: (b) => formatEur(b.margin),
+		sub: (b) => (b.marginPct !== null ? t('shillinq', '{pct}% of turnover', { pct: b.marginPct }) : null),
 	},
 	debtors: {
 		label: () => t('shillinq', 'Open debtors'),
 		icon: () => AccountArrowLeft,
 		variant: 'primary',
-		value: (k) => formatEur(k.openArAmount),
-		sub: (k) => n('shillinq', '%n invoice outstanding', '%n invoices outstanding', k.openArCount),
+		value: (b) => formatEur(b.openArAmount),
+		sub: (b) => n('shillinq', '%n invoice outstanding', '%n invoices outstanding', b.openArCount),
 	},
 	creditors: {
 		label: () => t('shillinq', 'Open creditors'),
 		icon: () => AccountArrowRight,
 		variant: 'default',
-		value: (k) => formatEur(k.openApAmount),
-		sub: (k) => n('shillinq', '%n invoice outstanding', '%n invoices outstanding', k.openApCount),
+		value: (b) => formatEur(b.openApAmount),
+		sub: (b) => n('shillinq', '%n invoice outstanding', '%n invoices outstanding', b.openApCount),
 	},
 	billable: {
-		label: () => t('shillinq', 'Billable this month'),
+		label: () => t('shillinq', 'Billable'),
 		icon: () => ClockOutline,
 		variant: 'primary',
-		value: (k) => (k.billablePct !== null ? `${k.billablePct}%` : '—'),
-		sub: (k) => {
+		rangeDriven: true,
+		value: (b) => (b.billablePct !== null ? `${b.billablePct}%` : '—'),
+		sub: (b) => {
 			const hours = new Intl.NumberFormat(getCanonicalLocale(), { maximumFractionDigits: 0 })
-			return t('shillinq', '{hours} billable hours', { hours: hours.format(k.billableHours || 0) })
+			return t('shillinq', '{hours} billable hours', { hours: hours.format(b.billableHours || 0) })
 		},
 	},
 	cash: {
 		label: () => t('shillinq', 'Cash position'),
 		icon: () => Bank,
 		variant: 'primary',
-		variantOf: (k) => (k.cashPosition < 0 ? 'error' : 'primary'),
-		value: (k) => formatEur(k.cashPosition),
+		variantOf: (b) => (b.cashPosition < 0 ? 'error' : 'primary'),
+		value: (b) => formatEur(b.cashPosition),
 	},
 }
 
 export default {
 	name: 'FinanceKpiCardWidget',
 
-	components: { NcLoadingIcon },
+	components: { NcLoadingIcon, NcActions, NcActionButton, CalendarRange },
 
 	props: {
 		/** Layout item from CnDashboardPage's widget slot scope. */
@@ -110,7 +143,14 @@ export default {
 
 	setup() {
 		const { loading, data, load, reload } = useFinancialData()
-		return { loading, financialData: data, load, reload }
+		// Inject the writable range ref in setup() (NOT via options
+		// inject, which Vue 2.7 hands down already-unwrapped — read-only).
+		// As a setup-returned ref, `this.dateRange` auto-unwraps on read
+		// and assigning `this.dateRange = value` writes through to its
+		// `.value`, updating every range-driven widget (charts + sibling
+		// KPI cards) and the engine's own chip reactively.
+		const dateRange = inject('cnDashboardDateRange', ref(null))
+		return { loading, financialData: data, load, reload, dateRange }
 	},
 
 	computed: {
@@ -121,26 +161,62 @@ export default {
 		/** @return {object} Resolved KPI definition, falling back to turnover. */
 		def() {
 			const base = KPI_DEFS[this.kpiKey] || KPI_DEFS.turnover
-			// Resolve a sign-aware variant once the data is in.
-			const variant = (this.kpis && base.variantOf) ? base.variantOf(this.kpis) : base.variant
+			const bag = this.bag
+			const variant = (bag && base.variantOf) ? base.variantOf(bag) : base.variant
 			return { ...base, variant }
 		},
-		/** @return {object|null} Computed KPI bag, or null while loading. */
+		presets() {
+			return RANGE_PRESETS
+		},
+		/** @return {object|null} The active dashboard range, or null. */
+		range() {
+			// `this.dateRange` is the setup-injected ref, auto-unwrapped to
+			// its value on read.
+			const r = this.dateRange
+			return (r && r.from && r.to) ? r : null
+		},
+		/** @return {string} Active preset id (for the chip checkmark). */
+		currentPreset() {
+			return this.range?.preset || ''
+		},
+		/** @return {string} Compact label for the active range. */
+		rangeText() {
+			return formatRange(this.range)
+		},
+		/** @return {string[]} Month buckets for the active range (or fallback). */
+		months() {
+			if (this.range) {
+				const ms = monthsInRange(this.range.from, this.range.to)
+				if (ms.length > 0) return ms
+			}
+			return lastMonths(FALLBACK_MONTHS)
+		},
+		/** @return {object|null} Range-aggregated metrics. */
+		rangeKpis() {
+			if (!this.financialData) return null
+			return computeRangeKpis(this.financialData, this.months)
+		},
+		/** @return {object|null} Point-in-time metrics. */
 		kpis() {
 			if (!this.financialData) return null
 			return computeKpis(this.financialData)
 		},
+		/** @return {object|null} The bag this card reads from. */
+		bag() {
+			const base = KPI_DEFS[this.kpiKey] || KPI_DEFS.turnover
+			return base.rangeDriven ? this.rangeKpis : this.kpis
+		},
 		iconComponent() {
-			return this.def.icon(this.kpis || {})
+			return this.def.icon(this.bag || {})
 		},
 		label() {
 			return this.def.label()
 		},
 		value() {
-			return this.kpis ? this.def.value(this.kpis) : '—'
+			return this.bag ? this.def.value(this.bag) : '—'
 		},
 		sub() {
-			return (this.kpis && this.def.sub) ? this.def.sub(this.kpis) : null
+			return (this.bag && this.def.sub) ? this.def.sub(this.bag) : null
 		},
 	},
 
@@ -156,12 +232,37 @@ export default {
 		unsubscribe('cn:widget:refresh', this._onRefresh)
 	},
 
-	methods: { t },
+	methods: {
+		t,
+		/**
+		 * Apply a preset: resolve its window, push it onto the shared
+		 * dashboard range ref (live-updating every range-driven widget)
+		 * and persist it under the engine's localStorage key so the
+		 * choice survives a reload and is read back by CnDashboardPage.
+		 *
+		 * @param {{ id: string }} preset The chosen preset.
+		 */
+		pickPreset(preset) {
+			const win = resolvePresetWindow(preset.id, this.presets)
+			if (!win) return
+			const value = { from: win.from, to: win.to, preset: preset.id }
+			// Assigning the setup-returned ref writes through to its
+			// `.value` — propagates to every range-driven widget + the
+			// engine's chart chips reactively.
+			this.dateRange = value
+			try {
+				localStorage.setItem(RANGE_PERSIST_KEY, JSON.stringify(value))
+			} catch (e) {
+				// Non-fatal (private window / quota) — in-memory range still applied.
+			}
+		},
+	},
 }
 </script>
 
 <style scoped>
 .finance-kpi-card {
+	position: relative;
 	display: flex;
 	align-items: center;
 	gap: 16px;
@@ -243,5 +344,50 @@ export default {
 	color: var(--color-text-maxcontrast, #767676);
 	font-size: 12px;
 	line-height: 1.3;
+}
+
+.finance-kpi-card__chip {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+}
+
+.finance-kpi-card__chip-label {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: var(--border-radius-pill, 16px);
+	background-color: var(--color-background-hover, #f5f5f5);
+	color: var(--color-text-maxcontrast, #767676);
+	font-size: 11px;
+	font-weight: 500;
+	white-space: nowrap;
+	cursor: pointer;
+}
+</style>
+
+<!--
+  Unscoped, namespaced override: NcActions renders its trigger as a
+  fixed-size icon button (`overflow: hidden`), which clips the wide date
+  label. Scoped :deep() didn't reliably beat the lib's icon-width rule,
+  so this small block (confined to .finance-kpi-card__chip) lets the
+  trigger shrink-wrap the pill — mirroring the engine's chart-chip
+  trigger styling.
+-->
+<style>
+.finance-kpi-card__chip .button-vue,
+.finance-kpi-card__chip .action-item__menutoggle {
+	width: auto !important;
+	min-width: 0 !important;
+	height: auto !important;
+	min-height: 0 !important;
+	padding: 0 !important;
+	overflow: visible !important;
+}
+
+.finance-kpi-card__chip .button-vue__wrapper,
+.finance-kpi-card__chip .button-vue__icon {
+	width: auto !important;
+	min-width: 0 !important;
+	height: auto !important;
 }
 </style>

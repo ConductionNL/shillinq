@@ -4823,12 +4823,12 @@
 				"widgets": [
 					{
 						"id": "turnover",
-						"title": "Turnover (YTD)",
+						"title": "Turnover",
 						"type": "custom"
 					},
 					{
 						"id": "margin",
-						"title": "Margin (YTD)",
+						"title": "Margin",
 						"type": "custom"
 					},
 					{
@@ -4843,7 +4843,7 @@
 					},
 					{
 						"id": "billable",
-						"title": "Billable this month",
+						"title": "Billable",
 						"type": "custom"
 					},
 					{

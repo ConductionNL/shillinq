@@ -23,6 +23,7 @@ import {
 	openArRows,
 	openApRows,
 	computeKpis,
+	computeRangeKpis,
 } from '../../src/components/dashboard/financial/financialSeries.js'
 import { useFinancialData, resetFinancialData } from '../../src/components/dashboard/financial/useFinancialData.js'
 
@@ -198,6 +199,32 @@ describe('financialSeries', () => {
 		expect(kpis.billableHours).toBe(30)
 		expect(kpis.billablePct).toBe(75)
 		expect(kpis.cashPosition).toBe(600)
+	})
+
+	it('computeRangeKpis aggregates turnover/margin/billable over the given months and varies by range', () => {
+		const hourEntries = [
+			{ date: '2026-03-02', hours: 6, recognisedRate: 95 },
+			{ date: '2026-03-03', hours: 2, recognisedRate: 0 },
+			{ date: '2026-04-01', hours: 8, recognisedRate: 110 },
+		]
+		const data = { accounts: ACCOUNTS, transactions: TRANSACTIONS, lines: LINES, hourEntries }
+
+		// March + April: revenue 1000 (March), margin 600; billable 6+8 of 16 total.
+		const wide = computeRangeKpis(data, ['2026-03', '2026-04'])
+		expect(wide.turnover).toBe(1000)
+		expect(wide.margin).toBe(600)
+		expect(wide.marginPct).toBe(60)
+		expect(wide.billableHours).toBe(14)
+		expect(wide.billablePct).toBe(87.5)
+
+		// April only: no posted revenue/cost → turnover 0, marginPct null;
+		// proves the metrics shrink with a narrower range.
+		const aprilOnly = computeRangeKpis(data, ['2026-04'])
+		expect(aprilOnly.turnover).toBe(0)
+		expect(aprilOnly.margin).toBe(0)
+		expect(aprilOnly.marginPct).toBe(null)
+		expect(aprilOnly.billableHours).toBe(8)
+		expect(aprilOnly.billablePct).toBe(100)
 	})
 })
 
