@@ -27,22 +27,56 @@ before relying on it for a compliance decision. Items still subject to change
 (e.g. the EU CSRD/ESRS reform) are flagged on their page.
 :::
 
+## Three kinds of "standard"
+
+A bookkeeping product juggles three different kinds of standard, and they behave
+differently — which is why they are modelled separately:
+
+| Category | Behaves like | Examples |
+|---|---|---|
+| **A. Bases of accounting** | *Competing* — when several apply, **one wins** (the [Standards policy](#how-shillinq-uses-this-the-standards-policy) ranks them) | IFRS, national GAAPs, tax bases, GASB/IPSAS/BBV |
+| **B. Compliance obligations** | *Additive* — meet **all** that apply (tracked per jurisdiction, not ranked) | [e-invoicing, ViDA, SAF-T, VAT](./digital-compliance.md) |
+| **C. Output / filing formats** | *Layered* on top of a chosen basis | [ESEF/XBRL, SEC, SSARS](./output-formats.md) |
+
 ## Frameworks covered
+
+### A — Bases of accounting (the precedence catalogue)
 
 | Framework | Issued by | Who applies it | Page |
 |---|---|---|---|
-| **IFRS / IAS** | IASB (IFRS Foundation) | EU-listed groups (consolidated); optional for many others | [IFRS / IAS](./ifrs.md) |
-| **Dutch GAAP** — BW2 Title 9 + RJ | Wetgever + Raad voor de Jaarverslaggeving | Dutch legal entities (NV, BV, …) | [Dutch GAAP](./dutch-gaap.md) |
-| **Dutch tax** — goed koopmansgebruik | Wetgever (Wet IB/Vpb) + case law | Dutch taxpayers (the *fiscale* jaarrekening) | [Dutch GAAP → tax](./dutch-gaap.md#deep-dive--goed-koopmansgebruik-fiscal-accounting) |
-| **US GAAP** — FASB ASC | FASB | US entities reporting under US GAAP | [US GAAP](./us-gaap.md) |
-| **IPSAS** | IPSASB (IFAC) | Public-sector entities on accrual accounting | [Public sector](./public-sector.md) |
+| **IFRS / IAS** (IASB) | IASB | EU-listed groups (consolidated); optional for many others | [IFRS / IAS](./ifrs.md) |
+| **IFRS (EU-endorsed)** | European Commission (EFRAG) | the legally binding EU variant (may lag IASB) | [EU national GAAP](./eu-national-gaap.md#eu-endorsed-ifrs) |
+| **Dutch GAAP** — BW2 Title 9 + RJ | Wetgever + RvdJ | Dutch legal entities | [Dutch GAAP](./dutch-gaap.md) |
+| **German HGB** (+ SKR / DRS) | HGB law + DRSC | German non-listed entities | [EU national GAAP](./eu-national-gaap.md#german-hgb) |
+| **French PCG** | ANC | French entities (mandatory chart) | [EU national GAAP](./eu-national-gaap.md#french-pcg) |
+| **Italian OIC** / **Spanish PGC** | OIC / ICAC | Italian / Spanish entities | [EU national GAAP](./eu-national-gaap.md#italian-oic) |
+| **Dutch tax** — goed koopmansgebruik | Wet IB/Vpb + case law | Dutch taxpayers | [Dutch GAAP → tax](./dutch-gaap.md#deep-dive--goed-koopmansgebruik-fiscal-accounting) |
+| **US GAAP** — FASB ASC | FASB | US entities under US GAAP | [US GAAP](./us-gaap.md) |
+| **US special-purpose** — tax / cash / modified-cash / FRF for SMEs | IRC / AICPA | US private entities not on full GAAP | [US GAAP → OCBOA](./us-gaap.md#special-purpose-frameworks-ocboa) |
+| **IPSAS** | IPSASB (IFAC) | Public-sector accrual reporting | [Public sector](./public-sector.md) |
 | **Dutch BBV** | Wetgever + Commissie BBV | Dutch municipalities & provinces | [Public sector](./public-sector.md#dutch-bbv) |
-| **ESRS (CSRD)** | EFRAG → European Commission | In-scope EU undertakings (sustainability) | [Sustainability](./sustainability.md) |
-| **IFRS S1 / S2** | ISSB (IFRS Foundation) | Investor-focused sustainability reporting | [Sustainability](./sustainability.md#ifrs-sustainability-issb) |
+| **US GASB** / **FASAB** | GASB / FASAB | US state-&-local / federal government | [Public sector](./public-sector.md#us-gasb) |
+| **ESRS (CSRD)** | EFRAG → EU Commission | In-scope EU undertakings (sustainability) | [Sustainability](./sustainability.md) |
+| **IFRS S1 / S2** | ISSB | Investor-focused sustainability | [Sustainability](./sustainability.md#ifrs-sustainability-issb) |
 
-See also the **[cross-framework comparison](./comparisons.md)** — side-by-side
-treatment of revenue, leases, inventories and development costs, highlighting
-exactly where the frameworks disagree.
+### B — Digital compliance obligations
+
+EN 16931, Peppol, **ViDA** (mandatory intra-EU e-invoicing from 2030), per-country
+mandates (IT, PL, ES, FR, DE, BE), **SAF-T**, and EU **VAT** — see
+**[Digital compliance](./digital-compliance.md)**.
+
+### C — Output & filing formats
+
+ESEF & US-GAAP XBRL, SEC Reg S-X/S-K, AICPA SSARS — see
+**[Output & filing formats](./output-formats.md)**.
+
+See also the **[cross-framework comparison](./comparisons.md)** — where the bases
+of accounting disagree (revenue, leases, inventories, development costs).
+
+> **Deliberately excluded:** **IFRS for SMEs**. Despite being the IASB's
+> purpose-built private-entity standard, no EU member state has adopted it (it
+> conflicts with the Accounting Directive), so for an EU+US product the national
+> GAAPs are the correct SME layer. Revisit only if targeting LatAm/Africa.
 
 ## How Shillinq uses this: the Standards policy
 

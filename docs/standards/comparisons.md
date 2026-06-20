@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 10
 title: Cross-framework comparison
 description: Where IFRS, US GAAP, Dutch GAAP (RJ) and Dutch tax disagree — revenue, leases, inventories and development costs — the conflicts the Standards policy resolves.
 ---

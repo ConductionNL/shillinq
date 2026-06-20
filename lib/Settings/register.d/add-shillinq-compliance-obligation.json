@@ -1,0 +1,96 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "expand-standards-eu-us",
+		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+		"description": "Adds the ComplianceObligation schema (Category B of the standards model). Unlike StandardsPolicy — which RANKS competing bases of accounting (one wins) — digital-compliance obligations are ADDITIVE: every obligation that applies to an administration's jurisdiction must be met. So they are tracked one record per { jurisdiction, type, standard, status, effectiveDate } rather than ordered by precedence. Covers EU e-invoicing (EN 16931 / Peppol / ViDA + per-country mandates IT/PL/ES/FR/DE/BE), SAF-T tax-audit exports, and EU VAT — see docs/standards/digital-compliance.md. Resolution by business logic is additive (meet-all-that-apply), so there is no resolver/precedence service for this schema. A future admin surface lets operators flag applicable obligations per administration; this fragment ships the data model only."
+	},
+	"components": {
+		"schemas": {
+			"ComplianceObligation": {
+				"title": "Compliance obligation",
+				"description": "An additive digital-compliance / tax-data obligation applying to an administration in a given jurisdiction (Category B). Examples: EU e-invoicing under ViDA, a per-country mandate (IT SdI, PL KSeF, ...), SAF-T export, VAT. Tracked with a status and effective date; NOT ranked (cf. StandardsPolicy, which is the precedence model for bases of accounting).",
+				"type": "object",
+				"required": [
+					"jurisdiction",
+					"type",
+					"status"
+				],
+				"properties": {
+					"name": {
+						"type": "string",
+						"nullable": true,
+						"description": "Human label, e.g. 'Poland KSeF e-invoicing'.",
+						"example": "Poland KSeF e-invoicing"
+					},
+					"administrationId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Optional administration scope. Null = applies to the register default.",
+						"example": "adm-001"
+					},
+					"jurisdiction": {
+						"type": "string",
+						"description": "ISO 3166-1 alpha-2 country code, or 'EU' for an EU-wide obligation, or 'US'.",
+						"example": "PL"
+					},
+					"type": {
+						"type": "string",
+						"description": "The kind of obligation.",
+						"enum": [
+							"e-invoicing",
+							"digital-reporting",
+							"saf-t",
+							"vat",
+							"sales-tax",
+							"other"
+						],
+						"example": "e-invoicing"
+					},
+					"standard": {
+						"type": "string",
+						"description": "The underlying standard/framework this obligation implements.",
+						"enum": [
+							"en-16931",
+							"peppol",
+							"vida",
+							"country-mandate",
+							"saf-t",
+							"vat-2006-112",
+							"oss-ioss",
+							"dbnalliance",
+							"other"
+						],
+						"example": "country-mandate"
+					},
+					"status": {
+						"type": "string",
+						"description": "Whether this obligation currently applies to the administration.",
+						"enum": [
+							"not-applicable",
+							"upcoming",
+							"live",
+							"exempt"
+						],
+						"default": "not-applicable",
+						"example": "upcoming"
+					},
+					"effectiveDate": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Date the obligation becomes (or became) mandatory for this administration.",
+						"example": "2026-04-01"
+					},
+					"notes": {
+						"type": "string",
+						"nullable": true,
+						"description": "Free-text detail (threshold, derogation, source link).",
+						"example": "Mandatory for most taxpayers from 1 Apr 2026; large taxpayers from 1 Feb 2026."
+					}
+				}
+			}
+		}
+	}
+}

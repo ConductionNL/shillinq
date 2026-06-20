@@ -104,12 +104,23 @@ const DOCS_BASE = 'https://shillinq.conduction.nl/standards/'
  * and the docs/standards/ pages. Order here is the default precedence.
  */
 const FRAMEWORKS = [
-	{ key: 'ifrs', label: 'IFRS / IAS (international)', docs: `${DOCS_BASE}ifrs` },
+	{ key: 'ifrs', label: 'IFRS / IAS (IASB)', docs: `${DOCS_BASE}ifrs` },
+	{ key: 'ifrs-eu', label: 'IFRS (EU-endorsed)', docs: `${DOCS_BASE}eu-national-gaap#eu-endorsed-ifrs` },
 	{ key: 'dutch-gaap', label: 'Dutch GAAP (BW Title 9 + RJ)', docs: `${DOCS_BASE}dutch-gaap` },
+	{ key: 'de-hgb', label: 'German HGB (+ SKR / DRS)', docs: `${DOCS_BASE}eu-national-gaap#german-hgb` },
+	{ key: 'fr-pcg', label: 'French PCG (ANC)', docs: `${DOCS_BASE}eu-national-gaap#french-pcg` },
+	{ key: 'it-oic', label: 'Italian GAAP (OIC)', docs: `${DOCS_BASE}eu-national-gaap#italian-oic` },
+	{ key: 'es-pgc', label: 'Spanish PGC (ICAC)', docs: `${DOCS_BASE}eu-national-gaap#spanish-pgc` },
 	{ key: 'dutch-tax', label: 'Dutch tax (goed koopmansgebruik)', docs: `${DOCS_BASE}dutch-gaap#deep-dive--goed-koopmansgebruik-fiscal-accounting` },
 	{ key: 'us-gaap', label: 'US GAAP (FASB ASC)', docs: `${DOCS_BASE}us-gaap` },
+	{ key: 'us-tax-basis', label: 'US income-tax basis (IRC)', docs: `${DOCS_BASE}us-gaap#special-purpose-frameworks-ocboa` },
+	{ key: 'us-cash-basis', label: 'US cash basis (OCBOA)', docs: `${DOCS_BASE}us-gaap#special-purpose-frameworks-ocboa` },
+	{ key: 'us-modified-cash', label: 'US modified-cash basis', docs: `${DOCS_BASE}us-gaap#special-purpose-frameworks-ocboa` },
+	{ key: 'us-frf-smes', label: 'US FRF for SMEs (AICPA)', docs: `${DOCS_BASE}us-gaap#special-purpose-frameworks-ocboa` },
 	{ key: 'ipsas', label: 'IPSAS (public sector)', docs: `${DOCS_BASE}public-sector` },
 	{ key: 'bbv', label: 'Dutch BBV (municipal)', docs: `${DOCS_BASE}public-sector#dutch-bbv` },
+	{ key: 'us-gasb', label: 'US GASB (state & local gov)', docs: `${DOCS_BASE}public-sector#us-gasb` },
+	{ key: 'us-fasab', label: 'US FASAB (federal gov)', docs: `${DOCS_BASE}public-sector#us-fasab` },
 	{ key: 'esrs', label: 'ESRS (CSRD sustainability)', docs: `${DOCS_BASE}sustainability` },
 	{ key: 'ifrs-sustainability', label: 'IFRS S1 / S2 (ISSB)', docs: `${DOCS_BASE}sustainability#ifrs-sustainability-issb` },
 ]

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 title: Public sector (IPSAS & BBV)
 description: Public-sector accounting — the accrual IPSAS standards (IPSASB) and the Dutch BBV (Besluit begroting en verantwoording provincies en gemeenten).
 ---
@@ -117,8 +117,37 @@ accountability statement) in its annual accounts.
 | Art. 59–65 — Waardering, activeren en afschrijven | Valuation, capitalisation and depreciation of assets | [BWBR0014606](https://wetten.overheid.nl/BWBR0014606/2025-04-17) |
 | Commissie BBV | Issues interpretive guidance and stellige uitspraken | [commissiebbv.nl](https://www.commissiebbv.nl/) |
 
+## US GASB — state & local government {#us-gasb}
+
+The **Governmental Accounting Standards Board (GASB)**, a board of the FAF, sets
+US GAAP for **state and local governments** (~90,000 entities and their pension
+systems) — the US counterpart to IPSAS and the Dutch BBV. GASB uses a distinctive
+dual model (government-wide accrual statements + fund-based modified accrual).
+Recent: **GASB 103** (financial reporting model improvements, effective FY
+beginning after 15 Jun 2025) and **GASB 105** (subsequent events).
+
+| Element | What it is | Source |
+|---|---|---|
+| GASB Statements | Authoritative US state/local government GAAP | [gasb.org](https://www.gasb.org/) |
+| GASB 34 | The financial reporting model (government-wide + fund statements) | [gasb.org](https://www.gasb.org/) |
+| GASB 103 | Financial reporting model improvements (FY2025/26) | [gasb.org](https://www.gasb.org/) |
+
+> You already ship IPSAS and the [Dutch BBV](#dutch-bbv); GASB is the symmetric US
+> public-sector basis.
+
+## US FASAB — federal government {#us-fasab}
+
+The **Federal Accounting Standards Advisory Board (FASAB)** sets accounting
+standards for the **US federal government** and its agencies (under the CFO Act).
+Niche — relevant only to federal-agency / government-contractor customers.
+
+| Element | What it is | Source |
+|---|---|---|
+| FASAB Handbook (SFFAS) | Statements of Federal Financial Accounting Standards | [fasab.gov](https://fasab.gov/) |
+
 ## Sources
 
+- [GASB](https://www.gasb.org/) · [FASAB](https://fasab.gov/)
 - [IPSASB Standards & Pronouncements](https://www.ipsasb.org/standards-pronouncements)
 - [2025 Handbook of International Public Sector Accounting Pronouncements](https://www.ipsasb.org/publications/2025-handbook-international-public-sector-accounting-pronouncements)
 - [Besluit begroting en verantwoording provincies en gemeenten (`BWBR0014606`)](https://wetten.overheid.nl/BWBR0014606/2025-04-17)

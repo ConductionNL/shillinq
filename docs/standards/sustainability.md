@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 7
 title: Sustainability (ESRS & IFRS S1/S2)
 description: Sustainability reporting — the European ESRS under the CSRD and the ISSB's IFRS S1 / S2, with the 2025-2026 EU reform state.
 ---

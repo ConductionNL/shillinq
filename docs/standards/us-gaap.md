@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 5
 title: US GAAP (FASB ASC)
 description: US GAAP — the FASB Accounting Standards Codification structure by Area and Topic, with key requirements for ASC 606 (revenue) and ASC 842 (leases).
 ---
@@ -103,7 +103,31 @@ a single on-balance-sheet model.
 *The operating/finance split is the key [conflict](./comparisons.md#leases) with
 IFRS 16's single model.*
 
+## Special-purpose frameworks (OCBOA) {#special-purpose-frameworks-ocboa}
+
+Many US private entities — especially small businesses — do **not** report under
+full US GAAP. They use a recognised **special-purpose framework** (historically
+"OCBOA", other comprehensive basis of accounting), permitted under AICPA AU-C 800.
+For a US-market bookkeeping product these are core, not edge cases.
+
+| Basis | What it is | Who uses it | Source |
+|---|---|---|---|
+| **Income-tax basis** | Statements on the same basis as the entity's tax return (Internal Revenue Code) | The **most common** SMB basis — "books on tax basis" | [AICPA](https://www.aicpa-cima.com/resources/article/frequent-questions-about-special-purpose-frameworks) |
+| **Cash basis** | Revenue/expense recognised when cash moves | Very common for the smallest entities & many non-profits | [AICPA](https://www.aicpa-cima.com/resources/article/frequent-questions-about-special-purpose-frameworks) |
+| **Modified-cash basis** | Cash basis with selected accrual modifications (fixed assets, payroll taxes) | Common SMB middle ground | [AICPA](https://www.aicpa-cima.com/resources/article/frequent-questions-about-special-purpose-frameworks) |
+| **Regulatory basis** | A basis a regulator prescribes | Regulated entities | AU-C 800 |
+| **FRF for SMEs** | AICPA's non-authoritative, historical-cost, reduced-disclosure framework for owner-managed private companies | Optional alternative to GAAP/tax basis | [AICPA — FRF for SMEs](https://www.aicpa-cima.com/resources/article/financial-reporting-framework-for-small-and-medium-size-entities) |
+
+> These are full *bases of accounting* (they sit in the
+> [Standards policy](./index.md#how-shillinq-uses-this-the-standards-policy)
+> alongside US GAAP). How the resulting statements are *produced and reported* —
+> preparation / compilation / review under **AICPA SSARS**, or SEC **Reg S-X/S-K**
+> for public companies — is an output layer covered on the
+> [output formats](./output-formats.md) page, not a basis of accounting.
+
 ## Sources
 
 - [FASB Accounting Standards Codification](https://asc.fasb.org/)
 - [FASB](https://www.fasb.org/)
+- [AICPA — Special purpose frameworks (OCBOA)](https://www.aicpa-cima.com/resources/article/frequent-questions-about-special-purpose-frameworks)
+- [AICPA — FRF for SMEs](https://www.aicpa-cima.com/resources/article/financial-reporting-framework-for-small-and-medium-size-entities)
