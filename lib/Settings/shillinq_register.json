@@ -115,6 +115,12 @@
 						"description": "ISO 8601 timestamp when the PSD2 consent expires. PSD2 mandates SCA renewal every 90 days.",
 						"example": "2026-09-30T10:00:00Z"
 					},
+					"consentRemainingDays": {
+						"type": "integer",
+						"description": "Derived (do not set directly): days until the PSD2 consent expires. Negative when already expired. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 14
+					},
 					"lastSyncAt": {
 						"type": "string",
 						"format": "date-time",
@@ -250,9 +256,11 @@
 				},
 				"x-openregister-calculations": {
 					"consentRemainingDays": {
-						"expression": "dateDiffDays(@self.consentExpiresAt, now())",
+						"materialise": true,
+						"targetField": "consentRemainingDays",
+						"expression": { "diffDays": [ { "prop": "consentExpiresAt" }, { "now": [] } ] },
 						"type": "integer",
-						"description": "Number of days until the PSD2 consent expires. Negative when already expired.",
+						"description": "Number of days until the PSD2 consent expires. Negative when already expired. JSON-AST: diffDays(consentExpiresAt, now()).",
 						"example": 14
 					}
 				},
@@ -1393,6 +1401,12 @@
 						"description": "Marks this account as Vpb-pligtig per Wet modernisering Vpb-plicht (2016). When true, postings against this account contribute to the Vpb-balans aggregation (REQ-VPB-001). Default false — only accounts explicitly tagged by the bookkeeper contribute.",
 						"default": false,
 						"example": false
+					},
+					"daysUntilRetention": {
+						"type": "integer",
+						"description": "Derived (do not set directly): always null for Account (kept indefinitely). Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": null
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -1547,8 +1561,12 @@
 				},
 				"x-openregister-calculations": {
 					"daysUntilRetention": {
-						"expression": "null",
-						"description": "Account records are kept indefinitely (disposition: keep_indefinite per selectielijst:5.1.1). This field always returns null for Account objects."
+						"materialise": true,
+						"targetField": "daysUntilRetention",
+						"expression": { "lit": null },
+						"type": "integer",
+						"nullable": true,
+						"description": "Account records are kept indefinitely (disposition: keep_indefinite per selectielijst:5.1.1). This field always returns null for Account objects. JSON-AST: lit(null)."
 					},
 					"emuAggregationHash": {
 						"description": "Stable SHA-256 hash of the contributing GL line IDs + esaClassifier state + applied emuInclusionRule values for the last EMU computation. Same inputs always produce the same hash, enabling audit-trail reproducibility per REQ-EMU-005.",
@@ -1575,8 +1593,16 @@
 				],
 				"x-openregister-calculations": {
 					"daysUntilRetention": {
-						"expression": "@self.effectiveTo != null ? datediff(today(), @self.effectiveTo) : null",
-						"description": "Days until this retention rule expires. Null when effectiveTo is absent (rules without an end date)."
+						"materialise": true,
+						"targetField": "daysUntilRetention",
+						"expression": { "if": [
+							{ "ne": [ { "prop": "effectiveTo" }, { "lit": null } ] },
+							{ "diffDays": [ { "prop": "effectiveTo" }, { "now": [] } ] },
+							{ "lit": null }
+						] },
+						"type": "integer",
+						"nullable": true,
+						"description": "Days until this retention rule expires (effectiveTo - today). Null when effectiveTo is absent. JSON-AST: if(effectiveTo != null, diffDays(effectiveTo, now()), null)."
 					}
 				},
 				"x-openregister-widgets": {
@@ -1694,6 +1720,12 @@
 						"description": "Administration identifier for per-administration override rules (archiefverordening scope). Absent on seeded default rules which apply to all administrations.",
 						"example": "gem-almelo",
 						"nullable": true
+					},
+					"daysUntilRetention": {
+						"type": "integer",
+						"description": "Derived (do not set directly): days until this rule expires (effectiveTo - today); null when effectiveTo is absent. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 365
 					},
 					"_meta": {
 						"type": "object",
@@ -2793,13 +2825,25 @@
 						"description": "Date the operator last updated these denominators. Aggregation surfaces a warning when >12 months old per REQ-CBSE-003.",
 						"nullable": true,
 						"example": "2026-01-15"
+					},
+					"denominatorStaleWarning": {
+						"type": "boolean",
+						"description": "Derived (do not set directly): true when denominators have not been updated in the past 12 months. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": false
 					}
 				},
 				"x-openregister-calculations": {
 					"denominatorStaleWarning": {
-						"expression": "@self.lastUpdatedAt != null ? dateDiffDays(today(), @self.lastUpdatedAt) > 365 : true",
+						"materialise": true,
+						"targetField": "denominatorStaleWarning",
+						"expression": { "if": [
+							{ "ne": [ { "prop": "lastUpdatedAt" }, { "lit": null } ] },
+							{ "gt": [ { "diffDays": [ { "now": [] }, { "prop": "lastUpdatedAt" } ] }, { "lit": 365 } ] },
+							{ "lit": true }
+						] },
 						"type": "boolean",
-						"description": "True when denominators have not been updated in the past 12 months. Surfaces a warning in the Kerngegevens bestand UI per REQ-CBSE-003.",
+						"description": "True when denominators have not been updated in the past 12 months. JSON-AST: if(lastUpdatedAt != null, diffDays(now(), lastUpdatedAt) > 365, true). REQ-CBSE-003.",
 						"example": false
 					}
 				},
@@ -3375,6 +3419,30 @@
 						],
 						"nullable": true
 					},
+					"monthlyDepreciation": {
+						"type": "number",
+						"description": "Derived (do not set directly): monthly depreciation charge for the current period. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 100.0
+					},
+					"currentBookValue": {
+						"type": "number",
+						"description": "Derived (do not set directly): current net book value. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 9000.0
+					},
+					"commercialBookValue": {
+						"type": "number",
+						"description": "Derived (do not set directly): net book value under the commercial depreciation stream. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 9000.0
+					},
+					"fiscalBookValue": {
+						"type": "number",
+						"description": "Derived (do not set directly): net book value under the fiscal depreciation stream. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 9000.0
+					},
 					"lifecycleState": {
 						"type": "string",
 						"description": "Current lifecycle state of the asset.",
@@ -3395,8 +3463,22 @@
 				},
 				"x-openregister-calculations": {
 					"monthlyDepreciation": {
-						"description": "Monthly depreciation charge for the current period under the linear method. Zero when depreciationMethod = none.",
-						"expression": "(depreciationMethod == 'none') ? 0 : (depreciationMethod == 'linear') ? (acquisitionCost - residualValue) / usefulLifeMonths : (depreciationMethod == 'degressive') ? (currentBookValue * degressiveRate / 12) : 0",
+						"materialise": true,
+						"targetField": "monthlyDepreciation",
+						"description": "Monthly depreciation charge for the current period. Zero for none-method; linear straight-line; degressive uses currentBookValue. JSON-AST nested if over depreciationMethod.",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "depreciationMethod" }, { "lit": "none" } ] },
+							{ "lit": 0 },
+							{ "if": [
+								{ "eq": [ { "prop": "depreciationMethod" }, { "lit": "linear" } ] },
+								{ "/": [ { "-": [ { "prop": "acquisitionCost" }, { "prop": "residualValue" } ] }, { "prop": "usefulLifeMonths" } ] },
+								{ "if": [
+									{ "eq": [ { "prop": "depreciationMethod" }, { "lit": "degressive" } ] },
+									{ "/": [ { "*": [ { "prop": "currentBookValue" }, { "prop": "degressiveRate" } ] }, { "lit": 12 } ] },
+									{ "lit": 0 }
+								] }
+							] }
+						] },
 						"dependsOn": [
 							"acquisitionCost",
 							"residualValue",
@@ -3407,8 +3489,23 @@
 						]
 					},
 					"currentBookValue": {
-						"description": "Current net book value. Equals acquisitionCost minus accumulated depreciation calculated from acquisitionDate to today. For none-method assets this always equals acquisitionCost.",
-						"expression": "(depreciationMethod == 'none') ? acquisitionCost : max(residualValue, acquisitionCost - ((acquisitionCost - residualValue) / usefulLifeMonths) * monthsElapsed(@self.acquisitionDate))",
+						"materialise": true,
+						"targetField": "currentBookValue",
+						"description": "Current net book value: acquisitionCost minus accumulated linear depreciation from acquisitionDate to today, floored at residualValue. none-method equals acquisitionCost. JSON-AST uses max + monthsElapsed.",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "depreciationMethod" }, { "lit": "none" } ] },
+							{ "prop": "acquisitionCost" },
+							{ "max": [
+								{ "prop": "residualValue" },
+								{ "-": [
+									{ "prop": "acquisitionCost" },
+									{ "*": [
+										{ "/": [ { "-": [ { "prop": "acquisitionCost" }, { "prop": "residualValue" } ] }, { "prop": "usefulLifeMonths" } ] },
+										{ "monthsElapsed": [ { "now": [] }, { "prop": "acquisitionDate" } ] }
+									] }
+								] }
+							] }
+						] },
 						"dependsOn": [
 							"acquisitionCost",
 							"residualValue",
@@ -3418,8 +3515,20 @@
 						]
 					},
 					"commercialBookValue": {
-						"description": "Net book value under the commercial depreciation stream (IFRS / Dutch GAAP). Only meaningful when commercialRate is set.",
-						"expression": "(commercialRate == null) ? currentBookValue : max(0, acquisitionCost * (1 - commercialRate * (monthsElapsed(@self.acquisitionDate) / 12)))",
+						"materialise": true,
+						"targetField": "commercialBookValue",
+						"description": "Net book value under the commercial depreciation stream (IFRS / Dutch GAAP). Falls back to currentBookValue when commercialRate is null. JSON-AST uses max + monthsElapsed.",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "commercialRate" }, { "lit": null } ] },
+							{ "prop": "currentBookValue" },
+							{ "max": [
+								{ "lit": 0 },
+								{ "*": [
+									{ "prop": "acquisitionCost" },
+									{ "-": [ { "lit": 1 }, { "*": [ { "prop": "commercialRate" }, { "/": [ { "monthsElapsed": [ { "now": [] }, { "prop": "acquisitionDate" } ] }, { "lit": 12 } ] } ] } ] }
+								] }
+							] }
+						] },
 						"dependsOn": [
 							"acquisitionCost",
 							"commercialRate",
@@ -3427,8 +3536,20 @@
 						]
 					},
 					"fiscalBookValue": {
-						"description": "Net book value under the fiscal depreciation stream (Wet IB / Wet VPB). Only meaningful when fiscalRate is set.",
-						"expression": "(fiscalRate == null) ? currentBookValue : max(0, acquisitionCost * (1 - fiscalRate * (monthsElapsed(@self.acquisitionDate) / 12)))",
+						"materialise": true,
+						"targetField": "fiscalBookValue",
+						"description": "Net book value under the fiscal depreciation stream (Wet IB / Wet VPB). Falls back to currentBookValue when fiscalRate is null. JSON-AST uses max + monthsElapsed.",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "fiscalRate" }, { "lit": null } ] },
+							{ "prop": "currentBookValue" },
+							{ "max": [
+								{ "lit": 0 },
+								{ "*": [
+									{ "prop": "acquisitionCost" },
+									{ "-": [ { "lit": 1 }, { "*": [ { "prop": "fiscalRate" }, { "/": [ { "monthsElapsed": [ { "now": [] }, { "prop": "acquisitionDate" } ] }, { "lit": 12 } ] } ] } ] }
+								] }
+							] }
+						] },
 						"dependsOn": [
 							"acquisitionCost",
 							"fiscalRate",
@@ -3828,12 +3949,13 @@
 						}
 					}
 				},
-				"x-openregister-calculations": {
+				"x-openregister-aggregations": {
 					"ytdRevenue": {
-						"description": "Year-to-date revenue sum from Invoice (T2 AR sub-ledger) for this administrationId within currentCalendarYear. Excludes cancelled invoices and credit notes. Per REQ-KOR-004; ADR-031 exception path: if OR's calculation engine cannot express the period-filter aggregation, a thin single-method KorThresholdGuard::currentYtdRevenue() guard (~30 LOC) is permitted.",
-						"expression": "sum(Invoice.totalAmountExclVat)",
-						"sourceSchema": "Invoice",
+						"description": "Year-to-date revenue sum from Invoice (T2 AR sub-ledger) for this administrationId within currentCalendarYear. Excludes cancelled invoices and credit notes. Cross-object SUM relocated from x-openregister-calculations per ADR-031 (the per-object evaluator cannot fold over other objects). Per REQ-KOR-004; ADR-031 exception path: if OR's aggregation engine cannot express the period filter, a thin single-method KorThresholdGuard::currentYtdRevenue() guard (~30 LOC) is permitted.",
+						"source": "Invoice",
 						"sourceRegister": "shillinq",
+						"operation": "sum",
+						"field": "totalAmountExclVat",
 						"filter": {
 							"administrationId": "@self.administrationId",
 							"invoiceYear": "@self.currentCalendarYear",
@@ -3843,7 +3965,8 @@
 									"credit-note"
 								]
 							}
-						}
+						},
+						"targetField": "ytdRevenue"
 					}
 				},
 				"x-openregister-notifications": {
@@ -4956,44 +5079,34 @@
 				},
 				"x-openregister-calculations": {
 					"recognisedRevenue": {
-						"description": "RJ 270 / IFRS 15 percentage-of-completion recognised revenue (REQ-CPA-007). Clamped to [0, totalContractValue].",
+						"materialise": true,
+						"targetField": "recognisedRevenue",
+						"description": "RJ 270 / IFRS 15 percentage-of-completion recognised revenue (REQ-CPA-007). Clamped to [0, totalContractValue]. JSON-AST: completed-contract recognises 0 until state=closed then full value; percentage-of-completion-output uses percentageComplete; cost-to-cost (default) uses costsIncurredToDate/totalEstimatedCosts clamped >= 0 via max.",
 						"type": "number",
-						"conditions": [
-							{
-								"when": {
-									"recognitionMethod": "completed-contract",
-									"state": {
-										"not": "closed"
-									}
-								},
-								"value": 0,
-								"description": "completed-contract: recognise nothing until state=closed."
-							},
-							{
-								"when": {
-									"recognitionMethod": "completed-contract",
-									"state": "closed"
-								},
-								"formula": "@self.totalContractValue",
-								"description": "completed-contract: recognise full contract value on close."
-							},
-							{
-								"when": {
-									"recognitionMethod": "percentage-of-completion-output"
-								},
-								"formula": "@self.totalContractValue * (@self.percentageComplete / 100)",
-								"description": "output-based: operator-supplied percentageComplete drives recognition."
-							}
-						],
-						"default": {
-							"formula": "@self.totalEstimatedCosts > 0 ? max(0, @self.totalContractValue * (@self.costsIncurredToDate / @self.totalEstimatedCosts)) : 0",
-							"description": "cost-to-cost (default): totalContractValue × (costsIncurredToDate / totalEstimatedCosts), clamped ≥ 0."
-						}
+						"expression": { "if": [
+							{ "eq": [ { "prop": "recognitionMethod" }, { "lit": "completed-contract" } ] },
+							{ "if": [
+								{ "eq": [ { "prop": "state" }, { "lit": "closed" } ] },
+								{ "prop": "totalContractValue" },
+								{ "lit": 0 }
+							] },
+							{ "if": [
+								{ "eq": [ { "prop": "recognitionMethod" }, { "lit": "percentage-of-completion-output" } ] },
+								{ "*": [ { "prop": "totalContractValue" }, { "/": [ { "prop": "percentageComplete" }, { "lit": 100 } ] } ] },
+								{ "if": [
+									{ "gt": [ { "prop": "totalEstimatedCosts" }, { "lit": 0 } ] },
+									{ "max": [ { "lit": 0 }, { "*": [ { "prop": "totalContractValue" }, { "/": [ { "prop": "costsIncurredToDate" }, { "prop": "totalEstimatedCosts" } ] } ] } ] },
+									{ "lit": 0 }
+								] }
+							] }
+						] }
 					},
 					"wipBalance": {
-						"description": "Work-in-progress balance: recognised revenue minus billed revenue (REQ-CPA-008).",
+						"materialise": true,
+						"targetField": "wipBalance",
+						"description": "Work-in-progress balance: recognised revenue minus billed revenue (REQ-CPA-008). JSON-AST: recognisedRevenue - billedRevenue.",
 						"type": "number",
-						"formula": "@self.recognisedRevenue - @self.billedRevenue"
+						"expression": { "-": [ { "prop": "recognisedRevenue" }, { "prop": "billedRevenue" } ] }
 					}
 				}
 			},
@@ -5478,9 +5591,15 @@
 				},
 				"x-openregister-calculations": {
 					"utilization": {
-						"description": "Billable hours this period divided by capacity hours this period per person (REQ-CPA-011).",
+						"materialise": true,
+						"targetField": "utilization",
+						"description": "Billable hours this period divided by capacity hours this period per person (REQ-CPA-011). JSON-AST: if(capacityHoursThisPeriod > 0, billableHoursThisPeriod / capacityHoursThisPeriod, 0).",
 						"type": "number",
-						"formula": "@self.capacityHoursThisPeriod > 0 ? (@self.billableHoursThisPeriod / @self.capacityHoursThisPeriod) : 0",
+						"expression": { "if": [
+							{ "gt": [ { "prop": "capacityHoursThisPeriod" }, { "lit": 0 } ] },
+							{ "/": [ { "prop": "billableHoursThisPeriod" }, { "prop": "capacityHoursThisPeriod" } ] },
+							{ "lit": 0 }
+						] },
 						"note": "billableHoursThisPeriod is aggregated from UrenRegistratie records for this assignment in the current FiscalPeriod; capacityHoursThisPeriod = capacityHoursPerWeek × workingWeeksInPeriod."
 					}
 				},
@@ -6029,6 +6148,18 @@
 						],
 						"description": "Status of this rate schedule.",
 						"example": "active"
+					},
+					"isCurrentlyEffective": {
+						"type": "boolean",
+						"description": "Derived (do not set directly): true when today falls within the effective-date window and status=active. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": true
+					},
+					"effectiveWindowLabel": {
+						"type": "string",
+						"description": "Derived (do not set directly): human-readable effective-date window string. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": "2026-01-01 – open-ended"
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -6145,13 +6276,28 @@
 				},
 				"x-openregister-calculations": {
 					"isCurrentlyEffective": {
-						"description": "True when today falls within [effectiveDate, expiryDate] and status=active.",
-						"expression": "status == 'active' AND effectiveDate <= @today AND (expiryDate IS NULL OR expiryDate >= @today)",
+						"materialise": true,
+						"targetField": "isCurrentlyEffective",
+						"description": "True when today falls within [effectiveDate, expiryDate] and status=active. JSON-AST: and(status=='active', effectiveDate<=now(), or(expiryDate==null, expiryDate>=now())).",
+						"expression": { "and": [
+							{ "eq": [ { "prop": "status" }, { "lit": "active" } ] },
+							{ "lte": [ { "prop": "effectiveDate" }, { "now": [] } ] },
+							{ "or": [
+								{ "eq": [ { "prop": "expiryDate" }, { "lit": null } ] },
+								{ "gte": [ { "prop": "expiryDate" }, { "now": [] } ] }
+							] }
+						] },
 						"type": "boolean"
 					},
 					"effectiveWindowLabel": {
-						"description": "Human-readable effective-date window string for UI display.",
-						"expression": "effectiveDate || ' – ' || COALESCE(expiryDate, 'open-ended')",
+						"materialise": true,
+						"targetField": "effectiveWindowLabel",
+						"description": "Human-readable effective-date window string for UI display. JSON-AST: concat(effectiveDate, ' – ', coalesce(expiryDate, 'open-ended')).",
+						"expression": { "concat": [
+							{ "prop": "effectiveDate" },
+							{ "lit": " – " },
+							{ "coalesce": [ { "prop": "expiryDate" }, { "lit": "open-ended" } ] }
+						] },
 						"type": "string"
 					}
 				},
@@ -8321,8 +8467,9 @@
 				},
 				"x-openregister-calculations": {
 					"totalAmount": {
-						"description": "Auto-calculated: distance × ratePerKm per REQ-EC-003. Recalculated on every save while the parent claim is in draft state.",
-						"expression": "@self.distance * @self.ratePerKm",
+						"materialise": true,
+						"description": "Auto-calculated: distance × ratePerKm per REQ-EC-003. Recalculated on every save while the parent claim is in draft state. JSON-AST: distance * ratePerKm.",
+						"expression": { "*": [ { "prop": "distance" }, { "prop": "ratePerKm" } ] },
 						"targetField": "totalAmount"
 					},
 					"ratePerKmLookup": {
@@ -8451,12 +8598,19 @@
 						"type": "string",
 						"description": "FK to the Administration owning this per-diem record.",
 						"example": "adm-consultancy-nl"
+					},
+					"nightCountWarning": {
+						"type": "string",
+						"description": "Derived (do not set directly): non-blocking warning string when nightCount does not match the calendar span; null when counts match. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": null
 					}
 				},
 				"x-openregister-calculations": {
 					"allowanceAmount": {
-						"description": "Auto-calculated: nightCount × dailyRate per REQ-EC-004. Recalculated on every save while parent claim is in draft state.",
-						"expression": "@self.nightCount * @self.dailyRate",
+						"materialise": true,
+						"description": "Auto-calculated: nightCount × dailyRate per REQ-EC-004. Recalculated on every save while parent claim is in draft state. JSON-AST: nightCount * dailyRate.",
+						"expression": { "*": [ { "prop": "nightCount" }, { "prop": "dailyRate" } ] },
 						"targetField": "allowanceAmount"
 					},
 					"dailyRateLookup": {
@@ -8466,8 +8620,14 @@
 						"nullable": true
 					},
 					"nightCountWarning": {
-						"description": "Issues a non-blocking warning when nightCount does not match the calendar span (travelEndDate - travelStartDate) per REQ-EC-004. Returns null when counts match, a warning message string otherwise.",
-						"expression": "datediff(@self.travelEndDate, @self.travelStartDate) != @self.nightCount ? 'Night count does not match travel dates — please verify' : null",
+						"materialise": true,
+						"targetField": "nightCountWarning",
+						"description": "Issues a non-blocking warning when nightCount does not match the calendar span (travelEndDate - travelStartDate) per REQ-EC-004. Returns null when counts match, a warning message string otherwise. JSON-AST: if(diffDays(travelEndDate, travelStartDate) != nightCount, msg, null).",
+						"expression": { "if": [
+							{ "ne": [ { "diffDays": [ { "prop": "travelEndDate" }, { "prop": "travelStartDate" } ] }, { "prop": "nightCount" } ] },
+							{ "lit": "Night count does not match travel dates — please verify" },
+							{ "lit": null }
+						] },
 						"nullable": true,
 						"severity": "warning"
 					}
@@ -9222,6 +9382,18 @@
 						"type": "string",
 						"description": "FK to Administration that owns this reorder rule. Rules are scoped per administration for multi-tenant isolation.",
 						"example": "adm-grocer-amsterdam"
+					},
+					"reorderPointCalculated": {
+						"type": "number",
+						"description": "Derived (do not set directly): lead-time-aware reorder point. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 120
+					},
+					"isLowStock": {
+						"type": "boolean",
+						"description": "Derived (do not set directly): true when the linked stock quantity is at or below minimumLevel and the rule is active. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": false
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -9385,14 +9557,32 @@
 				},
 				"x-openregister-calculations": {
 					"reorderPointCalculated": {
-						"description": "Computes the lead-time-aware reorder point. Formula: (expectedDailyUsage × leadTimeDays) + safetyStock. Falls back to minimumLevel + (leadTimeDays × 5) + 10 if expectedDailyUsage unavailable. Operator may override reorderPoint manually. REQ-IRA-005.",
-						"expression": "IF({expectedDailyUsage} IS NOT NULL, ({expectedDailyUsage} * COALESCE({leadTimeDays}, 7)) + ({expectedDailyUsage} * COALESCE({safetyStockDays}, 1)), {minimumLevel} + (COALESCE({leadTimeDays}, 7) * 5) + 10)",
+						"materialise": true,
+						"targetField": "reorderPointCalculated",
+						"description": "Computes the lead-time-aware reorder point. JSON-AST: if(expectedDailyUsage != null, expectedDailyUsage*coalesce(leadTimeDays,7) + expectedDailyUsage*coalesce(safetyStockDays,1), minimumLevel + coalesce(leadTimeDays,7)*5 + 10). REQ-IRA-005.",
+						"expression": { "if": [
+							{ "ne": [ { "prop": "expectedDailyUsage" }, { "lit": null } ] },
+							{ "+": [
+								{ "*": [ { "prop": "expectedDailyUsage" }, { "coalesce": [ { "prop": "leadTimeDays" }, { "lit": 7 } ] } ] },
+								{ "*": [ { "prop": "expectedDailyUsage" }, { "coalesce": [ { "prop": "safetyStockDays" }, { "lit": 1 } ] } ] }
+							] },
+							{ "+": [
+								{ "prop": "minimumLevel" },
+								{ "*": [ { "coalesce": [ { "prop": "leadTimeDays" }, { "lit": 7 } ] }, { "lit": 5 } ] },
+								{ "lit": 10 }
+							] }
+						] },
 						"outputField": "reorderPointCalculated",
 						"type": "number"
 					},
 					"isLowStock": {
-						"description": "True when the linked InventoryStock quantity is at or below minimumLevel and rule is active. Used for dashboard filtering without a separate aggregation round-trip.",
-						"expression": "{lifecycleState} = 'active' AND {linkedStockQuantity} <= {minimumLevel}",
+						"materialise": true,
+						"targetField": "isLowStock",
+						"description": "True when the linked InventoryStock quantity is at or below minimumLevel and rule is active. JSON-AST: and(lifecycleState=='active', linkedStockQuantity <= minimumLevel).",
+						"expression": { "and": [
+							{ "eq": [ { "prop": "lifecycleState" }, { "lit": "active" } ] },
+							{ "lte": [ { "prop": "linkedStockQuantity" }, { "prop": "minimumLevel" } ] }
+						] },
 						"outputField": "isLowStock",
 						"type": "boolean"
 					}
@@ -12010,8 +12200,26 @@
 				},
 				"x-openregister-calculations": {
 					"auditOpinion": {
-						"description": "Declarative audit opinion rule per REQ-SISA-009. If OR conditional aggregations are not stable, OCA\\Shillinq\\Service\\SisaReportingService::calculateAuditOpinion() implements the same rule as an ADR-031 exception.",
-						"expression": "IF remediationOverdueCount > 0 THEN 'disclaimer' ELSE IF criticalFindingsCount > 0 OR majorFindingsCount >= 3 THEN 'adverse' ELSE IF majorFindingsCount >= 1 THEN 'qualified' ELSE 'unqualified'"
+						"materialise": true,
+						"targetField": "auditOpinion",
+						"type": "string",
+						"description": "Declarative audit opinion rule per REQ-SISA-009. JSON-AST: nested if — disclaimer if remediationOverdueCount>0; adverse if criticalFindingsCount>0 or majorFindingsCount>=3; qualified if majorFindingsCount>=1; else unqualified.",
+						"expression": { "if": [
+							{ "gt": [ { "prop": "remediationOverdueCount" }, { "lit": 0 } ] },
+							{ "lit": "disclaimer" },
+							{ "if": [
+								{ "or": [
+									{ "gt": [ { "prop": "criticalFindingsCount" }, { "lit": 0 } ] },
+									{ "gte": [ { "prop": "majorFindingsCount" }, { "lit": 3 } ] }
+								] },
+								{ "lit": "adverse" },
+								{ "if": [
+									{ "gte": [ { "prop": "majorFindingsCount" }, { "lit": 1 } ] },
+									{ "lit": "qualified" },
+									{ "lit": "unqualified" }
+								] }
+							] }
+						] }
 					}
 				},
 				"x-openregister-rbac": {
@@ -13512,6 +13720,12 @@
 						"description": "Back-reference to the T1 JournalEntry posting the receipt of this instalment.",
 						"nullable": true,
 						"example": null
+					},
+					"isOverdue": {
+						"type": "boolean",
+						"description": "Derived (do not set directly): true when dueDate is past and the instalment is scheduled/overdue. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": false
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -13581,9 +13795,17 @@
 				},
 				"x-openregister-calculations": {
 					"isOverdue": {
-						"expression": "(@self.state = 'scheduled' OR @self.state = 'overdue') AND @self.dueDate < today()",
+						"materialise": true,
+						"targetField": "isOverdue",
+						"expression": { "and": [
+							{ "or": [
+								{ "eq": [ { "prop": "state" }, { "lit": "scheduled" } ] },
+								{ "eq": [ { "prop": "state" }, { "lit": "overdue" } ] }
+							] },
+							{ "lt": [ { "prop": "dueDate" }, { "now": [] } ] }
+						] },
 						"type": "boolean",
-						"description": "Derived flag: true when dueDate is past and instalment is not yet paid or cancelled. No TimedJob needed — value is fresh on every read per ADR-031.",
+						"description": "Derived flag: true when dueDate is past and instalment is scheduled/overdue (not yet paid or cancelled). JSON-AST: and(or(state=='scheduled', state=='overdue'), dueDate<now()). ADR-031.",
 						"example": false
 					}
 				},
@@ -14785,6 +15007,12 @@
 						"description": "Optional FK to the Vpb-aangifte record this election is attached to.",
 						"nullable": true,
 						"example": "vpb-aangifte-2026-adm-1"
+					},
+					"innovationAttributedProfitDisplay": {
+						"type": "number",
+						"description": "Derived (do not set directly): innovation-attributed profit for forfaitair elections; null for afpelmethode. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 25000.0
 					}
 				},
 				"x-openregister-aggregations": {
@@ -14870,9 +15098,15 @@
 				},
 				"x-openregister-calculations": {
 					"innovationAttributedProfitDisplay": {
-						"expression": "@self.route == 'forfaitair' ? min(@self.forfaitairPercentage * @self.operatingProfit, @self.forfaitairCapBedrag) : null",
+						"materialise": true,
+						"targetField": "innovationAttributedProfitDisplay",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "route" }, { "lit": "forfaitair" } ] },
+							{ "min": [ { "*": [ { "prop": "forfaitairPercentage" }, { "prop": "operatingProfit" } ] }, { "prop": "forfaitairCapBedrag" } ] },
+							{ "lit": null }
+						] },
 						"type": "number",
-						"description": "Computed innovation-attributed profit for forfaitair elections. Null for afpelmethode (aggregation provides the value).",
+						"description": "Computed innovation-attributed profit for forfaitair elections. Null for afpelmethode (aggregation provides the value). JSON-AST: if(route=='forfaitair', min(forfaitairPercentage*operatingProfit, forfaitairCapBedrag), null).",
 						"example": 25000.0
 					}
 				},
@@ -15060,13 +15294,35 @@
 						"type": "string",
 						"description": "FK to the Administration that owns this toerekening.",
 						"example": "adm-1"
+					},
+					"verdeelsleutelRatio": {
+						"type": "number",
+						"description": "Derived (do not set directly): computed verdeelsleutel ratio for omzet-aandeel and r-en-d-uren methods; null for custom-formula. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 0.3
 					}
 				},
 				"x-openregister-calculations": {
 					"verdeelsleutelRatio": {
-						"expression": "@self.verdeelsleutel == 'omzet-aandeel' && @self.parameters.totalRevenue > 0 ? @self.parameters.ipRevenue / @self.parameters.totalRevenue : (@self.verdeelsleutel == 'r-en-d-uren' && @self.parameters.totalHours > 0 ? @self.parameters.ipHours / @self.parameters.totalHours : null)",
+						"materialise": true,
+						"targetField": "verdeelsleutelRatio",
+						"expression": { "if": [
+							{ "and": [
+								{ "eq": [ { "prop": "verdeelsleutel" }, { "lit": "omzet-aandeel" } ] },
+								{ "gt": [ { "prop": "parameters.totalRevenue" }, { "lit": 0 } ] }
+							] },
+							{ "/": [ { "prop": "parameters.ipRevenue" }, { "prop": "parameters.totalRevenue" } ] },
+							{ "if": [
+								{ "and": [
+									{ "eq": [ { "prop": "verdeelsleutel" }, { "lit": "r-en-d-uren" } ] },
+									{ "gt": [ { "prop": "parameters.totalHours" }, { "lit": 0 } ] }
+								] },
+								{ "/": [ { "prop": "parameters.ipHours" }, { "prop": "parameters.totalHours" } ] },
+								{ "lit": null }
+							] }
+						] },
 						"type": "number",
-						"description": "Computed verdeelsleutel ratio for omzet-aandeel and r-en-d-uren methods. Null for custom-formula.",
+						"description": "Computed verdeelsleutel ratio for omzet-aandeel and r-en-d-uren methods. Null for custom-formula. JSON-AST nested if over verdeelsleutel with division.",
 						"example": 0.3
 					}
 				},
@@ -15710,8 +15966,11 @@
 				},
 				"x-openregister-calculations": {
 					"teBetalenOfTeruggave": {
-						"description": "Net payable = verschuldigdeOmzetbelasting minus voorbelasting.",
-						"formula": "verschuldigdeOmzetbelasting - voorbelasting"
+						"materialise": true,
+						"targetField": "teBetalenOfTeruggave",
+						"type": "number",
+						"description": "Net payable = verschuldigdeOmzetbelasting minus voorbelasting. JSON-AST: verschuldigdeOmzetbelasting - voorbelasting.",
+						"expression": { "-": [ { "prop": "verschuldigdeOmzetbelasting" }, { "prop": "voorbelasting" } ] }
 					}
 				},
 				"x-openregister-rbac": {
@@ -16416,42 +16675,16 @@
 					}
 				},
 				"x-openregister-calculations": {
-					"ytdQualifyingHours": {
-						"description": "YTD sum of UrenRegistratie.hours for same (administrationId, personId) within taxYear where category in {billable, non-billable-admin, non-billable-acquisition, non-billable-training}. Per REQ-ZZP-003. ADR-031 exception path: if OR engine cannot express the period-filter aggregation, UrencriteriumGuard::currentYtdHours(string $personId, int $year): float applies (~30 LOC, no state).",
-						"expression": "sum(UrenRegistratie.hours)",
-						"sourceSchema": "UrenRegistratie",
-						"sourceRegister": "shillinq",
-						"filter": {
-							"administrationId": "@self.administrationId",
-							"personId": "@self.personId",
-							"date": {
-								"gte": "@self.taxYear + '-01-01'",
-								"lte": "@self.taxYear + '-12-31'"
-							},
-							"category": {
-								"in": [
-									"billable",
-									"non-billable-admin",
-									"non-billable-acquisition",
-									"non-billable-training"
-								]
-							}
-						}
-					},
 					"qualifiesForUrencriterium": {
-						"description": "True when ytdQualifyingHours >= threshold (1225 regular, 800 starters-opvolgers). REQ-ZZP-007.",
-						"expression": "@self.isStartersOpvolger ? @self.ytdQualifyingHours >= 800 : @self.ytdQualifyingHours >= 1225"
-					},
-					"taxableProfit": {
-						"description": "GL-derived profit for taxYear: self-employment income aggregated from T1 GL.",
-						"expression": "sum(GLLine.amount)",
-						"sourceSchema": "GLLine",
-						"sourceRegister": "shillinq",
-						"filter": {
-							"administrationId": "@self.administrationId",
-							"fiscalYear": "@self.taxYear",
-							"taxCategory": "self-employment-income"
-						}
+						"materialise": true,
+						"targetField": "qualifiesForUrencriterium",
+						"description": "True when ytdQualifyingHours >= threshold (1225 regular, 800 starters-opvolgers). REQ-ZZP-007. JSON-AST: if(isStartersOpvolger, ytdQualifyingHours>=800, ytdQualifyingHours>=1225).",
+						"type": "boolean",
+						"expression": { "if": [
+							{ "prop": "isStartersOpvolger" },
+							{ "gte": [ { "prop": "ytdQualifyingHours" }, { "lit": 800 } ] },
+							{ "gte": [ { "prop": "ytdQualifyingHours" }, { "lit": 1225 } ] }
+						] }
 					},
 					"zelfstandigenaftrekAmount": {
 						"description": "Zelfstandigenaftrek from seeded zzp-deduction-amounts table for taxYear, applied when qualifiesForUrencriterium. Wet IB 2001 art. 3.76.",
@@ -16466,12 +16699,58 @@
 						"expression": "lookup('ZzpDeductionAmounts', taxYear: @self.taxYear, field: 'mkbWinstvrijstellingPercentage')"
 					},
 					"mkbWinstvrijstellingAmount": {
-						"description": "Derived: (taxableProfit - zelfstandigenaftrekAmount - startersaftrekAmount) x mkbWinstvrijstellingPercentage.",
-						"expression": "(@self.taxableProfit - @self.zelfstandigenaftrekAmount - @self.startersaftrekAmount) * @self.mkbWinstvrijstellingPercentage"
+						"materialise": true,
+						"targetField": "mkbWinstvrijstellingAmount",
+						"description": "Derived: (taxableProfit - zelfstandigenaftrekAmount - startersaftrekAmount) x mkbWinstvrijstellingPercentage. JSON-AST arithmetic.",
+						"type": "number",
+						"expression": { "*": [
+							{ "-": [ { "prop": "taxableProfit" }, { "prop": "zelfstandigenaftrekAmount" }, { "prop": "startersaftrekAmount" } ] },
+							{ "prop": "mkbWinstvrijstellingPercentage" }
+						] }
 					},
 					"totalDeduction": {
-						"description": "Sum of the three deduction amounts.",
-						"expression": "@self.zelfstandigenaftrekAmount + @self.startersaftrekAmount + @self.mkbWinstvrijstellingAmount"
+						"materialise": true,
+						"targetField": "totalDeduction",
+						"description": "Sum of the three deduction amounts. JSON-AST: zelfstandigenaftrekAmount + startersaftrekAmount + mkbWinstvrijstellingAmount.",
+						"type": "number",
+						"expression": { "+": [ { "prop": "zelfstandigenaftrekAmount" }, { "prop": "startersaftrekAmount" }, { "prop": "mkbWinstvrijstellingAmount" } ] }
+					}
+				},
+				"x-openregister-aggregations": {
+					"ytdQualifyingHours": {
+						"description": "YTD sum of UrenRegistratie.hours for the same (administrationId, personId) within taxYear where category is one of the qualifying categories. Cross-object SUM relocated from x-openregister-calculations per ADR-031 (the per-object evaluator cannot fold over other objects). REQ-ZZP-003. ADR-031 exception path: if the OR aggregation engine cannot express the period filter, OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours applies.",
+						"source": "UrenRegistratie",
+						"sourceRegister": "shillinq",
+						"operation": "sum",
+						"field": "hours",
+						"filter": {
+							"administrationId": "@self.administrationId",
+							"personId": "@self.personId",
+							"date": {
+								"gte": "@self.taxYear + '-01-01'",
+								"lte": "@self.taxYear + '-12-31'"
+							},
+							"category": [
+								"billable",
+								"non-billable-admin",
+								"non-billable-acquisition",
+								"non-billable-training"
+							]
+						},
+						"targetField": "ytdQualifyingHours"
+					},
+					"taxableProfit": {
+						"description": "GL-derived self-employment income for taxYear: sum of GLLine.amount over the self-employment-income tax category. Cross-object SUM relocated from x-openregister-calculations per ADR-031 (the per-object evaluator cannot fold over other objects).",
+						"source": "GLLine",
+						"sourceRegister": "shillinq",
+						"operation": "sum",
+						"field": "amount",
+						"filter": {
+							"administrationId": "@self.administrationId",
+							"fiscalYear": "@self.taxYear",
+							"taxCategory": "self-employment-income"
+						},
+						"targetField": "taxableProfit"
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -18334,8 +18613,26 @@
 			},
 			"x-openregister-calculations": {
 				"auditOpinion": {
-					"description": "Declarative audit opinion rule per REQ-SISA-009. If OR conditional aggregations are not stable, OCA\\Shillinq\\Service\\SisaReportingService::calculateAuditOpinion() implements the same rule as an ADR-031 exception.",
-					"expression": "IF remediationOverdueCount > 0 THEN 'disclaimer' ELSE IF criticalFindingsCount > 0 OR majorFindingsCount >= 3 THEN 'adverse' ELSE IF majorFindingsCount >= 1 THEN 'qualified' ELSE 'unqualified'"
+					"materialise": true,
+					"targetField": "auditOpinion",
+					"type": "string",
+					"description": "Declarative audit opinion rule per REQ-SISA-009. JSON-AST: nested if — disclaimer if remediationOverdueCount>0; adverse if criticalFindingsCount>0 or majorFindingsCount>=3; qualified if majorFindingsCount>=1; else unqualified.",
+					"expression": { "if": [
+						{ "gt": [ { "prop": "remediationOverdueCount" }, { "lit": 0 } ] },
+						{ "lit": "disclaimer" },
+						{ "if": [
+							{ "or": [
+								{ "gt": [ { "prop": "criticalFindingsCount" }, { "lit": 0 } ] },
+								{ "gte": [ { "prop": "majorFindingsCount" }, { "lit": 3 } ] }
+							] },
+							{ "lit": "adverse" },
+							{ "if": [
+								{ "gte": [ { "prop": "majorFindingsCount" }, { "lit": 1 } ] },
+								{ "lit": "qualified" },
+								{ "lit": "unqualified" }
+							] }
+						] }
+					] }
 				}
 			},
 			"x-openregister-rbac": {
