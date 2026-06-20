@@ -1,0 +1,22 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-rule-engine",
+		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+		"description": "Wires the rule engine into the bookkeeping lifecycle (REQ-RE-003). Adds the ARInvoice.issue precondition `OCA\\Shillinq\\Lifecycle\\RuleComplianceGuard::validateInvoice`, which runs OCA\\Shillinq\\Standards\\RuleEngine over the invoice and blocks the draft->issued transition when a MANDATORY machine-checkable invoice rule from the RuleCatalogue is violated (EN 16931 BR-02/03/05/13/14, BR-CO-15 total-with-VAT calculation, gl-sequential-invoice-numbering). The ARInvoice.issue transition has no prior `requires`, so this is a clean addition (deep-merge), not an override. GLTransaction.post enforcement is implemented in the same RuleComplianceGuard (::validateTransaction, reusing BalanceGuard for the balance invariant) and unit-tested, but its lifecycle wiring is deferred: GLTransaction.post already carries `requires: BalanceGuard::isBalanced` plus allocation-rule `actions`, and `requires` is single-valued, so wiring it requires overriding that scalar — held back until the fragment deep-merge is confirmed to preserve the existing `actions`. No new schema; this fragment only attaches a guard to an existing transition."
+	},
+	"components": {
+		"schemas": {
+			"ARInvoice": {
+				"x-openregister-lifecycle": {
+					"transitions": {
+						"issue": {
+							"requires": "OCA\\Shillinq\\Lifecycle\\RuleComplianceGuard::validateInvoice"
+						}
+					}
+				}
+			}
+		}
+	}
+}
