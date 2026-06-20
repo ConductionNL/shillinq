@@ -329,7 +329,7 @@ class BbvComplianceGuard
             return true;
         }
 
-        $administration = $this->findAdministration($administrationId);
+        $administration = $this->findAdministration(administrationId: $administrationId);
         if ($administration === null) {
             // Administration not yet present in OR (bootstrap) — permissive.
             return true;
@@ -354,7 +354,7 @@ class BbvComplianceGuard
         }
 
         $transactionId = (string) ($transaction['id'] ?? $transaction['uuid'] ?? '');
-        $lines         = $this->findTransactionLines($transactionId);
+        $lines         = $this->findTransactionLines(transactionId: $transactionId);
         if (empty($lines) === true) {
             // BalanceGuard handles transactions without lines.
             return true;
@@ -367,7 +367,7 @@ class BbvComplianceGuard
                 continue;
             }
 
-            $mapping = $this->findMapping($administrationId, $accountNumber);
+            $mapping = $this->findMapping(administrationId: $administrationId, accountNumber: $accountNumber);
             if ($mapping === null) {
                 $this->logger->info(
                     'BbvComplianceGuard: blocking GLTransaction.post — unmapped account on municipal administration',

@@ -325,7 +325,7 @@ class RetireCostProjectStep implements IRepairStep
         $candidate = $baseCode;
 
         for ($attempt = 2; $attempt <= self::MAX_COLLISION_ATTEMPTS + 1; $attempt++) {
-            if ($this->codeExists($objectService, $registerSlug, $candidate) === false) {
+            if ($this->codeExists(objectService: $objectService, registerSlug: $registerSlug, code: $candidate) === false) {
                 if ($candidate !== $baseCode) {
                     $output->info(
                         'Shillinq: RetireCostProjectStep — code collision on "'.$baseCode.'" resolved to "'.$candidate.'".'
@@ -392,7 +392,7 @@ class RetireCostProjectStep implements IRepairStep
             'code'               => $code,
             'name'               => (string) ($source['name'] ?? $code),
             'administrationId'   => (string) ($source['administrationId'] ?? ''),
-            'lifecycleState'     => $this->mapLifecycleState((string) ($source['lifecycleState'] ?? 'active')),
+            'lifecycleState'     => $this->mapLifecycleState(costProjectState: (string) ($source['lifecycleState'] ?? 'active')),
             'migratedFrom'       => $costProjectId,
             'externalProjectRef' => null,
         ];
@@ -423,13 +423,13 @@ class RetireCostProjectStep implements IRepairStep
             }
         }
 
-        // costCenterCode → parentCode (migrated project nests under its department).
+        // CostCenterCode → parentCode (migrated project nests under its department).
         $costCenterCode = ($source['costCenterCode'] ?? null);
         if ($costCenterCode !== null && $costCenterCode !== '') {
             $record['parentCode'] = (string) $costCenterCode;
         }
 
-        // costsIncurredToDate is intentionally NOT copied — it is a GL-derived
+        // CostsIncurredToDate is intentionally NOT copied — it is a GL-derived
         // read-time aggregation (spentToDate) on AnalyticalDimension and must
         // not be stored as a stale integer.
         return $record;
@@ -439,7 +439,7 @@ class RetireCostProjectStep implements IRepairStep
     /**
      * Map a CostProject lifecycleState to the AnalyticalDimension lifecycle.
      *
-     *   draft | active | on-hold → active
+     *   Draft | active | on-hold → active
      *   closed | archived        → archived
      *
      * @param string $costProjectState The source CostProject.lifecycleState.

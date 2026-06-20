@@ -123,7 +123,7 @@ class ConfirmationTokenService
             'createdBy'     => $createdBy,
         ];
 
-        $record = $this->saveToken($payload);
+        $record = $this->saveToken(token: $payload);
         return [
             'tokenId'   => $tokenId,
             'plaintext' => $plaintext,
@@ -159,8 +159,8 @@ class ConfirmationTokenService
             ];
         }
 
-        $issued     = $this->issueToken($appointmentId);
-        $confirmUrl = $this->buildConfirmUrl($appointmentId, $issued['plaintext']);
+        $issued     = $this->issueToken(appointmentId: $appointmentId);
+        $confirmUrl = $this->buildConfirmUrl(appointmentId: $appointmentId, plaintext: $issued['plaintext']);
         $context    = [
             'serviceName'    => (string) ($appointment['serviceName'] ?? 'Appointment'),
             'location'       => (string) ($appointment['location'] ?? ''),
@@ -208,7 +208,7 @@ class ConfirmationTokenService
             ];
         }
 
-        $token = $this->findActiveTokenForAppointment($appointmentId);
+        $token = $this->findActiveTokenForAppointment(appointmentId: $appointmentId);
         if ($token === null) {
             return [
                 'ok'     => false,
@@ -271,7 +271,7 @@ class ConfirmationTokenService
         $now = $this->nowIso();
         $token['status']     = 'redeemed';
         $token['redeemedAt'] = $now;
-        return $this->saveToken($token);
+        return $this->saveToken(token: $token);
 
     }//end markRedeemed()
 
@@ -285,13 +285,13 @@ class ConfirmationTokenService
      */
     public function revokeActiveForAppointment(string $appointmentId): ?array
     {
-        $token = $this->findActiveTokenForAppointment($appointmentId);
+        $token = $this->findActiveTokenForAppointment(appointmentId: $appointmentId);
         if ($token === null) {
             return null;
         }
 
         $token['status'] = 'revoked';
-        return $this->saveToken($token);
+        return $this->saveToken(token: $token);
 
     }//end revokeActiveForAppointment()
 
@@ -317,9 +317,9 @@ class ConfirmationTokenService
             ];
         }
 
-        $this->revokeActiveForAppointment($appointmentId);
-        $issued     = $this->issueToken($appointmentId, $actor);
-        $confirmUrl = $this->buildConfirmUrl($appointmentId, $issued['plaintext']);
+        $this->revokeActiveForAppointment(appointmentId: $appointmentId);
+        $issued     = $this->issueToken(appointmentId: $appointmentId, createdBy: $actor);
+        $confirmUrl = $this->buildConfirmUrl(appointmentId: $appointmentId, plaintext: $issued['plaintext']);
         $context    = [
             'serviceName'    => (string) ($appointment['serviceName'] ?? 'Appointment'),
             'location'       => (string) ($appointment['location'] ?? ''),
@@ -399,7 +399,7 @@ class ConfirmationTokenService
         }//end try
 
         foreach ($records as $record) {
-            return $this->toArray($record);
+            return $this->toArray(object: $record);
         }
 
         return null;
@@ -428,7 +428,7 @@ class ConfirmationTokenService
                 register: $this->settings->getRegisterSlug(),
                 schema: 'ConfirmationToken',
             );
-            return $this->toArray($saved);
+            return $this->toArray(object: $saved);
         } catch (Throwable $e) {
             $this->logger->error(
                 'ConfirmationTokenService: save failed',

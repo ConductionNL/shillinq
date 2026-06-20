@@ -150,7 +150,7 @@ class BankfeedReconciliationJob extends TimedJob
 
                 foreach ($newStatements as $statement) {
                     $match = $this->matcher->matchTransaction(
-                        transaction: $this->asArray($statement),
+                        transaction: $this->asArray(entity: $statement),
                         candidateInvoices: array_map([$this, 'asArray'], $candidates)
                     );
 

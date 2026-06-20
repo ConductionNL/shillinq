@@ -247,8 +247,14 @@ class BankStatementImportController extends Controller
         $uploaded = $this->request->getUploadedFile('file');
         if (is_array($uploaded) === true && isset($uploaded['tmp_name']) === true && is_uploaded_file((string) $uploaded['tmp_name']) === true) {
             $raw = file_get_contents((string) $uploaded['tmp_name']);
+            if ($raw !== false) {
+                $rawContents = $raw;
+            } else {
+                $rawContents = '';
+            }
+
             return [
-                'contents'    => ($raw !== false) ? $raw : '',
+                'contents'    => $rawContents,
                 'format'      => $format,
                 'glAccountId' => $glAccountId,
             ];
@@ -262,8 +268,10 @@ class BankStatementImportController extends Controller
                 $contents = (string) ($decoded['contents'] ?? '');
                 // Tolerate base64-wrapped payloads from the browser.
                 if ($contents !== '' && ($decoded['encoding'] ?? '') === 'base64') {
-                    $maybe    = base64_decode($contents, true);
-                    $contents = ($maybe !== false) ? $maybe : $contents;
+                    $maybe = base64_decode($contents, true);
+                    if ($maybe !== false) {
+                        $contents = $maybe;
+                    }
                 }
 
                 return [

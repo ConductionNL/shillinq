@@ -80,7 +80,9 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `uwv-loonaangifte` (PKIoverheid Services-server cert + UWV polisadministratie endpoint) and override UwvLoonaangifteAdapterInterface in Application::register() to enable real status pull.',
+                'note'   => 'Bind openconnector source slug `uwv-loonaangifte` (PKIoverheid Services-server cert '
+                    .'+ UWV polisadministratie endpoint) and override UwvLoonaangifteAdapterInterface in '
+                    .'Application::register() to enable real status pull.',
             ],
         );
     }//end pullStatus()
@@ -114,13 +116,19 @@ class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `uwv-loonaangifte` + map sectorindeling endpoint, then override UwvLoonaangifteAdapterInterface in Application::register() to enable real sector validation.',
+                'note'   => 'Bind openconnector source slug `uwv-loonaangifte` + map sectorindeling endpoint, '
+                    .'then override UwvLoonaangifteAdapterInterface in Application::register() to enable real '
+                    .'sector validation.',
             ],
         );
     }//end lookupSector()
 
     /**
+     * Report whether this adapter is a dormant log-only stand-in.
+     *
      * @inheritDoc
+     *
+     * @return bool Always true for the log adapter.
      */
     public function isDormant(): bool
     {

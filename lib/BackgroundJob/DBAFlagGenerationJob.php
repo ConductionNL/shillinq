@@ -401,6 +401,7 @@ class DBAFlagGenerationJob extends TimedJob
             /*
              * @var array<string,mixed> $entity
              */
+
             return $entity;
         }
 
@@ -410,6 +411,7 @@ class DBAFlagGenerationJob extends TimedJob
                 /*
                  * @var array<string,mixed> $data
                  */
+
                 return $data;
             }
         }
@@ -498,6 +500,10 @@ class DBAFlagGenerationJob extends TimedJob
     private function resolveRegister(): string
     {
         $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        return ($register === '') ? 'shillinq' : $register;
+        if ($register === '') {
+            return 'shillinq';
+        }
+
+        return $register;
     }//end resolveRegister()
 }//end class

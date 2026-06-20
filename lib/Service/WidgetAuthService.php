@@ -644,6 +644,7 @@ class WidgetAuthService
             /*
              * @var array<string,mixed> $object
              */
+
             return $object;
         }
 
@@ -653,6 +654,7 @@ class WidgetAuthService
                 /*
                  * @var array<string,mixed> $serialised
                  */
+
                 return $serialised;
             }
         }

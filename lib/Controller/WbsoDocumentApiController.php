@@ -107,7 +107,7 @@ class WbsoDocumentApiController extends Controller
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to load documents', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to load documents', context: ['exception' => $e->getMessage()]);
         }
 
         if ($status !== '') {
@@ -165,7 +165,7 @@ class WbsoDocumentApiController extends Controller
         try {
             $row = $this->documents->getDocument(administrationId: $administrationId, documentId: $id);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to load document', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to load document', context: ['exception' => $e->getMessage()]);
         }
 
         if ($row === null) {
@@ -213,7 +213,7 @@ class WbsoDocumentApiController extends Controller
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to create document', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to create document', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse($row, Http::STATUS_CREATED);
@@ -247,8 +247,12 @@ class WbsoDocumentApiController extends Controller
             return new JSONResponse(['error' => 'Invalid document id'], Http::STATUS_BAD_REQUEST);
         }
 
-        $user     = $this->userSession->getUser();
-        $approver = $user === null ? '' : $user->getUID();
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            $approver = '';
+        } else {
+            $approver = $user->getUID();
+        }
 
         try {
             $row = $this->documents->fileDocument(
@@ -261,7 +265,7 @@ class WbsoDocumentApiController extends Controller
         } catch (RuntimeException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to file document', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to file document', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse($row, Http::STATUS_OK);
@@ -315,7 +319,7 @@ class WbsoDocumentApiController extends Controller
         } catch (RuntimeException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to archive document', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to archive document', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse($row, Http::STATUS_OK);

@@ -196,12 +196,16 @@ class ObligationTaskBridge
      */
     private function writeVtodo(object $backend, string $title, string $dueDate, string $responsible): ?string
     {
-        $uid      = 'shillinq-obligation-'.bin2hex(random_bytes(8));
-        $due      = str_replace('-', '', $dueDate);
-        $attendee = ($responsible !== '') ? "\r\nATTENDEE:mailto:".$responsible : '';
+        $uid = 'shillinq-obligation-'.bin2hex(random_bytes(8));
+        $due = str_replace('-', '', $dueDate);
+        if ($responsible !== '') {
+            $attendee = "\r\nATTENDEE:mailto:".$responsible;
+        } else {
+            $attendee = '';
+        }
 
         $vtodo  = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Conduction//Shillinq CLM//EN\r\n";
-        $vtodo .= "BEGIN:VTODO\r\nUID:".$uid."\r\nSUMMARY:".$this->escapeIcal($title)."\r\n";
+        $vtodo .= "BEGIN:VTODO\r\nUID:".$uid."\r\nSUMMARY:".$this->escapeIcal(value: $title)."\r\n";
         $vtodo .= "DUE;VALUE=DATE:".$due.$attendee."\r\nEND:VTODO\r\nEND:VCALENDAR\r\n";
 
         // Calendar managers that support VTODO creation expose

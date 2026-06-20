@@ -130,7 +130,7 @@ class SnelstartProfile implements ImportProfileInterface
      */
     public function applyDialectQuirks(array $parsed): array
     {
-        $parsed['ledgerAccounts'] = $this->normalizeLedgerAccounts($parsed);
+        $parsed['ledgerAccounts'] = $this->normalizeLedgerAccounts(parsed: $parsed);
         return $parsed;
 
     }//end applyDialectQuirks()

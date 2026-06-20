@@ -188,7 +188,7 @@ class ENSIAXmlExporter
 
         $xml = $doc->saveXML();
         if ($xml === false) {
-            // saveXML cannot fail on construction-only DOMDocument; defensive
+            // SaveXML cannot fail on construction-only DOMDocument; defensive
             // fallback returns an empty signed envelope.
             return '<?xml version="1.0" encoding="UTF-8"?><ensiaZelfevaluatie/>';
         }

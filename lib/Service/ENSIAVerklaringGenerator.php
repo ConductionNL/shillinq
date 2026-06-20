@@ -158,41 +158,43 @@ class ENSIAVerklaringGenerator
         $jaar    = (string) ($cyclus['jaar'] ?? '');
 
         $paras   = [];
-        $paras[] = $this->para('College-verklaring ENSIA '.$jaar, bold: true);
-        $paras[] = $this->para('Organisatie: '.$orgNaam.' (KvK '.$orgKvk.')');
-        $paras[] = $this->para('Verslagjaar: '.$jaar);
-        $paras[] = $this->para('Datum opmaak: '.(new \DateTimeImmutable('now'))->format('Y-m-d'));
-        $paras[] = $this->para('');
+        $paras[] = $this->para(text: 'College-verklaring ENSIA '.$jaar, bold: true);
+        $paras[] = $this->para(text: 'Organisatie: '.$orgNaam.' (KvK '.$orgKvk.')');
+        $paras[] = $this->para(text: 'Verslagjaar: '.$jaar);
+        $paras[] = $this->para(text: 'Datum opmaak: '.(new \DateTimeImmutable('now'))->format('Y-m-d'));
+        $paras[] = $this->para(text: '');
 
         // Per-domein summary.
-        $paras[] = $this->para('Samenvatting per verantwoordingsdomein:', bold: true);
-        foreach ($this->summariseByDomein($vragen) as $line) {
-            $paras[] = $this->para($line);
+        $paras[] = $this->para(text: 'Samenvatting per verantwoordingsdomein:', bold: true);
+        foreach ($this->summariseByDomein(vragen: $vragen) as $line) {
+            $paras[] = $this->para(text: $line);
         }
 
-        $paras[] = $this->para('');
+        $paras[] = $this->para(text: '');
 
         // Top findings.
-        $paras[] = $this->para('Top '.self::TOP_FINDINGS_LIMIT.' bevindingen + mitigatieplan:', bold: true);
+        $paras[] = $this->para(text: 'Top '.self::TOP_FINDINGS_LIMIT.' bevindingen + mitigatieplan:', bold: true);
         $top     = array_slice($bevindingen, 0, self::TOP_FINDINGS_LIMIT);
         if (count($top) === 0) {
-            $paras[] = $this->para('Geen openstaande bevindingen.');
+            $paras[] = $this->para(text: 'Geen openstaande bevindingen.');
         } else {
             $i = 1;
             foreach ($top as $b) {
                 $type           = (string) ($b['type'] ?? 'tekortkoming');
                 $beschrijving   = (string) ($b['beschrijving'] ?? '');
                 $mitigatieActie = (string) ($b['mitigatieActie'] ?? 'nader te bepalen');
-                $paras[]        = $this->para(sprintf('%d. [%s] %s — mitigatie: %s', $i, $type, $beschrijving, $mitigatieActie));
+                $paras[]        = $this->para(
+                    text: sprintf('%d. [%s] %s — mitigatie: %s', $i, $type, $beschrijving, $mitigatieActie)
+                );
                 $i++;
             }
         }
 
-        $paras[] = $this->para('');
-        $paras[] = $this->para('Handtekeningvelden:', bold: true);
-        $paras[] = $this->para('Burgemeester: ____________________________  Datum: __________');
-        $paras[] = $this->para('Wethouder:     ____________________________  Datum: __________');
-        $paras[] = $this->para('Secretaris:    ____________________________  Datum: __________');
+        $paras[] = $this->para(text: '');
+        $paras[] = $this->para(text: 'Handtekeningvelden:', bold: true);
+        $paras[] = $this->para(text: 'Burgemeester: ____________________________  Datum: __________');
+        $paras[] = $this->para(text: 'Wethouder:     ____________________________  Datum: __________');
+        $paras[] = $this->para(text: 'Secretaris:    ____________________________  Datum: __________');
 
         $body = implode('', $paras);
 
@@ -216,7 +218,11 @@ class ENSIAVerklaringGenerator
     private function para(string $text, bool $bold=false): string
     {
         $escaped  = htmlspecialchars($text, ENT_XML1 | ENT_QUOTES, 'UTF-8');
-        $runProps = $bold === true ? '<w:rPr><w:b/></w:rPr>' : '';
+        $runProps = '';
+        if ($bold === true) {
+            $runProps = '<w:rPr><w:b/></w:rPr>';
+        }
+
         return '<w:p><w:r>'.$runProps.'<w:t xml:space="preserve">'.$escaped.'</w:t></w:r></w:p>';
 
     }//end para()
@@ -244,7 +250,7 @@ class ENSIAVerklaringGenerator
             if (is_int($score) === true && is_int($norm) === true && $score >= $norm) {
                 $counts[$domein]['metNorm']++;
             } else if ($score === null && (string) ($v['antwoord'] ?? '') === 'ja') {
-                // ja-nee-nvt: count 'ja' as norm-met.
+                // Ja-nee-nvt: count 'ja' as norm-met.
                 $counts[$domein]['metNorm']++;
             }
         }

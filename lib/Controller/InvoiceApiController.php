@@ -57,6 +57,8 @@ use Psr\Log\LoggerInterface;
 class InvoiceApiController extends Controller
 {
     /**
+     * Constructor.
+     *
      * @param IRequest                     $request               Request.
      * @param InvoiceGenerationService     $service               Drafting/posting service.
      * @param InvoicePdfGenerator          $pdfGenerator          PDF/HTML renderer.
@@ -102,12 +104,16 @@ class InvoiceApiController extends Controller
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_UNPROCESSABLE_ENTITY);
         } catch (\RuntimeException $e) {
             $message = $e->getMessage();
-            $status  = (str_contains($message, 'Conflict') === true) ? Http::STATUS_CONFLICT : Http::STATUS_BAD_REQUEST;
+            $status  = Http::STATUS_BAD_REQUEST;
+            if (str_contains($message, 'Conflict') === true) {
+                $status = Http::STATUS_CONFLICT;
+            }
+
             return new JSONResponse(['error' => $message], $status);
         } catch (\Throwable $e) {
             $this->logger->error('InvoiceApiController.generate failed: '.$e->getMessage());
             return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+        }//end try
 
     }//end generate()
 
@@ -143,7 +149,12 @@ class InvoiceApiController extends Controller
                 ->setSchema('BillableInvoice')
                 ->findAll(filters: $filters);
 
-            return new JSONResponse(is_array($all) === true ? $all : [], Http::STATUS_OK);
+            $items = [];
+            if (is_array($all) === true) {
+                $items = $all;
+            }
+
+            return new JSONResponse($items, Http::STATUS_OK);
         } catch (\Throwable $e) {
             $this->logger->error('InvoiceApiController.index failed: '.$e->getMessage());
             return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -187,10 +198,15 @@ class InvoiceApiController extends Controller
                 ->setSchema('BillableInvoiceLine')
                 ->findAll(filters: ['invoiceId' => $invoiceId]);
 
+            $lineItems = [];
+            if (is_array($lines) === true) {
+                $lineItems = $lines;
+            }
+
             return new JSONResponse(
                 [
                     'invoice'    => $invoice,
-                    'lines'      => is_array($lines) === true ? $lines : [],
+                    'lines'      => $lineItems,
                     'auditTrail' => [],
                 ],
                 Http::STATUS_OK
@@ -234,7 +250,11 @@ class InvoiceApiController extends Controller
             return new JSONResponse($updated, Http::STATUS_OK);
         } catch (\RuntimeException $e) {
             $message = $e->getMessage();
-            $status  = (str_contains($message, 'already posted') === true) ? Http::STATUS_CONFLICT : Http::STATUS_BAD_REQUEST;
+            $status  = Http::STATUS_BAD_REQUEST;
+            if (str_contains($message, 'already posted') === true) {
+                $status = Http::STATUS_CONFLICT;
+            }
+
             return new JSONResponse(['error' => $message], $status);
         } catch (\Throwable $e) {
             $this->logger->error('InvoiceApiController.post failed: '.$e->getMessage());
@@ -270,8 +290,13 @@ class InvoiceApiController extends Controller
                 return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
             }
 
-            $lines = $objectService->setRegister('shillinq')->setSchema('BillableInvoiceLine')->findAll(filters: ['invoiceId' => $invoiceId]);
-            $pdf   = $this->pdfGenerator->generatePdf(invoice: $invoice, lines: is_array($lines) === true ? $lines : []);
+            $lines     = $objectService->setRegister('shillinq')->setSchema('BillableInvoiceLine')->findAll(filters: ['invoiceId' => $invoiceId]);
+            $lineItems = [];
+            if (is_array($lines) === true) {
+                $lineItems = $lines;
+            }
+
+            $pdf = $this->pdfGenerator->generatePdf(invoice: $invoice, lines: $lineItems);
 
             return new DataDisplayResponse(
                 $pdf['html'],
@@ -305,7 +330,11 @@ class InvoiceApiController extends Controller
 
         // Fall back to request params.
         $params = $this->request->getParams();
-        return is_array($params) === true ? $params : [];
+        if (is_array($params) === true) {
+            return $params;
+        }
+
+        return [];
 
     }//end decodeBody()
 

@@ -131,7 +131,12 @@ class LotExpiryAlertJob extends TimedJob
 
             $raised = 0;
             foreach ($activeLots as $record) {
-                $raised += $this->checkLotForAlerts($record, $objectService, $registerSlug, $today);
+                $raised += $this->checkLotForAlerts(
+                    record: $record,
+                    objectService: $objectService,
+                    registerSlug: $registerSlug,
+                    today: $today,
+                );
             }
 
             $this->logger->info(
@@ -160,7 +165,7 @@ class LotExpiryAlertJob extends TimedJob
     private function checkLotForAlerts(mixed $record, mixed $objectService, string $registerSlug, string $today): int
     {
         try {
-            $lot     = $this->toArray($record);
+            $lot     = $this->toArray(object: $record);
             $lotId   = (string) ($lot['id'] ?? ($lot['uuid'] ?? ''));
             $expiry  = (string) ($lot['expiryDate'] ?? '');
             $adminId = (string) ($lot['administrationId'] ?? '');
@@ -168,7 +173,7 @@ class LotExpiryAlertJob extends TimedJob
                 return 0;
             }
 
-            $daysUntil = $this->daysBetween($today, $expiry);
+            $daysUntil = $this->daysBetween(earlier: $today, later: $expiry);
             $raised    = 0;
 
             if ($daysUntil < 0) {

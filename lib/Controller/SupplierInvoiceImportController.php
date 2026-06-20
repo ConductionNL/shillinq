@@ -357,7 +357,11 @@ class SupplierInvoiceImportController extends Controller
             ->setSchema(self::SUPPLIER_INVOICE_SCHEMA)
             ->saveObject($record);
 
-        return is_array($result) === true ? $result : $record;
+        if (is_array($result) === true) {
+            return $result;
+        }
+
+        return $record;
 
     }//end saveSupplierInvoice()
 
@@ -410,7 +414,12 @@ class SupplierInvoiceImportController extends Controller
         $file = $this->request->getUploadedFile('file');
         if (is_array($file) === true && isset($file['tmp_name']) === true && $file['tmp_name'] !== '') {
             $contents = (string) file_get_contents($file['tmp_name']);
-            $format   = ($explicitFormat !== '') ? $explicitFormat : $this->inferFormat((string) ($file['name'] ?? ''), $contents);
+            if ($explicitFormat !== '') {
+                $format = $explicitFormat;
+            } else {
+                $format = $this->inferFormat((string) ($file['name'] ?? ''), $contents);
+            }
+
             return [$contents, $format];
         }
 
@@ -506,7 +515,11 @@ class SupplierInvoiceImportController extends Controller
                     continue;
                 }
 
-                $row[$key] = isset($cells[$index]) === true ? trim((string) $cells[$index]) : '';
+                if (isset($cells[$index]) === true) {
+                    $row[$key] = trim((string) $cells[$index]);
+                } else {
+                    $row[$key] = '';
+                }
             }
 
             $rows[] = $row;
@@ -558,7 +571,11 @@ class SupplierInvoiceImportController extends Controller
         }
 
         $params = $this->request->getParams();
-        return is_array($params) === true ? $params : [];
+        if (is_array($params) === true) {
+            return $params;
+        }
+
+        return [];
 
     }//end decodeBody()
 

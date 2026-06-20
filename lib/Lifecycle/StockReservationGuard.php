@@ -99,7 +99,7 @@ class StockReservationGuard
                 return true;
             }
 
-            $cents = $this->cents(($move['quantity'] ?? 0));
+            $cents = $this->cents(value: ($move['quantity'] ?? 0));
             if ($cents <= 0) {
                 return true;
             }
@@ -121,7 +121,7 @@ class StockReservationGuard
                 return false;
             }
 
-            $availableCents = ($this->cents(($row['quantity'] ?? 0)) - $this->cents(($row['reservedQuantity'] ?? 0)));
+            $availableCents = ($this->cents(value: ($row['quantity'] ?? 0)) - $this->cents(value: ($row['reservedQuantity'] ?? 0)));
             if ($availableCents < $cents) {
                 $this->logger->info(
                     'StockReservationGuard: reserve denied — insufficient available',
@@ -134,9 +134,9 @@ class StockReservationGuard
                 return false;
             }
 
-            $newReservedCents = ($this->cents(($row['reservedQuantity'] ?? 0)) + $cents);
+            $newReservedCents = ($this->cents(value: ($row['reservedQuantity'] ?? 0)) + $cents);
             $patch            = [
-                'reservedQuantity' => $this->fromCents($newReservedCents),
+                'reservedQuantity' => $this->fromCents(cents: $newReservedCents),
                 'version'          => ((int) ($row['version'] ?? 0) + 1),
             ];
 
@@ -167,7 +167,7 @@ class StockReservationGuard
     public function commitReservation(array $move): bool
     {
         try {
-            $cents = $this->cents(($move['quantity'] ?? 0));
+            $cents = $this->cents(value: ($move['quantity'] ?? 0));
             if ($cents <= 0) {
                 return true;
             }
@@ -188,8 +188,8 @@ class StockReservationGuard
                     return false;
                 }
 
-                $sourceReservedCents = $this->cents(($source['reservedQuantity'] ?? 0));
-                $sourceOnHandCents   = $this->cents(($source['quantity'] ?? 0));
+                $sourceReservedCents = $this->cents(value: ($source['reservedQuantity'] ?? 0));
+                $sourceOnHandCents   = $this->cents(value: ($source['quantity'] ?? 0));
                 if ($sourceOnHandCents < $cents || $sourceReservedCents < $cents) {
                     $this->logger->info(
                         'StockReservationGuard: commit denied — source reservation/on-hand inconsistent',
@@ -202,8 +202,8 @@ class StockReservationGuard
                 }
 
                 $patch = [
-                    'reservedQuantity' => $this->fromCents($sourceReservedCents - $cents),
-                    'quantity'         => $this->fromCents($sourceOnHandCents - $cents),
+                    'reservedQuantity' => $this->fromCents(cents: $sourceReservedCents - $cents),
+                    'quantity'         => $this->fromCents(cents: $sourceOnHandCents - $cents),
                     'lastMovementDate' => date('Y-m-d'),
                     'version'          => ((int) ($source['version'] ?? 0) + 1),
                 ];
@@ -231,9 +231,9 @@ class StockReservationGuard
                     );
                 }
 
-                $destOnHandCents = ($this->cents(($destination['quantity'] ?? 0)) + $cents);
+                $destOnHandCents = ($this->cents(value: ($destination['quantity'] ?? 0)) + $cents);
                 $patch           = [
-                    'quantity'         => $this->fromCents($destOnHandCents),
+                    'quantity'         => $this->fromCents(cents: $destOnHandCents),
                     'lastMovementDate' => date('Y-m-d'),
                     'version'          => ((int) ($destination['version'] ?? 0) + 1),
                 ];
@@ -274,7 +274,7 @@ class StockReservationGuard
                 return true;
             }
 
-            $cents = $this->cents(($move['quantity'] ?? 0));
+            $cents = $this->cents(value: ($move['quantity'] ?? 0));
             if ($cents <= 0) {
                 return true;
             }
@@ -289,10 +289,10 @@ class StockReservationGuard
                 return true;
             }
 
-            $currentReservedCents = $this->cents(($row['reservedQuantity'] ?? 0));
+            $currentReservedCents = $this->cents(value: ($row['reservedQuantity'] ?? 0));
             $newReservedCents     = max(0, ($currentReservedCents - $cents));
             $patch = [
-                'reservedQuantity' => $this->fromCents($newReservedCents),
+                'reservedQuantity' => $this->fromCents(cents: $newReservedCents),
                 'version'          => ((int) ($row['version'] ?? 0) + 1),
             ];
 
@@ -377,7 +377,12 @@ class StockReservationGuard
                 return false;
             }
 
-            $currentArray = is_array($current) === true ? $current : (array) $current;
+            if (is_array($current) === true) {
+                $currentArray = $current;
+            } else {
+                $currentArray = (array) $current;
+            }
+
             if ((int) ($currentArray['version'] ?? 0) !== (int) ($row['version'] ?? 0)) {
                 $this->logger->info('StockReservationGuard: CAS collision', ['id' => $id]);
                 return false;
@@ -426,7 +431,7 @@ class StockReservationGuard
                 'administrationId' => $administrationId,
                 'locationId'       => $locationId,
                 'sku'              => $sku,
-                'quantity'         => $this->fromCents($quantityCents),
+                'quantity'         => $this->fromCents(cents: $quantityCents),
                 'reservedQuantity' => 0,
                 'unitCost'         => $unitCost,
                 'lastMovementDate' => date('Y-m-d'),

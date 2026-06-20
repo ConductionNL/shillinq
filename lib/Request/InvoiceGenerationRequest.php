@@ -35,6 +35,8 @@ final class InvoiceGenerationRequest
     public const MODELS = ['t_and_m', 'fixed_fee', 'milestone', 'retainer', 'mixed'];
 
     /**
+     * Construct a validated invoice-generation request.
+     *
      * @param string            $administrationId   Server-resolved tenant scope (NOT client-supplied).
      * @param string            $billingModel       One of MODELS.
      * @param string            $customerId         FK to customer (Nextcloud contact).
@@ -85,6 +87,36 @@ final class InvoiceGenerationRequest
             $fixedFee = (int) $fixedFee;
         }
 
+        if (isset($body['rateCardId']) === true) {
+            $rateCardId = (string) $body['rateCardId'];
+        } else {
+            $rateCardId = null;
+        }
+
+        if (isset($body['retainerScheduleId']) === true) {
+            $retainerScheduleId = (string) $body['retainerScheduleId'];
+        } else {
+            $retainerScheduleId = null;
+        }
+
+        if (isset($body['milestoneId']) === true) {
+            $milestoneId = (string) $body['milestoneId'];
+        } else {
+            $milestoneId = null;
+        }
+
+        if (isset($body['projectId']) === true) {
+            $projectId = (string) $body['projectId'];
+        } else {
+            $projectId = null;
+        }
+
+        if (isset($body['notes']) === true) {
+            $notes = (string) $body['notes'];
+        } else {
+            $notes = null;
+        }
+
         return new self(
             administrationId: $administrationId,
             billingModel: (string) ($body['billingModel'] ?? ''),
@@ -93,12 +125,12 @@ final class InvoiceGenerationRequest
             toDate: (string) ($body['toDate'] ?? ''),
             timeEntryIds: array_values(array_map('strval', (array) ($body['timeEntryIds'] ?? []))),
             expenseIds: array_values(array_map('strval', (array) ($body['expenseIds'] ?? []))),
-            rateCardId: isset($body['rateCardId']) ? (string) $body['rateCardId'] : null,
-            retainerScheduleId: isset($body['retainerScheduleId']) ? (string) $body['retainerScheduleId'] : null,
+            rateCardId: $rateCardId,
+            retainerScheduleId: $retainerScheduleId,
             fixedFeeCents: $fixedFee,
-            milestoneId: isset($body['milestoneId']) ? (string) $body['milestoneId'] : null,
-            projectId: isset($body['projectId']) ? (string) $body['projectId'] : null,
-            notes: isset($body['notes']) ? (string) $body['notes'] : null,
+            milestoneId: $milestoneId,
+            projectId: $projectId,
+            notes: $notes,
         );
 
     }//end fromArray()

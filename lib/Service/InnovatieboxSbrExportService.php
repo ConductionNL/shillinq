@@ -156,18 +156,30 @@ class InnovatieboxSbrExportService
         $rows   = $this->extractRows(aggregation: $aggregation);
         $totals = $this->extractTotals(aggregation: $aggregation);
 
+        if ($methode === 'forfaitair_25pct') {
+            $perAsset = [];
+        } else {
+            $perAsset = $this->renderAssetRows(rows: $rows);
+        }
+
+        if ($methode === 'forfaitair_25pct') {
+            $forfaitair = [
+                'kwalifVoorCap' => round((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
+                'kwalifNaCap'   => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
+                'capEur'        => 25000,
+                'capApplied'    => ((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0) > 25000.0),
+            ];
+        } else {
+            $forfaitair = null;
+        }
+
         return [
             'administrationId' => $administrationId,
             'boekjaar'         => $boekjaar,
             'methode'          => $methode,
             'instanceRef'      => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
-            'perAsset'         => ($methode === 'forfaitair_25pct') ? [] : $this->renderAssetRows(rows: $rows),
-            'forfaitair'       => ($methode === 'forfaitair_25pct') ? [
-                'kwalifVoorCap' => round((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
-                'kwalifNaCap'   => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
-                'capEur'        => 25000,
-                'capApplied'    => ((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0) > 25000.0),
-            ] : null,
+            'perAsset'         => $perAsset,
+            'forfaitair'       => $forfaitair,
             'totals'           => [
                 'winst_voor_nexus' => round((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
                 'winst_na_nexus'   => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),

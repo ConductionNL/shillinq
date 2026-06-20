@@ -149,7 +149,13 @@ class HorizonRollingJob extends TimedJob
     private function rollOne(mixed $horizon, mixed $objectService, string $registerSlug): void
     {
         // Defensive: the OR object accessor varies between entity and array.
-        $horizonId = is_array($horizon) === true ? ($horizon['horizonId'] ?? null) : (method_exists($horizon, 'getHorizonId') === true ? $horizon->getHorizonId() : null);
+        if (is_array($horizon) === true) {
+            $horizonId = ($horizon['horizonId'] ?? null);
+        } else if (method_exists($horizon, 'getHorizonId') === true) {
+            $horizonId = $horizon->getHorizonId();
+        } else {
+            $horizonId = null;
+        }
 
         if ($horizonId === null) {
             $this->logger->warning('HorizonRollingJob: horizon missing horizonId, skipping.');

@@ -114,13 +114,25 @@ final class IcsService
         string $confirmUrl,
         array $context=[],
     ): string {
+        if (isset($customer['userId']) === true) {
+            $userId = (string) $customer['userId'];
+        } else {
+            $userId = null;
+        }
+
+        if (isset($appointment['timezone']) === true) {
+            $appointmentTz = (string) $appointment['timezone'];
+        } else {
+            $appointmentTz = null;
+        }
+
         $tzId = $this->timezoneResolver->resolve(
-            (isset($customer['userId']) === true) ? (string) $customer['userId'] : null,
-            (isset($appointment['timezone']) === true) ? (string) $appointment['timezone'] : null,
+            $userId,
+            $appointmentTz,
         );
 
-        $start = $this->parseUtc((string) ($appointment['startTime'] ?? ''));
-        $end   = $this->parseUtc((string) ($appointment['endTime'] ?? ''));
+        $start = $this->parseUtc(iso: (string) ($appointment['startTime'] ?? ''));
+        $end   = $this->parseUtc(iso: (string) ($appointment['endTime'] ?? ''));
         if ($start === null || $end === null) {
             $this->logger->warning(
                 'IcsService: appointment '
@@ -133,12 +145,12 @@ final class IcsService
         $tz       = new \DateTimeZone($tzId);
         $startLoc = $start->setTimezone($tz);
         $endLoc   = $end->setTimezone($tz);
-        $uid      = $this->buildUid((string) ($appointment['appointmentId'] ?? 'unknown'));
+        $uid      = $this->buildUid(appointmentId: (string) ($appointment['appointmentId'] ?? 'unknown'));
         $summary  = (string) ($context['serviceName'] ?? 'Appointment');
         $location = (string) ($context['location'] ?? ($appointment['location'] ?? ''));
         $notes    = (string) ($appointment['notes'] ?? '');
 
-        $vTimeZone = $this->buildVTimezone($tzId, $start, $end);
+        $vTimeZone = $this->buildVTimezone(tzId: $tzId, start: $start, end: $end);
 
         $lines   = [];
         $lines[] = 'BEGIN:VCALENDAR';
@@ -148,22 +160,22 @@ final class IcsService
         $lines[] = 'CALSCALE:GREGORIAN';
         $lines[] = $vTimeZone;
         $lines[] = 'BEGIN:VEVENT';
-        $lines[] = 'UID:'.$this->escape($uid);
+        $lines[] = 'UID:'.$this->escape(value: $uid);
         $lines[] = 'DTSTAMP:'.gmdate('Ymd\THis\Z');
         $lines[] = 'DTSTART;TZID='.$tzId.':'.$startLoc->format('Ymd\THis');
         $lines[] = 'DTEND;TZID='.$tzId.':'.$endLoc->format('Ymd\THis');
-        $lines[] = 'SUMMARY:'.$this->escape($summary);
+        $lines[] = 'SUMMARY:'.$this->escape(value: $summary);
         if ($location !== '') {
-            $lines[] = 'LOCATION:'.$this->escape($location);
+            $lines[] = 'LOCATION:'.$this->escape(value: $location);
         }
 
         if ($notes !== '') {
-            $lines[] = 'DESCRIPTION:'.$this->escape($notes);
+            $lines[] = 'DESCRIPTION:'.$this->escape(value: $notes);
         }
 
         if (isset($customer['email']) === true && (string) $customer['email'] !== '') {
             $lines[] = 'ATTENDEE;RSVP=TRUE;PARTSTAT=NEEDS-ACTION;CN='
-                .$this->escape((string) ($customer['name'] ?? ''))
+                .$this->escape(value: (string) ($customer['name'] ?? ''))
                 .':mailto:'.(string) $customer['email'];
         }
 
@@ -172,8 +184,8 @@ final class IcsService
         }
 
         if ($confirmUrl !== '') {
-            $lines[] = 'ATTACH;FMTTYPE=text/calendar:'.$this->escape($confirmUrl);
-            $lines[] = 'URL:'.$this->escape($confirmUrl);
+            $lines[] = 'ATTACH;FMTTYPE=text/calendar:'.$this->escape(value: $confirmUrl);
+            $lines[] = 'URL:'.$this->escape(value: $confirmUrl);
         }
 
         $lines[] = 'STATUS:TENTATIVE';
@@ -215,7 +227,12 @@ final class IcsService
      */
     private function buildUid(string $appointmentId): string
     {
-        $host = (function_exists('gethostname') === true) ? (string) gethostname() : 'shillinq.local';
+        if (function_exists('gethostname') === true) {
+            $host = (string) gethostname();
+        } else {
+            $host = 'shillinq.local';
+        }
+
         if ($host === '') {
             $host = 'shillinq.local';
         }
@@ -261,9 +278,14 @@ final class IcsService
                     break;
                 }
 
-                $component  = ($transition['isdst'] === true) ? 'DAYLIGHT' : 'STANDARD';
+                if ($transition['isdst'] === true) {
+                    $component = 'DAYLIGHT';
+                } else {
+                    $component = 'STANDARD';
+                }
+
                 $when       = (new \DateTimeImmutable('@'.$transition['ts']))->setTimezone(new \DateTimeZone('UTC'));
-                $offsetTo   = $this->formatOffset((int) $transition['offset']);
+                $offsetTo   = $this->formatOffset(seconds: (int) $transition['offset']);
                 $offsetFrom = $offsetTo;
                 $lines[]    = 'BEGIN:'.$component;
                 $lines[]    = 'TZNAME:'.(string) $transition['abbr'];
@@ -272,11 +294,11 @@ final class IcsService
                 $lines[]    = 'TZOFFSETTO:'.$offsetTo;
                 $lines[]    = 'END:'.$component;
                 $emitted++;
-            }
+            }//end foreach
 
             if ($emitted === 0) {
                 // Fixed-offset zone (e.g. UTC) — emit one STANDARD block.
-                $offset  = $this->formatOffset((new \DateTimeImmutable('now', $tz))->getOffset());
+                $offset  = $this->formatOffset(seconds: (new \DateTimeImmutable('now', $tz))->getOffset());
                 $lines[] = 'BEGIN:STANDARD';
                 $lines[] = 'TZNAME:'.$tzId;
                 $lines[] = 'DTSTART:19700101T000000';
@@ -314,7 +336,12 @@ final class IcsService
      */
     private function formatOffset(int $seconds): string
     {
-        $sign  = ($seconds < 0) ? '-' : '+';
+        if ($seconds < 0) {
+            $sign = '-';
+        } else {
+            $sign = '+';
+        }
+
         $abs   = abs($seconds);
         $hours = (int) floor($abs / 3600);
         $mins  = (int) floor(($abs % 3600) / 60);

@@ -86,13 +86,19 @@ class LogDigipoortSbrAdapter implements DigipoortSbrAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `digipoort-sbr` (PKIoverheid Services-server cert + Aanleverservice WUS 2.0 endpoint) and override DigipoortSbrAdapterInterface in Application::register() to enable real transport.',
+                'note'   => 'Bind openconnector source slug `digipoort-sbr` (PKIoverheid Services-server cert '
+                    .'+ Aanleverservice WUS 2.0 endpoint) and override DigipoortSbrAdapterInterface in '
+                    .'Application::register() to enable real transport.',
             ],
         );
     }//end submit()
 
     /**
+     * Report whether this adapter is a dormant log-only stand-in.
+     *
      * @inheritDoc
+     *
+     * @return bool Always true for the log adapter.
      */
     public function isDormant(): bool
     {

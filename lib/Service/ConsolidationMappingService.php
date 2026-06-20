@@ -158,7 +158,11 @@ class ConsolidationMappingService
 
             if ((string) ($rule['sourceAccount'] ?? '') === $sourceAccount) {
                 $destination = (string) ($rule['destinationAccount'] ?? '');
-                return ($destination === '') ? $sourceAccount : $destination;
+                if ($destination === '') {
+                    return $sourceAccount;
+                }
+
+                return $destination;
             }
         }
 
@@ -264,7 +268,11 @@ class ConsolidationMappingService
         }
 
         $fromMapping = (string) ($mapping['intercompanyEliminationAccount'] ?? '');
-        return ($fromMapping === '') ? null : $fromMapping;
+        if ($fromMapping === '') {
+            return null;
+        }
+
+        return $fromMapping;
 
     }//end resolveEliminationAccount()
 

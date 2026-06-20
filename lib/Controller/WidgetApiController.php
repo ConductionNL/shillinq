@@ -550,6 +550,7 @@ class WidgetApiController extends Controller
             /*
              * @var array<string,mixed> $object
              */
+
             return $object;
         }
 
@@ -559,6 +560,7 @@ class WidgetApiController extends Controller
                 /*
                  * @var array<string,mixed> $serialised
                  */
+
                 return $serialised;
             }
         }

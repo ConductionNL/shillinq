@@ -211,7 +211,7 @@ class PeriodStatusGuard
      */
     private function findStatus(string $periodId, string $administrationId): ?array
     {
-        // periodId is `${year}-${month}` per the schema; split into the two fields.
+        // PeriodId is `${year}-${month}` per the schema; split into the two fields.
         [$year, $month] = $this->splitPeriodId(periodId: $periodId);
         if ($year === 0 || $month === 0) {
             return null;

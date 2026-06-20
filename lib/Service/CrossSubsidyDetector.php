@@ -128,8 +128,13 @@ class CrossSubsidyDetector
      *
      * @return bool True when omzet jumped >= spikeRatio without an IKP update in the same FY.
      */
-    public function detectOmzetSpikeNoIkpUpdate(float $currentYearOmzet, float $priorYearOmzet, ?string $lastIkpPeriod, string $today, float $spikeRatio=self::OMZET_SPIKE_RATIO): bool
-    {
+    public function detectOmzetSpikeNoIkpUpdate(
+        float $currentYearOmzet,
+        float $priorYearOmzet,
+        ?string $lastIkpPeriod,
+        string $today,
+        float $spikeRatio=self::OMZET_SPIKE_RATIO
+    ): bool {
         if ($priorYearOmzet <= 0.0) {
             return false;
         }
@@ -227,8 +232,11 @@ class CrossSubsidyDetector
      *
      * @return bool True when the override rate exceeds the threshold.
      */
-    public function detectManualOverrideAccumulation(int $manualOverrideCount, int $totalAllocations, float $ratioThreshold=self::MANUAL_OVERRIDE_RATIO): bool
-    {
+    public function detectManualOverrideAccumulation(
+        int $manualOverrideCount,
+        int $totalAllocations,
+        float $ratioThreshold=self::MANUAL_OVERRIDE_RATIO
+    ): bool {
         if ($totalAllocations <= 0) {
             return false;
         }
@@ -248,8 +256,13 @@ class CrossSubsidyDetector
      *
      * @return bool True when direct costs grew but overhead did not.
      */
-    public function detectOverheadOnderschatting(float $currentDirectCosts, float $priorDirectCosts, float $currentOverhead, float $priorOverhead, float $growthThreshold=self::OVERHEAD_UNDERSCHATTING_DIRECT_GROWTH): bool
-    {
+    public function detectOverheadOnderschatting(
+        float $currentDirectCosts,
+        float $priorDirectCosts,
+        float $currentOverhead,
+        float $priorOverhead,
+        float $growthThreshold=self::OVERHEAD_UNDERSCHATTING_DIRECT_GROWTH
+    ): bool {
         if ($priorDirectCosts <= 0.0) {
             return false;
         }
@@ -278,8 +291,12 @@ class CrossSubsidyDetector
      *
      * @return bool True when the price is suspiciously below market.
      */
-    public function detectBevoordelingRisk(float $gehanteerdTarief, float $kostprijsPerEenheid, array $benchmarks, float $discountThreshold=self::BEVOORDELING_DISCOUNT_THRESHOLD): bool
-    {
+    public function detectBevoordelingRisk(
+        float $gehanteerdTarief,
+        float $kostprijsPerEenheid,
+        array $benchmarks,
+        float $discountThreshold=self::BEVOORDELING_DISCOUNT_THRESHOLD
+    ): bool {
         if ($gehanteerdTarief < $kostprijsPerEenheid) {
             // Caller already raises a non-compliant alert for this.
             return false;
@@ -325,8 +342,14 @@ class CrossSubsidyDetector
      *
      * @return array<string,mixed> AlertLog record matching the schema.
      */
-    public function composeAlert(string $alertType, string $commercialActivityId, string $severity, string $administrationId, array $detectionContext=[], string $assignedTo=self::DEFAULT_ASSIGNEE): array
-    {
+    public function composeAlert(
+        string $alertType,
+        string $commercialActivityId,
+        string $severity,
+        string $administrationId,
+        array $detectionContext=[],
+        string $assignedTo=self::DEFAULT_ASSIGNEE
+    ): array {
         return [
             'alertType'            => $alertType,
             'commercialActivityId' => $commercialActivityId,

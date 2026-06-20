@@ -103,7 +103,7 @@ class WbsoAccountApiController extends Controller
         try {
             $rows = $this->accounts->getAccountsByAdministration(administrationId: $administrationId);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to load accounts', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to load accounts', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse(
@@ -137,7 +137,7 @@ class WbsoAccountApiController extends Controller
         try {
             $tree = $this->accounts->getAccountHierarchy(administrationId: $administrationId);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to load chart-of-accounts', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to load chart-of-accounts', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse(
@@ -180,7 +180,7 @@ class WbsoAccountApiController extends Controller
                 accountNumber: $accountNumber,
             );
         } catch (\Throwable $e) {
-            return $this->fail('Failed to load account', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to load account', context: ['exception' => $e->getMessage()]);
         }
 
         if ($row === null) {
@@ -213,14 +213,25 @@ class WbsoAccountApiController extends Controller
             return new JSONResponse(['error' => 'administration_id is required'], Http::STATUS_BAD_REQUEST);
         }
 
-        $payload = $this->collectPayload(['accountNumber', 'name', 'accountType', 'parentAccountNumber', 'status', 'currency', 'description', 'vatApplicable']);
+        $payload = $this->collectPayload(
+            fields: [
+                'accountNumber',
+                'name',
+                'accountType',
+                'parentAccountNumber',
+                'status',
+                'currency',
+                'description',
+                'vatApplicable',
+            ]
+        );
 
         try {
             $row = $this->accounts->createAccount(administrationId: $administrationId, payload: $payload);
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to create account', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to create account', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse($row, Http::STATUS_CREATED);
@@ -255,7 +266,16 @@ class WbsoAccountApiController extends Controller
             return new JSONResponse(['error' => 'Invalid accountNumber'], Http::STATUS_BAD_REQUEST);
         }
 
-        $payload = $this->collectPayload(['name', 'parentAccountNumber', 'status', 'currency', 'description', 'vatApplicable']);
+        $payload = $this->collectPayload(
+            fields: [
+                'name',
+                'parentAccountNumber',
+                'status',
+                'currency',
+                'description',
+                'vatApplicable',
+            ]
+        );
 
         try {
             $row = $this->accounts->updateAccount(
@@ -271,7 +291,7 @@ class WbsoAccountApiController extends Controller
 
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to update account', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to update account', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse($row, Http::STATUS_OK);

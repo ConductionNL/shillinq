@@ -465,7 +465,11 @@ class CalendarController extends Controller
 
         $context = $this->context->buildContext();
         $active  = (string) ($context['activeAdministrationId'] ?? '');
-        return ($active !== '' ? $active : null);
+        if ($active !== '') {
+            return $active;
+        }
+
+        return null;
 
     }//end resolveAdministrationId()
 
@@ -523,9 +527,17 @@ class CalendarController extends Controller
     {
         $tz = new DateTimeZone('UTC');
 
-        $startDt = ($start !== '') ? new DateTimeImmutable($start, $tz) : new DateTimeImmutable('today', $tz);
+        if ($start !== '') {
+            $startDt = new DateTimeImmutable($start, $tz);
+        } else {
+            $startDt = new DateTimeImmutable('today', $tz);
+        }
 
-        $endDt = ($end !== '') ? new DateTimeImmutable($end, $tz) : $startDt->modify('+'.self::DEFAULT_RANGE_DAYS.' days');
+        if ($end !== '') {
+            $endDt = new DateTimeImmutable($end, $tz);
+        } else {
+            $endDt = $startDt->modify('+'.self::DEFAULT_RANGE_DAYS.' days');
+        }
 
         if ($endDt <= $startDt) {
             throw new \InvalidArgumentException('end must be after start');

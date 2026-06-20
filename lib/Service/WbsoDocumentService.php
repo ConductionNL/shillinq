@@ -288,7 +288,7 @@ class WbsoDocumentService
 
         $boundary = $filed->modify('+'.self::RETENTION_DAYS.' days');
 
-        return (new DateTimeImmutable()) >= $boundary;
+        return $boundary <= (new DateTimeImmutable());
 
     }//end isRetentionElapsed()
 

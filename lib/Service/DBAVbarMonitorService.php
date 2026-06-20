@@ -106,7 +106,11 @@ class DBAVbarMonitorService
             ];
         }
 
-        $result = ($mode === DBAConstants::COMPLIANCE_MODE_HARD) ? self::RESULT_BLOCK : self::RESULT_WARN;
+        $result = self::RESULT_WARN;
+        if ($mode === DBAConstants::COMPLIANCE_MODE_HARD) {
+            $result = self::RESULT_BLOCK;
+        }
+
         return [
             'result'         => $result,
             'uurtariefCents' => $uurtarief,
@@ -169,7 +173,13 @@ class DBAVbarMonitorService
                     ]
                     );
             foreach ($existing as $entity) {
-                $arr = is_array($entity) ? $entity : (method_exists($entity, 'getObject') ? $entity->getObject() : null);
+                $arr = null;
+                if (is_array($entity) === true) {
+                    $arr = $entity;
+                } else if (method_exists($entity, 'getObject') === true) {
+                    $arr = $entity->getObject();
+                }
+
                 if (is_array($arr) === true
                     && (string) (($arr['details'] ?? [])['factuurId'] ?? '') === $factuurId
                 ) {
@@ -198,7 +208,8 @@ class DBAVbarMonitorService
                             'peiljaar'       => DBAConstants::VBAR_GRENS_PEILJAAR,
                         ],
                         'fiscaleBron'             => 'REQ-DBA-016; VBAR-wetsvoorstel uurtariefgrens (peil '.DBAConstants::VBAR_GRENS_PEILJAAR.')',
-                        'actieSuggestie'          => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast (motivatie EUR-grens uitzondering).',
+                        'actieSuggestie'          => 'Verhoog het uurtarief of leg een schriftelijke onderbouwing vast '
+                            .'(motivatie EUR-grens uitzondering).',
                         'status'                  => 'OPEN',
                         'weergegevenAanGebruiker' => true,
                     ]

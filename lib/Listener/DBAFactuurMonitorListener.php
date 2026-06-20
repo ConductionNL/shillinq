@@ -136,6 +136,7 @@ class DBAFactuurMonitorListener implements IEventListener
                     /*
                      * @var array<string,mixed> $obj
                      */
+
                     return $obj;
                 }
 
@@ -145,10 +146,11 @@ class DBAFactuurMonitorListener implements IEventListener
                         /*
                          * @var array<string,mixed> $data
                          */
+
                         return $data;
                     }
                 }
-            }
+            }//end if
 
             if (method_exists($event, 'getData') === true) {
                 $data = $event->getData();
@@ -156,6 +158,7 @@ class DBAFactuurMonitorListener implements IEventListener
                     /*
                      * @var array<string,mixed> $data
                      */
+
                     return $data;
                 }
             }

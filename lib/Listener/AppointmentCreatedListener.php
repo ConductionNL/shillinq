@@ -82,7 +82,7 @@ class AppointmentCreatedListener implements IEventListener
             }
 
             $schema = (string) $entity->getSchema();
-            if ($this->isAppointmentSchema($schema) === false) {
+            if ($this->isAppointmentSchema(schema: $schema) === false) {
                 return;
             }
 

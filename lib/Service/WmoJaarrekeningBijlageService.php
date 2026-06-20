@@ -45,17 +45,10 @@ class WmoJaarrekeningBijlageService
     /**
      * Compose a WMO jaarrekening-bijlage for a fiscal year (REQ-WMO-004).
      *
-     * @param array{
-     *   fiscalYear: string,
-     *   administrationId: string,
-     *   activities: array<int,array<string,mixed>>,
-     *   definitiefIkpByActivity: array<string,array<string,mixed>>,
-     *   priorYearIkpByActivity?: array<string,array<string,mixed>>,
-     *   omzetByActivity: array<string,float>,
-     *   priorYearOmzetByActivity?: array<string,float>,
-     *   abbByActivity?: array<string,array<string,mixed>>,
-     *   manualOverridesByActivity?: array<string,int>
-     * } $input Inputs.
+     * @param array<string,mixed> $input Inputs (fiscalYear, administrationId, activities,
+     *                                   definitiefIkpByActivity, priorYearIkpByActivity?,
+     *                                   omzetByActivity, priorYearOmzetByActivity?,
+     *                                   abbByActivity?, manualOverridesByActivity?).
      *
      * @return array<string,mixed> Bijlage payload.
      */
@@ -85,17 +78,30 @@ class WmoJaarrekeningBijlageService
             $ikp           = (array) ($ikpByAct[$activityId] ?? []);
             $integraleCost = (float) ($ikp['totaleKosten'] ?? 0);
             $omzet         = (float) ($omzetByAct[$activityId] ?? 0);
-            $ratio         = ($integraleCost > 0.0 ? round(($omzet / $integraleCost), 4) : null);
-            $compliant     = ($omzet >= $integraleCost);
-            $colorStatus   = ($compliant ? 'groen' : 'rood');
+            $ratio         = null;
+            if ($integraleCost > 0.0) {
+                $ratio = round(($omzet / $integraleCost), 4);
+            }
+
+            $compliant   = ($omzet >= $integraleCost);
+            $colorStatus = 'rood';
+            if ($compliant === true) {
+                $colorStatus = 'groen';
+            }
 
             $priorIkp   = (array) ($priorIkpByAct[$activityId] ?? []);
             $priorCost  = (float) ($priorIkp['totaleKosten'] ?? 0);
             $priorOmzet = (float) ($priorOmzetByAct[$activityId] ?? 0);
-            $priorRatio = ($priorCost > 0.0 ? round(($priorOmzet / $priorCost), 4) : null);
+            $priorRatio = null;
+            if ($priorCost > 0.0) {
+                $priorRatio = round(($priorOmzet / $priorCost), 4);
+            }
 
             $abb           = (array) ($abbByAct[$activityId] ?? []);
-            $abbReferentie = ((bool) ($activity['isExempted'] ?? false)) ? (string) ($abb['kenmerk'] ?? $activity['exemptionBesluitId'] ?? '') : null;
+            $abbReferentie = null;
+            if ((bool) ($activity['isExempted'] ?? false) === true) {
+                $abbReferentie = (string) ($abb['kenmerk'] ?? $activity['exemptionBesluitId'] ?? '');
+            }
 
             $rows[] = [
                 'commercialActivityId'        => $activityId,
@@ -195,17 +201,27 @@ class WmoJaarrekeningBijlageService
                 continue;
             }
 
+            $ratioText = '—';
+            if ($row['kostendekkingsratio'] !== null) {
+                $ratioText = (string) $row['kostendekkingsratio'];
+            }
+
+            $compliantText = 'rood';
+            if ((bool) ($row['compliant'] ?? false) === true) {
+                $compliantText = 'groen';
+            }
+
             $lines[] = sprintf(
                 '| %s | %s | %.2f | %.2f | %s | %s | %s |',
                 (string) ($row['code'] ?? ''),
                 (string) ($row['naam'] ?? ''),
                 (float) ($row['omzet'] ?? 0),
                 (float) ($row['integraleKostprijs'] ?? 0),
-                ($row['kostendekkingsratio'] === null ? '—' : (string) $row['kostendekkingsratio']),
-                ((bool) ($row['compliant'] ?? false) ? 'groen' : 'rood'),
+                $ratioText,
+                $compliantText,
                 (string) ($row['abbReferentie'] ?? '—')
             );
-        }
+        }//end foreach
 
         $sam     = (array) ($bijlage['samenvatting'] ?? []);
         $lines[] = '';
@@ -233,16 +249,26 @@ class WmoJaarrekeningBijlageService
                 continue;
             }
 
+            $ratioAttr = '';
+            if ($r['kostendekkingsratio'] !== null) {
+                $ratioAttr = (string) $r['kostendekkingsratio'];
+            }
+
+            $compliantAttr = 'false';
+            if ((bool) ($r['compliant'] ?? false) === true) {
+                $compliantAttr = 'true';
+            }
+
             $rows[] = sprintf(
                 '  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s" abb="%s"/>',
                 htmlspecialchars((string) ($r['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
                 (float) ($r['omzet'] ?? 0),
                 (float) ($r['integraleKostprijs'] ?? 0),
-                ($r['kostendekkingsratio'] === null ? '' : (string) $r['kostendekkingsratio']),
-                ((bool) ($r['compliant'] ?? false) ? 'true' : 'false'),
+                $ratioAttr,
+                $compliantAttr,
                 htmlspecialchars((string) ($r['abbReferentie'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8')
             );
-        }
+        }//end foreach
 
         $body = implode("\n", $rows);
 

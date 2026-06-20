@@ -147,7 +147,13 @@ class CashflowPdfRenderer
             if (isset($scenario['resultaat']) === true && is_array($scenario['resultaat']) === true) {
                 $lines[] = 'Min buffer week: '.($scenario['resultaat']['minBufferWeek'] ?? '?');
                 $lines[] = 'Min buffer bedrag: '.($scenario['resultaat']['minBufferBedrag'] ?? '?');
-                $lines[] = 'Buffer breached: '.(($scenario['resultaat']['onderschrijdingBuffer'] ?? false) === true ? 'YES' : 'NO');
+                if (($scenario['resultaat']['onderschrijdingBuffer'] ?? false) === true) {
+                    $bufferBreached = 'YES';
+                } else {
+                    $bufferBreached = 'NO';
+                }
+
+                $lines[] = 'Buffer breached: '.$bufferBreached;
             }
         }
 

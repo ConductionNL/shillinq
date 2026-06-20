@@ -107,12 +107,19 @@ class LogIb47Adapter implements Ib47AdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `belastingdienst-ib47` (PKIoverheid Services-server cert + Gegevensportaal IB47 endpoint, or Renseigneringsstroom via Digipoort for intermediair flow) and override Ib47AdapterInterface in Application::register() to enable real transport.',
+                'note'   => 'Bind openconnector source slug `belastingdienst-ib47` (PKIoverheid '
+                    .'Services-server cert + Gegevensportaal IB47 endpoint, or Renseigneringsstroom '
+                    .'via Digipoort for intermediair flow) and override Ib47AdapterInterface in '
+                    .'Application::register() to enable real transport.',
             ],
         );
     }//end submit()
 
     /**
+     * Report whether this adapter is dormant.
+     *
+     * @return bool True when no outbound connector is bound.
+     *
      * @inheritDoc
      */
     public function isDormant(): bool

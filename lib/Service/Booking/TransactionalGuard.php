@@ -45,6 +45,8 @@ class TransactionalGuard
 
     /**
      * Local transaction tracker used when no IDBConnection is wired.
+     *
+     * @var boolean
      */
     private bool $localInTransaction = false;
 

@@ -138,6 +138,12 @@ class ENSIAQuestionSetLoader
                 continue;
             }
 
+            if (isset($q['normniveau']) === true) {
+                $normniveau = (int) $q['normniveau'];
+            } else {
+                $normniveau = null;
+            }
+
             $vragen[] = [
                 'cyclusId'         => $cyclusId,
                 'administrationId' => $administrationId,
@@ -146,7 +152,7 @@ class ENSIAQuestionSetLoader
                 'vraagCode'        => (string) ($q['vraagCode'] ?? ''),
                 'vraagtekst'       => (string) ($q['vraagtekst'] ?? ''),
                 'antwoordType'     => (string) ($q['antwoordType'] ?? 'ja-nee-nvt'),
-                'normniveau'       => isset($q['normniveau']) === true ? (int) $q['normniveau'] : null,
+                'normniveau'       => $normniveau,
                 'peerReviewStatus' => 'nog-niet-beoordeeld',
                 'bewijsstukken'    => [],
             ];

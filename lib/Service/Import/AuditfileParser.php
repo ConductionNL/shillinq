@@ -115,7 +115,11 @@ class AuditfileParser
 
         $trimmed = trim($xml);
         if ($trimmed === '') {
-            $result['findings'][] = $this->finding(self::SEVERITY_ERROR, 'empty-input', 'Auditfile is empty.');
+            $result['findings'][] = $this->finding(
+                severity: self::SEVERITY_ERROR,
+                code: 'empty-input',
+                message: 'Auditfile is empty.'
+            );
             return $result;
         }
 
@@ -125,9 +129,9 @@ class AuditfileParser
         // and we additionally reject any DOCTYPE/entity declaration outright.
         if (preg_match('/<!DOCTYPE/i', $trimmed) === 1 || preg_match('/<!ENTITY/i', $trimmed) === 1) {
             $result['findings'][] = $this->finding(
-                self::SEVERITY_ERROR,
-                'doctype-rejected',
-                'Auditfile contains a DOCTYPE or ENTITY declaration and was rejected (XXE protection).'
+                severity: self::SEVERITY_ERROR,
+                code: 'doctype-rejected',
+                message: 'Auditfile contains a DOCTYPE or ENTITY declaration and was rejected (XXE protection).'
             );
             if ($this->logger !== null) {
                 $this->logger->warning('AuditfileParser: rejected DOCTYPE/ENTITY (XXE protection)');
@@ -149,10 +153,10 @@ class AuditfileParser
             }
 
             $result['findings'][] = $this->finding(
-                self::SEVERITY_ERROR,
-                'malformed-xml',
-                'Auditfile is not well-formed XML.',
-                ['detail' => $detail]
+                severity: self::SEVERITY_ERROR,
+                code: 'malformed-xml',
+                message: 'Auditfile is not well-formed XML.',
+                context: ['detail' => $detail]
             );
             if ($this->logger !== null) {
                 $this->logger->warning('AuditfileParser: malformed XML', ['detail' => $detail]);
@@ -193,7 +197,12 @@ class AuditfileParser
         $result = $this->emptyResult();
 
         if (is_readable($path) === false) {
-            $result['findings'][] = $this->finding(self::SEVERITY_ERROR, 'unreadable-file', 'Auditfile is not readable.', ['path' => $path]);
+            $result['findings'][] = $this->finding(
+                severity: self::SEVERITY_ERROR,
+                code: 'unreadable-file',
+                message: 'Auditfile is not readable.',
+                context: ['path' => $path]
+            );
             return $result;
         }
 
@@ -205,7 +214,12 @@ class AuditfileParser
         $opened = $reader->open($path, null, LIBXML_NONET);
         if ($opened === false) {
             libxml_use_internal_errors($previous);
-            $result['findings'][] = $this->finding(self::SEVERITY_ERROR, 'open-failed', 'Could not open auditfile for streaming.', ['path' => $path]);
+            $result['findings'][] = $this->finding(
+                severity: self::SEVERITY_ERROR,
+                code: 'open-failed',
+                message: 'Could not open auditfile for streaming.',
+                context: ['path' => $path]
+            );
             return $result;
         }
 
@@ -223,15 +237,25 @@ class AuditfileParser
                 }
             }
         } catch (\Throwable $e) {
-            $result['findings'][] = $this->finding(self::SEVERITY_ERROR, 'stream-error', 'Streaming the auditfile failed.', ['detail' => $e->getMessage()]);
+            $result['findings'][] = $this->finding(
+                severity: self::SEVERITY_ERROR,
+                code: 'stream-error',
+                message: 'Streaming the auditfile failed.',
+                context: ['detail' => $e->getMessage()]
+            );
         } finally {
             $reader->close();
             libxml_clear_errors();
             libxml_use_internal_errors($previous);
-        }
+        }//end try
 
         if (empty($fragments) === true) {
-            $result['findings'][] = $this->finding(self::SEVERITY_ERROR, 'no-company', 'No <company> element found in the auditfile.', ['path' => $path]);
+            $result['findings'][] = $this->finding(
+                severity: self::SEVERITY_ERROR,
+                code: 'no-company',
+                message: 'No <company> element found in the auditfile.',
+                context: ['path' => $path]
+            );
             return $result;
         }
 
@@ -239,9 +263,12 @@ class AuditfileParser
         // two entry points share one normalisation implementation.
         foreach ($fragments as $fragment) {
             $wrapped = '<auditfile xmlns="http://www.auditfiles.nl/XAF/3.2">'.$fragment.'</auditfile>';
-            $parsed  = $this->parse($wrapped);
+            $parsed  = $this->parse(xml: $wrapped);
 
-            $result['company']         = ($parsed['company'] !== [] ? $parsed['company'] : $result['company']);
+            if ($parsed['company'] !== []) {
+                $result['company'] = $parsed['company'];
+            }
+
             $result['ledgerAccounts']  = array_merge($result['ledgerAccounts'], $parsed['ledgerAccounts']);
             $result['relations']       = array_merge($result['relations'], $parsed['relations']);
             $result['openingBalances'] = array_merge($result['openingBalances'], $parsed['openingBalances']);
@@ -264,26 +291,32 @@ class AuditfileParser
     {
         $company = [];
 
-        $name = $this->firstString($doc, '//*[local-name()="company"]/*[local-name()="companyName"]');
+        $name = $this->firstString(node: $doc, xpath: '//*[local-name()="company"]/*[local-name()="companyName"]');
         if ($name !== '') {
             $company['companyName'] = $name;
         }
 
-        $kvk = $this->firstString($doc, '//*[local-name()="company"]/*[local-name()="companyIdent"]');
+        $kvk = $this->firstString(node: $doc, xpath: '//*[local-name()="company"]/*[local-name()="companyIdent"]');
         if ($kvk !== '') {
             $company['kvkNumber'] = $kvk;
         }
 
-        $taxIdent = $this->firstString($doc, '//*[local-name()="company"]/*[local-name()="taxRegistration"]/*[local-name()="taxRegIdent"]');
+        $taxIdent = $this->firstString(
+            node: $doc,
+            xpath: '//*[local-name()="company"]/*[local-name()="taxRegistration"]/*[local-name()="taxRegIdent"]'
+        );
         if ($taxIdent === '') {
-            $taxIdent = $this->firstString($doc, '//*[local-name()="company"]/*[local-name()="taxRegIdent"]');
+            $taxIdent = $this->firstString(
+                node: $doc,
+                xpath: '//*[local-name()="company"]/*[local-name()="taxRegIdent"]'
+            );
         }
 
         if ($taxIdent !== '') {
             $company['taxRegIdent'] = $taxIdent;
         }
 
-        $currency = $this->firstString($doc, '//*[local-name()="company"]/*[local-name()="currencyCode"]');
+        $currency = $this->firstString(node: $doc, xpath: '//*[local-name()="company"]/*[local-name()="currencyCode"]');
         if ($currency !== '') {
             $company['currencyCode'] = $currency;
         }
@@ -312,16 +345,16 @@ class AuditfileParser
         }
 
         foreach ($nodes as $node) {
-            $code = $this->firstString($node, './*[local-name()="accID"]');
+            $code = $this->firstString(node: $node, xpath: './*[local-name()="accID"]');
             if ($code === '') {
                 continue;
             }
 
             $accounts[] = [
                 'code'    => $code,
-                'name'    => $this->firstString($node, './*[local-name()="accDesc"]'),
-                'type'    => $this->firstString($node, './*[local-name()="accTp"]'),
-                'rgsCode' => $this->firstString($node, './*[local-name()="leadReference"]'),
+                'name'    => $this->firstString(node: $node, xpath: './*[local-name()="accDesc"]'),
+                'type'    => $this->firstString(node: $node, xpath: './*[local-name()="accTp"]'),
+                'rgsCode' => $this->firstString(node: $node, xpath: './*[local-name()="leadReference"]'),
             ];
         }
 
@@ -349,16 +382,16 @@ class AuditfileParser
         }
 
         foreach ($nodes as $node) {
-            $btw = $this->firstString($node, './/*[local-name()="taxRegIdent"]');
+            $btw = $this->firstString(node: $node, xpath: './/*[local-name()="taxRegIdent"]');
 
             $relations[] = [
-                'code'  => $this->firstString($node, './*[local-name()="custSupID"]'),
-                'name'  => $this->firstString($node, './*[local-name()="companyName"]'),
-                'kvk'   => $this->firstString($node, './*[local-name()="companyIdent"]'),
+                'code'  => $this->firstString(node: $node, xpath: './*[local-name()="custSupID"]'),
+                'name'  => $this->firstString(node: $node, xpath: './*[local-name()="companyName"]'),
+                'kvk'   => $this->firstString(node: $node, xpath: './*[local-name()="companyIdent"]'),
                 'btw'   => $btw,
-                'email' => $this->firstString($node, './/*[local-name()="eMail"]'),
-                'phone' => $this->firstString($node, './/*[local-name()="telephone"]'),
-                'type'  => $this->firstString($node, './*[local-name()="custSupTp"]'),
+                'email' => $this->firstString(node: $node, xpath: './/*[local-name()="eMail"]'),
+                'phone' => $this->firstString(node: $node, xpath: './/*[local-name()="telephone"]'),
+                'type'  => $this->firstString(node: $node, xpath: './*[local-name()="custSupTp"]'),
             ];
         }//end foreach
 
@@ -385,18 +418,28 @@ class AuditfileParser
         }
 
         foreach ($nodes as $node) {
-            $accountCode = $this->firstString($node, './*[local-name()="accID"]');
+            $accountCode = $this->firstString(node: $node, xpath: './*[local-name()="accID"]');
             if ($accountCode === '') {
                 continue;
             }
 
-            $amount = (float) $this->firstString($node, './*[local-name()="amnt"]');
-            $type   = strtoupper($this->firstString($node, './*[local-name()="amntTp"]'));
+            $amount = (float) $this->firstString(node: $node, xpath: './*[local-name()="amnt"]');
+            $type   = strtoupper($this->firstString(node: $node, xpath: './*[local-name()="amntTp"]'));
+
+            $debit = 0.0;
+            if ($type === 'D') {
+                $debit = $amount;
+            }
+
+            $credit = 0.0;
+            if ($type === 'C') {
+                $credit = $amount;
+            }
 
             $lines[] = [
                 'accountCode' => $accountCode,
-                'debit'       => ($type === 'D' ? $amount : 0.0),
-                'credit'      => ($type === 'C' ? $amount : 0.0),
+                'debit'       => $debit,
+                'credit'      => $credit,
             ];
         }//end foreach
 
@@ -423,7 +466,7 @@ class AuditfileParser
         }
 
         foreach ($journalNodes as $journalNode) {
-            $journalId    = $this->firstString($journalNode, './*[local-name()="jrnID"]');
+            $journalId    = $this->firstString(node: $journalNode, xpath: './*[local-name()="jrnID"]');
             $transactions = [];
 
             $txNodes = $journalNode->xpath('./*[local-name()="transaction"]');
@@ -431,22 +474,22 @@ class AuditfileParser
                 $lines     = [];
                 $lineNodes = $txNode->xpath('./*[local-name()="trLine"]');
                 foreach (($lineNodes ?? []) as $lineNode) {
-                    $accountCode = $this->firstString($lineNode, './*[local-name()="accID"]');
-                    $amountRaw   = $this->firstString($lineNode, './*[local-name()="amnt"]');
+                    $accountCode = $this->firstString(node: $lineNode, xpath: './*[local-name()="accID"]');
+                    $amountRaw   = $this->firstString(node: $lineNode, xpath: './*[local-name()="amnt"]');
 
                     if ($amountRaw === '') {
                         $findings[] = $this->finding(
-                            self::SEVERITY_ERROR,
-                            'transaction-line-missing-amount',
-                            'A transaction line is missing its <amnt> amount.',
-                            ['journalId' => $journalId, 'accountCode' => $accountCode]
+                            severity: self::SEVERITY_ERROR,
+                            code: 'transaction-line-missing-amount',
+                            message: 'A transaction line is missing its <amnt> amount.',
+                            context: ['journalId' => $journalId, 'accountCode' => $accountCode]
                         );
                         // The row is NOT silently dropped — it is kept with a null
                         // amount so the count is honest and the finding is traceable.
                         $lines[] = [
                             'accountCode' => $accountCode,
                             'amount'      => null,
-                            'amountType'  => strtoupper($this->firstString($lineNode, './*[local-name()="amntTp"]')),
+                            'amountType'  => strtoupper($this->firstString(node: $lineNode, xpath: './*[local-name()="amntTp"]')),
                         ];
                         continue;
                     }
@@ -454,12 +497,12 @@ class AuditfileParser
                     $lines[] = [
                         'accountCode' => $accountCode,
                         'amount'      => (float) $amountRaw,
-                        'amountType'  => strtoupper($this->firstString($lineNode, './*[local-name()="amntTp"]')),
+                        'amountType'  => strtoupper($this->firstString(node: $lineNode, xpath: './*[local-name()="amntTp"]')),
                     ];
                 }//end foreach
 
                 $transactions[] = [
-                    'transactionId' => $this->firstString($txNode, './*[local-name()="nr"]'),
+                    'transactionId' => $this->firstString(node: $txNode, xpath: './*[local-name()="nr"]'),
                     'lines'         => $lines,
                 ];
             }//end foreach

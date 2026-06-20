@@ -63,6 +63,8 @@ use Psr\Log\LoggerInterface;
 class DunningController extends Controller
 {
     /**
+     * Wire the dunning controller dependencies.
+     *
      * @param IRequest                     $request NC request.
      * @param BIKStaffelCalculator         $bik     Pure BIK + rente calculator.
      * @param DunningRunService            $runs    Run orchestrator.
@@ -147,10 +149,29 @@ class DunningController extends Controller
         }
 
         try {
-            $ingangsdatum = ($ingangsRaw === '') ? new DateTimeImmutable() : new DateTimeImmutable($ingangsRaw);
-            $berekendOp   = ($berekendRaw === '') ? new DateTimeImmutable() : new DateTimeImmutable($berekendRaw);
+            if ($ingangsRaw === '') {
+                $ingangsdatum = new DateTimeImmutable();
+            } else {
+                $ingangsdatum = new DateTimeImmutable($ingangsRaw);
+            }
+
+            if ($berekendRaw === '') {
+                $berekendOp = new DateTimeImmutable();
+            } else {
+                $berekendOp = new DateTimeImmutable($berekendRaw);
+            }
         } catch (\Throwable $e) {
             return new JSONResponse(['error' => 'Invalid ingangsdatum / berekendOp'], Http::STATUS_BAD_REQUEST);
+        }
+
+        $tariefB2BValue = null;
+        if ($tariefB2B !== null) {
+            $tariefB2BValue = (float) $tariefB2B;
+        }
+
+        $tariefB2CValue = null;
+        if ($tariefB2C !== null) {
+            $tariefB2CValue = (float) $tariefB2C;
         }
 
         $body = $this->bik->compose(
@@ -160,8 +181,8 @@ class DunningController extends Controller
             hoofdsom: $hoofdsom,
             ingangsdatum: $ingangsdatum,
             berekendOp: $berekendOp,
-            tariefB2B: ($tariefB2B === null ? null : (float) $tariefB2B),
-            tariefB2C: ($tariefB2C === null ? null : (float) $tariefB2C),
+            tariefB2B: $tariefB2BValue,
+            tariefB2C: $tariefB2CValue,
         );
 
         return new JSONResponse($body, Http::STATUS_OK);
@@ -263,6 +284,11 @@ class DunningController extends Controller
             return new JSONResponse(['error' => 'factuurId + valid reden are required'], Http::STATUS_BAD_REQUEST);
         }
 
+        $evidenceRefsValue = null;
+        if (is_array($evidenceRefs) === true) {
+            $evidenceRefsValue = $evidenceRefs;
+        }
+
         try {
             $persisted = $this->runs->pause(
                 administrationId: $administrationId,
@@ -270,7 +296,7 @@ class DunningController extends Controller
                 reden: $reden,
                 details: $details,
                 gepauzeerdDoor: $byUser,
-                evidenceRefs: is_array($evidenceRefs) ? $evidenceRefs : null,
+                evidenceRefs: $evidenceRefsValue,
             );
         } catch (\Throwable $e) {
             $this->logger->error('Shillinq: pause failed: '.$e->getMessage());
@@ -323,12 +349,17 @@ class DunningController extends Controller
             return new JSONResponse(['error' => 'resolution must be resolve or expire'], Http::STATUS_BAD_REQUEST);
         }
 
+        $partialSettlement = null;
+        if ($partial !== null) {
+            $partialSettlement = (float) $partial;
+        }
+
         try {
             $persisted = $this->runs->resumePause(
                 administrationId: $administrationId,
                 pauseId: $pauseId,
                 resolution: $resolution,
-                partialSettlement: ($partial === null ? null : (float) $partial),
+                partialSettlement: $partialSettlement,
             );
         } catch (\Throwable $e) {
             $this->logger->info('Shillinq: resumePause failed: '.$e->getMessage());

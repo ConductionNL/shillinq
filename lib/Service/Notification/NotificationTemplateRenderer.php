@@ -130,7 +130,11 @@ final class NotificationTemplateRenderer
     private function stringify($value): string
     {
         if (is_bool($value) === true) {
-            return ($value === true ? 'true' : 'false');
+            if ($value === true) {
+                return 'true';
+            }
+
+            return 'false';
         }
 
         if (is_scalar($value) === true) {
@@ -162,7 +166,12 @@ final class NotificationTemplateRenderer
                 return '';
             }
 
-            $format = ($arg !== '' ? $arg : 'd-m-Y H:i');
+            if ($arg !== '') {
+                $format = $arg;
+            } else {
+                $format = 'd-m-Y H:i';
+            }
+
             return date($format, $ts);
         }
 

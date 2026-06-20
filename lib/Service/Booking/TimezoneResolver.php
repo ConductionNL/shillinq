@@ -76,14 +76,14 @@ final class TimezoneResolver
      */
     public function resolve(?string $customerUserId, ?string $explicitOverride=null): string
     {
-        if ($explicitOverride !== null && $this->isValidTimezone($explicitOverride) === true) {
+        if ($explicitOverride !== null && $this->isValidTimezone(tz: $explicitOverride) === true) {
             return $explicitOverride;
         }
 
         if ($customerUserId !== null && $customerUserId !== '') {
             try {
                 $tz = $this->config->getUserValue($customerUserId, 'core', 'timezone', '');
-                if ($tz !== '' && $this->isValidTimezone($tz) === true) {
+                if ($tz !== '' && $this->isValidTimezone(tz: $tz) === true) {
                     return $tz;
                 }
             } catch (Throwable $e) {
@@ -95,7 +95,7 @@ final class TimezoneResolver
         }
 
         $serverDefault = date_default_timezone_get();
-        if ($serverDefault !== '' && $this->isValidTimezone($serverDefault) === true) {
+        if ($serverDefault !== '' && $this->isValidTimezone(tz: $serverDefault) === true) {
             return $serverDefault;
         }
 

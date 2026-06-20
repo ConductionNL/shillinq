@@ -55,7 +55,9 @@ class BankfeedMatcher
      *
      * Confidence = weighted average (amount 0.5, reference 0.3, date 0.2).
      *
-     * @param array<string,mixed>       $transaction       Bank-feed transaction. Expected keys: amount (float), reference (string), valueDate (Y-m-d).
+     * @param array<string,mixed>       $transaction       Bank-feed transaction. Expected keys:
+     *                                                     amount (float), reference (string),
+     *                                                     valueDate (Y-m-d).
      * @param list<array<string,mixed>> $candidateInvoices Candidate AR projections.
      *
      * @return array{arInvoiceId:?string,confidence:float} Best match + confidence, or null arInvoiceId if no match >= 0.5.

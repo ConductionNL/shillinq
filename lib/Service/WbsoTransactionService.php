@@ -96,11 +96,15 @@ class WbsoTransactionService
                 array_filter(
             $transactions,
             static function (array $row) use ($filters): bool {
-                if (isset($filters['status']) === true && $filters['status'] !== '' && (string) ($row['status'] ?? '') !== (string) $filters['status']) {
+                if (isset($filters['status']) === true && $filters['status'] !== ''
+                    && (string) ($row['status'] ?? '') !== (string) $filters['status']
+                ) {
                     return false;
                 }
 
-                if (isset($filters['type']) === true && $filters['type'] !== '' && (string) ($row['transactionType'] ?? '') !== (string) $filters['type']) {
+                if (isset($filters['type']) === true && $filters['type'] !== ''
+                    && (string) ($row['transactionType'] ?? '') !== (string) $filters['type']
+                ) {
                     return false;
                 }
 

@@ -214,7 +214,7 @@ class BookingDetailController extends Controller
         // collapsing them into a single `contactError`.
         try {
             $payload['klantbeeld'] = $this->presentKlantbeeld(
-                $this->pipelinq->fetchKlantbeeld(
+                result: $this->pipelinq->fetchKlantbeeld(
                     externalId: $pipelinqContactId,
                     limit: $limit,
                     offset: $offset
@@ -230,7 +230,7 @@ class BookingDetailController extends Controller
                 ]
             );
             $payload['klantbeeld'] = $this->presentKlantbeeld(
-                KlantbeeldResult::unavailable(limit: $limit, offset: $offset)
+                result: KlantbeeldResult::unavailable(limit: $limit, offset: $offset)
             );
         }//end try
 
@@ -322,6 +322,11 @@ class BookingDetailController extends Controller
      */
     private function presentBooking(array $appointment): array
     {
+        $pipelinqContactId = null;
+        if (isset($appointment['pipelinqContactId']) === true && $appointment['pipelinqContactId'] !== null) {
+            $pipelinqContactId = (string) $appointment['pipelinqContactId'];
+        }
+
         return [
             'appointmentId'     => (string) ($appointment['appointmentId'] ?? ''),
             'administrationId'  => (string) ($appointment['administrationId'] ?? ''),
@@ -334,7 +339,7 @@ class BookingDetailController extends Controller
             'endTime'           => (string) ($appointment['endTime'] ?? ''),
             'status'            => (string) ($appointment['status'] ?? ''),
             'notes'             => (string) ($appointment['notes'] ?? ''),
-            'pipelinqContactId' => ((isset($appointment['pipelinqContactId']) === true && $appointment['pipelinqContactId'] !== null) ? (string) $appointment['pipelinqContactId'] : null),
+            'pipelinqContactId' => $pipelinqContactId,
             'createdAt'         => (string) ($appointment['createdAt'] ?? ''),
             'updatedAt'         => (string) ($appointment['updatedAt'] ?? ''),
         ];

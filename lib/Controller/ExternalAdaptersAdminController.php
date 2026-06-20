@@ -124,7 +124,8 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['digipoort.endpoint', 'digipoort.certificate.alias'],
             'featureFlag'  => 'gov-sbr',
             'sourceSlug'   => 'digipoort-sbr',
-            'description'  => 'Submits SBR/XBRL filings (BTW-aangifte, jaarrekening, CSRD pack) to the Belastingdienst Digipoort gateway. Dormant by default; returns SUBMISSION_DEFERRED so the filing lifecycle advances to `submitted` without contacting Digipoort.',
+            'description'  => 'Submits SBR/XBRL filings (BTW-aangifte, jaarrekening, CSRD pack) to the Belastingdienst Digipoort gateway. '
+                .'Dormant by default; returns SUBMISSION_DEFERRED so the filing lifecycle advances to `submitted` without contacting Digipoort.',
             'steps'        => [
                 'Provision a PKIoverheid services certificate and store the PFX alias in the Nextcloud cert store.',
                 'Set app-config keys `digipoort.endpoint` and `digipoort.certificate.alias`.',
@@ -144,7 +145,8 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['salarisbureau.endpoint', 'salarisbureau.api.key'],
             'featureFlag'  => 'payroll-salarisbureau',
             'sourceSlug'   => 'salarisbureau',
-            'description'  => 'Posts payroll-run results to the external payroll bureau (Nmbrs, Visma, Loket). Dormant by default; returns PAYROLL_DEFERRED so the LoonComponent lifecycle stays observable without contacting the bureau.',
+            'description'  => 'Posts payroll-run results to the external payroll bureau (Nmbrs, Visma, Loket). '
+                .'Dormant by default; returns PAYROLL_DEFERRED so the LoonComponent lifecycle stays observable without contacting the bureau.',
             'steps'        => [
                 'Sign the data-processing agreement with the payroll bureau.',
                 'Provision an API key with `payroll.write` scope.',
@@ -165,7 +167,8 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['rvo.endpoint', 'rvo.client.id', 'rvo.client.secret'],
             'featureFlag'  => 'gov-rvo',
             'sourceSlug'   => 'rvo-aanvraag',
-            'description'  => 'Submits WBSO / SNO / investeringsaftrek aanvragen to the Rijksdienst voor Ondernemend Nederland portal. Dormant by default; returns REQUEST_DEFERRED so the Aanvraag register lifecycle stays observable.',
+            'description'  => 'Submits WBSO / SNO / investeringsaftrek aanvragen to the Rijksdienst voor Ondernemend Nederland portal. '
+                .'Dormant by default; returns REQUEST_DEFERRED so the Aanvraag register lifecycle stays observable.',
             'steps'        => [
                 'Register the tenant organisation with RvO and obtain client credentials.',
                 'Set app-config keys `rvo.endpoint`, `rvo.client.id`, and `rvo.client.secret`.',
@@ -185,7 +188,8 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['ib47.endpoint', 'ib47.certificate.alias'],
             'featureFlag'  => 'gov-ib47',
             'sourceSlug'   => 'ib47',
-            'description'  => 'Submits the annual IB47 opgaaf (uitbetalingen aan derden) to the Belastingdienst. Dormant by default; returns SUBMISSION_DEFERRED so the Ib47Submission lifecycle advances without contacting the Belastingdienst.',
+            'description'  => 'Submits the annual IB47 opgaaf (uitbetalingen aan derden) to the Belastingdienst. '
+                .'Dormant by default; returns SUBMISSION_DEFERRED so the Ib47Submission lifecycle advances without contacting the Belastingdienst.',
             'steps'        => [
                 'Provision a PKIoverheid certificate authorised for IB47.',
                 'Set app-config keys `ib47.endpoint` and `ib47.certificate.alias`.',
@@ -205,7 +209,8 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['cbs.bestanden.endpoint', 'cbs.bestanden.account'],
             'featureFlag'  => 'gov-cbs',
             'sourceSlug'   => 'cbs-bestanden',
-            'description'  => 'Uploads CBS statistical bestanden (productie, ICT, R&D, finance enquetes). Dormant by default; returns SUBMISSION_DEFERRED so submissions stay observable without contacting CBS.',
+            'description'  => 'Uploads CBS statistical bestanden (productie, ICT, R&D, finance enquetes). '
+                .'Dormant by default; returns SUBMISSION_DEFERRED so submissions stay observable without contacting CBS.',
             'steps'        => [
                 'Request a CBS account and SFTP / API credentials.',
                 'Set app-config keys `cbs.bestanden.endpoint` and `cbs.bestanden.account`.',
@@ -225,7 +230,8 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['cbs.iv3.endpoint', 'cbs.iv3.account'],
             'featureFlag'  => 'gov-iv3',
             'sourceSlug'   => 'cbs-iv3',
-            'description'  => 'Submits the quarterly Iv3 (Informatie voor derden) report for gemeenten / provincies / waterschappen / GRs to CBS. Dormant by default; returns SUBMISSION_DEFERRED.',
+            'description'  => 'Submits the quarterly Iv3 (Informatie voor derden) report for gemeenten / provincies / waterschappen / GRs to CBS. '
+                .'Dormant by default; returns SUBMISSION_DEFERRED.',
             'steps'        => [
                 'Request a CBS Iv3 account.',
                 'Set app-config keys `cbs.iv3.endpoint` and `cbs.iv3.account`.',
@@ -245,7 +251,8 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['sisa.endpoint', 'sisa.upload.token'],
             'featureFlag'  => 'gov-sisa',
             'sourceSlug'   => 'bzk-sisa',
-            'description'  => 'Uploads the SiSa-bijlage (Single information, single audit) to the BZK iv3-Plaza / SiSa portal. Dormant by default; returns SUBMISSION_DEFERRED.',
+            'description'  => 'Uploads the SiSa-bijlage (Single information, single audit) to the BZK iv3-Plaza / SiSa portal. '
+                .'Dormant by default; returns SUBMISSION_DEFERRED.',
             'steps'        => [
                 'Obtain a BZK iv3-Plaza upload token for the tenant.',
                 'Set app-config keys `sisa.endpoint` and `sisa.upload.token`.',
@@ -265,7 +272,9 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['mollie.api.key', 'mollie.webhook.secret'],
             'featureFlag'  => 'payments-mollie',
             'sourceSlug'   => 'mollie-payments',
-            'description'  => 'Creates deposit-payment intents (iDEAL / Bancontact / SEPA) and verifies webhook callbacks. Dormant by default; returns PAYMENT_DEFERRED so DepositReconciliationService never advances the lifecycle without a live confirmation.',
+            'description'  => 'Creates deposit-payment intents (iDEAL / Bancontact / SEPA) and verifies webhook callbacks. '
+                .'Dormant by default; returns PAYMENT_DEFERRED so DepositReconciliationService never advances the lifecycle '
+                .'without a live confirmation.',
             'steps'        => [
                 'Create a Mollie profile and obtain a live API key (test_ keys are accepted for staging).',
                 'Set app-config keys `mollie.api.key` and `mollie.webhook.secret`.',
@@ -285,7 +294,8 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['bunq.api.key', 'bunq.installation.context'],
             'featureFlag'  => 'bank-bunq',
             'sourceSlug'   => 'bunq-bank',
-            'description'  => 'Pulls CAMT.053 statements per BankConnection and handles SCA consent-renewal. Dormant by default; returns SYNC_DEFERRED so the BankConnection polling stays observable without contacting Bunq.',
+            'description'  => 'Pulls CAMT.053 statements per BankConnection and handles SCA consent-renewal. '
+                .'Dormant by default; returns SYNC_DEFERRED so the BankConnection polling stays observable without contacting Bunq.',
             'steps'        => [
                 'Create a Bunq sandbox key (or production key with PSD2 licence).',
                 'Set app-config keys `bunq.api.key` and `bunq.installation.context`.',
@@ -305,7 +315,8 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['kvk.api.key'],
             'featureFlag'  => 'registry-kvk',
             'sourceSlug'   => 'kvk-handelsregister',
-            'description'  => 'Looks up KvK Handelsregister entries for debtor/creditor enrichment, multi-administratie onboarding, and deelnemingen-graaf walks. Dormant by default; returns LOOKUP_DEFERRED.',
+            'description'  => 'Looks up KvK Handelsregister entries for debtor/creditor enrichment, multi-administratie onboarding, '
+                .'and deelnemingen-graaf walks. Dormant by default; returns LOOKUP_DEFERRED.',
             'steps'        => [
                 'Obtain a KvK API subscription key (Handelsregister Dataservice).',
                 'Set app-config key `kvk.api.key`.',
@@ -325,7 +336,8 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['uwv.endpoint', 'uwv.certificate.alias'],
             'featureFlag'  => 'gov-uwv',
             'sourceSlug'   => 'uwv-loonaangifte',
-            'description'  => 'Pulls LH-afdracht acceptance status + werkgever-setup sectorindeling validation from UWV. Dormant by default; returns STATUS_DEFERRED so the payroll lifecycle stays observable.',
+            'description'  => 'Pulls LH-afdracht acceptance status + werkgever-setup sectorindeling validation from UWV. '
+                .'Dormant by default; returns STATUS_DEFERRED so the payroll lifecycle stays observable.',
             'steps'        => [
                 'Provision a PKIoverheid certificate authorised for UWV.',
                 'Set app-config keys `uwv.endpoint` and `uwv.certificate.alias`.',
@@ -345,7 +357,9 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['treasury.rates.provider'],
             'featureFlag'  => 'treasury-rates',
             'sourceSlug'   => 'treasury-rates',
-            'description'  => 'Fetches daily reference rates (EURIBOR-3M / SOFR / SARON / ESTR) + FX spots from ECB SDMX (or Bloomberg / Refinitiv). Dormant by default; returns SNAPSHOT_DEFERRED so the interest-accrual + FX-revaluation aggregations stay observable. Manual IntercompanyLoan.interestRate remains the v1 fallback per REQ-IHB-004.',
+            'description'  => 'Fetches daily reference rates (EURIBOR-3M / SOFR / SARON / ESTR) + FX spots from ECB SDMX (or Bloomberg / Refinitiv). '
+                .'Dormant by default; returns SNAPSHOT_DEFERRED so the interest-accrual + FX-revaluation aggregations stay observable. '
+                .'Manual IntercompanyLoan.interestRate remains the v1 fallback per REQ-IHB-004.',
             'steps'        => [
                 'Pick a reference-rate provider (ECB SDMX is free; Bloomberg / Refinitiv require a market-data subscription).',
                 'Set app-config key `treasury.rates.provider` to the chosen vendor slug.',
@@ -365,7 +379,9 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['ccm.rule.engine.provider'],
             'featureFlag'  => 'ccm-external-engine',
             'sourceSlug'   => 'ccm-rule-engine',
-            'description'  => 'Optional swap-out seam delegating CCM v1 sync/async DSL evaluation to the future OpenRegister native rule engine or a third-party evaluator. Dormant by default; returns DEFERRED + fired=false (fail-soft) so binding never raises a false finding.',
+            'description'  => 'Optional swap-out seam delegating CCM v1 sync/async DSL evaluation to the future OpenRegister native rule engine '
+                .'or a third-party evaluator. '
+                .'Dormant by default; returns DEFERRED + fired=false (fail-soft) so binding never raises a false finding.',
             'steps'        => [
                 'Pick a target rule engine (OpenRegister native, Drools, OPA, etc.).',
                 'Set app-config key `ccm.rule.engine.provider`.',
@@ -385,14 +401,17 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['csrd.xbrl.taxonomy.version'],
             'featureFlag'  => 'csrd-xbrl',
             'sourceSlug'   => 'csrd-esrs-xbrl',
-            'description'  => 'EFRAG ESRS XBRL taxonomy mapping + mandatory-data-point validation + iXBRL instance build. SAFETY-CRITICAL: validateMandatoryDataPoints() always returns VALIDATION_BLOCKED in the dormant default so an unvalidated CSRD report cannot slip past EFRAG IG-3.',
+            'description'  => 'EFRAG ESRS XBRL taxonomy mapping + mandatory-data-point validation + iXBRL instance build. '
+                .'SAFETY-CRITICAL: validateMandatoryDataPoints() always returns VALIDATION_BLOCKED in the dormant default '
+                .'so an unvalidated CSRD report cannot slip past EFRAG IG-3.',
             'steps'        => [
                 'Pick an EFRAG taxonomy version (2024-01 baseline at v1).',
                 'Set app-config key `csrd.xbrl.taxonomy.version`.',
                 'Create openconnector Source slug `csrd-esrs-xbrl`.',
                 'Override CsrdEsrsXbrlAdapterInterface in Application::register().',
                 'Toggle the `csrd-xbrl` feature flag to ON.',
-                'Smoke-test against a sandbox iXBRL instance before submitting to KvK / AFM via the DigipoortSbrAdapter (filingType: csrd-xbrl-pack).',
+                'Smoke-test against a sandbox iXBRL instance before submitting to KvK / AFM via the DigipoortSbrAdapter '
+                    .'(filingType: csrd-xbrl-pack).',
             ],
         ],
         'deposit-payment' => [
@@ -406,7 +425,10 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['deposit.payment.provider'],
             'featureFlag'  => 'payments-deposit',
             'sourceSlug'   => 'deposit-payment',
-            'description'  => 'Lifecycle adapter sitting ONE LAYER ABOVE the Mollie adapter: the lifecycle code never sees a Mollie vs. Stripe branch, only the projected DepositPayment state. Dormant default returns pending / PAYMENT_DEFERRED with dormant=true so DepositReconciliationService::pollPending() must inspect the dormant flag before advancing.',
+            'description'  => 'Lifecycle adapter sitting ONE LAYER ABOVE the Mollie adapter: the lifecycle code never sees '
+                .'a Mollie vs. Stripe branch, only the projected DepositPayment state. '
+                .'Dormant default returns pending / PAYMENT_DEFERRED with dormant=true so '
+                .'DepositReconciliationService::pollPending() must inspect the dormant flag before advancing.',
             'steps'        => [
                 'Bind the Mollie adapter first (see the mollie family entry).',
                 'Set app-config key `deposit.payment.provider`.',
@@ -452,7 +474,7 @@ class ExternalAdaptersAdminController extends Controller
         $dormantCount = 0;
 
         foreach (self::ADAPTERS as $entry) {
-            $dormant   = $this->resolveDormancy($entry['interface']);
+            $dormant   = $this->resolveDormancy(interfaceFqcn: $entry['interface']);
             $entries[] = ($entry + ['dormant' => $dormant]);
             if ($dormant === true) {
                 $dormantCount++;
@@ -493,7 +515,7 @@ class ExternalAdaptersAdminController extends Controller
             );
         }
 
-        $dormant = $this->resolveDormancy($entry['interface']);
+        $dormant = $this->resolveDormancy(interfaceFqcn: $entry['interface']);
 
         return new JSONResponse(($entry + ['dormant' => $dormant]));
     }//end show()

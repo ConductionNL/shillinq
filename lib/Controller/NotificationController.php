@@ -128,7 +128,12 @@ class NotificationController extends Controller
             array_filter(
                 $triggers,
                 static function (array $trigger) use ($id): bool {
-                    $scope = ((isset($trigger['appliesToBookingSlug']) === true) ? (string) $trigger['appliesToBookingSlug'] : '');
+                    if (isset($trigger['appliesToBookingSlug']) === true) {
+                        $scope = (string) $trigger['appliesToBookingSlug'];
+                    } else {
+                        $scope = '';
+                    }
+
                     if ($scope === '' || $scope === $id) {
                         return true;
                     }
@@ -204,7 +209,12 @@ class NotificationController extends Controller
                 continue;
             }
 
-            $scope = ((isset($trigger['appliesToBookingSlug']) === true) ? (string) $trigger['appliesToBookingSlug'] : '');
+            if (isset($trigger['appliesToBookingSlug']) === true) {
+                $scope = (string) $trigger['appliesToBookingSlug'];
+            } else {
+                $scope = '';
+            }
+
             // A global trigger can be cloned to a per-booking override but cannot be mutated in place from this endpoint.
             // The endpoint only persists status + channels onto per-booking-scoped triggers, leaving the global config untouched.
             if ($scope === '' || $scope !== $id) {
@@ -381,7 +391,11 @@ class NotificationController extends Controller
             return [];
         }
 
-        return is_array($items) === true ? $items : [];
+        if (is_array($items) === true) {
+            return $items;
+        }
+
+        return [];
     }//end fetchTriggers()
 
     /**
@@ -413,7 +427,11 @@ class NotificationController extends Controller
             return [];
         }
 
-        return is_array($items) === true ? $items : [];
+        if (is_array($items) === true) {
+            return $items;
+        }
+
+        return [];
     }//end fetchRecentDeliveries()
 
     /**
@@ -442,6 +460,10 @@ class NotificationController extends Controller
         }
 
         $head = reset($items);
-        return is_array($head) === true ? $head : null;
+        if (is_array($head) === true) {
+            return $head;
+        }
+
+        return null;
     }//end findTriggerBySlug()
 }//end class

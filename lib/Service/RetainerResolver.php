@@ -38,6 +38,8 @@ use Psr\Log\LoggerInterface;
 class RetainerResolver
 {
     /**
+     * Construct the retainer resolver.
+     *
      * @param ContainerInterface $container DI container.
      * @param IAppConfig         $appConfig App config.
      * @param LoggerInterface    $logger    Logger.
@@ -93,10 +95,22 @@ class RetainerResolver
             ];
         }
 
+        if (isset($best['overageHoursThreshold']) === true) {
+            $overageHoursThreshold = (float) $best['overageHoursThreshold'];
+        } else {
+            $overageHoursThreshold = null;
+        }
+
+        if (isset($best['overageHourlyRate']) === true) {
+            $overageHourlyRateCents = $this->toCents(value: $best['overageHourlyRate']);
+        } else {
+            $overageHourlyRateCents = null;
+        }
+
         return [
-            'monthlyAmountCents'     => $this->toCents($best['monthlyAmount'] ?? 0),
-            'overageHoursThreshold'  => isset($best['overageHoursThreshold']) === true ? (float) $best['overageHoursThreshold'] : null,
-            'overageHourlyRateCents' => isset($best['overageHourlyRate']) === true ? $this->toCents($best['overageHourlyRate']) : null,
+            'monthlyAmountCents'     => $this->toCents(value: $best['monthlyAmount'] ?? 0),
+            'overageHoursThreshold'  => $overageHoursThreshold,
+            'overageHourlyRateCents' => $overageHourlyRateCents,
             'effectiveDate'          => (string) ($best['effectiveDate'] ?? $invoiceMonth),
             'label'                  => (string) ($best['label'] ?? 'Retainer'),
         ];
@@ -137,7 +151,11 @@ class RetainerResolver
                 ->setSchema($schema)
                 ->findAll(filters: $filters);
 
-            return is_array($rs) === true ? $rs : [];
+            if (is_array($rs) === true) {
+                return $rs;
+            }
+
+            return [];
         } catch (\Throwable $e) {
             $this->logger->error('RetainerResolver findAll failed: '.$e->getMessage());
             return [];

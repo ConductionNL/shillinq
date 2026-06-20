@@ -146,7 +146,11 @@ class FluxService
 
         if ($threshold <= 0) {
             // No threshold defined — treat anything non-zero as material to surface for review.
-            return $absoluteVariance === 0 ? 'immaterial' : 'material';
+            if ($absoluteVariance === 0) {
+                return 'immaterial';
+            }
+
+            return 'material';
         }
 
         if ($absoluteVariance <= $threshold) {
@@ -308,6 +312,14 @@ class FluxService
                 $escalated++;
             }
 
+            $escalationSla = null;
+            $escalatedTo   = '';
+            if ($status === 'escalated') {
+                $escalationSla = $runTimestamp->modify('+'.self::OWNER_SLA_HOURS.' hours')
+                    ->format(DateTimeInterface::ATOM);
+                $escalatedTo   = $this->ownerForAccount(glAccount: $glAccount, group: $group);
+            }
+
             $items[] = [
                 'fluxRunId'                 => $fluxRunId,
                 'glAccountNumber'           => $glAccount,
@@ -320,8 +332,8 @@ class FluxService
                 'autoExplanationCoverage'   => $coverage,
                 'ownerExplanation'          => '',
                 'status'                    => $status,
-                'ownerEscalationSLA'        => $status === 'escalated' ? $runTimestamp->modify('+'.self::OWNER_SLA_HOURS.' hours')->format(DateTimeInterface::ATOM) : null,
-                'ownerEscalatedTo'          => $status === 'escalated' ? $this->ownerForAccount(glAccount: $glAccount, group: $group) : '',
+                'ownerEscalationSLA'        => $escalationSla,
+                'ownerEscalatedTo'          => $escalatedTo,
                 'attributions'              => $attribs,
             ];
         }//end foreach
@@ -507,10 +519,21 @@ class FluxService
      */
     private function formatCents(int $cents, bool $signed=false): string
     {
-        $euros  = $cents / 100.0;
-        $body   = number_format(abs($euros), 0, '.', ',');
-        $sign   = $cents >= 0 ? '+' : '-';
-        $prefix = $signed === true ? $sign : ($cents < 0 ? '-' : '');
+        $euros = $cents / 100.0;
+        $body  = number_format(abs($euros), 0, '.', ',');
+        $sign  = '-';
+        if ($cents >= 0) {
+            $sign = '+';
+        }
+
+        if ($signed === true) {
+            $prefix = $sign;
+        } else if ($cents < 0) {
+            $prefix = '-';
+        } else {
+            $prefix = '';
+        }
+
         return 'EUR '.$prefix.$body;
 
     }//end formatCents()
@@ -551,7 +574,12 @@ class FluxService
         $explanation = (string) ($row['autoExplanation'] ?? '');
         $status      = (string) ($row['status'] ?? 'open');
         if ($status === 'escalated') {
-            return ($explanation === '' ? '' : $explanation.'; ').'escalated to '.((string) ($row['ownerEscalatedTo'] ?? 'owner'));
+            $prefix = '';
+            if ($explanation !== '') {
+                $prefix = $explanation.'; ';
+            }
+
+            return $prefix.'escalated to '.((string) ($row['ownerEscalatedTo'] ?? 'owner'));
         }
 
         return $explanation;
@@ -583,7 +611,11 @@ class FluxService
      */
     private function ownerForAccount(string $glAccount, string $group): string
     {
-        return $group !== '' ? $group.'-owner' : 'controller';
+        if ($group !== '') {
+            return $group.'-owner';
+        }
+
+        return 'controller';
 
     }//end ownerForAccount()
 

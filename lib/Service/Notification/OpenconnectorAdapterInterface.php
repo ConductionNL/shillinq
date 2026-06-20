@@ -1,7 +1,7 @@
 <?php
 
 /**
- * openconnector channel-adapter port for booking notifications.
+ * Openconnector channel-adapter port for booking notifications.
  *
  * REQ-BNT-004 routes every dispatch through openconnector's adapter API
  * (POST /openconnector/api/notifications/send). The adapter is wrapped

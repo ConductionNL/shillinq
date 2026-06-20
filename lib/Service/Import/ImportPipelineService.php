@@ -154,14 +154,28 @@ class ImportPipelineService
     {
         $batch = $this->loadBatch(batchId: $batchId);
         if ($batch === null) {
-            return ['findings' => [$this->finding(self::SEVERITY_ERROR, 'batch-not-found', 'Import batch not found.', ['batchId' => $batchId])]];
+            return [
+                'findings' => [
+                    $this->finding(
+                        severity: self::SEVERITY_ERROR,
+                        code: 'batch-not-found',
+                        message: 'Import batch not found.',
+                        context: ['batchId' => $batchId]
+                    ),
+                ],
+            ];
         }
 
         $profile  = $this->profileFor(sourceSystem: (string) ($batch['sourceSystem'] ?? 'xaf-generic'));
         $findings = [];
 
-        $xml      = $this->readSourceXaf(batch: $batch, findings: $findings);
-        $parsed   = ($xml === null ? $this->emptyParse() : $this->parser->parse($xml));
+        $xml = $this->readSourceXaf(batch: $batch, findings: $findings);
+        if ($xml === null) {
+            $parsed = $this->emptyParse();
+        } else {
+            $parsed = $this->parser->parse($xml);
+        }
+
         $parsed   = $profile->applyDialectQuirks($parsed);
         $findings = array_merge($findings, ($parsed['findings'] ?? []));
 
@@ -202,7 +216,18 @@ class ImportPipelineService
     {
         $batch = $this->loadBatch(batchId: $batchId);
         if ($batch === null) {
-            return ['mappings' => [], 'blocking' => true, 'findings' => [$this->finding(self::SEVERITY_ERROR, 'batch-not-found', 'Import batch not found.', ['batchId' => $batchId])]];
+            return [
+                'mappings' => [],
+                'blocking' => true,
+                'findings' => [
+                    $this->finding(
+                        severity: self::SEVERITY_ERROR,
+                        code: 'batch-not-found',
+                        message: 'Import batch not found.',
+                        context: ['batchId' => $batchId]
+                    ),
+                ],
+            ];
         }
 
         $stagingPayload = ($batch['stagingPayload'] ?? []);
@@ -212,7 +237,13 @@ class ImportPipelineService
 
         $mappings = [];
         foreach ($accounts as $account) {
-            $mappings[] = $this->resolveOne(account: $account, targetByRgs: $targetByRgs, profileMap: $profileMap, administrationId: (string) ($batch['administrationId'] ?? ''), batchId: $batchId);
+            $mappings[] = $this->resolveOne(
+                account: $account,
+                targetByRgs: $targetByRgs,
+                profileMap: $profileMap,
+                administrationId: (string) ($batch['administrationId'] ?? ''),
+                batchId: $batchId
+            );
         }
 
         foreach ($mappings as $row) {
@@ -246,11 +277,17 @@ class ImportPipelineService
         $sourceName = (string) ($account['name'] ?? '');
         $rgs        = (string) ($account['rgsCode'] ?? '');
 
+        if ($rgs !== '') {
+            $sourceRgsCode = $rgs;
+        } else {
+            $sourceRgsCode = null;
+        }
+
         $base = [
             'batchReference'   => $batchId,
             'sourceCode'       => $sourceCode,
             'sourceName'       => $sourceName,
-            'sourceRgsCode'    => ($rgs !== '' ? $rgs : null),
+            'sourceRgsCode'    => $sourceRgsCode,
             'administrationId' => $administrationId,
         ];
 
@@ -354,16 +391,21 @@ class ImportPipelineService
         [$debit, $credit] = $this->sumOpeningBalance(staging: $staging);
         if (abs($debit - $credit) > self::TOLERANCE) {
             $findings[] = $this->finding(
-                self::SEVERITY_ERROR,
-                'opening-journal-unbalanced',
-                'Opening balance is not balanced.',
-                ['debit' => $debit, 'credit' => $credit, 'difference' => round(($debit - $credit), 2)]
+                severity: self::SEVERITY_ERROR,
+                code: 'opening-journal-unbalanced',
+                message: 'Opening balance is not balanced.',
+                context: ['debit' => $debit, 'credit' => $credit, 'difference' => round(($debit - $credit), 2)]
             );
         }
 
         // (2) Open period.
         if (($batch['periodOpen'] ?? null) === false) {
-            $findings[] = $this->finding(self::SEVERITY_ERROR, 'period-closed', 'Migration date falls in a closed period.', ['migrationDate' => ($batch['migrationDate'] ?? null)]);
+            $findings[] = $this->finding(
+                severity: self::SEVERITY_ERROR,
+                code: 'period-closed',
+                message: 'Migration date falls in a closed period.',
+                context: ['migrationDate' => ($batch['migrationDate'] ?? null)]
+            );
         }
 
         // (3) AR / AP control-account == open-items sum (double-count guard).
@@ -375,10 +417,10 @@ class ImportPipelineService
             foreach ($mappings as $row) {
                 if (($row['mappingSource'] ?? '') === 'unmapped' || ($row['confirmed'] ?? false) !== true) {
                     $findings[] = $this->finding(
-                        self::SEVERITY_ERROR,
-                        'account-unmapped',
-                        'A source account is unmapped or unconfirmed and blocks posting.',
-                        ['sourceCode' => ($row['sourceCode'] ?? '')]
+                        severity: self::SEVERITY_ERROR,
+                        code: 'account-unmapped',
+                        message: 'A source account is unmapped or unconfirmed and blocks posting.',
+                        context: ['sourceCode' => ($row['sourceCode'] ?? '')]
                     );
                 }
             }
@@ -415,10 +457,10 @@ class ImportPipelineService
         if (abs($controlAmount - $itemSum) > self::TOLERANCE) {
             return [
                 $this->finding(
-                    self::SEVERITY_ERROR,
-                    strtoupper($side).'-control-mismatch',
-                    'Open items do not reconcile to the control account opening amount.',
-                    [
+                    severity: self::SEVERITY_ERROR,
+                    code: strtoupper($side).'-control-mismatch',
+                    message: 'Open items do not reconcile to the control account opening amount.',
+                    context: [
                         'side'          => strtoupper($side),
                         'controlAmount' => round($controlAmount, 2),
                         'openItemsSum'  => round($itemSum, 2),
@@ -475,10 +517,10 @@ class ImportPipelineService
 
                 if (isset($seen[$key][$value]) === true) {
                     $findings[] = $this->finding(
-                        self::SEVERITY_WARNING,
-                        'possible-duplicate-relation',
-                        'A relation may be a duplicate of an earlier one.',
-                        ['matchKey' => $key, 'value' => $value, 'name' => ($relation['name'] ?? '')]
+                        severity: self::SEVERITY_WARNING,
+                        code: 'possible-duplicate-relation',
+                        message: 'A relation may be a duplicate of an earlier one.',
+                        context: ['matchKey' => $key, 'value' => $value, 'name' => ($relation['name'] ?? '')]
                     );
                     break;
                 }
@@ -562,15 +604,21 @@ class ImportPipelineService
                 }
             }
 
+            if ($key === '') {
+                $wouldOutcome = 'create-no-key';
+            } else {
+                $wouldOutcome = 'create-or-link';
+            }
+
             $contacts[] = [
                 'name'         => ($relation['name'] ?? ''),
                 'kvk'          => ($relation['kvk'] ?? ''),
                 'btw'          => ($relation['btw'] ?? ''),
                 'email'        => ($relation['email'] ?? ''),
                 'dedupeKey'    => $key,
-                'wouldOutcome' => ($key === '' ? 'create-no-key' : 'create-or-link'),
+                'wouldOutcome' => $wouldOutcome,
             ];
-        }
+        }//end foreach
 
         return $contacts;
 
@@ -614,7 +662,14 @@ class ImportPipelineService
             return [
                 'status'      => 'posting_failed',
                 'postingRefs' => null,
-                'findings'    => [$this->finding(self::SEVERITY_ERROR, 'staged-state-changed', 'Staged state changed since the dry-run; a fresh validation and dry-run are required.', ['recordedHash' => $recordedHash, 'currentHash' => $currentHash])],
+                'findings'    => [
+                    $this->finding(
+                        severity: self::SEVERITY_ERROR,
+                        code: 'staged-state-changed',
+                        message: 'Staged state changed since the dry-run; a fresh validation and dry-run are required.',
+                        context: ['recordedHash' => $recordedHash, 'currentHash' => $currentHash]
+                    ),
+                ],
                 'idempotent'  => false,
             ];
         }
@@ -625,7 +680,14 @@ class ImportPipelineService
             return [
                 'status'      => 'posting_failed',
                 'postingRefs' => null,
-                'findings'    => [$this->finding(self::SEVERITY_ERROR, 'opening-journal-unbalanced', 'Opening balance is not balanced.', ['difference' => round(($debit - $credit), 2)])],
+                'findings'    => [
+                    $this->finding(
+                        severity: self::SEVERITY_ERROR,
+                        code: 'opening-journal-unbalanced',
+                        message: 'Opening balance is not balanced.',
+                        context: ['difference' => round(($debit - $credit), 2)]
+                    ),
+                ],
                 'idempotent'  => false,
             ];
         }
@@ -643,13 +705,27 @@ class ImportPipelineService
         // Compose existing surfaces. Each call degrades gracefully (logged
         // finding) where the live surface is environment-dependent.
         $postingRefs['openingJournalId'] = $this->createOpeningJournal(batch: $batch, journal: $report['openingJournal'], findings: $findings);
-        $postingRefs['arItemIds']        = $this->createOpenItems(batch: $batch, items: ($report['arOpenItems'] ?? []), side: 'ar', findings: $findings);
-        $postingRefs['apItemIds']        = $this->createOpenItems(batch: $batch, items: ($report['apOpenItems'] ?? []), side: 'ap', findings: $findings);
+        $postingRefs['arItemIds']        = $this->createOpenItems(
+            batch: $batch,
+            items: ($report['arOpenItems'] ?? []),
+            side: 'ar',
+            findings: $findings
+        );
+        $postingRefs['apItemIds']        = $this->createOpenItems(
+            batch: $batch,
+            items: ($report['apOpenItems'] ?? []),
+            side: 'ap',
+            findings: $findings
+        );
         [$contactIds, $masterIds]        = $this->createRelations(batch: $batch, contacts: ($report['contacts'] ?? []), findings: $findings);
         $postingRefs['contactIds']       = $contactIds;
         $postingRefs['masterIds']        = $masterIds;
 
-        $status = ($this->hasErrors(findings: $findings) === true ? 'posting_failed' : 'posted');
+        if ($this->hasErrors(findings: $findings) === true) {
+            $status = 'posting_failed';
+        } else {
+            $status = 'posted';
+        }
 
         return ['status' => $status, 'postingRefs' => $postingRefs, 'findings' => $findings, 'idempotent' => false];
 
@@ -675,15 +751,30 @@ class ImportPipelineService
         if ($this->guard->canReverse(batch: $batch, periodOpen: $periodOpen) === false) {
             return [
                 'status'   => ($batch['status'] ?? ''),
-                'findings' => [$this->finding(self::SEVERITY_ERROR, 'reversal-blocked', 'Reversal is blocked: the batch is not posted or the target period is closed. Follow correction-journal practice.', ['status' => ($batch['status'] ?? ''), 'periodOpen' => $periodOpen])],
+                'findings' => [
+                    $this->finding(
+                        severity: self::SEVERITY_ERROR,
+                        code: 'reversal-blocked',
+                        message: 'Reversal is blocked: the batch is not posted or the target period is closed. Follow correction-journal practice.',
+                        context: ['status' => ($batch['status'] ?? ''), 'periodOpen' => $periodOpen]
+                    ),
+                ],
             ];
         }
 
         $findings     = [];
         $postingRefs  = ($batch['postingRefs'] ?? []);
         $reversalRefs = [
-            'reversingJournalId'   => $this->createReversingJournal(batch: $batch, openingJournalId: ($postingRefs['openingJournalId'] ?? null), findings: $findings),
-            'softDeletedItemIds'   => $this->softDeleteAll(ids: array_merge(($postingRefs['arItemIds'] ?? []), ($postingRefs['apItemIds'] ?? [])), schema: 'ARInvoice', findings: $findings),
+            'reversingJournalId'   => $this->createReversingJournal(
+                batch: $batch,
+                openingJournalId: ($postingRefs['openingJournalId'] ?? null),
+                findings: $findings
+            ),
+            'softDeletedItemIds'   => $this->softDeleteAll(
+                ids: array_merge(($postingRefs['arItemIds'] ?? []), ($postingRefs['apItemIds'] ?? [])),
+                schema: 'ARInvoice',
+                findings: $findings
+            ),
             'softDeletedMasterIds' => $this->softDeleteAll(ids: ($postingRefs['masterIds'] ?? []), schema: 'CustomerMaster', findings: $findings),
         ];
 
@@ -714,7 +805,12 @@ class ImportPipelineService
         try {
             $service = $this->objectService();
             if ($service === null) {
-                $findings[] = $this->finding(self::SEVERITY_WARNING, 'journal-surface-unavailable', 'Journal-entry surface unavailable; opening journal not written.', []);
+                $findings[] = $this->finding(
+                    severity: self::SEVERITY_WARNING,
+                    code: 'journal-surface-unavailable',
+                    message: 'Journal-entry surface unavailable; opening journal not written.',
+                    context: []
+                );
                 return null;
             }
 
@@ -730,7 +826,12 @@ class ImportPipelineService
 
             return $this->extractId(created: $created);
         } catch (\Throwable $e) {
-            $findings[] = $this->finding(self::SEVERITY_WARNING, 'journal-write-degraded', 'Opening journal write degraded gracefully.', ['detail' => $e->getMessage()]);
+            $findings[] = $this->finding(
+                severity: self::SEVERITY_WARNING,
+                code: 'journal-write-degraded',
+                message: 'Opening journal write degraded gracefully.',
+                context: ['detail' => $e->getMessage()]
+            );
             $this->logger->warning('ImportPipelineService: opening journal write degraded', ['exception' => $e->getMessage()]);
             return null;
         }//end try
@@ -753,13 +854,23 @@ class ImportPipelineService
      */
     private function createOpenItems(array $batch, array $items, string $side, array &$findings): array
     {
-        $ids    = [];
-        $schema = ($side === 'ar' ? 'ARInvoice' : 'APTransaction');
+        $ids = [];
+        if ($side === 'ar') {
+            $schema = 'ARInvoice';
+        } else {
+            $schema = 'APTransaction';
+        }
+
         try {
             $service = $this->objectService();
             if ($service === null) {
                 if ($items !== []) {
-                    $findings[] = $this->finding(self::SEVERITY_WARNING, $side.'-surface-unavailable', strtoupper($side).' surface unavailable; open items not written.', []);
+                    $findings[] = $this->finding(
+                        severity: self::SEVERITY_WARNING,
+                        code: $side.'-surface-unavailable',
+                        message: strtoupper($side).' surface unavailable; open items not written.',
+                        context: []
+                    );
                 }
 
                 return $ids;
@@ -783,7 +894,12 @@ class ImportPipelineService
                 }
             }
         } catch (\Throwable $e) {
-            $findings[] = $this->finding(self::SEVERITY_WARNING, $side.'-write-degraded', strtoupper($side).' open-item write degraded gracefully.', ['detail' => $e->getMessage()]);
+            $findings[] = $this->finding(
+                severity: self::SEVERITY_WARNING,
+                code: $side.'-write-degraded',
+                message: strtoupper($side).' open-item write degraded gracefully.',
+                context: ['detail' => $e->getMessage()]
+            );
             $this->logger->warning('ImportPipelineService: open-item write degraded', ['side' => $side, 'exception' => $e->getMessage()]);
         }//end try
 
@@ -811,7 +927,11 @@ class ImportPipelineService
             return 'issued';
         }
 
-        return ($ts < time() ? 'overdue' : 'issued');
+        if ($ts < time()) {
+            return 'overdue';
+        }
+
+        return 'issued';
 
     }//end openItemStateForDueDate()
 
@@ -846,7 +966,12 @@ class ImportPipelineService
 
         if ($manager === null) {
             if ($contacts !== []) {
-                $findings[] = $this->finding(self::SEVERITY_WARNING, 'contacts-manager-unavailable', 'NC contacts manager unavailable; relations not written to the addressbook (degraded gracefully).', ['count' => count($contacts)]);
+                $findings[] = $this->finding(
+                    severity: self::SEVERITY_WARNING,
+                    code: 'contacts-manager-unavailable',
+                    message: 'NC contacts manager unavailable; relations not written to the addressbook (degraded gracefully).',
+                    context: ['count' => count($contacts)]
+                );
                 $this->logger->warning('ImportPipelineService: contacts manager unavailable; relations degraded', ['count' => count($contacts)]);
             }
 
@@ -877,7 +1002,12 @@ class ImportPipelineService
                 }
             }
         } catch (\Throwable $e) {
-            $findings[] = $this->finding(self::SEVERITY_WARNING, 'relations-write-degraded', 'Relation/master write degraded gracefully.', ['detail' => $e->getMessage()]);
+            $findings[] = $this->finding(
+                severity: self::SEVERITY_WARNING,
+                code: 'relations-write-degraded',
+                message: 'Relation/master write degraded gracefully.',
+                context: ['detail' => $e->getMessage()]
+            );
             $this->logger->warning('ImportPipelineService: relation write degraded', ['exception' => $e->getMessage()]);
         }//end try
 
@@ -897,14 +1027,24 @@ class ImportPipelineService
     private function createReversingJournal(array $batch, ?string $openingJournalId, array &$findings): ?string
     {
         if ($openingJournalId === null) {
-            $findings[] = $this->finding(self::SEVERITY_WARNING, 'no-opening-journal', 'No opening journal id on record; reversing journal skipped.', []);
+            $findings[] = $this->finding(
+                severity: self::SEVERITY_WARNING,
+                code: 'no-opening-journal',
+                message: 'No opening journal id on record; reversing journal skipped.',
+                context: []
+            );
             return null;
         }
 
         try {
             $service = $this->objectService();
             if ($service === null) {
-                $findings[] = $this->finding(self::SEVERITY_WARNING, 'journal-surface-unavailable', 'Journal surface unavailable; reversing journal not written.', []);
+                $findings[] = $this->finding(
+                    severity: self::SEVERITY_WARNING,
+                    code: 'journal-surface-unavailable',
+                    message: 'Journal surface unavailable; reversing journal not written.',
+                    context: []
+                );
                 return null;
             }
 
@@ -919,7 +1059,12 @@ class ImportPipelineService
 
             return $this->extractId(created: $created);
         } catch (\Throwable $e) {
-            $findings[] = $this->finding(self::SEVERITY_WARNING, 'reversing-journal-degraded', 'Reversing journal write degraded gracefully.', ['detail' => $e->getMessage()]);
+            $findings[] = $this->finding(
+                severity: self::SEVERITY_WARNING,
+                code: 'reversing-journal-degraded',
+                message: 'Reversing journal write degraded gracefully.',
+                context: ['detail' => $e->getMessage()]
+            );
             $this->logger->warning('ImportPipelineService: reversing journal degraded', ['exception' => $e->getMessage()]);
             return null;
         }//end try
@@ -942,7 +1087,12 @@ class ImportPipelineService
             $service = $this->objectService();
             if ($service === null) {
                 if ($ids !== []) {
-                    $findings[] = $this->finding(self::SEVERITY_WARNING, 'delete-surface-unavailable', 'Delete surface unavailable; soft-delete skipped.', ['schema' => $schema]);
+                    $findings[] = $this->finding(
+                        severity: self::SEVERITY_WARNING,
+                        code: 'delete-surface-unavailable',
+                        message: 'Delete surface unavailable; soft-delete skipped.',
+                        context: ['schema' => $schema]
+                    );
                 }
 
                 return $done;
@@ -953,9 +1103,14 @@ class ImportPipelineService
                 $done[] = $id;
             }
         } catch (\Throwable $e) {
-            $findings[] = $this->finding(self::SEVERITY_WARNING, 'soft-delete-degraded', 'Soft-delete degraded gracefully.', ['schema' => $schema, 'detail' => $e->getMessage()]);
+            $findings[] = $this->finding(
+                severity: self::SEVERITY_WARNING,
+                code: 'soft-delete-degraded',
+                message: 'Soft-delete degraded gracefully.',
+                context: ['schema' => $schema, 'detail' => $e->getMessage()]
+            );
             $this->logger->warning('ImportPipelineService: soft-delete degraded', ['schema' => $schema, 'exception' => $e->getMessage()]);
-        }
+        }//end try
 
         return $done;
 
@@ -1077,7 +1232,12 @@ class ImportPipelineService
             return $batch['sourceXaf'];
         }
 
-        $findings[] = $this->finding(self::SEVERITY_WARNING, 'source-not-loaded', 'Source XAF contents were not loaded in this context (NC Files read is environment-dependent).', []);
+        $findings[] = $this->finding(
+            severity: self::SEVERITY_WARNING,
+            code: 'source-not-loaded',
+            message: 'Source XAF contents were not loaded in this context (NC Files read is environment-dependent).',
+            context: []
+        );
         return null;
 
     }//end readSourceXaf()
@@ -1206,7 +1366,9 @@ class ImportPipelineService
                 return $byRgs;
             }
 
-            $accounts = $service->setRegister($this->register())->setSchema('Account')->findAll(['filters' => ['administrationId' => $administrationId]]);
+            $accounts = $service->setRegister($this->register())
+                ->setSchema('Account')
+                ->findAll(['filters' => ['administrationId' => $administrationId]]);
             foreach (($accounts ?? []) as $account) {
                 $row  = $this->toArray(object: $account);
                 $rgs  = (string) ($row['rgsCode'] ?? '');
@@ -1243,7 +1405,9 @@ class ImportPipelineService
                 return $map;
             }
 
-            $rows = $service->setRegister($this->register())->setSchema('ImportMapping')->findAll(['filters' => ['mappingProfile' => $name, 'confirmed' => true]]);
+            $rows = $service->setRegister($this->register())
+                ->setSchema('ImportMapping')
+                ->findAll(['filters' => ['mappingProfile' => $name, 'confirmed' => true]]);
             foreach (($rows ?? []) as $row) {
                 $r   = $this->toArray(object: $row);
                 $src = (string) ($r['sourceCode'] ?? '');

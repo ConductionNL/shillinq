@@ -37,6 +37,8 @@ use Psr\Log\LoggerInterface;
 class InvoiceDeduplicationService
 {
     /**
+     * Constructor.
+     *
      * @param ContainerInterface $container DI container.
      * @param IAppConfig         $appConfig App config.
      * @param LoggerInterface    $logger    Logger.
@@ -131,7 +133,11 @@ class InvoiceDeduplicationService
                 ->setSchema($schema)
                 ->findAll(filters: $filters);
 
-            return is_array($rs) === true ? $rs : [];
+            if (is_array($rs) === true) {
+                return $rs;
+            }
+
+            return [];
         } catch (\Throwable $e) {
             $this->logger->error('InvoiceDeduplicationService findAll failed: '.$e->getMessage());
             return [];

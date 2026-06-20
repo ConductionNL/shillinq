@@ -110,7 +110,7 @@ final class ReconciliationMatchToReportListener implements IEventListener
     public function handle(Event $event): void
     {
         try {
-            $payload = $this->extractEventPayload($event);
+            $payload = $this->extractEventPayload(event: $event);
             if ($payload === null) {
                 return;
             }
@@ -177,7 +177,7 @@ final class ReconciliationMatchToReportListener implements IEventListener
     /**
      * Decide whether this event should trigger T4-field stamping.
      *
-     * @param array{schema:string,object:array<string,mixed>} $payload
+     * @param array{schema:string,object:array<string,mixed>} $payload Extracted event payload.
      *
      * @return bool
      */
@@ -218,7 +218,7 @@ final class ReconciliationMatchToReportListener implements IEventListener
             return;
         }
 
-        $reconId = $this->resolveReconId($match);
+        $reconId = $this->resolveReconId(match: $match);
         if ($reconId === '') {
             // No open BankReconciliation session for this account/period yet —
             // leave reconId empty and let the operator wire it up later. The
@@ -230,7 +230,7 @@ final class ReconciliationMatchToReportListener implements IEventListener
         }
 
         $updates = [
-            'matchAlgorithm'    => $this->algorithmFromConfidence((string) ($match['confidence'] ?? 'auto')),
+            'matchAlgorithm'    => $this->algorithmFromConfidence(confidence: (string) ($match['confidence'] ?? 'auto')),
             'matchedAt'         => gmdate('Y-m-d\TH:i:s\Z'),
             'manualOverride'    => ((string) ($match['confidence'] ?? '') === 'manual'),
             'confidenceScoreT4' => (float) ($match['confidenceScore'] ?? 1.0),
@@ -289,7 +289,11 @@ final class ReconciliationMatchToReportListener implements IEventListener
      */
     private function algorithmFromConfidence(string $confidence): string
     {
-        return $confidence === 'manual' ? 'manual' : 'exact';
+        if ($confidence === 'manual') {
+            return 'manual';
+        }
+
+        return 'exact';
 
     }//end algorithmFromConfidence()
 
@@ -316,7 +320,7 @@ final class ReconciliationMatchToReportListener implements IEventListener
                 ->setRegister($this->getRegisterSlug())
                 ->setSchema('BankStatementLine')
                 ->find($lineId);
-            $line          = $this->toArray($line);
+            $line          = $this->toArray(result: $line);
             if ($line === null) {
                 return '';
             }
@@ -330,7 +334,7 @@ final class ReconciliationMatchToReportListener implements IEventListener
                 ->setRegister($this->getRegisterSlug())
                 ->setSchema('BankStatement')
                 ->find($statementId);
-            $statement = $this->toArray($statement);
+            $statement = $this->toArray(result: $statement);
             if ($statement === null) {
                 return '';
             }
@@ -384,7 +388,11 @@ final class ReconciliationMatchToReportListener implements IEventListener
 
         if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
             $serialized = $result->jsonSerialize();
-            return is_array($serialized) ? $serialized : null;
+            if (is_array($serialized) === true) {
+                return $serialized;
+            }
+
+            return null;
         }
 
         return null;

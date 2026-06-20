@@ -160,10 +160,16 @@ class DBAController extends Controller
             return $this->error(message: 'Opslaan intake mislukt', code: Http::STATUS_INTERNAL_SERVER_ERROR);
         }
 
+        if (($body['verkortType'] ?? false) === true) {
+            $risicoNiveau = 'VERKORT_LAGE_DREMPEL';
+        } else {
+            $risicoNiveau = $band;
+        }
+
         $opdracht['intakeStatus']       = 'INTAKE_VOLTOOID';
         $opdracht['intakeDatum']        = $body['ingevuldOp'];
         $opdracht['actueleRisicoscore'] = $total;
-        $opdracht['risicoNiveau']       = ($body['verkortType'] ?? false) === true ? 'VERKORT_LAGE_DREMPEL' : $band;
+        $opdracht['risicoNiveau']       = $risicoNiveau;
         try {
             $os->saveObject(object: $opdracht, register: $register, schema: 'DBAOpdracht');
         } catch (Throwable $e) {
@@ -500,12 +506,19 @@ class DBAController extends Controller
                     ]
                     );
             foreach ($intakeRows as $row) {
-                $intake = is_array($row) ? $row : (method_exists($row, 'getObject') ? $row->getObject() : null);
+                if (is_array($row) === true) {
+                    $intake = $row;
+                } else if (method_exists($row, 'getObject') === true) {
+                    $intake = $row->getObject();
+                } else {
+                    $intake = null;
+                }
+
                 break;
             }
         } catch (Throwable $e) {
             $this->logger->warning('Audit-report intake fetch failed', ['exception' => $e->getMessage()]);
-        }
+        }//end try
 
         $flags = [];
         try {
@@ -516,14 +529,21 @@ class DBAController extends Controller
                     ]
                     );
             foreach ($flagRows as $row) {
-                $arr = is_array($row) ? $row : (method_exists($row, 'getObject') ? $row->getObject() : null);
+                if (is_array($row) === true) {
+                    $arr = $row;
+                } else if (method_exists($row, 'getObject') === true) {
+                    $arr = $row->getObject();
+                } else {
+                    $arr = null;
+                }
+
                 if (is_array($arr) === true) {
                     $flags[] = $arr;
                 }
             }
         } catch (Throwable $e) {
             $this->logger->warning('Audit-report flags fetch failed', ['exception' => $e->getMessage()]);
-        }
+        }//end try
 
         $dossier   = null;
         $dossierId = (string) ($opdracht['evidenceDossierId'] ?? '');
@@ -537,7 +557,8 @@ class DBAController extends Controller
             'flags'            => $flags,
             'evidenceDossier'  => $dossier,
             'generatedAt'      => (new DateTimeImmutable())->format('c'),
-            'fiscaleGrondslag' => 'Wet DBA, BW art. 7:610, Deliveroo-arrest HR 24-3-2023, AWR art. 52, VBAR (peil '.DBAConstants::VBAR_GRENS_PEILJAAR.')',
+            'fiscaleGrondslag' => 'Wet DBA, BW art. 7:610, Deliveroo-arrest HR 24-3-2023, AWR art. 52, VBAR (peil '
+                .DBAConstants::VBAR_GRENS_PEILJAAR.')',
         ];
         $json    = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         if ($json === false) {
@@ -573,7 +594,11 @@ class DBAController extends Controller
         }
 
         $data = json_decode($raw, true);
-        return is_array($data) ? $data : [];
+        if (is_array($data) === true) {
+            return $data;
+        }
+
+        return [];
     }//end jsonBody()
 
     /**
@@ -597,7 +622,11 @@ class DBAController extends Controller
     private function register(): string
     {
         $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        return ($register === '') ? 'shillinq' : $register;
+        if ($register === '') {
+            return 'shillinq';
+        }
+
+        return $register;
     }//end register()
 
     /**
@@ -645,6 +674,7 @@ class DBAController extends Controller
             /*
              * @var array<string,mixed> $entity
              */
+
             return $entity;
         }
 
@@ -654,6 +684,7 @@ class DBAController extends Controller
                 /*
                  * @var array<string,mixed> $data
                  */
+
                 return $data;
             }
         }

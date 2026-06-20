@@ -70,9 +70,9 @@ class SoftCloseJob extends TimedJob
         private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
     ) {
-        parent::__construct($time);
-        $this->setInterval(self::INTERVAL_SECONDS);
-        $this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
+        parent::__construct(time: $time);
+        $this->setInterval(seconds: self::INTERVAL_SECONDS);
+        $this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
 
     }//end __construct()
 

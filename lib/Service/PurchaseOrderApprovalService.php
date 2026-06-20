@@ -126,6 +126,8 @@ class PurchaseOrderApprovalService
      *                                                            (server-authoritative).
      * @param LoggerInterface              $logger                Logger (no sensitive
      *                                                            payloads).
+     * @param ApprovalActivityEmitter|null $activityEmitter       Optional emitter for
+     *                                                            approval activity events.
      *
      * @return void
      */

@@ -242,7 +242,11 @@ class AdministrationMigrationService
         $fiscalTreatment = (string) ($migration['fiscalTreatment'] ?? 'met_realisatie');
 
         // Geruisloze doorschuiving: destination inherits the source's book value.
-        $activationCents = $fiscalTreatment === 'geruisloze_doorschuiving' ? $amounts['bookCents'] : $amounts['marketCents'];
+        if ($fiscalTreatment === 'geruisloze_doorschuiving') {
+            $activationCents = $amounts['bookCents'];
+        } else {
+            $activationCents = $amounts['marketCents'];
+        }
 
         return [
             'administrationId' => (string) ($migration['destinationAdministrationId'] ?? ''),

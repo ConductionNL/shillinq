@@ -60,6 +60,16 @@ final class LogOpenconnectorAdapter implements OpenconnectorAdapterInterface
     }//end __construct()
 
     /**
+     * Dispatch a notification by logging it (log-only adapter).
+     *
+     * @param string              $channel   Delivery channel (email, sms, etc.).
+     * @param string              $recipient Recipient address (masked before logging).
+     * @param string              $subject   Notification subject line.
+     * @param string              $body      Notification body (not logged, PII-safe).
+     * @param array<string,mixed> $metadata  Optional metadata for the log payload.
+     *
+     * @return NotificationSendResult The send outcome.
+     *
      * @inheritDoc
      */
     public function send(string $channel, string $recipient, string $subject, string $body, array $metadata=[]): NotificationSendResult
@@ -81,6 +91,12 @@ final class LogOpenconnectorAdapter implements OpenconnectorAdapterInterface
     }//end send()
 
     /**
+     * Report whether the given channel is available.
+     *
+     * @param string $channel Channel to check.
+     *
+     * @return bool Always TRUE for the log-only adapter.
+     *
      * @inheritDoc
      */
     public function isChannelAvailable(string $channel): bool
@@ -93,7 +109,7 @@ final class LogOpenconnectorAdapter implements OpenconnectorAdapterInterface
     /**
      * Mask an address for log payloads (PII-safe).
      *
-     * email   `alice@example.com` → `a***@example.com`
+     * Email   `alice@example.com` → `a***@example.com`
      * phone   `+31612345678`      → `+31***5678`
      * other   `xyz`               → `***`
      *

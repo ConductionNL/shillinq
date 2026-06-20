@@ -118,10 +118,10 @@ class TreasuryRateService
                 'Shillinq TreasuryRateService: reference-rate fetch threw — emitting dormant snapshot',
                 ['rateCode' => $rateCode, 'asOf' => $asOf, 'exception' => $e->getMessage()]
             );
-            $result = $this->syntheticDeferred($rateCode, $asOf);
+            $result = $this->syntheticDeferred(rateCode: $rateCode, asOf: $asOf);
         }
 
-        $snapshot          = $this->resultToSnapshot($result, $rateCode, $asOf);
+        $snapshot          = $this->resultToSnapshot(result: $result, rateCode: $rateCode, asOf: $asOf);
         $this->cache[$key] = $snapshot;
         return $snapshot;
     }//end getReferenceRate()
@@ -150,10 +150,10 @@ class TreasuryRateService
                 'Shillinq TreasuryRateService: FX-spot fetch threw — emitting dormant snapshot',
                 ['pair' => $pair, 'asOf' => $asOf, 'exception' => $e->getMessage()]
             );
-            $result = $this->syntheticDeferred($pair, $asOf);
+            $result = $this->syntheticDeferred(rateCode: $pair, asOf: $asOf);
         }
 
-        $snapshot          = $this->resultToSnapshot($result, $pair, $asOf);
+        $snapshot          = $this->resultToSnapshot(result: $result, rateCode: $pair, asOf: $asOf);
         $this->cache[$key] = $snapshot;
         return $snapshot;
     }//end getFxSpot()

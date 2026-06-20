@@ -51,7 +51,7 @@ final class TokenValidator
     public const TOKEN_LENGTH = 32;
 
     /**
-     * bcrypt cost used when hashing token strings for storage. Matches the
+     * Bcrypt cost used when hashing token strings for storage. Matches the
      * design.md guidance ("bcrypt cost 12"). Higher cost would slow login-like
      * validation without measurably improving security against a stolen DB
      * dump on PHP 8.3 hardware.

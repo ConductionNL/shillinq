@@ -106,7 +106,12 @@ class StockMoveReasonGuard
     public function requireReasonOnPost(array $move): bool
     {
         try {
-            $reason = isset($move['movementReason']) === true ? trim((string) $move['movementReason']) : '';
+            if (isset($move['movementReason']) === true) {
+                $reason = trim((string) $move['movementReason']);
+            } else {
+                $reason = '';
+            }
+
             if ($reason === '') {
                 $this->logger->info(
                     'StockMoveReasonGuard: post denied — movementReason missing',
@@ -115,8 +120,13 @@ class StockMoveReasonGuard
                 return false;
             }
 
-            $administrationId = isset($move['administrationId']) === true ? (string) $move['administrationId'] : '';
-            $allowed          = $this->allowedReasonCodes(administrationId: $administrationId);
+            if (isset($move['administrationId']) === true) {
+                $administrationId = (string) $move['administrationId'];
+            } else {
+                $administrationId = '';
+            }
+
+            $allowed = $this->allowedReasonCodes(administrationId: $administrationId);
 
             return in_array(needle: $reason, haystack: $allowed, strict: true);
         } catch (\Throwable $e) {

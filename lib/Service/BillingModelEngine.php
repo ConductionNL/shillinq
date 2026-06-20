@@ -39,9 +39,9 @@ class BillingModelEngine
     /**
      * T&M calculation: hours × rate + expenses, grouped by (rate, resourceType).
      *
-     * @param array<int,array{timeEntryId:string,resourceType:string,hours:float,rateCents:int,rateApplied:array<string,mixed>,description?:string,vatRate?:float}> $timeEntries
-     * @param array<int,array{expenseId:string,description:string,costAmountCents:int,vatRate?:float}>                                                              $expenses
-     * @param float                                                                                                                                                 $markupPercent
+     * @param array<int,array<string,mixed>> $timeEntries   Resolved time entries (timeEntryId, resourceType, hours, rateCents, rateApplied, vatRate).
+     * @param array<int,array<string,mixed>> $expenses      Expense lines (expenseId, description, costAmountCents, vatRate).
+     * @param float                          $markupPercent Markup percentage.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -80,7 +80,7 @@ class BillingModelEngine
                 'description'         => sprintf(
                     '%s — %s hours @ €%.2f/hr',
                     ucwords(str_replace('_', ' ', $group['resourceType'])),
-                    $this->formatHours($group['hours']),
+                    $this->formatHours(hours: $group['hours']),
                     ($group['rateCents'] / 100)
                 ),
                 'billableUnits'       => $group['hours'],
@@ -103,10 +103,10 @@ class BillingModelEngine
     /**
      * Fixed-fee: flat amount + expenses, time entries shown in audit only.
      *
-     * @param int                                                                                      $flatFeeCents  Flat fee in cents.
-     * @param string                                                                                   $description   Customer-facing line description.
-     * @param array<int,array{expenseId:string,description:string,costAmountCents:int,vatRate?:float}> $expenses      Expense lines.
-     * @param int                                                                                      $timeHourCount Informational hour count (for lineItemsByModel).
+     * @param int                            $flatFeeCents  Flat fee in cents.
+     * @param string                         $description   Customer-facing line description.
+     * @param array<int,array<string,mixed>> $expenses      Expense lines.
+     * @param int                            $timeHourCount Informational hour count (for lineItemsByModel).
      *
      * @return array<int,array<string,mixed>>
      */
@@ -139,8 +139,8 @@ class BillingModelEngine
     /**
      * Milestone: milestoneAmount + expenses; time entries informational.
      *
-     * @param array{milestoneId:string,milestoneName:string,milestoneCompletedAt:string,milestoneBudgetCents:int} $milestone
-     * @param array<int,array{expenseId:string,description:string,costAmountCents:int,vatRate?:float}>            $expenses
+     * @param array<string,mixed>            $milestone Milestone (milestoneId, milestoneName, milestoneCompletedAt, milestoneBudgetCents).
+     * @param array<int,array<string,mixed>> $expenses  Expense lines.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -178,10 +178,10 @@ class BillingModelEngine
     /**
      * Retainer: mandatory retainer charge + overage (if applicable) + expenses.
      *
-     * @param array{monthlyAmountCents:int,overageHoursThreshold:?float,overageHourlyRateCents:?int,effectiveDate:string,label:string} $retainer
-     * @param string                                                                                                                   $retainerMonth ISO YYYY-MM.
-     * @param float                                                                                                                    $hoursLogged   Total hours within retainer period.
-     * @param array<int,array{expenseId:string,description:string,costAmountCents:int,vatRate?:float}>                                 $expenses
+     * @param array<string,mixed>            $retainer      Retainer config (monthlyAmountCents, overageHoursThreshold, etc.).
+     * @param string                         $retainerMonth ISO YYYY-MM.
+     * @param float                          $hoursLogged   Total hours within retainer period.
+     * @param array<int,array<string,mixed>> $expenses      Expense lines.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -213,7 +213,11 @@ class BillingModelEngine
                 'lineNumber'          => ($line++),
                 'sourceType'          => 'time_entry',
                 'sourceId'            => null,
-                'description'         => sprintf('Overage — %s hours @ €%.2f/hr', $this->formatHours($overageHours), ($overageRate / 100)),
+                'description'         => sprintf(
+                    'Overage — %s hours @ €%.2f/hr',
+                    $this->formatHours(hours: $overageHours),
+                    ($overageRate / 100)
+                ),
                 'billableUnits'       => $overageHours,
                 'rateApplied'         => [
                     'rateCents'       => (int) $overageRate,
@@ -226,7 +230,7 @@ class BillingModelEngine
                 'vatRate'             => self::DEFAULT_VAT_RATE,
                 'modelSpecificFields' => ['retainerMonth' => $retainerMonth, 'overage' => true],
             ];
-        }
+        }//end if
 
         foreach ($expenses as $exp) {
             $lines[] = $this->expenseLine(expense: $exp, lineNumber: ($line++));
@@ -239,12 +243,12 @@ class BillingModelEngine
     /**
      * Mixed: retainer base + overage + optional setup fee + expenses.
      *
-     * @param array{monthlyAmountCents:int,overageHoursThreshold:?float,overageHourlyRateCents:?int,effectiveDate:string,label:string} $retainer
-     * @param string                                                                                                                   $retainerMonth
-     * @param float                                                                                                                    $hoursLogged
-     * @param int|null                                                                                                                 $setupFeeCents       One-time fixed fee.
-     * @param string                                                                                                                   $setupFeeDescription
-     * @param array<int,array{expenseId:string,description:string,costAmountCents:int,vatRate?:float}>                                 $expenses
+     * @param array<string,mixed>            $retainer            Retainer config (monthlyAmountCents, overageHoursThreshold, etc.).
+     * @param string                         $retainerMonth       ISO YYYY-MM.
+     * @param float                          $hoursLogged         Total hours within retainer period.
+     * @param int|null                       $setupFeeCents       One-time fixed fee.
+     * @param string                         $setupFeeDescription Setup fee description.
+     * @param array<int,array<string,mixed>> $expenses            Expense lines.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -292,8 +296,8 @@ class BillingModelEngine
     /**
      * Build an expense line.
      *
-     * @param array{expenseId:string,description:string,costAmountCents:int,vatRate?:float} $expense
-     * @param int                                                                           $lineNumber
+     * @param array<string,mixed> $expense    Expense (expenseId, description, costAmountCents, vatRate).
+     * @param int                 $lineNumber Sequential line number.
      *
      * @return array<string,mixed>
      */
@@ -343,7 +347,11 @@ class BillingModelEngine
     private function formatHours(float $hours): string
     {
         $formatted = rtrim(rtrim(number_format($hours, 2, '.', ''), '0'), '.');
-        return $formatted === '' ? '0' : $formatted;
+        if ($formatted === '') {
+            return '0';
+        }
+
+        return $formatted;
 
     }//end formatHours()
 }//end class

@@ -198,7 +198,10 @@ class DepreciationCalculator
      * @param float               $splitPercentage Fraction (0..1) of the asset transferred (e.g. 0.30 for 30%).
      * @param int|null            $floatPrecision  Float Precision (REQ-FA-005).
      *
-     * @return array{original:array{purchaseCost:float, residualValue:float},split:array{purchaseCost:float, residualValue:float, transferSourceAssetRef:?string}}
+     * @return array{
+     *     original:array{purchaseCost:float, residualValue:float},
+     *     split:array{purchaseCost:float, residualValue:float, transferSourceAssetRef:?string}
+     * }
      *
      * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md#REQ-FA-006
      */
@@ -214,6 +217,12 @@ class DepreciationCalculator
         $originalCost     = $this->applyFloatPrecision(value: ($cost - $splitCost), floatPrecision: $floatPrecision);
         $originalResidual = $this->applyFloatPrecision(value: ($residual - $splitResidual), floatPrecision: $floatPrecision);
 
+        if (isset($asset['id']) === true) {
+            $transferSourceAssetRef = (string) $asset['id'];
+        } else {
+            $transferSourceAssetRef = null;
+        }
+
         return [
             'original' => [
                 'purchaseCost'  => $originalCost,
@@ -222,7 +231,7 @@ class DepreciationCalculator
             'split'    => [
                 'purchaseCost'           => $splitCost,
                 'residualValue'          => $splitResidual,
-                'transferSourceAssetRef' => (isset($asset['id']) === true ? (string) $asset['id'] : null),
+                'transferSourceAssetRef' => $transferSourceAssetRef,
             ],
         ];
 

@@ -90,16 +90,9 @@ class WmoAuditLogService
     /**
      * Compose a WMOAuditLog entry (REQ-WMO-010).
      *
-     * @param array{
-     *   eventType: string,
-     *   entityId: string,
-     *   entityType: string,
-     *   userId: string,
-     *   beforeValues?: array<string,mixed>|null,
-     *   afterValues: array<string,mixed>,
-     *   reason?: string|null,
-     *   administrationId: string
-     * } $input Composition inputs.
+     * @param array<string,mixed> $input Composition inputs: eventType, entityId,
+     *                                   entityType, userId, beforeValues?,
+     *                                   afterValues, reason?, administrationId.
      *
      * @return array<string,mixed> Audit-log record matching the schema.
      *
@@ -182,14 +175,14 @@ class WmoAuditLogService
 
             $rows[] = sprintf(
                 '%s,%s,%s,%s,%s,%s,%s,%s',
-                $this->csvEscape((string) ($entry['timestamp'] ?? '')),
-                $this->csvEscape((string) ($entry['eventType'] ?? '')),
-                $this->csvEscape((string) ($entry['entityType'] ?? '')),
-                $this->csvEscape((string) ($entry['entityId'] ?? '')),
-                $this->csvEscape((string) ($entry['userId'] ?? '')),
-                $this->csvEscape((string) ($entry['reason'] ?? '')),
-                $this->csvEscape($this->jsonInline($entry['beforeValues'] ?? null)),
-                $this->csvEscape($this->jsonInline($entry['afterValues'] ?? []))
+                $this->csvEscape(field: (string) ($entry['timestamp'] ?? '')),
+                $this->csvEscape(field: (string) ($entry['eventType'] ?? '')),
+                $this->csvEscape(field: (string) ($entry['entityType'] ?? '')),
+                $this->csvEscape(field: (string) ($entry['entityId'] ?? '')),
+                $this->csvEscape(field: (string) ($entry['userId'] ?? '')),
+                $this->csvEscape(field: (string) ($entry['reason'] ?? '')),
+                $this->csvEscape(field: $this->jsonInline(value: $entry['beforeValues'] ?? null)),
+                $this->csvEscape(field: $this->jsonInline(value: $entry['afterValues'] ?? []))
             );
         }
 
@@ -203,15 +196,10 @@ class WmoAuditLogService
      * The caller bundles the listed files into a zip; this returns the
      * manifest.json index describing what the package contains.
      *
-     * @param array{
-     *   fiscalYear: string,
-     *   administrationId: string,
-     *   activitiesCount: int,
-     *   ikpCount: int,
-     *   allocationsCount: int,
-     *   abbCount: int,
-     *   auditEntriesCount: int
-     * } $input Inputs.
+     * @param array<string,mixed> $input Inputs: fiscalYear, administrationId,
+     *                                   activitiesCount, ikpCount,
+     *                                   allocationsCount, abbCount,
+     *                                   auditEntriesCount.
      *
      * @return array<string,mixed> Manifest object.
      */
@@ -258,10 +246,14 @@ class WmoAuditLogService
 
     /**
      * CSV-escape a single field (RFC 4180).
+     *
+     * @param string $field The field to escape.
+     *
+     * @return string The escaped field.
      */
     private function csvEscape(string $field): string
     {
-        if (str_contains($field, ',') || str_contains($field, '"') || str_contains($field, "\n")) {
+        if (str_contains($field, ',') === true || str_contains($field, '"') === true || str_contains($field, "\n") === true) {
             return '"'.str_replace('"', '""', $field).'"';
         }
 

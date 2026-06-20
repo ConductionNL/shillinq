@@ -92,6 +92,12 @@ class ENSIABevindingGenerator
             $vraagTxt  = (string) ($v['vraagtekst'] ?? '');
             $vraagId   = (string) ($v['id'] ?? $v['uuid'] ?? '');
 
+            if ($vraagTxt !== '') {
+                $vraagLabel = $vraagTxt;
+            } else {
+                $vraagLabel = 'evaluatievraag';
+            }
+
             $findings[] = [
                 'cyclusId'         => $cyclusId,
                 'administrationId' => $administrationId,
@@ -100,7 +106,7 @@ class ENSIABevindingGenerator
                 'beschrijving'     => sprintf(
                     '%s — %s: volwassenheidsScore %d ligt onder VNG normniveau %d.',
                     $vraagCode,
-                    $vraagTxt !== '' ? $vraagTxt : 'evaluatievraag',
+                    $vraagLabel,
                     $score,
                     $normniveau
                 ),

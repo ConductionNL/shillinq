@@ -175,8 +175,13 @@ final class UrenAlertService
             );
         }
 
-        $type     = ($newStatus === 'KRITIEK') ? 'OMSLAG_KRITIEK' : 'OMSLAG_RISICO';
-        $urgentie = ($newStatus === 'KRITIEK') ? 'KRITIEK' : 'WAARSCHUWING';
+        if ($newStatus === 'KRITIEK') {
+            $type     = 'OMSLAG_KRITIEK';
+            $urgentie = 'KRITIEK';
+        } else {
+            $type     = 'OMSLAG_RISICO';
+            $urgentie = 'WAARSCHUWING';
+        }
 
         $alert = $this->seedAlert(
             year: $year,

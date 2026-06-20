@@ -335,7 +335,7 @@ class KorThresholdCalculator
             return null;
         }
 
-        // lockInEindDatum: ingangsDatum - 1 day + 3 years = end of third calendar year.
+        // LockInEindDatum: ingangsDatum - 1 day + 3 years = end of third calendar year.
         // For a 1-1 ingangsdatum, that is 31-12 of (year + 2). We model the general
         // case as +3 years - 1 day; for the canonical 1-1 start the prior day is 31-12.
         if ($month === 1 && $day === 1) {
@@ -487,7 +487,8 @@ class KorThresholdCalculator
         if ($isFiscaleEenheid === true) {
             return [
                 'verdict' => 'BLOCK',
-                'reden'   => 'KOR aanmelden door een fiscale eenheid is niet mogelijk; de eenheid zelf moet aanmelden, niet een individuele deelnemer.',
+                'reden'   => 'KOR aanmelden door een fiscale eenheid is niet mogelijk; '
+                    .'de eenheid zelf moet aanmelden, niet een individuele deelnemer.',
             ];
         }
 

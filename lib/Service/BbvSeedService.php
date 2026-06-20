@@ -47,9 +47,27 @@ class BbvSeedService
      * @var array<int, array<string, string>>
      */
     private const CATALOGUES = [
-        ['file' => 'bbv-taakvelden-gemeente-2025.json', 'key' => 'taakvelden', 'schema' => 'Taakveld', 'dedup' => 'code', 'secondaryDedup' => 'overheidslaag'],
-        ['file' => 'bbv-taakvelden-provincia-2025.json', 'key' => 'taakvelden', 'schema' => 'Taakveld', 'dedup' => 'code', 'secondaryDedup' => 'overheidslaag'],
-        ['file' => 'bbv-taakvelden-waterschap-2025.json', 'key' => 'taakvelden', 'schema' => 'Taakveld', 'dedup' => 'code', 'secondaryDedup' => 'overheidslaag'],
+        [
+            'file'           => 'bbv-taakvelden-gemeente-2025.json',
+            'key'            => 'taakvelden',
+            'schema'         => 'Taakveld',
+            'dedup'          => 'code',
+            'secondaryDedup' => 'overheidslaag',
+        ],
+        [
+            'file'           => 'bbv-taakvelden-provincia-2025.json',
+            'key'            => 'taakvelden',
+            'schema'         => 'Taakveld',
+            'dedup'          => 'code',
+            'secondaryDedup' => 'overheidslaag',
+        ],
+        [
+            'file'           => 'bbv-taakvelden-waterschap-2025.json',
+            'key'            => 'taakvelden',
+            'schema'         => 'Taakveld',
+            'dedup'          => 'code',
+            'secondaryDedup' => 'overheidslaag',
+        ],
         ['file' => 'economische-categorieen-2025.json', 'key' => 'economischeCategorieen', 'schema' => 'EconomischeCategorie', 'dedup' => 'code'],
         ['file' => 'beleidsindicatoren-bbv-2025.json', 'key' => 'beleidsindicatoren', 'schema' => 'BeleidsIndicator', 'dedup' => 'code'],
         ['file' => 'rgs-decentraal-2025.json', 'key' => 'mappings', 'schema' => 'BbvAccountMapping', 'dedup' => 'rgsDecentraalCode'],
@@ -179,10 +197,11 @@ class BbvSeedService
     /**
      * Import catalogue rows into a schema, skipping existing dedup keys.
      *
-     * @param object                           $objectService OpenRegister ObjectService.
-     * @param array<int, array<string, mixed>> $rows          Catalogue rows.
-     * @param string                           $schema        Target schema slug.
-     * @param string                           $dedupField    Field used as the dedup key.
+     * @param object                           $objectService       OpenRegister ObjectService.
+     * @param array<int, array<string, mixed>> $rows                Catalogue rows.
+     * @param string                           $schema              Target schema slug.
+     * @param string                           $dedupField          Field used as the dedup key.
+     * @param string|null                      $secondaryDedupField Optional secondary field for the dedup key.
      *
      * @return array{seeded:int,skipped:int}
      */

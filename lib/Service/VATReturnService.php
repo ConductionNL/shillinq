@@ -247,7 +247,7 @@ class VATReturnService
                 if ($type === 'collected') {
                     $totalVATCollectedCt += $vatAmountCt;
                 } else {
-                    // paid + reverse-charge both feed deductible VAT.
+                    // Paid + reverse-charge both feed deductible VAT.
                     $totalVATPaidCt += $vatAmountCt;
                 }
 

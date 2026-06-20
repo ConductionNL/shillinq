@@ -76,8 +76,12 @@ final class RecipientResolver
                 continue;
             }
 
-            $role      = (string) ($rule['role'] ?? '');
-            $condition = (isset($rule['condition']) === true ? (string) $rule['condition'] : null);
+            $role = (string) ($rule['role'] ?? '');
+            if (isset($rule['condition']) === true) {
+                $condition = (string) $rule['condition'];
+            } else {
+                $condition = null;
+            }
 
             $passes = $this->evaluator->evaluate(condition: $condition, variables: $variables);
             if ($passes === false) {
@@ -137,9 +141,15 @@ final class RecipientResolver
                 return null;
             }
 
+            if ($name === null) {
+                $displayName = null;
+            } else {
+                $displayName = (string) $name;
+            }
+
             return [
                 'address' => (string) $email,
-                'name'    => ($name === null ? null : (string) $name),
+                'name'    => $displayName,
             ];
         }
 
@@ -150,9 +160,15 @@ final class RecipientResolver
                 return null;
             }
 
+            if ($name === null) {
+                $displayName = null;
+            } else {
+                $displayName = (string) $name;
+            }
+
             return [
                 'address' => (string) $email,
-                'name'    => ($name === null ? null : (string) $name),
+                'name'    => $displayName,
             ];
         }
 

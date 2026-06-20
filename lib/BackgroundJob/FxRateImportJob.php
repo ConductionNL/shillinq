@@ -126,7 +126,9 @@ class FxRateImportJob extends TimedJob
         if ($this->adapter->isDormant() === true) {
             $this->logger->info(
                 'Shillinq FxRateImportJob: TreasuryRateAdapter is dormant — skipping ECB ingest. '
-                .'Bind openconnector source slug `treasury-rates` (ECB SDMX) and override TreasuryRateAdapterInterface in Application::register() to enable. Manual FxRate entries via the admin UI are unaffected.',
+                .'Bind openconnector source slug `treasury-rates` (ECB SDMX) and override '
+                .'TreasuryRateAdapterInterface in Application::register() to enable. '
+                .'Manual FxRate entries via the admin UI are unaffected.',
                 ['asOf' => $asOf]
             );
             return;
@@ -164,7 +166,7 @@ class FxRateImportJob extends TimedJob
                 continue;
             }
 
-            if ($this->isDeferredResult($result) === true) {
+            if ($this->isDeferredResult(result: $result) === true) {
                 $skipped++;
                 continue;
             }
@@ -366,13 +368,19 @@ class FxRateImportJob extends TimedJob
         string $asOf,
         float $rate,
     ): array {
+        if ($rate > 0) {
+            $inverseRate = (1 / $rate);
+        } else {
+            $inverseRate = null;
+        }
+
         return [
             'transactionCurrency' => $transactionCurrency,
             'baseCurrency'        => $baseCurrency,
             'date'                => $asOf,
             'source'              => self::SOURCE_ECB,
             'rate'                => $rate,
-            'inverseRate'         => ($rate > 0 ? (1 / $rate) : null),
+            'inverseRate'         => $inverseRate,
             'ingestedAt'          => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM),
         ];
     }//end buildRecord()
@@ -410,7 +418,11 @@ class FxRateImportJob extends TimedJob
             $pairs[] = ['transaction' => $tx, 'base' => $base];
         }
 
-        return ($pairs === [] ? self::DEFAULT_PAIRS : $pairs);
+        if ($pairs === []) {
+            return self::DEFAULT_PAIRS;
+        }
+
+        return $pairs;
     }//end configuredPairs()
 
     /**

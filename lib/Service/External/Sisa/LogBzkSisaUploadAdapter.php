@@ -73,13 +73,18 @@ class LogBzkSisaUploadAdapter implements BzkSisaUploadAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `bzk-sisa` and override BzkSisaUploadAdapterInterface in Application::register() to enable real transport.',
+                'note'   => 'Bind openconnector source slug `bzk-sisa` and override BzkSisaUploadAdapterInterface '
+                    .'in Application::register() to enable real transport.',
             ],
         );
     }//end upload()
 
     /**
+     * Report whether this adapter is dormant (logs only, no outbound connector).
+     *
      * @inheritDoc
+     *
+     * @return bool Always true for the dormant log adapter.
      */
     public function isDormant(): bool
     {

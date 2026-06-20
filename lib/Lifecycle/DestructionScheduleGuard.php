@@ -123,7 +123,7 @@ class DestructionScheduleGuard
     }//end __construct()
 
     /**
-     * canModify — `destruction-completed` records are immutable.
+     * Check modifiability: `destruction-completed` records are immutable.
      *
      * @param array<string,mixed> $record The record being mutated.
      *
@@ -137,7 +137,7 @@ class DestructionScheduleGuard
     }//end canModify()
 
     /**
-     * canDelete — destruction is a state transition, NEVER a true
+     * Check deletability: destruction is a state transition, NEVER a true
      * deletion. Archiefwet requires proof; deletion of a destruction-
      * completed record would erase the proof.
      *
@@ -184,29 +184,30 @@ class DestructionScheduleGuard
             return false;
         }
 
-        // destruction-completed is terminal.
+        // Destruction-completed is terminal.
         if ($from === self::STATE_COMPLETED) {
             return false;
         }
 
-        // active -> marked-for-destruction: compliance officer + 7+ years.
+        // Active -> marked-for-destruction: compliance officer + 7+ years.
         if ($from === self::STATE_ACTIVE && $to === self::STATE_MARKED) {
-            return $this->isComplianceOfficer($options) && $this->isOlderThanRetentionFloor($record, $options);
+            return $this->isComplianceOfficer(options: $options)
+                && $this->isOlderThanRetentionFloor(record: $record, options: $options);
         }
 
-        // active -> destruction-completed: NOT allowed (must go via marked).
+        // Active -> destruction-completed: NOT allowed (must go via marked).
         if ($from === self::STATE_ACTIVE && $to === self::STATE_COMPLETED) {
             return false;
         }
 
-        // marked -> active: allowed (rollback / unmark).
+        // Marked -> active: allowed (rollback / unmark).
         if ($from === self::STATE_MARKED && $to === self::STATE_ACTIVE) {
             return true;
         }
 
-        // marked -> destruction-completed: compliance officer / system.
+        // Marked -> destruction-completed: compliance officer / system.
         if ($from === self::STATE_MARKED && $to === self::STATE_COMPLETED) {
-            return $this->isComplianceOfficerOrSystem($options);
+            return $this->isComplianceOfficerOrSystem(options: $options);
         }
 
         return false;
@@ -272,7 +273,7 @@ class DestructionScheduleGuard
      */
     private function isComplianceOfficerOrSystem(array $options): bool
     {
-        if ($this->isComplianceOfficer($options) === true) {
+        if ($this->isComplianceOfficer(options: $options) === true) {
             return true;
         }
 

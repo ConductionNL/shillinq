@@ -114,7 +114,12 @@ class SoftCloseController extends Controller
                 asOf: new DateTimeImmutable()
             );
 
-            $status = $report['status'] === 'failed' ? Http::STATUS_INTERNAL_SERVER_ERROR : Http::STATUS_OK;
+            if ($report['status'] === 'failed') {
+                $status = Http::STATUS_INTERNAL_SERVER_ERROR;
+            } else {
+                $status = Http::STATUS_OK;
+            }
+
             return new JSONResponse(['data' => $report], $status);
         } catch (\Throwable $e) {
             return $this->serverError(action: 'executeNow', e: $e);

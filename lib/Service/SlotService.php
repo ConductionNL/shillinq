@@ -526,6 +526,7 @@ class SlotService
             /*
              * @var array<string,mixed> $object
              */
+
             return $object;
         }
 
@@ -535,6 +536,7 @@ class SlotService
                 /*
                  * @var array<string,mixed> $serialised
                  */
+
                 return $serialised;
             }
         }

@@ -354,7 +354,9 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
             $uid = $this->searchContactByProperty(property: 'FN', value: $name);
             if ($uid !== null) {
                 $this->logger->warning(
-                    'MigrateProductVendorMasterToPipelinq: fuzzy name-only match for vendor "'.$vendorSlug.'" → contact UID "'.$uid.'"; NOT auto-applied. Operator review needed.',
+                    'MigrateProductVendorMasterToPipelinq: fuzzy name-only match for vendor "'
+                    .$vendorSlug.'" → contact UID "'.$uid.'"; NOT auto-applied. '
+                    .'Operator review needed.',
                     ['vendor' => $vendorSlug, 'name' => $name, 'candidateUid' => $uid]
                 );
             }
@@ -393,7 +395,11 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
 
             $contact = $results[0];
             $uid     = (string) ($contact['URI'] ?? ($contact['UID'] ?? ''));
-            return $uid !== '' ? $uid : null;
+            if ($uid !== '') {
+                return $uid;
+            }
+
+            return null;
         } catch (\Throwable $e) {
             $this->logger->warning(
                 'MigrateProductVendorMasterToPipelinq: Contacts search for property='.$property.' value='.$value.' failed: '.$e->getMessage()
@@ -422,14 +428,18 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
                 return null;
             }
 
-            $normalizedTarget = $this->normalizeIban($iban);
+            $normalizedTarget = $this->normalizeIban(iban: $iban);
 
             foreach ($results as $contact) {
                 // Check that the IBAN also matches (any of the contact's IBAN properties).
                 $contactIban = (string) ($contact['IBAN'] ?? ($contact['X-CUSTOM-IBAN'] ?? ''));
-                if ($this->normalizeIban($contactIban) === $normalizedTarget) {
+                if ($this->normalizeIban(iban: $contactIban) === $normalizedTarget) {
                     $uid = (string) ($contact['URI'] ?? ($contact['UID'] ?? ''));
-                    return $uid !== '' ? $uid : null;
+                    if ($uid !== '') {
+                        return $uid;
+                    }
+
+                    return null;
                 }
             }
 

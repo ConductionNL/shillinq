@@ -89,7 +89,10 @@ class LogTreasuryRateAdapter implements TreasuryRateAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `treasury-rates` (ECB SDMX / Bloomberg / Refinitiv per-tenant credentials) and override TreasuryRateAdapterInterface in Application::register() to enable real transport. Until then, IntercompanyLoan.interestRate manual-entry path (REQ-IHB-004) carries the v1 value.',
+                'note'   => 'Bind openconnector source slug `treasury-rates` (ECB SDMX / Bloomberg / Refinitiv '
+                    .'per-tenant credentials) and override TreasuryRateAdapterInterface in Application::register() '
+                    .'to enable real transport. Until then, IntercompanyLoan.interestRate manual-entry path '
+                    .'(REQ-IHB-004) carries the v1 value.',
             ],
         );
     }//end fetchReferenceRate()
@@ -127,13 +130,18 @@ class LogTreasuryRateAdapter implements TreasuryRateAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `treasury-rates` to enable real FX snapshots; until then, FXPosition.spotRate manual-entry path carries the v1 value.',
+                'note'   => 'Bind openconnector source slug `treasury-rates` to enable real FX snapshots; '
+                    .'until then, FXPosition.spotRate manual-entry path carries the v1 value.',
             ],
         );
     }//end fetchFxSpot()
 
     /**
+     * Report whether this adapter is a dormant log-only stand-in.
+     *
      * @inheritDoc
+     *
+     * @return bool Always true for the log adapter.
      */
     public function isDormant(): bool
     {

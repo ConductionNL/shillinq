@@ -378,7 +378,14 @@ class LeaseDisclosureService
 
         $rows[] = ['header', 'fiscalPeriod', (string) ($disclosure['fiscalPeriod'] ?? '')];
         $rows[] = ['header', 'administrationId', (string) ($disclosure['administrationId'] ?? '')];
-        $rows[] = ['header', 'materializedAtPeriodClose', empty($disclosure['materializedAtPeriodClose']) === false ? 'true' : 'false'];
+
+        if (empty($disclosure['materializedAtPeriodClose']) === false) {
+            $materialized = 'true';
+        } else {
+            $materialized = 'false';
+        }
+
+        $rows[] = ['header', 'materializedAtPeriodClose', $materialized];
 
         foreach ((array) ($disclosure['closingRouByClass'] ?? []) as $class => $value) {
             $rows[] = ['rou-by-class', (string) $class, $this->csvNumber(value: $value)];
@@ -442,7 +449,12 @@ class LeaseDisclosureService
      */
     public function exportDisclosureNoteToHtml(array $disclosure, string $language='en'): string
     {
-        $lang   = ($language === 'nl' ? 'nl' : 'en');
+        if ($language === 'nl') {
+            $lang = 'nl';
+        } else {
+            $lang = 'en';
+        }
+
         $labels = $this->disclosureLabels(language: $lang);
 
         $fiscalPeriod = htmlspecialchars(
@@ -452,7 +464,11 @@ class LeaseDisclosureService
         );
 
         $html  = '<!DOCTYPE html><html lang="'.$lang.'"><head><meta charset="UTF-8">';
-        $html .= '<title>'.htmlspecialchars(string: $labels['title'], flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8').' '.$fiscalPeriod.'</title>';
+        $html .= '<title>'.htmlspecialchars(
+            string: $labels['title'],
+            flags: (ENT_QUOTES | ENT_HTML5),
+            encoding: 'UTF-8'
+        ).' '.$fiscalPeriod.'</title>';
         $html .= '</head><body>';
         $html .= '<h1>'.htmlspecialchars(string: $labels['title'], flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8').' '.$fiscalPeriod.'</h1>';
 
@@ -482,7 +498,11 @@ class LeaseDisclosureService
             $html .= '<p>'.nl2br(string: htmlspecialchars(string: $narrative, flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8')).'</p>';
         }
 
-        $html .= '<footer><p><em>'.htmlspecialchars(string: $labels['footerNote'], flags: (ENT_QUOTES | ENT_HTML5), encoding: 'UTF-8').'</em></p></footer>';
+        $html .= '<footer><p><em>'.htmlspecialchars(
+            string: $labels['footerNote'],
+            flags: (ENT_QUOTES | ENT_HTML5),
+            encoding: 'UTF-8'
+        ).'</em></p></footer>';
         $html .= '</body></html>';
 
         return $html;
@@ -511,11 +531,17 @@ class LeaseDisclosureService
      */
     public function exportDisclosureNoteToPDF(array $disclosure, string $language='en'): array
     {
+        if ($language === 'nl') {
+            $lang = 'nl';
+        } else {
+            $lang = 'en';
+        }
+
         return [
             'kind'             => 'lease-disclosure-note',
             'fiscalPeriod'     => ($disclosure['fiscalPeriod'] ?? ''),
             'administrationId' => ($disclosure['administrationId'] ?? ''),
-            'language'         => ($language === 'nl' ? 'nl' : 'en'),
+            'language'         => $lang,
             'status'           => 'pending-pdf-pipeline',
             'html'             => $this->exportDisclosureNoteToHtml(disclosure: $disclosure, language: $language),
         ];
@@ -543,8 +569,15 @@ class LeaseDisclosureService
      */
     public function exportToXBRL(array $disclosure): array
     {
-        $period     = (string) ($disclosure['fiscalPeriod'] ?? '');
-        $contextRef = ('ctx-'.($period !== '' ? str_replace(' ', '_', $period) : 'period'));
+        $period = (string) ($disclosure['fiscalPeriod'] ?? '');
+
+        if ($period !== '') {
+            $periodSegment = str_replace(' ', '_', $period);
+        } else {
+            $periodSegment = 'period';
+        }
+
+        $contextRef = ('ctx-'.$periodSegment);
 
         $facts = [
             // IFRS 16 RoU totals (rough mapping to the IFRS taxonomy).

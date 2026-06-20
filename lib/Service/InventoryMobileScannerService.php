@@ -139,8 +139,8 @@ class InventoryMobileScannerService
                 );
 
             foreach ($records as $record) {
-                $row = $this->stockToArray($record);
-                if ($since !== null && $since !== '' && $this->isStrictlyAfter($since, ($row['lastModified'] ?? '')) === true) {
+                $row = $this->stockToArray(record: $record);
+                if ($since !== null && $since !== '' && $this->isStrictlyAfter(since: $since, candidate: ($row['lastModified'] ?? '')) === true) {
                     continue;
                 }
 
@@ -459,7 +459,7 @@ class InventoryMobileScannerService
             return null;
         }
 
-        $row = $this->toArray($existing[0]);
+        $row = $this->toArray(record: $existing[0]);
 
         $occurredAt = (string) ($row['occurredAt'] ?? '');
         if ($occurredAt === '') {
@@ -730,7 +730,7 @@ class InventoryMobileScannerService
             return;
         }
 
-        $current    = $this->toArray($existing[0]);
+        $current    = $this->toArray(record: $existing[0]);
         $currentQty = (float) ($current['quantity'] ?? 0);
         $nextQty    = max(0.0, ($currentQty + $delta));
         $current['quantity']     = $nextQty;
@@ -781,7 +781,7 @@ class InventoryMobileScannerService
             return 0.0;
         }
 
-        $row = $this->toArray($existing[0]);
+        $row = $this->toArray(record: $existing[0]);
         return (float) ($row['quantity'] ?? 0);
 
     }//end readSystemQuantity()
@@ -918,7 +918,7 @@ class InventoryMobileScannerService
      */
     private function stockToArray(mixed $record): array
     {
-        $row = $this->toArray($record);
+        $row = $this->toArray(record: $record);
         return [
             'sku'          => (string) ($row['sku'] ?? ''),
             'location'     => (string) ($row['location'] ?? ''),

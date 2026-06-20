@@ -58,6 +58,13 @@ final class LogPurchaseOrderMailer implements PurchaseOrderMailerInterface
     }//end __construct()
 
     /**
+     * Log the dispatch of a purchase order email.
+     *
+     * @param string $administrationId The administration identifier.
+     * @param array  $purchaseOrder    The purchase order payload.
+     *
+     * @return void
+     *
      * @inheritDoc
      */
     public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): void

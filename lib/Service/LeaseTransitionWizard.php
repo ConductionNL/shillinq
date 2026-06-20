@@ -95,7 +95,9 @@ class LeaseTransitionWizard
         string $transitionDate,
         array $practicalExpedients=[],
     ): array {
-        $method = in_array($method, ['modified-retrospective', 'full-retrospective'], true) === true ? $method : 'modified-retrospective';
+        if (in_array($method, ['modified-retrospective', 'full-retrospective'], true) === false) {
+            $method = 'modified-retrospective';
+        }
 
         $expedients = $this->normaliseExpedients(elections: $practicalExpedients);
 
@@ -211,7 +213,11 @@ class LeaseTransitionWizard
             }
         }
 
-        $electedSentence = $elected === [] ? 'No practical expedients were elected.' : 'The following practical expedients were elected: '.implode(', ', $elected).'.';
+        if ($elected === []) {
+            $electedSentence = 'No practical expedients were elected.';
+        } else {
+            $electedSentence = 'The following practical expedients were elected: '.implode(', ', $elected).'.';
+        }
 
         return sprintf(
             'The entity adopted IFRS 16 on %s using the %s approach. %d lease(s) '

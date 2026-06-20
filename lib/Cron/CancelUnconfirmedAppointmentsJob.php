@@ -129,7 +129,7 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
 
             $cancelled = 0;
             foreach ($pending as $record) {
-                if ($this->cancelIfExpired($record, $objectService, $registerSlug, $now) === true) {
+                if ($this->cancelIfExpired(record: $record, objectService: $objectService, registerSlug: $registerSlug, now: $now) === true) {
                     $cancelled++;
                 }
             }
@@ -161,7 +161,7 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
     private function cancelIfExpired(mixed $record, mixed $objectService, string $registerSlug, string $now): bool
     {
         try {
-            $appt     = $this->toArray($record);
+            $appt     = $this->toArray(object: $record);
             $deadline = (string) ($appt['confirmationDeadline'] ?? '');
             if ($deadline === '') {
                 return false;

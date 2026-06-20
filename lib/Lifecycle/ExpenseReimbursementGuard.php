@@ -290,8 +290,12 @@ class ExpenseReimbursementGuard
     {
         try {
             $settlementMode = ($claim['settlementMode'] ?? null);
-            $glField        = ($settlementMode === 'pass-through' ? 'glPassThroughTransactionId' : 'glReimbursableTransactionId');
-            $glTxnId        = ($claim[$glField] ?? null);
+            $glField        = 'glReimbursableTransactionId';
+            if ($settlementMode === 'pass-through') {
+                $glField = 'glPassThroughTransactionId';
+            }
+
+            $glTxnId = ($claim[$glField] ?? null);
 
             if ($glTxnId === null || $glTxnId === '') {
                 // No GL entry to reverse ⇒ permit (claim was never posted under this mode).
@@ -356,8 +360,12 @@ class ExpenseReimbursementGuard
                     continue;
                 }
 
-                $itemArray = (is_array($item) === true ? $item : (array) $item);
-                $itemMode  = ($itemArray['settlementMode'] ?? null);
+                $itemArray = (array) $item;
+                if (is_array($item) === true) {
+                    $itemArray = $item;
+                }
+
+                $itemMode = ($itemArray['settlementMode'] ?? null);
 
                 if ($itemMode !== null && $itemMode !== '' && $itemMode !== $claimMode) {
                     $this->logger->info(
@@ -423,7 +431,11 @@ class ExpenseReimbursementGuard
             return null;
         }
 
-        $policy    = (is_array($matches[0]) === true ? $matches[0] : (array) $matches[0]);
+        $policy = (array) $matches[0];
+        if (is_array($matches[0]) === true) {
+            $policy = $matches[0];
+        }
+
         $threshold = ($policy['requiresMarkupApprovalThreshold'] ?? null);
         if ($threshold === null) {
             return null;
@@ -434,7 +446,9 @@ class ExpenseReimbursementGuard
     }//end getMarkupApprovalThresholdForPolicy()
 
     /**
-     * Compute the markup portion of a pass-through claim total per REQ-ERP-006:
+     * Compute the markup portion of a pass-through claim total per REQ-ERP-006.
+     *
+     * Formula:
      *
      *   markupAmount = totalPassThroughAmount - (totalPassThroughAmount / (1 + avgMarkupRate))
      *
@@ -507,7 +521,11 @@ class ExpenseReimbursementGuard
                     continue;
                 }
 
-                $itemArray = (is_array($item) === true ? $item : (array) $item);
+                $itemArray = (array) $item;
+                if (is_array($item) === true) {
+                    $itemArray = $item;
+                }
+
                 if (($itemArray['settlementMode'] ?? null) !== 'pass-through') {
                     continue;
                 }
@@ -554,7 +572,11 @@ class ExpenseReimbursementGuard
             return false;
         }
 
-        $txnArray = (is_array($txn) === true ? $txn : (array) $txn);
+        $txnArray = (array) $txn;
+        if (is_array($txn) === true) {
+            $txnArray = $txn;
+        }
+
         $status   = ($txnArray['status'] ?? null);
         $reversed = ($txnArray['isReversed'] ?? null);
 

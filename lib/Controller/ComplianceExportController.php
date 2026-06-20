@@ -132,12 +132,16 @@ class ComplianceExportController extends Controller
             );
         }
 
-        $from        = (string) $this->request->getParam('from', '');
-        $to          = (string) $this->request->getParam('to', '');
-        $scope       = (string) $this->request->getParam('scope', ComplianceExportService::SCOPE_ALL);
-        $format      = (string) $this->request->getParam('format', ComplianceExportService::FORMAT_CSV);
-        $actor       = $this->request->getParam('actor');
-        $actorFilter = (is_string($actor) === true && $actor !== '') ? $actor : null;
+        $from   = (string) $this->request->getParam('from', '');
+        $to     = (string) $this->request->getParam('to', '');
+        $scope  = (string) $this->request->getParam('scope', ComplianceExportService::SCOPE_ALL);
+        $format = (string) $this->request->getParam('format', ComplianceExportService::FORMAT_CSV);
+        $actor  = $this->request->getParam('actor');
+        if (is_string($actor) === true && $actor !== '') {
+            $actorFilter = $actor;
+        } else {
+            $actorFilter = null;
+        }
 
         try {
             $envelope = $this->complianceExportService->generateExport(

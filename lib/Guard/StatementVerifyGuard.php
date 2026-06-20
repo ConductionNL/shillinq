@@ -148,8 +148,8 @@ class StatementVerifyGuard
         }
 
         try {
-            $openingCents = $this->cents((float) ($object['openingBalance'] ?? 0.0));
-            $closingCents = $this->cents((float) ($object['closingBalance'] ?? 0.0));
+            $openingCents = $this->cents(amount: (float) ($object['openingBalance'] ?? 0.0));
+            $closingCents = $this->cents(amount: (float) ($object['closingBalance'] ?? 0.0));
 
             $netActivityCents = $this->sumGLNetActivityCents(
                 bankAccountId: (string) ($object['bankAccountId'] ?? ''),
@@ -339,7 +339,7 @@ class StatementVerifyGuard
                 // Polarity is encoded by the `side` enum on GLLine per
                 // REQ-GL-003 — 'debit' contributes positively to net activity
                 // on an asset account, 'credit' contributes negatively.
-                $amountCents = $this->cents((float) ($line['amount'] ?? 0.0));
+                $amountCents = $this->cents(amount: (float) ($line['amount'] ?? 0.0));
                 $side        = (string) ($line['side'] ?? 'debit');
                 if ($side === 'credit') {
                     $netCents -= $amountCents;

@@ -179,13 +179,13 @@ class RgsAccountMapper
             }
         }
 
-        $rgsRows = array_map(fn($row) => $this->toArray($row), $rgsRekeningen);
+        $rgsRows = array_map(fn($row) => $this->toArray(object: $row), $rgsRekeningen);
 
         $suggestions = [];
         $skipped     = 0;
 
         foreach ($accounts as $account) {
-            $accountRow = $this->toArray($account);
+            $accountRow = $this->toArray(object: $account);
 
             if (empty($accountRow['rgsDecentraalCode']) === false) {
                 $skipped++;
@@ -244,7 +244,7 @@ class RgsAccountMapper
             } else if ($accountName !== '') {
                 $candidateName = mb_strtolower((string) ($rgsRow['omschrijvingKort'] ?? $rgsRow['naam'] ?? ''));
                 if ($candidateName !== '') {
-                    $similarity = $this->similarityPercent($accountName, $candidateName);
+                    $similarity = $this->similarityPercent(left: $accountName, right: $candidateName);
                     if ($similarity >= 50) {
                         $confidence = (int) round($similarity * 0.70);
                         $reason     = 'fuzzy-name-match-'.((int) $similarity).'%';

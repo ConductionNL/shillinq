@@ -303,7 +303,7 @@ class GoodsReceiptNoteService
             throw new RuntimeException('quantityReceived must be positive');
         }
 
-        // accepted + rejected may NOT exceed received (integer-thousandths
+        // Accepted + rejected may NOT exceed received (integer-thousandths
         // arithmetic so rounding noise never creeps in).
         $receivedThousandths = $this->thousandths(value: $quantityReceived);
         $acceptedThousandths = $this->thousandths(value: $quantityAccepted);
@@ -318,15 +318,27 @@ class GoodsReceiptNoteService
 
         $grnRecordId = (string) ($grn['id'] ?? ($grn['@self']['id'] ?? $grnId));
 
+        if ($rejectedThousandths > 0) {
+            $rejectionReasonValue = $rejectionReason;
+        } else {
+            $rejectionReasonValue = null;
+        }
+
+        if ($batchReference !== '') {
+            $batchReferenceValue = $batchReference;
+        } else {
+            $batchReferenceValue = null;
+        }
+
         $line = [
             'grnId'            => $grnRecordId,
             'poLineId'         => $poLineId,
             'quantityReceived' => $quantityReceived,
             'quantityAccepted' => $quantityAccepted,
             'quantityRejected' => $quantityRejected,
-            'rejectionReason'  => ($rejectedThousandths > 0 ? $rejectionReason : null),
+            'rejectionReason'  => $rejectionReasonValue,
             'inspector'        => $inspector,
-            'batchReference'   => ($batchReference !== '' ? $batchReference : null),
+            'batchReference'   => $batchReferenceValue,
             'administrationId' => $administrationId,
         ];
 
@@ -566,7 +578,7 @@ class GoodsReceiptNoteService
         $unitCost       = ((float) $unitPriceCents) / 100.0;
         $quantity       = (float) ($grnLine['quantityAccepted'] ?? 0);
 
-        // unitCost is integer cents on the PO line (ADR-022) — converting back
+        // UnitCost is integer cents on the PO line (ADR-022) — converting back
         // to euro for the StockMove which uses multipleOf 0.01.
         $grnNumber       = (string) ($grn['grnNumber'] ?? '');
         $grnLineId       = (string) ($grnLine['id'] ?? ($grnLine['@self']['id'] ?? ''));
@@ -575,6 +587,12 @@ class GoodsReceiptNoteService
         $referenceUri    = self::REFERENCE_DOCUMENT_URI_PREFIX.$poId;
         $destinationCode = trim((string) ($grnLine['destinationLocationId'] ?? ($grn['destinationLocationId'] ?? '')));
 
+        if ($destinationCode !== '') {
+            $destinationLocationId = $destinationCode;
+        } else {
+            $destinationLocationId = null;
+        }
+
         $stockMove = [
             'movementNumber'        => $movementNumber,
             'itemId'                => $itemId,
@@ -582,7 +600,7 @@ class GoodsReceiptNoteService
             'unitCost'              => $unitCost,
             'movementType'          => self::STOCK_MOVE_TYPE_RECEIPT,
             'sourceLocationId'      => null,
-            'destinationLocationId' => ($destinationCode !== '' ? $destinationCode : null),
+            'destinationLocationId' => $destinationLocationId,
             'referenceDocumentUri'  => $referenceUri,
             'movementReason'        => self::STOCK_MOVE_REASON_NORMAL,
             'notes'                 => 'Receipt for '.$grnNumber.' / PO line '.$poLineId,

@@ -100,9 +100,9 @@ class StockLedgerService
                 locationId: $locationId,
                 sku: $sku
             );
-            $netCents = $this->cents($initialStock);
+            $netCents = $this->cents(value: $initialStock);
             foreach ($moves as $move) {
-                $cents = $this->cents(($move['quantity'] ?? 0));
+                $cents = $this->cents(value: ($move['quantity'] ?? 0));
                 if (((string) ($move['destinationLocationId'] ?? '')) === $locationId) {
                     $netCents += $cents;
                 }
@@ -112,7 +112,7 @@ class StockLedgerService
                 }
             }
 
-            return $this->fromCents($netCents);
+            return $this->fromCents(cents: $netCents);
         } catch (\Throwable $e) {
             $this->logger->error(
                 'StockLedgerService: quantityForLocation failed',
@@ -150,10 +150,10 @@ class StockLedgerService
             );
             $reservedCents = 0;
             foreach ($moves as $move) {
-                $reservedCents += $this->cents(($move['quantity'] ?? 0));
+                $reservedCents += $this->cents(value: ($move['quantity'] ?? 0));
             }
 
-            return $this->fromCents($reservedCents);
+            return $this->fromCents(cents: $reservedCents);
         } catch (\Throwable $e) {
             $this->logger->error(
                 'StockLedgerService: reservedForLocation failed',
@@ -203,7 +203,7 @@ class StockLedgerService
             $trace        = [];
             $runningCents = 0;
             foreach ($moves as $move) {
-                $cents     = $this->cents(($move['quantity'] ?? 0));
+                $cents     = $this->cents(value: ($move['quantity'] ?? 0));
                 $sign      = '+';
                 $signCents = $cents;
                 if (((string) ($move['sourceLocationId'] ?? '')) === $locationId) {
@@ -218,8 +218,8 @@ class StockLedgerService
                     'postedAt'       => ($move['postedAt'] ?? null),
                     'movementType'   => ($move['movementType'] ?? null),
                     'sign'           => $sign,
-                    'quantity'       => $this->fromCents($cents),
-                    'runningTotal'   => $this->fromCents($runningCents),
+                    'quantity'       => $this->fromCents(cents: $cents),
+                    'runningTotal'   => $this->fromCents(cents: $runningCents),
                 ];
             }
 
@@ -328,7 +328,11 @@ class StockLedgerService
                 ]
             ) ?? []);
 
-        return is_array($rows) === true ? $rows : [];
+        if (is_array($rows) === true) {
+            return $rows;
+        }
+
+        return [];
 
     }//end draftMovesForSource()
 

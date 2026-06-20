@@ -273,7 +273,11 @@ class AbbLifecycleService
 
         $flags   = [];
         $kenmerk = (string) ($abb['kenmerk'] ?? 'ABB');
-        $reason  = ($status === 'intrekking' ? sprintf('Exemption ABB %s ingetrokken; review activity', $kenmerk) : sprintf('Exemption ABB %s in herziening; review activity', $kenmerk));
+        if ($status === 'intrekking') {
+            $reason = sprintf('Exemption ABB %s ingetrokken; review activity', $kenmerk);
+        } else {
+            $reason = sprintf('Exemption ABB %s in herziening; review activity', $kenmerk);
+        }
 
         foreach ($activities as $activity) {
             if (is_array($activity) === false) {

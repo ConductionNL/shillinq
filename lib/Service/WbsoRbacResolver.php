@@ -131,7 +131,7 @@ class WbsoRbacResolver
      */
     public function canCreate(): bool
     {
-        return $this->hasAny(['bookkeeper', 'administrator']);
+        return $this->hasAny(allowed: ['bookkeeper', 'administrator']);
 
     }//end canCreate()
 }//end class

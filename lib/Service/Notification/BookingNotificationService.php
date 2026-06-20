@@ -106,7 +106,12 @@ final class BookingNotificationService
                 continue;
             }
 
-            $scope = (isset($trigger['appliesToBookingSlug']) === true ? (string) $trigger['appliesToBookingSlug'] : '');
+            if (isset($trigger['appliesToBookingSlug']) === true) {
+                $scope = (string) $trigger['appliesToBookingSlug'];
+            } else {
+                $scope = '';
+            }
+
             if ($scope !== '' && $scope !== $bookingSlug) {
                 continue;
             }
@@ -172,7 +177,12 @@ final class BookingNotificationService
             }
 
             // Build the variable map for opt-out lookup + rendering.
-            $recipientVars = $this->buildRecipientVars(role: (string) $recipient['role'], address: $address, name: $recipient['name'] ?? null, booking: $booking);
+            $recipientVars = $this->buildRecipientVars(
+                role: (string) $recipient['role'],
+                address: $address,
+                name: $recipient['name'] ?? null,
+                booking: $booking
+            );
 
             // Opt-out gate.
             if ($this->optOutPolicy->isOptedOut(trigger: $trigger, recipient: $recipientVars) === true) {

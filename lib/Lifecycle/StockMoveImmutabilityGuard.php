@@ -109,7 +109,12 @@ class StockMoveImmutabilityGuard
             ];
             foreach ($loadBearing as $field) {
                 $before = ($current[$field] ?? null);
-                $after  = array_key_exists($field, $proposed) === true ? $proposed[$field] : $before;
+                if (array_key_exists($field, $proposed) === true) {
+                    $after = $proposed[$field];
+                } else {
+                    $after = $before;
+                }
+
                 if ($before !== $after) {
                     $this->logger->info(
                         'StockMoveImmutabilityGuard: edit denied — move is locked',
@@ -183,7 +188,10 @@ class StockMoveImmutabilityGuard
                     ]
                 );
 
-            $existing = is_array($existing) === true ? $existing : [];
+            if (is_array($existing) === false) {
+                $existing = [];
+            }
+
             if (count($existing) > 0) {
                 $this->logger->info(
                     'StockMoveImmutabilityGuard: cancel denied — offset already exists',

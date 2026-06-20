@@ -72,7 +72,7 @@ final class SigningConcludedListener implements IEventListener
     private const SUBJECT_SCHEMAS = ['ACMReport', 'AnnualReport', 'ManagementLetter'];
 
     /**
-     * docudesk statuses that map to a terminal shillinq signingStatus. A
+     * Docudesk statuses that map to a terminal shillinq signingStatus. A
      * `cancelled` request is, like an `expired` one, a non-completing terminal
      * outcome that must not open the submission gate, so it maps to `expired`.
      *
@@ -168,13 +168,19 @@ final class SigningConcludedListener implements IEventListener
             // and fires the consequence exactly once on 'signed'; a repeated
             // conclusion is a no-op and $consequence stays empty.
             $consequence = [];
-            $updated     = $this->signingService->onSigningCallback(
+            if ($signedDocumentRef !== '') {
+                $signedDocumentValue = $signedDocumentRef;
+            } else {
+                $signedDocumentValue = null;
+            }
+
+            $updated = $this->signingService->onSigningCallback(
                 $financeObject,
                 $outcome,
                 $signingRequestRef,
                 null,
                 null,
-                ($signedDocumentRef !== '' ? $signedDocumentRef : null),
+                $signedDocumentValue,
                 function (array $object) use ($schema, $outcome, &$consequence): array {
                     $object      = $this->applyAccountingConsequence(schema: $schema, object: $object, outcome: $outcome);
                     $consequence = $this->consequenceDelta(object: $object, outcome: $outcome);

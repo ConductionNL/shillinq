@@ -99,7 +99,7 @@ class ReconciliationResolutionService
                 ->setRegister($register)
                 ->setSchema('BankReconciliation')
                 ->find($reconId);
-            $parent = $this->toArray($parent);
+            $parent = $this->toArray(result: $parent);
         } catch (\Throwable $e) {
             throw new \OutOfBoundsException(
                 'reconciliation '.$reconId.' not found',
@@ -125,7 +125,7 @@ class ReconciliationResolutionService
                 ->setRegister($register)
                 ->setSchema('ReconciliationMatch')
                 ->find($matchId);
-            $match = $this->toArray($match);
+            $match = $this->toArray(result: $match);
         } catch (\Throwable $e) {
             throw new \OutOfBoundsException(
                 'match '.$matchId.' not found',
@@ -169,7 +169,7 @@ class ReconciliationResolutionService
             ]
         );
 
-        return $this->toArray($updated) ?? [];
+        return $this->toArray(result: $updated) ?? [];
 
     }//end resolveMatch()
 
@@ -204,7 +204,11 @@ class ReconciliationResolutionService
 
         if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
             $serialized = $result->jsonSerialize();
-            return is_array($serialized) ? $serialized : null;
+            if (is_array($serialized) === true) {
+                return $serialized;
+            }
+
+            return null;
         }
 
         return null;

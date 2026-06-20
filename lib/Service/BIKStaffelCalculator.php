@@ -190,9 +190,18 @@ class BIKStaffelCalculator
             throw new InvalidArgumentException('berekendOp must not be before ingangsdatum.');
         }
 
-        $isB2C  = ($partyType === 'B2C');
-        $tarief = $isB2C ? ($tariefB2C ?? self::DEFAULT_WETTELIJKE_RENTE_B2C) : ($tariefB2B ?? self::DEFAULT_HANDELSRENTE_B2B);
-        $type   = $isB2C ? 'WETTELIJKE_RENTE_B2C_6_119_BW' : 'HANDELSRENTE_B2B_6_119A_BW';
+        $isB2C = ($partyType === 'B2C');
+        if ($isB2C === true) {
+            $tarief = ($tariefB2C ?? self::DEFAULT_WETTELIJKE_RENTE_B2C);
+        } else {
+            $tarief = ($tariefB2B ?? self::DEFAULT_HANDELSRENTE_B2B);
+        }
+
+        if ($isB2C === true) {
+            $type = 'WETTELIJKE_RENTE_B2C_6_119_BW';
+        } else {
+            $type = 'HANDELSRENTE_B2B_6_119A_BW';
+        }
 
         $dagen = (int) $ingangsdatum->diff($berekendOp)->days;
 
@@ -263,8 +272,13 @@ class BIKStaffelCalculator
     ): array {
         $berekening = $this->staffel(hoofdsom: $hoofdsom);
         // For GOVERNMENT we still need a rente choice — treat as B2B handelsrente.
-        $effectiveParty = ($partyType === 'B2C') ? 'B2C' : 'B2B';
-        $rente          = $this->rente(
+        if ($partyType === 'B2C') {
+            $effectiveParty = 'B2C';
+        } else {
+            $effectiveParty = 'B2B';
+        }
+
+        $rente = $this->rente(
             partyType: $effectiveParty,
             hoofdsom: $hoofdsom,
             ingangsdatum: $ingangsdatum,
@@ -273,7 +287,10 @@ class BIKStaffelCalculator
             tariefB2C: $tariefB2C
         );
 
-        $totaalCents = $this->toCents(amount: $hoofdsom) + $this->toCents(amount: $berekening['toegepast']) + $this->toCents(amount: $rente['bedrag']);
+        $hoofdsomCents  = $this->toCents(amount: $hoofdsom);
+        $toegepastCents = $this->toCents(amount: $berekening['toegepast']);
+        $renteCents     = $this->toCents(amount: $rente['bedrag']);
+        $totaalCents    = ($hoofdsomCents + $toegepastCents + $renteCents);
 
         return [
             'factuurId'          => $factuurId,

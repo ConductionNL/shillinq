@@ -118,7 +118,7 @@ final class DBAConstants
     public const RISICO_BAND_LAAG_MAX        = 24;
     public const RISICO_BAND_LAAG_MIDDEN_MAX = 49;
     public const RISICO_BAND_MIDDEN_HOOG_MAX = 74;
-    // HOOG = 75..100
+    // HOOG = 75..100.
 
 
     /**
@@ -175,7 +175,11 @@ final class DBAConstants
         }
 
         $value = $appConfig->getValueInt($appId, $key, self::VBAR_GRENS_EUR_CENTS);
-        return $value > 0 ? $value : self::VBAR_GRENS_EUR_CENTS;
+        if ($value > 0) {
+            return $value;
+        }
+
+        return self::VBAR_GRENS_EUR_CENTS;
     }//end vbarGrensCents()
 
     /**

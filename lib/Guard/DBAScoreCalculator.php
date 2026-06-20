@@ -135,8 +135,11 @@ class DBAScoreCalculator
      */
     public function subtotalGezag(array $intake): int
     {
-        $block = $this->arrayOrEmpty(value: ($intake['gezagsverhouding'] ?? []));
-        $value = (int) ($block['kwaInstructiesScore'] ?? 0) + (int) ($block['kwaResultaatVrijScore'] ?? 0) + (int) ($block['deelneemtAanWerkoverlegScore'] ?? 0);
+        $block       = $this->arrayOrEmpty(value: ($intake['gezagsverhouding'] ?? []));
+        $instructies = (int) ($block['kwaInstructiesScore'] ?? 0);
+        $resultaat   = (int) ($block['kwaResultaatVrijScore'] ?? 0);
+        $werkoverleg = (int) ($block['deelneemtAanWerkoverlegScore'] ?? 0);
+        $value       = ($instructies + $resultaat + $werkoverleg);
         return $this->clamp(value: $value, min: 0, max: 20);
     }//end subtotalGezag()
 
@@ -163,8 +166,11 @@ class DBAScoreCalculator
      */
     public function subtotalFinancieel(array $intake): int
     {
-        $block = $this->arrayOrEmpty(value: ($intake['financieelRisico'] ?? []));
-        $value = (int) ($block['factuurFrequentieScore'] ?? 0) + (int) ($block['betalingsRisicoScore'] ?? 0) + (int) ($block['investeringEigenMiddelenScore'] ?? 0);
+        $block       = $this->arrayOrEmpty(value: ($intake['financieelRisico'] ?? []));
+        $frequentie  = (int) ($block['factuurFrequentieScore'] ?? 0);
+        $risico      = (int) ($block['betalingsRisicoScore'] ?? 0);
+        $investering = (int) ($block['investeringEigenMiddelenScore'] ?? 0);
+        $value       = ($frequentie + $risico + $investering);
         return $this->clamp(value: $value, min: 0, max: 20);
     }//end subtotalFinancieel()
 
@@ -228,14 +234,17 @@ class DBAScoreCalculator
             /*
              * @var array<string,mixed> $value
              */
+
             return $value;
         }
 
         if (is_object($value) === true) {
             $arr = (array) $value;
+
             /*
              * @var array<string,mixed> $arr
              */
+
             return $arr;
         }
 

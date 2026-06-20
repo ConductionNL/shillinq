@@ -445,9 +445,17 @@ class EmuReportingService
             ['regel' => 4, 'label' => 'Bijdragen van derden in investeringen', 'bedrag' => 0.0],
             ['regel' => 5, 'label' => 'Desinvesteringen', 'bedrag' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2)],
             ['regel' => 6, 'label' => 'Afschrijvingen', 'bedrag' => round(($sumByType['eliminatie-afschrijving'] ?? 0.0), 2)],
-            ['regel' => 7, 'label' => 'Dotaties voorzieningen ten laste exploitatie', 'bedrag' => round(($sumByType['eliminatie-voorzieningdotatie'] ?? 0.0), 2)],
+            [
+                'regel'  => 7,
+                'label'  => 'Dotaties voorzieningen ten laste exploitatie',
+                'bedrag' => round(($sumByType['eliminatie-voorzieningdotatie'] ?? 0.0), 2),
+            ],
             ['regel' => 8, 'label' => 'Onttrekkingen voorzieningen via exploitatie', 'bedrag' => 0.0],
-            ['regel' => 9, 'label' => 'Boekwinst / verlies desinvesteringen', 'bedrag' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2)],
+            [
+                'regel'  => 9,
+                'label'  => 'Boekwinst / verlies desinvesteringen',
+                'bedrag' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2),
+            ],
             ['regel' => 10, 'label' => 'EMU-saldo', 'bedrag' => round($emuSaldoBerekend, 2)],
         ];
 

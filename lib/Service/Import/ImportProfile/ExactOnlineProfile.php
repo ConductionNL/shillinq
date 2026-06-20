@@ -68,8 +68,12 @@ class ExactOnlineProfile implements ImportProfileInterface
         $accounts = ($parsed['ledgerAccounts'] ?? []);
         foreach ($accounts as &$account) {
             if (isset($account['code']) === true && $account['code'] !== '') {
-                $trimmed         = ltrim((string) $account['code'], '0');
-                $account['code'] = ($trimmed === '' ? '0' : $trimmed);
+                $trimmed = ltrim((string) $account['code'], '0');
+                if ($trimmed === '') {
+                    $account['code'] = '0';
+                } else {
+                    $account['code'] = $trimmed;
+                }
             }
         }
 
@@ -131,7 +135,7 @@ class ExactOnlineProfile implements ImportProfileInterface
      */
     public function applyDialectQuirks(array $parsed): array
     {
-        $parsed['ledgerAccounts'] = $this->normalizeLedgerAccounts($parsed);
+        $parsed['ledgerAccounts'] = $this->normalizeLedgerAccounts(parsed: $parsed);
         return $parsed;
 
     }//end applyDialectQuirks()

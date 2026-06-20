@@ -220,7 +220,13 @@ class LeaseAuditPackGenerator
         return array_values(
             array_filter(
                 array_map(
-                    static fn ($item): string => is_string($item) === true ? $item : (string) ($item['id'] ?? ''),
+                    static function ($item): string {
+                        if (is_string($item) === true) {
+                            return $item;
+                        }
+
+                        return (string) ($item['id'] ?? '');
+                    },
                     $evidence
                 ),
                 static fn (string $id): bool => $id !== ''
@@ -300,7 +306,11 @@ class LeaseAuditPackGenerator
             return [];
         }
 
-        return is_array($events) === true ? array_values($events) : [];
+        if (is_array($events) === true) {
+            return array_values($events);
+        }
+
+        return [];
 
     }//end fetchEvents()
 

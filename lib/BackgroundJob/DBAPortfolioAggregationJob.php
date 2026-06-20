@@ -175,7 +175,12 @@ class DBAPortfolioAggregationJob extends TimedJob
 
         foreach ($perKlant as $klantId => $row) {
             $duurJaren = (float) ($row['start']->diff($now)->days / 365.0);
-            $aandeel   = ($row['omzet'] > 0) ? ($row['omzet'] / $totaal) : 0.0;
+            if ($row['omzet'] > 0) {
+                $aandeel = ($row['omzet'] / $totaal);
+            } else {
+                $aandeel = 0.0;
+            }
+
             if ($duurJaren >= DBAConstants::LANGJARIG_DREMPEL_JAREN
                 && $aandeel >= DBAConstants::LANGJARIG_DREMPEL_OMZET
             ) {
@@ -352,6 +357,7 @@ class DBAPortfolioAggregationJob extends TimedJob
             /*
              * @var array<string,mixed> $entity
              */
+
             return $entity;
         }
 
@@ -361,6 +367,7 @@ class DBAPortfolioAggregationJob extends TimedJob
                 /*
                  * @var array<string,mixed> $data
                  */
+
                 return $data;
             }
         }
@@ -376,6 +383,10 @@ class DBAPortfolioAggregationJob extends TimedJob
     private function resolveRegister(): string
     {
         $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        return ($register === '') ? 'shillinq' : $register;
+        if ($register === '') {
+            return 'shillinq';
+        }
+
+        return $register;
     }//end resolveRegister()
 }//end class

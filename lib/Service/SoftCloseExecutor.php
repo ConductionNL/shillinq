@@ -243,7 +243,7 @@ class SoftCloseExecutor
                 return (int) round($revenue * $rate);
 
             case 'straight-line-from-contract':
-                // principalCents × annualRate × dayCount / dayCountConvention
+                // PrincipalCents × annualRate × dayCount / dayCountConvention.
                 $principal = (int) ($parameters['principalCents'] ?? 0);
                 $rate      = (float) ($parameters['annualRate'] ?? 0.0);
                 $dayCount  = (int) ($parameters['dayCount'] ?? 365);

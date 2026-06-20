@@ -54,16 +54,9 @@ class AcmReportGenerator
     /**
      * Compose an ACM report record for a reporting period (REQ-WMO-006).
      *
-     * @param array{
-     *   period: string,
-     *   administrationId: string,
-     *   activities: array<int,array<string,mixed>>,
-     *   ikpRecords: array<string,array<string,mixed>>,
-     *   omzetByActivity: array<string,float>,
-     *   abbList?: array<int,array<string,mixed>>,
-     *   manualOverrides?: int,
-     *   samenvatting?: string
-     * } $input Inputs.
+     * @param array<string,mixed> $input Inputs (period, administrationId, activities,
+     *                                   ikpRecords, omzetByActivity, abbList?,
+     *                                   manualOverrides?, samenvatting?).
      *
      * @return array<string,mixed> ACMReport record matching the schema.
      *
@@ -93,9 +86,18 @@ class AcmReportGenerator
             $ikp           = (array) ($ikpRecords[$activityId] ?? []);
             $integraleCost = (float) ($ikp['totaleKosten'] ?? 0);
             $omzet         = (float) ($omzetByActivity[$activityId] ?? 0);
-            $ratio         = ($integraleCost > 0.0 ? round(($omzet / $integraleCost), 4) : null);
-            $compliant     = ($omzet >= $integraleCost);
-            $abbReferentie = ((bool) ($activity['isExempted'] ?? false)) ? ((string) ($activity['exemptionBesluitId'] ?? '')) : null;
+            if ($integraleCost > 0.0) {
+                $ratio = round(($omzet / $integraleCost), 4);
+            } else {
+                $ratio = null;
+            }
+
+            $compliant = ($omzet >= $integraleCost);
+            if ((bool) ($activity['isExempted'] ?? false) === true) {
+                $abbReferentie = (string) ($activity['exemptionBesluitId'] ?? '');
+            } else {
+                $abbReferentie = null;
+            }
 
             $activiteiten[] = [
                 'commercialActivityId' => $activityId,
@@ -233,15 +235,27 @@ class AcmReportGenerator
                 continue;
             }
 
+            if ($a['kostendekkingsratio'] === null) {
+                $ratioAttr = '';
+            } else {
+                $ratioAttr = (string) $a['kostendekkingsratio'];
+            }
+
+            if ((bool) ($a['compliant'] ?? false) === true) {
+                $compliantAttr = 'true';
+            } else {
+                $compliantAttr = 'false';
+            }
+
             $lines[] = sprintf(
                 '  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s"/>',
                 htmlspecialchars((string) ($a['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
                 (float) ($a['omzet'] ?? 0),
                 (float) ($a['integraleKostprijs'] ?? 0),
-                ($a['kostendekkingsratio'] === null ? '' : (string) $a['kostendekkingsratio']),
-                ((bool) ($a['compliant'] ?? false) ? 'true' : 'false')
+                $ratioAttr,
+                $compliantAttr
             );
-        }
+        }//end foreach
 
         $body = implode("\n", $lines);
 

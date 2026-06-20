@@ -154,6 +154,13 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
     }//end lookupParticipant()
 
     /**
+     * Submit an order to the Peppol network.
+     *
+     * @param string $participantId The recipient Peppol participant identifier.
+     * @param string $ublOrderXml   The UBL order XML payload.
+     *
+     * @return string The transmission identifier.
+     *
      * @inheritDoc
      */
     public function submitOrder(string $participantId, string $ublOrderXml): string

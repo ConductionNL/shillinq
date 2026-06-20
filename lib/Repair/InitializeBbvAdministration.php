@@ -141,7 +141,7 @@ class InitializeBbvAdministration implements IRepairStep
         $totalSeededTaakvelden = 0;
 
         foreach ($administrations as $administration) {
-            $row  = $this->toArray($administration);
+            $row  = $this->toArray(object: $administration);
             $type = ($row['administrationType'] ?? null);
 
             if (in_array($type, self::BBV_ADMINISTRATION_TYPES, true) === false) {

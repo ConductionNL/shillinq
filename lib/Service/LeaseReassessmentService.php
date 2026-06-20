@@ -129,12 +129,18 @@ class LeaseReassessmentService
         $newLease = $lease;
         $newLease['basePaymentAmount'] = $newPaymentAmount;
 
+        if ($triggerDescription !== '') {
+            $resolvedTriggerDescription = $triggerDescription;
+        } else {
+            $resolvedTriggerDescription = 'Indexation clause triggered';
+        }
+
         return $this->persistEvent(
             eventType: 'indexation-remeasurement',
             lease: $lease,
             newLease: $newLease,
             remeasurementApproach: 'catch-up-adjustment',
-            triggerDescription: ($triggerDescription !== '' ? $triggerDescription : 'Indexation clause triggered'),
+            triggerDescription: $resolvedTriggerDescription,
             approver: $approver,
             administrationId: $administrationId,
         );
@@ -174,12 +180,18 @@ class LeaseReassessmentService
         $newLease = $lease;
         $newLease['extensionOptions'] = $updatedExtensionOptions;
 
+        if ($triggerDescription !== '') {
+            $resolvedTriggerDescription = $triggerDescription;
+        } else {
+            $resolvedTriggerDescription = 'Extension-option likelihood revised';
+        }
+
         return $this->persistEvent(
             eventType: 'extension-option-reassessment',
             lease: $lease,
             newLease: $newLease,
             remeasurementApproach: 'catch-up-adjustment',
-            triggerDescription: ($triggerDescription !== '' ? $triggerDescription : 'Extension-option likelihood revised'),
+            triggerDescription: $resolvedTriggerDescription,
             approver: $approver,
             administrationId: $administrationId,
         );
@@ -219,17 +231,25 @@ class LeaseReassessmentService
             return null;
         }
 
-        $approach = in_array($approach, ['catch-up-adjustment', 'prospective', 'separate-lease'], true) === true ? $approach : 'catch-up-adjustment';
+        if (in_array($approach, ['catch-up-adjustment', 'prospective', 'separate-lease'], true) === false) {
+            $approach = 'catch-up-adjustment';
+        }
 
         $newLease  = array_merge($lease, $newTerms);
         $eventType = $this->resolveModificationEventType(newTerms: $newTerms);
+
+        if ($triggerDescription !== '') {
+            $resolvedTriggerDescription = $triggerDescription;
+        } else {
+            $resolvedTriggerDescription = 'Lease terms modified';
+        }
 
         return $this->persistEvent(
             eventType: $eventType,
             lease: $lease,
             newLease: $newLease,
             remeasurementApproach: $approach,
-            triggerDescription: ($triggerDescription !== '' ? $triggerDescription : 'Lease terms modified'),
+            triggerDescription: $resolvedTriggerDescription,
             approver: $approver,
             administrationId: $administrationId,
         );
@@ -274,6 +294,12 @@ class LeaseReassessmentService
         $rouDeltaCents          = ($postEventRouCents - $preEventRouCents);
         $plImpactCents          = -$rouDeltaCents;
 
+        if ($triggerDescription !== '') {
+            $resolvedTriggerDescription = $triggerDescription;
+        } else {
+            $resolvedTriggerDescription = 'Impairment write-down';
+        }
+
         $eventPayload = [
             'eventType'                   => 'impairment',
             'remeasurementApproach'       => 'catch-up-adjustment',
@@ -283,7 +309,7 @@ class LeaseReassessmentService
             'postEventLeaseLiability'     => $opening['liability'],
             'rouAssetAdjustment'          => $this->calculator->fromCents(cents: $rouDeltaCents),
             'plImpact'                    => $this->calculator->fromCents(cents: $plImpactCents),
-            'triggerDescription'          => ($triggerDescription !== '' ? $triggerDescription : 'Impairment write-down'),
+            'triggerDescription'          => $resolvedTriggerDescription,
             'approver'                    => $approver,
             'glLines'                     => $this->buildImpairmentGlLines(rouDeltaCents: $rouDeltaCents),
             'rouAdjustmentMagnitudeCents' => abs($rouDeltaCents),
@@ -348,7 +374,11 @@ class LeaseReassessmentService
         // Catch-up: RoU mirrors the liability delta (no gain/loss).
         // Prospective: RoU unchanged, the delta is absorbed by future periods.
         // Separate-lease: this event records the split; the new lease is created by the caller.
-        $rouDeltaCents = ($remeasurementApproach === 'catch-up-adjustment') ? $liabilityDeltaCents : 0;
+        if ($remeasurementApproach === 'catch-up-adjustment') {
+            $rouDeltaCents = $liabilityDeltaCents;
+        } else {
+            $rouDeltaCents = 0;
+        }
 
         $payload = [
             'eventType'                   => $eventType,
@@ -398,7 +428,11 @@ class LeaseReassessmentService
         int $preEventLiabilityCents,
     ): array {
         $sourceLease = $this->resolveSourceLease(lease: $lease);
-        $status      = ($payload['rouAdjustmentMagnitudeCents'] > self::DECIDESK_THRESHOLD_CENTS) ? 'pending-approval' : 'approved';
+        if ($payload['rouAdjustmentMagnitudeCents'] > self::DECIDESK_THRESHOLD_CENTS) {
+            $status = 'pending-approval';
+        } else {
+            $status = 'approved';
+        }
 
         unset($payload['rouAdjustmentMagnitudeCents']);
 
@@ -450,7 +484,7 @@ class LeaseReassessmentService
     /**
      * Resolve the modification event-type from the field deltas.
      *
-     * payment-modification when only basePaymentAmount changes; term-modification
+     * Payment-modification when only basePaymentAmount changes; term-modification
      * when nonCancellableTermMonths changes; scope-modification otherwise (the
      * IFRS 16.44 default for any other field change).
      *
@@ -692,14 +726,18 @@ class LeaseReassessmentService
                         ],
                     ]
                 );
-            $count    = is_array($existing) === true ? count($existing) : 0;
+            if (is_array($existing) === true) {
+                $count = count($existing);
+            } else {
+                $count = 0;
+            }
         } catch (\Throwable $e) {
             $this->logger->warning(
                 'LeaseReassessmentService: failed to count prior events',
                 ['sourceLease' => $sourceLease, 'exception' => $e->getMessage()]
             );
             $count = 0;
-        }
+        }//end try
 
         return sprintf('%s-reassess-%03d', $leaseNumber, ($count + 1));
 

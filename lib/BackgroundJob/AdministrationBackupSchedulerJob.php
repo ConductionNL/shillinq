@@ -312,7 +312,11 @@ class AdministrationBackupSchedulerJob extends TimedJob
         $persisted = 0;
 
         foreach ($due as $administration) {
-            $status = $this->isReadOnlyAdministration(administration: $administration) === true ? 'snapshot-only' : 'success';
+            if ($this->isReadOnlyAdministration(administration: $administration) === true) {
+                $status = 'snapshot-only';
+            } else {
+                $status = 'success';
+            }
 
             $record = $this->buildBackupRunRecord(
                 administration: $administration,

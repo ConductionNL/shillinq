@@ -115,7 +115,11 @@ final class RecipientConditionEvaluator
 
         // Numeric literal.
         if (is_numeric($operand) === true) {
-            return ((strpos($operand, '.') !== false) ? (float) $operand : (int) $operand);
+            if (strpos($operand, '.') !== false) {
+                return (float) $operand;
+            }
+
+            return (int) $operand;
         }
 
         // Boolean literal.
