@@ -24,6 +24,7 @@
 import MobileScannerHome from './views/inventory/MobileScannerHome.vue'
 import ReceivePage from './views/inventory/ReceivePage.vue'
 import TransferPage from './views/inventory/TransferPage.vue'
+import StandardsPolicyEditor from './views/settings/StandardsPolicyEditor.vue'
 import PickPage from './views/inventory/PickPage.vue'
 import CountPage from './views/inventory/CountPage.vue'
 // bookings-resource-calendar exception (#117, per design.md):
@@ -276,6 +277,7 @@ import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.
 export default {
 	RecurringInvoiceProfileModal: { kind: 'modal', component: RecurringInvoiceProfileModal },
 
+	StandardsPolicyEditor: { kind: 'page', component: StandardsPolicyEditor },
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
 	MobileScannerTransfer: { kind: 'page', component: TransferPage },

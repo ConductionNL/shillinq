@@ -5005,6 +5005,13 @@
 			}
 		},
 		{
+			"id": "AccountingStandardsPolicy",
+			"route": "/settings/accounting-standards",
+			"type": "custom",
+			"title": "Standards policy",
+			"component": "StandardsPolicyEditor"
+		},
+		{
 			"id": "BalanceSheet",
 			"route": "/financial-statements/balance-sheet",
 			"type": "index",
@@ -6574,6 +6581,17 @@
 						"widgets": [
 							{
 								"type": "version-info"
+							}
+						]
+					},
+					{
+						"id": "accounting-standards",
+						"title": "Accounting standards",
+						"links": [
+							{
+								"id": "AccountingStandardsPolicy",
+								"label": "Standards policy",
+								"route": "AccountingStandardsPolicy"
 							}
 						]
 					},
