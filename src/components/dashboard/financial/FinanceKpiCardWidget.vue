@@ -165,8 +165,12 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 16px;
+	box-sizing: border-box;
 	height: 100%;
-	padding: 8px 4px;
+	padding: 16px 20px;
+	background-color: var(--color-main-background, #fff);
+	border: 1px solid var(--color-border, #ededed);
+	border-radius: var(--border-radius-large, 10px);
 }
 
 .finance-kpi-card__loading {
