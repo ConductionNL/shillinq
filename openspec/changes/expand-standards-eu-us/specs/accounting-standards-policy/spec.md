@@ -23,24 +23,32 @@ EU + US bases of accounting: `ifrs`, `ifrs-eu`, `dutch-gaap`, `de-hgb`, `fr-pcg`
 #### Scenario: digital-compliance keys are NOT bases of accounting
 
 - **WHEN** an author tries to add `saf-t` or `vida` as a StandardsPolicy framework key
-- **THEN** it is rejected — those are ComplianceObligation standards, not ranked bases
+- **THEN** it is rejected — those are ComplianceCatalogue obligations (additive facts), not ranked bases
 
 ## ADDED Requirements
 
-### Requirement: REQ-ASP-004 — ComplianceObligation schema (additive)
+### Requirement: REQ-ASP-004 — versioned static ComplianceCatalogue (additive, not OR)
 
-The system SHALL provide a `ComplianceObligation` schema for digital-compliance /
-tax-data obligations that are **additive** (every applicable obligation must be
-met), tracked per `{ jurisdiction, type, standard, status, effectiveDate }`.
-Obligations SHALL NOT be ranked and SHALL NOT be resolved by the precedence
-resolver.
+Digital-compliance / tax-data obligations are regulatory **facts** (identical for
+every tenant, changing only with regulation), so the system SHALL model them as a
+**versioned static catalogue in code** (`ComplianceCatalogue`, stamped with a
+`VERSION`/`asOf`), NOT as OpenRegister config. The catalogue SHALL be read-only and
+**additive** (every applicable obligation is met — no ranking, no precedence
+resolver) and SHALL expose query helpers for business logic (`applicableTo(country)`,
+`byType()`). The only per-tenant input — which jurisdictions an administration
+operates in — SHALL be derived from existing data, introducing no per-tenant schema.
 
-#### Scenario: obligation is recorded per jurisdiction
+#### Scenario: catalogue is versioned and well-formed
 
-- **WHEN** an administration in Poland is subject to KSeF e-invoicing from 1 Apr 2026
-- **THEN** a `ComplianceObligation` exists with `jurisdiction: "PL"`, `type: "e-invoicing"`, `standard: "country-mandate"`, `status: "upcoming"`, `effectiveDate: "2026-04-01"`
+- **WHEN** business logic reads the catalogue
+- **THEN** it returns a version string and entries each carrying `id`, `jurisdiction`, `type`, `standard`, `status` and `effectiveDate`, with unique ids
 
-#### Scenario: obligations are additive, not ranked
+#### Scenario: applicability is derived per jurisdiction, additively
 
-- **WHEN** an administration has both a SAF-T and a VAT obligation
-- **THEN** both apply simultaneously — there is no "winner" and no precedence between them
+- **WHEN** `applicableTo("NL")` is called
+- **THEN** it returns NL's own obligations plus EU-wide obligations (NL is an EU member), excluding other countries' mandates and US-only entries — all applying simultaneously with no "winner"
+
+#### Scenario: non-EU jurisdiction excludes EU-wide obligations
+
+- **WHEN** `applicableTo("US")` is called
+- **THEN** only US entries are returned (EU-wide obligations do not leak in)

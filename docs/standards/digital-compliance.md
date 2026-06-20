@@ -82,11 +82,23 @@ plus state **sales-tax** rules — there is no SAF-T/ViDA equivalent to track ye
 
 ## How Shillinq models this
 
-These obligations are tracked by the **`ComplianceObligation`** schema — one
-record per `{ jurisdiction, type, status, effectiveDate }` — *not* by the ranked
-Standards policy. A future admin surface will let you flag which obligations apply
-to each administration; the business logic then treats them additively (meet all
-that apply) rather than picking a winner.
+These obligations are **facts about the world**, not a per-tenant choice — EN
+16931, ViDA's dates, "Poland KSeF from 2026" are identical for everyone and change
+only when regulation changes. So they are **not** stored as OpenRegister config;
+they ship as a **versioned static catalogue in code** (`ComplianceCatalogue`,
+stamped with a `VERSION`/`asOf`) that updates with releases. Business logic reads
+it **additively** — meet every obligation that applies — and it is the
+machine-readable source for turning compliance rules into specs.
+
+The only genuinely per-tenant input is **which jurisdictions an administration
+operates in**, which is derived from data the app already holds (administration /
+customer countries) and passed to `ComplianceCatalogue::applicableTo(country)` —
+no separate per-tenant schema is needed.
+
+> Contrast with the [Standards policy](./index.md#how-shillinq-uses-this-the-standards-policy):
+> that *is* a per-tenant choice (which basis of accounting, in what order) → an
+> OpenRegister object you edit and rank. Compliance obligations are a given → static
+> versioned code.
 
 ## Sources
 

@@ -34,10 +34,16 @@ B compliance obligations — additive; C output formats — layered).
   `de-hgb`, `fr-pcg`, `it-oic`, `es-pgc`, `us-tax-basis`, `us-cash-basis`,
   `us-modified-cash`, `us-frf-smes`, `us-gasb`, `us-fasab` (enum + the editor's
   catalogue). The resolver is unchanged — more bases, same ranking.
-- **Category B — NEW `ComplianceObligation` schema**: an *additive*,
-  jurisdiction-keyed model (`jurisdiction`, `type`, `standard`, `status`,
-  `effectiveDate`) for e-invoicing/ViDA/SAF-T/VAT. Deliberately **not** ranked and
-  **not** wired to the precedence resolver.
+- **Category B — NEW versioned static `ComplianceCatalogue` (code, not OR)**:
+  digital-compliance obligations (e-invoicing/ViDA/SAF-T/VAT) are *facts about the
+  world*, identical for every tenant and changing only with regulation — so they
+  ship as versioned static code (`lib/Standards/ComplianceCatalogue.php`, with a
+  `VERSION`/`asOf` stamp), **not** an OpenRegister schema. The catalogue is
+  *additive* (meet all that apply), read-only, queried via `applicableTo(country)`
+  / `byType()`, and is the machine-readable source for the future
+  compliance-rules→specs pipeline. The only per-tenant input (which jurisdictions
+  an administration operates in) is derived from existing data, so no new
+  per-tenant schema is introduced.
 - **Docs** (`docs/standards/`): new `eu-national-gaap`, `digital-compliance` and
   `output-formats` pages; `public-sector` gains GASB + FASAB; `us-gaap` gains the
   special-purpose/OCBOA section; the overview reframes the catalogue around the
@@ -45,7 +51,9 @@ B compliance obligations — additive; C output formats — layered).
 
 ## Out of scope
 
-- An admin UI for `ComplianceObligation` (the StandardsPolicyEditor covers
-  Category A; a Category-B surface is a follow-up).
+- A read-only **compliance-status view** per administration (deriving applicable
+  obligations from `ComplianceCatalogue::applicableTo()` + the administration's
+  jurisdictions). The catalogue itself is static code, not a user-editable
+  surface; the StandardsPolicyEditor remains the only Category-A admin screen.
 - IFRS for SMEs — deliberately excluded (no EU member state has adopted it).
 - Deep tooling for Category C output formats (documented only).

@@ -41,7 +41,7 @@
 							"properties": {
 								"key": {
 									"type": "string",
-									"description": "Framework identifier — fixed enum mirroring the docs/standards/ pages. Covers bases of accounting (Category A): international (IFRS IASB / EU-endorsed), national GAAPs (Dutch, German, French, Italian, Spanish), tax bases (Dutch, US tax/cash/modified-cash, FRF for SMEs), public sector (IPSAS, Dutch BBV, US GASB/FASAB) and sustainability (ESRS, IFRS S1/S2). Digital-compliance obligations (e-invoicing, SAF-T, VAT) are NOT here — they are additive and modelled by the separate ComplianceObligation schema.",
+									"description": "Framework identifier — fixed enum mirroring the docs/standards/ pages. Covers bases of accounting (Category A): international (IFRS IASB / EU-endorsed), national GAAPs (Dutch, German, French, Italian, Spanish), tax bases (Dutch, US tax/cash/modified-cash, FRF for SMEs), public sector (IPSAS, Dutch BBV, US GASB/FASAB) and sustainability (ESRS, IFRS S1/S2). Digital-compliance obligations (e-invoicing, SAF-T, VAT) are NOT here — they are additive regulatory facts modelled by the versioned static OCA\\Shillinq\\Standards\\ComplianceCatalogue (code, not OpenRegister).",
 									"enum": [
 										"ifrs",
 										"ifrs-eu",
