@@ -83,12 +83,8 @@ final class RuleEngine
                 'gl-sequential-journal-numbering' => static fn(array $o): bool => self::present($o, 'transactionNumber'),
                 // Recorded with a posting date (chronological order / timeliness).
                 'gl-chronological-order'          => static fn(array $o): bool => self::present($o, 'postingDate'),
-                // NOTE: gl-source-document-traceability (sourceReference) is intentionally
-                // NOT enforced here. The audit shows ~127/128 transactions lack a
-                // sourceReference, so blocking post on it would break legitimate
-                // postings (opening balances, adjustments). It remains a corpus rule and
-                // an audit finding requiring data backfill — enforce only once the data
-                // populates it, to avoid breaking the bookkeeping flow.
+                // Each entry traceable to a source document (Belegfunktion / GoBD).
+                'gl-source-document-traceability' => static fn(array $o): bool => self::present($o, 'sourceReference'),
             ],
         ];
 
