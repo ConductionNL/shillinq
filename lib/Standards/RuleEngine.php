@@ -307,6 +307,29 @@ final class RuleEngine
     }//end providerSeedSpecs()
 
     /**
+     * The sample objects to create for empty object types, declared by providers
+     * that implement the SeedsObjects capability. Keyed by object type.
+     *
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    public static function providerSeedObjects(): array
+    {
+        $objects = [];
+        foreach (self::providers() as $provider) {
+            if (in_array(\OCA\Shillinq\Standards\Checks\SeedsObjects::class, class_implements($provider), true) === false) {
+                continue;
+            }
+
+            foreach ($provider::seedObjects() as $objectType => $samples) {
+                $objects[$objectType] = array_merge(($objects[$objectType] ?? []), $samples);
+            }
+        }
+
+        return $objects;
+
+    }//end providerSeedObjects()
+
+    /**
      * Discover the registered per-domain CheckProvider classes (memoised).
      *
      * @return array<int, class-string<\OCA\Shillinq\Standards\Checks\CheckProvider>>

@@ -224,6 +224,36 @@ class RuleTestDataSeeder
             }
         }//end foreach
 
+        // Provider object seeding: create compliant sample objects for new object
+        // types that have no rows yet, so the provider's checks actually evaluate
+        // (RuleEngine::providerSeedObjects, from the SeedsObjects capability).
+        $providerObjectsCreated = 0;
+        foreach (\OCA\Shillinq\Standards\RuleEngine::providerSeedObjects() as $objectType => $samples) {
+            if ($samples === []) {
+                continue;
+            }
+
+            try {
+                $existing = $os->setRegister($register)->setSchema($objectType)->findAll(['limit' => 1]);
+            } catch (\Throwable $e) {
+                $this->logger->warning('RuleTestDataSeeder: cannot probe '.$objectType.' for object seeding: '.$e->getMessage());
+                continue;
+            }
+
+            if (is_array($existing) === true && $existing !== []) {
+                continue;
+            }
+
+            foreach ($samples as $sample) {
+                try {
+                    $os->saveObject(object: $sample, register: $register, schema: $objectType, _rbac: false, _multitenancy: false, currentUser: $admin);
+                    $providerObjectsCreated++;
+                } catch (\Throwable $e) {
+                    $this->logger->warning('RuleTestDataSeeder: sample '.$objectType.' create failed: '.$e->getMessage());
+                }
+            }
+        }//end foreach
+
         // Generic per-domain provider seeding: each CheckProvider may declare the
         // test-data field defaults its checks expect (RuleEngine::providerSeedSpecs).
         // Backfill any missing/empty field on the existing objects of that type.
@@ -266,11 +296,12 @@ class RuleTestDataSeeder
         }//end foreach
 
         return [
-            'sourceReferencesAdded' => $srcAdded,
-            'linesAdded'            => $linesAdded,
-            'invoiceLinesAdded'     => $invoiceLinesAdded,
-            'providerFieldsAdded'   => $providerFieldsAdded,
-            'alreadyCompliant'      => $alreadyCompliant,
+            'sourceReferencesAdded'  => $srcAdded,
+            'linesAdded'             => $linesAdded,
+            'invoiceLinesAdded'      => $invoiceLinesAdded,
+            'providerObjectsCreated' => $providerObjectsCreated,
+            'providerFieldsAdded'    => $providerFieldsAdded,
+            'alreadyCompliant'       => $alreadyCompliant,
         ];
 
     }//end seed()
