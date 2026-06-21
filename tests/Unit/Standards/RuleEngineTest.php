@@ -49,7 +49,9 @@ class RuleEngineTest extends TestCase
     {
         return [
             'invoiceNumber' => '2026-001',
+            'invoiceTypeCode' => '380',
             'invoiceDate'   => '2026-06-21',
+            'supplyDate'    => '2026-06-21',
             'dueDate'       => '2026-07-21',
             'customerId'    => 'CUST-1',
             'currency'      => 'EUR',

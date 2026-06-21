@@ -155,7 +155,8 @@ class RuleTestDataSeeder
             $firstLine = (($ar['invoiceLines'][0] ?? null));
             $hasFull   = (is_array($firstLine) === true && array_key_exists('vatRate', $firstLine) === true
                 && array_key_exists('allowancesTotal', $ar) === true
-                && trim((string) ($ar['sellerVatId'] ?? '')) !== '');
+                && trim((string) ($ar['sellerVatId'] ?? '')) !== ''
+                && trim((string) ($ar['invoiceTypeCode'] ?? '')) !== '');
             if ($hasFull === true) {
                 $alreadyCompliant++;
                 continue;
@@ -205,6 +206,8 @@ class RuleTestDataSeeder
             // Seller/buyer party identification (BG-4/BG-7) so the EN 16931 party
             // and per-category seller-VAT rules (BR-01/06/08/09/10, BR-CO-09/26,
             // BR-S/Z/E-02, vatdir-226-3) are satisfied. NL example identifiers.
+            $ar['invoiceTypeCode']   = ($ar['invoiceTypeCode'] ?? '380');
+            $ar['supplyDate']        = ($ar['supplyDate'] ?? ($ar['invoiceDate'] ?? '2026-06-21'));
             $ar['specificationId']   = ($ar['specificationId'] ?? 'urn:cen.eu:en16931:2017');
             $ar['sellerName']        = ($ar['sellerName'] ?? 'Seeded Seller B.V.');
             $ar['sellerIdentifier']  = ($ar['sellerIdentifier'] ?? 'NL-KVK-00000000');

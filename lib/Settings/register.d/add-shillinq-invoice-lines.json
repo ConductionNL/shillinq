@@ -3,8 +3,10 @@
     "components": {
         "schemas": {
             "ARInvoice": {
-                "version": "0.4.0",
+                "version": "0.5.0",
                 "properties": {
+                    "invoiceTypeCode": {"type": "string", "nullable": true, "description": "Invoice type code (BT-3), UNTDID 1001 (e.g. 380 commercial invoice)."},
+                    "supplyDate": {"type": "string", "nullable": true, "description": "Date on which the supply was made/completed (BT-72 / VAT Directive art. 226(7))."},
                     "specificationId": {"type": "string", "nullable": true, "description": "Specification identifier (BT-24), e.g. the CIUS/Peppol identifier."},
                     "sellerName": {"type": "string", "nullable": true, "description": "Seller name (BT-27)."},
                     "sellerIdentifier": {"type": "string", "nullable": true, "description": "Seller identifier (BT-29)."},

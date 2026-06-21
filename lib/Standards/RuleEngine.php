@@ -234,6 +234,12 @@ final class RuleEngine
                 'en16931-br-o-02'                 => static fn(array $o): bool => (self::anyLineHasCategory($o, 'O') === false
                     || (self::present($o, 'sellerVatId') === false && self::present($o, 'sellerTaxRepVatId') === false
                     && self::present($o, 'buyerVatId') === false)),
+
+                // --- EN 16931 / VAT Directive mandatory invoice-content fields. ---
+                'en16931-br-04'                   => static fn(array $o): bool => self::present($o, 'invoiceTypeCode'),
+                'vatdir-art226-1'                 => static fn(array $o): bool => self::present($o, 'invoiceDate'),
+                'vatdir-art226-2'                 => static fn(array $o): bool => self::present($o, 'invoiceNumber'),
+                'vatdir-art226-7'                 => static fn(array $o): bool => self::present($o, 'supplyDate'),
             ],
             'APTransaction' => [
                 // Purchase (received) invoices: the same EN 16931 / VAT Directive
