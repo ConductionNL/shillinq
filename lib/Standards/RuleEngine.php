@@ -47,6 +47,13 @@ final class RuleEngine
     private static ?array $index = null;
 
     /**
+     * Memoised list of discovered per-domain CheckProvider class-strings.
+     *
+     * @var array<int, class-string>|null
+     */
+    private static ?array $providers = null;
+
+    /**
      * The registered predicates, keyed by object type then rule id. Each
      * predicate is `fn(array $object, array $context): bool` — true = the rule is
      * satisfied. Every key is a real RuleCatalogue id.
@@ -55,7 +62,7 @@ final class RuleEngine
      */
     private static function checks(): array
     {
-        return [
+        $builtin = [
             'ARInvoice'     => [
                 // EN 16931 mandatory invoice fields (BT-1/2/5/109/112) mapped to the ARInvoice header.
                 'en16931-br-02'                   => static fn(array $o): bool => self::present($o, 'invoiceNumber'),
@@ -266,7 +273,45 @@ final class RuleEngine
             ],
         ];
 
+        // Merge per-domain providers (lib/Standards/Checks/*.php). Each provider
+        // contributes [objectType => [ruleId => predicate]]; later providers add to
+        // (never silently overwrite) the built-in registry, so the corpus can grow
+        // an executable check per domain without editing this file.
+        foreach (self::providers() as $provider) {
+            foreach ($provider::checks() as $objectType => $ruleChecks) {
+                $builtin[$objectType] = array_merge(($builtin[$objectType] ?? []), $ruleChecks);
+            }
+        }
+
+        return $builtin;
+
     }//end checks()
+
+    /**
+     * Discover the registered per-domain CheckProvider classes (memoised).
+     *
+     * @return array<int, class-string<\OCA\Shillinq\Standards\Checks\CheckProvider>>
+     */
+    private static function providers(): array
+    {
+        if (self::$providers !== null) {
+            return self::$providers;
+        }
+
+        $found = [];
+        foreach ((glob(__DIR__.'/Checks/*.php') ?: []) as $file) {
+            $class = '\\OCA\\Shillinq\\Standards\\Checks\\'.basename($file, '.php');
+            if (class_exists($class) === true
+                && in_array(\OCA\Shillinq\Standards\Checks\CheckProvider::class, class_implements($class), true) === true
+            ) {
+                $found[] = $class;
+            }
+        }
+
+        self::$providers = $found;
+        return $found;
+
+    }//end providers()
 
     /**
      * Evaluate an object of $objectType against its applicable machine-checkable
@@ -380,7 +425,8 @@ final class RuleEngine
      */
     public static function reset(): void
     {
-        self::$index = null;
+        self::$index     = null;
+        self::$providers = null;
 
     }//end reset()
 
