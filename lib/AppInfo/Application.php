@@ -678,7 +678,8 @@ class Application extends App implements IBootstrap
                     sectionId: $appId,
                     priority: 10,
                     appManager: $c->get('OCP\\App\\IAppManager'),
-                    initialState: $c->get('OCP\\AppFramework\\Services\\IInitialState')
+                    initialState: $c->get('OCP\\AppFramework\\Services\\IInitialState'),
+                    appConfig: $c->get('OCP\\IAppConfig')
                 );
             }
         );
