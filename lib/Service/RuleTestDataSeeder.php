@@ -148,10 +148,14 @@ class RuleTestDataSeeder
         $invoiceLinesAdded = 0;
         $invoices          = $os->setRegister($register)->setSchema('ARInvoice')->findAll(['limit' => 10000]);
         foreach ($invoices as $invoice) {
-            $ar       = is_array($invoice) === true ? $invoice : $invoice->jsonSerialize();
-            $id       = (string) ($ar['id'] ?? $ar['@self']['id'] ?? '');
-            $existing = ($ar['invoiceLines'] ?? null);
-            if (is_array($existing) === true && $existing !== []) {
+            $ar = is_array($invoice) === true ? $invoice : $invoice->jsonSerialize();
+            $id = (string) ($ar['id'] ?? $ar['@self']['id'] ?? '');
+            // Idempotent: skip only when the full structure (lines WITH a per-line
+            // vatRate + document allowance/charge totals) is already present.
+            $firstLine = (($ar['invoiceLines'][0] ?? null));
+            $hasFull   = (is_array($firstLine) === true && array_key_exists('vatRate', $firstLine) === true
+                && array_key_exists('allowancesTotal', $ar) === true);
+            if ($hasFull === true) {
                 $alreadyCompliant++;
                 continue;
             }
@@ -178,6 +182,7 @@ class RuleTestDataSeeder
                     'itemName'    => 'Seeded line item',
                     'netPrice'    => $net,
                     'vatCategory' => $category,
+                    'vatRate'     => $rate,
                 ],
             ];
             $ar['vatBreakdown'] = [
@@ -189,6 +194,13 @@ class RuleTestDataSeeder
                 ],
             ];
             $ar['lineNetTotal'] = $net;
+            // No document-level allowances/charges on the seeded test data; the
+            // EN 16931 allowance/charge field rules are vacuously satisfied and the
+            // BT-107/108 totals reconcile to an empty sum (BR-CO-11/12).
+            $ar['allowances']      = [];
+            $ar['charges']         = [];
+            $ar['allowancesTotal'] = 0;
+            $ar['chargesTotal']    = 0;
 
             try {
                 $os->saveObject(object: $ar, register: $register, schema: 'ARInvoice', uuid: $id, _rbac: false, _multitenancy: false, currentUser: $admin);

@@ -140,6 +140,63 @@ final class RuleEngine
                 'en16931-br-g-09'                 => static fn(array $o): bool => self::categoryTaxOk($o, 'G', true),
                 'en16931-br-ic-08'                => static fn(array $o): bool => self::categoryTaxableOk($o, 'K'),
                 'en16931-br-ic-09'                => static fn(array $o): bool => self::categoryTaxOk($o, 'K', true),
+
+                // --- EN 16931 invoiced-item VAT rate per line category (BT-152 by BT-151, BR-*-05). ---
+                // Standard rated must be > 0; the zero/exempt/reverse/export/intra families must be 0;
+                // 'Not subject to VAT' must carry no rate at all.
+                'en16931-br-s-05'                 => static fn(array $o): bool => self::lineRateByCategory($o, 'S', 'positive'),
+                'en16931-br-z-05'                 => static fn(array $o): bool => self::lineRateByCategory($o, 'Z', 'zero'),
+                'en16931-br-e-05'                 => static fn(array $o): bool => self::lineRateByCategory($o, 'E', 'zero'),
+                'en16931-br-ae-05'                => static fn(array $o): bool => self::lineRateByCategory($o, 'AE', 'zero'),
+                'en16931-br-g-05'                 => static fn(array $o): bool => self::lineRateByCategory($o, 'G', 'zero'),
+                'en16931-br-ic-05'                => static fn(array $o): bool => self::lineRateByCategory($o, 'K', 'zero'),
+                'en16931-br-o-05'                 => static fn(array $o): bool => self::lineRateByCategory($o, 'O', 'absent'),
+
+                // --- EN 16931 VAT exemption reason per breakdown category (BT-120/121 by BT-118, BR-*-10). ---
+                // Standard/Zero rated must NOT carry an exemption reason; the exempt/reverse/not-subject/
+                // export/intra-community families MUST carry one.
+                'en16931-br-s-10'                 => static fn(array $o): bool => self::breakdownExemptionByCategory($o, 'S', false),
+                'en16931-br-z-10'                 => static fn(array $o): bool => self::breakdownExemptionByCategory($o, 'Z', false),
+                'en16931-br-e-10'                 => static fn(array $o): bool => self::breakdownExemptionByCategory($o, 'E', true),
+                'en16931-br-ae-10'                => static fn(array $o): bool => self::breakdownExemptionByCategory($o, 'AE', true),
+                'en16931-br-o-10'                 => static fn(array $o): bool => self::breakdownExemptionByCategory($o, 'O', true),
+                'en16931-br-g-10'                 => static fn(array $o): bool => self::breakdownExemptionByCategory($o, 'G', true),
+                'en16931-br-ic-10'                => static fn(array $o): bool => self::breakdownExemptionByCategory($o, 'K', true),
+
+                // --- EN 16931 document-level allowances (BG-20) and charges (BG-21). ---
+                // BR-31/32/33: each allowance has amount, VAT category, and a reason or reason code.
+                'en16931-br-31'                   => static fn(array $o): bool => self::allItemsNumeric($o, 'allowances', 'amount'),
+                'en16931-br-32'                   => static fn(array $o): bool => self::allItemsPresent($o, 'allowances', 'vatCategory'),
+                'en16931-br-33'                   => static fn(array $o): bool => self::allItemsHaveReason($o, 'allowances'),
+                // BR-36/37/38: each charge has amount, VAT category, and a reason or reason code.
+                'en16931-br-36'                   => static fn(array $o): bool => self::allItemsNumeric($o, 'charges', 'amount'),
+                'en16931-br-37'                   => static fn(array $o): bool => self::allItemsPresent($o, 'charges', 'vatCategory'),
+                'en16931-br-38'                   => static fn(array $o): bool => self::allItemsHaveReason($o, 'charges'),
+                // BR-41/42/43/44: each invoice-line allowance/charge has an amount and a reason.
+                'en16931-br-41'                   => static fn(array $o): bool => self::allLineItemsNumeric($o, 'lineAllowances', 'amount'),
+                'en16931-br-42'                   => static fn(array $o): bool => self::allLineItemsHaveReason($o, 'lineAllowances'),
+                'en16931-br-43'                   => static fn(array $o): bool => self::allLineItemsNumeric($o, 'lineCharges', 'amount'),
+                'en16931-br-44'                   => static fn(array $o): bool => self::allLineItemsHaveReason($o, 'lineCharges'),
+                // BR-CO-11/12: document allowance/charge totals reconcile to the sum of the lines.
+                'en16931-br-co-11'                => static fn(array $o): bool => self::centsEqual(
+                    (float) ($o['allowancesTotal'] ?? 0),
+                    self::sumItems($o, 'allowances')
+                ),
+                'en16931-br-co-12'                => static fn(array $o): bool => self::centsEqual(
+                    (float) ($o['chargesTotal'] ?? 0),
+                    self::sumItems($o, 'charges')
+                ),
+                // BR-DEC-01/02/05/06/10/11/24/25/27/28: allowance/charge amounts respect 2 decimals.
+                'en16931-br-dec-01'               => static fn(array $o): bool => self::allItemsMaxDecimals($o, 'allowances', 'amount', 2),
+                'en16931-br-dec-02'               => static fn(array $o): bool => self::allItemsMaxDecimals($o, 'allowances', 'baseAmount', 2),
+                'en16931-br-dec-05'               => static fn(array $o): bool => self::allItemsMaxDecimals($o, 'charges', 'amount', 2),
+                'en16931-br-dec-06'               => static fn(array $o): bool => self::allItemsMaxDecimals($o, 'charges', 'baseAmount', 2),
+                'en16931-br-dec-10'               => static fn(array $o): bool => self::maxDecimals($o['allowancesTotal'] ?? null, 2),
+                'en16931-br-dec-11'               => static fn(array $o): bool => self::maxDecimals($o['chargesTotal'] ?? null, 2),
+                'en16931-br-dec-24'               => static fn(array $o): bool => self::allLineItemsMaxDecimals($o, 'lineAllowances', 'amount', 2),
+                'en16931-br-dec-25'               => static fn(array $o): bool => self::allLineItemsMaxDecimals($o, 'lineAllowances', 'baseAmount', 2),
+                'en16931-br-dec-27'               => static fn(array $o): bool => self::allLineItemsMaxDecimals($o, 'lineCharges', 'amount', 2),
+                'en16931-br-dec-28'               => static fn(array $o): bool => self::allLineItemsMaxDecimals($o, 'lineCharges', 'baseAmount', 2),
             ],
             'APTransaction' => [
                 // Purchase (received) invoices: the same EN 16931 / VAT Directive
@@ -815,6 +872,277 @@ final class RuleEngine
         return true;
 
     }//end categoryTaxOk()
+
+    /**
+     * For every invoice line of category $cat, its VAT rate (BT-152) satisfies the
+     * mode: 'positive' (> 0), 'zero' (= 0), or 'absent' (no rate). Vacuously true
+     * when no line of that category exists (EN 16931 BR-*-05).
+     *
+     * @param array<string, mixed> $o    The ARInvoice.
+     * @param string               $cat  The UNTDID 5305 category code.
+     * @param string               $mode One of 'positive', 'zero', 'absent'.
+     *
+     * @return bool
+     */
+    private static function lineRateByCategory(array $o, string $cat, string $mode): bool
+    {
+        foreach (self::lines($o) as $line) {
+            if ((string) ($line['vatCategory'] ?? '') !== $cat) {
+                continue;
+            }
+
+            $hasRate = (($line['vatRate'] ?? null) !== null && ($line['vatRate'] ?? '') !== '');
+            if ($mode === 'absent') {
+                if ($hasRate === true) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            if ($hasRate === false || is_numeric($line['vatRate']) === false) {
+                return false;
+            }
+
+            $rateCents = (int) round(((float) $line['vatRate']) * 100);
+            if ($mode === 'positive' && $rateCents <= 0) {
+                return false;
+            }
+
+            if ($mode === 'zero' && $rateCents !== 0) {
+                return false;
+            }
+        }//end foreach
+
+        return true;
+
+    }//end lineRateByCategory()
+
+    /**
+     * For every VAT breakdown of category $cat, the presence of an exemption reason
+     * (BT-120 text or BT-121 code) matches $mustHave (EN 16931 BR-*-10). Vacuously
+     * true when no breakdown of that category exists.
+     *
+     * @param array<string, mixed> $o        The ARInvoice.
+     * @param string               $cat      The UNTDID 5305 category code.
+     * @param bool                 $mustHave True if a reason is required, false if forbidden.
+     *
+     * @return bool
+     */
+    private static function breakdownExemptionByCategory(array $o, string $cat, bool $mustHave): bool
+    {
+        foreach (self::vatBreakdown($o) as $group) {
+            if ((string) ($group['category'] ?? '') !== $cat) {
+                continue;
+            }
+
+            $hasReason = (trim((string) ($group['exemptionReasonCode'] ?? '')) !== ''
+                || trim((string) ($group['exemptionReasonText'] ?? '')) !== '');
+            if ($hasReason !== $mustHave) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end breakdownExemptionByCategory()
+
+    /**
+     * Normalise a named array-of-objects property to a list of arrays.
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $key The property (e.g. 'allowances').
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private static function items(array $o, string $key): array
+    {
+        $items = ($o[$key] ?? []);
+        if (is_array($items) === false) {
+            return [];
+        }
+
+        return array_values(array_filter($items, 'is_array'));
+
+    }//end items()
+
+    /**
+     * Every item in the named collection carries a non-empty value at $field.
+     *
+     * @param array<string, mixed> $o     The ARInvoice.
+     * @param string               $key   Collection property.
+     * @param string               $field Item field.
+     *
+     * @return bool
+     */
+    private static function allItemsPresent(array $o, string $key, string $field): bool
+    {
+        foreach (self::items($o, $key) as $item) {
+            if (trim((string) ($item[$field] ?? '')) === '') {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end allItemsPresent()
+
+    /**
+     * Every item in the named collection carries a numeric value at $field.
+     *
+     * @param array<string, mixed> $o     The ARInvoice.
+     * @param string               $key   Collection property.
+     * @param string               $field Item field.
+     *
+     * @return bool
+     */
+    private static function allItemsNumeric(array $o, string $key, string $field): bool
+    {
+        foreach (self::items($o, $key) as $item) {
+            if (is_numeric(($item[$field] ?? null)) === false) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end allItemsNumeric()
+
+    /**
+     * Every item in the named collection carries a reason text or reason code.
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $key Collection property.
+     *
+     * @return bool
+     */
+    private static function allItemsHaveReason(array $o, string $key): bool
+    {
+        foreach (self::items($o, $key) as $item) {
+            $hasReason = (trim((string) ($item['reasonText'] ?? '')) !== ''
+                || trim((string) ($item['reasonCode'] ?? '')) !== '');
+            if ($hasReason === false) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end allItemsHaveReason()
+
+    /**
+     * Every item in the named collection respects the decimal limit at $field.
+     *
+     * @param array<string, mixed> $o     The ARInvoice.
+     * @param string               $key   Collection property.
+     * @param string               $field Item field.
+     * @param int                  $max   Maximum decimals.
+     *
+     * @return bool
+     */
+    private static function allItemsMaxDecimals(array $o, string $key, string $field, int $max): bool
+    {
+        foreach (self::items($o, $key) as $item) {
+            if (self::maxDecimals(($item[$field] ?? null), $max) === false) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end allItemsMaxDecimals()
+
+    /**
+     * Σ of a named collection's amount field, to the cent.
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $key Collection property.
+     *
+     * @return float
+     */
+    private static function sumItems(array $o, string $key): float
+    {
+        $cents = 0;
+        foreach (self::items($o, $key) as $item) {
+            $cents += (int) round(((float) ($item['amount'] ?? 0)) * 100);
+        }
+
+        return ($cents / 100);
+
+    }//end sumItems()
+
+    /**
+     * Every line-level allowance/charge across all invoice lines carries a numeric
+     * value at $field (EN 16931 BR-41/43).
+     *
+     * @param array<string, mixed> $o     The ARInvoice.
+     * @param string               $key   Line collection ('lineAllowances'|'lineCharges').
+     * @param string               $field Item field.
+     *
+     * @return bool
+     */
+    private static function allLineItemsNumeric(array $o, string $key, string $field): bool
+    {
+        foreach (self::lines($o) as $line) {
+            foreach (self::items($line, $key) as $item) {
+                if (is_numeric(($item[$field] ?? null)) === false) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+
+    }//end allLineItemsNumeric()
+
+    /**
+     * Every line-level allowance/charge carries a reason text or code (BR-42/44).
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $key Line collection ('lineAllowances'|'lineCharges').
+     *
+     * @return bool
+     */
+    private static function allLineItemsHaveReason(array $o, string $key): bool
+    {
+        foreach (self::lines($o) as $line) {
+            foreach (self::items($line, $key) as $item) {
+                $hasReason = (trim((string) ($item['reasonText'] ?? '')) !== ''
+                    || trim((string) ($item['reasonCode'] ?? '')) !== '');
+                if ($hasReason === false) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+
+    }//end allLineItemsHaveReason()
+
+    /**
+     * Every line-level allowance/charge respects the decimal limit at $field
+     * (EN 16931 BR-DEC-24/25/27/28).
+     *
+     * @param array<string, mixed> $o     The ARInvoice.
+     * @param string               $key   Line collection ('lineAllowances'|'lineCharges').
+     * @param string               $field Item field.
+     * @param int                  $max   Maximum decimals.
+     *
+     * @return bool
+     */
+    private static function allLineItemsMaxDecimals(array $o, string $key, string $field, int $max): bool
+    {
+        foreach (self::lines($o) as $line) {
+            foreach (self::items($line, $key) as $item) {
+                if (self::maxDecimals(($item[$field] ?? null), $max) === false) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+
+    }//end allLineItemsMaxDecimals()
 
     /**
      * Build the id => rule index from RuleCatalogue (memoised).

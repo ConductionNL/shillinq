@@ -56,6 +56,10 @@ class RuleEngineTest extends TestCase
             'vatAmount'     => 21.00,
             'grossAmount'   => 121.00,
             'lineNetTotal'  => 100.00,
+            'allowances'    => [],
+            'charges'       => [],
+            'allowancesTotal' => 0,
+            'chargesTotal'  => 0,
             'invoiceLines'  => [
                 [
                     'lineId'      => '1',
@@ -65,6 +69,7 @@ class RuleEngineTest extends TestCase
                     'itemName'    => 'Consultancy',
                     'netPrice'    => 100.00,
                     'vatCategory' => 'S',
+                    'vatRate'     => 21,
                 ],
             ],
             'vatBreakdown'  => [
@@ -218,6 +223,38 @@ class RuleEngineTest extends TestCase
         $this->assertNotContains('en16931-br-dec-14', $goodIds);
 
     }//end testCurrencyAndDecimalChecks()
+
+
+    /**
+     * Per-category line VAT rate and exemption-reason rules flag inconsistencies.
+     *
+     * @return void
+     */
+    public function testCategoryRateAndExemptionRules(): void
+    {
+        // A Standard-rated line with a zero rate violates BR-S-05.
+        $noRate = self::compliantInvoice();
+        $noRate['invoiceLines'][0]['vatRate'] = 0;
+        $ids = array_map(static fn(Violation $v): string => $v->ruleId, RuleEngine::evaluate('ARInvoice', $noRate));
+        $this->assertContains('en16931-br-s-05', $ids, 'standard-rated line must have a positive rate');
+
+        // An exempt breakdown without an exemption reason violates BR-E-10; a
+        // standard breakdown that carries one violates BR-S-10.
+        $exempt = self::compliantInvoice();
+        $exempt['vatBreakdown'][0]['exemptionReasonText'] = 'Article 44';
+        $sIds = array_map(static fn(Violation $v): string => $v->ruleId, RuleEngine::evaluate('ARInvoice', $exempt));
+        $this->assertContains('en16931-br-s-10', $sIds, 'standard breakdown must not carry an exemption reason');
+
+        $exemptLine = self::compliantInvoice();
+        $exemptLine['invoiceLines'][0]['vatCategory'] = 'E';
+        $exemptLine['invoiceLines'][0]['vatRate']     = 0;
+        $exemptLine['vatBreakdown'][0]['category']    = 'E';
+        $exemptLine['vatBreakdown'][0]['rate']        = 0;
+        $exemptLine['vatBreakdown'][0]['taxAmount']   = 0;
+        $eIds = array_map(static fn(Violation $v): string => $v->ruleId, RuleEngine::evaluate('ARInvoice', $exemptLine));
+        $this->assertContains('en16931-br-e-10', $eIds, 'exempt breakdown must carry an exemption reason');
+
+    }//end testCategoryRateAndExemptionRules()
 
 
     /**

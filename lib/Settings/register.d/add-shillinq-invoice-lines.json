@@ -3,12 +3,12 @@
     "components": {
         "schemas": {
             "ARInvoice": {
-                "version": "0.2.0",
+                "version": "0.3.0",
                 "properties": {
                     "invoiceLines": {
                         "type": "array",
                         "nullable": true,
-                        "description": "EN 16931 invoice lines (BG-25). Each line carries lineId (BT-126), quantity (BT-129), unitCode (BT-130), netAmount (BT-131), itemName (BT-153), netPrice (BT-146) and vatCategory (BT-151).",
+                        "description": "EN 16931 invoice lines (BG-25). Each line carries lineId (BT-126), quantity (BT-129), unitCode (BT-130), netAmount (BT-131), itemName (BT-153), netPrice (BT-146), vatCategory (BT-151), vatRate (BT-152) and optional line-level allowances/charges (BG-27/BG-28).",
                         "items": {
                             "type": "object",
                             "properties": {
@@ -18,23 +18,68 @@
                                 "netAmount": {"type": "number", "description": "Invoice line net amount (BT-131)."},
                                 "itemName": {"type": "string", "description": "Item name (BT-153)."},
                                 "netPrice": {"type": "number", "description": "Item net price (BT-146)."},
-                                "vatCategory": {"type": "string", "description": "Invoiced item VAT category code (BT-151), UNTDID 5305."}
+                                "vatCategory": {"type": "string", "description": "Invoiced item VAT category code (BT-151), UNTDID 5305."},
+                                "vatRate": {"type": "number", "nullable": true, "description": "Invoiced item VAT rate (BT-152); >0 for Standard rated, 0 for the zero/exempt families, absent for 'Not subject to VAT'."},
+                                "lineAllowances": {"type": "array", "nullable": true, "description": "Invoice line allowances (BG-27); each carries amount (BT-136), baseAmount (BT-137) and a reasonText (BT-139) or reasonCode (BT-140)."},
+                                "lineCharges": {"type": "array", "nullable": true, "description": "Invoice line charges (BG-28); each carries amount (BT-141), baseAmount (BT-142) and a reasonText (BT-144) or reasonCode (BT-145)."}
                             }
                         }
                     },
                     "vatBreakdown": {
                         "type": "array",
                         "nullable": true,
-                        "description": "EN 16931 VAT breakdown groups (BG-23). Each group carries category (BT-118), taxableAmount (BT-116), taxAmount (BT-117) and rate (BT-119).",
+                        "description": "EN 16931 VAT breakdown groups (BG-23). Each group carries category (BT-118), taxableAmount (BT-116), taxAmount (BT-117), rate (BT-119) and exemptionReasonText/Code (BT-120/BT-121).",
                         "items": {
                             "type": "object",
                             "properties": {
                                 "category": {"type": "string", "description": "VAT category code (BT-118), UNTDID 5305."},
                                 "taxableAmount": {"type": "number", "description": "VAT category taxable amount (BT-116)."},
                                 "taxAmount": {"type": "number", "description": "VAT category tax amount (BT-117)."},
-                                "rate": {"type": "number", "nullable": true, "description": "VAT category rate (BT-119); absent only for category 'O' (not subject to VAT)."}
+                                "rate": {"type": "number", "nullable": true, "description": "VAT category rate (BT-119); absent only for category 'O' (not subject to VAT)."},
+                                "exemptionReasonCode": {"type": "string", "nullable": true, "description": "VAT exemption reason code (BT-121); present for exempt/reverse-charge/export/intra-community/not-subject, absent for Standard/Zero rated."},
+                                "exemptionReasonText": {"type": "string", "nullable": true, "description": "VAT exemption reason text (BT-120)."}
                             }
                         }
+                    },
+                    "allowances": {
+                        "type": "array",
+                        "nullable": true,
+                        "description": "EN 16931 document-level allowances (BG-20); each carries amount (BT-92), baseAmount (BT-93), vatCategory (BT-95) and a reasonText (BT-97) or reasonCode (BT-98).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "amount": {"type": "number", "description": "Document level allowance amount (BT-92)."},
+                                "baseAmount": {"type": "number", "nullable": true, "description": "Document level allowance base amount (BT-93)."},
+                                "vatCategory": {"type": "string", "description": "Document level allowance VAT category code (BT-95)."},
+                                "reasonText": {"type": "string", "nullable": true, "description": "Document level allowance reason (BT-97)."},
+                                "reasonCode": {"type": "string", "nullable": true, "description": "Document level allowance reason code (BT-98)."}
+                            }
+                        }
+                    },
+                    "charges": {
+                        "type": "array",
+                        "nullable": true,
+                        "description": "EN 16931 document-level charges (BG-21); each carries amount (BT-99), baseAmount (BT-100), vatCategory (BT-102) and a reasonText (BT-104) or reasonCode (BT-105).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "amount": {"type": "number", "description": "Document level charge amount (BT-99)."},
+                                "baseAmount": {"type": "number", "nullable": true, "description": "Document level charge base amount (BT-100)."},
+                                "vatCategory": {"type": "string", "description": "Document level charge VAT category code (BT-102)."},
+                                "reasonText": {"type": "string", "nullable": true, "description": "Document level charge reason (BT-104)."},
+                                "reasonCode": {"type": "string", "nullable": true, "description": "Document level charge reason code (BT-105)."}
+                            }
+                        }
+                    },
+                    "allowancesTotal": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Sum of allowances on document level (BT-107) = Σ allowances[].amount."
+                    },
+                    "chargesTotal": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Sum of charges on document level (BT-108) = Σ charges[].amount."
                     },
                     "lineNetTotal": {
                         "type": "number",
