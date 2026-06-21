@@ -122,6 +122,24 @@ final class RuleEngine
                 // VAT Directive art. 226(8)/(9): taxable amount per rate + the rate applied.
                 'vatdir-art226-8'                 => static fn(array $o): bool => self::allBreakdownNumeric($o, 'taxableAmount'),
                 'vatdir-art226-9'                 => static fn(array $o): bool => self::allBreakdownRated($o),
+
+                // --- EN 16931 per-VAT-category breakdown consistency (BG-23 keyed by BT-118). ---
+                // *-08: category taxable amount = Σ line net of that category. *-09: tax amount
+                // is taxable × rate for Standard-rated and zero for the exempt/zero-rated families.
+                'en16931-br-s-08'                 => static fn(array $o): bool => self::categoryTaxableOk($o, 'S'),
+                'en16931-br-s-09'                 => static fn(array $o): bool => self::categoryTaxOk($o, 'S', false),
+                'en16931-br-z-08'                 => static fn(array $o): bool => self::categoryTaxableOk($o, 'Z'),
+                'en16931-br-z-09'                 => static fn(array $o): bool => self::categoryTaxOk($o, 'Z', true),
+                'en16931-br-e-08'                 => static fn(array $o): bool => self::categoryTaxableOk($o, 'E'),
+                'en16931-br-e-09'                 => static fn(array $o): bool => self::categoryTaxOk($o, 'E', true),
+                'en16931-br-ae-08'                => static fn(array $o): bool => self::categoryTaxableOk($o, 'AE'),
+                'en16931-br-ae-09'                => static fn(array $o): bool => self::categoryTaxOk($o, 'AE', true),
+                'en16931-br-o-08'                 => static fn(array $o): bool => self::categoryTaxableOk($o, 'O'),
+                'en16931-br-o-09'                 => static fn(array $o): bool => self::categoryTaxOk($o, 'O', true),
+                'en16931-br-g-08'                 => static fn(array $o): bool => self::categoryTaxableOk($o, 'G'),
+                'en16931-br-g-09'                 => static fn(array $o): bool => self::categoryTaxOk($o, 'G', true),
+                'en16931-br-ic-08'                => static fn(array $o): bool => self::categoryTaxableOk($o, 'K'),
+                'en16931-br-ic-09'                => static fn(array $o): bool => self::categoryTaxOk($o, 'K', true),
             ],
             'APTransaction' => [
                 // Purchase (received) invoices: the same EN 16931 / VAT Directive
@@ -726,6 +744,77 @@ final class RuleEngine
         return true;
 
     }//end breakdownTaxConsistent()
+
+    /**
+     * For every VAT breakdown of category $cat, its taxable amount (BT-116) equals
+     * the Σ of the line net amounts categorised with that code (EN 16931 BR-*-08).
+     * Vacuously true when no breakdown of that category is present.
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $cat The UNTDID 5305 category code.
+     *
+     * @return bool
+     */
+    private static function categoryTaxableOk(array $o, string $cat): bool
+    {
+        foreach (self::vatBreakdown($o) as $group) {
+            if ((string) ($group['category'] ?? '') !== $cat) {
+                continue;
+            }
+
+            $lineCents = 0;
+            foreach (self::lines($o) as $line) {
+                if ((string) ($line['vatCategory'] ?? '') === $cat) {
+                    $lineCents += (int) round(((float) ($line['netAmount'] ?? 0)) * 100);
+                }
+            }
+
+            if ((int) round(((float) ($group['taxableAmount'] ?? 0)) * 100) !== $lineCents) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end categoryTaxableOk()
+
+    /**
+     * For every VAT breakdown of category $cat, its tax amount (BT-117) is correct
+     * (EN 16931 BR-*-09): zero for the exempt / zero-rated / reverse-charge / not-
+     * subject / export / intra-community families, or taxable × rate for Standard
+     * rated. Vacuously true when no breakdown of that category is present.
+     *
+     * @param array<string, mixed> $o    The ARInvoice.
+     * @param string               $cat  The UNTDID 5305 category code.
+     * @param bool                 $zero Whether the tax amount must be zero.
+     *
+     * @return bool
+     */
+    private static function categoryTaxOk(array $o, string $cat, bool $zero): bool
+    {
+        foreach (self::vatBreakdown($o) as $group) {
+            if ((string) ($group['category'] ?? '') !== $cat) {
+                continue;
+            }
+
+            $taxCents = (int) round(((float) ($group['taxAmount'] ?? 0)) * 100);
+            if ($zero === true) {
+                if ($taxCents !== 0) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            $expected = (((float) ($group['taxableAmount'] ?? 0)) * (((float) ($group['rate'] ?? 0)) / 100));
+            if (self::centsEqual((float) ($group['taxAmount'] ?? 0), $expected) === false) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end categoryTaxOk()
 
     /**
      * Build the id => rule index from RuleCatalogue (memoised).
