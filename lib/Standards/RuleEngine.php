@@ -101,6 +101,8 @@ final class RuleEngine
                 'gl-sequential-journal-numbering' => static fn(array $o): bool => self::present($o, 'transactionNumber'),
                 // Recorded with a posting date (chronological order / timeliness).
                 'gl-chronological-order'          => static fn(array $o): bool => self::present($o, 'postingDate'),
+                // Every journal entry must balance: total debits = total credits.
+                'ledger-double-entry-balance'     => static fn(array $o): bool => self::glBalanced($o),
                 // Each entry traceable to a source document (Belegfunktion / GoBD).
                 'gl-source-document-traceability' => static fn(array $o): bool => self::present($o, 'sourceReference'),
             ],
@@ -355,6 +357,44 @@ final class RuleEngine
         return true;
 
     }//end glComplete()
+
+
+    /**
+     * A GL transaction is "balanced" when the sum of its debit-side line amounts
+     * equals the sum of its credit-side line amounts (to the cent). Mirrors the
+     * runtime BalanceGuard, expressed here as a corpus-sourced engine check so the
+     * audit attributes it to rule `ledger-double-entry-balance`. A transaction
+     * with no lines is treated as not-yet-balanced (fail-closed).
+     *
+     * @param array<string, mixed> $o The GL transaction, with `lines`.
+     *
+     * @return bool
+     */
+    private static function glBalanced(array $o): bool
+    {
+        $lines = ($o['lines'] ?? []);
+        if (is_array($lines) === false || $lines === []) {
+            return false;
+        }
+
+        $debit  = 0;
+        $credit = 0;
+        foreach ($lines as $line) {
+            if (is_array($line) === false) {
+                return false;
+            }
+
+            $cents = (int) round(((float) ($line['amount'] ?? 0)) * 100);
+            if (($line['side'] ?? '') === 'debit') {
+                $debit += $cents;
+            } else if (($line['side'] ?? '') === 'credit') {
+                $credit += $cents;
+            }
+        }
+
+        return $debit === $credit;
+
+    }//end glBalanced()
 
 
     /**

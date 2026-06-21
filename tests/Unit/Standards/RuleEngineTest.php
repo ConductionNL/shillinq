@@ -38,6 +38,7 @@ class RuleEngineTest extends TestCase
         $invoice = [
             'invoiceNumber' => '2026-001',
             'invoiceDate'   => '2026-06-21',
+            'customerId'    => 'CUST-1',
             'currency'      => 'EUR',
             'netAmount'     => 100.00,
             'vatAmount'     => 21.00,
@@ -86,6 +87,8 @@ class RuleEngineTest extends TestCase
     {
         $ok = [
             'transactionNumber' => 'J-100',
+            'postingDate'       => '2026-06-21',
+            'sourceReference'   => 'DOC-J-100',
             'lines'             => [
                 ['accountNumber' => '8000', 'amount' => 100, 'side' => 'credit'],
                 ['accountNumber' => '1300', 'amount' => 100, 'side' => 'debit'],
@@ -97,6 +100,19 @@ class RuleEngineTest extends TestCase
         $ids = array_map(static fn(Violation $v): string => $v->ruleId, RuleEngine::evaluate('GLTransaction', $bad));
         $this->assertContains('gl-completeness-timeliness', $ids);
         $this->assertContains('gl-sequential-journal-numbering', $ids);
+
+        // Lines present and sided but debits ≠ credits → double-entry balance flagged.
+        $unbalanced = [
+            'transactionNumber' => 'J-200',
+            'postingDate'       => '2026-06-21',
+            'sourceReference'   => 'DOC-J-200',
+            'lines'             => [
+                ['accountNumber' => '8000', 'amount' => 100, 'side' => 'credit'],
+                ['accountNumber' => '1300', 'amount' => 90, 'side' => 'debit'],
+            ],
+        ];
+        $unbalancedIds = array_map(static fn(Violation $v): string => $v->ruleId, RuleEngine::evaluate('GLTransaction', $unbalanced));
+        $this->assertContains('ledger-double-entry-balance', $unbalancedIds, 'debits ≠ credits must flag the balance rule');
 
     }//end testGlTransactionCompleteness()
 
