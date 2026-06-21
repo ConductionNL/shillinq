@@ -124,6 +124,33 @@ class RuleEngineTest extends TestCase
 
 
     /**
+     * Currency-format and decimal-limit checks flag bad data and pass good data.
+     *
+     * @return void
+     */
+    public function testCurrencyAndDecimalChecks(): void
+    {
+        $base = [
+            'invoiceNumber' => '1', 'invoiceDate' => '2026-06-21', 'customerId' => 'c1',
+            'netAmount' => 100.00, 'vatAmount' => 21.00, 'grossAmount' => 121.00,
+        ];
+
+        // Bad currency (not ISO) + sub-cent amount → violations.
+        $bad = array_merge($base, ['currency' => 'euro', 'grossAmount' => 121.005, 'netAmount' => 100.005]);
+        $ids = array_map(static fn(Violation $v): string => $v->ruleId, RuleEngine::evaluate('ARInvoice', $bad));
+        $this->assertContains('en16931-br-cl-03', $ids, 'non-ISO currency flagged');
+        $this->assertContains('en16931-br-dec-14', $ids, 'sub-cent total flagged');
+
+        // Clean data → none of these fire.
+        $good = array_merge($base, ['currency' => 'EUR']);
+        $goodIds = array_map(static fn(Violation $v): string => $v->ruleId, RuleEngine::evaluate('ARInvoice', $good));
+        $this->assertNotContains('en16931-br-cl-03', $goodIds);
+        $this->assertNotContains('en16931-br-dec-14', $goodIds);
+
+    }//end testCurrencyAndDecimalChecks()
+
+
+    /**
      * violationFor() hydrates severity + source from the catalogue.
      *
      * @return void

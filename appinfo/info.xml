@@ -160,5 +160,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <!-- Audit the register's bookkeeping objects against the machine-checkable
              rule corpus (lib/Standards/RuleCatalogue + RuleEngine). Read-only. -->
         <command>OCA\Shillinq\Command\RulesAuditCommand</command>
+        <!-- Idempotently backfill local TEST data to satisfy the enforced rules
+             (sourceReference + balanced lines on every GL transaction). Test/dev. -->
+        <command>OCA\Shillinq\Command\RulesSeedTestDataCommand</command>
     </commands>
 </info>

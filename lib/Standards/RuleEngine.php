@@ -76,6 +76,12 @@ final class RuleEngine
                 'en16931-br-07'                   => static fn(array $o): bool => self::present($o, 'customerId'),
                 // The VAT amount payable must be stated (VAT Directive art. 226(10)).
                 'vatdir-art226-10'                => static fn(array $o): bool => self::numericPresent($o, 'vatAmount'),
+                // Currency must be a valid ISO 4217 code (EN 16931 BR-CL-03).
+                'en16931-br-cl-03'                => static fn(array $o): bool => self::isIsoCurrency((string) ($o['currency'] ?? '')),
+                // Totals must not exceed 2 decimals (EN 16931 BR-DEC-12/13/14).
+                'en16931-br-dec-12'               => static fn(array $o): bool => self::maxDecimals($o['netAmount'] ?? null, 2),
+                'en16931-br-dec-13'               => static fn(array $o): bool => self::maxDecimals($o['vatAmount'] ?? null, 2),
+                'en16931-br-dec-14'               => static fn(array $o): bool => self::maxDecimals($o['grossAmount'] ?? null, 2),
             ],
             'GLTransaction' => [
                 // Completeness: a real double entry — at least two lines, each with an account and a non-zero, sided amount.
@@ -273,6 +279,37 @@ final class RuleEngine
         return (int) round($a * 100) === (int) round($b * 100);
 
     }//end centsEqual()
+
+
+    /**
+     * @param string $code A currency code.
+     *
+     * @return bool True when it is a 3-letter ISO 4217-shaped code.
+     */
+    private static function isIsoCurrency(string $code): bool
+    {
+        return preg_match('/^[A-Z]{3}$/', $code) === 1;
+
+    }//end isIsoCurrency()
+
+
+    /**
+     * @param mixed $value Amount.
+     * @param int   $max   Maximum decimal places allowed.
+     *
+     * @return bool True when absent/non-numeric (presence enforced elsewhere) or
+     *              the value has at most $max decimals (float-tolerant).
+     */
+    private static function maxDecimals(mixed $value, int $max): bool
+    {
+        if (is_numeric($value) === false) {
+            return true;
+        }
+
+        $scaled = ((float) $value) * (10 ** $max);
+        return abs($scaled - round($scaled)) < 1e-6;
+
+    }//end maxDecimals()
 
 
     /**

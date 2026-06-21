@@ -1,0 +1,197 @@
+<?php
+
+/**
+ * Rule Test-Data Seeder
+ *
+ * Idempotently backfills the local TEST data so it satisfies the enforced
+ * machine-checkable rules — every GLTransaction gets a `sourceReference`
+ * (Belegfunktion) and at least two balanced GLLines (double-entry completeness).
+ * Run after a clean-env reset so a fresh environment starts 100%-compliant in
+ * `occ shillinq:rules:audit`.
+ *
+ * This is a TEST/DEV utility only: it writes with RBAC bypassed and as an admin
+ * user to reach seeded objects' folders. No runtime path uses it; it exists so
+ * the compliant-test-data state is reproducible rather than a one-off live edit.
+ *
+ * @category Service
+ * @package  OCA\Shillinq\Service
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/changes/bookkeeping-rule-testdata-seed/specs/bookkeeping-rule-engine/spec.md
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Service;
+
+use OCA\Shillinq\AppInfo\Application;
+use OCP\IAppConfig;
+use OCP\IGroupManager;
+use OCP\IUser;
+use OCP\IUserManager;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Makes the local test data compliant with the enforced rules (idempotent).
+ */
+class RuleTestDataSeeder
+{
+
+    /**
+     * @param ContainerInterface $container    DI container for lazy ObjectService resolution.
+     * @param IAppConfig         $appConfig    App config for the register slug.
+     * @param IUserManager       $userManager  To resolve an admin user for updates.
+     * @param IGroupManager      $groupManager To find an admin user.
+     * @param LoggerInterface    $logger       Logger.
+     */
+    public function __construct(
+        private readonly ContainerInterface $container,
+        private readonly IAppConfig $appConfig,
+        private readonly IUserManager $userManager,
+        private readonly IGroupManager $groupManager,
+        private readonly LoggerInterface $logger,
+    ) {
+
+    }//end __construct()
+
+
+    /**
+     * Backfill GL transactions to satisfy the enforced ledger rules.
+     *
+     * @return array<string, int> Counts: sourceReferencesAdded, linesAdded, alreadyCompliant.
+     */
+    public function seed(): array
+    {
+        $register = $this->register();
+        $admin    = $this->adminUser();
+        $os       = $this->objectService();
+
+        $transactions      = $os->setRegister($register)->setSchema('GLTransaction')->findAll(['limit' => 10000]);
+        $srcAdded          = 0;
+        $linesAdded        = 0;
+        $alreadyCompliant  = 0;
+
+        foreach ($transactions as $transaction) {
+            $tx = is_array($transaction) === true ? $transaction : $transaction->jsonSerialize();
+            $id  = (string) ($tx['id'] ?? $tx['@self']['id'] ?? '');
+            $num = (string) ($tx['transactionNumber'] ?? '');
+            $changed = false;
+
+            if (trim((string) ($tx['sourceReference'] ?? '')) === '') {
+                unset($tx['@self']);
+                $tx['sourceReference'] = 'DOC-'.($num !== '' ? $num : substr($id, 0, 8));
+                try {
+                    $os->saveObject(object: $tx, register: $register, schema: 'GLTransaction', uuid: $id, _rbac: false, _multitenancy: false, currentUser: $admin);
+                    $srcAdded++;
+                    $changed = true;
+                } catch (\Throwable $e) {
+                    $this->logger->warning('RuleTestDataSeeder: sourceReference update failed for '.$id.': '.$e->getMessage());
+                }
+            }
+
+            if ($this->lineCount($register, $id, $num) < 2) {
+                $key      = $num !== '' ? $num : $id;
+                $currency = (string) ($tx['currency'] ?? 'EUR');
+                foreach ([['1000', 'debit'], ['8000', 'credit']] as $i => $spec) {
+                    $line = [
+                        'transactionId' => $key,
+                        'lineNumber'    => ($i + 1),
+                        'accountNumber' => $spec[0],
+                        'side'          => $spec[1],
+                        'amount'        => 100.00,
+                        'currency'      => $currency,
+                        'description'   => 'rules test-data seeder',
+                    ];
+                    try {
+                        $os->saveObject(object: $line, register: $register, schema: 'GLLine', _rbac: false, _multitenancy: false, currentUser: $admin);
+                        $linesAdded++;
+                        $changed = true;
+                    } catch (\Throwable $e) {
+                        $this->logger->warning('RuleTestDataSeeder: GLLine create failed for '.$key.': '.$e->getMessage());
+                    }
+                }
+            }
+
+            if ($changed === false) {
+                $alreadyCompliant++;
+            }
+        }//end foreach
+
+        return [
+            'sourceReferencesAdded' => $srcAdded,
+            'linesAdded'            => $linesAdded,
+            'alreadyCompliant'      => $alreadyCompliant,
+        ];
+
+    }//end seed()
+
+
+    /**
+     * @param string $register Register slug.
+     * @param string $id       Transaction OR id.
+     * @param string $num      Transaction number.
+     *
+     * @return int Number of GLLines linked by either key.
+     */
+    private function lineCount(string $register, string $id, string $num): int
+    {
+        $os = $this->objectService();
+        foreach (array_values(array_unique(array_filter([$id, $num]))) as $key) {
+            $rows = $os->setRegister($register)->setSchema('GLLine')->findAll(['filters' => ['transactionId' => $key]]);
+            if (is_array($rows) === true && count($rows) >= 2) {
+                return count($rows);
+            }
+        }
+
+        return 0;
+
+    }//end lineCount()
+
+
+    /**
+     * Resolve an admin user (needed to update seeded objects' folders), or null.
+     *
+     * @return IUser|null
+     */
+    private function adminUser(): ?IUser
+    {
+        $admins = $this->groupManager->get('admin');
+        if ($admins !== null) {
+            foreach ($admins->getUsers() as $user) {
+                return $user;
+            }
+        }
+
+        return $this->userManager->get('admin');
+
+    }//end adminUser()
+
+
+    /**
+     * @return mixed The OpenRegister ObjectService.
+     */
+    private function objectService(): mixed
+    {
+        return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+
+    }//end objectService()
+
+
+    /**
+     * @return string The configured register slug.
+     */
+    private function register(): string
+    {
+        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+        return $register === '' ? 'shillinq' : $register;
+
+    }//end register()
+
+
+}//end class
