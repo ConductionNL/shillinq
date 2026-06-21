@@ -274,6 +274,19 @@ import FinancialDashboardActions from './components/dashboard/financial/Financia
 // modal-isolated under src/modals/ (hydra gate-13).
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
 
+// reporting-compliance-consolidation: the Reporting & Compliance section is
+// two custom pages. The overview renders the static ReportCatalogue
+// (lib/Reporting/ReportCatalogue.php) as category-grouped cards with a
+// per-card format picker and an isolated GenerateReportDialog that POSTs
+// /api/reporting/generate — none of which the declarative dashboard/index
+// page types can author. The generated-reports index renders the persisted
+// GeneratedReport records with a per-row download link + a three-facet
+// filter row that does not fit the built-in `index` page type. Both are
+// kind:"page" custom components per ADR-024 / ADR-036; the manifest
+// fragment src/manifest.d/reporting-compliance.json declares the routes.
+import ReportingComplianceOverview from './components/reporting/ReportingComplianceOverview.vue'
+import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.vue'
+
 export default {
 	RecurringInvoiceProfileModal: { kind: 'modal', component: RecurringInvoiceProfileModal },
 
@@ -352,4 +365,8 @@ export default {
 	// Create invoice / Import bank) registered as kind:"widget" so the manifest
 	// actionsComponent field resolves to this entry via CnPageRenderer.
 	FinancialDashboardActions: { kind: 'widget', component: FinancialDashboardActions },
+
+	// reporting-compliance-consolidation: Reporting & Compliance pages.
+	ReportingComplianceOverview: { kind: 'page', component: ReportingComplianceOverview },
+	GeneratedReportsIndex: { kind: 'page', component: GeneratedReportsIndex },
 }

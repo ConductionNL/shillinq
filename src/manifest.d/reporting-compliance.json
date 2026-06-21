@@ -1,0 +1,58 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "reporting-compliance-consolidation",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Reporting & Compliance consolidation: two custom pages under the existing top-level 'Compliance' group (label 'Reporting & Compliance', defined in the base manifest). The overview page renders the static ReportCatalogue as category-grouped cards with a per-card format picker + a Generate dialog that POSTs /api/reporting/generate; the generated-reports index lists the persisted GeneratedReport records with a download link. Both are type=custom (kind:page in src/registry.js) because neither the category-grouped card grid + generate dialog nor the download-link cell + three-facet filter row fits a built-in dashboard/index page type (ADR-024 / ADR-036). The menu leaves are merged into the existing 'Compliance' group by id (per mergeMenuItems in main.js); the stranded report leaves scattered across Belastingen / Bookkeeping / PublicSector / Purchasing are re-homed into this same group via src/menu-layout.json#relocations."
+	},
+	"menu": [
+		{
+			"id": "Compliance",
+			"children": [
+				{
+					"id": "ReportingComplianceOverview",
+					"label": "Rapportages",
+					"icon": "FileChartOutline",
+					"route": "ReportingComplianceOverview",
+					"order": 5
+				},
+				{
+					"id": "GeneratedReportsIndex",
+					"label": "Gegenereerde rapportages",
+					"icon": "FileDownloadOutline",
+					"route": "GeneratedReportsIndex",
+					"order": 6
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ReportingComplianceOverview",
+			"route": "/reporting-compliance",
+			"type": "custom",
+			"title": "Reporting & Compliance",
+			"icon": "FileChartOutline",
+			"component": "ReportingComplianceOverview",
+			"group": "Compliance",
+			"config": {
+				"register": "shillinq"
+			}
+		},
+		{
+			"id": "GeneratedReportsIndex",
+			"route": "/reporting-compliance/generated",
+			"type": "custom",
+			"title": "Generated reports",
+			"icon": "FileDownloadOutline",
+			"component": "GeneratedReportsIndex",
+			"group": "Compliance",
+			"config": {
+				"register": "shillinq",
+				"schema": "GeneratedReport",
+				"indexRoute": "ReportingComplianceOverview"
+			}
+		}
+	]
+}

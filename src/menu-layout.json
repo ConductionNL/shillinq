@@ -100,7 +100,15 @@
 		"Projecten": "Payroll",
 		"UitgesteldeBelastingen": "Belastingen",
 		"ENSIA": "Compliance",
-		"DBA": "Compliance"
+		"DBA": "Compliance",
+		"BtwAangiften": "Compliance",
+		"VATByPeriod": "Compliance",
+		"IcpOpgaaf": "Compliance",
+		"BtwCorrecties": "Compliance",
+		"IbAangiftenZzp": "Compliance",
+		"VpbReports": "Compliance",
+		"VpbBalansAangifte": "Compliance",
+		"Iv3Rapportages": "Compliance"
 	},
 	"removals": [
 		"BookkeepingSigningTrail",

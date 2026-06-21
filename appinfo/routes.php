@@ -499,4 +499,19 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         // placeholder selects mollie / stripe. Declared before the SPA catch-all so
         // Symfony matches it first per ADR-016.
         ['name' => 'paymentRequestWebhook#handle', 'url' => '/api/v1/payment-requests/webhook/{gateway}', 'verb' => 'POST'],
+
+        // Reporting & Compliance consolidation (reporting-compliance-consolidation).
+        // The HTTP surface behind the unified "Reporting & Compliance" section:
+        // types() returns the static report catalogue grouped by category (overview
+        // cards); generate() renders a chosen report and stores + tags + records it
+        // via ReportGenerationService; generated() lists the recorded GeneratedReport
+        // objects; download({id}) streams a stored report file. Every endpoint is
+        // #[NoAdminRequired] with an explicit anonymous-rejection guard in the
+        // controller (ADR-005); file access is scoped to the caller's Files home.
+        // Static segments precede the {id} wildcard, and all are declared before the
+        // SPA catch-all so Symfony matches them first per ADR-016.
+        ['name' => 'reporting#types', 'url' => '/api/reporting/types', 'verb' => 'GET'],
+        ['name' => 'reporting#generate', 'url' => '/api/reporting/generate', 'verb' => 'POST'],
+        ['name' => 'reporting#generated', 'url' => '/api/reporting/generated', 'verb' => 'GET'],
+        ['name' => 'reporting#download', 'url' => '/api/reporting/download/{id}', 'verb' => 'GET'],
 ]);
