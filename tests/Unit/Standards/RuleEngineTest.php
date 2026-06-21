@@ -35,7 +35,19 @@ class RuleEngineTest extends TestCase
      */
     public function testCompliantInvoiceHasNoViolations(): void
     {
-        $invoice = [
+        $this->assertSame([], RuleEngine::evaluate('ARInvoice', self::compliantInvoice()));
+
+    }//end testCompliantInvoiceHasNoViolations()
+
+
+    /**
+     * A fully EN 16931-compliant invoice fixture (header + lines + VAT breakdown).
+     *
+     * @return array<string, mixed>
+     */
+    private static function compliantInvoice(): array
+    {
+        return [
             'invoiceNumber' => '2026-001',
             'invoiceDate'   => '2026-06-21',
             'customerId'    => 'CUST-1',
@@ -43,11 +55,53 @@ class RuleEngineTest extends TestCase
             'netAmount'     => 100.00,
             'vatAmount'     => 21.00,
             'grossAmount'   => 121.00,
+            'lineNetTotal'  => 100.00,
+            'invoiceLines'  => [
+                [
+                    'lineId'      => '1',
+                    'quantity'    => 1,
+                    'unitCode'    => 'C62',
+                    'netAmount'   => 100.00,
+                    'itemName'    => 'Consultancy',
+                    'netPrice'    => 100.00,
+                    'vatCategory' => 'S',
+                ],
+            ],
+            'vatBreakdown'  => [
+                ['category' => 'S', 'taxableAmount' => 100.00, 'taxAmount' => 21.00, 'rate' => 21],
+            ],
         ];
 
-        $this->assertSame([], RuleEngine::evaluate('ARInvoice', $invoice));
+    }//end compliantInvoice()
 
-    }//end testCompliantInvoiceHasNoViolations()
+
+    /**
+     * Line-level and VAT-breakdown rules flag a structurally broken invoice and
+     * pass a complete one.
+     *
+     * @return void
+     */
+    public function testInvoiceLineAndVatBreakdownRules(): void
+    {
+        // Missing line id + unit, and a VAT breakdown whose tax amount does not
+        // equal taxable × rate → BR-21 / BR-23 / BR-CO-17 must fire.
+        $broken = self::compliantInvoice();
+        unset($broken['invoiceLines'][0]['lineId'], $broken['invoiceLines'][0]['unitCode']);
+        $broken['vatBreakdown'][0]['taxAmount'] = 19.00;
+
+        $ids = array_map(static fn(Violation $v): string => $v->ruleId, RuleEngine::evaluate('ARInvoice', $broken));
+        $this->assertContains('en16931-br-21', $ids, 'missing invoice line identifier');
+        $this->assertContains('en16931-br-23', $ids, 'missing invoiced quantity unit');
+        $this->assertContains('en16931-br-co-17', $ids, 'VAT breakdown tax ≠ taxable × rate');
+
+        // An invoice with no lines at all fails the line-presence group (BR-16).
+        $headerOnly = self::compliantInvoice();
+        unset($headerOnly['invoiceLines'], $headerOnly['vatBreakdown'], $headerOnly['lineNetTotal']);
+        $headerIds = array_map(static fn(Violation $v): string => $v->ruleId, RuleEngine::evaluate('ARInvoice', $headerOnly));
+        $this->assertContains('en16931-br-16', $headerIds, 'an invoice must have at least one line');
+        $this->assertContains('en16931-br-co-18', $headerIds, 'an invoice must have a VAT breakdown');
+
+    }//end testInvoiceLineAndVatBreakdownRules()
 
 
     /**

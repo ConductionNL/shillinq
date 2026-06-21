@@ -46,7 +46,6 @@ final class RuleEngine
      */
     private static ?array $index = null;
 
-
     /**
      * The registered predicates, keyed by object type then rule id. Each
      * predicate is `fn(array $object, array $context): bool` — true = the rule is
@@ -57,7 +56,7 @@ final class RuleEngine
     private static function checks(): array
     {
         return [
-            'ARInvoice' => [
+            'ARInvoice'     => [
                 // EN 16931 mandatory invoice fields (BT-1/2/5/109/112) mapped to the ARInvoice header.
                 'en16931-br-02'                   => static fn(array $o): bool => self::present($o, 'invoiceNumber'),
                 'en16931-br-03'                   => static fn(array $o): bool => self::present($o, 'invoiceDate'),
@@ -82,6 +81,47 @@ final class RuleEngine
                 'en16931-br-dec-12'               => static fn(array $o): bool => self::maxDecimals($o['netAmount'] ?? null, 2),
                 'en16931-br-dec-13'               => static fn(array $o): bool => self::maxDecimals($o['vatAmount'] ?? null, 2),
                 'en16931-br-dec-14'               => static fn(array $o): bool => self::maxDecimals($o['grossAmount'] ?? null, 2),
+
+                // --- EN 16931 invoice-line group (BG-25), enforced against the modeled `invoiceLines[]`. ---
+                'en16931-br-16'                   => static fn(array $o): bool => self::lines($o) !== [],
+                'en16931-br-21'                   => static fn(array $o): bool => self::allLinesPresent($o, 'lineId'),
+                'en16931-br-22'                   => static fn(array $o): bool => self::allLinesNumeric($o, 'quantity'),
+                'en16931-br-23'                   => static fn(array $o): bool => self::allLinesPresent($o, 'unitCode'),
+                'en16931-br-24'                   => static fn(array $o): bool => self::allLinesNumeric($o, 'netAmount'),
+                'en16931-br-25'                   => static fn(array $o): bool => self::allLinesPresent($o, 'itemName'),
+                'en16931-br-26'                   => static fn(array $o): bool => self::allLinesNumeric($o, 'netPrice'),
+                'en16931-br-co-04'                => static fn(array $o): bool => self::allLinesVatCategorized($o),
+                'en16931-br-dec-23'               => static fn(array $o): bool => self::allLinesMaxDecimals($o, 'netAmount', 2),
+
+                // --- Document totals derived from the lines (BT-106 / BT-109). ---
+                'en16931-br-12'                   => static fn(array $o): bool => self::numericPresent($o, 'lineNetTotal'),
+                'en16931-br-dec-09'               => static fn(array $o): bool => self::maxDecimals($o['lineNetTotal'] ?? null, 2),
+                'en16931-br-co-10'                => static fn(array $o): bool => self::centsEqual(
+                    (float) ($o['lineNetTotal'] ?? 0),
+                    self::sumLineNet($o)
+                ),
+                'en16931-br-co-13'                => static fn(array $o): bool => self::centsEqual(
+                    (float) ($o['netAmount'] ?? 0),
+                    (float) ($o['lineNetTotal'] ?? 0)
+                ),
+
+                // --- EN 16931 VAT breakdown group (BG-23), enforced against the modeled `vatBreakdown[]`. ---
+                'en16931-br-co-18'                => static fn(array $o): bool => self::vatBreakdown($o) !== [],
+                'en16931-br-45'                   => static fn(array $o): bool => self::allBreakdownNumeric($o, 'taxableAmount'),
+                'en16931-br-46'                   => static fn(array $o): bool => self::allBreakdownNumeric($o, 'taxAmount'),
+                'en16931-br-47'                   => static fn(array $o): bool => self::allBreakdownPresent($o, 'category'),
+                'en16931-br-48'                   => static fn(array $o): bool => self::allBreakdownRated($o),
+                'en16931-br-dec-19'               => static fn(array $o): bool => self::allBreakdownMaxDecimals($o, 'taxableAmount', 2),
+                'en16931-br-dec-20'               => static fn(array $o): bool => self::allBreakdownMaxDecimals($o, 'taxAmount', 2),
+                'en16931-br-co-14'                => static fn(array $o): bool => self::centsEqual(
+                    (float) ($o['vatAmount'] ?? 0),
+                    self::sumBreakdownTax($o)
+                ),
+                'en16931-br-co-17'                => static fn(array $o): bool => self::breakdownTaxConsistent($o),
+
+                // VAT Directive art. 226(8)/(9): taxable amount per rate + the rate applied.
+                'vatdir-art226-8'                 => static fn(array $o): bool => self::allBreakdownNumeric($o, 'taxableAmount'),
+                'vatdir-art226-9'                 => static fn(array $o): bool => self::allBreakdownRated($o),
             ],
             'APTransaction' => [
                 // Purchase (received) invoices: the same EN 16931 / VAT Directive
@@ -109,7 +149,6 @@ final class RuleEngine
         ];
 
     }//end checks()
-
 
     /**
      * Evaluate an object of $objectType against its applicable machine-checkable
@@ -148,7 +187,6 @@ final class RuleEngine
 
     }//end evaluate()
 
-
     /**
      * True when any violation is `mandatory` (i.e. a lifecycle guard must block).
      *
@@ -167,7 +205,6 @@ final class RuleEngine
         return false;
 
     }//end hasMandatory()
-
 
     /**
      * Build a Violation for a rule id from the catalogue (severity/source/text).
@@ -188,7 +225,6 @@ final class RuleEngine
 
     }//end violationFor()
 
-
     /**
      * Object types that have at least one registered executable check.
      *
@@ -199,7 +235,6 @@ final class RuleEngine
         return array_keys(self::checks());
 
     }//end supportedTypes()
-
 
     /**
      * All catalogue rule ids that have a registered executable check (across all
@@ -220,7 +255,6 @@ final class RuleEngine
 
     }//end checkedRuleIds()
 
-
     /**
      * Reset the memoised index (test hook).
      *
@@ -231,7 +265,6 @@ final class RuleEngine
         self::$index = null;
 
     }//end reset()
-
 
     /**
      * Whether a rule applies to the context jurisdiction: its own country, plus
@@ -255,8 +288,9 @@ final class RuleEngine
 
     }//end applies()
 
-
     /**
+     * True when an object field holds a non-empty value.
+     *
      * @param array<string, mixed> $o   Object.
      * @param string               $key Field.
      *
@@ -268,8 +302,9 @@ final class RuleEngine
 
     }//end present()
 
-
     /**
+     * True when an object field holds a present, numeric value.
+     *
      * @param array<string, mixed> $o   Object.
      * @param string               $key Field.
      *
@@ -281,8 +316,9 @@ final class RuleEngine
 
     }//end numericPresent()
 
-
     /**
+     * Compare two amounts at cent precision.
+     *
      * @param float $a Left amount.
      * @param float $b Right amount.
      *
@@ -294,8 +330,9 @@ final class RuleEngine
 
     }//end centsEqual()
 
-
     /**
+     * True when a string is an ISO 4217-shaped currency code.
+     *
      * @param string $code A currency code.
      *
      * @return bool True when it is a 3-letter ISO 4217-shaped code.
@@ -306,8 +343,9 @@ final class RuleEngine
 
     }//end isIsoCurrency()
 
-
     /**
+     * True when an amount has at most a given number of decimals.
+     *
      * @param mixed $value Amount.
      * @param int   $max   Maximum decimal places allowed.
      *
@@ -324,7 +362,6 @@ final class RuleEngine
         return abs($scaled - round($scaled)) < 1e-6;
 
     }//end maxDecimals()
-
 
     /**
      * A GL transaction is "complete" when it has at least two lines and every
@@ -357,7 +394,6 @@ final class RuleEngine
         return true;
 
     }//end glComplete()
-
 
     /**
      * A GL transaction is "balanced" when the sum of its debit-side line amounts
@@ -396,6 +432,300 @@ final class RuleEngine
 
     }//end glBalanced()
 
+    /**
+     * The invoice lines (EN 16931 BG-25), normalised to a list of arrays.
+     *
+     * @param array<string, mixed> $o The ARInvoice.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private static function lines(array $o): array
+    {
+        $lines = ($o['invoiceLines'] ?? []);
+        if (is_array($lines) === false) {
+            return [];
+        }
+
+        return array_values(array_filter($lines, 'is_array'));
+
+    }//end lines()
+
+    /**
+     * The VAT breakdown groups (EN 16931 BG-23), normalised to a list of arrays.
+     *
+     * @param array<string, mixed> $o The ARInvoice.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private static function vatBreakdown(array $o): array
+    {
+        $vb = ($o['vatBreakdown'] ?? []);
+        if (is_array($vb) === false) {
+            return [];
+        }
+
+        return array_values(array_filter($vb, 'is_array'));
+
+    }//end vatBreakdown()
+
+    /**
+     * Every invoice line carries a non-empty value at $key (fail-closed on no lines).
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $key The line field.
+     *
+     * @return bool
+     */
+    private static function allLinesPresent(array $o, string $key): bool
+    {
+        $lines = self::lines($o);
+        if ($lines === []) {
+            return false;
+        }
+
+        foreach ($lines as $line) {
+            if (trim((string) ($line[$key] ?? '')) === '') {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end allLinesPresent()
+
+    /**
+     * Every invoice line carries a numeric value at $key (fail-closed on no lines).
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $key The line field.
+     *
+     * @return bool
+     */
+    private static function allLinesNumeric(array $o, string $key): bool
+    {
+        $lines = self::lines($o);
+        if ($lines === []) {
+            return false;
+        }
+
+        foreach ($lines as $line) {
+            if (is_numeric(($line[$key] ?? null)) === false) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end allLinesNumeric()
+
+    /**
+     * Every invoice line value at $key respects the decimal limit.
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $key The line field.
+     * @param int                  $max Maximum decimals.
+     *
+     * @return bool
+     */
+    private static function allLinesMaxDecimals(array $o, string $key, int $max): bool
+    {
+        foreach (self::lines($o) as $line) {
+            if (self::maxDecimals(($line[$key] ?? null), $max) === false) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end allLinesMaxDecimals()
+
+    /**
+     * Every invoice line is categorised with a valid UNTDID 5305 VAT category
+     * code (EN 16931 BR-CO-04). Fail-closed on no lines.
+     *
+     * @param array<string, mixed> $o The ARInvoice.
+     *
+     * @return bool
+     */
+    private static function allLinesVatCategorized(array $o): bool
+    {
+        $allowed = ['S', 'Z', 'E', 'AE', 'K', 'G', 'O', 'L', 'M', 'B'];
+        $lines   = self::lines($o);
+        if ($lines === []) {
+            return false;
+        }
+
+        foreach ($lines as $line) {
+            if (in_array((string) ($line['vatCategory'] ?? ''), $allowed, true) === false) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end allLinesVatCategorized()
+
+    /**
+     * Σ of the invoice line net amounts (BT-131), to the cent.
+     *
+     * @param array<string, mixed> $o The ARInvoice.
+     *
+     * @return float
+     */
+    private static function sumLineNet(array $o): float
+    {
+        $cents = 0;
+        foreach (self::lines($o) as $line) {
+            $cents += (int) round(((float) ($line['netAmount'] ?? 0)) * 100);
+        }
+
+        return ($cents / 100);
+
+    }//end sumLineNet()
+
+    /**
+     * Every VAT breakdown carries a non-empty value at $key (fail-closed on none).
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $key The breakdown field.
+     *
+     * @return bool
+     */
+    private static function allBreakdownPresent(array $o, string $key): bool
+    {
+        $vb = self::vatBreakdown($o);
+        if ($vb === []) {
+            return false;
+        }
+
+        foreach ($vb as $group) {
+            if (trim((string) ($group[$key] ?? '')) === '') {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end allBreakdownPresent()
+
+    /**
+     * Every VAT breakdown carries a numeric value at $key (fail-closed on none).
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $key The breakdown field.
+     *
+     * @return bool
+     */
+    private static function allBreakdownNumeric(array $o, string $key): bool
+    {
+        $vb = self::vatBreakdown($o);
+        if ($vb === []) {
+            return false;
+        }
+
+        foreach ($vb as $group) {
+            if (is_numeric(($group[$key] ?? null)) === false) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end allBreakdownNumeric()
+
+    /**
+     * Every VAT breakdown value at $key respects the decimal limit.
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $key The breakdown field.
+     * @param int                  $max Maximum decimals.
+     *
+     * @return bool
+     */
+    private static function allBreakdownMaxDecimals(array $o, string $key, int $max): bool
+    {
+        foreach (self::vatBreakdown($o) as $group) {
+            if (self::maxDecimals(($group[$key] ?? null), $max) === false) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end allBreakdownMaxDecimals()
+
+    /**
+     * Every VAT breakdown has a numeric rate, except category 'O' (not subject to
+     * VAT) which must not carry one (EN 16931 BR-48). Fail-closed on no breakdown.
+     *
+     * @param array<string, mixed> $o The ARInvoice.
+     *
+     * @return bool
+     */
+    private static function allBreakdownRated(array $o): bool
+    {
+        $vb = self::vatBreakdown($o);
+        if ($vb === []) {
+            return false;
+        }
+
+        foreach ($vb as $group) {
+            if ((string) ($group['category'] ?? '') === 'O') {
+                continue;
+            }
+
+            if (is_numeric(($group['rate'] ?? null)) === false) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end allBreakdownRated()
+
+    /**
+     * Σ of the VAT category tax amounts (BT-117), to the cent.
+     *
+     * @param array<string, mixed> $o The ARInvoice.
+     *
+     * @return float
+     */
+    private static function sumBreakdownTax(array $o): float
+    {
+        $cents = 0;
+        foreach (self::vatBreakdown($o) as $group) {
+            $cents += (int) round(((float) ($group['taxAmount'] ?? 0)) * 100);
+        }
+
+        return ($cents / 100);
+
+    }//end sumBreakdownTax()
+
+    /**
+     * Each VAT breakdown's tax amount (BT-117) equals taxable amount (BT-116) ×
+     * rate / 100 (EN 16931 BR-CO-17), to the cent. Fail-closed on no breakdown.
+     *
+     * @param array<string, mixed> $o The ARInvoice.
+     *
+     * @return bool
+     */
+    private static function breakdownTaxConsistent(array $o): bool
+    {
+        $vb = self::vatBreakdown($o);
+        if ($vb === []) {
+            return false;
+        }
+
+        foreach ($vb as $group) {
+            $expected = (((float) ($group['taxableAmount'] ?? 0)) * (((float) ($group['rate'] ?? 0)) / 100));
+            if (self::centsEqual((float) ($group['taxAmount'] ?? 0), $expected) === false) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end breakdownTaxConsistent()
 
     /**
      * Build the id => rule index from RuleCatalogue (memoised).
@@ -417,6 +747,4 @@ final class RuleEngine
         return $index;
 
     }//end index()
-
-
 }//end class

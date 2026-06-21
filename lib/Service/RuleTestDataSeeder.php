@@ -42,7 +42,6 @@ use Psr\Log\LoggerInterface;
  */
 class RuleTestDataSeeder
 {
-
     /**
      * @param ContainerInterface $container    DI container for lazy ObjectService resolution.
      * @param IAppConfig         $appConfig    App config for the register slug.
@@ -60,7 +59,6 @@ class RuleTestDataSeeder
 
     }//end __construct()
 
-
     /**
      * Backfill GL transactions to satisfy the enforced ledger rules.
      *
@@ -72,15 +70,15 @@ class RuleTestDataSeeder
         $admin    = $this->adminUser();
         $os       = $this->objectService();
 
-        $transactions      = $os->setRegister($register)->setSchema('GLTransaction')->findAll(['limit' => 10000]);
-        $srcAdded          = 0;
-        $linesAdded        = 0;
-        $alreadyCompliant  = 0;
+        $transactions     = $os->setRegister($register)->setSchema('GLTransaction')->findAll(['limit' => 10000]);
+        $srcAdded         = 0;
+        $linesAdded       = 0;
+        $alreadyCompliant = 0;
 
         foreach ($transactions as $transaction) {
-            $tx = is_array($transaction) === true ? $transaction : $transaction->jsonSerialize();
-            $id  = (string) ($tx['id'] ?? $tx['@self']['id'] ?? '');
-            $num = (string) ($tx['transactionNumber'] ?? '');
+            $tx      = is_array($transaction) === true ? $transaction : $transaction->jsonSerialize();
+            $id      = (string) ($tx['id'] ?? $tx['@self']['id'] ?? '');
+            $num     = (string) ($tx['transactionNumber'] ?? '');
             $changed = false;
 
             if (trim((string) ($tx['sourceReference'] ?? '')) === '') {
@@ -116,7 +114,7 @@ class RuleTestDataSeeder
                         $this->logger->warning('RuleTestDataSeeder: GLLine create failed for '.$key.': '.$e->getMessage());
                     }
                 }
-            }
+            }//end if
 
             if ($changed === false) {
                 $alreadyCompliant++;
@@ -126,8 +124,8 @@ class RuleTestDataSeeder
         // Purchase invoices: ensure a source-document URI (traceability).
         $purchases = $os->setRegister($register)->setSchema('APTransaction')->findAll(['limit' => 10000]);
         foreach ($purchases as $purchase) {
-            $ap  = is_array($purchase) === true ? $purchase : $purchase->jsonSerialize();
-            $id  = (string) ($ap['id'] ?? $ap['@self']['id'] ?? '');
+            $ap = is_array($purchase) === true ? $purchase : $purchase->jsonSerialize();
+            $id = (string) ($ap['id'] ?? $ap['@self']['id'] ?? '');
             if (trim((string) ($ap['sourceDocumentUri'] ?? '')) !== '') {
                 $alreadyCompliant++;
                 continue;
@@ -143,14 +141,71 @@ class RuleTestDataSeeder
             }
         }
 
+        // Sales invoices: backfill EN 16931 line items + VAT breakdown so the
+        // structured-invoice rules (BR-12/16/21..26, BR-CO-04/10/13/14/17/18,
+        // BR-45..48, BR-DEC-09/19/20/23) can be enforced. Derived from the
+        // header net/vat, which already reconcile (BR-CO-15 is enforced).
+        $invoiceLinesAdded = 0;
+        $invoices          = $os->setRegister($register)->setSchema('ARInvoice')->findAll(['limit' => 10000]);
+        foreach ($invoices as $invoice) {
+            $ar       = is_array($invoice) === true ? $invoice : $invoice->jsonSerialize();
+            $id       = (string) ($ar['id'] ?? $ar['@self']['id'] ?? '');
+            $existing = ($ar['invoiceLines'] ?? null);
+            if (is_array($existing) === true && $existing !== []) {
+                $alreadyCompliant++;
+                continue;
+            }
+
+            $net      = (float) ($ar['netAmount'] ?? 0);
+            $vat      = (float) ($ar['vatAmount'] ?? 0);
+            $currency = (string) ($ar['currency'] ?? 'EUR');
+            $vatCents = (int) round($vat * 100);
+            if ($vatCents === 0) {
+                $category = 'Z';
+                $rate     = 0.0;
+            } else {
+                $category = 'S';
+                $rate     = ($net > 0) ? (($vat / $net) * 100) : 0.0;
+            }
+
+            unset($ar['@self']);
+            $ar['invoiceLines'] = [
+                [
+                    'lineId'      => '1',
+                    'quantity'    => 1,
+                    'unitCode'    => 'C62',
+                    'netAmount'   => $net,
+                    'itemName'    => 'Seeded line item',
+                    'netPrice'    => $net,
+                    'vatCategory' => $category,
+                ],
+            ];
+            $ar['vatBreakdown'] = [
+                [
+                    'category'      => $category,
+                    'taxableAmount' => $net,
+                    'taxAmount'     => $vat,
+                    'rate'          => $rate,
+                ],
+            ];
+            $ar['lineNetTotal'] = $net;
+
+            try {
+                $os->saveObject(object: $ar, register: $register, schema: 'ARInvoice', uuid: $id, _rbac: false, _multitenancy: false, currentUser: $admin);
+                $invoiceLinesAdded++;
+            } catch (\Throwable $e) {
+                $this->logger->warning('RuleTestDataSeeder: ARInvoice line backfill failed for '.$id.': '.$e->getMessage());
+            }
+        }//end foreach
+
         return [
             'sourceReferencesAdded' => $srcAdded,
             'linesAdded'            => $linesAdded,
+            'invoiceLinesAdded'     => $invoiceLinesAdded,
             'alreadyCompliant'      => $alreadyCompliant,
         ];
 
     }//end seed()
-
 
     /**
      * @param string $register Register slug.
@@ -173,7 +228,6 @@ class RuleTestDataSeeder
 
     }//end lineCount()
 
-
     /**
      * Resolve an admin user (needed to update seeded objects' folders), or null.
      *
@@ -192,7 +246,6 @@ class RuleTestDataSeeder
 
     }//end adminUser()
 
-
     /**
      * @return mixed The OpenRegister ObjectService.
      */
@@ -201,7 +254,6 @@ class RuleTestDataSeeder
         return $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
     }//end objectService()
-
 
     /**
      * @return string The configured register slug.
@@ -212,6 +264,4 @@ class RuleTestDataSeeder
         return $register === '' ? 'shillinq' : $register;
 
     }//end register()
-
-
 }//end class

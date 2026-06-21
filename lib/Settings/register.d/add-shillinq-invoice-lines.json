@@ -1,0 +1,48 @@
+{
+    "x-shillinq-fragment": "add-shillinq-invoice-lines",
+    "components": {
+        "schemas": {
+            "ARInvoice": {
+                "version": "0.2.0",
+                "properties": {
+                    "invoiceLines": {
+                        "type": "array",
+                        "nullable": true,
+                        "description": "EN 16931 invoice lines (BG-25). Each line carries lineId (BT-126), quantity (BT-129), unitCode (BT-130), netAmount (BT-131), itemName (BT-153), netPrice (BT-146) and vatCategory (BT-151).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "lineId": {"type": "string", "description": "Invoice line identifier (BT-126)."},
+                                "quantity": {"type": "number", "description": "Invoiced quantity (BT-129)."},
+                                "unitCode": {"type": "string", "description": "Invoiced quantity unit of measure (BT-130), UN/ECE Recommendation 20."},
+                                "netAmount": {"type": "number", "description": "Invoice line net amount (BT-131)."},
+                                "itemName": {"type": "string", "description": "Item name (BT-153)."},
+                                "netPrice": {"type": "number", "description": "Item net price (BT-146)."},
+                                "vatCategory": {"type": "string", "description": "Invoiced item VAT category code (BT-151), UNTDID 5305."}
+                            }
+                        }
+                    },
+                    "vatBreakdown": {
+                        "type": "array",
+                        "nullable": true,
+                        "description": "EN 16931 VAT breakdown groups (BG-23). Each group carries category (BT-118), taxableAmount (BT-116), taxAmount (BT-117) and rate (BT-119).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "category": {"type": "string", "description": "VAT category code (BT-118), UNTDID 5305."},
+                                "taxableAmount": {"type": "number", "description": "VAT category taxable amount (BT-116)."},
+                                "taxAmount": {"type": "number", "description": "VAT category tax amount (BT-117)."},
+                                "rate": {"type": "number", "nullable": true, "description": "VAT category rate (BT-119); absent only for category 'O' (not subject to VAT)."}
+                            }
+                        }
+                    },
+                    "lineNetTotal": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Sum of Invoice line net amount (BT-106) = Σ invoiceLines[].netAmount."
+                    }
+                }
+            }
+        }
+    }
+}

@@ -34,8 +34,6 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class RulesSeedTestDataCommand extends Command
 {
-
-
     /**
      * @param RuleTestDataSeeder $seeder The test-data seeder.
      */
@@ -46,7 +44,6 @@ class RulesSeedTestDataCommand extends Command
 
     }//end __construct()
 
-
     /**
      * @return void
      */
@@ -56,7 +53,6 @@ class RulesSeedTestDataCommand extends Command
             ->setDescription('Backfill local test data to satisfy the enforced rules (idempotent; test/dev only).');
 
     }//end configure()
-
 
     /**
      * @param InputInterface  $input  Console input.
@@ -71,12 +67,11 @@ class RulesSeedTestDataCommand extends Command
         $output->writeln('<info>Shillinq rules test-data seeder</info>');
         $output->writeln(sprintf('  sourceReference backfilled : %d', $result['sourceReferencesAdded']));
         $output->writeln(sprintf('  GLLines added              : %d', $result['linesAdded']));
+        $output->writeln(sprintf('  ARInvoice lines backfilled : %d', ($result['invoiceLinesAdded'] ?? 0)));
         $output->writeln(sprintf('  already compliant          : %d', $result['alreadyCompliant']));
         $output->writeln('Run <info>occ shillinq:rules:audit</info> to confirm 100% compliance.');
 
         return 0;
 
     }//end execute()
-
-
 }//end class
