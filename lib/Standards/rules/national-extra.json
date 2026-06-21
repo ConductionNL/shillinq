@@ -142,7 +142,7 @@
       "source": "art. 2426 n.1 c.c.",
       "statement": "Fixed assets shall be recorded at acquisition or production cost, including accessory charges and directly attributable production costs.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://www.brocardi.it/codice-civile/libro-quinto/titolo-v/capo-v/sezione-ix/art2426.html"
     },
@@ -154,7 +154,7 @@
       "source": "art. 2426 n.2 c.c.",
       "statement": "The cost of fixed assets with a limited useful life shall be systematically depreciated each year in relation to their residual useful life.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://www.brocardi.it/codice-civile/libro-quinto/titolo-v/capo-v/sezione-ix/art2426.html"
     },
@@ -346,7 +346,7 @@
       "source": "OIC 16",
       "statement": "Tangible fixed assets shall be recorded at cost, depreciated systematically over their useful life by component where significant, and written down for durable impairment per OIC 16.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://www.fondazioneoic.eu/"
     },
@@ -358,7 +358,7 @@
       "source": "OIC 24",
       "statement": "Intangible fixed assets shall be capitalised at cost only where they meet recognition criteria and amortised systematically over their useful life per OIC 24.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://www.fondazioneoic.eu/"
     },
@@ -502,7 +502,7 @@
       "source": "PGC norma 2ª de registro y valoración",
       "statement": "Property, plant and equipment (inmovilizado material) shall be measured initially at acquisition price or production cost and subsequently at cost less accumulated depreciation and impairment.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2008-01-01",
       "sourceUrl": "https://gabilos.com/webcontable/nuevoPGCE/texto_nuevo_pgc/rd1514-2007.p2.htm"
     },
@@ -514,7 +514,7 @@
       "source": "PGC norma 5ª de registro y valoración",
       "statement": "Intangible assets (inmovilizado intangible) shall be recognised only where they meet the identifiability criterion and measured at cost less amortisation and impairment.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2008-01-01",
       "sourceUrl": "https://gabilos.com/webcontable/nuevoPGCE/texto_nuevo_pgc/rd1514-2007.p2.htm"
     },

@@ -238,7 +238,7 @@
       "source": "31 CFR 1020.320",
       "statement": "A bank must file a Suspicious Activity Report (SAR) for transactions of USD 5,000 or more that it knows, suspects, or has reason to suspect involve illicit funds, evasion of the BSA, or no apparent lawful purpose.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://www.ecfr.gov/current/title-31/subtitle-B/chapter-X/part-1020/subpart-C/section-1020.320"
     },

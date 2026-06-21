@@ -118,7 +118,7 @@
       "source": "IFRS 9.5.5.1",
       "statement": "Recognise a loss allowance for expected credit losses on financial assets measured at amortised cost, debt assets at FVOCI, lease receivables, contract assets and loan commitments.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2018-01-01",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-9-financial-instruments/"
     },
@@ -190,7 +190,7 @@
       "source": "IFRS 9.5.5.15",
       "statement": "Always measure the loss allowance at lifetime expected credit losses for trade receivables and contract assets without a significant financing component (simplified approach).",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2018-01-01",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-9-financial-instruments/"
     },
@@ -334,7 +334,7 @@
       "source": "IAS 32.42",
       "statement": "Offset a financial asset and a financial liability and present the net amount only when there is a currently legally enforceable right to set off and an intention to settle net or simultaneously.",
       "severity": "conditional",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ias-32-financial-instruments-presentation/"
     },
@@ -394,7 +394,7 @@
       "source": "ASC 326-20-30-1",
       "statement": "Measure expected credit losses on financial assets at amortized cost on a current expected credit loss (CECL) basis, recognising lifetime expected losses from initial recognition with no staging.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2020-01-01",
       "sourceUrl": "https://asc.fasb.org/326/showallinonepage"
     },

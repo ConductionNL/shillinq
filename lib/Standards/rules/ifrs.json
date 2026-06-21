@@ -286,7 +286,7 @@
       "source": "IFRS 16.23",
       "statement": "At the commencement date, a lessee shall measure the right-of-use asset at cost.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2019-01-01",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-16-leases/"
     },
@@ -406,7 +406,7 @@
       "source": "IAS 2.9",
       "statement": "Inventories shall be measured at the lower of cost and net realisable value.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2005-01-01",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ias-2-inventories/"
     },
@@ -490,7 +490,7 @@
       "source": "IAS 2.28",
       "statement": "Write inventories down to net realisable value when their cost may not be recoverable due to damage, obsolescence, or a decline in selling prices.",
       "severity": "conditional",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2005-01-01",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ias-2-inventories/"
     },
@@ -502,7 +502,7 @@
       "source": "IAS 2.33",
       "statement": "Reverse a prior inventory write-down, limited to the original write-down amount, when the circumstances that caused it no longer exist or net realisable value increases.",
       "severity": "conditional",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2005-01-01",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ias-2-inventories/"
     },
@@ -526,7 +526,7 @@
       "source": "IAS 16.15",
       "statement": "Measure an item of PP&E that qualifies for recognition at its cost.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2005-01-01",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ias-16-property-plant-and-equipment/"
     },
@@ -598,7 +598,7 @@
       "source": "IAS 16.50",
       "statement": "Allocate the depreciable amount of an asset on a systematic basis over its useful life.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2005-01-01",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ias-16-property-plant-and-equipment/"
     },
@@ -646,7 +646,7 @@
       "source": "IAS 38.24",
       "statement": "Measure an intangible asset initially at cost.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2004-03-31",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ias-38-intangible-assets/"
     },
@@ -670,7 +670,7 @@
       "source": "IAS 38.54",
       "statement": "Recognise expenditure on research (or the research phase of an internal project) as an expense when incurred; no intangible asset arises from research.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2004-03-31",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ias-38-intangible-assets/"
     },
@@ -754,7 +754,7 @@
       "source": "IAS 36.18",
       "statement": "Recoverable amount is the higher of an asset's (or CGU's) fair value less costs of disposal and its value in use.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2004-03-31",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ias-36-impairment-of-assets/"
     },
@@ -766,7 +766,7 @@
       "source": "IAS 36.59",
       "statement": "Reduce the carrying amount of an asset to its recoverable amount when, and only when, the recoverable amount is less than the carrying amount; the reduction is an impairment loss.",
       "severity": "conditional",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2004-03-31",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ias-36-impairment-of-assets/"
     },
@@ -874,7 +874,7 @@
       "source": "IAS 37.31",
       "statement": "Do not recognise a contingent asset; recognise the asset only when realisation of income is virtually certain.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "1999-07-01",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ias-37-provisions-contingent-liabilities-and-contingent-assets/"
     },
@@ -1342,7 +1342,7 @@
       "source": "IFRS 18.73 (verify)",
       "statement": "Present a profit or loss before financing and income taxes subtotal, unless the entity's specified main business activities make it not meaningful.",
       "severity": "conditional",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2027-01-01",
       "sourceUrl": "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-18-presentation-and-disclosure-in-financial-statements/"
     },

@@ -874,7 +874,7 @@
       "source": "DATEV SKR03",
       "statement": "SKR03 is a process-oriented (Prozessgliederung) standard chart of accounts numbering accounts along the business process cycle; it is widely used for HGB bookkeeping.",
       "severity": "recommended",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://www.datev.de/web/de/datev-shop/material/kontenrahmen-skr-03-und-skr-04/"
     },
@@ -886,7 +886,7 @@
       "source": "DATEV SKR04",
       "statement": "SKR04 is a financial-statement-oriented (Abschlussgliederung) standard chart of accounts whose account ranges follow the HGB §266/§275 balance-sheet and P&L structure.",
       "severity": "recommended",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://www.datev.de/web/de/datev-shop/material/kontenrahmen-skr-03-und-skr-04/"
     },

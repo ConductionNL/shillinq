@@ -298,7 +298,7 @@
       "source": "ASC 330-10-35-1B",
       "statement": "Inventory measured using any method other than LIFO or the retail inventory method (e.g. FIFO or average cost) shall be measured at the lower of cost and net realizable value.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2017-01-01",
       "sourceUrl": "https://asc.fasb.org/330"
     },
@@ -310,7 +310,7 @@
       "source": "ASC 330-10-35-1C",
       "statement": "Inventory measured using LIFO or the retail inventory method is measured at the lower of cost or market, where market is current replacement cost subject to a NRV ceiling and a NRV-less-normal-profit floor.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://asc.fasb.org/330"
     },

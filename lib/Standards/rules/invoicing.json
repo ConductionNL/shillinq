@@ -730,7 +730,7 @@
       "source": "EN 16931 BR-CO-5",
       "statement": "Document level allowance reason code (BT-98) and Document level allowance reason (BT-97) shall indicate the same type of allowance.",
       "severity": "conditional",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://docs.peppol.eu/poacc/billing/3.0/rules/ubl-tc434/"
     },
@@ -742,7 +742,7 @@
       "source": "EN 16931 BR-CO-6",
       "statement": "Document level charge reason code (BT-105) and Document level charge reason (BT-104) shall indicate the same type of charge.",
       "severity": "conditional",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://docs.peppol.eu/poacc/billing/3.0/rules/ubl-tc434/"
     },
@@ -754,7 +754,7 @@
       "source": "EN 16931 BR-CO-7",
       "statement": "Invoice line allowance reason code (BT-140) and Invoice line allowance reason (BT-139) shall indicate the same type of allowance reason.",
       "severity": "conditional",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://docs.peppol.eu/poacc/billing/3.0/rules/ubl-tc434/"
     },
@@ -766,7 +766,7 @@
       "source": "EN 16931 BR-CO-8",
       "statement": "Invoice line charge reason code (BT-145) and Invoice line charge reason (BT-144) shall indicate the same type of charge reason.",
       "severity": "conditional",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://docs.peppol.eu/poacc/billing/3.0/rules/ubl-tc434/"
     },

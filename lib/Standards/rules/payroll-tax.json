@@ -970,7 +970,7 @@
       "source": "State revenue codes (e.g. CA, NY)",
       "statement": "Where the work or residence state imposes income tax, the employer shall withhold state (and where applicable local) income tax and remit it to the state agency.",
       "severity": "conditional",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://www.irs.gov/businesses/small-businesses-self-employed/state-government-websites"
     },
@@ -982,7 +982,7 @@
       "source": "State unemployment insurance (SUTA) acts",
       "statement": "The employer shall pay state unemployment insurance (SUTA) tax at its experience-rated rate on wages up to each state's taxable wage base.",
       "severity": "conditional",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": null,
       "sourceUrl": "https://www.dol.gov/agencies/eta/unemployment-insurance-payments/employers"
     },

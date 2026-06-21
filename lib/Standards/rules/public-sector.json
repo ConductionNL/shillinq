@@ -118,7 +118,7 @@
       "source": "IPSAS 19.22",
       "statement": "A provision shall be recognized only when a present obligation from a past event exists, an outflow of resources is probable, and a reliable estimate can be made.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2004-01-01",
       "sourceUrl": "https://www.ipsasb.org/publications/ipsas-19-provisions-contingent-liabilities-and-contingent-assets"
     },
@@ -190,7 +190,7 @@
       "source": "IPSAS 23.31",
       "statement": "Recognize an asset from a non-exchange transaction when an inflow of future economic benefits or service potential is probable and its fair value is reliably measurable.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2008-06-30",
       "sourceUrl": "https://www.ipsasb.org/publications/ipsas-23-revenue-non-exchange-transactions-taxes-and-transfers"
     },
@@ -346,7 +346,7 @@
       "source": "IPSAS 39.65",
       "statement": "Recognize the net defined benefit liability or asset as the present value of the defined benefit obligation less the fair value of plan assets, subject to the asset ceiling.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2018-01-01",
       "sourceUrl": "https://www.ipsasb.org/publications/ipsas-39-employee-benefits-2"
     },
@@ -394,7 +394,7 @@
       "source": "IPSAS 41.73",
       "statement": "Recognize a loss allowance for expected credit losses on financial assets measured at amortized cost or fair value through net assets/equity, lease receivables, and loan commitments.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2023-01-01",
       "sourceUrl": "https://www.ipsasb.org/publications/ipsas-41-financial-instruments"
     },
@@ -442,7 +442,7 @@
       "source": "IPSAS 45.6",
       "statement": "Recognize an item of property, plant and equipment as an asset only if future economic benefits or service potential are probable and its cost or current value is reliably measurable.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2025-01-01",
       "sourceUrl": "https://www.ipsasb.org/publications/ipsas-45-property-plant-and-equipment"
     },
@@ -490,7 +490,7 @@
       "source": "IPSAS 47.88",
       "statement": "Under the binding arrangement model, recognize revenue when (or as) the entity satisfies a compliance obligation by using resources in the specified manner.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2026-01-01",
       "sourceUrl": "https://www.ipsasb.org/publications/ipsas-47-revenue"
     },
@@ -502,7 +502,7 @@
       "source": "IPSAS 47.26",
       "statement": "Under the model without a binding arrangement, recognize an associated obligation as a liability when it is a present obligation to transfer resources, and recognize revenue to the extent not deferred by that liability.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2026-01-01",
       "sourceUrl": "https://www.ipsasb.org/publications/ipsas-47-revenue"
     },
@@ -574,7 +574,7 @@
       "source": "GASB 34",
       "statement": "Capital assets, including infrastructure, shall be capitalized at historical cost and depreciated over their useful lives in the government-wide statements.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2002-06-15",
       "sourceUrl": "https://gasb.org/page/ShowPdf?path=GASBS+34.pdf"
     },
@@ -1030,7 +1030,7 @@
       "source": "BBV art. 64",
       "statement": "Fixed assets with a limited useful life shall be depreciated systematically over their estimated useful life.",
       "severity": "mandatory",
-      "machineCheckable": true,
+      "machineCheckable": false,
       "effectiveDate": "2004-01-01",
       "sourceUrl": "https://wetten.overheid.nl/BWBR0014606"
     },
