@@ -47,7 +47,10 @@ class RuleEngineTest extends TestCase
      */
     private static function compliantInvoice(): array
     {
-        return [
+        // Merge in any per-domain provider seedSpec defaults for ARInvoice so the
+        // fixture stays compliant as provider checks are added (the literal below
+        // wins for the fields it sets).
+        return array_merge((RuleEngine::providerSeedSpecs()['ARInvoice'] ?? []), [
             'invoiceNumber' => '2026-001',
             'invoiceTypeCode' => '380',
             'invoiceDate'   => '2026-06-21',
@@ -85,7 +88,7 @@ class RuleEngineTest extends TestCase
             'vatBreakdown'  => [
                 ['category' => 'S', 'taxableAmount' => 100.00, 'taxAmount' => 21.00, 'rate' => 21],
             ],
-        ];
+        ]);
 
     }//end compliantInvoice()
 
@@ -154,7 +157,9 @@ class RuleEngineTest extends TestCase
      */
     public function testGlTransactionCompleteness(): void
     {
-        $ok = [
+        // Merge provider seedSpec defaults (period-lock, audit-trail, retention,
+        // SAF-T flags, …) so the fixture satisfies the ledger-integrity checks too.
+        $ok = array_merge((RuleEngine::providerSeedSpecs()['GLTransaction'] ?? []), [
             'transactionNumber' => 'J-100',
             'postingDate'       => '2026-06-21',
             'sourceReference'   => 'DOC-J-100',
@@ -162,7 +167,7 @@ class RuleEngineTest extends TestCase
                 ['accountNumber' => '8000', 'amount' => 100, 'side' => 'credit'],
                 ['accountNumber' => '1300', 'amount' => 100, 'side' => 'debit'],
             ],
-        ];
+        ]);
         $this->assertSame([], RuleEngine::evaluate('GLTransaction', $ok));
 
         $bad = ['transactionNumber' => '', 'lines' => [['accountNumber' => '8000', 'amount' => 100, 'side' => 'credit']]];
