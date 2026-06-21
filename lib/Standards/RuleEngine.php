@@ -288,6 +288,25 @@ final class RuleEngine
     }//end checks()
 
     /**
+     * The merged test-data field defaults declared by all providers, keyed by
+     * object type then field name. Consumed by RuleTestDataSeeder.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function providerSeedSpecs(): array
+    {
+        $specs = [];
+        foreach (self::providers() as $provider) {
+            foreach ($provider::seedSpec() as $objectType => $fields) {
+                $specs[$objectType] = array_merge(($specs[$objectType] ?? []), $fields);
+            }
+        }
+
+        return $specs;
+
+    }//end providerSeedSpecs()
+
+    /**
      * Discover the registered per-domain CheckProvider classes (memoised).
      *
      * @return array<int, class-string<\OCA\Shillinq\Standards\Checks\CheckProvider>>

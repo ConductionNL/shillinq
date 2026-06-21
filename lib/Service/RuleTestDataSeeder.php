@@ -224,10 +224,52 @@ class RuleTestDataSeeder
             }
         }//end foreach
 
+        // Generic per-domain provider seeding: each CheckProvider may declare the
+        // test-data field defaults its checks expect (RuleEngine::providerSeedSpecs).
+        // Backfill any missing/empty field on the existing objects of that type.
+        $providerFieldsAdded = 0;
+        foreach (\OCA\Shillinq\Standards\RuleEngine::providerSeedSpecs() as $objectType => $fields) {
+            if ($fields === []) {
+                continue;
+            }
+
+            try {
+                $rows = $os->setRegister($register)->setSchema($objectType)->findAll(['limit' => 10000]);
+            } catch (\Throwable $e) {
+                $this->logger->warning('RuleTestDataSeeder: cannot load '.$objectType.' for provider seeding: '.$e->getMessage());
+                continue;
+            }
+
+            foreach ($rows as $row) {
+                $obj     = is_array($row) === true ? $row : $row->jsonSerialize();
+                $rowId   = (string) ($obj['id'] ?? $obj['@self']['id'] ?? '');
+                $changed = false;
+                foreach ($fields as $field => $default) {
+                    if (array_key_exists($field, $obj) === false || trim((string) ($obj[$field] ?? '')) === '') {
+                        $obj[$field] = $default;
+                        $changed     = true;
+                    }
+                }
+
+                if ($changed === false) {
+                    continue;
+                }
+
+                unset($obj['@self']);
+                try {
+                    $os->saveObject(object: $obj, register: $register, schema: $objectType, uuid: $rowId, _rbac: false, _multitenancy: false, currentUser: $admin);
+                    $providerFieldsAdded++;
+                } catch (\Throwable $e) {
+                    $this->logger->warning('RuleTestDataSeeder: provider field backfill failed for '.$objectType.' '.$rowId.': '.$e->getMessage());
+                }
+            }//end foreach
+        }//end foreach
+
         return [
             'sourceReferencesAdded' => $srcAdded,
             'linesAdded'            => $linesAdded,
             'invoiceLinesAdded'     => $invoiceLinesAdded,
+            'providerFieldsAdded'   => $providerFieldsAdded,
             'alreadyCompliant'      => $alreadyCompliant,
         ];
 
