@@ -197,6 +197,43 @@ final class RuleEngine
                 'en16931-br-dec-25'               => static fn(array $o): bool => self::allLineItemsMaxDecimals($o, 'lineAllowances', 'baseAmount', 2),
                 'en16931-br-dec-27'               => static fn(array $o): bool => self::allLineItemsMaxDecimals($o, 'lineCharges', 'amount', 2),
                 'en16931-br-dec-28'               => static fn(array $o): bool => self::allLineItemsMaxDecimals($o, 'lineCharges', 'baseAmount', 2),
+
+                // --- EN 16931 seller/buyer party identification (BG-4/BG-7) + payment/tax-point. ---
+                'en16931-br-01'                   => static fn(array $o): bool => self::present($o, 'specificationId'),
+                'en16931-br-06'                   => static fn(array $o): bool => self::present($o, 'sellerName'),
+                'en16931-br-08'                   => static fn(array $o): bool => self::present($o, 'sellerAddress'),
+                'en16931-br-09'                   => static fn(array $o): bool => self::present($o, 'sellerCountryCode'),
+                'en16931-br-10'                   => static fn(array $o): bool => self::present($o, 'buyerAddress'),
+                'vatdir-art226-3'                 => static fn(array $o): bool => self::present($o, 'sellerVatId'),
+                // BR-CO-26: a supplier must be identifiable by id, legal-reg or VAT id.
+                'en16931-br-co-26'                => static fn(array $o): bool => (self::present($o, 'sellerIdentifier')
+                    || self::present($o, 'sellerTaxRegId') || self::present($o, 'sellerVatId')),
+                // BR-CO-09: every present VAT identifier carries an ISO 3166-1 alpha-2 prefix.
+                'en16931-br-co-09'                => static fn(array $o): bool => self::vatIdsHaveCountryPrefix($o),
+                // BR-CO-03: tax point date and tax point date code are mutually exclusive.
+                'en16931-br-co-03'                => static fn(array $o): bool => (self::present($o, 'taxPointDate') === false
+                    || self::present($o, 'taxPointDateCode') === false),
+                // BR-CO-25: a positive amount due requires a payment due date or payment terms.
+                'en16931-br-co-25'                => static fn(array $o): bool => (((float) ($o['grossAmount'] ?? 0)) <= 0
+                    || self::present($o, 'dueDate') || self::present($o, 'paymentTerms')),
+                // BR-{S,Z,E}-02: a line of this category requires a seller VAT/tax identifier.
+                'en16931-br-s-02'                 => static fn(array $o): bool => self::sellerVatRequiredFor($o, 'S'),
+                'en16931-br-z-02'                 => static fn(array $o): bool => self::sellerVatRequiredFor($o, 'Z'),
+                'en16931-br-e-02'                 => static fn(array $o): bool => self::sellerVatRequiredFor($o, 'E'),
+                // BR-G-02: export line requires the seller VAT id or tax representative VAT id.
+                'en16931-br-g-02'                 => static fn(array $o): bool => (self::anyLineHasCategory($o, 'G') === false
+                    || self::present($o, 'sellerVatId') || self::present($o, 'sellerTaxRepVatId')),
+                // BR-AE-02: reverse-charge line requires seller AND buyer identification.
+                'en16931-br-ae-02'                => static fn(array $o): bool => (self::anyLineHasCategory($o, 'AE') === false
+                    || ((self::present($o, 'sellerVatId') || self::present($o, 'sellerTaxRegId') || self::present($o, 'sellerTaxRepVatId'))
+                    && (self::present($o, 'buyerVatId') || self::present($o, 'buyerLegalRegId')))),
+                // BR-IC-02: intra-community line requires seller VAT id (or tax rep) AND buyer VAT id.
+                'en16931-br-ic-02'                => static fn(array $o): bool => (self::anyLineHasCategory($o, 'K') === false
+                    || ((self::present($o, 'sellerVatId') || self::present($o, 'sellerTaxRepVatId')) && self::present($o, 'buyerVatId'))),
+                // BR-O-02: a 'Not subject to VAT' line forbids seller/buyer VAT identifiers.
+                'en16931-br-o-02'                 => static fn(array $o): bool => (self::anyLineHasCategory($o, 'O') === false
+                    || (self::present($o, 'sellerVatId') === false && self::present($o, 'sellerTaxRepVatId') === false
+                    && self::present($o, 'buyerVatId') === false)),
             ],
             'APTransaction' => [
                 // Purchase (received) invoices: the same EN 16931 / VAT Directive
@@ -1143,6 +1180,69 @@ final class RuleEngine
         return true;
 
     }//end allLineItemsMaxDecimals()
+
+    /**
+     * True when at least one invoice line carries the given VAT category code.
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $cat The UNTDID 5305 category code.
+     *
+     * @return bool
+     */
+    private static function anyLineHasCategory(array $o, string $cat): bool
+    {
+        foreach (self::lines($o) as $line) {
+            if ((string) ($line['vatCategory'] ?? '') === $cat) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }//end anyLineHasCategory()
+
+    /**
+     * A line of category $cat (Standard/Zero/Exempt) requires the seller VAT
+     * identifier, tax registration identifier, or tax representative VAT identifier
+     * (EN 16931 BR-S/Z/E-02). Vacuously true when no such line exists.
+     *
+     * @param array<string, mixed> $o   The ARInvoice.
+     * @param string               $cat The UNTDID 5305 category code.
+     *
+     * @return bool
+     */
+    private static function sellerVatRequiredFor(array $o, string $cat): bool
+    {
+        if (self::anyLineHasCategory($o, $cat) === false) {
+            return true;
+        }
+
+        return (self::present($o, 'sellerVatId') === true
+            || self::present($o, 'sellerTaxRegId') === true
+            || self::present($o, 'sellerTaxRepVatId') === true);
+
+    }//end sellerVatRequiredFor()
+
+    /**
+     * Every present VAT identifier (seller, seller tax representative, buyer) has an
+     * ISO 3166-1 alpha-2 country prefix (EN 16931 BR-CO-09).
+     *
+     * @param array<string, mixed> $o The ARInvoice.
+     *
+     * @return bool
+     */
+    private static function vatIdsHaveCountryPrefix(array $o): bool
+    {
+        foreach (['sellerVatId', 'sellerTaxRepVatId', 'buyerVatId'] as $key) {
+            $value = trim((string) ($o[$key] ?? ''));
+            if ($value !== '' && preg_match('/^[A-Z]{2}/', $value) !== 1) {
+                return false;
+            }
+        }
+
+        return true;
+
+    }//end vatIdsHaveCountryPrefix()
 
     /**
      * Build the id => rule index from RuleCatalogue (memoised).

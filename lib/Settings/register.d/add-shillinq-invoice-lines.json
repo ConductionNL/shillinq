@@ -3,8 +3,22 @@
     "components": {
         "schemas": {
             "ARInvoice": {
-                "version": "0.3.0",
+                "version": "0.4.0",
                 "properties": {
+                    "specificationId": {"type": "string", "nullable": true, "description": "Specification identifier (BT-24), e.g. the CIUS/Peppol identifier."},
+                    "sellerName": {"type": "string", "nullable": true, "description": "Seller name (BT-27)."},
+                    "sellerIdentifier": {"type": "string", "nullable": true, "description": "Seller identifier (BT-29)."},
+                    "sellerVatId": {"type": "string", "nullable": true, "description": "Seller VAT identifier (BT-31); ISO 3166-1 alpha-2 country prefix."},
+                    "sellerTaxRegId": {"type": "string", "nullable": true, "description": "Seller tax registration identifier (BT-32)."},
+                    "sellerTaxRepVatId": {"type": "string", "nullable": true, "description": "Seller tax representative VAT identifier (BT-63)."},
+                    "sellerAddress": {"type": "string", "nullable": true, "description": "Seller postal address (BG-5)."},
+                    "sellerCountryCode": {"type": "string", "nullable": true, "description": "Seller country code (BT-40), ISO 3166-1 alpha-2."},
+                    "buyerAddress": {"type": "string", "nullable": true, "description": "Buyer postal address (BG-8)."},
+                    "buyerVatId": {"type": "string", "nullable": true, "description": "Buyer VAT identifier (BT-48); ISO 3166-1 alpha-2 country prefix."},
+                    "buyerLegalRegId": {"type": "string", "nullable": true, "description": "Buyer legal registration identifier (BT-47)."},
+                    "taxPointDate": {"type": "string", "nullable": true, "description": "Value added tax point date (BT-7); mutually exclusive with taxPointDateCode."},
+                    "taxPointDateCode": {"type": "string", "nullable": true, "description": "Value added tax point date code (BT-8); mutually exclusive with taxPointDate."},
+                    "paymentTerms": {"type": "string", "nullable": true, "description": "Payment terms (BT-20)."},
                     "invoiceLines": {
                         "type": "array",
                         "nullable": true,

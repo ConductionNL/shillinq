@@ -154,7 +154,8 @@ class RuleTestDataSeeder
             // vatRate + document allowance/charge totals) is already present.
             $firstLine = (($ar['invoiceLines'][0] ?? null));
             $hasFull   = (is_array($firstLine) === true && array_key_exists('vatRate', $firstLine) === true
-                && array_key_exists('allowancesTotal', $ar) === true);
+                && array_key_exists('allowancesTotal', $ar) === true
+                && trim((string) ($ar['sellerVatId'] ?? '')) !== '');
             if ($hasFull === true) {
                 $alreadyCompliant++;
                 continue;
@@ -201,6 +202,16 @@ class RuleTestDataSeeder
             $ar['charges']         = [];
             $ar['allowancesTotal'] = 0;
             $ar['chargesTotal']    = 0;
+            // Seller/buyer party identification (BG-4/BG-7) so the EN 16931 party
+            // and per-category seller-VAT rules (BR-01/06/08/09/10, BR-CO-09/26,
+            // BR-S/Z/E-02, vatdir-226-3) are satisfied. NL example identifiers.
+            $ar['specificationId']   = ($ar['specificationId'] ?? 'urn:cen.eu:en16931:2017');
+            $ar['sellerName']        = ($ar['sellerName'] ?? 'Seeded Seller B.V.');
+            $ar['sellerIdentifier']  = ($ar['sellerIdentifier'] ?? 'NL-KVK-00000000');
+            $ar['sellerVatId']       = ($ar['sellerVatId'] ?? 'NL123456789B01');
+            $ar['sellerAddress']     = ($ar['sellerAddress'] ?? 'Seeded street 1, Amsterdam');
+            $ar['sellerCountryCode'] = ($ar['sellerCountryCode'] ?? 'NL');
+            $ar['buyerAddress']      = ($ar['buyerAddress'] ?? 'Buyer street 2, Rotterdam');
 
             try {
                 $os->saveObject(object: $ar, register: $register, schema: 'ARInvoice', uuid: $id, _rbac: false, _multitenancy: false, currentUser: $admin);
