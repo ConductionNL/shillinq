@@ -123,6 +123,26 @@ class RuleTestDataSeeder
             }
         }//end foreach
 
+        // Purchase invoices: ensure a source-document URI (traceability).
+        $purchases = $os->setRegister($register)->setSchema('APTransaction')->findAll(['limit' => 10000]);
+        foreach ($purchases as $purchase) {
+            $ap  = is_array($purchase) === true ? $purchase : $purchase->jsonSerialize();
+            $id  = (string) ($ap['id'] ?? $ap['@self']['id'] ?? '');
+            if (trim((string) ($ap['sourceDocumentUri'] ?? '')) !== '') {
+                $alreadyCompliant++;
+                continue;
+            }
+
+            unset($ap['@self']);
+            $ap['sourceDocumentUri'] = 'doc://ap/'.(($ap['invoiceNumber'] ?? '') !== '' ? $ap['invoiceNumber'] : substr($id, 0, 8));
+            try {
+                $os->saveObject(object: $ap, register: $register, schema: 'APTransaction', uuid: $id, _rbac: false, _multitenancy: false, currentUser: $admin);
+                $srcAdded++;
+            } catch (\Throwable $e) {
+                $this->logger->warning('RuleTestDataSeeder: APTransaction sourceDocumentUri update failed for '.$id.': '.$e->getMessage());
+            }
+        }
+
         return [
             'sourceReferencesAdded' => $srcAdded,
             'linesAdded'            => $linesAdded,

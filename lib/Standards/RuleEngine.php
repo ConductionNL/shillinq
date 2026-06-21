@@ -83,6 +83,18 @@ final class RuleEngine
                 'en16931-br-dec-13'               => static fn(array $o): bool => self::maxDecimals($o['vatAmount'] ?? null, 2),
                 'en16931-br-dec-14'               => static fn(array $o): bool => self::maxDecimals($o['grossAmount'] ?? null, 2),
             ],
+            'APTransaction' => [
+                // Purchase (received) invoices: the same EN 16931 / VAT Directive
+                // content rules apply, mapped to the APTransaction header fields.
+                'en16931-br-02'                   => static fn(array $o): bool => self::present($o, 'invoiceNumber'),
+                'en16931-br-03'                   => static fn(array $o): bool => self::present($o, 'invoiceDate'),
+                'en16931-br-05'                   => static fn(array $o): bool => self::present($o, 'currency'),
+                'en16931-br-cl-03'                => static fn(array $o): bool => self::isIsoCurrency((string) ($o['currency'] ?? '')),
+                'en16931-br-14'                   => static fn(array $o): bool => self::numericPresent($o, 'totalAmount'),
+                'vatdir-art226-5'                 => static fn(array $o): bool => self::present($o, 'vendorId'),
+                'vatdir-art226-10'                => static fn(array $o): bool => self::numericPresent($o, 'taxAmount'),
+                'gl-source-document-traceability' => static fn(array $o): bool => self::present($o, 'sourceDocumentUri'),
+            ],
             'GLTransaction' => [
                 // Completeness: a real double entry — at least two lines, each with an account and a non-zero, sided amount.
                 'gl-completeness-timeliness'      => static fn(array $o): bool => self::glComplete($o),
