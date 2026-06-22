@@ -7,9 +7,9 @@
 			"Order": {
 				"slug": "Order",
 				"icon": "CalendarCheckOutline",
-				"version": "0.2.0",
+				"version": "0.3.0",
 				"title": "Order",
-				"description": "A booking order. Extended by bookings-deposit-to-invoice with the completed → invoiced lifecycle: on completion a final Invoice is materialised in Shillinq and linked back via invoiceId; on cancellation after invoicing a reversing CreditNote is materialised. Part of the booking dependency surface (owned by the booking module / bookings-deposits); the deposit-to-invoice change extends its state machine and adds invoiceId / completedAt per REQ-DI-001/002.",
+				"description": "Base order/agreement primitive. Concrete kinds (booking, sales, purchase, grant, engagement, quote, blanket) discriminate via `orderType` and extend with their own tail; payments (deposits, disbursements) and lines are related objects (Payment / OrderLine), not fields. Booking orders (orderType=booking) keep the completed → invoiced lifecycle: on completion a final Invoice is materialised and linked via invoiceId; on cancellation after invoicing a reversing CreditNote is materialised (REQ-DI-001/002).",
 				"x-schema-org": "schema:Order",
 				"x-openregister-purpose": "fact",
 				"type": "object",
@@ -20,6 +20,53 @@
 					"state"
 				],
 				"properties": {
+					"orderType": {
+						"type": "string",
+						"enum": ["booking", "sales", "purchase", "grant", "engagement", "quote", "blanket"],
+						"nullable": true,
+						"description": "Discriminator selecting the order kind + lifecycle. Existing rows default to 'booking'."
+					},
+					"direction": {
+						"type": "string",
+						"enum": ["incoming", "outgoing"],
+						"nullable": true,
+						"description": "incoming (we receive/are awarded) vs outgoing (we issue/award)."
+					},
+					"orderNumber": {
+						"type": "string",
+						"nullable": true,
+						"description": "Human reference (PO / quote / grant / booking number)."
+					},
+					"counterpartyId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Supplier / customer / grantee / contractor party id (generalises customerId)."
+					},
+					"counterpartyName": {
+						"type": "string",
+						"nullable": true,
+						"description": "Counterparty display name (snapshot)."
+					},
+					"paymentTerms": {
+						"type": "string",
+						"nullable": true,
+						"description": "Payment terms (universal base field)."
+					},
+					"totalAmount": {
+						"type": "number",
+						"nullable": true,
+						"description": "Headline amount (order total / awarded amount / engagement value)."
+					},
+					"orderDate": {
+						"type": "string",
+						"nullable": true,
+						"description": "Order/agreement date."
+					},
+					"projectReference": {
+						"type": "string",
+						"nullable": true,
+						"description": "Optional project this order is for."
+					},
 					"administrationId": {
 						"type": "string",
 						"description": "FK to the Administration owning this order for tenant isolation.",

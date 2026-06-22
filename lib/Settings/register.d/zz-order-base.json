@@ -4,28 +4,10 @@
         "spdx-license": "EUPL-1.2",
         "spdx-copyright": "2026 Conduction B.V.",
         "change": "abstract-order-primitive",
-        "description": "Phase 1 of the Order/Contract consolidation: the generic base-Order layer (orderType discriminator + shared core) added additively to the existing Order schema, plus the Payment and OrderLine related objects that order extensions attach (deposits, disbursements, reclaims, lines). Non-destructive — extensions (Grant/Booking/SalesOrder/PurchaseOrder/Engagement) allOf this base in phase 2; data migrations in phase 4."
+        "description": "Phase 1 of the Order/Contract consolidation: the Payment and OrderLine related objects that order extensions attach (deposits, disbursements, reclaims, lines). The base-Order generic layer (orderType discriminator + shared core) is added directly on the Order schema in bookings-deposit-to-invoice.json. Non-destructive."
     },
     "components": {
         "schemas": {
-            "Order": {
-                "version": "1.0.0",
-                "slug": "Order",
-                "title": "Order",
-                "type": "object",
-                "description": "Base order/agreement primitive. Concrete order kinds (sales, purchase, grant, booking, engagement, quote, blanket) extend this via JSON-Schema allOf and add their own tail; payments and lines are related objects, not fields.",
-                "properties": {
-                    "orderType": {"type": "string", "nullable": true, "enum": ["sales", "purchase", "grant", "booking", "engagement", "quote", "blanket"], "description": "The kind of order — the discriminator selecting the extension + lifecycle. Existing booking orders default to 'booking'."},
-                    "direction": {"type": "string", "nullable": true, "enum": ["incoming", "outgoing"], "description": "incoming (we receive/are awarded) vs outgoing (we issue/award)."},
-                    "orderNumber": {"type": "string", "nullable": true, "description": "Human reference (PO/quote/grant/booking number)."},
-                    "counterpartyId": {"type": "string", "nullable": true, "description": "Supplier / customer / grantee / contractor party id."},
-                    "counterpartyName": {"type": "string", "nullable": true, "description": "Counterparty display name (snapshot)."},
-                    "paymentTerms": {"type": "string", "nullable": true, "description": "Payment terms (universal enough to stay a base field)."},
-                    "totalAmount": {"type": "number", "nullable": true, "description": "Headline amount (order total / awarded amount / engagement value)."},
-                    "orderDate": {"type": "string", "nullable": true, "description": "Order/agreement date."},
-                    "projectReference": {"type": "string", "nullable": true, "description": "Optional project this order is for."}
-                }
-            },
             "Payment": {
                 "version": "0.1.0",
                 "slug": "Payment",
