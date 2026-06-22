@@ -8,6 +8,12 @@ description: Raise a PO to a supplier, route it for approval, send it, and use i
 
 A purchase order (PO) is the commitment to a supplier, *"we order X at price Y, deliver by date Z"*. Shillinq tracks the PO from creation through approval, dispatch to the supplier, goods receipt, and three-way matching against the supplier's bill.
 
+:::note
+A purchase order is an **Order of type `purchase`**. POs now live in the unified
+**Orders** workspace (filter by type), alongside sales orders, bookings and grants —
+see [Work with Orders](13-orders-workspace.md). The workflow below is unchanged.
+:::
+
 ## Goal
 
 By the end you will have a PO in *Sent* state at a supplier, with the right approver having signed it off, ready to be three-way-matched against the goods-receipt note and the supplier's bill when both arrive.
