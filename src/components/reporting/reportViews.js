@@ -3,20 +3,32 @@
 
 /**
  * Report VIEW pages surfaced as navigate-cards on the Reporting & Compliance
- * overview (kind="view" — open their page by route name rather than generating a
- * file), so the menu holds one "Reporting & Compliance" entry instead of 28
- * scattered report sub-items.
+ * overview (kind="view" — open their page by route name). Sourced from the menu-IA
+ * audit REPORTS verdicts so the whole report surface lives on one cards page.
  */
 
 export const reportViewCategories = {
+ "operational": "Operationele overzichten",
  "compliance": "Compliance, audit & dossiers",
  "statements": "Jaarrekening & consolidatie",
- "tax": "Belastingrapportages",
  "public-sector": "Overheidsrapportages",
+ "tax": "Belastingrapportages",
  "sbr": "SBR / XBRL"
 }
 
 export const reportViews = [
+ {
+  "id": "APAging",
+  "label": "AP Aging",
+  "icon": "CalendarClockOutline",
+  "category": "operational"
+ },
+ {
+  "id": "ARAging",
+  "label": "AR Aging",
+  "icon": "CalendarClockOutline",
+  "category": "operational"
+ },
  {
   "id": "AuditDocuments",
   "label": "Auditdocumenten",
@@ -28,6 +40,12 @@ export const reportViews = [
   "label": "Balance Sheet",
   "icon": "TableAccountOutline",
   "category": "statements"
+ },
+ {
+  "id": "BcfClaims",
+  "label": "BCF-claims",
+  "icon": "CashRefund",
+  "category": "public-sector"
  },
  {
   "id": "BtwAangiften",
@@ -42,6 +60,18 @@ export const reportViews = [
   "category": "tax"
  },
  {
+  "id": "CashflowDashboard",
+  "label": "Cashflow Dashboard",
+  "icon": "ChartBarStacked",
+  "category": "compliance"
+ },
+ {
+  "id": "CashflowScenarios",
+  "label": "Scenarios",
+  "icon": "SourceBranch",
+  "category": "compliance"
+ },
+ {
   "id": "ComplianceAuditTrails",
   "label": "Compliance audittrail",
   "icon": "ClipboardCheckOutline",
@@ -54,27 +84,15 @@ export const reportViews = [
   "category": "statements"
  },
  {
-  "id": "DBAEvidenceBrowser",
-  "label": "DBA Evidence Browser",
-  "icon": "FolderLockOutline",
-  "category": "compliance"
+  "id": "DeferredTaxMovements",
+  "label": "Mutatieoverzicht",
+  "icon": "ArrowUpDown",
+  "category": "tax"
  },
  {
-  "id": "DBAIntakeWizard",
-  "label": "DBA Intake Wizard",
-  "icon": "ClipboardListOutline",
-  "category": "compliance"
- },
- {
-  "id": "DBAModelovereenkomstRegister",
-  "label": "DBA Modelovereenkomst Register",
-  "icon": "FileDocumentMultipleOutline",
-  "category": "compliance"
- },
- {
-  "id": "DBAPortfolioDashboard",
-  "label": "DBA Portfolio Dashboard",
-  "icon": "ChartDonutVariant",
+  "id": "DunningTimeline",
+  "label": "Dunning Timeline",
+  "icon": "EmailAlertOutline",
   "category": "compliance"
  },
  {
@@ -99,7 +117,7 @@ export const reportViews = [
   "id": "ENSIAEvaluations",
   "label": "ENSIA Evaluations",
   "icon": "ClipboardQuestionOutline",
-  "category": "compliance"
+  "category": "operational"
  },
  {
   "id": "ENSIAFindings",
@@ -108,10 +126,28 @@ export const reportViews = [
   "category": "compliance"
  },
  {
-  "id": "EliminationRules",
-  "label": "Elimination Rules",
-  "icon": "VectorDifference",
+  "id": "EmuRapportage",
+  "label": "EMU-rapportage",
+  "icon": "ChartBarOutline",
+  "category": "public-sector"
+ },
+ {
+  "id": "ExpiryAlerts",
+  "label": "Expiry Alerts",
+  "icon": "AlertCircleOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "GRConsolidated",
+  "label": "Geconsolideerde view",
+  "icon": "TableMergeCellsOutline",
   "category": "statements"
+ },
+ {
+  "id": "IbAangifte",
+  "label": "IB-aangifte",
+  "icon": "FileExportOutline",
+  "category": "tax"
  },
  {
   "id": "IcpOpgaaf",
@@ -120,10 +156,22 @@ export const reportViews = [
   "category": "tax"
  },
  {
-  "id": "IntercompanyTransactions",
-  "label": "Inter-Company Transactions",
-  "icon": "SwapHorizontalBold",
-  "category": "statements"
+  "id": "InventoryPostingHistory",
+  "label": "Posting Historie",
+  "icon": "BookOpenVariantOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "InventoryValuation",
+  "label": "Valuation",
+  "icon": "ScaleBalance",
+  "category": "operational"
+ },
+ {
+  "id": "Iv3Aanlevering",
+  "label": "Iv3-aanlevering",
+  "icon": "ChartTimelineVariant",
+  "category": "public-sector"
  },
  {
   "id": "Iv3Rapportages",
@@ -132,16 +180,28 @@ export const reportViews = [
   "category": "public-sector"
  },
  {
+  "id": "KorStatus",
+  "label": "KOR-status",
+  "icon": "ShieldCheckOutline",
+  "category": "tax"
+ },
+ {
+  "id": "LowStockAlerts",
+  "label": "Low Stock Alerts",
+  "icon": "AlertCircleOutline",
+  "category": "operational"
+ },
+ {
   "id": "ManagementLetters",
   "label": "Management letters",
   "icon": "EmailOutline",
   "category": "compliance"
  },
  {
-  "id": "SBRDocuments",
-  "label": "SBR Documents",
-  "icon": "FileDocumentEditOutline",
-  "category": "sbr"
+  "id": "PensionDisclosureTables",
+  "label": "Disclosure Tables",
+  "icon": "TableLarge",
+  "category": "compliance"
  },
  {
   "id": "SbrXbrlFilings",
@@ -150,10 +210,58 @@ export const reportViews = [
   "category": "sbr"
  },
  {
+  "id": "SchatkistPositie",
+  "label": "Schatkist-positie",
+  "icon": "BankOutline",
+  "category": "public-sector"
+ },
+ {
   "id": "SisaRapportages",
   "label": "SiSa-rapportages",
   "icon": "FileDocumentCheckOutline",
   "category": "public-sector"
+ },
+ {
+  "id": "StockLevelsDashboard",
+  "label": "Stock Levels Dashboard",
+  "icon": "ChartBarOutline",
+  "category": "operational"
+ },
+ {
+  "id": "TaxEstimates",
+  "label": "Tax Estimates",
+  "icon": "CalculatorOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "TaxFilingPrep",
+  "label": "Tax Filing Prep",
+  "icon": "FileDocumentCheckOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "TaxLossCarryForwards",
+  "label": "Compensabele verliezen",
+  "icon": "AccountGroup",
+  "category": "compliance"
+ },
+ {
+  "id": "TaxProvisions",
+  "label": "Belastinglatentie",
+  "icon": "CurrencyEur",
+  "category": "tax"
+ },
+ {
+  "id": "TaxRateReconciliations",
+  "label": "ETR-aansluiting",
+  "icon": "ChartBar",
+  "category": "tax"
+ },
+ {
+  "id": "TemporaryDifferences",
+  "label": "Tijdelijke verschillen",
+  "icon": "ScaleBalance",
+  "category": "tax"
  },
  {
   "id": "TrialBalance",
@@ -168,21 +276,39 @@ export const reportViews = [
   "category": "statements"
  },
  {
+  "id": "Utilisatie",
+  "label": "Utilisatie",
+  "icon": "ChartLineVariant",
+  "category": "compliance"
+ },
+ {
   "id": "VATByPeriod",
   "label": "VAT by Period",
   "icon": "ChartTimelineVariantOutline",
   "category": "tax"
  },
  {
-  "id": "XBRLMappingValidation",
-  "label": "Mapping Validation",
-  "icon": "ArrowDecisionOutline",
-  "category": "sbr"
+  "id": "VarianceReport",
+  "label": "Variance Report",
+  "icon": "ChartTimelineVariantShimmer",
+  "category": "operational"
  },
  {
-  "id": "XBRLTaxonomies",
-  "label": "XBRL Taxonomies",
-  "icon": "FileTreeOutline",
-  "category": "sbr"
+  "id": "WBSOExport",
+  "label": "WBSO Export Dashboard",
+  "icon": "FileExportOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "YearEndCloseChecklist",
+  "label": "Year-End Close Checklist",
+  "icon": "ClipboardCheckOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "ZzpAftrek",
+  "label": "ZZP-aftrek",
+  "icon": "AccountCashOutline",
+  "category": "tax"
  }
 ]

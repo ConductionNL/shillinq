@@ -1,0 +1,12 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "menu-ia-simplification",
+		"adr": "ADR-037 modular manifest fragment — adds the top-level 'Configuratie' group that menu-layout.json relocates master-data/config pages (Fiscal Years, Cost centers/objects, Tax config, dunning/matching/reorder rules, cashflow policy, verdeelsleutels, BBV-mapping, XBRL/SBR taxonomies, tarieven) into.",
+		"description": "Top-level Configuratie (settings/master-data) navigation group."
+	},
+	"menu": [
+		{ "id": "Configuratie", "label": "Configuratie", "icon": "CogOutline", "order": 76 }
+	]
+}
