@@ -90,6 +90,11 @@
                         "nullable": true,
                         "description": "Whether a reclaim repayment plan exists."
                     },
+                    "repaymentPlanId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "FK to the reclaim repayment plan (preserved from the folded Subsidie)."
+                    },
                     "decisionDocumentUri": {
                         "type": "string",
                         "nullable": true,

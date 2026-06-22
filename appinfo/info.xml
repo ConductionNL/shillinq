@@ -76,6 +76,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
             <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
             <step>OCA\Shillinq\Repair\SetOrderExtensionComposition</step>
+            <step>OCA\Shillinq\Repair\FoldIntoOrder</step>
+            <step>OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice</step>
+            <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
+            <step>OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject</step>
         </post-migration>
     </repair-steps>
 
