@@ -38,3 +38,23 @@ that follow.
 - Schemas: +Order; (later) −Subsidie ×2, −PurchaseOrder.
 - Compliance: re-point subsidie/PO rule providers to Order (preserve rule ids).
 - Nav: 6 Subsidie + PO + DBA entries → one Order workspace.
+
+## BLOCKER (2026-06-22) — prerequisite schema-dedup required
+A parallel build attempt (author→verify) was REJECTED by the verify stage and is not
+shipped. Root causes discovered:
+- **`Order` slug collision**: three `Order` schemas already exist — bookings-deposit-to-invoice
+  (deposit/booking), bookkeeping-quote-order-invoice, and this change's draft. A unified Order
+  primitive cannot be added without first consolidating these.
+- **`Subsidie` is triplicated** with *different* field sets (shillinq_register.json Dutch/rich vs
+  add-shillinq-bookkeeping-operations.json English/simple vs an empty audit-trail stub). The merge
+  must map the deep-merged UNION, and the duplicates must be retired first.
+- **Migrations are unverifiable locally** — 0 rows of Subsidie/PurchaseOrder/Order exist in the dev
+  env, so a count-equality / no-field-loss check cannot run.
+- The auto-generated repair steps dropped ~14 source fields, passed `currentUser` as a string
+  (IUser TypeError), read under RBAC in a no-session repair context, and were unregistered.
+
+**Required before resuming**: (1) consolidate the 3 Order + 3 Subsidie schemas into one canonical
+each; (2) seed representative test data so migrations can be verified; (3) write the migration by
+hand against the real merged field set with the IUser + `_rbac:false` fixes. Until then this change
+stays in DESIGN state — the nav entries are NOT collapsed (removing them without the fold would
+strand the pages).
