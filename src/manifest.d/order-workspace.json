@@ -6,7 +6,7 @@
 		"adr": "ADR-037 modular manifest fragment — the unified Order workspace that replaces the scattered Subsidie / Purchase Order / Quote / Sales Order pages. One Order index (filterable by orderType) + an Order detail that auto-renders the schema and its related Payments + OrderLines."
 	},
 	"menu": [
-		{ "id": "Orders", "label": "Orders", "icon": "FileDocumentMultipleOutline", "order": 28 }
+		{ "id": "Orders", "label": "Orders", "icon": "FileDocumentMultipleOutline", "route": "Orders", "order": 28 }
 	],
 	"pages": [
 		{
@@ -17,7 +17,6 @@
 			"type": "index",
 			"schema": "Order",
 			"register": "shillinq",
-			"group": "Orders",
 			"filters": [
 				{ "key": "orderType", "label": "Type", "type": "select", "options": ["booking", "sales", "purchase", "grant", "engagement", "quote", "blanket"] }
 			],
