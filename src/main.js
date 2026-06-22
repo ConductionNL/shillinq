@@ -244,13 +244,24 @@ function applyMenuRelocations(menu, relocations) {
 function applyMenuRemovals(menu, removals) {
 	if (!Array.isArray(removals) || removals.length === 0) return menu
 	const drop = new Set(removals)
-	const isLeaf = (n) => !Array.isArray(n.children) || n.children.length === 0
-	menu.forEach((node) => {
-		if (Array.isArray(node.children)) {
-			node.children = node.children.filter((c) => !(drop.has(c.id) && isLeaf(c)))
+	const wasGroup = (n) => Array.isArray(n.children) && n.children.length > 0
+	// Recursively prune: drop any explicitly-removed leaf at any depth, then drop a
+	// group when it is either explicitly removed OR left empty after its children
+	// were removed/relocated away (the report-card collapse empties ENSIA/DBA/…).
+	// A group that still has children is never silently hidden (no stranding).
+	const prune = (nodes) => nodes.reduce((acc, n) => {
+		if (drop.has(n.id) && !wasGroup(n)) return acc
+		if (Array.isArray(n.children)) {
+			const children = prune(n.children)
+			const hadChildren = wasGroup(n)
+			if (children.length === 0 && hadChildren) return acc
+			acc.push({ ...n, children })
+			return acc
 		}
-	})
-	return menu.filter((n) => !(drop.has(n.id) && isLeaf(n)))
+		acc.push(n)
+		return acc
+	}, [])
+	return prune(menu)
 }
 
 const mergedManifest = mergeManifestFragments(bundledManifest)
