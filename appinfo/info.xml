@@ -75,6 +75,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\Load_DBA_Seeds_Step</step>
             <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
             <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
+            <step>OCA\Shillinq\Repair\SetOrderExtensionComposition</step>
         </post-migration>
     </repair-steps>
 

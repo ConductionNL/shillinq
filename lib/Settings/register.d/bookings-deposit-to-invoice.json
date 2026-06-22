@@ -7,17 +7,14 @@
 			"Order": {
 				"slug": "Order",
 				"icon": "CalendarCheckOutline",
-				"version": "0.3.0",
+				"version": "0.4.0",
 				"title": "Order",
 				"description": "Base order/agreement primitive. Concrete kinds (booking, sales, purchase, grant, engagement, quote, blanket) discriminate via `orderType` and extend with their own tail; payments (deposits, disbursements) and lines are related objects (Payment / OrderLine), not fields. Booking orders (orderType=booking) keep the completed → invoiced lifecycle: on completion a final Invoice is materialised and linked via invoiceId; on cancellation after invoicing a reversing CreditNote is materialised (REQ-DI-001/002).",
 				"x-schema-org": "schema:Order",
 				"x-openregister-purpose": "fact",
 				"type": "object",
 				"required": [
-					"administrationId",
-					"orderId",
-					"customerId",
-					"state"
+					"administrationId"
 				],
 				"properties": {
 					"orderType": {
