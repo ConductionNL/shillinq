@@ -1,0 +1,71 @@
+{
+    "x-shillinq-fragment": "order-base",
+    "_meta": {
+        "spdx-license": "EUPL-1.2",
+        "spdx-copyright": "2026 Conduction B.V.",
+        "change": "abstract-order-primitive",
+        "description": "Phase 1 of the Order/Contract consolidation: the generic base-Order layer (orderType discriminator + shared core) added additively to the existing Order schema, plus the Payment and OrderLine related objects that order extensions attach (deposits, disbursements, reclaims, lines). Non-destructive — extensions (Grant/Booking/SalesOrder/PurchaseOrder/Engagement) allOf this base in phase 2; data migrations in phase 4."
+    },
+    "components": {
+        "schemas": {
+            "Order": {
+                "version": "1.0.0",
+                "slug": "Order",
+                "title": "Order",
+                "type": "object",
+                "description": "Base order/agreement primitive. Concrete order kinds (sales, purchase, grant, booking, engagement, quote, blanket) extend this via JSON-Schema allOf and add their own tail; payments and lines are related objects, not fields.",
+                "properties": {
+                    "orderType": {"type": "string", "nullable": true, "enum": ["sales", "purchase", "grant", "booking", "engagement", "quote", "blanket"], "description": "The kind of order — the discriminator selecting the extension + lifecycle. Existing booking orders default to 'booking'."},
+                    "direction": {"type": "string", "nullable": true, "enum": ["incoming", "outgoing"], "description": "incoming (we receive/are awarded) vs outgoing (we issue/award)."},
+                    "orderNumber": {"type": "string", "nullable": true, "description": "Human reference (PO/quote/grant/booking number)."},
+                    "counterpartyId": {"type": "string", "nullable": true, "description": "Supplier / customer / grantee / contractor party id."},
+                    "counterpartyName": {"type": "string", "nullable": true, "description": "Counterparty display name (snapshot)."},
+                    "paymentTerms": {"type": "string", "nullable": true, "description": "Payment terms (universal enough to stay a base field)."},
+                    "totalAmount": {"type": "number", "nullable": true, "description": "Headline amount (order total / awarded amount / engagement value)."},
+                    "orderDate": {"type": "string", "nullable": true, "description": "Order/agreement date."},
+                    "projectReference": {"type": "string", "nullable": true, "description": "Optional project this order is for."}
+                }
+            },
+            "Payment": {
+                "version": "0.1.0",
+                "slug": "Payment",
+                "title": "Payment",
+                "type": "object",
+                "description": "A payment related to an Order (or invoice). Generalises the booking DepositPayment and the grant disbursement/reclaim amounts so the order detail can render a Payments widget instead of carrying amount fields. Deposits, installments, grant disbursements and reclaims are all Payment rows.",
+                "required": ["orderId", "paymentType", "amount"],
+                "properties": {
+                    "orderId": {"type": "string", "description": "The Order this payment belongs to."},
+                    "paymentType": {"type": "string", "enum": ["deposit", "installment", "disbursement", "reclaim", "final", "refund"], "description": "deposit (booking) / installment / disbursement (grant uitbetaald) / reclaim (grant teruggevorderd) / final / refund."},
+                    "amount": {"type": "number", "description": "Payment amount."},
+                    "currency": {"type": "string", "nullable": true, "description": "ISO 4217 currency."},
+                    "paymentDate": {"type": "string", "nullable": true, "description": "Date the payment was made/received."},
+                    "method": {"type": "string", "nullable": true, "description": "Payment method (bank, card, …)."},
+                    "status": {"type": "string", "nullable": true, "enum": ["pending", "paid", "failed", "refunded"], "description": "Payment status."},
+                    "linkedInvoiceId": {"type": "string", "nullable": true, "description": "Invoice this payment settles, if any."},
+                    "administrationId": {"type": "string", "nullable": true, "description": "Owning administration."}
+                }
+            },
+            "OrderLine": {
+                "version": "0.1.0",
+                "slug": "OrderLine",
+                "title": "Order Line",
+                "type": "object",
+                "description": "A line on an Order — the unified successor of QuoteLine / SalesOrderLine. Related object, not an inline array, so lines are queryable + reusable across order types.",
+                "required": ["orderId"],
+                "properties": {
+                    "orderId": {"type": "string", "description": "The Order this line belongs to."},
+                    "lineNumber": {"type": "integer", "nullable": true},
+                    "productReference": {"type": "string", "nullable": true},
+                    "description": {"type": "string", "nullable": true},
+                    "quantity": {"type": "number", "nullable": true},
+                    "unitPrice": {"type": "number", "nullable": true},
+                    "discount": {"type": "number", "nullable": true},
+                    "btwRate": {"type": "number", "nullable": true},
+                    "glAccount": {"type": "string", "nullable": true},
+                    "projectReference": {"type": "string", "nullable": true},
+                    "lineAmount": {"type": "number", "nullable": true}
+                }
+            }
+        }
+    }
+}
