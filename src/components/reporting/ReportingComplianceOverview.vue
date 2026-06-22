@@ -150,7 +150,7 @@
 						<p class="reporting-overview__card-desc">
 							{{ report.description }}
 						</p>
-						<div class="reporting-overview__card-format">
+						<div v-if="report.kind !== 'view'" class="reporting-overview__card-format">
 							<label
 								class="reporting-overview__filter-label"
 								:for="`reporting-format-${report.id}`">
@@ -169,7 +169,15 @@
 							</select>
 						</div>
 						<div class="reporting-overview__card-actions">
+							<router-link
+								v-if="report.kind === 'view'"
+								class="reporting-overview__generate"
+								:data-testid="`reporting-open-${report.id}`"
+								:to="{ name: report.id }">
+								{{ t('shillinq', 'Open') }}
+							</router-link>
 							<button
+								v-else
 								type="button"
 								class="reporting-overview__generate"
 								:data-testid="`reporting-generate-${report.id}`"
@@ -201,6 +209,7 @@ import { showError, showSuccess } from '@nextcloud/dialogs'
 import axios from '@nextcloud/axios'
 
 import GenerateReportDialog from '../../modals/GenerateReportDialog.vue'
+import { reportViews, reportViewCategories } from './reportViews.js'
 
 export default {
 	name: 'ReportingComplianceOverview',
@@ -293,8 +302,17 @@ export default {
 				const rows = Array.isArray(data.types)
 					? data.types
 					: (Array.isArray(data) ? data : [])
-				this.reports = rows
-				this.categories = data.categories || {}
+				// Merge the existing report VIEW pages (navigate-cards) so the one
+				// overview holds every report — generate-to-file and on-screen
+				// views alike — instead of leaving them as scattered menu items.
+				const views = reportViews.map(v => ({
+					...v,
+					kind: 'view',
+					formats: [],
+					description: this.t('shillinq', 'Open this report.'),
+				}))
+				this.reports = [...rows, ...views]
+				this.categories = { ...(data.categories || {}), ...reportViewCategories }
 
 				// Seed each card's format picker with the first offered format.
 				const seed = {}
