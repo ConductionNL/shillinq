@@ -1,0 +1,92 @@
+{
+    "x-shillinq-fragment": "order-primitive",
+    "_meta": {
+        "spdx-license": "EUPL-1.2",
+        "spdx-copyright": "2026 Conduction B.V.",
+        "change": "abstract-order-primitive",
+        "description": "Generic Order/Contract primitive (orderType discriminator) that subsidies, purchase orders and ZZP engagements fold into — phase 1 (schema only, non-destructive)."
+    },
+    "components": {
+        "schemas": {
+            "Order": {
+                "version": "0.1.0",
+                "slug": "Order",
+                "title": "Order",
+                "type": "object",
+                "description": "A commitment/agreement primitive: purchase orders, sales orders, subsidies (grants) and ZZP engagements, discriminated by orderType. Type-specific semantics live in the matching namespaced field group so the merge drops no regulatory/audit field.",
+                "required": ["orderType", "direction", "administrationId"],
+                "properties": {
+                    "orderNumber": {"type": "string", "nullable": true, "description": "Human reference for this order (PO number / subsidieNumber / engagement reference)."},
+                    "orderType": {"type": "string", "enum": ["purchase", "sales", "subsidie", "engagement"], "description": "The kind of order — the discriminator that selects the applicable field group + lifecycle."},
+                    "direction": {"type": "string", "enum": ["incoming", "outgoing"], "description": "incoming (we receive/are awarded) vs outgoing (we issue/award)."},
+                    "counterpartyId": {"type": "string", "nullable": true, "description": "The supplier / customer / grantee / contractor party id."},
+                    "counterpartyName": {"type": "string", "nullable": true, "description": "Counterparty display name (snapshot)."},
+                    "description": {"type": "string", "nullable": true, "description": "What the order is for."},
+                    "currency": {"type": "string", "nullable": true, "description": "ISO 4217 currency."},
+                    "totalAmount": {"type": "number", "nullable": true, "description": "Headline amount (PO total / awarded amount / engagement value)."},
+                    "startDate": {"type": "string", "nullable": true, "description": "Order/period start (order date / aanvraagDate / engagement start)."},
+                    "endDate": {"type": "string", "nullable": true, "description": "Order/period end."},
+                    "periodId": {"type": "string", "nullable": true, "description": "Fiscal period the order belongs to."},
+                    "administrationId": {"type": "string", "description": "Owning administration (tenant)."},
+                    "state": {"type": "string", "nullable": true, "description": "Lifecycle state — interpreted per orderType (subsidie: aanvraag…afgehandeld; purchase: draft…paid; engagement: …)."},
+                    "lines": {"type": "array", "nullable": true, "description": "Optional order lines (PO lines etc.)."},
+
+                    "subsidie": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "Subsidie (grant) field group — populated when orderType = subsidie. Mirrors the retired Subsidie schema 1:1 (Awb 4.2 / ASV-model).",
+                        "properties": {
+                            "regelingNaam": {"type": "string", "nullable": true},
+                            "regelingArtikel": {"type": "string", "nullable": true},
+                            "aanvraagDate": {"type": "string", "nullable": true},
+                            "beschikkingDate": {"type": "string", "nullable": true},
+                            "vaststellingDate": {"type": "string", "nullable": true},
+                            "aangevraagdBedrag": {"type": "number", "nullable": true},
+                            "verleendBedrag": {"type": "number", "nullable": true},
+                            "vastgesteldBedrag": {"type": "number", "nullable": true},
+                            "uitbetaaldBedrag": {"type": "number", "nullable": true},
+                            "teruggevorderdBedrag": {"type": "number", "nullable": true},
+                            "beschikkingUri": {"type": "string", "nullable": true},
+                            "vaststellingUri": {"type": "string", "nullable": true},
+                            "prestatieverantwoording": {"type": "string", "nullable": true},
+                            "afwijzingsReden": {"type": "string", "nullable": true},
+                            "auditThresholdApplied": {"type": "boolean", "nullable": true},
+                            "repaymentPlanId": {"type": "string", "nullable": true}
+                        }
+                    },
+                    "purchase": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "Purchase-order field group — populated when orderType = purchase (folds PurchaseOrder).",
+                        "properties": {
+                            "supplierReference": {"type": "string", "nullable": true},
+                            "requester": {"type": "string", "nullable": true},
+                            "costCenter": {"type": "string", "nullable": true},
+                            "projectCode": {"type": "string", "nullable": true},
+                            "paymentTerms": {"type": "string", "nullable": true},
+                            "deliveryAddress": {"type": "string", "nullable": true},
+                            "expectedDeliveryDate": {"type": "string", "nullable": true},
+                            "totalExclVat": {"type": "number", "nullable": true},
+                            "totalVat": {"type": "number", "nullable": true},
+                            "totalInclVat": {"type": "number", "nullable": true},
+                            "approvalChain": {"type": "array", "nullable": true},
+                            "peppolSentAt": {"type": "string", "nullable": true},
+                            "peppolMessageId": {"type": "string", "nullable": true},
+                            "statusCode": {"type": "string", "nullable": true}
+                        }
+                    },
+                    "engagement": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "ZZP engagement field group — populated when orderType = engagement (folds the DBA modelovereenkomst engagement).",
+                        "properties": {
+                            "modelovereenkomstId": {"type": "string", "nullable": true},
+                            "risicoklasse": {"type": "string", "nullable": true, "enum": ["laag", "midden", "hoog"]},
+                            "dbaBeoordeling": {"type": "string", "nullable": true}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
