@@ -1,6 +1,6 @@
 ## MODIFIED Requirements
 
-### Requirement: REQ-AP-001: Accounts payable SHALL be declared as `Payee` + `APTransaction` + `DunningNotice` registers, not duplicates of GL
+### REQ-AP-001: Accounts payable SHALL be declared as `Payee` + `APTransaction` + `DunningNotice` registers, not duplicates of GL
 
 Accounts payable MUST be expressed as the canonical core registers in
 `lib/Settings/register.d/bookkeeping-accounts-payable-core.json` (the
