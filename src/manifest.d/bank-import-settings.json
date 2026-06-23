@@ -8,16 +8,11 @@
 	},
 	"menu": [
 		{
-			"id": "Configuratie",
-			"children": [
-				{
-					"id": "BankImportPage",
-					"label": "Import bank statements",
-					"icon": "BankTransferIn",
-					"route": "BankImportPage",
-					"order": 40
-				}
-			]
+			"id": "BankImportPage",
+			"label": "Import bank statements",
+			"icon": "BankTransferIn",
+			"route": "BankImportPage",
+			"order": 40
 		}
 	],
 	"pages": [
