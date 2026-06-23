@@ -6,10 +6,12 @@
   card (icon circle + title + value + sub), pipelinq-style.
 
   Turnover / margin / billable are RANGE-DRIVEN: they aggregate over
-  the dashboard's selected date range and carry an interactive preset
-  chip (mirroring the chart widgets' chip — same shared range ref,
-  same persisted value). Open debtors / creditors / cash position are
-  point-in-time and ignore the range (no chip).
+  the dashboard's selected date range. Those tiles opt into the shared
+  per-card date chip via `layout[].dateChip: true` (rendered by
+  CnDashboardPage / CnWidgetWrapper — same shared range ref + persistence
+  as the chart widgets), so this component only READS the range. Open
+  debtors / creditors / cash position are point-in-time and ignore the
+  range (no chip).
 
   Values reuse the shared, unit-tested computeKpis()/computeRangeKpis()/
   formatEur() layer, so the numbers match the charts and tables on the
@@ -29,30 +31,13 @@
 				<span class="finance-kpi-card__value" :class="`finance-kpi-card__value--${def.variant}`">{{ value }}</span>
 				<span v-if="sub" class="finance-kpi-card__sub">{{ sub }}</span>
 			</div>
-			<div v-if="def.rangeDriven && rangeText" class="finance-kpi-card__chip">
-				<NcActions :force-menu="true" :container="false" :menu-title="t('shillinq', 'Change date range')">
-					<template #icon>
-						<span class="finance-kpi-card__chip-label" :data-testid="`finance-kpi-range-${kpiKey}`">{{ rangeText }}</span>
-					</template>
-					<NcActionButton
-						v-for="preset in presets"
-						:key="preset.id"
-						:close-after-click="true"
-						@click="pickPreset(preset)">
-						<template v-if="currentPreset === preset.id" #icon>
-							<CalendarRange :size="16" />
-						</template>
-						{{ preset.label }}
-					</NcActionButton>
-				</NcActions>
-			</div>
 		</template>
 	</div>
 </template>
 
 <script>
 import { translate as t, translatePlural as n, getCanonicalLocale } from '@nextcloud/l10n'
-import { NcLoadingIcon, NcActions, NcActionButton } from '@nextcloud/vue'
+import { NcLoadingIcon } from '@nextcloud/vue'
 import { subscribe, unsubscribe } from '@nextcloud/event-bus'
 import { inject, ref } from 'vue'
 import CashMultiple from 'vue-material-design-icons/CashMultiple.vue'
@@ -62,10 +47,8 @@ import AccountArrowLeft from 'vue-material-design-icons/AccountArrowLeft.vue'
 import AccountArrowRight from 'vue-material-design-icons/AccountArrowRight.vue'
 import ClockOutline from 'vue-material-design-icons/ClockOutline.vue'
 import Bank from 'vue-material-design-icons/Bank.vue'
-import CalendarRange from 'vue-material-design-icons/CalendarRange.vue'
 import { useFinancialData } from './useFinancialData.js'
 import { computeKpis, computeRangeKpis, formatEur, lastMonths, monthsInRange } from './financialSeries.js'
-import { RANGE_PRESETS, RANGE_PERSIST_KEY, resolvePresetWindow, formatRange } from './financialDashboardConfig.js'
 
 /** Trailing months used when no dashboard range is active yet. */
 const FALLBACK_MONTHS = 12
@@ -132,7 +115,7 @@ const KPI_DEFS = {
 export default {
 	name: 'FinanceKpiCardWidget',
 
-	components: { NcLoadingIcon, NcActions, NcActionButton, CalendarRange },
+	components: { NcLoadingIcon },
 
 	props: {
 		/** Layout item from CnDashboardPage's widget slot scope. */
@@ -165,23 +148,12 @@ export default {
 			const variant = (bag && base.variantOf) ? base.variantOf(bag) : base.variant
 			return { ...base, variant }
 		},
-		presets() {
-			return RANGE_PRESETS
-		},
 		/** @return {object|null} The active dashboard range, or null. */
 		range() {
 			// `this.dateRange` is the setup-injected ref, auto-unwrapped to
 			// its value on read.
 			const r = this.dateRange
 			return (r && r.from && r.to) ? r : null
-		},
-		/** @return {string} Active preset id (for the chip checkmark). */
-		currentPreset() {
-			return this.range?.preset || ''
-		},
-		/** @return {string} Compact label for the active range. */
-		rangeText() {
-			return formatRange(this.range)
 		},
 		/** @return {string[]} Month buckets for the active range (or fallback). */
 		months() {
@@ -234,28 +206,6 @@ export default {
 
 	methods: {
 		t,
-		/**
-		 * Apply a preset: resolve its window, push it onto the shared
-		 * dashboard range ref (live-updating every range-driven widget)
-		 * and persist it under the engine's localStorage key so the
-		 * choice survives a reload and is read back by CnDashboardPage.
-		 *
-		 * @param {{ id: string }} preset The chosen preset.
-		 */
-		pickPreset(preset) {
-			const win = resolvePresetWindow(preset.id, this.presets)
-			if (!win) return
-			const value = { from: win.from, to: win.to, preset: preset.id }
-			// Assigning the setup-returned ref writes through to its
-			// `.value` — propagates to every range-driven widget + the
-			// engine's chart chips reactively.
-			this.dateRange = value
-			try {
-				localStorage.setItem(RANGE_PERSIST_KEY, JSON.stringify(value))
-			} catch (e) {
-				// Non-fatal (private window / quota) — in-memory range still applied.
-			}
-		},
 	},
 }
 </script>
@@ -344,50 +294,5 @@ export default {
 	color: var(--color-text-maxcontrast, #767676);
 	font-size: 12px;
 	line-height: 1.3;
-}
-
-.finance-kpi-card__chip {
-	position: absolute;
-	top: 10px;
-	right: 10px;
-}
-
-.finance-kpi-card__chip-label {
-	display: inline-block;
-	padding: 2px 8px;
-	border-radius: var(--border-radius-pill, 16px);
-	background-color: var(--color-background-hover, #f5f5f5);
-	color: var(--color-text-maxcontrast, #767676);
-	font-size: 11px;
-	font-weight: 500;
-	white-space: nowrap;
-	cursor: pointer;
-}
-</style>
-
-<!--
-  Unscoped, namespaced override: NcActions renders its trigger as a
-  fixed-size icon button (`overflow: hidden`), which clips the wide date
-  label. Scoped :deep() didn't reliably beat the lib's icon-width rule,
-  so this small block (confined to .finance-kpi-card__chip) lets the
-  trigger shrink-wrap the pill — mirroring the engine's chart-chip
-  trigger styling.
--->
-<style>
-.finance-kpi-card__chip .button-vue,
-.finance-kpi-card__chip .action-item__menutoggle {
-	width: auto !important;
-	min-width: 0 !important;
-	height: auto !important;
-	min-height: 0 !important;
-	padding: 0 !important;
-	overflow: visible !important;
-}
-
-.finance-kpi-card__chip .button-vue__wrapper,
-.finance-kpi-card__chip .button-vue__icon {
-	width: auto !important;
-	min-width: 0 !important;
-	height: auto !important;
 }
 </style>
