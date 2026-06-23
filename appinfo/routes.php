@@ -45,6 +45,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         ['name' => 'pipelinqSettings#index', 'url' => '/api/pipelinq/settings', 'verb' => 'GET'],
         ['name' => 'pipelinqSettings#create', 'url' => '/api/pipelinq/settings', 'verb' => 'POST'],
         ['name' => 'pipelinqSettings#test', 'url' => '/api/pipelinq/settings/test', 'verb' => 'POST'],
+        // First-time setup wizard (ADR-042)
+        ['name' => 'setup#status',     'url' => '/api/setup/status',            'verb' => 'GET'],
+        ['name' => 'setup#saveConfig', 'url' => '/api/setup/config',            'verb' => 'POST'],
+        ['name' => 'setup#runAction',  'url' => '/api/setup/action/{actionId}', 'verb' => 'POST'],
 
         // bookings-pipelinq-customer-bridge slice 09 — admin dead-letter
         // dashboard over the TimelineDeadLetter register populated by
