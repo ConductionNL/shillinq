@@ -310,5 +310,29 @@ export const reportViews = [
   "label": "ZZP-aftrek",
   "icon": "AccountCashOutline",
   "category": "tax"
+ },
+ {
+  "id": "Jaarrekening",
+  "label": "Annual accounts",
+  "icon": "FileDocumentOutline",
+  "category": "statements"
+ },
+ {
+  "id": "IbAangiftenZzp",
+  "label": "IB returns",
+  "icon": "FileDocumentEditOutline",
+  "category": "tax"
+ },
+ {
+  "id": "VpbBalansAangifte",
+  "label": "Vpb balance + return preparation",
+  "icon": "FileDocumentMultipleOutline",
+  "category": "tax"
+ },
+ {
+  "id": "VpbReports",
+  "label": "Quarterly statement",
+  "icon": "FileChartOutline",
+  "category": "tax"
  }
 ]

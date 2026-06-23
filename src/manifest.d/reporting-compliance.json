@@ -6,26 +6,9 @@
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
 		"description": "Reporting & Compliance consolidation: two custom pages under the existing top-level 'Compliance' group (label 'Reporting & Compliance', defined in the base manifest). The overview page renders the static ReportCatalogue as category-grouped cards with a per-card format picker + a Generate dialog that POSTs /api/reporting/generate; the generated-reports index lists the persisted GeneratedReport records with a download link. Both are type=custom (kind:page in src/registry.js) because neither the category-grouped card grid + generate dialog nor the download-link cell + three-facet filter row fits a built-in dashboard/index page type (ADR-024 / ADR-036). The menu leaves are merged into the existing 'Compliance' group by id (per mergeMenuItems in main.js); the stranded report leaves scattered across Belastingen / Bookkeeping / PublicSector / Purchasing are re-homed into this same group via src/menu-layout.json#relocations."
 	},
+	"_menu_note": "The 'Reporting & Compliance' top-level group is now a DIRECT LINK to the ReportingComplianceOverview cards page, with no sub-items. The route is set HERE (not in the base manifest) because main.js mergeMenuItems fills the base group's missing 'route' from this fragment, and the base-manifest consistency validator only resolves routes against base pages (the overview page is fragment-declared). The former 'Reports' + 'Generated reports' leaves are gone: the overview IS the reports page (a card per report) and links to the generated-reports index itself.",
 	"menu": [
-		{
-			"id": "Compliance",
-			"children": [
-				{
-					"id": "ReportingComplianceOverview",
-					"label": "Reports",
-					"icon": "FileChartOutline",
-					"route": "ReportingComplianceOverview",
-					"order": 5
-				},
-				{
-					"id": "GeneratedReportsIndex",
-					"label": "Generated reports",
-					"icon": "FileDownloadOutline",
-					"route": "GeneratedReportsIndex",
-					"order": 6
-				}
-			]
-		}
+		{ "id": "Compliance", "route": "ReportingComplianceOverview" }
 	],
 	"pages": [
 		{

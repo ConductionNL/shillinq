@@ -249,12 +249,16 @@ function applyMenuRemovals(menu, removals) {
 	// group when it is either explicitly removed OR left empty after its children
 	// were removed/relocated away (the report-card collapse empties ENSIA/DBA/…).
 	// A group that still has children is never silently hidden (no stranding).
+	// EXCEPTION: a group that carries a `route`/`href`/`action` is itself clickable
+	// (a direct-link top-level item, e.g. 'Reporting & Compliance' → its cards page),
+	// so it must survive even when all its children have been removed.
+	const isClickable = (n) => n.route !== undefined || n.href !== undefined || n.action !== undefined
 	const prune = (nodes) => nodes.reduce((acc, n) => {
 		if (drop.has(n.id) && !wasGroup(n)) return acc
 		if (Array.isArray(n.children)) {
 			const children = prune(n.children)
 			const hadChildren = wasGroup(n)
-			if (children.length === 0 && hadChildren) return acc
+			if (children.length === 0 && hadChildren && !isClickable(n)) return acc
 			acc.push({ ...n, children })
 			return acc
 		}
