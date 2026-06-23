@@ -514,4 +514,20 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         ['name' => 'reporting#generate', 'url' => '/api/reporting/generate', 'verb' => 'POST'],
         ['name' => 'reporting#generated', 'url' => '/api/reporting/generated', 'verb' => 'GET'],
         ['name' => 'reporting#download', 'url' => '/api/reporting/download/{id}', 'verb' => 'GET'],
+
+        // payment-run-sepa-export (REQ-SEPA-006 / REQ-SEPA-007). The HTTP surface
+        // behind the "Export to bank" and "Reconcile / import statement" actions
+        // on the PaymentRun detail page. export({id}) generates the SEPA
+        // pain.001 / CSV bank file, stores + tags it, sets exportedFileRef /
+        // exportedAt and drives approved → exported through the OR lifecycle
+        // engine; reconcile({id}) imports a CAMT.053 statement, matches its
+        // booked entries to the run's lines and drives exported → reconciled on a
+        // full match (a partial match stays exported with a mismatch note). Both
+        // are #[NoAdminRequired] with an explicit user-session guard plus an
+        // ADR-005 per-administration authorisation guard in the controller body
+        // (cross-tenant ids masked as 404). The {id} wildcard is preceded by the
+        // static /export and /reconcile suffixes per Symfony route ordering, and
+        // both are declared before the SPA catch-all per ADR-016.
+        ['name' => 'paymentRun#export', 'url' => '/api/v1/payment-runs/{id}/export', 'verb' => 'POST'],
+        ['name' => 'paymentRun#reconcile', 'url' => '/api/v1/payment-runs/{id}/reconcile', 'verb' => 'POST'],
 ]);

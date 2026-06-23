@@ -96,6 +96,13 @@ import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceipt
 // registered as a kind:"page" custom component.
 import SupplierInvoiceDetail from './components/supplier-invoice/SupplierInvoiceDetail.vue'
 
+// payment-run-sepa-export: the actions component injected into the PaymentRun
+// detail page's #actions slot (wired as the page's actionsComponent in the
+// manifest). It renders the "Export to bank" button (approved runs) + the
+// "Reconcile / import statement" launcher (exported runs). Registered as
+// kind:"widget" so the manifest actionsComponent field resolves to this entry.
+import PaymentRunDetailActions from './components/payment-run/PaymentRunDetailActions.vue'
+
 // bookkeeping-purchase-order-3way slice 06 (REQ-PO3W-004 / REQ-PO3W-006):
 // the three-way-match index renders per-row match-status pills and a
 // "Re-evaluate" quick-action button that calls back into the matching
@@ -287,6 +294,12 @@ import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.
 import ReportingComplianceOverview from './components/reporting/ReportingComplianceOverview.vue'
 import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.vue'
 
+// Import bank statements lives under the Configuratie (settings) group as a
+// page that hosts BankStatementWizard — moved off the Financial overview
+// dashboard so it sits with the other one-time setup tasks. manifest fragment
+// src/manifest.d/bank-import-settings.json declares the route + menu entry.
+import BankImportPage from './components/settings/BankImportPage.vue'
+
 export default {
 	RecurringInvoiceProfileModal: { kind: 'modal', component: RecurringInvoiceProfileModal },
 
@@ -366,7 +379,12 @@ export default {
 	// actionsComponent field resolves to this entry via CnPageRenderer.
 	FinancialDashboardActions: { kind: 'widget', component: FinancialDashboardActions },
 
+	// payment-run-sepa-export: PaymentRun detail-page actions (Export to bank /
+	// Reconcile). kind:"widget" so the manifest actionsComponent field resolves.
+	PaymentRunDetailActions: { kind: 'widget', component: PaymentRunDetailActions },
+
 	// reporting-compliance-consolidation: Reporting & Compliance pages.
 	ReportingComplianceOverview: { kind: 'page', component: ReportingComplianceOverview },
 	GeneratedReportsIndex: { kind: 'page', component: GeneratedReportsIndex },
+	BankImportPage: { kind: 'page', component: BankImportPage },
 }

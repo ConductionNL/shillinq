@@ -8,7 +8,7 @@
 			"children": [
 				{
 					"id": "Jaarrekening",
-					"label": "Jaarrekening",
+					"label": "Annual accounts",
 					"icon": "FileDocumentOutline",
 					"route": "Jaarrekening",
 					"order": 60
@@ -21,7 +21,7 @@
 			"id": "Jaarrekening",
 			"route": "/bookkeeping/jaarrekening",
 			"type": "index",
-			"title": "Jaarrekening",
+			"title": "Annual accounts",
 			"config": {
 				"register": "shillinq",
 				"schema": "AnnualReport",
@@ -33,12 +33,12 @@
 					},
 					{
 						"key": "boekjaarEind",
-						"label": "Boekjaar",
+						"label": "Financial year",
 						"sortable": true
 					},
 					{
 						"key": "groottecategorie",
-						"label": "Groottecategorie",
+						"label": "Size category",
 						"sortable": true
 					},
 					{
@@ -48,17 +48,17 @@
 					},
 					{
 						"key": "opmaakDatum",
-						"label": "Opgemaakt",
+						"label": "Prepared",
 						"sortable": true
 					},
 					{
 						"key": "vaststellingDatum",
-						"label": "Vastgesteld",
+						"label": "Adopted",
 						"sortable": true
 					},
 					{
 						"key": "depositeringDatum",
-						"label": "Gedeponeerd",
+						"label": "Filed",
 						"sortable": true
 					}
 				],
@@ -70,7 +70,7 @@
 			"id": "JaarrekeningDetail",
 			"route": "/bookkeeping/jaarrekening/:id",
 			"type": "detail",
-			"title": "Jaarrekening",
+			"title": "Annual accounts",
 			"config": {
 				"register": "shillinq",
 				"schema": "AnnualReport",
@@ -82,27 +82,27 @@
 					},
 					{
 						"key": "boekjaarStart",
-						"label": "Boekjaar start",
+						"label": "Financial year start",
 						"type": "string"
 					},
 					{
 						"key": "boekjaarEind",
-						"label": "Boekjaar eind",
+						"label": "Financial year end",
 						"type": "string"
 					},
 					{
 						"key": "groottecategorie",
-						"label": "Groottecategorie",
+						"label": "Size category",
 						"type": "string"
 					},
 					{
 						"key": "rapportageGrondslag",
-						"label": "Rapportagegrondslag",
+						"label": "Reporting basis",
 						"type": "string"
 					},
 					{
 						"key": "valuta",
-						"label": "Valuta",
+						"label": "Currency",
 						"type": "string"
 					},
 					{
@@ -112,37 +112,37 @@
 					},
 					{
 						"key": "opmaakDatum",
-						"label": "Opmaakdatum",
+						"label": "Preparation date",
 						"type": "string"
 					},
 					{
 						"key": "vaststellingDatum",
-						"label": "Vaststellingsdatum",
+						"label": "Adoption date",
 						"type": "string"
 					},
 					{
 						"key": "depositeringDatum",
-						"label": "Deponeringsdatum",
+						"label": "Filing date",
 						"type": "string"
 					},
 					{
 						"key": "accountantsverklaringVereist",
-						"label": "Accountantsverklaring vereist",
+						"label": "Auditor's report required",
 						"type": "boolean"
 					},
 					{
 						"key": "accountantsverklaringStatus",
-						"label": "Accountantsverklaring",
+						"label": "Auditor's report",
 						"type": "string"
 					},
 					{
 						"key": "kasstroomoverzichtVereist",
-						"label": "Kasstroomoverzicht vereist",
+						"label": "Cash flow statement required",
 						"type": "boolean"
 					},
 					{
 						"key": "bestuursverslagVereist",
-						"label": "Bestuursverslag vereist",
+						"label": "Management report required",
 						"type": "boolean"
 					}
 				],
@@ -153,19 +153,19 @@
 			"id": "ReviewWorkflowDetail",
 			"route": "/bookkeeping/jaarrekening/review/:id",
 			"type": "detail",
-			"title": "Reviewworkflow",
+			"title": "Review workflow",
 			"config": {
 				"register": "shillinq",
 				"schema": "ReviewWorkflow",
 				"fields": [
 					{
 						"key": "reportId",
-						"label": "Jaarrekening",
+						"label": "Annual accounts",
 						"type": "string"
 					},
 					{
 						"key": "huidigStap",
-						"label": "Huidige stap",
+						"label": "Current step",
 						"type": "string"
 					}
 				],

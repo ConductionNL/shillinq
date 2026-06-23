@@ -71,17 +71,17 @@
 				"fields": [
 					{
 						"key": "accountNumber",
-						"label": "Grootboek",
+						"label": "Ledger",
 						"type": "string"
 					},
 					{
 						"key": "programmaCode",
-						"label": "Programma",
+						"label": "Programme",
 						"type": "string"
 					},
 					{
 						"key": "taakveld",
-						"label": "Taakveld",
+						"label": "Task field",
 						"type": "string"
 					},
 					{
@@ -91,7 +91,7 @@
 					},
 					{
 						"key": "administrationId",
-						"label": "Administratie",
+						"label": "Administration",
 						"type": "string"
 					},
 					{

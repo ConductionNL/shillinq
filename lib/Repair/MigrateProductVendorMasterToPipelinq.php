@@ -6,7 +6,8 @@
  * Idempotent migration step: exports shillinq Product + ProductAttribute +
  * VendorMaster data to app-config key `shillinq_pvm_export` for pipelinq
  * ingest, then rewires existing stock/PO/AP objects to use productId +
- * VendorFinancialProfile.
+ * Payee (the canonical AP master; the retired VendorFinancialProfile folded
+ * into Payee per consolidate-accounts-payable).
  *
  * @category Repair
  * @package  OCA\Shillinq\Repair
@@ -36,7 +37,8 @@ use Psr\Log\LoggerInterface;
 /**
  * Idempotent migration step: exports shillinq Product + ProductAttribute + VendorMaster
  * data to app-config key `shillinq_pvm_export` for pipelinq ingest, then rewires
- * existing stock/PO/AP objects to use productId + VendorFinancialProfile.
+ * existing stock/PO/AP objects to use productId + Payee (the canonical AP master;
+ * the retired VendorFinancialProfile folded into Payee per consolidate-accounts-payable).
  *
  * Design decisions:
  * - FAIL-CLOSED: if the export payload cannot be written, the step aborts and leaves

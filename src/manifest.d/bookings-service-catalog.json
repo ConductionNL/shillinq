@@ -2,13 +2,13 @@
 	"menu": [
 		{
 			"id": "Verkoop",
-			"label": "Verkoop",
+			"label": "Sales",
 			"icon": "CartOutline",
 			"order": 33,
 			"children": [
 				{
 					"id": "Diensten",
-					"label": "Diensten",
+					"label": "Services",
 					"icon": "BriefcaseOutline",
 					"route": "Diensten",
 					"order": 5
@@ -21,7 +21,7 @@
 			"id": "Diensten",
 			"route": "/verkoop/diensten",
 			"type": "index",
-			"title": "Diensten-catalogus",
+			"title": "Service catalogue",
 			"config": {
 				"register": "shillinq",
 				"schema": "Service",
@@ -70,7 +70,7 @@
 			"id": "DienstDetail",
 			"route": "/verkoop/diensten/:id",
 			"type": "detail",
-			"title": "Dienst",
+			"title": "Service",
 			"config": {
 				"register": "shillinq",
 				"schema": "Service",

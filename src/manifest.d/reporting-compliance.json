@@ -12,14 +12,14 @@
 			"children": [
 				{
 					"id": "ReportingComplianceOverview",
-					"label": "Rapportages",
+					"label": "Reports",
 					"icon": "FileChartOutline",
 					"route": "ReportingComplianceOverview",
 					"order": 5
 				},
 				{
 					"id": "GeneratedReportsIndex",
-					"label": "Gegenereerde rapportages",
+					"label": "Generated reports",
 					"icon": "FileDownloadOutline",
 					"route": "GeneratedReportsIndex",
 					"order": 6

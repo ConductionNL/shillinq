@@ -2,13 +2,13 @@
 	"menu": [
 		{
 			"id": "Verkoop",
-			"label": "Verkoop",
+			"label": "Sales",
 			"icon": "CartOutline",
 			"order": 33,
 			"children": [
 				{
 					"id": "Annuleringsbeleid",
-					"label": "Annuleringsbeleid",
+					"label": "Cancellation policy",
 					"icon": "CalendarRemoveOutline",
 					"route": "Annuleringsbeleid",
 					"order": 20
@@ -21,7 +21,7 @@
 			"id": "Annuleringsbeleid",
 			"route": "/verkoop/annuleringsbeleid",
 			"type": "index",
-			"title": "Annuleringsbeleid",
+			"title": "Cancellation policy",
 			"config": {
 				"register": "shillinq",
 				"schema": "CancellationPolicy",
@@ -65,7 +65,7 @@
 			"id": "AnnuleringsbeleidDetail",
 			"route": "/verkoop/annuleringsbeleid/:id",
 			"type": "detail",
-			"title": "Annuleringsbeleid",
+			"title": "Cancellation policy",
 			"config": {
 				"register": "shillinq",
 				"schema": "CancellationPolicy",

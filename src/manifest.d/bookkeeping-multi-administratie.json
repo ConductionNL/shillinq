@@ -9,48 +9,48 @@
 	"menu": [
 		{
 			"id": "MultiAdministratie",
-			"label": "Administraties",
+			"label": "Administrations",
 			"icon": "OfficeBuildingOutline",
 			"order": 29,
 			"children": [
 				{
 					"id": "AdministrationSwitcher",
-					"label": "Administratie wisselen",
+					"label": "Switch administration",
 					"icon": "SwapHorizontal",
 					"route": "AdministrationSwitcher",
 					"order": 1
 				},
 				{
 					"id": "Administraties",
-					"label": "Administraties",
+					"label": "Administrations",
 					"icon": "OfficeBuilding",
 					"route": "Administraties",
 					"order": 5
 				},
 				{
 					"id": "AdministratieLidmaatschappen",
-					"label": "Toegang & rollen",
+					"label": "Access & roles",
 					"icon": "AccountMultipleOutline",
 					"route": "AdministratieLidmaatschappen",
 					"order": 6
 				},
 				{
 					"id": "IntercompanyBoekingen",
-					"label": "Intercompany journaalposten",
+					"label": "Intercompany journal entries",
 					"icon": "SwapHorizontal",
 					"route": "IntercompanyBoekingen",
 					"order": 7
 				},
 				{
 					"id": "ConsolidatieMappings",
-					"label": "Consolidatie mapping",
+					"label": "Consolidation mapping",
 					"icon": "Sitemap",
 					"route": "ConsolidatieMappings",
 					"order": 8
 				},
 				{
 					"id": "AdministratieMigraties",
-					"label": "Activaoverdracht",
+					"label": "Asset transfer",
 					"icon": "TransferRight",
 					"route": "AdministratieMigraties",
 					"order": 9
@@ -65,22 +65,22 @@
 			"type": "custom",
 			"kind": "page",
 			"component": "AdministrationSwitcherPage",
-			"title": "Administratie wisselen"
+			"title": "Switch administration"
 		},
 		{
 			"id": "Administraties",
 			"route": "/administratie/administraties",
 			"type": "index",
-			"title": "Administraties",
+			"title": "Administrations",
 			"config": {
 				"register": "shillinq",
 				"schema": "Administration",
 				"columns": [
 					{ "key": "administrationCode", "label": "Code", "sortable": true },
-					{ "key": "name", "label": "Naam", "sortable": true },
-					{ "key": "legalForm", "label": "Rechtsvorm", "sortable": true },
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "legalForm", "label": "Legal form", "sortable": true },
 					{ "key": "kvkNumber", "label": "KvK", "sortable": true },
-					{ "key": "vatRegime", "label": "BTW-regime", "sortable": true },
+					{ "key": "vatRegime", "label": "BTW regime", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true },
 					{ "key": "backupSchedule", "label": "Backup", "sortable": true }
 				],
@@ -92,33 +92,33 @@
 			"id": "AdministratieDetail",
 			"route": "/administratie/administraties/:id",
 			"type": "detail",
-			"title": "Administratie",
+			"title": "Administration",
 			"config": {
 				"register": "shillinq",
 				"schema": "Administration",
 				"fields": [
-					{ "key": "administrationCode", "label": "Administratiecode", "type": "string" },
-					{ "key": "name", "label": "Naam", "type": "string" },
-					{ "key": "legalForm", "label": "Rechtsvorm", "type": "string" },
-					{ "key": "kvkNumber", "label": "KvK-nummer", "type": "string" },
+					{ "key": "administrationCode", "label": "Administration code", "type": "string" },
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "legalForm", "label": "Legal form", "type": "string" },
+					{ "key": "kvkNumber", "label": "KvK number", "type": "string" },
 					{ "key": "rsin", "label": "RSIN", "type": "string" },
-					{ "key": "vatNumber", "label": "BTW-nummer", "type": "string" },
-					{ "key": "payrollTaxNumber", "label": "Loonheffingsnummer", "type": "string" },
-					{ "key": "parentAdministrationId", "label": "Moederadministratie", "type": "string" },
-					{ "key": "childAdministrationIds", "label": "Dochteradministraties", "type": "array" },
-					{ "key": "consolidateIntoId", "label": "Consolideren in", "type": "string" },
-					{ "key": "consolidationMethod", "label": "Consolidatiemethode", "type": "string" },
-					{ "key": "fiscalUnitVpbId", "label": "Fiscale eenheid (VPB)", "type": "string" },
-					{ "key": "fiscalUnitVatId", "label": "Fiscale eenheid (BTW)", "type": "string" },
-					{ "key": "fiscalYearStartMonth", "label": "Boekjaar startmaand", "type": "number" },
-					{ "key": "nonCalendarFiscalYear", "label": "Afwijkend boekjaar", "type": "boolean" },
-					{ "key": "presentationCurrency", "label": "Presentatievaluta", "type": "string" },
-					{ "key": "vatRegime", "label": "BTW-regime", "type": "string" },
-					{ "key": "vatFilingFrequency", "label": "BTW-aangiftefrequentie", "type": "string" },
+					{ "key": "vatNumber", "label": "BTW number", "type": "string" },
+					{ "key": "payrollTaxNumber", "label": "Payroll tax number", "type": "string" },
+					{ "key": "parentAdministrationId", "label": "Parent administration", "type": "string" },
+					{ "key": "childAdministrationIds", "label": "Child administrations", "type": "array" },
+					{ "key": "consolidateIntoId", "label": "Consolidate into", "type": "string" },
+					{ "key": "consolidationMethod", "label": "Consolidation method", "type": "string" },
+					{ "key": "fiscalUnitVpbId", "label": "Fiscal unit (Vpb)", "type": "string" },
+					{ "key": "fiscalUnitVatId", "label": "Fiscal unit (BTW)", "type": "string" },
+					{ "key": "fiscalYearStartMonth", "label": "Fiscal year start month", "type": "number" },
+					{ "key": "nonCalendarFiscalYear", "label": "Non-calendar fiscal year", "type": "boolean" },
+					{ "key": "presentationCurrency", "label": "Presentation currency", "type": "string" },
+					{ "key": "vatRegime", "label": "BTW regime", "type": "string" },
+					{ "key": "vatFilingFrequency", "label": "BTW filing frequency", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" },
-					{ "key": "backupSchedule", "label": "Backup planning", "type": "string" },
-					{ "key": "dataRetentionYears", "label": "Gegevensretentie (jaren)", "type": "number" },
-					{ "key": "defaultLanguage", "label": "Standaardtaal", "type": "string" }
+					{ "key": "backupSchedule", "label": "Backup schedule", "type": "string" },
+					{ "key": "dataRetentionYears", "label": "Data retention (years)", "type": "number" },
+					{ "key": "defaultLanguage", "label": "Default language", "type": "string" }
 				],
 				"indexRoute": "Administraties"
 			}
@@ -127,16 +127,16 @@
 			"id": "AdministratieLidmaatschappen",
 			"route": "/administratie/lidmaatschappen",
 			"type": "index",
-			"title": "Toegang & rollen",
+			"title": "Access & roles",
 			"config": {
 				"register": "shillinq",
 				"schema": "AdministrationMembership",
 				"columns": [
-					{ "key": "userId", "label": "Gebruiker", "sortable": true },
-					{ "key": "administrationId", "label": "Administratie", "sortable": true },
-					{ "key": "role", "label": "Rol", "sortable": true },
-					{ "key": "mayPostJournalEntries", "label": "Mag boeken", "sortable": false },
-					{ "key": "mayCloseFiscalYear", "label": "Mag afsluiten", "sortable": false }
+					{ "key": "userId", "label": "User", "sortable": true },
+					{ "key": "administrationId", "label": "Administration", "sortable": true },
+					{ "key": "role", "label": "Role", "sortable": true },
+					{ "key": "mayPostJournalEntries", "label": "May post", "sortable": false },
+					{ "key": "mayCloseFiscalYear", "label": "May close", "sortable": false }
 				],
 				"defaultSort": "administrationId",
 				"detailRoute": "AdministratieLidmaatschapDetail"
@@ -146,19 +146,19 @@
 			"id": "AdministratieLidmaatschapDetail",
 			"route": "/administratie/lidmaatschappen/:id",
 			"type": "detail",
-			"title": "Toegang & rol",
+			"title": "Access & role",
 			"config": {
 				"register": "shillinq",
 				"schema": "AdministrationMembership",
 				"fields": [
-					{ "key": "userId", "label": "Gebruiker", "type": "string" },
-					{ "key": "administrationId", "label": "Administratie", "type": "string" },
-					{ "key": "role", "label": "Rol", "type": "string" },
-					{ "key": "ledgerAccessRestriction", "label": "Grootboekbeperking", "type": "array" },
-					{ "key": "mayPostJournalEntries", "label": "Mag journaalposten boeken", "type": "boolean" },
-					{ "key": "mayCloseFiscalYear", "label": "Mag jaarafsluiting doen", "type": "boolean" },
-					{ "key": "validFrom", "label": "Geldig van", "type": "string" },
-					{ "key": "validUntil", "label": "Geldig tot", "type": "string" }
+					{ "key": "userId", "label": "User", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" },
+					{ "key": "role", "label": "Role", "type": "string" },
+					{ "key": "ledgerAccessRestriction", "label": "Ledger restriction", "type": "array" },
+					{ "key": "mayPostJournalEntries", "label": "May post journal entries", "type": "boolean" },
+					{ "key": "mayCloseFiscalYear", "label": "May close fiscal year", "type": "boolean" },
+					{ "key": "validFrom", "label": "Valid from", "type": "string" },
+					{ "key": "validUntil", "label": "Valid until", "type": "string" }
 				],
 				"indexRoute": "AdministratieLidmaatschappen"
 			}
@@ -167,17 +167,17 @@
 			"id": "IntercompanyBoekingen",
 			"route": "/administratie/intercompany",
 			"type": "index",
-			"title": "Intercompany journaalposten",
+			"title": "Intercompany journal entries",
 			"config": {
 				"register": "shillinq",
 				"schema": "IntercompanyJournalEntry",
 				"columns": [
-					{ "key": "intercompanyNumber", "label": "IC-nummer", "sortable": true },
-					{ "key": "date", "label": "Datum", "sortable": true },
-					{ "key": "kind", "label": "Soort", "sortable": true },
-					{ "key": "sourceAdministrationId", "label": "Bron", "sortable": true },
-					{ "key": "destinationAdministrationId", "label": "Doel", "sortable": true },
-					{ "key": "amount", "label": "Bedrag", "sortable": true },
+					{ "key": "intercompanyNumber", "label": "IC number", "sortable": true },
+					{ "key": "date", "label": "Date", "sortable": true },
+					{ "key": "kind", "label": "Kind", "sortable": true },
+					{ "key": "sourceAdministrationId", "label": "Source", "sortable": true },
+					{ "key": "destinationAdministrationId", "label": "Target", "sortable": true },
+					{ "key": "amount", "label": "Amount", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "date",
@@ -188,25 +188,25 @@
 			"id": "IntercompanyBoekingDetail",
 			"route": "/administratie/intercompany/:id",
 			"type": "detail",
-			"title": "Intercompany journaalpost",
+			"title": "Intercompany journal entry",
 			"config": {
 				"register": "shillinq",
 				"schema": "IntercompanyJournalEntry",
 				"fields": [
-					{ "key": "intercompanyNumber", "label": "IC-nummer", "type": "string" },
-					{ "key": "date", "label": "Datum", "type": "string" },
-					{ "key": "kind", "label": "Soort", "type": "string" },
-					{ "key": "sourceAdministrationId", "label": "Bronadministratie", "type": "string" },
-					{ "key": "destinationAdministrationId", "label": "Doeladministratie", "type": "string" },
-					{ "key": "sourceJournalEntryId", "label": "Bron-journaalpost", "type": "string" },
-					{ "key": "destinationJournalEntryId", "label": "Doel-journaalpost", "type": "string" },
-					{ "key": "amount", "label": "Bedrag", "type": "number" },
-					{ "key": "currency", "label": "Valuta", "type": "string" },
-					{ "key": "vatTreatment", "label": "BTW-behandeling", "type": "string" },
-					{ "key": "eliminateOnConsolidation", "label": "Elimineren bij consolidatie", "type": "boolean" },
-					{ "key": "eliminationAccount", "label": "Eliminatierekening", "type": "string" },
+					{ "key": "intercompanyNumber", "label": "IC number", "type": "string" },
+					{ "key": "date", "label": "Date", "type": "string" },
+					{ "key": "kind", "label": "Kind", "type": "string" },
+					{ "key": "sourceAdministrationId", "label": "Source administration", "type": "string" },
+					{ "key": "destinationAdministrationId", "label": "Target administration", "type": "string" },
+					{ "key": "sourceJournalEntryId", "label": "Source journal entry", "type": "string" },
+					{ "key": "destinationJournalEntryId", "label": "Target journal entry", "type": "string" },
+					{ "key": "amount", "label": "Amount", "type": "number" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "vatTreatment", "label": "BTW treatment", "type": "string" },
+					{ "key": "eliminateOnConsolidation", "label": "Eliminate on consolidation", "type": "boolean" },
+					{ "key": "eliminationAccount", "label": "Elimination account", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" },
-					{ "key": "varianceAmount", "label": "Afwijking", "type": "number" }
+					{ "key": "varianceAmount", "label": "Variance", "type": "number" }
 				],
 				"indexRoute": "IntercompanyBoekingen"
 			}
@@ -215,15 +215,15 @@
 			"id": "ConsolidatieMappings",
 			"route": "/administratie/consolidatie-mappings",
 			"type": "index",
-			"title": "Consolidatie mapping",
+			"title": "Consolidation mapping",
 			"config": {
 				"register": "shillinq",
 				"schema": "ConsolidationMapping",
 				"columns": [
-					{ "key": "name", "label": "Naam", "sortable": true },
-					{ "key": "sourceAdministrationId", "label": "Bron", "sortable": true },
-					{ "key": "destinationAdministrationId", "label": "Doel", "sortable": true },
-					{ "key": "currencyTranslationMethod", "label": "Valutamethode", "sortable": true }
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "sourceAdministrationId", "label": "Source", "sortable": true },
+					{ "key": "destinationAdministrationId", "label": "Target", "sortable": true },
+					{ "key": "currencyTranslationMethod", "label": "Currency method", "sortable": true }
 				],
 				"defaultSort": "name",
 				"detailRoute": "ConsolidatieMappingDetail"
@@ -233,18 +233,18 @@
 			"id": "ConsolidatieMappingDetail",
 			"route": "/administratie/consolidatie-mappings/:id",
 			"type": "detail",
-			"title": "Consolidatie mapping",
+			"title": "Consolidation mapping",
 			"config": {
 				"register": "shillinq",
 				"schema": "ConsolidationMapping",
 				"fields": [
-					{ "key": "name", "label": "Naam", "type": "string" },
-					{ "key": "sourceAdministrationId", "label": "Bronadministratie", "type": "string" },
-					{ "key": "destinationAdministrationId", "label": "Doeladministratie", "type": "string" },
-					{ "key": "rules", "label": "Mappingregels", "type": "array" },
-					{ "key": "intercompanyEliminationAccount", "label": "IC-eliminatierekening", "type": "string" },
-					{ "key": "currencyTranslationMethod", "label": "Valutaomrekeningsmethode", "type": "string" },
-					{ "key": "validFrom", "label": "Geldig van", "type": "string" }
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "sourceAdministrationId", "label": "Source administration", "type": "string" },
+					{ "key": "destinationAdministrationId", "label": "Target administration", "type": "string" },
+					{ "key": "rules", "label": "Mapping rules", "type": "array" },
+					{ "key": "intercompanyEliminationAccount", "label": "IC elimination account", "type": "string" },
+					{ "key": "currencyTranslationMethod", "label": "Currency translation method", "type": "string" },
+					{ "key": "validFrom", "label": "Valid from", "type": "string" }
 				],
 				"indexRoute": "ConsolidatieMappings"
 			}
@@ -253,16 +253,16 @@
 			"id": "AdministratieMigraties",
 			"route": "/administratie/migraties",
 			"type": "index",
-			"title": "Activaoverdracht",
+			"title": "Asset transfer",
 			"config": {
 				"register": "shillinq",
 				"schema": "AdministrationMigration",
 				"columns": [
-					{ "key": "migrationNumber", "label": "Nummer", "sortable": true },
-					{ "key": "date", "label": "Datum", "sortable": true },
-					{ "key": "kind", "label": "Soort", "sortable": true },
-					{ "key": "sourceAdministrationId", "label": "Bron", "sortable": true },
-					{ "key": "destinationAdministrationId", "label": "Doel", "sortable": true },
+					{ "key": "migrationNumber", "label": "Number", "sortable": true },
+					{ "key": "date", "label": "Date", "sortable": true },
+					{ "key": "kind", "label": "Kind", "sortable": true },
+					{ "key": "sourceAdministrationId", "label": "Source", "sortable": true },
+					{ "key": "destinationAdministrationId", "label": "Target", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "migrationNumber",
@@ -273,24 +273,24 @@
 			"id": "AdministratieMigratieDetail",
 			"route": "/administratie/migraties/:id",
 			"type": "detail",
-			"title": "Activaoverdracht",
+			"title": "Asset transfer",
 			"config": {
 				"register": "shillinq",
 				"schema": "AdministrationMigration",
 				"fields": [
-					{ "key": "migrationNumber", "label": "Nummer", "type": "string" },
-					{ "key": "date", "label": "Datum", "type": "string" },
-					{ "key": "kind", "label": "Soort", "type": "string" },
-					{ "key": "sourceAdministrationId", "label": "Bronadministratie", "type": "string" },
-					{ "key": "destinationAdministrationId", "label": "Doeladministratie", "type": "string" },
-					{ "key": "objectIds", "label": "Overgedragen objecten", "type": "array" },
-					{ "key": "bookValueTransferred", "label": "Boekwaarde", "type": "number" },
-					{ "key": "marketValueTransferred", "label": "Marktwaarde", "type": "number" },
-					{ "key": "resultImpact", "label": "Verschil naar resultaat", "type": "number" },
-					{ "key": "fiscalTreatment", "label": "Fiscale behandeling", "type": "string" },
-					{ "key": "legalBasis", "label": "Juridische grondslag", "type": "string" },
-					{ "key": "sourceJournalEntryId", "label": "Bron-journaalpost", "type": "string" },
-					{ "key": "destinationJournalEntryId", "label": "Doel-journaalpost", "type": "string" },
+					{ "key": "migrationNumber", "label": "Number", "type": "string" },
+					{ "key": "date", "label": "Date", "type": "string" },
+					{ "key": "kind", "label": "Kind", "type": "string" },
+					{ "key": "sourceAdministrationId", "label": "Source administration", "type": "string" },
+					{ "key": "destinationAdministrationId", "label": "Target administration", "type": "string" },
+					{ "key": "objectIds", "label": "Transferred objects", "type": "array" },
+					{ "key": "bookValueTransferred", "label": "Book value", "type": "number" },
+					{ "key": "marketValueTransferred", "label": "Market value", "type": "number" },
+					{ "key": "resultImpact", "label": "Impact on result", "type": "number" },
+					{ "key": "fiscalTreatment", "label": "Fiscal treatment", "type": "string" },
+					{ "key": "legalBasis", "label": "Legal basis", "type": "string" },
+					{ "key": "sourceJournalEntryId", "label": "Source journal entry", "type": "string" },
+					{ "key": "destinationJournalEntryId", "label": "Target journal entry", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
 				"indexRoute": "AdministratieMigraties"

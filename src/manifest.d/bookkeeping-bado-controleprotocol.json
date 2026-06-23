@@ -35,7 +35,7 @@
 				},
 				{
 					"id": "AuditVerklaringen",
-					"label": "Audit Verklaringen",
+					"label": "Audit statements",
 					"icon": "FileCertificateOutline",
 					"route": "AuditVerklaringen",
 					"order": 40
@@ -94,10 +94,10 @@
 				"schema": "ToleranceMatrix",
 				"columns": [
 					{ "key": "topic", "label": "Topic", "sortable": true },
-					{ "key": "getrouwheidApprovalCeiling", "label": "Getrouwheid Approval %", "sortable": true },
-					{ "key": "getrouwheidQualificationCeiling", "label": "Getrouwheid Qual. %", "sortable": true },
-					{ "key": "rechtmatigheidApprovalCeiling", "label": "Rechtmatigheid Approval %", "sortable": true },
-					{ "key": "rechtmatigheidQualificationCeiling", "label": "Rechtmatigheid Qual. %", "sortable": true }
+					{ "key": "getrouwheidApprovalCeiling", "label": "Fair presentation Approval %", "sortable": true },
+					{ "key": "getrouwheidQualificationCeiling", "label": "Fair presentation Qual. %", "sortable": true },
+					{ "key": "rechtmatigheidApprovalCeiling", "label": "Lawfulness Approval %", "sortable": true },
+					{ "key": "rechtmatigheidQualificationCeiling", "label": "Lawfulness Qual. %", "sortable": true }
 				],
 				"defaultSort": "topic",
 				"detailRoute": "ToleranceMatrixDetail"
@@ -113,10 +113,10 @@
 				"schema": "ToleranceMatrix",
 				"fields": [
 					{ "key": "topic", "label": "Topic", "type": "string" },
-					{ "key": "getrouwheidApprovalCeiling", "label": "Getrouwheid Approval %", "type": "number" },
-					{ "key": "getrouwheidQualificationCeiling", "label": "Getrouwheid Qualification %", "type": "number" },
-					{ "key": "rechtmatigheidApprovalCeiling", "label": "Rechtmatigheid Approval %", "type": "number" },
-					{ "key": "rechtmatigheidQualificationCeiling", "label": "Rechtmatigheid Qualification %", "type": "number" },
+					{ "key": "getrouwheidApprovalCeiling", "label": "Fair presentation Approval %", "type": "number" },
+					{ "key": "getrouwheidQualificationCeiling", "label": "Fair presentation Qualification %", "type": "number" },
+					{ "key": "rechtmatigheidApprovalCeiling", "label": "Lawfulness Approval %", "type": "number" },
+					{ "key": "rechtmatigheidQualificationCeiling", "label": "Lawfulness Qualification %", "type": "number" },
 					{ "key": "uncertaintyCeiling", "label": "Uncertainty %", "type": "number" },
 					{ "key": "methodologyNote", "label": "Methodology Note", "type": "string" }
 				]
@@ -152,8 +152,8 @@
 				"fields": [
 					{ "key": "topic", "label": "Topic", "type": "string" },
 					{ "key": "findingType", "label": "Finding Type", "type": "string" },
-					{ "key": "rechtmatigheid", "label": "Rechtmatigheid", "type": "string" },
-					{ "key": "getrouwheid", "label": "Getrouwheid", "type": "string" },
+					{ "key": "rechtmatigheid", "label": "Lawfulness", "type": "string" },
+					{ "key": "getrouwheid", "label": "Fair presentation", "type": "string" },
 					{ "key": "severity", "label": "Severity", "type": "string" },
 					{ "key": "amount", "label": "Amount", "type": "number" },
 					{ "key": "narrative", "label": "Narrative", "type": "string" },
@@ -167,7 +167,7 @@
 			"id": "AuditVerklaringen",
 			"route": "/bado/verklaringen",
 			"type": "index",
-			"title": "Audit Verklaringen",
+			"title": "Audit statements",
 			"config": {
 				"register": "shillinq",
 				"schema": "VerklaringDraft",
@@ -183,7 +183,7 @@
 			"id": "AuditVerklaringDetail",
 			"route": "/bado/verklaringen/:id",
 			"type": "detail",
-			"title": "Audit Verklaring",
+			"title": "Audit statement",
 			"config": {
 				"register": "shillinq",
 				"schema": "VerklaringDraft",

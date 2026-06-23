@@ -8,7 +8,7 @@
 			"children": [
 				{
 					"id": "DBAOpdrachten",
-					"label": "DBA Opdrachten",
+					"label": "DBA assignments",
 					"icon": "BriefcaseAccountOutline",
 					"route": "DBAOpdrachten",
 					"order": 10
@@ -22,7 +22,7 @@
 				},
 				{
 					"id": "DBAModelovereenkomsten",
-					"label": "Modelovereenkomst Register",
+					"label": "Model agreement register",
 					"icon": "FileDocumentCheckOutline",
 					"route": "DBAModelovereenkomsten",
 					"order": 30
@@ -56,13 +56,13 @@
 			"id": "DBAOpdrachten",
 			"route": "/dba/opdrachten",
 			"type": "index",
-			"title": "DBA Opdrachten",
+			"title": "DBA assignments",
 			"config": {
 				"register": "shillinq",
 				"schema": "DBAOpdracht",
 				"columns": [
-					{"key": "opdrachtNaam", "label": "Opdracht", "sortable": true},
-					{"key": "klantId", "label": "Klant", "sortable": true},
+					{"key": "opdrachtNaam", "label": "Assignment", "sortable": true},
+					{"key": "klantId", "label": "Client", "sortable": true},
 					{"key": "startDatum", "label": "Start", "sortable": true},
 					{"key": "actueleRisicoscore", "label": "Risk score", "sortable": true},
 					{"key": "risicoNiveau", "label": "Risk band", "sortable": true},
@@ -77,20 +77,20 @@
 			"id": "DBAOpdrachtDetail",
 			"route": "/dba/opdrachten/:id",
 			"type": "detail",
-			"title": "DBA Opdracht",
+			"title": "DBA assignment",
 			"config": {
 				"register": "shillinq",
 				"schema": "DBAOpdracht",
 				"fields": [
-					{"key": "opdrachtNaam", "label": "Opdracht", "type": "string"},
-					{"key": "ondernemingId", "label": "Onderneming", "type": "string"},
-					{"key": "klantId", "label": "Klant", "type": "string"},
+					{"key": "opdrachtNaam", "label": "Assignment", "type": "string"},
+					{"key": "ondernemingId", "label": "Company", "type": "string"},
+					{"key": "klantId", "label": "Client", "type": "string"},
 					{"key": "startDatum", "label": "Start date", "type": "string"},
 					{"key": "verwachteEindDatum", "label": "Expected end", "type": "string"},
 					{"key": "feitelijkeEindDatum", "label": "Actual end", "type": "string"},
 					{"key": "verwachteOmzet", "label": "Expected revenue", "type": "number"},
 					{"key": "gerealiseerdeOmzet", "label": "Realised revenue", "type": "number"},
-					{"key": "modelOvereenkomstId", "label": "Modelovereenkomst", "type": "string"},
+					{"key": "modelOvereenkomstId", "label": "Model agreement", "type": "string"},
 					{"key": "intakeStatus", "label": "Intake status", "type": "string"},
 					{"key": "actueleRisicoscore", "label": "Risk score", "type": "number"},
 					{"key": "risicoNiveau", "label": "Risk band", "type": "string"},
@@ -110,7 +110,7 @@
 				"register": "shillinq",
 				"schema": "DBAIntake",
 				"columns": [
-					{"key": "opdrachtId", "label": "Opdracht", "sortable": true},
+					{"key": "opdrachtId", "label": "Assignment", "sortable": true},
 					{"key": "ingevuldOp", "label": "Filled in", "sortable": true},
 					{"key": "gezagSubtotaal", "label": "Authority", "sortable": true},
 					{"key": "arbeidSubtotaal", "label": "Personal service", "sortable": true},
@@ -131,7 +131,7 @@
 				"register": "shillinq",
 				"schema": "DBAIntake",
 				"fields": [
-					{"key": "opdrachtId", "label": "Opdracht", "type": "string"},
+					{"key": "opdrachtId", "label": "Assignment", "type": "string"},
 					{"key": "ingevuldOp", "label": "Filled in", "type": "string"},
 					{"key": "gezagSubtotaal", "label": "Authority/control", "type": "number"},
 					{"key": "arbeidSubtotaal", "label": "Personal service", "type": "number"},
@@ -148,7 +148,7 @@
 			"id": "DBAModelovereenkomsten",
 			"route": "/dba/modelovereenkomsten",
 			"type": "index",
-			"title": "Modelovereenkomst Register",
+			"title": "Model agreement register",
 			"config": {
 				"register": "shillinq",
 				"schema": "DBAModelovereenkomst",
@@ -167,7 +167,7 @@
 			"id": "DBAModelovereenkomstDetail",
 			"route": "/dba/modelovereenkomsten/:id",
 			"type": "detail",
-			"title": "Modelovereenkomst",
+			"title": "Model agreement",
 			"config": {
 				"register": "shillinq",
 				"schema": "DBAModelovereenkomst",
@@ -192,7 +192,7 @@
 				"register": "shillinq",
 				"schema": "DBAPortfolioRisico",
 				"columns": [
-					{"key": "ondernemingId", "label": "Onderneming", "sortable": true},
+					{"key": "ondernemingId", "label": "Company", "sortable": true},
 					{"key": "peilDatum", "label": "Reference date", "sortable": true},
 					{"key": "actieveOpdrachten", "label": "Active engagements", "sortable": true},
 					{"key": "exclusieveRelaties", "label": "Exclusive relations", "sortable": true},
@@ -211,7 +211,7 @@
 				"register": "shillinq",
 				"schema": "DBAPortfolioRisico",
 				"fields": [
-					{"key": "ondernemingId", "label": "Onderneming", "type": "string"},
+					{"key": "ondernemingId", "label": "Company", "type": "string"},
 					{"key": "peilDatum", "label": "Reference date", "type": "string"},
 					{"key": "actieveOpdrachten", "label": "Active engagements", "type": "number"},
 					{"key": "exclusieveRelaties", "label": "Exclusive relations", "type": "number"},
@@ -229,7 +229,7 @@
 				"register": "shillinq",
 				"schema": "DBAEvidenceDossier",
 				"columns": [
-					{"key": "opdrachtId", "label": "Opdracht", "sortable": true},
+					{"key": "opdrachtId", "label": "Assignment", "sortable": true},
 					{"key": "compleetheidScore", "label": "Completeness", "sortable": true},
 					{"key": "bewaarTermijn", "label": "Retention", "sortable": true},
 					{"key": "archiveDate", "label": "Delete-eligible", "sortable": true}
@@ -247,7 +247,7 @@
 				"register": "shillinq",
 				"schema": "DBAEvidenceDossier",
 				"fields": [
-					{"key": "opdrachtId", "label": "Opdracht", "type": "string"},
+					{"key": "opdrachtId", "label": "Assignment", "type": "string"},
 					{"key": "emailArchiefOptIn", "label": "Email archive opt-in", "type": "boolean"},
 					{"key": "compleetheidScore", "label": "Completeness", "type": "number"},
 					{"key": "bewaarTermijn", "label": "Retention period", "type": "string"},
@@ -265,7 +265,7 @@
 				"register": "shillinq",
 				"schema": "DBARisicoflag",
 				"columns": [
-					{"key": "opdrachtId", "label": "Opdracht", "sortable": true},
+					{"key": "opdrachtId", "label": "Assignment", "sortable": true},
 					{"key": "type", "label": "Flag type", "sortable": true},
 					{"key": "ernst", "label": "Severity", "sortable": true},
 					{"key": "detectieMoment", "label": "Detected", "sortable": true},
@@ -284,7 +284,7 @@
 				"register": "shillinq",
 				"schema": "DBARisicoflag",
 				"fields": [
-					{"key": "opdrachtId", "label": "Opdracht", "type": "string"},
+					{"key": "opdrachtId", "label": "Assignment", "type": "string"},
 					{"key": "type", "label": "Flag type", "type": "string"},
 					{"key": "ernst", "label": "Severity", "type": "string"},
 					{"key": "detectieMoment", "label": "Detected", "type": "string"},

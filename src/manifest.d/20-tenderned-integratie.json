@@ -1,28 +1,28 @@
 {
 	"menu": [
 		{
-			"id": "Inkoop",
-			"label": "Inkoop",
-			"icon": "GavelOutline",
-			"order": 36,
+			"id": "Purchasing",
+			"label": "Purchasing & Inventory",
+			"icon": "CartArrowDownOutline",
+			"order": 35,
 			"children": [
 				{
 					"id": "TenderNedAanbestedingen",
-					"label": "TenderNed Aanbestedingen",
+					"label": "TenderNed tenders",
 					"icon": "GavelOutline",
 					"route": "TenderNedAanbestedingen",
 					"order": 10
 				},
 				{
 					"id": "Verplichtingen",
-					"label": "Verplichtingen",
+					"label": "Commitments",
 					"icon": "FileSignOutline",
 					"route": "Verplichtingen",
 					"order": 20
 				},
 				{
 					"id": "MijnContracten",
-					"label": "Mijn Contracten",
+					"label": "My contracts",
 					"icon": "BriefcaseCheckOutline",
 					"route": "MijnContracten",
 					"order": 30
@@ -35,16 +35,16 @@
 			"id": "TenderNedAanbestedingen",
 			"route": "/inkoop/tenderned",
 			"type": "index",
-			"title": "TenderNed Aanbestedingen",
+			"title": "TenderNed tenders",
 			"config": {
 				"register": "shillinq",
 				"schema": "TenderNedAanbesteding",
 				"columns": [
-					{ "key": "aanbestedingId", "label": "Aanbesteding", "sortable": true },
-					{ "key": "titel", "label": "Titel", "sortable": true },
-					{ "key": "gunningsDatum", "label": "Gunningsdatum", "sortable": true },
-					{ "key": "contractWaarde", "label": "Contractwaarde", "sortable": true },
-					{ "key": "gegundeLeverancier", "label": "Gegunde leverancier", "sortable": true },
+					{ "key": "aanbestedingId", "label": "Tender", "sortable": true },
+					{ "key": "titel", "label": "Title", "sortable": true },
+					{ "key": "gunningsDatum", "label": "Award date", "sortable": true },
+					{ "key": "contractWaarde", "label": "Contract value", "sortable": true },
+					{ "key": "gegundeLeverancier", "label": "Awarded supplier", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "gunningsDatum",
@@ -55,24 +55,24 @@
 			"id": "TenderNedAanbestedingDetail",
 			"route": "/inkoop/tenderned/:id",
 			"type": "detail",
-			"title": "TenderNed Dossier",
+			"title": "TenderNed file",
 			"config": {
 				"register": "shillinq",
 				"schema": "TenderNedAanbesteding",
 				"fields": [
-					{ "key": "aanbestedingId", "label": "Aanbesteding", "type": "string" },
-					{ "key": "tenderNedUrl", "label": "TenderNed dossier", "type": "string" },
-					{ "key": "titel", "label": "Titel", "type": "string" },
-					{ "key": "beschrijving", "label": "Beschrijving", "type": "string" },
-					{ "key": "cpvCodes", "label": "CPV-codes", "type": "array" },
-					{ "key": "aanbestedendeDienst", "label": "Aanbestedende dienst", "type": "string" },
-					{ "key": "gunningsDatum", "label": "Gunningsdatum", "type": "string" },
-					{ "key": "contractWaarde", "label": "Contractwaarde", "type": "number" },
-					{ "key": "looptijdStart", "label": "Looptijd start", "type": "string" },
-					{ "key": "looptijdEind", "label": "Looptijd eind", "type": "string" },
-					{ "key": "gegundeLeverancier", "label": "Gegunde leverancier", "type": "string" },
-					{ "key": "opdrachttype", "label": "Opdrachttype", "type": "string" },
-					{ "key": "verplichtingId", "label": "Verplichting", "type": "string" },
+					{ "key": "aanbestedingId", "label": "Tender", "type": "string" },
+					{ "key": "tenderNedUrl", "label": "TenderNed file", "type": "string" },
+					{ "key": "titel", "label": "Title", "type": "string" },
+					{ "key": "beschrijving", "label": "Description", "type": "string" },
+					{ "key": "cpvCodes", "label": "CPV codes", "type": "array" },
+					{ "key": "aanbestedendeDienst", "label": "Contracting authority", "type": "string" },
+					{ "key": "gunningsDatum", "label": "Award date", "type": "string" },
+					{ "key": "contractWaarde", "label": "Contract value", "type": "number" },
+					{ "key": "looptijdStart", "label": "Term start", "type": "string" },
+					{ "key": "looptijdEind", "label": "Term end", "type": "string" },
+					{ "key": "gegundeLeverancier", "label": "Awarded supplier", "type": "string" },
+					{ "key": "opdrachttype", "label": "Contract type", "type": "string" },
+					{ "key": "verplichtingId", "label": "Commitment", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				]
 			}
@@ -81,16 +81,16 @@
 			"id": "Verplichtingen",
 			"route": "/inkoop/verplichtingen",
 			"type": "index",
-			"title": "Verplichtingen",
+			"title": "Commitments",
 			"config": {
 				"register": "shillinq",
 				"schema": "Verplichting",
 				"columns": [
-					{ "key": "verplichtingNummer", "label": "Nummer", "sortable": true },
-					{ "key": "omschrijving", "label": "Omschrijving", "sortable": true },
-					{ "key": "bron", "label": "Bron", "sortable": true },
-					{ "key": "bedrag", "label": "Bedrag", "sortable": true },
-					{ "key": "kostenplaats", "label": "Kostenplaats", "sortable": true },
+					{ "key": "verplichtingNummer", "label": "Number", "sortable": true },
+					{ "key": "omschrijving", "label": "Description", "sortable": true },
+					{ "key": "bron", "label": "Source", "sortable": true },
+					{ "key": "bedrag", "label": "Amount", "sortable": true },
+					{ "key": "kostenplaats", "label": "Cost center", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "verplichtingNummer",
@@ -101,21 +101,21 @@
 			"id": "VerplichtingDetail",
 			"route": "/inkoop/verplichtingen/:id",
 			"type": "detail",
-			"title": "Verplichting",
+			"title": "Commitment",
 			"config": {
 				"register": "shillinq",
 				"schema": "Verplichting",
 				"fields": [
-					{ "key": "verplichtingNummer", "label": "Nummer", "type": "string" },
-					{ "key": "omschrijving", "label": "Omschrijving", "type": "string" },
-					{ "key": "bron", "label": "Bron", "type": "string" },
-					{ "key": "bronReferentie", "label": "TenderNed-referentie", "type": "string" },
-					{ "key": "bedrag", "label": "Bedrag", "type": "number" },
-					{ "key": "kostenplaats", "label": "Kostenplaats", "type": "string" },
-					{ "key": "grootboekrekening", "label": "Grootboekrekening", "type": "string" },
-					{ "key": "looptijdStart", "label": "Looptijd start", "type": "string" },
-					{ "key": "looptijdEind", "label": "Looptijd eind", "type": "string" },
-					{ "key": "mijlpalen", "label": "Mijlpalen", "type": "array" },
+					{ "key": "verplichtingNummer", "label": "Number", "type": "string" },
+					{ "key": "omschrijving", "label": "Description", "type": "string" },
+					{ "key": "bron", "label": "Source", "type": "string" },
+					{ "key": "bronReferentie", "label": "TenderNed reference", "type": "string" },
+					{ "key": "bedrag", "label": "Amount", "type": "number" },
+					{ "key": "kostenplaats", "label": "Cost center", "type": "string" },
+					{ "key": "grootboekrekening", "label": "GL account", "type": "string" },
+					{ "key": "looptijdStart", "label": "Term start", "type": "string" },
+					{ "key": "looptijdEind", "label": "Term end", "type": "string" },
+					{ "key": "mijlpalen", "label": "Milestones", "type": "array" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				]
 			}
@@ -124,7 +124,7 @@
 			"id": "MijnContracten",
 			"route": "/inkoop/mijn-contracten",
 			"type": "index",
-			"title": "Mijn Contracten",
+			"title": "My contracts",
 			"config": {
 				"register": "shillinq",
 				"schema": "Verplichting",
@@ -132,11 +132,11 @@
 					"bron": "tenderned"
 				},
 				"columns": [
-					{ "key": "verplichtingNummer", "label": "Nummer", "sortable": true },
-					{ "key": "omschrijving", "label": "Omschrijving", "sortable": true },
-					{ "key": "bedrag", "label": "Contractwaarde", "sortable": true },
-					{ "key": "looptijdStart", "label": "Looptijd start", "sortable": true },
-					{ "key": "looptijdEind", "label": "Looptijd eind", "sortable": true },
+					{ "key": "verplichtingNummer", "label": "Number", "sortable": true },
+					{ "key": "omschrijving", "label": "Description", "sortable": true },
+					{ "key": "bedrag", "label": "Contract value", "sortable": true },
+					{ "key": "looptijdStart", "label": "Term start", "sortable": true },
+					{ "key": "looptijdEind", "label": "Term end", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "looptijdStart",

@@ -8,7 +8,7 @@
 	},
 	"menu": [
 		{
-			"id": "Inkoop",
+			"id": "Purchasing",
 			"children": [
 				{
 					"id": "GoodsReceiptNotes",

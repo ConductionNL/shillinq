@@ -4,25 +4,25 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-accounts-payable-core",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
-		"description": "Tier 2 — Accounts Payable (Core) navigation per REQ-AP-010. Adds 4 menu entries (Payees, Accounts Payable, AP Aging, Dunning) under the existing Bookkeeping menu and their backing index/detail pages bound to the canonical Payee / APTransaction / DunningNotice schemas. Coexists with the pre-T2 VendorMaster/APInvoice flavour during the migration window per dedup-notes.md."
+		"description": "Tier 2 — Accounts Payable (Core) navigation per REQ-AP-010 + REQ-AP-014 (consolidate-accounts-payable). Single Accounts Payable group with clean leaf labels (Payees, AP Invoices, AP Aging, Dunning Notices, Payment Runs) under the existing Bookkeeping menu and their backing index/detail pages bound to the canonical Payee / APTransaction / DunningNotice / PaymentRun schemas. The legacy base-monolith AP leaves + page definitions (Vendors/AccountsPayable/APAging/PaymentRuns) are removed from src/manifest.json by this change."
 	},
 	"menu": [
 		{
 			"id": "AccountsPayableT2",
-			"label": "Accounts Payable (T2)",
+			"label": "Accounts Payable",
 			"icon": "TruckOutline",
 			"order": 23,
 			"children": [
 				{
 					"id": "Payees",
-					"label": "Vendors",
+					"label": "Payees",
 					"icon": "TruckOutline",
 					"route": "Payees",
 					"order": 10
 				},
 				{
 					"id": "APTransactions",
-					"label": "Accounts Payable",
+					"label": "AP Invoices",
 					"icon": "ReceiptTextOutline",
 					"route": "APTransactions",
 					"order": 20
@@ -36,10 +36,17 @@
 				},
 				{
 					"id": "DunningNotices",
-					"label": "Dunning",
+					"label": "Dunning Notices",
 					"icon": "EmailAlertOutline",
 					"route": "DunningNotices",
 					"order": 40
+				},
+				{
+					"id": "PaymentRuns",
+					"label": "Payment Runs",
+					"icon": "BankTransferOutline",
+					"route": "PaymentRuns",
+					"order": 50
 				}
 			]
 		}
@@ -56,7 +63,7 @@
 				"columns": [
 					{"key": "vendorNumber", "label": "Vendor #", "sortable": true},
 					{"key": "name", "label": "Name", "sortable": true},
-					{"key": "bankAccount", "label": "IBAN", "sortable": false},
+					{"key": "bankAccount.iban", "label": "IBAN", "sortable": false},
 					{"key": "paymentTermDays", "label": "Payment Terms (days)", "sortable": true},
 					{"key": "email", "label": "Email", "sortable": false},
 					{"key": "lifecycleState", "label": "Status", "sortable": true}
@@ -79,7 +86,11 @@
 					{"key": "tradingName", "label": "Trading Name", "type": "string"},
 					{"key": "kvkNumber", "label": "KvK Number", "type": "string"},
 					{"key": "btwNumber", "label": "BTW Number", "type": "string"},
-					{"key": "bankAccount", "label": "IBAN", "type": "string"},
+					{"key": "payeeType", "label": "Payee Type", "type": "string"},
+					{"key": "bankAccount.iban", "label": "IBAN", "type": "string"},
+					{"key": "bankAccount.bic", "label": "BIC / SWIFT", "type": "string"},
+					{"key": "creditLimit", "label": "Credit Limit", "type": "number"},
+					{"key": "apBalance", "label": "Open AP Balance", "type": "number"},
 					{"key": "paymentTermDays", "label": "Payment Terms (days)", "type": "integer"},
 					{"key": "creditTerms", "label": "Credit Terms", "type": "string"},
 					{"key": "defaultExpenseAccountNumber", "label": "Default Expense Account", "type": "string"},
@@ -312,6 +323,73 @@
 					{"key": "administrationId", "label": "Administration", "type": "string"}
 				],
 				"indexRoute": "DunningNotices",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "PaymentRuns",
+			"route": "/bookkeeping/payment-runs",
+			"type": "index",
+			"title": "Payment Runs",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"columns": [
+					{"key": "runNumber", "label": "Run #", "sortable": true},
+					{"key": "executionDate", "label": "Execution Date", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "currency", "label": "Currency", "sortable": false},
+					{"key": "totalAmount", "label": "Total (EUR)", "sortable": true},
+					{"key": "lifecycleState", "label": "Lifecycle", "sortable": true}
+				],
+				"defaultSort": "runNumber",
+				"detailRoute": "PaymentRunDetail"
+			}
+		},
+		{
+			"id": "PaymentRunDetail",
+			"route": "/bookkeeping/payment-runs/:id",
+			"type": "detail",
+			"title": "Payment Run",
+			"actionsComponent": "PaymentRunDetailActions",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentRun",
+				"fields": [
+					{"key": "runNumber", "label": "Run #", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "executionDate", "label": "Execution Date", "type": "date"},
+					{"key": "debtorAccountIban", "label": "Debtor IBAN", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "currency", "label": "Currency", "type": "string"},
+					{"key": "totalAmount", "label": "Total Amount", "type": "number"},
+					{"key": "paymentLines", "label": "Payment Lines", "type": "array"},
+					{"key": "exportedFileRef", "label": "Exported File", "type": "string"},
+					{"key": "exportedAt", "label": "Exported At", "type": "datetime"},
+					{"key": "reconciledAt", "label": "Reconciled At", "type": "datetime"},
+					{"key": "lifecycleState", "label": "Lifecycle", "type": "string"}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "PaymentRuns",
 				"sidebarProps": {
 					"tabs": [
 						{
