@@ -13,7 +13,9 @@ export const reportViewCategories = {
  "statements": "Jaarrekening & consolidatie",
  "public-sector": "Overheidsrapportages",
  "tax": "Belastingrapportages",
- "sbr": "SBR / XBRL"
+ "sbr": "SBR / XBRL",
+ "sustainability": "Sustainability (CSRD/ESRS)",
+ "frameworks": "Standards & frameworks (IFRS/RJ)"
 }
 
 export const reportViews = [
@@ -334,5 +336,263 @@ export const reportViews = [
   "label": "Quarterly statement",
   "icon": "FileChartOutline",
   "category": "tax"
+ },
+ {
+  "id": "MaterialityAssessments",
+  "label": "Materiality Assessments",
+  "icon": "ScaleBalance",
+  "category": "sustainability"
+ },
+ {
+  "id": "EsrsDataPoints",
+  "label": "ESRS Data Points",
+  "icon": "TableLarge",
+  "category": "sustainability"
+ },
+ {
+  "id": "GhgInventories",
+  "label": "GHG Inventory",
+  "icon": "Molecule",
+  "category": "sustainability"
+ },
+ {
+  "id": "ValueChainActors",
+  "label": "Value Chain Actors",
+  "icon": "Truck",
+  "category": "sustainability"
+ },
+ {
+  "id": "AssuranceEngagements",
+  "label": "Assurance Engagements",
+  "icon": "ClipboardCheckOutline",
+  "category": "sustainability"
+ },
+ {
+  "id": "RevenueContracts",
+  "label": "Revenue contracts (IFRS 15)",
+  "icon": "FileDocumentOutline",
+  "category": "frameworks"
+ },
+ {
+  "id": "PerformanceObligations",
+  "label": "Performance Obligations",
+  "icon": "FormatListChecks",
+  "category": "frameworks"
+ },
+ {
+  "id": "RevenueWaterfall",
+  "label": "Revenue Waterfall",
+  "icon": "ChartTimelineVariant",
+  "category": "frameworks"
+ },
+ {
+  "id": "ContractBalances",
+  "label": "Contract Balances",
+  "icon": "Scale",
+  "category": "frameworks"
+ },
+ {
+  "id": "ContractModifications",
+  "label": "Contract Modifications",
+  "icon": "FileDocumentEditOutline",
+  "category": "frameworks"
+ },
+ {
+  "id": "ContractCostAssets",
+  "label": "Contract Cost Assets",
+  "icon": "Wallet",
+  "category": "frameworks"
+ },
+ {
+  "id": "LeaseRegister",
+  "label": "Lease Register (IFRS 16)",
+  "icon": "FileSign",
+  "category": "frameworks"
+ },
+ {
+  "id": "LeaseReassessmentEvents",
+  "label": "Lease Reassessment Events",
+  "icon": "FileDocumentEditOutline",
+  "category": "frameworks"
+ },
+ {
+  "id": "LeaseDisclosures",
+  "label": "Lease Annual Disclosures",
+  "icon": "TableLarge",
+  "category": "frameworks"
+ },
+ {
+  "id": "LeaseExemptions",
+  "label": "Lease Exemption Policy",
+  "icon": "ShieldCheckOutline",
+  "category": "frameworks"
+ },
+ {
+  "id": "AccountingFrameworks",
+  "label": "GAAP Framework Configuration",
+  "icon": "Earth",
+  "category": "frameworks"
+ },
+ {
+  "id": "ChartOfAccountsMappings",
+  "label": "Dual-GAAP Chart Mapping",
+  "icon": "SwapHorizontal",
+  "category": "frameworks"
+ },
+ {
+  "id": "ReconciliationBridges",
+  "label": "GAAP Reconciliation Bridge",
+  "icon": "TransitConnectionVariant",
+  "category": "frameworks"
+ },
+ {
+  "id": "DualTransactions",
+  "label": "Dual Ledger Explorer",
+  "icon": "TableLarge",
+  "category": "frameworks"
+ },
+ {
+  "id": "FrameworkElections",
+  "label": "Framework Election",
+  "icon": "GavelOutline",
+  "category": "frameworks"
+ },
+ {
+  "id": "ConsolidationGroups",
+  "label": "Consolidation Groups",
+  "icon": "Sitemap",
+  "category": "statements"
+ },
+ {
+  "id": "ConsolidationPeriods",
+  "label": "Consolidation Periods",
+  "icon": "CalendarSync",
+  "category": "statements"
+ },
+ {
+  "id": "ConsolidatedReports",
+  "label": "Consolidated Reports",
+  "icon": "FileChartOutline",
+  "category": "statements"
+ },
+ {
+  "id": "CcmFindings",
+  "label": "CCM Findings",
+  "icon": "AlertCircleOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "CcmRules",
+  "label": "CCM Rule Library",
+  "icon": "ShieldSearch",
+  "category": "compliance"
+ },
+ {
+  "id": "CcmSegregationMatrix",
+  "label": "Segregation Matrix",
+  "icon": "AccountSwitch",
+  "category": "compliance"
+ },
+ {
+  "id": "CcmUserFunctionAssignments",
+  "label": "Function Assignments",
+  "icon": "AccountKey",
+  "category": "compliance"
+ },
+ {
+  "id": "CcmBaselines",
+  "label": "CCM Baselines",
+  "icon": "ChartBellCurve",
+  "category": "compliance"
+ },
+ {
+  "id": "CcmAuditCommitteeReports",
+  "label": "Audit Committee Reports",
+  "icon": "FileChartOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "DBAOpdrachten",
+  "label": "DBA assignments",
+  "icon": "BriefcaseAccountOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "DBAIntakes",
+  "label": "DBA Intake Wizard",
+  "icon": "ClipboardListOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "DBAModelovereenkomsten",
+  "label": "Model agreement register",
+  "icon": "FileDocumentCheckOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "DBAPortfolioRisicos",
+  "label": "DBA Portfolio Dashboard",
+  "icon": "ChartArc",
+  "category": "compliance"
+ },
+ {
+  "id": "DBAEvidenceDossiers",
+  "label": "DBA Evidence Browser",
+  "icon": "FolderZipOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "DBARisicoflags",
+  "label": "DBA Risk Flags",
+  "icon": "FlagAlertOutline",
+  "category": "compliance"
+ },
+ {
+  "id": "ComplianceReports",
+  "label": "Schatkist compliance reports",
+  "icon": "FileChartOutline",
+  "category": "public-sector"
+ },
+ {
+  "id": "AcmReports",
+  "label": "ACM Reports",
+  "icon": "FileChartOutline",
+  "category": "public-sector"
+ },
+ {
+  "id": "RechtmatigheidAuditExport",
+  "label": "Lawfulness audit export",
+  "icon": "FileExportOutline",
+  "category": "public-sector"
+ },
+ {
+  "id": "CBSSubmissions",
+  "label": "CBS Submissions",
+  "icon": "FileDocumentCheckOutline",
+  "category": "public-sector"
+ },
+ {
+  "id": "AuditVerklaringen",
+  "label": "Audit statements (BADO)",
+  "icon": "FileSignOutline",
+  "category": "public-sector"
+ },
+ {
+  "id": "Rechtmatigheidsparagraaf",
+  "label": "Lawfulness paragraph",
+  "icon": "FileDocumentOutline",
+  "category": "public-sector"
+ },
+ {
+  "id": "WmoAuditLog",
+  "label": "WMO Audit Log",
+  "icon": "ClipboardListOutline",
+  "category": "public-sector"
+ },
+ {
+  "id": "QuartaalrapportagesFido",
+  "label": "Quarterly Fido Reports",
+  "icon": "FileChartOutline",
+  "category": "public-sector"
  }
 ]
