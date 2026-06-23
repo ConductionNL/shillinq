@@ -3,10 +3,18 @@
 		"spdx-license": "EUPL-1.2",
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "menu-ia-simplification",
-		"adr": "ADR-037 modular manifest fragment — adds the top-level 'Configuration' group that menu-layout.json relocates master-data/config pages (Fiscal Years, Cost centers/objects, Tax config, dunning/matching/reorder rules, cashflow policy, allocation keys, BBV-mapping, XBRL/SBR taxonomies, rates) into. Group id stays 'Configuratie' so existing menu-layout.json relocations keep resolving; only the display label is anglicized.",
-		"description": "Top-level Configuration (settings/master-data) navigation group."
+		"adr": "ADR-037 modular manifest fragment — the single top-level 'Settings' group that menu-layout.json relocates all master-data/config pages (Fiscal Years, Cost centers/objects, Tax config, dunning/matching/reorder rules, cashflow policy, allocation keys, BBV-mapping, XBRL/SBR taxonomies, rates) into. Group id stays 'Configuratie' so existing menu-layout.json relocations keep resolving; the display label is 'Settings'. The legacy section:settings footer 'Settings' item is removed via menu-layout.json#removals and its in-app settings page is folded in here as the 'General' child (a section:settings footer item cannot host children, so the expandable group owns the id and the footer is retired).",
+		"description": "Single top-level Settings group: app settings page + all configuration/master-data pages."
 	},
 	"menu": [
-		{ "id": "Configuratie", "label": "Configuration", "icon": "CogOutline", "order": 76 }
+		{
+			"id": "Configuratie",
+			"label": "Settings",
+			"icon": "CogOutline",
+			"order": 100,
+			"children": [
+				{ "id": "GeneralSettings", "label": "General", "icon": "CogOutline", "route": "Settings", "order": 1 }
+			]
+		}
 	]
 }
