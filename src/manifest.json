@@ -7153,6 +7153,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ARInvoice",
+				"sidebar": { "enabled": true },
 				"fields": [
 					{
 						"key": "invoiceNumber",

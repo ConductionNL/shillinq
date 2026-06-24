@@ -463,6 +463,15 @@
 						"type": "string",
 						"description": "FK to the GLTransaction that this transaction reverses. Required on the reversed transaction for the reversal guard.",
 						"nullable": true
+					},
+					"lines": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"format": "uuid",
+							"$ref": "GLLine"
+						},
+						"description": "Inverse of GLLine.transactionId; back-reference populated by OpenRegister."
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -749,8 +758,11 @@
 				"properties": {
 					"transactionId": {
 						"type": "string",
-						"description": "FK to the parent GLTransaction.id.",
-						"example": "txn-001"
+						"format": "uuid",
+						"$ref": "GLTransaction",
+						"inversedBy": "lines",
+						"description": "Reference to the parent GLTransaction (holds its object UUID).",
+						"example": "00000000-0000-0000-0000-000000000000"
 					},
 					"lineNumber": {
 						"type": "integer",
@@ -762,6 +774,13 @@
 						"type": "string",
 						"description": "FK to Account.accountNumber.",
 						"example": "4100"
+					},
+					"accountRef": {
+						"type": "string",
+						"format": "uuid",
+						"$ref": "Account",
+						"description": "Reference to the Account (holds its object UUID). accountNumber RGS code retained.",
+						"example": "00000000-0000-0000-0000-000000000000"
 					},
 					"side": {
 						"type": "string",
@@ -19938,6 +19957,15 @@
 					"description": "FK to OR contact abstraction if stable per ADR-022; else null. Symmetric to AP REQ-AP-002. Resolution deferred to implementing cycle.",
 					"nullable": true
 				},
+				"invoices": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"format": "uuid",
+						"$ref": "ARInvoice"
+					},
+					"description": "Inverse of ARInvoice.customerId; back-reference populated by OpenRegister."
+				},
 				"administrationId": {
 					"type": "string",
 					"description": "FK to the administration owning this customer record.",
@@ -20044,8 +20072,11 @@
 				},
 				"customerId": {
 					"type": "string",
-					"description": "FK to CustomerMaster UUID.",
-					"example": "customer-klant-1"
+					"format": "uuid",
+					"$ref": "CustomerMaster",
+					"inversedBy": "invoices",
+					"description": "Reference to the CustomerMaster this invoice bills (holds its object UUID).",
+					"example": "00000000-0000-0000-0000-000000000000"
 				},
 				"invoiceDate": {
 					"type": "string",
@@ -20188,9 +20219,11 @@
 				},
 				"glTransactionId": {
 					"type": "string",
-					"description": "Back-reference to the materialised GLTransaction once the invoice is issued.",
+					"format": "uuid",
+					"$ref": "GLTransaction",
+					"description": "Reference to the materialised issue GLTransaction (holds its object UUID).",
 					"nullable": true,
-					"example": "gl-txn-2026-ar-0001"
+					"example": "00000000-0000-0000-0000-000000000000"
 				},
 				"writeOffReason": {
 					"type": "string",
