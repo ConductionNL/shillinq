@@ -75,7 +75,7 @@ const MAX_ROWS = 8
 
 const ROUTES = {
 	debtors: { detail: 'ARInvoiceDetail', index: 'AccountsReceivable' },
-	creditors: { detail: 'APInvoiceDetail', index: 'AccountsPayable' },
+	creditors: { detail: 'SupplierInvoiceDetail', index: 'SupplierInvoices' },
 }
 
 export default {
