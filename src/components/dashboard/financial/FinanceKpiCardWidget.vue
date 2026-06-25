@@ -20,7 +20,14 @@
   @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
 -->
 <template>
-	<div class="finance-kpi-card" :data-testid="`finance-kpi-${kpiKey}`">
+	<div
+		class="finance-kpi-card"
+		:class="{ 'finance-kpi-card--clickable': !!kpiRoute }"
+		:data-testid="`finance-kpi-${kpiKey}`"
+		:tabindex="kpiRoute ? 0 : undefined"
+		:role="kpiRoute ? 'link' : undefined"
+		@click="navigateKpi"
+		@keyup.enter="navigateKpi">
 		<NcLoadingIcon v-if="loading" :size="28" class="finance-kpi-card__loading" />
 		<template v-else>
 			<div class="finance-kpi-card__icon" :class="`finance-kpi-card__icon--${def.variant}`">
@@ -190,6 +197,28 @@ export default {
 		sub() {
 			return (this.bag && this.def.sub) ? this.def.sub(this.bag) : null
 		},
+		/**
+		 * Route to navigate to when the card is clicked, or null if the KPI
+		 * is a pure aggregate with no matching list page (margin, billable).
+		 *
+		 * - turnover  → AccountsReceivable (AR invoice list = revenue source)
+		 * - debtors   → AccountsReceivable (open debtor invoices)
+		 * - creditors → SupplierInvoices   (open creditor invoices)
+		 * - cash      → CashflowDashboard  (cash position overview)
+		 * - margin    → null (computed ratio; no single list)
+		 * - billable  → null (utilisation percentage; no single list)
+		 *
+		 * @return {{ name: string }|null}
+		 */
+		kpiRoute() {
+			const routes = {
+				turnover: { name: 'AccountsReceivable' },
+				debtors: { name: 'AccountsReceivable' },
+				creditors: { name: 'SupplierInvoices' },
+				cash: { name: 'CashflowDashboard' },
+			}
+			return routes[this.kpiKey] || null
+		},
 	},
 
 	mounted() {
@@ -206,6 +235,12 @@ export default {
 
 	methods: {
 		t,
+		/** Navigate to the list page associated with this KPI, if one exists. */
+		navigateKpi() {
+			if (this.kpiRoute) {
+				this.$router.push(this.kpiRoute)
+			}
+		},
 	},
 }
 </script>
@@ -222,6 +257,16 @@ export default {
 	background-color: var(--color-main-background, #fff);
 	border: 1px solid var(--color-border, #ededed);
 	border-radius: var(--border-radius-large, 10px);
+}
+
+.finance-kpi-card--clickable {
+	cursor: pointer;
+}
+
+.finance-kpi-card--clickable:hover,
+.finance-kpi-card--clickable:focus-visible {
+	background-color: var(--color-background-hover, #f5f5f5);
+	outline: none;
 }
 
 .finance-kpi-card__loading {
