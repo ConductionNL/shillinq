@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-reorder-automation
 
 **Status:** proposed

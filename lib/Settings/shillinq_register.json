@@ -115,6 +115,12 @@
 						"description": "ISO 8601 timestamp when the PSD2 consent expires. PSD2 mandates SCA renewal every 90 days.",
 						"example": "2026-09-30T10:00:00Z"
 					},
+					"consentRemainingDays": {
+						"type": "integer",
+						"description": "Derived (do not set directly): days until the PSD2 consent expires. Negative when already expired. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 14
+					},
 					"lastSyncAt": {
 						"type": "string",
 						"format": "date-time",
@@ -250,9 +256,11 @@
 				},
 				"x-openregister-calculations": {
 					"consentRemainingDays": {
-						"expression": "dateDiffDays(@self.consentExpiresAt, now())",
+						"materialise": true,
+						"targetField": "consentRemainingDays",
+						"expression": { "diffDays": [ { "prop": "consentExpiresAt" }, { "now": [] } ] },
 						"type": "integer",
-						"description": "Number of days until the PSD2 consent expires. Negative when already expired.",
+						"description": "Number of days until the PSD2 consent expires. Negative when already expired. JSON-AST: diffDays(consentExpiresAt, now()).",
 						"example": 14
 					}
 				},
@@ -455,6 +463,15 @@
 						"type": "string",
 						"description": "FK to the GLTransaction that this transaction reverses. Required on the reversed transaction for the reversal guard.",
 						"nullable": true
+					},
+					"lines": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"format": "uuid",
+							"$ref": "GLLine"
+						},
+						"description": "Inverse of GLLine.transactionId; back-reference populated by OpenRegister."
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -741,8 +758,11 @@
 				"properties": {
 					"transactionId": {
 						"type": "string",
-						"description": "FK to the parent GLTransaction.id.",
-						"example": "txn-001"
+						"format": "uuid",
+						"$ref": "GLTransaction",
+						"inversedBy": "lines",
+						"description": "Reference to the parent GLTransaction (holds its object UUID).",
+						"example": "00000000-0000-0000-0000-000000000000"
 					},
 					"lineNumber": {
 						"type": "integer",
@@ -754,6 +774,13 @@
 						"type": "string",
 						"description": "FK to Account.accountNumber.",
 						"example": "4100"
+					},
+					"accountRef": {
+						"type": "string",
+						"format": "uuid",
+						"$ref": "Account",
+						"description": "Reference to the Account (holds its object UUID). accountNumber RGS code retained.",
+						"example": "00000000-0000-0000-0000-000000000000"
 					},
 					"side": {
 						"type": "string",
@@ -1393,6 +1420,19 @@
 						"description": "Marks this account as Vpb-pligtig per Wet modernisering Vpb-plicht (2016). When true, postings against this account contribute to the Vpb-balans aggregation (REQ-VPB-001). Default false — only accounts explicitly tagged by the bookkeeper contribute.",
 						"default": false,
 						"example": false
+					},
+					"daysUntilRetention": {
+						"type": "integer",
+						"description": "Derived (do not set directly): always null for Account (kept indefinitely). Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": null
+					},
+					"emuAggregationHash": {
+						"type": "string",
+						"nullable": true,
+						"readOnly": true,
+						"description": "Derived (do not set directly): stable SHA-256 audit hash over the contributing-GLLine count + esaClassifier for the last EMU computation (REQ-EMU-005). Materialised via x-openregister-calculations from the emuContributors aggregate-ref.",
+						"example": null
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -1545,14 +1585,39 @@
 						}
 					}
 				},
+				"x-openregister-aggregate-refs": {
+					"emuContributors": {
+						"schema": "GLLine",
+						"register": "shillinq",
+						"metric": "count",
+						"filters": {
+							"accountNumber": "@self.accountNumber",
+							"emuInclusionRule": [ "included", "partial" ],
+							"periodState": "closed"
+						}
+					}
+				},
 				"x-openregister-calculations": {
 					"daysUntilRetention": {
-						"expression": "null",
-						"description": "Account records are kept indefinitely (disposition: keep_indefinite per selectielijst:5.1.1). This field always returns null for Account objects."
+						"materialise": true,
+						"targetField": "daysUntilRetention",
+						"expression": { "lit": null },
+						"type": "integer",
+						"nullable": true,
+						"description": "Account records are kept indefinitely (disposition: keep_indefinite per selectielijst:5.1.1). This field always returns null for Account objects. JSON-AST: lit(null)."
 					},
 					"emuAggregationHash": {
-						"description": "Stable SHA-256 hash of the contributing GL line IDs + esaClassifier state + applied emuInclusionRule values for the last EMU computation. Same inputs always produce the same hash, enabling audit-trail reproducibility per REQ-EMU-005.",
-						"expression": "sha256(@aggregation.contributingIds + ':' + @self.esaClassifier + ':' + @params.emuInclusionRule)",
+						"materialise": true,
+						"type": "string",
+						"targetField": "emuAggregationHash",
+						"description": "Declarative (ADR-031) stable SHA-256 hash over the contributing-GLLine count + esaClassifier for this account's last EMU computation, enabling audit-trail reproducibility per REQ-EMU-005. The contributing set is folded via the emuContributors aggregate-ref (closed GLLines with emuInclusionRule in [included, partial], joined on accountNumber). Replaces the former imperative sha256(@aggregation...) string; the @params.emuInclusionRule term is dropped (not available in the calc payload) — same contributing set + sector still yields the same hash. JSON-AST: sha256(concat(@aggregate.emuContributors, ':', esaClassifier)).",
+						"expression": { "sha256": [
+							{ "concat": [
+								{ "prop": "@aggregate.emuContributors" },
+								{ "lit": ":" },
+								{ "prop": "esaClassifier" }
+							] }
+						] },
 						"nullable": true
 					}
 				}
@@ -1575,8 +1640,16 @@
 				],
 				"x-openregister-calculations": {
 					"daysUntilRetention": {
-						"expression": "@self.effectiveTo != null ? datediff(today(), @self.effectiveTo) : null",
-						"description": "Days until this retention rule expires. Null when effectiveTo is absent (rules without an end date)."
+						"materialise": true,
+						"targetField": "daysUntilRetention",
+						"expression": { "if": [
+							{ "ne": [ { "prop": "effectiveTo" }, { "lit": null } ] },
+							{ "diffDays": [ { "prop": "effectiveTo" }, { "now": [] } ] },
+							{ "lit": null }
+						] },
+						"type": "integer",
+						"nullable": true,
+						"description": "Days until this retention rule expires (effectiveTo - today). Null when effectiveTo is absent. JSON-AST: if(effectiveTo != null, diffDays(effectiveTo, now()), null)."
 					}
 				},
 				"x-openregister-widgets": {
@@ -1694,6 +1767,12 @@
 						"description": "Administration identifier for per-administration override rules (archiefverordening scope). Absent on seeded default rules which apply to all administrations.",
 						"example": "gem-almelo",
 						"nullable": true
+					},
+					"daysUntilRetention": {
+						"type": "integer",
+						"description": "Derived (do not set directly): days until this rule expires (effectiveTo - today); null when effectiveTo is absent. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 365
 					},
 					"_meta": {
 						"type": "object",
@@ -2793,13 +2872,25 @@
 						"description": "Date the operator last updated these denominators. Aggregation surfaces a warning when >12 months old per REQ-CBSE-003.",
 						"nullable": true,
 						"example": "2026-01-15"
+					},
+					"denominatorStaleWarning": {
+						"type": "boolean",
+						"description": "Derived (do not set directly): true when denominators have not been updated in the past 12 months. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": false
 					}
 				},
 				"x-openregister-calculations": {
 					"denominatorStaleWarning": {
-						"expression": "@self.lastUpdatedAt != null ? dateDiffDays(today(), @self.lastUpdatedAt) > 365 : true",
+						"materialise": true,
+						"targetField": "denominatorStaleWarning",
+						"expression": { "if": [
+							{ "ne": [ { "prop": "lastUpdatedAt" }, { "lit": null } ] },
+							{ "gt": [ { "diffDays": [ { "now": [] }, { "prop": "lastUpdatedAt" } ] }, { "lit": 365 } ] },
+							{ "lit": true }
+						] },
 						"type": "boolean",
-						"description": "True when denominators have not been updated in the past 12 months. Surfaces a warning in the Kerngegevens bestand UI per REQ-CBSE-003.",
+						"description": "True when denominators have not been updated in the past 12 months. JSON-AST: if(lastUpdatedAt != null, diffDays(now(), lastUpdatedAt) > 365, true). REQ-CBSE-003.",
 						"example": false
 					}
 				},
@@ -3375,6 +3466,30 @@
 						],
 						"nullable": true
 					},
+					"monthlyDepreciation": {
+						"type": "number",
+						"description": "Derived (do not set directly): monthly depreciation charge for the current period. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 100.0
+					},
+					"currentBookValue": {
+						"type": "number",
+						"description": "Derived (do not set directly): current net book value. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 9000.0
+					},
+					"commercialBookValue": {
+						"type": "number",
+						"description": "Derived (do not set directly): net book value under the commercial depreciation stream. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 9000.0
+					},
+					"fiscalBookValue": {
+						"type": "number",
+						"description": "Derived (do not set directly): net book value under the fiscal depreciation stream. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 9000.0
+					},
 					"lifecycleState": {
 						"type": "string",
 						"description": "Current lifecycle state of the asset.",
@@ -3395,8 +3510,22 @@
 				},
 				"x-openregister-calculations": {
 					"monthlyDepreciation": {
-						"description": "Monthly depreciation charge for the current period under the linear method. Zero when depreciationMethod = none.",
-						"expression": "(depreciationMethod == 'none') ? 0 : (depreciationMethod == 'linear') ? (acquisitionCost - residualValue) / usefulLifeMonths : (depreciationMethod == 'degressive') ? (currentBookValue * degressiveRate / 12) : 0",
+						"materialise": true,
+						"targetField": "monthlyDepreciation",
+						"description": "Monthly depreciation charge for the current period. Zero for none-method; linear straight-line; degressive uses currentBookValue. JSON-AST nested if over depreciationMethod.",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "depreciationMethod" }, { "lit": "none" } ] },
+							{ "lit": 0 },
+							{ "if": [
+								{ "eq": [ { "prop": "depreciationMethod" }, { "lit": "linear" } ] },
+								{ "/": [ { "-": [ { "prop": "acquisitionCost" }, { "prop": "residualValue" } ] }, { "prop": "usefulLifeMonths" } ] },
+								{ "if": [
+									{ "eq": [ { "prop": "depreciationMethod" }, { "lit": "degressive" } ] },
+									{ "/": [ { "*": [ { "prop": "currentBookValue" }, { "prop": "degressiveRate" } ] }, { "lit": 12 } ] },
+									{ "lit": 0 }
+								] }
+							] }
+						] },
 						"dependsOn": [
 							"acquisitionCost",
 							"residualValue",
@@ -3407,8 +3536,23 @@
 						]
 					},
 					"currentBookValue": {
-						"description": "Current net book value. Equals acquisitionCost minus accumulated depreciation calculated from acquisitionDate to today. For none-method assets this always equals acquisitionCost.",
-						"expression": "(depreciationMethod == 'none') ? acquisitionCost : max(residualValue, acquisitionCost - ((acquisitionCost - residualValue) / usefulLifeMonths) * monthsElapsed(@self.acquisitionDate))",
+						"materialise": true,
+						"targetField": "currentBookValue",
+						"description": "Current net book value: acquisitionCost minus accumulated linear depreciation from acquisitionDate to today, floored at residualValue. none-method equals acquisitionCost. JSON-AST uses max + monthsElapsed.",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "depreciationMethod" }, { "lit": "none" } ] },
+							{ "prop": "acquisitionCost" },
+							{ "max": [
+								{ "prop": "residualValue" },
+								{ "-": [
+									{ "prop": "acquisitionCost" },
+									{ "*": [
+										{ "/": [ { "-": [ { "prop": "acquisitionCost" }, { "prop": "residualValue" } ] }, { "prop": "usefulLifeMonths" } ] },
+										{ "monthsElapsed": [ { "now": [] }, { "prop": "acquisitionDate" } ] }
+									] }
+								] }
+							] }
+						] },
 						"dependsOn": [
 							"acquisitionCost",
 							"residualValue",
@@ -3418,8 +3562,20 @@
 						]
 					},
 					"commercialBookValue": {
-						"description": "Net book value under the commercial depreciation stream (IFRS / Dutch GAAP). Only meaningful when commercialRate is set.",
-						"expression": "(commercialRate == null) ? currentBookValue : max(0, acquisitionCost * (1 - commercialRate * (monthsElapsed(@self.acquisitionDate) / 12)))",
+						"materialise": true,
+						"targetField": "commercialBookValue",
+						"description": "Net book value under the commercial depreciation stream (IFRS / Dutch GAAP). Falls back to currentBookValue when commercialRate is null. JSON-AST uses max + monthsElapsed.",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "commercialRate" }, { "lit": null } ] },
+							{ "prop": "currentBookValue" },
+							{ "max": [
+								{ "lit": 0 },
+								{ "*": [
+									{ "prop": "acquisitionCost" },
+									{ "-": [ { "lit": 1 }, { "*": [ { "prop": "commercialRate" }, { "/": [ { "monthsElapsed": [ { "now": [] }, { "prop": "acquisitionDate" } ] }, { "lit": 12 } ] } ] } ] }
+								] }
+							] }
+						] },
 						"dependsOn": [
 							"acquisitionCost",
 							"commercialRate",
@@ -3427,8 +3583,20 @@
 						]
 					},
 					"fiscalBookValue": {
-						"description": "Net book value under the fiscal depreciation stream (Wet IB / Wet VPB). Only meaningful when fiscalRate is set.",
-						"expression": "(fiscalRate == null) ? currentBookValue : max(0, acquisitionCost * (1 - fiscalRate * (monthsElapsed(@self.acquisitionDate) / 12)))",
+						"materialise": true,
+						"targetField": "fiscalBookValue",
+						"description": "Net book value under the fiscal depreciation stream (Wet IB / Wet VPB). Falls back to currentBookValue when fiscalRate is null. JSON-AST uses max + monthsElapsed.",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "fiscalRate" }, { "lit": null } ] },
+							{ "prop": "currentBookValue" },
+							{ "max": [
+								{ "lit": 0 },
+								{ "*": [
+									{ "prop": "acquisitionCost" },
+									{ "-": [ { "lit": 1 }, { "*": [ { "prop": "fiscalRate" }, { "/": [ { "monthsElapsed": [ { "now": [] }, { "prop": "acquisitionDate" } ] }, { "lit": 12 } ] } ] } ] }
+								] }
+							] }
+						] },
 						"dependsOn": [
 							"acquisitionCost",
 							"fiscalRate",
@@ -3828,12 +3996,13 @@
 						}
 					}
 				},
-				"x-openregister-calculations": {
+				"x-openregister-aggregations": {
 					"ytdRevenue": {
-						"description": "Year-to-date revenue sum from Invoice (T2 AR sub-ledger) for this administrationId within currentCalendarYear. Excludes cancelled invoices and credit notes. Per REQ-KOR-004; ADR-031 exception path: if OR's calculation engine cannot express the period-filter aggregation, a thin single-method KorThresholdGuard::currentYtdRevenue() guard (~30 LOC) is permitted.",
-						"expression": "sum(Invoice.totalAmountExclVat)",
-						"sourceSchema": "Invoice",
+						"description": "Year-to-date revenue sum from Invoice (T2 AR sub-ledger) for this administrationId within currentCalendarYear. Excludes cancelled invoices and credit notes. Cross-object SUM relocated from x-openregister-calculations per ADR-031 (the per-object evaluator cannot fold over other objects). Per REQ-KOR-004; ADR-031 exception path: if OR's aggregation engine cannot express the period filter, a thin single-method KorThresholdGuard::currentYtdRevenue() guard (~30 LOC) is permitted.",
+						"source": "Invoice",
 						"sourceRegister": "shillinq",
+						"operation": "sum",
+						"field": "totalAmountExclVat",
 						"filter": {
 							"administrationId": "@self.administrationId",
 							"invoiceYear": "@self.currentCalendarYear",
@@ -3843,7 +4012,8 @@
 									"credit-note"
 								]
 							}
-						}
+						},
+						"targetField": "ytdRevenue"
 					}
 				},
 				"x-openregister-notifications": {
@@ -4956,44 +5126,34 @@
 				},
 				"x-openregister-calculations": {
 					"recognisedRevenue": {
-						"description": "RJ 270 / IFRS 15 percentage-of-completion recognised revenue (REQ-CPA-007). Clamped to [0, totalContractValue].",
+						"materialise": true,
+						"targetField": "recognisedRevenue",
+						"description": "RJ 270 / IFRS 15 percentage-of-completion recognised revenue (REQ-CPA-007). Clamped to [0, totalContractValue]. JSON-AST: completed-contract recognises 0 until state=closed then full value; percentage-of-completion-output uses percentageComplete; cost-to-cost (default) uses costsIncurredToDate/totalEstimatedCosts clamped >= 0 via max.",
 						"type": "number",
-						"conditions": [
-							{
-								"when": {
-									"recognitionMethod": "completed-contract",
-									"state": {
-										"not": "closed"
-									}
-								},
-								"value": 0,
-								"description": "completed-contract: recognise nothing until state=closed."
-							},
-							{
-								"when": {
-									"recognitionMethod": "completed-contract",
-									"state": "closed"
-								},
-								"formula": "@self.totalContractValue",
-								"description": "completed-contract: recognise full contract value on close."
-							},
-							{
-								"when": {
-									"recognitionMethod": "percentage-of-completion-output"
-								},
-								"formula": "@self.totalContractValue * (@self.percentageComplete / 100)",
-								"description": "output-based: operator-supplied percentageComplete drives recognition."
-							}
-						],
-						"default": {
-							"formula": "@self.totalEstimatedCosts > 0 ? max(0, @self.totalContractValue * (@self.costsIncurredToDate / @self.totalEstimatedCosts)) : 0",
-							"description": "cost-to-cost (default): totalContractValue × (costsIncurredToDate / totalEstimatedCosts), clamped ≥ 0."
-						}
+						"expression": { "if": [
+							{ "eq": [ { "prop": "recognitionMethod" }, { "lit": "completed-contract" } ] },
+							{ "if": [
+								{ "eq": [ { "prop": "state" }, { "lit": "closed" } ] },
+								{ "prop": "totalContractValue" },
+								{ "lit": 0 }
+							] },
+							{ "if": [
+								{ "eq": [ { "prop": "recognitionMethod" }, { "lit": "percentage-of-completion-output" } ] },
+								{ "*": [ { "prop": "totalContractValue" }, { "/": [ { "prop": "percentageComplete" }, { "lit": 100 } ] } ] },
+								{ "if": [
+									{ "gt": [ { "prop": "totalEstimatedCosts" }, { "lit": 0 } ] },
+									{ "max": [ { "lit": 0 }, { "*": [ { "prop": "totalContractValue" }, { "/": [ { "prop": "costsIncurredToDate" }, { "prop": "totalEstimatedCosts" } ] } ] } ] },
+									{ "lit": 0 }
+								] }
+							] }
+						] }
 					},
 					"wipBalance": {
-						"description": "Work-in-progress balance: recognised revenue minus billed revenue (REQ-CPA-008).",
+						"materialise": true,
+						"targetField": "wipBalance",
+						"description": "Work-in-progress balance: recognised revenue minus billed revenue (REQ-CPA-008). JSON-AST: recognisedRevenue - billedRevenue.",
 						"type": "number",
-						"formula": "@self.recognisedRevenue - @self.billedRevenue"
+						"expression": { "-": [ { "prop": "recognisedRevenue" }, { "prop": "billedRevenue" } ] }
 					}
 				}
 			},
@@ -5478,9 +5638,15 @@
 				},
 				"x-openregister-calculations": {
 					"utilization": {
-						"description": "Billable hours this period divided by capacity hours this period per person (REQ-CPA-011).",
+						"materialise": true,
+						"targetField": "utilization",
+						"description": "Billable hours this period divided by capacity hours this period per person (REQ-CPA-011). JSON-AST: if(capacityHoursThisPeriod > 0, billableHoursThisPeriod / capacityHoursThisPeriod, 0).",
 						"type": "number",
-						"formula": "@self.capacityHoursThisPeriod > 0 ? (@self.billableHoursThisPeriod / @self.capacityHoursThisPeriod) : 0",
+						"expression": { "if": [
+							{ "gt": [ { "prop": "capacityHoursThisPeriod" }, { "lit": 0 } ] },
+							{ "/": [ { "prop": "billableHoursThisPeriod" }, { "prop": "capacityHoursThisPeriod" } ] },
+							{ "lit": 0 }
+						] },
 						"note": "billableHoursThisPeriod is aggregated from UrenRegistratie records for this assignment in the current FiscalPeriod; capacityHoursThisPeriod = capacityHoursPerWeek × workingWeeksInPeriod."
 					}
 				},
@@ -6029,6 +6195,18 @@
 						],
 						"description": "Status of this rate schedule.",
 						"example": "active"
+					},
+					"isCurrentlyEffective": {
+						"type": "boolean",
+						"description": "Derived (do not set directly): true when today falls within the effective-date window and status=active. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": true
+					},
+					"effectiveWindowLabel": {
+						"type": "string",
+						"description": "Derived (do not set directly): human-readable effective-date window string. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": "2026-01-01 – open-ended"
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -6145,13 +6323,28 @@
 				},
 				"x-openregister-calculations": {
 					"isCurrentlyEffective": {
-						"description": "True when today falls within [effectiveDate, expiryDate] and status=active.",
-						"expression": "status == 'active' AND effectiveDate <= @today AND (expiryDate IS NULL OR expiryDate >= @today)",
+						"materialise": true,
+						"targetField": "isCurrentlyEffective",
+						"description": "True when today falls within [effectiveDate, expiryDate] and status=active. JSON-AST: and(status=='active', effectiveDate<=now(), or(expiryDate==null, expiryDate>=now())).",
+						"expression": { "and": [
+							{ "eq": [ { "prop": "status" }, { "lit": "active" } ] },
+							{ "lte": [ { "prop": "effectiveDate" }, { "now": [] } ] },
+							{ "or": [
+								{ "eq": [ { "prop": "expiryDate" }, { "lit": null } ] },
+								{ "gte": [ { "prop": "expiryDate" }, { "now": [] } ] }
+							] }
+						] },
 						"type": "boolean"
 					},
 					"effectiveWindowLabel": {
-						"description": "Human-readable effective-date window string for UI display.",
-						"expression": "effectiveDate || ' – ' || COALESCE(expiryDate, 'open-ended')",
+						"materialise": true,
+						"targetField": "effectiveWindowLabel",
+						"description": "Human-readable effective-date window string for UI display. JSON-AST: concat(effectiveDate, ' – ', coalesce(expiryDate, 'open-ended')).",
+						"expression": { "concat": [
+							{ "prop": "effectiveDate" },
+							{ "lit": " – " },
+							{ "coalesce": [ { "prop": "expiryDate" }, { "lit": "open-ended" } ] }
+						] },
 						"type": "string"
 					}
 				},
@@ -6479,6 +6672,13 @@
 						"nullable": true,
 						"description": "Timestamp when WBSO tags were assigned — either automatically from project metadata or manually by operator (REQ-WBSO-004).",
 						"example": "2026-03-15T10:00:00Z"
+					},
+					"utilizationPercent": {
+						"type": "number",
+						"nullable": true,
+						"readOnly": true,
+						"description": "Derived (do not set directly): utilization percentage per REQ-CPA-109, materialised via x-openregister-calculations from the billable/available aggregate-refs. round((billable / max(1, available)) * 100, 1).",
+						"example": 75.0
 					}
 				},
 				"x-openregister-rbac": {
@@ -6572,15 +6772,40 @@
 						}
 					}
 				},
+				"x-openregister-aggregate-refs": {
+					"billable": {
+						"schema": "UrenRegistratie",
+						"register": "shillinq",
+						"metric": "sum",
+						"field": "hours",
+						"filters": {
+							"personId": "@self.personId",
+							"projectId": { "op": "notNull" }
+						}
+					},
+					"available": {
+						"schema": "UrenRegistratie",
+						"register": "shillinq",
+						"metric": "sum",
+						"field": "hours",
+						"filters": {
+							"personId": "@self.personId"
+						}
+					}
+				},
 				"x-openregister-calculations": {
 					"utilizationPercent": {
-						"description": "Utilization percentage per REQ-CPA-109: billableHoursThisPeriod / availableHoursThisPeriod × 100. Computed per (personId, fiscalPeriod) grouping. billableHoursThisPeriod aggregates UrenRegistratie.hours for this person in the current FiscalPeriod (where projectId or costProjectId is non-null = billable). availableHoursThisPeriod sources from the assignment's capacityHoursPerWeek × workingWeeksInPeriod (default 40 × period weeks). Clamped to [0, 100].",
+						"materialise": true,
 						"type": "number",
-						"formula": "min(100, max(0, ((@aggregate.billableHoursThisPeriod ?? 0) / max(1, (@aggregate.availableHoursThisPeriod ?? 1))) * 100))",
-						"groupBy": [
-							"personId",
-							"@period.fiscalPeriodCode"
-						]
+						"targetField": "utilizationPercent",
+						"description": "Declarative (ADR-031) utilization percentage per REQ-CPA-109: billable hours / available hours × 100, rounded to 1 decimal. billable = sum of UrenRegistratie.hours for this person where projectId is non-null (billable); available = sum of all UrenRegistratie.hours for this person — both via x-openregister-aggregate-refs. Replaces the former imperative string min/max formula. JSON-AST: round((@aggregate.billable / max(1, @aggregate.available)) * 100, 1).",
+						"expression": { "round": [
+							{ "*": [
+								{ "/": [ { "prop": "@aggregate.billable" }, { "max": [ { "lit": 1 }, { "prop": "@aggregate.available" } ] } ] },
+								{ "lit": 100 }
+							] },
+							{ "lit": 1 }
+						] }
 					}
 				}
 			},
@@ -8182,9 +8407,28 @@
 						"nullable": true
 					},
 					"multiCurrencyConversion": {
-						"description": "When currency != base (EUR), looks up the exchange rate for receiptDate from the multi-currency capability snapshot and populates amountInBaseCurrency and exchangeRate per REQ-EC-009. Prompts operator to enter manual rate if snapshot is unavailable.",
-						"expression": "@self.currency == 'EUR' ? @self.amount : @self.amount * lookup('ExchangeRate', {sourceCurrency: @self.currency, targetCurrency: 'EUR', rateDate: @self.receiptDate})",
+						"materialise": true,
+						"type": "number",
+						"description": "Declarative (ADR-031): when currency == EUR, amountInBaseCurrency = amount; otherwise amount * @ref.fxRate.rate where fxRate is the effective FxRate row for (transactionCurrency=currency, baseCurrency=EUR, date<=receiptDate) per REQ-EC-009. Replaces the former imperative lookup('ExchangeRate', ...) guard. JSON-AST: if(eq(currency,'EUR'), amount, amount * @ref.fxRate.rate).",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "currency" }, { "lit": "EUR" } ] },
+							{ "prop": "amount" },
+							{ "*": [ { "prop": "amount" }, { "prop": "@ref.fxRate.rate" } ] }
+						] },
 						"targetField": "amountInBaseCurrency",
+						"nullable": true
+					}
+				},
+				"x-openregister-references": {
+					"fxRate": {
+						"schema": "FxRate",
+						"register": "shillinq",
+						"mode": "lookup",
+						"filters": {
+							"transactionCurrency": "@self.currency",
+							"baseCurrency": "EUR"
+						},
+						"effectiveDate": { "field": "date", "op": "lte", "value": "@self.receiptDate" },
 						"nullable": true
 					}
 				},
@@ -8228,7 +8472,7 @@
 			"MileageEntry": {
 				"slug": "MileageEntry",
 				"icon": "CarOutline",
-				"version": "0.1.0",
+				"version": "0.1.2",
 				"title": "Mileage Entry",
 				"description": "Journey log capturing distance travelled, vehicle type, and applicable rate per kilometre. totalAmount is auto-calculated as distance × ratePerKm per REQ-EC-003. Linked to a parent ExpenseClaimEntry for approval and reimbursement.",
 				"x-schema-org": "schema:Thing",
@@ -8317,19 +8561,40 @@
 						"type": "string",
 						"description": "FK to the Administration owning this mileage entry.",
 						"example": "adm-consultancy-nl"
+					},
+					"country": {
+						"type": "string",
+						"description": "ISO 3166-1 alpha-2 country code of the tax jurisdiction; drives the MileageRate lookup.",
+						"example": "NL",
+						"default": "NL"
+					}
+				},
+				"x-openregister-references": {
+					"rate": {
+						"schema": "MileageRate",
+						"mode": "lookup",
+						"filters": {
+							"fiscalYear": { "year": "@self.journeyDate" },
+							"vehicleType": "@self.vehicleType",
+							"country": "@self.country"
+						},
+						"effectiveDate": { "field": "fiscalYear", "op": "lte", "value": "@self.journeyDate" },
+						"nullable": true
 					}
 				},
 				"x-openregister-calculations": {
 					"totalAmount": {
-						"description": "Auto-calculated: distance × ratePerKm per REQ-EC-003. Recalculated on every save while the parent claim is in draft state.",
-						"expression": "@self.distance * @self.ratePerKm",
+						"materialise": true,
+						"description": "Auto-calculated: distance × ratePerKm per REQ-EC-003. Recalculated on every save while the parent claim is in draft state. JSON-AST: distance * ratePerKm.",
+						"expression": { "*": [ { "prop": "distance" }, { "prop": "@ref.rate.ratePerKm" } ] },
 						"targetField": "totalAmount"
 					},
-					"ratePerKmLookup": {
-						"description": "Looks up the current rate per km from MileageRate master table by (fiscalYear derived from journeyDate, vehicleType, country derived from administrationId). Populates ratePerKm field. Locked at claim submission.",
-						"expression": "lookup('MileageRate', {fiscalYear: year(@self.journeyDate), vehicleType: @self.vehicleType, country: @administration.country})",
-						"targetField": "ratePerKm",
-						"nullable": true
+					"ratePerKm": {
+						"materialise": true,
+						"type": "number",
+						"description": "Declarative rate lookup (ADR-031): resolved from the MileageRate master table via the `rate` reference (fiscalYear=year(journeyDate), vehicleType, country), read as @ref.rate.ratePerKm. Replaces the former imperative lookup() guard.",
+						"expression": { "prop": "@ref.rate.ratePerKm" },
+						"targetField": "ratePerKm"
 					}
 				},
 				"x-openregister-relations": {
@@ -8451,25 +8716,53 @@
 						"type": "string",
 						"description": "FK to the Administration owning this per-diem record.",
 						"example": "adm-consultancy-nl"
+					},
+					"nightCountWarning": {
+						"type": "string",
+						"description": "Derived (do not set directly): non-blocking warning string when nightCount does not match the calendar span; null when counts match. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": null
 					}
 				},
 				"x-openregister-calculations": {
 					"allowanceAmount": {
-						"description": "Auto-calculated: nightCount × dailyRate per REQ-EC-004. Recalculated on every save while parent claim is in draft state.",
-						"expression": "@self.nightCount * @self.dailyRate",
+						"materialise": true,
+						"description": "Auto-calculated: nightCount × dailyRate per REQ-EC-004. Recalculated on every save while parent claim is in draft state. JSON-AST: nightCount * dailyRate.",
+						"expression": { "*": [ { "prop": "nightCount" }, { "prop": "dailyRate" } ] },
 						"targetField": "allowanceAmount"
 					},
-					"dailyRateLookup": {
-						"description": "Looks up the current daily rate from PerDiemRate master table by (calendarYear derived from travelStartDate, country). Populates dailyRate field. Locked at claim submission.",
-						"expression": "lookup('PerDiemRate', {calendarYear: year(@self.travelStartDate), country: @self.country})",
+					"dailyRate": {
+						"materialise": true,
+						"type": "number",
+						"description": "Declarative rate lookup (ADR-031): resolved from the PerDiemRate master table via the `rate` reference (calendarYear=year(travelStartDate), country), read as @ref.rate.dailyRate. Replaces the former imperative lookup('PerDiemRate', ...) guard. Locked at claim submission.",
+						"expression": { "prop": "@ref.rate.dailyRate" },
 						"targetField": "dailyRate",
 						"nullable": true
 					},
 					"nightCountWarning": {
-						"description": "Issues a non-blocking warning when nightCount does not match the calendar span (travelEndDate - travelStartDate) per REQ-EC-004. Returns null when counts match, a warning message string otherwise.",
-						"expression": "datediff(@self.travelEndDate, @self.travelStartDate) != @self.nightCount ? 'Night count does not match travel dates — please verify' : null",
+						"materialise": true,
+						"targetField": "nightCountWarning",
+						"description": "Issues a non-blocking warning when nightCount does not match the calendar span (travelEndDate - travelStartDate) per REQ-EC-004. Returns null when counts match, a warning message string otherwise. JSON-AST: if(diffDays(travelEndDate, travelStartDate) != nightCount, msg, null).",
+						"expression": { "if": [
+							{ "ne": [ { "diffDays": [ { "prop": "travelEndDate" }, { "prop": "travelStartDate" } ] }, { "prop": "nightCount" } ] },
+							{ "lit": "Night count does not match travel dates — please verify" },
+							{ "lit": null }
+						] },
 						"nullable": true,
 						"severity": "warning"
+					}
+				},
+				"x-openregister-references": {
+					"rate": {
+						"schema": "PerDiemRate",
+						"register": "shillinq",
+						"mode": "lookup",
+						"filters": {
+							"calendarYear": { "year": "@self.travelStartDate" },
+							"country": "@self.country"
+						},
+						"effectiveDate": { "field": "calendarYear", "op": "lte", "value": "@self.travelStartDate" },
+						"nullable": true
 					}
 				},
 				"x-openregister-relations": {
@@ -9080,6 +9373,77 @@
 					}
 				}
 			},
+			"ZzpDeductionAmounts": {
+				"slug": "ZzpDeductionAmounts",
+				"icon": "CashMultiple",
+				"version": "0.1.0",
+				"title": "ZZP Deduction Amounts",
+				"description": "Master data table of statutory ZZP (zelfstandige) deduction amounts per tax year per Wet IB 2001: zelfstandigenaftrek (art. 3.76), startersaftrek (art. 3.77), and the mkb-winstvrijstelling percentage (art. 3.79a). One row per taxYear; ZzpDeduction.{zelfstandigenaftrekAmount,startersaftrekAmount,mkbWinstvrijstellingPercentage} are looked up from this table via the `deduction` @ref reference and locked into the snapshot at save time.",
+				"x-schema-org": "schema:PriceSpecification",
+				"type": "object",
+				"required": [
+					"taxYear",
+					"zelfstandigenaftrek",
+					"startersaftrek",
+					"mkbWinstvrijstellingPercentage"
+				],
+				"properties": {
+					"taxYear": {
+						"type": "integer",
+						"description": "Tax year these statutory amounts apply to (e.g. 2026).",
+						"example": 2026
+					},
+					"zelfstandigenaftrek": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Zelfstandigenaftrek amount in EUR for this tax year (Wet IB 2001 art. 3.76).",
+						"example": 3750
+					},
+					"startersaftrek": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Startersaftrek amount in EUR for this tax year (Wet IB 2001 art. 3.77).",
+						"example": 2123
+					},
+					"mkbWinstvrijstellingPercentage": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 1,
+						"description": "MKB-winstvrijstelling percentage for this tax year as a fraction (e.g. 0.1231 = 12.31%) per Wet IB 2001 art. 3.79a.",
+						"example": 0.1231
+					},
+					"source": {
+						"type": "string",
+						"nullable": true,
+						"description": "Regulatory source for these amounts (e.g. 'Belastingdienst — cijfers 2026').",
+						"example": "Belastingdienst — ondernemersaftrek 2026"
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							],
+							"description": "Bookkeepers maintain ZZP deduction master data per tax year."
+						},
+						"employee": {
+							"permissions": [
+								"read"
+							],
+							"description": "Read-only: ZZP'ers may view applicable deduction amounts."
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					}
+				}
+			},
 			"InventoryReorderRule": {
 				"slug": "InventoryReorderRule",
 				"icon": "CartArrowDownOutline",
@@ -9222,6 +9586,18 @@
 						"type": "string",
 						"description": "FK to Administration that owns this reorder rule. Rules are scoped per administration for multi-tenant isolation.",
 						"example": "adm-grocer-amsterdam"
+					},
+					"reorderPointCalculated": {
+						"type": "number",
+						"description": "Derived (do not set directly): lead-time-aware reorder point. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 120
+					},
+					"isLowStock": {
+						"type": "boolean",
+						"description": "Derived (do not set directly): true when the linked stock quantity is at or below minimumLevel and the rule is active. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": false
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -9385,14 +9761,32 @@
 				},
 				"x-openregister-calculations": {
 					"reorderPointCalculated": {
-						"description": "Computes the lead-time-aware reorder point. Formula: (expectedDailyUsage × leadTimeDays) + safetyStock. Falls back to minimumLevel + (leadTimeDays × 5) + 10 if expectedDailyUsage unavailable. Operator may override reorderPoint manually. REQ-IRA-005.",
-						"expression": "IF({expectedDailyUsage} IS NOT NULL, ({expectedDailyUsage} * COALESCE({leadTimeDays}, 7)) + ({expectedDailyUsage} * COALESCE({safetyStockDays}, 1)), {minimumLevel} + (COALESCE({leadTimeDays}, 7) * 5) + 10)",
+						"materialise": true,
+						"targetField": "reorderPointCalculated",
+						"description": "Computes the lead-time-aware reorder point. JSON-AST: if(expectedDailyUsage != null, expectedDailyUsage*coalesce(leadTimeDays,7) + expectedDailyUsage*coalesce(safetyStockDays,1), minimumLevel + coalesce(leadTimeDays,7)*5 + 10). REQ-IRA-005.",
+						"expression": { "if": [
+							{ "ne": [ { "prop": "expectedDailyUsage" }, { "lit": null } ] },
+							{ "+": [
+								{ "*": [ { "prop": "expectedDailyUsage" }, { "coalesce": [ { "prop": "leadTimeDays" }, { "lit": 7 } ] } ] },
+								{ "*": [ { "prop": "expectedDailyUsage" }, { "coalesce": [ { "prop": "safetyStockDays" }, { "lit": 1 } ] } ] }
+							] },
+							{ "+": [
+								{ "prop": "minimumLevel" },
+								{ "*": [ { "coalesce": [ { "prop": "leadTimeDays" }, { "lit": 7 } ] }, { "lit": 5 } ] },
+								{ "lit": 10 }
+							] }
+						] },
 						"outputField": "reorderPointCalculated",
 						"type": "number"
 					},
 					"isLowStock": {
-						"description": "True when the linked InventoryStock quantity is at or below minimumLevel and rule is active. Used for dashboard filtering without a separate aggregation round-trip.",
-						"expression": "{lifecycleState} = 'active' AND {linkedStockQuantity} <= {minimumLevel}",
+						"materialise": true,
+						"targetField": "isLowStock",
+						"description": "True when the linked InventoryStock quantity is at or below minimumLevel and rule is active. JSON-AST: and(lifecycleState=='active', linkedStockQuantity <= minimumLevel).",
+						"expression": { "and": [
+							{ "eq": [ { "prop": "lifecycleState" }, { "lit": "active" } ] },
+							{ "lte": [ { "prop": "linkedStockQuantity" }, { "prop": "minimumLevel" } ] }
+						] },
 						"outputField": "isLowStock",
 						"type": "boolean"
 					}
@@ -11462,26 +11856,33 @@
 						"example": "adm-sample"
 					}
 				},
+				"x-openregister-references": {
+					"asset": {
+						"schema": "FixedAsset",
+						"register": "shillinq",
+						"mode": "relatedObject",
+						"field": "assetRef",
+						"nullable": true
+					}
+				},
 				"x-openregister-calculations": {
 					"bookValue": {
-						"description": "Derived net book value per REQ-FA-003: FixedAsset.purchaseCost minus accumulatedDepreciation at period end.",
-						"formula": "relatedObject('FixedAsset', assetRef).purchaseCost - accumulatedDepreciation",
-						"precision": {
-							"source": "nextcloud-system-settings:floatPrecision",
-							"fallback": 2
-						}
+						"materialise": true,
+						"type": "number",
+						"targetField": "bookValue",
+						"description": "Declarative (ADR-031): net book value per REQ-FA-003 = FixedAsset.acquisitionCost minus accumulatedDepreciation. Reads the related FixedAsset via the `asset` reference (mode relatedObject, FK assetRef). Replaces the former imperative relatedObject('FixedAsset', ...) guard. JSON-AST: @ref.asset.acquisitionCost - accumulatedDepreciation.",
+						"expression": { "-": [ { "prop": "@ref.asset.acquisitionCost" }, { "prop": "accumulatedDepreciation" } ] }
 					},
 					"depreciationAmount": {
-						"description": "Period depreciation amount computed per depreciationMethod with Float Precision rounding per REQ-FA-005.",
-						"formula": {
-							"linear": "(relatedObject('FixedAsset', assetRef).purchaseCost - relatedObject('FixedAsset', assetRef).residualValue) * annualRate",
-							"declining-balance": "relatedObject('FixedAsset', assetRef).purchaseCost * relatedObject('FixedAsset', assetRef).declineRate",
-							"units-of-production": "(relatedObject('FixedAsset', assetRef).purchaseCost - relatedObject('FixedAsset', assetRef).residualValue) * (annualRate / relatedObject('FixedAsset', assetRef).productionUnits)"
-						},
-						"precision": {
-							"source": "nextcloud-system-settings:floatPrecision",
-							"fallback": 2
-						}
+						"materialise": true,
+						"type": "number",
+						"targetField": "depreciationAmount",
+						"description": "Declarative (ADR-031): period depreciation per depreciationMethod (REQ-FA-005). degressive = acquisitionCost * degressiveRate; otherwise (linear/none) = (acquisitionCost - residualValue) * annualRate. Reads the related FixedAsset via the `asset` reference. Replaces the former imperative relatedObject('FixedAsset', ...) guard. NOTE: the legacy formula referenced purchaseCost/declineRate/productionUnits which do not exist on FixedAsset; this maps to the real fields acquisitionCost/residualValue/degressiveRate. The units-of-production branch is omitted because FixedAsset has no productionUnits field.",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "@ref.asset.depreciationMethod" }, { "lit": "degressive" } ] },
+							{ "*": [ { "prop": "@ref.asset.acquisitionCost" }, { "prop": "@ref.asset.degressiveRate" } ] },
+							{ "*": [ { "-": [ { "prop": "@ref.asset.acquisitionCost" }, { "prop": "@ref.asset.residualValue" } ] }, { "prop": "annualRate" } ] }
+						] }
 					}
 				},
 				"x-openregister-aggregations": {
@@ -12010,8 +12411,26 @@
 				},
 				"x-openregister-calculations": {
 					"auditOpinion": {
-						"description": "Declarative audit opinion rule per REQ-SISA-009. If OR conditional aggregations are not stable, OCA\\Shillinq\\Service\\SisaReportingService::calculateAuditOpinion() implements the same rule as an ADR-031 exception.",
-						"expression": "IF remediationOverdueCount > 0 THEN 'disclaimer' ELSE IF criticalFindingsCount > 0 OR majorFindingsCount >= 3 THEN 'adverse' ELSE IF majorFindingsCount >= 1 THEN 'qualified' ELSE 'unqualified'"
+						"materialise": true,
+						"targetField": "auditOpinion",
+						"type": "string",
+						"description": "Declarative audit opinion rule per REQ-SISA-009. JSON-AST: nested if — disclaimer if remediationOverdueCount>0; adverse if criticalFindingsCount>0 or majorFindingsCount>=3; qualified if majorFindingsCount>=1; else unqualified.",
+						"expression": { "if": [
+							{ "gt": [ { "prop": "remediationOverdueCount" }, { "lit": 0 } ] },
+							{ "lit": "disclaimer" },
+							{ "if": [
+								{ "or": [
+									{ "gt": [ { "prop": "criticalFindingsCount" }, { "lit": 0 } ] },
+									{ "gte": [ { "prop": "majorFindingsCount" }, { "lit": 3 } ] }
+								] },
+								{ "lit": "adverse" },
+								{ "if": [
+									{ "gte": [ { "prop": "majorFindingsCount" }, { "lit": 1 } ] },
+									{ "lit": "qualified" },
+									{ "lit": "unqualified" }
+								] }
+							] }
+						] }
 					}
 				},
 				"x-openregister-rbac": {
@@ -13512,6 +13931,12 @@
 						"description": "Back-reference to the T1 JournalEntry posting the receipt of this instalment.",
 						"nullable": true,
 						"example": null
+					},
+					"isOverdue": {
+						"type": "boolean",
+						"description": "Derived (do not set directly): true when dueDate is past and the instalment is scheduled/overdue. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": false
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -13581,9 +14006,17 @@
 				},
 				"x-openregister-calculations": {
 					"isOverdue": {
-						"expression": "(@self.state = 'scheduled' OR @self.state = 'overdue') AND @self.dueDate < today()",
+						"materialise": true,
+						"targetField": "isOverdue",
+						"expression": { "and": [
+							{ "or": [
+								{ "eq": [ { "prop": "state" }, { "lit": "scheduled" } ] },
+								{ "eq": [ { "prop": "state" }, { "lit": "overdue" } ] }
+							] },
+							{ "lt": [ { "prop": "dueDate" }, { "now": [] } ] }
+						] },
 						"type": "boolean",
-						"description": "Derived flag: true when dueDate is past and instalment is not yet paid or cancelled. No TimedJob needed — value is fresh on every read per ADR-031.",
+						"description": "Derived flag: true when dueDate is past and instalment is scheduled/overdue (not yet paid or cancelled). JSON-AST: and(or(state=='scheduled', state=='overdue'), dueDate<now()). ADR-031.",
 						"example": false
 					}
 				},
@@ -14785,6 +15218,12 @@
 						"description": "Optional FK to the Vpb-aangifte record this election is attached to.",
 						"nullable": true,
 						"example": "vpb-aangifte-2026-adm-1"
+					},
+					"innovationAttributedProfitDisplay": {
+						"type": "number",
+						"description": "Derived (do not set directly): innovation-attributed profit for forfaitair elections; null for afpelmethode. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 25000.0
 					}
 				},
 				"x-openregister-aggregations": {
@@ -14870,9 +15309,15 @@
 				},
 				"x-openregister-calculations": {
 					"innovationAttributedProfitDisplay": {
-						"expression": "@self.route == 'forfaitair' ? min(@self.forfaitairPercentage * @self.operatingProfit, @self.forfaitairCapBedrag) : null",
+						"materialise": true,
+						"targetField": "innovationAttributedProfitDisplay",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "route" }, { "lit": "forfaitair" } ] },
+							{ "min": [ { "*": [ { "prop": "forfaitairPercentage" }, { "prop": "operatingProfit" } ] }, { "prop": "forfaitairCapBedrag" } ] },
+							{ "lit": null }
+						] },
 						"type": "number",
-						"description": "Computed innovation-attributed profit for forfaitair elections. Null for afpelmethode (aggregation provides the value).",
+						"description": "Computed innovation-attributed profit for forfaitair elections. Null for afpelmethode (aggregation provides the value). JSON-AST: if(route=='forfaitair', min(forfaitairPercentage*operatingProfit, forfaitairCapBedrag), null).",
 						"example": 25000.0
 					}
 				},
@@ -15060,13 +15505,35 @@
 						"type": "string",
 						"description": "FK to the Administration that owns this toerekening.",
 						"example": "adm-1"
+					},
+					"verdeelsleutelRatio": {
+						"type": "number",
+						"description": "Derived (do not set directly): computed verdeelsleutel ratio for omzet-aandeel and r-en-d-uren methods; null for custom-formula. Materialised via x-openregister-calculations.",
+						"nullable": true,
+						"example": 0.3
 					}
 				},
 				"x-openregister-calculations": {
 					"verdeelsleutelRatio": {
-						"expression": "@self.verdeelsleutel == 'omzet-aandeel' && @self.parameters.totalRevenue > 0 ? @self.parameters.ipRevenue / @self.parameters.totalRevenue : (@self.verdeelsleutel == 'r-en-d-uren' && @self.parameters.totalHours > 0 ? @self.parameters.ipHours / @self.parameters.totalHours : null)",
+						"materialise": true,
+						"targetField": "verdeelsleutelRatio",
+						"expression": { "if": [
+							{ "and": [
+								{ "eq": [ { "prop": "verdeelsleutel" }, { "lit": "omzet-aandeel" } ] },
+								{ "gt": [ { "prop": "parameters.totalRevenue" }, { "lit": 0 } ] }
+							] },
+							{ "/": [ { "prop": "parameters.ipRevenue" }, { "prop": "parameters.totalRevenue" } ] },
+							{ "if": [
+								{ "and": [
+									{ "eq": [ { "prop": "verdeelsleutel" }, { "lit": "r-en-d-uren" } ] },
+									{ "gt": [ { "prop": "parameters.totalHours" }, { "lit": 0 } ] }
+								] },
+								{ "/": [ { "prop": "parameters.ipHours" }, { "prop": "parameters.totalHours" } ] },
+								{ "lit": null }
+							] }
+						] },
 						"type": "number",
-						"description": "Computed verdeelsleutel ratio for omzet-aandeel and r-en-d-uren methods. Null for custom-formula.",
+						"description": "Computed verdeelsleutel ratio for omzet-aandeel and r-en-d-uren methods. Null for custom-formula. JSON-AST nested if over verdeelsleutel with division.",
 						"example": 0.3
 					}
 				},
@@ -15710,8 +16177,11 @@
 				},
 				"x-openregister-calculations": {
 					"teBetalenOfTeruggave": {
-						"description": "Net payable = verschuldigdeOmzetbelasting minus voorbelasting.",
-						"formula": "verschuldigdeOmzetbelasting - voorbelasting"
+						"materialise": true,
+						"targetField": "teBetalenOfTeruggave",
+						"type": "number",
+						"description": "Net payable = verschuldigdeOmzetbelasting minus voorbelasting. JSON-AST: verschuldigdeOmzetbelasting - voorbelasting.",
+						"expression": { "-": [ { "prop": "verschuldigdeOmzetbelasting" }, { "prop": "voorbelasting" } ] }
 					}
 				},
 				"x-openregister-rbac": {
@@ -16415,12 +16885,87 @@
 						"example": 12749.51
 					}
 				},
+				"x-openregister-references": {
+					"deduction": {
+						"schema": "ZzpDeductionAmounts",
+						"register": "shillinq",
+						"mode": "lookup",
+						"filters": {
+							"taxYear": "@self.taxYear"
+						},
+						"nullable": true
+					}
+				},
 				"x-openregister-calculations": {
+					"qualifiesForUrencriterium": {
+						"materialise": true,
+						"targetField": "qualifiesForUrencriterium",
+						"description": "True when ytdQualifyingHours >= threshold (1225 regular, 800 starters-opvolgers). REQ-ZZP-007. JSON-AST: if(isStartersOpvolger, ytdQualifyingHours>=800, ytdQualifyingHours>=1225).",
+						"type": "boolean",
+						"expression": { "if": [
+							{ "prop": "isStartersOpvolger" },
+							{ "gte": [ { "prop": "ytdQualifyingHours" }, { "lit": 800 } ] },
+							{ "gte": [ { "prop": "ytdQualifyingHours" }, { "lit": 1225 } ] }
+						] }
+					},
+					"zelfstandigenaftrekAmount": {
+						"materialise": true,
+						"type": "number",
+						"targetField": "zelfstandigenaftrekAmount",
+						"description": "Declarative (ADR-031): zelfstandigenaftrek from the ZzpDeductionAmounts master table for taxYear (read via the `deduction` reference), applied when qualifiesForUrencriterium else 0. Wet IB 2001 art. 3.76. Replaces the former imperative lookup('ZzpDeductionAmounts', ...) guard. JSON-AST: if(qualifiesForUrencriterium, @ref.deduction.zelfstandigenaftrek, 0).",
+						"expression": { "if": [
+							{ "prop": "qualifiesForUrencriterium" },
+							{ "prop": "@ref.deduction.zelfstandigenaftrek" },
+							{ "lit": 0 }
+						] }
+					},
+					"startersaftrekAmount": {
+						"materialise": true,
+						"type": "number",
+						"targetField": "startersaftrekAmount",
+						"description": "Declarative (ADR-031): startersaftrek from the ZzpDeductionAmounts master table for taxYear (read via the `deduction` reference), applied when isStarter AND startersClaimsThisRegime < 3 AND qualifiesForUrencriterium else 0. Wet IB 2001 art. 3.77. Replaces the former imperative lookup('ZzpDeductionAmounts', ...) guard.",
+						"expression": { "if": [
+							{ "and": [
+								{ "prop": "isStarter" },
+								{ "lt": [ { "prop": "startersClaimsThisRegime" }, { "lit": 3 } ] },
+								{ "prop": "qualifiesForUrencriterium" }
+							] },
+							{ "prop": "@ref.deduction.startersaftrek" },
+							{ "lit": 0 }
+						] }
+					},
+					"mkbWinstvrijstellingPercentage": {
+						"materialise": true,
+						"type": "number",
+						"targetField": "mkbWinstvrijstellingPercentage",
+						"description": "Declarative (ADR-031): MKB-winstvrijstelling percentage from the ZzpDeductionAmounts master table for taxYear (read via the `deduction` reference). Wet IB 2001 art. 3.79a. Replaces the former imperative lookup('ZzpDeductionAmounts', ...) guard. JSON-AST: @ref.deduction.mkbWinstvrijstellingPercentage.",
+						"expression": { "prop": "@ref.deduction.mkbWinstvrijstellingPercentage" }
+					},
+					"mkbWinstvrijstellingAmount": {
+						"materialise": true,
+						"targetField": "mkbWinstvrijstellingAmount",
+						"description": "Derived: (taxableProfit - zelfstandigenaftrekAmount - startersaftrekAmount) x mkbWinstvrijstellingPercentage. JSON-AST arithmetic.",
+						"type": "number",
+						"expression": { "*": [
+							{ "-": [ { "prop": "taxableProfit" }, { "prop": "zelfstandigenaftrekAmount" }, { "prop": "startersaftrekAmount" } ] },
+							{ "prop": "mkbWinstvrijstellingPercentage" }
+						] }
+					},
+					"totalDeduction": {
+						"materialise": true,
+						"targetField": "totalDeduction",
+						"description": "Sum of the three deduction amounts. JSON-AST: zelfstandigenaftrekAmount + startersaftrekAmount + mkbWinstvrijstellingAmount.",
+						"type": "number",
+						"expression": { "+": [ { "prop": "zelfstandigenaftrekAmount" }, { "prop": "startersaftrekAmount" }, { "prop": "mkbWinstvrijstellingAmount" } ] }
+					}
+				},
+				"x-openregister-aggregations": {
 					"ytdQualifyingHours": {
-						"description": "YTD sum of UrenRegistratie.hours for same (administrationId, personId) within taxYear where category in {billable, non-billable-admin, non-billable-acquisition, non-billable-training}. Per REQ-ZZP-003. ADR-031 exception path: if OR engine cannot express the period-filter aggregation, UrencriteriumGuard::currentYtdHours(string $personId, int $year): float applies (~30 LOC, no state).",
-						"expression": "sum(UrenRegistratie.hours)",
-						"sourceSchema": "UrenRegistratie",
+						"description": "YTD sum of UrenRegistratie.hours for the same (administrationId, personId) within taxYear where category is one of the qualifying categories. Cross-object SUM relocated from x-openregister-calculations per ADR-031 (the per-object evaluator cannot fold over other objects). REQ-ZZP-003. ADR-031 exception path: if the OR aggregation engine cannot express the period filter, OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours applies.",
+						"source": "UrenRegistratie",
 						"sourceRegister": "shillinq",
+						"operation": "sum",
+						"field": "hours",
 						"filter": {
 							"administrationId": "@self.administrationId",
 							"personId": "@self.personId",
@@ -16428,50 +16973,27 @@
 								"gte": "@self.taxYear + '-01-01'",
 								"lte": "@self.taxYear + '-12-31'"
 							},
-							"category": {
-								"in": [
-									"billable",
-									"non-billable-admin",
-									"non-billable-acquisition",
-									"non-billable-training"
-								]
-							}
-						}
-					},
-					"qualifiesForUrencriterium": {
-						"description": "True when ytdQualifyingHours >= threshold (1225 regular, 800 starters-opvolgers). REQ-ZZP-007.",
-						"expression": "@self.isStartersOpvolger ? @self.ytdQualifyingHours >= 800 : @self.ytdQualifyingHours >= 1225"
+							"category": [
+								"billable",
+								"non-billable-admin",
+								"non-billable-acquisition",
+								"non-billable-training"
+							]
+						},
+						"targetField": "ytdQualifyingHours"
 					},
 					"taxableProfit": {
-						"description": "GL-derived profit for taxYear: self-employment income aggregated from T1 GL.",
-						"expression": "sum(GLLine.amount)",
-						"sourceSchema": "GLLine",
+						"description": "GL-derived self-employment income for taxYear: sum of GLLine.amount over the self-employment-income tax category. Cross-object SUM relocated from x-openregister-calculations per ADR-031 (the per-object evaluator cannot fold over other objects).",
+						"source": "GLLine",
 						"sourceRegister": "shillinq",
+						"operation": "sum",
+						"field": "amount",
 						"filter": {
 							"administrationId": "@self.administrationId",
 							"fiscalYear": "@self.taxYear",
 							"taxCategory": "self-employment-income"
-						}
-					},
-					"zelfstandigenaftrekAmount": {
-						"description": "Zelfstandigenaftrek from seeded zzp-deduction-amounts table for taxYear, applied when qualifiesForUrencriterium. Wet IB 2001 art. 3.76.",
-						"expression": "@self.qualifiesForUrencriterium ? lookup('ZzpDeductionAmounts', taxYear: @self.taxYear, field: 'zelfstandigenaftrek') : 0"
-					},
-					"startersaftrekAmount": {
-						"description": "Startersaftrek from seeded table. Applied when isStarter AND startersClaimsThisRegime < 3 AND qualifiesForUrencriterium. Wet IB 2001 art. 3.77.",
-						"expression": "(@self.isStarter && @self.startersClaimsThisRegime < 3 && @self.qualifiesForUrencriterium) ? lookup('ZzpDeductionAmounts', taxYear: @self.taxYear, field: 'startersaftrek') : 0"
-					},
-					"mkbWinstvrijstellingPercentage": {
-						"description": "MKB-winstvrijstelling percentage from seeded table for taxYear. Wet IB 2001 art. 3.79a.",
-						"expression": "lookup('ZzpDeductionAmounts', taxYear: @self.taxYear, field: 'mkbWinstvrijstellingPercentage')"
-					},
-					"mkbWinstvrijstellingAmount": {
-						"description": "Derived: (taxableProfit - zelfstandigenaftrekAmount - startersaftrekAmount) x mkbWinstvrijstellingPercentage.",
-						"expression": "(@self.taxableProfit - @self.zelfstandigenaftrekAmount - @self.startersaftrekAmount) * @self.mkbWinstvrijstellingPercentage"
-					},
-					"totalDeduction": {
-						"description": "Sum of the three deduction amounts.",
-						"expression": "@self.zelfstandigenaftrekAmount + @self.startersaftrekAmount + @self.mkbWinstvrijstellingAmount"
+						},
+						"targetField": "taxableProfit"
 					}
 				},
 				"x-openregister-lifecycle": {
@@ -17738,6 +18260,327 @@
 						}
 					}
 				}
+			},
+			"SalesOrder": {
+				"slug": "SalesOrder",
+				"icon": "FileDocumentOutline",
+				"version": "0.1.0",
+				"title": "Sales Order",
+				"description": "The booking term for recognized recurring revenue. The order is the actual booking term; the contract is the legal signer (referenced by contractId as a plain string, NOT a modeled Contract entity). Holds the term [termStart, termEnd] (termEnd null = indefinite), customer, currency and lifecycle (active/ended). Recognized recurring revenue is computed per period by the chained order-revenue-recognition-engine service over its SalesOrderLines. recurring-revenue-recognition.",
+				"x-schema-org": "schema:Order",
+				"type": "object",
+				"required": [
+					"orderId",
+					"ondernemingId",
+					"administrationId",
+					"klantId",
+					"orderDate",
+					"termStart",
+					"status",
+					"currency"
+				],
+				"properties": {
+					"orderId": {
+						"type": "string",
+						"description": "Unique identifier (business key).",
+						"example": "ORDER-2026-0001"
+					},
+					"ondernemingId": {
+						"type": "string",
+						"description": "FK to the selling Corporation.",
+						"example": "00000000-0000-0000-0000-000000000000"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration tenant.",
+						"example": "00000000-0000-0000-0000-000000000000"
+					},
+					"klantId": {
+						"type": "string",
+						"description": "FK to the customer.",
+						"example": "KLANT-ACME-CONSULTING"
+					},
+					"orderDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Date the order was booked.",
+						"example": "2026-01-01"
+					},
+					"termStart": {
+						"type": "string",
+						"format": "date",
+						"description": "Start of the booking term.",
+						"example": "2026-01-01"
+					},
+					"termEnd": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "End of the booking term; null = indefinite (open-ended) booking.",
+						"example": "2026-12-31"
+					},
+					"status": {
+						"type": "string",
+						"description": "Lifecycle of the booking.",
+						"enum": [
+							"active",
+							"ended"
+						],
+						"default": "active",
+						"example": "active"
+					},
+					"currency": {
+						"type": "string",
+						"minLength": 3,
+						"maxLength": 3,
+						"description": "ISO 4217 currency code.",
+						"default": "EUR",
+						"example": "EUR"
+					},
+					"contractId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Plain string reference to the legal agreement — NOT a modeled Contract entity. No referential-integrity resolution is performed against a Contract object.",
+						"example": "CONTRACT-2026-0001"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initialState": "active",
+					"states": {
+						"active": {
+							"label": "Active",
+							"description": "Booking is live; lines are recognized over their effective term."
+						},
+						"ended": {
+							"label": "Ended",
+							"description": "Booking term ended or order terminated; no further recognition."
+						}
+					},
+					"transitions": {
+						"end": {
+							"from": "active",
+							"to": "ended",
+							"label": "End order",
+							"description": "Booking term reached termEnd or the order was terminated."
+						}
+					}
+				},
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR audit service captures every state transition automatically (actor, timestamp, action, before/after state). No app-local event table per ADR-022 D2."
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"ondernemer": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"boekhouder": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				}
+			},
+			"SalesOrderLine": {
+				"slug": "SalesOrderLine",
+				"icon": "FormatListBulleted",
+				"version": "0.1.0",
+				"title": "Sales Order Line",
+				"description": "A line on a SalesOrder, tagged RECURRING or ONE_OFF, with the recognition method (OVER_TIME or POINT_IN_TIME) the chained engine uses. RECURRING lines carry a frequentie and are normalized to a monthly rate; ONE_OFF lines carry a recognitionDate and are recognized point-in-time, never as recurring revenue. Null termStart/termEnd inherit the parent order's term. recurring-revenue-recognition.",
+				"x-schema-org": "schema:OrderItem",
+				"type": "object",
+				"required": [
+					"lineId",
+					"orderId",
+					"administrationId",
+					"nature",
+					"label",
+					"amount",
+					"recognitionMethod"
+				],
+				"properties": {
+					"lineId": {
+						"type": "string",
+						"description": "Unique identifier.",
+						"example": "ORDERLINE-2026-0001-A"
+					},
+					"orderId": {
+						"type": "string",
+						"description": "FK to the parent SalesOrder.",
+						"example": "ORDER-2026-0001"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the Administration tenant.",
+						"example": "00000000-0000-0000-0000-000000000000"
+					},
+					"nature": {
+						"type": "string",
+						"description": "Whether the line is recurring or one-off.",
+						"enum": [
+							"RECURRING",
+							"ONE_OFF"
+						],
+						"example": "RECURRING"
+					},
+					"label": {
+						"type": "string",
+						"description": "Human-readable line label.",
+						"example": "SaaS subscription"
+					},
+					"amount": {
+						"type": "number",
+						"multipleOf": 0.01,
+						"minimum": 0,
+						"description": "Per-interval amount for RECURRING (normalized to a monthly rate via frequentie); total amount for ONE_OFF. EUR.",
+						"example": 12000.0
+					},
+					"maandWaarde": {
+						"type": "number",
+						"description": "Monthly-normalized recurring amount; derived — do not set directly. 0 for one-off lines.",
+						"example": 1000.0
+					},
+					"frequentie": {
+						"type": "string",
+						"nullable": true,
+						"description": "Recurrence frequency. Required for RECURRING lines; null for ONE_OFF. Normalized to a monthly rate by the engine (MAANDELIJKS=1, KWARTAALS=1/3, JAARLIJKS=1/12, WEKELIJKS=52/12, TWEEWEKELIJKS=26/12).",
+						"enum": [
+							"MAANDELIJKS",
+							"KWARTAALS",
+							"JAARLIJKS",
+							"WEKELIJKS",
+							"TWEEWEKELIJKS"
+						],
+						"example": "JAARLIJKS"
+					},
+					"recognitionMethod": {
+						"type": "string",
+						"description": "How the line is recognized. OVER_TIME prorates across the effective term; POINT_IN_TIME recognizes the full amount on recognitionDate.",
+						"enum": [
+							"OVER_TIME",
+							"POINT_IN_TIME"
+						],
+						"example": "OVER_TIME"
+					},
+					"recognitionDate": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Required for POINT_IN_TIME lines; the date the performance obligation is satisfied. Null for OVER_TIME lines.",
+						"example": "2026-01-15"
+					},
+					"termStart": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Line term start; inherits the parent SalesOrder's termStart when null.",
+						"example": null
+					},
+					"termEnd": {
+						"type": "string",
+						"format": "date",
+						"nullable": true,
+						"description": "Line term end; inherits the parent SalesOrder's termEnd when null.",
+						"example": null
+					},
+					"accountNumber": {
+						"type": "string",
+						"description": "GL account code for the recognized revenue. FK to Account.accountNumber.",
+						"example": "8100"
+					}
+				},
+				"x-openregister-calculations": {
+					"maandWaarde": {
+						"description": "Monthly-normalized recurring amount: amount × frequencyFactor(frequentie), 0 for ONE_OFF lines (one-offs contribute nothing to recurring run-rate). Factors: MAANDELIJKS=1, KWARTAALS=1/3, JAARLIJKS=1/12, WEKELIJKS=52/12, TWEEWEKELIJKS=26/12. Derived — do not set directly. Pipelinq SUMs this (filtered nature=RECURRING) for its CRM run-rate tile. Expressed in OpenRegister's JSON-AST calc grammar (CalculationEvaluator) with materialise:true — the on-save listener skips calcs without it.",
+						"materialise": true,
+						"targetField": "maandWaarde",
+						"expression": { "if": [
+							{ "eq": [ { "prop": "nature" }, { "lit": "ONE_OFF" } ] },
+							{ "lit": 0 },
+							{ "if": [
+								{ "eq": [ { "prop": "frequentie" }, { "lit": "MAANDELIJKS" } ] },
+								{ "prop": "amount" },
+								{ "if": [
+									{ "eq": [ { "prop": "frequentie" }, { "lit": "KWARTAALS" } ] },
+									{ "/": [ { "prop": "amount" }, { "lit": 3 } ] },
+									{ "if": [
+										{ "eq": [ { "prop": "frequentie" }, { "lit": "JAARLIJKS" } ] },
+										{ "/": [ { "prop": "amount" }, { "lit": 12 } ] },
+										{ "if": [
+											{ "eq": [ { "prop": "frequentie" }, { "lit": "WEKELIJKS" } ] },
+											{ "/": [ { "*": [ { "prop": "amount" }, { "lit": 52 } ] }, { "lit": 12 } ] },
+											{ "if": [
+												{ "eq": [ { "prop": "frequentie" }, { "lit": "TWEEWEKELIJKS" } ] },
+												{ "/": [ { "*": [ { "prop": "amount" }, { "lit": 26 } ] }, { "lit": 12 } ] },
+												{ "lit": 0 }
+											] }
+										] }
+									] }
+								] }
+							] }
+						] },
+						"nullable": true
+					}
+				},
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR audit service captures every state transition automatically (actor, timestamp, action, before/after state). No app-local event table per ADR-022 D2."
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"ondernemer": {
+							"permissions": [
+								"create",
+								"read",
+								"update",
+								"delete"
+							]
+						},
+						"boekhouder": {
+							"permissions": [
+								"create",
+								"read",
+								"update"
+							]
+						},
+						"auditor": {
+							"permissions": [
+								"read"
+							]
+						}
+					},
+					"adminScope": {
+						"field": "administrationId",
+						"enforce": true
+					}
+				},
+				"x-openregister-relations": {
+					"order": {
+						"localField": "orderId",
+						"relatedSchema": "SalesOrder",
+						"relatedField": "orderId",
+						"cardinality": "many-to-one",
+						"description": "The parent SalesOrder this line belongs to."
+					}
+				}
 			}
 		},
 		"SisaReport": {
@@ -18013,8 +18856,26 @@
 			},
 			"x-openregister-calculations": {
 				"auditOpinion": {
-					"description": "Declarative audit opinion rule per REQ-SISA-009. If OR conditional aggregations are not stable, OCA\\Shillinq\\Service\\SisaReportingService::calculateAuditOpinion() implements the same rule as an ADR-031 exception.",
-					"expression": "IF remediationOverdueCount > 0 THEN 'disclaimer' ELSE IF criticalFindingsCount > 0 OR majorFindingsCount >= 3 THEN 'adverse' ELSE IF majorFindingsCount >= 1 THEN 'qualified' ELSE 'unqualified'"
+					"materialise": true,
+					"targetField": "auditOpinion",
+					"type": "string",
+					"description": "Declarative audit opinion rule per REQ-SISA-009. JSON-AST: nested if — disclaimer if remediationOverdueCount>0; adverse if criticalFindingsCount>0 or majorFindingsCount>=3; qualified if majorFindingsCount>=1; else unqualified.",
+					"expression": { "if": [
+						{ "gt": [ { "prop": "remediationOverdueCount" }, { "lit": 0 } ] },
+						{ "lit": "disclaimer" },
+						{ "if": [
+							{ "or": [
+								{ "gt": [ { "prop": "criticalFindingsCount" }, { "lit": 0 } ] },
+								{ "gte": [ { "prop": "majorFindingsCount" }, { "lit": 3 } ] }
+							] },
+							{ "lit": "adverse" },
+							{ "if": [
+								{ "gte": [ { "prop": "majorFindingsCount" }, { "lit": 1 } ] },
+								{ "lit": "qualified" },
+								{ "lit": "unqualified" }
+							] }
+						] }
+					] }
 				}
 			},
 			"x-openregister-rbac": {
@@ -18550,215 +19411,6 @@
 				}
 			}
 		},
-		"VendorFinancialProfile": {
-			"slug": "VendorFinancialProfile",
-			"icon": "StoreOutline",
-			"version": "0.1.0",
-			"title": "Vendor Financial Profile",
-			"description": "Vendor financial / AP profile keyed by contactsUid. Identity fields are denormalised read-caches from NC Contact / pipelinq Supplier.",
-			"x-schema-org": "schema:Organization",
-			"type": "object",
-			"required": [
-				"contactsUid",
-				"vendorNumber",
-				"paymentTermDays",
-				"administrationId",
-				"lifecycleState"
-			],
-			"properties": {
-				"contactsUid": {
-					"type": "string",
-					"description": "NC addressbook UID linking this financial profile to an NC Contact and the pipelinq Supplier commercial record. Required join key per ADR-019.",
-					"example": "contact-uid-123"
-				},
-				"vendorNumber": {
-					"type": "string",
-					"description": "Stable vendor identifier unique per administration.",
-					"example": "V-2026-001"
-				},
-				"name": {
-					"type": "string",
-					"nullable": true,
-					"description": "Denormalised read-cache: legal name sourced from NC Contact / pipelinq Supplier. Non-authoritative; refreshed via registry. Null until first sync.",
-					"example": "Acme Leveranciers BV"
-				},
-				"tradingName": {
-					"type": "string",
-					"description": "Alternate or DBA trading name.",
-					"nullable": true,
-					"example": "Acme"
-				},
-				"kvkNumber": {
-					"type": "string",
-					"description": "Dutch KvK number (8 digits).",
-					"nullable": true,
-					"example": "12345678"
-				},
-				"btwNumber": {
-					"type": "string",
-					"description": "Dutch BTW / EU VAT number.",
-					"nullable": true,
-					"example": "NL123456789B01"
-				},
-				"iban": {
-					"type": "string",
-					"description": "Default IBAN for outgoing payments to this vendor.",
-					"nullable": true,
-					"example": "NL01RABO0123456789"
-				},
-				"bic": {
-					"type": "string",
-					"description": "BIC/SWIFT code matching the IBAN bank.",
-					"nullable": true,
-					"example": "RABONL2U"
-				},
-				"paymentTermDays": {
-					"type": "integer",
-					"minimum": 0,
-					"default": 30,
-					"description": "Default payment term in days (auto-sets APInvoice.dueDate on creation).",
-					"example": 30
-				},
-				"defaultExpenseAccountNumber": {
-					"type": "string",
-					"description": "FK to Account.accountNumber for default expense coding on AP invoices.",
-					"nullable": true,
-					"example": "7000"
-				},
-				"address": {
-					"type": "object",
-					"description": "Postal address of the vendor.",
-					"nullable": true,
-					"properties": {
-						"street": {
-							"type": "string"
-						},
-						"houseNumber": {
-							"type": "string"
-						},
-						"postcode": {
-							"type": "string"
-						},
-						"city": {
-							"type": "string"
-						},
-						"country": {
-							"type": "string",
-							"default": "NL"
-						}
-					}
-				},
-				"email": {
-					"type": "string",
-					"format": "email",
-					"description": "Primary contact email for invoice queries.",
-					"nullable": true,
-					"example": "facturatie@acme.nl"
-				},
-				"phone": {
-					"type": "string",
-					"description": "Primary contact phone number.",
-					"nullable": true,
-					"example": "+31201234567"
-				},
-				"dunningPolicyId": {
-					"type": "string",
-					"description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null.",
-					"nullable": true
-				},
-				"creditLimit": {
-					"type": "number",
-					"nullable": true,
-					"minimum": 0,
-					"description": "Maximum credit extended to this vendor (AP usage). When apBalance approaches creditLimit, the system flags for review.",
-					"example": 50000.0
-				},
-				"apBalance": {
-					"type": "number",
-					"nullable": true,
-					"description": "Derived: sum of open AP invoice totals against this vendor profile. Recomputed on every APInvoice post/pay cycle. Non-authoritative read-cache.",
-					"example": 1250.0
-				},
-				"contactRef": {
-					"type": "string",
-					"description": "Deprecated: use contactsUid. Retained for migration window only.",
-					"nullable": true
-				},
-				"administrationId": {
-					"type": "string",
-					"description": "FK to the administration owning this vendor record.",
-					"example": "adm-1"
-				},
-				"lifecycleState": {
-					"type": "string",
-					"enum": [
-						"active",
-						"blocked",
-						"archived"
-					],
-					"description": "Vendor financial profile lifecycle state. blocked: payments suspended; archived: historical reference only.",
-					"default": "active",
-					"example": "active"
-				}
-			},
-			"x-openregister-lifecycle": {
-				"field": "lifecycleState",
-				"initialState": "active",
-				"states": {
-					"active": {
-						"label": "Active",
-						"description": "Vendor is active; AP invoices may be created and paid."
-					},
-					"blocked": {
-						"label": "Blocked",
-						"description": "Vendor is blocked; new AP invoices cannot transition to approved or posted."
-					},
-					"archived": {
-						"label": "Archived",
-						"description": "Vendor is archived for historical reference; no new invoices may be created."
-					}
-				},
-				"transitions": {
-					"block": {
-						"from": "active",
-						"to": "blocked",
-						"label": "Block vendor",
-						"description": "Suspend payments to this vendor."
-					},
-					"unblock": {
-						"from": "blocked",
-						"to": "active",
-						"label": "Unblock vendor",
-						"description": "Restore vendor to active status."
-					},
-					"archive": {
-						"from": [
-							"active",
-							"blocked"
-						],
-						"to": "archived",
-						"label": "Archive vendor",
-						"description": "Archive vendor after all open AP invoices are settled."
-					}
-				}
-			},
-			"x-openregister-rbac": {
-				"roles": {
-					"bookkeeper": {
-						"permissions": [
-							"create",
-							"read",
-							"update"
-						]
-					},
-					"auditor": {
-						"permissions": [
-							"read"
-						]
-					}
-				}
-			}
-		},
 		"APInvoice": {
 			"slug": "APInvoice",
 			"icon": "ReceiptTextOutline",
@@ -19185,230 +19837,6 @@
 				}
 			}
 		},
-		"PaymentRun": {
-			"slug": "PaymentRun",
-			"icon": "BankTransferOutline",
-			"version": "0.1.0",
-			"title": "Payment Run",
-			"description": "Operator-curated batch of selected APInvoice UUIDs with SEPA pain.001 XML and iDEAL link outputs generated as x-openregister-calculations fields. No PaymentRunService or SepaXmlBuilder PHP classes per ADR-031. Per REQ-AP-007.",
-			"x-schema-org": "schema:PaymentService",
-			"type": "object",
-			"required": [
-				"runNumber",
-				"runDate",
-				"invoiceRefs",
-				"paymentMethod",
-				"state",
-				"administrationId"
-			],
-			"properties": {
-				"runNumber": {
-					"type": "string",
-					"description": "Sequential payment run identifier per administration.",
-					"example": "PR-2026-001"
-				},
-				"runDate": {
-					"type": "string",
-					"format": "date",
-					"description": "Scheduled execution date for payments.",
-					"example": "2026-02-28"
-				},
-				"invoiceRefs": {
-					"type": "array",
-					"minItems": 1,
-					"description": "List of APInvoice UUIDs to include in this payment run.",
-					"items": {
-						"type": "string",
-						"description": "APInvoice UUID."
-					}
-				},
-				"totalAmount": {
-					"type": "number",
-					"minimum": 0,
-					"description": "Sum of selected invoices' totalAmount (x-openregister-calculations output).",
-					"nullable": true
-				},
-				"paymentMethod": {
-					"type": "string",
-					"enum": [
-						"sepa-pain001",
-						"ideal"
-					],
-					"description": "Payment method for this run. Determines which calculation output is populated.",
-					"example": "sepa-pain001"
-				},
-				"sepaXml": {
-					"type": "string",
-					"description": "SEPA pain.001.001.03 XML document (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=sepa-pain001. Operator downloads and uploads to bank portal.",
-					"nullable": true
-				},
-				"idealLinks": {
-					"type": "array",
-					"description": "Per-invoice iDEAL payment links (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=ideal.",
-					"nullable": true,
-					"items": {
-						"type": "object",
-						"properties": {
-							"invoiceRef": {
-								"type": "string",
-								"description": "APInvoice UUID."
-							},
-							"url": {
-								"type": "string",
-								"description": "iDEAL payment URL."
-							},
-							"amount": {
-								"type": "number",
-								"description": "Invoice amount."
-							},
-							"expiresAt": {
-								"type": "string",
-								"format": "date-time",
-								"description": "Link expiry timestamp."
-							}
-						}
-					}
-				},
-				"state": {
-					"type": "string",
-					"enum": [
-						"draft",
-						"ready",
-						"submitted",
-						"executed",
-						"failed"
-					],
-					"description": "Payment run lifecycle state.",
-					"default": "draft",
-					"example": "draft"
-				},
-				"administrationId": {
-					"type": "string",
-					"description": "FK to the administration owning this payment run.",
-					"example": "adm-1"
-				}
-			},
-			"x-openregister-notifications": {
-				"runReady": {
-					"trigger": {
-						"type": "updated",
-						"condition": {
-							"field": "state",
-							"operator": "equals",
-							"value": "ready"
-						}
-					},
-					"enabled": true,
-					"channels": [
-						"nc-notification"
-					],
-					"recipients": [
-						{
-							"kind": "object-acl",
-							"permission": "manage"
-						},
-						{
-							"kind": "groups",
-							"groups": [
-								"shillinq-finance"
-							]
-						}
-					],
-					"subject": {
-						"nl": "Betaalrun gereed: {{runNumber}} (geplande datum {{runDate}})",
-						"en": "Payment run ready: {{runNumber}} (scheduled {{runDate}})"
-					}
-				}
-			},
-			"x-openregister-lifecycle": {
-				"field": "state",
-				"initialState": "draft",
-				"states": {
-					"draft": {
-						"label": "Draft",
-						"description": "Operator selects invoices and configures the run."
-					},
-					"ready": {
-						"label": "Ready",
-						"description": "SEPA XML or iDEAL links generated. Ready for download / submission."
-					},
-					"submitted": {
-						"label": "Submitted",
-						"description": "Operator has uploaded the SEPA file or shared iDEAL links."
-					},
-					"executed": {
-						"label": "Executed",
-						"description": "Payments executed (confirmed via bank reconciliation)."
-					},
-					"failed": {
-						"label": "Failed",
-						"description": "Run failed (e.g. bank rejection). Operator must investigate and retry."
-					}
-				},
-				"transitions": {
-					"prepare": {
-						"from": "draft",
-						"to": "ready",
-						"label": "Generate payment file",
-						"description": "Triggers x-openregister-calculations to compose sepaXml (pain.001.001.03) or idealLinks per paymentMethod selection."
-					},
-					"submit": {
-						"from": "ready",
-						"to": "submitted",
-						"label": "Mark as submitted",
-						"description": "Operator confirms upload to bank portal or dispatch of iDEAL links."
-					},
-					"execute": {
-						"from": "submitted",
-						"to": "executed",
-						"label": "Mark as executed",
-						"description": "Bank confirms payment execution (or bank reconciliation auto-matches)."
-					},
-					"fail": {
-						"from": "submitted",
-						"to": "failed",
-						"label": "Mark as failed",
-						"description": "Bank rejects the payment file or iDEAL transaction."
-					},
-					"retry": {
-						"from": "failed",
-						"to": "draft",
-						"label": "Retry (return to draft)",
-						"description": "Return to draft for operator to correct and re-generate."
-					}
-				}
-			},
-			"x-openregister-calculations": {
-				"totalAmount": {
-					"expression": "invoiceRefs.map(id => APInvoice[id].totalAmount).sum()",
-					"description": "Sum of selected APInvoice totals, computed on save per REQ-AP-007."
-				},
-				"sepaXml": {
-					"expression": "sepa.composePain001({invoiceRefs: invoiceRefs, runDate: runDate, schemaVersion: 'pain.001.001.03', administrationId: administrationId})",
-					"description": "SEPA pain.001.001.03 XML document composed from selected invoice vendor IBANs, amounts, and run date per REQ-AP-007. Populated when paymentMethod=sepa-pain001."
-				},
-				"idealLinks": {
-					"expression": "invoiceRefs.map(id => ideal.generatePaymentLink({invoiceRef: id, amount: APInvoice[id].totalAmount, currency: APInvoice[id].currency}))",
-					"description": "Per-invoice iDEAL payment link array per REQ-AP-007. Populated when paymentMethod=ideal."
-				}
-			},
-			"x-openregister-rbac": {
-				"roles": {
-					"bookkeeper": {
-						"permissions": [
-							"create",
-							"read",
-							"update"
-						]
-					},
-					"auditor": {
-						"permissions": [
-							"read"
-						]
-					}
-				}
-			}
-		},
 		"CustomerMaster": {
 			"slug": "CustomerMaster",
 			"icon": "AccountTieOutline",
@@ -19529,6 +19957,15 @@
 					"description": "FK to OR contact abstraction if stable per ADR-022; else null. Symmetric to AP REQ-AP-002. Resolution deferred to implementing cycle.",
 					"nullable": true
 				},
+				"invoices": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"format": "uuid",
+						"$ref": "ARInvoice"
+					},
+					"description": "Inverse of ARInvoice.customerId; back-reference populated by OpenRegister."
+				},
 				"administrationId": {
 					"type": "string",
 					"description": "FK to the administration owning this customer record.",
@@ -19635,8 +20072,11 @@
 				},
 				"customerId": {
 					"type": "string",
-					"description": "FK to CustomerMaster UUID.",
-					"example": "customer-klant-1"
+					"format": "uuid",
+					"$ref": "CustomerMaster",
+					"inversedBy": "invoices",
+					"description": "Reference to the CustomerMaster this invoice bills (holds its object UUID).",
+					"example": "00000000-0000-0000-0000-000000000000"
 				},
 				"invoiceDate": {
 					"type": "string",
@@ -19779,9 +20219,11 @@
 				},
 				"glTransactionId": {
 					"type": "string",
-					"description": "Back-reference to the materialised GLTransaction once the invoice is issued.",
+					"format": "uuid",
+					"$ref": "GLTransaction",
+					"description": "Reference to the materialised issue GLTransaction (holds its object UUID).",
 					"nullable": true,
-					"example": "gl-txn-2026-ar-0001"
+					"example": "00000000-0000-0000-0000-000000000000"
 				},
 				"writeOffReason": {
 					"type": "string",
@@ -23361,6 +23803,80 @@
 		{
 			"@self": {
 				"register": "shillinq",
+				"schema": "SalesOrder",
+				"slug": "sales-order-2026-0001"
+			},
+			"orderId": "ORDER-2026-0001",
+			"ondernemingId": "00000000-0000-0000-0000-000000000000",
+			"administrationId": "00000000-0000-0000-0000-000000000000",
+			"klantId": "KLANT-ACME-CONSULTING",
+			"orderDate": "2026-01-01",
+			"termStart": "2026-01-01",
+			"termEnd": "2026-12-31",
+			"status": "active",
+			"currency": "EUR",
+			"contractId": "CONTRACT-2026-0001"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "SalesOrderLine",
+				"slug": "sales-order-line-2026-0001-a"
+			},
+			"lineId": "ORDERLINE-2026-0001-A",
+			"orderId": "ORDER-2026-0001",
+			"administrationId": "00000000-0000-0000-0000-000000000000",
+			"nature": "RECURRING",
+			"label": "SaaS subscription",
+			"amount": 12000.0,
+			"frequentie": "JAARLIJKS",
+			"recognitionMethod": "OVER_TIME",
+			"recognitionDate": null,
+			"termStart": null,
+			"termEnd": null,
+			"accountNumber": "8100"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "SalesOrderLine",
+				"slug": "sales-order-line-2026-0001-b"
+			},
+			"lineId": "ORDERLINE-2026-0001-B",
+			"orderId": "ORDER-2026-0001",
+			"administrationId": "00000000-0000-0000-0000-000000000000",
+			"nature": "ONE_OFF",
+			"label": "Implementation fee",
+			"amount": 5000.0,
+			"frequentie": null,
+			"recognitionMethod": "POINT_IN_TIME",
+			"recognitionDate": "2026-01-15",
+			"termStart": null,
+			"termEnd": null,
+			"accountNumber": "8200"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
+				"schema": "SalesOrderLine",
+				"slug": "sales-order-line-2026-0001-c"
+			},
+			"lineId": "ORDERLINE-2026-0001-C",
+			"orderId": "ORDER-2026-0001",
+			"administrationId": "00000000-0000-0000-0000-000000000000",
+			"nature": "RECURRING",
+			"label": "Monthly retainer",
+			"amount": 1500.0,
+			"frequentie": "MAANDELIJKS",
+			"recognitionMethod": "OVER_TIME",
+			"recognitionDate": null,
+			"termStart": null,
+			"termEnd": null,
+			"accountNumber": "8100"
+		},
+		{
+			"@self": {
+				"register": "shillinq",
 				"schema": "GLTransaction",
 				"slug": "gl-txn-2026-q1-revenue"
 			},
@@ -23998,64 +24514,6 @@
 		{
 			"@self": {
 				"register": "shillinq",
-				"schema": "VendorFinancialProfile",
-				"slug": "vendor-acme-bv-2026"
-			},
-			"contactsUid": "contact-uid-placeholder-vendor-acme-bv-2026",
-			"vendorNumber": "V-2026-001",
-			"name": "Acme Leveranciers BV",
-			"tradingName": "Acme",
-			"kvkNumber": "12345678",
-			"btwNumber": "NL123456789B01",
-			"iban": "NL01RABO0123456789",
-			"bic": "RABONL2U",
-			"paymentTermDays": 30,
-			"defaultExpenseAccountNumber": "7000",
-			"email": "facturatie@acme.nl",
-			"phone": "+31201234567",
-			"administrationId": "adm-1",
-			"lifecycleState": "active"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "VendorFinancialProfile",
-				"slug": "vendor-techsupply-2026"
-			},
-			"contactsUid": "contact-uid-placeholder-vendor-techsupply-2026",
-			"vendorNumber": "V-2026-002",
-			"name": "TechSupply Nederland BV",
-			"kvkNumber": "87654321",
-			"btwNumber": "NL987654321B01",
-			"iban": "NL02INGB0001234567",
-			"bic": "INGBNL2A",
-			"paymentTermDays": 14,
-			"defaultExpenseAccountNumber": "7100",
-			"email": "ap@techsupply.nl",
-			"administrationId": "adm-1",
-			"lifecycleState": "active"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "VendorFinancialProfile",
-				"slug": "vendor-kantoor-co-2026"
-			},
-			"contactsUid": "contact-uid-placeholder-vendor-kantoor-co-2026",
-			"vendorNumber": "V-2026-003",
-			"name": "Kantoor & Co BV",
-			"kvkNumber": "11223344",
-			"iban": "NL03ABNA0417164300",
-			"bic": "ABNANL2A",
-			"paymentTermDays": 30,
-			"defaultExpenseAccountNumber": "7200",
-			"email": "rekeningen@kantoorco.nl",
-			"administrationId": "adm-1",
-			"lifecycleState": "active"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
 				"schema": "APInvoice",
 				"slug": "ap-inv-2026-v-001-draft"
 			},
@@ -24135,53 +24593,6 @@
 			"state": "posted",
 			"glTransactionId": "gl-txn-2026-ap-0003",
 			"periodId": "2026-Q1",
-			"administrationId": "adm-1"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "PaymentRun",
-				"slug": "pr-2026-001-draft"
-			},
-			"runNumber": "PR-2026-001",
-			"runDate": "2026-02-28",
-			"invoiceRefs": [
-				"ap-inv-2026-v-003-posted"
-			],
-			"totalAmount": 363.0,
-			"paymentMethod": "sepa-pain001",
-			"state": "draft",
-			"administrationId": "adm-1"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "PaymentRun",
-				"slug": "pr-2026-002-ready"
-			},
-			"runNumber": "PR-2026-002",
-			"runDate": "2026-03-15",
-			"invoiceRefs": [
-				"ap-inv-2026-v-002-approved"
-			],
-			"totalAmount": 4840.0,
-			"paymentMethod": "sepa-pain001",
-			"state": "ready",
-			"sepaXml": "<?xml version='1.0' encoding='UTF-8'?><Document xmlns='urn:iso:std:iso:20022:tech:xsd:pain.001.001.03'><!-- pain.001.001.03 stub --></Document>",
-			"administrationId": "adm-1"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "PaymentRun",
-				"slug": "pr-2026-003-executed"
-			},
-			"runNumber": "PR-2026-003",
-			"runDate": "2026-01-31",
-			"invoiceRefs": [],
-			"totalAmount": 0.0,
-			"paymentMethod": "ideal",
-			"state": "executed",
 			"administrationId": "adm-1"
 		},
 		{

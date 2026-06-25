@@ -61,7 +61,7 @@ class LogBunqBankConnectorAdapter implements BunqBankConnectorAdapterInterface
      *
      * @return BunqSyncResult The dispatch outcome.
      */
-    public function pullTransactions(string $connectionReference, array $context = []): BunqSyncResult
+    public function pullTransactions(string $connectionReference, array $context=[]): BunqSyncResult
     {
         $this->logger->info(
             'Shillinq Bunq pullTransactions deferred (no outbound connector bound)',
@@ -78,7 +78,9 @@ class LogBunqBankConnectorAdapter implements BunqBankConnectorAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `bunq-bank-connector` (Bunq API v1, per-tenant API key + installation token + device-server registration) and override BunqBankConnectorAdapterInterface in Application::register() to enable real sync.',
+                'note'   => 'Bind openconnector source slug `bunq-bank-connector` (Bunq API v1, per-tenant '
+                    .'API key + installation token + device-server registration) and override '
+                    .'BunqBankConnectorAdapterInterface in Application::register() to enable real sync.',
             ],
         );
     }//end pullTransactions()
@@ -91,7 +93,7 @@ class LogBunqBankConnectorAdapter implements BunqBankConnectorAdapterInterface
      *
      * @return BunqSyncResult The dispatch outcome.
      */
-    public function renewConsent(string $connectionReference, array $context = []): BunqSyncResult
+    public function renewConsent(string $connectionReference, array $context=[]): BunqSyncResult
     {
         $this->logger->info(
             'Shillinq Bunq renewConsent deferred (no outbound connector bound)',
@@ -108,13 +110,18 @@ class LogBunqBankConnectorAdapter implements BunqBankConnectorAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector SCA endpoint for Bunq + override BunqBankConnectorAdapterInterface to enable real consent-renewal hand-off.',
+                'note'   => 'Bind openconnector SCA endpoint for Bunq + override '
+                    .'BunqBankConnectorAdapterInterface to enable real consent-renewal hand-off.',
                 'scaUrl' => '',
             ],
         );
     }//end renewConsent()
 
     /**
+     * Report whether this adapter is dormant.
+     *
+     * @return bool True when no outbound connector is bound.
+     *
      * @inheritDoc
      */
     public function isDormant(): bool

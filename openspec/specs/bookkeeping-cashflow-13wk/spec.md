@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-cashflow-13wk
 
 **Status:** proposed

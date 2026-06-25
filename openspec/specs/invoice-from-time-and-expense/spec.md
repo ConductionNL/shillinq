@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Invoice from Time + Expense
 
 **Status:** proposed

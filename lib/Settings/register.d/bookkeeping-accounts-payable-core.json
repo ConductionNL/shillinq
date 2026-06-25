@@ -4,16 +4,16 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-accounts-payable-core",
 		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-		"description": "Tier 2 — Accounts Payable (Core). Adds Payee, APTransaction, DunningNotice schemas with x-openregister-lifecycle and x-openregister-aggregations per REQ-AP-001 .. REQ-AP-011. Mirrors the AR core. Consumes OR dunning-workflow (ADR-022) and OR scheduled-workflow for the issued → overdue transition (ADR-031 path 2). Sub-ledger materialises balanced GLTransaction via the T1 JournalEntry pattern. Seed data per REQ-AP-011 ships 3 Dutch vendors + 6 AP invoices spanning lifecycle states."
+		"description": "Tier 2 — Accounts Payable (Core). Adds Payee, APTransaction, DunningNotice, PaymentRun schemas with x-openregister-lifecycle and x-openregister-aggregations per REQ-AP-001 .. REQ-AP-013. Mirrors the AR core. Consumes OR dunning-workflow (ADR-022) and OR scheduled-workflow for the issued → overdue transition (ADR-031 path 2). Sub-ledger materialises balanced GLTransaction via the T1 JournalEntry pattern. PaymentRun re-established as the canonical batch-payment schema (consolidate-accounts-payable). Seed data per REQ-AP-011 ships Dutch suppliers + a ZZP freelancer + a government payee + AP invoices spanning lifecycle states + an approved PaymentRun."
 	},
 	"components": {
 		"schemas": {
 			"Payee": {
 				"slug": "Payee",
 				"icon": "TruckOutline",
-				"version": "0.1.0",
+				"version": "0.2.0",
 				"title": "Payee",
-				"description": "Vendor / supplier party record for accounts payable per REQ-AP-002. Holds vendor contact details, payment terms, bank IBAN, dunning policy reference, and default expense account. Symmetric to CustomerMaster on the AR side. Per REQ-AP-001 + ADR-024 (registers, not parallel PHP tables) + ADR-022 (consumes OR contact abstraction when available via contactRef).",
+				"description": "Canonical \"anyone we pay\" master for accounts payable per REQ-AP-002 + REQ-AP-012 — covers suppliers, vendors, AND freelancers (Dutch ZZP'ers / sole traders / contractors), plus government payees. Holds party contact details, payment terms, a structured bankAccount object (IBAN + BIC/SWIFT + account holder), payeeType, folded financial fields (creditLimit, apBalance), dunning policy reference, and default expense account. Folds in the retired VendorFinancialProfile duplicate. Symmetric to CustomerMaster on the AR side. Per REQ-AP-001 + ADR-024 (registers, not parallel PHP tables) + ADR-022 (consumes OR contact abstraction when available via contactRef).",
 				"x-openregister-audit-trail": {
 					"enabled": true,
 					"description": "Vendor master register; every create / update / lifecycle transition is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
@@ -38,6 +38,13 @@
 						"type": "string",
 						"description": "Legal name of the vendor.",
 						"example": "Eneco Energie B.V."
+					},
+					"payeeType": {
+						"type": "string",
+						"enum": ["supplier", "vendor", "freelancer", "contractor", "government", "other"],
+						"description": "Kind of party we pay per REQ-AP-012. supplier/vendor = trading companies; freelancer = Dutch ZZP'er / sole trader; contractor = subcontracted party; government = public-sector payee; other = anything else. The AP module treats every payeeType as a payable party.",
+						"default": "supplier",
+						"example": "supplier"
 					},
 					"tradingName": {
 						"type": "string",
@@ -71,10 +78,41 @@
 						"example": "4000"
 					},
 					"bankAccount": {
-						"type": "string",
-						"description": "Payee bank account IBAN for outgoing payments.",
+						"type": "object",
+						"description": "Payee bank account for outgoing SEPA payments. Folds the retired VendorFinancialProfile iban/bic into a structured object. NOTE: bic IS the ISO 9362 SWIFT code (a \"SWIFT code\" and a BIC are the same identifier) — no separate swift field is modelled. Non-SEPA / cross-border international payments (non-IBAN account numbers, intermediary/correspondent banks) are OUT OF SCOPE here — a future capability; this object models SEPA IBAN/BIC only.",
 						"nullable": true,
-						"example": "NL44RABO0123456789"
+						"properties": {
+							"iban": {
+								"type": "string",
+								"description": "Payee IBAN for outgoing SEPA payments. Read by the payment-run SEPA export as the creditor account.",
+								"nullable": true,
+								"example": "NL00BANK0123456789"
+							},
+							"bic": {
+								"type": "string",
+								"description": "Bank ISO 9362 BIC / SWIFT code (same identifier). Creditor agent for the SEPA export.",
+								"nullable": true,
+								"example": "<BANKNL2A>"
+							},
+							"accountHolderName": {
+								"type": "string",
+								"description": "Name on the bank account, if it differs from the payee legal name.",
+								"nullable": true,
+								"example": "Eneco Energie B.V."
+							}
+						}
+					},
+					"creditLimit": {
+						"type": "number",
+						"description": "Maximum outstanding AP balance permitted for this payee. Folded in from the retired VendorFinancialProfile per REQ-AP-012.",
+						"nullable": true,
+						"example": 10000
+					},
+					"apBalance": {
+						"type": "number",
+						"description": "Current open accounts-payable balance for this payee (derived open-AP total; mirrors the vendorOpenApBalance aggregation). Folded in from the retired VendorFinancialProfile per REQ-AP-012.",
+						"nullable": true,
+						"example": 892.50
 					},
 					"creditTerms": {
 						"type": "string",
@@ -638,6 +676,154 @@
 						"auditor": {"permissions": ["read"]}
 					}
 				}
+			},
+			"PaymentRun": {
+				"slug": "PaymentRun",
+				"icon": "BankTransferOutline",
+				"version": "0.1.0",
+				"title": "Payment Run",
+				"description": "A batch of approved Payee payments per REQ-AP-013 (consolidate-accounts-payable). Groups open AP invoices into a single outgoing payment instruction with a declarative lifecycle draft → approved → exported → reconciled. Approval (RBAC controller) is a hard gate before export — there is NO direct draft → exported transition. The actual SEPA pain.001 / CSV bank-file GENERATION is the separate payment-run-sepa-export change (writes exportedFileRef); this schema models only the batch + its lifecycle. Each paymentLines[] entry references one Payee + one APTransaction. bankAccount.iban / bankAccount.bic on the referenced Payee are the SEPA creditor source of truth.",
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "Payment-batch register; every create / approve / export / reconcile transition is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. Approval and export are the auditable control points before money leaves the administration."
+				},
+				"x-schema-org": "schema:PaymentService",
+				"x-spec": "openspec/changes/bookkeeping-accounts-payable-core/specs/bookkeeping-accounts-payable-core/spec.md",
+				"type": "object",
+				"required": [
+					"runNumber",
+					"administrationId",
+					"executionDate",
+					"status",
+					"totalAmount",
+					"currency",
+					"paymentLines",
+					"lifecycleState"
+				],
+				"properties": {
+					"runNumber": {
+						"type": "string",
+						"description": "Stable batch identifier unique per administration. Operator-supplied.",
+						"example": "PR-2026-001"
+					},
+					"administrationId": {
+						"type": "string",
+						"description": "FK to the administration owning this payment run.",
+						"example": "adm-1"
+					},
+					"executionDate": {
+						"type": "string",
+						"format": "date",
+						"description": "Requested execution date (ISO 20022 RequestedExecutionDate) for the batch.",
+						"example": "2026-07-01"
+					},
+					"debtorAccountIban": {
+						"type": "string",
+						"description": "IBAN of the administration's own (debtor) bank account the batch is paid from. SAFE placeholder in seed data.",
+						"nullable": true,
+						"example": "NL00BANK9999999999"
+					},
+					"status": {
+						"type": "string",
+						"enum": ["draft", "approved", "exported", "reconciled"],
+						"description": "Mirror of lifecycleState for list/filter convenience; the canonical state machine is x-openregister-lifecycle on lifecycleState.",
+						"default": "draft",
+						"example": "approved"
+					},
+					"totalAmount": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Sum of all paymentLines[].amount in the run currency. Integer-cent precision per ADR-031 money rules.",
+						"example": 1497.50
+					},
+					"currency": {
+						"type": "string",
+						"minLength": 3,
+						"maxLength": 3,
+						"description": "ISO 4217 currency code. T2: base currency only (EUR).",
+						"default": "EUR",
+						"example": "EUR"
+					},
+					"paymentLines": {
+						"type": "array",
+						"minItems": 1,
+						"description": "One line per Payee payment in the batch. Each line references a Payee and the AP invoice being settled.",
+						"items": {
+							"type": "object",
+							"required": ["payeeId", "creditorIban", "amount", "apTransactionRef"],
+							"properties": {
+								"payeeId": {"type": "string", "description": "FK to Payee UUID / slug being paid."},
+								"payeeName": {"type": "string", "description": "Denormalised payee name for display / remittance.", "nullable": true},
+								"creditorIban": {"type": "string", "description": "Creditor (payee) IBAN, sourced from the referenced Payee.bankAccount.iban. SAFE placeholder in seed data."},
+								"amount": {"type": "number", "minimum": 0, "description": "Line payment amount in the run currency."},
+								"remittanceInfo": {"type": "string", "description": "Unstructured or structured remittance reference (ISO 20022 RmtInf) — typically the vendor invoice number.", "nullable": true},
+								"apTransactionRef": {"type": "string", "description": "FK to the APTransaction UUID / slug this line settles."}
+							}
+						}
+					},
+					"exportedFileRef": {
+						"type": "string",
+						"description": "FK / URI to the generated SEPA pain.001 / CSV bank file. Written by the separate payment-run-sepa-export change on the export transition; null until exported.",
+						"nullable": true
+					},
+					"exportedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp the batch was exported to a bank file.",
+						"nullable": true
+					},
+					"reconciledAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp the batch was reconciled against the bank statement.",
+						"nullable": true
+					},
+					"lifecycleState": {
+						"type": "string",
+						"enum": ["draft", "approved", "exported", "reconciled"],
+						"description": "Canonical payment-run lifecycle state (see x-openregister-lifecycle).",
+						"default": "draft",
+						"example": "approved"
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "lifecycleState",
+					"initialState": "draft",
+					"states": {
+						"draft": {"label": "Draft", "description": "Batch under construction; payment lines may be added/removed."},
+						"approved": {"label": "Approved", "description": "Batch approved by a controller; immutable and ready for export. Hard gate before money leaves the administration."},
+						"exported": {"label": "Exported", "description": "SEPA pain.001 / CSV bank file generated (payment-run-sepa-export change); exportedFileRef set."},
+						"reconciled": {"label": "Reconciled", "description": "Batch reconciled against the bank statement; terminal state."}
+					},
+					"transitions": {
+						"approve": {
+							"from": "draft",
+							"to": "approved",
+							"label": "Approve payment run",
+							"description": "Controller approves the batch. Single-approver gate (D4) — there is NO direct draft → exported transition. Approval is the control point before export.",
+							"x-rbac-role": "controller"
+						},
+						"export": {
+							"from": "approved",
+							"to": "exported",
+							"label": "Export payment run",
+							"description": "Generate the SEPA pain.001 / CSV bank file (payment-run-sepa-export change) and set exportedFileRef + exportedAt. Only an approved batch can be exported."
+						},
+						"reconcile": {
+							"from": "exported",
+							"to": "reconciled",
+							"label": "Reconcile payment run",
+							"description": "Match the exported batch against the bank statement and set reconciledAt. Terminal."
+						}
+					}
+				},
+				"x-openregister-rbac": {
+					"roles": {
+						"bookkeeper": {"permissions": ["create", "read", "update"]},
+						"controller": {"permissions": ["create", "read", "update", "delete"]},
+						"auditor": {"permissions": ["read"]}
+					}
+				}
 			}
 		},
 		"objects": [
@@ -649,12 +835,19 @@
 				},
 				"vendorNumber": "V-2026-001",
 				"name": "Eneco Energie B.V.",
+				"payeeType": "supplier",
 				"tradingName": "Eneco",
 				"kvkNumber": "24502797",
 				"btwNumber": "NL003726244B01",
 				"paymentTermDays": 30,
 				"defaultExpenseAccountNumber": "4150",
-				"bankAccount": "NL44RABO0123456789",
+				"bankAccount": {
+					"iban": "NL00BANK0123456789",
+					"bic": "<BANKNL2A>",
+					"accountHolderName": "Eneco Energie B.V."
+				},
+				"creditLimit": 10000,
+				"apBalance": 892.50,
 				"creditTerms": "Net 30",
 				"address": {
 					"street": "Marten Meesweg",
@@ -676,12 +869,19 @@
 				},
 				"vendorNumber": "V-2026-002",
 				"name": "Office Centre Nederland B.V.",
+				"payeeType": "supplier",
 				"tradingName": "Office Centre",
 				"kvkNumber": "27176868",
 				"btwNumber": "NL807898852B01",
 				"paymentTermDays": 14,
 				"defaultExpenseAccountNumber": "4400",
-				"bankAccount": "NL52INGB0987654321",
+				"bankAccount": {
+					"iban": "NL00TEST0222222222",
+					"bic": "<TESTNL2A>",
+					"accountHolderName": "Office Centre Nederland B.V."
+				},
+				"creditLimit": 5000,
+				"apBalance": 858.00,
 				"creditTerms": "Net 14",
 				"address": {
 					"street": "Bredewater",
@@ -703,12 +903,19 @@
 				},
 				"vendorNumber": "V-2026-003",
 				"name": "Deloitte Accountants B.V.",
+				"payeeType": "supplier",
 				"tradingName": "Deloitte",
 				"kvkNumber": "24362853",
 				"btwNumber": "NL006847569B01",
 				"paymentTermDays": 30,
 				"defaultExpenseAccountNumber": "4302",
-				"bankAccount": "NL66ABNA0212345678",
+				"bankAccount": {
+					"iban": "NL00BANK0333333333",
+					"bic": "<BANKNL2A>",
+					"accountHolderName": "Deloitte Accountants B.V."
+				},
+				"creditLimit": 25000,
+				"apBalance": 6352.50,
 				"creditTerms": "Net 30, korting 2%/10 dagen",
 				"address": {
 					"street": "Gustav Mahlerlaan",
@@ -719,6 +926,58 @@
 				},
 				"email": "billing.nl@deloitte.nl",
 				"phone": "+31882882888",
+				"administrationId": "adm-shillinq-demo",
+				"lifecycleState": "active"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "Payee",
+					"slug": "payee-jandevries"
+				},
+				"vendorNumber": "V-2026-010",
+				"name": "Jan de Vries (ZZP)",
+				"payeeType": "freelancer",
+				"tradingName": "JdV Reisadvies",
+				"kvkNumber": "11122233",
+				"btwNumber": "NL001234567B01",
+				"paymentTermDays": 14,
+				"defaultExpenseAccountNumber": "4302",
+				"bankAccount": {
+					"iban": "NL00TEST0222222222",
+					"bic": "<TESTNL2A>",
+					"accountHolderName": "Jan de Vries"
+				},
+				"creditLimit": 2000,
+				"apBalance": 605.00,
+				"creditTerms": "Net 14",
+				"email": "jan@jdvreisadvies.nl",
+				"phone": "+31612345678",
+				"administrationId": "adm-shillinq-demo",
+				"lifecycleState": "active"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "Payee",
+					"slug": "payee-gemeente-inkoop"
+				},
+				"vendorNumber": "V-2026-020",
+				"name": "Gemeente Demo Inkoopbureau",
+				"payeeType": "government",
+				"kvkNumber": "55566677",
+				"paymentTermDays": 30,
+				"defaultExpenseAccountNumber": "4400",
+				"bankAccount": {
+					"iban": "NL00BANK0333333333",
+					"bic": "<BANKNL2A>",
+					"accountHolderName": "Gemeente Demo Inkoopbureau"
+				},
+				"creditLimit": 50000,
+				"apBalance": 0,
+				"creditTerms": "Net 30",
+				"email": "crediteuren@gemeente-demo.nl",
+				"phone": "+31702000000",
 				"administrationId": "adm-shillinq-demo",
 				"lifecycleState": "active"
 			},
@@ -831,6 +1090,25 @@
 				"@self": {
 					"register": "shillinq",
 					"schema": "APTransaction",
+					"slug": "ap-txn-jdv-2026-06-0003"
+				},
+				"invoiceNumber": "JDV-2026-06-0003",
+				"vendorId": "payee-jandevries",
+				"invoiceDate": "2026-06-10",
+				"dueDate": "2026-06-24",
+				"currency": "EUR",
+				"totalAmount": 605.00,
+				"taxAmount": 105.00,
+				"lines": [
+					{"description": "Reisadvies + offerte-uitwerking projectteam", "accountNumber": "4302", "amount": 500.00, "taxCode": "BTW21", "quantity": 5, "unitPrice": 100.00}
+				],
+				"state": "issued",
+				"administrationId": "adm-shillinq-demo"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "APTransaction",
 					"slug": "ap-txn-officecenter-2026-04-0007"
 				},
 				"invoiceNumber": "OC-2026-04-0007",
@@ -891,6 +1169,39 @@
 				"dispatchedBy": "system",
 				"templateRef": "or-notification-template-dunning-reminder-1",
 				"administrationId": "adm-shillinq-demo"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "PaymentRun",
+					"slug": "pr-2026-001-approved"
+				},
+				"runNumber": "PR-2026-001",
+				"administrationId": "adm-shillinq-demo",
+				"executionDate": "2026-07-01",
+				"debtorAccountIban": "NL00BANK9999999999",
+				"status": "approved",
+				"lifecycleState": "approved",
+				"currency": "EUR",
+				"totalAmount": 1497.50,
+				"paymentLines": [
+					{
+						"payeeId": "payee-eneco",
+						"payeeName": "Eneco Energie B.V.",
+						"creditorIban": "NL00BANK0123456789",
+						"amount": 892.50,
+						"remittanceInfo": "ENECO-2026-04-0001",
+						"apTransactionRef": "ap-txn-eneco-2026-04-0001"
+					},
+					{
+						"payeeId": "payee-jandevries",
+						"payeeName": "Jan de Vries (ZZP)",
+						"creditorIban": "NL00TEST0222222222",
+						"amount": 605.00,
+						"remittanceInfo": "JDV-2026-06-0003",
+						"apTransactionRef": "ap-txn-jdv-2026-06-0003"
+					}
+				]
 			}
 		]
 	}

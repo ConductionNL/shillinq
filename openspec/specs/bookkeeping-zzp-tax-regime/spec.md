@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-zzp-tax-regime
 
 **Status:** proposed

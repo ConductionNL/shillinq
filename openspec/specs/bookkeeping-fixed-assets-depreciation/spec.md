@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-fixed-assets-depreciation
 
 **Status:** proposed

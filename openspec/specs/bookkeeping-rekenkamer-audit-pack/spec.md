@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-rekenkamer-audit-pack
 
 **Status:** proposed

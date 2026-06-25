@@ -53,7 +53,6 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
      */
     private const INTERVAL_SECONDS = 86400;
 
-
     /**
      * Constructor.
      *
@@ -89,7 +88,6 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
 
     }//end __construct()
 
-
     /**
      * Time factory captured at construction. Distinct from TimedJob's
      * protected `$time` so the class is self-contained for testing.
@@ -97,7 +95,6 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
      * @var ITimeFactory
      */
     private ITimeFactory $timeFactory;
-
 
     /**
      * Sweep pending appointments and cancel those past their deadline.
@@ -123,14 +120,16 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
             $pending = $objectService
                 ->setRegister($registerSlug)
                 ->setSchema('Appointment')
-                ->findAll([
-                    'filters' => ['status' => 'pending_confirmation'],
-                    'limit'   => 5000,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => ['status' => 'pending_confirmation'],
+                            'limit'   => 5000,
+                        ]
+                        );
 
             $cancelled = 0;
             foreach ($pending as $record) {
-                if ($this->cancelIfExpired($record, $objectService, $registerSlug, $now) === true) {
+                if ($this->cancelIfExpired(record: $record, objectService: $objectService, registerSlug: $registerSlug, now: $now) === true) {
                     $cancelled++;
                 }
             }
@@ -149,7 +148,6 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
 
     }//end run()
 
-
     /**
      * Cancel one appointment if its deadline has passed.
      *
@@ -163,7 +161,7 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
     private function cancelIfExpired(mixed $record, mixed $objectService, string $registerSlug, string $now): bool
     {
         try {
-            $appt = $this->toArray($record);
+            $appt     = $this->toArray(object: $record);
             $deadline = (string) ($appt['confirmationDeadline'] ?? '');
             if ($deadline === '') {
                 return false;
@@ -175,9 +173,9 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
                 return false;
             }
 
-            $appt['status']           = 'cancelled';
-            $appt['cancelledAt']      = $now;
-            $appt['cancelledReason']  = 'Confirmation deadline passed';
+            $appt['status']          = 'cancelled';
+            $appt['cancelledAt']     = $now;
+            $appt['cancelledReason'] = 'Confirmation deadline passed';
 
             $objectService
                 ->setRegister($registerSlug)
@@ -203,7 +201,6 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
 
     }//end cancelIfExpired()
 
-
     /**
      * Current server time as ISO 8601 UTC.
      *
@@ -216,7 +213,6 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
             ->format('Y-m-d\TH:i:s\Z');
 
     }//end nowIso()
-
 
     /**
      * Normalise an OR record into a flat array.
@@ -252,6 +248,4 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
         return [];
 
     }//end toArray()
-
-
 }//end class

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-provincies-bbv-variant
 
 **Status:** proposed

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-sbr-xbrl-reporting
 
 **Status:** proposed

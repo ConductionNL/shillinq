@@ -67,8 +67,6 @@ use Throwable;
  */
 class ConfirmationApiController extends Controller
 {
-
-
     /**
      * Construct the controller with DI dependencies.
      *
@@ -95,10 +93,9 @@ class ConfirmationApiController extends Controller
         private readonly ITimeFactory $time,
         private readonly LoggerInterface $logger,
     ) {
-        parent::__construct(Application::APP_ID, $request);
+        parent::__construct(appName: Application::APP_ID, request: $request);
 
     }//end __construct()
-
 
     /**
      * PATCH /api/v1/appointments/{appointmentId}/confirm
@@ -129,7 +126,7 @@ class ConfirmationApiController extends Controller
 
         $result = $this->tokens->validate($appointmentId, $token);
         if ($result['ok'] === false) {
-            return $this->mapValidationError($result['reason']);
+            return $this->mapValidationError(reason: $result['reason']);
         }
 
         if ($this->settings->isOpenRegisterAvailable() === false) {
@@ -140,7 +137,7 @@ class ConfirmationApiController extends Controller
         }
 
         try {
-            $appointment = $this->loadAppointment($appointmentId);
+            $appointment = $this->loadAppointment(appointmentId: $appointmentId);
             if ($appointment === null) {
                 return new JSONResponse(
                     ['error' => 'Appointment not found'],
@@ -170,7 +167,7 @@ class ConfirmationApiController extends Controller
             );
 
             return new JSONResponse(
-                ['appointment' => $this->toArray($saved)],
+                ['appointment' => $this->toArray(object: $saved)],
                 Http::STATUS_OK,
             );
         } catch (Throwable $e) {
@@ -185,7 +182,6 @@ class ConfirmationApiController extends Controller
         }//end try
 
     }//end confirm()
-
 
     /**
      * POST /api/v1/appointments/{appointmentId}/resend-confirmation
@@ -228,7 +224,7 @@ class ConfirmationApiController extends Controller
             );
         }
 
-        $appointment = $this->loadAppointment($appointmentId);
+        $appointment = $this->loadAppointment(appointmentId: $appointmentId);
         if ($appointment === null) {
             return new JSONResponse(
                 ['error' => 'Appointment not found'],
@@ -236,14 +232,14 @@ class ConfirmationApiController extends Controller
             );
         }
 
-        if ($this->isAuthorisedForAppointment($appointment) === false) {
+        if ($this->isAuthorisedForAppointment(appointment: $appointment) === false) {
             return new JSONResponse(
                 ['error' => 'Forbidden'],
                 Http::STATUS_FORBIDDEN,
             );
         }
 
-        $customer = $this->loadCustomer($appointment);
+        $customer = $this->loadCustomer(appointment: $appointment);
         $result   = $this->tokens->resend(
             appointment: $appointment,
             customer: $customer,
@@ -266,7 +262,6 @@ class ConfirmationApiController extends Controller
         );
 
     }//end resend()
-
 
     /**
      * GET /api/v1/appointments/validate-confirmation-token
@@ -320,7 +315,7 @@ class ConfirmationApiController extends Controller
             );
         }
 
-        $appointment = $this->loadAppointment($appointmentId);
+        $appointment = $this->loadAppointment(appointmentId: $appointmentId);
         if ($appointment === null) {
             return new JSONResponse(
                 ['ok' => false, 'reason' => 'not_found'],
@@ -331,13 +326,12 @@ class ConfirmationApiController extends Controller
         return new JSONResponse(
             [
                 'ok'          => true,
-                'appointment' => $this->presentAppointment($appointment),
+                'appointment' => $this->presentAppointment(appointment: $appointment),
             ],
             Http::STATUS_OK,
         );
 
-    }//end validateToken()
-
+    }//end lookupByToken()
 
     /**
      * Map a {@see ConfirmationTokenService::validate()} `reason` onto an
@@ -363,7 +357,6 @@ class ConfirmationApiController extends Controller
 
     }//end mapValidationError()
 
-
     /**
      * Load an Appointment OR record by id (REST-style business key).
      *
@@ -378,10 +371,12 @@ class ConfirmationApiController extends Controller
             $records       = $objectService
                 ->setRegister($this->settings->getRegisterSlug())
                 ->setSchema('Appointment')
-                ->findAll([
-                    'filters' => ['appointmentId' => $appointmentId],
-                    'limit'   => 1,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => ['appointmentId' => $appointmentId],
+                            'limit'   => 1,
+                        ]
+                        );
         } catch (Throwable $e) {
             $this->logger->error(
                 'ConfirmationApiController: appointment lookup failed',
@@ -391,13 +386,12 @@ class ConfirmationApiController extends Controller
         }
 
         foreach ($records as $record) {
-            return $this->toArray($record);
+            return $this->toArray(object: $record);
         }
 
         return null;
 
     }//end loadAppointment()
-
 
     /**
      * Build the customer descriptor used by ConfirmationTokenService /
@@ -422,7 +416,6 @@ class ConfirmationApiController extends Controller
         ];
 
     }//end loadCustomer()
-
 
     /**
      * Authorise the current user against an appointment. The customer of
@@ -465,7 +458,6 @@ class ConfirmationApiController extends Controller
 
     }//end isAuthorisedForAppointment()
 
-
     /**
      * Project an Appointment record into the response shape used by the
      * confirmation portal (no token hash, no internal audit fields).
@@ -489,7 +481,6 @@ class ConfirmationApiController extends Controller
 
     }//end presentAppointment()
 
-
     /**
      * Current server time as ISO 8601 UTC.
      *
@@ -502,7 +493,6 @@ class ConfirmationApiController extends Controller
             ->format('Y-m-d\TH:i:s\Z');
 
     }//end nowIso()
-
 
     /**
      * Normalise an OR record into a flat array.
@@ -538,6 +528,4 @@ class ConfirmationApiController extends Controller
         return [];
 
     }//end toArray()
-
-
 }//end class

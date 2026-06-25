@@ -46,16 +46,16 @@ class AbbLifecycleService
      * @var array<string,array<int,string>>
      */
     private const TRANSITIONS = [
-        'concept'        => ['raadsvoorstel'],
-        'raadsvoorstel'  => ['raadsbesluit', 'concept'],
-        'raadsbesluit'   => ['publicatie'],
-        'publicatie'     => ['acm-notified'],
-        'acm-notified'   => ['bezwaar'],
-        'bezwaar'        => ['geldig'],
-        'geldig'         => ['evaluatie-due', 'intrekking', 'herziening'],
-        'evaluatie-due'  => ['herziening', 'geldig', 'intrekking'],
+        'concept'       => ['raadsvoorstel'],
+        'raadsvoorstel' => ['raadsbesluit', 'concept'],
+        'raadsbesluit'  => ['publicatie'],
+        'publicatie'    => ['acm-notified'],
+        'acm-notified'  => ['bezwaar'],
+        'bezwaar'       => ['geldig'],
+        'geldig'        => ['evaluatie-due', 'intrekking', 'herziening'],
+        'evaluatie-due' => ['herziening', 'geldig', 'intrekking'],
         'herziening'    => ['raadsvoorstel', 'intrekking'],
-        'intrekking'     => [],
+        'intrekking'    => [],
     ];
 
     /**
@@ -122,7 +122,7 @@ class AbbLifecycleService
 
             default:
                 break;
-        }
+        }//end switch
 
         return ['ok' => true];
 
@@ -173,13 +173,13 @@ class AbbLifecycleService
      */
     public function generateTasks(array $abb, string $toStatus): array
     {
-        $tasks = [];
-        $now   = new DateTimeImmutable('now');
+        $tasks   = [];
+        $now     = new DateTimeImmutable('now');
         $kenmerk = (string) ($abb['kenmerk'] ?? 'ABB');
 
         switch ($toStatus) {
             case 'raadsbesluit':
-                $due = $now->add(new DateInterval('P14D'))->format('Y-m-d');
+                $due     = $now->add(new DateInterval('P14D'))->format('Y-m-d');
                 $tasks[] = [
                     'type'       => 'publish-gemeenteblad',
                     'subject'    => sprintf('Publish in gemeenteblad: %s', $kenmerk),
@@ -190,7 +190,7 @@ class AbbLifecycleService
                 break;
 
             case 'publicatie':
-                $due = $now->add(new DateInterval('P7D'))->format('Y-m-d');
+                $due     = $now->add(new DateInterval('P7D'))->format('Y-m-d');
                 $tasks[] = [
                     'type'       => 'notify-acm',
                     'subject'    => sprintf('Notify ACM: %s', $kenmerk),
@@ -201,7 +201,7 @@ class AbbLifecycleService
                 break;
 
             case 'acm-notified':
-                $due = $now->add(new DateInterval('P42D'))->format('Y-m-d');
+                $due     = $now->add(new DateInterval('P42D'))->format('Y-m-d');
                 $tasks[] = [
                     'type'       => 'review-bezwaarschriften',
                     'subject'    => sprintf('Review bezwaarschriften (6 weeks): %s', $kenmerk),
@@ -223,7 +223,7 @@ class AbbLifecycleService
 
             default:
                 break;
-        }
+        }//end switch
 
         return $tasks;
 
@@ -252,7 +252,7 @@ class AbbLifecycleService
             default          => 2,
         };
 
-        return $base->add(new DateInterval('P' . $years . 'Y'))->format('Y-m-d');
+        return $base->add(new DateInterval('P'.$years.'Y'))->format('Y-m-d');
 
     }//end calculateNextEvaluation()
 
@@ -271,11 +271,13 @@ class AbbLifecycleService
             return [];
         }
 
-        $flags    = [];
-        $kenmerk  = (string) ($abb['kenmerk'] ?? 'ABB');
-        $reason   = ($status === 'intrekking'
-            ? sprintf('Exemption ABB %s ingetrokken; review activity', $kenmerk)
-            : sprintf('Exemption ABB %s in herziening; review activity', $kenmerk));
+        $flags   = [];
+        $kenmerk = (string) ($abb['kenmerk'] ?? 'ABB');
+        if ($status === 'intrekking') {
+            $reason = sprintf('Exemption ABB %s ingetrokken; review activity', $kenmerk);
+        } else {
+            $reason = sprintf('Exemption ABB %s in herziening; review activity', $kenmerk);
+        }
 
         foreach ($activities as $activity) {
             if (is_array($activity) === false) {
@@ -291,5 +293,4 @@ class AbbLifecycleService
         return $flags;
 
     }//end flagDependentActivities()
-
 }//end class

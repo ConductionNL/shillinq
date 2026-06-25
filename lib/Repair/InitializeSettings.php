@@ -90,7 +90,9 @@ class InitializeSettings implements IRepairStep
      * Phase 5: seeds KOR thresholds from kor-thresholds-2026.json idempotently.
      * Phase 6: seeds AllocationRule example records from seeds/allocation-rules/ idempotently.
      * Phase 7: seeds RJ-270 stages and rate-card templates for consultancy project accounting.
-     * Phase 7b: seeds project-flavoured AnalyticalDimension (dimensionType=project) + CostCenter consultancy templates per REQ-CPA-110/111/112. Formerly seeded CostProject (retired by retire-cost-project per REQ-RCP-003).
+     * Phase 7b: seeds project-flavoured AnalyticalDimension (dimensionType=project) + CostCenter
+     * consultancy templates per REQ-CPA-110/111/112. Formerly seeded CostProject (retired by
+     * retire-cost-project per REQ-RCP-003).
      * Phase 8: seeds ProductAttribute templates (office, it_hardware, logistics, food_beverage, clothing) per REQ-IPC-007.
      * Phase 9: seeds ReimbursementPolicy + PassThroughMarkupRule master-data records per REQ-ERP-004 / REQ-ERP-005.
      * Phase 10: seeds demo Barcode records (EAN/GTIN/SSCC/UPC/internal) per REQ-SKU-011.
@@ -168,9 +170,9 @@ class InitializeSettings implements IRepairStep
             $this->registerIntercompanyMonthlyMatchingWorkflow(output: $output);
             $this->seedKorThresholds(output: $output);
             $this->seedComplianceReferenceData(output: $output);
-            // Removed: seedProductAttributeTemplates — ProductAttribute data migrated to pipelinq.
-            // @see MigrateProductVendorMasterToPipelinq (shillinq-product-vendor-to-pipelinq change).
             // $this->seedProductAttributeTemplates(output: $output);
+            // @see MigrateProductVendorMasterToPipelinq (shillinq-product-vendor-to-pipelinq change).
+            // Removed: seedProductAttributeTemplates — ProductAttribute data migrated to pipelinq.
             $this->seedReimbursementPolicies(output: $output);
             $this->seedPassThroughMarkupRules(output: $output);
             $this->seedInventoryBarcodeDemo(output: $output);

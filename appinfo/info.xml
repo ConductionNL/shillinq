@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.9.1</version>
+    <version>0.9.7</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -58,18 +58,9 @@ Vrij en open source onder de EUPL-1.2-licentie.
     </navigations>
 
     <settings>
-        <admin>OCA\OpenRegister\AppHost\Settings\GenericAdminSettings</admin>
-        <admin-section>OCA\OpenRegister\AppHost\Settings\GenericSettingsSection</admin-section>
+        <admin>OCA\Shillinq\Settings\AdminSettings</admin>
+        <admin-section>OCA\Shillinq\Sections\SettingsSection</admin-section>
     </settings>
-
-    <background-jobs>
-        <job>OCA\Shillinq\BackgroundJob\HorizonRollingJob</job>
-        <job>OCA\Shillinq\BackgroundJob\CancelUnconfirmedAppointments</job>
-        <job>OCA\Shillinq\Job\MandateDormancyExpiryJob</job>
-        <job>OCA\Shillinq\BackgroundJob\OverdueVerantwoordingJob</job>
-        <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
-        <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
-    </background-jobs>
 
     <repair-steps>
         <post-migration>
@@ -84,10 +75,22 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\Load_DBA_Seeds_Step</step>
             <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
             <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
+            <step>OCA\Shillinq\Repair\SetOrderExtensionComposition</step>
+            <step>OCA\Shillinq\Repair\FoldIntoOrder</step>
+            <step>OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice</step>
+            <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
+            <step>OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject</step>
+            <step>OCA\Shillinq\Repair\RetireSubsidieSchema</step>
         </post-migration>
     </repair-steps>
 
     <background-jobs>
+        <job>OCA\Shillinq\BackgroundJob\HorizonRollingJob</job>
+        <job>OCA\Shillinq\BackgroundJob\CancelUnconfirmedAppointments</job>
+        <job>OCA\Shillinq\Job\MandateDormancyExpiryJob</job>
+        <job>OCA\Shillinq\BackgroundJob\OverdueVerantwoordingJob</job>
+        <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
+        <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
         <!-- Cashflow 13wk: weekly horizon roll (Monday 02:00 UTC), daily bankfeed pull,
              daily crisis-mode refresh, monthly calibration. REQ-CF-000/010/012/013. -->
         <job>OCA\Shillinq\Cron\HorizonRollingJob</job>
@@ -155,4 +158,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
              admin UI keep working regardless. -->
         <job>OCA\Shillinq\BackgroundJob\FxRateImportJob</job>
     </background-jobs>
+
+    <commands>
+        <!-- Audit the register's bookkeeping objects against the machine-checkable
+             rule corpus (lib/Standards/RuleCatalogue + RuleEngine). Read-only. -->
+        <command>OCA\Shillinq\Command\RulesAuditCommand</command>
+        <!-- Idempotently backfill local TEST data to satisfy the enforced rules
+             (sourceReference + balanced lines on every GL transaction). Test/dev. -->
+        <command>OCA\Shillinq\Command\RulesSeedTestDataCommand</command>
+    </commands>
 </info>

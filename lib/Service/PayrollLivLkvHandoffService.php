@@ -40,7 +40,6 @@ use Psr\Container\ContainerInterface;
  */
 class PayrollLivLkvHandoffService
 {
-
     /**
      * Construct the service.
      *
@@ -85,15 +84,15 @@ class PayrollLivLkvHandoffService
         );
 
         return [
-            'werknemerId'        => $werknemerId,
-            'jaar'               => $jaar,
-            'inkomenniveau'      => (string) ($werknemer['inkomenniveau'] ?? ''),
-            'fiscaalLoonJaar'    => $totaalFiscaal,
-            'contracturenPerWeek'=> (float) ($werknemer['contracturenPerWeek'] ?? 0),
-            'lkvCategorie'       => (string) ($werknemer['lkvCategorie'] ?? ''),
-            'doelgroepverklaring'=> (bool) ($werknemer['doelgroepverklaring'] ?? false),
-            'administrationId'   => $administrationId,
-            'source'             => 'Werknemer+LoonStrook',
+            'werknemerId'         => $werknemerId,
+            'jaar'                => $jaar,
+            'inkomenniveau'       => (string) ($werknemer['inkomenniveau'] ?? ''),
+            'fiscaalLoonJaar'     => $totaalFiscaal,
+            'contracturenPerWeek' => (float) ($werknemer['contracturenPerWeek'] ?? 0),
+            'lkvCategorie'        => (string) ($werknemer['lkvCategorie'] ?? ''),
+            'doelgroepverklaring' => (bool) ($werknemer['doelgroepverklaring'] ?? false),
+            'administrationId'    => $administrationId,
+            'source'              => 'Werknemer+LoonStrook',
         ];
 
     }//end toLivLkvEligibilityPayload()

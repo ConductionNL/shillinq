@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Booking SMS Reminder Channel
 
 **Scope:** notification-booking-sms-reminders

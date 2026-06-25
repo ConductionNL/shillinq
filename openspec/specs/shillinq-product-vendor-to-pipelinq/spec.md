@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # shillinq-product-vendor-to-pipelinq Specification
 
 ## Purpose
-TBD - created by archiving change shillinq-product-vendor-to-pipelinq. Update Purpose after archive.
+Moves product and vendor master-data ownership out of shillinq to pipelinq, rewiring inventory records to reference products by a `productId` resolved through the integration registry and demoting VendorMaster to a financial profile keyed by the Nextcloud contact UID. shillinq retains only locally-authored financial and stock data (unit cost, valuation, payment terms, credit limits) as authoritative, treats product and vendor identity fields as non-authoritative read caches with a safe offline fallback, and provides an idempotent, fail-closed migration of existing data to pipelinq with no data loss.
 ## Requirements
 ### Requirement: REQ-SPVP-001 — The system SHALL reference a product by `productId` resolved from pipelinq, not by an embedded product definition
 

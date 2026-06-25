@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-general-ledger
 
 **Status:** proposed

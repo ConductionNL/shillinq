@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-sepa-direct-debit
 
 **Status:** proposed

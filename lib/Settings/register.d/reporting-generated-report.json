@@ -1,0 +1,31 @@
+{
+    "x-shillinq-fragment": "reporting-generated-report",
+    "components": {
+        "schemas": {
+            "GeneratedReport": {
+                "version": "0.1.0",
+                "slug": "GeneratedReport",
+                "title": "Generated Report",
+                "type": "object",
+                "description": "A report produced under Reporting & Compliance and stored as a file in Nextcloud. Records what was generated, for which period/administration, in which format, where the file lives, and the system tags applied so it is retrievable from the generated-reports index.",
+                "required": ["reportType", "format"],
+                "properties": {
+                    "reportType": {"type": "string", "description": "ReportCatalogue report-type id (e.g. vat-return, trial-balance, annual-accounts)."},
+                    "reportLabel": {"type": "string", "nullable": true, "description": "Human label of the report type at generation time."},
+                    "category": {"type": "string", "nullable": true, "description": "ReportCatalogue category id (tax, statements, ledger, audit-file, public-sector, compliance)."},
+                    "period": {"type": "string", "nullable": true, "description": "Reporting period the report covers (e.g. 2026, 2026-Q1, 2026-03)."},
+                    "administrationId": {"type": "string", "nullable": true, "description": "Administration the report was generated for."},
+                    "format": {"type": "string", "description": "File format: pdf | docx | odt | xlsx | csv | xml | xbrl | json."},
+                    "fileName": {"type": "string", "nullable": true, "description": "Stored file name including extension."},
+                    "filePath": {"type": "string", "nullable": true, "description": "Nextcloud path of the stored file (e.g. /Shillinq/Reports/...)."},
+                    "fileId": {"type": "integer", "nullable": true, "description": "Nextcloud file id of the stored file (for download/deep-link)."},
+                    "sizeBytes": {"type": "integer", "nullable": true, "description": "File size in bytes."},
+                    "generatedAt": {"type": "string", "nullable": true, "description": "ISO-8601 timestamp the report was generated."},
+                    "generatedBy": {"type": "string", "nullable": true, "description": "User id that generated the report."},
+                    "status": {"type": "string", "nullable": true, "enum": ["generating", "ready", "failed"], "description": "Generation status."},
+                    "tags": {"type": "array", "nullable": true, "description": "System tags applied to the file for retrieval (report type, period, administration, category)."}
+                }
+            }
+        }
+    }
+}

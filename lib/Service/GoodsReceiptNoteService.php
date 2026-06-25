@@ -79,7 +79,7 @@ use RuntimeException;
  * registers (PurchaseOrder, PurchaseOrderLine, GoodsReceiptNote,
  * GoodsReceiptLine, StockMove); decomposing further would only obscure the
  * 3-way-match middle leg.
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) GRN lifecycle exposes the
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)   GRN lifecycle exposes the
  * five surfaces named above; each one corresponds 1:1 with a slice-04 task.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
@@ -205,7 +205,7 @@ class GoodsReceiptNoteService
 
         $this->assertPurchaseOrdersAccessible(administrationId: $administrationId, poIds: $poIds);
 
-        $grnNumber = $this->generateGrnNumber(administrationId: $administrationId);
+        $grnNumber  = $this->generateGrnNumber(administrationId: $administrationId);
         $receivedAt = trim((string) ($payload['receivedAt'] ?? $payload['received_at'] ?? ''));
         if ($receivedAt === '') {
             $receivedAt = $this->nowIso();
@@ -303,7 +303,7 @@ class GoodsReceiptNoteService
             throw new RuntimeException('quantityReceived must be positive');
         }
 
-        // accepted + rejected may NOT exceed received (integer-thousandths
+        // Accepted + rejected may NOT exceed received (integer-thousandths
         // arithmetic so rounding noise never creeps in).
         $receivedThousandths = $this->thousandths(value: $quantityReceived);
         $acceptedThousandths = $this->thousandths(value: $quantityAccepted);
@@ -318,15 +318,27 @@ class GoodsReceiptNoteService
 
         $grnRecordId = (string) ($grn['id'] ?? ($grn['@self']['id'] ?? $grnId));
 
+        if ($rejectedThousandths > 0) {
+            $rejectionReasonValue = $rejectionReason;
+        } else {
+            $rejectionReasonValue = null;
+        }
+
+        if ($batchReference !== '') {
+            $batchReferenceValue = $batchReference;
+        } else {
+            $batchReferenceValue = null;
+        }
+
         $line = [
             'grnId'            => $grnRecordId,
             'poLineId'         => $poLineId,
             'quantityReceived' => $quantityReceived,
             'quantityAccepted' => $quantityAccepted,
             'quantityRejected' => $quantityRejected,
-            'rejectionReason'  => ($rejectedThousandths > 0 ? $rejectionReason : null),
+            'rejectionReason'  => $rejectionReasonValue,
             'inspector'        => $inspector,
-            'batchReference'   => ($batchReference !== '' ? $batchReference : null),
+            'batchReference'   => $batchReferenceValue,
             'administrationId' => $administrationId,
         ];
 
@@ -480,9 +492,9 @@ class GoodsReceiptNoteService
      * 04 design — Security/ADR-005); this service only persists the FK array.
      * Existing photos are preserved.
      *
-     * @param string             $administrationId Administration scope.
-     * @param string             $grnId            GRN id.
-     * @param array<int,string>  $photoFileIds     File ids returned by docudesk.
+     * @param string            $administrationId Administration scope.
+     * @param string            $grnId            GRN id.
+     * @param array<int,string> $photoFileIds     File ids returned by docudesk.
      *
      * @return array<string,mixed> The persisted GoodsReceiptNote payload.
      *
@@ -566,7 +578,7 @@ class GoodsReceiptNoteService
         $unitCost       = ((float) $unitPriceCents) / 100.0;
         $quantity       = (float) ($grnLine['quantityAccepted'] ?? 0);
 
-        // unitCost is integer cents on the PO line (ADR-022) — converting back
+        // UnitCost is integer cents on the PO line (ADR-022) — converting back
         // to euro for the StockMove which uses multipleOf 0.01.
         $grnNumber       = (string) ($grn['grnNumber'] ?? '');
         $grnLineId       = (string) ($grnLine['id'] ?? ($grnLine['@self']['id'] ?? ''));
@@ -575,6 +587,12 @@ class GoodsReceiptNoteService
         $referenceUri    = self::REFERENCE_DOCUMENT_URI_PREFIX.$poId;
         $destinationCode = trim((string) ($grnLine['destinationLocationId'] ?? ($grn['destinationLocationId'] ?? '')));
 
+        if ($destinationCode !== '') {
+            $destinationLocationId = $destinationCode;
+        } else {
+            $destinationLocationId = null;
+        }
+
         $stockMove = [
             'movementNumber'        => $movementNumber,
             'itemId'                => $itemId,
@@ -582,7 +600,7 @@ class GoodsReceiptNoteService
             'unitCost'              => $unitCost,
             'movementType'          => self::STOCK_MOVE_TYPE_RECEIPT,
             'sourceLocationId'      => null,
-            'destinationLocationId' => ($destinationCode !== '' ? $destinationCode : null),
+            'destinationLocationId' => $destinationLocationId,
             'referenceDocumentUri'  => $referenceUri,
             'movementReason'        => self::STOCK_MOVE_REASON_NORMAL,
             'notes'                 => 'Receipt for '.$grnNumber.' / PO line '.$poLineId,
@@ -636,7 +654,7 @@ class GoodsReceiptNoteService
 
         // Total accepted per PO-line across every GRN line that targets it.
         $acceptedByPoLine = [];
-        $allGrnLines     = $this->findAll(
+        $allGrnLines      = $this->findAll(
             schema: self::SCHEMA_GRN_LINE,
             filters: [
                 'administrationId' => $administrationId,
@@ -676,7 +694,7 @@ class GoodsReceiptNoteService
         $newLifecycle = $po['lifecycleState'] ?? '';
         if ($allFullyReceived === true) {
             $newLifecycle = 'fully_received';
-        } elseif ($anyReceived === true) {
+        } else if ($anyReceived === true) {
             $newLifecycle = 'partial_received';
         }
 

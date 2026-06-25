@@ -70,8 +70,8 @@ class DBAPortfolioAggregationJob extends TimedJob
      * Compute the concentratie-aggregate for a set of opdrachten (REQ-DBA-005).
      *
      * @param array<int,array<string,mixed>> $opdrachten Per-opdracht rows containing
-     *                                                     `klantId` and `gerealiseerdeOmzet`
-     *                                                     (eurocenten).
+     *                                                   `klantId` and `gerealiseerdeOmzet`
+     *                                                   (eurocenten).
      *
      * @return array<string,mixed> concentratie object { grootsteKlant, aandeelOmzet12mnd, drempelHoog, status }.
      *
@@ -80,37 +80,38 @@ class DBAPortfolioAggregationJob extends TimedJob
     public function computeConcentratie(array $opdrachten): array
     {
         $omzetPerKlant = [];
-        $totaal = 0;
+        $totaal        = 0;
         foreach ($opdrachten as $opdracht) {
             $klantId = (string) ($opdracht['klantId'] ?? '');
-            $bedrag = (int) ($opdracht['gerealiseerdeOmzet'] ?? 0);
+            $bedrag  = (int) ($opdracht['gerealiseerdeOmzet'] ?? 0);
             if ($klantId === '' || $bedrag <= 0) {
                 continue;
             }
+
             $omzetPerKlant[$klantId] = ($omzetPerKlant[$klantId] ?? 0) + $bedrag;
             $totaal += $bedrag;
         }
 
         if ($totaal <= 0 || count($omzetPerKlant) === 0) {
             return [
-                'grootsteKlant' => null,
+                'grootsteKlant'     => null,
                 'aandeelOmzet12mnd' => 0.0,
-                'drempelHoog' => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
-                'status' => 'VEILIG',
+                'drempelHoog'       => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
+                'status'            => 'VEILIG',
             ];
         }
 
-        $grootsteKlant = null;
+        $grootsteKlant  = null;
         $grootsteBedrag = 0;
         foreach ($omzetPerKlant as $klantId => $bedrag) {
             if ($bedrag > $grootsteBedrag) {
                 $grootsteBedrag = $bedrag;
-                $grootsteKlant = (string) $klantId;
+                $grootsteKlant  = (string) $klantId;
             }
         }
 
         $aandeel = $grootsteBedrag / $totaal;
-        $status = 'VEILIG';
+        $status  = 'VEILIG';
         if ($aandeel >= DBAConstants::CONCENTRATIE_DREMPEL_KRITIEK) {
             $status = 'KRITIEK';
         } else if ($aandeel >= DBAConstants::CONCENTRATIE_DREMPEL_HOOG) {
@@ -118,10 +119,10 @@ class DBAPortfolioAggregationJob extends TimedJob
         }
 
         return [
-            'grootsteKlant' => $grootsteKlant,
+            'grootsteKlant'     => $grootsteKlant,
             'aandeelOmzet12mnd' => round($aandeel, 4),
-            'drempelHoog' => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
-            'status' => $status,
+            'drempelHoog'       => DBAConstants::CONCENTRATIE_DREMPEL_HOOG,
+            'status'            => $status,
         ];
     }//end computeConcentratie()
 
@@ -129,9 +130,9 @@ class DBAPortfolioAggregationJob extends TimedJob
      * Compute langjarige-relaties (REQ-DBA-005).
      *
      * @param array<int,array<string,mixed>> $opdrachten Per-opdracht rows with
-     *                                                     `klantId`, `startDatum`,
-     *                                                     `gerealiseerdeOmzet`.
-     * @param DateTimeImmutable               $now        Reference "now".
+     *                                                   `klantId`, `startDatum`,
+     *                                                   `gerealiseerdeOmzet`.
+     * @param DateTimeImmutable              $now        Reference "now".
      *
      * @return array<int,array<string,mixed>> List of langjarige relaties.
      *
@@ -144,43 +145,54 @@ class DBAPortfolioAggregationJob extends TimedJob
         foreach ($opdrachten as $opdracht) {
             $totaal += (int) ($opdracht['gerealiseerdeOmzet'] ?? 0);
         }
+
         if ($totaal <= 0) {
             return $result;
         }
+
         // Group oldest startDatum + total omzet per klant.
         $perKlant = [];
         foreach ($opdrachten as $opdracht) {
-            $klantId = (string) ($opdracht['klantId'] ?? '');
+            $klantId  = (string) ($opdracht['klantId'] ?? '');
             $startStr = (string) ($opdracht['startDatum'] ?? '');
-            $bedrag = (int) ($opdracht['gerealiseerdeOmzet'] ?? 0);
+            $bedrag   = (int) ($opdracht['gerealiseerdeOmzet'] ?? 0);
             if ($klantId === '' || $startStr === '') {
                 continue;
             }
+
             try {
                 $start = new DateTimeImmutable($startStr);
             } catch (Throwable) {
                 continue;
             }
+
             if (isset($perKlant[$klantId]) === false || $perKlant[$klantId]['start'] > $start) {
                 $perKlant[$klantId] = ['start' => $start, 'omzet' => $bedrag];
             } else {
                 $perKlant[$klantId]['omzet'] += $bedrag;
             }
         }
+
         foreach ($perKlant as $klantId => $row) {
             $duurJaren = (float) ($row['start']->diff($now)->days / 365.0);
-            $aandeel = ($row['omzet'] > 0) ? ($row['omzet'] / $totaal) : 0.0;
+            if ($row['omzet'] > 0) {
+                $aandeel = ($row['omzet'] / $totaal);
+            } else {
+                $aandeel = 0.0;
+            }
+
             if ($duurJaren >= DBAConstants::LANGJARIG_DREMPEL_JAREN
                 && $aandeel >= DBAConstants::LANGJARIG_DREMPEL_OMZET
             ) {
                 $result[] = [
-                    'klantId' => (string) $klantId,
-                    'startDatum' => $row['start']->format('Y-m-d'),
-                    'duurJaren' => round($duurJaren, 2),
+                    'klantId'      => (string) $klantId,
+                    'startDatum'   => $row['start']->format('Y-m-d'),
+                    'duurJaren'    => round($duurJaren, 2),
                     'omzetAandeel' => round($aandeel, 4),
                 ];
             }
         }
+
         return $result;
     }//end computeLangjarigeRelaties()
 
@@ -200,9 +212,11 @@ class DBAPortfolioAggregationJob extends TimedJob
         if ($status === 'KRITIEK' || count($langjarigeRelaties) >= 2) {
             return 'HOOG';
         }
+
         if ($status === 'WAARSCHUWING' || count($langjarigeRelaties) === 1) {
             return 'MIDDEN';
         }
+
         return 'LAAG';
     }//end computeOverallRisico()
 
@@ -232,8 +246,8 @@ class DBAPortfolioAggregationJob extends TimedJob
         }
 
         $register = $this->resolveRegister();
-        $now = new DateTimeImmutable();
-        $written = 0;
+        $now      = new DateTimeImmutable();
+        $written  = 0;
 
         try {
             $rows = $objectService->setRegister($register)->setSchema('DBAOpdracht')->findAll(['limit' => 5000]);
@@ -251,31 +265,35 @@ class DBAPortfolioAggregationJob extends TimedJob
             if ($opdracht === null) {
                 continue;
             }
+
             $ondernemingId = (string) ($opdracht['ondernemingId'] ?? '');
             if ($ondernemingId === '') {
                 continue;
             }
+
             $perOnderneming[$ondernemingId] ??= [];
             $perOnderneming[$ondernemingId][] = $opdracht;
         }
 
         foreach ($perOnderneming as $ondernemingId => $opdrachten) {
-            $concentratie = $this->computeConcentratie(opdrachten: $opdrachten);
-            $langjarig = $this->computeLangjarigeRelaties(opdrachten: $opdrachten, now: $now);
-            $overall = $this->computeOverallRisico(concentratie: $concentratie, langjarigeRelaties: $langjarig);
+            $concentratie     = $this->computeConcentratie(opdrachten: $opdrachten);
+            $langjarig        = $this->computeLangjarigeRelaties(opdrachten: $opdrachten, now: $now);
+            $overall          = $this->computeOverallRisico(concentratie: $concentratie, langjarigeRelaties: $langjarig);
             $administrationId = (string) ($opdrachten[0]['administrationId'] ?? '');
 
             try {
-                $objectService->setRegister($register)->setSchema('DBAPortfolioRisico')->saveObject([
-                    'administrationId' => $administrationId,
-                    'ondernemingId' => (string) $ondernemingId,
-                    'peilDatum' => $now->format('Y-m-d'),
-                    'actieveOpdrachten' => count($opdrachten),
-                    'concentratie' => $concentratie,
-                    'langjarigeRelaties' => $langjarig,
-                    'exclusieveRelaties' => $this->countExclusief(opdrachten: $opdrachten),
-                    'overallRisico' => $overall,
-                ]);
+                $objectService->setRegister($register)->setSchema('DBAPortfolioRisico')->saveObject(
+                        [
+                            'administrationId'   => $administrationId,
+                            'ondernemingId'      => (string) $ondernemingId,
+                            'peilDatum'          => $now->format('Y-m-d'),
+                            'actieveOpdrachten'  => count($opdrachten),
+                            'concentratie'       => $concentratie,
+                            'langjarigeRelaties' => $langjarig,
+                            'exclusieveRelaties' => $this->countExclusief(opdrachten: $opdrachten),
+                            'overallRisico'      => $overall,
+                        ]
+                        );
                 $written++;
             } catch (Throwable $e) {
                 $this->logger->error(
@@ -283,7 +301,7 @@ class DBAPortfolioAggregationJob extends TimedJob
                     ['ondernemingId' => (string) $ondernemingId, 'exception' => $e->getMessage()]
                 );
             }
-        }
+        }//end foreach
 
         $this->logger->info(
             sprintf('Shillinq DBAPortfolioAggregationJob: wrote %d portfolio records', $written)
@@ -300,25 +318,29 @@ class DBAPortfolioAggregationJob extends TimedJob
     private function countExclusief(array $opdrachten): int
     {
         $omzetPerKlant = [];
-        $totaal = 0;
+        $totaal        = 0;
         foreach ($opdrachten as $opdracht) {
             $klantId = (string) ($opdracht['klantId'] ?? '');
-            $bedrag = (int) ($opdracht['gerealiseerdeOmzet'] ?? 0);
+            $bedrag  = (int) ($opdracht['gerealiseerdeOmzet'] ?? 0);
             if ($klantId === '' || $bedrag <= 0) {
                 continue;
             }
+
             $omzetPerKlant[$klantId] = ($omzetPerKlant[$klantId] ?? 0) + $bedrag;
             $totaal += $bedrag;
         }
+
         if ($totaal <= 0 || count($omzetPerKlant) === 0) {
             return 0;
         }
+
         $count = 0;
         foreach ($omzetPerKlant as $bedrag) {
             if (((float) $bedrag / (float) $totaal) >= 0.99) {
                 $count++;
             }
         }
+
         return $count;
     }//end countExclusief()
 
@@ -332,16 +354,24 @@ class DBAPortfolioAggregationJob extends TimedJob
     private function toArray(mixed $entity): ?array
     {
         if (is_array($entity) === true) {
-            /** @var array<string,mixed> $entity */
+            /*
+             * @var array<string,mixed> $entity
+             */
+
             return $entity;
         }
+
         if (is_object($entity) === true && method_exists($entity, 'getObject') === true) {
             $data = $entity->getObject();
             if (is_array($data) === true) {
-                /** @var array<string,mixed> $data */
+                /*
+                 * @var array<string,mixed> $data
+                 */
+
                 return $data;
             }
         }
+
         return null;
     }//end toArray()
 
@@ -353,6 +383,10 @@ class DBAPortfolioAggregationJob extends TimedJob
     private function resolveRegister(): string
     {
         $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        return ($register === '') ? 'shillinq' : $register;
+        if ($register === '') {
+            return 'shillinq';
+        }
+
+        return $register;
     }//end resolveRegister()
 }//end class

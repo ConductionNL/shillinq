@@ -37,8 +37,6 @@ namespace OCA\Shillinq\Service\PurchaseOrder;
  */
 interface PeppolTransmissionAdapterInterface
 {
-
-
     /**
      * Look up the Peppol participant identifier for a supplier.
      *
@@ -53,7 +51,6 @@ interface PeppolTransmissionAdapterInterface
      * @return string|null The Peppol participant id, or null when not registered.
      */
     public function lookupParticipant(string $administrationId, string $supplierId): ?string;
-
 
     /**
      * Submit a UBL 2.1 Order to the Peppol Access Point.
@@ -72,6 +69,4 @@ interface PeppolTransmissionAdapterInterface
      * @throws \RuntimeException When the access point refuses or fails.
      */
     public function submitOrder(string $participantId, string $ublOrderXml): string;
-
-
 }//end interface

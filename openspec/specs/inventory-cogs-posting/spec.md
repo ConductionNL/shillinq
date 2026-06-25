@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-cogs-posting
 
 **Status:** proposed

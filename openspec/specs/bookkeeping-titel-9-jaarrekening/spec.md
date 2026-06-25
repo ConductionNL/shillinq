@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-titel-9-jaarrekening
 
 **Status:** proposed  

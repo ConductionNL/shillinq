@@ -117,10 +117,12 @@ class DocumentArchiveCron extends TimedJob
             $filed = $objectService
                 ->setRegister($registerSlug)
                 ->setSchema('Document')
-                ->findAll([
-                    'filters' => ['status' => 'filed'],
-                    'limit'   => 5000,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => ['status' => 'filed'],
+                            'limit'   => 5000,
+                        ]
+                        );
 
             $archived = 0;
             $skipped  = 0;

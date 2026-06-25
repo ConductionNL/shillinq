@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-ifrs15-revenue
 
 **Status:** proposed

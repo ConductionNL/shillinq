@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Specification: bookkeeping-bcf-vat-compensation
 
 **Status**: proposed

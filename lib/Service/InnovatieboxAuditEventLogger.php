@@ -60,14 +60,14 @@ class InnovatieboxAuditEventLogger
      *
      * @var string
      */
-    public const EVENT_NEXUS_CALCULATED                  = 'NexusCalculation.calculated';
-    public const EVENT_PROFIT_CREATED                    = 'IBProfitAttribution.created';
-    public const EVENT_PROFIT_FINALIZED                  = 'IBProfitAttribution.finalized';
-    public const EVENT_PROFIT_AMENDMENT_BLOCKED          = 'IBProfitAttribution.amendment_attempt_blocked';
-    public const EVENT_LOSS_CREATED                      = 'CarryForwardLoss.created';
-    public const EVENT_LOSS_OFFSET_APPLIED               = 'CarryForwardLoss.offset_applied';
-    public const EVENT_DOORSNIJDINGSVERBOD_CHECK_RUN     = 'DoorsnijdingsVerbod.check_run';
-    public const EVENT_FORFAITAIR_CAP_APPLIED            = 'ForfaitairCap.applied';
+    public const EVENT_NEXUS_CALCULATED         = 'NexusCalculation.calculated';
+    public const EVENT_PROFIT_CREATED           = 'IBProfitAttribution.created';
+    public const EVENT_PROFIT_FINALIZED         = 'IBProfitAttribution.finalized';
+    public const EVENT_PROFIT_AMENDMENT_BLOCKED = 'IBProfitAttribution.amendment_attempt_blocked';
+    public const EVENT_LOSS_CREATED        = 'CarryForwardLoss.created';
+    public const EVENT_LOSS_OFFSET_APPLIED = 'CarryForwardLoss.offset_applied';
+    public const EVENT_DOORSNIJDINGSVERBOD_CHECK_RUN = 'DoorsnijdingsVerbod.check_run';
+    public const EVENT_FORFAITAIR_CAP_APPLIED        = 'ForfaitairCap.applied';
 
     /**
      * Construct the logger.

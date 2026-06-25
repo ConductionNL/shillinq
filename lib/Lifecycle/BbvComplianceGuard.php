@@ -77,7 +77,6 @@ class BbvComplianceGuard
      */
     private const APP_CONFIG_GATE_INSTALL_DATE = 'bbv_gate_install_date';
 
-
     /**
      * Construct the guard with lazy DI of OR's ObjectService.
      *
@@ -98,7 +97,6 @@ class BbvComplianceGuard
     ) {
     }//end __construct()
 
-
     /**
      * Resolve the configured OpenRegister register slug for shillinq.
      *
@@ -114,7 +112,6 @@ class BbvComplianceGuard
         return $slug;
 
     }//end getRegisterSlug()
-
 
     /**
      * Read the BBV gate's installation date from app config. The gate is
@@ -138,7 +135,6 @@ class BbvComplianceGuard
         return $value;
 
     }//end getGateInstallDate()
-
 
     /**
      * Load the administration record by id; returns null when the record is
@@ -206,7 +202,6 @@ class BbvComplianceGuard
 
     }//end findAdministration()
 
-
     /**
      * Resolve every GLLine row belonging to the candidate GLTransaction.
      * Returns an empty array when the schema is unavailable; the caller
@@ -244,7 +239,6 @@ class BbvComplianceGuard
         }//end try
 
     }//end findTransactionLines()
-
 
     /**
      * Look up the BbvAccountMapping for (administrationId, accountNumber).
@@ -295,7 +289,6 @@ class BbvComplianceGuard
 
     }//end findMapping()
 
-
     /**
      * Precondition: every GLLine on this transaction MUST have a non-archived
      * BbvAccountMapping for the transaction's administration, but ONLY when
@@ -336,7 +329,7 @@ class BbvComplianceGuard
             return true;
         }
 
-        $administration = $this->findAdministration($administrationId);
+        $administration = $this->findAdministration(administrationId: $administrationId);
         if ($administration === null) {
             // Administration not yet present in OR (bootstrap) — permissive.
             return true;
@@ -361,7 +354,7 @@ class BbvComplianceGuard
         }
 
         $transactionId = (string) ($transaction['id'] ?? $transaction['uuid'] ?? '');
-        $lines         = $this->findTransactionLines($transactionId);
+        $lines         = $this->findTransactionLines(transactionId: $transactionId);
         if (empty($lines) === true) {
             // BalanceGuard handles transactions without lines.
             return true;
@@ -374,7 +367,7 @@ class BbvComplianceGuard
                 continue;
             }
 
-            $mapping = $this->findMapping($administrationId, $accountNumber);
+            $mapping = $this->findMapping(administrationId: $administrationId, accountNumber: $accountNumber);
             if ($mapping === null) {
                 $this->logger->info(
                     'BbvComplianceGuard: blocking GLTransaction.post — unmapped account on municipal administration',

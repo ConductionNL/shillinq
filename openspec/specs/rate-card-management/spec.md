@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: rate-card-management
 
 **Status:** proposed

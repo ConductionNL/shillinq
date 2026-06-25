@@ -2,13 +2,13 @@
 	"menu": [
 		{
 			"id": "Verkoop",
-			"label": "Verkoop",
+			"label": "Sales",
 			"icon": "CartOutline",
 			"order": 33,
 			"children": [
 				{
 					"id": "BookingsCalendar",
-					"label": "Boekingenkalender",
+					"label": "Bookings calendar",
 					"icon": "CalendarOutline",
 					"route": "BookingsCalendar",
 					"order": 12
@@ -22,7 +22,7 @@
 			"route": "/verkoop/boekingen-kalender",
 			"type": "custom",
 			"component": "BookingsCalendarPage",
-			"title": "Boekingenkalender"
+			"title": "Bookings calendar"
 		}
 	]
 }

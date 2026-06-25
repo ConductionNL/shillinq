@@ -39,13 +39,13 @@ class BillingModelEngine
     /**
      * T&M calculation: hours × rate + expenses, grouped by (rate, resourceType).
      *
-     * @param array<int,array{timeEntryId:string,resourceType:string,hours:float,rateCents:int,rateApplied:array<string,mixed>,description?:string,vatRate?:float}> $timeEntries
-     * @param array<int,array{expenseId:string,description:string,costAmountCents:int,vatRate?:float}>                                                              $expenses
-     * @param float                                                                                                                                                $markupPercent
+     * @param array<int,array<string,mixed>> $timeEntries   Resolved time entries (timeEntryId, resourceType, hours, rateCents, rateApplied, vatRate).
+     * @param array<int,array<string,mixed>> $expenses      Expense lines (expenseId, description, costAmountCents, vatRate).
+     * @param float                          $markupPercent Markup percentage.
      *
      * @return array<int,array<string,mixed>>
      */
-    public function calculateT_AND_M(array $timeEntries, array $expenses, float $markupPercent = 0.0): array
+    public function calculateT_AND_M(array $timeEntries, array $expenses, float $markupPercent=0.0): array
     {
         $grouped = [];
         foreach ($timeEntries as $entry) {
@@ -61,7 +61,7 @@ class BillingModelEngine
                 ];
             }
 
-            $grouped[$key]['hours']     += (float) $entry['hours'];
+            $grouped[$key]['hours']      += (float) $entry['hours'];
             $grouped[$key]['sourceIds'][] = (string) $entry['timeEntryId'];
         }//end foreach
 
@@ -74,23 +74,23 @@ class BillingModelEngine
                 markupPercent: $markupPercent
             );
             $lines[]  = [
-                'lineNumber'   => ($line++),
-                'sourceType'   => 'time_entry',
-                'sourceId'     => $group['sourceIds'][0] ?? null,
-                'description'  => sprintf(
+                'lineNumber'          => ($line++),
+                'sourceType'          => 'time_entry',
+                'sourceId'            => $group['sourceIds'][0] ?? null,
+                'description'         => sprintf(
                     '%s — %s hours @ €%.2f/hr',
                     ucwords(str_replace('_', ' ', $group['resourceType'])),
-                    $this->formatHours($group['hours']),
+                    $this->formatHours(hours: $group['hours']),
                     ($group['rateCents'] / 100)
                 ),
-                'billableUnits' => $group['hours'],
-                'rateApplied'   => $group['rateApplied'],
-                'markup'        => $markupPercent,
-                'costAmountCents' => $netCents,
-                'vatRate'       => $group['vatRate'],
+                'billableUnits'       => $group['hours'],
+                'rateApplied'         => $group['rateApplied'],
+                'markup'              => $markupPercent,
+                'costAmountCents'     => $netCents,
+                'vatRate'             => $group['vatRate'],
                 'modelSpecificFields' => ['sourceIds' => $group['sourceIds']],
             ];
-        }
+        }//end foreach
 
         foreach ($expenses as $exp) {
             $lines[] = $this->expenseLine(expense: $exp, lineNumber: ($line++));
@@ -103,26 +103,26 @@ class BillingModelEngine
     /**
      * Fixed-fee: flat amount + expenses, time entries shown in audit only.
      *
-     * @param int                                                                                          $flatFeeCents  Flat fee in cents.
-     * @param string                                                                                       $description   Customer-facing line description.
-     * @param array<int,array{expenseId:string,description:string,costAmountCents:int,vatRate?:float}>     $expenses      Expense lines.
-     * @param int                                                                                          $timeHourCount Informational hour count (for lineItemsByModel).
+     * @param int                            $flatFeeCents  Flat fee in cents.
+     * @param string                         $description   Customer-facing line description.
+     * @param array<int,array<string,mixed>> $expenses      Expense lines.
+     * @param int                            $timeHourCount Informational hour count (for lineItemsByModel).
      *
      * @return array<int,array<string,mixed>>
      */
-    public function calculateFixedFee(int $flatFeeCents, string $description, array $expenses = [], int $timeHourCount = 0): array
+    public function calculateFixedFee(int $flatFeeCents, string $description, array $expenses=[], int $timeHourCount=0): array
     {
         $lines = [
             [
-                'lineNumber'        => 1,
-                'sourceType'        => 'fixed_fee',
-                'sourceId'          => null,
-                'description'       => $description,
-                'billableUnits'     => 1.0,
-                'rateApplied'       => null,
-                'markup'            => 0.0,
-                'costAmountCents'   => $flatFeeCents,
-                'vatRate'           => self::DEFAULT_VAT_RATE,
+                'lineNumber'          => 1,
+                'sourceType'          => 'fixed_fee',
+                'sourceId'            => null,
+                'description'         => $description,
+                'billableUnits'       => 1.0,
+                'rateApplied'         => null,
+                'markup'              => 0.0,
+                'costAmountCents'     => $flatFeeCents,
+                'vatRate'             => self::DEFAULT_VAT_RATE,
                 'modelSpecificFields' => ['informationalHourCount' => $timeHourCount],
             ],
         ];
@@ -139,29 +139,29 @@ class BillingModelEngine
     /**
      * Milestone: milestoneAmount + expenses; time entries informational.
      *
-     * @param array{milestoneId:string,milestoneName:string,milestoneCompletedAt:string,milestoneBudgetCents:int} $milestone
-     * @param array<int,array{expenseId:string,description:string,costAmountCents:int,vatRate?:float}>            $expenses
+     * @param array<string,mixed>            $milestone Milestone (milestoneId, milestoneName, milestoneCompletedAt, milestoneBudgetCents).
+     * @param array<int,array<string,mixed>> $expenses  Expense lines.
      *
      * @return array<int,array<string,mixed>>
      */
-    public function calculateMilestone(array $milestone, array $expenses = []): array
+    public function calculateMilestone(array $milestone, array $expenses=[]): array
     {
         $lines = [
             [
-                'lineNumber'        => 1,
-                'sourceType'        => 'fixed_fee',
-                'sourceId'          => (string) $milestone['milestoneId'],
-                'description'       => (string) $milestone['milestoneName'],
-                'billableUnits'     => 1.0,
-                'rateApplied'       => null,
-                'markup'            => 0.0,
-                'costAmountCents'   => (int) $milestone['milestoneBudgetCents'],
-                'vatRate'           => self::DEFAULT_VAT_RATE,
+                'lineNumber'          => 1,
+                'sourceType'          => 'fixed_fee',
+                'sourceId'            => (string) $milestone['milestoneId'],
+                'description'         => (string) $milestone['milestoneName'],
+                'billableUnits'       => 1.0,
+                'rateApplied'         => null,
+                'markup'              => 0.0,
+                'costAmountCents'     => (int) $milestone['milestoneBudgetCents'],
+                'vatRate'             => self::DEFAULT_VAT_RATE,
                 'modelSpecificFields' => [
-                    'milestoneId'         => (string) $milestone['milestoneId'],
+                    'milestoneId'          => (string) $milestone['milestoneId'],
                     'milestoneCompletedAt' => (string) $milestone['milestoneCompletedAt'],
-                    'milestoneName'       => (string) $milestone['milestoneName'],
-                    'milestoneBudget'     => (int) $milestone['milestoneBudgetCents'],
+                    'milestoneName'        => (string) $milestone['milestoneName'],
+                    'milestoneBudget'      => (int) $milestone['milestoneBudgetCents'],
                 ],
             ],
         ];
@@ -178,26 +178,26 @@ class BillingModelEngine
     /**
      * Retainer: mandatory retainer charge + overage (if applicable) + expenses.
      *
-     * @param array{monthlyAmountCents:int,overageHoursThreshold:?float,overageHourlyRateCents:?int,effectiveDate:string,label:string} $retainer
-     * @param string                                                                                                                  $retainerMonth ISO YYYY-MM.
-     * @param float                                                                                                                   $hoursLogged   Total hours within retainer period.
-     * @param array<int,array{expenseId:string,description:string,costAmountCents:int,vatRate?:float}>                                  $expenses
+     * @param array<string,mixed>            $retainer      Retainer config (monthlyAmountCents, overageHoursThreshold, etc.).
+     * @param string                         $retainerMonth ISO YYYY-MM.
+     * @param float                          $hoursLogged   Total hours within retainer period.
+     * @param array<int,array<string,mixed>> $expenses      Expense lines.
      *
      * @return array<int,array<string,mixed>>
      */
-    public function calculateRetainer(array $retainer, string $retainerMonth, float $hoursLogged, array $expenses = []): array
+    public function calculateRetainer(array $retainer, string $retainerMonth, float $hoursLogged, array $expenses=[]): array
     {
         $lines = [
             [
-                'lineNumber'        => 1,
-                'sourceType'        => 'retainer_charge',
-                'sourceId'          => null,
-                'description'       => sprintf('%s — %s', $retainer['label'], $retainerMonth),
-                'billableUnits'     => 1.0,
-                'rateApplied'       => null,
-                'markup'            => 0.0,
-                'costAmountCents'   => (int) $retainer['monthlyAmountCents'],
-                'vatRate'           => self::DEFAULT_VAT_RATE,
+                'lineNumber'          => 1,
+                'sourceType'          => 'retainer_charge',
+                'sourceId'            => null,
+                'description'         => sprintf('%s — %s', $retainer['label'], $retainerMonth),
+                'billableUnits'       => 1.0,
+                'rateApplied'         => null,
+                'markup'              => 0.0,
+                'costAmountCents'     => (int) $retainer['monthlyAmountCents'],
+                'vatRate'             => self::DEFAULT_VAT_RATE,
                 'modelSpecificFields' => ['retainerMonth' => $retainerMonth],
             ],
         ];
@@ -205,28 +205,32 @@ class BillingModelEngine
         $line = 2;
 
         // Overage T&M if threshold breached.
-        $threshold = $retainer['overageHoursThreshold'];
+        $threshold   = $retainer['overageHoursThreshold'];
         $overageRate = $retainer['overageHourlyRateCents'];
         if ($threshold !== null && $overageRate !== null && $hoursLogged > $threshold) {
             $overageHours = ($hoursLogged - $threshold);
             $lines[]      = [
-                'lineNumber'        => ($line++),
-                'sourceType'        => 'time_entry',
-                'sourceId'          => null,
-                'description'       => sprintf('Overage — %s hours @ €%.2f/hr', $this->formatHours($overageHours), ($overageRate / 100)),
-                'billableUnits'     => $overageHours,
-                'rateApplied'       => [
+                'lineNumber'          => ($line++),
+                'sourceType'          => 'time_entry',
+                'sourceId'            => null,
+                'description'         => sprintf(
+                    'Overage — %s hours @ €%.2f/hr',
+                    $this->formatHours(hours: $overageHours),
+                    ($overageRate / 100)
+                ),
+                'billableUnits'       => $overageHours,
+                'rateApplied'         => [
                     'rateCents'       => (int) $overageRate,
                     'currency'        => 'EUR',
                     'rateCardVersion' => 'retainer-overage',
                     'effectiveDate'   => $retainer['effectiveDate'],
                 ],
-                'markup'            => 0.0,
-                'costAmountCents'   => (int) round($overageHours * $overageRate),
-                'vatRate'           => self::DEFAULT_VAT_RATE,
+                'markup'              => 0.0,
+                'costAmountCents'     => (int) round($overageHours * $overageRate),
+                'vatRate'             => self::DEFAULT_VAT_RATE,
                 'modelSpecificFields' => ['retainerMonth' => $retainerMonth, 'overage' => true],
             ];
-        }
+        }//end if
 
         foreach ($expenses as $exp) {
             $lines[] = $this->expenseLine(expense: $exp, lineNumber: ($line++));
@@ -239,12 +243,12 @@ class BillingModelEngine
     /**
      * Mixed: retainer base + overage + optional setup fee + expenses.
      *
-     * @param array{monthlyAmountCents:int,overageHoursThreshold:?float,overageHourlyRateCents:?int,effectiveDate:string,label:string} $retainer
-     * @param string                                                                                                                  $retainerMonth
-     * @param float                                                                                                                   $hoursLogged
-     * @param int|null                                                                                                                $setupFeeCents One-time fixed fee.
-     * @param string                                                                                                                  $setupFeeDescription
-     * @param array<int,array{expenseId:string,description:string,costAmountCents:int,vatRate?:float}>                                  $expenses
+     * @param array<string,mixed>            $retainer            Retainer config (monthlyAmountCents, overageHoursThreshold, etc.).
+     * @param string                         $retainerMonth       ISO YYYY-MM.
+     * @param float                          $hoursLogged         Total hours within retainer period.
+     * @param int|null                       $setupFeeCents       One-time fixed fee.
+     * @param string                         $setupFeeDescription Setup fee description.
+     * @param array<int,array<string,mixed>> $expenses            Expense lines.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -254,21 +258,21 @@ class BillingModelEngine
         float $hoursLogged,
         ?int $setupFeeCents,
         string $setupFeeDescription,
-        array $expenses = []
+        array $expenses=[]
     ): array {
         $lines = $this->calculateRetainer(retainer: $retainer, retainerMonth: $retainerMonth, hoursLogged: $hoursLogged, expenses: []);
 
         if ($setupFeeCents !== null && $setupFeeCents > 0) {
             $lines[] = [
-                'lineNumber'        => (count($lines) + 1),
-                'sourceType'        => 'fixed_fee',
-                'sourceId'          => null,
-                'description'       => $setupFeeDescription,
-                'billableUnits'     => 1.0,
-                'rateApplied'       => null,
-                'markup'            => 0.0,
-                'costAmountCents'   => $setupFeeCents,
-                'vatRate'           => self::DEFAULT_VAT_RATE,
+                'lineNumber'          => (count($lines) + 1),
+                'sourceType'          => 'fixed_fee',
+                'sourceId'            => null,
+                'description'         => $setupFeeDescription,
+                'billableUnits'       => 1.0,
+                'rateApplied'         => null,
+                'markup'              => 0.0,
+                'costAmountCents'     => $setupFeeCents,
+                'vatRate'             => self::DEFAULT_VAT_RATE,
                 'modelSpecificFields' => ['oneTime' => true],
             ];
         }
@@ -292,23 +296,23 @@ class BillingModelEngine
     /**
      * Build an expense line.
      *
-     * @param array{expenseId:string,description:string,costAmountCents:int,vatRate?:float} $expense
-     * @param int                                                                            $lineNumber
+     * @param array<string,mixed> $expense    Expense (expenseId, description, costAmountCents, vatRate).
+     * @param int                 $lineNumber Sequential line number.
      *
      * @return array<string,mixed>
      */
     private function expenseLine(array $expense, int $lineNumber): array
     {
         return [
-            'lineNumber'        => $lineNumber,
-            'sourceType'        => 'expense',
-            'sourceId'          => (string) $expense['expenseId'],
-            'description'       => (string) $expense['description'],
-            'billableUnits'     => 1.0,
-            'rateApplied'       => null,
-            'markup'            => 0.0,
-            'costAmountCents'   => (int) $expense['costAmountCents'],
-            'vatRate'           => (float) ($expense['vatRate'] ?? self::DEFAULT_VAT_RATE),
+            'lineNumber'          => $lineNumber,
+            'sourceType'          => 'expense',
+            'sourceId'            => (string) $expense['expenseId'],
+            'description'         => (string) $expense['description'],
+            'billableUnits'       => 1.0,
+            'rateApplied'         => null,
+            'markup'              => 0.0,
+            'costAmountCents'     => (int) $expense['costAmountCents'],
+            'vatRate'             => (float) ($expense['vatRate'] ?? self::DEFAULT_VAT_RATE),
             'modelSpecificFields' => null,
         ];
 
@@ -343,8 +347,11 @@ class BillingModelEngine
     private function formatHours(float $hours): string
     {
         $formatted = rtrim(rtrim(number_format($hours, 2, '.', ''), '0'), '.');
-        return $formatted === '' ? '0' : $formatted;
+        if ($formatted === '') {
+            return '0';
+        }
+
+        return $formatted;
 
     }//end formatHours()
-
 }//end class

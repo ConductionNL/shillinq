@@ -76,7 +76,6 @@ class LotExpiryAlertJob extends TimedJob
      */
     private ITimeFactory $timeFactory;
 
-
     /**
      * Constructor.
      *
@@ -98,7 +97,6 @@ class LotExpiryAlertJob extends TimedJob
         $this->timeFactory = $time;
 
     }//end __construct()
-
 
     /**
      * Sweep all active/quarantined InventoryLot records and raise alerts.
@@ -124,14 +122,21 @@ class LotExpiryAlertJob extends TimedJob
             $activeLots = $objectService
                 ->setRegister($registerSlug)
                 ->setSchema('InventoryLot')
-                ->findAll([
-                    'filters' => ['lotStatus' => 'active'],
-                    'limit'   => 5000,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => ['lotStatus' => 'active'],
+                            'limit'   => 5000,
+                        ]
+                        );
 
             $raised = 0;
             foreach ($activeLots as $record) {
-                $raised += $this->checkLotForAlerts($record, $objectService, $registerSlug, $today);
+                $raised += $this->checkLotForAlerts(
+                    record: $record,
+                    objectService: $objectService,
+                    registerSlug: $registerSlug,
+                    today: $today,
+                );
             }
 
             $this->logger->info(
@@ -147,7 +152,6 @@ class LotExpiryAlertJob extends TimedJob
 
     }//end run()
 
-
     /**
      * Inspect one lot and raise any missing threshold or expired alerts.
      *
@@ -161,15 +165,15 @@ class LotExpiryAlertJob extends TimedJob
     private function checkLotForAlerts(mixed $record, mixed $objectService, string $registerSlug, string $today): int
     {
         try {
-            $lot       = $this->toArray($record);
-            $lotId     = (string) ($lot['id'] ?? ($lot['uuid'] ?? ''));
-            $expiry    = (string) ($lot['expiryDate'] ?? '');
-            $adminId   = (string) ($lot['administrationId'] ?? '');
+            $lot     = $this->toArray(object: $record);
+            $lotId   = (string) ($lot['id'] ?? ($lot['uuid'] ?? ''));
+            $expiry  = (string) ($lot['expiryDate'] ?? '');
+            $adminId = (string) ($lot['administrationId'] ?? '');
             if ($lotId === '' || $expiry === '') {
                 return 0;
             }
 
-            $daysUntil = $this->daysBetween($today, $expiry);
+            $daysUntil = $this->daysBetween(earlier: $today, later: $expiry);
             $raised    = 0;
 
             if ($daysUntil < 0) {
@@ -212,7 +216,6 @@ class LotExpiryAlertJob extends TimedJob
 
     }//end checkLotForAlerts()
 
-
     /**
      * Insert one alert if no equivalent one exists already (idempotent on uniqueness key).
      *
@@ -246,10 +249,12 @@ class LotExpiryAlertJob extends TimedJob
         $existing = $objectService
             ->setRegister($registerSlug)
             ->setSchema('ExpiryAlert')
-            ->findAll([
-                'filters' => $filters,
-                'limit'   => 1,
-            ]);
+            ->findAll(
+                    [
+                        'filters' => $filters,
+                        'limit'   => 1,
+                    ]
+                    );
 
         if (empty($existing) === false) {
             return 0;
@@ -276,7 +281,6 @@ class LotExpiryAlertJob extends TimedJob
 
     }//end ensureAlert()
 
-
     /**
      * Days between two YYYY-MM-DD dates ($later minus $earlier).
      *
@@ -299,7 +303,6 @@ class LotExpiryAlertJob extends TimedJob
 
     }//end daysBetween()
 
-
     /**
      * Current server date as YYYY-MM-DD.
      *
@@ -312,7 +315,6 @@ class LotExpiryAlertJob extends TimedJob
             ->format('Y-m-d');
 
     }//end todayDate()
-
 
     /**
      * Normalise an OR record into a flat array.
@@ -348,6 +350,4 @@ class LotExpiryAlertJob extends TimedJob
         return [];
 
     }//end toArray()
-
-
 }//end class

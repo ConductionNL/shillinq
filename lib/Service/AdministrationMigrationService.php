@@ -242,9 +242,11 @@ class AdministrationMigrationService
         $fiscalTreatment = (string) ($migration['fiscalTreatment'] ?? 'met_realisatie');
 
         // Geruisloze doorschuiving: destination inherits the source's book value.
-        $activationCents = $fiscalTreatment === 'geruisloze_doorschuiving'
-            ? $amounts['bookCents']
-            : $amounts['marketCents'];
+        if ($fiscalTreatment === 'geruisloze_doorschuiving') {
+            $activationCents = $amounts['bookCents'];
+        } else {
+            $activationCents = $amounts['marketCents'];
+        }
 
         return [
             'administrationId' => (string) ($migration['destinationAdministrationId'] ?? ''),
@@ -322,13 +324,14 @@ class AdministrationMigrationService
                 $drafts['source'][$key] = (-1 * (int) $drafts['source'][$key]);
             }
         }
+
         if (array_key_exists('activationCents', $drafts['destination']) === true) {
             $drafts['destination']['activationCents'] = (-1 * (int) $drafts['destination']['activationCents']);
         }
 
-        $drafts['source']['kind']      = 'migration_source_reversal';
-        $drafts['destination']['kind'] = 'migration_destination_reversal';
-        $drafts['source']['description']      .= ' (teruggedraaid)';
+        $drafts['source']['kind']         = 'migration_source_reversal';
+        $drafts['destination']['kind']    = 'migration_destination_reversal';
+        $drafts['source']['description'] .= ' (teruggedraaid)';
         $drafts['destination']['description'] .= ' (teruggedraaid)';
 
         return $drafts;

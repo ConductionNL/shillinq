@@ -83,12 +83,12 @@ class SupplierInvoiceImportController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest                     $request               Request.
+     * @param IRequest                     $request                Request.
      * @param SupplierInvoiceService       $supplierInvoiceService Deterministic UBL ingestion + parser.
-     * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
-     * @param IUserSession                 $session               User session.
-     * @param ContainerInterface           $container             DI container (OR ObjectService).
-     * @param LoggerInterface              $logger                Logger.
+     * @param AdministrationContextService $administrationContext  Server-resolved tenant scope (ADR-005).
+     * @param IUserSession                 $session                User session.
+     * @param ContainerInterface           $container              DI container (OR ObjectService).
+     * @param LoggerInterface              $logger                 Logger.
      *
      * @return void
      */
@@ -243,9 +243,9 @@ class SupplierInvoiceImportController extends Controller
             );
         }
 
-        $imported  = 0;
-        $skipped   = 0;
-        $records   = [];
+        $imported = 0;
+        $skipped  = 0;
+        $records  = [];
         foreach ($rows as $row) {
             $invoiceNumber = trim((string) ($row['invoiceNumber'] ?? ''));
             $supplierId    = trim((string) ($row['supplier'] ?? ''));
@@ -273,8 +273,8 @@ class SupplierInvoiceImportController extends Controller
                 'createdAt'        => date('c'),
             ];
 
-            $saved      = $this->saveSupplierInvoice($record);
-            $records[]  = $saved;
+            $saved     = $this->saveSupplierInvoice($record);
+            $records[] = $saved;
             $imported++;
         }//end foreach
 
@@ -357,7 +357,11 @@ class SupplierInvoiceImportController extends Controller
             ->setSchema(self::SUPPLIER_INVOICE_SCHEMA)
             ->saveObject($record);
 
-        return is_array($result) === true ? $result : $record;
+        if (is_array($result) === true) {
+            return $result;
+        }
+
+        return $record;
 
     }//end saveSupplierInvoice()
 
@@ -410,9 +414,12 @@ class SupplierInvoiceImportController extends Controller
         $file = $this->request->getUploadedFile('file');
         if (is_array($file) === true && isset($file['tmp_name']) === true && $file['tmp_name'] !== '') {
             $contents = (string) file_get_contents($file['tmp_name']);
-            $format   = ($explicitFormat !== '')
-                ? $explicitFormat
-                : $this->inferFormat((string) ($file['name'] ?? ''), $contents);
+            if ($explicitFormat !== '') {
+                $format = $explicitFormat;
+            } else {
+                $format = $this->inferFormat((string) ($file['name'] ?? ''), $contents);
+            }
+
             return [$contents, $format];
         }
 
@@ -508,7 +515,11 @@ class SupplierInvoiceImportController extends Controller
                     continue;
                 }
 
-                $row[$key] = isset($cells[$index]) === true ? trim((string) $cells[$index]) : '';
+                if (isset($cells[$index]) === true) {
+                    $row[$key] = trim((string) $cells[$index]);
+                } else {
+                    $row[$key] = '';
+                }
             }
 
             $rows[] = $row;
@@ -560,7 +571,11 @@ class SupplierInvoiceImportController extends Controller
         }
 
         $params = $this->request->getParams();
-        return is_array($params) === true ? $params : [];
+        if (is_array($params) === true) {
+            return $params;
+        }
+
+        return [];
 
     }//end decodeBody()
 
@@ -586,5 +601,4 @@ class SupplierInvoiceImportController extends Controller
         return 'default';
 
     }//end resolveAdministrationId()
-
 }//end class

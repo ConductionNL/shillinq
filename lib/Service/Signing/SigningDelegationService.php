@@ -75,7 +75,6 @@ class SigningDelegationService
     ) {
     }//end __construct()
 
-
     /**
      * Raise a docudesk document signing request for a finance object (REQ-SIGN-001).
      *
@@ -92,13 +91,13 @@ class SigningDelegationService
      *
      * No PKI signing is performed here.
      *
-     * @param array<string,mixed> $financeObject    The finance object (ACMReport etc.).
-     * @param string              $subjectSchema    The finance schema slug (e.g. 'ACMReport').
-     * @param string              $documentClass    Document class hint for docudesk (e.g. 'acm-report').
+     * @param array<string,mixed> $financeObject     The finance object (ACMReport etc.).
+     * @param string              $subjectSchema     The finance schema slug (e.g. 'ACMReport').
+     * @param string              $documentClass     Document class hint for docudesk (e.g. 'acm-report').
      * @param string              $documentReference NC Files reference to the document to sign (optional).
-     * @param array<int,mixed>    $signers          Signer descriptors for the signing chain (optional).
-     * @param string              $signatureLevel   eIDAS level hint (simple|advanced|qualified).
-     * @param string              $signingMode      docudesk signing mode hint (e.g. 'sequential').
+     * @param array<int,mixed>    $signers           Signer descriptors for the signing chain (optional).
+     * @param string              $signatureLevel    eIDAS level hint (simple|advanced|qualified).
+     * @param string              $signingMode       docudesk signing mode hint (e.g. 'sequential').
      *
      * @return array<string,mixed> Updated finance object with signingStatus=requested.
      *
@@ -166,15 +165,17 @@ class SigningDelegationService
         $financeObject['signingRequestRef'] = $signingRequestId;
         $financeObject['signingStatus']     = 'requested';
 
-        $this->logger->info('SigningDelegationService: signingRequest raised via docudesk event', [
-            'signingRequestRef' => $financeObject['signingRequestRef'],
-            'documentClass'     => $documentClass,
-        ]);
+        $this->logger->info(
+                'SigningDelegationService: signingRequest raised via docudesk event',
+                [
+                    'signingRequestRef' => $financeObject['signingRequestRef'],
+                    'documentClass'     => $documentClass,
+                ]
+                );
 
         return $financeObject;
 
     }//end requestSignature()
-
 
     /**
      * Consume a docudesk signed/declined/expired callback (REQ-SIGN-001/006).
@@ -243,14 +244,15 @@ class SigningDelegationService
             $consequenceCallback($financeObject);
         }
 
-        $this->logger->info('SigningDelegationService: callback consumed', [
-            'outcome'           => $outcome,
-            'signingRequestRef' => $signingRequestRef,
-        ]);
+        $this->logger->info(
+                'SigningDelegationService: callback consumed',
+                [
+                    'outcome'           => $outcome,
+                    'signingRequestRef' => $signingRequestRef,
+                ]
+                );
 
         return $financeObject;
 
     }//end onSigningCallback()
-
-
 }//end class

@@ -51,6 +51,9 @@ const SCHEMA_BASENAME = (() => {
 
 const SCHEMA_CANDIDATES = [
 	process.env.APP_MANIFEST_SCHEMA,
+	// Vendored canonical v2 schema (includes the setup block + metric cacheTtl);
+	// preferred so the gate does not depend on a fresh node_modules copy.
+	path.join(REPO_ROOT, 'tests', 'schemas', 'app-manifest-v2.schema.json'),
 	path.join(REPO_ROOT, 'node_modules', '@conduction', 'nextcloud-vue', 'src', 'schemas', SCHEMA_BASENAME),
 	path.join(REPO_ROOT, '..', 'nextcloud-vue', 'src', 'schemas', SCHEMA_BASENAME),
 ].filter(Boolean)

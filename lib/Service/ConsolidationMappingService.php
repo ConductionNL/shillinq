@@ -89,7 +89,7 @@ class ConsolidationMappingService
     public function findActiveMapping(
         string $sourceAdministrationId,
         string $destinationAdministrationId,
-        ?DateTimeImmutable $asOf = null
+        ?DateTimeImmutable $asOf=null
     ): ?array {
         if ($sourceAdministrationId === '' || $destinationAdministrationId === '') {
             return null;
@@ -120,7 +120,7 @@ class ConsolidationMappingService
                 ]
             );
             return null;
-        }
+        }//end try
 
         return $this->pickMostRecent(candidates: $candidates, asOf: $asOf);
 
@@ -158,7 +158,11 @@ class ConsolidationMappingService
 
             if ((string) ($rule['sourceAccount'] ?? '') === $sourceAccount) {
                 $destination = (string) ($rule['destinationAccount'] ?? '');
-                return ($destination === '') ? $sourceAccount : $destination;
+                if ($destination === '') {
+                    return $sourceAccount;
+                }
+
+                return $destination;
             }
         }
 
@@ -264,7 +268,11 @@ class ConsolidationMappingService
         }
 
         $fromMapping = (string) ($mapping['intercompanyEliminationAccount'] ?? '');
-        return ($fromMapping === '') ? null : $fromMapping;
+        if ($fromMapping === '') {
+            return null;
+        }
+
+        return $fromMapping;
 
     }//end resolveEliminationAccount()
 
@@ -285,8 +293,8 @@ class ConsolidationMappingService
      */
     public function pickMostRecent(iterable $candidates, DateTimeImmutable $asOf): ?array
     {
-        $best       = null;
-        $bestStamp  = null;
+        $best      = null;
+        $bestStamp = null;
 
         foreach ($candidates as $candidate) {
             $record = $this->extractArray(candidate: $candidate);
@@ -299,6 +307,7 @@ class ConsolidationMappingService
                 if ($best === null) {
                     $best = $record;
                 }
+
                 continue;
             }
 

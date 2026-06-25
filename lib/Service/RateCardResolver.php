@@ -39,6 +39,8 @@ use RuntimeException;
 class RateCardResolver
 {
     /**
+     * Constructor.
+     *
      * @param ContainerInterface $container DI container — OR ObjectService is fetched lazily.
      * @param IAppConfig         $appConfig App config for the register slug.
      * @param LoggerInterface    $logger    Logger.
@@ -94,7 +96,7 @@ class RateCardResolver
 
         if ($best !== null) {
             return [
-                'rateCents'       => $this->toCents($best['rateCents'] ?? $best['hourlyRate'] ?? 0),
+                'rateCents'       => $this->toCents(value: $best['rateCents'] ?? $best['hourlyRate'] ?? 0),
                 'currency'        => (string) ($best['currency'] ?? 'EUR'),
                 'rateCardVersion' => (string) ($best['rateCardVersion'] ?? ($best['version'] ?? 'v1')),
                 'effectiveDate'   => (string) ($best['effectiveDate'] ?? $date),
@@ -112,14 +114,21 @@ class RateCardResolver
         if (count($rateCards) > 0) {
             $card = $rateCards[0];
             return [
-                'rateCents'       => $this->toCents($card['defaultHourlyRate'] ?? $card['hourlyRate'] ?? 10000),
+                'rateCents'       => $this->toCents(value: $card['defaultHourlyRate'] ?? $card['hourlyRate'] ?? 10000),
                 'currency'        => (string) ($card['currency'] ?? 'EUR'),
                 'rateCardVersion' => (string) ($card['version'] ?? 'v1'),
                 'effectiveDate'   => $date,
             ];
         }
 
-        $this->logger->warning(sprintf('RateCardResolver: no rate found for %s/%s on %s, falling back to €100/hr', $rateCardId, $resourceType, $date));
+        $this->logger->warning(
+            sprintf(
+                'RateCardResolver: no rate found for %s/%s on %s, falling back to €100/hr',
+                $rateCardId,
+                $resourceType,
+                $date
+            )
+        );
 
         return [
             'rateCents'       => 10000,
@@ -152,7 +161,7 @@ class RateCardResolver
     /**
      * Find all matching records via the real OR ObjectService API (findAll).
      *
-     * @param string             $schema  Schema slug.
+     * @param string              $schema  Schema slug.
      * @param array<string,mixed> $filters Filter map.
      *
      * @return array<int,array<string,mixed>>
@@ -166,7 +175,11 @@ class RateCardResolver
                 ->setSchema($schema)
                 ->findAll(filters: $filters);
 
-            return is_array($rs) === true ? $rs : [];
+            if (is_array($rs) === true) {
+                return $rs;
+            }
+
+            return [];
         } catch (\Throwable $e) {
             $this->logger->error('RateCardResolver findAll failed: '.$e->getMessage());
             return [];
@@ -189,5 +202,4 @@ class RateCardResolver
         return $register;
 
     }//end register()
-
 }//end class

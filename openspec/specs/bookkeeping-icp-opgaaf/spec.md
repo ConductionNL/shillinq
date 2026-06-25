@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-icp-opgaaf
 
 **Status:** proposed

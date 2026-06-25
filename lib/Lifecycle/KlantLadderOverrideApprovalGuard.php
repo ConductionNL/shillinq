@@ -74,6 +74,7 @@ class KlantLadderOverrideApprovalGuard
             if ($register === '') {
                 $register = 'shillinq';
             }
+
             $rows = $objectService
                 ->setRegister($register)
                 ->setSchema('KlantLadderOverride')
@@ -84,8 +85,8 @@ class KlantLadderOverrideApprovalGuard
                 return false;
             }
 
-            $override   = $rows[0];
-            $stages     = (array) ($override['overrides']['stages'] ?? []);
+            $override        = $rows[0];
+            $stages          = (array) ($override['overrides']['stages'] ?? []);
             $touchesElevated = false;
             foreach ($stages as $stage) {
                 $nr = (int) ($stage['nr'] ?? 0);
@@ -106,8 +107,7 @@ class KlantLadderOverrideApprovalGuard
         } catch (\Throwable $e) {
             $this->logger->warning('Shillinq: KlantLadderOverrideApprovalGuard failed: '.$e->getMessage());
             return false;
-        }
+        }//end try
 
     }//end isApprovedForElevatedStages()
-
 }//end class

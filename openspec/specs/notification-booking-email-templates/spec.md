@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Booking Email Templates
 
 **Scope:** notification-booking-email-templates

@@ -40,14 +40,16 @@ use RuntimeException;
 class InvoiceGenerationService
 {
     /**
-     * @param ContainerInterface           $container         DI container.
-     * @param IAppConfig                   $appConfig         App config.
-     * @param LoggerInterface              $logger            Logger.
-     * @param RateCardResolver             $rateCards         Rate snapshot lookup.
-     * @param RetainerResolver             $retainers         Retainer schedule lookup.
-     * @param BillingModelEngine           $billingEngine     Pure model logic.
-     * @param InvoiceDeduplicationService  $deduper           Source-id conflict scanner.
-     * @param VATCalculationService        $vat               VAT totaller.
+     * Wire collaborators for invoice drafting and posting.
+     *
+     * @param ContainerInterface          $container     DI container.
+     * @param IAppConfig                  $appConfig     App config.
+     * @param LoggerInterface             $logger        Logger.
+     * @param RateCardResolver            $rateCards     Rate snapshot lookup.
+     * @param RetainerResolver            $retainers     Retainer schedule lookup.
+     * @param BillingModelEngine          $billingEngine Pure model logic.
+     * @param InvoiceDeduplicationService $deduper       Source-id conflict scanner.
+     * @param VATCalculationService       $vat           VAT totaller.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -78,10 +80,12 @@ class InvoiceGenerationService
             expenseIds: $request->expenseIds
         );
         if ($dedup['hasConflicts'] === true) {
-            throw new RuntimeException(sprintf(
+            throw new RuntimeException(
+                    sprintf(
                 'Conflict: source ids already invoiced (%s)',
                 json_encode($dedup['conflicts'])
-            ));
+            )
+                    );
         }
 
         // 2. Resolve time entries → BillingModelEngine input shape.
@@ -104,9 +108,9 @@ class InvoiceGenerationService
 
         unset($_line);
 
-        $totals = $this->vat->calculateVAT($lineDrafts);
+        $totals        = $this->vat->calculateVAT($lineDrafts);
         $invoiceNumber = $this->generateInvoiceNumber(administrationId: $request->administrationId, invoiceDate: $request->toDate);
-        $dueDate       = $this->addDays($request->toDate, 30);
+        $dueDate       = $this->addDays(isoDate: $request->toDate, days: 30);
 
         $invoice = [
             'administrationId'   => $request->administrationId,
@@ -120,13 +124,13 @@ class InvoiceGenerationService
             'expenseIds'         => $request->expenseIds,
             'rateCardId'         => $request->rateCardId,
             'retainerScheduleId' => $request->retainerScheduleId,
-            'lineItemsByModel'   => $this->summariseLineItemsByModel($lineDrafts),
+            'lineItemsByModel'   => $this->summariseLineItemsByModel(lineDrafts: $lineDrafts),
             'summary'            => [
                 'netAmount'   => round($totals['netCents'] / 100, 2),
                 'vatAmount'   => round($totals['vatCents'] / 100, 2),
                 'grossAmount' => round($totals['grossCents'] / 100, 2),
                 'currency'    => 'EUR',
-                'breakdown'   => $this->breakdownInEuros($totals['breakdown']),
+                'breakdown'   => $this->breakdownInEuros(breakdown: $totals['breakdown']),
             ],
             'netAmount'          => round($totals['netCents'] / 100, 2),
             'vatAmount'          => round($totals['vatCents'] / 100, 2),
@@ -147,6 +151,20 @@ class InvoiceGenerationService
 
         // 5. Persist lines.
         foreach ($lineDrafts as $line) {
+            if (isset($line['billableUnits']) === true) {
+                $billableUnits = (float) $line['billableUnits'];
+            } else {
+                $billableUnits = null;
+            }
+
+            $vatAmount = round(
+                $this->vat->vatOnNet(
+                    netCents: (int) $line['costAmountCents'],
+                    rate: (float) $line['vatRate']
+                ) / 100,
+                2
+            );
+
             $linePayload = [
                 'administrationId'    => $request->administrationId,
                 'invoiceId'           => $invoiceId,
@@ -154,18 +172,25 @@ class InvoiceGenerationService
                 'sourceType'          => (string) $line['sourceType'],
                 'sourceId'            => $line['sourceId'] ?? null,
                 'description'         => (string) $line['description'],
-                'billableUnits'       => isset($line['billableUnits']) ? (float) $line['billableUnits'] : null,
+                'billableUnits'       => $billableUnits,
                 'rateApplied'         => $line['rateApplied'] ?? null,
                 'markup'              => (float) ($line['markup'] ?? 0),
                 'costAmount'          => round(((int) $line['costAmountCents']) / 100, 2),
                 'vatRate'             => (float) $line['vatRate'],
-                'vatAmount'           => round($this->vat->vatOnNet(netCents: (int) $line['costAmountCents'], rate: (float) $line['vatRate']) / 100, 2),
+                'vatAmount'           => $vatAmount,
                 'modelSpecificFields' => $line['modelSpecificFields'] ?? null,
             ];
             $this->saveObject(schema: 'BillableInvoiceLine', data: $linePayload);
-        }
+        }//end foreach
 
-        $this->logger->info(sprintf('BillableInvoice %s drafted (%s lines, gross €%.2f)', $invoiceNumber, count($lineDrafts), ($totals['grossCents'] / 100)));
+        $this->logger->info(
+            sprintf(
+                'BillableInvoice %s drafted (%s lines, gross €%.2f)',
+                $invoiceNumber,
+                count($lineDrafts),
+                ($totals['grossCents'] / 100)
+            )
+        );
 
         return $this->fetchInvoice(invoiceId: $invoiceId);
 
@@ -180,17 +205,23 @@ class InvoiceGenerationService
      */
     public function validateInvoice(array $invoice): array
     {
-        $errors = [];
+        $errors    = [];
         $invoiceId = (string) ($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
         $admin     = (string) ($invoice['administrationId'] ?? '');
         $timeIds   = array_map('strval', (array) ($invoice['timeEntryIds'] ?? []));
         $expIds    = array_map('strval', (array) ($invoice['expenseIds'] ?? []));
 
+        if ($invoiceId !== '') {
+            $excludeInvoiceId = $invoiceId;
+        } else {
+            $excludeInvoiceId = null;
+        }
+
         $dedup = $this->deduper->deduplicateSourceIds(
             administrationId: $admin,
             timeEntryIds: $timeIds,
             expenseIds: $expIds,
-            excludeInvoiceId: $invoiceId !== '' ? $invoiceId : null
+            excludeInvoiceId: $excludeInvoiceId
         );
         if ($dedup['hasConflicts'] === true) {
             foreach ($dedup['conflicts'] as $conflict) {
@@ -242,7 +273,7 @@ class InvoiceGenerationService
         $invoiceId = (string) ($invoice['id'] ?? ($invoice['@self']['id'] ?? ''));
         $admin     = (string) ($invoice['administrationId'] ?? '');
 
-        $validation = $this->validateInvoice($invoice);
+        $validation = $this->validateInvoice(invoice: $invoice);
         if ($validation['valid'] === false) {
             throw new RuntimeException('Invoice failed validation: '.implode('; ', $validation['errors']));
         }
@@ -273,7 +304,7 @@ class InvoiceGenerationService
 
         // GL posting: Debit AR, Credit Revenue (by model), Credit VAT Payable.
         $revenueAccount = $this->revenueAccountFor(billingModel: (string) ($invoice['billingModel'] ?? ''));
-        $journal = [
+        $journal        = [
             'administrationId' => $admin,
             'description'      => sprintf('Invoice %s', (string) ($invoice['invoiceNumber'] ?? '')),
             'journalDate'      => (string) ($invoice['invoiceDate'] ?? ''),
@@ -293,14 +324,24 @@ class InvoiceGenerationService
         }
 
         // Patch the invoice.
-        $update = array_merge($invoice, [
-            'status'       => 'posted',
-            'posted'       => true,
-            'obligationId' => $obligationId,
-        ]);
+        $update = array_merge(
+                $invoice,
+                [
+                    'status'       => 'posted',
+                    'posted'       => true,
+                    'obligationId' => $obligationId,
+                ]
+                );
 
         $persisted = $this->saveObject(schema: 'BillableInvoice', data: $update);
-        $this->logger->info(sprintf('BillableInvoice %s posted (gross €%.2f, obligation %s)', (string) ($invoice['invoiceNumber'] ?? ''), $grossCents / 100, (string) $obligationId));
+        $this->logger->info(
+            sprintf(
+                'BillableInvoice %s posted (gross €%.2f, obligation %s)',
+                (string) ($invoice['invoiceNumber'] ?? ''),
+                $grossCents / 100,
+                (string) $obligationId
+            )
+        );
 
         return $persisted;
 
@@ -346,10 +387,10 @@ class InvoiceGenerationService
     /**
      * Decide which BillingModelEngine method to invoke.
      *
-     * @param InvoiceGenerationRequest        $request     Request.
-     * @param array<int,array<string,mixed>>  $timeEntries Resolved time entries.
-     * @param array<int,array<string,mixed>>  $expenses    Resolved expenses.
-     * @param float                           $hoursLogged Total hours.
+     * @param InvoiceGenerationRequest       $request     Request.
+     * @param array<int,array<string,mixed>> $timeEntries Resolved time entries.
+     * @param array<int,array<string,mixed>> $expenses    Resolved expenses.
+     * @param float                          $hoursLogged Total hours.
      *
      * @return array<int,array<string,mixed>> Line drafts.
      */
@@ -364,9 +405,14 @@ class InvoiceGenerationService
                 return $this->billingEngine->calculateT_AND_M(timeEntries: $timeEntries, expenses: $expenses);
 
             case 'fixed_fee':
+                if (empty($request->notes) === false) {
+                    $fixedFeeDescription = $request->notes;
+                } else {
+                    $fixedFeeDescription = 'Fixed-fee engagement';
+                }
                 return $this->billingEngine->calculateFixedFee(
                     flatFeeCents: (int) $request->fixedFeeCents,
-                    description: $request->notes ?: 'Fixed-fee engagement',
+                    description: $fixedFeeDescription,
                     expenses: $expenses,
                     timeHourCount: (int) round($hoursLogged)
                 );
@@ -379,19 +425,30 @@ class InvoiceGenerationService
 
             case 'retainer':
                 return $this->billingEngine->calculateRetainer(
-                    retainer: $this->retainers->resolveRetainerAmount(scheduleId: (string) $request->retainerScheduleId, invoiceMonth: $request->toDate),
+                    retainer: $this->retainers->resolveRetainerAmount(
+                        scheduleId: (string) $request->retainerScheduleId,
+                        invoiceMonth: $request->toDate
+                    ),
                     retainerMonth: substr($request->toDate, 0, 7),
                     hoursLogged: $hoursLogged,
                     expenses: $expenses
                 );
 
             case 'mixed':
+                if (empty($request->notes) === false) {
+                    $setupFeeDescription = $request->notes;
+                } else {
+                    $setupFeeDescription = 'Setup fee';
+                }
                 return $this->billingEngine->calculateMixed(
-                    retainer: $this->retainers->resolveRetainerAmount(scheduleId: (string) $request->retainerScheduleId, invoiceMonth: $request->toDate),
+                    retainer: $this->retainers->resolveRetainerAmount(
+                        scheduleId: (string) $request->retainerScheduleId,
+                        invoiceMonth: $request->toDate
+                    ),
                     retainerMonth: substr($request->toDate, 0, 7),
                     hoursLogged: $hoursLogged,
                     setupFeeCents: $request->fixedFeeCents,
-                    setupFeeDescription: $request->notes ?: 'Setup fee',
+                    setupFeeDescription: $setupFeeDescription,
                     expenses: $expenses
                 );
 
@@ -405,7 +462,7 @@ class InvoiceGenerationService
      * Load time entries and attach rate snapshots.
      *
      * @param array<int,string> $ids        UrenRegistratie ids.
-     * @param string|null        $rateCardId Rate card to resolve against.
+     * @param string|null       $rateCardId Rate card to resolve against.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -426,9 +483,20 @@ class InvoiceGenerationService
             $hours        = (float) ($loaded['hours'] ?? ($loaded['duration'] ?? 0));
             $date         = (string) ($loaded['date'] ?? ($loaded['workDate'] ?? date('Y-m-d')));
 
-            $rate = ($rateCardId !== null)
-                ? $this->rateCards->resolveRate(rateCardId: $rateCardId, resourceType: $resourceType, date: $date)
-                : ['rateCents' => $this->toCents($loaded['hourlyRateOverride'] ?? 10000), 'currency' => 'EUR', 'rateCardVersion' => 'override', 'effectiveDate' => $date];
+            if ($rateCardId !== null) {
+                $rate = $this->rateCards->resolveRate(
+                    rateCardId: $rateCardId,
+                    resourceType: $resourceType,
+                    date: $date
+                );
+            } else {
+                $rate = [
+                    'rateCents'       => $this->toCents(value: $loaded['hourlyRateOverride'] ?? 10000),
+                    'currency'        => 'EUR',
+                    'rateCardVersion' => 'override',
+                    'effectiveDate'   => $date,
+                ];
+            }
 
             $entries[] = [
                 'timeEntryId'  => $id,
@@ -466,7 +534,7 @@ class InvoiceGenerationService
             $rows[] = [
                 'expenseId'       => $id,
                 'description'     => (string) ($loaded['description'] ?? ($loaded['category'] ?? 'Expense')),
-                'costAmountCents' => $this->toCents($loaded['amount'] ?? ($loaded['costAmount'] ?? 0)),
+                'costAmountCents' => $this->toCents(value: $loaded['amount'] ?? ($loaded['costAmount'] ?? 0)),
                 'vatRate'         => (float) ($loaded['vatRate'] ?? BillingModelEngine::DEFAULT_VAT_RATE),
             ];
         }//end foreach
@@ -487,18 +555,18 @@ class InvoiceGenerationService
         $loaded = $this->find(schema: 'Milestone', id: $milestoneId);
         if ($loaded === null) {
             return [
-                'milestoneId'         => $milestoneId,
-                'milestoneName'       => 'Milestone',
+                'milestoneId'          => $milestoneId,
+                'milestoneName'        => 'Milestone',
                 'milestoneCompletedAt' => date('Y-m-d'),
                 'milestoneBudgetCents' => 0,
             ];
         }
 
         return [
-            'milestoneId'         => $milestoneId,
-            'milestoneName'       => (string) ($loaded['name'] ?? 'Milestone'),
+            'milestoneId'          => $milestoneId,
+            'milestoneName'        => (string) ($loaded['name'] ?? 'Milestone'),
             'milestoneCompletedAt' => (string) ($loaded['completedAt'] ?? date('Y-m-d')),
-            'milestoneBudgetCents' => $this->toCents($loaded['budgetAmount'] ?? 0),
+            'milestoneBudgetCents' => $this->toCents(value: $loaded['budgetAmount'] ?? 0),
         ];
 
     }//end loadMilestone()
@@ -565,7 +633,11 @@ class InvoiceGenerationService
             $rs = $existing->setRegister($this->register())
                 ->setSchema('BillableInvoice')
                 ->findAll(filters: ['administrationId' => $administrationId]);
-            $count = is_array($rs) === true ? count($rs) : 0;
+            if (is_array($rs) === true) {
+                $count = count($rs);
+            } else {
+                $count = 0;
+            }
         } catch (\Throwable $e) {
             $count = 0;
         }
@@ -604,7 +676,11 @@ class InvoiceGenerationService
     private function fetchInvoice(string $invoiceId): array
     {
         $loaded = $this->find(schema: 'BillableInvoice', id: $invoiceId);
-        return is_array($loaded) === true ? $loaded : [];
+        if (is_array($loaded) === true) {
+            return $loaded;
+        }
+
+        return [];
 
     }//end fetchInvoice()
 
@@ -621,7 +697,11 @@ class InvoiceGenerationService
         try {
             $svc = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $rs  = $svc->setRegister($this->register())->setSchema($schema)->find($id);
-            return is_array($rs) === true ? $rs : null;
+            if (is_array($rs) === true) {
+                return $rs;
+            }
+
+            return null;
         } catch (\Throwable $e) {
             return null;
         }
@@ -631,7 +711,7 @@ class InvoiceGenerationService
     /**
      * Save (create or update) via the real OR ObjectService API.
      *
-     * @param string             $schema Schema slug.
+     * @param string              $schema Schema slug.
      * @param array<string,mixed> $data   Record body.
      *
      * @return array<string,mixed>
@@ -684,5 +764,4 @@ class InvoiceGenerationService
         return $register;
 
     }//end register()
-
 }//end class

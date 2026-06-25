@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Wet Fido & Treasurystatuut Compliance
 
 **Status:** proposed  

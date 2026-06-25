@@ -331,7 +331,8 @@ class DepositReconciliationService
     {
         if ($this->adapter === null) {
             $this->logger->warning(
-                'Shillinq DepositReconciliationService::pollPendingViaAdapter() called without an adapter bound — returning empty counters. Configure DepositPaymentAdapterInterface in Application::register() to enable.'
+                'Shillinq DepositReconciliationService::pollPendingViaAdapter() called without an adapter bound — '
+                .'returning empty counters. Configure DepositPaymentAdapterInterface in Application::register() to enable.'
             );
             return ['scanned' => 0, 'reconciled' => 0];
         }
@@ -340,7 +341,7 @@ class DepositReconciliationService
         $logger  = $this->logger;
 
         return $this->pollPending(
-            static function (string $intentId) use ($adapter, $logger): ?string {
+            statusProvider: static function (string $intentId) use ($adapter, $logger): ?string {
                 try {
                     $result = $adapter->fetchStatus($intentId, '');
                 } catch (\Throwable $e) {
@@ -357,7 +358,7 @@ class DepositReconciliationService
                     return null;
                 }
 
-                return self::lifecycleStateToOutcome($result);
+                return self::lifecycleStateToOutcome(result: $result);
             }
         );
     }//end pollPendingViaAdapter()

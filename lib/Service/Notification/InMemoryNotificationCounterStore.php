@@ -44,6 +44,12 @@ final class InMemoryNotificationCounterStore implements NotificationCounterStore
     private array $counts = [];
 
     /**
+     * Read the current counter value for a key.
+     *
+     * @param string $key The counter key.
+     *
+     * @return int The current count (zero when unset).
+     *
      * @inheritDoc
      */
     public function get(string $key): int
@@ -52,6 +58,13 @@ final class InMemoryNotificationCounterStore implements NotificationCounterStore
     }//end get()
 
     /**
+     * Increment the counter for a key.
+     *
+     * @param string $key The counter key.
+     * @param int    $ttl Time-to-live in seconds (ignored by this in-memory store).
+     *
+     * @return int The incremented count.
+     *
      * @inheritDoc
      */
     public function increment(string $key, int $ttl=0): int
@@ -62,6 +75,12 @@ final class InMemoryNotificationCounterStore implements NotificationCounterStore
     }//end increment()
 
     /**
+     * Reset the counter for a key.
+     *
+     * @param string $key The counter key.
+     *
+     * @return void
+     *
      * @inheritDoc
      */
     public function reset(string $key): void
@@ -78,5 +97,4 @@ final class InMemoryNotificationCounterStore implements NotificationCounterStore
     {
         $this->counts = [];
     }//end clear()
-
 }//end class

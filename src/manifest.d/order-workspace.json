@@ -1,0 +1,38 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "abstract-order-primitive",
+		"adr": "ADR-037 modular manifest fragment — the unified Order workspace that replaces the scattered Subsidie / Purchase Order / Quote / Sales Order pages. One Order index (filterable by orderType) + an Order detail that auto-renders the schema and its related Payments + OrderLines."
+	},
+	"menu": [
+		{ "id": "Orders", "label": "Orders", "icon": "FileDocumentMultipleOutline", "route": "Orders", "order": 28 }
+	],
+	"pages": [
+		{
+			"id": "Orders",
+			"title": "Orders",
+			"icon": "FileDocumentMultipleOutline",
+			"route": "/orders",
+			"type": "index",
+			"schema": "Order",
+			"register": "shillinq",
+			"filters": [
+				{ "key": "orderType", "label": "Type", "type": "select", "options": ["booking", "sales", "purchase", "grant", "engagement", "quote", "blanket"] }
+			],
+			"columns": ["orderNumber", "orderType", "counterpartyName", "totalAmount", "orderDate", "state"]
+		},
+		{
+			"id": "OrderDetail",
+			"title": "Order",
+			"route": "/orders/:id",
+			"type": "detail",
+			"schema": "Order",
+			"register": "shillinq",
+			"relatedSchemas": [
+				{ "schema": "Payment", "foreignKey": "orderId", "label": "Payments", "title": "Payments" },
+				{ "schema": "OrderLine", "foreignKey": "orderId", "label": "Lines", "title": "Order lines" }
+			]
+		}
+	]
+}

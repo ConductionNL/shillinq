@@ -61,10 +61,10 @@ class DBAOpdrachtGuard
      *
      * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
      */
-    public function validateOnSave(array $opdracht, array $previous = []): array
+    public function validateOnSave(array $opdracht, array $previous=[]): array
     {
-        $errors = [];
-        $status = (string) ($opdracht['intakeStatus'] ?? 'DRAFT');
+        $errors         = [];
+        $status         = (string) ($opdracht['intakeStatus'] ?? 'DRAFT');
         $previousStatus = (string) ($previous['intakeStatus'] ?? 'DRAFT');
 
         // REQ-DBA-001 — transition to ACTIEF requires INTAKE_VOLTOOID first.
@@ -96,7 +96,7 @@ class DBAOpdrachtGuard
 
         // REQ-DBA-000 — risico-niveau HOOG vereist actueleRisicoscore >= 75.
         $niveau = (string) ($opdracht['risicoNiveau'] ?? 'LAAG');
-        $score = $opdracht['actueleRisicoscore'] ?? null;
+        $score  = $opdracht['actueleRisicoscore'] ?? null;
         if ($niveau === 'HOOG' && is_int($score) === true) {
             if ($score < 75) {
                 $errors[] = 'REQ-DBA-000/003: risicoNiveau HOOG vereist actueleRisicoscore >= 75.';
@@ -127,6 +127,7 @@ class DBAOpdrachtGuard
         } catch (\Throwable) {
             return null;
         }
+
         return $date->modify('+'.DBAConstants::RETENTIE_TERMIJN_JAREN.' years')->format('Y-m-d');
     }//end computeRetentieDeadline()
 }//end class

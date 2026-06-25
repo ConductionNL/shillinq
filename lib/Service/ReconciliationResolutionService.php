@@ -43,8 +43,6 @@ use Psr\Log\LoggerInterface;
  */
 class ReconciliationResolutionService
 {
-
-
     /**
      * Constructor.
      *
@@ -64,16 +62,15 @@ class ReconciliationResolutionService
     ) {
     }//end __construct()
 
-
     /**
      * Resolve one ReconciliationMatch by classifying it per REQ-REC-004.
      *
      * @param string $reconId          The parent BankReconciliation id.
      * @param string $matchId          The ReconciliationMatch id.
      * @param string $resolutionStatus One of matched/timing/pending/adjustment
-     *                                  (validated by the caller).
+     *                                 (validated by the caller).
      * @param string $resolutionReason Operator-supplied reason text
-     *                                  (audit-trailed).
+     *                                 (audit-trailed).
      * @param string $actor            Nextcloud UID of the operator.
      *
      * @return array<string,mixed> The updated ReconciliationMatch as
@@ -102,7 +99,7 @@ class ReconciliationResolutionService
                 ->setRegister($register)
                 ->setSchema('BankReconciliation')
                 ->find($reconId);
-            $parent = $this->toArray($parent);
+            $parent = $this->toArray(result: $parent);
         } catch (\Throwable $e) {
             throw new \OutOfBoundsException(
                 'reconciliation '.$reconId.' not found',
@@ -128,7 +125,7 @@ class ReconciliationResolutionService
                 ->setRegister($register)
                 ->setSchema('ReconciliationMatch')
                 ->find($matchId);
-            $match = $this->toArray($match);
+            $match = $this->toArray(result: $match);
         } catch (\Throwable $e) {
             throw new \OutOfBoundsException(
                 'match '.$matchId.' not found',
@@ -172,10 +169,9 @@ class ReconciliationResolutionService
             ]
         );
 
-        return $this->toArray($updated) ?? [];
+        return $this->toArray(result: $updated) ?? [];
 
     }//end resolveMatch()
-
 
     /**
      * Return the configured register slug, falling back to 'shillinq'.
@@ -193,7 +189,6 @@ class ReconciliationResolutionService
 
     }//end getRegisterSlug()
 
-
     /**
      * Normalise an OR find/update result to a plain array.
      *
@@ -209,12 +204,14 @@ class ReconciliationResolutionService
 
         if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
             $serialized = $result->jsonSerialize();
-            return is_array($serialized) ? $serialized : null;
+            if (is_array($serialized) === true) {
+                return $serialized;
+            }
+
+            return null;
         }
 
         return null;
 
     }//end toArray()
-
-
 }//end class

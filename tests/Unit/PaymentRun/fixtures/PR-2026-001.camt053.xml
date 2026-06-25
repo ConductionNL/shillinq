@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SAFE-placeholder CAMT.053 fixture for payment-run-sepa-export reconciliation
+  tests (full match). All IBAN / EndToEndId / statement-id values are SAFE
+  placeholders — never realistic secrets. Echoes both exported EndToEndIds of
+  the seeded PR-2026-001 so the run fully reconciles.
+-->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.02">
+  <BkToCstmrStmt>
+    <Stmt>
+      <Id>STMT-PLACEHOLDER</Id>
+      <Acct><Id><IBAN>NL00BANK9999999999</IBAN></Id></Acct>
+      <Ntry>
+        <Amt Ccy="EUR">892.50</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>PR-2026-001-1</EndToEndId></Refs>
+          <Amt Ccy="EUR">892.50</Amt>
+          <CdtrAcct><Id><IBAN>NL00BANK0123456789</IBAN></Id></CdtrAcct>
+        </TxDtls></NtryDtls>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">605.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts>BOOK</Sts>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>PR-2026-001-2</EndToEndId></Refs>
+          <Amt Ccy="EUR">605.00</Amt>
+          <CdtrAcct><Id><IBAN>NL00TEST0222222222</IBAN></Id></CdtrAcct>
+        </TxDtls></NtryDtls>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

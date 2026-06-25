@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-accounts-receivable-core
 
 **Status:** proposed

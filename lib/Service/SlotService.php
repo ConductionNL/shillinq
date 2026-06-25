@@ -202,12 +202,12 @@ class SlotService
     /**
      * Public alias of the private slot enumerator for tests + reuse.
      *
-     * @param string                                   $date                 Calendar date YYYY-MM-DD UTC.
-     * @param string                                   $openingTime          HH:MM lower bound (inclusive).
-     * @param string                                   $closingTime          HH:MM upper bound (exclusive on the last slot).
-     * @param int                                      $durationMinutes      Service duration in minutes.
+     * @param string                                            $date                 Calendar date YYYY-MM-DD UTC.
+     * @param string                                            $openingTime          HH:MM lower bound (inclusive).
+     * @param string                                            $closingTime          HH:MM upper bound (exclusive on the last slot).
+     * @param int                                               $durationMinutes      Service duration in minutes.
      * @param array<int,array{startTime:string,endTime:string}> $existingAppointments Existing booked windows.
-     * @param bool                                     $allowOverlap         When true, the conflict check is skipped.
+     * @param bool                                              $allowOverlap         When true, the conflict check is skipped.
      *
      * @return array<int,array{startTime:string,endTime:string,resourceId?:string}>
      */
@@ -234,12 +234,12 @@ class SlotService
      * Walk the operational-hours window in fixed steps and emit non-conflicting
      * slots whose end-time still falls inside the window and ahead of `now`.
      *
-     * @param string                                   $date                 Calendar date YYYY-MM-DD UTC.
-     * @param string                                   $openingTime          HH:MM lower bound.
-     * @param string                                   $closingTime          HH:MM upper bound.
-     * @param int                                      $durationMinutes      Service duration.
+     * @param string                                            $date                 Calendar date YYYY-MM-DD UTC.
+     * @param string                                            $openingTime          HH:MM lower bound.
+     * @param string                                            $closingTime          HH:MM upper bound.
+     * @param int                                               $durationMinutes      Service duration.
      * @param array<int,array{startTime:string,endTime:string}> $existingAppointments Existing booked windows.
-     * @param bool                                     $allowOverlap         Skip conflict check when true.
+     * @param bool                                              $allowOverlap         Skip conflict check when true.
      *
      * @return array<int,array{startTime:string,endTime:string}>
      */
@@ -315,8 +315,8 @@ class SlotService
     /**
      * Detect whether [slotStart, slotEnd) overlaps any element of $existing.
      *
-     * @param DateTimeImmutable                        $slotStart Candidate slot start.
-     * @param DateTimeImmutable                        $slotEnd   Candidate slot end.
+     * @param DateTimeImmutable                                 $slotStart Candidate slot start.
+     * @param DateTimeImmutable                                 $slotEnd   Candidate slot end.
      * @param array<int,array{startTime:string,endTime:string}> $existing  Existing booked windows.
      *
      * @return bool
@@ -452,7 +452,7 @@ class SlotService
                     'exception' => $e->getMessage(),
                 ]
             );
-        }
+        }//end try
 
         return null;
 
@@ -523,14 +523,20 @@ class SlotService
     private function toArray(mixed $object): array
     {
         if (is_array($object) === true) {
-            /** @var array<string,mixed> $object */
+            /*
+             * @var array<string,mixed> $object
+             */
+
             return $object;
         }
 
         if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
             $serialised = $object->jsonSerialize();
             if (is_array($serialised) === true) {
-                /** @var array<string,mixed> $serialised */
+                /*
+                 * @var array<string,mixed> $serialised
+                 */
+
                 return $serialised;
             }
         }

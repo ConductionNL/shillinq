@@ -29,14 +29,14 @@
 				},
 				{
 					"id": "Leningen",
-					"label": "Leningen",
+					"label": "Loans",
 					"icon": "CashMultiple",
 					"route": "Leningen",
 					"order": 30
 				},
 				{
 					"id": "Derivaten",
-					"label": "Derivaten",
+					"label": "Derivatives",
 					"icon": "SwapHorizontal",
 					"route": "Derivaten",
 					"order": 40
@@ -61,7 +61,7 @@
 				"widgets": [
 					{
 						"id": "kasgeld-headroom",
-						"title": "Kasgeldlimiet headroom",
+						"title": "Cash limit headroom",
 						"type": "stats-block",
 						"iconClass": "icon-quota",
 						"props": {
@@ -72,7 +72,7 @@
 					},
 					{
 						"id": "rente-risico-headroom",
-						"title": "Rente-risiconorm headroom",
+						"title": "Interest rate risk norm headroom",
 						"type": "stats-block",
 						"iconClass": "icon-quota",
 						"props": {
@@ -83,7 +83,7 @@
 					},
 					{
 						"id": "schatkist-saldo",
-						"title": "Schatkistbankieren saldo",
+						"title": "Treasury banking balance",
 						"type": "stats-block",
 						"iconClass": "icon-category-office",
 						"props": {
@@ -94,7 +94,7 @@
 					},
 					{
 						"id": "open-alerts",
-						"title": "Open limiet alerts",
+						"title": "Open limit alerts",
 						"type": "stats-block",
 						"iconClass": "icon-error",
 						"props": {
@@ -158,7 +158,7 @@
 			"id": "Leningen",
 			"route": "/treasury/leningen",
 			"type": "index",
-			"title": "Leningen",
+			"title": "Loans",
 			"config": {
 				"register": "shillinq",
 				"schema": "Lening",
@@ -177,7 +177,7 @@
 			"id": "LeningDetail",
 			"route": "/treasury/leningen/:id",
 			"type": "detail",
-			"title": "Lening",
+			"title": "Loan",
 			"config": {
 				"register": "shillinq",
 				"schema": "Lening",
@@ -192,7 +192,7 @@
 					{ "key": "maturityDate", "label": "Maturity", "type": "string" },
 					{ "key": "signingMandateRole", "label": "Signing mandate role", "type": "string" },
 					{ "key": "purpose", "label": "Purpose", "type": "string" },
-					{ "key": "limietBreach", "label": "Limiet breach", "type": "boolean" },
+					{ "key": "limietBreach", "label": "Limit breach", "type": "boolean" },
 					{ "key": "overrideRationale", "label": "Override rationale", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
@@ -203,7 +203,7 @@
 			"id": "Derivaten",
 			"route": "/treasury/derivaten",
 			"type": "index",
-			"title": "Derivaten",
+			"title": "Derivatives",
 			"config": {
 				"register": "shillinq",
 				"schema": "Derivaat",
@@ -222,7 +222,7 @@
 			"id": "DerivaatDetail",
 			"route": "/treasury/derivaten/:id",
 			"type": "detail",
-			"title": "Derivaat",
+			"title": "Derivative",
 			"config": {
 				"register": "shillinq",
 				"schema": "Derivaat",
@@ -252,7 +252,7 @@
 				"columns": [
 					{ "key": "auditYear", "label": "Year", "sortable": true },
 					{ "key": "kwartaal", "label": "Quarter", "sortable": true },
-					{ "key": "toezichthouderName", "label": "Toezichthouder", "sortable": true },
+					{ "key": "toezichthouderName", "label": "Supervisor", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "auditYear",
@@ -272,7 +272,7 @@
 					{ "key": "kwartaal", "label": "Quarter", "type": "string" },
 					{ "key": "organisationId", "label": "Organisation", "type": "string" },
 					{ "key": "narrative", "label": "Narrative", "type": "string" },
-					{ "key": "toezichthouderName", "label": "Toezichthouder", "type": "string" },
+					{ "key": "toezichthouderName", "label": "Supervisor", "type": "string" },
 					{ "key": "submittedToToezichthouder", "label": "Submitted", "type": "string" },
 					{ "key": "submissionReceipt", "label": "Receipt", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }

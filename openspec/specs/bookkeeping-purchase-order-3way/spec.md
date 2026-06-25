@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Purchase Order 3-way Match
 
 **Primary spec for:** `bookkeeping-purchase-order-3way`

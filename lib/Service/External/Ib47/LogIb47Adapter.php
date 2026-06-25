@@ -71,24 +71,26 @@ class LogIb47Adapter implements Ib47AdapterInterface
         // never log BSN, name, address, or birth date.
         if (isset($sanitised['recipients']) === true && is_array($sanitised['recipients']) === true) {
             $natureHistogram = [];
-            $totalRows = 0;
-            $totalAmount = 0.0;
+            $totalRows       = 0;
+            $totalAmount     = 0.0;
             foreach ($sanitised['recipients'] as $row) {
                 if (is_array($row) === false) {
                     continue;
                 }
+
                 $totalRows++;
                 $natureCode = (string) ($row['natureCode'] ?? 'unknown');
                 $natureHistogram[$natureCode] = (($natureHistogram[$natureCode] ?? 0) + 1);
                 $totalAmount += (float) ($row['paidAmount'] ?? 0.0);
             }
+
             $sanitised['recipients'] = [
-                '_redacted'        => true,
-                'rowCount'         => $totalRows,
-                'totalPaidAmount'  => $totalAmount,
-                'natureHistogram'  => $natureHistogram,
+                '_redacted'       => true,
+                'rowCount'        => $totalRows,
+                'totalPaidAmount' => $totalAmount,
+                'natureHistogram' => $natureHistogram,
             ];
-        }
+        }//end if
 
         $kenmerk = 'ib47-log-'.bin2hex(random_bytes(8));
         $this->logger->info(
@@ -105,12 +107,19 @@ class LogIb47Adapter implements Ib47AdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `belastingdienst-ib47` (PKIoverheid Services-server cert + Gegevensportaal IB47 endpoint, or Renseigneringsstroom via Digipoort for intermediair flow) and override Ib47AdapterInterface in Application::register() to enable real transport.',
+                'note'   => 'Bind openconnector source slug `belastingdienst-ib47` (PKIoverheid '
+                    .'Services-server cert + Gegevensportaal IB47 endpoint, or Renseigneringsstroom '
+                    .'via Digipoort for intermediair flow) and override Ib47AdapterInterface in '
+                    .'Application::register() to enable real transport.',
             ],
         );
     }//end submit()
 
     /**
+     * Report whether this adapter is dormant.
+     *
+     * @return bool True when no outbound connector is bound.
+     *
      * @inheritDoc
      */
     public function isDormant(): bool

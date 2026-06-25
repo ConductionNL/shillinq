@@ -145,8 +145,14 @@ class AdministrationArchivalService
         }
 
         $status = (string) ($administration['status'] ?? '');
+        if ($status === '') {
+            $statusLabel = 'onbekend';
+        } else {
+            $statusLabel = $status;
+        }
+
         throw new RuntimeException(
-            sprintf('administratie gearchiveerd (status=%s)', ($status === '' ? 'onbekend' : $status))
+            sprintf('administratie gearchiveerd (status=%s)', $statusLabel)
         );
 
     }//end assertWritable()

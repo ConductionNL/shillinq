@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Bookkeeping — Detachering & Payroll Administration
 
 **Status:** proposed  

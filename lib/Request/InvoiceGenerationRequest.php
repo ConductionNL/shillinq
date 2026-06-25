@@ -35,19 +35,23 @@ final class InvoiceGenerationRequest
     public const MODELS = ['t_and_m', 'fixed_fee', 'milestone', 'retainer', 'mixed'];
 
     /**
-     * @param string        $administrationId    Server-resolved tenant scope (NOT client-supplied).
-     * @param string        $billingModel        One of MODELS.
-     * @param string        $customerId          FK to customer (Nextcloud contact).
-     * @param string        $fromDate            ISO date — start of source-record period.
-     * @param string        $toDate              ISO date — end of source-record period.
-     * @param array<int,string> $timeEntryIds    FKs to UrenRegistratie rows.
-     * @param array<int,string> $expenseIds      FKs to ExpenseClaimEntry rows.
-     * @param string|null   $rateCardId          Required for t_and_m / mixed / retainer overage.
-     * @param string|null   $retainerScheduleId  Required for retainer / mixed.
-     * @param int|null      $fixedFeeCents       Required for fixed_fee / mixed setup fee.
-     * @param string|null   $milestoneId         Required for milestone.
-     * @param string|null   $projectId           Optional FK to Project.
-     * @param string|null   $notes               Free-text notes.
+     * Construct a validated invoice-generation request.
+     *
+     * @param string            $administrationId   Server-resolved tenant scope (NOT client-supplied).
+     * @param string            $billingModel       One of MODELS.
+     * @param string            $customerId         FK to customer (Nextcloud contact).
+     * @param string            $fromDate           ISO date — start of
+     *                                              source-record period.
+     * @param string            $toDate             ISO date — end of
+     *                                              source-record period.
+     * @param array<int,string> $timeEntryIds       FKs to UrenRegistratie rows.
+     * @param array<int,string> $expenseIds         FKs to ExpenseClaimEntry rows.
+     * @param string|null       $rateCardId         Required for t_and_m / mixed / retainer overage.
+     * @param string|null       $retainerScheduleId Required for retainer / mixed.
+     * @param int|null          $fixedFeeCents      Required for fixed_fee / mixed setup fee.
+     * @param string|null       $milestoneId        Required for milestone.
+     * @param string|null       $projectId          Optional FK to Project.
+     * @param string|null       $notes              Free-text notes.
      */
     public function __construct(
         public readonly string $administrationId,
@@ -55,14 +59,14 @@ final class InvoiceGenerationRequest
         public readonly string $customerId,
         public readonly string $fromDate,
         public readonly string $toDate,
-        public readonly array $timeEntryIds = [],
-        public readonly array $expenseIds = [],
-        public readonly ?string $rateCardId = null,
-        public readonly ?string $retainerScheduleId = null,
-        public readonly ?int $fixedFeeCents = null,
-        public readonly ?string $milestoneId = null,
-        public readonly ?string $projectId = null,
-        public readonly ?string $notes = null,
+        public readonly array $timeEntryIds=[],
+        public readonly array $expenseIds=[],
+        public readonly ?string $rateCardId=null,
+        public readonly ?string $retainerScheduleId=null,
+        public readonly ?int $fixedFeeCents=null,
+        public readonly ?string $milestoneId=null,
+        public readonly ?string $projectId=null,
+        public readonly ?string $notes=null,
     ) {
         $this->assertValid();
 
@@ -71,8 +75,8 @@ final class InvoiceGenerationRequest
     /**
      * Build from a request body array; throws if invalid.
      *
-     * @param string             $administrationId Server-resolved scope.
-     * @param array<string,mixed> $body            Decoded request body.
+     * @param string              $administrationId Server-resolved scope.
+     * @param array<string,mixed> $body             Decoded request body.
      *
      * @return self
      */
@@ -83,6 +87,36 @@ final class InvoiceGenerationRequest
             $fixedFee = (int) $fixedFee;
         }
 
+        if (isset($body['rateCardId']) === true) {
+            $rateCardId = (string) $body['rateCardId'];
+        } else {
+            $rateCardId = null;
+        }
+
+        if (isset($body['retainerScheduleId']) === true) {
+            $retainerScheduleId = (string) $body['retainerScheduleId'];
+        } else {
+            $retainerScheduleId = null;
+        }
+
+        if (isset($body['milestoneId']) === true) {
+            $milestoneId = (string) $body['milestoneId'];
+        } else {
+            $milestoneId = null;
+        }
+
+        if (isset($body['projectId']) === true) {
+            $projectId = (string) $body['projectId'];
+        } else {
+            $projectId = null;
+        }
+
+        if (isset($body['notes']) === true) {
+            $notes = (string) $body['notes'];
+        } else {
+            $notes = null;
+        }
+
         return new self(
             administrationId: $administrationId,
             billingModel: (string) ($body['billingModel'] ?? ''),
@@ -91,12 +125,12 @@ final class InvoiceGenerationRequest
             toDate: (string) ($body['toDate'] ?? ''),
             timeEntryIds: array_values(array_map('strval', (array) ($body['timeEntryIds'] ?? []))),
             expenseIds: array_values(array_map('strval', (array) ($body['expenseIds'] ?? []))),
-            rateCardId: isset($body['rateCardId']) ? (string) $body['rateCardId'] : null,
-            retainerScheduleId: isset($body['retainerScheduleId']) ? (string) $body['retainerScheduleId'] : null,
+            rateCardId: $rateCardId,
+            retainerScheduleId: $retainerScheduleId,
             fixedFeeCents: $fixedFee,
-            milestoneId: isset($body['milestoneId']) ? (string) $body['milestoneId'] : null,
-            projectId: isset($body['projectId']) ? (string) $body['projectId'] : null,
-            notes: isset($body['notes']) ? (string) $body['notes'] : null,
+            milestoneId: $milestoneId,
+            projectId: $projectId,
+            notes: $notes,
         );
 
     }//end fromArray()
@@ -147,5 +181,4 @@ final class InvoiceGenerationRequest
         }
 
     }//end assertValid()
-
 }//end class

@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # shillinq-nav-ia-cleanup Specification
 
 ## Purpose
-TBD - created by archiving change shillinq-nav-ia-cleanup. Update Purpose after archive.
+Corrects shillinq's navigation information architecture by disambiguating the manual-journal entry as "Manual Journals" distinct from the General Ledger, giving the Project schema exactly one navigation home while keeping its page deep-linkable, and ensuring each route marks exactly one active nav leaf with no duplicate detail-route registrations. The capability also fixes dashboard KPI rendering so stats-block tiles render with single card chrome instead of nested cards, and adds e2e coverage for these corrections.
 ## Requirements
 ### Requirement: REQ-NAVIA-001 — The system SHALL label the manual-journal menu entry "Manual Journals" (nl "Memoriaalboekingen") so it does not read as a duplicate of the General Ledger
 

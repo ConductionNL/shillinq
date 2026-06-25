@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookings-service-catalog
 
 **Status:** proposed

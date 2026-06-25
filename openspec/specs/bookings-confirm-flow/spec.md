@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookings-confirm-flow
 
 **Status:** proposed

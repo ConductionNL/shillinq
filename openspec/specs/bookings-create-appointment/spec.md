@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookings-create-appointment
 
 **Status:** proposed

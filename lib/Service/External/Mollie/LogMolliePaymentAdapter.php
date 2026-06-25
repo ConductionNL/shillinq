@@ -85,7 +85,9 @@ class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `mollie-payments` (Mollie Payments API v2, per-tenant API key + webhook HMAC secret) and override MolliePaymentAdapterInterface in Application::register() to enable real transport.',
+                'note'   => 'Bind openconnector source slug `mollie-payments` (Mollie Payments API v2, '
+                    .'per-tenant API key + webhook HMAC secret) and override MolliePaymentAdapterInterface '
+                    .'in Application::register() to enable real transport.',
             ],
         );
     }//end createPayment()
@@ -93,8 +95,8 @@ class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface
     /**
      * Log the webhook intent + synthesise a stub result.
      *
-     * @param string              $mollieId Mollie paymentId from inbound webhook.
-     * @param array<string,string> $headers Request headers.
+     * @param string               $mollieId Mollie paymentId from inbound webhook.
+     * @param array<string,string> $headers  Request headers.
      *
      * @return MolliePaymentResult Stubbed payment record.
      */
@@ -107,12 +109,18 @@ class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface
         $signature = $headers['Mollie-Signature'] ?? ($headers['mollie-signature'] ?? '');
         unset($headers['Mollie-Signature'], $headers['mollie-signature']);
 
+        if ($signature === '') {
+            $signaturePresence = 'absent';
+        } else {
+            $signaturePresence = 'present';
+        }
+
         $this->logger->info(
             'Shillinq Mollie verifyWebhook deferred (no outbound connector bound)',
             [
-                'molliePaymentId'    => $mollieId,
-                'headers'            => $headers,
-                'signaturePresence'  => ($signature === '' ? 'absent' : 'present'),
+                'molliePaymentId'   => $mollieId,
+                'headers'           => $headers,
+                'signaturePresence' => $signaturePresence,
             ]
         );
 
@@ -129,6 +137,10 @@ class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface
     }//end verifyWebhook()
 
     /**
+     * Report whether this adapter is dormant.
+     *
+     * @return bool True when no outbound connector is bound.
+     *
      * @inheritDoc
      */
     public function isDormant(): bool

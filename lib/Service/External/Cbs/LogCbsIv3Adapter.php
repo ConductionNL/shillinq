@@ -72,13 +72,18 @@ class LogCbsIv3Adapter implements CbsIv3AdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `cbs-iv3` and override CbsIv3AdapterInterface in Application::register() to enable real transport.',
+                'note'   => 'Bind openconnector source slug `cbs-iv3` and override CbsIv3AdapterInterface in '
+                    .'Application::register() to enable real transport.',
             ],
         );
     }//end submit()
 
     /**
+     * Report whether this adapter is a dormant log-only stand-in.
+     *
      * @inheritDoc
+     *
+     * @return bool Always true for the log adapter.
      */
     public function isDormant(): bool
     {

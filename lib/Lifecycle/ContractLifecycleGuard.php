@@ -80,7 +80,7 @@ class ContractLifecycleGuard
         try {
             $missing = [];
             foreach (['startDate', 'counterpartyReference', 'contractOwner'] as $field) {
-                if ($this->isPresent($contract[$field] ?? null) === false) {
+                if ($this->isPresent(value: ($contract[$field] ?? null)) === false) {
                     $missing[] = $field;
                 }
             }
@@ -120,7 +120,7 @@ class ContractLifecycleGuard
     public function requireTerminationReason(array $contract): bool
     {
         try {
-            if ($this->isPresent($contract['terminationReason'] ?? null) === false) {
+            if ($this->isPresent(value: ($contract['terminationReason'] ?? null)) === false) {
                 $this->logger->info(
                     'ContractLifecycleGuard: termination denied — terminationReason missing (fail-closed)'
                 );

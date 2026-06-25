@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-year-end-close
 
 **Status:** proposed

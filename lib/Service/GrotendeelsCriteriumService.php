@@ -43,8 +43,6 @@ use Psr\Log\LoggerInterface;
  */
 final class GrotendeelsCriteriumService
 {
-
-
     /**
      * Construct the service.
      *
@@ -56,7 +54,6 @@ final class GrotendeelsCriteriumService
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Sum the onderneming hours from a UrenDagregistratie collection.
@@ -80,14 +77,13 @@ final class GrotendeelsCriteriumService
                 continue;
             }
 
-            $geteld = $entry['getoldeUren'] ?? $entry['uren'] ?? 0;
+            $geteld  = $entry['getoldeUren'] ?? $entry['uren'] ?? 0;
             $totaal += (float) $geteld;
         }
 
         return $totaal;
 
     }//end telOndernemingsUren()
-
 
     /**
      * Classify the grotendeels-criterium from the YTD totals.
@@ -111,7 +107,6 @@ final class GrotendeelsCriteriumService
         );
 
     }//end classifeer()
-
 
     /**
      * Build the grotendeels patch to apply to a UrencriteriumYear record.
@@ -152,6 +147,4 @@ final class GrotendeelsCriteriumService
         ];
 
     }//end bouwPatch()
-
-
 }//end class

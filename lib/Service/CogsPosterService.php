@@ -240,6 +240,7 @@ class CogsPosterService
         if ($qty > 0) {
             $unitCost = (($cogsCents / 100) / $qty);
         }
+
         $unitCost = round($unitCost, 4);
 
         return sprintf(

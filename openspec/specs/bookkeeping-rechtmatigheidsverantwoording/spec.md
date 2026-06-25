@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Specification: Rechtmatigheidsverantwoording
 
 **Status:** proposed  

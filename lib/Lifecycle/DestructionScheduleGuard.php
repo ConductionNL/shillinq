@@ -123,7 +123,7 @@ class DestructionScheduleGuard
     }//end __construct()
 
     /**
-     * canModify — `destruction-completed` records are immutable.
+     * Check modifiability: `destruction-completed` records are immutable.
      *
      * @param array<string,mixed> $record The record being mutated.
      *
@@ -137,7 +137,7 @@ class DestructionScheduleGuard
     }//end canModify()
 
     /**
-     * canDelete — destruction is a state transition, NEVER a true
+     * Check deletability: destruction is a state transition, NEVER a true
      * deletion. Archiefwet requires proof; deletion of a destruction-
      * completed record would erase the proof.
      *
@@ -158,18 +158,23 @@ class DestructionScheduleGuard
     /**
      * Validate a proposed state transition.
      *
-     * @param string                      $from     Current state.
-     * @param string                      $to       Proposed state.
-     * @param array<string,mixed>         $record   The record being transitioned (for age check).
-     * @param array<string,mixed>         $options  Transition options:
-     *                                              - `actorRoles`: array of caller roles
-     *                                                              (e.g. ['compliance-officer']).
-     *                                              - `now`: ISO timestamp to use as "now"
-     *                                                       (for deterministic tests).
+     * @param string              $from    Current state.
+     * @param string              $to      Proposed state.
+     * @param array<string,mixed> $record  The record being transitioned (for age check).
+     * @param array<string,mixed> $options Transition options:
+     *                                     - `actorRoles`:
+     *                                     array of caller
+     *                                     roles (e.g.
+     *                                     ['compliance-officer']).
+     *                                     - `now`: ISO
+     *                                     timestamp to use as
+     *                                     "now" (for
+     *                                     deterministic
+     *                                     tests).
      *
      * @return bool True if the transition is allowed; false otherwise.
      */
-    public function canTransition(string $from, string $to, array $record, array $options = []): bool
+    public function canTransition(string $from, string $to, array $record, array $options=[]): bool
     {
         if (in_array($from, self::STATES, true) === false || in_array($to, self::STATES, true) === false) {
             return false;
@@ -179,29 +184,30 @@ class DestructionScheduleGuard
             return false;
         }
 
-        // destruction-completed is terminal.
+        // Destruction-completed is terminal.
         if ($from === self::STATE_COMPLETED) {
             return false;
         }
 
-        // active -> marked-for-destruction: compliance officer + 7+ years.
+        // Active -> marked-for-destruction: compliance officer + 7+ years.
         if ($from === self::STATE_ACTIVE && $to === self::STATE_MARKED) {
-            return $this->isComplianceOfficer($options) && $this->isOlderThanRetentionFloor($record, $options);
+            return $this->isComplianceOfficer(options: $options)
+                && $this->isOlderThanRetentionFloor(record: $record, options: $options);
         }
 
-        // active -> destruction-completed: NOT allowed (must go via marked).
+        // Active -> destruction-completed: NOT allowed (must go via marked).
         if ($from === self::STATE_ACTIVE && $to === self::STATE_COMPLETED) {
             return false;
         }
 
-        // marked -> active: allowed (rollback / unmark).
+        // Marked -> active: allowed (rollback / unmark).
         if ($from === self::STATE_MARKED && $to === self::STATE_ACTIVE) {
             return true;
         }
 
-        // marked -> destruction-completed: compliance officer / system.
+        // Marked -> destruction-completed: compliance officer / system.
         if ($from === self::STATE_MARKED && $to === self::STATE_COMPLETED) {
-            return $this->isComplianceOfficerOrSystem($options);
+            return $this->isComplianceOfficerOrSystem(options: $options);
         }
 
         return false;
@@ -219,25 +225,25 @@ class DestructionScheduleGuard
      * @param string              $to      New state.
      * @param array<string,mixed> $options Optional fields:
      *                                     - `actorUid`: actor UID (defaults
-     *                                                   to 'system').
+     *                                     to 'system').
      *                                     - `selectielijstCode`: legal basis
-     *                                                            code (e.g. "5.1.2").
+     *                                     code (e.g. "5.1.2").
      *                                     - `legalBasis`: citation
-     *                                                     (e.g. "Archiefwet Article 7").
+     *                                     (e.g. "Archiefwet Article 7").
      *
      * @return array<string,mixed>
      */
-    public function buildTransitionEvent(array $record, string $from, string $to, array $options = []): array
+    public function buildTransitionEvent(array $record, string $from, string $to, array $options=[]): array
     {
         return [
-            'action'           => sprintf('lifecycle:%s→%s', $from, $to),
-            'actor'            => (string) ($options['actorUid'] ?? 'system'),
-            'objectType'       => (string) ($record['_objectType'] ?? ($record['schema'] ?? '')),
-            'objectId'         => (string) ($record['id'] ?? ($record['uuid'] ?? '')),
+            'action'            => sprintf('lifecycle:%s→%s', $from, $to),
+            'actor'             => (string) ($options['actorUid'] ?? 'system'),
+            'objectType'        => (string) ($record['_objectType'] ?? ($record['schema'] ?? '')),
+            'objectId'          => (string) ($record['id'] ?? ($record['uuid'] ?? '')),
             'selectielijstCode' => (string) ($options['selectielijstCode'] ?? '5.1.2'),
-            'legalBasis'       => (string) ($options['legalBasis'] ?? 'Archiefwet Article 7'),
-            'timestamp'        => (string) ($options['now'] ?? date('c')),
-            'requirementId'    => 'REQ-RAP-008',
+            'legalBasis'        => (string) ($options['legalBasis'] ?? 'Archiefwet Article 7'),
+            'timestamp'         => (string) ($options['now'] ?? date('c')),
+            'requirementId'     => 'REQ-RAP-008',
         ];
 
     }//end buildTransitionEvent()
@@ -267,7 +273,7 @@ class DestructionScheduleGuard
      */
     private function isComplianceOfficerOrSystem(array $options): bool
     {
-        if ($this->isComplianceOfficer($options) === true) {
+        if ($this->isComplianceOfficer(options: $options) === true) {
             return true;
         }
 

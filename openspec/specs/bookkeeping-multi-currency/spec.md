@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-multi-currency
 
 **Status:** proposed

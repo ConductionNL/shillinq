@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Bookkeeping — CBS-Bestanden Extended
 
 **Status:** proposed  

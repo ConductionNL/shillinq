@@ -9333,3 +9333,56 @@ ADR-032 (T3 spec sizing), ADR-037 (modular register fragments).
 > **Reconciliation note (bookkeeping-cost-centers-dimensions, 2026-06-11):** Segment P&L roll-up is fully declarative per ADR-031 / ADR-037. `CostCenter` and `Project` schemas are owned by `lib/Settings/shillinq_register.json` (originally landed via the prior `consultancy-project-accounting` build); both carry `code` / `name` / `parentCode` (self-relation for hierarchical roll-up per REQ-CD-007) / `responsibleUser` / `lifecycleState` / `administrationId`, with the Project schema also carrying the consultancy fields (projectNumber, customerId, recognitionMethod, etc.). `AnalyticalDimension` is the round-2 addition declared in `lib/Settings/register.d/bookkeeping-cost-centers-dimensions.json`; it is the operator-extensible register that enables REQ-CD-006 custom dimensions (Region, Product Line, Department, …) without PHP/Vue edits. Each AnalyticalDimension carries a `dataType` (string|integer|decimal|date|reference), an `isHierarchical` flag (parent-child tree roll-up), and optional `referenceRegister`/`referenceSchema` so reference-typed dimensions validate values via the OR relations engine. `GLLine` (in `shillinq_register.json`) carries `costCenterCode`, `kostenDragerCode`, `projectCode`, and a free-form `dimensions` JSON map for the analytical-dimension values; the round-2 fragment overlay layers four `x-openregister-aggregations` on top — `byCostCenter`, `byCostCenterHierarchy`, `byProject`, and `byAnalyticalDimension` (wildcard `dimensions.*` groupBy). All four sum the GLLine amount field and filter by `administrationId`. The wildcard aggregation is what makes the surface operator-extensible — declaring a new AnalyticalDimension is enough to contribute a group to the segment P&L without any code change. Manifest navigation (Bookkeeping > Cost Centers / Projects / Analytical Dimensions) carries index+detail pages for each schema and the fragment ships seed objects (three Dutch cost centers, two projects, and the REGION + PRODUCT_LINE example dimensions). No bespoke PHP `SegmentReportService` or `DimensionService` class ships — the OR aggregation engine consumes the declarations at runtime.
 
 **Cites:** ADR-031 (schema-declarative segment P&L), ADR-037 (modular register fragments + manifest fragments), ADR-022 (registers as the single source, no parallel `lib/Db/CostCenter` Mapper), `bookkeeping-cost-centers-dimensions/specs/spec.md` REQ-CD-002..008.
+
+### SalesOrder
+**Schema.org:** `schema:Order`
+_The booking term for recognized recurring revenue. The order is the actual booking term; the contract is the legal signer (referenced by `contractId` as a plain string, NOT a modeled Contract entity). Recognized recurring revenue is computed per reporting period by the chained `order-revenue-recognition-engine` service (ADR-031 exception) over the order's `SalesOrderLine`s. The schema is fully declarative `config` in `lib/Settings/shillinq_register.json`._
+**Primary spec:** recurring-revenue-recognition
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| orderId | string | Yes | Unique identifier (business key) |
+| ondernemingId | string | Yes | FK to the selling Corporation |
+| administrationId | string | Yes | FK to the Administration tenant |
+| klantId | string | Yes | FK to the customer |
+| orderDate | date | Yes | Date the order was booked |
+| termStart | date | Yes | Start of the booking term |
+| termEnd | date | No | End of the booking term; `null` = indefinite (open-ended) |
+| status | enum | Yes | One of active, ended (lifecycle of the booking) |
+| currency | string | Yes | ISO 4217 currency code; default EUR |
+| contractId | string | No | Plain string reference to the legal agreement — NOT a modeled entity; no referential-integrity resolution |
+
+**Relations:**
+- → Corporation (many-to-one, via ondernemingId)
+- → CustomerMaster (many-to-one, via klantId)
+- → Administration (many-to-one, via administrationId)
+- ← SalesOrderLine (one-to-many, via orderId)
+
+> **Note (order-revenue-recognition, 2026-06-20):** `contractId` is deliberately an unmodeled plain-string legal reference — there is NO `Contract` entity (the full IFRS 15 `Contract` / `PerformanceObligation` model is the separate `bookkeeping-ifrs15-revenue` capability). Carries `x-openregister-lifecycle` (active → ended), `x-openregister-audit-trail.enabled=true`, and `administrationId`-scoped RBAC consistent with the other bookkeeping registers.
+
+### SalesOrderLine
+**Schema.org:** `schema:OrderItem`
+_A line on a `SalesOrder`, tagged `RECURRING` or `ONE_OFF`, declaring the recognition method the chained engine uses. `RECURRING` lines carry a `frequentie` normalized to a monthly rate; `ONE_OFF` lines carry a `recognitionDate` and are recognized point-in-time, never as recurring revenue. Null `termStart`/`termEnd` inherit the parent order's term. Recognized recurring revenue for a period = Σ over RECURRING lines of `monthlyRate × overlapMonths(termOf(line), period)` — computed by the chained `order-revenue-recognition-engine` service (ADR-031 exception), not declaratively (the OR aggregation grammar cannot express runtime-period interval-overlap proration)._
+**Primary spec:** recurring-revenue-recognition
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| lineId | string | Yes | Unique identifier |
+| orderId | string | Yes | FK to the parent SalesOrder |
+| administrationId | string | Yes | FK to the Administration tenant |
+| nature | enum | Yes | One of RECURRING, ONE_OFF |
+| label | string | Yes | Human-readable line label |
+| amount | number | Yes | Per-interval amount for RECURRING; total for ONE_OFF (EUR, multipleOf 0.01) |
+| frequentie | enum | No | One of MAANDELIJKS, KWARTAALS, JAARLIJKS, WEKELIJKS, TWEEWEKELIJKS — required for RECURRING, null for ONE_OFF |
+| recognitionMethod | enum | Yes | One of OVER_TIME, POINT_IN_TIME |
+| recognitionDate | date | No | Required for POINT_IN_TIME lines; the date the obligation is satisfied |
+| termStart | date | No | Line term start; inherits the order's termStart when null |
+| termEnd | date | No | Line term end; inherits the order's termEnd when null |
+| accountNumber | string | No | GL account code (FK to Account.accountNumber) |
+
+**Relations:**
+- → SalesOrder (many-to-one, via orderId)
+- → Administration (many-to-one, via administrationId)
+- → Account (many-to-one, via accountNumber)
+
+> **Note (order-revenue-recognition, 2026-06-20):** Validation rules — a RECURRING line carries a non-null `frequentie`; a POINT_IN_TIME line carries a non-null `recognitionDate`; a line with null `termStart`/`termEnd` is evaluated against the parent order's term. Carries `x-openregister-audit-trail.enabled=true`, `administrationId`-scoped RBAC, and an `x-openregister-relations` entry to its parent SalesOrder. The recognition arithmetic is the chained `-engine` (kind: code) change per ADR-032; this head change ships only the declarative schema + seed.

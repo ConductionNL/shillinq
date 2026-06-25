@@ -100,7 +100,7 @@ class CommercialActivityReviewService
             return false;
         }
 
-        $boundary = $lastInstant->add(new DateInterval('P' . self::REVIEW_INTERVAL_DAYS . 'D'));
+        $boundary = $lastInstant->add(new DateInterval('P'.self::REVIEW_INTERVAL_DAYS.'D'));
         return $now >= $boundary;
 
     }//end detectOverdueState()
@@ -127,5 +127,4 @@ class CommercialActivityReviewService
         ];
 
     }//end composeReviewTask()
-
 }//end class

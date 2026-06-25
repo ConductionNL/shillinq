@@ -2,7 +2,7 @@
 	"menu": [
 		{
 			"id": "BbvProvincie",
-			"label": "BBV Provincie",
+			"label": "BBV Province",
 			"icon": "MapOutline",
 			"order": 75,
 			"visibilityPredicate": {

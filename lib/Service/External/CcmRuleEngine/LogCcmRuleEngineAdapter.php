@@ -90,7 +90,9 @@ class LogCcmRuleEngineAdapter implements CcmRuleEngineAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `ccm-rule-engine` (OpenRegister native rule-engine or third-party evaluator) and override CcmRuleEngineAdapterInterface in Application::register() to enable cross-app compile/evaluate.',
+                'note'   => 'Bind openconnector source slug `ccm-rule-engine` (OpenRegister native rule-engine or '
+                    .'third-party evaluator) and override CcmRuleEngineAdapterInterface in Application::register() '
+                    .'to enable cross-app compile/evaluate.',
             ],
         );
     }//end compileRule()
@@ -137,13 +139,18 @@ class LogCcmRuleEngineAdapter implements CcmRuleEngineAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `ccm-rule-engine` to enable cross-app evaluation. Until then, the local OCA\\Shillinq\\Service\\CcmRuleEngine carries v1 sync/async evaluation.',
+                'note'   => 'Bind openconnector source slug `ccm-rule-engine` to enable cross-app evaluation. '
+                    .'Until then, the local OCA\\Shillinq\\Service\\CcmRuleEngine carries v1 sync/async evaluation.',
             ],
         );
     }//end evaluate()
 
     /**
+     * Report whether this adapter is dormant (logs only, no outbound connector).
+     *
      * @inheritDoc
+     *
+     * @return bool Always true for the dormant log adapter.
      */
     public function isDormant(): bool
     {

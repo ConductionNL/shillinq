@@ -40,7 +40,6 @@ use DateTimeZone;
  */
 final class NotificationDeduplicator
 {
-
     /**
      * Constructor.
      *
@@ -50,7 +49,6 @@ final class NotificationDeduplicator
     {
 
     }//end __construct()
-
 
     /**
      * Check whether the (recipient, triggerType, bookingId) tuple has
@@ -71,7 +69,6 @@ final class NotificationDeduplicator
         return ($this->store->get(key: $key) > 0);
     }//end isDuplicate()
 
-
     /**
      * Record a fresh dispatch in the dedupe window.
      *
@@ -90,7 +87,6 @@ final class NotificationDeduplicator
         $this->store->increment(key: $key, ttl: $ttl);
     }//end record()
 
-
     /**
      * Build the dedupe key.
      *
@@ -103,14 +99,12 @@ final class NotificationDeduplicator
      */
     private function key(array $trigger, string $recipient, string $bookingId, ?DateTimeImmutable $at=null): string
     {
-        $now        = ($at ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
-        $window     = max(1, (int) ($trigger['deduplicationWindowMinutes'] ?? 5));
-        $type       = (string) ($trigger['triggerType'] ?? '');
-        $bucket     = (int) floor(((int) $now->format('U')) / ($window * 60));
-        $tuple      = $type.'|'.$recipient.'|'.$bookingId;
-        $tupleHash  = sha1($tuple);
+        $now       = ($at ?? new DateTimeImmutable('now', new DateTimeZone('UTC')));
+        $window    = max(1, (int) ($trigger['deduplicationWindowMinutes'] ?? 5));
+        $type      = (string) ($trigger['triggerType'] ?? '');
+        $bucket    = (int) floor(((int) $now->format('U')) / ($window * 60));
+        $tuple     = $type.'|'.$recipient.'|'.$bookingId;
+        $tupleHash = sha1($tuple);
         return 'shillinq:notif:dedupe:'.$bucket.':'.$tupleHash;
     }//end key()
-
-
 }//end class

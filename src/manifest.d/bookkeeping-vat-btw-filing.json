@@ -9,14 +9,14 @@
 	"menu": [
 		{
 			"id": "VATReturns",
-			"label": "BTW-aangifte",
+			"label": "BTW return",
 			"icon": "FileDocumentCheckOutline",
 			"route": "VATReturns",
 			"order": 70
 		},
 		{
 			"id": "VATReports",
-			"label": "BTW-rapportage",
+			"label": "BTW report",
 			"icon": "ChartBoxOutline",
 			"route": "VATReports",
 			"order": 71
@@ -27,23 +27,23 @@
 			"id": "VATReturns",
 			"route": "/vat-returns",
 			"type": "index",
-			"title": "BTW-aangiften",
+			"title": "BTW returns",
 			"config": {
 				"register": "shillinq",
 				"schema": "VATReturn",
 				"columns": [
-					{"key": "returnNumber", "label": "Aangiftenummer", "sortable": true},
-					{"key": "period", "label": "Periode", "sortable": true},
-					{"key": "periodYear", "label": "Jaar", "sortable": true},
+					{"key": "returnNumber", "label": "Return number", "sortable": true},
+					{"key": "period", "label": "Period", "sortable": true},
+					{"key": "periodYear", "label": "Year", "sortable": true},
 					{"key": "periodNumber", "label": "#", "sortable": true},
 					{"key": "regime", "label": "Regime", "sortable": true},
-					{"key": "totalVATCollected", "label": "BTW geheven", "sortable": true, "type": "money"},
-					{"key": "totalVATPaid", "label": "Voorbelasting", "sortable": true, "type": "money"},
-					{"key": "vatBalance", "label": "Saldo", "sortable": true, "type": "money"},
+					{"key": "totalVATCollected", "label": "BTW collected", "sortable": true, "type": "money"},
+					{"key": "totalVATPaid", "label": "Input tax", "sortable": true, "type": "money"},
+					{"key": "vatBalance", "label": "Balance", "sortable": true, "type": "money"},
 					{"key": "statusCode", "label": "Status", "sortable": true}
 				],
 				"filters": [
-					{"key": "period", "label": "Periode", "type": "select", "options": ["quarter", "month", "year"]},
+					{"key": "period", "label": "Period", "type": "select", "options": ["quarter", "month", "year"]},
 					{"key": "regime", "label": "Regime", "type": "select", "options": ["standard", "kor", "reverse-charge"]},
 					{"key": "statusCode", "label": "Status", "type": "select", "options": ["draft", "submitted", "verified", "filed"]}
 				],
@@ -56,68 +56,68 @@
 			"id": "VATReturnDetail",
 			"route": "/vat-returns/:id",
 			"type": "detail",
-			"title": "BTW-aangifte",
+			"title": "BTW return",
 			"config": {
 				"register": "shillinq",
 				"schema": "VATReturn",
 				"fields": [
-					{"key": "returnNumber", "label": "Aangiftenummer", "type": "string"},
-					{"key": "period", "label": "Periode", "type": "string"},
-					{"key": "periodYear", "label": "Fiscaal jaar", "type": "number"},
-					{"key": "periodNumber", "label": "Periodenummer", "type": "number"},
-					{"key": "startDate", "label": "Begindatum", "type": "string"},
-					{"key": "endDate", "label": "Einddatum", "type": "string"},
+					{"key": "returnNumber", "label": "Return number", "type": "string"},
+					{"key": "period", "label": "Period", "type": "string"},
+					{"key": "periodYear", "label": "Fiscal year", "type": "number"},
+					{"key": "periodNumber", "label": "Period number", "type": "number"},
+					{"key": "startDate", "label": "Start date", "type": "string"},
+					{"key": "endDate", "label": "End date", "type": "string"},
 					{"key": "regime", "label": "Regime", "type": "string"},
-					{"key": "administrationId", "label": "Administratie", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"},
 					{"key": "statusCode", "label": "Status", "type": "string"},
-					{"key": "submissionDate", "label": "Ingediend op", "type": "string"},
-					{"key": "verificationDate", "label": "Bevestigd op", "type": "string"},
-					{"key": "filingReference", "label": "Belastingdienst-referentie", "type": "string"},
-					{"key": "totalVATCollected", "label": "BTW geheven", "type": "number"},
-					{"key": "totalVATPaid", "label": "Voorbelasting", "type": "number"},
-					{"key": "vatBalance", "label": "Saldo", "type": "number"},
-					{"key": "totalTaxableAmount", "label": "Belastbare omzet", "type": "number"},
-					{"key": "notes", "label": "Notities", "type": "string"}
+					{"key": "submissionDate", "label": "Submitted on", "type": "string"},
+					{"key": "verificationDate", "label": "Confirmed on", "type": "string"},
+					{"key": "filingReference", "label": "Belastingdienst reference", "type": "string"},
+					{"key": "totalVATCollected", "label": "BTW collected", "type": "number"},
+					{"key": "totalVATPaid", "label": "Input tax", "type": "number"},
+					{"key": "vatBalance", "label": "Balance", "type": "number"},
+					{"key": "totalTaxableAmount", "label": "Taxable turnover", "type": "number"},
+					{"key": "notes", "label": "Notes", "type": "string"}
 				],
 				"sections": [
 					{
 						"id": "Declarations",
-						"label": "Rubrieken",
+						"label": "Sections",
 						"type": "table",
 						"register": "shillinq",
 						"schema": "VATDeclaration",
 						"filter": {"returnId": "@self.id"},
 						"columns": [
 							{"key": "type", "label": "Type", "sortable": true},
-							{"key": "taxRate", "label": "Tarief %", "sortable": true},
-							{"key": "totalTaxableAmount", "label": "Belastbaar", "sortable": true, "type": "money"},
+							{"key": "taxRate", "label": "Rate %", "sortable": true},
+							{"key": "totalTaxableAmount", "label": "Taxable", "sortable": true, "type": "money"},
 							{"key": "totalVATAmount", "label": "BTW", "sortable": true, "type": "money"},
-							{"key": "lineCount", "label": "Regels", "sortable": true}
+							{"key": "lineCount", "label": "Lines", "sortable": true}
 						]
 					},
 					{
 						"id": "Lines",
-						"label": "Regels",
+						"label": "Lines",
 						"type": "table",
 						"register": "shillinq",
 						"schema": "VATLine",
 						"filter": {"returnId": "@self.id"},
 						"columns": [
 							{"key": "lineNumber", "label": "#", "sortable": true},
-							{"key": "glAccountNumber", "label": "Grootboek", "sortable": true},
-							{"key": "glAccountName", "label": "Naam", "sortable": true},
+							{"key": "glAccountNumber", "label": "Ledger", "sortable": true},
+							{"key": "glAccountName", "label": "Name", "sortable": true},
 							{"key": "type", "label": "Type", "sortable": true},
-							{"key": "taxRate", "label": "Tarief %", "sortable": true},
-							{"key": "taxableAmount", "label": "Belastbaar", "sortable": true, "type": "money"},
+							{"key": "taxRate", "label": "Rate %", "sortable": true},
+							{"key": "taxableAmount", "label": "Taxable", "sortable": true, "type": "money"},
 							{"key": "vatAmount", "label": "BTW", "sortable": true, "type": "money"}
 						]
 					}
 				],
 				"actions": [
-					{"id": "submit", "label": "Indienen", "type": "lifecycle", "transition": "submit", "enabledWhen": "statusCode === 'draft'"},
-					{"id": "rebase", "label": "Heropenen", "type": "lifecycle", "transition": "rebase", "enabledWhen": "statusCode === 'submitted'"},
-					{"id": "verify", "label": "Bevestiging vastleggen", "type": "lifecycle", "transition": "verify", "enabledWhen": "statusCode === 'submitted'"},
-					{"id": "file", "label": "Definitief maken", "type": "lifecycle", "transition": "file", "enabledWhen": "statusCode === 'verified'"}
+					{"id": "submit", "label": "Submit", "type": "lifecycle", "transition": "submit", "enabledWhen": "statusCode === 'draft'"},
+					{"id": "rebase", "label": "Reopen", "type": "lifecycle", "transition": "rebase", "enabledWhen": "statusCode === 'submitted'"},
+					{"id": "verify", "label": "Record confirmation", "type": "lifecycle", "transition": "verify", "enabledWhen": "statusCode === 'submitted'"},
+					{"id": "file", "label": "Finalize", "type": "lifecycle", "transition": "file", "enabledWhen": "statusCode === 'verified'"}
 				]
 			}
 		},
@@ -125,7 +125,7 @@
 			"id": "VATReports",
 			"route": "/vat-reports",
 			"type": "dashboard",
-			"title": "BTW-rapportage",
+			"title": "BTW report",
 			"config": {
 				"register": "shillinq",
 				"schema": "VATReturn",
@@ -133,32 +133,32 @@
 					{
 						"id": "summary",
 						"type": "summary",
-						"label": "BTW-overzicht (jaar)",
+						"label": "BTW overview (year)",
 						"fields": [
-							{"key": "vatBalance", "label": "Saldo BTW", "aggregation": "sum"},
-							{"key": "totalVATCollected", "label": "BTW geheven", "aggregation": "sum"},
-							{"key": "totalVATPaid", "label": "Voorbelasting", "aggregation": "sum"}
+							{"key": "vatBalance", "label": "BTW balance", "aggregation": "sum"},
+							{"key": "totalVATCollected", "label": "BTW collected", "aggregation": "sum"},
+							{"key": "totalVATPaid", "label": "Input tax", "aggregation": "sum"}
 						]
 					},
 					{
 						"id": "periodTable",
 						"type": "table",
-						"label": "Aangiften per periode",
+						"label": "Returns per period",
 						"columns": [
-							{"key": "returnNumber", "label": "Aangifte"},
-							{"key": "periodYear", "label": "Jaar"},
-							{"key": "periodNumber", "label": "Periode"},
+							{"key": "returnNumber", "label": "Return"},
+							{"key": "periodYear", "label": "Year"},
+							{"key": "periodNumber", "label": "Period"},
 							{"key": "regime", "label": "Regime"},
-							{"key": "totalVATCollected", "label": "Geheven", "type": "money"},
-							{"key": "totalVATPaid", "label": "Voorbelasting", "type": "money"},
-							{"key": "vatBalance", "label": "Saldo", "type": "money"},
+							{"key": "totalVATCollected", "label": "Collected", "type": "money"},
+							{"key": "totalVATPaid", "label": "Input tax", "type": "money"},
+							{"key": "vatBalance", "label": "Balance", "type": "money"},
 							{"key": "statusCode", "label": "Status"}
 						]
 					},
 					{
 						"id": "trend",
 						"type": "lineChart",
-						"label": "BTW-saldo per kwartaal",
+						"label": "BTW balance per quarter",
 						"xKey": "periodNumber",
 						"yKey": "vatBalance",
 						"groupBy": "periodYear"
@@ -166,7 +166,7 @@
 					{
 						"id": "statusDistribution",
 						"type": "pieChart",
-						"label": "Status-verdeling",
+						"label": "Status distribution",
 						"groupBy": "statusCode"
 					}
 				],
@@ -180,16 +180,16 @@
 			"id": "VATReturnCreateDialog",
 			"route": "/vat-returns/new",
 			"type": "dialog",
-			"title": "Nieuwe BTW-aangifte",
+			"title": "New BTW return",
 			"config": {
 				"register": "shillinq",
 				"schema": "VATReturn",
 				"action": {"verb": "POST", "url": "/api/vat-returns"},
 				"fields": [
-					{"key": "administrationId", "label": "Administratie", "type": "string", "required": true},
-					{"key": "period", "label": "Periode", "type": "select", "required": true, "options": ["quarter", "month", "year"], "default": "quarter"},
-					{"key": "periodYear", "label": "Fiscaal jaar", "type": "number", "required": true, "default": 2026},
-					{"key": "periodNumber", "label": "Periodenummer", "type": "number", "required": true, "default": 1},
+					{"key": "administrationId", "label": "Administration", "type": "string", "required": true},
+					{"key": "period", "label": "Period", "type": "select", "required": true, "options": ["quarter", "month", "year"], "default": "quarter"},
+					{"key": "periodYear", "label": "Fiscal year", "type": "number", "required": true, "default": 2026},
+					{"key": "periodNumber", "label": "Period number", "type": "number", "required": true, "default": 1},
 					{"key": "regime", "label": "Regime", "type": "select", "required": true, "options": ["standard", "kor", "reverse-charge"], "default": "standard"}
 				],
 				"onSuccess": "navigate:VATReturnDetail"

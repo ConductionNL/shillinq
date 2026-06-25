@@ -62,7 +62,6 @@ class CalendarController extends Controller
      */
     private const DEFAULT_RANGE_DAYS = 30;
 
-
     /**
      * Construct the controller with DI dependencies.
      *
@@ -85,7 +84,6 @@ class CalendarController extends Controller
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
-
 
     /**
      * GET /api/v2/calendars — list calendars accessible to the current user.
@@ -132,10 +130,12 @@ class CalendarController extends Controller
             $records       = $objectService
                 ->setRegister($this->settings->getRegisterSlug())
                 ->setSchema('Calendar')
-                ->findAll([
-                    'filters' => $filters,
-                    'limit'   => 500,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => $filters,
+                            'limit'   => 500,
+                        ]
+                        );
         } catch (\Throwable $e) {
             $this->logger->error(
                 'Shillinq: calendars index failed',
@@ -152,7 +152,6 @@ class CalendarController extends Controller
         return new JSONResponse(['calendars' => $calendars]);
 
     }//end index()
-
 
     /**
      * GET /api/v2/calendars/{calendarId} — return one calendar by id.
@@ -184,7 +183,6 @@ class CalendarController extends Controller
         return new JSONResponse($this->formatCalendar(record: $record));
 
     }//end show()
-
 
     /**
      * GET /api/v2/calendars/{calendarId}/bookings — bookings in a date range.
@@ -233,10 +231,12 @@ class CalendarController extends Controller
             $records       = $objectService
                 ->setRegister($this->settings->getRegisterSlug())
                 ->setSchema('Booking')
-                ->findAll([
-                    'filters' => ['calendar' => $calendarId],
-                    'limit'   => 5000,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => ['calendar' => $calendarId],
+                            'limit'   => 5000,
+                        ]
+                        );
         } catch (\Throwable $e) {
             $this->logger->error(
                 'Shillinq: booking lookup failed',
@@ -247,7 +247,7 @@ class CalendarController extends Controller
 
         $bookings = [];
         foreach ($records as $record) {
-            $row = $this->toArray(object: $record);
+            $row      = $this->toArray(object: $record);
             $startRaw = (string) ($row['startTime'] ?? '');
             $endRaw   = (string) ($row['endTime'] ?? '');
             if ($startRaw === '' || $endRaw === '') {
@@ -275,7 +275,6 @@ class CalendarController extends Controller
         return new JSONResponse(['bookings' => $bookings]);
 
     }//end listBookings()
-
 
     /**
      * POST /api/v2/calendars/{calendarId}/bookings — create a booking.
@@ -384,9 +383,9 @@ class CalendarController extends Controller
                 );
             }
 
-            $bookingId    = $this->generateBookingId();
+            $bookingId     = $this->generateBookingId();
             $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $payload      = [
+            $payload       = [
                 'administrationId' => (string) ($calendarRow['administrationId'] ?? 'adm-1'),
                 'bookingId'        => $bookingId,
                 'calendar'         => $calendarId,
@@ -432,7 +431,6 @@ class CalendarController extends Controller
 
     }//end createBooking()
 
-
     /**
      * Require an authenticated user (the controller is #[NoAdminRequired]
      * but anonymous access is rejected per ADR-005).
@@ -448,7 +446,6 @@ class CalendarController extends Controller
         return null;
 
     }//end requireAuth()
-
 
     /**
      * Resolve the administration id to scope reads to. When the caller
@@ -468,10 +465,13 @@ class CalendarController extends Controller
 
         $context = $this->context->buildContext();
         $active  = (string) ($context['activeAdministrationId'] ?? '');
-        return ($active !== '' ? $active : null);
+        if ($active !== '') {
+            return $active;
+        }
+
+        return null;
 
     }//end resolveAdministrationId()
-
 
     /**
      * Look up a calendar by its logical id.
@@ -491,10 +491,12 @@ class CalendarController extends Controller
             $records       = $objectService
                 ->setRegister($this->settings->getRegisterSlug())
                 ->setSchema('Calendar')
-                ->findAll([
-                    'filters' => ['calendarId' => $calendarId],
-                    'limit'   => 1,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => ['calendarId' => $calendarId],
+                            'limit'   => 1,
+                        ]
+                        );
         } catch (\Throwable $e) {
             $this->logger->error(
                 'Shillinq: calendar lookup failed',
@@ -511,7 +513,6 @@ class CalendarController extends Controller
 
     }//end loadCalendar()
 
-
     /**
      * Default a missing range to today + 30 days and normalise to UTC.
      *
@@ -526,13 +527,17 @@ class CalendarController extends Controller
     {
         $tz = new DateTimeZone('UTC');
 
-        $startDt = ($start !== '')
-            ? new DateTimeImmutable($start, $tz)
-            : new DateTimeImmutable('today', $tz);
+        if ($start !== '') {
+            $startDt = new DateTimeImmutable($start, $tz);
+        } else {
+            $startDt = new DateTimeImmutable('today', $tz);
+        }
 
-        $endDt = ($end !== '')
-            ? new DateTimeImmutable($end, $tz)
-            : $startDt->modify('+'.self::DEFAULT_RANGE_DAYS.' days');
+        if ($end !== '') {
+            $endDt = new DateTimeImmutable($end, $tz);
+        } else {
+            $endDt = $startDt->modify('+'.self::DEFAULT_RANGE_DAYS.' days');
+        }
 
         if ($endDt <= $startDt) {
             throw new \InvalidArgumentException('end must be after start');
@@ -541,7 +546,6 @@ class CalendarController extends Controller
         return [$startDt->setTimezone($tz), $endDt->setTimezone($tz)];
 
     }//end resolveRange()
-
 
     /**
      * Generate a stable, sortable booking id for a new booking.
@@ -553,7 +557,6 @@ class CalendarController extends Controller
         return 'bk-'.gmdate('YmdHis').'-'.bin2hex(random_bytes(2));
 
     }//end generateBookingId()
-
 
     /**
      * Shape a calendar OR record into the API response payload.
@@ -578,7 +581,6 @@ class CalendarController extends Controller
         ];
 
     }//end formatCalendar()
-
 
     /**
      * Shape a booking OR record into the API response payload.
@@ -606,7 +608,6 @@ class CalendarController extends Controller
         ];
 
     }//end formatBooking()
-
 
     /**
      * Normalise an OR record (Entity, array, or JSON-serialisable) into a flat array.
@@ -642,6 +643,4 @@ class CalendarController extends Controller
         return [];
 
     }//end toArray()
-
-
 }//end class

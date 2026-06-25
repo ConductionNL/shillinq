@@ -103,7 +103,7 @@ class PayrollSbrConversionService
         $werkgeverId = (string) ($lhAfdracht['werkgeverId'] ?? '');
         $periodeId   = (string) ($lhAfdracht['periodeId'] ?? '');
 
-        $stamped                   = $lhAfdracht;
+        $stamped = $lhAfdracht;
         $stamped['sbrInstanceRef'] = $this->deriveInstanceRef(werkgeverId: $werkgeverId, periodeId: $periodeId);
 
         return $stamped;

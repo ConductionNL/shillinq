@@ -100,13 +100,15 @@ interface MolliePaymentAdapterInterface
      * the webhook listener can branch on the synthetic id without
      * crashing.
      *
-     * @param string              $mollieId         Mollie paymentId from
-     *                                              the inbound `id` body
-     *                                              parameter.
-     * @param array<string,string> $headers         Request headers
-     *                                              (signature is in
-     *                                              `Mollie-Signature` or
-     *                                              the v2 header set).
+     * @param string               $mollieId Mollie paymentId from
+     *                                       the inbound `id` body
+     *                                       parameter.
+     * @param array<string,string> $headers  Request headers
+     *                                       (signature is
+     *                                       in
+     *                                       `Mollie-Signature`
+     *                                       or the v2
+     *                                       header set).
      *
      * @return MolliePaymentResult Loaded payment record (status reflects
      *                             Mollie-side state).

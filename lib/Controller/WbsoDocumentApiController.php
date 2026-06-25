@@ -107,22 +107,26 @@ class WbsoDocumentApiController extends Controller
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to load documents', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to load documents', context: ['exception' => $e->getMessage()]);
         }
 
         if ($status !== '') {
-            $rows = array_values(array_filter(
+            $rows = array_values(
+                    array_filter(
                 $rows,
                 static fn (array $row): bool => ((string) ($row['status'] ?? '') === $status)
-            ));
+            )
+                    );
         }
 
         $filedFrom = (string) $this->request->getParam('filedFrom', '');
         if ($filedFrom !== '') {
-            $rows = array_values(array_filter(
+            $rows = array_values(
+                    array_filter(
                 $rows,
                 static fn (array $row): bool => ((string) ($row['filedAt'] ?? $row['documentDate'] ?? '') >= $filedFrom)
-            ));
+            )
+                    );
         }
 
         return new JSONResponse(
@@ -161,7 +165,7 @@ class WbsoDocumentApiController extends Controller
         try {
             $row = $this->documents->getDocument(administrationId: $administrationId, documentId: $id);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to load document', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to load document', context: ['exception' => $e->getMessage()]);
         }
 
         if ($row === null) {
@@ -194,10 +198,10 @@ class WbsoDocumentApiController extends Controller
         }
 
         $payload = [
-            'documentType'    => (string) $this->request->getParam('documentType', ''),
-            'documentNumber'  => (string) $this->request->getParam('documentNumber', ''),
-            'documentDate'    => (string) $this->request->getParam('documentDate', ''),
-            'fileReference'   => (string) $this->request->getParam('fileReference', ''),
+            'documentType'   => (string) $this->request->getParam('documentType', ''),
+            'documentNumber' => (string) $this->request->getParam('documentNumber', ''),
+            'documentDate'   => (string) $this->request->getParam('documentDate', ''),
+            'fileReference'  => (string) $this->request->getParam('fileReference', ''),
         ];
 
         if ($payload['fileReference'] === '') {
@@ -209,7 +213,7 @@ class WbsoDocumentApiController extends Controller
         } catch (InvalidArgumentException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to create document', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to create document', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse($row, Http::STATUS_CREATED);
@@ -244,7 +248,11 @@ class WbsoDocumentApiController extends Controller
         }
 
         $user = $this->userSession->getUser();
-        $approver = $user === null ? '' : $user->getUID();
+        if ($user === null) {
+            $approver = '';
+        } else {
+            $approver = $user->getUID();
+        }
 
         try {
             $row = $this->documents->fileDocument(
@@ -257,7 +265,7 @@ class WbsoDocumentApiController extends Controller
         } catch (RuntimeException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to file document', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to file document', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse($row, Http::STATUS_OK);
@@ -311,7 +319,7 @@ class WbsoDocumentApiController extends Controller
         } catch (RuntimeException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to archive document', ['exception' => $e->getMessage()]);
+            return $this->fail(message: 'Failed to archive document', context: ['exception' => $e->getMessage()]);
         }
 
         return new JSONResponse($row, Http::STATUS_OK);

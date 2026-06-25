@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-cost-centers-dimensions
 
 **Status:** proposed

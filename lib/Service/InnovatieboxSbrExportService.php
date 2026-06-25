@@ -76,8 +76,8 @@ class InnovatieboxSbrExportService
      * Convert an InnovatieboxAggregationService result into an SBR/XBRL
      * instance hand-off payload.
      *
-     * @param array<string,mixed> $aggregation     The InnovatieboxAggregationService::aggregate result.
-     *                                             Expected shape: {data: list<row>, totals: assoc}.
+     * @param array<string,mixed> $aggregation      The InnovatieboxAggregationService::aggregate result.
+     *                                              Expected shape: {data: list<row>, totals: assoc}.
      * @param string              $administrationId Administration scope (server-resolved, REQ-IBA-008).
      * @param int                 $boekjaar         Fiscal year.
      * @param string              $methode          Election: 'per_asset_afpelmethode' (default)
@@ -97,17 +97,17 @@ class InnovatieboxSbrExportService
         $totals = $this->extractTotals(aggregation: $aggregation);
 
         $payload = [
-            'taxonomyVersion'         => self::SBR_TAXONOMY_VERSION,
-            'instanceRef'             => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
-            'collectie'               => self::SBR_COLLECTION,
-            'identificerendePeriode'  => sprintf('%04d', $boekjaar),
-            'administratie'           => $administrationId,
-            'gekozenMethode'          => $methode,
-            'regel23_kwalifWinst'     => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
-            'regel23_vpbInnovatie'    => round((float) ($totals['vpb_op_innovatiedeel'] ?? 0.0), 2),
-            'regel23_voordeel'        => round((float) ($totals['voordeel_innovatiebox'] ?? 0.0), 2),
-            'effectiefTarief'         => 0.09,
-            'status'                  => 'READY_FOR_SBR',
+            'taxonomyVersion'        => self::SBR_TAXONOMY_VERSION,
+            'instanceRef'            => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
+            'collectie'              => self::SBR_COLLECTION,
+            'identificerendePeriode' => sprintf('%04d', $boekjaar),
+            'administratie'          => $administrationId,
+            'gekozenMethode'         => $methode,
+            'regel23_kwalifWinst'    => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
+            'regel23_vpbInnovatie'   => round((float) ($totals['vpb_op_innovatiedeel'] ?? 0.0), 2),
+            'regel23_voordeel'       => round((float) ($totals['voordeel_innovatiebox'] ?? 0.0), 2),
+            'effectiefTarief'        => 0.09,
+            'status'                 => 'READY_FOR_SBR',
         ];
 
         if ($methode === 'forfaitair_25pct') {
@@ -118,10 +118,10 @@ class InnovatieboxSbrExportService
                 'capEur'        => 25000,
                 'capApplied'    => ((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0) > 25000.0),
             ];
-            $payload['perAssetRows'] = [];
+            $payload['perAssetRows']   = [];
         } else {
             // Afpelmethode: emit one row per qualifying asset.
-            $payload['perAssetRows'] = $this->renderAssetRows(rows: $rows);
+            $payload['perAssetRows']   = $this->renderAssetRows(rows: $rows);
             $payload['forfaitairLine'] = null;
         }
 
@@ -138,7 +138,7 @@ class InnovatieboxSbrExportService
      * pre-formatting (locale, EUR signs) is left to the docudesk renderer
      * itself per ADR-024.
      *
-     * @param array<string,mixed> $aggregation     The InnovatieboxAggregationService::aggregate result.
+     * @param array<string,mixed> $aggregation      The InnovatieboxAggregationService::aggregate result.
      * @param string              $administrationId Administration scope.
      * @param int                 $boekjaar         Fiscal year.
      * @param string              $methode          Election method.
@@ -156,18 +156,30 @@ class InnovatieboxSbrExportService
         $rows   = $this->extractRows(aggregation: $aggregation);
         $totals = $this->extractTotals(aggregation: $aggregation);
 
+        if ($methode === 'forfaitair_25pct') {
+            $perAsset = [];
+        } else {
+            $perAsset = $this->renderAssetRows(rows: $rows);
+        }
+
+        if ($methode === 'forfaitair_25pct') {
+            $forfaitair = [
+                'kwalifVoorCap' => round((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
+                'kwalifNaCap'   => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
+                'capEur'        => 25000,
+                'capApplied'    => ((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0) > 25000.0),
+            ];
+        } else {
+            $forfaitair = null;
+        }
+
         return [
             'administrationId' => $administrationId,
             'boekjaar'         => $boekjaar,
             'methode'          => $methode,
             'instanceRef'      => $this->deriveInstanceRef(administrationId: $administrationId, boekjaar: $boekjaar),
-            'perAsset'         => ($methode === 'forfaitair_25pct') ? [] : $this->renderAssetRows(rows: $rows),
-            'forfaitair'       => ($methode === 'forfaitair_25pct') ? [
-                'kwalifVoorCap' => round((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
-                'kwalifNaCap'   => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),
-                'capEur'        => 25000,
-                'capApplied'    => ((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0) > 25000.0),
-            ] : null,
+            'perAsset'         => $perAsset,
+            'forfaitair'       => $forfaitair,
             'totals'           => [
                 'winst_voor_nexus' => round((float) ($totals['kwalificerende_winst_voor_nexus'] ?? 0.0), 2),
                 'winst_na_nexus'   => round((float) ($totals['kwalificerende_winst_na_nexus'] ?? 0.0), 2),

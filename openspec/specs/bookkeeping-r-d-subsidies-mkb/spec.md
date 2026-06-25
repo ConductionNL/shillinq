@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-r-d-subsidies-mkb
 
 **Status:** proposed

@@ -91,7 +91,9 @@ class LogCsrdEsrsXbrlAdapter implements CsrdEsrsXbrlAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `efrag-esrs-xbrl` (requires bookkeeping-sbr-xbrl-reporting dependency + EFRAG ESRS XML schema import) and override CsrdEsrsXbrlAdapterInterface in Application::register() to enable real taxonomy mapping.',
+                'note'   => 'Bind openconnector source slug `efrag-esrs-xbrl` '
+                    .'(requires bookkeeping-sbr-xbrl-reporting dependency + EFRAG ESRS XML schema import) '
+                    .'and override CsrdEsrsXbrlAdapterInterface in Application::register() to enable real taxonomy mapping.',
             ],
         );
     }//end mapTaxonomy()
@@ -131,7 +133,9 @@ class LogCsrdEsrsXbrlAdapter implements CsrdEsrsXbrlAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'EFRAG IG-3 mandatory-data-point validation deferred; the LOG_DEFERRED sentinel deliberately blocks publish. Bind openconnector source slug `efrag-esrs-xbrl` to enable real validation.',
+                'note'   => 'EFRAG IG-3 mandatory-data-point validation deferred; the LOG_DEFERRED '
+                    .'sentinel deliberately blocks publish. Bind openconnector source slug '
+                    .'`efrag-esrs-xbrl` to enable real validation.',
             ],
         );
     }//end validateMandatoryDataPoints()
@@ -172,12 +176,18 @@ class LogCsrdEsrsXbrlAdapter implements CsrdEsrsXbrlAdapterInterface
             dormant: true,
             extras: [
                 'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `efrag-esrs-xbrl` to enable real iXBRL instance build; the produced instance is handed to DigipoortSbrAdapterInterface (filingType: csrd-xbrl-pack) for KvK / AFM transport.',
+                'note'   => 'Bind openconnector source slug `efrag-esrs-xbrl` to enable real iXBRL '
+                    .'instance build; the produced instance is handed to DigipoortSbrAdapterInterface '
+                    .'(filingType: csrd-xbrl-pack) for KvK / AFM transport.',
             ],
         );
     }//end buildInstance()
 
     /**
+     * Report whether this adapter is dormant (log-only).
+     *
+     * @return bool Always TRUE for the log-only adapter.
+     *
      * @inheritDoc
      */
     public function isDormant(): bool

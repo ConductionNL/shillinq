@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: expense-capture-core
 
 **Status:** proposed

@@ -24,6 +24,7 @@
 import MobileScannerHome from './views/inventory/MobileScannerHome.vue'
 import ReceivePage from './views/inventory/ReceivePage.vue'
 import TransferPage from './views/inventory/TransferPage.vue'
+import StandardsPolicyEditor from './views/settings/StandardsPolicyEditor.vue'
 import PickPage from './views/inventory/PickPage.vue'
 import CountPage from './views/inventory/CountPage.vue'
 // bookings-resource-calendar exception (#117, per design.md):
@@ -94,6 +95,13 @@ import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceipt
 // type (the OCR meter is a conditional bespoke block), so the view is
 // registered as a kind:"page" custom component.
 import SupplierInvoiceDetail from './components/supplier-invoice/SupplierInvoiceDetail.vue'
+
+// payment-run-sepa-export: the actions component injected into the PaymentRun
+// detail page's #actions slot (wired as the page's actionsComponent in the
+// manifest). It renders the "Export to bank" button (approved runs) + the
+// "Reconcile / import statement" launcher (exported runs). Registered as
+// kind:"widget" so the manifest actionsComponent field resolves to this entry.
+import PaymentRunDetailActions from './components/payment-run/PaymentRunDetailActions.vue'
 
 // bookkeeping-purchase-order-3way slice 06 (REQ-PO3W-004 / REQ-PO3W-006):
 // the three-way-match index renders per-row match-status pills and a
@@ -255,7 +263,7 @@ import ExternalAdapterDetail from './views/external-adapters/ExternalAdapterDeta
 // declarative `stats-block` / `chart` / `table` widget types, so
 // they are registered as kind:"widget" components and wired into
 // the Dashboard page through its `slots` map (ADR-024 / ADR-036).
-import FinanceKpisWidget from './components/dashboard/financial/FinanceKpisWidget.vue'
+import FinanceKpiCardWidget from './components/dashboard/financial/FinanceKpiCardWidget.vue'
 import TurnoverChartWidget from './components/dashboard/financial/TurnoverChartWidget.vue'
 import MarginChartWidget from './components/dashboard/financial/MarginChartWidget.vue'
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
@@ -273,9 +281,29 @@ import FinancialDashboardActions from './components/dashboard/financial/Financia
 // modal-isolated under src/modals/ (hydra gate-13).
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
 
+// reporting-compliance-consolidation: the Reporting & Compliance section is
+// two custom pages. The overview renders the static ReportCatalogue
+// (lib/Reporting/ReportCatalogue.php) as category-grouped cards with a
+// per-card format picker and an isolated GenerateReportDialog that POSTs
+// /api/reporting/generate — none of which the declarative dashboard/index
+// page types can author. The generated-reports index renders the persisted
+// GeneratedReport records with a per-row download link + a three-facet
+// filter row that does not fit the built-in `index` page type. Both are
+// kind:"page" custom components per ADR-024 / ADR-036; the manifest
+// fragment src/manifest.d/reporting-compliance.json declares the routes.
+import ReportingComplianceOverview from './components/reporting/ReportingComplianceOverview.vue'
+import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.vue'
+
+// Import bank statements lives under the Configuratie (settings) group as a
+// page that hosts BankStatementWizard — moved off the Financial overview
+// dashboard so it sits with the other one-time setup tasks. manifest fragment
+// src/manifest.d/bank-import-settings.json declares the route + menu entry.
+import BankImportPage from './components/settings/BankImportPage.vue'
+
 export default {
 	RecurringInvoiceProfileModal: { kind: 'modal', component: RecurringInvoiceProfileModal },
 
+	StandardsPolicyEditor: { kind: 'page', component: StandardsPolicyEditor },
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
 	MobileScannerReceive: { kind: 'page', component: ReceivePage },
 	MobileScannerTransfer: { kind: 'page', component: TransferPage },
@@ -339,7 +367,7 @@ export default {
 	ExternalAdapterDetail: { kind: 'page', component: ExternalAdapterDetail },
 
 	// financial-dashboard-graphs: Financial overview dashboard widgets.
-	FinanceKpisWidget: { kind: 'widget', component: FinanceKpisWidget },
+	FinanceKpiCardWidget: { kind: 'widget', component: FinanceKpiCardWidget },
 	TurnoverChartWidget: { kind: 'widget', component: TurnoverChartWidget },
 	MarginChartWidget: { kind: 'widget', component: MarginChartWidget },
 	CashflowChartWidget: { kind: 'widget', component: CashflowChartWidget },
@@ -350,4 +378,13 @@ export default {
 	// Create invoice / Import bank) registered as kind:"widget" so the manifest
 	// actionsComponent field resolves to this entry via CnPageRenderer.
 	FinancialDashboardActions: { kind: 'widget', component: FinancialDashboardActions },
+
+	// payment-run-sepa-export: PaymentRun detail-page actions (Export to bank /
+	// Reconcile). kind:"widget" so the manifest actionsComponent field resolves.
+	PaymentRunDetailActions: { kind: 'widget', component: PaymentRunDetailActions },
+
+	// reporting-compliance-consolidation: Reporting & Compliance pages.
+	ReportingComplianceOverview: { kind: 'page', component: ReportingComplianceOverview },
+	GeneratedReportsIndex: { kind: 'page', component: GeneratedReportsIndex },
+	BankImportPage: { kind: 'page', component: BankImportPage },
 }

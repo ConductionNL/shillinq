@@ -79,8 +79,8 @@ class WbsoTransactionService
     /**
      * List transactions for an administration, optionally filtered.
      *
-     * @param string                $administrationId Administration scope.
-     * @param array<string,mixed>   $filters          Optional filters: status, type, dateFrom, dateTo.
+     * @param string              $administrationId Administration scope.
+     * @param array<string,mixed> $filters          Optional filters: status, type, dateFrom, dateTo.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -92,14 +92,19 @@ class WbsoTransactionService
             ->setSchema('Transaction')
             ->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-        return array_values(array_filter(
+        return array_values(
+                array_filter(
             $transactions,
             static function (array $row) use ($filters): bool {
-                if (isset($filters['status']) === true && $filters['status'] !== '' && (string) ($row['status'] ?? '') !== (string) $filters['status']) {
+                if (isset($filters['status']) === true && $filters['status'] !== ''
+                    && (string) ($row['status'] ?? '') !== (string) $filters['status']
+                ) {
                     return false;
                 }
 
-                if (isset($filters['type']) === true && $filters['type'] !== '' && (string) ($row['transactionType'] ?? '') !== (string) $filters['type']) {
+                if (isset($filters['type']) === true && $filters['type'] !== ''
+                    && (string) ($row['transactionType'] ?? '') !== (string) $filters['type']
+                ) {
                     return false;
                 }
 
@@ -114,7 +119,8 @@ class WbsoTransactionService
 
                 return true;
             }
-        ));
+        )
+                );
 
     }//end listTransactions()
 
@@ -238,17 +244,17 @@ class WbsoTransactionService
         }
 
         $reversal = [
-            'transactionNumber'        => (string) $existing['transactionNumber'].'-REV',
-            'transactionType'          => 'credit-note',
-            'transactionDate'          => (new \DateTimeImmutable())->format('Y-m-d'),
-            'amount'                   => (float) ($existing['amount'] ?? 0.0),
-            'description'              => 'Reversal of '.((string) ($existing['description'] ?? '')),
-            'status'                   => 'reversed',
-            'administrationId'         => $administrationId,
-            'createdAt'                => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
-            'createdBy'                => $this->currentUserId(),
-            'reversalOfTransactionId'  => (string) ($existing['id'] ?? $existing['transactionNumber']),
-            'reversalReason'           => $reason,
+            'transactionNumber'       => (string) $existing['transactionNumber'].'-REV',
+            'transactionType'         => 'credit-note',
+            'transactionDate'         => (new \DateTimeImmutable())->format('Y-m-d'),
+            'amount'                  => (float) ($existing['amount'] ?? 0.0),
+            'description'             => 'Reversal of '.((string) ($existing['description'] ?? '')),
+            'status'                  => 'reversed',
+            'administrationId'        => $administrationId,
+            'createdAt'               => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+            'createdBy'               => $this->currentUserId(),
+            'reversalOfTransactionId' => (string) ($existing['id'] ?? $existing['transactionNumber']),
+            'reversalReason'          => $reason,
         ];
 
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');

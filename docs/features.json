@@ -1,0 +1,662 @@
+[
+  {
+    "slug": "app-administration",
+    "title": "Spec: app-administration",
+    "summary": "Defines the application-administration surface of Shillinq as it ships today: the authenticated settings endpoint, forced register-configuration re-import, the public health probe, the admin-only metrics endpoint, and the generic OpenRegister object store used by the Vue shell.",
+    "docsUrl": "openspec/specs/app-administration/spec.md"
+  },
+  {
+    "slug": "apphost-adoption",
+    "title": "apphost-adoption",
+    "summary": "Serves shillinq's health and Prometheus metrics endpoints through the OpenRegister AppHost engine, so operators get real database and OpenRegister availability checks and admin-only Prometheus exposition instead of hardcoded placeholders. Exposes the imperative pipelinq customer-bridge counters and circuit-breaker state via a registered metrics provider, and lets the AppHost generic classes serve the dashboard, admin settings, and canonical routes while preserving shillinq's bespoke settings, preferences, seeding, and deep-link plumbing.",
+    "docsUrl": "openspec/specs/apphost-adoption/spec.md"
+  },
+  {
+    "slug": "bookings",
+    "title": "Bookings",
+    "summary": "Defines the canonical requirements for per-resource calendar and booking management in Shillinq, enabling multi-resource (staff, room, equipment) appointment scheduling with automated conflict detection. This spec establishes the foundational data model, API contracts, and UI patterns for the booking module.",
+    "docsUrl": "openspec/specs/bookings/spec.md"
+  },
+  {
+    "slug": "bookings-cancellation-rules",
+    "title": "Spec: Booking Cancellation Rules",
+    "summary": "This specification defines the `CancellationPolicy` register and extends the `Appointment` register with cancellation fields, enabling operators to enforce minimum-notice policies, late-cancellation fees, and no-show charges. All requirements use RFC 2119 language (MUST, SHOULD, MAY).",
+    "docsUrl": "openspec/specs/bookings-cancellation-rules/spec.md"
+  },
+  {
+    "slug": "bookings-confirm-flow",
+    "title": "Spec: bookings-confirm-flow",
+    "summary": "This specification defines the requirements for bookings confirm flow in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookings-confirm-flow/spec.md"
+  },
+  {
+    "slug": "bookings-create-appointment",
+    "title": "Spec: bookings-create-appointment",
+    "summary": "This specification defines the requirements for bookings create appointment in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookings-create-appointment/spec.md"
+  },
+  {
+    "slug": "bookings-deposit-to-invoice",
+    "title": "Capability Spec: Booking Deposit-to-Invoice Flow",
+    "summary": "This spec defines the capability to automatically consume authorized deposit amounts when a booking transitions to invoicing (at completion or checkout). When a booking moves from `confirmed` to `completed`, a final `Invoice` is created in Shillinq with a negative line item (credit) for the deposit amount, reducing the customer's outstanding balance. Deposit-to-invoice reconciliation is bidirectional and auditable through Shillinq's AR module.",
+    "docsUrl": "openspec/specs/bookings-deposit-to-invoice/spec.md"
+  },
+  {
+    "slug": "bookings-deposits",
+    "title": "Capability Spec: Booking Deposits at Booking Time",
+    "summary": "This spec defines the capability to collect partial or full deposits from customers at booking confirmation via Mollie or Stripe (routed through OpenConnector). Deposits are materialized as Shillinq `ARInvoice` records for accounting and tax compliance. The feature is declarative per ADR-031: all deposit rules, payment-link generation, and invoice creation logic are `x-openregister-lifecycle` and `x-openregister-calculations` metadata, not PHP code.",
+    "docsUrl": "openspec/specs/bookings-deposits/spec.md"
+  },
+  {
+    "slug": "bookings-notification-triggers",
+    "title": "Spec: bookings-notification-triggers",
+    "summary": "This specification defines the requirements for bookings notification triggers in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookings-notification-triggers/spec.md"
+  },
+  {
+    "slug": "bookings-self-service-widget",
+    "title": "Spec: bookings-self-service-widget",
+    "summary": "This specification defines the requirements for bookings self service widget in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookings-self-service-widget/spec.md"
+  },
+  {
+    "slug": "bookings-service-catalog",
+    "title": "Spec: bookings-service-catalog",
+    "summary": "This specification defines the requirements for bookings service catalog in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookings-service-catalog/spec.md"
+  },
+  {
+    "slug": "bookkeeping-accounts-receivable-core",
+    "title": "Spec: bookkeeping-accounts-receivable-core",
+    "summary": "This specification defines the requirements for bookkeeping accounts receivable core in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-accounts-receivable-core/spec.md"
+  },
+  {
+    "slug": "bookkeeping-archiefwet-retention",
+    "title": "Specification: bookkeeping-archiefwet-retention",
+    "summary": "Records retention enforcement per Archiefwet 1995 and Selectielijst Gemeenten 2020. Declares retention rules for every record type in Shillinq (T1, T2, T3), consumed by OR's lifecycle retention abstraction per ADR-022.",
+    "docsUrl": "openspec/specs/bookkeeping-archiefwet-retention/spec.md"
+  },
+  {
+    "slug": "bookkeeping-audit-trail",
+    "title": "Spec: bookkeeping-audit-trail",
+    "summary": "This specification defines the requirements for bookkeeping audit trail in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-audit-trail/spec.md"
+  },
+  {
+    "slug": "bookkeeping-bado-controleprotocol",
+    "title": "Specification: BADO Audit Protocol & Tolerance Matrix",
+    "summary": "This specification defines the BADO audit framework as a declarative, machine- readable capability within Shillinq. It covers:",
+    "docsUrl": "openspec/specs/bookkeeping-bado-controleprotocol/spec.md"
+  },
+  {
+    "slug": "bookkeeping-bank-connectors",
+    "title": "Spec: bookkeeping-bank-connectors",
+    "summary": "This specification defines the requirements for bookkeeping bank connectors in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-bank-connectors/spec.md"
+  },
+  {
+    "slug": "bookkeeping-bank-reconciliation",
+    "title": "Spec: bookkeeping-bank-reconciliation",
+    "summary": "This specification defines the requirements for bookkeeping bank reconciliation in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-bank-reconciliation/spec.md"
+  },
+  {
+    "slug": "bookkeeping-bbv-compliance",
+    "title": "Spec: bookkeeping-bbv-compliance",
+    "summary": "This specification defines the requirements for bookkeeping bbv compliance in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-bbv-compliance/spec.md"
+  },
+  {
+    "slug": "bookkeeping-bcf-vat-compensation",
+    "title": "Specification: bookkeeping-bcf-vat-compensation",
+    "summary": "BTW Compensatiefonds (BCF) claim administration for Dutch municipalities. Municipalities recover compensable VAT from the fund via quarterly claim submissions per Wet HOF.",
+    "docsUrl": "openspec/specs/bookkeeping-bcf-vat-compensation/spec.md"
+  },
+  {
+    "slug": "bookkeeping-btw-oss-eu",
+    "title": "Spec: bookkeeping-btw-oss-eu",
+    "summary": "This specification defines the requirements for bookkeeping btw oss eu in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-btw-oss-eu/spec.md"
+  },
+  {
+    "slug": "bookkeeping-cashflow-13wk",
+    "title": "Spec: bookkeeping-cashflow-13wk",
+    "summary": "This specification defines the requirements for bookkeeping cashflow 13wk in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-cashflow-13wk/spec.md"
+  },
+  {
+    "slug": "bookkeeping-cbcr-pillar2",
+    "title": "Spec: Country-by-Country Reporting (CbCR) & OESO Pillar Two (Global Minimum Tax)",
+    "summary": "Deze spec introduceert volledige CbCR (BEPS Action 13, Wet Vpb 29b–29h) en Pillar 2 (OESO GloBE Model Rules, Wet minimumbelasting 2024) rapportage voor Shillinq. Het systeem detecteert EUR 750M drempel automatisch, aggregeert per-jurisdictie financiële kerncijfers uit consolidatie, past GloBE-correcties toe, berekent per-jurisdictie ETR en top-up tax, test safe harbour, en exporteert CbCR XML (OESO schema) + GIR XML + NL QDMTT-aangifte.",
+    "docsUrl": "openspec/specs/bookkeeping-cbcr-pillar2/spec.md"
+  },
+  {
+    "slug": "bookkeeping-cbs-bestanden-extended",
+    "title": "Spec: Bookkeeping — CBS-Bestanden Extended",
+    "summary": "Add extended CBS (Centraal Bureau voor de Statistiek) statistical file exports beyond the baseline IV3: Iv3-detail, Kerngegevens jaarstaten, Iv3-OZB, EMU-bestand, periodieke statistiekleveringen. Each is a transformation aggregation + docudesk template + openconnector source row.",
+    "docsUrl": "openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md"
+  },
+  {
+    "slug": "bookkeeping-chart-of-accounts",
+    "title": "Spec: bookkeeping-chart-of-accounts",
+    "summary": "This specification defines the requirements for bookkeeping chart of accounts in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-chart-of-accounts/spec.md"
+  },
+  {
+    "slug": "bookkeeping-consultancy-project-accounting",
+    "title": "Spec: bookkeeping-consultancy-project-accounting",
+    "summary": "This specification defines the requirements for bookkeeping consultancy project accounting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-consultancy-project-accounting/spec.md"
+  },
+  {
+    "slug": "bookkeeping-continuous-close",
+    "title": "Spec: bookkeeping-continuous-close",
+    "summary": "This specification defines the requirements for bookkeeping continuous close in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-continuous-close/spec.md"
+  },
+  {
+    "slug": "bookkeeping-cost-centers-dimensions",
+    "title": "Spec: bookkeeping-cost-centers-dimensions",
+    "summary": "This specification defines the requirements for bookkeeping cost centers dimensions in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-cost-centers-dimensions/spec.md"
+  },
+  {
+    "slug": "bookkeeping-deferred-tax",
+    "title": "Spec: bookkeeping-deferred-tax",
+    "summary": "This specification defines the requirements for bookkeeping deferred tax in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-deferred-tax/spec.md"
+  },
+  {
+    "slug": "bookkeeping-detachering-payroll-administratie",
+    "title": "Spec: Bookkeeping — Detachering & Payroll Administration",
+    "summary": "Implement detachering (ZZP/freelance staffing) and payroll bridge: salarisbureau feed imports (ADP/Loket/Visma/Nmbrs) via openconnector + Wet DBA opdrachtgeversverklaring register + IB47 freelance filing.",
+    "docsUrl": "openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md"
+  },
+  {
+    "slug": "bookkeeping-document-attachment-integration",
+    "title": "Spec: bookkeeping-document-attachment-integration",
+    "summary": "This specification defines the requirements for bookkeeping document attachment integration in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-document-attachment-integration/spec.md"
+  },
+  {
+    "slug": "bookkeeping-emu-reporting",
+    "title": "Spec: EMU-saldo & EMU-schuld Reporting",
+    "summary": "Automated reporting pipeline for Dutch decentrale overheden under Wet Houdbare Overheidsfinanciën (Wet Hof). Converts BBV accrual-basis general ledger to cash-basis EMU-saldo via macro-rules (Wet Hof art. 3) and transaction-level adjustments. Generates quarterly EMU-saldo aangifte (kwartaalenquête) and annual bruto EMU-schuld position. Includes automatic CBS XBRL indiening (via openconnector), reconciliation with BBV jaarrekening, and afwijkingsalert on referentiewaarde overschrijding.",
+    "docsUrl": "openspec/specs/bookkeeping-emu-reporting/spec.md"
+  },
+  {
+    "slug": "bookkeeping-ensia-zelfevaluatie",
+    "title": "Spec: bookkeeping-ensia-zelfevaluatie",
+    "summary": "This specification defines the requirements for bookkeeping ensia zelfevaluatie in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md"
+  },
+  {
+    "slug": "bookkeeping-financial-statements",
+    "title": "Spec: bookkeeping-financial-statements",
+    "summary": "This specification defines the requirements for bookkeeping financial statements in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-financial-statements/spec.md"
+  },
+  {
+    "slug": "bookkeeping-fixed-assets-depreciation",
+    "title": "Spec: bookkeeping-fixed-assets-depreciation",
+    "summary": "This specification defines the requirements for bookkeeping fixed assets depreciation in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md"
+  },
+  {
+    "slug": "bookkeeping-general-ledger",
+    "title": "Spec: bookkeeping-general-ledger",
+    "summary": "This specification defines the requirements for bookkeeping general ledger in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-general-ledger/spec.md"
+  },
+  {
+    "slug": "bookkeeping-gr-consolidation",
+    "title": "Spec: bookkeeping-gr-consolidation",
+    "summary": "This specification defines the requirements for bookkeeping gr consolidation in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-gr-consolidation/spec.md"
+  },
+  {
+    "slug": "bookkeeping-ib-aangifte-zzp",
+    "title": "Spec: IB Aangifte (Income Tax Return) Assembly for ZZP",
+    "summary": "This spec enables ZZP'ers and small entrepreneurs to automatically assemble, validate, and submit their annual income tax return (P-formulier) in compliance with Wet inkomstenbelasting 2001 (Wet IB), Algemene wet inzake rijksbelastingen (AWR), and Dutch Belastingplan annual updates.",
+    "docsUrl": "openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md"
+  },
+  {
+    "slug": "bookkeeping-icp-opgaaf",
+    "title": "Spec: bookkeeping-icp-opgaaf",
+    "summary": "This specification defines the requirements for bookkeeping icp opgaaf in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-icp-opgaaf/spec.md"
+  },
+  {
+    "slug": "bookkeeping-ifrs-rj-dual-gaap",
+    "title": "Spec: bookkeeping-ifrs-rj-dual-gaap",
+    "summary": "This specification defines the requirements for bookkeeping ifrs rj dual gaap in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md"
+  },
+  {
+    "slug": "bookkeeping-ifrs15-revenue",
+    "title": "Spec: bookkeeping-ifrs15-revenue",
+    "summary": "This specification defines the requirements for bookkeeping ifrs15 revenue in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-ifrs15-revenue/spec.md"
+  },
+  {
+    "slug": "bookkeeping-innovatiebox-administratie",
+    "title": "Spec: bookkeeping-innovatiebox-administratie",
+    "summary": "This specification defines the requirements for bookkeeping innovatiebox administratie in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-innovatiebox-administratie/spec.md"
+  },
+  {
+    "slug": "bookkeeping-intercompany-elimination",
+    "title": "Spec: bookkeeping-intercompany-elimination",
+    "summary": "This specification defines the requirements for bookkeeping intercompany elimination in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-intercompany-elimination/spec.md"
+  },
+  {
+    "slug": "bookkeeping-investeringsaftrek",
+    "title": "Spec: bookkeeping-investeringsaftrek",
+    "summary": "This specification defines the requirements for bookkeeping investeringsaftrek in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-investeringsaftrek/spec.md"
+  },
+  {
+    "slug": "bookkeeping-iv3-reporting",
+    "title": "Spec: bookkeeping-iv3-reporting",
+    "summary": "This specification defines the requirements for bookkeeping iv3 reporting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-iv3-reporting/spec.md"
+  },
+  {
+    "slug": "bookkeeping-journal-entries",
+    "title": "Spec: bookkeeping-journal-entries",
+    "summary": "This specification defines the requirements for bookkeeping journal entries in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-journal-entries/spec.md"
+  },
+  {
+    "slug": "bookkeeping-kor-kleine-ondernemersregeling",
+    "title": "Spec: bookkeeping-kor-kleine-ondernemersregeling",
+    "summary": "This specification defines the requirements for bookkeeping kor kleine ondernemersregeling in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md"
+  },
+  {
+    "slug": "bookkeeping-lease-accounting",
+    "title": "Spec: bookkeeping-lease-accounting",
+    "summary": "Lease accounting covers the recognition of Right-of-Use (RoU) assets and lease liabilities at commencement, the automatic generation of payment schedules, periodic interest and depreciation posting, and the integration with the GL and fixed-asset engines.",
+    "docsUrl": "openspec/specs/bookkeeping-lease-accounting/spec.md"
+  },
+  {
+    "slug": "bookkeeping-lease-contracts",
+    "title": "Spec: bookkeeping-lease-contracts",
+    "summary": "The lease-contract register is the master record for every lease under IFRS 16 that a shillinq customer owns. It captures the contractual terms (lessor, commencement date, payment terms, extension/termination options, IBR, classification), integrates with docudesk for source contract PDFs, and routes complex contracts through an optional classification wizard.",
+    "docsUrl": "openspec/specs/bookkeeping-lease-contracts/spec.md"
+  },
+  {
+    "slug": "bookkeeping-lease-disclosures",
+    "title": "Spec: bookkeeping-lease-disclosures",
+    "summary": "IFRS 16 paragraphs 51–60 mandate detailed quantitative and qualitative disclosures about leases. The disclosure-table register materializes this information at period close, allowing one-click export to XBRL and audit-ready PDF reports.",
+    "docsUrl": "openspec/specs/bookkeeping-lease-disclosures/spec.md"
+  },
+  {
+    "slug": "bookkeeping-lease-exemptions",
+    "title": "Spec: bookkeeping-lease-exemptions",
+    "summary": "IFRS 16 provides exemptions for short-term leases (≤12 months at commencement) and low-value leases (asset fair value ≤ ~USD 5,000). Leases eligible for exemption are expensed straight-line over the lease term instead of being capitalized. This spec defines the policy elections, contract-by-contract application, and expense posting.",
+    "docsUrl": "openspec/specs/bookkeeping-lease-exemptions/spec.md"
+  },
+  {
+    "slug": "bookkeeping-lease-reassessment",
+    "title": "Spec: bookkeeping-lease-reassessment",
+    "summary": "Over the life of a lease, modifications and remeasurement events occur: a lessee extends the term, the IBR changes, the lessor adjusts payment terms, or indexation clauses trigger a recalculation. Each event is captured in a `lease-reassessment-event` record with before/after snapshots, supporting evidence, and GL postings.",
+    "docsUrl": "openspec/specs/bookkeeping-lease-reassessment/spec.md"
+  },
+  {
+    "slug": "bookkeeping-market-government-separation",
+    "title": "Spec: bookkeeping-market-government-separation",
+    "summary": "This specification defines the requirements for bookkeeping market government separation in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-market-government-separation/spec.md"
+  },
+  {
+    "slug": "bookkeeping-multi-administratie",
+    "title": "Spec: bookkeeping-multi-administratie",
+    "summary": "This specification defines the requirements for bookkeeping multi administratie in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-multi-administratie/spec.md"
+  },
+  {
+    "slug": "bookkeeping-multi-currency",
+    "title": "Spec: bookkeeping-multi-currency",
+    "summary": "This specification defines the requirements for bookkeeping multi currency in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-multi-currency/spec.md"
+  },
+  {
+    "slug": "bookkeeping-pension-ias19",
+    "title": "Spec: IAS 19 Employee Benefit Pension Accounting (RJ 271)",
+    "summary": "This spec introduces complete IAS 19 / RJ 271 defined-benefit (DB) and defined-contribution (DC) pension accounting for Shillinq. The system measures, rolls forward, and discloses pension obligations and assets per Projected Unit Credit (PUC) method for DB plans, or simplified disclosure for DC plans.",
+    "docsUrl": "openspec/specs/bookkeeping-pension-ias19/spec.md"
+  },
+  {
+    "slug": "bookkeeping-period-close",
+    "title": "Spec: bookkeeping-period-close",
+    "summary": "This specification defines the requirements for bookkeeping period close in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-period-close/spec.md"
+  },
+  {
+    "slug": "bookkeeping-programmabegroting",
+    "title": "Spec: bookkeeping-programmabegroting",
+    "summary": "This specification defines the requirements for bookkeeping programmabegroting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-programmabegroting/spec.md"
+  },
+  {
+    "slug": "bookkeeping-provincies-bbv-variant",
+    "title": "Spec: bookkeeping-provincies-bbv-variant",
+    "summary": "This specification defines the requirements for bookkeeping provincies bbv variant in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-provincies-bbv-variant/spec.md"
+  },
+  {
+    "slug": "bookkeeping-purchase-order-3way",
+    "title": "Spec: Purchase Order 3-way Match",
+    "summary": "@e2e exclude pure backend/schema: 3-way match purchase order — not browser-testable",
+    "docsUrl": "openspec/specs/bookkeeping-purchase-order-3way/spec.md"
+  },
+  {
+    "slug": "bookkeeping-r-d-subsidies-mkb",
+    "title": "Spec: bookkeeping-r-d-subsidies-mkb",
+    "summary": "This specification defines the requirements for bookkeeping r d subsidies mkb in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-r-d-subsidies-mkb/spec.md"
+  },
+  {
+    "slug": "bookkeeping-rechtmatigheidsverantwoording",
+    "title": "Specification: Rechtmatigheidsverantwoording",
+    "summary": "Rechtmatigheidsverantwoording (BBV artikel 17a, mandatory since 2023) declares that all financial transactions of a decentrale overheid have been processed legitimately. This spec defines:",
+    "docsUrl": "openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md"
+  },
+  {
+    "slug": "bookkeeping-reconciliation-reports",
+    "title": "Spec: bookkeeping-reconciliation-reports",
+    "summary": "This specification defines the requirements for bookkeeping reconciliation reports in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-reconciliation-reports/spec.md"
+  },
+  {
+    "slug": "bookkeeping-rekenkamer-audit-pack",
+    "title": "Spec: bookkeeping-rekenkamer-audit-pack",
+    "summary": "This specification defines the requirements for bookkeeping rekenkamer audit pack in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md"
+  },
+  {
+    "slug": "bookkeeping-sbr-xbrl-reporting",
+    "title": "Spec: bookkeeping-sbr-xbrl-reporting",
+    "summary": "This specification defines the requirements for bookkeeping sbr xbrl reporting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md"
+  },
+  {
+    "slug": "bookkeeping-schatkistbankieren",
+    "title": "Spec: bookkeeping-schatkistbankieren",
+    "summary": "This specification defines the requirements for bookkeeping schatkistbankieren in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-schatkistbankieren/spec.md"
+  },
+  {
+    "slug": "bookkeeping-sepa-direct-debit",
+    "title": "Spec: bookkeeping-sepa-direct-debit",
+    "summary": "This specification defines the requirements for bookkeeping sepa direct debit in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-sepa-direct-debit/spec.md"
+  },
+  {
+    "slug": "bookkeeping-sisa-reporting",
+    "title": "Spec: bookkeeping-sisa-reporting",
+    "summary": "This specification defines the requirements for bookkeeping sisa reporting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-sisa-reporting/spec.md"
+  },
+  {
+    "slug": "bookkeeping-subsidie-verantwoording",
+    "title": "Spec: bookkeeping-subsidie-verantwoording",
+    "summary": "This specification defines the requirements for bookkeeping subsidie verantwoording in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-subsidie-verantwoording/spec.md"
+  },
+  {
+    "slug": "bookkeeping-tenderned-integratie",
+    "title": "Spec: bookkeeping-tenderned-integratie",
+    "summary": "TenderNed Integratie enables Shillinq to automatically import publicly awarded procurement contracts from TenderNed (Dutch central platform, Logius) and manifest them as financial obligations (Verplichting) with real-time budget-impact visibility and milestone-based execution tracking. The integration supports two roles: aanbestedende dienst (public buyer organization) and inschrijvende leverancier (private vendor organization), each with role-specific workflows and visibility constraints.",
+    "docsUrl": "openspec/specs/bookkeeping-tenderned-integratie/spec.md"
+  },
+  {
+    "slug": "bookkeeping-titel-9-jaarrekening",
+    "title": "Spec: bookkeeping-titel-9-jaarrekening",
+    "summary": "This specification defines the requirements for bookkeeping titel 9 jaarrekening in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md"
+  },
+  {
+    "slug": "bookkeeping-treasury-ihb",
+    "title": "Spec: bookkeeping-treasury-ihb",
+    "summary": "This specification defines the requirements for bookkeeping treasury ihb in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-treasury-ihb/spec.md"
+  },
+  {
+    "slug": "bookkeeping-trial-balance",
+    "title": "Spec: bookkeeping-trial-balance",
+    "summary": "This specification defines the requirements for bookkeeping trial balance in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-trial-balance/spec.md"
+  },
+  {
+    "slug": "bookkeeping-vat-btw-filing",
+    "title": "Spec: bookkeeping-vat-btw-filing",
+    "summary": "This specification defines the requirements for bookkeeping vat btw filing in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-vat-btw-filing/spec.md"
+  },
+  {
+    "slug": "bookkeeping-voorzieningen-claims",
+    "title": "Specs — IAS 37 / RJ 252 Provisions, Contingent Liabilities and Contingent Assets",
+    "summary": "This specification defines the requirements for IAS 37 / RJ 252 provisions, contingent liabilities and contingent assets in the Shillinq Nextcloud accounting application, establishing recognition, measurement, roll-forward and disclosure behaviour.",
+    "docsUrl": "openspec/specs/bookkeeping-voorzieningen-claims/spec.md"
+  },
+  {
+    "slug": "bookkeeping-vpb-corporate-tax",
+    "title": "Spec: bookkeeping-vpb-corporate-tax",
+    "summary": "This specification defines the requirements for bookkeeping vpb corporate tax in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-vpb-corporate-tax/spec.md"
+  },
+  {
+    "slug": "bookkeeping-waterschappen-bbv-variant",
+    "title": "Spec: bookkeeping-waterschappen-bbv-variant",
+    "summary": "This specification defines the requirements for bookkeeping waterschappen bbv variant in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md"
+  },
+  {
+    "slug": "bookkeeping-wbso-sno-administratie",
+    "title": "Spec: bookkeeping-wbso-sno-administratie",
+    "summary": "This specification defines the requirements for bookkeeping wbso sno administratie in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-wbso-sno-administratie/spec.md"
+  },
+  {
+    "slug": "bookkeeping-wet-fido-treasury",
+    "title": "Spec: Wet Fido & Treasurystatuut Compliance",
+    "summary": "This spec introduces complete Wet Fido (Wet Financiering Decentrale Overheden) and local Treasurystatuut compliance for Shillinq. The system enforces two hard quantitative limits — the kasgeldlimiet on rolling 3-month average short-term debt and the rente-risiconorm on per-year interest-rate herfinanciering + reset exposure — and operationalises the mandatory schatkistbankieren (central treasury) cash-sweep scheme. Every treasury transaction (lening, derivaat) is tested in real-time against both the legal ceilings and the organisation's adopted Treasurystatuut. The system produces the verplichte kwartaalrapportage to the toezichthouder and the jaarrekening's treasury-paragraph without manual spreadsheet work.",
+    "docsUrl": "openspec/specs/bookkeeping-wet-fido-treasury/spec.md"
+  },
+  {
+    "slug": "bookkeeping-year-end-close",
+    "title": "Spec: bookkeeping-year-end-close",
+    "summary": "This specification defines the requirements for bookkeeping year end close in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-year-end-close/spec.md"
+  },
+  {
+    "slug": "bookkeeping-zzp-tax-regime",
+    "title": "Spec: bookkeeping-zzp-tax-regime",
+    "summary": "This specification defines the requirements for bookkeeping zzp tax regime in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/bookkeeping-zzp-tax-regime/spec.md"
+  },
+  {
+    "slug": "dba-compliance-marker",
+    "title": "Spec: dba-compliance-marker",
+    "summary": "This specification defines the requirements for dba compliance marker in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/dba-compliance-marker/spec.md"
+  },
+  {
+    "slug": "docs",
+    "title": "docs",
+    "summary": "Defines the canonical structure, configuration, and content requirements for shillinq's product documentation site, built on `@conduction/docusaurus-preset` (ADR-030). The spec ensures the docs site conforms to the fleet-wide product-pages layout, exposes an API documentation endpoint, and ships with both English and Dutch locale support.",
+    "docsUrl": "openspec/specs/docs/spec.md"
+  },
+  {
+    "slug": "expense-capture-core",
+    "title": "Spec: expense-capture-core",
+    "summary": "This specification defines the requirements for expense capture core in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/expense-capture-core/spec.md"
+  },
+  {
+    "slug": "expense-reimbursement-or-passthrough",
+    "title": "Spec: expense-reimbursement-or-passthrough",
+    "summary": "This specification defines the requirements for expense reimbursement or passthrough in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/expense-reimbursement-or-passthrough/spec.md"
+  },
+  {
+    "slug": "financial-dashboard-graphs",
+    "title": "financial-dashboard-graphs",
+    "summary": "Provides a financial overview dashboard that visualises an administration's bookkeeping data, including a six-metric KPI strip and charts for turnover, margin, cashflow with forecast overlay, and billable hours, each with value/percentage toggles where relevant. The dashboard also lists open debtor and creditor invoices flagged by due date, draws all widget data from a single shared fetch per schema, and ships an idempotent demo seed script that populates a coherent 12-month bookkeeping story.",
+    "docsUrl": "openspec/specs/financial-dashboard-graphs/spec.md"
+  },
+  {
+    "slug": "governance-compliance-settings",
+    "title": "governance-compliance-settings",
+    "summary": "Relocates the governance-config and audit-log leaves out of the top-level transactional navigation into a Settings \"Governance & Compliance\" section while keeping every page directly routable via deep links. The relocated audit-trail, change-history, activity-feed, destruction-report, and compliance-export surfaces remain strictly read-only, and AllocationRules stays pure rule metadata with no allocation service execution introduced by the move.",
+    "docsUrl": "openspec/specs/governance-compliance-settings/spec.md"
+  },
+  {
+    "slug": "inventory-barcode-sku",
+    "title": "Spec: inventory-barcode-sku",
+    "summary": "This specification defines the requirements for inventory barcode sku in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/inventory-barcode-sku/spec.md"
+  },
+  {
+    "slug": "inventory-cogs-posting",
+    "title": "Spec: inventory-cogs-posting",
+    "summary": "This specification defines the requirements for inventory cogs posting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/inventory-cogs-posting/spec.md"
+  },
+  {
+    "slug": "inventory-cycle-count",
+    "title": "Spec: inventory-cycle-count",
+    "summary": "This specification defines the requirements for inventory cycle count in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/inventory-cycle-count/spec.md"
+  },
+  {
+    "slug": "inventory-lot-batch-expiry",
+    "title": "Spec: inventory-lot-batch-expiry",
+    "summary": "This specification defines the requirements for inventory lot batch expiry in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/inventory-lot-batch-expiry/spec.md"
+  },
+  {
+    "slug": "inventory-mobile-scanner",
+    "title": "Spec: Inventory Mobile Scanner (PWA, offline)",
+    "summary": "- **Change**: inventory-mobile-scanner - **Type**: PWA Feature (Mobile-first app with offline support) - **Dependencies**: inventory-stock-tracking, inventory-barcode-sku - **Status**: Specification phase",
+    "docsUrl": "openspec/specs/inventory-mobile-scanner/spec.md"
+  },
+  {
+    "slug": "inventory-multi-warehouse",
+    "title": "Spec: inventory-multi-warehouse",
+    "summary": "This specification defines the requirements for inventory multi warehouse in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/inventory-multi-warehouse/spec.md"
+  },
+  {
+    "slug": "inventory-product-catalog",
+    "title": "Spec: inventory-product-catalog",
+    "summary": "This specification defines the requirements for inventory product catalog in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/inventory-product-catalog/spec.md"
+  },
+  {
+    "slug": "inventory-reorder-automation",
+    "title": "Spec: inventory-reorder-automation",
+    "summary": "This specification defines the requirements for inventory reorder automation in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/inventory-reorder-automation/spec.md"
+  },
+  {
+    "slug": "inventory-stock-movement-ledger",
+    "title": "Spec: inventory-stock-movement-ledger",
+    "summary": "This specification defines the requirements for inventory stock movement ledger in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/inventory-stock-movement-ledger/spec.md"
+  },
+  {
+    "slug": "inventory-stock-tracking",
+    "title": "Spec: inventory-stock-tracking",
+    "summary": "This specification defines the requirements for inventory stock tracking in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/inventory-stock-tracking/spec.md"
+  },
+  {
+    "slug": "inventory-valuation-fifo-avg",
+    "title": "Spec: inventory-valuation-fifo-avg",
+    "summary": "This specification defines the requirements for inventory valuation fifo avg in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/inventory-valuation-fifo-avg/spec.md"
+  },
+  {
+    "slug": "invoice-from-time-and-expense",
+    "title": "Spec: Invoice from Time + Expense",
+    "summary": "This specification defines invoice generation from approved time entries and expense records, supporting multiple billing models (T&M, fixed-fee, milestone, retainer, mixed). It extends the `Invoice` and `InvoiceLine` registers with time/expense tracking, rate card integration, and GL posting. All requirements use RFC 2119 language (MUST, SHOULD, MAY).",
+    "docsUrl": "openspec/specs/invoice-from-time-and-expense/spec.md"
+  },
+  {
+    "slug": "notification-booking-email-templates",
+    "title": "Spec: Booking Email Templates",
+    "summary": "Declared templates for automated booking emails: confirmation, reminder, cancellation. Operators customize branding (logo, colors, footer) and template text without code access. Templates integrate with OR's notification engine for dispatch on booking lifecycle events.",
+    "docsUrl": "openspec/specs/notification-booking-email-templates/spec.md"
+  },
+  {
+    "slug": "notification-booking-sms-reminders",
+    "title": "Spec: Booking SMS Reminder Channel",
+    "summary": "Configurable SMS reminder channels for booking reminders with pluggable provider support (MessageBird, Twilio). Operators configure SMS channel, select provider, customize message template, set delivery timing and retry behavior. Channels integrate with OR's notification engine for SMS dispatch on booking lifecycle events.",
+    "docsUrl": "openspec/specs/notification-booking-sms-reminders/spec.md"
+  },
+  {
+    "slug": "rate-card-management",
+    "title": "Spec: rate-card-management",
+    "summary": "This specification defines the requirements for rate card management in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/rate-card-management/spec.md"
+  },
+  {
+    "slug": "recurring-invoicing",
+    "title": "recurring-invoicing",
+    "summary": "Manages recurring billing definitions as OpenRegister-managed profiles that reference Nextcloud addressbook contacts and generate ordinary AR invoices per period through a scheduled OpenRegister workflow, with no app-local cron or parallel invoice type. The capability covers declarative next-run-date calculation with month-end clamping, idempotent generation with bounded catch-up after downtime, a draft-to-ended profile lifecycle, optional annual price indexation, declarative notifications, and a manifest-driven UI with an exact next-invoice preview.",
+    "docsUrl": "openspec/specs/recurring-invoicing/spec.md"
+  },
+  {
+    "slug": "retainer-billing-management",
+    "title": "Spec: Retainer Billing Management",
+    "summary": "The retainer-billing-management capability enables monthly retainer pools per client/project with automatic drawdown tracking from time entries, rollover of unused balances, and period-end true-up reconciliation.",
+    "docsUrl": "openspec/specs/retainer-billing-management/spec.md"
+  },
+  {
+    "slug": "shillinq-bank-statement-wizard",
+    "title": "shillinq-bank-statement-wizard",
+    "summary": "Provides a dashboard-launched modal wizard that guides a bookkeeper through importing a bank statement (CAMT.053, MT940, or CSV) without leaving the Financial overview. The wizard offers format-specific export guidance and a PSD2 discoverability link, maps the statement IBAN to a GL account with remembered mappings, posts the file to a server-administration-scoped import endpoint that persists the statement and its lines, and shows an import summary before refreshing the dashboard payables and receivables widgets.",
+    "docsUrl": "openspec/specs/shillinq-bank-statement-wizard/spec.md"
+  },
+  {
+    "slug": "shillinq-bill-import-modal",
+    "title": "shillinq-bill-import-modal",
+    "summary": "Provides a dashboard-launched modal for importing supplier invoices from UBL/e-invoice XML or CSV files, parsed deterministically server-side into SupplierInvoice records without leaving the Financial overview. PDF uploads are honestly routed to a deferred OCR path rather than fabricating extractions; the review step pre-fills parsed values and gates save on required fields, duplicate invoices are rejected with an inline warning, and a successful import refreshes the dashboard payables widget.",
+    "docsUrl": "openspec/specs/shillinq-bill-import-modal/spec.md"
+  },
+  {
+    "slug": "shillinq-invoice-quick-draft",
+    "title": "shillinq-invoice-quick-draft",
+    "summary": "Provides a dashboard-launched modal for quickly drafting an accounts-receivable invoice without leaving the Financial overview. Selecting a customer drives default GL account and due date, line items show live net, VAT, and gross totals, and saving creates a draft ARInvoice through the OpenRegister object API before refreshing the receivables widget; last-used line details are remembered per customer with a 90-day expiry.",
+    "docsUrl": "openspec/specs/shillinq-invoice-quick-draft/spec.md"
+  },
+  {
+    "slug": "shillinq-nav-ia-cleanup",
+    "title": "shillinq-nav-ia-cleanup",
+    "summary": "Corrects shillinq's navigation information architecture by disambiguating the manual-journal entry as \"Manual Journals\" distinct from the General Ledger, giving the Project schema exactly one navigation home while keeping its page deep-linkable, and ensuring each route marks exactly one active nav leaf with no duplicate detail-route registrations. The capability also fixes dashboard KPI rendering so stats-block tiles render with single card chrome instead of nested cards, and adds e2e coverage for these corrections.",
+    "docsUrl": "openspec/specs/shillinq-nav-ia-cleanup/spec.md"
+  },
+  {
+    "slug": "shillinq-product-vendor-to-pipelinq",
+    "title": "shillinq-product-vendor-to-pipelinq",
+    "summary": "Moves product and vendor master-data ownership out of shillinq to pipelinq, rewiring inventory records to reference products by a `productId` resolved through the integration registry and demoting VendorMaster to a financial profile keyed by the Nextcloud contact UID. shillinq retains only locally-authored financial and stock data (unit cost, valuation, payment terms, credit limits) as authoritative, treats product and vendor identity fields as non-authoritative read caches with a safe offline fallback, and provides an idempotent, fail-closed migration of existing data to pipelinq with no data loss.",
+    "docsUrl": "openspec/specs/shillinq-product-vendor-to-pipelinq/spec.md"
+  },
+  {
+    "slug": "templates-notifications-settings",
+    "title": "templates-notifications-settings",
+    "summary": "Consolidates the scattered template and notification-configuration leaves from the bookings and inventory groups into a single Settings \"Templates & Notifications\" section while keeping every page directly routable via deep links and leaving the source manifest fragments unchanged. The relocation preserves each page's read/write posture: the NotificationMonitor stays a read-only delivery view, and the template, trigger, and SMS-channel pages remain editable configuration.",
+    "docsUrl": "openspec/specs/templates-notifications-settings/spec.md"
+  },
+  {
+    "slug": "zzp-urencriterium-tracker",
+    "title": "Spec: zzp-urencriterium-tracker",
+    "summary": "This specification defines the requirements for zzp urencriterium tracker in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.",
+    "docsUrl": "openspec/specs/zzp-urencriterium-tracker/spec.md"
+  }
+]

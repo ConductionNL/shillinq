@@ -95,7 +95,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
     ) {
     }//end __construct()
 
-
     /**
      * Handle the T2 transition event and stamp T4 fields when the
      * subject is a ReconciliationMatch confirm.
@@ -111,7 +110,7 @@ final class ReconciliationMatchToReportListener implements IEventListener
     public function handle(Event $event): void
     {
         try {
-            $payload = $this->extractEventPayload($event);
+            $payload = $this->extractEventPayload(event: $event);
             if ($payload === null) {
                 return;
             }
@@ -129,7 +128,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
         }
 
     }//end handle()
-
 
     /**
      * Extract the schema + object payload from an OR event. OR events
@@ -163,7 +161,7 @@ final class ReconciliationMatchToReportListener implements IEventListener
             $rawSchema = $event->getSchema();
             if (is_string($rawSchema) === true) {
                 $schema = $rawSchema;
-            } elseif (is_object($rawSchema) === true && method_exists($rawSchema, 'getSlug') === true) {
+            } else if (is_object($rawSchema) === true && method_exists($rawSchema, 'getSlug') === true) {
                 $schema = (string) $rawSchema->getSlug();
             }
         }
@@ -176,11 +174,10 @@ final class ReconciliationMatchToReportListener implements IEventListener
 
     }//end extractEventPayload()
 
-
     /**
      * Decide whether this event should trigger T4-field stamping.
      *
-     * @param array{schema:string,object:array<string,mixed>} $payload
+     * @param array{schema:string,object:array<string,mixed>} $payload Extracted event payload.
      *
      * @return bool
      */
@@ -207,7 +204,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
 
     }//end shouldStamp()
 
-
     /**
      * Update the ReconciliationMatch in-place with T4 fields.
      *
@@ -222,7 +218,7 @@ final class ReconciliationMatchToReportListener implements IEventListener
             return;
         }
 
-        $reconId = $this->resolveReconId($match);
+        $reconId = $this->resolveReconId(match: $match);
         if ($reconId === '') {
             // No open BankReconciliation session for this account/period yet —
             // leave reconId empty and let the operator wire it up later. The
@@ -234,7 +230,7 @@ final class ReconciliationMatchToReportListener implements IEventListener
         }
 
         $updates = [
-            'matchAlgorithm'    => $this->algorithmFromConfidence((string) ($match['confidence'] ?? 'auto')),
+            'matchAlgorithm'    => $this->algorithmFromConfidence(confidence: (string) ($match['confidence'] ?? 'auto')),
             'matchedAt'         => gmdate('Y-m-d\TH:i:s\Z'),
             'manualOverride'    => ((string) ($match['confidence'] ?? '') === 'manual'),
             'confidenceScoreT4' => (float) ($match['confidenceScore'] ?? 1.0),
@@ -244,8 +240,8 @@ final class ReconciliationMatchToReportListener implements IEventListener
             $updates['reconId'] = $reconId;
         }
 
-        $matchType      = (string) ($match['matchType'] ?? '');
-        $matchedObject  = (string) ($match['matchedObjectId'] ?? '');
+        $matchType     = (string) ($match['matchType'] ?? '');
+        $matchedObject = (string) ($match['matchedObjectId'] ?? '');
         if ($matchedObject !== '') {
             switch ($matchType) {
                 case 'ar-invoice':
@@ -282,7 +278,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
 
     }//end stampT4Fields()
 
-
     /**
      * Convert the T2 `confidence` enum (auto/manual) into the T4
      * `matchAlgorithm` enum (exact/manual). REQ-REC-005: T4 supports
@@ -294,10 +289,13 @@ final class ReconciliationMatchToReportListener implements IEventListener
      */
     private function algorithmFromConfidence(string $confidence): string
     {
-        return $confidence === 'manual' ? 'manual' : 'exact';
+        if ($confidence === 'manual') {
+            return 'manual';
+        }
+
+        return 'exact';
 
     }//end algorithmFromConfidence()
-
 
     /**
      * Resolve the open BankReconciliation session that owns this match.
@@ -318,11 +316,11 @@ final class ReconciliationMatchToReportListener implements IEventListener
             }
 
             $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $line = $objectService
+            $line          = $objectService
                 ->setRegister($this->getRegisterSlug())
                 ->setSchema('BankStatementLine')
                 ->find($lineId);
-            $line = $this->toArray($line);
+            $line          = $this->toArray(result: $line);
             if ($line === null) {
                 return '';
             }
@@ -336,7 +334,7 @@ final class ReconciliationMatchToReportListener implements IEventListener
                 ->setRegister($this->getRegisterSlug())
                 ->setSchema('BankStatement')
                 ->find($statementId);
-            $statement = $this->toArray($statement);
+            $statement = $this->toArray(result: $statement);
             if ($statement === null) {
                 return '';
             }
@@ -353,8 +351,8 @@ final class ReconciliationMatchToReportListener implements IEventListener
                 ->findAll(
                     [
                         'filters' => [
-                            'bankAccountId'       => $iban,
-                            'statementPeriodEnd'  => $periodEnd,
+                            'bankAccountId'        => $iban,
+                            'statementPeriodEnd'   => $periodEnd,
                             'reconciliationStatus' => 'in-progress',
                         ],
                         'limit'   => 1,
@@ -375,7 +373,6 @@ final class ReconciliationMatchToReportListener implements IEventListener
 
     }//end resolveReconId()
 
-
     /**
      * Normalise an OR find result to a plain array.
      *
@@ -391,13 +388,16 @@ final class ReconciliationMatchToReportListener implements IEventListener
 
         if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
             $serialized = $result->jsonSerialize();
-            return is_array($serialized) ? $serialized : null;
+            if (is_array($serialized) === true) {
+                return $serialized;
+            }
+
+            return null;
         }
 
         return null;
 
     }//end toArray()
-
 
     /**
      * Return the configured register slug, falling back to 'shillinq'.
@@ -414,6 +414,4 @@ final class ReconciliationMatchToReportListener implements IEventListener
         return $slug;
 
     }//end getRegisterSlug()
-
-
 }//end class

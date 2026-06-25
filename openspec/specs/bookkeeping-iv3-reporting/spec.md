@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-iv3-reporting
 
 **Status:** proposed

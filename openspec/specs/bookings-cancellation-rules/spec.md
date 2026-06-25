@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Booking Cancellation Rules
 
 **Status:** proposed

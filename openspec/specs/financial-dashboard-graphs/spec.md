@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # financial-dashboard-graphs Specification
 
 ## Purpose
-TBD - created by archiving change financial-dashboard-graphs. Update Purpose after archive.
+Provides a financial overview dashboard that visualises an administration's bookkeeping data, including a six-metric KPI strip and charts for turnover, margin, cashflow with forecast overlay, and billable hours, each with value/percentage toggles where relevant. The dashboard also lists open debtor and creditor invoices flagged by due date, draws all widget data from a single shared fetch per schema, and ships an idempotent demo seed script that populates a coherent 12-month bookkeeping story.
 ## Requirements
 ### Requirement: Financial KPI strip
 

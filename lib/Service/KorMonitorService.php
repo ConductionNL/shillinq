@@ -145,7 +145,8 @@ class KorMonitorService
                 today: $today,
                 vroegsteOpzegDatum: $vroegste,
                 lockInEindDatum: $eind
-            ) === true) {
+            ) === true
+            ) {
                 return true;
             }
         }

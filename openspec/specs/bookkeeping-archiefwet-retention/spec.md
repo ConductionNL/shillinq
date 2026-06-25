@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Specification: bookkeeping-archiefwet-retention
 
 **Status**: proposed

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-market-government-separation
 
 **Status:** proposed

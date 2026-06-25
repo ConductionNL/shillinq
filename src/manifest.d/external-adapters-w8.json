@@ -23,7 +23,7 @@
 				},
 				{
 					"id": "ExternalAdapterSalarisbureau",
-					"label": "Salarisbureau",
+					"label": "Payroll bureau",
 					"icon": "AccountGroupOutline",
 					"route": "ExternalAdapterSalarisbureau",
 					"order": 15
@@ -44,7 +44,7 @@
 				},
 				{
 					"id": "ExternalAdapterCbsBestanden",
-					"label": "CBS Bestanden",
+					"label": "CBS files",
 					"icon": "TableLarge",
 					"route": "ExternalAdapterCbsBestanden",
 					"order": 30
@@ -79,14 +79,14 @@
 				},
 				{
 					"id": "ExternalAdapterKvk",
-					"label": "KvK Handelsregister",
+					"label": "KvK Trade Register",
 					"icon": "OfficeBuildingOutline",
 					"route": "ExternalAdapterKvk",
 					"order": 50
 				},
 				{
 					"id": "ExternalAdapterUwv",
-					"label": "UWV Loonaangifte",
+					"label": "UWV payroll filing",
 					"icon": "AccountGroupOutline",
 					"route": "ExternalAdapterUwv",
 					"order": 55
@@ -142,7 +142,7 @@
 			"id": "ExternalAdapterSalarisbureau",
 			"route": "/external-adapters/salarisbureau",
 			"type": "custom",
-			"title": "Salarisbureau",
+			"title": "Payroll bureau",
 			"component": "ExternalAdapterDetail",
 			"props": { "adapterId": "salarisbureau" }
 		},
@@ -166,7 +166,7 @@
 			"id": "ExternalAdapterCbsBestanden",
 			"route": "/external-adapters/cbs-bestanden",
 			"type": "custom",
-			"title": "CBS Bestanden",
+			"title": "CBS files",
 			"component": "ExternalAdapterDetail",
 			"props": { "adapterId": "cbs-bestanden" }
 		},
@@ -206,7 +206,7 @@
 			"id": "ExternalAdapterKvk",
 			"route": "/external-adapters/kvk",
 			"type": "custom",
-			"title": "KvK Handelsregister",
+			"title": "KvK Trade Register",
 			"component": "ExternalAdapterDetail",
 			"props": { "adapterId": "kvk" }
 		},
@@ -214,7 +214,7 @@
 			"id": "ExternalAdapterUwv",
 			"route": "/external-adapters/uwv",
 			"type": "custom",
-			"title": "UWV Loonaangifte",
+			"title": "UWV payroll filing",
 			"component": "ExternalAdapterDetail",
 			"props": { "adapterId": "uwv" }
 		},

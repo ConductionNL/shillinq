@@ -118,15 +118,15 @@ class ComplianceExportService
      * Constructor.
      *
      * @param ContainerInterface $container   DI container — OR's
-     *                                         ObjectService is fetched
-     *                                         lazily so unit tests can
-     *                                         swap an in-memory stub.
+     *                                        ObjectService is fetched
+     *                                        lazily so unit tests can
+     *                                        swap an in-memory stub.
      * @param IAppConfig         $appConfig   App config for the OR
-     *                                         register slug.
+     *                                        register slug.
      * @param IUserSession       $userSession Session used as the
-     *                                         default actor when
-     *                                         no explicit actorFilter
-     *                                         is supplied with scope=subject.
+     *                                        default actor when
+     *                                        no explicit actorFilter
+     *                                        is supplied with scope=subject.
      * @param LoggerInterface    $logger      Logger (no PII payloads).
      *
      * @return void
@@ -143,14 +143,15 @@ class ComplianceExportService
     /**
      * Build the PII-filtered audit-trail export envelope.
      *
-     * @param string      $from         ISO date YYYY-MM-DD (inclusive).
-     * @param string      $to           ISO date YYYY-MM-DD (inclusive).
-     * @param string      $scope        ComplianceExportService::SCOPE_ALL
-     *                                  or ::SCOPE_SUBJECT.
-     * @param string      $format       ::FORMAT_CSV or ::FORMAT_JSON.
-     * @param string|null $actorFilter  When scope=subject, restrict
-     *                                  to events where the actor matches.
-     *                                  Defaults to the current session UID.
+     * @param string      $from        ISO date YYYY-MM-DD (inclusive).
+     * @param string      $to          ISO date YYYY-MM-DD (inclusive).
+     * @param string      $scope       ComplianceExportService::SCOPE_ALL
+     *                                 or ::SCOPE_SUBJECT.
+     * @param string      $format      ::FORMAT_CSV or ::FORMAT_JSON.
+     * @param string|null $actorFilter When scope=subject, restrict
+     *                                 to events where the actor
+     *                                 matches. Defaults to the
+     *                                 current session UID.
      *
      * @return array{
      *     from:string,
@@ -170,9 +171,9 @@ class ComplianceExportService
     public function generateExport(
         string $from,
         string $to,
-        string $scope = self::SCOPE_ALL,
-        string $format = self::FORMAT_CSV,
-        ?string $actorFilter = null,
+        string $scope=self::SCOPE_ALL,
+        string $format=self::FORMAT_CSV,
+        ?string $actorFilter=null,
     ): array {
         $this->assertDateRange(from: $from, to: $to);
 
@@ -210,15 +211,15 @@ class ComplianceExportService
         $generatedBy = $this->currentUserId();
 
         return [
-            'from'         => $from,
-            'to'           => $to,
-            'scope'        => $scope,
-            'format'       => $format,
-            'actorFilter'  => $actorFilter,
-            'generatedAt'  => $generatedAt,
-            'generatedBy'  => $generatedBy,
-            'eventCount'   => count($rows),
-            'headers'      => [
+            'from'        => $from,
+            'to'          => $to,
+            'scope'       => $scope,
+            'format'      => $format,
+            'actorFilter' => $actorFilter,
+            'generatedAt' => $generatedAt,
+            'generatedBy' => $generatedBy,
+            'eventCount'  => count($rows),
+            'headers'     => [
                 'timestamp',
                 'objectType',
                 'objectId',
@@ -228,7 +229,7 @@ class ComplianceExportService
                 'beforeValue',
                 'afterValue',
             ],
-            'rows'         => $rows,
+            'rows'        => $rows,
         ];
 
     }//end generateExport()
@@ -258,6 +259,7 @@ class ComplianceExportService
                     $line[] = (string) $value;
                 }
             }
+
             fputcsv(stream: $output, fields: $line);
         }
 
@@ -289,6 +291,7 @@ class ComplianceExportService
             if (is_string($key) === true && in_array($key, self::PII_FIELDS, true) === true) {
                 continue;
             }
+
             $clean[$key] = $this->stripPii(value: $sub);
         }
 
@@ -328,7 +331,7 @@ class ComplianceExportService
                     from:     $from.'T00:00:00Z',
                     to:       $to.'T23:59:59Z'
                 );
-            } elseif (method_exists($auditService, 'findAll') === true) {
+            } else if (method_exists($auditService, 'findAll') === true) {
                 $rows = $auditService->findAll(
                     [
                         'filters' => [
@@ -342,14 +345,14 @@ class ComplianceExportService
                     'ComplianceExportService: OR AuditTrailService has no findInRange/findAll method'
                 );
                 return [];
-            }
+            }//end if
         } catch (\Throwable $e) {
             $this->logger->error(
                 'ComplianceExportService: failed to query OR audit-trail',
                 ['exception' => $e->getMessage()]
             );
             return [];
-        }
+        }//end try
 
         $result = [];
         foreach ((array) $rows as $row) {
@@ -357,10 +360,12 @@ class ComplianceExportService
                 $result[] = $row;
                 continue;
             }
+
             if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
                 $result[] = (array) $row->jsonSerialize();
                 continue;
             }
+
             if (is_object($row) === true) {
                 $result[] = json_decode((string) json_encode($row), true) ?? [];
             }
@@ -380,7 +385,7 @@ class ComplianceExportService
     private function renderRow(array $event): array
     {
         $before = $this->stripPii(value: ($event['before'] ?? ($event['beforeValue'] ?? [])));
-        $after  = $this->stripPii(value: ($event['after']  ?? ($event['afterValue']  ?? [])));
+        $after  = $this->stripPii(value: ($event['after'] ?? ($event['afterValue'] ?? [])));
 
         $fieldsChanged = [];
         if (is_array($before) === true && is_array($after) === true) {
@@ -389,6 +394,7 @@ class ComplianceExportService
                 if (in_array($key, self::PII_FIELDS, true) === true) {
                     continue;
                 }
+
                 if (($before[$key] ?? null) !== ($after[$key] ?? null)) {
                     $fieldsChanged[] = (string) $key;
                 }
@@ -397,10 +403,10 @@ class ComplianceExportService
 
         return [
             'timestamp'      => (string) ($event['created'] ?? ($event['timestamp'] ?? '')),
-            'objectType'    => (string) ($event['schema']  ?? ($event['objectType'] ?? '')),
+            'objectType'     => (string) ($event['schema'] ?? ($event['objectType'] ?? '')),
             'objectId'       => (string) ($event['objectId'] ?? ($event['object'] ?? '')),
-            'action'         => (string) ($event['action']  ?? ''),
-            'actor'          => (string) ($event['user']    ?? ($event['actor'] ?? '')),
+            'action'         => (string) ($event['action'] ?? ''),
+            'actor'          => (string) ($event['user'] ?? ($event['actor'] ?? '')),
             'fields_changed' => $fieldsChanged,
             'beforeValue'    => $before,
             'afterValue'     => $after,

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-audit-trail
 
 **Status:** proposed

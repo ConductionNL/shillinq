@@ -136,12 +136,12 @@ class InitializeBbvAdministration implements IRepairStep
             return;
         }
 
-        $totalSeededReserves = 0;
-        $totalSkippedReserves = 0;
+        $totalSeededReserves   = 0;
+        $totalSkippedReserves  = 0;
         $totalSeededTaakvelden = 0;
 
         foreach ($administrations as $administration) {
-            $row = $this->toArray($administration);
+            $row  = $this->toArray(object: $administration);
             $type = ($row['administrationType'] ?? null);
 
             if (in_array($type, self::BBV_ADMINISTRATION_TYPES, true) === false) {
@@ -153,15 +153,15 @@ class InitializeBbvAdministration implements IRepairStep
                 continue;
             }
 
-            $reserveResult = $this->ensureAlgemeneReserve(
+            $reserveResult         = $this->ensureAlgemeneReserve(
                 objectService: $objectService,
                 registerSlug: $registerSlug,
                 administrationId: (string) $administrationId
             );
-            $totalSeededReserves += $reserveResult['seeded'];
+            $totalSeededReserves  += $reserveResult['seeded'];
             $totalSkippedReserves += $reserveResult['skipped'];
 
-            $taakveldResult = $this->ensureReserveTaakveld(
+            $taakveldResult         = $this->ensureReserveTaakveld(
                 objectService: $objectService,
                 registerSlug: $registerSlug,
                 overheidslaag: (string) $type
@@ -183,9 +183,9 @@ class InitializeBbvAdministration implements IRepairStep
     /**
      * Ensure an Algemene reserve exists for the given administration.
      *
-     * @param object $objectService     OpenRegister ObjectService.
-     * @param string $registerSlug      Register slug.
-     * @param string $administrationId  Administration identifier.
+     * @param object $objectService    OpenRegister ObjectService.
+     * @param string $registerSlug     Register slug.
+     * @param string $administrationId Administration identifier.
      *
      * @return array{seeded:int,skipped:int}
      */
@@ -195,13 +195,15 @@ class InitializeBbvAdministration implements IRepairStep
             $existing = $objectService
                 ->setRegister($registerSlug)
                 ->setSchema('Reserve')
-                ->findAll([
-                    'filters' => [
-                        'administrationId' => $administrationId,
-                        'naam' => self::ALGEMENE_RESERVE_NAAM,
-                    ],
-                    'limit' => 1,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => [
+                                'administrationId' => $administrationId,
+                                'naam'             => self::ALGEMENE_RESERVE_NAAM,
+                            ],
+                            'limit'   => 1,
+                        ]
+                        );
         } catch (\Throwable $e) {
             $this->logger->warning(
                 'Shillinq: Reserve register unavailable, skipping algemene reserve bootstrap',
@@ -209,7 +211,7 @@ class InitializeBbvAdministration implements IRepairStep
             );
 
             return ['seeded' => 0, 'skipped' => 0];
-        }
+        }//end try
 
         if (empty($existing) === false) {
             return ['seeded' => 0, 'skipped' => 1];
@@ -217,12 +219,12 @@ class InitializeBbvAdministration implements IRepairStep
 
         $payload = [
             'administrationId' => $administrationId,
-            'naam' => self::ALGEMENE_RESERVE_NAAM,
-            'soort' => 'algemeen',
-            'saldoBeginJaar' => 0,
+            'naam'             => self::ALGEMENE_RESERVE_NAAM,
+            'soort'            => 'algemeen',
+            'saldoBeginJaar'   => 0,
             'rentetoerekening' => false,
-            '_meta' => [
-                'source' => 'bootstrap',
+            '_meta'            => [
+                'source'    => 'bootstrap',
                 'createdBy' => 'InitializeBbvAdministration',
             ],
         ];
@@ -256,13 +258,15 @@ class InitializeBbvAdministration implements IRepairStep
             $existing = $objectService
                 ->setRegister($registerSlug)
                 ->setSchema('Taakveld')
-                ->findAll([
-                    'filters' => [
-                        'code' => self::RESERVE_TAAKVELD,
-                        'overheidslaag' => $overheidslaag,
-                    ],
-                    'limit' => 1,
-                ]);
+                ->findAll(
+                        [
+                            'filters' => [
+                                'code'          => self::RESERVE_TAAKVELD,
+                                'overheidslaag' => $overheidslaag,
+                            ],
+                            'limit'   => 1,
+                        ]
+                        );
         } catch (\Throwable $e) {
             $this->logger->warning(
                 'Shillinq: Taakveld register unavailable, skipping reserve-taakveld bootstrap',
@@ -270,22 +274,22 @@ class InitializeBbvAdministration implements IRepairStep
             );
 
             return ['seeded' => 0, 'skipped' => 0];
-        }
+        }//end try
 
         if (empty($existing) === false) {
             return ['seeded' => 0, 'skipped' => 1];
         }
 
         $payload = [
-            'code' => self::RESERVE_TAAKVELD,
-            'naam' => self::RESERVE_TAAKVELD_NAAM,
-            'hoofdfunctie' => 0,
+            'code'             => self::RESERVE_TAAKVELD,
+            'naam'             => self::RESERVE_TAAKVELD_NAAM,
+            'hoofdfunctie'     => 0,
             'hoofdfunctieNaam' => 'Bestuur en ondersteuning',
-            'omschrijvingIv3' => 'Resultaatbestemming: dotaties en onttrekkingen aan reserves (bootstrap).',
-            'overheidslaag' => $overheidslaag,
-            'geldigVanaf' => '2025-01-01',
-            '_meta' => [
-                'source' => 'bootstrap',
+            'omschrijvingIv3'  => 'Resultaatbestemming: dotaties en onttrekkingen aan reserves (bootstrap).',
+            'overheidslaag'    => $overheidslaag,
+            'geldigVanaf'      => '2025-01-01',
+            '_meta'            => [
+                'source'    => 'bootstrap',
                 'createdBy' => 'InitializeBbvAdministration',
             ],
         ];

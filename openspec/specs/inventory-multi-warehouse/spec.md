@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-multi-warehouse
 
 **Status:** proposed

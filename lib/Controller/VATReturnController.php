@@ -292,7 +292,7 @@ class VATReturnController extends Controller
             }
 
             $vatReturn['notes'] = $notes;
-            $saved              = $objectService
+            $saved = $objectService
                 ->setRegister(register: 'shillinq')
                 ->setSchema(schema: 'VATReturn')
                 ->saveObject($vatReturn);

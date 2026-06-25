@@ -64,12 +64,12 @@ class PaymentRequestWebhookController extends Controller
     /**
      * Constructor for PaymentRequestWebhookController.
      *
-     * @param IRequest                      $request        The request object.
-     * @param IAppConfig                    $appConfig      App config for the per-gateway shared secrets.
-     * @param PaymentReconciliationService  $reconciliation Shared idempotent reconciliation service
-     *                                                      (handles BOTH PaymentRequest and
-     *                                                      DepositPayment — REQ-APL-004).
-     * @param LoggerInterface               $logger         Logger (never receives raw payment data).
+     * @param IRequest                     $request        The request object.
+     * @param IAppConfig                   $appConfig      App config for the per-gateway shared secrets.
+     * @param PaymentReconciliationService $reconciliation Shared idempotent reconciliation service
+     *                                                     (handles BOTH PaymentRequest and
+     *                                                     DepositPayment — REQ-APL-004).
+     * @param LoggerInterface              $logger         Logger (never receives raw payment data).
      *
      * @return void
      */

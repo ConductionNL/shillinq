@@ -167,7 +167,7 @@ class VATReturnService
         string $administrationId,
         string $startDate,
         string $endDate,
-        string $regime = 'standard'
+        string $regime='standard'
     ): array {
         if ($regime === 'kor') {
             // KOR exempts both collected and paid VAT (REQ-VAT-004).
@@ -247,7 +247,7 @@ class VATReturnService
                 if ($type === 'collected') {
                     $totalVATCollectedCt += $vatAmountCt;
                 } else {
-                    // paid + reverse-charge both feed deductible VAT.
+                    // Paid + reverse-charge both feed deductible VAT.
                     $totalVATPaidCt += $vatAmountCt;
                 }
 
@@ -263,8 +263,8 @@ class VATReturnService
                     'description'             => (string) ($posting['description'] ?? ($transaction['description'] ?? '')),
                     'reverseChargeApplicable' => ($type === 'reverse-charge'),
                 ];
-            }//end foreach postings
-        }//end foreach transactions
+            }//end foreach
+        }//end foreach
 
         // Persist declarations + their lines.
         foreach ($declarationsByKey as $group) {
@@ -428,11 +428,11 @@ class VATReturnService
         }
 
         // Default = quarter.
-        $quarter = max(1, min(4, $periodNumber));
-        $startM  = (1 + (($quarter - 1) * 3));
-        $endM    = ($startM + 2);
+        $quarter   = max(1, min(4, $periodNumber));
+        $startM    = (1 + (($quarter - 1) * 3));
+        $endM      = ($startM + 2);
         $startDate = sprintf('%04d-%02d-01', $periodYear, $startM);
-        $endTs   = strtotime(datetime: sprintf('last day of %04d-%02d-01', $periodYear, $endM));
+        $endTs     = strtotime(datetime: sprintf('last day of %04d-%02d-01', $periodYear, $endM));
         if ($endTs === false) {
             throw new RuntimeException(sprintf('Cannot resolve quarter-end for %s', $startDate));
         }
@@ -725,7 +725,7 @@ class VATReturnService
     /**
      * Persist a record via the real OR ObjectService API.
      *
-     * @param string             $schema Schema slug.
+     * @param string              $schema Schema slug.
      * @param array<string,mixed> $data   Record body.
      *
      * @return array<string,mixed> The saved record (with id).

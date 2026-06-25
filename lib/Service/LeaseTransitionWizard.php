@@ -71,9 +71,9 @@ class LeaseTransitionWizard
     /**
      * Compute the transition recognition payload for a portfolio of leases.
      *
-     * @param array<int,array<string,mixed>> $leases             Pre-IFRS-16 operating leases.
-     * @param string                         $method             modified-retrospective | full-retrospective.
-     * @param string                         $transitionDate     ISO date (e.g. "2026-01-01").
+     * @param array<int,array<string,mixed>> $leases              Pre-IFRS-16 operating leases.
+     * @param string                         $method              modified-retrospective | full-retrospective.
+     * @param string                         $transitionDate      ISO date (e.g. "2026-01-01").
      * @param array<string,bool>             $practicalExpedients Optional IFRS 16.C3 / C10 election flags.
      *
      * @return array{
@@ -93,18 +93,18 @@ class LeaseTransitionWizard
         array $leases,
         string $method,
         string $transitionDate,
-        array $practicalExpedients = [],
+        array $practicalExpedients=[],
     ): array {
-        $method = in_array($method, ['modified-retrospective', 'full-retrospective'], true) === true
-            ? $method
-            : 'modified-retrospective';
+        if (in_array($method, ['modified-retrospective', 'full-retrospective'], true) === false) {
+            $method = 'modified-retrospective';
+        }
 
         $expedients = $this->normaliseExpedients(elections: $practicalExpedients);
 
-        $recognitions     = [];
-        $totalRouCents    = 0;
-        $totalLiabCents   = 0;
-        $catchUpCents     = 0;
+        $recognitions   = [];
+        $totalRouCents  = 0;
+        $totalLiabCents = 0;
+        $catchUpCents   = 0;
 
         foreach ($leases as $lease) {
             if (is_array($lease) === false) {
@@ -121,16 +121,16 @@ class LeaseTransitionWizard
 
             $recognition = $this->recognitionService->recognise(lease: $lease);
 
-            $rouCents       = $this->calculator->toCents(amount: $recognition['rouAsset']);
-            $liabCents      = $this->calculator->toCents(amount: $recognition['liability']);
-            $totalRouCents += $rouCents;
+            $rouCents        = $this->calculator->toCents(amount: $recognition['rouAsset']);
+            $liabCents       = $this->calculator->toCents(amount: $recognition['liability']);
+            $totalRouCents  += $rouCents;
             $totalLiabCents += $liabCents;
-            $catchUpCents  += ($rouCents - $liabCents);
+            $catchUpCents   += ($rouCents - $liabCents);
 
             $recognitions[] = [
-                'leaseNumber'  => (string) ($lease['leaseNumber'] ?? ''),
-                'method'       => $method,
-                'recognition'  => $recognition,
+                'leaseNumber' => (string) ($lease['leaseNumber'] ?? ''),
+                'method'      => $method,
+                'recognition' => $recognition,
             ];
         }//end foreach
 
@@ -173,12 +173,12 @@ class LeaseTransitionWizard
     private function normaliseExpedients(array $elections): array
     {
         $defaults = [
-            'single-discount-rate-by-class'    => false,
-            'short-term-exempt-at-transition'  => false,
-            'low-value-exempt-at-transition'   => false,
-            'hindsight-on-extension-options'   => false,
-            'exclude-initial-direct-costs'     => false,
-            'use-onerous-contracts-provision'  => false,
+            'single-discount-rate-by-class'   => false,
+            'short-term-exempt-at-transition' => false,
+            'low-value-exempt-at-transition'  => false,
+            'hindsight-on-extension-options'  => false,
+            'exclude-initial-direct-costs'    => false,
+            'use-onerous-contracts-provision' => false,
         ];
 
         $out = [];
@@ -213,9 +213,11 @@ class LeaseTransitionWizard
             }
         }
 
-        $electedSentence = $elected === []
-            ? 'No practical expedients were elected.'
-            : 'The following practical expedients were elected: '.implode(', ', $elected).'.';
+        if ($elected === []) {
+            $electedSentence = 'No practical expedients were elected.';
+        } else {
+            $electedSentence = 'The following practical expedients were elected: '.implode(', ', $elected).'.';
+        }
 
         return sprintf(
             'The entity adopted IFRS 16 on %s using the %s approach. %d lease(s) '

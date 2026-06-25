@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-ifrs-rj-dual-gaap
 
 **Status:** proposed

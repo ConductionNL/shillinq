@@ -60,17 +60,16 @@ use Psr\Log\LoggerInterface;
  */
 class WidgetApiController extends Controller
 {
-
     /**
      * Construct the controller with DI dependencies.
      *
-     * @param IRequest           $request    The HTTP request.
-     * @param WidgetAuthService  $auth       API key + rate-limit gateway.
-     * @param SlotService        $slots      Slot availability computation.
-     * @param SettingsService    $settings   Shillinq settings (register slug, OR availability).
-     * @param ContainerInterface $container  DI container for lazy ObjectService resolution.
-     * @param ITimeFactory       $time       Time provider for createdAt stamping.
-     * @param LoggerInterface    $logger     Logger for fail-closed diagnostics.
+     * @param IRequest           $request   The HTTP request.
+     * @param WidgetAuthService  $auth      API key + rate-limit gateway.
+     * @param SlotService        $slots     Slot availability computation.
+     * @param SettingsService    $settings  Shillinq settings (register slug, OR availability).
+     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+     * @param ITimeFactory       $time      Time provider for createdAt stamping.
+     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
      */
     public function __construct(
         IRequest $request,
@@ -548,14 +547,20 @@ class WidgetApiController extends Controller
     private function toArray(mixed $object): array
     {
         if (is_array($object) === true) {
-            /** @var array<string,mixed> $object */
+            /*
+             * @var array<string,mixed> $object
+             */
+
             return $object;
         }
 
         if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
             $serialised = $object->jsonSerialize();
             if (is_array($serialised) === true) {
-                /** @var array<string,mixed> $serialised */
+                /*
+                 * @var array<string,mixed> $serialised
+                 */
+
                 return $serialised;
             }
         }

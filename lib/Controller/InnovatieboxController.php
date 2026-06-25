@@ -66,6 +66,7 @@ class InnovatieboxController extends Controller
      * @param InnovatieboxAggregationService $aggregation The per-asset Vpb roll-up service.
      * @param NexusCalculationService        $nexus       The nexus arithmetic helper (scenario).
      * @param DoorsnijdingsVerbodValidator   $doorsnijden The doorsnijdingsverbod validator.
+     * @param InnovatieboxSbrExportService   $sbrExport   The SBR export service.
      * @param IUserSession                   $userSession Session for the auth body-guard.
      * @param LoggerInterface                $logger      Logger (no stack traces to client).
      *
@@ -297,7 +298,7 @@ class InnovatieboxController extends Controller
                     'exception'        => $e->getMessage(),
                 ]
             );
-        }
+        }//end try
 
         return new JSONResponse(
             ['sbr' => $sbr, 'pdf' => $pdf],

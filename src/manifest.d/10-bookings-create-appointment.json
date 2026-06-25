@@ -2,13 +2,13 @@
 	"menu": [
 		{
 			"id": "Verkoop",
-			"label": "Verkoop",
+			"label": "Sales",
 			"icon": "CartOutline",
 			"order": 33,
 			"children": [
 				{
 					"id": "Afspraken",
-					"label": "Afspraken",
+					"label": "Appointments",
 					"icon": "CalendarClockOutline",
 					"route": "Afspraken",
 					"order": 10
@@ -21,7 +21,7 @@
 			"id": "Afspraken",
 			"route": "/verkoop/afspraken",
 			"type": "index",
-			"title": "Afspraken",
+			"title": "Appointments",
 			"config": {
 				"register": "shillinq",
 				"schema": "Appointment",
@@ -70,7 +70,7 @@
 			"id": "AfspraakDetail",
 			"route": "/verkoop/afspraken/:id",
 			"type": "custom",
-			"title": "Afspraak",
+			"title": "Appointment",
 			"component": "AfspraakDetail",
 			"config": {
 				"register": "shillinq",

@@ -63,7 +63,7 @@ final class BunqSyncResult
         public readonly string $connectionReference,
         public readonly int $transactionCount,
         public readonly bool $dormant,
-        public readonly array $extras = [],
+        public readonly array $extras=[],
     ) {
     }//end __construct()
 }//end class

@@ -71,9 +71,9 @@ class AdministrationBackupSchedulerJob extends TimedJob
      * @var array<string,int|null>
      */
     private const SCHEDULE_INTERVALS = [
-        'dagelijks'  => 86400,
-        'wekelijks'  => 604800,
-        'aanvragen'  => null,
+        'dagelijks' => 86400,
+        'wekelijks' => 604800,
+        'aanvragen' => null,
     ];
 
     /**
@@ -261,7 +261,7 @@ class AdministrationBackupSchedulerJob extends TimedJob
         DateTimeImmutable $startedAt,
         DateTimeImmutable $completedAt,
         string $status,
-        ?int $sizeBytes = null
+        ?int $sizeBytes=null
     ): array {
         return [
             'administrationId'   => (string) ($administration['id'] ?? ''),
@@ -305,16 +305,18 @@ class AdministrationBackupSchedulerJob extends TimedJob
             return;
         }
 
-        $register        = $this->resolveRegister();
-        $now             = new DateTimeImmutable();
+        $register = $this->resolveRegister();
+        $now      = new DateTimeImmutable();
         $administrations = $this->fetchAdministrations(objectService: $objectService, register: $register);
-        $due             = $this->evaluateDueAdministrations(administrations: $administrations, now: $now);
-        $persisted       = 0;
+        $due       = $this->evaluateDueAdministrations(administrations: $administrations, now: $now);
+        $persisted = 0;
 
         foreach ($due as $administration) {
-            $status = $this->isReadOnlyAdministration(administration: $administration) === true
-                ? 'snapshot-only'
-                : 'success';
+            if ($this->isReadOnlyAdministration(administration: $administration) === true) {
+                $status = 'snapshot-only';
+            } else {
+                $status = 'success';
+            }
 
             $record = $this->buildBackupRunRecord(
                 administration: $administration,

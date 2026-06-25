@@ -1,0 +1,423 @@
+<?php
+
+/**
+ * Shillinq RetireSubsidieSchema Repair Step
+ *
+ * Idempotent, fail-soft cleanup that retires the legacy `Subsidie` schema AFTER
+ * the FoldIntoOrder repair step (which runs earlier in the same post-migration
+ * repair list) has folded every Subsidie row onto a `Grant` (orderType=grant).
+ *
+ * FoldIntoOrder stamps each new Grant with the marker
+ * `migratedFromSubsidie = <subsidieNumber|id>` (the source Subsidie's stable
+ * migration key). This step uses that exact marker to verify a Grant exists
+ * before it removes the corresponding Subsidie object — so unmigrated data is
+ * NEVER lost.
+ *
+ * ## Behaviour
+ *
+ *   1. For every remaining Subsidie object: derive its migration key (prefer
+ *      subsidieNumber, else id/uuid — the same rule FoldIntoOrder used). If a
+ *      Grant exists carrying `migratedFromSubsidie = <key>`, delete the Subsidie
+ *      object (deleteObject, _rbac:false). A Subsidie with NO corresponding
+ *      Grant is left in place (deleting it would lose unmigrated data).
+ *
+ *   2. After the loop, when ZERO Subsidie objects remain, delete the Subsidie
+ *      SCHEMA row from `openregister_schemas` — but only via a SQL guard that
+ *      double-checks no `openregister_objects` row still references the schema
+ *      (delete-only-if-empty), mirroring the conservative pattern used by the
+ *      sibling Order repair steps.
+ *
+ * ## Guarantees
+ *
+ *   - Idempotent: once the objects are gone and the schema row removed, re-runs
+ *     are no-ops (no Subsidie objects to scan, no schema id to resolve).
+ *   - Fail-soft: a top-level \Throwable catch + per-object catch ensure a
+ *     cleanup failure NEVER blocks the Nextcloud upgrade path.
+ *   - Data-safe: never deletes a Subsidie that has no folded Grant; never drops
+ *     the schema row while any object still references it.
+ *
+ * All OR reads/writes pass `_rbac:false` + `_multitenancy:false` as NAMED
+ * parameters; `currentUser` is resolved to a real admin IUser object (NEVER a
+ * string) via the admin group.
+ *
+ * Runs on `occ maintenance:repair` and on `occ app:enable shillinq`, registered
+ * in `appinfo/info.xml` repair-steps AFTER FoldIntoOrder.
+ *
+ * @category Repair
+ * @package  OCA\Shillinq\Repair
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Repair;
+
+use OCA\Shillinq\Service\SettingsService;
+use OCP\IDBConnection;
+use OCP\IGroupManager;
+use OCP\IUser;
+use OCP\Migration\IOutput;
+use OCP\Migration\IRepairStep;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Retires the Subsidie schema after FoldIntoOrder has folded every Subsidie row
+ * onto a Grant. Idempotent, fail-soft, data-safe (never removes a Subsidie that
+ * lacks a corresponding Grant, never drops the schema row while objects remain).
+ *
+ * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
+ */
+class RetireSubsidieSchema implements IRepairStep
+{
+
+    /**
+     * The legacy schema slug being retired.
+     */
+    private const SCHEMA = 'Subsidie';
+
+    /**
+     * The target schema that Subsidie rows were folded onto.
+     */
+    private const TARGET = 'Grant';
+
+    /**
+     * The idempotency marker FoldIntoOrder stamps on each folded Grant.
+     */
+    private const MARKER = 'migratedFromSubsidie';
+
+
+    /**
+     * Constructor.
+     *
+     * @param SettingsService    $settingsService Provides the shillinq register slug.
+     * @param LoggerInterface    $logger          Logger for per-object failures.
+     * @param IGroupManager      $groupManager    Resolves the admin IUser for OR writes.
+     * @param IDBConnection      $db              Direct DB access (delete-if-empty schema row).
+     * @param ContainerInterface $container       DI container (lazy OR ObjectService resolution).
+     */
+    public function __construct(
+        private readonly SettingsService $settingsService,
+        private readonly LoggerInterface $logger,
+        private readonly IGroupManager $groupManager,
+        private readonly IDBConnection $db,
+        private readonly ContainerInterface $container,
+    ) {
+    }//end __construct()
+
+
+    /**
+     * The repair-step display name shown in occ maintenance:repair output.
+     *
+     * @return string The display name.
+     */
+    public function getName(): string
+    {
+        return 'Shillinq: retire the legacy Subsidie schema (after FoldIntoOrder has folded every Subsidie onto a Grant)';
+
+    }//end getName()
+
+
+    /**
+     * Run the retirement. Idempotent, fail-soft, data-safe.
+     *
+     * @param IOutput $output The repair-step output (progress + warnings).
+     *
+     * @return void
+     */
+    public function run(IOutput $output): void
+    {
+        try {
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $registerSlug  = $this->settingsService->getRegisterSlug();
+            $admin         = $this->resolveAdminUser();
+            if ($admin === null) {
+                $output->warning('Shillinq: RetireSubsidieSchema — could not resolve an admin user; skipping (re-run after an admin exists).');
+                return;
+            }
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: RetireSubsidieSchema — OpenRegister ObjectService unavailable: '.$e->getMessage());
+            return;
+        }
+
+        $deleted = 0;
+        $kept    = 0;
+        $failed  = 0;
+
+        foreach ($this->readSubsidies($objectService, $registerSlug, $output) as $row) {
+            $src          = (array) $row;
+            $subsidieId   = (string) ($src['id'] ?? ($src['uuid'] ?? ''));
+            $migrationKey = $this->migrationKey($src);
+
+            if ($migrationKey === '' || $subsidieId === '') {
+                $output->warning('Shillinq: RetireSubsidieSchema — Subsidie row without subsidieNumber or id; left in place.');
+                $kept++;
+                continue;
+            }
+
+            try {
+                // Data-safety: only delete a Subsidie that was actually folded
+                // (a Grant carries its migration marker). No Grant → keep it.
+                if ($this->grantExists($objectService, $registerSlug, $migrationKey) === false) {
+                    $output->warning('Shillinq: RetireSubsidieSchema — Subsidie "'.$migrationKey.'" has no migrated Grant; left in place (unmigrated data).');
+                    $kept++;
+                    continue;
+                }
+
+                $objectService
+                    ->setRegister($registerSlug)
+                    ->setSchema(self::SCHEMA)
+                    ->deleteObject($subsidieId, _rbac: false, _multitenancy: false);
+
+                $deleted++;
+            } catch (\Throwable $e) {
+                $output->warning('Shillinq: RetireSubsidieSchema — failed to delete Subsidie "'.$migrationKey.'": '.$e->getMessage());
+                $this->logger->warning(
+                    'Shillinq: RetireSubsidieSchema — Subsidie delete failed',
+                    ['key' => $migrationKey, 'exception' => $e->getMessage()]
+                );
+                $failed++;
+            }//end try
+        }//end foreach
+
+        $output->info(
+            sprintf(
+                'Shillinq: RetireSubsidieSchema — %d Subsidie object(s) deleted, %d kept (unmigrated), %d failed.',
+                $deleted,
+                $kept,
+                $failed
+            )
+        );
+
+        // Only drop the schema row when every Subsidie object is gone.
+        if ($kept === 0 && $failed === 0) {
+            $this->dropSchemaIfEmpty($output);
+        } else {
+            $output->info('Shillinq: RetireSubsidieSchema — Subsidie objects remain; leaving the Subsidie schema row in place.');
+        }
+
+    }//end run()
+
+
+    /**
+     * Resolve the admin user as an IUser object (NEVER a string) for OR writes.
+     *
+     * @return IUser|null The first admin-group member, or null when none exists.
+     */
+    private function resolveAdminUser(): ?IUser
+    {
+        $adminGroup = $this->groupManager->get('admin');
+        if ($adminGroup === null) {
+            return null;
+        }
+
+        $users = $adminGroup->getUsers();
+        if ($users === []) {
+            return null;
+        }
+
+        return reset($users);
+
+    }//end resolveAdminUser()
+
+
+    /**
+     * Read every remaining Subsidie object. Returns [] when the schema is absent
+     * or already empty (a valid no-op for re-runs / fresh tenants).
+     *
+     * @param object  $objectService The OR ObjectService.
+     * @param string  $registerSlug  The shillinq register slug.
+     * @param IOutput $output        The repair output.
+     *
+     * @return array<int,mixed> The list of Subsidie rows (may be empty).
+     */
+    private function readSubsidies(object $objectService, string $registerSlug, IOutput $output): array
+    {
+        try {
+            $rows = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema(self::SCHEMA)
+                ->findAll(
+                    [
+                        'limit'         => 0,
+                        '_rbac'         => false,
+                        '_multitenancy' => false,
+                    ]
+                );
+
+            if (is_array($rows) === false) {
+                return [];
+            }
+
+            return $rows;
+        } catch (\Throwable $e) {
+            $output->info('Shillinq: RetireSubsidieSchema — Subsidie schema not available ('.$e->getMessage().'); nothing to retire.');
+            return [];
+        }//end try
+
+    }//end readSubsidies()
+
+
+    /**
+     * Derive the stable migration key for a Subsidie row, mirroring exactly the
+     * rule FoldIntoOrder used to stamp the Grant marker: prefer the unique
+     * subsidieNumber, else fall back to the source id/uuid.
+     *
+     * @param array<string,mixed> $src The source Subsidie row.
+     *
+     * @return string The migration key (may be empty when unresolvable).
+     */
+    private function migrationKey(array $src): string
+    {
+        $subsidieNumber = (string) ($src['subsidieNumber'] ?? '');
+        if ($subsidieNumber !== '') {
+            return $subsidieNumber;
+        }
+
+        return (string) ($src['id'] ?? ($src['uuid'] ?? ''));
+
+    }//end migrationKey()
+
+
+    /**
+     * Whether a Grant exists carrying the given migration marker — proof that
+     * the Subsidie was folded and is therefore safe to delete.
+     *
+     * @param object $objectService The OR ObjectService.
+     * @param string $registerSlug  The shillinq register slug.
+     * @param string $migrationKey  The stable source marker.
+     *
+     * @return bool True when a matching Grant exists.
+     */
+    private function grantExists(object $objectService, string $registerSlug, string $migrationKey): bool
+    {
+        try {
+            $found = $objectService
+                ->setRegister($registerSlug)
+                ->setSchema(self::TARGET)
+                ->findAll(
+                    [
+                        'filters'       => [self::MARKER => $migrationKey],
+                        'limit'         => 1,
+                        '_rbac'         => false,
+                        '_multitenancy' => false,
+                    ]
+                );
+
+            return is_array($found) === true && $found !== [];
+        } catch (\Throwable) {
+            // On lookup error, conservatively report "no Grant" so the Subsidie
+            // is KEPT (never delete on an ambiguous read).
+            return false;
+        }
+
+    }//end grantExists()
+
+
+    /**
+     * Delete the Subsidie schema row from openregister_schemas — but only when
+     * no openregister_objects row still references it (delete-only-if-empty).
+     * Resolves the schema id by slug, then guards the delete on a live count of
+     * referencing objects (matching the schema column by either its id or its
+     * slug, since OR's objects.schema column can hold either form). Fail-soft.
+     *
+     * @param IOutput $output The repair output.
+     *
+     * @return void
+     */
+    private function dropSchemaIfEmpty(IOutput $output): void
+    {
+        try {
+            if ($this->db->tableExists('openregister_schemas') === false) {
+                $output->info('Shillinq: RetireSubsidieSchema — OpenRegister schemas table absent; nothing to drop.');
+                return;
+            }
+
+            $schemaId = $this->schemaId(self::SCHEMA);
+            if ($schemaId === null) {
+                $output->info('Shillinq: RetireSubsidieSchema — Subsidie schema row already absent; nothing to drop.');
+                return;
+            }
+
+            if ($this->objectsRemain($schemaId) === true) {
+                $output->warning('Shillinq: RetireSubsidieSchema — objects still reference the Subsidie schema; NOT dropping the schema row.');
+                return;
+            }
+
+            $qb = $this->db->getQueryBuilder();
+            $qb->delete('openregister_schemas')
+                ->where($qb->expr()->eq('id', $qb->createNamedParameter($schemaId)))
+                ->andWhere($qb->expr()->eq('slug', $qb->createNamedParameter(self::SCHEMA)));
+            $qb->executeStatement();
+
+            $output->info('Shillinq: RetireSubsidieSchema — Subsidie schema row #'.((string) $schemaId).' dropped.');
+        } catch (\Throwable $e) {
+            $output->warning('Shillinq: RetireSubsidieSchema — schema-row drop failed: '.$e->getMessage());
+            $this->logger->warning('Shillinq: RetireSubsidieSchema — schema-row drop failed', ['exception' => $e->getMessage()]);
+        }//end try
+
+    }//end dropSchemaIfEmpty()
+
+
+    /**
+     * Resolve a schema id by slug, or null when absent.
+     *
+     * @param string $slug The schema slug.
+     *
+     * @return int|string|null The schema id, or null.
+     */
+    private function schemaId(string $slug): int|string|null
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('id')
+            ->from('openregister_schemas')
+            ->where($qb->expr()->eq('slug', $qb->createNamedParameter($slug)))
+            ->setMaxResults(1);
+        $id = $qb->executeQuery()->fetchOne();
+        return ($id === false ? null : $id);
+
+    }//end schemaId()
+
+
+    /**
+     * Whether any openregister_objects row still references the Subsidie schema.
+     * The objects.schema column may carry either the schema id or its slug, so
+     * the guard checks both forms (delete-only-if-empty correctness).
+     *
+     * @param int|string $schemaId The resolved Subsidie schema id.
+     *
+     * @return bool True when at least one referencing object remains.
+     */
+    private function objectsRemain(int|string $schemaId): bool
+    {
+        if ($this->db->tableExists('openregister_objects') === false) {
+            return false;
+        }
+
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('id')
+            ->from('openregister_objects')
+            ->where(
+                $qb->expr()->orX(
+                    $qb->expr()->eq('schema', $qb->createNamedParameter((string) $schemaId)),
+                    $qb->expr()->eq('schema', $qb->createNamedParameter(self::SCHEMA))
+                )
+            )
+            ->setMaxResults(1);
+        $found = $qb->executeQuery()->fetchOne();
+        return ($found !== false);
+
+    }//end objectsRemain()
+
+
+}//end class
