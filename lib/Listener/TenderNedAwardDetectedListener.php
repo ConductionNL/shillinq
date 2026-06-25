@@ -89,7 +89,7 @@ class TenderNedAwardDetectedListener implements IEventListener
      * Construct the listener with DI dependencies.
      *
      * @param MilestoneTemplateService $templates Pure-logic milestone planner (REQ-003).
-     * @param BudgetImpactEmitter      $budget    Emits the mydash budget-impact CloudEvent (REQ-007).
+     * @param BudgetImpactEmitter      $budget    Emits the launchpad budget-impact CloudEvent (REQ-007).
      * @param ContainerInterface       $container DI container for lazy OR ObjectService resolution.
      * @param IAppConfig               $appConfig App config for register slug + tenant KvK.
      * @param LoggerInterface          $logger    Logger for fail-soft diagnostics.
@@ -255,7 +255,7 @@ class TenderNedAwardDetectedListener implements IEventListener
         if ($existing !== null) {
             // REQ-002 idempotency: an obligation already exists for this
             // aanbestedingId. Nothing to do beyond re-emitting the budget
-            // impact CloudEvent (in case mydash missed the original).
+            // impact CloudEvent (in case launchpad missed the original).
             $this->budget->emitActivated(verplichting: $existing, source: $payload);
             return;
         }

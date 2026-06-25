@@ -454,7 +454,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
             $this->assertNotSame('Verplichting', $save['schema'], 'No new Verplichting should be created on idempotent re-event');
         }
 
-        // Budget impact event WAS re-emitted to nudge mydash.
+        // Budget impact event WAS re-emitted to nudge launchpad.
         $this->assertCount(1, $dispatcher->events);
 
     }//end testIdempotentOnExistingBronReferentie()

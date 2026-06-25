@@ -65,7 +65,7 @@ The deliverable is a revenue subledger that produces (a) GAAP-correct deferred a
 - **bookkeeping-period-close** + **bookkeeping-soft-close-flux**: nightly soft-close runs the revenue cut-off; flux analysis explains period-over-period revenue movements per PO satisfaction pattern.
 - **bookkeeping-ifrs7-disclosure / consolidation**: revenue disaggregation feeds the consolidated annual accounts.
 - **openconnector**: integration with CRM systems (Salesforce, HubSpot) for contract data ingestion, and with usage-metering systems for variable consideration.
-- **mydash**: CFO tile for ARR/MRR, billing vs revenue gap, top-10 contracts by remaining performance obligation.
+- **launchpad**: CFO tile for ARR/MRR, billing vs revenue gap, top-10 contracts by remaining performance obligation.
 - **docudesk**: signed contract PDFs stored as evidence, linked to the Contract entity.
 
 ## Target users

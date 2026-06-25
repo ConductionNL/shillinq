@@ -4,12 +4,12 @@
  * Budget Impact Emitter Service.
  *
  * REQ-007 — on activation of a `bron: tenderned` Verplichting, publish an
- * `obligation.activated` CloudEvent so mydash's budget-utilisation widget
+ * `obligation.activated` CloudEvent so launchpad's budget-utilisation widget
  * can reflect the new committed expense within 60 seconds.
  *
  * The emitter is a thin wrapper over the Nextcloud `IEventDispatcher`:
  * the actual cross-app transport is the OR event bus (consumed by the
- * mydash listener, which lives in its own app and is NOT a shillinq
+ * launchpad listener, which lives in its own app and is NOT a shillinq
  * concern). The emitter only:
  *
  *  1. Shapes a deterministic CloudEvent payload (contractWaarde, period,

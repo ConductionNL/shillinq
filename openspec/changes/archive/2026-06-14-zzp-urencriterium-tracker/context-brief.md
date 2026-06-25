@@ -458,7 +458,7 @@ Indien een ondernemer achteraf uren wil toevoegen (backfill), moet het systeem d
 - `openconnector` — ICS/CalDAV/Outlook/Google Calendar-import endpoints; Toggl/Harvest/Clockify/Pomofocus-OAuth
 - `openregister` — bewijsdossier file-storage met SHA-256 + bewaartermijn (art. 52 AWR, 7 jaar)
 - `nldesign` — government-thema voor publieke ZZP-portaal-deelnemers
-- `mydash` — BI-overzicht voor langjarige trends over meerdere ondernemingen
+- `launchpad` — BI-overzicht voor langjarige trends over meerdere ondernemingen
 
 ## Target users
 

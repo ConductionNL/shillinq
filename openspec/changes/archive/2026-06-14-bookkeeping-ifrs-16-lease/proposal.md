@@ -47,7 +47,7 @@ The success criterion is that a Shillinq customer should be able to capitalise t
 - ASC 842 (US GAAP) reconciliation — Phase 2
 - Cloud-infrastructure lease accounting (dedicated server / dark fibre) — out of scope but anticipated in design; no anti-patterns in schema
 - Sale-and-leaseback accounting in full detail (IFRS 16 November 2023 amendments) — deferred to Phase 2; schema carries `purchase-option` field for future expansion
-- Real-time lease-portfolio analytics dashboard (mydash) — deferred to Phase 2; disclosure table is the output
+- Real-time lease-portfolio analytics dashboard (launchpad) — deferred to Phase 2; disclosure table is the output
 - Lessor accounting (IFRS 16.63 onwards) — out of scope; Shillinq is for lessees
 
 ## Key Risks

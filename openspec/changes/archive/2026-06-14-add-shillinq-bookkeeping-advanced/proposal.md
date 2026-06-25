@@ -93,9 +93,9 @@ reconciliation reports; year-end close consumes period close).
   attached source statements (the generated CAMT.053 from bank
   connectors, attached source documents on fixed-asset acquisition)
   by foreign-key URI per ADR-022.
-- [ ] Project: mydash — no source changes; mydash consumes
+- [ ] Project: launchpad — no source changes; launchpad consumes
   reconciliation reports via runtime GraphQL only (per
-  `feedback_mydash-no-or-dependency.md`); no `shillinq` dep is added.
+  `feedback_launchpad-no-or-dependency.md`); no `shillinq` dep is added.
 
 ## Scope
 
@@ -207,8 +207,8 @@ dependency order:
    core, T2 AR core) — declares saved-query objects as
    `x-openregister-aggregations`; sub-ledger ↔ GL match, intercompany
    match, variance analysis vs `Budget` register, controller
-   exception report. Consumed by mydash via runtime GraphQL (no
-   install-time dep per `feedback_mydash-no-or-dependency.md`).
+   exception report. Consumed by launchpad via runtime GraphQL (no
+   install-time dep per `feedback_launchpad-no-or-dependency.md`).
 
 All seven specs follow the conduction-schema format (RFC 2119,
 `### REQ-{Abbrev}-NNN: <name>`, `#### Scenario:` with exactly 4 hashtags,
@@ -267,8 +267,8 @@ that operators configure, and the already-bumped
 - **docudesk** — fixed-asset acquisition documents, XBRL submission
   receipts, and CAMT.053-from-aggregator statements are referenced
   by docudesk attachment URI from the relevant register records.
-- **mydash** — reads reconciliation reports via runtime GraphQL on
-  OR (per `feedback_mydash-no-or-dependency.md`). mydash MUST NOT
+- **launchpad** — reads reconciliation reports via runtime GraphQL on
+  OR (per `feedback_launchpad-no-or-dependency.md`). launchpad MUST NOT
   list shillinq as a dependency.
 
 ## Risks
