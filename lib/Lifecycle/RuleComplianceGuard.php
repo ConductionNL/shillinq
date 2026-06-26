@@ -27,6 +27,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-rule-engine/specs/bookkeeping-rule-engine/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -44,9 +46,9 @@ use Psr\Log\LoggerInterface;
  */
 class RuleComplianceGuard
 {
-
-
     /**
+     * Construct the rule compliance lifecycle guard.
+     *
      * @param ContainerInterface $container    DI container for lazy ObjectService resolution.
      * @param IAppConfig         $appConfig    App config for the register slug.
      * @param LoggerInterface    $logger       Logger for violations + fail-closed diagnostics.
@@ -60,7 +62,6 @@ class RuleComplianceGuard
     ) {
 
     }//end __construct()
-
 
     /**
      * Allow ARInvoice.issue only when no mandatory invoice rule is violated.
@@ -89,7 +90,6 @@ class RuleComplianceGuard
         }//end try
 
     }//end validateInvoice()
-
 
     /**
      * Allow GLTransaction.post only when balanced and no mandatory ledger rule is
@@ -127,7 +127,6 @@ class RuleComplianceGuard
 
     }//end validateTransaction()
 
-
     /**
      * Build the evaluation context. Jurisdiction drives which rules apply; it
      * defaults to NL (the home jurisdiction — EU + global rules then apply) and
@@ -146,12 +145,11 @@ class RuleComplianceGuard
 
     }//end context()
 
-
     /**
      * Load one object by id from the register as a plain array, or null.
      *
      * @param string $schema The schema name.
-     * @param string $id      The object id.
+     * @param string $id     The object id.
      *
      * @return array<string, mixed>|null
      */
@@ -168,7 +166,6 @@ class RuleComplianceGuard
 
     }//end loadObject()
 
-
     /**
      * Load the GLLine rows for a transaction. Lines reference their parent via
      * `transactionId` matching EITHER the OpenRegister id OR the human
@@ -183,10 +180,16 @@ class RuleComplianceGuard
     private function loadLines(array $transaction): array
     {
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $keys = array_values(array_unique(array_filter([
-            (string) ($transaction['id'] ?? $transaction['@self']['id'] ?? ''),
-            (string) ($transaction['transactionNumber'] ?? ''),
-        ])));
+        $keys          = array_values(
+                array_unique(
+                array_filter(
+                [
+                    (string) ($transaction['id'] ?? $transaction['@self']['id'] ?? ''),
+                    (string) ($transaction['transactionNumber'] ?? ''),
+                ]
+                )
+                )
+                );
 
         $lines = [];
         foreach ($keys as $key) {
@@ -202,7 +205,7 @@ class RuleComplianceGuard
                 }
 
                 if (is_array($line) === true) {
-                    $lineId = (string) ($line['id'] ?? $line['@self']['id'] ?? count($lines));
+                    $lineId         = (string) ($line['id'] ?? $line['@self']['id'] ?? count($lines));
                     $lines[$lineId] = $line;
                 }
             }
@@ -212,12 +215,11 @@ class RuleComplianceGuard
 
     }//end loadLines()
 
-
     /**
      * Log violations (mandatory at warning level, others at info).
      *
-     * @param string                $objectType The object type.
-     * @param string                $id         The object id.
+     * @param string                                        $objectType The object type.
+     * @param string                                        $id         The object id.
      * @param array<int, \OCA\Shillinq\Standards\Violation> $violations Violations.
      *
      * @return void
@@ -243,7 +245,6 @@ class RuleComplianceGuard
 
     }//end logViolations()
 
-
     /**
      * The configured register slug.
      *
@@ -255,6 +256,4 @@ class RuleComplianceGuard
         return $register === '' ? 'shillinq' : $register;
 
     }//end register()
-
-
 }//end class

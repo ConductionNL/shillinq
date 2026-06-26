@@ -35,6 +35,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-rule-engine/specs/bookkeeping-rule-engine/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, Squiz.Commenting.DocCommentAlignment, Squiz.Commenting.InlineComment, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -546,9 +548,9 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects
      * "not exceeding two of three" test). Vacuously true when a DIFFERENT class is
      * declared (that other class's own rule governs it) or no metrics are modelled.
      *
+     * @param array<string, mixed>             $o     The object.
      * @param array<string, array<int, float>> $table The jurisdiction's threshold table.
      * @param string                           $class The size class this rule governs.
-     * @param array<string, mixed>             $o     The object.
      *
      * @return bool
      */

@@ -43,6 +43,8 @@
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, Squiz.Commenting.InlineComment, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -72,7 +74,7 @@ class FoldIntoOrder implements IRepairStep
      * @param SettingsService    $settingsService Provides the shillinq register slug.
      * @param LoggerInterface    $logger          Logger for per-row failures.
      * @param IGroupManager      $groupManager    Resolves the admin IUser for OR writes.
-     * @param ContainerInterface $container        DI container (lazy OR ObjectService resolution).
+     * @param ContainerInterface $container       DI container (lazy OR ObjectService resolution).
      */
     public function __construct(
         private readonly SettingsService $settingsService,
@@ -179,8 +181,8 @@ class FoldIntoOrder implements IRepairStep
                 ->setSchema($schema)
                 ->findAll(
                     [
-                        'limit'        => 0,
-                        '_rbac'        => false,
+                        'limit'         => 0,
+                        '_rbac'         => false,
                         '_multitenancy' => false,
                     ]
                 );
@@ -298,17 +300,17 @@ class FoldIntoOrder implements IRepairStep
 
         $record = [
             // ---- Order base fields (inherited via allOf composition) --------.
-            'orderType'        => 'grant',
-            'direction'        => (string) ($src['direction'] ?? 'outgoing'),
-            'orderNumber'      => $migrationKey,
-            'counterpartyId'   => $this->stringOrNull($src['counterpartyId'] ?? null),
-            'counterpartyName' => $this->firstNonEmpty([($src['counterpartyName'] ?? null), ($src['granteeOrganization'] ?? null)]),
-            'totalAmount'      => ($grantedAmount === null ? null : (float) $grantedAmount),
-            'currency'         => (string) ($src['currency'] ?? 'EUR'),
-            'orderDate'        => $this->toDateTime($src['awardDate'] ?? ($src['beschikkingDate'] ?? null)),
-            'administrationId' => (string) ($src['administrationId'] ?? 'unknown'),
-            'state'            => $this->mapGrantState((string) ($src['state'] ?? '')),
-            'description'      => $this->stringOrNull($src['purposeDescription'] ?? ($src['notes'] ?? null)),
+            'orderType'             => 'grant',
+            'direction'             => (string) ($src['direction'] ?? 'outgoing'),
+            'orderNumber'           => $migrationKey,
+            'counterpartyId'        => $this->stringOrNull($src['counterpartyId'] ?? null),
+            'counterpartyName'      => $this->firstNonEmpty([($src['counterpartyName'] ?? null), ($src['granteeOrganization'] ?? null)]),
+            'totalAmount'           => ($grantedAmount === null ? null : (float) $grantedAmount),
+            'currency'              => (string) ($src['currency'] ?? 'EUR'),
+            'orderDate'             => $this->toDateTime($src['awardDate'] ?? ($src['beschikkingDate'] ?? null)),
+            'administrationId'      => (string) ($src['administrationId'] ?? 'unknown'),
+            'state'                 => $this->mapGrantState((string) ($src['state'] ?? '')),
+            'description'           => $this->stringOrNull($src['purposeDescription'] ?? ($src['notes'] ?? null)),
 
             // ---- Grant tail (English) --------------------------------------.
             'scheme'                => $scheme,
@@ -330,7 +332,7 @@ class FoldIntoOrder implements IRepairStep
             'settlementDocumentUri' => $this->stringOrNull($src['vaststellingUri'] ?? null),
 
             // Stable migration marker so re-runs are idempotent.
-            'migratedFromSubsidie' => $migrationKey,
+            'migratedFromSubsidie'  => $migrationKey,
         ];
 
         return $record;
@@ -343,12 +345,12 @@ class FoldIntoOrder implements IRepairStep
      * source amount is dropped — anything not mappable to a Grant field lands
      * here as a Payment. Idempotent (skips when a matching Payment exists).
      *
-     * @param object  $objectService The OR ObjectService.
-     * @param string  $registerSlug  The shillinq register slug.
-     * @param IUser   $admin         The admin user for OR writes.
-     * @param IOutput $output        The repair output.
-     * @param array<string,mixed> $src      The source Subsidie row.
-     * @param string  $grantOrderId  The folded Grant/Order id (Payment.orderId).
+     * @param object              $objectService The OR ObjectService.
+     * @param string              $registerSlug  The shillinq register slug.
+     * @param IUser               $admin         The admin user for OR writes.
+     * @param IOutput             $output        The repair output.
+     * @param array<string,mixed> $src           The source Subsidie row.
+     * @param string              $grantOrderId  The folded Grant/Order id (Payment.orderId).
      *
      * @return void
      */
@@ -364,7 +366,15 @@ class FoldIntoOrder implements IRepairStep
         $disbursed = $this->floatOrNull($src['uitbetaaldBedrag'] ?? null);
         if ($disbursed !== null && $disbursed > 0) {
             $this->createPaymentIfAbsent(
-                $objectService, $registerSlug, $admin, $output, $grantOrderId, 'disbursement', $disbursed, $currency, $administrationId,
+                $objectService,
+                    $registerSlug,
+                    $admin,
+                    $output,
+                    $grantOrderId,
+                    'disbursement',
+                    $disbursed,
+                    $currency,
+                    $administrationId,
                 $this->toDateTime($src['disbursementDate'] ?? null)
             );
         }
@@ -372,7 +382,15 @@ class FoldIntoOrder implements IRepairStep
         $reclaimed = $this->floatOrNull($src['teruggevorderdBedrag'] ?? null);
         if ($reclaimed !== null && $reclaimed > 0) {
             $this->createPaymentIfAbsent(
-                $objectService, $registerSlug, $admin, $output, $grantOrderId, 'reclaim', $reclaimed, $currency, $administrationId,
+                $objectService,
+                    $registerSlug,
+                    $admin,
+                    $output,
+                    $grantOrderId,
+                    'reclaim',
+                    $reclaimed,
+                    $currency,
+                    $administrationId,
                 null
             );
         }
@@ -417,7 +435,7 @@ class FoldIntoOrder implements IRepairStep
             }
 
             try {
-                $patch              = $src;
+                $patch = $src;
                 $patch['orderType'] = 'booking';
                 if (($patch['direction'] ?? '') === '') {
                     $patch['direction'] = 'incoming';
@@ -440,9 +458,16 @@ class FoldIntoOrder implements IRepairStep
                     // depositAmount is minor units (cents) on the Order; express
                     // the generic Payment.amount in major units.
                     $this->createPaymentIfAbsent(
-                        $objectService, $registerSlug, $admin, $output, $sourceId, 'deposit',
-                        ($depositAmount / 100.0), (string) ($src['currency'] ?? 'EUR'),
-                        (string) ($src['administrationId'] ?? 'unknown'), null,
+                        $objectService,
+                            $registerSlug,
+                            $admin,
+                            $output,
+                            $sourceId,
+                            'deposit',
+                        ($depositAmount / 100.0),
+                            (string) ($src['currency'] ?? 'EUR'),
+                        (string) ($src['administrationId'] ?? 'unknown'),
+                            null,
                         ($depositPaymentId !== '' ? $depositPaymentId : null)
                     );
                 }
@@ -498,7 +523,7 @@ class FoldIntoOrder implements IRepairStep
             }
 
             try {
-                $patch              = $src;
+                $patch = $src;
                 $patch['orderType'] = $orderType;
                 if (($patch['direction'] ?? '') === '') {
                     $patch['direction'] = $direction;
@@ -554,23 +579,23 @@ class FoldIntoOrder implements IRepairStep
                 'projectReference' => ['projectCode'],
             ],
             'Quote' => [
-                'orderNumber'      => ['quoteNumber'],
-                'counterpartyId'   => ['customerReference'],
-                'paymentTerms'     => ['paymentTerms'],
+                'orderNumber'    => ['quoteNumber'],
+                'counterpartyId' => ['customerReference'],
+                'paymentTerms'   => ['paymentTerms'],
             ],
             'SalesOrder' => [
-                'orderNumber'      => ['orderNumber', 'orderId'],
-                'counterpartyId'   => ['customerReference', 'klantId'],
-                'orderDate'        => ['orderDate'],
-                'paymentTerms'     => ['paymentTerms'],
+                'orderNumber'    => ['orderNumber', 'orderId'],
+                'counterpartyId' => ['customerReference', 'klantId'],
+                'orderDate'      => ['orderDate'],
+                'paymentTerms'   => ['paymentTerms'],
             ],
             'BlanketOrder' => [
-                'orderNumber'      => ['blanketOrderNumber'],
-                'counterpartyId'   => ['customerReference'],
-                'totalAmount'      => ['committedQuantity'],
+                'orderNumber'    => ['blanketOrderNumber'],
+                'counterpartyId' => ['customerReference'],
+                'totalAmount'    => ['committedQuantity'],
             ],
             default => [],
-        };
+        };//end match
 
         foreach ($map as $target => $candidates) {
             if (($patch[$target] ?? '') !== '' && ($patch[$target] ?? null) !== null) {
@@ -634,9 +659,9 @@ class FoldIntoOrder implements IRepairStep
                 ->setSchema('Payment')
                 ->findAll(
                     [
-                        'filters'      => ['orderId' => $orderId, 'paymentType' => $paymentType],
-                        'limit'        => 1,
-                        '_rbac'        => false,
+                        'filters'       => ['orderId' => $orderId, 'paymentType' => $paymentType],
+                        'limit'         => 1,
+                        '_rbac'         => false,
                         '_multitenancy' => false,
                     ]
                 );
@@ -692,9 +717,9 @@ class FoldIntoOrder implements IRepairStep
                 ->setSchema('Grant')
                 ->findAll(
                     [
-                        'filters'      => ['migratedFromSubsidie' => $migrationKey],
-                        'limit'        => 1,
-                        '_rbac'        => false,
+                        'filters'       => ['migratedFromSubsidie' => $migrationKey],
+                        'limit'         => 1,
+                        '_rbac'         => false,
                         '_multitenancy' => false,
                     ]
                 );
@@ -753,7 +778,7 @@ class FoldIntoOrder implements IRepairStep
             }
         }
 
-        $arr = (array) $saved;
+        $arr     = (array) $saved;
         $fromArr = (string) ($arr['uuid'] ?? ($arr['id'] ?? ''));
         if ($fromArr !== '') {
             return $fromArr;

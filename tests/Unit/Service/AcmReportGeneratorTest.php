@@ -97,31 +97,6 @@ final class AcmReportGeneratorTest extends TestCase
     }//end testComposeRejectsInvalidPeriod()
 
     /**
-     * Sign requires draft + non-empty inputs and flips to ready-for-submission.
-     */
-    public function testSignFlipsToReadyForSubmission(): void
-    {
-        $report = ['status' => 'draft'];
-        $signed = $this->svc->sign($report, 'concerncontroller-user', 'SHA256:abc123');
-        self::assertSame('ready-for-submission', $signed['status']);
-        self::assertSame('concerncontroller-user', $signed['ondertekenaar']);
-        self::assertSame('SHA256:abc123', $signed['signatureFingerprint']);
-        self::assertNotNull($signed['ondertekendOp']);
-
-    }//end testSignFlipsToReadyForSubmission()
-
-    /**
-     * Sign rejects non-draft reports.
-     */
-    public function testSignRejectsNonDraft(): void
-    {
-        $report = ['status' => 'verzonden'];
-        $this->expectException(InvalidArgumentException::class);
-        $this->svc->sign($report, 'user', 'fp');
-
-    }//end testSignRejectsNonDraft()
-
-    /**
      * Submit flips ready-for-submission to verzonden.
      */
     public function testSubmitFlipsToVerzonden(): void

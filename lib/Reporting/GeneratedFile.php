@@ -28,9 +28,9 @@ namespace OCA\Shillinq\Reporting;
  */
 final class GeneratedFile
 {
-
-
     /**
+     * Construct an immutable rendered-report payload.
+     *
      * @param string $fileName Suggested file name including extension.
      * @param string $mimeType MIME type (e.g. application/pdf, text/xml, text/csv).
      * @param string $format   Short format label: pdf | xml | xbrl | csv | json.
@@ -44,6 +44,4 @@ final class GeneratedFile
     ) {
 
     }//end __construct()
-
-
 }//end class

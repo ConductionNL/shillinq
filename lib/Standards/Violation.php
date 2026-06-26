@@ -32,9 +32,9 @@ use JsonSerializable;
  */
 final class Violation implements JsonSerializable
 {
-
-
     /**
+     * Construct an immutable rule violation.
+     *
      * @param string $ruleId    The violated rule's catalogue id.
      * @param string $severity  `mandatory` | `conditional` | `recommended`.
      * @param string $source    Human citation (e.g. "EN 16931 BR-CO-15").
@@ -49,8 +49,9 @@ final class Violation implements JsonSerializable
 
     }//end __construct()
 
-
     /**
+     * Serialize the violation to a plain JSON-compatible array.
+     *
      * @return array<string, string>
      */
     public function jsonSerialize(): array
@@ -63,6 +64,4 @@ final class Violation implements JsonSerializable
         ];
 
     }//end jsonSerialize()
-
-
 }//end class

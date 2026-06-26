@@ -25,6 +25,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ *
+ * phpcs:disable Generic.Files.LineLength
  */
 
 declare(strict_types=1);
@@ -48,7 +50,6 @@ final class ReportCatalogue
         'public-sector' => 'Overheidsrapportages',
         'compliance'    => 'Compliance & audit trail',
     ];
-
 
     /**
      * The report-type registry. Each: id, label, category, kind (data|document),
@@ -92,7 +93,6 @@ final class ReportCatalogue
 
     }//end all()
 
-
     /**
      * Look up a report type by id.
      *
@@ -111,6 +111,4 @@ final class ReportCatalogue
         return null;
 
     }//end byId()
-
-
 }//end class

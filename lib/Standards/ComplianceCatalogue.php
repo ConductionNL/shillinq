@@ -34,6 +34,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/expand-standards-eu-us/specs/accounting-standards-policy/spec.md
+ *
+ * phpcs:disable Generic.Files.LineLength
  */
 
 declare(strict_types=1);
@@ -67,11 +69,34 @@ final class ComplianceCatalogue
      * @var string[]
      */
     public const EU_MEMBER_STATES = [
-        'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR',
-        'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL',
-        'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE',
+        'AT',
+        'BE',
+        'BG',
+        'HR',
+        'CY',
+        'CZ',
+        'DK',
+        'EE',
+        'FI',
+        'FR',
+        'DE',
+        'GR',
+        'HU',
+        'IE',
+        'IT',
+        'LV',
+        'LT',
+        'LU',
+        'MT',
+        'NL',
+        'PL',
+        'PT',
+        'RO',
+        'SK',
+        'SI',
+        'ES',
+        'SE',
     ];
-
 
     /**
      * The full catalogue. Each entry:
@@ -119,7 +144,6 @@ final class ComplianceCatalogue
 
     }//end all()
 
-
     /**
      * Obligations applying to a jurisdiction: its own entries plus EU-wide
      * entries when the jurisdiction is an EU member state.
@@ -148,7 +172,6 @@ final class ComplianceCatalogue
 
     }//end applicableTo()
 
-
     /**
      * All obligations of a given type (e-invoicing, saf-t, vat, ...).
      *
@@ -169,7 +192,6 @@ final class ComplianceCatalogue
 
     }//end byType()
 
-
     /**
      * The catalogue version string.
      *
@@ -180,6 +202,4 @@ final class ComplianceCatalogue
         return self::VERSION;
 
     }//end version()
-
-
 }//end class

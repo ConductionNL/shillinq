@@ -26,6 +26,8 @@
  * @link https://shillinq.nl
  *
  * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.Operators.ComparisonOperatorUsage, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -50,11 +52,15 @@ use OCP\IRequest;
 class SetupController extends Controller
 {
     /**
-     * @var int Setup contract version; matches manifest.setup.version.
+     * Setup contract version; matches manifest.setup.version.
+     *
+     * @var int
      */
     private const SETUP_VERSION = 1;
 
     /**
+     * Construct the setup controller.
+     *
      * @param string          $appName         The app id.
      * @param IRequest        $request         The request.
      * @param IAppConfig      $appConfig       App-config reader/writer.

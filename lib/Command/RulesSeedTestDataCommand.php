@@ -18,6 +18,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-rule-testdata-seed/specs/bookkeeping-rule-engine/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment
  */
 
 declare(strict_types=1);
@@ -30,11 +32,13 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * occ command that seeds compliant local test data.
+ * OCC command that seeds compliant local test data.
  */
 class RulesSeedTestDataCommand extends Command
 {
     /**
+     * Construct the seed-testdata command.
+     *
      * @param RuleTestDataSeeder $seeder The test-data seeder.
      */
     public function __construct(
@@ -45,6 +49,8 @@ class RulesSeedTestDataCommand extends Command
     }//end __construct()
 
     /**
+     * Configure the command name and description.
+     *
      * @return void
      */
     protected function configure(): void
@@ -55,6 +61,8 @@ class RulesSeedTestDataCommand extends Command
     }//end configure()
 
     /**
+     * Execute the command — run the seeder and print the result summary.
+     *
      * @param InputInterface  $input  Console input.
      * @param OutputInterface $output Console output.
      *

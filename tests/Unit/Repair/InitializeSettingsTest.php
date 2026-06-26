@@ -204,10 +204,12 @@ class InitializeSettingsTest extends TestCase
         $this->settingsService->method('seedSelectielijst')
             ->willReturn(['success' => true, 'seeded' => 100, 'skipped' => 0]);
 
-        // ProductAttribute seeds are called once per category (5 categories) per REQ-IPC-007.
-        $this->settingsService->expects($this->exactly(count: 5))
-            ->method('seedProductAttributes')
-            ->willReturn(['success' => true, 'seeded' => 12, 'skipped' => 0]);
+        // seedProductAttributes is no longer called from run() — the ProductAttribute
+        // data was migrated to pipelinq (MigrateProductVendorMasterToPipelinq change).
+        // The expectation is intentionally absent; the mock allows the call to return
+        // a sensible default if ever triggered by a stale call path.
+        $this->settingsService->method('seedProductAttributes')
+            ->willReturn(['success' => true, 'seeded' => 0, 'skipped' => 0]);
 
         $this->settingsService->method('getRegisterSlug')
             ->willReturn('shillinq');

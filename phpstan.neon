@@ -15,6 +15,10 @@ parameters:
         - vendor-bin
         # Apps that ship a verbatim template snapshot under lib/Resources/template/ (e.g. openbuilt).
         - lib/Resources/template
+        # CustomerBridgeMetricsService implements OCA\OpenRegister\AppHost\IMetricsProvider which is
+        # unavailable at analysis time (cross-app interface, present only at runtime). PHPStan requires
+        # excludePaths for this class of error (not suppressible via ignoreErrors or baseline).
+        - lib/Service/Pipelinq/CustomerBridgeMetricsService.php
     scanDirectories:
         - vendor/nextcloud/ocp
     reportUnmatchedIgnoredErrors: false
