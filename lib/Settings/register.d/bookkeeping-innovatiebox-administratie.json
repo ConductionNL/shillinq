@@ -1,927 +1,1089 @@
 {
-	"_meta": {
-		"spdx-license": "EUPL-1.2",
-		"spdx-copyright": "2026 Conduction B.V.",
-		"change": "bookkeeping-innovatiebox-administratie",
-		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-		"description": "Tier 4 — Innovatiebox administratie (Wet Vpb art. 12b-12bg). Declares the five interconnected registers QualifyingAsset (kwalificerend immaterieel activum with validated toegangsticket), NexusCalculation (OECD BEPS Action 5 modified nexus per asset per boekjaar, immutable), IBProfitAttribution (per-asset winsttoerekening: afpelmethode / forfaitair / cost-plus), IBExpenseAllocation (kostentoerekening with doorsnijdingsverbod flag), and CarryForwardLoss (asset-specific voortwenteling verlies). The declarative x-openregister-aggregations document the nexus / profit-attribution / loss-carry-forward / doorsnijdingsverbod shapes; the PHP service layer (NexusCalculationService, ProfitAttributionService, CarryForwardLossService, DoorsnijdingsVerbodValidator, QualifyingAssetValidator, InnovatieboxAggregationService) computes the same results from the real OpenRegister ObjectService API (find/findAll). Tariff 0.09 is hard-coded per Wet Vpb art. 12b 2026 (REQ-IBA-010). Seed objects provide the worked nexus / afpelmethode / forfaitair / loss-carry-forward examples from spec.md."
-	},
-	"components": {
-		"schemas": {
-			"QualifyingAsset": {
-				"slug": "QualifyingAsset",
-				"icon": "Lightbulb",
-				"version": "0.1.0",
-				"title": "Qualifying Asset",
-				"description": "Kwalificerend immaterieel activum (IP asset) with a validated toegangsticket per Wet Vpb art. 12ba (REQ-IBA-001). Assets without a valid access ticket get status invalid_access_ticket and are excluded from nexus / profit-attribution aggregations.",
-				"x-schema-org": "schema:CreativeWork",
-				"x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-001",
-				"type": "object",
-				"required": [
-					"naam",
-					"type",
-					"type_immaterieel_activum",
-					"voortbrenger",
-					"kostendrager_id",
-					"status",
-					"administrationId"
-				],
-				"properties": {
-					"naam": {
-						"type": "string",
-						"description": "IP asset name.",
-						"example": "Slimme routeringsalgoritme"
-					},
-					"type": {
-						"type": "string",
-						"description": "Asset type per Wet Vpb art. 12ba.",
-						"enum": [
-							"software",
-							"octrooi",
-							"kwekersrecht",
-							"weesgeneesmiddel",
-							"gebruiksmodel",
-							"aanvullend_beschermingscertificaat",
-							"combinatie"
-						],
-						"example": "software"
-					},
-					"toegangsticket": {
-						"type": "object",
-						"description": "Access-ticket evidence (REQ-IBA-001). soort drives which sub-fields are required.",
-						"nullable": true,
-						"properties": {
-							"soort": {
-								"type": "string",
-								"enum": [
-									"so_verklaring",
-									"octrooi",
-									"kwekersrecht",
-									"weesgeneesmiddel",
-									"gebruiksmodel",
-									"abc"
-								]
-							},
-							"so_verklaring_nummer": {
-								"type": "string",
-								"description": "RVO S&O-verklaring (format S{jaar}/{6-cijfer}); required if soort=so_verklaring.",
-								"example": "S2024/001234"
-							},
-							"so_verklaring_periode": {
-								"type": "object",
-								"properties": {
-									"van": {
-										"type": "string",
-										"format": "date"
-									},
-									"tot": {
-										"type": "string",
-										"format": "date"
-									}
-								}
-							},
-							"octrooi_nummer": {
-								"type": "string"
-							},
-							"octrooi_land": {
-								"type": "string"
-							},
-							"octrooi_aanvraagdatum": {
-								"type": "string",
-								"format": "date"
-							},
-							"kwekersrecht_nummer": {
-								"type": "string"
-							}
-						}
-					},
-					"type_immaterieel_activum": {
-						"type": "string",
-						"enum": [
-							"software",
-							"hardware-related",
-							"data-algoritme",
-							"other"
-						],
-						"example": "software"
-					},
-					"ontwikkelingsperiode": {
-						"type": "object",
-						"properties": {
-							"start": {
-								"type": "string",
-								"format": "date"
-							},
-							"einde_verwacht": {
-								"type": "string",
-								"format": "date"
-							}
-						}
-					},
-					"in_gebruik_genomen": {
-						"type": "string",
-						"format": "date",
-						"nullable": true
-					},
-					"voortbrenger": {
-						"type": "string",
-						"enum": [
-							"interne_ontwikkeling",
-							"externe_aankoop",
-							"combinatie"
-						],
-						"example": "interne_ontwikkeling"
-					},
-					"kostendrager_id": {
-						"type": "string",
-						"description": "FK to the cost carrier (R&D team / project) per bookkeeping-cost-centers-dimensions.",
-						"example": "kd-platform-team"
-					},
-					"verbonden_lichaam_betrokken": {
-						"type": "boolean",
-						"default": false
-					},
-					"drempelbedrag_van_toepassing": {
-						"type": "boolean",
-						"default": false
-					},
-					"status": {
-						"type": "string",
-						"enum": [
-							"valid",
-							"invalid_access_ticket",
-							"awaiting_renewal",
-							"expired"
-						],
-						"default": "valid",
-						"example": "valid"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the administration; reads are scoped to the requesting user's administration (REQ-IBA-008).",
-						"example": "adm-mkb-1"
-					}
-				}
-			},
-			"NexusCalculation": {
-				"slug": "NexusCalculation",
-				"icon": "Sigma",
-				"version": "0.1.0",
-				"title": "Nexus Calculation",
-				"description": "OECD BEPS Action 5 modified-nexus calculation per asset per fiscal year (REQ-IBA-002). nexusbreuk = min(1; 1.3 x (eigen + uitbesteed_derden) / totaal). Immutable after creation (audit-trail enforced).",
-				"x-schema-org": "schema:MonetaryAmount",
-				"x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002",
-				"x-openregister": {
-					"immutable": true
-				},
-				"type": "object",
-				"required": [
-					"qualifying_asset_id",
-					"boekjaar",
-					"eigen_rd_kosten",
-					"rd_kosten_uitbesteed_derden",
-					"rd_kosten_uitbesteed_verbonden",
-					"totale_rd_kosten",
-					"uplift_factor",
-					"nexusbreuk_toegepast",
-					"administrationId"
-				],
-				"properties": {
-					"qualifying_asset_id": {
-						"type": "string",
-						"description": "FK to QualifyingAsset.",
-						"example": "qa-2024-001"
-					},
-					"boekjaar": {
-						"type": "integer",
-						"example": 2024
-					},
-					"eigen_rd_kosten": {
-						"type": "number",
-						"minimum": 0,
-						"example": 480000.0
-					},
-					"rd_kosten_uitbesteed_derden": {
-						"type": "number",
-						"minimum": 0,
-						"description": "R&D outsourced to unrelated third parties (counts in the teller).",
-						"example": 120000.0
-					},
-					"rd_kosten_uitbesteed_verbonden": {
-						"type": "number",
-						"minimum": 0,
-						"description": "R&D outsourced to related entities per art. 10a Vpb (noemer only, never in teller).",
-						"example": 80000.0
-					},
-					"totale_rd_kosten": {
-						"type": "number",
-						"minimum": 0,
-						"example": 680000.0
-					},
-					"uplift_factor": {
-						"type": "number",
-						"description": "Fixed 1.3 per OECD BEPS Action 5.",
-						"default": 1.3,
-						"example": 1.3
-					},
-					"nexus_teller_voor_uplift": {
-						"type": "number",
-						"description": "eigen_rd_kosten + rd_kosten_uitbesteed_derden.",
-						"example": 600000.0
-					},
-					"nexus_teller_na_uplift": {
-						"type": "number",
-						"description": "min(uplift_factor x teller_voor_uplift, totale_rd_kosten).",
-						"example": 680000.0
-					},
-					"nexus_noemer": {
-						"type": "number",
-						"example": 680000.0
-					},
-					"nexusbreuk_ongecapt": {
-						"type": "number",
-						"example": 1.0
-					},
-					"nexusbreuk_toegepast": {
-						"type": "number",
-						"description": "min(nexusbreuk_ongecapt, 1.0), capped at 100%.",
-						"example": 1.0
-					},
-					"berekend_op": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"berekend_door": {
-						"type": "string",
-						"nullable": true
-					},
-					"administrationId": {
-						"type": "string",
-						"example": "adm-mkb-1"
-					}
-				},
-				"x-openregister-aggregations": {
-					"nexusByAssetYear": {
-						"description": "Declarative shape of the modified-nexus roll-up NexusCalculationService computes (REQ-IBA-002). Groups R&D cost by (qualifying_asset_id, boekjaar), derives teller_voor_uplift = eigen + uitbesteed_derden, teller_na_uplift = min(1.3 x teller_voor_uplift, totaal), and nexusbreuk_toegepast = min(teller_na_uplift / totaal, 1.0).",
-						"source": "NexusCalculation",
-						"groupBy": [
-							"NexusCalculation.qualifying_asset_id",
-							"NexusCalculation.boekjaar"
-						],
-						"operations": {
-							"nexusbreuk_toegepast": {
-								"operation": "expression",
-								"expression": "min(min(1.3 * (eigen_rd_kosten + rd_kosten_uitbesteed_derden), totale_rd_kosten) / totale_rd_kosten, 1.0)",
-								"target": "nexusbreuk_toegepast"
-							}
-						}
-					}
-				}
-			},
-			"IBProfitAttribution": {
-				"slug": "IBProfitAttribution",
-				"icon": "ChartPie",
-				"version": "0.1.0",
-				"title": "IB Profit Attribution",
-				"description": "Per-asset winsttoerekening per fiscal year using one of three methods: per_asset_afpelmethode, forfaitair_25pct (25% capped at EUR 25k, no nexus), cost_plus (REQ-IBA-003). Exactly one record per (qualifying_asset_id, boekjaar).",
-				"x-schema-org": "schema:MonetaryAmount",
-				"x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-003",
-				"type": "object",
-				"required": [
-					"qualifying_asset_id",
-					"boekjaar",
-					"methode",
-					"bruto_opbrengst_activum",
-					"kwalificerende_winst_voor_nexus",
-					"nexus_calculation_id",
-					"nexusbreuk_toegepast",
-					"kwalificerende_winst_na_nexus",
-					"effectief_tarief",
-					"vpb_op_innovatiedeel",
-					"voordeel_innovatiebox",
-					"administrationId"
-				],
-				"properties": {
-					"qualifying_asset_id": {
-						"type": "string",
-						"example": "qa-2024-001"
-					},
-					"boekjaar": {
-						"type": "integer",
-						"example": 2024
-					},
-					"methode": {
-						"type": "string",
-						"enum": [
-							"per_asset_afpelmethode",
-							"forfaitair_25pct",
-							"cost_plus"
-						],
-						"example": "per_asset_afpelmethode"
-					},
-					"bruto_opbrengst_activum": {
-						"type": "number",
-						"minimum": 0,
-						"example": 2400000.0
-					},
-					"directe_kosten_activum": {
-						"type": "number",
-						"minimum": 0,
-						"default": 0,
-						"example": 850000.0
-					},
-					"routine_marketing_winst": {
-						"type": "number",
-						"minimum": 0,
-						"default": 0,
-						"example": 180000.0
-					},
-					"routine_distributie_winst": {
-						"type": "number",
-						"minimum": 0,
-						"default": 0,
-						"example": 90000.0
-					},
-					"routine_productie_winst": {
-						"type": "number",
-						"minimum": 0,
-						"default": 0,
-						"example": 480000.0
-					},
-					"kwalificerende_winst_voor_nexus": {
-						"type": "number",
-						"description": "bruto_opbrengst - directe_kosten - sum(routines).",
-						"example": 800000.0
-					},
-					"nexus_calculation_id": {
-						"type": "string",
-						"example": "nx-2024-001"
-					},
-					"nexusbreuk_toegepast": {
-						"type": "number",
-						"example": 1.0
-					},
-					"kwalificerende_winst_na_nexus": {
-						"type": "number",
-						"description": "kwalificerende_winst_voor_nexus x nexusbreuk_toegepast (afpelmethode); min(0.25 x profit, 25000) for forfaitair.",
-						"example": 800000.0
-					},
-					"effectief_tarief": {
-						"type": "number",
-						"description": "Innovatiebox tariff 0.09 (Wet Vpb art. 12b 2026, REQ-IBA-010).",
-						"default": 0.09,
-						"example": 0.09
-					},
-					"vpb_op_innovatiedeel": {
-						"type": "number",
-						"description": "kwalificerende_winst_na_nexus x effectief_tarief.",
-						"example": 72000.0
-					},
-					"vpb_zonder_innovatiebox": {
-						"type": "number",
-						"description": "kwalificerende_winst_voor_nexus x 0.258 (standard rate, for comparison).",
-						"example": 206400.0
-					},
-					"voordeel_innovatiebox": {
-						"type": "number",
-						"description": "vpb_zonder_innovatiebox - vpb_op_innovatiedeel.",
-						"example": 134400.0
-					},
-					"drempel_2024": {
-						"type": "number",
-						"minimum": 0,
-						"default": 0
-					},
-					"drempel_resterend": {
-						"type": "number",
-						"minimum": 0,
-						"default": 0
-					},
-					"vso_locked": {
-						"type": "boolean",
-						"description": "True once the fiscal year is signed off in a VSO; record becomes read-only (REQ-IBA-008).",
-						"default": false
-					},
-					"forfaitair_cap_applied": {
-						"type": "boolean",
-						"description": "True when the forfaitair_25pct election hit the EUR 25k annual cap (art. 12bg). Drives the ForfaitairCap.applied audit event (REQ-IBA-008).",
-						"default": false
-					},
-					"administrationId": {
-						"type": "string",
-						"example": "adm-mkb-1"
-					}
-				},
-				"x-openregister-aggregations": {
-					"innovatieboxAdministratie": {
-						"description": "Per-asset Vpb innovatiebox roll-up (REQ-IBA-006). For each valid QualifyingAsset, joins IBProfitAttribution + NexusCalculation + CarryForwardLoss for the boekjaar and emits naam, kwalificerende_winst_voor_nexus, nexusbreuk_toegepast, kwalificerende_winst_na_nexus, effectief_tarief, vpb_op_innovatiedeel. The grand total contributes to Vpb-aangifte regel 23. InnovatieboxAggregationService computes this in PHP from the real ObjectService API.",
-						"source": "IBProfitAttribution",
-						"join": {
-							"from": "IBProfitAttribution.qualifying_asset_id",
-							"through": "QualifyingAsset",
-							"on": "QualifyingAsset.id",
-							"select": [
-								"QualifyingAsset.naam",
-								"QualifyingAsset.status"
-							]
-						},
-						"filter": {
-							"boekjaar": "@self.boekjaar",
-							"administrationId": "@self.administrationId"
-						},
-						"groupBy": [
-							"IBProfitAttribution.qualifying_asset_id"
-						],
-						"operations": {
-							"vpb_op_innovatiedeel": {
-								"field": "IBProfitAttribution.kwalificerende_winst_na_nexus",
-								"operation": "sum",
-								"target": "vpb_op_innovatiedeel"
-							}
-						}
-					}
-				}
-			},
-			"IBExpenseAllocation": {
-				"slug": "IBExpenseAllocation",
-				"icon": "CashMinus",
-				"version": "0.1.0",
-				"title": "IB Expense Allocation",
-				"description": "Kostentoerekening per asset per periode with the doorsnijdingsverbod flag exclusief_in_winstbepaling (REQ-IBA-004). When true, the same (grootboekrekening, kostenplaats) pair MUST NOT appear in the regular GL deduction feed.",
-				"x-schema-org": "schema:MonetaryAmount",
-				"x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004",
-				"type": "object",
-				"required": [
-					"qualifying_asset_id",
-					"boekjaar",
-					"periode",
-					"kostensoort",
-					"bron",
-					"bedrag",
-					"grootboekrekening",
-					"kostenplaats",
-					"kostendrager_id",
-					"exclusief_in_winstbepaling",
-					"administrationId"
-				],
-				"properties": {
-					"qualifying_asset_id": {
-						"type": "string",
-						"example": "qa-2024-001"
-					},
-					"boekjaar": {
-						"type": "integer",
-						"example": 2024
-					},
-					"periode": {
-						"type": "string",
-						"description": "Quarter or month, e.g. 2024-Q1 or 2024-M01.",
-						"example": "2024-Q1"
-					},
-					"kostensoort": {
-						"type": "string",
-						"enum": [
-							"rd_loonkosten",
-							"materiaal",
-							"afschrijving",
-							"licentie",
-							"uitbesteding_derden",
-							"uitbesteding_verbonden",
-							"overhead_opslag"
-						],
-						"example": "rd_loonkosten"
-					},
-					"bron": {
-						"type": "string",
-						"enum": [
-							"loonadministratie",
-							"faktuur",
-							"journal_entry",
-							"calculation"
-						],
-						"example": "loonadministratie"
-					},
-					"bron_referentie": {
-						"type": "object",
-						"nullable": true,
-						"properties": {
-							"so_verklaring": {
-								"type": "string"
-							},
-							"medewerker_ids": {
-								"type": "array",
-								"items": {
-									"type": "string"
-								}
-							},
-							"totale_so_uren": {
-								"type": "number"
-							},
-							"uurtarief_intern": {
-								"type": "number"
-							}
-						}
-					},
-					"bedrag": {
-						"type": "number",
-						"minimum": 0,
-						"example": 60000.0
-					},
-					"grootboekrekening": {
-						"type": "string",
-						"example": "4010"
-					},
-					"kostenplaats": {
-						"type": "string",
-						"example": "rd-team-1"
-					},
-					"kostendrager_id": {
-						"type": "string",
-						"example": "kd-platform-team"
-					},
-					"boekstuk_referentie": {
-						"type": "string",
-						"nullable": true
-					},
-					"exclusief_in_winstbepaling": {
-						"type": "boolean",
-						"description": "If true, the cost is exclusively in the innovatiebox track and MUST NOT be deducted again in regular GL.",
-						"default": true
-					},
-					"administrationId": {
-						"type": "string",
-						"example": "adm-mkb-1"
-					}
-				}
-			},
-			"CarryForwardLoss": {
-				"slug": "CarryForwardLoss",
-				"icon": "TrendingDown",
-				"version": "0.1.0",
-				"title": "Carry Forward Loss",
-				"description": "Asset-specific voortwenteling verlies per Wet Vpb art. 12be (REQ-IBA-005). A loss from asset A can only offset future profit on asset A; the first profit offsets at the full statutory tariff before 9% applies to the residual. Immutable after creation.",
-				"x-schema-org": "schema:MonetaryAmount",
-				"x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-005",
-				"x-openregister": {
-					"immutable": true
-				},
-				"type": "object",
-				"required": [
-					"qualifying_asset_id",
-					"ontstaansboekjaar",
-					"negatief_kwalificerend_resultaat",
-					"saldo_open",
-					"status",
-					"administrationId"
-				],
-				"properties": {
-					"qualifying_asset_id": {
-						"type": "string",
-						"example": "qa-2024-001"
-					},
-					"ontstaansboekjaar": {
-						"type": "integer",
-						"example": 2023
-					},
-					"negatief_kwalificerend_resultaat": {
-						"type": "number",
-						"description": "Loss amount (negative), e.g. -215000.",
-						"example": -215000.0
-					},
-					"verrekend_boekjaar": {
-						"type": "array",
-						"description": "Records of offset applications: [{jaar, bedrag, saldo_na}].",
-						"items": {
-							"type": "object",
-							"properties": {
-								"jaar": {
-									"type": "integer"
-								},
-								"bedrag": {
-									"type": "number"
-								},
-								"saldo_na": {
-									"type": "number"
-								}
-							}
-						}
-					},
-					"saldo_open": {
-						"type": "number",
-						"minimum": 0,
-						"example": 215000.0
-					},
-					"status": {
-						"type": "string",
-						"enum": [
-							"open",
-							"volledig_verrekend",
-							"expired"
-						],
-						"default": "open",
-						"example": "open"
-					},
-					"vervaldatum": {
-						"type": "string",
-						"format": "date",
-						"nullable": true
-					},
-					"administrationId": {
-						"type": "string",
-						"example": "adm-mkb-1"
-					}
-				}
-			},
-			"InnovatieboxAuditEvent": {
-				"slug": "InnovatieboxAuditEvent",
-				"icon": "TextBoxCheckOutline",
-				"version": "0.1.0",
-				"title": "Innovatiebox Audit Event",
-				"description": "Immutable audit event for innovatiebox lifecycle transitions (REQ-IBA-008 + REQ-IBA-009). One record per nexus calculation, profit-attribution write, year-end finalisation, VSO-locked amendment attempt, doorsnijdingsverbod check and forfaitair-cap application. Append-only by x-openregister.immutable. Used by Belastingdienst VSO audit-reproducibility and by the internal audit log.",
-				"x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008",
-				"x-openregister": {
-					"immutable": true
-				},
-				"type": "object",
-				"required": [
-					"event_type",
-					"event_timestamp",
-					"administrationId"
-				],
-				"properties": {
-					"event_type": {
-						"type": "string",
-						"description": "Lifecycle event type. Mirrors the listener constants in InnovatieboxAuditEventLogger.",
-						"enum": [
-							"NexusCalculation.calculated",
-							"IBProfitAttribution.created",
-							"IBProfitAttribution.finalized",
-							"IBProfitAttribution.amendment_attempt_blocked",
-							"CarryForwardLoss.created",
-							"CarryForwardLoss.offset_applied",
-							"DoorsnijdingsVerbod.check_run",
-							"ForfaitairCap.applied"
-						],
-						"example": "IBProfitAttribution.created"
-					},
-					"event_timestamp": {
-						"type": "string",
-						"format": "date-time",
-						"description": "ISO-8601 UTC timestamp when the event was recorded."
-					},
-					"actor_uid": {
-						"type": "string",
-						"description": "Acting user UID (Nextcloud uid, never a BSN per ADR-005).",
-						"nullable": true
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "Administration scope (REQ-IBA-008).",
-						"example": "adm-mkb-1"
-					},
-					"boekjaar": {
-						"type": "integer",
-						"description": "Fiscal year the event relates to.",
-						"nullable": true,
-						"example": 2026
-					},
-					"qualifying_asset_id": {
-						"type": "string",
-						"description": "FK to the QualifyingAsset (when applicable).",
-						"nullable": true
-					},
-					"subject_schema": {
-						"type": "string",
-						"description": "Schema slug of the subject record (NexusCalculation / IBProfitAttribution / CarryForwardLoss).",
-						"nullable": true
-					},
-					"subject_id": {
-						"type": "string",
-						"description": "Object id of the subject record.",
-						"nullable": true
-					},
-					"reason": {
-						"type": "string",
-						"description": "Reason / context (e.g. 'vso_locked', 'cap_hit', 'doorsnijdingsverbod_duplicate').",
-						"nullable": true
-					},
-					"details": {
-						"type": "object",
-						"description": "Structured event payload (event-type specific; e.g. nexus figures, blocked update fields, cap reduction, duplicate findings).",
-						"nullable": true,
-						"additionalProperties": true
-					}
-				}
-			}
-		},
-		"objects": [
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "QualifyingAsset",
-					"slug": "qa-2024-001"
-				},
-				"naam": "Slimme routeringsalgoritme",
-				"type": "software",
-				"toegangsticket": {
-					"soort": "so_verklaring",
-					"so_verklaring_nummer": "S2024/001234",
-					"so_verklaring_periode": {
-						"van": "2024-01-01",
-						"tot": "2024-12-31"
-					}
-				},
-				"type_immaterieel_activum": "software",
-				"ontwikkelingsperiode": {
-					"start": "2023-02-01",
-					"einde_verwacht": "2024-06-30"
-				},
-				"in_gebruik_genomen": "2024-07-01",
-				"voortbrenger": "interne_ontwikkeling",
-				"kostendrager_id": "kd-platform-team",
-				"verbonden_lichaam_betrokken": false,
-				"drempelbedrag_van_toepassing": false,
-				"status": "valid",
-				"administrationId": "adm-mkb-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "QualifyingAsset",
-					"slug": "qa-2024-002"
-				},
-				"naam": "Voorspelmodel onderhoud (related-party R&D)",
-				"type": "software",
-				"toegangsticket": {
-					"soort": "so_verklaring",
-					"so_verklaring_nummer": "S2024/005678",
-					"so_verklaring_periode": {
-						"van": "2024-01-01",
-						"tot": "2024-12-31"
-					}
-				},
-				"type_immaterieel_activum": "data-algoritme",
-				"ontwikkelingsperiode": {
-					"start": "2023-06-01"
-				},
-				"voortbrenger": "combinatie",
-				"kostendrager_id": "kd-data-team",
-				"verbonden_lichaam_betrokken": true,
-				"status": "valid",
-				"administrationId": "adm-mkb-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "QualifyingAsset",
-					"slug": "qa-2023-003"
-				},
-				"naam": "Octrooi sensorbehuizing",
-				"type": "octrooi",
-				"toegangsticket": {
-					"soort": "octrooi",
-					"octrooi_nummer": "NL2031234",
-					"octrooi_land": "NL",
-					"octrooi_aanvraagdatum": "2021-09-15"
-				},
-				"type_immaterieel_activum": "hardware-related",
-				"ontwikkelingsperiode": {
-					"start": "2020-01-01"
-				},
-				"in_gebruik_genomen": "2022-01-01",
-				"voortbrenger": "interne_ontwikkeling",
-				"kostendrager_id": "kd-hardware-team",
-				"status": "valid",
-				"administrationId": "adm-mkb-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "NexusCalculation",
-					"slug": "nx-2024-001"
-				},
-				"qualifying_asset_id": "qa-2024-001",
-				"boekjaar": 2024,
-				"eigen_rd_kosten": 480000.0,
-				"rd_kosten_uitbesteed_derden": 120000.0,
-				"rd_kosten_uitbesteed_verbonden": 80000.0,
-				"totale_rd_kosten": 680000.0,
-				"uplift_factor": 1.3,
-				"nexus_teller_voor_uplift": 600000.0,
-				"nexus_teller_na_uplift": 680000.0,
-				"nexus_noemer": 680000.0,
-				"nexusbreuk_ongecapt": 1.0,
-				"nexusbreuk_toegepast": 1.0,
-				"berekend_op": "2024-03-15T10:00:00+00:00",
-				"berekend_door": "controller@bv-x.nl",
-				"administrationId": "adm-mkb-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "NexusCalculation",
-					"slug": "nx-2024-002"
-				},
-				"qualifying_asset_id": "qa-2024-002",
-				"boekjaar": 2024,
-				"eigen_rd_kosten": 100000.0,
-				"rd_kosten_uitbesteed_derden": 50000.0,
-				"rd_kosten_uitbesteed_verbonden": 300000.0,
-				"totale_rd_kosten": 450000.0,
-				"uplift_factor": 1.3,
-				"nexus_teller_voor_uplift": 150000.0,
-				"nexus_teller_na_uplift": 195000.0,
-				"nexus_noemer": 450000.0,
-				"nexusbreuk_ongecapt": 0.4333,
-				"nexusbreuk_toegepast": 0.4333,
-				"berekend_op": "2024-03-15T10:05:00+00:00",
-				"administrationId": "adm-mkb-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "IBProfitAttribution",
-					"slug": "ib-pa-2024-001"
-				},
-				"qualifying_asset_id": "qa-2024-001",
-				"boekjaar": 2024,
-				"methode": "per_asset_afpelmethode",
-				"bruto_opbrengst_activum": 2400000.0,
-				"directe_kosten_activum": 850000.0,
-				"routine_marketing_winst": 180000.0,
-				"routine_distributie_winst": 90000.0,
-				"routine_productie_winst": 480000.0,
-				"kwalificerende_winst_voor_nexus": 800000.0,
-				"nexus_calculation_id": "nx-2024-001",
-				"nexusbreuk_toegepast": 1.0,
-				"kwalificerende_winst_na_nexus": 800000.0,
-				"effectief_tarief": 0.09,
-				"vpb_op_innovatiedeel": 72000.0,
-				"vpb_zonder_innovatiebox": 206400.0,
-				"voordeel_innovatiebox": 134400.0,
-				"vso_locked": false,
-				"administrationId": "adm-mkb-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "IBProfitAttribution",
-					"slug": "ib-pa-2026-forfaitair"
-				},
-				"qualifying_asset_id": "qa-2024-001",
-				"boekjaar": 2026,
-				"methode": "forfaitair_25pct",
-				"bruto_opbrengst_activum": 200000.0,
-				"kwalificerende_winst_voor_nexus": 200000.0,
-				"nexus_calculation_id": "nx-2024-001",
-				"nexusbreuk_toegepast": 1.0,
-				"kwalificerende_winst_na_nexus": 25000.0,
-				"effectief_tarief": 0.09,
-				"vpb_op_innovatiedeel": 2250.0,
-				"vpb_zonder_innovatiebox": 51600.0,
-				"voordeel_innovatiebox": 49350.0,
-				"vso_locked": false,
-				"administrationId": "adm-mkb-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "IBExpenseAllocation",
-					"slug": "ib-ea-2024-001"
-				},
-				"qualifying_asset_id": "qa-2024-001",
-				"boekjaar": 2024,
-				"periode": "2024-Q1",
-				"kostensoort": "rd_loonkosten",
-				"bron": "loonadministratie",
-				"bron_referentie": {
-					"so_verklaring": "S2024/001234",
-					"medewerker_ids": ["emp-101", "emp-102"],
-					"totale_so_uren": 800.0,
-					"uurtarief_intern": 75.0
-				},
-				"bedrag": 60000.0,
-				"grootboekrekening": "4010",
-				"kostenplaats": "rd-team-1",
-				"kostendrager_id": "kd-platform-team",
-				"boekstuk_referentie": "MEMO-2024-Q1-RD",
-				"exclusief_in_winstbepaling": true,
-				"administrationId": "adm-mkb-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "CarryForwardLoss",
-					"slug": "ib-cfl-2023-001"
-				},
-				"qualifying_asset_id": "qa-2024-001",
-				"ontstaansboekjaar": 2023,
-				"negatief_kwalificerend_resultaat": -215000.0,
-				"verrekend_boekjaar": [],
-				"saldo_open": 215000.0,
-				"status": "open",
-				"administrationId": "adm-mkb-1"
-			}
-		]
-	}
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-innovatiebox-administratie",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 4 — Innovatiebox administratie (Wet Vpb art. 12b-12bg). Declares the five interconnected registers QualifyingAsset (kwalificerend immaterieel activum with validated toegangsticket), NexusCalculation (OECD BEPS Action 5 modified nexus per asset per boekjaar, immutable), IBProfitAttribution (per-asset winsttoerekening: afpelmethode / forfaitair / cost-plus), IBExpenseAllocation (kostentoerekening with doorsnijdingsverbod flag), and CarryForwardLoss (asset-specific voortwenteling verlies). The declarative x-openregister-aggregations document the nexus / profit-attribution / loss-carry-forward / doorsnijdingsverbod shapes; the PHP service layer (NexusCalculationService, ProfitAttributionService, CarryForwardLossService, DoorsnijdingsVerbodValidator, QualifyingAssetValidator, InnovatieboxAggregationService) computes the same results from the real OpenRegister ObjectService API (find/findAll). Tariff 0.09 is hard-coded per Wet Vpb art. 12b 2026 (REQ-IBA-010). Seed objects provide the worked nexus / afpelmethode / forfaitair / loss-carry-forward examples from spec.md."
+  },
+  "components": {
+    "schemas": {
+      "QualifyingAsset": {
+        "slug": "QualifyingAsset",
+        "icon": "Lightbulb",
+        "version": "0.1.0",
+        "title": "Qualifying Asset",
+        "description": "Kwalificerend immaterieel activum (IP asset) with a validated toegangsticket per Wet Vpb art. 12ba (REQ-IBA-001). Assets without a valid access ticket get status invalid_access_ticket and are excluded from nexus / profit-attribution aggregations.",
+        "x-schema-org": "schema:CreativeWork",
+        "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-001",
+        "type": "object",
+        "required": [
+          "naam",
+          "type",
+          "type_immaterieel_activum",
+          "voortbrenger",
+          "kostendrager_id",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "naam": {
+            "type": "string",
+            "description": "IP asset name.",
+            "example": "Slimme routeringsalgoritme",
+            "title": "Naam"
+          },
+          "type": {
+            "type": "string",
+            "description": "Asset type per Wet Vpb art. 12ba.",
+            "enum": [
+              "software",
+              "octrooi",
+              "kwekersrecht",
+              "weesgeneesmiddel",
+              "gebruiksmodel",
+              "aanvullend_beschermingscertificaat",
+              "combinatie"
+            ],
+            "example": "software",
+            "title": "Type"
+          },
+          "toegangsticket": {
+            "type": "object",
+            "description": "Access-ticket evidence (REQ-IBA-001). soort drives which sub-fields are required.",
+            "nullable": true,
+            "properties": {
+              "soort": {
+                "type": "string",
+                "enum": [
+                  "so_verklaring",
+                  "octrooi",
+                  "kwekersrecht",
+                  "weesgeneesmiddel",
+                  "gebruiksmodel",
+                  "abc"
+                ],
+                "title": "Soort",
+                "description": "The soort."
+              },
+              "so_verklaring_nummer": {
+                "type": "string",
+                "description": "RVO S&O-verklaring (format S{jaar}/{6-cijfer}); required if soort=so_verklaring.",
+                "example": "S2024/001234",
+                "title": "So Verklaring Nummer"
+              },
+              "so_verklaring_periode": {
+                "type": "object",
+                "properties": {
+                  "van": {
+                    "type": "string",
+                    "format": "date",
+                    "title": "Van",
+                    "description": "The van."
+                  },
+                  "tot": {
+                    "type": "string",
+                    "format": "date",
+                    "title": "Tot",
+                    "description": "The tot."
+                  }
+                },
+                "title": "So Verklaring Periode",
+                "description": "A structured so verklaring periode object with nested properties."
+              },
+              "octrooi_nummer": {
+                "type": "string",
+                "title": "Octrooi Nummer",
+                "description": "The octrooi nummer."
+              },
+              "octrooi_land": {
+                "type": "string",
+                "title": "Octrooi Land",
+                "description": "The octrooi land."
+              },
+              "octrooi_aanvraagdatum": {
+                "type": "string",
+                "format": "date",
+                "title": "Octrooi Aanvraagdatum",
+                "description": "The date and time for octrooi aanvraagdatum."
+              },
+              "kwekersrecht_nummer": {
+                "type": "string",
+                "title": "Kwekersrecht Nummer",
+                "description": "The kwekersrecht nummer."
+              }
+            },
+            "title": "Toegangsticket"
+          },
+          "type_immaterieel_activum": {
+            "type": "string",
+            "enum": [
+              "software",
+              "hardware-related",
+              "data-algoritme",
+              "other"
+            ],
+            "example": "software",
+            "title": "Type Immaterieel Activum",
+            "description": "The date and time for type immaterieel activum."
+          },
+          "ontwikkelingsperiode": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "string",
+                "format": "date",
+                "title": "Start",
+                "description": "The start."
+              },
+              "einde_verwacht": {
+                "type": "string",
+                "format": "date",
+                "title": "Einde Verwacht",
+                "description": "The einde verwacht."
+              }
+            },
+            "title": "Ontwikkelingsperiode",
+            "description": "A structured ontwikkelingsperiode object with nested properties."
+          },
+          "in_gebruik_genomen": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "title": "In Gebruik Genomen",
+            "description": "The in gebruik genomen."
+          },
+          "voortbrenger": {
+            "type": "string",
+            "enum": [
+              "interne_ontwikkeling",
+              "externe_aankoop",
+              "combinatie"
+            ],
+            "example": "interne_ontwikkeling",
+            "title": "Voortbrenger",
+            "description": "The voortbrenger."
+          },
+          "kostendrager_id": {
+            "type": "string",
+            "description": "FK to the cost carrier (R&D team / project) per bookkeeping-cost-centers-dimensions.",
+            "example": "kd-platform-team",
+            "title": "Kostendrager ID"
+          },
+          "verbonden_lichaam_betrokken": {
+            "type": "boolean",
+            "default": false,
+            "title": "Verbonden Lichaam Betrokken",
+            "description": "Indicates whether verbonden lichaam betrokken applies."
+          },
+          "drempelbedrag_van_toepassing": {
+            "type": "boolean",
+            "default": false,
+            "title": "Drempelbedrag Van Toepassing",
+            "description": "Indicates whether drempelbedrag van toepassing applies."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "valid",
+              "invalid_access_ticket",
+              "awaiting_renewal",
+              "expired"
+            ],
+            "default": "valid",
+            "example": "valid",
+            "title": "Status",
+            "description": "The current status of this record."
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads are scoped to the requesting user's administration (REQ-IBA-008).",
+            "example": "adm-mkb-1",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "NexusCalculation": {
+        "slug": "NexusCalculation",
+        "icon": "Sigma",
+        "version": "0.1.0",
+        "title": "Nexus Calculation",
+        "description": "OECD BEPS Action 5 modified-nexus calculation per asset per fiscal year (REQ-IBA-002). nexusbreuk = min(1; 1.3 x (eigen + uitbesteed_derden) / totaal). Immutable after creation (audit-trail enforced).",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002",
+        "x-openregister": {
+          "immutable": true
+        },
+        "type": "object",
+        "required": [
+          "qualifying_asset_id",
+          "boekjaar",
+          "eigen_rd_kosten",
+          "rd_kosten_uitbesteed_derden",
+          "rd_kosten_uitbesteed_verbonden",
+          "totale_rd_kosten",
+          "uplift_factor",
+          "nexusbreuk_toegepast",
+          "administrationId"
+        ],
+        "properties": {
+          "qualifying_asset_id": {
+            "type": "string",
+            "description": "FK to QualifyingAsset.",
+            "example": "qa-2024-001",
+            "title": "Qualifying Asset ID"
+          },
+          "boekjaar": {
+            "type": "integer",
+            "example": 2024,
+            "title": "Boekjaar",
+            "description": "The numeric value for boekjaar."
+          },
+          "eigen_rd_kosten": {
+            "type": "number",
+            "minimum": 0,
+            "example": 480000.0,
+            "title": "Eigen Rd Kosten",
+            "description": "The numeric value for eigen rd kosten."
+          },
+          "rd_kosten_uitbesteed_derden": {
+            "type": "number",
+            "minimum": 0,
+            "description": "R&D outsourced to unrelated third parties (counts in the teller).",
+            "example": 120000.0,
+            "title": "Rd Kosten Uitbesteed Derden"
+          },
+          "rd_kosten_uitbesteed_verbonden": {
+            "type": "number",
+            "minimum": 0,
+            "description": "R&D outsourced to related entities per art. 10a Vpb (noemer only, never in teller).",
+            "example": 80000.0,
+            "title": "Rd Kosten Uitbesteed Verbonden"
+          },
+          "totale_rd_kosten": {
+            "type": "number",
+            "minimum": 0,
+            "example": 680000.0,
+            "title": "Totale Rd Kosten",
+            "description": "The totale rd kosten as a numeric value."
+          },
+          "uplift_factor": {
+            "type": "number",
+            "description": "Fixed 1.3 per OECD BEPS Action 5.",
+            "default": 1.3,
+            "example": 1.3,
+            "title": "Uplift Factor"
+          },
+          "nexus_teller_voor_uplift": {
+            "type": "number",
+            "description": "eigen_rd_kosten + rd_kosten_uitbesteed_derden.",
+            "example": 600000.0,
+            "title": "Nexus Teller Voor Uplift"
+          },
+          "nexus_teller_na_uplift": {
+            "type": "number",
+            "description": "min(uplift_factor x teller_voor_uplift, totale_rd_kosten).",
+            "example": 680000.0,
+            "title": "Nexus Teller Na Uplift"
+          },
+          "nexus_noemer": {
+            "type": "number",
+            "example": 680000.0,
+            "title": "Nexus Noemer",
+            "description": "The numeric value for nexus noemer."
+          },
+          "nexusbreuk_ongecapt": {
+            "type": "number",
+            "example": 1.0,
+            "title": "Nexusbreuk Ongecapt",
+            "description": "The numeric value for nexusbreuk ongecapt."
+          },
+          "nexusbreuk_toegepast": {
+            "type": "number",
+            "description": "min(nexusbreuk_ongecapt, 1.0), capped at 100%.",
+            "example": 1.0,
+            "title": "Nexusbreuk Toegepast"
+          },
+          "berekend_op": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Berekend Op",
+            "description": "The berekend op."
+          },
+          "berekend_door": {
+            "type": "string",
+            "nullable": true,
+            "title": "Berekend Door",
+            "description": "The berekend door."
+          },
+          "administrationId": {
+            "type": "string",
+            "example": "adm-mkb-1",
+            "title": "Administration ID",
+            "description": "The date and time for administration id."
+          }
+        },
+        "x-openregister-aggregations": {
+          "nexusByAssetYear": {
+            "description": "Declarative shape of the modified-nexus roll-up NexusCalculationService computes (REQ-IBA-002). Groups R&D cost by (qualifying_asset_id, boekjaar), derives teller_voor_uplift = eigen + uitbesteed_derden, teller_na_uplift = min(1.3 x teller_voor_uplift, totaal), and nexusbreuk_toegepast = min(teller_na_uplift / totaal, 1.0).",
+            "source": "NexusCalculation",
+            "groupBy": [
+              "NexusCalculation.qualifying_asset_id",
+              "NexusCalculation.boekjaar"
+            ],
+            "operations": {
+              "nexusbreuk_toegepast": {
+                "operation": "expression",
+                "expression": "min(min(1.3 * (eigen_rd_kosten + rd_kosten_uitbesteed_derden), totale_rd_kosten) / totale_rd_kosten, 1.0)",
+                "target": "nexusbreuk_toegepast"
+              }
+            }
+          }
+        }
+      },
+      "IBProfitAttribution": {
+        "slug": "IBProfitAttribution",
+        "icon": "ChartPie",
+        "version": "0.1.0",
+        "title": "IB Profit Attribution",
+        "description": "Per-asset winsttoerekening per fiscal year using one of three methods: per_asset_afpelmethode, forfaitair_25pct (25% capped at EUR 25k, no nexus), cost_plus (REQ-IBA-003). Exactly one record per (qualifying_asset_id, boekjaar).",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-003",
+        "type": "object",
+        "required": [
+          "qualifying_asset_id",
+          "boekjaar",
+          "methode",
+          "bruto_opbrengst_activum",
+          "kwalificerende_winst_voor_nexus",
+          "nexus_calculation_id",
+          "nexusbreuk_toegepast",
+          "kwalificerende_winst_na_nexus",
+          "effectief_tarief",
+          "vpb_op_innovatiedeel",
+          "voordeel_innovatiebox",
+          "administrationId"
+        ],
+        "properties": {
+          "qualifying_asset_id": {
+            "type": "string",
+            "example": "qa-2024-001",
+            "title": "Qualifying Asset ID",
+            "description": "The identifier of the associated qualifying asset."
+          },
+          "boekjaar": {
+            "type": "integer",
+            "example": 2024,
+            "title": "Boekjaar",
+            "description": "The numeric value for boekjaar."
+          },
+          "methode": {
+            "type": "string",
+            "enum": [
+              "per_asset_afpelmethode",
+              "forfaitair_25pct",
+              "cost_plus"
+            ],
+            "example": "per_asset_afpelmethode",
+            "title": "Methode",
+            "description": "The methode."
+          },
+          "bruto_opbrengst_activum": {
+            "type": "number",
+            "minimum": 0,
+            "example": 2400000.0,
+            "title": "Bruto Opbrengst Activum",
+            "description": "The numeric value for bruto opbrengst activum."
+          },
+          "directe_kosten_activum": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "example": 850000.0,
+            "title": "Directe Kosten Activum",
+            "description": "The numeric value for directe kosten activum."
+          },
+          "routine_marketing_winst": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "example": 180000.0,
+            "title": "Routine Marketing Winst",
+            "description": "The numeric value for routine marketing winst."
+          },
+          "routine_distributie_winst": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "example": 90000.0,
+            "title": "Routine Distributie Winst",
+            "description": "The numeric value for routine distributie winst."
+          },
+          "routine_productie_winst": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "example": 480000.0,
+            "title": "Routine Productie Winst",
+            "description": "The numeric value for routine productie winst."
+          },
+          "kwalificerende_winst_voor_nexus": {
+            "type": "number",
+            "description": "bruto_opbrengst - directe_kosten - sum(routines).",
+            "example": 800000.0,
+            "title": "Kwalificerende Winst Voor Nexus"
+          },
+          "nexus_calculation_id": {
+            "type": "string",
+            "example": "nx-2024-001",
+            "title": "Nexus Calculation ID",
+            "description": "The date and time for nexus calculation id."
+          },
+          "nexusbreuk_toegepast": {
+            "type": "number",
+            "example": 1.0,
+            "title": "Nexusbreuk Toegepast",
+            "description": "The numeric value for nexusbreuk toegepast."
+          },
+          "kwalificerende_winst_na_nexus": {
+            "type": "number",
+            "description": "kwalificerende_winst_voor_nexus x nexusbreuk_toegepast (afpelmethode); min(0.25 x profit, 25000) for forfaitair.",
+            "example": 800000.0,
+            "title": "Kwalificerende Winst Na Nexus"
+          },
+          "effectief_tarief": {
+            "type": "number",
+            "description": "Innovatiebox tariff 0.09 (Wet Vpb art. 12b 2026, REQ-IBA-010).",
+            "default": 0.09,
+            "example": 0.09,
+            "title": "Effectief Tarief"
+          },
+          "vpb_op_innovatiedeel": {
+            "type": "number",
+            "description": "kwalificerende_winst_na_nexus x effectief_tarief.",
+            "example": 72000.0,
+            "title": "VpB Op Innovatiedeel"
+          },
+          "vpb_zonder_innovatiebox": {
+            "type": "number",
+            "description": "kwalificerende_winst_voor_nexus x 0.258 (standard rate, for comparison).",
+            "example": 206400.0,
+            "title": "VpB Zonder Innovatiebox"
+          },
+          "voordeel_innovatiebox": {
+            "type": "number",
+            "description": "vpb_zonder_innovatiebox - vpb_op_innovatiedeel.",
+            "example": 134400.0,
+            "title": "Voordeel Innovatiebox"
+          },
+          "drempel_2024": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "title": "Drempel 2024",
+            "description": "The numeric value for drempel 2024."
+          },
+          "drempel_resterend": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "title": "Drempel Resterend",
+            "description": "The numeric value for drempel resterend."
+          },
+          "vso_locked": {
+            "type": "boolean",
+            "description": "True once the fiscal year is signed off in a VSO; record becomes read-only (REQ-IBA-008).",
+            "default": false,
+            "title": "Vso Locked"
+          },
+          "forfaitair_cap_applied": {
+            "type": "boolean",
+            "description": "True when the forfaitair_25pct election hit the EUR 25k annual cap (art. 12bg). Drives the ForfaitairCap.applied audit event (REQ-IBA-008).",
+            "default": false,
+            "title": "Forfaitair Cap Applied"
+          },
+          "administrationId": {
+            "type": "string",
+            "example": "adm-mkb-1",
+            "title": "Administration ID",
+            "description": "The date and time for administration id."
+          }
+        },
+        "x-openregister-aggregations": {
+          "innovatieboxAdministratie": {
+            "description": "Per-asset Vpb innovatiebox roll-up (REQ-IBA-006). For each valid QualifyingAsset, joins IBProfitAttribution + NexusCalculation + CarryForwardLoss for the boekjaar and emits naam, kwalificerende_winst_voor_nexus, nexusbreuk_toegepast, kwalificerende_winst_na_nexus, effectief_tarief, vpb_op_innovatiedeel. The grand total contributes to Vpb-aangifte regel 23. InnovatieboxAggregationService computes this in PHP from the real ObjectService API.",
+            "source": "IBProfitAttribution",
+            "join": {
+              "from": "IBProfitAttribution.qualifying_asset_id",
+              "through": "QualifyingAsset",
+              "on": "QualifyingAsset.id",
+              "select": [
+                "QualifyingAsset.naam",
+                "QualifyingAsset.status"
+              ]
+            },
+            "filter": {
+              "boekjaar": "@self.boekjaar",
+              "administrationId": "@self.administrationId"
+            },
+            "groupBy": [
+              "IBProfitAttribution.qualifying_asset_id"
+            ],
+            "operations": {
+              "vpb_op_innovatiedeel": {
+                "field": "IBProfitAttribution.kwalificerende_winst_na_nexus",
+                "operation": "sum",
+                "target": "vpb_op_innovatiedeel"
+              }
+            }
+          }
+        }
+      },
+      "IBExpenseAllocation": {
+        "slug": "IBExpenseAllocation",
+        "icon": "CashMinus",
+        "version": "0.1.0",
+        "title": "IB Expense Allocation",
+        "description": "Kostentoerekening per asset per periode with the doorsnijdingsverbod flag exclusief_in_winstbepaling (REQ-IBA-004). When true, the same (grootboekrekening, kostenplaats) pair MUST NOT appear in the regular GL deduction feed.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004",
+        "type": "object",
+        "required": [
+          "qualifying_asset_id",
+          "boekjaar",
+          "periode",
+          "kostensoort",
+          "bron",
+          "bedrag",
+          "grootboekrekening",
+          "kostenplaats",
+          "kostendrager_id",
+          "exclusief_in_winstbepaling",
+          "administrationId"
+        ],
+        "properties": {
+          "qualifying_asset_id": {
+            "type": "string",
+            "example": "qa-2024-001",
+            "title": "Qualifying Asset ID",
+            "description": "The identifier of the associated qualifying asset."
+          },
+          "boekjaar": {
+            "type": "integer",
+            "example": 2024,
+            "title": "Boekjaar",
+            "description": "The numeric value for boekjaar."
+          },
+          "periode": {
+            "type": "string",
+            "description": "Quarter or month, e.g. 2024-Q1 or 2024-M01.",
+            "example": "2024-Q1",
+            "title": "Periode"
+          },
+          "kostensoort": {
+            "type": "string",
+            "enum": [
+              "rd_loonkosten",
+              "materiaal",
+              "afschrijving",
+              "licentie",
+              "uitbesteding_derden",
+              "uitbesteding_verbonden",
+              "overhead_opslag"
+            ],
+            "example": "rd_loonkosten",
+            "title": "Kostensoort",
+            "description": "The kostensoort."
+          },
+          "bron": {
+            "type": "string",
+            "enum": [
+              "loonadministratie",
+              "faktuur",
+              "journal_entry",
+              "calculation"
+            ],
+            "example": "loonadministratie",
+            "title": "Bron",
+            "description": "The bron."
+          },
+          "bron_referentie": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "so_verklaring": {
+                "type": "string",
+                "title": "So Verklaring",
+                "description": "The so verklaring."
+              },
+              "medewerker_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Medewerker Ids",
+                "description": "A list of medewerker ids entries."
+              },
+              "totale_so_uren": {
+                "type": "number",
+                "title": "Totale So Uren",
+                "description": "The totale so uren as a numeric value."
+              },
+              "uurtarief_intern": {
+                "type": "number",
+                "title": "Uurtarief Intern",
+                "description": "The numeric value for uurtarief intern."
+              }
+            },
+            "title": "Bron Referentie",
+            "description": "A structured bron referentie object with nested properties."
+          },
+          "bedrag": {
+            "type": "number",
+            "minimum": 0,
+            "example": 60000.0,
+            "title": "Bedrag",
+            "description": "The numeric value for bedrag."
+          },
+          "grootboekrekening": {
+            "type": "string",
+            "example": "4010",
+            "title": "Grootboekrekening",
+            "description": "The grootboekrekening."
+          },
+          "kostenplaats": {
+            "type": "string",
+            "example": "rd-team-1",
+            "title": "Kostenplaats",
+            "description": "The date and time for kostenplaats."
+          },
+          "kostendrager_id": {
+            "type": "string",
+            "example": "kd-platform-team",
+            "title": "Kostendrager ID",
+            "description": "The identifier of the associated kostendrager."
+          },
+          "boekstuk_referentie": {
+            "type": "string",
+            "nullable": true,
+            "title": "Boekstuk Referentie",
+            "description": "The boekstuk referentie."
+          },
+          "exclusief_in_winstbepaling": {
+            "type": "boolean",
+            "description": "If true, the cost is exclusively in the innovatiebox track and MUST NOT be deducted again in regular GL.",
+            "default": true,
+            "title": "Exclusief In Winstbepaling"
+          },
+          "administrationId": {
+            "type": "string",
+            "example": "adm-mkb-1",
+            "title": "Administration ID",
+            "description": "The date and time for administration id."
+          }
+        }
+      },
+      "CarryForwardLoss": {
+        "slug": "CarryForwardLoss",
+        "icon": "TrendingDown",
+        "version": "0.1.0",
+        "title": "Carry Forward Loss",
+        "description": "Asset-specific voortwenteling verlies per Wet Vpb art. 12be (REQ-IBA-005). A loss from asset A can only offset future profit on asset A; the first profit offsets at the full statutory tariff before 9% applies to the residual. Immutable after creation.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-005",
+        "x-openregister": {
+          "immutable": true
+        },
+        "type": "object",
+        "required": [
+          "qualifying_asset_id",
+          "ontstaansboekjaar",
+          "negatief_kwalificerend_resultaat",
+          "saldo_open",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "qualifying_asset_id": {
+            "type": "string",
+            "example": "qa-2024-001",
+            "title": "Qualifying Asset ID",
+            "description": "The identifier of the associated qualifying asset."
+          },
+          "ontstaansboekjaar": {
+            "type": "integer",
+            "example": 2023,
+            "title": "Ontstaansboekjaar",
+            "description": "The numeric value for ontstaansboekjaar."
+          },
+          "negatief_kwalificerend_resultaat": {
+            "type": "number",
+            "description": "Loss amount (negative), e.g. -215000.",
+            "example": -215000.0,
+            "title": "Negatief Kwalificerend Resultaat"
+          },
+          "verrekend_boekjaar": {
+            "type": "array",
+            "description": "Records of offset applications: [{jaar, bedrag, saldo_na}].",
+            "items": {
+              "type": "object",
+              "properties": {
+                "jaar": {
+                  "type": "integer",
+                  "title": "Jaar",
+                  "description": "The numeric value for jaar."
+                },
+                "bedrag": {
+                  "type": "number",
+                  "title": "Bedrag",
+                  "description": "The numeric value for bedrag."
+                },
+                "saldo_na": {
+                  "type": "number",
+                  "title": "Saldo Na",
+                  "description": "The numeric value for saldo na."
+                }
+              }
+            },
+            "title": "Verrekend Boekjaar"
+          },
+          "saldo_open": {
+            "type": "number",
+            "minimum": 0,
+            "example": 215000.0,
+            "title": "Saldo Open",
+            "description": "The numeric value for saldo open."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "volledig_verrekend",
+              "expired"
+            ],
+            "default": "open",
+            "example": "open",
+            "title": "Status",
+            "description": "The current status of this record."
+          },
+          "vervaldatum": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "title": "Vervaldatum",
+            "description": "The date and time for vervaldatum."
+          },
+          "administrationId": {
+            "type": "string",
+            "example": "adm-mkb-1",
+            "title": "Administration ID",
+            "description": "The date and time for administration id."
+          }
+        }
+      },
+      "InnovatieboxAuditEvent": {
+        "slug": "InnovatieboxAuditEvent",
+        "icon": "TextBoxCheckOutline",
+        "version": "0.1.0",
+        "title": "Innovatiebox Audit Event",
+        "description": "Immutable audit event for innovatiebox lifecycle transitions (REQ-IBA-008 + REQ-IBA-009). One record per nexus calculation, profit-attribution write, year-end finalisation, VSO-locked amendment attempt, doorsnijdingsverbod check and forfaitair-cap application. Append-only by x-openregister.immutable. Used by Belastingdienst VSO audit-reproducibility and by the internal audit log.",
+        "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008",
+        "x-openregister": {
+          "immutable": true
+        },
+        "type": "object",
+        "required": [
+          "event_type",
+          "event_timestamp",
+          "administrationId"
+        ],
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "description": "Lifecycle event type. Mirrors the listener constants in InnovatieboxAuditEventLogger.",
+            "enum": [
+              "NexusCalculation.calculated",
+              "IBProfitAttribution.created",
+              "IBProfitAttribution.finalized",
+              "IBProfitAttribution.amendment_attempt_blocked",
+              "CarryForwardLoss.created",
+              "CarryForwardLoss.offset_applied",
+              "DoorsnijdingsVerbod.check_run",
+              "ForfaitairCap.applied"
+            ],
+            "example": "IBProfitAttribution.created",
+            "title": "Event Type"
+          },
+          "event_timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp when the event was recorded.",
+            "title": "Event Timestamp"
+          },
+          "actor_uid": {
+            "type": "string",
+            "description": "Acting user UID (Nextcloud uid, never a BSN per ADR-005).",
+            "nullable": true,
+            "title": "Actor Uid"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Administration scope (REQ-IBA-008).",
+            "example": "adm-mkb-1",
+            "title": "Administration ID"
+          },
+          "boekjaar": {
+            "type": "integer",
+            "description": "Fiscal year the event relates to.",
+            "nullable": true,
+            "example": 2026,
+            "title": "Boekjaar"
+          },
+          "qualifying_asset_id": {
+            "type": "string",
+            "description": "FK to the QualifyingAsset (when applicable).",
+            "nullable": true,
+            "title": "Qualifying Asset ID"
+          },
+          "subject_schema": {
+            "type": "string",
+            "description": "Schema slug of the subject record (NexusCalculation / IBProfitAttribution / CarryForwardLoss).",
+            "nullable": true,
+            "title": "Subject Schema"
+          },
+          "subject_id": {
+            "type": "string",
+            "description": "Object id of the subject record.",
+            "nullable": true,
+            "title": "Subject ID"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason / context (e.g. 'vso_locked', 'cap_hit', 'doorsnijdingsverbod_duplicate').",
+            "nullable": true,
+            "title": "Reason"
+          },
+          "details": {
+            "type": "object",
+            "description": "Structured event payload (event-type specific; e.g. nexus figures, blocked update fields, cap reduction, duplicate findings).",
+            "nullable": true,
+            "additionalProperties": true,
+            "title": "Details"
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "QualifyingAsset",
+          "slug": "qa-2024-001"
+        },
+        "naam": "Slimme routeringsalgoritme",
+        "type": "software",
+        "toegangsticket": {
+          "soort": "so_verklaring",
+          "so_verklaring_nummer": "S2024/001234",
+          "so_verklaring_periode": {
+            "van": "2024-01-01",
+            "tot": "2024-12-31"
+          }
+        },
+        "type_immaterieel_activum": "software",
+        "ontwikkelingsperiode": {
+          "start": "2023-02-01",
+          "einde_verwacht": "2024-06-30"
+        },
+        "in_gebruik_genomen": "2024-07-01",
+        "voortbrenger": "interne_ontwikkeling",
+        "kostendrager_id": "kd-platform-team",
+        "verbonden_lichaam_betrokken": false,
+        "drempelbedrag_van_toepassing": false,
+        "status": "valid",
+        "administrationId": "adm-mkb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "QualifyingAsset",
+          "slug": "qa-2024-002"
+        },
+        "naam": "Voorspelmodel onderhoud (related-party R&D)",
+        "type": "software",
+        "toegangsticket": {
+          "soort": "so_verklaring",
+          "so_verklaring_nummer": "S2024/005678",
+          "so_verklaring_periode": {
+            "van": "2024-01-01",
+            "tot": "2024-12-31"
+          }
+        },
+        "type_immaterieel_activum": "data-algoritme",
+        "ontwikkelingsperiode": {
+          "start": "2023-06-01"
+        },
+        "voortbrenger": "combinatie",
+        "kostendrager_id": "kd-data-team",
+        "verbonden_lichaam_betrokken": true,
+        "status": "valid",
+        "administrationId": "adm-mkb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "QualifyingAsset",
+          "slug": "qa-2023-003"
+        },
+        "naam": "Octrooi sensorbehuizing",
+        "type": "octrooi",
+        "toegangsticket": {
+          "soort": "octrooi",
+          "octrooi_nummer": "NL2031234",
+          "octrooi_land": "NL",
+          "octrooi_aanvraagdatum": "2021-09-15"
+        },
+        "type_immaterieel_activum": "hardware-related",
+        "ontwikkelingsperiode": {
+          "start": "2020-01-01"
+        },
+        "in_gebruik_genomen": "2022-01-01",
+        "voortbrenger": "interne_ontwikkeling",
+        "kostendrager_id": "kd-hardware-team",
+        "status": "valid",
+        "administrationId": "adm-mkb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "NexusCalculation",
+          "slug": "nx-2024-001"
+        },
+        "qualifying_asset_id": "qa-2024-001",
+        "boekjaar": 2024,
+        "eigen_rd_kosten": 480000.0,
+        "rd_kosten_uitbesteed_derden": 120000.0,
+        "rd_kosten_uitbesteed_verbonden": 80000.0,
+        "totale_rd_kosten": 680000.0,
+        "uplift_factor": 1.3,
+        "nexus_teller_voor_uplift": 600000.0,
+        "nexus_teller_na_uplift": 680000.0,
+        "nexus_noemer": 680000.0,
+        "nexusbreuk_ongecapt": 1.0,
+        "nexusbreuk_toegepast": 1.0,
+        "berekend_op": "2024-03-15T10:00:00+00:00",
+        "berekend_door": "controller@bv-x.nl",
+        "administrationId": "adm-mkb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "NexusCalculation",
+          "slug": "nx-2024-002"
+        },
+        "qualifying_asset_id": "qa-2024-002",
+        "boekjaar": 2024,
+        "eigen_rd_kosten": 100000.0,
+        "rd_kosten_uitbesteed_derden": 50000.0,
+        "rd_kosten_uitbesteed_verbonden": 300000.0,
+        "totale_rd_kosten": 450000.0,
+        "uplift_factor": 1.3,
+        "nexus_teller_voor_uplift": 150000.0,
+        "nexus_teller_na_uplift": 195000.0,
+        "nexus_noemer": 450000.0,
+        "nexusbreuk_ongecapt": 0.4333,
+        "nexusbreuk_toegepast": 0.4333,
+        "berekend_op": "2024-03-15T10:05:00+00:00",
+        "administrationId": "adm-mkb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IBProfitAttribution",
+          "slug": "ib-pa-2024-001"
+        },
+        "qualifying_asset_id": "qa-2024-001",
+        "boekjaar": 2024,
+        "methode": "per_asset_afpelmethode",
+        "bruto_opbrengst_activum": 2400000.0,
+        "directe_kosten_activum": 850000.0,
+        "routine_marketing_winst": 180000.0,
+        "routine_distributie_winst": 90000.0,
+        "routine_productie_winst": 480000.0,
+        "kwalificerende_winst_voor_nexus": 800000.0,
+        "nexus_calculation_id": "nx-2024-001",
+        "nexusbreuk_toegepast": 1.0,
+        "kwalificerende_winst_na_nexus": 800000.0,
+        "effectief_tarief": 0.09,
+        "vpb_op_innovatiedeel": 72000.0,
+        "vpb_zonder_innovatiebox": 206400.0,
+        "voordeel_innovatiebox": 134400.0,
+        "vso_locked": false,
+        "administrationId": "adm-mkb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IBProfitAttribution",
+          "slug": "ib-pa-2026-forfaitair"
+        },
+        "qualifying_asset_id": "qa-2024-001",
+        "boekjaar": 2026,
+        "methode": "forfaitair_25pct",
+        "bruto_opbrengst_activum": 200000.0,
+        "kwalificerende_winst_voor_nexus": 200000.0,
+        "nexus_calculation_id": "nx-2024-001",
+        "nexusbreuk_toegepast": 1.0,
+        "kwalificerende_winst_na_nexus": 25000.0,
+        "effectief_tarief": 0.09,
+        "vpb_op_innovatiedeel": 2250.0,
+        "vpb_zonder_innovatiebox": 51600.0,
+        "voordeel_innovatiebox": 49350.0,
+        "vso_locked": false,
+        "administrationId": "adm-mkb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IBExpenseAllocation",
+          "slug": "ib-ea-2024-001"
+        },
+        "qualifying_asset_id": "qa-2024-001",
+        "boekjaar": 2024,
+        "periode": "2024-Q1",
+        "kostensoort": "rd_loonkosten",
+        "bron": "loonadministratie",
+        "bron_referentie": {
+          "so_verklaring": "S2024/001234",
+          "medewerker_ids": [
+            "emp-101",
+            "emp-102"
+          ],
+          "totale_so_uren": 800.0,
+          "uurtarief_intern": 75.0
+        },
+        "bedrag": 60000.0,
+        "grootboekrekening": "4010",
+        "kostenplaats": "rd-team-1",
+        "kostendrager_id": "kd-platform-team",
+        "boekstuk_referentie": "MEMO-2024-Q1-RD",
+        "exclusief_in_winstbepaling": true,
+        "administrationId": "adm-mkb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CarryForwardLoss",
+          "slug": "ib-cfl-2023-001"
+        },
+        "qualifying_asset_id": "qa-2024-001",
+        "ontstaansboekjaar": 2023,
+        "negatief_kwalificerend_resultaat": -215000.0,
+        "verrekend_boekjaar": [],
+        "saldo_open": 215000.0,
+        "status": "open",
+        "administrationId": "adm-mkb-1"
+      }
+    ]
+  }
 }
