@@ -770,45 +770,6 @@ final class InvoicingTailChecks implements CheckProvider
     }//end allBreakdownTaxComputed()
 
     // ===================== period helpers =====================
-
-    /**
-     * True when an invoicing period (BG-14) is in use (a start or end date is set).
-     *
-     * @param array<string, mixed> $o The ARInvoice.
-     *
-     * @return bool
-     */
-    private static function hasInvoicingPeriod(array $o): bool
-    {
-        return self::present($o, 'invoicingPeriodStart') || self::present($o, 'invoicingPeriodEnd');
-
-    }//end hasInvoicingPeriod()
-
-    /**
-     * Every invoice-line period (BG-26), where a line carries any period field, has a
-     * start or end date filled (EN 16931 BR-CO-20). Vacuously true otherwise.
-     *
-     * @param array<string, mixed> $o The ARInvoice.
-     *
-     * @return bool
-     */
-    private static function allLinePeriodsFilledWhenUsed(array $o): bool
-    {
-        foreach (self::lines($o) as $line) {
-            $hasStart = trim((string) ($line['periodStart'] ?? '')) !== '';
-            $hasEnd   = trim((string) ($line['periodEnd'] ?? '')) !== '';
-            // A line "uses" a period if it carries either a start or end date; that is
-            // already a filled start-or-end, so the only failure is an empty period
-            // marker. We treat an explicit empty marker key with no value as unused.
-            if ($hasStart === false && $hasEnd === false) {
-                continue;
-            }
-        }
-
-        return true;
-
-    }//end allLinePeriodsFilledWhenUsed()
-
     // ===================== item-identifier scheme =====================
 
     /**

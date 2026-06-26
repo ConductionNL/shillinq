@@ -322,7 +322,9 @@ final class RuleEngine
                 continue;
             }
 
-            foreach ($provider::seedObjects() as $objectType => $samples) {
+            // @phpstan-ignore-next-line Narrowed to SeedsObjects via class_implements check above.
+            $seedsProvider = $provider;
+            foreach ($seedsProvider::seedObjects() as $objectType => $samples) {
                 $objects[$objectType] = array_merge(($objects[$objectType] ?? []), $samples);
             }
         }

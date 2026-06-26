@@ -108,7 +108,6 @@ final class DunningRunServiceTest extends TestCase
         return new DunningRunService(
             container: $container,
             appConfig: $appConfig,
-            bik: new BIKStaffelCalculator(),
             logger: new NullLogger(),
         );
 

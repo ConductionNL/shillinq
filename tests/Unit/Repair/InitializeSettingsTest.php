@@ -105,7 +105,6 @@ class InitializeSettingsTest extends TestCase
 
         $this->repairStep = new InitializeSettings(
             settingsService: $this->settingsService,
-            bbvSeedService: $this->bbvSeedService,
             manifestService: $this->manifestService,
             logger: $this->logger,
             container: $this->container,

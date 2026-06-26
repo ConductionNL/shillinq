@@ -179,7 +179,6 @@ final class AppointmentConfirmationServiceTest extends TestCase
         $this->service = new AppointmentConfirmationService(
             container: $container,
             appConfig: $appConfig,
-            tokenValidator: new TokenValidator(),
             mailer: $mailer,
             logger: $this->createMock(LoggerInterface::class),
         );
