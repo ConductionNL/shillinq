@@ -22,6 +22,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -48,8 +50,9 @@ class SetOrderExtensionComposition implements IRepairStep
      */
     private const EXTENSIONS = ['Grant', 'SalesOrder', 'PurchaseOrder', 'Quote', 'BlanketOrder'];
 
-
     /**
+     * Construct the repair step.
+     *
      * @param IDBConnection $db Database connection (direct schema-column update).
      */
     public function __construct(
@@ -58,8 +61,9 @@ class SetOrderExtensionComposition implements IRepairStep
 
     }//end __construct()
 
-
     /**
+     * Return the repair-step display name.
+     *
      * @return string
      */
     public function getName(): string
@@ -67,7 +71,6 @@ class SetOrderExtensionComposition implements IRepairStep
         return 'Compose Order extensions (Grant/SalesOrder/PurchaseOrder/Quote/BlanketOrder) onto the base Order via allOf';
 
     }//end getName()
-
 
     /**
      * Resolve the base Order schema id, then set each extension's all_of to
@@ -115,7 +118,6 @@ class SetOrderExtensionComposition implements IRepairStep
 
     }//end run()
 
-
     /**
      * Resolve a schema id by slug, or null.
      *
@@ -134,6 +136,4 @@ class SetOrderExtensionComposition implements IRepairStep
         return ($id === false ? null : $id);
 
     }//end schemaId()
-
-
 }//end class

@@ -43,6 +43,8 @@
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -97,6 +99,8 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
      * @param IOutput $output The repair-step output (progress + warnings).
      *
      * @return void
+     *
+     * @spec openspec/changes/abstract-arinvoice-types/tasks.md
      */
     public function run(IOutput $output): void
     {
@@ -166,24 +170,23 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
                 }
 
                 // Map the FULL OninbaarAfschrijving field set onto writeOff.
-                $declaration = (string) ($row['art29OBVerklaring'] ?? '');
+                $declaration            = (string) ($row['art29OBVerklaring'] ?? '');
                 $invoiceArr['writeOff'] = [
                     'isWrittenOff'              => true,
-                    'writtenOffReason'         => $this->deriveWriteOffReason(declaration: $declaration),
-                    'art29OBVerklaring'        => $declaration,
-                    'hoofdsomAfgeschreven'     => $this->numOrNull($row['hoofdsomAfgeschreven'] ?? null),
-                    'btwBedrag'                => $this->numOrNull($row['btwBedrag'] ?? null),
-                    'evidenceRef'              => $this->strOrNull($row['evidenceRef'] ?? null),
+                    'writtenOffReason'          => $this->deriveWriteOffReason(declaration: $declaration),
+                    'art29OBVerklaring'         => $declaration,
+                    'hoofdsomAfgeschreven'      => $this->numOrNull($row['hoofdsomAfgeschreven'] ?? null),
+                    'btwBedrag'                 => $this->numOrNull($row['btwBedrag'] ?? null),
+                    'evidenceRef'               => $this->strOrNull($row['evidenceRef'] ?? null),
                     'writtenOffGLTransactionId' => ($boekingId !== '' ? $boekingId : null),
-                    'btwTeruggaafPeriode'      => $this->strOrNull($row['btwAangiftePeriode'] ?? null),
-                    'administrationId'         => $this->strOrNull($row['administrationId'] ?? null),
+                    'btwTeruggaafPeriode'       => $this->strOrNull($row['btwAangiftePeriode'] ?? null),
+                    'administrationId'          => $this->strOrNull($row['administrationId'] ?? null),
                 ];
 
                 // Mirror the lifecycle onto the discriminator-adjacent flag
                 // only when the invoice has no explicit invoiceType yet:
                 // a written-off invoice is still a 'standard' document, so
                 // leave invoiceType untouched here (fold is write-off only).
-
                 // Derive the dunning summary from the latest DunningRun for
                 // this factuurId. Absent any run, dunning is left null.
                 $dunning = $this->deriveDunningSummary(

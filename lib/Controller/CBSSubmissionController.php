@@ -479,7 +479,7 @@ class CBSSubmissionController extends Controller
     private function requireFields(array $body, array $fields): ?JSONResponse
     {
         foreach ($fields as $field) {
-            if (isset($body[$field]) === false || $body[$field] === '' || $body[$field] === null) {
+            if (isset($body[$field]) === false || $body[$field] === '') {
                 return new JSONResponse(
                     [
                         'error'   => 'missing field',

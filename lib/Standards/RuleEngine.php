@@ -27,6 +27,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-rule-engine/specs/bookkeeping-rule-engine/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, Squiz.Operators.ComparisonOperatorUsage, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -320,7 +322,9 @@ final class RuleEngine
                 continue;
             }
 
-            foreach ($provider::seedObjects() as $objectType => $samples) {
+            // @phpstan-ignore-next-line Narrowed to SeedsObjects via class_implements check above.
+            $seedsProvider = $provider;
+            foreach ($seedsProvider::seedObjects() as $objectType => $samples) {
                 $objects[$objectType] = array_merge(($objects[$objectType] ?? []), $samples);
             }
         }

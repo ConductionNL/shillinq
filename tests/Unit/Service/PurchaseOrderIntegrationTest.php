@@ -147,13 +147,19 @@ final class PurchaseOrderIntegrationTest extends TestCase
     }//end testCreateThenSendEndToEnd()
 
     /**
-     * The manifest fragment shipped by this slice exposes both Vue pages and
-     * a sidebar menu entry so the Vue layer can reach the new API.
+     * The standalone PurchaseOrderForm/PurchaseOrderDetail pages were retired into
+     * the unified Order workspace (order-workspace.json, abstract-order-primitive
+     * change). The slice-02 core fragment now ships an empty pages/menu (the schema +
+     * lifecycle remain). Verify that:
+     *   (a) the core fragment still exists and is valid JSON with pages + menu keys, and
+     *   (b) the order-workspace.json fragment exposes the unified Orders + OrderDetail
+     *       pages that replaced the retired standalone PO pages.
      *
      * @return void
      */
     public function testManifestFragmentExposesPurchaseOrderPages(): void
     {
+        // (a) Slice-02 core fragment still exists and has valid (possibly empty) structure.
         $fragmentPath = __DIR__.'/../../../src/manifest.d/bookkeeping-purchase-order-3way-02-core.json';
         self::assertFileExists($fragmentPath);
 
@@ -162,17 +168,20 @@ final class PurchaseOrderIntegrationTest extends TestCase
         self::assertArrayHasKey('pages', $json);
         self::assertArrayHasKey('menu', $json);
 
-        $pageIds = array_column($json['pages'], 'id');
-        self::assertContains('PurchaseOrderForm', $pageIds);
-        self::assertContains('PurchaseOrderDetail', $pageIds);
+        // (b) Unified Order workspace exposes the Orders + OrderDetail pages (the
+        //     successors to the retired PurchaseOrderForm/PurchaseOrderDetail pages).
+        $workspacePath = __DIR__.'/../../../src/manifest.d/order-workspace.json';
+        self::assertFileExists($workspacePath, 'order-workspace.json must exist (unified Order pages)');
 
-        foreach ($json['pages'] as $page) {
-            self::assertSame('custom', $page['type'] ?? '', 'Custom pages must declare type=custom for the v2 registry resolver');
-            self::assertNotEmpty($page['component'] ?? '', 'Custom pages must reference a registry component');
-        }
+        $workspace = json_decode((string) file_get_contents($workspacePath), true);
+        self::assertIsArray($workspace);
 
-        $menuIds = array_column($json['menu'], 'id');
-        self::assertContains('PurchaseOrders', $menuIds);
+        $wsPageIds = array_column($workspace['pages'] ?? [], 'id');
+        self::assertContains('Orders', $wsPageIds, 'Unified Orders index page must be present in order-workspace.json');
+        self::assertContains('OrderDetail', $wsPageIds, 'Unified OrderDetail page must be present in order-workspace.json');
+
+        $wsMenuIds = array_column($workspace['menu'] ?? [], 'id');
+        self::assertContains('Orders', $wsMenuIds, 'Orders menu entry must be present in order-workspace.json');
 
     }//end testManifestFragmentExposesPurchaseOrderPages()
 

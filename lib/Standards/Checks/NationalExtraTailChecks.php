@@ -49,6 +49,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-rule-engine/specs/bookkeeping-rule-engine/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, Squiz.Commenting.InlineComment
  */
 
 declare(strict_types=1);

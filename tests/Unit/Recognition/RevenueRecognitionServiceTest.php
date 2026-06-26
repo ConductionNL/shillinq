@@ -176,10 +176,14 @@ final class RevenueRecognitionServiceTest extends TestCase
             }//end findAll()
         };
 
-        $this->container->method('get')->willReturn($stub);
+        // Create a fresh container mock per invocation so a second buildService()
+        // call within the same test method gets its own clean stub rather than
+        // stacking willReturn() on the already-configured shared mock.
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('get')->willReturn($stub);
 
         return new RevenueRecognitionService(
-            container: $this->container,
+            container: $container,
             appConfig: $this->appConfig,
             logger: $this->logger,
         );

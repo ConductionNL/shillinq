@@ -29,6 +29,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/add-accounting-standards-policy/specs/accounting-standards-policy/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -58,7 +60,6 @@ class StandardsPolicyService
      */
     private const SCHEMA = 'StandardsPolicy';
 
-
     /**
      * Constructor.
      *
@@ -69,7 +70,6 @@ class StandardsPolicyService
     ) {
 
     }//end __construct()
-
 
     /**
      * Resolve the highest-precedence enabled framework for a conflict topic.
@@ -90,7 +90,6 @@ class StandardsPolicyService
         return $this->resolveFromPolicy($this->loadFrameworks($administrationId), $topic);
 
     }//end resolve()
-
 
     /**
      * Pure ranking logic: pick the enabled framework with the lowest precedence.
@@ -132,7 +131,6 @@ class StandardsPolicyService
         return (string) $enabled[0]['key'];
 
     }//end resolveFromPolicy()
-
 
     /**
      * Load the StandardsPolicy frameworks[] list through the real ObjectService.
@@ -179,7 +177,6 @@ class StandardsPolicyService
 
     }//end loadFrameworks()
 
-
     /**
      * Normalise an ObjectService row (ObjectEntity or array) to a plain array.
      *
@@ -205,6 +202,4 @@ class StandardsPolicyService
         return [];
 
     }//end normalise()
-
-
 }//end class

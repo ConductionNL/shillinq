@@ -117,7 +117,6 @@ class BookingNotificationControllerTest extends TestCase
 
         $this->controller = new BookingNotificationController(
             request: $this->request,
-            notificationService: $this->notificationService,
             settingsService: $this->settingsService,
             container: $this->container,
             groupManager: $this->groupManager,

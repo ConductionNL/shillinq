@@ -75,16 +75,14 @@ class AppointmentConfirmationService
     /**
      * Construct the service.
      *
-     * @param ContainerInterface $container      DI container for lazy OR ObjectService.
-     * @param IAppConfig         $appConfig      App config for register slug.
-     * @param TokenValidator     $tokenValidator Token generation/validation helper.
-     * @param ConfirmationMailer $mailer         Confirmation email delivery (ADR-022).
-     * @param LoggerInterface    $logger         Logger.
+     * @param ContainerInterface $container DI container for lazy OR ObjectService.
+     * @param IAppConfig         $appConfig App config for register slug.
+     * @param ConfirmationMailer $mailer    Confirmation email delivery (ADR-022).
+     * @param LoggerInterface    $logger    Logger.
      */
     public function __construct(
         private ContainerInterface $container,
         private IAppConfig $appConfig,
-        private TokenValidator $tokenValidator,
         private ConfirmationMailer $mailer,
         private LoggerInterface $logger,
     ) {

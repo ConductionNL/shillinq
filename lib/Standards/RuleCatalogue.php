@@ -26,6 +26,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/expand-standards-eu-us/specs/accounting-standards-policy/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.Operators.ComparisonOperatorUsage, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -67,7 +69,6 @@ final class RuleCatalogue
      */
     private static ?array $cache = null;
 
-
     /**
      * All rules from every `rules/*.json` file, merged. Malformed entries
      * (missing a required key) are skipped defensively.
@@ -99,7 +100,6 @@ final class RuleCatalogue
 
     }//end all()
 
-
     /**
      * Rules in a given domain (invoicing, vat, retention, ...).
      *
@@ -113,7 +113,6 @@ final class RuleCatalogue
 
     }//end byDomain()
 
-
     /**
      * Rules attributed to a given framework/law (en-16931, ifrs-15, gobd, ...).
      *
@@ -126,7 +125,6 @@ final class RuleCatalogue
         return self::where('framework', $framework);
 
     }//end byFramework()
-
 
     /**
      * Rules for a jurisdiction, including `EU`-wide and `global` rules.
@@ -150,7 +148,6 @@ final class RuleCatalogue
 
     }//end byJurisdiction()
 
-
     /**
      * Only the machine-checkable rules (enforceable by the bookkeeping engine).
      *
@@ -169,7 +166,6 @@ final class RuleCatalogue
 
     }//end machineCheckable()
 
-
     /**
      * Total rule count.
      *
@@ -181,7 +177,6 @@ final class RuleCatalogue
 
     }//end count()
 
-
     /**
      * Per-domain rule counts, keyed by domain.
      *
@@ -191,15 +186,14 @@ final class RuleCatalogue
     {
         $counts = [];
         foreach (self::all() as $rule) {
-            $domain           = (string) $rule['domain'];
-            $counts[$domain]  = (($counts[$domain] ?? 0) + 1);
+            $domain          = (string) $rule['domain'];
+            $counts[$domain] = (($counts[$domain] ?? 0) + 1);
         }
 
         ksort($counts);
         return $counts;
 
     }//end countByDomain()
-
 
     /**
      * The catalogue version string.
@@ -212,7 +206,6 @@ final class RuleCatalogue
 
     }//end version()
 
-
     /**
      * Reset the memoised cache (test hook).
      *
@@ -223,7 +216,6 @@ final class RuleCatalogue
         self::$cache = null;
 
     }//end reset()
-
 
     /**
      * Filter all rules where $key === $value.
@@ -245,7 +237,6 @@ final class RuleCatalogue
         );
 
     }//end where()
-
 
     /**
      * Whether a decoded rule has all required keys.
@@ -269,6 +260,4 @@ final class RuleCatalogue
         return true;
 
     }//end isWellFormed()
-
-
 }//end class

@@ -162,8 +162,8 @@ class StampJournalTypeOnGlTransactions implements IRepairStep
         $stamped = 0;
         foreach ($closingEntries as $entry) {
             try {
-                $arr               = (array) $entry;
-                $glTransactionId   = (string) ($arr['glTransactionId'] ?? '');
+                $arr = (array) $entry;
+                $glTransactionId = (string) ($arr['glTransactionId'] ?? '');
                 if ($glTransactionId === '') {
                     continue;
                 }
@@ -250,7 +250,7 @@ class StampJournalTypeOnGlTransactions implements IRepairStep
         $stamped = 0;
         foreach ($intercompany as $ic) {
             try {
-                $arr             = (array) $ic;
+                $arr = (array) $ic;
                 $glTransactionId = (string) ($arr['sourceJournalEntryId'] ?? '');
                 if ($glTransactionId === '') {
                     continue;
@@ -354,7 +354,7 @@ class StampJournalTypeOnGlTransactions implements IRepairStep
             return null;
         }
 
-        // getObject() returns the clean object data with `id` prepended,
+        // GetObject() returns the clean object data with `id` prepended,
         // which makes the later saveObject resolve as an UPDATE.
         $data = $found->getObject();
         if (is_array($data) === false || $data === []) {

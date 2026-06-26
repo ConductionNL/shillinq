@@ -164,7 +164,7 @@ final class BookingNotificationService
                     trigger: $trigger,
                     bookingId: $bookingId,
                     recipient: $address,
-                    channel: ((string) (($recipient['channels'][0] ?? '') ?? '')),
+                    channel: ((string) ($recipient['channels'][0] ?? '')),
                     templateName: null,
                     result: new NotificationSendResult(
                         status: NotificationSendResult::STATUS_SKIPPED,
@@ -391,7 +391,7 @@ final class BookingNotificationService
             trigger: $trigger,
             bookingId: $bookingId,
             recipient: ((string) ($booking['recipient'] ?? '')),
-            channel: ((string) (($trigger['channels'][0] ?? '') ?? '')),
+            channel: ((string) ($trigger['channels'][0] ?? '')),
             templateName: null,
             result: $result,
             dispatchGroupId: null,

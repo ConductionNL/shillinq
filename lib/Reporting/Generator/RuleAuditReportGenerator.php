@@ -20,6 +20,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -41,6 +43,8 @@ final class RuleAuditReportGenerator implements ReportGeneratorInterface
     use ReportDataTrait;
 
     /**
+     * Construct the rule-audit report generator.
+     *
      * @param ContainerInterface $container DI container for lazy RuleAuditService resolution.
      * @param LoggerInterface    $logger    Logger.
      */

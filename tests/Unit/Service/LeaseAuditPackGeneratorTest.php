@@ -202,12 +202,6 @@ final class LeaseAuditPackGeneratorTest extends TestCase
                 calculator: $calculator,
                 logger: $logger,
             ),
-            disclosureService: new LeaseDisclosureService(
-                container: $this->container,
-                appConfig: $this->appConfig,
-                calculator: $calculator,
-                logger: $logger,
-            ),
             logger: $logger,
         );
 

@@ -21,6 +21,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);

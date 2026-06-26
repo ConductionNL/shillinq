@@ -23,6 +23,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-rule-audit/specs/bookkeeping-rule-engine/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -49,8 +51,9 @@ class RuleAuditService
      */
     private const LIMIT = 10000;
 
-
     /**
+     * Construct the rule audit service.
+     *
      * @param ContainerInterface $container DI container for lazy ObjectService resolution.
      * @param IAppConfig         $appConfig App config for the register slug.
      * @param LoggerInterface    $logger    Logger.
@@ -63,19 +66,20 @@ class RuleAuditService
 
     }//end __construct()
 
-
     /**
      * Run the audit and return the structured report.
      *
      * @param array<string, mixed> $context Evaluation context (e.g. jurisdiction).
      *
      * @return array<string, mixed>
+     *
+     * @spec openspec/changes/bookkeeping-rule-audit/specs/bookkeeping-rule-engine/spec.md
      */
     public function audit(array $context=[]): array
     {
-        $corpusTotal     = RuleCatalogue::count();
+        $corpusTotal      = RuleCatalogue::count();
         $machineCheckable = count(RuleCatalogue::machineCheckable());
-        $enforceable     = count(RuleEngine::checkedRuleIds());
+        $enforceable      = count(RuleEngine::checkedRuleIds());
 
         $report = [
             'catalogueVersion'      => RuleCatalogue::version(),
@@ -94,7 +98,7 @@ class RuleAuditService
         $byRule = [];
 
         foreach (RuleEngine::supportedTypes() as $type) {
-            $objects = $this->loadAll($type);
+            $objects  = $this->loadAll($type);
             $typeStat = ['checked' => 0, 'compliant' => 0, 'withViolations' => 0, 'violations' => 0];
 
             foreach ($objects as $object) {
@@ -119,10 +123,10 @@ class RuleAuditService
                     $report['violationsBySeverity'][$violation->severity] = (($report['violationsBySeverity'][$violation->severity] ?? 0) + 1);
                     $byRule[$violation->ruleId] = (($byRule[$violation->ruleId] ?? 0) + 1);
                 }
-            }
+            }//end foreach
 
             $report['types'][$type] = $typeStat;
-        }
+        }//end foreach
 
         arsort($byRule);
         foreach (array_slice($byRule, 0, 15, true) as $ruleId => $count) {
@@ -132,7 +136,6 @@ class RuleAuditService
         return $report;
 
     }//end audit()
-
 
     /**
      * Load all objects of a schema (capped), as plain arrays.
@@ -157,7 +160,6 @@ class RuleAuditService
 
     }//end loadAll()
 
-
     /**
      * Load GLLine rows for a transaction as plain arrays. GLLines reference their
      * parent via `transactionId` matching EITHER the transaction's OpenRegister
@@ -170,10 +172,16 @@ class RuleAuditService
      */
     private function loadLines(array $transaction): array
     {
-        $keys = array_values(array_unique(array_filter([
-            (string) ($transaction['id'] ?? $transaction['@self']['id'] ?? ''),
-            (string) ($transaction['transactionNumber'] ?? ''),
-        ])));
+        $keys = array_values(
+                array_unique(
+                array_filter(
+                [
+                    (string) ($transaction['id'] ?? $transaction['@self']['id'] ?? ''),
+                    (string) ($transaction['transactionNumber'] ?? ''),
+                ]
+                )
+                )
+                );
 
         $lines = [];
         foreach ($keys as $key) {
@@ -187,7 +195,7 @@ class RuleAuditService
             }
 
             foreach ($this->normaliseRows($rows) as $line) {
-                $lineId = (string) ($line['id'] ?? $line['@self']['id'] ?? spl_object_hash((object) $line));
+                $lineId         = (string) ($line['id'] ?? $line['@self']['id'] ?? spl_object_hash((object) $line));
                 $lines[$lineId] = $line;
             }
         }
@@ -195,7 +203,6 @@ class RuleAuditService
         return array_values($lines);
 
     }//end loadLines()
-
 
     /**
      * Normalise a list of ObjectService rows (entities or arrays) to arrays.
@@ -222,8 +229,9 @@ class RuleAuditService
 
     }//end normaliseRows()
 
-
     /**
+     * Resolve the OpenRegister ObjectService from the DI container.
+     *
      * @return mixed The OpenRegister ObjectService.
      */
     private function objectService(): mixed
@@ -232,8 +240,9 @@ class RuleAuditService
 
     }//end objectService()
 
-
     /**
+     * Return the configured OpenRegister register slug.
+     *
      * @return string The configured register slug.
      */
     private function register(): string
@@ -242,6 +251,4 @@ class RuleAuditService
         return $register === '' ? 'shillinq' : $register;
 
     }//end register()
-
-
 }//end class

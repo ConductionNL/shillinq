@@ -353,7 +353,7 @@ class LeaseReassessmentService
      * @param string              $approver              Approver person id.
      * @param string              $administrationId      Administration scope.
      *
-     * @return array<string,mixed>|null The persisted event payload.
+     * @return array<string,mixed> The persisted event payload.
      */
     private function persistEvent(
         string $eventType,
@@ -363,7 +363,7 @@ class LeaseReassessmentService
         string $triggerDescription,
         string $approver,
         string $administrationId,
-    ): ?array {
+    ): array {
         $preOpening  = $this->calculator->openingBalances(lease: $lease);
         $postOpening = $this->calculator->openingBalances(lease: $newLease);
 

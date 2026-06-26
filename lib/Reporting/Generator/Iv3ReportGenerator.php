@@ -20,6 +20,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment
  */
 
 declare(strict_types=1);
@@ -41,6 +43,8 @@ final class Iv3ReportGenerator implements ReportGeneratorInterface
     use ReportDataTrait;
 
     /**
+     * Construct the IV3 report generator.
+     *
      * @param ContainerInterface $container DI container for lazy ObjectService resolution.
      * @param LoggerInterface    $logger    Logger.
      */

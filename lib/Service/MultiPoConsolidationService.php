@@ -160,13 +160,6 @@ class MultiPoConsolidationService
     private const SCHEMA_GRN_LINE = 'GoodsReceiptLine';
 
     /**
-     * Schema slug for goods-receipt notes (slice 01).
-     *
-     * @var string
-     */
-    private const SCHEMA_GRN = 'GoodsReceiptNote';
-
-    /**
      * Schema slug for the three-way match register (slice 01).
      *
      * @var string

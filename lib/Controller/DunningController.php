@@ -277,7 +277,7 @@ class DunningController extends Controller
         $factuurId    = (string) $this->request->getParam('factuurId', '');
         $reden        = (string) $this->request->getParam('reden', '');
         $details      = (string) $this->request->getParam('details', '');
-        $byUser       = (string) ($this->context->currentUserId() ?? 'system');
+        $byUser       = (string) $this->context->currentUserId();
         $evidenceRefs = $this->request->getParam('evidenceRefs');
 
         if ($factuurId === '' || in_array($reden, ['DISPUTED', 'PAYMENT_PLAN', 'OTHER'], true) === false) {

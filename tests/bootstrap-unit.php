@@ -59,6 +59,45 @@ if (class_exists('Doctrine\\DBAL\\ArrayParameterType', false) === false) {
     );
 }
 
+// OCP\Http\Client\IClient extends Psr\Http\Client\ClientInterface (since NC30+).
+// PSR-18 is not in composer.json (the real NC ships it at system level), so
+// declare a minimal stub so the OCP interface can be reflected in unit tests.
+if (interface_exists('Psr\\Http\\Client\\ClientInterface', false) === false) {
+    eval(
+        'namespace Psr\\Http\\Client; '
+        . 'interface ClientInterface { '
+        . 'public function sendRequest(\\Psr\\Http\\Message\\RequestInterface $request): \\Psr\\Http\\Message\\ResponseInterface; '
+        . '}'
+    );
+}
+
+// Psr\Http\Message\RequestInterface and ResponseInterface are referenced as
+// type hints in the ClientInterface stub above.
+if (interface_exists('Psr\\Http\\Message\\MessageInterface', false) === false) {
+    eval('namespace Psr\\Http\\Message; interface MessageInterface {}');
+}
+
+if (interface_exists('Psr\\Http\\Message\\RequestInterface', false) === false) {
+    eval(
+        'namespace Psr\\Http\\Message; '
+        . 'interface RequestInterface extends MessageInterface {}'
+    );
+}
+
+if (interface_exists('Psr\\Http\\Message\\ResponseInterface', false) === false) {
+    eval(
+        'namespace Psr\\Http\\Message; '
+        . 'interface ResponseInterface extends MessageInterface {}'
+    );
+}
+
+// OCP\Files\IRootFolder extends OC\Hooks\Emitter (NC internal interface). It
+// is not part of the public API stubs but is needed when any test reflects or
+// mocks IRootFolder. Provide a minimal no-op stub.
+if (interface_exists('OC\\Hooks\\Emitter', false) === false) {
+    eval('namespace OC\\Hooks; interface Emitter {}');
+}
+
 // \OC::$server is referenced from OCP\AppFramework\Http\Response::getHeaders()
 // (Retry-After / request-id serialisation). Provide a minimal compatible stub
 // so controller tests can serialise headers without a full Nextcloud
@@ -119,24 +158,27 @@ if (class_exists('OC', false) === false) {
                 };
             }
 
+            if ($service === 'OCP\\IUserSession') {
+                return new class {
+                    /**
+                     * Return null (no user in unit test context).
+                     *
+                     * @return null
+                     */
+                    public function getUser(): mixed
+                    {
+                        return null;
+                    }//end getUser()
+                };
+            }
+
             return new class {
             };
         }//end get()
     };
 }//end if
 
-// Bootstrap Nextcloud when running inside the Docker container / deployed tree —
-// the full environment (including \OC::$server) is then available. Loaded AFTER
-// the stub psr4 registration above; in CI this file is absent and the suite
-// runs purely against the ocp stubs.
-if (file_exists(__DIR__ . '/../../../lib/base.php')) {
-    require_once __DIR__ . '/../../../lib/base.php';
-}
-
-// Register Test\ namespace for NC test classes.
-$serverTestsLib = __DIR__ . '/../../../tests/lib/';
-if (is_dir($serverTestsLib)) {
-    $loader = new \Composer\Autoload\ClassLoader();
-    $loader->addPsr4('Test\\', $serverTestsLib);
-    $loader->register(true);
-}
+// NOTE: bootstrap-unit.php intentionally does NOT load lib/base.php.
+// Unit tests run against the nextcloud/ocp stubs only (pure PHP, no full NC
+// environment). Integration tests that need the full Nextcloud bootstrap use
+// bootstrap.php / phpunit.xml instead.

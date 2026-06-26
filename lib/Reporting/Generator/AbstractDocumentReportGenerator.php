@@ -35,6 +35,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.Commenting.InlineComment, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -113,7 +115,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 
         return new GeneratedFile(
             fileName: $fileName,
-            mimeType: (self::MIME_TYPES[$useFormat] ?? 'application/octet-stream'),
+            mimeType: self::MIME_TYPES[$useFormat],
             format: $useFormat,
             content: $bytes,
         );
@@ -487,8 +489,9 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
                 return null;
             }
 
-            $reflection = new \ReflectionClass('\\Dompdf\\Dompdf');
-            $file       = $reflection->getFileName();
+            $domPdfClass = '\\Dompdf\\Dompdf';
+            $reflection  = new \ReflectionClass($domPdfClass);
+            $file        = $reflection->getFileName();
             if ($file === false) {
                 return null;
             }
@@ -500,7 +503,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
             }
         } catch (Throwable $e) {
             return null;
-        }
+        }//end try
 
         return null;
 

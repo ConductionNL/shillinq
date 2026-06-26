@@ -23,6 +23,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-rule-testdata-seed/specs/bookkeeping-rule-engine/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -43,6 +45,8 @@ use Psr\Log\LoggerInterface;
 class RuleTestDataSeeder
 {
     /**
+     * Construct the rule test-data seeder.
+     *
      * @param ContainerInterface $container    DI container for lazy ObjectService resolution.
      * @param IAppConfig         $appConfig    App config for the register slug.
      * @param IUserManager       $userManager  To resolve an admin user for updates.
@@ -307,6 +311,8 @@ class RuleTestDataSeeder
     }//end seed()
 
     /**
+     * Count GLLines linked to a transaction by id or transaction number.
+     *
      * @param string $register Register slug.
      * @param string $id       Transaction OR id.
      * @param string $num      Transaction number.
@@ -346,6 +352,8 @@ class RuleTestDataSeeder
     }//end adminUser()
 
     /**
+     * Resolve the OpenRegister ObjectService from the DI container.
+     *
      * @return mixed The OpenRegister ObjectService.
      */
     private function objectService(): mixed
@@ -355,6 +363,8 @@ class RuleTestDataSeeder
     }//end objectService()
 
     /**
+     * Return the configured OpenRegister register slug.
+     *
      * @return string The configured register slug.
      */
     private function register(): string

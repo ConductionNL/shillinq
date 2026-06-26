@@ -55,7 +55,12 @@ final class CostCentersDimensionsFragmentTest extends TestCase
     }//end setUp()
 
     /**
-     * The fragment declares AnalyticalDimension with the REQ-CD-006 fields.
+     * The fragment declares AnalyticalDimension with the REQ-CD-006 / REQ-ADIM-001 fields.
+     *
+     * After the cost-center / cost-object / custom-dimension ADIM merge (REQ-ADIM-001),
+     * `dimensionType` is the discriminator in `required` (replacing the earlier per-type
+     * required sets). `dataType` is a custom-dimension property and lives in `properties`
+     * but is NOT globally required (it is only relevant when dimensionType=custom).
      *
      * @return void
      */
@@ -69,7 +74,8 @@ final class CostCentersDimensionsFragmentTest extends TestCase
         );
 
         $dim = $schemas['AnalyticalDimension'];
-        foreach (['code', 'name', 'dataType', 'administrationId', 'lifecycleState'] as $field) {
+        // Core fields that apply to ALL dimension types (REQ-ADIM-001).
+        foreach (['code', 'name', 'dimensionType', 'administrationId', 'lifecycleState'] as $field) {
             self::assertContains(
                 $field,
                 $dim['required'],
@@ -77,6 +83,14 @@ final class CostCentersDimensionsFragmentTest extends TestCase
             );
             self::assertArrayHasKey($field, $dim['properties']);
         }
+
+        // `dataType` is a custom-dimension property (only relevant when dimensionType=custom)
+        // so it lives in properties but NOT in required (per REQ-ADIM-001 discriminator design).
+        self::assertArrayHasKey(
+            'dataType',
+            $dim['properties'],
+            'dataType MUST be declared in properties (REQ-CD-006 custom-dimension extensibility)'
+        );
 
         // Custom-dimension extensibility — operator chooses a value type.
         $allowedTypes = $dim['properties']['dataType']['enum'];
@@ -120,11 +134,13 @@ final class CostCentersDimensionsFragmentTest extends TestCase
             self::assertArrayHasKey('filter', $aggs[$key]);
         }
 
-        // Cost-center hierarchy joins through CostCenter for parentCode resolution.
+        // After the ADIM merge (REQ-ADIM-101), byCostCenter joins through the unified
+        // AnalyticalDimension schema (filtered by dimensionType=cost-center) rather than
+        // the retired CostCenter schema.
         self::assertSame(
-            'CostCenter',
+            'AnalyticalDimension',
             $aggs['byCostCenter']['join']['through'],
-            'byCostCenter MUST join through CostCenter'
+            'byCostCenter MUST join through AnalyticalDimension (REQ-ADIM-101 re-targeting)'
         );
         self::assertSame(
             'Project',
@@ -174,10 +190,12 @@ final class CostCentersDimensionsFragmentTest extends TestCase
         self::assertIsArray($productLine, 'PRODUCT_LINE dimension seed MUST be present');
         self::assertTrue($productLine['isHierarchical']);
 
-        // Three Dutch cost centers covering admin + sales + logistics.
+        // Three Dutch cost centers covering admin + sales + logistics. After the ADIM merge
+        // (REQ-ADIM-101), cost-center seed objects live under schema=AnalyticalDimension
+        // with dimensionType=cost-center (the retired CostCenter schema was unified).
         foreach (['cc-admin-amsterdam', 'cc-sales-utrecht', 'cc-logistics-rotterdam'] as $slug) {
-            $cc = $byKey($objects, 'CostCenter', $slug);
-            self::assertIsArray($cc, 'CostCenter seed '.$slug.' MUST be present');
+            $cc = $byKey($objects, 'AnalyticalDimension', $slug);
+            self::assertIsArray($cc, 'AnalyticalDimension (cost-center) seed '.$slug.' MUST be present');
             self::assertSame('active', $cc['lifecycleState']);
             self::assertSame('adm-default', $cc['administrationId']);
         }

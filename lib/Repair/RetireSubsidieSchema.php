@@ -56,6 +56,8 @@
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -96,7 +98,6 @@ class RetireSubsidieSchema implements IRepairStep
      */
     private const MARKER = 'migratedFromSubsidie';
 
-
     /**
      * Constructor.
      *
@@ -115,7 +116,6 @@ class RetireSubsidieSchema implements IRepairStep
     ) {
     }//end __construct()
 
-
     /**
      * The repair-step display name shown in occ maintenance:repair output.
      *
@@ -126,7 +126,6 @@ class RetireSubsidieSchema implements IRepairStep
         return 'Shillinq: retire the legacy Subsidie schema (after FoldIntoOrder has folded every Subsidie onto a Grant)';
 
     }//end getName()
-
 
     /**
      * Run the retirement. Idempotent, fail-soft, data-safe.
@@ -208,7 +207,6 @@ class RetireSubsidieSchema implements IRepairStep
 
     }//end run()
 
-
     /**
      * Resolve the admin user as an IUser object (NEVER a string) for OR writes.
      *
@@ -229,7 +227,6 @@ class RetireSubsidieSchema implements IRepairStep
         return reset($users);
 
     }//end resolveAdminUser()
-
 
     /**
      * Read every remaining Subsidie object. Returns [] when the schema is absent
@@ -267,7 +264,6 @@ class RetireSubsidieSchema implements IRepairStep
 
     }//end readSubsidies()
 
-
     /**
      * Derive the stable migration key for a Subsidie row, mirroring exactly the
      * rule FoldIntoOrder used to stamp the Grant marker: prefer the unique
@@ -287,7 +283,6 @@ class RetireSubsidieSchema implements IRepairStep
         return (string) ($src['id'] ?? ($src['uuid'] ?? ''));
 
     }//end migrationKey()
-
 
     /**
      * Whether a Grant exists carrying the given migration marker — proof that
@@ -322,7 +317,6 @@ class RetireSubsidieSchema implements IRepairStep
         }
 
     }//end grantExists()
-
 
     /**
      * Delete the Subsidie schema row from openregister_schemas — but only when
@@ -368,7 +362,6 @@ class RetireSubsidieSchema implements IRepairStep
 
     }//end dropSchemaIfEmpty()
 
-
     /**
      * Resolve a schema id by slug, or null when absent.
      *
@@ -387,7 +380,6 @@ class RetireSubsidieSchema implements IRepairStep
         return ($id === false ? null : $id);
 
     }//end schemaId()
-
 
     /**
      * Whether any openregister_objects row still references the Subsidie schema.
@@ -418,6 +410,4 @@ class RetireSubsidieSchema implements IRepairStep
         return ($found !== false);
 
     }//end objectsRemain()
-
-
 }//end class

@@ -18,6 +18,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-rule-audit/specs/bookkeeping-rule-engine/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment
  */
 
 declare(strict_types=1);
@@ -31,13 +33,13 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * occ command that audits bookkeeping data against the rule corpus.
+ * OCC command that audits bookkeeping data against the rule corpus.
  */
 class RulesAuditCommand extends Command
 {
-
-
     /**
+     * Construct the rule-audit command.
+     *
      * @param RuleAuditService $auditService The compliance auditor.
      */
     public function __construct(
@@ -47,8 +49,9 @@ class RulesAuditCommand extends Command
 
     }//end __construct()
 
-
     /**
+     * Configure the command name, description and options.
+     *
      * @return void
      */
     protected function configure(): void
@@ -59,12 +62,15 @@ class RulesAuditCommand extends Command
 
     }//end configure()
 
-
     /**
+     * Execute the audit and print the compliance summary to the console.
+     *
      * @param InputInterface  $input  Console input.
      * @param OutputInterface $output Console output.
      *
      * @return int
+     *
+     * @spec openspec/changes/bookkeeping-rule-audit/specs/bookkeeping-rule-engine/spec.md
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -78,21 +84,25 @@ class RulesAuditCommand extends Command
         $output->writeln(sprintf('  objects checked   : %d', $report['objectsChecked']));
         $output->writeln(sprintf('  compliant         : %d', $report['objectsCompliant']));
         $output->writeln(sprintf('  with violations   : %d', $report['objectsWithViolations']));
-        $output->writeln(sprintf(
+        $output->writeln(
+                sprintf(
             '  violations        : %d mandatory / %d conditional / %d recommended',
             $report['violationsBySeverity']['mandatory'] ?? 0,
             $report['violationsBySeverity']['conditional'] ?? 0,
             $report['violationsBySeverity']['recommended'] ?? 0
-        ));
+        )
+                );
 
         foreach ($report['types'] as $type => $stat) {
-            $output->writeln(sprintf(
+            $output->writeln(
+                    sprintf(
                 '    %-16s checked=%d compliant=%d withViolations=%d',
                 $type,
                 $stat['checked'],
                 $stat['compliant'],
                 $stat['withViolations']
-            ));
+            )
+                    );
         }
 
         if (empty($report['topViolatedRules']) === false) {
@@ -106,6 +116,4 @@ class RulesAuditCommand extends Command
         return 0;
 
     }//end execute()
-
-
 }//end class

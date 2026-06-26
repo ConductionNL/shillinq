@@ -24,7 +24,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
-use OCA\Shillinq\Service\BbvSeedService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\StatementManifestService;
 use OCP\Migration\IOutput;
@@ -44,7 +43,6 @@ class InitializeSettings implements IRepairStep
      * Constructor for InitializeSettings.
      *
      * @param SettingsService          $settingsService The settings service
-     * @param BbvSeedService           $bbvSeedService  The BBV stam-data seed service
      * @param StatementManifestService $manifestService The statement-manifest importer
      * @param LoggerInterface          $logger          The logger interface
      * @param ContainerInterface       $container       The DI container
@@ -53,7 +51,6 @@ class InitializeSettings implements IRepairStep
      */
     public function __construct(
         private SettingsService $settingsService,
-        private BbvSeedService $bbvSeedService,
         private StatementManifestService $manifestService,
         private LoggerInterface $logger,
         private ContainerInterface $container,
@@ -1064,42 +1061,6 @@ class InitializeSettings implements IRepairStep
         }//end try
 
     }//end seedKorThresholds()
-
-    /**
-     * Seed ProductAttribute templates for all five standard categories, idempotently.
-     *
-     * Calls SettingsService::seedProductAttributes() per category. Idempotent:
-     * attributes matched by name + applicableToCategories are skipped, preserving
-     * operator edits per REQ-IPC-007.
-     *
-     * @param IOutput $output The output interface for progress reporting.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
-     */
-    private function seedProductAttributeTemplates(IOutput $output): void
-    {
-        $categories = ['office', 'it_hardware', 'logistics', 'food_beverage', 'clothing'];
-
-        foreach ($categories as $category) {
-            $output->info('Seeding ProductAttribute template: '.$category.'...');
-            $result = $this->settingsService->seedProductAttributes(category: $category);
-
-            if ($result['success'] === true) {
-                $output->info(
-                    'ProductAttribute ('.$category.'): '.($result['seeded'] ?? 0).' created, '.($result['skipped'] ?? 0).' skipped.'
-                );
-            }
-
-            if ($result['success'] !== true) {
-                $output->warning(
-                    'ProductAttribute ('.$category.') seeding issue: '.($result['message'] ?? 'unknown error')
-                );
-            }
-        }//end foreach
-
-    }//end seedProductAttributeTemplates()
 
     /**
      * Seed the demo Barcode records, idempotently.

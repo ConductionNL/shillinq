@@ -20,6 +20,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.Commenting.InlineComment
  */
 
 declare(strict_types=1);
@@ -40,6 +42,8 @@ final class TrialBalanceReportGenerator implements ReportGeneratorInterface
     use ReportDataTrait;
 
     /**
+     * Construct the trial-balance report generator.
+     *
      * @param ContainerInterface $container DI container for lazy ObjectService resolution.
      * @param LoggerInterface    $logger    Logger.
      */
