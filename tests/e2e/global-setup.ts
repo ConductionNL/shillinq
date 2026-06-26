@@ -16,7 +16,7 @@
  * across NC 28 / 29 / 30.
  *
  * Pattern reference: ADR-030 (hydra/openspec/architecture/), mirrored
- * from mydash's journeydoc setup (the longest-running journeydoc
+ * from launchpad's journeydoc setup (the longest-running journeydoc
  * adopter).
  */
 
@@ -99,7 +99,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 	await page.locator('input[name="user"]').fill(username)
 	await page.locator('input[name="password"]').fill(password)
 	await page.locator('button[type="submit"]').first().click()
-	// Nextcloud bounces to a default app (dashboard / mydash / …) on
+	// Nextcloud bounces to a default app (dashboard / launchpad / …) on
 	// success. The post-submit redirect chain can take a few seconds on a
 	// heavy instance and the `#header`-only wait races with it, so wait for
 	// the URL to leave /login first (the authoritative success signal),

@@ -34,7 +34,7 @@ structure.
 
 **Cross-project integration:** `openconnector` (ICS/CalDAV import for agenda),
 `openregister` (file storage for evidence export), `hrmq` (meewerkende-partner data),
-`mydash` (multi-year trend dashboard).
+`launchpad` (multi-year trend dashboard).
 
 ## Motivation
 
@@ -162,7 +162,7 @@ traceability.
 - **openconnector** — ICS/CalDAV endpoints for meeting + reistijd import.
 - **openregister** — file-storage + SHA-256 hashing.
 - **hrmq** — meewerkende-partner + AO-status lookups.
-- **mydash** — 5-year trend queries over `UrencriteriumYear` history.
+- **launchpad** — 5-year trend queries over `UrencriteriumYear` history.
 - **dba-compliance-marker** — future linkage (out of scope T2 MVP).
 
 ## Risks

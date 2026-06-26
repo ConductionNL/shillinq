@@ -75,13 +75,13 @@ When the eindoplevering milestone of a `bron: tenderned` obligation is approved 
 
 ### Requirement: (REQ-007) The system SHALL surface a new TenderNed obligation in the budget-impact view within 60 seconds
 
-On activation of a `bron: tenderned` obligation, a budget-impact CloudEvent MUST be emitted asynchronously to mydash carrying contractWaarde, period, kostenplaats, and the TenderNed dossier URL; the budget-utilization widget reflects the new committed expense within 60 seconds.
+On activation of a `bron: tenderned` obligation, a budget-impact CloudEvent MUST be emitted asynchronously to launchpad carrying contractWaarde, period, kostenplaats, and the TenderNed dossier URL; the budget-utilization widget reflects the new committed expense within 60 seconds.
 
 #### Scenario: Budget widget reflects a newly activated obligation
 
 - **GIVEN** a `bron: tenderned` obligation being activated
 - **WHEN** the activation completes
-- **THEN** a non-blocking CloudEvent with contractWaarde/period/kostenplaats/dossierUrl is emitted, the mydash budget widget re-renders within 60 seconds, and an unreachable mydash degrades gracefully (warning logged, activation continues).
+- **THEN** a non-blocking CloudEvent with contractWaarde/period/kostenplaats/dossierUrl is emitted, the launchpad budget widget re-renders within 60 seconds, and an unreachable launchpad degrades gracefully (warning logged, activation continues).
 
 ### Requirement: (REQ-008) The system SHALL show a vendor cashflow forecast for won TenderNed contracts
 
@@ -181,7 +181,7 @@ An MKB-leverancier tenant MUST see a read-only omzet-prognose distributing each 
 
 - **openconnector**: Consumes TenderNed source polling (5-min cadence) and emits CloudEvents on status change
 - **openregister**: Uses audit-trail-immutable (REQ-005), RBAC, and file-attachment (REQ-004 bewijsstukken via docudesk)
-- **mydash**: Listens for obligation-activated events and updates the budget-widget (REQ-007)
+- **launchpad**: Listens for obligation-activated events and updates the budget-widget (REQ-007)
 - **docudesk**: Stores bewijsstukken (proof documents) via the ADR-022 file-attachment mechanism
 
 ## Standards & Compliance

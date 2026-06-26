@@ -70,7 +70,7 @@ All amounts use Money objects (amount + currency) with three-decimal precision f
 - **bookkeeping-accounts-payable** + **bookkeeping-accounts-receivable**: feed expected outflows/inflows into the 13-week forecast.
 - **bookkeeping-ifrs15-revenue**: contractual revenue waterfall feeds long-horizon inflow expectations.
 - **openconnector**: external integrations to rate-curve providers (Bloomberg, Refinitiv, ECB SDMX), FX broker APIs (360T, FXAll), confirmation matching (Misys, Acumen).
-- **mydash**: CFO dashboard tile for group cash position, FX exposure heatmap, liquidity runway.
+- **launchpad**: CFO dashboard tile for group cash position, FX exposure heatmap, liquidity runway.
 - **docudesk**: archive of loan agreements, ISDA master agreements, CSA, confirmations.
 - **n8n**: orchestration of nightly forecast regeneration, sweep generation, alert routing.
 

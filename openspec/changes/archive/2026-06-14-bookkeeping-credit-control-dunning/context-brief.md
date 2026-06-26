@@ -432,7 +432,7 @@ Stage 4 (ingebrekestelling) vereist veelal bewijs van ontvangst; het systeem moe
 - `openregister` — file-storage voor evidence (eerste e-mail, ontvangstbevestiging, aanmaning-PDF) met SHA-256-hashes en 7-jaar-retentie
 - `docudesk` — PDF-templates en versiebeheer van aanmaningsbrieven en ingebrekestellingen
 - `hrmq` — voor MKB-werkgevers die incassoteam coordineren — workflow-management
-- `mydash` — KPI's DSO (Days Sales Outstanding), aging-buckets, success rate per stage
+- `launchpad` — KPI's DSO (Days Sales Outstanding), aging-buckets, success rate per stage
 
 ## Target users
 

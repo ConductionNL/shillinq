@@ -69,7 +69,7 @@ Cross-register joins: `Programma` (programmabegroting), `Begroting` (bbv-complia
 - **Feeds** `bookkeeping-jaarrekening-publication` — TreasuryParagraaf is embedded in the published jaarrekening.
 - **Feeds** `bookkeeping-bado-controleprotocol` — quarterly fido-rapportages are auditable artefacts within the BADO controleprotocol scope.
 - **OpenConnector events** — `fido.kasgeld.breach`, `fido.renterisico.breach`, `fido.schatkist.sweep`, `fido.statuut.adopted`, `fido.lening.recorded`.
-- **mydash** — Treasury Dashboard widget reads via OR GraphQL only; no install-time dep on shillinq.
+- **launchpad** — Treasury Dashboard widget reads via OR GraphQL only; no install-time dep on shillinq.
 
 ## Target users
 

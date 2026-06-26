@@ -80,7 +80,7 @@ Klik **Activeren**. Shillinq genereert nu het initiële mijlpaalplan
 | `other`                      | 2 mijlpalen, elk 50% (midden + einde looptijd).  |
 
 De `Verplichting`-status wordt `active` en de
-`shillinq.obligation.activated`-CloudEvent gaat uit zodat mydash de
+`shillinq.obligation.activated`-CloudEvent gaat uit zodat launchpad de
 nieuwe budget-impact binnen 60 seconden toont (REQ-007).
 
 ## 3. Automatische promotie bij gunning (REQ-002)

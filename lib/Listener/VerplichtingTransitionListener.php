@@ -5,7 +5,7 @@
  *
  * Task 5.2 / REQ-007 — emit the cross-app `obligation.activated` CloudEvent
  * when a `bron: tenderned` Verplichting transitions to `active`, so the
- * mydash budget-utilisation widget reflects the newly committed expense
+ * launchpad budget-utilisation widget reflects the newly committed expense
  * within 60 seconds (REQ-007 scenario).
  *
  * Two activation paths converge here:

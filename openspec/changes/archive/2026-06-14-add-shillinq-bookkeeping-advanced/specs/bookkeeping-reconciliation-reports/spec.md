@@ -13,7 +13,7 @@ Every reconciliation report (sub-ledger ↔ GL control account match, intercompa
 OpenRegister-managed `SavedQuery` register (or whatever OR's
 canonical name for parameterised aggregation queries is). The
 query MUST be an `x-openregister-aggregations` definition consumed
-both by mydash for dashboard rendering (per ADR-022) and by the
+both by launchpad for dashboard rendering (per ADR-022) and by the
 shillinq manifest detail page that surfaces the report. shillinq
 MUST NOT author a `ReportingService` / `ReconciliationService`
 that loops ledger objects and produces rows.
@@ -27,11 +27,11 @@ that loops ledger objects and produces rows.
 - **THEN** no such classes SHALL exist; reports MUST be aggregation-
   declared.
 
-#### Scenario: mydash consumes a reconciliation report by query slug
+#### Scenario: launchpad consumes a reconciliation report by query slug
 
 - **GIVEN** a saved query `subledger-ap-vs-gl-1700` declared as
   `x-openregister-aggregations`
-- **WHEN** mydash renders a widget bound to that slug via runtime
+- **WHEN** launchpad renders a widget bound to that slug via runtime
   GraphQL
 - **THEN** the widget MUST resolve without any shillinq-side PHP
   controller in the call path.
@@ -124,7 +124,7 @@ intercompany), and REQ-RR-004 (above-threshold variances) into a
 single report sorted by severity (`critical` > `warning` > `info`)
 and per administration. The severity classification MUST be
 declarative — encoded as a calculated field on each query — not
-authored in PHP. mydash consumes this report via runtime GraphQL
+authored in PHP. launchpad consumes this report via runtime GraphQL
 to render the controller's home dashboard widget.
 
 #### Scenario: The exception report surfaces all three exception classes in one query
@@ -158,16 +158,16 @@ this capability introduces the `Budget` register).
   badges and per-row drill-down links into the underlying GL /
   sub-ledger objects.
 
-### Requirement: REQ-RR-007 — Reports SHALL be consumable from mydash via runtime GraphQL with no install-time dependency
+### Requirement: REQ-RR-007 — Reports SHALL be consumable from launchpad via runtime GraphQL with no install-time dependency
 
-mydash MUST (per ADR-022 and `feedback_mydash-no-or-dependency.md`) consume reconciliation reports via runtime GraphQL against OpenRegister; mydash MUST NOT declare a `shillinq` dependency in
-its app manifest, and shillinq MUST NOT push any data to mydash.
+launchpad MUST (per ADR-022 and `feedback_launchpad-no-or-dependency.md`) consume reconciliation reports via runtime GraphQL against OpenRegister; launchpad MUST NOT declare a `shillinq` dependency in
+its app manifest, and shillinq MUST NOT push any data to launchpad.
 The reports are surfaced *because* they are aggregations on OR
-registers — mydash discovers them through the GraphQL schema.
+registers — launchpad discovers them through the GraphQL schema.
 
-#### Scenario: Reviewer confirms mydash does not depend on shillinq
+#### Scenario: Reviewer confirms launchpad does not depend on shillinq
 
-- **GIVEN** mydash's `src/manifest.json`
+- **GIVEN** launchpad's `src/manifest.json`
 - **WHEN** scanned for `dependencies[]`
-- **THEN** `shillinq` MUST NOT be listed; mydash's only
+- **THEN** `shillinq` MUST NOT be listed; launchpad's only
   data-source dependency MUST be runtime GraphQL on OR.
