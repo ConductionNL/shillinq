@@ -29,76 +29,95 @@
             "type": "string",
             "maxLength": 120,
             "description": "Human-readable template name shown in the admin list (REQ-BET-001).",
-            "example": "Default Booking Confirmation"
+            "example": "Default Booking Confirmation",
+            "title": "Name"
           },
           "status": {
             "type": "string",
-            "enum": ["draft", "published", "archived"],
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
             "default": "draft",
-            "description": "Lifecycle state (REQ-BET-002/003/008). draft = editable, not dispatched; published = active and dispatched on booking.confirmed; archived = retired, no new dispatches but kept for audit/history."
+            "description": "Lifecycle state (REQ-BET-002/003/008). draft = editable, not dispatched; published = active and dispatched on booking.confirmed; archived = retired, no new dispatches but kept for audit/history.",
+            "title": "Status"
           },
           "locale": {
             "type": "string",
-            "enum": ["nl", "en"],
+            "enum": [
+              "nl",
+              "en"
+            ],
             "default": "nl",
-            "description": "Template language (REQ-BET-NFR-005). nl = Dutch, en = English. The notification engine selects the matching locale at dispatch using the customer language preference, falling back to nl when no preference is set."
+            "description": "Template language (REQ-BET-NFR-005). nl = Dutch, en = English. The notification engine selects the matching locale at dispatch using the customer language preference, falling back to nl when no preference is set.",
+            "title": "Locale"
           },
           "subjectLine": {
             "type": "string",
             "maxLength": 78,
             "description": "Email subject (NFR-BET-002). Limited to 78 characters for cross-client compatibility; supports {{variables}} substituted at dispatch.",
-            "example": "Boeking bevestigd: {{bookingRef}}"
+            "example": "Boeking bevestigd: {{bookingRef}}",
+            "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
             "maxLength": 102400,
             "description": "HTML email body (NFR-BET-001/003). Inline styles only — no external CSS, no JavaScript. Allowed elements limited to div, p, h1-h6, a, img, table, tr, td, ul, ol, li, br, span, strong, em. Combined html + plain-text size capped at 102 KB.",
-            "example": "<html><body><h1>Hallo {{customerName}}</h1><p>Uw boeking is bevestigd.</p></body></html>"
+            "example": "<html><body><h1>Hallo {{customerName}}</h1><p>Uw boeking is bevestigd.</p></body></html>",
+            "title": "Html Body"
           },
           "plainTextBody": {
             "type": "string",
             "maxLength": 102400,
             "description": "Plain-text fallback (REQ-BET-006). Required for email clients without HTML rendering; supports {{variables}}.",
-            "example": "Hallo {{customerName}},\nUw boeking is bevestigd.\nReferentie: {{bookingRef}}"
+            "example": "Hallo {{customerName}},\nUw boeking is bevestigd.\nReferentie: {{bookingRef}}",
+            "title": "Plain Text Body"
           },
           "logoUri": {
             "type": "string",
             "format": "uri",
             "nullable": true,
             "description": "URL of the organization logo image (NFR-BET-004). Loaded from CDN or document-store URI — never inline base64 (keeps email size small and supports updates without resending).",
-            "example": "https://cdn.example.org/logo.png"
+            "example": "https://cdn.example.org/logo.png",
+            "title": "Logo URI"
           },
           "accentColor": {
             "type": "string",
             "nullable": true,
             "pattern": "^#[0-9A-Fa-f]{6}$",
             "description": "Hex colour code for branding accents (REQ-BET-007). Six-digit hex.",
-            "example": "#0066cc"
+            "example": "#0066cc",
+            "title": "Accent Color"
           },
           "footerText": {
             "type": "string",
             "nullable": true,
             "maxLength": 500,
             "description": "Custom footer text — typically address, contact information, legal notices.",
-            "example": "© 2026 Example BV, Postbus 123, 1000 AA Amsterdam"
+            "example": "© 2026 Example BV, Postbus 123, 1000 AA Amsterdam",
+            "title": "Footer Text"
           },
           "senderName": {
             "type": "string",
             "nullable": true,
             "maxLength": 120,
-            "description": "Display name used as the From: header at dispatch."
+            "description": "Display name used as the From: header at dispatch.",
+            "title": "Sender Name"
           },
           "senderAddress": {
             "type": "string",
             "format": "email",
             "nullable": true,
-            "description": "Email address used as the From: sender at dispatch."
+            "description": "Email address used as the From: sender at dispatch.",
+            "title": "Sender Address"
           },
           "activatedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp when the template was first published (REQ-BET-002). Set on the first draft → published transition."
+            "description": "Timestamp when the template was first published (REQ-BET-002). Set on the first draft → published transition.",
+            "title": "Activated At"
           }
         },
         "x-openregister-lifecycle": {
@@ -169,12 +188,16 @@
         "x-openregister-notifications": {
           "onBookingConfirmed": {
             "trigger": "booking.confirmed",
-            "channels": ["email"],
+            "channels": [
+              "email"
+            ],
             "template": "@self",
             "sender": "@self.senderAddress",
             "appliesWhen": {
               "field": "status",
-              "in": ["published"]
+              "in": [
+                "published"
+              ]
             },
             "selectBy": {
               "schema": "BookingConfirmationTemplate",
@@ -190,9 +213,25 @@
         },
         "x-openregister-rbac": {
           "roles": {
-            "template-administrator": {"permissions": ["create", "read", "update", "delete"]},
-            "booking-administrator": {"permissions": ["read", "update"]},
-            "auditor": {"permissions": ["read"]}
+            "template-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "booking-administrator": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           },
           "permissionMap": {
             "booking:template:list": "read",
@@ -226,87 +265,116 @@
             "type": "string",
             "maxLength": 120,
             "description": "Human-readable template name shown in the admin list.",
-            "example": "24-Hour Booking Reminder"
+            "example": "24-Hour Booking Reminder",
+            "title": "Name"
           },
           "status": {
             "type": "string",
-            "enum": ["draft", "published", "archived"],
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
             "default": "draft",
-            "description": "Lifecycle state. Same semantics as BookingConfirmationTemplate."
+            "description": "Lifecycle state. Same semantics as BookingConfirmationTemplate.",
+            "title": "Status"
           },
           "locale": {
             "type": "string",
-            "enum": ["nl", "en"],
+            "enum": [
+              "nl",
+              "en"
+            ],
             "default": "nl",
-            "description": "Template language (NFR-BET-005)."
+            "description": "Template language (NFR-BET-005).",
+            "title": "Locale"
           },
           "hoursBeforeBooking": {
             "type": "integer",
             "minimum": 1,
             "maximum": 720,
             "description": "Hours before booking start to dispatch the reminder (REQ-BET-005). Common values: 1, 2, 24, 48, 72. OR's notification engine schedules dispatch at bookingStart − hoursBeforeBooking hours with a ±15 min tolerance; missed windows dispatch immediately (REQ-BET-005).",
-            "example": 24
+            "example": 24,
+            "title": "Hours Before Booking"
           },
           "subjectLine": {
             "type": "string",
             "maxLength": 78,
             "description": "Email subject; ≤78 characters; supports {{variables}}.",
-            "example": "Herinnering: Uw boeking op {{bookingDate}}"
+            "example": "Herinnering: Uw boeking op {{bookingDate}}",
+            "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
             "maxLength": 102400,
-            "description": "HTML body; inline styles only; whitelisted elements; combined html + plain-text ≤102 KB."
+            "description": "HTML body; inline styles only; whitelisted elements; combined html + plain-text ≤102 KB.",
+            "title": "Html Body"
           },
           "plainTextBody": {
             "type": "string",
             "maxLength": 102400,
-            "description": "Plain-text fallback (REQ-BET-006)."
+            "description": "Plain-text fallback (REQ-BET-006).",
+            "title": "Plain Text Body"
           },
           "logoUri": {
             "type": "string",
             "format": "uri",
             "nullable": true,
-            "description": "Organization logo URI; loaded from CDN/doc-store; never inline base64 (NFR-BET-004)."
+            "description": "Organization logo URI; loaded from CDN/doc-store; never inline base64 (NFR-BET-004).",
+            "title": "Logo URI"
           },
           "accentColor": {
             "type": "string",
             "nullable": true,
             "pattern": "^#[0-9A-Fa-f]{6}$",
-            "description": "Six-digit hex colour code."
+            "description": "Six-digit hex colour code.",
+            "title": "Accent Color"
           },
           "footerText": {
             "type": "string",
             "nullable": true,
             "maxLength": 500,
-            "description": "Custom footer text."
+            "description": "Custom footer text.",
+            "title": "Footer Text"
           },
           "senderName": {
             "type": "string",
             "nullable": true,
             "maxLength": 120,
-            "description": "Display name used as the From: header at dispatch."
+            "description": "Display name used as the From: header at dispatch.",
+            "title": "Sender Name"
           },
           "senderAddress": {
             "type": "string",
             "format": "email",
             "nullable": true,
-            "description": "From: address."
+            "description": "From: address.",
+            "title": "Sender Address"
           },
           "activatedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "First-publish timestamp."
+            "description": "First-publish timestamp.",
+            "title": "Activated At"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
           "initialState": "draft",
           "states": {
-            "draft": {"label": "Concept", "description": "Editable; not dispatched."},
-            "published": {"label": "Gepubliceerd", "description": "Scheduled by the notification engine for active dispatch."},
-            "archived": {"label": "Gearchiveerd", "description": "Retired; no further dispatches."}
+            "draft": {
+              "label": "Concept",
+              "description": "Editable; not dispatched."
+            },
+            "published": {
+              "label": "Gepubliceerd",
+              "description": "Scheduled by the notification engine for active dispatch."
+            },
+            "archived": {
+              "label": "Gearchiveerd",
+              "description": "Retired; no further dispatches."
+            }
           },
           "transitions": {
             "publish": {
@@ -359,13 +427,17 @@
         "x-openregister-notifications": {
           "onBookingReminderDue": {
             "trigger": "booking.reminder-due",
-            "channels": ["email"],
+            "channels": [
+              "email"
+            ],
             "template": "@self",
             "sender": "@self.senderAddress",
             "scheduleOffsetHours": "@self.hoursBeforeBooking",
             "appliesWhen": {
               "field": "status",
-              "in": ["published"]
+              "in": [
+                "published"
+              ]
             },
             "selectBy": {
               "schema": "BookingReminderTemplate",
@@ -380,9 +452,25 @@
         },
         "x-openregister-rbac": {
           "roles": {
-            "template-administrator": {"permissions": ["create", "read", "update", "delete"]},
-            "booking-administrator": {"permissions": ["read", "update"]},
-            "auditor": {"permissions": ["read"]}
+            "template-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "booking-administrator": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           },
           "permissionMap": {
             "booking:template:list": "read",
@@ -415,85 +503,114 @@
             "type": "string",
             "maxLength": 120,
             "description": "Human-readable template name.",
-            "example": "Default Booking Cancellation"
+            "example": "Default Booking Cancellation",
+            "title": "Name"
           },
           "status": {
             "type": "string",
-            "enum": ["draft", "published", "archived"],
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
             "default": "draft",
-            "description": "Lifecycle state."
+            "description": "Lifecycle state.",
+            "title": "Status"
           },
           "locale": {
             "type": "string",
-            "enum": ["nl", "en"],
+            "enum": [
+              "nl",
+              "en"
+            ],
             "default": "nl",
-            "description": "Template language (NFR-BET-005)."
+            "description": "Template language (NFR-BET-005).",
+            "title": "Locale"
           },
           "subjectLine": {
             "type": "string",
             "maxLength": 78,
             "description": "Email subject; ≤78 characters; supports {{variables}}.",
-            "example": "Boeking geannuleerd: {{bookingRef}}"
+            "example": "Boeking geannuleerd: {{bookingRef}}",
+            "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
             "maxLength": 102400,
-            "description": "HTML body; inline styles only; whitelisted elements."
+            "description": "HTML body; inline styles only; whitelisted elements.",
+            "title": "Html Body"
           },
           "plainTextBody": {
             "type": "string",
             "maxLength": 102400,
-            "description": "Plain-text fallback."
+            "description": "Plain-text fallback.",
+            "title": "Plain Text Body"
           },
           "logoUri": {
             "type": "string",
             "format": "uri",
             "nullable": true,
-            "description": "Organization logo URI."
+            "description": "Organization logo URI.",
+            "title": "Logo URI"
           },
           "accentColor": {
             "type": "string",
             "nullable": true,
             "pattern": "^#[0-9A-Fa-f]{6}$",
-            "description": "Hex colour code for branding accents."
+            "description": "Hex colour code for branding accents.",
+            "title": "Accent Color"
           },
           "footerText": {
             "type": "string",
             "nullable": true,
             "maxLength": 500,
-            "description": "Custom footer text."
+            "description": "Custom footer text.",
+            "title": "Footer Text"
           },
           "cancellationReasonRequired": {
             "type": "boolean",
             "default": false,
-            "description": "When true, {{cancellationReason}} is included in the template variable map at dispatch (REQ-BET-009). When false, the variable resolves to empty string per the standard substitution rule (T14)."
+            "description": "When true, {{cancellationReason}} is included in the template variable map at dispatch (REQ-BET-009). When false, the variable resolves to empty string per the standard substitution rule (T14).",
+            "title": "Cancellation Reason Required"
           },
           "senderName": {
             "type": "string",
             "nullable": true,
             "maxLength": 120,
-            "description": "Display name used as the From: header at dispatch."
+            "description": "Display name used as the From: header at dispatch.",
+            "title": "Sender Name"
           },
           "senderAddress": {
             "type": "string",
             "format": "email",
             "nullable": true,
-            "description": "From: address."
+            "description": "From: address.",
+            "title": "Sender Address"
           },
           "activatedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "First-publish timestamp."
+            "description": "First-publish timestamp.",
+            "title": "Activated At"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
           "initialState": "draft",
           "states": {
-            "draft": {"label": "Concept", "description": "Editable; not dispatched."},
-            "published": {"label": "Gepubliceerd", "description": "Active and dispatched on booking.cancelled events."},
-            "archived": {"label": "Gearchiveerd", "description": "Retired; no further dispatches."}
+            "draft": {
+              "label": "Concept",
+              "description": "Editable; not dispatched."
+            },
+            "published": {
+              "label": "Gepubliceerd",
+              "description": "Active and dispatched on booking.cancelled events."
+            },
+            "archived": {
+              "label": "Gearchiveerd",
+              "description": "Retired; no further dispatches."
+            }
           },
           "transitions": {
             "publish": {
@@ -546,12 +663,16 @@
         "x-openregister-notifications": {
           "onBookingCancelled": {
             "trigger": "booking.cancelled",
-            "channels": ["email"],
+            "channels": [
+              "email"
+            ],
             "template": "@self",
             "sender": "@self.senderAddress",
             "appliesWhen": {
               "field": "status",
-              "in": ["published"]
+              "in": [
+                "published"
+              ]
             },
             "selectBy": {
               "schema": "BookingCancellationTemplate",
@@ -566,9 +687,25 @@
         },
         "x-openregister-rbac": {
           "roles": {
-            "template-administrator": {"permissions": ["create", "read", "update", "delete"]},
-            "booking-administrator": {"permissions": ["read", "update"]},
-            "auditor": {"permissions": ["read"]}
+            "template-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "booking-administrator": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           },
           "permissionMap": {
             "booking:template:list": "read",

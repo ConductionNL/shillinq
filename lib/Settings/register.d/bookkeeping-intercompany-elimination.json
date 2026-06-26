@@ -32,19 +32,23 @@
           "relationId": {
             "type": "string",
             "description": "Unique identifier of the relation within the consolidation group.",
-            "example": "icr-werk-holding-services"
+            "example": "icr-werk-holding-services",
+            "title": "Relation ID"
           },
           "groupId": {
             "type": "string",
-            "description": "FK to ConsolidationGroup (bookkeeping-consolidation-commercial)."
+            "description": "FK to ConsolidationGroup (bookkeeping-consolidation-commercial).",
+            "title": "Group ID"
           },
           "entityAId": {
             "type": "string",
-            "description": "FK to the first entity (administration) of the relation."
+            "description": "FK to the first entity (administration) of the relation.",
+            "title": "Entity A ID"
           },
           "entityBId": {
             "type": "string",
-            "description": "FK to the second entity (administration) of the relation."
+            "description": "FK to the second entity (administration) of the relation.",
+            "title": "Entity B ID"
           },
           "relationType": {
             "type": "string",
@@ -59,48 +63,57 @@
               "capital-contribution",
               "expense-recharge"
             ],
-            "description": "Economic nature of the intercompany relation; drives default tolerance and elimination treatment."
+            "description": "Economic nature of the intercompany relation; drives default tolerance and elimination treatment.",
+            "title": "Relation Type"
           },
           "defaultAccountA": {
             "type": "string",
             "description": "Default GL account on entity A's side (e.g. '8200 - IC revenue').",
-            "example": "8200"
+            "example": "8200",
+            "title": "Default Account A"
           },
           "defaultAccountB": {
             "type": "string",
             "description": "Default GL account on entity B's side (e.g. '4400 - IC purchases').",
-            "example": "4400"
+            "example": "4400",
+            "title": "Default Account B"
           },
           "toleranceAbsolute": {
             "type": "number",
             "minimum": 0,
             "default": 10,
-            "description": "Absolute mismatch threshold in EUR (default EUR 10)."
+            "description": "Absolute mismatch threshold in EUR (default EUR 10).",
+            "title": "Tolerance Absolute"
           },
           "toleranceRelative": {
             "type": "number",
             "minimum": 0,
             "default": 0.5,
-            "description": "Relative mismatch threshold in percent (default 0.5%)."
+            "description": "Relative mismatch threshold in percent (default 0.5%).",
+            "title": "Tolerance Relative"
           },
           "toleranceFallbackAccount": {
             "type": "string",
             "description": "Rounding-difference fallback GL account for within-tolerance residuals (e.g. '9999 - Elimination rounding').",
-            "example": "9999"
+            "example": "9999",
+            "title": "Tolerance Fallback Account"
           },
           "activeFrom": {
             "type": "string",
             "format": "date",
-            "description": "Start date of the relation."
+            "description": "Start date of the relation.",
+            "title": "Active From"
           },
           "activeTo": {
             "type": "string",
             "format": "date",
-            "description": "End date of the relation; null means currently active."
+            "description": "End date of the relation; null means currently active.",
+            "title": "Active To"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration (tenant scope)."
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
           }
         }
       },
@@ -127,52 +140,63 @@
         "properties": {
           "sourceAdministrationId": {
             "type": "string",
-            "description": "FK to the source administration the transaction was booked in."
+            "description": "FK to the source administration the transaction was booked in.",
+            "title": "Source Administration ID"
           },
           "sourceJournalEntryId": {
             "type": "string",
-            "description": "FK to the source journal entry (T1 JournalEntry/GLTransaction)."
+            "description": "FK to the source journal entry (T1 JournalEntry/GLTransaction).",
+            "title": "Source Journal Entry ID"
           },
           "sourceLineNumber": {
             "type": "integer",
             "minimum": 0,
-            "description": "Line number within the source journal entry."
+            "description": "Line number within the source journal entry.",
+            "title": "Source Line Number"
           },
           "bookingDate": {
             "type": "string",
             "format": "date",
-            "description": "Booking date of the source line."
+            "description": "Booking date of the source line.",
+            "title": "Booking Date"
           },
           "glAccount": {
             "type": "string",
-            "description": "General-ledger account in the source administration."
+            "description": "General-ledger account in the source administration.",
+            "title": "GL Account"
           },
           "debitAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Debit amount (non-negative)."
+            "description": "Debit amount (non-negative).",
+            "title": "Debit Amount"
           },
           "creditAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Credit amount (non-negative)."
+            "description": "Credit amount (non-negative).",
+            "title": "Credit Amount"
           },
           "currency": {
             "type": "string",
             "description": "ISO 4217 currency code.",
-            "example": "EUR"
+            "example": "EUR",
+            "title": "Currency"
           },
           "description": {
             "type": "string",
-            "description": "Description copied from the source journal line."
+            "description": "Description copied from the source journal line.",
+            "title": "Description"
           },
           "counterpartyEntityId": {
             "type": "string",
-            "description": "FK to the detected or asserted counterparty entity (administration)."
+            "description": "FK to the detected or asserted counterparty entity (administration).",
+            "title": "Counterparty Entity ID"
           },
           "relationId": {
             "type": "string",
-            "description": "FK to the matched IntercompanyRelation, when known."
+            "description": "FK to the matched IntercompanyRelation, when known.",
+            "title": "Relation ID"
           },
           "detectionMethod": {
             "type": "string",
@@ -181,7 +205,8 @@
               "label-based",
               "explicitly-marked"
             ],
-            "description": "How the transaction was identified as intercompany."
+            "description": "How the transaction was identified as intercompany.",
+            "title": "Detection Method"
           },
           "detectionConfidence": {
             "type": "string",
@@ -190,20 +215,24 @@
               "medium",
               "low"
             ],
-            "description": "Confidence of the detection; label-based defaults to medium pending operator confirmation."
+            "description": "Confidence of the detection; label-based defaults to medium pending operator confirmation.",
+            "title": "Detection Confidence"
           },
           "isMatched": {
             "type": "boolean",
             "default": false,
-            "description": "Whether the transaction has been included in a match."
+            "description": "Whether the transaction has been included in a match.",
+            "title": "Is Matched"
           },
           "matchId": {
             "type": "string",
-            "description": "FK to the IntercompanyMatch the transaction belongs to."
+            "description": "FK to the IntercompanyMatch the transaction belongs to.",
+            "title": "Match ID"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration (tenant scope)."
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
           }
         }
       },
@@ -230,45 +259,54 @@
         "properties": {
           "matchId": {
             "type": "string",
-            "description": "Unique match identifier."
+            "description": "Unique match identifier.",
+            "title": "Match ID"
           },
           "periodId": {
             "type": "string",
-            "description": "FK to the consolidation period."
+            "description": "FK to the consolidation period.",
+            "title": "Period ID"
           },
           "relationId": {
             "type": "string",
-            "description": "FK to the IntercompanyRelation."
+            "description": "FK to the IntercompanyRelation.",
+            "title": "Relation ID"
           },
           "entityATransactionIds": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "UUIDs of the IntercompanyTransaction rows on entity A's side."
+            "description": "UUIDs of the IntercompanyTransaction rows on entity A's side.",
+            "title": "Entity A Transaction Ids"
           },
           "entityBTransactionIds": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "UUIDs of the IntercompanyTransaction rows on entity B's side."
+            "description": "UUIDs of the IntercompanyTransaction rows on entity B's side.",
+            "title": "Entity B Transaction Ids"
           },
           "totalAmountA": {
             "type": "number",
-            "description": "Aggregated amount on entity A's side, in group reporting currency."
+            "description": "Aggregated amount on entity A's side, in group reporting currency.",
+            "title": "Total Amount A"
           },
           "totalAmountB": {
             "type": "number",
-            "description": "Aggregated amount on entity B's side, in group reporting currency."
+            "description": "Aggregated amount on entity B's side, in group reporting currency.",
+            "title": "Total Amount B"
           },
           "mismatchAmount": {
             "type": "number",
-            "description": "Delta (totalAmountA - totalAmountB)."
+            "description": "Delta (totalAmountA - totalAmountB).",
+            "title": "Mismatch Amount"
           },
           "mismatchPercentage": {
             "type": "number",
-            "description": "Relative difference in percent of the larger side."
+            "description": "Relative difference in percent of the larger side.",
+            "title": "Mismatch Percentage"
           },
           "matchStatus": {
             "type": "string",
@@ -279,15 +317,18 @@
               "one-sided-A",
               "one-sided-B"
             ],
-            "description": "Tolerance-evaluated match outcome."
+            "description": "Tolerance-evaluated match outcome.",
+            "title": "Match Status"
           },
           "generatedEliminationId": {
             "type": "string",
-            "description": "FK to the generated EliminationJournal, when an elimination was produced."
+            "description": "FK to the generated EliminationJournal, when an elimination was produced.",
+            "title": "Generated Elimination ID"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration (tenant scope)."
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
           }
         },
         "x-openregister-aggregations": {
@@ -381,19 +422,23 @@
         "properties": {
           "mismatchId": {
             "type": "string",
-            "description": "Unique mismatch identifier."
+            "description": "Unique mismatch identifier.",
+            "title": "Mismatch ID"
           },
           "periodId": {
             "type": "string",
-            "description": "FK to the consolidation period."
+            "description": "FK to the consolidation period.",
+            "title": "Period ID"
           },
           "relationId": {
             "type": "string",
-            "description": "FK to the IntercompanyRelation."
+            "description": "FK to the IntercompanyRelation.",
+            "title": "Relation ID"
           },
           "matchId": {
             "type": "string",
-            "description": "FK to the IntercompanyMatch the mismatch belongs to, when part of a match."
+            "description": "FK to the IntercompanyMatch the mismatch belongs to, when part of a match.",
+            "title": "Match ID"
           },
           "causeClassification": {
             "type": "string",
@@ -405,20 +450,24 @@
               "classification-error",
               "unknown"
             ],
-            "description": "Operator-assigned cause of the discrepancy; drives the resolution path."
+            "description": "Operator-assigned cause of the discrepancy; drives the resolution path.",
+            "title": "Cause Classification"
           },
           "amount": {
             "type": "number",
-            "description": "Mismatch amount in EUR or source currency."
+            "description": "Mismatch amount in EUR or source currency.",
+            "title": "Amount"
           },
           "currency": {
             "type": "string",
             "description": "ISO 4217 currency of the mismatch amount.",
-            "example": "EUR"
+            "example": "EUR",
+            "title": "Currency"
           },
           "description": {
             "type": "string",
-            "description": "Summary of the discrepancy."
+            "description": "Summary of the discrepancy.",
+            "title": "Description"
           },
           "status": {
             "type": "string",
@@ -429,11 +478,13 @@
               "accepted-as-difference"
             ],
             "default": "open",
-            "description": "Resolution status of the exception."
+            "description": "Resolution status of the exception.",
+            "title": "Status"
           },
           "assigneeId": {
             "type": "string",
-            "description": "FK to the Nextcloud user investigating the mismatch."
+            "description": "FK to the Nextcloud user investigating the mismatch.",
+            "title": "Assignee ID"
           },
           "resolutionAction": {
             "type": "string",
@@ -444,15 +495,18 @@
               "source-correction-booking-wizard",
               "accept-as-difference"
             ],
-            "description": "Chosen resolution path for the mismatch."
+            "description": "Chosen resolution path for the mismatch.",
+            "title": "Resolution Action"
           },
           "resolutionNotes": {
             "type": "string",
-            "description": "Free-text explanation of the chosen resolution."
+            "description": "Free-text explanation of the chosen resolution.",
+            "title": "Resolution Notes"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration (tenant scope)."
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
           }
         },
         "x-openregister-lifecycle": {
@@ -517,11 +571,13 @@
         "properties": {
           "ruleId": {
             "type": "string",
-            "description": "Unique rule identifier."
+            "description": "Unique rule identifier.",
+            "title": "Rule ID"
           },
           "groupId": {
             "type": "string",
-            "description": "FK to ConsolidationGroup; a group-wide default rule."
+            "description": "FK to ConsolidationGroup; a group-wide default rule.",
+            "title": "Group ID"
           },
           "relationTypeFilter": {
             "type": "string",
@@ -536,17 +592,20 @@
               "capital-contribution",
               "expense-recharge"
             ],
-            "description": "Relation type the rule applies to; null means all relation types."
+            "description": "Relation type the rule applies to; null means all relation types.",
+            "title": "Relation Type Filter"
           },
           "toleranceAbsolute": {
             "type": "number",
             "minimum": 0,
-            "description": "Absolute mismatch threshold in EUR."
+            "description": "Absolute mismatch threshold in EUR.",
+            "title": "Tolerance Absolute"
           },
           "toleranceRelative": {
             "type": "number",
             "minimum": 0,
-            "description": "Relative mismatch threshold in percent."
+            "description": "Relative mismatch threshold in percent.",
+            "title": "Tolerance Relative"
           },
           "toleranceMethod": {
             "type": "string",
@@ -555,21 +614,25 @@
               "min-of-absolute-relative",
               "absolute-only"
             ],
-            "description": "How the absolute and relative thresholds are combined: max-of (either passes), min-of (both must pass), or absolute-only."
+            "description": "How the absolute and relative thresholds are combined: max-of (either passes), min-of (both must pass), or absolute-only.",
+            "title": "Tolerance Method"
           },
           "fallbackAccount": {
             "type": "string",
             "description": "GL account the within-tolerance residual posts to.",
-            "example": "9999"
+            "example": "9999",
+            "title": "Fallback Account"
           },
           "autoResolve": {
             "type": "boolean",
             "default": true,
-            "description": "Whether within-tolerance mismatches are accepted automatically."
+            "description": "Whether within-tolerance mismatches are accepted automatically.",
+            "title": "Auto Resolve"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration (tenant scope)."
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
           }
         }
       },
@@ -601,62 +664,76 @@
         "properties": {
           "balanceId": {
             "type": "string",
-            "description": "Unique identifier per pair + period."
+            "description": "Unique identifier per pair + period.",
+            "title": "Balance ID"
           },
           "groupId": {
             "type": "string",
-            "description": "FK to ConsolidationGroup."
+            "description": "FK to ConsolidationGroup.",
+            "title": "Group ID"
           },
           "entityAId": {
             "type": "string",
-            "description": "FK to entity A."
+            "description": "FK to entity A.",
+            "title": "Entity A ID"
           },
           "entityBId": {
             "type": "string",
-            "description": "FK to entity B."
+            "description": "FK to entity B.",
+            "title": "Entity B ID"
           },
           "periodId": {
             "type": "string",
-            "description": "FK to the consolidation period."
+            "description": "FK to the consolidation period.",
+            "title": "Period ID"
           },
           "totalReceivablesAonB": {
             "type": "number",
-            "description": "Total outstanding receivables of A on B."
+            "description": "Total outstanding receivables of A on B.",
+            "title": "Total Receivables Aon B"
           },
           "totalPayablesAtoB": {
             "type": "number",
-            "description": "Total outstanding payables of A to B."
+            "description": "Total outstanding payables of A to B.",
+            "title": "Total Payables Ato B"
           },
           "netPositionAtoB": {
             "type": "number",
-            "description": "Net position of A versus B (receivables - payables)."
+            "description": "Net position of A versus B (receivables - payables).",
+            "title": "Net Position Ato B"
           },
           "totalSalesAtoB": {
             "type": "number",
-            "description": "Total sales flow A to B in the period."
+            "description": "Total sales flow A to B in the period.",
+            "title": "Total Sales Ato B"
           },
           "totalPurchasesAtoB": {
             "type": "number",
-            "description": "Total purchase flow A from B in the period."
+            "description": "Total purchase flow A from B in the period.",
+            "title": "Total Purchases Ato B"
           },
           "transactionCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "Number of intercompany transactions in the period."
+            "description": "Number of intercompany transactions in the period.",
+            "title": "Transaction Count"
           },
           "mismatchCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "Number of reported mismatches in the period."
+            "description": "Number of reported mismatches in the period.",
+            "title": "Mismatch Count"
           },
           "lastUpdated": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp of the last refresh."
+            "description": "Timestamp of the last refresh.",
+            "title": "Last Updated"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration (tenant scope)."
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
           }
         },
         "x-openregister-aggregations": {
@@ -720,24 +797,29 @@
         "properties": {
           "eliminationId": {
             "type": "string",
-            "description": "Unique journal identifier."
+            "description": "Unique journal identifier.",
+            "title": "Elimination ID"
           },
           "consolidationPeriodId": {
             "type": "string",
-            "description": "FK to the consolidation period."
+            "description": "FK to the consolidation period.",
+            "title": "Consolidation Period ID"
           },
           "matchId": {
             "type": "string",
-            "description": "FK to the triggering IntercompanyMatch."
+            "description": "FK to the triggering IntercompanyMatch.",
+            "title": "Match ID"
           },
           "bookingDate": {
             "type": "string",
             "format": "date",
-            "description": "Journal entry date."
+            "description": "Journal entry date.",
+            "title": "Booking Date"
           },
           "description": {
             "type": "string",
-            "description": "Human-readable description of the elimination."
+            "description": "Human-readable description of the elimination.",
+            "title": "Description"
           },
           "lines": {
             "type": "array",
@@ -753,34 +835,41 @@
               "properties": {
                 "glAccount": {
                   "type": "string",
-                  "description": "GL account of the elimination line."
+                  "description": "GL account of the elimination line.",
+                  "title": "GL Account"
                 },
                 "debitAmount": {
                   "type": "number",
                   "minimum": 0,
-                  "description": "Non-negative debit amount."
+                  "description": "Non-negative debit amount.",
+                  "title": "Debit Amount"
                 },
                 "creditAmount": {
                   "type": "number",
                   "minimum": 0,
-                  "description": "Non-negative credit amount."
+                  "description": "Non-negative credit amount.",
+                  "title": "Credit Amount"
                 },
                 "description": {
                   "type": "string",
-                  "description": "Line description."
+                  "description": "Line description.",
+                  "title": "Description"
                 }
               }
-            }
+            },
+            "title": "Lines"
           },
           "totalDebit": {
             "type": "number",
             "minimum": 0,
-            "description": "Sum of debit amounts; MUST equal totalCredit."
+            "description": "Sum of debit amounts; MUST equal totalCredit.",
+            "title": "Total Debit"
           },
           "totalCredit": {
             "type": "number",
             "minimum": 0,
-            "description": "Sum of credit amounts; MUST equal totalDebit."
+            "description": "Sum of credit amounts; MUST equal totalDebit.",
+            "title": "Total Credit"
           },
           "generatedBy": {
             "type": "string",
@@ -788,20 +877,24 @@
               "system",
               "operator"
             ],
-            "description": "Whether the journal was auto-generated by the matching run or entered manually."
+            "description": "Whether the journal was auto-generated by the matching run or entered manually.",
+            "title": "Generated By"
           },
           "approvedBy": {
             "type": "string",
-            "description": "FK to the Nextcloud user who approved the elimination."
+            "description": "FK to the Nextcloud user who approved the elimination.",
+            "title": "Approved By"
           },
           "approvedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "When the elimination was approved."
+            "description": "When the elimination was approved.",
+            "title": "Approved At"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration (tenant scope)."
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
           }
         },
         "x-openregister-lifecycle": {

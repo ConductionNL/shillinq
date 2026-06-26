@@ -17,41 +17,59 @@
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-subsidie-verantwoording/specs.md",
         "type": "object",
-        "required": ["categoryId", "categoryName", "severity"],
+        "required": [
+          "categoryId",
+          "categoryName",
+          "severity"
+        ],
         "properties": {
           "categoryId": {
             "type": "string",
             "description": "Stable category identifier referenced by AuditorStatement.findings[].categoryId (REQ-SUBV-007).",
-            "example": "documentation"
+            "example": "documentation",
+            "title": "Category ID"
           },
           "categoryName": {
             "type": "string",
             "description": "Human-readable category name.",
-            "example": "Documentation"
+            "example": "Documentation",
+            "title": "Category Name"
           },
           "severity": {
             "type": "string",
-            "enum": ["critical", "high", "medium", "low"],
-            "description": "Default severity for findings in this category (REQ-SUBV-007)."
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ],
+            "description": "Default severity for findings in this category (REQ-SUBV-007).",
+            "title": "Severity"
           },
           "defaultRemediationTemplate": {
             "type": "string",
             "nullable": true,
-            "description": "Default remediation text proposed when the auditor selects this category."
+            "description": "Default remediation text proposed when the auditor selects this category.",
+            "title": "Default Remediation Template"
           },
           "administrationId": {
             "type": "string",
             "nullable": true,
-            "description": "Optional FK to the Administration owning an operator-customised override; null for the bundled defaults."
+            "description": "Optional FK to the Administration owning an operator-customised override; null for the bundled defaults.",
+            "title": "Administration ID"
           }
         },
         "x-openregister-rbac": {
           "roles": {
             "auditor": {
-              "permissions": ["read"]
+              "permissions": [
+                "read"
+              ]
             },
             "subsidie-coordinator": {
-              "permissions": ["read"]
+              "permissions": [
+                "read"
+              ]
             }
           }
         }
@@ -77,63 +95,79 @@
           "verantwoordingId": {
             "type": "string",
             "description": "Unique accountability record identifier (REQ-SUBV-002).",
-            "example": "SV-2026-0001"
+            "example": "SV-2026-0001",
+            "title": "Verantwoording ID"
           },
           "grantId": {
             "type": "string",
             "description": "FK to the Subsidie grant master (Subsidie.subsidieNumber).",
-            "example": "SUB-2026-0001"
+            "example": "SUB-2026-0001",
+            "title": "Grant ID"
           },
           "reportDate": {
             "type": "string",
             "format": "date",
             "description": "Date the accountability report was generated (REQ-SUBV-002).",
-            "example": "2026-03-01"
+            "example": "2026-03-01",
+            "title": "Report Date"
           },
           "reportingPeriod": {
             "type": "string",
             "description": "Period covered, auto-calculated from grant award date to report date (REQ-SUBV-009).",
-            "example": "2024-01-01 to 2024-12-31"
+            "example": "2024-01-01 to 2024-12-31",
+            "title": "Reporting Period"
           },
           "status": {
             "type": "string",
-            "enum": ["draft", "submitted", "approved", "final"],
+            "enum": [
+              "draft",
+              "submitted",
+              "approved",
+              "final"
+            ],
             "default": "draft",
             "description": "Accountability report lifecycle state (REQ-SUBV-003).",
-            "example": "draft"
+            "example": "draft",
+            "title": "Status"
           },
           "submittedDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Date the report was submitted for approval."
+            "description": "Date the report was submitted for approval.",
+            "title": "Submitted Date"
           },
           "approverUserId": {
             "type": "string",
             "nullable": true,
-            "description": "User (finance officer) who approved the report."
+            "description": "User (finance officer) who approved the report.",
+            "title": "Approver User ID"
           },
           "approvalDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Date of approval."
+            "description": "Date of approval.",
+            "title": "Approval Date"
           },
           "reportContent": {
             "type": "string",
             "nullable": true,
-            "description": "Full text or summary of the accountability narrative."
+            "description": "Full text or summary of the accountability narrative.",
+            "title": "Report Content"
           },
           "awardedAmount": {
             "type": "number",
             "nullable": true,
             "description": "Awarded amount snapshot copied from the Subsidie grant, used to evaluate the auditor threshold (REQ-SUBV-006) without a cross-schema join at transition time.",
-            "example": 50000
+            "example": 50000,
+            "title": "Awarded Amount"
           },
           "administrationId": {
             "type": "string",
             "description": "FK to the Administration owning this record.",
-            "example": "adm-gemeente-1"
+            "example": "adm-gemeente-1",
+            "title": "Administration ID"
           }
         },
         "x-openregister-lifecycle": {
@@ -198,7 +232,10 @@
               "resolver": "finance-officer",
               "fallback": "subsidie-coordinator"
             },
-            "channels": ["in-app", "email"],
+            "channels": [
+              "in-app",
+              "email"
+            ],
             "title": "Report Ready for Approval",
             "message": "Subsidie verantwoording @self.verantwoordingId is submitted for approval."
           },
@@ -209,7 +246,9 @@
               "resolver": "subsidie-coordinator",
               "fallback": "administration-treasurer"
             },
-            "channels": ["in-app"],
+            "channels": [
+              "in-app"
+            ],
             "title": "Accountability Report Approved",
             "message": "Subsidie verantwoording @self.verantwoordingId is approved."
           },
@@ -220,7 +259,9 @@
               "resolver": "subsidie-coordinator",
               "fallback": "administration-treasurer"
             },
-            "channels": ["in-app"],
+            "channels": [
+              "in-app"
+            ],
             "title": "Accountability Report Finalised",
             "message": "Subsidie verantwoording @self.verantwoordingId is finalised."
           }
@@ -237,13 +278,22 @@
         "x-openregister-rbac": {
           "roles": {
             "subsidie-coordinator": {
-              "permissions": ["create", "read", "update"]
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
             },
             "finance-officer": {
-              "permissions": ["read", "update"]
+              "permissions": [
+                "read",
+                "update"
+              ]
             },
             "auditor": {
-              "permissions": ["read"]
+              "permissions": [
+                "read"
+              ]
             }
           }
         }
@@ -270,35 +320,47 @@
           "statementId": {
             "type": "string",
             "description": "Unique auditor statement identifier (REQ-SUBV-004).",
-            "example": "AS-2026-0001"
+            "example": "AS-2026-0001",
+            "title": "Statement ID"
           },
           "grantId": {
             "type": "string",
             "description": "FK to the Subsidie grant master (Subsidie.subsidieNumber).",
-            "example": "SUB-2026-0001"
+            "example": "SUB-2026-0001",
+            "title": "Grant ID"
           },
           "auditThresholdApplied": {
             "type": "boolean",
             "default": true,
-            "description": "Whether the grant exceeded the auditor threshold and verification is mandatory (REQ-SUBV-004)."
+            "description": "Whether the grant exceeded the auditor threshold and verification is mandatory (REQ-SUBV-004).",
+            "title": "Audit Threshold Applied"
           },
           "auditDate": {
             "type": "string",
             "format": "date",
             "description": "Date of audit verification (REQ-SUBV-004).",
-            "example": "2026-03-15"
+            "example": "2026-03-15",
+            "title": "Audit Date"
           },
           "auditorUserId": {
             "type": "string",
             "description": "User (auditor) who performs verification (REQ-SUBV-004).",
-            "example": "auditor-jansen"
+            "example": "auditor-jansen",
+            "title": "Auditor User ID"
           },
           "status": {
             "type": "string",
-            "enum": ["pending", "under-review", "approved", "rejected", "conditional"],
+            "enum": [
+              "pending",
+              "under-review",
+              "approved",
+              "rejected",
+              "conditional"
+            ],
             "default": "pending",
             "description": "Auditor verification lifecycle state (REQ-SUBV-005).",
-            "example": "pending"
+            "example": "pending",
+            "title": "Status"
           },
           "findings": {
             "type": "array",
@@ -306,49 +368,71 @@
             "description": "Audit findings: FK to audit-finding-template categoryId plus per-finding notes and resolution status (REQ-SUBV-005).",
             "items": {
               "type": "object",
-              "required": ["categoryId"],
+              "required": [
+                "categoryId"
+              ],
               "properties": {
                 "categoryId": {
                   "type": "string",
                   "description": "FK to audit-finding-template.categoryId.",
-                  "example": "documentation"
+                  "example": "documentation",
+                  "title": "Category ID"
                 },
                 "severity": {
                   "type": "string",
-                  "enum": ["critical", "high", "medium", "low"],
-                  "description": "Severity copied from the template at selection time; operator may override."
+                  "enum": [
+                    "critical",
+                    "high",
+                    "medium",
+                    "low"
+                  ],
+                  "description": "Severity copied from the template at selection time; operator may override.",
+                  "title": "Severity"
                 },
                 "note": {
                   "type": "string",
                   "nullable": true,
-                  "description": "Auditor free-text note for this finding."
+                  "description": "Auditor free-text note for this finding.",
+                  "title": "Note"
                 },
                 "resolution": {
                   "type": "string",
-                  "enum": ["open", "resolved"],
+                  "enum": [
+                    "open",
+                    "resolved"
+                  ],
                   "default": "open",
-                  "description": "Per-finding resolution status. All findings must be resolved (or none present) before approval (REQ-SUBV-005)."
+                  "description": "Per-finding resolution status. All findings must be resolved (or none present) before approval (REQ-SUBV-005).",
+                  "title": "Resolution"
                 }
               }
-            }
+            },
+            "title": "Findings"
           },
           "attestationDocumentUri": {
             "type": "string",
             "format": "uri",
             "nullable": true,
             "description": "URI to the docudesk PDF of the auditor sign-off (REQ-SUBV-004). The file lives in docudesk; no blob embedded (ADR-022).",
-            "example": "docudesk://attachments/aabbccdd-1122-3344-5566-778899aabbcc/auditor-signoff.pdf"
+            "example": "docudesk://attachments/aabbccdd-1122-3344-5566-778899aabbcc/auditor-signoff.pdf",
+            "title": "Attestation Document URI"
           },
           "verdict": {
             "type": "string",
             "nullable": true,
-            "enum": ["approved", "rejected", "conditional-with-caveats"],
-            "description": "Final auditor verdict (REQ-SUBV-004)."
+            "enum": [
+              "approved",
+              "rejected",
+              "conditional-with-caveats"
+            ],
+            "description": "Final auditor verdict (REQ-SUBV-004).",
+            "title": "Verdict"
           },
           "administrationId": {
             "type": "string",
             "description": "FK to the Administration owning this record.",
-            "example": "adm-gemeente-1"
+            "example": "adm-gemeente-1",
+            "title": "Administration ID"
           }
         },
         "x-openregister-lifecycle": {
@@ -417,7 +501,9 @@
               "resolver": "subsidie-coordinator",
               "fallback": "administration-treasurer"
             },
-            "channels": ["in-app"],
+            "channels": [
+              "in-app"
+            ],
             "title": "Auditor Statement — Under Review",
             "message": "Auditor statement @self.statementId is now under review."
           },
@@ -428,7 +514,10 @@
               "resolver": "subsidie-coordinator",
               "fallback": "administration-treasurer"
             },
-            "channels": ["in-app", "email"],
+            "channels": [
+              "in-app",
+              "email"
+            ],
             "title": "Auditor Statement — Approved",
             "message": "Auditor statement @self.statementId is approved."
           },
@@ -439,7 +528,10 @@
               "resolver": "subsidie-coordinator",
               "fallback": "administration-treasurer"
             },
-            "channels": ["in-app", "email"],
+            "channels": [
+              "in-app",
+              "email"
+            ],
             "title": "Auditor Statement — Rejected",
             "message": "Auditor statement @self.statementId is rejected; grant settlement is blocked."
           },
@@ -450,7 +542,10 @@
               "resolver": "subsidie-coordinator",
               "fallback": "administration-treasurer"
             },
-            "channels": ["in-app", "email"],
+            "channels": [
+              "in-app",
+              "email"
+            ],
             "title": "Auditor Statement — Conditional Approval",
             "message": "Auditor statement @self.statementId is conditionally approved with caveats."
           }
@@ -467,13 +562,21 @@
         "x-openregister-rbac": {
           "roles": {
             "auditor": {
-              "permissions": ["create", "read", "update"]
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
             },
             "finance-officer": {
-              "permissions": ["read"]
+              "permissions": [
+                "read"
+              ]
             },
             "subsidie-coordinator": {
-              "permissions": ["read"]
+              "permissions": [
+                "read"
+              ]
             }
           }
         }
