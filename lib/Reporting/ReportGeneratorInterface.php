@@ -41,8 +41,6 @@ namespace OCA\Shillinq\Reporting;
  */
 interface ReportGeneratorInterface
 {
-
-
     /**
      * The ReportCatalogue report-type id this generator produces (e.g. 'saft',
      * 'trial-balance', 'annual-accounts', 'vat-return').
@@ -50,7 +48,6 @@ interface ReportGeneratorInterface
      * @return string
      */
     public static function reportType(): string;
-
 
     /**
      * The formats this generator can emit, in preference order. DATA reports return
@@ -61,7 +58,6 @@ interface ReportGeneratorInterface
      */
     public static function supportedFormats(): array;
 
-
     /**
      * Render the report.
      *
@@ -71,6 +67,4 @@ interface ReportGeneratorInterface
      * @return GeneratedFile
      */
     public function generate(array $context, string $format): GeneratedFile;
-
-
 }//end interface

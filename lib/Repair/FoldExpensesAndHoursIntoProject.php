@@ -334,16 +334,20 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
     /**
      * Fold one expense schema family into Project.costLines.
      *
-     * @param object                                $objectService The OR ObjectService.
-     * @param string                                $registerSlug  The register slug.
-     * @param string                                $schema        The source schema name.
-     * @param string                                $type          The costLine discriminator value.
-     * @param array<string,string>                  $byKey         Identifier → projectKey index.
-     * @param array<string,array<string,mixed>>     $projectArrays ProjectKey → mutable record (by ref).
-     * @param array<string,string>                  $claimIndex    Claim id/number → projectId.
-     * @param callable                              $mapper        Source-row → costLine mapper.
-     * @param array<string,bool>                    $touched       Projects touched so far.
-     * @param IOutput                               $output        Repair output.
+     * @param object                            $objectService The OR ObjectService.
+     * @param string                            $registerSlug  The register slug.
+     * @param string                            $schema        The source schema name.
+     * @param string                            $type          The costLine discriminator value.
+     * @param array<string,string>              $byKey         Identifier → projectKey
+     *                                                         index.
+     * @param array<string,array<string,mixed>> $projectArrays ProjectKey → mutable record (by
+     *                                                         ref).
+     * @param array<string,string>              $claimIndex    Claim id/number →
+     *                                                         projectId.
+     * @param callable                          $mapper        Source-row → costLine
+     *                                                         mapper.
+     * @param array<string,bool>                $touched       Projects touched so far.
+     * @param IOutput                           $output        Repair output.
      *
      * @return array<string,bool> The newly-touched project keys.
      */
@@ -397,12 +401,12 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
                     continue;
                 }
 
-                $line             = $mapper($arr);
+                $line = $mapper($arr);
                 $line['sourceId'] = $sourceId;
                 $line['type']     = $type;
 
                 $projectArrays[$projectKey]['costLines'][] = $line;
-                $newlyTouched[$projectKey]                 = true;
+                $newlyTouched[$projectKey] = true;
             } catch (\Throwable $e) {
                 $output->warning('Shillinq: fold — '.$schema.' row failed: '.$e->getMessage());
             }//end try
@@ -474,7 +478,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
                 $line['sourceId'] = $sourceId;
 
                 $projectArrays[$projectKey]['hoursLines'][] = $line;
-                $newlyTouched[$projectKey]                  = true;
+                $newlyTouched[$projectKey] = true;
             } catch (\Throwable $e) {
                 $output->warning('Shillinq: fold — UrenRegistratie row failed: '.$e->getMessage());
             }//end try
