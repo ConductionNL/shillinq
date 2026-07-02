@@ -71,6 +71,10 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Controleprotocol",
+				"_note": "CONFIG archetype — the controleprotocol is the governing audit framework (materiality base/amount, reference framework, adoption decision, validity window) that tolerance matrices and audit statements hang off. Native shillinq detail contract: config.aggregations[] surface the materiality-amount currency KPI so an auditor sees the threshold first; config.fields[] render the protocol data; config.relatedLists[] list the tolerance matrices defined under this protocol (ToleranceMatrix, FK protocol=@self.id); and the sidebar carries an audit-trail tab. NO comms/files — a protocol is a policy record, not correspondence.",
+				"aggregations": [
+					{ "id": "materialityAmount", "title": "Materiality amount", "field": "materialityAmount", "metric": "value", "format": "currency" }
+				],
 				"fields": [
 					{ "key": "version", "label": "Version", "type": "string" },
 					{ "key": "auditYear", "label": "Audit Year", "type": "number" },
@@ -81,7 +85,24 @@
 					{ "key": "effectiveFrom", "label": "Effective From", "type": "string" },
 					{ "key": "effectiveTo", "label": "Effective To", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
-				]
+				],
+				"relatedLists": [
+					{ "id": "tolerance-matrices", "title": "Tolerance matrices", "schema": "ToleranceMatrix", "filter": { "protocol": "@self.id" }, "columns": [
+						{ "key": "topic", "label": "Topic" },
+						{ "key": "getrouwheidApprovalCeiling", "label": "Fair pres. approval %" },
+						{ "key": "rechtmatigheidApprovalCeiling", "label": "Lawfulness approval %" },
+						{ "key": "uncertaintyCeiling", "label": "Uncertainty %" }
+					] }
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "AuditProtocols"
 			}
 		},
 		{
@@ -111,6 +132,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ToleranceMatrix",
+				"_note": "CONFIG archetype — a tolerance matrix defines the fair-presentation and lawfulness approval/qualification ceilings for one audit topic under a protocol. Native shillinq detail contract: config.fields[] render the ceiling data; the sidebar carries an audit-trail tab so an auditor can see who changed a tolerance. Pure threshold configuration — NO comms/files, and no money aggregation (the values are percentages, not currency totals).",
 				"fields": [
 					{ "key": "topic", "label": "Topic", "type": "string" },
 					{ "key": "getrouwheidApprovalCeiling", "label": "Fair presentation Approval %", "type": "number" },
@@ -119,7 +141,16 @@
 					{ "key": "rechtmatigheidQualificationCeiling", "label": "Lawfulness Qualification %", "type": "number" },
 					{ "key": "uncertaintyCeiling", "label": "Uncertainty %", "type": "number" },
 					{ "key": "methodologyNote", "label": "Methodology Note", "type": "string" }
-				]
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "ToleranceMatrices"
 			}
 		},
 		{
@@ -149,6 +180,10 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "AuditFinding",
+				"_note": "FINDING/CASE archetype — an audit finding pairs a sampled transaction with a lawfulness/fair-presentation classification, a monetary error and an auditor conclusion. Native shillinq detail contract: config.aggregations[] surface the finding-amount currency KPI so its financial impact reads first; config.fields[] render the finding narrative (topic, type, classifications, severity, controller response, auditor conclusion, status); the sidebar carries a file-references tab for supporting evidence and an audit-trail tab for the immutable status history. NO comms.",
+				"aggregations": [
+					{ "id": "findingAmount", "title": "Finding amount", "field": "amount", "metric": "value", "format": "currency" }
+				],
 				"fields": [
 					{ "key": "topic", "label": "Topic", "type": "string" },
 					{ "key": "findingType", "label": "Finding Type", "type": "string" },
@@ -160,7 +195,19 @@
 					{ "key": "controllerResponse", "label": "Controller Response", "type": "string" },
 					{ "key": "auditorConclusion", "label": "Auditor Conclusion", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
-				]
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "documents", "label": "Evidence", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "AuditFinding", "objectId": ":id" } }
+						] },
+						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "AuditFindings"
 			}
 		},
 		{
@@ -187,12 +234,25 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "VerklaringDraft",
+				"_note": "REPORT/DOCUMENT archetype — a verklaring draft is the auditor's opinion (goedkeurend / met beperking / etc.), aggregating findings under a protocol toward sign-off. Native shillinq detail contract: config.fields[] render the opinion data (proposed opinion, rationale, override, status); the sidebar carries a file-references tab for the signed statement PDF and an audit-trail tab for the immutable sign-off / opinion-change history — critical assurance evidence. NO comms; no money aggregation of its own (amounts live on the aggregated findings).",
 				"fields": [
 					{ "key": "proposedOpinion", "label": "Proposed Opinion", "type": "string" },
 					{ "key": "opinionRationale", "label": "Opinion Rationale", "type": "string" },
 					{ "key": "opinionOverride", "label": "Opinion Override", "type": "boolean" },
 					{ "key": "status", "label": "Status", "type": "string" }
-				]
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "documents", "label": "Signed statement", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "VerklaringDraft", "objectId": ":id" } }
+						] },
+						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "AuditVerklaringen"
 			}
 		}
 	]

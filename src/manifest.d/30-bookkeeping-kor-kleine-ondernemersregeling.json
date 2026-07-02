@@ -141,6 +141,12 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "KORAnnualTurnover",
+				"_note": "REPORT/MONITOR archetype — a KOR annual-turnover record tracks a registration's running turnover against the small-business threshold in real time. Native shillinq detail contract: config.aggregations[] surface the three money/utilization KPIs (running turnover, year-end forecast, threshold utilization) so a bookkeeper instantly sees whether the threshold is at risk; config.fields[] render the full turnover data (year, threshold, per-month breakdown, excluded items, forecast status); and the bespoke KOR sidebarProps (alert-history list filtered by registrationId + audit trail) is preserved verbatim — the correct home for the threshold-alert log. NO comms/files — this is a computed monitor, not a document.",
+				"aggregations": [
+					{ "id": "runningTurnover", "title": "Running turnover", "field": "lopendeOmzet", "metric": "value", "format": "currency" },
+					{ "id": "yearEndForecast", "title": "Year-end forecast", "field": "prognoseEindeJaar", "metric": "value", "format": "currency" },
+					{ "id": "thresholdUtilization", "title": "Threshold utilization", "field": "drempelBenutting", "metric": "value", "format": "percentage" }
+				],
 				"fields": [
 					{ "key": "registrationId", "label": "Registration", "type": "string" },
 					{ "key": "jaar", "label": "Calendar year", "type": "integer" },
@@ -152,6 +158,7 @@
 					{ "key": "prognoseEindeJaar", "label": "Year-end forecast (EUR)", "type": "money" },
 					{ "key": "prognoseStatus", "label": "Forecast status", "type": "string" }
 				],
+				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [
 						{

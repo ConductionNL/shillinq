@@ -1130,6 +1130,8 @@
 			"title": "Barcode",
 			"config": {
 				"register": "shillinq",
+				"_note": "Barcode detail — a barcode/SKU identifier bound to a product (type, format, UoM, default flag) for mobile scanning. Audit trail evidences barcode assignment changes.",
+				"auditTrail": true,
 				"schema": "Barcode",
 				"fields": [
 					{
@@ -1255,6 +1257,36 @@
 			"title": "Lot",
 			"config": {
 				"register": "shillinq",
+				"_note": "Inventory Lot detail — a tracked batch/lot with manufacture/expiry dates, quantity and warehouse location (lot-batch-expiry control). Expiry alerts raised for this lot are listed; audit trail evidences lot status changes.",
+				"relatedLists": [
+					{
+						"id": "lot-alerts",
+						"title": "Expiry alerts",
+						"schema": "ExpiryAlert",
+						"filter": {
+							"lotId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "alertType",
+								"label": "Type"
+							},
+							{
+								"key": "alertDate",
+								"label": "Alert date"
+							},
+							{
+								"key": "daysBeforeExpiry",
+								"label": "Days before expiry"
+							},
+							{
+								"key": "status",
+								"label": "Status"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
 				"schema": "InventoryLot",
 				"fields": [
 					{
@@ -1401,6 +1433,8 @@
 			"title": "Expiry Alert",
 			"config": {
 				"register": "shillinq",
+				"_note": "Expiry Alert detail — a raised alert that a lot is nearing or past its expiry date. Links to the originating lot and recipient; audit trail evidences resolution.",
+				"auditTrail": true,
 				"schema": "ExpiryAlert",
 				"fields": [
 					{
@@ -1526,6 +1560,9 @@
 			"title": "Inventory Valuation",
 			"config": {
 				"register": "shillinq",
+				"_note": "Inventory Valuation detail — a stock valuation snapshot (method, quantity, unit cost, total value, pending COGS) for a product/warehouse. Aggregation surfaces total valued stock; audit trail evidences revaluation.",
+				"aggregation": "inventoryValueTotals",
+				"auditTrail": true,
 				"schema": "InventoryValuation",
 				"fields": [
 					{
@@ -1681,6 +1718,40 @@
 			"title": "Stock Level",
 			"config": {
 				"register": "shillinq",
+				"_note": "Stock Level detail — on-hand/available/reserved/in-transit quantities for a SKU at a location, with unit cost. Reorder rules governing this stock are listed; audit trail evidences movement and cost changes.",
+				"relatedLists": [
+					{
+						"id": "stock-reorder",
+						"title": "Reorder rules",
+						"schema": "InventoryReorderRule",
+						"filter": {
+							"inventoryStockId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "reorderPoint",
+								"label": "Reorder point"
+							},
+							{
+								"key": "reorderQuantity",
+								"label": "Reorder qty"
+							},
+							{
+								"key": "minimumLevel",
+								"label": "Min"
+							},
+							{
+								"key": "maximumLevel",
+								"label": "Max"
+							},
+							{
+								"key": "isLowStock",
+								"label": "Low stock"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
 				"schema": "InventoryStock",
 				"fields": [
 					{
@@ -1933,6 +2004,40 @@
 			"title": "Cost center",
 			"config": {
 				"register": "shillinq",
+				"_note": "Analytical cost centre detail — a costing dimension (code, budget, hierarchy) used to tag GL lines. GL postings list every movement carrying this cost centre; aggregation surfaces budget-vs-actual. Audit trail evidences budget and hierarchy changes.",
+				"relatedLists": [
+					{
+						"id": "centre-lines",
+						"title": "GL postings",
+						"schema": "GLLine",
+						"filter": {
+							"costCenterCode": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "transactionId",
+								"label": "Transaction"
+							},
+							{
+								"key": "accountNumber",
+								"label": "Account"
+							},
+							{
+								"key": "side",
+								"label": "D/C"
+							},
+							{
+								"key": "amount",
+								"label": "Amount (EUR)"
+							},
+							{
+								"key": "periodId",
+								"label": "Period"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
 				"schema": "AnalyticalDimension",
 				"fields": [
 					{
@@ -2058,6 +2163,40 @@
 			"title": "Cost object",
 			"config": {
 				"register": "shillinq",
+				"_note": "Analytical cost object detail — a costing dimension (code, budget, hierarchy) used to tag GL lines. GL postings list every movement carrying this cost object; aggregation surfaces budget-vs-actual. Audit trail evidences budget and hierarchy changes.",
+				"relatedLists": [
+					{
+						"id": "object-lines",
+						"title": "GL postings",
+						"schema": "GLLine",
+						"filter": {
+							"kostenDragerCode": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "transactionId",
+								"label": "Transaction"
+							},
+							{
+								"key": "accountNumber",
+								"label": "Account"
+							},
+							{
+								"key": "side",
+								"label": "D/C"
+							},
+							{
+								"key": "amount",
+								"label": "Amount (EUR)"
+							},
+							{
+								"key": "periodId",
+								"label": "Period"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
 				"schema": "AnalyticalDimension",
 				"fields": [
 					{
@@ -2164,6 +2303,8 @@
 			"title": "Project",
 			"config": {
 				"register": "shillinq",
+				"_note": "Project detail — a project costing dimension with contract value, WIP and revenue-recognition (RJ 270). Assignments and WIP history are listed (existing related lists); segment P&L aggregation and audit trail evidence recognition method changes.",
+				"auditTrail": true,
 				"schema": "Project",
 				"fields": [
 					{
@@ -2359,6 +2500,8 @@
 			"title": "Allocation Rule",
 			"config": {
 				"register": "shillinq",
+				"_note": "Allocation Rule detail — a cost-allocation rule (driver, cadence, source-account pattern, targets) that redistributes costs across dimensions. Audit trail evidences rule changes affecting cost apportionment.",
+				"auditTrail": true,
 				"schema": "AllocationRule",
 				"fields": [
 					{
@@ -2495,6 +2638,36 @@
 			"title": "EMU report details",
 			"config": {
 				"register": "shillinq",
+				"_note": "EMU report account detail — an ESA/EMU-classified GL account contributing to the EMU balance (Wet Fido). Shows the account's EMU aggregation hash and ESA classifier; GL postings list the movements rolled up into the EMU figure. Audit trail evidences classification changes.",
+				"relatedLists": [
+					{
+						"id": "emu-lines",
+						"title": "GL postings",
+						"schema": "GLLine",
+						"filter": {
+							"accountNumber": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "transactionId",
+								"label": "Transaction"
+							},
+							{
+								"key": "side",
+								"label": "D/C"
+							},
+							{
+								"key": "amount",
+								"label": "Amount (EUR)"
+							},
+							{
+								"key": "periodId",
+								"label": "Period"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
 				"schema": "Account",
 				"fields": [
 					{
@@ -2645,6 +2818,8 @@
 			"title": "SBR/XBRL Filing",
 			"config": {
 				"register": "shillinq",
+				"_note": "SBR/XBRL filing detail — an XBRL instance filed via Digipoort (entry point, taxonomy version, instance hash, receipt). The instance XML is available under Files; audit trail evidences submission and Digipoort acceptance/rejection.",
+				"auditTrail": true,
 				"schema": "XbrlInstance",
 				"fields": [
 					{
@@ -2727,6 +2902,22 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Audit Trail",
 							"icon": "HistoryIcon",
@@ -2802,6 +2993,8 @@
 			"title": "KOR-regime",
 			"config": {
 				"register": "shillinq",
+				"_note": "KOR regime detail — the small-business VAT exemption status (opt-in/out dates, YTD revenue vs threshold, warning percentage). Audit trail evidences opt-in/out transitions.",
+				"auditTrail": true,
 				"schema": "KorRegime",
 				"fields": [
 					{
@@ -2927,6 +3120,33 @@
 			"title": "Bank Connection",
 			"config": {
 				"register": "shillinq",
+				"_note": "Bank Connection detail — a linked bank account feed (PSD2/statement import). Imported bank statements from this connection are listed; audit trail evidences connection and mandate changes.",
+				"relatedLists": [
+					{
+						"id": "conn-statements",
+						"title": "Bank statements",
+						"schema": "BankStatement",
+						"filter": {
+							"bankConnectionId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "statementDate",
+								"label": "Date"
+							},
+							{
+								"key": "statementFormat",
+								"label": "Format"
+							},
+							{
+								"key": "transactionCount",
+								"label": "Lines"
+							}
+						],
+						"detailRoute": "BankReconciliationDetail"
+					}
+				],
+				"auditTrail": true,
 				"schema": "BankConnection",
 				"fields": [
 					{
@@ -3106,6 +3326,8 @@
 			"title": "Bank Statement",
 			"config": {
 				"register": "shillinq",
+				"_note": "Bank Statement reconciliation detail — an imported statement matched against journal entries. Lines, match candidates and source document are shown (existing tabs); audit trail evidences the reconciliation.",
+				"auditTrail": true,
 				"schema": "BankStatement",
 				"fields": [
 					{
@@ -3394,6 +3616,8 @@
 			"title": "Matching Rule",
 			"config": {
 				"register": "shillinq",
+				"_note": "Matching Rule detail — a reconciliation rule (predicates, priority, confidence, auto-confirm) that auto-matches bank lines to journal entries. Audit trail evidences rule changes affecting auto-reconciliation.",
+				"auditTrail": true,
 				"schema": "MatchingRule",
 				"fields": [
 					{
@@ -3519,6 +3743,8 @@
 			"title": "Levy posting",
 			"config": {
 				"register": "shillinq",
+				"_note": "Levy posting detail — a water-authority levy booking (heffing type, tariff, aanslag amount, EMU exclusion) with its GL transaction. Audit trail evidences the posting.",
+				"auditTrail": true,
 				"schema": "WaterschapHeffingPosting",
 				"fields": [
 					{
@@ -3662,6 +3888,8 @@
 			"title": "IV3 report",
 			"config": {
 				"register": "shillinq",
+				"_note": "IV3 report detail — a quarterly IV3 submission to CBS (buckets, version, CBS message id). The XML attachment lives under Files; audit trail evidences submission and any correction.",
+				"auditTrail": true,
 				"schema": "Iv3Export",
 				"fields": [
 					{
@@ -3729,6 +3957,22 @@
 				"indexRoute": "Iv3Rapportages",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -3954,6 +4198,8 @@
 			"title": "GL Transaction",
 			"config": {
 				"register": "shillinq",
+				"_note": "GL Transaction detail — a balanced double-entry posting (debit=credit) with its source reference and journal link. GL lines list each debit/credit leg with account, dimensions and amount. Audit trail evidences posting/reversal for ledger integrity; source document (if any) under Files.",
+				"auditTrail": true,
 				"schema": "GLTransaction",
 				"fields": [
 					{
@@ -4041,6 +4287,22 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Audit Trail",
 							"icon": "HistoryIcon",
@@ -4113,6 +4375,8 @@
 			"title": "Journal Entry",
 			"config": {
 				"register": "shillinq",
+				"_note": "Journal Entry detail — a source journal (memorial/sales/purchase) that posts to the GL. Header shows type, cadence and approval state; the source document is available under Files and the resulting GL transaction is linked. Audit trail evidences the approval workflow.",
+				"auditTrail": true,
 				"schema": "JournalEntry",
 				"fields": [
 					{
@@ -4301,6 +4565,8 @@
 			"title": "Deelnemer",
 			"config": {
 				"register": "shillinq",
+				"_note": "GR participant detail — a member of a gemeenschappelijke regeling (name, type, cost share). Audit trail evidences membership and share changes affecting cost apportionment.",
+				"auditTrail": true,
 				"schema": "GRDeelnemer",
 				"fields": [
 					{
@@ -4396,6 +4662,8 @@
 			"title": "Verdeelsleutel",
 			"config": {
 				"register": "shillinq",
+				"_note": "GR allocation key detail — the apportionment key (type, parameters, cost-cluster accounts) that distributes shared costs across GR participants. Audit trail evidences key changes.",
+				"auditTrail": true,
 				"schema": "GRVerdeelsleutel",
 				"fields": [
 					{
@@ -4490,6 +4758,41 @@
 			"title": "Account",
 			"config": {
 				"register": "shillinq",
+				"_note": "General-ledger account detail — a single Chart-of-Accounts line (number, type, VAT/Vpb flags, BBV variant, retention). GL posting lines list every movement booked to this account; audit trail evidences master-data changes for ledger integrity.",
+				"relatedLists": [
+					{
+						"id": "account-lines",
+						"title": "GL postings",
+						"schema": "GLLine",
+						"filter": {
+							"accountNumber": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "transactionId",
+								"label": "Transaction"
+							},
+							{
+								"key": "side",
+								"label": "D/C"
+							},
+							{
+								"key": "amount",
+								"label": "Amount (EUR)"
+							},
+							{
+								"key": "periodId",
+								"label": "Period"
+							},
+							{
+								"key": "description",
+								"label": "Description"
+							}
+						]
+					}
+				],
+				"aggregation": "accountBalance",
+				"auditTrail": true,
 				"schema": "Account",
 				"fields": [
 					{
@@ -4625,6 +4928,45 @@
 			"title": "Fixed Asset",
 			"config": {
 				"register": "shillinq",
+				"_note": "Fixed Asset detail — a capitalised asset with commercial and fiscal book values and depreciation method (linear/degressive, VAMIL). The depreciation schedule lists each period's charge and GL posting; audit trail evidences impairment/disposal decisions. Aggregation surfaces book-value roll-forward.",
+				"relatedLists": [
+					{
+						"id": "depreciation",
+						"title": "Depreciation schedule",
+						"schema": "DepreciationSchedule",
+						"filter": {
+							"assetRef": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "scheduleNumber",
+								"label": "#"
+							},
+							{
+								"key": "periodStartDate",
+								"label": "Period"
+							},
+							{
+								"key": "depreciationAmount",
+								"label": "Charge (EUR)"
+							},
+							{
+								"key": "accumulatedDepreciation",
+								"label": "Accumulated (EUR)"
+							},
+							{
+								"key": "bookValue",
+								"label": "Book value (EUR)"
+							},
+							{
+								"key": "status",
+								"label": "Status"
+							}
+						]
+					}
+				],
+				"aggregation": "bookValueRollforward",
+				"auditTrail": true,
 				"schema": "FixedAsset",
 				"fields": [
 					{
@@ -5063,6 +5405,9 @@
 			"title": "Balance Sheet",
 			"config": {
 				"register": "shillinq",
+				"_note": "Balance Sheet detail — the statement of financial position at the reporting date (Titel 9 rubrieken). Shows total assets/equity/liabilities and the balanced flag; aggregation reconciles activa=passiva. Audit trail evidences report generation and any manual overrides.",
+				"aggregation": "balanceSheetTotals",
+				"auditTrail": true,
 				"schema": "BalanceSheet",
 				"fields": [
 					{
@@ -5183,6 +5528,45 @@
 			"title": "Trial Balance",
 			"config": {
 				"register": "shillinq",
+				"_note": "Trial Balance detail — a period snapshot proving debits=credits across all accounts. Trial-balance lines list per-account opening balance, movements and closing balance; aggregation surfaces total debits/credits and the balanced flag. Audit trail evidences the preparation sign-off.",
+				"relatedLists": [
+					{
+						"id": "tb-lines",
+						"title": "Trial balance lines",
+						"schema": "TrialBalanceLine",
+						"filter": {
+							"administrationId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "accountNumber",
+								"label": "Account"
+							},
+							{
+								"key": "accountName",
+								"label": "Name"
+							},
+							{
+								"key": "openingBalance",
+								"label": "Opening (EUR)"
+							},
+							{
+								"key": "debitMovement",
+								"label": "Debit (EUR)"
+							},
+							{
+								"key": "creditMovement",
+								"label": "Credit (EUR)"
+							},
+							{
+								"key": "closingBalance",
+								"label": "Closing (EUR)"
+							}
+						]
+					}
+				],
+				"aggregation": "trialBalanceTotals",
+				"auditTrail": true,
 				"schema": "TrialBalance",
 				"fields": [
 					{
@@ -5359,6 +5743,40 @@
 			"title": "Consolidation Group",
 			"config": {
 				"register": "shillinq",
+				"_note": "Consolidation Group detail — the group definition (parent, member administrations, method, reporting currency/framework). Member entities list ownership and consolidation method per subsidiary; audit trail evidences membership and elimination-rule changes.",
+				"relatedLists": [
+					{
+						"id": "group-entities",
+						"title": "Group entities",
+						"schema": "GroupEntity",
+						"filter": {
+							"consolidationGroupId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "administrationId",
+								"label": "Administration"
+							},
+							{
+								"key": "entityType",
+								"label": "Type"
+							},
+							{
+								"key": "ownershipPercentage",
+								"label": "Ownership %"
+							},
+							{
+								"key": "consolidationMethod",
+								"label": "Method"
+							},
+							{
+								"key": "state",
+								"label": "Status"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
 				"schema": "ConsolidationGroup",
 				"fields": [
 					{
@@ -5464,6 +5882,41 @@
 			"title": "Consolidated Report",
 			"config": {
 				"register": "shillinq",
+				"_note": "Consolidated Report detail — a group financial statement for a consolidation group and fiscal year, with eliminations applied. Intercompany transactions eliminated into this report are listed; aggregation surfaces consolidated totals. Audit trail evidences the consolidation run and review.",
+				"relatedLists": [
+					{
+						"id": "consol-ic",
+						"title": "Intercompany transactions",
+						"schema": "IntercompanyTransaction",
+						"filter": {
+							"consolidatedReportId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "reference",
+								"label": "Reference"
+							},
+							{
+								"key": "amount",
+								"label": "Amount (EUR)"
+							},
+							{
+								"key": "eliminationStatus",
+								"label": "Elimination"
+							},
+							{
+								"key": "fromAdministrationId",
+								"label": "From"
+							},
+							{
+								"key": "toAdministrationId",
+								"label": "To"
+							}
+						]
+					}
+				],
+				"aggregation": "consolidatedTotals",
+				"auditTrail": true,
 				"schema": "ConsolidatedReport",
 				"fields": [
 					{
@@ -5584,6 +6037,8 @@
 			"title": "Inter-Company Transaction",
 			"config": {
 				"register": "shillinq",
+				"_note": "Inter-Company Transaction detail — a cross-administration booking flagged for elimination on consolidation. Shows counterparty entity, matched status and elimination rule; audit trail evidences manual overrides to the elimination decision.",
+				"auditTrail": true,
 				"schema": "IntercompanyTransaction",
 				"fields": [
 					{
@@ -5744,6 +6199,8 @@
 			"title": "Elimination Rule",
 			"config": {
 				"register": "shillinq",
+				"_note": "Elimination Rule detail — a consolidation elimination rule (account pair, tolerance, type) applied to intercompany balances. Audit trail evidences rule changes affecting consolidated figures.",
+				"auditTrail": true,
 				"schema": "EliminationRule",
 				"fields": [
 					{
@@ -5858,6 +6315,9 @@
 			"title": "SiSa report",
 			"config": {
 				"register": "shillinq",
+				"_note": "SiSa report detail — the Single-information Single-audit accountability report (findings by severity, compliance status, management letter link). Audit trail evidences the report and its assurance.",
+				"aggregation": "sisaFindingTotals",
+				"auditTrail": true,
 				"schema": "SisaReport",
 				"fields": [
 					{
@@ -6028,6 +6488,8 @@
 			"title": "Compliance audittrail",
 			"config": {
 				"register": "shillinq",
+				"_note": "Compliance audit trail detail — a recorded finding/observation with severity and remediation status for a fiscal year. Audit trail evidences remediation progress.",
+				"auditTrail": true,
 				"schema": "ComplianceAuditTrail",
 				"fields": [
 					{
@@ -6173,6 +6635,8 @@
 			"title": "Management letter",
 			"config": {
 				"register": "shillinq",
+				"_note": "Management letter detail — the auditor's letter (opinion, findings/observations summary, remediation recommendations) linked to a SiSa report. The letter document lives under Files; audit trail evidences issuance.",
+				"auditTrail": true,
 				"schema": "ManagementLetter",
 				"fields": [
 					{
@@ -6230,6 +6694,22 @@
 				"indexRoute": "ManagementLetters",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -6298,6 +6778,7 @@
 			"title": "Auditdocument",
 			"config": {
 				"register": "shillinq",
+				"_note": "Audit document detail — a signed evidentiary document (type, signatory, signing reason/timestamp) linked to a GL transaction. The signed document lives under Files; audit trail (already enabled) evidences the signing and archiving lifecycle for retention compliance.",
 				"schema": "AuditDocument",
 				"fields": [
 					{
@@ -6361,6 +6842,22 @@
 				"indexRoute": "AuditDocuments",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -6434,6 +6931,8 @@
 			"title": "Bewaartermijn",
 			"config": {
 				"register": "shillinq",
+				"_note": "Retention period detail — a records-retention rule (category, retention years, legal basis, selectielijst code, disposition). Audit trail evidences rule changes governing archival and destruction.",
+				"auditTrail": true,
 				"schema": "RetentionRule",
 				"fields": [
 					{
@@ -6792,6 +7291,8 @@
 			"title": "Tax Estimate",
 			"config": {
 				"register": "shillinq",
+				"_note": "Tax Estimate detail — a YTD income-tax estimate snapshot (taxable income/expenses, estimated liability, withholding credits) driven by GL activity. Audit trail evidences the snapshot basis.",
+				"auditTrail": true,
 				"schema": "TaxEstimate",
 				"fields": [
 					{
@@ -6907,6 +7408,8 @@
 			"title": "Tax Configuration",
 			"config": {
 				"register": "shillinq",
+				"_note": "Tax Configuration detail — the tax-regime parameters (rates, allowances, filing deadline) effective for a fiscal year. Audit trail evidences parameter changes that drive tax estimates and returns.",
+				"auditTrail": true,
 				"schema": "TaxRegimeConfiguration",
 				"visibility": {
 					"roles": [
@@ -7054,6 +7557,41 @@
 			"title": "Customer",
 			"config": {
 				"register": "shillinq",
+				"_note": "Customer master detail — the debtor record (legal/trade name, VAT/KvK, credit limit, payment terms, dunning policy). Outstanding invoices list the AR position for this customer; audit trail evidences master-data changes (credit limit, IBAN) for AR internal control.",
+				"relatedLists": [
+					{
+						"id": "customer-invoices",
+						"title": "Invoices",
+						"schema": "ARInvoice",
+						"filter": {
+							"customerId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "invoiceNumber",
+								"label": "Invoice #"
+							},
+							{
+								"key": "invoiceDate",
+								"label": "Date"
+							},
+							{
+								"key": "dueDate",
+								"label": "Due"
+							},
+							{
+								"key": "totalAmount",
+								"label": "Total (EUR)"
+							},
+							{
+								"key": "state",
+								"label": "Status"
+							}
+						],
+						"detailRoute": "ARInvoiceDetail"
+					}
+				],
+				"auditTrail": true,
 				"schema": "CustomerMaster",
 				"fields": [
 					{
@@ -7204,6 +7742,8 @@
 			"title": "AR Invoice",
 			"config": {
 				"register": "shillinq",
+				"_note": "AR Invoice detail — a receivable invoice (customer, totals, VAT, write-off, GL link). Dunning timeline and source document are shown (existing tabs); audit trail evidences state transitions and write-offs for AR internal control.",
+				"auditTrail": true,
 				"schema": "ARInvoice",
 				"sidebar": { "enabled": true },
 				"fields": [
@@ -7439,6 +7979,8 @@
 			"title": "Dunning Record",
 			"config": {
 				"register": "shillinq",
+				"_note": "Dunning Record detail — one reminder event in an invoice's dunning timeline (level, channel, dispatched/acknowledged). Audit trail evidences the dispatch.",
+				"auditTrail": true,
 				"schema": "DunningRecord",
 				"fields": [
 					{
@@ -7648,6 +8190,7 @@
 			"title": "IP-activum",
 			"config": {
 				"register": "shillinq",
+				"_note": "IP asset valuation detail — a valued intangible (WBSO/patent reference, valuation, innovation-box rate) for the afpelmethode. Profit allocations are listed (existing related list); audit trail evidences the valuation.",
 				"schema": "IPAssetValuation",
 				"fields": [
 					{
@@ -7755,6 +8298,7 @@
 			"title": "Innovation box election",
 			"config": {
 				"register": "shillinq",
+				"_note": "Innovation box election detail — the Wet Vpb art. 12b/12bg election (route, rate, forfaitair cap, qualifying profit). IP assets (afpelmethode) are listed (existing related list); innovatiebox administration aggregation and audit trail evidence the election.",
 				"schema": "InnovatieboxElection",
 				"fields": [
 					{
@@ -7984,6 +8528,8 @@
 			"title": "R&D grant",
 			"config": {
 				"register": "shillinq",
+				"_note": "R&D grant detail — a WBSO/innovation grant (scheme, requested/granted/determined amounts, indirect-25% horizon warning). Cost items are listed (existing related list); voortgangsrapportage aggregation and audit trail evidence the claim.",
+				"auditTrail": true,
 				"schema": "Subsidie",
 				"fields": [
 					{
@@ -8124,6 +8670,8 @@
 			"title": "Cost item",
 			"config": {
 				"register": "shillinq",
+				"_note": "Cost item detail — a project/grant cost line (category, period, amount) supporting subsidy accountability. The supporting attachment lives under Files; audit trail evidences approval of the claimed cost.",
+				"auditTrail": true,
 				"schema": "Kostenpost",
 				"fields": [
 					{
@@ -8181,6 +8729,22 @@
 				"indexRoute": "RDSubsidies",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -8249,6 +8813,41 @@
 			"title": "Fiscal Year",
 			"config": {
 				"register": "shillinq",
+				"_note": "Fiscal Year detail — a bookyear with its open/close state, opening and closing journals and reopen audit. Closing entries booked at year-end are listed; audit trail evidences the close and any reopen (period-close control).",
+				"relatedLists": [
+					{
+						"id": "fy-closings",
+						"title": "Closing entries",
+						"schema": "ClosingEntry",
+						"filter": {
+							"fiscalYearId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "closingEntryNumber",
+								"label": "#"
+							},
+							{
+								"key": "entryType",
+								"label": "Type"
+							},
+							{
+								"key": "entryDate",
+								"label": "Date"
+							},
+							{
+								"key": "amountCents",
+								"label": "Amount"
+							},
+							{
+								"key": "approvalStatus",
+								"label": "Status"
+							}
+						],
+						"detailRoute": "ClosingEntryDetail"
+					}
+				],
+				"auditTrail": true,
 				"schema": "FiscalYear",
 				"fields": [
 					{
@@ -8447,6 +9046,8 @@
 			"title": "Closing Entry",
 			"config": {
 				"register": "shillinq",
+				"_note": "Closing Entry detail — a period-end closing posting (type, amount, approval) linked to its GL transaction and fiscal year. Audit trail evidences the close approval (segregation of duties).",
+				"auditTrail": true,
 				"schema": "ClosingEntry",
 				"fields": [
 					{
@@ -8582,6 +9183,36 @@
 			"title": "Rate Card Template",
 			"config": {
 				"register": "shillinq",
+				"_note": "Rate Card Template detail — a reusable pricing template (tier structure, currency) versioned over time. Rate schedules derived from this template are listed; audit trail evidences template changes.",
+				"relatedLists": [
+					{
+						"id": "card-versions",
+						"title": "Rate card versions",
+						"schema": "RateCardVersion",
+						"filter": {
+							"templateId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "versionId",
+								"label": "Version"
+							},
+							{
+								"key": "effectiveDate",
+								"label": "Effective"
+							},
+							{
+								"key": "expiryDate",
+								"label": "Expiry"
+							},
+							{
+								"key": "status",
+								"label": "Status"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
 				"schema": "RateCardTemplate",
 				"fields": [
 					{
@@ -8707,6 +9338,40 @@
 			"title": "Rate Schedule",
 			"config": {
 				"register": "shillinq",
+				"_note": "Rate Schedule detail — an effective-dated rate for a tier/unit with volume brackets. Resolved rate records that used this schedule are listed; audit trail evidences rate changes.",
+				"relatedLists": [
+					{
+						"id": "schedule-records",
+						"title": "Resolved records",
+						"schema": "RateRecord",
+						"filter": {
+							"resolvedScheduleId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "lookupDate",
+								"label": "Lookup date"
+							},
+							{
+								"key": "clientId",
+								"label": "Client"
+							},
+							{
+								"key": "projectId",
+								"label": "Project"
+							},
+							{
+								"key": "resolvedRate",
+								"label": "Resolved rate (EUR)"
+							},
+							{
+								"key": "resolvedTier",
+								"label": "Tier"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
 				"schema": "RateSchedule",
 				"fields": [
 					{
@@ -8842,6 +9507,8 @@
 			"title": "Rate Record",
 			"config": {
 				"register": "shillinq",
+				"_note": "Rate Record detail — a resolved rate lookup (client/project/role/user, effective window, resolved rate/tier/unit) used to price time. Audit trail evidences the resolution.",
+				"auditTrail": true,
 				"schema": "RateRecord",
 				"fields": [
 					{
@@ -9021,6 +9688,8 @@
 			"title": "Receipt",
 			"config": {
 				"register": "shillinq",
+				"_note": "Receipt detail — a single expense receipt (vendor, category, amount, OCR-extracted text) attached to an expense claim. The receipt image lives under Files; audit trail evidences the captured amount.",
+				"auditTrail": true,
 				"schema": "Receipt",
 				"fields": [
 					{
@@ -9097,6 +9766,22 @@
 				"indexRoute": "Receipts",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -9215,6 +9900,76 @@
 			"title": "Expense Claim",
 			"config": {
 				"register": "shillinq",
+				"_note": "Expense Claim detail — an employee reimbursement claim aggregating receipts, per-diems and mileage into one approvable total. Related receipts and mileage entries list the underlying evidence; source receipt images live under Files. Audit trail evidences the approval workflow.",
+				"relatedLists": [
+					{
+						"id": "claim-receipts",
+						"title": "Receipts",
+						"schema": "Receipt",
+						"filter": {
+							"claimId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "receiptNumber",
+								"label": "#"
+							},
+							{
+								"key": "receiptDate",
+								"label": "Date"
+							},
+							{
+								"key": "vendorName",
+								"label": "Vendor"
+							},
+							{
+								"key": "category",
+								"label": "Category"
+							},
+							{
+								"key": "amount",
+								"label": "Amount (EUR)"
+							}
+						],
+						"detailRoute": "ReceiptDetail"
+					},
+					{
+						"id": "claim-mileage",
+						"title": "Mileage entries",
+						"schema": "MileageEntry",
+						"filter": {
+							"claimId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "mileageNumber",
+								"label": "#"
+							},
+							{
+								"key": "journeyDate",
+								"label": "Date"
+							},
+							{
+								"key": "fromLocation",
+								"label": "From"
+							},
+							{
+								"key": "toLocation",
+								"label": "To"
+							},
+							{
+								"key": "distance",
+								"label": "Km"
+							},
+							{
+								"key": "totalAmount",
+								"label": "Amount (EUR)"
+							}
+						],
+						"detailRoute": "MileageLogDetail"
+					}
+				],
+				"auditTrail": true,
 				"schema": "ExpenseClaimEntry",
 				"fields": [
 					{
@@ -9304,6 +10059,22 @@
 				"indexRoute": "ExpenseClaims",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -9424,6 +10195,8 @@
 			"title": "Mileage Entry",
 			"config": {
 				"register": "shillinq",
+				"_note": "Mileage Entry detail — a business trip (from/to, distance, rate per km, vehicle) reimbursed via an expense claim. Audit trail evidences the recorded distance and rate.",
+				"auditTrail": true,
 				"schema": "MileageEntry",
 				"fields": [
 					{
@@ -9553,6 +10326,8 @@
 			"title": "BTW return",
 			"config": {
 				"register": "shillinq",
+				"_note": "BTW return detail — a periodic VAT return (rubrieken, verschuldigde omzetbelasting, voorbelasting, te betalen/teruggave) filed via Digipoort. The filed attachment lives under Files; audit trail evidences submission and acceptance.",
+				"auditTrail": true,
 				"schema": "VatReturn",
 				"fields": [
 					{
@@ -9604,6 +10379,22 @@
 				"indexRoute": "BtwAangiften",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -9699,6 +10490,7 @@
 			"config": {
 				"description": "REQ-VAT-010: per-period VAT reconciliation page. Shows the contributing invoices, line-by-line VATAuditRecord entries, the four VATGLAccounts balances for the period, and a 'Ready for Filing' checklist.",
 				"register": "shillinq",
+				"_note": "VAT Reconciliation detail — per-settlement-period VAT reconciliation (REQ-VAT-010). vatByPeriod aggregation surfaces net/VAT-per-rate/gross totals; sidebar tabs list contributing VAT audit records, the four VATGLAccounts balances and a ready-for-filing checklist. Audit trail evidences the reconciliation before the BTW-aangifte is filed.",
 				"schema": "VATAuditRecord",
 				"aggregation": "vatByPeriod",
 				"groupBy": "settlementPeriod",
@@ -9894,6 +10686,8 @@
 			"title": "ICP-opgaaf",
 			"config": {
 				"register": "shillinq",
+				"_note": "ICP statement detail — the intra-community supplies listing (ICP-opgaaf) with per-counterparty lines filed via Digipoort. Audit trail evidences submission and any correction.",
+				"auditTrail": true,
 				"schema": "IcpStatement",
 				"fields": [
 					{
@@ -9983,6 +10777,8 @@
 			"title": "BTW-correctie",
 			"config": {
 				"register": "shillinq",
+				"_note": "BTW correction detail — a supplementary VAT correction (suppletie) against an original return, with reason and adjustment amount. The supporting attachment lives under Files; audit trail evidences submission.",
+				"auditTrail": true,
 				"schema": "VatCorrection",
 				"fields": [
 					{
@@ -10014,6 +10810,22 @@
 				"indexRoute": "BtwCorrecties",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -10118,6 +10930,8 @@
 			"title": "ZZP-aftrek",
 			"config": {
 				"register": "shillinq",
+				"_note": "ZZP deduction detail — self-employed deductions (zelfstandigenaftrek, startersaftrek, MKB-winstvrijstelling) with the urencriterium qualification. Audit trail evidences the qualifying-hours basis.",
+				"auditTrail": true,
 				"schema": "ZzpDeduction",
 				"fields": [
 					{
@@ -10275,6 +11089,8 @@
 			"title": "BBV-mapping detail",
 			"config": {
 				"register": "shillinq",
+				"_note": "BBV mapping detail — maps a GL account to its BBV taakveld/programma/paragraaf and IV3 bucket, with BCF compensability. Audit trail evidences classification changes affecting IV3 and BCF.",
+				"auditTrail": true,
 				"schema": "BbvAccountMapping",
 				"visibility": {
 					"field": "administrationType",
@@ -10408,6 +11224,8 @@
 			"title": "BCF-claim",
 			"config": {
 				"register": "shillinq",
+				"_note": "BCF claim detail — a BTW-compensatiefonds claim (quarter, compensable amount, breakdown, settlement). The supporting attachment lives under Files; audit trail evidences submission and settlement.",
+				"auditTrail": true,
 				"schema": "BcfClaim",
 				"fields": [
 					{
@@ -10444,6 +11262,22 @@
 				"indexRoute": "BcfClaims",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -10661,6 +11495,8 @@
 			"title": "Reorder Rule",
 			"config": {
 				"register": "shillinq",
+				"_note": "Reorder Rule detail — automatic replenishment policy for a stock item (reorder point, min/max, lead time, safety stock, optional auto-PO). Audit trail evidences threshold and auto-PO changes.",
+				"auditTrail": true,
 				"schema": "InventoryReorderRule",
 				"fields": [
 					{
@@ -11078,6 +11914,8 @@
 			"title": "Buffer Policy",
 			"config": {
 				"register": "shillinq",
+				"_note": "Cashflow Buffer Policy detail — the liquidity-buffer policy (fixed amount / months of fixed costs / custom formula) with alert thresholds. Audit trail evidences policy changes driving cashflow alerts.",
+				"auditTrail": true,
 				"schema": "CashflowBufferPolicy",
 				"fields": [
 					{
@@ -11253,6 +12091,36 @@
 			"title": "Dunning Ladder",
 			"config": {
 				"register": "shillinq",
+				"_note": "Dunning Ladder detail — a reminder escalation ladder (stages, channels, intervals) applied to a customer group. Customer overrides deviating from this ladder are listed; audit trail evidences ladder changes.",
+				"relatedLists": [
+					{
+						"id": "ladder-overrides",
+						"title": "Customer overrides",
+						"schema": "KlantLadderOverride",
+						"filter": {
+							"baseLadderId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "klantId",
+								"label": "Customer"
+							},
+							{
+								"key": "reden",
+								"label": "Reason"
+							},
+							{
+								"key": "approvedBy",
+								"label": "Approved by"
+							},
+							{
+								"key": "approvedAt",
+								"label": "Approved at"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
 				"schema": "DunningLadder",
 				"fields": [
 					{
@@ -11364,6 +12232,8 @@
 			"title": "Customer ladder override",
 			"config": {
 				"register": "shillinq",
+				"_note": "Customer ladder override detail — a per-customer deviation from the base dunning ladder (paused/adjusted stages) with approval. Audit trail evidences the override approval.",
+				"auditTrail": true,
 				"schema": "KlantLadderOverride",
 				"fields": [
 					{
@@ -11490,6 +12360,8 @@
 			"title": "Dunning Run",
 			"config": {
 				"register": "shillinq",
+				"_note": "Dunning Run detail — a single rendered dunning message dispatched for an invoice (stage, channel, amounts incl. statutory interest and collection cost). The rendered PDF is available under Files; audit trail evidences dispatch and delivery status.",
+				"auditTrail": true,
 				"schema": "DunningRun",
 				"fields": [
 					{
@@ -11578,6 +12450,22 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Audit Trail",
 							"icon": "HistoryIcon",
@@ -11641,6 +12529,8 @@
 			"title": "Collection cost calculation",
 			"config": {
 				"register": "shillinq",
+				"_note": "Collection-cost calculation detail — statutory collection cost and interest (WIK/Besluit vergoeding buitengerechtelijke incassokosten) computed for an overdue invoice. Audit trail evidences the calculation basis.",
+				"auditTrail": true,
 				"schema": "IncassoKostenBerekening",
 				"fields": [
 					{
@@ -11751,6 +12641,8 @@
 			"title": "Oninbare Afschrijving",
 			"config": {
 				"register": "shillinq",
+				"_note": "Bad-debt write-off detail — an uncollectible invoice written off with the art. 29 OB VAT-refund declaration and GL posting. Supporting evidence lives under Files; audit trail evidences the write-off approval.",
+				"auditTrail": true,
 				"schema": "OninbaarAfschrijving",
 				"fields": [
 					{
@@ -11798,6 +12690,22 @@
 				"indexRoute": "OninbareAfschrijvingen",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -11877,6 +12785,45 @@
 			"title": "Purchase Order",
 			"config": {
 				"register": "shillinq",
+				"_note": "Purchase Order detail — commitment document header (PO number, supplier, delivery, VAT totals). Order lines list the ordered goods/services; downstream goods receipts and 3-way match reconcile against this PO. Aggregation surfaces committed vs received value; audit trail evidences approval-chain changes for procurement compliance.",
+				"relatedLists": [
+					{
+						"id": "po-lines",
+						"title": "Order lines",
+						"schema": "PurchaseOrderLine",
+						"filter": {
+							"poId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "lineNumber",
+								"label": "#"
+							},
+							{
+								"key": "description",
+								"label": "Description"
+							},
+							{
+								"key": "quantityOrdered",
+								"label": "Qty"
+							},
+							{
+								"key": "unitPrice",
+								"label": "Unit price"
+							},
+							{
+								"key": "vatRate",
+								"label": "VAT %"
+							},
+							{
+								"key": "lineTotal",
+								"label": "Line total (EUR)"
+							}
+						]
+					}
+				],
+				"aggregation": "committedVsReceived",
+				"auditTrail": true,
 				"schema": "PurchaseOrder",
 				"fields": [
 					{
@@ -12043,6 +12990,44 @@
 			"title": "Goods Receipt Note",
 			"config": {
 				"register": "shillinq",
+				"_note": "Goods Receipt Note detail — records physically received quantities against one or more purchase orders. Receipt lines capture accepted/received/rejected quantities per PO line for 3-way match; audit trail evidences who received and inspected the goods (segregation of duties).",
+				"relatedLists": [
+					{
+						"id": "grn-lines",
+						"title": "Receipt lines",
+						"schema": "GoodsReceiptLine",
+						"filter": {
+							"grnId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "poLineId",
+								"label": "PO line"
+							},
+							{
+								"key": "quantityReceived",
+								"label": "Received"
+							},
+							{
+								"key": "quantityAccepted",
+								"label": "Accepted"
+							},
+							{
+								"key": "quantityRejected",
+								"label": "Rejected"
+							},
+							{
+								"key": "rejectionReason",
+								"label": "Rejection reason"
+							},
+							{
+								"key": "inspector",
+								"label": "Inspector"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
 				"schema": "GoodsReceiptNote",
 				"fields": [
 					{
@@ -12179,6 +13164,40 @@
 			"title": "Supplier Invoice",
 			"config": {
 				"register": "shillinq",
+				"_note": "Supplier Invoice detail — the payable document header (invoice number, supplier, VAT totals, UBL/PEPPOL source). The source UBL/OCR document is available under Files; the 3-way match reconciles this invoice against PO and goods receipt. Audit trail evidences posting and approval for AP compliance.",
+				"relatedLists": [
+					{
+						"id": "inv-matches",
+						"title": "3-way matches",
+						"schema": "ThreeWayMatch",
+						"filter": {
+							"invoiceId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "matchStatus",
+								"label": "Status"
+							},
+							{
+								"key": "matchedPoIds",
+								"label": "PO(s)"
+							},
+							{
+								"key": "matchedGrnIds",
+								"label": "GRN(s)"
+							},
+							{
+								"key": "resolutionAction",
+								"label": "Resolution"
+							},
+							{
+								"key": "resolvedBy",
+								"label": "Resolved by"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
 				"schema": "SupplierInvoice",
 				"fields": [
 					{
@@ -12267,6 +13286,22 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Audit Trail",
 							"icon": "HistoryIcon",
@@ -12340,6 +13375,8 @@
 			"title": "3-way Match",
 			"config": {
 				"register": "shillinq",
+				"_note": "3-way Match detail — reconciles a supplier invoice against its purchase order(s) and goods receipt(s). Shows match status, divergence details and the resolution action taken. Audit trail evidences the exception-handling decision (who resolved a mismatch and why) for AP internal control.",
+				"auditTrail": true,
 				"schema": "ThreeWayMatch",
 				"fields": [
 					{
@@ -12815,6 +13852,71 @@
 			"title": "Deferred tax",
 			"config": {
 				"register": "shillinq",
+				"_note": "Deferred-tax provision detail — the net current/deferred tax position for a jurisdiction and period (DTA/DTL totals, balance-sheet presentation). Temporary differences and movements driving the position are listed; audit trail evidences recognition judgements.",
+				"relatedLists": [
+					{
+						"id": "td-list",
+						"title": "Temporary differences",
+						"schema": "TemporaryDifference",
+						"filter": {
+							"periodId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "accountNumber",
+								"label": "Account"
+							},
+							{
+								"key": "category",
+								"label": "Category"
+							},
+							{
+								"key": "temporaryDifference",
+								"label": "Difference (EUR)"
+							},
+							{
+								"key": "deferredTaxBalance",
+								"label": "Deferred tax (EUR)"
+							},
+							{
+								"key": "expectedReversalYear",
+								"label": "Reversal"
+							}
+						]
+					},
+					{
+						"id": "dt-movements",
+						"title": "Movements",
+						"schema": "DeferredTaxMovement",
+						"filter": {
+							"periodId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "category",
+								"label": "Category"
+							},
+							{
+								"key": "openingBalance",
+								"label": "Opening (EUR)"
+							},
+							{
+								"key": "recognisedInPL",
+								"label": "P&L (EUR)"
+							},
+							{
+								"key": "recognisedInOCI",
+								"label": "OCI (EUR)"
+							},
+							{
+								"key": "closingBalance",
+								"label": "Closing (EUR)"
+							}
+						]
+					}
+				],
+				"aggregation": "deferredTaxPosition",
+				"auditTrail": true,
 				"schema": "TaxProvision",
 				"fields": [
 					{
@@ -12954,6 +14056,8 @@
 			"title": "Tijdelijk verschil",
 			"config": {
 				"register": "shillinq",
+				"_note": "Temporary difference detail — a book-vs-tax carrying-amount difference (deductible/taxable) with its reversal pattern and expected reversal year. Feeds the deferred-tax provision. Audit trail evidences the recognition and rate assumptions.",
+				"auditTrail": true,
 				"schema": "TemporaryDifference",
 				"fields": [
 					{
@@ -13103,6 +14207,8 @@
 			"title": "Deferred tax movement",
 			"config": {
 				"register": "shillinq",
+				"_note": "Deferred-tax movement detail — the period roll-forward of a deferred-tax balance (P&L, OCI, rate-change, translation, business-combination). Linked journal entries evidence the GL impact. Audit trail evidences the movement classification.",
+				"auditTrail": true,
 				"schema": "DeferredTaxMovement",
 				"fields": [
 					{
@@ -13252,6 +14358,8 @@
 			"title": "Compensabel verlies",
 			"config": {
 				"register": "shillinq",
+				"_note": "Tax loss carry-forward detail — an available fiscal loss with original/utilised/remaining amounts and expiry (Wet Vpb carry-forward). Recoverability rationale supports any recognised DTA. Audit trail evidences the recoverability assessment.",
+				"auditTrail": true,
 				"schema": "TaxLossCarryForward",
 				"fields": [
 					{
@@ -13391,6 +14499,9 @@
 			"title": "ETR-aansluiting",
 			"config": {
 				"register": "shillinq",
+				"_note": "Effective-tax-rate reconciliation detail — reconciles statutory to effective tax expense (profit before tax, reconciling items, ETR). Aggregation surfaces the statutory-vs-effective bridge for the Titel-9 tax disclosure. Audit trail evidences the disclosure narrative.",
+				"aggregation": "etrBridge",
+				"auditTrail": true,
 				"schema": "TaxRateReconciliation",
 				"fields": [
 					{
@@ -13515,6 +14626,8 @@
 			"title": "Posting configuration",
 			"config": {
 				"register": "shillinq",
+				"_note": "Inventory GL posting configuration — maps inventory movements to GL accounts (inventory asset, COGS, GR/IR clearing, adjustment). Audit trail evidences posting-account changes that affect COGS.",
+				"auditTrail": true,
 				"schema": "InventoryGLConfig",
 				"fields": [
 					{
@@ -13676,6 +14789,8 @@
 			"title": "Pension Plan",
 			"config": {
 				"register": "shillinq",
+				"_note": "Pension Plan detail — the plan definition (type, funding, provider, accrual rate, participant counts, regulatory framework). Actuarial valuations and pension movements are listed (existing related lists); audit trail evidences plan changes.",
+				"auditTrail": true,
 				"schema": "PensionPlan",
 				"fields": [
 					{
@@ -13916,6 +15031,8 @@
 			"title": "Actuarial Valuation",
 			"config": {
 				"register": "shillinq",
+				"_note": "Actuarial Valuation detail — an IAS 19 valuation of a pension plan (DBO, plan assets, net liability, discount/salary/inflation assumptions, mortality table). Pension movements attributable to this valuation are listed; audit trail evidences actuary certification and approval.",
+				"auditTrail": true,
 				"schema": "ActuarialValuation",
 				"fields": [
 					{
@@ -14146,6 +15263,8 @@
 			"title": "WBSO Tag",
 			"config": {
 				"register": "shillinq",
+				"_note": "WBSO Tag detail — an S&O project tag (code, RVO certification) used to mark research hours. Related activity codes are listed (existing related list); audit trail evidences tag changes.",
+				"auditTrail": true,
 				"schema": "WBSOTag",
 				"fields": [
 					{
@@ -14279,6 +15398,8 @@
 			"title": "WBSO Activity Code",
 			"config": {
 				"register": "shillinq",
+				"_note": "WBSO Activity Code detail — an RVO S&O activity classification (allowed/disallowed) used to tag research hours. Audit trail evidences code changes that affect WBSO eligibility.",
+				"auditTrail": true,
 				"schema": "WBSOActivityCode",
 				"fields": [
 					{
@@ -14409,6 +15530,8 @@
 			"title": "WBSO Export",
 			"config": {
 				"register": "shillinq",
+				"_note": "WBSO Export detail — a generated S&O hours submission to RVO (period, totals, validation errors, file URI). The export file is available under Files; audit trail evidences generation, validation and submission.",
+				"auditTrail": true,
 				"schema": "WBSOExportLog",
 				"fields": [
 					{
@@ -14540,6 +15663,22 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Audit Trail",
 							"icon": "HistoryIcon",
@@ -14597,6 +15736,8 @@
 			"title": "Disclosure Table",
 			"config": {
 				"register": "shillinq",
+				"_note": "Pension Disclosure Table detail — the assembled IAS 19 disclosure table for a plan and valuation date. Audit trail evidences approval of the disclosure content before it enters the annual report.",
+				"auditTrail": true,
 				"schema": "PensionDisclosureTabel",
 				"fields": [
 					{
@@ -14708,6 +15849,8 @@
 			"title": "XBRL Taxonomy",
 			"config": {
 				"register": "shillinq",
+				"_note": "XBRL Taxonomy detail — a taxonomy version (publication/effective/expiry dates, status) used for SBR filings. Related mappings are listed (existing related list); audit trail evidences version lifecycle.",
+				"auditTrail": true,
 				"schema": "XBRLTaxonomy",
 				"fields": [
 					{
@@ -14856,6 +15999,8 @@
 			"title": "SBR Document",
 			"config": {
 				"register": "shillinq",
+				"_note": "SBR Document detail — an SBR filing definition (taxonomy version, required fields, deadline, submission endpoint, auth method). Audit trail evidences filing-state transitions and validation errors.",
+				"auditTrail": true,
 				"schema": "SBRDocumentType",
 				"fields": [
 					{
@@ -15023,6 +16168,8 @@
 			"title": "XBRL Mapping",
 			"config": {
 				"register": "shillinq",
+				"_note": "XBRL Mapping detail — maps a source GL account to an XBRL concept for a taxonomy version. Audit trail evidences mapping changes that affect SBR filings.",
+				"auditTrail": true,
 				"schema": "XBRLMapping",
 				"fields": [
 					{
@@ -15158,6 +16305,8 @@
 			"title": "Reconciliation",
 			"config": {
 				"register": "shillinq",
+				"_note": "Bank Reconciliation detail — the reconciliation of a bank account for a period (opening/closing balance, variance, match counts, sign-off). Matches, unresolved items and closure summary are shown (existing tabs); audit trail evidences preparer/verifier sign-off.",
+				"auditTrail": true,
 				"schema": "BankReconciliation",
 				"fields": [
 					{
@@ -15590,6 +16739,9 @@
 			"title": "Reconciliation Report",
 			"config": {
 				"register": "shillinq",
+				"_note": "Reconciliation Report detail — the sign-off summary of a bank reconciliation (matched count, variance, unmatched bank/GL). Audit trail evidences preparer and verifier sign-off (segregation of duties).",
+				"aggregation": "reconciliationSummary",
+				"auditTrail": true,
 				"schema": "ReconciliationReport",
 				"fields": [
 					{
@@ -15727,6 +16879,60 @@
 			"title": "DBA assignment",
 			"config": {
 				"register": "shillinq",
+				"_note": "DBA assignment detail — a Wet DBA engagement intake (perspective, risk level/score, model-agreement link, WBA assessment). The evidence dossier and risk flags support the classification; audit trail evidences intake decisions.",
+				"relatedLists": [
+					{
+						"id": "dba-flags",
+						"title": "Risk flags",
+						"schema": "DBARisicoflag",
+						"filter": {
+							"opdrachtId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "type",
+								"label": "Type"
+							},
+							{
+								"key": "ernst",
+								"label": "Severity"
+							},
+							{
+								"key": "detectieMoment",
+								"label": "Detected"
+							},
+							{
+								"key": "status",
+								"label": "Status"
+							},
+							{
+								"key": "actieSuggestie",
+								"label": "Suggested action"
+							}
+						]
+					}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
 				"schema": "DBAOpdracht",
 				"fields": [
 					{
@@ -15857,6 +17063,28 @@
 			"title": "DBA Portfolio-risico",
 			"config": {
 				"register": "shillinq",
+				"_note": "DBA portfolio-risk detail — the aggregate DBA risk across active engagements (concentration, exclusive/long-term relationships, overall risk) at a peildatum. Audit trail evidences the risk snapshot.",
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
 				"schema": "DBAPortfolioRisico",
 				"fields": [
 					{
@@ -15946,6 +17174,44 @@
 			"title": "Evidence Dossier",
 			"config": {
 				"register": "shillinq",
+				"_note": "DBA evidence dossier detail — the assembled evidence pack for an engagement (completeness score, missing items, retention term, archive/consent). Dossier documents live under Files; audit trail evidences archival.",
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
 				"schema": "DBAEvidenceDossier",
 				"fields": [
 					{
@@ -16045,6 +17311,44 @@
 			"title": "Modelovereenkomst",
 			"config": {
 				"register": "shillinq",
+				"_note": "DBA model agreement detail — a Belastingdienst model agreement (version, validity, essential clauses, publication URL, sha256). The agreement file lives under Files; audit trail evidences version changes.",
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
 				"schema": "DBAModelovereenkomst",
 				"fields": [
 					{
@@ -16149,6 +17453,76 @@
 			"title": "ENSIA Cycle",
 			"config": {
 				"register": "shillinq",
+				"_note": "ENSIA cycle detail — an annual ENSIA self-assessment cycle (year, deadlines, accountability domains, process owner). Evaluation questions and findings for this cycle are listed; the declaration file lives under Files. Audit trail evidences status transitions.",
+				"relatedLists": [
+					{
+						"id": "ensia-questions",
+						"title": "Evaluation questions",
+						"schema": "Evaluatievraag",
+						"filter": {
+							"cyclusId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "vraagCode",
+								"label": "Code"
+							},
+							{
+								"key": "domein",
+								"label": "Domain"
+							},
+							{
+								"key": "normniveau",
+								"label": "Norm"
+							},
+							{
+								"key": "antwoord",
+								"label": "Answer"
+							},
+							{
+								"key": "volwassenheidsScore",
+								"label": "Maturity"
+							},
+							{
+								"key": "peerReviewStatus",
+								"label": "Peer review"
+							}
+						],
+						"detailRoute": "ENSIAEvaluationDetail"
+					},
+					{
+						"id": "ensia-findings",
+						"title": "Findings",
+						"schema": "Bevinding",
+						"filter": {
+							"cyclusId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "type",
+								"label": "Type"
+							},
+							{
+								"key": "beschrijving",
+								"label": "Description"
+							},
+							{
+								"key": "impact",
+								"label": "Impact"
+							},
+							{
+								"key": "status",
+								"label": "Status"
+							},
+							{
+								"key": "streefDatum",
+								"label": "Target date"
+							}
+						],
+						"detailRoute": "ENSIAFindingDetail"
+					}
+				],
+				"auditTrail": true,
 				"schema": "ENSIAJaarcyclus",
 				"fields": [
 					{
@@ -16215,6 +17589,22 @@
 				"indexRoute": "ENSIACycles",
 				"sidebarProps": {
 					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
 						{
 							"id": "audit",
 							"label": "Audit Trail",
@@ -16293,6 +17683,8 @@
 			"title": "ENSIA Evaluation Question",
 			"config": {
 				"register": "shillinq",
+				"_note": "ENSIA evaluation question detail — a single self-assessment question (norm level, answer, maturity score, evidence, peer review). Evidence documents live under Files; audit trail evidences the peer-review workflow.",
+				"auditTrail": true,
 				"schema": "Evaluatievraag",
 				"fields": [
 					{
@@ -16385,6 +17777,22 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Change History",
 							"icon": "HistoryIcon",
@@ -16452,6 +17860,28 @@
 			"title": "ENSIA Finding",
 			"config": {
 				"register": "shillinq",
+				"_note": "ENSIA finding detail — a risk/gap raised during the self-assessment (type, impact/likelihood, mitigation action, target date). Audit trail evidences remediation progress.",
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
 				"schema": "Bevinding",
 				"fields": [
 					{
@@ -16692,6 +18122,8 @@
 			"title": "Grant",
 			"config": {
 				"register": "shillinq",
+				"_note": "Grant detail — a subsidy (direction, scheme/article, requested/granted/determined/paid/reclaimed amounts, award decisions). Repayment instalments are listed; award-decision documents (beschikking) are linked as fields and under Files. Audit trail evidences state transitions.",
+				"auditTrail": true,
 				"schema": "Subsidie",
 				"fields": [
 					{
@@ -16819,6 +18251,42 @@
 					}
 				],
 				"indexRoute": "SubsidieAanvragen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "files",
+							"label": "Files",
+							"icon": "FolderOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/files",
+										"collapsed": true
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
 			}
 		}

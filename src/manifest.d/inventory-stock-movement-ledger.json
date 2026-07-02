@@ -74,6 +74,11 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "StockMove",
+				"_note": "FINANCIAL/TRANSACTION archetype — a stock move is an immutable double-entry ledger row (receipt/transfer/issue/manufacture/repack) that also materialises a GLTransaction. Native shillinq detail contract: config.aggregations[] surface the quantity-moved and unit-cost (currency) KPIs so an operator reads what shifted and its value first; config.fields[] render the move data (number, type, state, item, source/destination, reason, timestamps, locked flag, GL-transaction and offset-of references); lifecycleActions drive draft→posted→cancelled; the sidebar carries a file-references tab for the reference document and an audit-trail tab for the immutable trail (posted moves are locked; cancellation emits an offsetting row, REQ-SM-003). NO comms — a ledger move is not a conversation.",
+				"aggregations": [
+					{ "id": "quantityMoved", "title": "Quantity moved", "field": "quantity", "metric": "value", "format": "number" },
+					{ "id": "unitCost", "title": "Unit cost", "field": "unitCost", "metric": "value", "format": "currency" }
+				],
 				"fields": [
 					{ "key": "movementNumber", "label": "Movement #", "type": "string" },
 					{ "key": "movementType", "label": "Type", "type": "string" },
@@ -94,6 +99,17 @@
 					{ "key": "offsetOfMoveId", "label": "Offset Of", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "documents", "label": "Reference documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "StockMove", "objectId": ":id" } }
+						] },
+						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
 				"lifecycleActions": true,
 				"indexRoute": "StockMovements",
 				"description": "Detail view per REQ-SM-008. Posted moves show the materialised GLTransaction link; cancellation creates an offsetting move rather than patching the original (REQ-SM-003)."

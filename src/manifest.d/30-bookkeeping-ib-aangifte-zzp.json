@@ -90,6 +90,65 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "IBAangifte",
+				"_note": "FINANCIAL / REPORT archetype (native CnDetailPage). An income-tax (IB) return for a sole trader is a tax filing - a signed/submitted document with a lifecycle (CONCEPT -> GEVALIDEERD -> XBRL_GEVALIDEERD -> INGEDIEND -> CORRECTIE_SUPPLETIE) and a Digipoort acknowledgement. Fields carry the P-formulier totals. relatedLists link to the three schedule schemas that have their own index+detail pages in this fragment (IBOndernemersaftrek, IBLijfrenteAOV, IBBox3Vermogen; all FK aangifteId) so the preparer can drill into each schedule. Sidebar carries a Documents tab (XBRL/Digipoort source documents) and an Audit Trail tab (immutable filing record, REQ-IB-009). NO comms leaves - a tax return is filed, not discussed.",
+				"lifecycleActions": true,
+				"relatedLists": [
+					{
+						"id": "ondernemersaftrekken",
+						"title": "Entrepreneur allowances",
+						"schema": "IBOndernemersaftrek",
+						"foreignKey": "aangifteId",
+						"columns": [
+							{ "key": "mkbWinstvrijstelling", "label": "MKB exemption" },
+							{ "key": "totaalAftrek", "label": "Total deduction" }
+						],
+						"detailRoute": "IbOndernemersaftrekDetail"
+					},
+					{
+						"id": "lijfrente",
+						"title": "Annuity & AOV",
+						"schema": "IBLijfrenteAOV",
+						"foreignKey": "aangifteId",
+						"columns": [
+							{ "key": "totaalAftrekbaar", "label": "Total deductible" }
+						],
+						"detailRoute": "IbLijfrenteBeheerDetail"
+					},
+					{
+						"id": "box3",
+						"title": "Box 3 assets",
+						"schema": "IBBox3Vermogen",
+						"foreignKey": "aangifteId",
+						"columns": [
+							{ "key": "peildatum", "label": "Reference date" },
+							{ "key": "totaalRendementsgrondslag", "label": "Yield basis" },
+							{ "key": "belastbareGrondslag", "label": "Taxable basis" }
+						],
+						"detailRoute": "IbBox3VermogenDetail"
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "documents",
+							"label": "Documents",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "IBAangifte", "objectId": ":id" } }
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
 				"fields": [
 					{
 						"key": "belastingjaar",
@@ -202,6 +261,20 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "IBOndernemersaftrek",
+				"_note": "FINANCIAL / TRANSACTION archetype (native CnDetailPage). A supporting entrepreneur-allowance schedule (zelfstandigenaftrek/MKB-vrijstelling) that feeds one parent IB return via FK aangifteId. It is a computed sub-record of the parent filing, so no lifecycle or relatedLists of its own - just fields plus an audit tab for traceability back to the parent filing's audit trail. NO comms leaves and no files - it is a derived line of a filed return.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
 				"fields": [
 					{
 						"key": "aangifteId",
@@ -254,6 +327,20 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "IBLijfrenteAOV",
+				"_note": "FINANCIAL / TRANSACTION archetype (native CnDetailPage). Annuity & disability-insurance (AOV) deduction schedule feeding one parent IB return via FK aangifteId - a computed sub-record of the parent filing, so no lifecycle or relatedLists of its own - just fields plus an audit tab for traceability. NO comms leaves and no files.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
 				"fields": [
 					{
 						"key": "aangifteId",
@@ -311,6 +398,20 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "IBBox3Vermogen",
+				"_note": "FINANCIAL / TRANSACTION archetype (native CnDetailPage). Box 3 net-wealth schedule (savings + other assets minus debts) feeding one parent IB return via FK aangifteId - a computed sub-record of the parent filing, so no lifecycle or relatedLists of its own - just fields plus an audit tab for traceability. NO comms leaves and no files - a derived asset line of a filed return.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
 				"fields": [
 					{
 						"key": "aangifteId",

@@ -61,7 +61,43 @@
 					{"key": "lockInPeriodEndDate", "label": "Lock-in end date", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
 				],
-				"indexRoute": "OssRegistration"
+				"_note": "MASTER — the Union OSS registration (One-Stop-Shop for cross-border EU VAT). Body shows the OSS identifier, home member state, in-scope destination countries and the lock-in window; the primary related content is the list of quarterly OSS returns filed under it. Audit trail in the sidebar. A registration record does not correspond — no comms leaves.",
+				"indexRoute": "OssRegistration",
+				"relatedObjects": [
+					{
+						"id": "returns",
+						"label": "OSS returns",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "OssReturn",
+							"filterField": "registrationId",
+							"columns": ["periodYear", "periodQuarter", "type", "totalVatAmount", "status"],
+							"detailRoute": "OssReturnDetail",
+							"defaultSort": "periodYear"
+						}
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -105,7 +141,44 @@
 					{"key": "belastingdienstKenmerk", "label": "Kenmerk", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
 				],
-				"indexRoute": "OssReturns"
+				"_note": "TAX RETURN — a quarterly Union-OSS VAT return. Body shows the period, correction linkage, taxable base and total VAT, plus the Belastingdienst kenmerk that confirms filing; the embedded per-country line items and distribution ride on the object. XML/CSV filing payloads download from the export links; audit trail in the sidebar. It is a filed return, not a mailbox — no comms leaves.",
+				"indexRoute": "OssReturns",
+				"links": [
+					{
+						"id": "xml-payload",
+						"label": "Download XML payload",
+						"description": "The XML filing payload submitted to the Belastingdienst OSS portal.",
+						"endpoint": "/index.php/apps/openregister/api/objects/shillinq/OssReturn/:id?field=xmlPayload",
+						"method": "GET"
+					},
+					{
+						"id": "csv-payload",
+						"label": "Download CSV payload",
+						"description": "CSV export of the per-country distribution for reconciliation.",
+						"endpoint": "/index.php/apps/openregister/api/objects/shillinq/OssReturn/:id?field=csvPayload",
+						"method": "GET"
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

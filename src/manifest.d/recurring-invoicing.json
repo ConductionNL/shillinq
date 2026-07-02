@@ -79,6 +79,8 @@
             "config": {
                 "register": "shillinq",
                 "schema": "RecurringInvoiceProfile",
+                "_note": "MASTER billing profile — the template that mints periodic AR invoices. Body leads with the schedule mechanics (customer, frequency/interval, invoice day, next-run, last-billed period) and the issue/delivery/payment-terms + indexation policy, then lists the actual invoices it generated (ARInvoice filtered by recurringProfileId) as the primary provenance evidence. Last-run status surfaces failures inline; the audit trail sits in the sidebar. A profile schedules billing, it does not correspond — no comms leaves.",
+                "indexRoute": "RecurringInvoiceProfiles",
                 "fields": [
                     {
                         "key": "name",
@@ -166,10 +168,31 @@
                                 "invoiceDate",
                                 "grossAmount",
                                 "lifecycleState"
-                            ]
+                            ],
+                            "defaultSort": "invoiceDate"
                         }
                     }
-                ]
+                ],
+                "sidebarProps": {
+                    "tabs": [
+                        {
+                            "id": "audit",
+                            "label": "Audit Trail",
+                            "icon": "HistoryIcon",
+                            "order": 90,
+                            "widgets": [
+                                {
+                                    "type": "data",
+                                    "componentName": "openregister-audit-trail",
+                                    "props": {
+                                        "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+                                        "collapsed": true
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
             }
         }
     ]

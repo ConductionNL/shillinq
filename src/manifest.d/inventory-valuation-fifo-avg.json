@@ -42,6 +42,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "InventoryValuation",
+				"_note": "VALUATION snapshot (the FIFO/AVG value of a product's stock at a warehouse on a date — the number that lands on the balance sheet and feeds COGS). The body foregrounds the valuation maths: quantity × unit cost = total value, the method that produced it, the date, warehouse, product and cost-center it books to, and the pending-COGS flag. A leaf snapshot with no child lines; no comms. The audit trail sidebar is the recalculation/method-change record, essential when a valuation is restated.",
 				"fields": [
 					{"key": "name", "label": "Name", "type": "string"},
 					{"key": "quantity", "label": "Quantity", "type": "number"},
@@ -56,7 +57,27 @@
 					{"key": "pendingCogs", "label": "Pending COGS", "type": "boolean"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
 				],
-				"indexRoute": "InventoryValuations"
+				"indexRoute": "InventoryValuations",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

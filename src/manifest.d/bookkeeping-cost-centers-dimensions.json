@@ -71,6 +71,7 @@
 				"nl": "Analytische dimensie"
 			},
 			"config": {
+				"_note": "An analytical dimension is a MASTER reference record — a bookkeeping axis (cost centre / cost object / custom) that GL transaction lines are tagged against for segment reporting. Body leads with the definition (code, data type, hierarchy, optional reference register/schema for open-list values); the segment-P&L aggregation rolls up the postings that carry this dimension so the accountant sees its financial weight without a fragile per-line filter. No comms — a chart-of-accounts master; audit trail in a sidebar tab to evidence dimension changes.",
 				"register": "shillinq",
 				"schema": "AnalyticalDimension",
 				"fields": [
@@ -85,7 +86,17 @@
 					{ "key": "sortOrder", "label": "Sort order", "type": "integer" },
 					{ "key": "lifecycleState", "label": "Status", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
-				]
+				],
+				"aggregation": "segmentPnl",
+				"auditTrail": true,
+				"indexRoute": "AnalyticalDimensions",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{

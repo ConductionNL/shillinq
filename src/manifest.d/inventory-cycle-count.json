@@ -73,6 +73,15 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "InventoryCycleCount",
+				"_note": "MASTER archetype (native CnDetailPage). A cycle count is a periodic stock-take SESSION (REQ-ICC-006/REQ-ICC-010): a header carrying scope, dates, and the aggregate expected/counted/variance totals, with a lifecycle (draft -> submitted -> counting -> posted -> reconciled -> cancelled). The counted stock lines (InventoryCycleCountLine, one per sku/location pair per REQ-ICC-003) are surfaced as a relatedList keyed on FK countId, so a reviewer walks from the session header to every counted line and its flagged variance/reason code. lifecycleActions on for the submit/begin-counting/post/reconcile/cancel state machine per REQ-ICC-006. An audit-trail sidebar tab records who counted and reconciled per REQ-ICC-007. No documents tab - counts are entered in-app, not source documents; no comms tabs - this is an accounting event, not a conversation.",
+				"relatedLists": [
+					{ "id": "count-lines", "title": "Count Lines", "schema": "InventoryCycleCountLine", "foreignKey": "countId", "columns": [ { "key": "lineId", "label": "Line #" }, { "key": "sku", "label": "SKU" }, { "key": "productName", "label": "Product" }, { "key": "locationId", "label": "Location" }, { "key": "expectedQuantity", "label": "Expected Qty" }, { "key": "countedQuantity", "label": "Counted Qty" }, { "key": "quantityVariance", "label": "Qty Variance" }, { "key": "valueVariance", "label": "Value Variance" }, { "key": "requiresReason", "label": "Requires Reason" }, { "key": "reasonCode", "label": "Reason" } ], "detailRoute": "CycleCountDetail" }
+				],
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [ { "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } } ] }
+					]
+				},
 				"fields": [
 					{ "key": "countId", "label": "Count #", "type": "string" },
 					{ "key": "countDate", "label": "Date", "type": "date" },
@@ -93,26 +102,6 @@
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
 				"lifecycleActions": true,
-				"relatedRegisters": [
-					{
-						"schema": "InventoryCycleCountLine",
-						"filter": { "countId": "$countId" },
-						"title": "Count Lines",
-						"description": "REQ-ICC-003 snapshot lines: expected vs counted, variance, requiresReason flag.",
-						"columns": [
-							{ "key": "lineId", "label": "Line #" },
-							{ "key": "sku", "label": "SKU" },
-							{ "key": "productName", "label": "Product" },
-							{ "key": "locationId", "label": "Location" },
-							{ "key": "expectedQuantity", "label": "Expected Qty" },
-							{ "key": "countedQuantity", "label": "Counted Qty" },
-							{ "key": "quantityVariance", "label": "Qty Variance" },
-							{ "key": "valueVariance", "label": "Value Variance" },
-							{ "key": "requiresReason", "label": "Requires Reason" },
-							{ "key": "reasonCode", "label": "Reason" }
-						]
-					}
-				],
 				"indexRoute": "CycleCounts",
 				"description": "REQ-ICC-006 lifecycle controls: submit (snapshot scope), begin-counting, post (variance review), reconcile (emit StockMoves), cancel. Variance lines that require investigation are highlighted; reason-code dropdown drawn from the active set in InventoryVarianceReason."
 			}
