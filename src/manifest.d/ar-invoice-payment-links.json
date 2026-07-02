@@ -66,8 +66,13 @@
 			"type": "detail",
 			"title": "Payment request",
 			"config": {
+				"_note": "A payment request is a payment-gateway TRANSACTION against an AR invoice: a hosted payment link with a state machine (pending → authorized → captured / failed / expired), captured amount, gateway fee and settlement reference. Body leads with the invoice/amount data, the copyable payment link with QR, and an amount KPI; the Regenerate action mints a NEW request (history preserved). Prior attempts for the same invoice live in the Request-history sidebar tab and the immutable audit trail sits beside it. No email/calendar leaf — a financial transaction, not a comms surface.",
 				"register": "shillinq",
 				"schema": "PaymentRequest",
+				"aggregations": [
+					{"id": "amount", "title": "Requested amount", "field": "amount", "metric": "value", "format": "currency"},
+					{"id": "gatewayFee", "title": "Gateway fee", "field": "gatewayFeeAmount", "metric": "value", "format": "currency"}
+				],
 				"fields": [
 					{"key": "invoiceReference", "label": "Invoice", "type": "string"},
 					{"key": "amount", "label": "Amount", "type": "number"},

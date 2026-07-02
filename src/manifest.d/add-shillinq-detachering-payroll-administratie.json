@@ -88,6 +88,7 @@
 				"register": "shillinq",
 				"schema": "SalarisFeed",
 				"featureFlag": "mkb-detachering",
+				"_note": "IMPORT TRANSACTION (one employee's payroll line imported from an external salarisbureau, ready to book). The body is the cost breakdown that gets posted — labour cost, net pay, social contributions, payroll tax, pension — with the import status and the resulting journal-entry reference. lifecycleActions drive the import → booked transition. No child schema and no comms (a feed line is data, not a person to email). Audit trail sidebar is the import/booking provenance.",
 				"fields": [
 					{
 						"key": "salarisbureauSlug",
@@ -151,7 +152,27 @@
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "SalarisFeed"
+				"indexRoute": "SalarisFeed",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -205,6 +226,7 @@
 				"register": "shillinq",
 				"schema": "OpdrachtgeversVerklaring",
 				"featureFlag": "mkb-detachering",
+				"_note": "DBA CLIENT STATEMENT (the opdrachtgeversverklaring that fixes the freelancer relationship and its false-self-employment risk). The body carries the assignment, term, model agreement, risk assessment and the generated statement-document link. The existing generate-document action + lifecycleActions confirm the agreement and produce the doc via docudesk. It is a compliance artefact, not correspondence, so no email/calendar; the audit trail sidebar is the who-signed-off record for a labour-law document.",
 				"fields": [
 					{
 						"key": "zzpId",
@@ -272,7 +294,27 @@
 						"description": "Confirm the agreement and generate the client statement document via docudesk."
 					}
 				],
-				"indexRoute": "OpdrachtgeversVerklaringen"
+				"indexRoute": "OpdrachtgeversVerklaringen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -326,6 +368,7 @@
 				"register": "shillinq",
 				"schema": "IB47Record",
 				"featureFlag": "mkb-detachering",
+				"_note": "IB47 TAX RECORD (a single third-party payment reported annually to the Belastingdienst — opgaaf van betalingen aan derden). The body is the reportable data: tax year, client, recipient (with encrypted BSN readable only to the payroll-officer role), address, total payments, type code and the dry-run flag/month used to validate before the real submission. A statutory record, not a correspondence, so no comms; the audit trail sidebar is the submission/dry-run history for a privacy-sensitive filing.",
 				"fields": [
 					{
 						"key": "belastingjaar",
@@ -379,7 +422,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "IB47Jaarbatch"
+				"indexRoute": "IB47Jaarbatch",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

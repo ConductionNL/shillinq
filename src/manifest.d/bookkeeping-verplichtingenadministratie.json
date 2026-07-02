@@ -59,6 +59,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Verplichting",
+				"_note": "COMMITMENT (the parent obligation an organisation enters into — a purchase order/contract encumbrance). The body pairs the commitment header (amounts, term, BTW, applied mandate) with its three child registers, all filtered on `verplichting`: the budget lines (Verplichtingsregel) that break it down per GL/programme with delivered/invoiced/paid running balances, the movements (Verplichtingsmutatie) that draw it down over time, and the approval steps (Goedkeuringsstap) that authorise it. This is the encumbrance-tracking view. No comms leaves; audit trail sidebar records mandate overrides and amount changes.",
 				"fields": [
 					{"key": "verplichtingsnummer", "label": "Number", "type": "string"},
 					{"key": "soort", "label": "Kind", "type": "string"},
@@ -74,7 +75,62 @@
 					{"key": "override_reden", "label": "Override reason", "type": "string"},
 					{"key": "interne_kenmerk", "label": "Internal reference", "type": "string"}
 				],
-				"indexRoute": "Verplichtingenregister"
+				"relatedObjects": [
+					{
+						"id": "lines",
+						"label": "Commitment lines",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "Verplichtingsregel",
+							"filterField": "verplichting",
+							"columns": ["regelnummer", "omschrijving", "bedrag_excl_btw", "geleverd_bedrag", "gefactureerd_bedrag", "restant_verplicht"]
+						}
+					},
+					{
+						"id": "movements",
+						"label": "Movements",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "Verplichtingsmutatie",
+							"filterField": "verplichting",
+							"columns": ["datum", "soort", "bedrag", "gerelateerde_factuur", "journaalpost"]
+						}
+					},
+					{
+						"id": "approvals",
+						"label": "Approvals",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "Goedkeuringsstap",
+							"filterField": "verplichting",
+							"columns": ["stapnummer", "rol_vereist", "toegewezen_aan", "status", "behandeld_op"]
+						}
+					}
+				],
+				"indexRoute": "Verplichtingenregister",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -104,6 +160,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Mandaat",
+				"_note": "MANDATE (the authority definition that governs who may enter commitments and up to what amount). The body is the rule: holder + holder type, maximum amount, whether it is an override mandate, the second-signature threshold, validity window and the decision that adopted it. A config record with no children of its own; no comms. The audit trail sidebar is critical — a mandate is a delegated-authority control, so every change to its limits or holder must be traceable.",
 				"fields": [
 					{"key": "mandaatcode", "label": "Code", "type": "string"},
 					{"key": "naam", "label": "Name", "type": "string"},
@@ -116,7 +173,27 @@
 					{"key": "geldig_tot", "label": "Valid until", "type": "string"},
 					{"key": "vastgesteld_bij", "label": "Adopted by", "type": "string"}
 				],
-				"indexRoute": "Mandaten"
+				"indexRoute": "Mandaten",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -146,6 +223,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Goedkeuringsstap",
+				"_note": "APPROVAL STEP (one node in a commitment's authorisation chain). The body is the step: which commitment, step number, required role, assignee, current status, when it was handled, the remark, and whether a signature is required. A single workflow item with no children; no comms. The audit trail sidebar is the sign-off evidence — approvals must be individually traceable for segregation-of-duties.",
 				"fields": [
 					{"key": "verplichting", "label": "Commitment", "type": "string"},
 					{"key": "stapnummer", "label": "Step", "type": "number"},
@@ -156,7 +234,27 @@
 					{"key": "opmerking", "label": "Remark", "type": "string"},
 					{"key": "vereist_handtekening", "label": "Signature required", "type": "boolean"}
 				],
-				"indexRoute": "Goedkeuringsstappen"
+				"indexRoute": "Goedkeuringsstappen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

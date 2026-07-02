@@ -162,7 +162,7 @@ export default {
 			this.loading = true
 			this.fetchError = ''
 			try {
-				const params = { limit: 500 }
+				const params = { _limit: 500 }
 				if (this.administrationId) {
 					params.administrationId = this.administrationId
 				}

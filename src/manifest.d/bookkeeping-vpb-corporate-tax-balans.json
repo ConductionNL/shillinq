@@ -96,6 +96,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "VpbBalansLink",
+				"_note": "CONFIG record (declares which business activity/cost-center is Vpb-liable, over which window, and exactly which GL accounts fall inside that liability). The body is that scoping definition — the liability period, the list of Vpb-liable account numbers and the explanation that substantiates the boundary — since this record IS the mapping that the Vpb balance report reads. No transactions of its own, no comms. The audit trail sidebar matters because moving an account in or out of the Vpb scope directly changes the taxable balance.",
 				"fields": [
 					{ "key": "costCenterId", "label": "Business activity (cost-center)", "type": "string" },
 					{ "key": "vpbPligtigVanaf", "label": "Vpb-liable from", "type": "date" },
@@ -103,7 +104,27 @@
 					{ "key": "accountNumbers", "label": "Vpb-liable accounts", "type": "array" },
 					{ "key": "toelichting", "label": "Explanation", "type": "string" }
 				],
-				"indexRoute": "VpbBalansLinks"
+				"indexRoute": "VpbBalansLinks",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -115,6 +136,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "VpbBalansLink",
+				"_note": "REPORT (not a single-object detail): a computed Vpb balance grouped by business activity that prepares the corporate-tax return. It intentionally keeps its aggregation (vpbBalansFiltered), groupBy, currency columns, balance-reconciliation warnings and the generate-return docudesk/SBR action — that report machinery IS the page, so it is preserved rather than replaced with a data/relatedObjects layout. No comms leaves.",
 				"aggregation": "vpbBalansFiltered",
 				"docudeskTemplate": "vpb-aangifte-voorbereiding",
 				"groupBy": "costCenterId",

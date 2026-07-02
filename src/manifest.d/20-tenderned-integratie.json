@@ -57,8 +57,12 @@
 			"type": "detail",
 			"title": "TenderNed file",
 			"config": {
+				"_note": "A TenderNed tender is an INTEGRATION record imported from the TenderNed portal: the award (title, CPV codes, contracting authority, award date, contract value, supplier, term) plus the source URL and the commitment it feeds. Body leads with the tender data and a contract-value KPI; the linked commitment(s) are listed as related so procurement can trace tender → obligation, and the tender documents + audit trail sit in the sidebar. No comms — an imported reference record, not a conversation.",
 				"register": "shillinq",
 				"schema": "TenderNedAanbesteding",
+				"aggregations": [
+					{"id": "contractValue", "title": "Contract value", "field": "contractWaarde", "metric": "value", "format": "currency"}
+				],
 				"fields": [
 					{ "key": "aanbestedingId", "label": "Tender", "type": "string" },
 					{ "key": "tenderNedUrl", "label": "TenderNed file", "type": "string" },
@@ -74,7 +78,25 @@
 					{ "key": "opdrachttype", "label": "Contract type", "type": "string" },
 					{ "key": "verplichtingId", "label": "Commitment", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
-				]
+				],
+				"relatedLists": [
+					{"id": "commitment", "title": "Linked commitment", "schema": "Verplichting", "foreignKey": "id", "join": "verplichtingId", "columns": [
+						{"key": "verplichtingNummer", "label": "Number"},
+						{"key": "bedrag", "label": "Amount"},
+						{"key": "status", "label": "Status"}
+					], "detailRoute": "VerplichtingDetail"}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Tender documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "TenderNedAanbesteding", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -103,8 +125,12 @@
 			"type": "detail",
 			"title": "Commitment",
 			"config": {
+				"_note": "A commitment (verplichting) is a FINANCIAL obligation booked against a cost centre and GL account, sourced from a tender or a contract, carrying a term and a milestone schedule (mijlpalen). Body leads with the obligation data and a committed-amount KPI; the tender(s) that generated it are listed as related so the amount is traceable to its award, and contract documents + audit trail sit in the sidebar. No comms — an obligation ledger record.",
 				"register": "shillinq",
 				"schema": "Verplichting",
+				"aggregations": [
+					{"id": "committedAmount", "title": "Committed amount", "field": "bedrag", "metric": "value", "format": "currency"}
+				],
 				"fields": [
 					{ "key": "verplichtingNummer", "label": "Number", "type": "string" },
 					{ "key": "omschrijving", "label": "Description", "type": "string" },
@@ -113,11 +139,30 @@
 					{ "key": "bedrag", "label": "Amount", "type": "number" },
 					{ "key": "kostenplaats", "label": "Cost center", "type": "string" },
 					{ "key": "grootboekrekening", "label": "GL account", "type": "string" },
+					{ "key": "gegundeLeverancierKvk", "label": "Supplier KvK", "type": "string" },
 					{ "key": "looptijdStart", "label": "Term start", "type": "string" },
 					{ "key": "looptijdEind", "label": "Term end", "type": "string" },
 					{ "key": "mijlpalen", "label": "Milestones", "type": "array" },
 					{ "key": "status", "label": "Status", "type": "string" }
-				]
+				],
+				"relatedLists": [
+					{"id": "tenders", "title": "Source tenders", "schema": "TenderNedAanbesteding", "foreignKey": "verplichtingId", "join": "verplichtingId", "columns": [
+						{"key": "titel", "label": "Tender"},
+						{"key": "gegundeLeverancier", "label": "Supplier"},
+						{"key": "contractWaarde", "label": "Contract value"}
+					], "detailRoute": "TenderNedAanbestedingDetail"}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "Verplichting", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{

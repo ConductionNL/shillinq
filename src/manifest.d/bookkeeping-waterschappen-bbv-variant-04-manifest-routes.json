@@ -100,7 +100,28 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "BudgetBBVMappings"
+				"_note": "CONFIG — a waterschappen BBV budget mapping that pins a GL ledger account to a programme/task-field with a budgeted amount, driving BBV-conformant aggregation. Body is a compact key-value mapping; the audit trail (who changed the allocation and when) is the single sidebar tab. A mapping row has no documents, children or correspondence — data + audit only.",
+				"indexRoute": "BudgetBBVMappings",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

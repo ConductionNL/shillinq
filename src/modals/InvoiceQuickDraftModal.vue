@@ -314,7 +314,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${CUSTOMER_SCHEMA}`),
-					{ params: { limit: 500 } },
+					{ params: { _limit: 500 } },
 				)
 				const rows = response.data?.results ?? response.data?.objects ?? response.data ?? []
 				this.customers = Array.isArray(rows) ? rows : []

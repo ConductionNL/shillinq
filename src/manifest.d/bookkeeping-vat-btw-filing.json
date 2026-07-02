@@ -58,8 +58,14 @@
 			"type": "detail",
 			"title": "BTW return",
 			"config": {
+				"_note": "A BTW return (VATReturn) is a tax-filing TRANSACTION: a period's declarations and VAT lines rolled up into collected BTW, input tax and the balance owed/refundable, driven through a draft → submitted → verified → filed lifecycle. Body leads with the return header data plus three currency KPIs (BTW collected, input tax, balance); the Declarations (rubrieken) and Lines child tables sit below as the auditable breakdown, and the Submit/Verify/File lifecycle buttons are gated on statusCode. Source documents and the immutable audit trail live in the sidebar. No comms — a tax filing, not a conversation.",
 				"register": "shillinq",
 				"schema": "VATReturn",
+				"aggregations": [
+					{"id": "vatCollected", "title": "BTW collected", "field": "totalVATCollected", "metric": "value", "format": "currency"},
+					{"id": "vatPaid", "title": "Input tax", "field": "totalVATPaid", "metric": "value", "format": "currency"},
+					{"id": "vatBalance", "title": "Balance", "field": "vatBalance", "metric": "value", "format": "currency"}
+				],
 				"fields": [
 					{"key": "returnNumber", "label": "Return number", "type": "string"},
 					{"key": "period", "label": "Period", "type": "string"},
@@ -118,7 +124,18 @@
 					{"id": "rebase", "label": "Reopen", "type": "lifecycle", "transition": "rebase", "enabledWhen": "statusCode === 'submitted'"},
 					{"id": "verify", "label": "Record confirmation", "type": "lifecycle", "transition": "verify", "enabledWhen": "statusCode === 'submitted'"},
 					{"id": "file", "label": "Finalize", "type": "lifecycle", "transition": "file", "enabledWhen": "statusCode === 'verified'"}
-				]
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Source documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "VATReturn", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{

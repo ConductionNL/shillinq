@@ -82,6 +82,11 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Contract",
+				"_note": "FINANCIAL/MASTER archetype — an IFRS-15 revenue contract is the header for the five-step revenue model; its substance is the performance obligations that decompose the transaction price. Native shillinq detail contract: config.aggregations[] surface the fixed + variable consideration currency KPIs so an accountant reads the deal size first; config.fields[] render the contract header (number, customer, dates, currency, sales-order/group references, state); config.relatedLists[] show the performance obligations (PerformanceObligation, FK contractId=@self.id) — the allocation lines; the sidebar carries a file-references tab for the signed contract PDF and an audit-trail tab for the immutable modification/lifecycle history. NO email/calendar — a revenue contract is a financial artefact, not a conversation.",
+				"aggregations": [
+					{ "id": "fixedConsideration", "title": "Fixed consideration", "field": "fixedConsideration", "metric": "value", "format": "currency" },
+					{ "id": "variableConsideration", "title": "Variable consideration", "field": "variableConsideration", "metric": "value", "format": "currency" }
+				],
 				"fields": [
 					{ "key": "contractNumber", "label": "Contract Number", "type": "string" },
 					{ "key": "customerId", "label": "Customer", "type": "string" },
@@ -94,7 +99,29 @@
 					{ "key": "quoteOrderReference", "label": "Sales Order", "type": "string" },
 					{ "key": "contractGroupId", "label": "Contract Group", "type": "string" },
 					{ "key": "lifecycleState", "label": "State", "type": "string" }
-				]
+				],
+				"relatedLists": [
+					{ "id": "performance-obligations", "title": "Performance obligations", "schema": "PerformanceObligation", "filter": { "contractId": "@self.id" }, "columns": [
+						{ "key": "description", "label": "Description" },
+						{ "key": "satisfactionPattern", "label": "Satisfaction" },
+						{ "key": "sspAmount", "label": "SSP" },
+						{ "key": "allocatedPrice", "label": "Allocated price" },
+						{ "key": "percentageComplete", "label": "% complete" },
+						{ "key": "statusAtPeriodEnd", "label": "Status" }
+					] }
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "documents", "label": "Signed contract", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "Contract", "objectId": ":id" } }
+						] },
+						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "RevenueContracts"
 			}
 		},
 		{

@@ -56,7 +56,46 @@
 			"title": "Resource",
 			"config": {
 				"register": "shillinq",
-				"schema": "Resource"
+				"schema": "Resource",
+				"_note": "MASTER — a bookable resource (room, person, asset). Body shows identity + opening hours + overlap policy, then the two lists that give a resource meaning: the calendars scoped to it and the bookings placed against it. No calendar integration leaf — the Booking/Calendar schemas do not declare a `calendar` linkedType, so scheduling stays within the register's own objects (there is a dedicated custom BookingsCalendar grid view for the time-grid).",
+				"fields": [
+					{ "key": "resourceId", "label": "Resource ID", "type": "string" },
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "type", "label": "Type", "type": "string" },
+					{ "key": "organization", "label": "Organization", "type": "string" },
+					{ "key": "openingTime", "label": "Opening time", "type": "string" },
+					{ "key": "closingTime", "label": "Closing time", "type": "string" },
+					{ "key": "allowOverlap", "label": "Allow overlap", "type": "boolean" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "Resources",
+				"relatedObjects": [
+					{
+						"id": "calendars",
+						"label": "Calendars",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "Calendar",
+							"filterField": "resource",
+							"columns": ["calendarId", "timeZone", "status"],
+							"detailRoute": "CalendarDetail"
+						}
+					},
+					{
+						"id": "bookings",
+						"label": "Bookings",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "Booking",
+							"filterField": "resource",
+							"columns": ["title", "startTime", "endTime", "attendee", "status"],
+							"detailRoute": "BookingDetail",
+							"defaultSort": "startTime"
+						}
+					}
+				]
 			}
 		},
 		{
@@ -84,7 +123,32 @@
 			"title": "Calendar",
 			"config": {
 				"register": "shillinq",
-				"schema": "Calendar"
+				"schema": "Calendar",
+				"_note": "CONFIG — a scheduling calendar bound to one resource. Body shows the owning resource, time zone and working-hours window; the primary related content is the list of bookings on this calendar. No calendar leaf: the schema declares no `calendar` linkedType, so this is a register object, not an NC-Calendar mirror.",
+				"fields": [
+					{ "key": "calendarId", "label": "Calendar ID", "type": "string" },
+					{ "key": "resource", "label": "Resource", "type": "string" },
+					{ "key": "timeZone", "label": "Time zone", "type": "string" },
+					{ "key": "workingHours", "label": "Working hours", "type": "object" },
+					{ "key": "organization", "label": "Organization", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "Calendars",
+				"relatedObjects": [
+					{
+						"id": "bookings",
+						"label": "Bookings",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "Booking",
+							"filterField": "calendar",
+							"columns": ["title", "startTime", "endTime", "attendee", "status"],
+							"detailRoute": "BookingDetail",
+							"defaultSort": "startTime"
+						}
+					}
+				]
 			}
 		},
 		{
@@ -113,7 +177,20 @@
 			"title": "Booking",
 			"config": {
 				"register": "shillinq",
-				"schema": "Booking"
+				"schema": "Booking",
+				"_note": "EVENT record — a single booking slot. Body is a compact field list: what/when (title, start/end), which calendar and resource it occupies, the attendee and its confirmation status, plus the external-system id for round-tripping. No calendar integration leaf — the schema declares no `calendar` linkedType and the visual time-grid is the separate custom BookingsCalendar page. A booking is a scheduling row, not a mailbox, so no email/talk leaf.",
+				"fields": [
+					{ "key": "bookingId", "label": "Booking ID", "type": "string" },
+					{ "key": "title", "label": "Title", "type": "string" },
+					{ "key": "calendar", "label": "Calendar", "type": "string" },
+					{ "key": "resource", "label": "Resource", "type": "string" },
+					{ "key": "startTime", "label": "Start", "type": "string" },
+					{ "key": "endTime", "label": "End", "type": "string" },
+					{ "key": "attendee", "label": "Attendee", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "externalId", "label": "External ID", "type": "string" }
+				],
+				"indexRoute": "BookingList"
 			}
 		},
 		{
