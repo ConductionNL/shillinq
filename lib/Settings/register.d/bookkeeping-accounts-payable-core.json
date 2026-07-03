@@ -19,6 +19,12 @@
           "description": "Vendor master register; every create / update / lifecycle transition is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
         },
         "x-schema-org": "schema:Organization",
+        "configuration": {
+            "implements": [
+                "https://openregister.app/ns#Vendor",
+                "https://schema.org/Organization"
+            ]
+        },
         "x-spec": "openspec/changes/bookkeeping-accounts-payable-core/specs/bookkeeping-accounts-payable-core/spec.md",
         "type": "object",
         "required": [
