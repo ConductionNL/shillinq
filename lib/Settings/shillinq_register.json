@@ -13969,7 +13969,6 @@
         "version": "0.1.0",
         "title": "Banking Rule",
         "description": "Configurable compliance criterion for schatkistbankieren treasury account validation. Operators configure rules per administration; rules are evaluated declaratively during TreasuryAccount lifecycle transitions per REQ-SCHATKIST-003.",
-        "x-schema-org": "schatkist:BankingRule",
         "type": "object",
         "required": [
           "ruleNumber",
