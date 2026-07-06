@@ -302,6 +302,7 @@ final class FinancialDashboardServiceTest extends TestCase
         $this->assertSame([null, 60.0, null], $result['marginPct']);
         $this->assertSame([0.0, 0.0, 30.0], $result['billableHours']);
         $this->assertSame([0.0, 0.0, 10.0], $result['nonBillableHours']);
+        $this->assertSame([null, null, 75.0], $result['billablePct']);
         $this->assertSame([0.0, 0.0, 1000.0], $result['cashIn']);
         $this->assertSame([0.0, 400.0, 0.0], $result['cashOut']);
         $this->assertSame([0.0, -400.0, 1000.0], $result['cashNet']);
