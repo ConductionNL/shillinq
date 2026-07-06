@@ -197,6 +197,55 @@ draft-arrival assertion verifiable in a clean environment without pipelinq.
 - [Handed-off drafts pile up unnoticed] → REQ-SIC-005 notifications; the
   finance group triages drafts through the existing index views.
 
+## Apply-time dialect alignment (2026-07-06 — landed OR engine verified)
+
+The OR engine landed on openregister `origin/development`
+(`lib/Service/Handoff/`: HandoffKindContracts, HandoffAnnotationValidator,
+HandoffContractBindingValidator, HandoffMappingEvaluator, HandoffService,
+`lib/Listener/HandoffLifecycleListener`). D3's provisional shape was wrong in
+these verified ways; the fragment and the spec delta were aligned to HEAD:
+
+1. **Acceptance ≠ target-side rule.** The consume side is a
+   `configuration.handoffContract` binding block on the PROVIDER schema
+   (kind URI → {contractField: ownProperty}, every mandatory field bound);
+   `x-openregister-handoff` is an EMITTER array (id, targetSemanticType,
+   trigger `manual`|`lifecycle:<state>`, mapping over kind-contract fields
+   with exactly one of `from|const|template|semanticRef|provenance` per field,
+   `whenUnavailable: hide|queue`, optional `onSuccess.set`). Kind contracts
+   are fixed in `HandoffKindContracts` (ns#Quote/ns#Contract/ns#Invoice/
+   ns#Case) — `ns#SalesOrder` has NO contract, so SalesOrder carries the
+   marker only.
+2. **No condition grammar.** H2's "outbound + provenance-carrying" gate is not
+   expressible; `lifecycle:active` would auto-draft AR invoices for inbound
+   contracts. H2 ships `trigger: manual` (narrowest safe scope, OQ3). No
+   engine idempotency either — the manual trigger is the v1 dedupe boundary.
+3. **`source` is the provenance contract field; created-filters are
+   scalar-only.** The notification created-filter string-casts objects to
+   `''`, so binding `source` to an envelope-object property would make the
+   REQ-SIC-005 rules dead config. The shillinq emitters map `source` as a
+   scalar URN template (`shillinq:quote:{{quoteNumber}}`,
+   `shillinq:contract:{{contractNumber}}`) into string properties;
+   uuid-level provenance comes free from the engine's
+   `handoff:<id>:originated-from` relations + audit rows.
+   `referenceSemanticType` was dropped from the provenance properties (they
+   hold URNs, not resolvable uuid references — the Related widget renders the
+   engine relation instead).
+4. **Runtime chain blocked by union-merged `required` (pre-existing).** The
+   merged Contract requires contractNumber/contractType/customerId/
+   fixedConsideration/signedAt…, ARInvoice requires invoiceNumber/periodId/
+   administrationId/invoiceDate/netAmount… — none are kind-contract fields,
+   so handoff CREATES fail target validation until `abstract-order-primitive`
+   dedups required and/or an ADR-041 intake listener (numbering etc., per the
+   hydra order-chain contract) lands. H1's lifecycle-triggered attempt is
+   logged-and-swallowed by `HandoffLifecycleListener` (the quote transition
+   itself is never blocked).
+5. **Misplaced notification block was doubly dead.** Besides living under
+   `components.ARInvoice` (never read — `ImportHandler` iterates
+   `components.schemas` only), it filtered a non-existent `state` field with a
+   non-canonical `{all: […]}`/`notIn`/`before` grammar. Fixed by relocation +
+   modernisation (overdue → scheduled filter `lifecycleState: "overdue"`,
+   paid → updated condition `lifecycleState equals paid`).
+
 ## Migration Plan
 
 None — purely additive config. Import happens via the existing

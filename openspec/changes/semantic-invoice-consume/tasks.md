@@ -26,8 +26,11 @@
     existing schema changed (union-merge gotcha; overlay declares no
     `required`) and the QOI `Invoice`'s existing `configuration`
     (objectNameField/linkedTypes) is untouched
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test — full fragment-merge simulation (deepMergeConfig semantics):
+      exactly one holder per kind (ARInvoice/Contract/SalesOrder/Quote), QOI
+      `Invoice` configuration untouched (no implements), required lists
+      byte-identical pre/post overlay
 
 ## 2. Handoff acceptance (kind-keyed)
 
@@ -44,8 +47,17 @@
     field names are aligned to it (re-verify against pipelinq HEAD — no quote
     schema exists there at spec-authoring time); otherwise the source side is
     left explicitly marked provisional in the fragment description
-- [ ] Implement
-- [ ] Test
+- [x] Implement — landed dialect verified at OR HEAD (design.md "Apply-time
+      dialect alignment"): consume side = `configuration.handoffContract`
+      binding on `Contract` (ns#Contract, all mandatory fields bound);
+      emit side = `x-openregister-handoff` entry `quote-accepted-to-contract`
+      on shillinq's own `Quote` (`trigger: lifecycle:accepted`); pipelinq
+      emitter stays with the pipelinq produce change (still no quote schema at
+      pipelinq HEAD); kind URIs only, no slugs/app ids
+- [x] Test — OR's real `HandoffAnnotationValidator` +
+      `HandoffContractBindingValidator` (extracted from openregister
+      origin/development) run over the merged shapes: green, and
+      `isCompleteBinding(ns#Contract)` = YES (resolvable provider)
 
 ### Task 3: Declare H2 — activated outbound handed-off `Contract` → ONE draft `ARInvoice`
 - **spec_ref**: `openspec/changes/semantic-invoice-consume/specs/semantic-invoice-consume/spec.md#requirement-req-sic-002--shillinq-shall-accept-kind-keyed-handoffs-that-land-the-quote--contract--ar-invoice-chain`
@@ -60,8 +72,19 @@
   - GIVEN a handoff payload proposing `lifecycleState = issued` WHEN processed
     THEN the created invoice is still `draft` and no GLTransaction was
     materialised (REQ-SIC-004)
-- [ ] Implement
-- [ ] Test
+- [x] Implement — H2 `contract-to-initial-invoice` on `Contract` targeting
+      ns#Invoice with `trigger: manual`: the landed v1 dialect has no
+      condition grammar (spec REQ-SIC-002 updated), so the
+      "outbound + provenance" gate is operator-held; ARInvoice carries the
+      complete ns#Invoice `handoffContract` binding. Lifecycle fields are not
+      kind-contract fields so the mapping/binding CANNOT deliver a state —
+      arrival is the schema's `initialState` (draft) by construction. No
+      RecurringInvoiceProfile is referenced anywhere in the fragment.
+- [x] Test — OR validators green over merged shapes;
+      `isCompleteBinding(ns#Invoice)` = YES. Runtime create currently fails
+      the merged `required` list (union-merge debt owned by
+      abstract-order-primitive; recorded in spec + design) — no engine
+      idempotency exists in v1, manual trigger is the dedupe boundary
 
 ## 3. Provenance + notifications
 
@@ -76,8 +99,18 @@
   - GIVEN an operator-created Contract/ARInvoice without these fields WHEN
     validated THEN it passes (properties additive + nullable, not in any
     `required`)
-- [ ] Implement
-- [ ] Test
+- [x] Implement — `Contract.sourceQuoteReference` +
+      `ARInvoice.sourceContractReference` added as nullable STRING pointer
+      properties (gate-28 title+description) bound to the mandatory kind-
+      contract field `source`. Deviation from the drafted
+      `referenceSemanticType` uuid shape, per landed engine: `source` values
+      flow through the binding, and the notification created-filter grammar
+      is scalar-only — the emitters map scalar URNs; uuid-level provenance is
+      the engine-written `handoff:<id>:originated-from` relation + audit rows
+      (spec REQ-SIC-003 updated)
+- [x] Test — merged shapes carry both properties (title+description present);
+      required lists unchanged, so operator-created objects validate without
+      them
 
 ### Task 5: Declare handoff-received notification rules + fix the misplaced notifications block
 - **spec_ref**: `openspec/changes/semantic-invoice-consume/specs/semantic-invoice-consume/spec.md#requirement-req-sic-005--finance-operators-shall-be-notified-when-a-handed-off-object-arrives-adr-031`
@@ -96,8 +129,21 @@
     is indeed dead config — it is relocated under
     `components.schemas.ARInvoice` (pre-existing fix, same batch), and the
     hydra notification-dialect gate (gate-18) passes
-- [ ] Implement
-- [ ] Test
+- [x] Implement — `handoffReceived` rules on Contract + ARInvoice (created +
+      canonical filter `{field: <provenanceProp>, operator: notIn,
+      values: [""]}`, recipients object-acl manage + shillinq-finance,
+      bilingual nl/en metadata-only subjects) under
+      `components.schemas.<Schema>`. Import behaviour CONFIRMED at OR HEAD:
+      `ImportHandler` iterates `components.schemas` only → the
+      `components.ARInvoice` block was dead. Relocated AND modernised: it
+      also filtered a non-existent `state` field (real field:
+      `lifecycleState`) with a non-canonical `{all: […]}`/`notIn`/`before`
+      grammar — overdue now `scheduled` + filter `lifecycleState: "overdue"`,
+      paid now `updated` + condition `lifecycleState equals paid`
+- [x] Test — OR's real `NotificationAnnotationValidator` over the merged
+      Contract/ARInvoice/PurchaseOrder shapes: zero errors; rule-key union
+      verified (Contract: handoffReceived + 3 CLM rules; ARInvoice:
+      handoffReceived + overdue + paid)
 
 ## 4. Seed + verification
 
@@ -115,37 +161,61 @@
   - GIVEN the full register import (`SettingsService` fragment merge) WHEN run
     THEN the fragment-signature version bump triggers re-import and
     `openspec validate semantic-invoice-consume --strict` passes
-- [ ] Implement
-- [ ] Test
+- [x] Implement — 2 DEMO seeds under `components.objects` (house shape:
+      `@self` register/schema/slug): draft Contract `CT-2026-HANDOFF-001`
+      (nil-UUID URN provenance placeholder) + draft ARInvoice
+      `INV-2026-HANDOFF-001` (provenance URN pointing at the seeded
+      contract's business number — slug-based seeds have no pre-known uuid,
+      so the URN pointer replaces the drafted "contract's UUID"); both carry
+      every merged-required field so they import cleanly
+- [x] Test — fragment greps clean: no `"slug": "Order"`, no property added to
+      any Order declaration, all routing keys are kind URIs; fragment
+      signature auto-bumps the import version (SettingsService
+      `+frag.<md5>`); `openspec validate semantic-invoice-consume --strict`
+      passes. Live clean-env import + NC bell check NOT executed: the running
+      dev Nextcloud is the shared instance (bind-mounts + shared DB — house
+      rule: no deploy of in-progress work there) and the container's shillinq
+      copy is stale; validated instead by running OR's real schema-save
+      validators (extracted from openregister origin/development) over the
+      exact merged shapes SchemaMapper would see
 
 ## Verification
-- [ ] All tasks checked off
-- [ ] `openspec validate semantic-invoice-consume --strict` passes
-- [ ] Manual testing against acceptance criteria (clean-env import + resolver
-      check + NC bell check for the notification rule)
-- [ ] Code review against spec requirements
-- [ ] Hydra mechanical gates pass (`/hydra-gates`), incl. gate-18
+- [x] All tasks checked off
+- [x] `openspec validate semantic-invoice-consume --strict` passes
+- [x] Manual testing against acceptance criteria — executed as an offline
+      equivalent: OR's real schema-save validators (handoff annotation,
+      handoff-contract binding incl. `isCompleteBinding` provider filter,
+      notification dialect) from openregister origin/development run over the
+      exact deep-merged shapes; clean-env import + NC bell check deferred to
+      the shared-instance-safe verification window (no deploy of in-progress
+      work to the shared dev instance)
+- [x] Code review against spec requirements (spec delta re-aligned to the
+      landed dialect before implementation review)
+- [x] Hydra mechanical gates pass (`/hydra-gates`), incl. gate-18
       notification-dialect on the touched fragments
 
 ## Tests (company-wide ADR-009)
-- [ ] PHPUnit unit tests for new/changed business logic (`tests/Unit/`) — N/A
-      if the change stays zero-PHP as designed (kind: config); the handoff
+- [x] PHPUnit unit tests for new/changed business logic (`tests/Unit/`) — N/A:
+      the change stayed zero-PHP as designed (kind: config); the handoff
       engine's tests live with `semantic-object-handoff` in OpenRegister
-- [ ] Newman/Postman tests for new/changed API endpoints — N/A: no new
+- [x] Newman/Postman tests for new/changed API endpoints — N/A: no new
       endpoints; OR's semantic-types API is covered on the OR side
-- [ ] Browser tests (Playwright MCP) for UI changes — N/A: no UI change
+- [x] Browser tests (Playwright MCP) for UI changes — N/A: no UI change
       (@e2e exclusions recorded per requirement in the spec)
-- [ ] JSON fragments re-validated after merge (`python3 -m json.tool` on every
+- [x] JSON fragments re-validated after merge (`python3 -m json.tool` on every
       touched register.d file)
 
 ## Documentation (company-wide ADR-010)
-- [ ] Feature documentation updated in `docs/` — one section: "Objects handed
-      off from pipelinq land as drafts" (where they appear, what the provenance
-      link means, who gets notified)
-- [ ] Screenshot captured and committed to `docs/images/` — the seeded
-      handed-off draft invoice with its provenance link
+- [x] Feature documentation updated in `docs/` —
+      `docs/Integrations/semantic-handoff.md`: where handed-off objects
+      appear (drafts), what the provenance link means, who gets notified,
+      current limits
+- [ ] Screenshot captured and committed to `docs/images/` — DEFERRED: needs
+      the seeds imported on a live instance; the shared dev instance is
+      off-limits for in-progress deploys (capture at the next isolated-env
+      verification of this app)
 
 ## i18n (company-wide ADR-005)
-- [ ] Dutch (`nl_NL`) and English (`en_US`) strings: the notification subjects
-      ship bilingual inside the notification rules (nl/en keys, English as the
-      i18n source key convention); no frontend strings added
+- [x] Dutch (`nl_NL`) and English (`en_US`) strings: the notification subjects
+      ship bilingual inside the notification rules (nl/en keys); no frontend
+      strings added

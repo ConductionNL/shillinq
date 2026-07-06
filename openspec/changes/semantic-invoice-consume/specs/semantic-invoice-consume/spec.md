@@ -57,26 +57,54 @@ editing the schemas' owning fragments), merged additively by
 
 ### Requirement: REQ-SIC-002 — Shillinq SHALL accept kind-keyed handoffs that land the quote → contract → AR-invoice chain
 
-Shillinq MUST declare `x-openregister-handoff` acceptance rules (dialect:
-hydra `semantic-object-handoff`; field mapping + provenance + ADR-041 events)
-keyed to canonical kind URIs — NEVER to concrete schema slugs or app ids:
+Shillinq MUST declare the handoff chain against the LANDED ADR-051 dialect
+(OpenRegister `lib/Service/Handoff/`, verified at OR HEAD 2026-07-06), keyed to
+canonical kind URIs — NEVER to concrete schema slugs or app ids:
 
-- **H1**: when a source object of kind `https://openregister.app/ns#Quote`
-  reaches its accepted terminal state, a target object of kind `ns#Contract`
-  MUST be created in shillinq with the declared field mapping and provenance.
-- **H2**: when a contract of kind `ns#Contract` that carries handoff provenance
-  transitions to `active` with `direction = outbound`, ONE draft target object
-  of kind `ns#Invoice` MUST be created with field mapping and provenance.
-  Recurring billing MUST remain with `RecurringInvoiceProfile`
-  (`recurring-invoicing.json`) — H2 creates only the initial invoice.
+- **Consume side (provider bindings)**: the implementing schemas MUST carry a
+  complete `configuration.handoffContract` binding block — the landed
+  consume-side dialect, mapping each kind-contract field name to an own
+  property (validated by OR's `HandoffContractBindingValidator`; a schema
+  implementing a kind WITHOUT a complete binding is not a handoff provider):
+  - `Contract` binds `ns#Contract` (title→title,
+    counterparty→counterpartyReference, currency→currency,
+    totalAmount→totalContractValue, startDate→startDate, endDate→endDate,
+    source→sourceQuoteReference).
+  - `ARInvoice` binds `ns#Invoice` (counterparty→customerId,
+    currency→currency, totalAmount→grossAmount, dueDate→dueDate,
+    source→sourceContractReference).
+  - `ns#SalesOrder` carries no kind contract at OR HEAD
+    (`HandoffKindContracts`) — `SalesOrder` gets the ADR-048 marker only.
+- **H1** (`quote-accepted-to-contract`): declared as an
+  `x-openregister-handoff` emitter entry on shillinq's own `Quote` schema with
+  `trigger: lifecycle:accepted` and `targetSemanticType: ns#Contract`, so the
+  quote → contract handoff works shillinq-standalone; the pipelinq-side quote
+  emitter is authored with the pipelinq produce change (no quote schema exists
+  at pipelinq HEAD). The mapping keys are the `ns#Contract` kind-contract
+  fields (all mandatory fields mapped, per OR's `HandoffAnnotationValidator`).
+- **H2** (`contract-to-initial-invoice`): declared as an emitter entry on
+  `Contract` with `targetSemanticType: ns#Invoice` and `trigger: manual`. The
+  landed v1 dialect has NO condition grammar, so the originally intended
+  auto-trigger "on transition to `active` when `direction = outbound` AND
+  handoff provenance present" is not expressible — a `lifecycle:active`
+  trigger would also draft AR invoices for inbound/purchase contracts. Manual
+  is the narrowest safe scope (change Open Question 3); it MAY be upgraded to
+  a conditional lifecycle trigger when the dialect grows conditions.
+  Idempotency is likewise operator-gated: the v1 engine performs no
+  correlation-id dedupe. Recurring billing MUST remain with
+  `RecurringInvoiceProfile` (`recurring-invoicing.json`) — H2 creates only the
+  initial invoice.
 
-The mapping's TARGET fields MUST exist on the shillinq schemas at HEAD
-(`Contract`: contractNumber, title, contractType, direction,
-counterpartyReference, startDate, endDate, totalContractValue, currency,
-status, administrationId; `ARInvoice`: invoiceNumber, customerId,
-administrationId, invoiceDate, dueDate, gross/vat/netAmount, currency,
-lifecycleState, sourceDocumentUri). SOURCE field names for H1 MUST be aligned
-to the pipelinq quote schema when it lands (none exists at pipelinq HEAD).
+Field translation is exclusively contract-field → binding → own property (the
+emitter never names a concrete target property); every bound own property MUST
+exist on the merged schemas at HEAD. NOTE (runtime reality, verified): the
+merged `required` lists of `Contract` and `ARInvoice` (union-merge debt owned
+by `abstract-order-primitive`) demand fields the kind contracts do not carry
+(e.g. contractNumber/contractType, invoiceNumber/periodId/administrationId),
+so handoff CREATES fail target validation until that dedup and/or an ADR-041
+intake listener (per the hydra order-chain contract: numbering, VAT, ledger
+are the implementing app's own intake logic) lands. The declarations are the
+consume-side contract; the chain goes live with those follow-ups.
 
 @e2e exclude cross-app backend handoff; asserted via OR-side integration tests of the semantic-object-handoff engine, no shillinq UI surface in this change
 
@@ -93,11 +121,13 @@ to the pipelinq quote schema when it lands (none exists at pipelinq HEAD).
 #### Scenario: Activated handed-off contract yields exactly one draft AR invoice
 
 - **GIVEN** a shillinq `Contract` created by H1 (provenance present) with
-  `direction = outbound`
-- **WHEN** it transitions to `active`
-- **THEN** exactly ONE `ARInvoice` MUST be created in `draft` with provenance
-  to the contract; re-processing the same transition MUST NOT create a second
-  invoice (idempotent per the handoff dialect); recurring schedules are NOT
+  `direction = outbound` that has been activated
+- **WHEN** the operator triggers the `contract-to-initial-invoice` handoff
+  (manual trigger — the v1 dialect cannot condition an auto-trigger on
+  direction/provenance)
+- **THEN** ONE `ARInvoice` MUST be created in `draft` with provenance to the
+  contract; the operator-gated manual trigger is the v1 idempotency boundary
+  (the engine performs no correlation-id dedupe); recurring schedules are NOT
   created by this rule
 
 #### Scenario: Handoff keys survive slug changes
@@ -110,19 +140,29 @@ to the pipelinq quote schema when it lands (none exists at pipelinq HEAD).
 
 ### Requirement: REQ-SIC-003 — Handed-off objects SHALL carry provenance links back to their source objects
 
-Shillinq MUST declare semantic provenance reference properties (ADR-048
-`referenceSemanticType`) so every handed-off object links back to what produced
-it, and the ADR-041 provenance envelope (sourceApp, source register/schema/id,
-correlationId) delivered by the handoff MUST be persisted with the object:
+Shillinq MUST declare provenance pointer properties bound to the mandatory
+kind-contract field `source`, so every handed-off object links back to what
+produced it. Per the LANDED engine (verified at OR HEAD), uuid-level
+provenance is written unconditionally by `HandoffService` as typed relations
+(`handoff:<id>:originated-from` on the target, `…:handed-off-to` on the
+source — the Related-widget surface) plus one immutable audit row per side
+carrying sourceApp, source register/schema/uuid and the correlationId (ADR-041
+envelope). The schema properties carry the in-data pointer:
 
-- `Contract.sourceQuoteReference` — nullable string (uuid), with
-  `referenceSemanticType: "https://openregister.app/ns#Quote"`.
-- `ARInvoice.sourceContractReference` — nullable string (uuid), with
-  `referenceSemanticType: "https://openregister.app/ns#Contract"`.
+- `Contract.sourceQuoteReference` — nullable string; scalar URN
+  `shillinq:quote:<quoteNumber>` written by H1's `source` template mapping.
+- `ARInvoice.sourceContractReference` — nullable string; scalar URN
+  `shillinq:contract:<contractNumber>` written by H2's `source` template
+  mapping.
 
-Both properties MUST be nullable and additive (operator-created contracts and
-invoices remain valid without them). Resolution of the reference MUST degrade
-null-safe when the providing app is uninstalled later.
+The pointer is a scalar (not the `provenance`-expression envelope object)
+because the notification created-filter grammar is scalar-only — objects
+string-cast to `''`, which would make the REQ-SIC-005 condition dead config.
+Emitters targeting these bindings MUST map `source` to a scalar pointer until
+the filter grammar learns non-scalars, at which point the property MAY widen
+to the envelope. Both properties MUST be nullable and additive
+(operator-created contracts and invoices remain valid without them), and the
+chain MUST degrade null-safe when the providing app is uninstalled later.
 
 @e2e exclude additive schema properties + stored provenance; asserted via schema import + object round-trip checks, no UI change in this change
 
@@ -130,9 +170,11 @@ null-safe when the providing app is uninstalled later.
 
 - **GIVEN** an `ARInvoice` created by H2
 - **WHEN** the object is read
-- **THEN** `sourceContractReference` MUST hold the source Contract's UUID and
-  the persisted provenance envelope MUST identify sourceApp and correlationId
-  of the originating handoff chain
+- **THEN** `sourceContractReference` MUST hold the scalar provenance pointer
+  to the source Contract, the object's relations MUST carry the engine-written
+  `handoff:contract-to-initial-invoice:originated-from` entry holding the
+  source Contract's UUID, and the audit trail MUST identify sourceApp and the
+  correlationId of the originating handoff chain
 
 #### Scenario: Operator-created objects are unaffected
 
@@ -173,15 +215,21 @@ lifecycle.
 ### Requirement: REQ-SIC-005 — Finance operators SHALL be notified when a handed-off object arrives (ADR-031)
 
 Shillinq MUST declare `x-openregister-notifications` rules (canonical dialect,
-gate-18; house shape as in `shillinq-notifications.json` — trigger types
-`created`/`updated`/`scheduled`, bilingual nl/en subjects, metadata-only) on
-`Contract` and `ARInvoice`: trigger `created` with a condition that handoff
-provenance is present (e.g. `sourceQuoteReference` / `sourceContractReference`
-not null), recipients `object-acl` (manage) plus the `shillinq-finance` group.
-The rules MUST live under `components.schemas.<Schema>` in the overlay fragment
-(the shape the import actually merges); the pre-existing misplaced
-`components.ARInvoice` block in `shillinq-notifications.json` MUST be relocated
-under `components.schemas` in the same batch.
+gate-18; bilingual nl/en subjects, metadata-only) on `Contract` and
+`ARInvoice`: trigger `created` with the canonical created-filter
+`{field: <provenance property>, operator: notIn, values: [""]}` — the landed
+grammar's expression of "handoff provenance present" (scalar comparison;
+absent property string-casts to `''` and does not fire) — recipients
+`object-acl` (manage) plus the `shillinq-finance` group. The rules MUST live
+under `components.schemas.<Schema>` in the overlay fragment (OR's
+`ImportHandler` iterates `components.schemas` only). The pre-existing
+misplaced `components.ARInvoice` block in `shillinq-notifications.json` MUST
+be relocated under `components.schemas` in the same batch AND modernised to
+the canonical dialect: it filtered on a non-existent `state` field (the
+schema's lifecycle field is `lifecycleState`) and used a non-canonical
+`{all: […]}` filter grammar with operators (`notIn`, `before`) the canonical
+scheduled-filter grammar does not know — relocation alone would have left it
+dead a second way.
 
 @e2e exclude declarative notification rules; delivery is asserted via the OR notification engine's own tests + a manual NC bell check during verification
 
