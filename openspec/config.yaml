@@ -31,6 +31,9 @@ rules:
     - Imported via ConfigurationService::importFromApp() in repair step
   tasks:
     - Test with OpenRegister to verify schema validation works
-  review:
+    # NOTE: a "review" rules key previously lived here, but "review" is not an artifact of the
+    # conduction schema (valid: contract, design, discovery, migration, proposal, specs, tasks,
+    # test-plan) and made the CLI warn on every `openspec instructions` call. Its intent
+    # (cross-reference shared specs; flag deviations) is preserved in these tasks rules:
     - Cross-reference shared specs (nextcloud-app, api-patterns, nl-design, docker)
     - Flag spec deviations with WARNING and justification
