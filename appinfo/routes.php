@@ -91,6 +91,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         // Trial balance (Tier 2): read-only per-account period aggregation.
         ['name' => 'trialBalance#index', 'url' => '/api/trial-balance', 'verb' => 'GET'],
 
+        // Financial overview dashboard (Wave-4 endpoint-bound widgets):
+        // read-only monthly series + KPI summary computed server-side over
+        // ALL matching OpenRegister objects (no client-side 2000-row cap).
+        // Both #[NoAdminRequired]; RBAC/multitenancy enforced by OR reads.
+        ['name' => 'financialDashboard#series', 'url' => '/api/dashboard/financial-series', 'verb' => 'GET'],
+        ['name' => 'financialDashboard#summary', 'url' => '/api/dashboard/financial-summary', 'verb' => 'GET'],
+
         // Credit control & dunning ladder (Tier 2 — issue #124).
         // Static segments first; the resume route uses a {pauseId} wildcard.
         ['name' => 'dunning#bik', 'url' => '/api/dunning/bik', 'verb' => 'POST'],
