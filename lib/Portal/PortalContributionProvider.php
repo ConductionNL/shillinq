@@ -1,0 +1,256 @@
+<?php
+
+/**
+ * Shillinq Portal Contribution Provider
+ *
+ * Shillinq's Wave-1 contribution to the shared Portaliq external portal
+ * (hydra ADR-046 + 2026-07-06 amendment, contribution contract v2). Portaliq
+ * — the one shared external portal for people WITHOUT Nextcloud accounts —
+ * discovers this class by convention FQCN
+ * (`OCA\{App}\Portal\PortalContributionProvider`) and duck-types it via
+ * method_exists(), never instanceof. Therefore this class is deliberately
+ * PLAIN: no portaliq imports, no `implements` clause, no info.xml dependency,
+ * no constructor dependencies. Without portaliq installed it is inert and the
+ * app behaves exactly as before (amendment A1).
+ *
+ * Shillinq contributes to TWO audiences: `customer` (invoices, quotes,
+ * orders, contracts) and `supplier` (purchase orders, supplier invoices).
+ * Every collection is read-only and scoped by a verified UUID domain
+ * reference on the row, matched against a shillinq-namespaced claim
+ * (claims.shillinq.customerId / claims.shillinq.supplierId) — never a
+ * Nextcloud user id (externals have no NC account by premise). The verified
+ * scoping map and all exclusions (ARInvoice, PaymentRequest, dunning, goods
+ * receipts) are documented in the change's design.md.
+ *
+ * @category Portal
+ * @package  OCA\Shillinq\Portal
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/changes/portal-contribution/tasks.md#task-1
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Portal;
+
+/**
+ * Declares what an external portal subject may see in Shillinq's books.
+ *
+ * The contribution is a declarative manifest (pure data — no I/O, no
+ * callbacks): per audience, the OpenRegister collections portaliq may read on
+ * the subject's behalf, each scoped by a UUID domain-reference property
+ * (`scopeField`) matched against a shillinq claim (`scopeClaim`, bare name =
+ * own app namespace). All subject identity (subjectRef, audience,
+ * organisation, trust) is derived server-side by portaliq's auth edge and
+ * MUST never be trusted from the client (ADR-005). Rows also carry
+ * administrationId — shillinq-internal multi-administration tenancy — which
+ * is NOT a portal boundary and is never used as a scopeField here; portaliq's
+ * per-row organisation check only applies when rows carry `organisation`,
+ * which shillinq rows do not.
+ *
+ * No create/endpoint actions ship in Wave 1 (read-only manifest); collections
+ * stay at default (low) trust until the eHerkenning broker lands, after which
+ * the financial collections move to minTrust `substantial` (Wave 2).
+ *
+ * @spec openspec/changes/portal-contribution/tasks.md#task-1
+ */
+class PortalContributionProvider
+{
+    /**
+     * The audiences this provider contributes to (contract v2, preferred).
+     *
+     * The registry probes for this method first; the audience vocabulary is
+     * an open string set. Shillinq serves the parties on both sides of its
+     * ledgers: customers (AR side) and suppliers (AP side).
+     *
+     * @return array<int, string> The audience identifiers.
+     *
+     * @spec openspec/changes/portal-contribution/tasks.md#task-2
+     */
+    public function getAudiences(): array
+    {
+        return [
+            'customer',
+            'supplier',
+        ];
+
+    }//end getAudiences()
+
+    /**
+     * The single audience this provider contributes to (contract v1 fallback).
+     *
+     * Kept alongside getAudiences() so the provider also works against a v1
+     * registry that predates multi-audience support. A v1 registry serves a
+     * single audience, so the primary (customer) surface is declared; the
+     * supplier surface then only exists on contract-v2 registries.
+     *
+     * @return string The audience identifier.
+     *
+     * @spec openspec/changes/portal-contribution/tasks.md#task-2
+     */
+    public function getAudience(): string
+    {
+        return 'customer';
+
+    }//end getAudience()
+
+    /**
+     * Build the declarative portal manifest for one resolved subject.
+     *
+     * The subject array is server-derived by portaliq (subjectRef UUID,
+     * audience, organisation, trust level low|substantial|high). Branches on
+     * `$subject['audience']` and returns null for any audience this app does
+     * not serve — fail-closed; the registry already filters by audience, but
+     * a provider must not rely on that. The customer manifest never contains
+     * supplier collections and vice versa (other parties' data stays out).
+     *
+     * @param array<string, mixed> $subject The resolved portal subject.
+     *
+     * @return array<string, mixed>|null The manifest, or null when not contributing.
+     *
+     * @spec openspec/changes/portal-contribution/tasks.md#task-2
+     */
+    public function getContribution(array $subject): ?array
+    {
+        $audience = $subject['audience'] ?? '';
+
+        if ($audience === 'customer') {
+            return $this->customerManifest();
+        }
+
+        if ($audience === 'supplier') {
+            return $this->supplierManifest();
+        }
+
+        return null;
+
+    }//end getContribution()
+
+    /**
+     * The read-only customer (AR-side) manifest.
+     *
+     * Every scopeField below is a verified UUID domain reference to the
+     * customer record (Nextcloud contact / AR customer master) and every
+     * collection matches it against claims.shillinq.customerId (bare-name
+     * scopeClaim). ARInvoice and PaymentRequest are deliberately absent:
+     * ARInvoice scopes by CustomerMaster.customerId — an internal customer
+     * CODE, not a UUID — and PaymentRequest only reaches a customer through
+     * that same non-UUID property (deferred to Wave 2; see design.md).
+     * Dunning schemas are absent because DunningNotice is AP-side vendor
+     * dunning and the AR dunning records carry no customer scope property.
+     *
+     * @return array<string, mixed> The customer manifest.
+     *
+     * @spec openspec/changes/portal-contribution/tasks.md#task-2
+     */
+    private function customerManifest(): array
+    {
+        return [
+            'label'         => 'Shillinq',
+            'collections'   => [
+                [
+                    'id'         => 'invoices',
+                    'register'   => 'shillinq',
+                    'schema'     => 'Invoice',
+                    'scopeField' => 'customerReference',
+                    'scopeClaim' => 'customerId',
+                    'label'      => 'My invoices',
+                    'listable'   => true,
+                ],
+                [
+                    'id'         => 'projectInvoices',
+                    'register'   => 'shillinq',
+                    'schema'     => 'BillableInvoice',
+                    'scopeField' => 'customerId',
+                    'scopeClaim' => 'customerId',
+                    'label'      => 'My project invoices',
+                    'listable'   => true,
+                ],
+                [
+                    'id'         => 'quotes',
+                    'register'   => 'shillinq',
+                    'schema'     => 'Quote',
+                    'scopeField' => 'customerReference',
+                    'scopeClaim' => 'customerId',
+                    'label'      => 'My quotes',
+                    'listable'   => true,
+                ],
+                [
+                    'id'         => 'salesOrders',
+                    'register'   => 'shillinq',
+                    'schema'     => 'SalesOrder',
+                    'scopeField' => 'customerReference',
+                    'scopeClaim' => 'customerId',
+                    'label'      => 'My orders',
+                    'listable'   => true,
+                ],
+                [
+                    'id'         => 'contracts',
+                    'register'   => 'shillinq',
+                    'schema'     => 'Contract',
+                    'scopeField' => 'customerId',
+                    'scopeClaim' => 'customerId',
+                    'label'      => 'My contracts',
+                    'listable'   => true,
+                ],
+            ],
+            'actions'       => [],
+            'notifications' => [],
+        ];
+
+    }//end customerManifest()
+
+    /**
+     * The read-only supplier (AP-side) manifest.
+     *
+     * Both scopeFields are verified UUID references to the Payee (vendor)
+     * record, matched against claims.shillinq.supplierId. GoodsReceipt is
+     * deliberately absent (it carries no supplier reference at all) and
+     * GoodsReceiptNote is deferred (its only supplier linkage is the poIds
+     * ARRAY of PurchaseOrder FKs — beyond the one-hop scalar via join);
+     * suppliers see match outcomes via SupplierInvoice.statusCode instead.
+     *
+     * @return array<string, mixed> The supplier manifest.
+     *
+     * @spec openspec/changes/portal-contribution/tasks.md#task-2
+     */
+    private function supplierManifest(): array
+    {
+        return [
+            'label'         => 'Shillinq',
+            'collections'   => [
+                [
+                    'id'         => 'purchaseOrders',
+                    'register'   => 'shillinq',
+                    'schema'     => 'PurchaseOrder',
+                    'scopeField' => 'supplierId',
+                    'scopeClaim' => 'supplierId',
+                    'label'      => 'Purchase orders',
+                    'listable'   => true,
+                ],
+                [
+                    'id'         => 'supplierInvoices',
+                    'register'   => 'shillinq',
+                    'schema'     => 'SupplierInvoice',
+                    'scopeField' => 'supplierId',
+                    'scopeClaim' => 'supplierId',
+                    'label'      => 'My invoices',
+                    'listable'   => true,
+                ],
+            ],
+            'actions'       => [],
+            'notifications' => [],
+        ];
+
+    }//end supplierManifest()
+}//end class
