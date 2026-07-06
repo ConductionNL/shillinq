@@ -96,13 +96,6 @@ import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceipt
 // registered as a kind:"page" custom component.
 import SupplierInvoiceDetail from './components/supplier-invoice/SupplierInvoiceDetail.vue'
 
-// payment-run-sepa-export: the actions component injected into the PaymentRun
-// detail page's #actions slot (wired as the page's actionsComponent in the
-// manifest). It renders the "Export to bank" button (approved runs) + the
-// "Reconcile / import statement" launcher (exported runs). Registered as
-// kind:"widget" so the manifest actionsComponent field resolves to this entry.
-import PaymentRunDetailActions from './components/payment-run/PaymentRunDetailActions.vue'
-
 // bookkeeping-purchase-order-3way slice 06 (REQ-PO3W-004 / REQ-PO3W-006):
 // the three-way-match index renders per-row match-status pills and a
 // "Re-evaluate" quick-action button that calls back into the matching
@@ -254,22 +247,21 @@ import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashbo
 import ExternalAdaptersStatus from './views/external-adapters/ExternalAdaptersStatus.vue'
 import ExternalAdapterDetail from './views/external-adapters/ExternalAdapterDetail.vue'
 
-// financial-dashboard-graphs: the Financial overview widgets are
-// imperative — the KPI strip, the four charts and the two
-// open-invoice tables all derive their series client-side from a
-// shared fetch-once data layer (GL classification by accountType,
-// month bucketing, CashflowWeek roll-up), and margin / billable
-// carry a €/% resp. total/% view toggle. None of that fits the
-// declarative `stats-block` / `chart` / `table` widget types, so
-// they are registered as kind:"widget" components and wired into
-// the Dashboard page through its `slots` map (ADR-024 / ADR-036).
-import FinanceKpiCardWidget from './components/dashboard/financial/FinanceKpiCardWidget.vue'
-import TurnoverChartWidget from './components/dashboard/financial/TurnoverChartWidget.vue'
-import MarginChartWidget from './components/dashboard/financial/MarginChartWidget.vue'
+// financial-dashboard-graphs (ADR-049 Phase-4 dissolution): the Financial
+// overview KPI strip, the turnover / margin / billable charts and the two
+// open-invoice tables are now DECLARATIVE built-in dashboard widgets —
+// `stat` (endpointSource /api/dashboard/financial-summary), `chart`
+// (endpointSource /api/dashboard/financial-series + a €/% resp. hours/%
+// `views[]` switcher) and `object-table` (OpenRegister source). The
+// dashboard / payment-run action ribbons are now `config.headerActions[]`
+// (open-modal / api-call). See src/manifest.json Dashboard page +
+// src/manifest.d/bookkeeping-accounts-payable-core.json PaymentRunDetail.
+//
+// CashflowChartWidget stays a custom kind:"widget": it merges TWO sources
+// (realized GL lines + the 13-week CashflowWeek forecast) into one chart
+// with dimmed projection columns — a genuinely custom two-source transform
+// (nextcloud-vue#91 Wave-4) that no single declarative endpoint expresses.
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
-import BillableHoursChartWidget from './components/dashboard/financial/BillableHoursChartWidget.vue'
-import OpenInvoicesTableWidget from './components/dashboard/financial/OpenInvoicesTableWidget.vue'
-import FinancialDashboardActions from './components/dashboard/financial/FinancialDashboardActions.vue'
 
 // recurring-invoicing (REQ-RIN-008, Task 15): the create/edit modal for a
 // RecurringInvoiceProfile is a bespoke multi-line form with period-token
@@ -280,6 +272,15 @@ import FinancialDashboardActions from './components/dashboard/financial/Financia
 // resolvable by component id; registered here as a kind:"modal" and
 // modal-isolated under src/modals/ (hydra gate-13).
 import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
+
+// ADR-049 Phase-4 dissolution: modals formerly launched by the imperative
+// FinancialDashboardActions / PaymentRunDetailActions widgets. Those action
+// ribbons are now declarative `config.headerActions[]` (type:"open-modal");
+// each modal is registered here as a kind:"modal" so the manifest action's
+// `target` resolves it. Modal-isolated under src/modals/ (hydra gate-13).
+import InvoiceQuickDraftModal from './modals/InvoiceQuickDraftModal.vue'
+import BillImportModal from './modals/BillImportModal.vue'
+import PaymentRunReconcileModal from './modals/PaymentRunReconcileModal.vue'
 
 // reporting-compliance-consolidation: the Reporting & Compliance section is
 // two custom pages. The overview renders the static ReportCatalogue
@@ -302,6 +303,11 @@ import BankImportPage from './components/settings/BankImportPage.vue'
 
 export default {
 	RecurringInvoiceProfileModal: { kind: 'modal', component: RecurringInvoiceProfileModal },
+
+	// ADR-049 Phase-4: modals launched by declarative headerActions (open-modal).
+	InvoiceQuickDraftModal: { kind: 'modal', component: InvoiceQuickDraftModal },
+	BillImportModal: { kind: 'modal', component: BillImportModal },
+	PaymentRunReconcileModal: { kind: 'modal', component: PaymentRunReconcileModal },
 
 	StandardsPolicyEditor: { kind: 'page', component: StandardsPolicyEditor },
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
@@ -366,22 +372,12 @@ export default {
 	ExternalAdaptersStatus: { kind: 'page', component: ExternalAdaptersStatus },
 	ExternalAdapterDetail: { kind: 'page', component: ExternalAdapterDetail },
 
-	// financial-dashboard-graphs: Financial overview dashboard widgets.
-	FinanceKpiCardWidget: { kind: 'widget', component: FinanceKpiCardWidget },
-	TurnoverChartWidget: { kind: 'widget', component: TurnoverChartWidget },
-	MarginChartWidget: { kind: 'widget', component: MarginChartWidget },
+	// financial-dashboard-graphs (ADR-049 Phase-4): the only surviving custom
+	// financial widget. Cashflow merges realized GL lines with the 13-week
+	// forecast (two sources) into one chart — see the import docblock above.
+	// The KPIs / turnover / margin / billable charts / open-invoice tables are
+	// now declarative built-in stat / chart / object-table dashboard widgets.
 	CashflowChartWidget: { kind: 'widget', component: CashflowChartWidget },
-	BillableHoursChartWidget: { kind: 'widget', component: BillableHoursChartWidget },
-	OpenInvoicesTableWidget: { kind: 'widget', component: OpenInvoicesTableWidget },
-
-	// financial-dashboard-actions: quick-access header buttons (Import bill /
-	// Create invoice / Import bank) registered as kind:"widget" so the manifest
-	// actionsComponent field resolves to this entry via CnPageRenderer.
-	FinancialDashboardActions: { kind: 'widget', component: FinancialDashboardActions },
-
-	// payment-run-sepa-export: PaymentRun detail-page actions (Export to bank /
-	// Reconcile). kind:"widget" so the manifest actionsComponent field resolves.
-	PaymentRunDetailActions: { kind: 'widget', component: PaymentRunDetailActions },
 
 	// reporting-compliance-consolidation: Reporting & Compliance pages.
 	ReportingComplianceOverview: { kind: 'page', component: ReportingComplianceOverview },

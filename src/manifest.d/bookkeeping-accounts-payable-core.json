@@ -421,11 +421,33 @@
 			"route": "/bookkeeping/payment-runs/:id",
 			"type": "detail",
 			"title": "Payment Run",
-			"actionsComponent": "PaymentRunDetailActions",
 			"config": {
 				"register": "shillinq",
 				"schema": "PaymentRun",
 				"_note": "BATCH transaction — a SEPA payment run. Body shows the run header, debtor IBAN, the embedded paymentLines array and the total being disbursed, plus the export/reconciliation timestamps that track its lifecycle. The generated SEPA file lives in the Export File sidebar tab; audit trail proves who released it. No comms leaves — a payment run does not correspond with anyone.",
+				"headerActions": [
+					{
+						"id": "export-to-bank",
+						"label": "Export to bank",
+						"type": "api-call",
+						"url": "/apps/shillinq/api/v1/payment-runs/@objectId/export",
+						"method": "POST",
+						"icon": "BankOutline",
+						"variant": "primary",
+						"successMessage": "Payment run exported to bank file.",
+						"errorMessage": "Could not export the payment run.",
+						"visibleWhen": { "field": "lifecycleState", "op": "eq", "value": "approved" }
+					},
+					{
+						"id": "reconcile-statement",
+						"label": "Reconcile / import statement",
+						"type": "open-modal",
+						"target": "PaymentRunReconcileModal",
+						"icon": "BankCheck",
+						"props": { "open": true },
+						"visibleWhen": { "field": "lifecycleState", "op": "eq", "value": "exported" }
+					}
+				],
 				"fields": [
 					{"key": "runNumber", "label": "Run #", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"},
