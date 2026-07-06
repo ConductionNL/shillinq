@@ -42,3 +42,19 @@ requirements and scenarios:
 - The recognition arithmetic, one-off split, ARR view and the RBAC-guarded read endpoint
   (`GET /api/recognition/recurring-revenue`) SHALL be realized by the `order-revenue-recognition-engine`
   change (kind: code) — see its delta for the normative engine requirements and scenarios.
+
+### Requirement: Recognized recurring revenue is computed from booking terms, not run-rate MRR
+
+The capability SHALL model booking terms declaratively (`SalesOrder` +
+`SalesOrderLine`) and SHALL report recognized recurring revenue per period as
+the term-overlap-prorated, frequency-normalized sum of `RECURRING` lines,
+excluding one-off lines — realized by the two in-flight changes listed above,
+whose deltas carry the normative per-requirement scenarios and are folded in
+here at archive time.
+
+#### Scenario: Period recognition excludes one-off lines
+
+- GIVEN a SalesOrder whose lines include `RECURRING` and `ONE_OFF` natures
+- WHEN recognized recurring revenue is computed for a reporting period
+- THEN only `RECURRING` lines contribute, prorated to the overlap of each line's term with the period and normalized to a monthly rate by `frequentie`
+- @e2e exclude pure backend recognition arithmetic with no browser surface; normative scenarios live in the in-flight change deltas (order-revenue-recognition / order-revenue-recognition-engine) and their PHPUnit coverage
