@@ -12,6 +12,7 @@
         "version": "0.1.0",
         "slug": "Payment",
         "title": "Payment",
+        "x-schema-org": "schema:PayAction",
         "type": "object",
         "description": "A payment related to an Order (or invoice). Generalises the booking DepositPayment and the grant disbursement/reclaim amounts so the order detail can render a Payments widget instead of carrying amount fields. Deposits, installments, grant disbursements and reclaims are all Payment rows.",
         "required": [
