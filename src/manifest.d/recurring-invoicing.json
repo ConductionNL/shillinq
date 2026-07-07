@@ -79,118 +79,55 @@
             "config": {
                 "register": "shillinq",
                 "schema": "RecurringInvoiceProfile",
-                "_note": "MASTER billing profile — the template that mints periodic AR invoices. Body leads with the schedule mechanics (customer, frequency/interval, invoice day, next-run, last-billed period) and the issue/delivery/payment-terms + indexation policy, then lists the actual invoices it generated (ARInvoice filtered by recurringProfileId) as the primary provenance evidence. Last-run status surfaces failures inline; the audit trail sits in the sidebar. A profile schedules billing, it does not correspond — no comms leaves.",
+                "_note": "MASTER billing-profile archetype — the template that mints periodic AR invoices. Body leads with a schema-driven Data widget (schedule mechanics: customer, frequency/interval, invoice day, next-run, last-billed period, plus the issue/delivery/payment-terms + indexation policy and lastRunStatus for inline failure visibility) beside a Related panel; the full-width child list is the actual generated invoices (ARInvoice filtered recurringProfileId=@objectId, rowRoute ARInvoiceDetail) as provenance evidence, with a KPI strip of generated-invoice count and total billed. A profile schedules billing, it does not correspond — no comms leaves. Audit trail moves to the sidebar per policy.",
                 "indexRoute": "RecurringInvoiceProfiles",
-                "fields": [
+                "widgets": [
                     {
-                        "key": "name",
-                        "label": "Profile name",
-                        "type": "string"
+                        "id": "profile-data",
+                        "type": "data",
+                        "title": "Profile details",
+                        "content": { "columns": 2 }
                     },
                     {
-                        "key": "customerReference",
-                        "label": "Customer",
-                        "type": "string"
+                        "id": "profile-related",
+                        "type": "related",
+                        "title": "Links"
                     },
                     {
-                        "key": "frequency",
-                        "label": "Frequency",
-                        "type": "string"
-                    },
-                    {
-                        "key": "interval",
-                        "label": "Interval",
-                        "type": "integer"
-                    },
-                    {
-                        "key": "invoiceDay",
-                        "label": "Invoice day",
-                        "type": "integer"
-                    },
-                    {
-                        "key": "startDate",
-                        "label": "Start date",
-                        "type": "date"
-                    },
-                    {
-                        "key": "nextRunDate",
-                        "label": "Next run",
-                        "type": "date"
-                    },
-                    {
-                        "key": "lastBillingPeriod",
-                        "label": "Last billed period",
-                        "type": "string"
-                    },
-                    {
-                        "key": "issueMode",
-                        "label": "Issue mode",
-                        "type": "string"
-                    },
-                    {
-                        "key": "deliveryChannel",
-                        "label": "Delivery channel",
-                        "type": "string"
-                    },
-                    {
-                        "key": "paymentTermsDays",
-                        "label": "Payment terms (days)",
-                        "type": "integer"
-                    },
-                    {
-                        "key": "indexationPercent",
-                        "label": "Indexation %",
-                        "type": "number"
-                    },
-                    {
-                        "key": "lastRunStatus",
-                        "label": "Last run status",
-                        "type": "string"
-                    },
-                    {
-                        "key": "status",
-                        "label": "Status",
-                        "type": "string"
-                    }
-                ],
-                "relatedObjects": [
-                    {
-                        "id": "generated-invoices",
-                        "label": "Generated invoices",
-                        "componentName": "openregister-related-list",
-                        "componentProps": {
+                        "id": "profile-invoices",
+                        "type": "object-list",
+                        "title": "Generated invoices",
+                        "content": {
                             "register": "shillinq",
                             "schema": "ARInvoice",
-                            "filterField": "recurringProfileId",
+                            "filter": { "recurringProfileId": "@objectId" },
+                            "sort": { "field": "invoiceDate", "dir": "desc" },
+                            "limit": 20,
                             "columns": [
-                                "invoiceNumber",
-                                "billingPeriod",
-                                "invoiceDate",
-                                "grossAmount",
-                                "lifecycleState"
+                                { "key": "invoiceNumber", "label": "Invoice #" },
+                                { "key": "invoiceDate", "label": "Date" },
+                                { "key": "grossAmount", "label": "Total (EUR)" },
+                                { "key": "lifecycleState", "label": "Status" }
                             ],
-                            "defaultSort": "invoiceDate"
+                            "rowRoute": "ARInvoiceDetail"
                         }
                     }
                 ],
-                "sidebarProps": {
+                "layout": [
+                    { "id": "1", "widgetId": "profile-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5 },
+                    { "id": "2", "widgetId": "profile-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },
+                    { "id": "3", "widgetId": "profile-invoices", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 5 }
+                ],
+                "summaryAggregates": [
+                    { "label": "Invoices generated", "register": "shillinq", "schema": "ARInvoice", "metric": "count", "filter": { "recurringProfileId": "@objectId" } },
+                    { "label": "Total billed", "register": "shillinq", "schema": "ARInvoice", "metric": "sum", "field": "grossAmount", "filter": { "recurringProfileId": "@objectId" }, "format": "currency" }
+                ],
+                "lifecycleActions": true,
+                "sidebar": {
+                    "enabled": true,
+                    "showMetadata": true,
                     "tabs": [
-                        {
-                            "id": "audit",
-                            "label": "Audit Trail",
-                            "icon": "HistoryIcon",
-                            "order": 90,
-                            "widgets": [
-                                {
-                                    "type": "data",
-                                    "componentName": "openregister-audit-trail",
-                                    "props": {
-                                        "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
-                                        "collapsed": true
-                                    }
-                                }
-                            ]
-                        }
+                        { "id": "audit", "label": "History", "component": "CnAuditTrailTab" }
                     ]
                 }
             }
