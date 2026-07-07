@@ -80,6 +80,7 @@ final class ReportCatalogue
 
             // --- Audit files / e-invoicing ---
             ['id' => 'saft', 'label' => 'SAF-T auditbestand', 'category' => 'audit-file', 'kind' => 'data', 'formats' => ['xml'], 'templateId' => null, 'description' => 'OECD SAF-T fiscaal auditbestand.'],
+            ['id' => 'xaf', 'label' => 'XAF auditbestand (Auditfile Financieel)', 'category' => 'audit-file', 'kind' => 'data', 'formats' => ['xml'], 'templateId' => null, 'description' => 'Nederlands Auditfile Financieel (XAF 3.2, Belastingdienst/XBRL Nederland).'],
 
             // --- Public sector ---
             ['id' => 'iv3', 'label' => 'IV3-rapportage', 'category' => 'public-sector', 'kind' => 'data', 'formats' => ['xml', 'csv'], 'templateId' => null, 'description' => 'Informatie voor derden (CBS).'],
