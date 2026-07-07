@@ -26,8 +26,8 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.9.9</version>
-    <licence>agpl</licence>
+    <version>0.9.10</version>
+    <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
     <documentation>
@@ -44,45 +44,9 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <screenshot>https://raw.githubusercontent.com/ConductionNL/shillinq/main/img/app-store.svg</screenshot>
 
     <dependencies>
-        <nextcloud min-version="28" max-version="34"/>
         <php min-version="8.3"/>
+        <nextcloud min-version="31" max-version="34"/>
     </dependencies>
-
-    <navigations>
-        <navigation>
-            <id>shillinq</id>
-            <name>Shillinq</name>
-            <route>shillinq.dashboard.page</route>
-            <icon>app.svg</icon>
-        </navigation>
-    </navigations>
-
-    <settings>
-        <admin>OCA\Shillinq\Settings\AdminSettings</admin>
-        <admin-section>OCA\Shillinq\Sections\SettingsSection</admin-section>
-    </settings>
-
-    <repair-steps>
-        <post-migration>
-            <step>OCA\Shillinq\Repair\InitializeSettings</step>
-            <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
-            <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>
-            <step>OCA\Shillinq\Repair\RetireCostProjectStep</step>
-            <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
-            <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
-            <step>OCA\Shillinq\Repair\Load_CBS_Seeds_Step</step>
-            <step>OCA\Shillinq\Repair\Load_SBR_XBRL_Seeds_Step</step>
-            <step>OCA\Shillinq\Repair\Load_DBA_Seeds_Step</step>
-            <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
-            <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
-            <step>OCA\Shillinq\Repair\SetOrderExtensionComposition</step>
-            <step>OCA\Shillinq\Repair\FoldIntoOrder</step>
-            <step>OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice</step>
-            <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
-            <step>OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject</step>
-            <step>OCA\Shillinq\Repair\RetireSubsidieSchema</step>
-        </post-migration>
-    </repair-steps>
 
     <background-jobs>
         <job>OCA\Shillinq\BackgroundJob\HorizonRollingJob</job>
@@ -159,6 +123,28 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Shillinq\BackgroundJob\FxRateImportJob</job>
     </background-jobs>
 
+    <repair-steps>
+        <post-migration>
+            <step>OCA\Shillinq\Repair\InitializeSettings</step>
+            <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
+            <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>
+            <step>OCA\Shillinq\Repair\RetireCostProjectStep</step>
+            <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
+            <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
+            <step>OCA\Shillinq\Repair\Load_CBS_Seeds_Step</step>
+            <step>OCA\Shillinq\Repair\Load_SBR_XBRL_Seeds_Step</step>
+            <step>OCA\Shillinq\Repair\Load_DBA_Seeds_Step</step>
+            <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
+            <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
+            <step>OCA\Shillinq\Repair\SetOrderExtensionComposition</step>
+            <step>OCA\Shillinq\Repair\FoldIntoOrder</step>
+            <step>OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice</step>
+            <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
+            <step>OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject</step>
+            <step>OCA\Shillinq\Repair\RetireSubsidieSchema</step>
+        </post-migration>
+    </repair-steps>
+
     <commands>
         <!-- Audit the register's bookkeeping objects against the machine-checkable
              rule corpus (lib/Standards/RuleCatalogue + RuleEngine). Read-only. -->
@@ -167,4 +153,18 @@ Vrij en open source onder de EUPL-1.2-licentie.
              (sourceReference + balanced lines on every GL transaction). Test/dev. -->
         <command>OCA\Shillinq\Command\RulesSeedTestDataCommand</command>
     </commands>
+
+    <settings>
+        <admin>OCA\Shillinq\Settings\AdminSettings</admin>
+        <admin-section>OCA\Shillinq\Sections\SettingsSection</admin-section>
+    </settings>
+
+    <navigations>
+        <navigation>
+            <id>shillinq</id>
+            <name>Shillinq</name>
+            <route>shillinq.dashboard.page</route>
+            <icon>app.svg</icon>
+        </navigation>
+    </navigations>
 </info>
