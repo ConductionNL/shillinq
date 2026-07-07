@@ -58,3 +58,15 @@ each; (2) seed representative test data so migrations can be verified; (3) write
 hand against the real merged field set with the IUser + `_rbac:false` fixes. Until then this change
 stays in DESIGN state — the nav entries are NOT collapsed (removing them without the fold would
 strand the pages).
+
+## UNBLOCK (2026-07-07) — schema-consolidation prerequisite landed
+The prerequisite `consolidate-order-subsidie-collisions` change has shipped the non-destructive
+schema consolidation this change was blocked on: (1) `Subsidie` is now **one canonical schema**
+(the field union — every regulatory field preserved; the dead sibling + the operations-fragment
+duplicate retired), and (2) the generic **`Order` slug is freed** (the booking order renamed to
+`BookingOrder`; `SalesOrder`/`PurchaseOrder` unchanged). The canonical order-family slug map
+(`Order` reserved for this abstract primitive; `SalesOrder`; `PurchaseOrder`; `BookingOrder`) is
+documented in that change's `design.md`. The abstract `Order` primitive can now be added without a
+`lower(slug)` collision. The count-abort migration core is unit-tested there; the live object
+re-point (`Order`→`BookingOrder`) is coordinated with this change's `FoldIntoOrder` fold and
+verified on a live import.
