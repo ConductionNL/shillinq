@@ -60,75 +60,71 @@
 			{{ error }}
 		</div>
 
-		<table v-else-if="filteredMatches.length > 0" class="twm-index__table">
-			<thead>
-				<tr>
-					<th>{{ t('shillinq', 'Invoice') }}</th>
-					<th>{{ t('shillinq', 'Supplier') }}</th>
-					<th>{{ t('shillinq', 'Amount') }}</th>
-					<th>{{ t('shillinq', 'Match date') }}</th>
-					<th>{{ t('shillinq', 'Status') }}</th>
-					<th>{{ t('shillinq', 'Linked PO / GRN') }}</th>
-					<th />
-				</tr>
-			</thead>
-			<tbody>
-				<tr
-					v-for="match in filteredMatches"
-					:key="match.id"
-					:data-testid="`twm-row-${match.id}`">
-					<td>
-						<router-link :to="{ name: 'SupplierInvoiceDetail', params: { id: match.invoiceId } }">
-							{{ supplierInvoiceLabel(match) }}
-						</router-link>
-					</td>
-					<td>{{ supplierLabel(match) }}</td>
-					<td>{{ amountLabel(match) }}</td>
-					<td>{{ formatDate(match.createdAt) }}</td>
-					<td>
-						<span
-							class="twm-index__pill"
-							:class="`twm-index__pill--${match.matchStatus}`"
-							:data-testid="`twm-status-${match.id}`">
-							{{ statusLabel(match.matchStatus) }}
-						</span>
-					</td>
-					<td class="twm-index__refs">
-						<span v-if="(match.matchedPoIds || []).length > 0">
-							{{ t('shillinq', 'PO') }}: {{ (match.matchedPoIds || []).join(', ') }}
-						</span>
-						<span v-if="(match.matchedGrnIds || []).length > 0">
-							{{ t('shillinq', 'GRN') }}: {{ (match.matchedGrnIds || []).join(', ') }}
-						</span>
-					</td>
-					<td class="twm-index__actions">
-						<button
-							type="button"
-							class="twm-index__action"
-							:data-testid="`twm-reevaluate-${match.id}`"
-							:disabled="reevaluating === match.id"
-							@click="reevaluate(match)">
-							{{ reevaluating === match.id
-								? t('shillinq', 'Evaluating...')
-								: t('shillinq', 'Re-evaluate') }}
-						</button>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-
-		<p v-else class="twm-index__empty" data-testid="twm-index-empty">
-			{{ t('shillinq', 'No matches recorded yet.') }}
-		</p>
+		<CnDataTable
+			v-else
+			class="twm-index__table"
+			data-testid="twm-index-table"
+			:columns="columns"
+			:rows="filteredMatches"
+			:empty-label="t('shillinq', 'No matches recorded yet.')">
+			<template #cell-invoice="{ row }">
+				<router-link :to="{ name: 'SupplierInvoiceDetail', params: { id: row.invoiceId } }">
+					{{ supplierInvoiceLabel(row) }}
+				</router-link>
+			</template>
+			<template #cell-supplier="{ row }">
+				{{ supplierLabel(row) }}
+			</template>
+			<template #cell-amount="{ row }">
+				{{ amountLabel(row) }}
+			</template>
+			<template #cell-matchDate="{ row }">
+				{{ formatDate(row.createdAt) }}
+			</template>
+			<template #cell-matchStatus="{ row }">
+				<span
+					class="twm-index__pill"
+					:class="`twm-index__pill--${row.matchStatus}`"
+					:data-testid="`twm-status-${row.id}`">
+					{{ statusLabel(row.matchStatus) }}
+				</span>
+			</template>
+			<template #cell-refs="{ row }">
+				<span class="twm-index__refs">
+					<span v-if="(row.matchedPoIds || []).length > 0">
+						{{ t('shillinq', 'PO') }}: {{ (row.matchedPoIds || []).join(', ') }}
+					</span>
+					<span v-if="(row.matchedGrnIds || []).length > 0">
+						{{ t('shillinq', 'GRN') }}: {{ (row.matchedGrnIds || []).join(', ') }}
+					</span>
+				</span>
+			</template>
+			<template #cell-actions="{ row }">
+				<button
+					type="button"
+					class="twm-index__action"
+					:data-testid="`twm-reevaluate-${row.id}`"
+					:disabled="reevaluating === row.id"
+					@click="reevaluate(row)">
+					{{ reevaluating === row.id
+						? t('shillinq', 'Evaluating...')
+						: t('shillinq', 'Re-evaluate') }}
+				</button>
+			</template>
+		</CnDataTable>
 	</div>
 </template>
 
 <script>
+import { CnDataTable } from '@conduction/nextcloud-vue'
 import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 
 export default {
 	name: 'ThreeWayMatchIndex',
+	components: {
+		CnDataTable,
+	},
 	props: {
 		/**
 		 * Administration scope (server-resolved at the call site; the
@@ -152,6 +148,23 @@ export default {
 		}
 	},
 	computed: {
+		/**
+		 * CnDataTable column definitions for the three-way-match list.
+		 *
+		 * @spec openspec/specs/list-views-cndatatable/spec.md
+		 * @return {Array<object>} ordered column defs
+		 */
+		columns() {
+			return [
+				{ key: 'invoice', label: this.t('shillinq', 'Invoice'), sortable: false },
+				{ key: 'supplier', label: this.t('shillinq', 'Supplier'), sortable: false },
+				{ key: 'amount', label: this.t('shillinq', 'Amount'), sortable: false },
+				{ key: 'matchDate', label: this.t('shillinq', 'Match date'), sortable: false },
+				{ key: 'matchStatus', label: this.t('shillinq', 'Status'), sortable: true },
+				{ key: 'refs', label: this.t('shillinq', 'Linked PO / GRN'), sortable: false },
+				{ key: 'actions', label: '', sortable: false },
+			]
+		},
 		statusOptions() {
 			return [
 				{ value: 'auto_approved', label: this.t('shillinq', 'Auto-approved') },
@@ -285,22 +298,27 @@ export default {
 .twm-index {
 	padding: 1rem;
 }
+
 .twm-index__header h2 {
 	margin: 0 0 0.25rem 0;
 }
+
 .twm-index__hint {
 	color: var(--color-text-maxcontrast);
 	margin: 0 0 1rem 0;
 }
+
 .twm-index__filters {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 	margin-bottom: 1rem;
 }
+
 .twm-index__filter-label {
 	font-weight: 600;
 }
+
 .twm-index__loading,
 .twm-index__error,
 .twm-index__empty {
@@ -308,13 +326,16 @@ export default {
 	border-radius: var(--border-radius-large);
 	background: var(--color-background-hover);
 }
+
 .twm-index__error {
 	color: var(--color-error);
 }
+
 .twm-index__table {
 	width: 100%;
 	border-collapse: collapse;
 }
+
 .twm-index__table th,
 .twm-index__table td {
 	padding: 0.5rem 0.75rem;
@@ -322,6 +343,7 @@ export default {
 	text-align: left;
 	vertical-align: top;
 }
+
 .twm-index__pill {
 	display: inline-block;
 	padding: 0.125rem 0.5rem;
@@ -329,11 +351,13 @@ export default {
 	font-size: 0.875rem;
 	background: var(--color-background-hover);
 }
+
 .twm-index__pill--auto_approved,
 .twm-index__pill--within_tolerance {
 	background: var(--color-success);
 	color: var(--color-primary-text);
 }
+
 .twm-index__pill--exception_price,
 .twm-index__pill--exception_quantity,
 .twm-index__pill--exception_missing_grn,
@@ -341,14 +365,17 @@ export default {
 	background: var(--color-warning);
 	color: var(--color-primary-text);
 }
+
 .twm-index__pill--fraud_alert {
 	background: var(--color-error);
 	color: var(--color-primary-text);
 }
+
 .twm-index__refs {
 	font-size: 0.875rem;
 	color: var(--color-text-lighter);
 }
+
 .twm-index__action {
 	padding: 0.25rem 0.75rem;
 	border-radius: var(--border-radius);
@@ -357,6 +384,7 @@ export default {
 	border: 0;
 	cursor: pointer;
 }
+
 .twm-index__action:disabled {
 	opacity: 0.6;
 	cursor: progress;
