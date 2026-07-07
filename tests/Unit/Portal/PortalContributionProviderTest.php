@@ -76,6 +76,18 @@ class PortalContributionProviderTest extends TestCase
     ];
 
     /**
+     * A fully server-derived accountant (external bookkeeper) subject.
+     *
+     * @var array<string, mixed>
+     */
+    private const ACCOUNTANT_SUBJECT = [
+        'subjectRef'   => '00000000-0000-0000-0000-000000000000',
+        'audience'     => 'accountant',
+        'organisation' => '00000000-0000-0000-0000-000000000000',
+        'trust'        => 'substantial',
+    ];
+
+    /**
      * Schemas that must never appear in any manifest (design.md Exclusions).
      *
      * @var array<int, string>
@@ -118,15 +130,18 @@ class PortalContributionProviderTest extends TestCase
     }//end testClassIsPlainAndDependencyFree()
 
     /**
-     * getAudiences() (v2) returns exactly ['customer', 'supplier'].
+     * getAudiences() (v2) returns exactly ['customer', 'supplier', 'accountant'].
      *
      * @return void
      */
-    public function testGetAudiencesReturnsCustomerAndSupplier(): void
+    public function testGetAudiencesReturnsCustomerSupplierAccountant(): void
     {
-        $this->assertSame(['customer', 'supplier'], $this->provider->getAudiences());
+        $this->assertSame(
+            ['customer', 'supplier', 'accountant'],
+            $this->provider->getAudiences()
+        );
 
-    }//end testGetAudiencesReturnsCustomerAndSupplier()
+    }//end testGetAudiencesReturnsCustomerSupplierAccountant()
 
     /**
      * getAudience() (v1 fallback) returns the primary audience, contained in v2.
@@ -281,4 +296,108 @@ class PortalContributionProviderTest extends TestCase
         }
 
     }//end testEveryCollectionDeclaresABareNameScopeClaim()
+
+    /**
+     * The accountant manifest carries the administration-scoped review surfaces.
+     *
+     * Every collection scopes by the row's administrationId tenancy key against
+     * the accountantAdministrationId claim, register shillinq, listable. The
+     * spec-listed financialStatements is intentionally omitted because no
+     * FinancialStatement schema declares administrationId (no-dead-scope rule,
+     * REQ-SPC-011 / task 2.3).
+     *
+     * @return void
+     *
+     * @spec openspec/specs/portal-contribution/spec.md
+     */
+    public function testAccountantManifestShape(): void
+    {
+        $manifest = $this->provider->getContribution(self::ACCOUNTANT_SUBJECT);
+
+        $this->assertIsArray($manifest);
+        $this->assertSame('Shillinq', $manifest['label']);
+        $this->assertSame([], $manifest['actions']);
+        $this->assertSame([], $manifest['notifications']);
+
+        $expected = [
+            'salesInvoices'    => 'ARInvoice',
+            'purchaseInvoices' => 'SupplierInvoice',
+            'journalEntries'   => 'JournalEntry',
+            'generalLedger'    => 'GLTransaction',
+            'trialBalance'     => 'TrialBalance',
+            'vatReturns'       => 'VatReturn',
+        ];
+
+        $this->assertSame(array_keys($expected), array_column($manifest['collections'], 'id'));
+
+        foreach ($manifest['collections'] as $collection) {
+            $this->assertSame($expected[$collection['id']], $collection['schema'], $collection['id']);
+            $this->assertSame('shillinq', $collection['register'], $collection['id']);
+            $this->assertSame('administrationId', $collection['scopeField'], $collection['id']);
+            $this->assertSame('accountantAdministrationId', $collection['scopeClaim'], $collection['id']);
+            $this->assertTrue($collection['listable'], $collection['id']);
+            $this->assertNotSame('', $collection['label'], $collection['id']);
+        }
+
+    }//end testAccountantManifestShape()
+
+    /**
+     * The accountant surface is read-only and never scopes by a party ref.
+     *
+     * actions/notifications stay empty this wave, and no collection may scope
+     * by customerReference / customerId / supplierId (party scopes), which
+     * would leak across administrations.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/portal-contribution/spec.md
+     */
+    public function testAccountantManifestIsReadOnlyAndAdministrationScoped(): void
+    {
+        $manifest = $this->provider->getContribution(self::ACCOUNTANT_SUBJECT);
+
+        $this->assertSame([], $manifest['actions']);
+        $this->assertSame([], $manifest['notifications']);
+
+        foreach ($manifest['collections'] as $collection) {
+            $this->assertNotContains(
+                $collection['scopeField'],
+                ['customerReference', 'customerId', 'supplierId'],
+                $collection['id']
+            );
+        }
+
+        // FinancialStatement is omitted (no administrationId) — no dead scope.
+        $this->assertNotContains(
+            'FinancialStatement',
+            array_column($manifest['collections'], 'schema')
+        );
+
+    }//end testAccountantManifestIsReadOnlyAndAdministrationScoped()
+
+    /**
+     * Adding the accountant audience leaves customer/supplier manifests intact.
+     *
+     * Byte-for-byte snapshot of the existing manifests (task 3.1): no
+     * collection, scopeField or scopeClaim of the Wave-1 surfaces changed.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/portal-contribution/spec.md
+     */
+    public function testExistingManifestsAreUnchanged(): void
+    {
+        $customer = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
+        $supplier = $this->provider->getContribution(self::SUPPLIER_SUBJECT);
+
+        $this->assertSame(
+            ['invoices', 'projectInvoices', 'quotes', 'salesOrders', 'contracts'],
+            array_column($customer['collections'], 'id')
+        );
+        $this->assertSame(
+            ['purchaseOrders', 'supplierInvoices'],
+            array_column($supplier['collections'], 'id')
+        );
+
+    }//end testExistingManifestsAreUnchanged()
 }//end class

@@ -75,13 +75,14 @@ class PortalContributionProvider
      *
      * @return array<int, string> The audience identifiers.
      *
-     * @spec openspec/changes/portal-contribution/tasks.md#task-2
+     * @spec openspec/specs/portal-contribution/spec.md
      */
     public function getAudiences(): array
     {
         return [
             'customer',
             'supplier',
+            'accountant',
         ];
 
     }//end getAudiences()
@@ -130,6 +131,10 @@ class PortalContributionProvider
 
         if ($audience === 'supplier') {
             return $this->supplierManifest();
+        }
+
+        if ($audience === 'accountant') {
+            return $this->accountantManifest();
         }
 
         return null;
@@ -253,4 +258,104 @@ class PortalContributionProvider
         ];
 
     }//end supplierManifest()
+
+    /**
+     * The read-only accountant (external bookkeeper) review manifest.
+     *
+     * Unlike the customer/supplier surfaces — scoped by a party UUID on the
+     * row — an external accountant is authorised over a whole administration,
+     * so every collection scopes by the row's `administrationId` tenancy key
+     * matched against claims.shillinq.accountantAdministrationId (a multi-value
+     * claim: an accountant authorised for two client administrations carries
+     * both UUIDs, and portaliq's claim matching returns only those rows).
+     *
+     * The collections are the financial-review surfaces an external boekhouder
+     * opens to review and file the books: sales invoices (AR), purchase
+     * invoices (AP), the journal, the general ledger, the trial balance and
+     * the VAT returns. Every schema below was verified to declare an
+     * `administrationId` property so the scope resolves to a real field.
+     *
+     * DEVIATION (task 2.3 / REQ-SPC-011 no-dead-scope rule): the spec lists
+     * `financialStatements` (schema FinancialStatement) as a candidate
+     * collection, but no FinancialStatement definition in lib/Settings declares
+     * an `administrationId` property (its three fragments —
+     * checks-national-reporting{,-tail}.json, checks-ifrsusgaap.json — carry
+     * only reporting fields). Emitting it would be a dead/fail-open scope and a
+     * cross-administration-leakage risk, which REQ-SPC-011 forbids, so it is
+     * intentionally omitted until FinancialStatement carries administrationId.
+     * Adding it back is then pure manifest data (no contract change).
+     *
+     * Read-only this ADR-046 Wave: actions and notifications are empty. Write
+     * accountant collaboration (posting adjustments, correction requests) is a
+     * deliberately deferred later wave.
+     *
+     * @return array<string, mixed> The accountant manifest.
+     *
+     * @spec openspec/specs/portal-contribution/spec.md
+     */
+    private function accountantManifest(): array
+    {
+        return [
+            'label'         => 'Shillinq',
+            'collections'   => [
+                [
+                    'id'         => 'salesInvoices',
+                    'register'   => 'shillinq',
+                    'schema'     => 'ARInvoice',
+                    'scopeField' => 'administrationId',
+                    'scopeClaim' => 'accountantAdministrationId',
+                    'label'      => 'Sales invoices',
+                    'listable'   => true,
+                ],
+                [
+                    'id'         => 'purchaseInvoices',
+                    'register'   => 'shillinq',
+                    'schema'     => 'SupplierInvoice',
+                    'scopeField' => 'administrationId',
+                    'scopeClaim' => 'accountantAdministrationId',
+                    'label'      => 'Purchase invoices',
+                    'listable'   => true,
+                ],
+                [
+                    'id'         => 'journalEntries',
+                    'register'   => 'shillinq',
+                    'schema'     => 'JournalEntry',
+                    'scopeField' => 'administrationId',
+                    'scopeClaim' => 'accountantAdministrationId',
+                    'label'      => 'Journal entries',
+                    'listable'   => true,
+                ],
+                [
+                    'id'         => 'generalLedger',
+                    'register'   => 'shillinq',
+                    'schema'     => 'GLTransaction',
+                    'scopeField' => 'administrationId',
+                    'scopeClaim' => 'accountantAdministrationId',
+                    'label'      => 'General ledger',
+                    'listable'   => true,
+                ],
+                [
+                    'id'         => 'trialBalance',
+                    'register'   => 'shillinq',
+                    'schema'     => 'TrialBalance',
+                    'scopeField' => 'administrationId',
+                    'scopeClaim' => 'accountantAdministrationId',
+                    'label'      => 'Trial balance',
+                    'listable'   => true,
+                ],
+                [
+                    'id'         => 'vatReturns',
+                    'register'   => 'shillinq',
+                    'schema'     => 'VatReturn',
+                    'scopeField' => 'administrationId',
+                    'scopeClaim' => 'accountantAdministrationId',
+                    'label'      => 'VAT returns',
+                    'listable'   => true,
+                ],
+            ],
+            'actions'       => [],
+            'notifications' => [],
+        ];
+
+    }//end accountantManifest()
 }//end class
