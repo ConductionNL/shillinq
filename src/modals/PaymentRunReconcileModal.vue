@@ -14,7 +14,9 @@
  mismatch note shown inline.
 
  Modal isolation (hydra gate-13): this dialog lives in its own .vue file under
- src/modals/ and is imported by the PaymentRunDetailActions actions component.
+ src/modals/. It is launched declaratively from the PaymentRunDetail page's
+ `config.headerActions[]` (ADR-049 Phase-4) via a type:"open-modal" action
+ targeting this component's registry id ("PaymentRunReconcileModal").
 
  @spec openspec/changes/payment-run-sepa-export/specs/payment-run-sepa-export/spec.md
 -->
@@ -87,6 +89,12 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+		// Optional explicit run id. When launched declaratively from the
+		// PaymentRunDetail page's `config.headerActions[]` open-modal action
+		// (ADR-049 Phase-4), the modal is hosted at CnAppRoot level — outside
+		// the detail page's object-context provide — so no `@objectId` prop is
+		// interpolated. In that case `runId` falls back to the route's `:id`
+		// param (the modal is always mounted within the app router).
 		paymentRunId: {
 			type: String,
 			default: '',
@@ -102,6 +110,10 @@ export default {
 		}
 	},
 	computed: {
+		/** Effective run id: explicit prop wins, else the current route's :id. */
+		runId() {
+			return String(this.paymentRunId || this.$route?.params?.id || '')
+		},
 		resultClass() {
 			if (!this.result) {
 				return ''
@@ -133,7 +145,7 @@ export default {
 			this.result = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/shillinq/api/v1/payment-runs/${this.paymentRunId}/reconcile`),
+					generateUrl(`/apps/shillinq/api/v1/payment-runs/${this.runId}/reconcile`),
 					{ contents: this.fileContents },
 				)
 				this.result = response.data

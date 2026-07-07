@@ -105,8 +105,8 @@ class FinancialDashboardService
 
     /**
      * Monthly financial series over the resolved month window: turnover,
-     * costs, margin (EUR + %), billable vs non-billable hours and realized
-     * cashflow, one entry per month key.
+     * costs, margin (EUR + %), billable vs non-billable hours, billable
+     * percentage and realized cashflow, one entry per month key.
      *
      * @param string|null            $from Optional ISO-8601 lower bound.
      * @param string|null            $to   Optional ISO-8601 upper bound.
@@ -140,6 +140,7 @@ class FinancialDashboardService
             'marginPct'        => $series['marginPct'],
             'billableHours'    => $billable['billable'],
             'nonBillableHours' => $billable['nonBillable'],
+            'billablePct'      => $billable['pct'],
             'cashIn'           => $series['cashIn'],
             'cashOut'          => $series['cashOut'],
             'cashNet'          => $series['cashNet'],
