@@ -24,10 +24,7 @@ richer/more-constrained definition MUST win and the mapping MUST be recorded. Th
 
 ### Requirement: The generic Order slug is freed for the abstract primitive
 
-The booking-context order schema currently occupying `"slug": "Order"` in
-`bookings-deposit-to-invoice.json` MUST be renamed to a namespaced slug (e.g. `BookingOrder`)
-so that, under OpenRegister's global `lower(slug)` resolution, the generic `Order` slug
-becomes available for the abstract Order primitive introduced by `abstract-order-primitive`.
+The generic `Order` slug MUST be freed for the abstract Order primitive by renaming the booking-context order schema currently occupying `"slug": "Order"` in `bookings-deposit-to-invoice.json` to a namespaced slug (e.g. `BookingOrder`), so that under OpenRegister's global `lower(slug)` resolution the generic `Order` slug becomes available for the abstract Order primitive introduced by `abstract-order-primitive`.
 `SalesOrder` and `PurchaseOrder` MUST remain distinct schemas. The change MUST document the
 canonical order-family slug map (`Order` reserved for the abstract primitive; `SalesOrder`;
 `PurchaseOrder`; the renamed booking order) so the abstract primitive can be added without a
