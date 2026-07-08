@@ -7713,137 +7713,199 @@
 			"title": "Customer",
 			"config": {
 				"register": "shillinq",
-				"_note": "Customer master detail — the debtor record (legal/trade name, VAT/KvK, credit limit, payment terms, dunning policy). Outstanding invoices list the AR position for this customer; audit trail evidences master-data changes (credit limit, IBAN) for AR internal control.",
-				"relatedLists": [
-					{
-						"id": "customer-invoices",
-						"title": "Invoices",
-						"schema": "ARInvoice",
-						"filter": {
-							"customerId": "@self.id"
-						},
-						"columns": [
-							{
-								"key": "invoiceNumber",
-								"label": "Invoice #"
-							},
-							{
-								"key": "invoiceDate",
-								"label": "Date"
-							},
-							{
-								"key": "dueDate",
-								"label": "Due"
-							},
-							{
-								"key": "totalAmount",
-								"label": "Total (EUR)"
-							},
-							{
-								"key": "state",
-								"label": "Status"
-							}
-						],
-						"detailRoute": "ARInvoiceDetail"
-					}
-				],
-				"auditTrail": true,
 				"schema": "CustomerMaster",
-				"fields": [
-					{
-						"key": "customerNumber",
-						"label": "Customer #",
-						"type": "string"
-					},
-					{
-						"key": "name",
-						"label": "Legal Name",
-						"type": "string"
-					},
-					{
-						"key": "tradingName",
-						"label": "Trading Name",
-						"type": "string"
-					},
-					{
-						"key": "kvkNumber",
-						"label": "KvK Number",
-						"type": "string"
-					},
-					{
-						"key": "btwNumber",
-						"label": "BTW Number",
-						"type": "string"
-					},
-					{
-						"key": "paymentTermDays",
-						"label": "Payment Terms (days)",
-						"type": "integer"
-					},
-					{
-						"key": "defaultRevenueAccountNumber",
-						"label": "Default Revenue Account",
-						"type": "string"
-					},
-					{
-						"key": "creditLimit",
-						"label": "Credit Limit (EUR)",
-						"type": "number"
-					},
-					{
-						"key": "dunningPolicyRef",
-						"label": "Dunning Policy",
-						"type": "string"
-					},
-					{
-						"key": "peppolEndpoint",
-						"label": "Peppol Endpoint",
-						"type": "string"
-					},
-					{
-						"key": "email",
-						"label": "Email",
-						"type": "string"
-					},
-					{
-						"key": "phone",
-						"label": "Phone",
-						"type": "string"
-					},
-					{
-						"key": "lifecycleState",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "administrationId",
-						"label": "Administration",
-						"type": "string"
-					}
-				],
-				"lifecycleActions": true,
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/customers",
 				"indexRoute": "Customers",
-				"sidebarProps": {
-					"tabs": [
-						{
-							"id": "audit",
-							"label": "Audit Trail",
-							"icon": "HistoryIcon",
-							"order": 90,
-							"widgets": [
+				"_note": "Debtor master archetype — a customer that gets invoiced. Body leads with the schema-driven Data widget (legalName/tradeName, kvkNumber, vatID, iban, creditLimit, dunningPolicyRef — real CustomerMaster fields; the legacy page listed fabricated keys like customerNumber/name/tradingName/btwNumber/paymentTermDays/peppolEndpoint/phone that do not exist on this schema, fixed here) beside a Related panel. The AR position is the customer's whole reason to be here, so its invoices (ARInvoice filtered customerId=@objectId, rowRoute to ARInvoiceDetail) are the primary body list, with outstanding/open-invoice totals as summaryAggregates KPI chips. No comms leaves — CustomerMaster carries no email/talk linkedType beyond the plain email/telephone fields already in the Data widget. Audit trail evidences master-data changes (credit limit, IBAN) and stays in the sidebar per policy.",
+				"widgets": [
+					{
+						"id": "customer-identity",
+						"type": "data",
+						"title": "Company identity",
+						"icon": "OfficeBuilding",
+						"content": {
+							"columns": 2,
+							"include": [
+								"customerId",
+								"legalName",
+								"tradeName",
+								"kvkNumber",
+								"vatID",
+								"email",
+								"telephone"
+							]
+						}
+					},
+					{
+						"id": "customer-stats",
+						"type": "stats-block",
+						"title": "AR position",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
-									"type": "data",
-									"componentName": "openregister-audit-trail",
-									"props": {
-										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
-										"collapsed": true
-									}
+									"title": "Open invoices",
+									"register": "shillinq",
+									"schema": "ARInvoice",
+									"metric": "count",
+									"filter": {
+										"customerId": "@objectId",
+										"lifecycleState": "issued"
+									},
+									"route": "AccountsReceivable"
+								},
+								{
+									"title": "Overdue invoices",
+									"register": "shillinq",
+									"schema": "ARInvoice",
+									"metric": "count",
+									"filter": {
+										"customerId": "@objectId",
+										"lifecycleState": "overdue"
+									},
+									"route": "AccountsReceivable"
+								},
+								{
+									"title": "Outstanding (gross)",
+									"register": "shillinq",
+									"schema": "ARInvoice",
+									"metric": "sum",
+									"field": "grossAmount",
+									"filter": {
+										"customerId": "@objectId",
+										"lifecycleState": "overdue"
+									},
+									"format": "currency"
 								}
 							]
 						}
+					},
+					{
+						"id": "customer-finance",
+						"type": "data",
+						"title": "Finance & compliance",
+						"icon": "CurrencyEur",
+						"content": {
+							"columns": 2,
+							"include": [
+								"iban",
+								"creditLimit",
+								"dunningPolicyRef",
+								"defaultGlAccount",
+								"lifecycleState",
+								"administrationId",
+								"ublDebtorRef"
+							]
+						}
+					},
+					{
+						"id": "customer-related",
+						"type": "related",
+						"title": "Links",
+						"icon": "LinkVariant"
+					},
+					{
+						"id": "customer-invoices",
+						"type": "object-list",
+						"title": "Invoices",
+						"icon": "FileDocument",
+						"content": {
+							"register": "shillinq",
+							"schema": "ARInvoice",
+							"filter": {
+								"customerId": "@objectId"
+							},
+							"sort": {
+								"field": "dueDate",
+								"dir": "desc"
+							},
+							"limit": 20,
+							"columns": [
+								{
+									"key": "invoiceNumber",
+									"label": "Invoice #"
+								},
+								{
+									"key": "invoiceDate",
+									"label": "Date"
+								},
+								{
+									"key": "dueDate",
+									"label": "Due"
+								},
+								{
+									"key": "grossAmount",
+									"label": "Total (EUR)"
+								},
+								{
+									"key": "lifecycleState",
+									"label": "Status"
+								}
+							],
+							"rowRoute": "ARInvoiceDetail",
+							"viewAllRoute": "AccountsReceivable",
+							"viewAllQuery": {
+								"customerId": "@objectId"
+							},
+							"emptyText": "No invoices yet for this customer."
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "customer-identity",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 4
+					},
+					{
+						"id": "2",
+						"widgetId": "customer-stats",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 4
+					},
+					{
+						"id": "3",
+						"widgetId": "customer-finance",
+						"gridX": 0,
+						"gridY": 4,
+						"gridWidth": 8,
+						"gridHeight": 4
+					},
+					{
+						"id": "4",
+						"widgetId": "customer-related",
+						"gridX": 8,
+						"gridY": 4,
+						"gridWidth": 4,
+						"gridHeight": 4
+					},
+					{
+						"id": "5",
+						"widgetId": "customer-invoices",
+						"gridX": 0,
+						"gridY": 8,
+						"gridWidth": 12,
+						"gridHeight": 5
+					}
+				],
+				"lifecycleActions": true,
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [ { "type": "audit" } ]
+						}
 					]
-				},
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/customers"
+				}
 			}
 		},
 		{
@@ -7898,153 +7960,227 @@
 			"title": "AR Invoice",
 			"config": {
 				"register": "shillinq",
-				"_note": "AR Invoice detail — a receivable invoice (customer, totals, VAT, write-off, GL link). Dunning timeline and source document are shown (existing tabs); audit trail evidences state transitions and write-offs for AR internal control.",
-				"auditTrail": true,
 				"schema": "ARInvoice",
-				"sidebar": { "enabled": true },
-				"fields": [
-					{
-						"key": "invoiceNumber",
-						"label": "Invoice #",
-						"type": "string"
-					},
-					{
-						"key": "customerId",
-						"label": "Customer",
-						"type": "string"
-					},
-					{
-						"key": "invoiceDate",
-						"label": "Invoice Date",
-						"type": "date"
-					},
-					{
-						"key": "dueDate",
-						"label": "Due Date",
-						"type": "date"
-					},
-					{
-						"key": "currency",
-						"label": "Currency",
-						"type": "string"
-					},
-					{
-						"key": "totalAmount",
-						"label": "Total Amount",
-						"type": "number"
-					},
-					{
-						"key": "taxAmount",
-						"label": "Tax Amount",
-						"type": "number"
-					},
-					{
-						"key": "state",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "glTransactionId",
-						"label": "GL Transaction",
-						"type": "string"
-					},
-					{
-						"key": "writeOffReason",
-						"label": "Write-off Reason",
-						"type": "string"
-					},
-					{
-						"key": "writeOffGlTransactionId",
-						"label": "Write-off GL Transaction",
-						"type": "string"
-					},
-					{
-						"key": "sourceDocumentUri",
-						"label": "Source Document",
-						"type": "string"
-					},
-					{
-						"key": "administrationId",
-						"label": "Administration",
-						"type": "string"
-					}
-				],
-				"lifecycleActions": true,
+				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices",
 				"indexRoute": "AccountsReceivable",
-				"sidebarProps": {
-					"tabs": [
-						{
-							"id": "dunning",
-							"label": "Dunning Timeline",
-							"icon": "EmailAlertOutline",
-							"order": 10,
-							"widgets": [
+				"_note": "Billing-document archetype — a receivable invoice sent to a customer. Body leads with the invoice's own fields (schema-driven Data widget: number, type, dates, EN 16931 party/tax fields, the folded dunning/writeOff summary groups, GL link) beside a Related panel for the customerId FK. Dunning history uses the real credit-control schema DunningRun (filter factuurId=@objectId, rowRoute to the existing DunningRunDetail page) — the legacy sidebar tab pointed at an orphaned DunningRecord schema filtered on a non-existent 'invoiceRef' field (no index/detail page ever existed for it); this is a pre-existing bug fixed here. sourceDocumentUri is a docudesk PDF reference, so a Files leaf replaces the old bespoke docudesk-attachment-viewer sidebar tab. Totals surface as summaryAggregates KPI chips (gross/due/paid, all sums over the invoice's own field via filter id=@objectId, the established self-value idiom) plus a dunning-run count. No comms leaves — an invoice is a billing document, not a conversation. Audit trail moves to the sidebar per policy. Note: the EN 16931 invoiceLines are an array EMBEDDED directly on ARInvoice (no separate register/schema, no FK) so they cannot be expressed as an object-list widget without fabricating a relation; wishlist for nc-vue below.",
+				"widgets": [
+					{
+						"id": "invoice-document",
+						"type": "data",
+						"title": "Document",
+						"icon": "FileDocument",
+						"content": {
+							"columns": 2,
+							"include": [
+								"invoiceNumber",
+								"customerId",
+								"invoiceDate",
+								"dueDate",
+								"currency",
+								"periodId",
+								"lifecycleState",
+								"ublRef",
+								"sourceDocumentUri"
+							]
+						}
+					},
+					{
+						"id": "invoice-stats",
+						"type": "stats-block",
+						"title": "Invoice position",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
-									"type": "list",
+									"title": "Gross amount",
 									"register": "shillinq",
-									"schema": "DunningRecord",
+									"schema": "ARInvoice",
+									"metric": "sum",
+									"field": "grossAmount",
 									"filter": {
-										"invoiceRef": ":id"
+										"id": "@objectId"
 									},
-									"orderBy": "dispatchedAt asc",
-									"columns": [
-										{
-											"key": "reminderLevel",
-											"label": "Step"
-										},
-										{
-											"key": "dispatchedAt",
-											"label": "Dispatched"
-										},
-										{
-											"key": "channel",
-											"label": "Channel"
-										},
-										{
-											"key": "acknowledgedAt",
-											"label": "Acknowledged"
-										}
-									]
-								}
-							]
-						},
-						{
-							"id": "documents",
-							"label": "Source Document",
-							"icon": "FileDocumentOutline",
-							"order": 80,
-							"widgets": [
+									"format": "currency"
+								},
 								{
-									"type": "data",
-									"componentName": "docudesk-attachment-viewer",
-									"props": {
-										"uriField": "sourceDocumentUri",
-										"appField": "sourceDocumentApp",
-										"role": "invoice",
-										"fallbackMessage": "Source document unreachable — docudesk may be unavailable; retry later."
-									}
-								}
-							]
-						},
-						{
-							"id": "audit",
-							"label": "Audit Trail",
-							"icon": "HistoryIcon",
-							"order": 90,
-							"widgets": [
+									"title": "Amount due",
+									"register": "shillinq",
+									"schema": "ARInvoice",
+									"metric": "sum",
+									"field": "amountDue",
+									"filter": {
+										"id": "@objectId"
+									},
+									"format": "currency"
+								},
 								{
-									"type": "data",
-									"componentName": "openregister-audit-trail",
-									"props": {
-										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
-										"collapsed": true
-									}
+									"title": "Paid amount",
+									"register": "shillinq",
+									"schema": "ARInvoice",
+									"metric": "sum",
+									"field": "paidAmount",
+									"filter": {
+										"id": "@objectId"
+									},
+									"format": "currency"
+								},
+								{
+									"title": "Dunning runs",
+									"register": "shillinq",
+									"schema": "DunningRun",
+									"metric": "count",
+									"filter": {
+										"factuurId": "@objectId"
+									},
+									"route": "DunningRuns"
 								}
 							]
 						}
+					},
+					{
+						"id": "invoice-money",
+						"type": "data",
+						"title": "Money",
+						"icon": "CurrencyEur",
+						"content": {
+							"columns": 2,
+							"include": [
+								"grossAmount",
+								"vatAmount",
+								"netAmount",
+								"amountDue",
+								"paidAmount",
+								"glTransactionId",
+								"matchedBankLineId",
+								"administrationId"
+							]
+						}
+					},
+					{
+						"id": "invoice-related",
+						"type": "related",
+						"title": "Customer",
+						"icon": "LinkVariant"
+					},
+					{
+						"id": "invoice-dunning",
+						"type": "object-list",
+						"title": "Dunning history",
+						"icon": "Bell",
+						"content": {
+							"register": "shillinq",
+							"schema": "DunningRun",
+							"filter": {
+								"factuurId": "@objectId"
+							},
+							"sort": {
+								"field": "stageNr",
+								"dir": "asc"
+							},
+							"limit": 20,
+							"columns": [
+								{
+									"key": "stageNr",
+									"label": "Stage"
+								},
+								{
+									"key": "uitgevoerdOp",
+									"label": "Executed"
+								},
+								{
+									"key": "kanaal",
+									"label": "Channel"
+								},
+								{
+									"key": "deliveryStatus",
+									"label": "Delivery status"
+								},
+								{
+									"key": "incassokostenBedrag",
+									"label": "Collection costs"
+								}
+							],
+							"rowRoute": "DunningRunDetail",
+							"viewAllRoute": "DunningRuns",
+							"viewAllQuery": {
+								"factuurId": "@objectId"
+							},
+							"emptyText": "No dunning runs have been triggered for this invoice.",
+							"allowCreate": false
+						}
+					},
+					{
+						"id": "invoice-files",
+						"type": "integration",
+						"integrationId": "files",
+						"title": "Invoice PDF & attachments",
+						"icon": "FileDocument"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "invoice-document",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6
+					},
+					{
+						"id": "2",
+						"widgetId": "invoice-stats",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6
+					},
+					{
+						"id": "3",
+						"widgetId": "invoice-money",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 8,
+						"gridHeight": 4
+					},
+					{
+						"id": "4",
+						"widgetId": "invoice-related",
+						"gridX": 8,
+						"gridY": 6,
+						"gridWidth": 4,
+						"gridHeight": 4
+					},
+					{
+						"id": "5",
+						"widgetId": "invoice-dunning",
+						"gridX": 0,
+						"gridY": 10,
+						"gridWidth": 12,
+						"gridHeight": 4
+					},
+					{
+						"id": "6",
+						"widgetId": "invoice-files",
+						"gridX": 0,
+						"gridY": 14,
+						"gridWidth": 12,
+						"gridHeight": 3
+					}
+				],
+				"lifecycleActions": true,
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [ { "type": "audit" } ]
+						}
 					]
-				},
-				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices"
+				}
 			}
 		},
 		{
