@@ -5,7 +5,7 @@
     <name lang="en">Shillinq</name>
     <name lang="nl">Shillinq</name>
     <summary lang="en">Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations.</summary>
-    <summary lang="nl">Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations.</summary>
+    <summary lang="nl">Complete open-source bedrijfsadministratie voor zzp'ers, eenmanszaken, mkb en grotere ondernemingen.</summary>
     <description lang="en"><![CDATA[Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations. Combines bookkeeping, invoicing, procurement, and contract management into one self-hosted.
 
 **Key Features**
@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.9.9</version>
+    <version>0.9.10</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
