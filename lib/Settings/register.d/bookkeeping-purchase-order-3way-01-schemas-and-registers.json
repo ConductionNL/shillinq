@@ -33,6 +33,8 @@
           },
           "supplierId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "Payee",
             "description": "FK to the Vendor (supplier) the order is issued to.",
             "example": "vendor-001",
             "title": "Supplier ID"
@@ -315,6 +317,8 @@
         "properties": {
           "poId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "PurchaseOrder",
             "description": "FK to the parent PurchaseOrder.",
             "example": "po-1",
             "title": "PO ID"
@@ -469,7 +473,9 @@
             "type": "array",
             "description": "FK references to PurchaseOrder records this GRN receipts against (multi-PO supported, REQ-GRN-001).",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid",
+              "$ref": "PurchaseOrder"
             },
             "example": [
               "po-1"
@@ -669,12 +675,16 @@
         "properties": {
           "grnId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "GoodsReceiptNote",
             "description": "FK to the parent GoodsReceiptNote.",
             "example": "grn-1",
             "title": "Grn ID"
           },
           "poLineId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "PurchaseOrderLine",
             "description": "FK to the PurchaseOrderLine this receipt line settles against.",
             "example": "poline-1",
             "title": "PO Line ID"
@@ -757,6 +767,8 @@
           },
           "supplierId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "Payee",
             "description": "FK to the Vendor (supplier) that issued the invoice.",
             "example": "vendor-001",
             "title": "Supplier ID"
@@ -964,6 +976,8 @@
         "properties": {
           "invoiceId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "SupplierInvoice",
             "description": "FK to the SupplierInvoice being matched.",
             "example": "inv-1",
             "title": "Invoice ID"
@@ -973,7 +987,9 @@
             "description": "FK references to PurchaseOrder records the invoice matched against.",
             "nullable": true,
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid",
+              "$ref": "PurchaseOrder"
             },
             "example": [
               "po-1"
@@ -985,7 +1001,9 @@
             "description": "FK references to GoodsReceiptNote records the invoice matched against.",
             "nullable": true,
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid",
+              "$ref": "GoodsReceiptNote"
             },
             "example": [
               "grn-1"
@@ -1294,6 +1312,8 @@
         "properties": {
           "supplierId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "Payee",
             "description": "FK to the Vendor (supplier) the scorecard belongs to.",
             "example": "vendor-001",
             "title": "Supplier ID"

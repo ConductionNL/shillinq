@@ -63,12 +63,26 @@
 						"id": "resource-data",
 						"type": "data",
 						"title": "Resource details",
+						"icon": "Briefcase",
 						"content": { "columns": 2 }
+					},
+					{
+						"id": "resource-stats",
+						"type": "stats-block",
+						"title": "Utilisation",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{ "title": "Calendars", "register": "shillinq", "schema": "Calendar", "metric": "count", "filter": { "resource": "@objectId" }, "route": "Calendars" },
+								{ "title": "Bookings", "register": "shillinq", "schema": "Booking", "metric": "count", "filter": { "resource": "@objectId" }, "route": "BookingList" }
+							]
+						}
 					},
 					{
 						"id": "resource-calendars",
 						"type": "object-list",
 						"title": "Calendars",
+						"icon": "Calendar",
 						"content": {
 							"register": "shillinq",
 							"schema": "Calendar",
@@ -79,13 +93,17 @@
 								{ "key": "status", "label": "Status" }
 							],
 							"limit": 20,
-							"rowRoute": "CalendarDetail"
+							"rowRoute": "CalendarDetail",
+							"viewAllRoute": "Calendars",
+							"viewAllQuery": { "resource": "@objectId" },
+							"emptyText": "No calendars scheduled on this resource yet."
 						}
 					},
 					{
 						"id": "resource-bookings",
 						"type": "object-list",
 						"title": "Bookings",
+						"icon": "ClipboardList",
 						"content": {
 							"register": "shillinq",
 							"schema": "Booking",
@@ -99,18 +117,18 @@
 								{ "key": "status", "label": "Status" }
 							],
 							"limit": 20,
-							"rowRoute": "BookingDetail"
+							"rowRoute": "BookingDetail",
+							"viewAllRoute": "BookingList",
+							"viewAllQuery": { "resource": "@objectId" },
+							"emptyText": "No bookings placed against this resource yet."
 						}
 					}
 				],
 				"layout": [
-					{ "id": "1", "widgetId": "resource-data", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 4 },
-					{ "id": "2", "widgetId": "resource-calendars", "gridX": 0, "gridY": 4, "gridWidth": 6, "gridHeight": 5 },
-					{ "id": "3", "widgetId": "resource-bookings", "gridX": 6, "gridY": 4, "gridWidth": 6, "gridHeight": 5 }
-				],
-				"summaryAggregates": [
-					{ "label": "Calendars", "register": "shillinq", "schema": "Calendar", "metric": "count", "filter": { "resource": "@objectId" } },
-					{ "label": "Bookings", "register": "shillinq", "schema": "Booking", "metric": "count", "filter": { "resource": "@objectId" } }
+					{ "id": "1", "widgetId": "resource-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 6 },
+					{ "id": "2", "widgetId": "resource-stats", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 6 },
+					{ "id": "3", "widgetId": "resource-calendars", "gridX": 0, "gridY": 6, "gridWidth": 6, "gridHeight": 5 },
+					{ "id": "4", "widgetId": "resource-bookings", "gridX": 6, "gridY": 6, "gridWidth": 6, "gridHeight": 5 }
 				],
 				"indexRoute": "Resources",
 				"sidebar": {
@@ -154,17 +172,31 @@
 						"id": "calendar-data",
 						"type": "data",
 						"title": "Calendar details",
+						"icon": "Calendar",
 						"content": { "columns": 2 }
+					},
+					{
+						"id": "calendar-stats",
+						"type": "stats-block",
+						"title": "Utilisation",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{ "title": "Bookings", "register": "shillinq", "schema": "Booking", "metric": "count", "filter": { "calendar": "@objectId" }, "route": "BookingList" }
+							]
+						}
 					},
 					{
 						"id": "calendar-related",
 						"type": "related",
-						"title": "Resource"
+						"title": "Resource",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "calendar-bookings",
 						"type": "object-list",
 						"title": "Bookings",
+						"icon": "ClipboardList",
 						"content": {
 							"register": "shillinq",
 							"schema": "Booking",
@@ -178,17 +210,18 @@
 								{ "key": "status", "label": "Status" }
 							],
 							"limit": 20,
-							"rowRoute": "BookingDetail"
+							"rowRoute": "BookingDetail",
+							"viewAllRoute": "BookingList",
+							"viewAllQuery": { "calendar": "@objectId" },
+							"emptyText": "No bookings placed on this calendar yet."
 						}
 					}
 				],
 				"layout": [
-					{ "id": "1", "widgetId": "calendar-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 4 },
-					{ "id": "2", "widgetId": "calendar-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 4 },
-					{ "id": "3", "widgetId": "calendar-bookings", "gridX": 0, "gridY": 4, "gridWidth": 12, "gridHeight": 5 }
-				],
-				"summaryAggregates": [
-					{ "label": "Bookings", "register": "shillinq", "schema": "Booking", "metric": "count", "filter": { "calendar": "@objectId" } }
+					{ "id": "1", "widgetId": "calendar-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5 },
+					{ "id": "2", "widgetId": "calendar-stats", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 3 },
+					{ "id": "3", "widgetId": "calendar-related", "gridX": 8, "gridY": 3, "gridWidth": 4, "gridHeight": 2 },
+					{ "id": "4", "widgetId": "calendar-bookings", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 5 }
 				],
 				"indexRoute": "Calendars",
 				"sidebar": {
@@ -233,17 +266,19 @@
 						"id": "booking-data",
 						"type": "data",
 						"title": "Booking details",
+						"icon": "ClipboardList",
 						"content": { "columns": 2 }
 					},
 					{
 						"id": "booking-related",
 						"type": "related",
-						"title": "Calendar & resource"
+						"title": "Calendar & resource",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
-					{ "id": "1", "widgetId": "booking-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 4 },
-					{ "id": "2", "widgetId": "booking-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 4 }
+					{ "id": "1", "widgetId": "booking-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 6 },
+					{ "id": "2", "widgetId": "booking-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 6 }
 				],
 				"indexRoute": "BookingList",
 				"sidebar": {

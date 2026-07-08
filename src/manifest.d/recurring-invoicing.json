@@ -83,20 +83,71 @@
                 "indexRoute": "RecurringInvoiceProfiles",
                 "widgets": [
                     {
-                        "id": "profile-data",
+                        "id": "profile-schedule",
                         "type": "data",
-                        "title": "Profile details",
-                        "content": { "columns": 2 }
+                        "title": "Identity & schedule",
+                        "icon": "Calendar",
+                        "content": {
+                            "columns": 2,
+                            "include": [
+                                "name",
+                                "customerReference",
+                                "frequency",
+                                "interval",
+                                "startDate",
+                                "endCondition",
+                                "invoiceDay",
+                                "nextRunDate",
+                                "lastBillingPeriod",
+                                "remainingOccurrences",
+                                "status"
+                            ]
+                        }
+                    },
+                    {
+                        "id": "profile-stats",
+                        "type": "stats-block",
+                        "title": "Generation position",
+                        "icon": "ChartBar",
+                        "content": {
+                            "entries": [
+                                { "title": "Invoices generated", "register": "shillinq", "schema": "ARInvoice", "metric": "count", "filter": { "recurringProfileId": "@objectId" }, "route": "AccountsReceivable" },
+                                { "title": "Total billed", "register": "shillinq", "schema": "ARInvoice", "metric": "sum", "field": "grossAmount", "filter": { "recurringProfileId": "@objectId" }, "format": "currency" }
+                            ]
+                        }
+                    },
+                    {
+                        "id": "profile-billing",
+                        "type": "data",
+                        "title": "Billing & delivery",
+                        "icon": "Cash",
+                        "content": {
+                            "columns": 2,
+                            "include": [
+                                "issueMode",
+                                "deliveryChannel",
+                                "paymentTermsDays",
+                                "indexationPercent",
+                                "sepaCollection",
+                                "contractReference",
+                                "currency",
+                                "administrationId",
+                                "lastRunStatus",
+                                "lastRunError"
+                            ]
+                        }
                     },
                     {
                         "id": "profile-related",
                         "type": "related",
-                        "title": "Links"
+                        "title": "Links",
+                        "icon": "LinkVariant"
                     },
                     {
                         "id": "profile-invoices",
                         "type": "object-list",
                         "title": "Generated invoices",
+                        "icon": "FileDocument",
                         "content": {
                             "register": "shillinq",
                             "schema": "ARInvoice",
@@ -109,18 +160,20 @@
                                 { "key": "grossAmount", "label": "Total (EUR)" },
                                 { "key": "lifecycleState", "label": "Status" }
                             ],
-                            "rowRoute": "ARInvoiceDetail"
+                            "rowRoute": "ARInvoiceDetail",
+                            "viewAllRoute": "AccountsReceivable",
+                            "viewAllQuery": { "recurringProfileId": "@objectId" },
+                            "emptyText": "No invoices generated yet from this profile.",
+                            "allowCreate": false
                         }
                     }
                 ],
                 "layout": [
-                    { "id": "1", "widgetId": "profile-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5 },
-                    { "id": "2", "widgetId": "profile-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },
-                    { "id": "3", "widgetId": "profile-invoices", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 5 }
-                ],
-                "summaryAggregates": [
-                    { "label": "Invoices generated", "register": "shillinq", "schema": "ARInvoice", "metric": "count", "filter": { "recurringProfileId": "@objectId" } },
-                    { "label": "Total billed", "register": "shillinq", "schema": "ARInvoice", "metric": "sum", "field": "grossAmount", "filter": { "recurringProfileId": "@objectId" }, "format": "currency" }
+                    { "id": "1", "widgetId": "profile-schedule", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 6 },
+                    { "id": "2", "widgetId": "profile-stats", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 6 },
+                    { "id": "3", "widgetId": "profile-billing", "gridX": 0, "gridY": 6, "gridWidth": 8, "gridHeight": 5 },
+                    { "id": "4", "widgetId": "profile-related", "gridX": 8, "gridY": 6, "gridWidth": 4, "gridHeight": 5 },
+                    { "id": "5", "widgetId": "profile-invoices", "gridX": 0, "gridY": 11, "gridWidth": 12, "gridHeight": 5 }
                 ],
                 "lifecycleActions": true,
                 "sidebar": {
