@@ -7,7 +7,12 @@
  type, and status columns. Supports filtering by date range, status, and
  type, and exposes a "Create Transaction" action for bookkeepers.
 
+ Migrated from a hand-rolled <table> to the shared nc-vue CnDataTable
+ universal-list-widget (columns + :rows + #cell-* slots + empty-label);
+ the date-range/status/type filters and the create action are unchanged.
+
  @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-21
+ @spec openspec/changes/migrate-list-views-to-cndatatable/specs/list-views-cndatatable/spec.md
 -->
 <template>
 	<NcAppContent>
@@ -50,42 +55,23 @@
 				</label>
 			</div>
 
-			<NcEmptyContent v-if="!loading && transactions.length === 0"
-				:name="t('shillinq', 'No transactions')"
-				:description="t('shillinq', 'Create the first transaction to start posting to the books.')" />
-
-			<table v-else-if="!loading" class="wbso-transactions__table">
-				<thead>
-					<tr>
-						<th>{{ t('shillinq', 'Transaction Date') }}</th>
-						<th>{{ t('shillinq', 'Number') }}</th>
-						<th>{{ t('shillinq', 'Type') }}</th>
-						<th>{{ t('shillinq', 'Description') }}</th>
-						<th class="wbso-transactions__cell--amount">
-							{{ t('shillinq', 'Amount') }}
-						</th>
-						<th>{{ t('shillinq', 'Status') }}</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="row in transactions" :key="row.id || row.transactionNumber">
-						<td>{{ row.transactionDate }}</td>
-						<td>{{ row.transactionNumber }}</td>
-						<td>{{ row.transactionType }}</td>
-						<td>{{ row.description }}</td>
-						<td class="wbso-transactions__cell--amount">
-							{{ formatAmount(row.amount) }}
-						</td>
-						<td>
-							<span :data-status="row.status">{{ translateStatus(row.status) }}</span>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-
-			<div v-else class="wbso-transactions__loading">
+			<div v-if="loading" class="wbso-transactions__loading">
 				{{ t('shillinq', 'Loading…') }}
 			</div>
+
+			<CnDataTable
+				v-else
+				class="wbso-transactions__table"
+				:columns="columns"
+				:rows="transactions"
+				:empty-label="t('shillinq', 'Create the first transaction to start posting to the books.')">
+				<template #cell-amount="{ row }">
+					<span class="wbso-transactions__cell--amount">{{ formatAmount(row.amount) }}</span>
+				</template>
+				<template #cell-status="{ row }">
+					<span :data-status="row.status">{{ translateStatus(row.status) }}</span>
+				</template>
+			</CnDataTable>
 
 			<p v-if="errorMessage" class="wbso-transactions__error" role="alert">
 				{{ errorMessage }}
@@ -95,7 +81,8 @@
 </template>
 
 <script>
-import { NcAppContent, NcButton, NcEmptyContent } from '@nextcloud/vue'
+import { CnDataTable } from '@conduction/nextcloud-vue'
+import { NcAppContent, NcButton } from '@nextcloud/vue'
 import { generateOcsUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 
@@ -103,9 +90,9 @@ export default {
 	name: 'TransactionsView',
 
 	components: {
+		CnDataTable,
 		NcAppContent,
 		NcButton,
-		NcEmptyContent,
 	},
 
 	data() {
@@ -121,6 +108,25 @@ export default {
 				dateTo: '',
 			},
 		}
+	},
+
+	computed: {
+		/**
+		 * CnDataTable column definitions for the transactions list.
+		 *
+		 * @spec openspec/specs/list-views-cndatatable/spec.md
+		 * @return {Array<object>} ordered column defs
+		 */
+		columns() {
+			return [
+				{ key: 'transactionDate', label: t('shillinq', 'Transaction Date'), sortable: true },
+				{ key: 'transactionNumber', label: t('shillinq', 'Number'), sortable: true },
+				{ key: 'transactionType', label: t('shillinq', 'Type'), sortable: true },
+				{ key: 'description', label: t('shillinq', 'Description'), sortable: true },
+				{ key: 'amount', label: t('shillinq', 'Amount'), sortable: true, align: 'right' },
+				{ key: 'status', label: t('shillinq', 'Status'), sortable: true },
+			]
+		},
 	},
 
 	mounted() {
@@ -178,43 +184,40 @@ export default {
 .wbso-transactions {
 	padding: 1rem;
 }
+
 .wbso-transactions__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 1rem;
 }
+
 .wbso-transactions__filters {
 	display: flex;
 	gap: 1rem;
 	flex-wrap: wrap;
 	margin-bottom: 1rem;
 }
+
 .wbso-transactions__filters label {
 	display: flex;
 	flex-direction: column;
 	font-size: 0.9rem;
 }
-.wbso-transactions__table {
-	width: 100%;
-	border-collapse: collapse;
-}
-.wbso-transactions__table th,
-.wbso-transactions__table td {
-	padding: 0.5rem;
-	border-bottom: 1px solid var(--color-border);
-	text-align: left;
-}
+
 .wbso-transactions__cell--amount {
 	text-align: right;
 }
+
 .wbso-transactions__error {
 	color: var(--color-error);
 }
-[data-status="posted"] {
+
+[data-status='posted'] {
 	font-weight: bold;
 }
-[data-status="reversed"] {
+
+[data-status='reversed'] {
 	color: var(--color-error);
 }
 </style>

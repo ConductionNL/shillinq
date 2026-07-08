@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Minimal structural XSD for the Dutch Auditfile Financieel (XAF 3.2).
+
+  This is NOT the full official XAF 3.2 schema (which the Belastingdienst /
+  XBRL Nederland publish separately and which is not bundled offline). It is a
+  focused structural schema over the subset of blocks the shillinq
+  XafAuditfileGenerator emits — the mandatory header / company / generalLedger /
+  customersSuppliers / transactions skeleton under the XAF 3.2 namespace — so a
+  PHPUnit test can assert the generated document is schema-valid and correctly
+  namespaced (REQ-MA-011). It is intentionally permissive on the leaf content it
+  does not constrain; full official-XSD conformance is a separate concern.
+
+  SPDX-FileCopyrightText: 2026 Conduction B.V.
+  SPDX-License-Identifier: EUPL-1.2
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://www.auditfiles.nl/XAF/3.2"
+           targetNamespace="http://www.auditfiles.nl/XAF/3.2"
+           elementFormDefault="qualified">
+
+  <xs:element name="auditfile">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="header" type="headerType"/>
+        <xs:element name="company" type="companyType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="headerType">
+    <xs:sequence>
+      <xs:element name="fiscalYear" type="xs:string"/>
+      <xs:element name="startDate" type="xs:date"/>
+      <xs:element name="endDate" type="xs:date"/>
+      <xs:element name="curCode" type="xs:string"/>
+      <xs:element name="dateCreated" type="xs:date" minOccurs="0"/>
+      <xs:element name="softwareDesc" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="companyType">
+    <xs:sequence>
+      <xs:element name="companyName" type="xs:string"/>
+      <xs:element name="companyIdent" type="xs:string"/>
+      <xs:element name="currencyCode" type="xs:string"/>
+      <xs:element name="generalLedger" type="generalLedgerType"/>
+      <xs:element name="customersSuppliers" type="customersSuppliersType"/>
+      <xs:element name="transactions" type="transactionsType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="generalLedgerType">
+    <xs:sequence>
+      <xs:element name="ledgerAccount" type="ledgerAccountType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ledgerAccountType">
+    <xs:sequence>
+      <xs:element name="accID" type="xs:string"/>
+      <xs:element name="accDesc" type="xs:string"/>
+      <xs:element name="accTp" type="xs:string"/>
+      <xs:element name="leadReference" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="customersSuppliersType">
+    <xs:sequence>
+      <xs:element name="customerSupplier" type="customerSupplierType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="customerSupplierType">
+    <xs:sequence>
+      <xs:element name="custSupID" type="xs:string"/>
+      <xs:element name="custSupTp" type="xs:string"/>
+      <xs:element name="companyName" type="xs:string"/>
+      <xs:element name="companyIdent" type="xs:string" minOccurs="0"/>
+      <xs:element name="taxRegistration" type="taxRegistrationType" minOccurs="0"/>
+      <xs:element name="contact" type="contactType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="taxRegistrationType">
+    <xs:sequence>
+      <xs:element name="taxRegIdent" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="contactType">
+    <xs:sequence>
+      <xs:element name="eMail" type="xs:string" minOccurs="0"/>
+      <xs:element name="telephone" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="transactionsType">
+    <xs:sequence>
+      <xs:element name="linesCount" type="xs:integer" minOccurs="0"/>
+      <xs:element name="transactionCount" type="xs:integer" minOccurs="0"/>
+      <xs:element name="journal" type="journalType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="journalType">
+    <xs:sequence>
+      <xs:element name="jrnID" type="xs:string"/>
+      <xs:element name="desc" type="xs:string" minOccurs="0"/>
+      <xs:element name="jrnTp" type="xs:string" minOccurs="0"/>
+      <xs:element name="transaction" type="transactionType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="transactionType">
+    <xs:sequence>
+      <xs:element name="nr" type="xs:string"/>
+      <xs:element name="desc" type="xs:string" minOccurs="0"/>
+      <xs:element name="trDt" type="xs:string" minOccurs="0"/>
+      <xs:element name="trLine" type="trLineType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="trLineType">
+    <xs:sequence>
+      <xs:element name="nr" type="xs:string" minOccurs="0"/>
+      <xs:element name="accID" type="xs:string"/>
+      <xs:element name="desc" type="xs:string" minOccurs="0"/>
+      <xs:element name="amnt" type="xs:decimal"/>
+      <xs:element name="amntTp" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

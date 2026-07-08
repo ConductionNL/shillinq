@@ -98,7 +98,7 @@ const NON_BOOKKEEPING = new Set([
 	'InventoryValuation',
 	'InventoryVarianceReason',
 	'MobileScannerSyncBatch',
-	'Order',
+	'BookingOrder',
 	'OrderPick',
 	'ExpiryAlert',
 	'StockMove',

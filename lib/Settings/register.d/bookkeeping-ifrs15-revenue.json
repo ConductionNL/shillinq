@@ -14,7 +14,7 @@
         "version": "0.1.0",
         "title": "Contract",
         "description": "A customer contract under IFRS 15 — the legal instrument that bundles one or more performance obligations (REQ-IFRS15-001). Carries identification, dates, the decomposed transaction price (fixed + estimated variable), currency, the signed-at date, the originating quote/order reference, and a contractGroupId for IFRS 15.17 combination-of-contracts treatment (REQ-IFRS15-011). Contracts are first-class entities with their own lifecycle and modification history; they are never embedded in GL transactions or invoice rows.",
-        "x-schema-org": "schema:CreativeWork",
+        "x-schema-org": "schema:Contract",
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,

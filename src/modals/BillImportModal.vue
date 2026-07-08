@@ -5,8 +5,9 @@
  BillImportModal — shillinq-bill-import-modal.
 
  A two-step NcDialog launched from the Financial overview dashboard's
- "Import bill" action (FinancialDashboardActions.vue), so the bookkeeper
- records a supplier invoice without losing the dashboard context.
+ "Import bill" action — a declarative `config.headerActions[]` open-modal
+ action (ADR-049 Phase-4) targeting this component's registry id — so the
+ bookkeeper records a supplier invoice without losing the dashboard context.
 
  Step 1 (Upload): drag-and-drop or file-picker for a UBL/e-invoice XML or
  CSV (REQ-BIM-001). The upload POSTs to /api/v1/supplier-invoices/import,
@@ -23,9 +24,9 @@
  payables widget reloads without navigation (REQ-BIM-004).
 
  Modal isolation (hydra gate-13): this dialog lives in its own .vue file
- under src/modals/ and is imported by FinancialDashboardActions.vue. The
- non-trivial logic lives in the sibling billImportModal.js so it is unit
- testable without the SFC.
+ under src/modals/ and is registered as a kind:"modal" so the dashboard
+ headerAction's open-modal `target` resolves it. The non-trivial logic
+ lives in the sibling billImportModal.js so it is unit testable without the SFC.
 
  @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
 -->

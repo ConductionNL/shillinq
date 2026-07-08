@@ -92,9 +92,9 @@ class FinancialDashboardController extends Controller
      *
      * Without a range the trailing 12 months are returned (the widgets'
      * fallback window). Returns HTTP 200 with { months, revenue, costs,
-     * margin, marginPct, billableHours, nonBillableHours, cashIn, cashOut,
-     * cashNet }; HTTP 400 on malformed bounds; HTTP 500 without a stack
-     * trace on an unexpected failure.
+     * margin, marginPct, billableHours, nonBillableHours, billablePct,
+     * cashIn, cashOut, cashNet }; HTTP 400 on malformed bounds; HTTP 500
+     * without a stack trace on an unexpected failure.
      *
      * @return JSONResponse The series payload.
      *

@@ -12,6 +12,7 @@
 -->
 <template>
 	<CnAppRoot
+		:ai-companion="true"
 		:manifest="manifest"
 		:page-types="pageTypes"
 		:custom-components="customComponents"

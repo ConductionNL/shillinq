@@ -20,6 +20,7 @@
     "test:coverage-ratchet": "npm run test:coverage && bash tests/coverage-ratchet.sh vitest coverage-vitest/coverage-summary.json",
     "check:manifest": "node tests/validate-manifest.js",
     "check:registers": "node tests/validate-registers.js",
+    "check:markers": "node tests/validate-semantic-markers.js",
     "test:e2e": "playwright test",
     "test:e2e:docs": "playwright test --project docs-capture",
     "test:e2e:install": "playwright install chromium",

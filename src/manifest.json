@@ -5115,24 +5115,31 @@
 			"route": "/",
 			"type": "dashboard",
 			"title": "Financial overview",
-			"actionsComponent": "FinancialDashboardActions",
 			"slots": {
-				"widget-turnover": "FinanceKpiCardWidget",
-				"widget-margin": "FinanceKpiCardWidget",
-				"widget-debtors": "FinanceKpiCardWidget",
-				"widget-creditors": "FinanceKpiCardWidget",
-				"widget-billable": "FinanceKpiCardWidget",
-				"widget-cash": "FinanceKpiCardWidget",
-				"widget-turnover-chart": "TurnoverChartWidget",
-				"widget-margin-chart": "MarginChartWidget",
-				"widget-cashflow-chart": "CashflowChartWidget",
-				"widget-billable-hours-chart": "BillableHoursChartWidget",
-				"widget-open-debtors": "OpenInvoicesTableWidget",
-				"widget-open-creditors": "OpenInvoicesTableWidget"
+				"widget-cashflow-chart": "CashflowChartWidget"
 			},
 			"config": {
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/financial-overview",
 				"description": "Live financial position of the company from the bookkeeping register",
+				"headerActions": [
+					{
+						"id": "import-bill",
+						"label": "Import bill",
+						"type": "open-modal",
+						"target": "BillImportModal",
+						"icon": "InboxArrowDown",
+						"props": { "open": true }
+					},
+					{
+						"id": "create-invoice",
+						"label": "Create invoice",
+						"type": "open-modal",
+						"target": "InvoiceQuickDraftModal",
+						"icon": "FileDocumentPlus",
+						"variant": "primary",
+						"props": { "open": true }
+					}
+				],
 				"dateRange": {
 					"enabled": true,
 					"showHeaderPicker": false,
@@ -5167,73 +5174,222 @@
 					{
 						"id": "turnover",
 						"title": "Turnover",
-						"type": "custom"
+						"type": "stat",
+						"content": {
+							"label": "Turnover",
+							"icon": "CashMultiple",
+							"format": { "style": "currency", "currency": "EUR", "decimals": 0 },
+							"endpointSource": {
+								"url": "/apps/shillinq/api/dashboard/financial-summary",
+								"params": { "from": "@workspace.dateFrom?", "to": "@workspace.dateTo?" }
+							},
+							"valueField": "current.turnover",
+							"previousField": "previousPeriod.turnover",
+							"clickRoute": "AccountsReceivable"
+						}
 					},
 					{
 						"id": "margin",
 						"title": "Margin",
-						"type": "custom"
+						"type": "stat",
+						"content": {
+							"label": "Margin",
+							"icon": "TrendingUp",
+							"format": { "style": "currency", "currency": "EUR", "decimals": 0 },
+							"endpointSource": {
+								"url": "/apps/shillinq/api/dashboard/financial-summary",
+								"params": { "from": "@workspace.dateFrom?", "to": "@workspace.dateTo?" }
+							},
+							"valueField": "current.margin",
+							"previousField": "previousPeriod.margin",
+							"variantWhen": [ { "op": "lt", "value": 0, "variant": "error", "icon": "TrendingDown" } ]
+						}
 					},
 					{
 						"id": "debtors",
 						"title": "Open debtors",
-						"type": "custom"
+						"type": "stat",
+						"content": {
+							"label": "Open debtors",
+							"icon": "CurrencyEur",
+							"format": { "style": "currency", "currency": "EUR", "decimals": 0 },
+							"endpointSource": {
+								"url": "/apps/shillinq/api/dashboard/financial-summary",
+								"params": { "from": "@workspace.dateFrom?", "to": "@workspace.dateTo?" }
+							},
+							"valueField": "current.openDebtors.amount",
+							"clickRoute": "AccountsReceivable"
+						}
 					},
 					{
 						"id": "creditors",
 						"title": "Open creditors",
-						"type": "custom"
+						"type": "stat",
+						"content": {
+							"label": "Open creditors",
+							"icon": "Briefcase",
+							"format": { "style": "currency", "currency": "EUR", "decimals": 0 },
+							"endpointSource": {
+								"url": "/apps/shillinq/api/dashboard/financial-summary",
+								"params": { "from": "@workspace.dateFrom?", "to": "@workspace.dateTo?" }
+							},
+							"valueField": "current.openCreditors.amount",
+							"clickRoute": "SupplierInvoices"
+						}
 					},
 					{
 						"id": "billable",
 						"title": "Billable",
-						"type": "custom"
+						"type": "stat",
+						"content": {
+							"label": "Billable",
+							"icon": "Percent",
+							"format": { "style": "percent", "decimals": 0 },
+							"endpointSource": {
+								"url": "/apps/shillinq/api/dashboard/financial-summary",
+								"params": { "from": "@workspace.dateFrom?", "to": "@workspace.dateTo?" }
+							},
+							"valueField": "current.billablePct",
+							"previousField": "previousPeriod.billablePct"
+						}
 					},
 					{
 						"id": "cash",
 						"title": "Cash position",
-						"type": "custom"
+						"type": "stat",
+						"content": {
+							"label": "Cash position",
+							"icon": "Cash",
+							"format": { "style": "currency", "currency": "EUR", "decimals": 0 },
+							"endpointSource": {
+								"url": "/apps/shillinq/api/dashboard/financial-summary",
+								"params": { "from": "@workspace.dateFrom?", "to": "@workspace.dateTo?" }
+							},
+							"valueField": "current.cashPosition",
+							"variantWhen": [ { "op": "lt", "value": 0, "variant": "error" } ],
+							"clickRoute": "CashflowDashboard"
+						}
 					},
 					{
 						"id": "turnover-chart",
 						"title": "Turnover per month",
-						"type": "custom",
-						"iconClass": "icon-quota"
+						"type": "chart",
+						"iconClass": "icon-quota",
+						"content": {
+							"chartKind": "bar",
+							"height": 260,
+							"legend": false,
+							"valueFormat": "currency",
+							"endpointSource": {
+								"url": "/apps/shillinq/api/dashboard/financial-series",
+								"params": { "from": "@workspace.dateFrom?", "to": "@workspace.dateTo?" },
+								"labelsPath": "months",
+								"series": [ { "name": "Turnover", "path": "revenue" } ]
+							}
+						}
 					},
 					{
 						"id": "margin-chart",
 						"title": "Margin per month",
-						"type": "custom",
-						"iconClass": "icon-quota"
+						"type": "chart",
+						"iconClass": "icon-quota",
+						"content": {
+							"chartKind": "line",
+							"height": 240,
+							"valueFormat": "currency",
+							"endpointSource": {
+								"url": "/apps/shillinq/api/dashboard/financial-series",
+								"params": { "from": "@workspace.dateFrom?", "to": "@workspace.dateTo?" },
+								"labelsPath": "months",
+								"series": [
+									{ "name": "Revenue", "path": "revenue" },
+									{ "name": "Costs", "path": "costs" },
+									{ "name": "Margin", "path": "margin" },
+									{ "name": "Margin %", "path": "marginPct" }
+								]
+							},
+							"views": [
+								{ "key": "value", "label": "€", "series": [ "Revenue", "Costs", "Margin" ], "valueFormat": "currency" },
+								{ "key": "pct", "label": "%", "series": [ "Margin %" ], "valueFormat": "percent" }
+							]
+						}
 					},
 					{
 						"id": "cashflow-chart",
 						"title": "Cashflow",
 						"type": "custom",
-						"iconClass": "icon-category-monitoring"
+						"iconClass": "icon-category-monitoring",
+						"_note": "ADR-049 Phase-4: kept CUSTOM. CashflowChartWidget merges realized GL cashflow with the 13-week CashflowWeek forecast (two sources) into one chart with dimmed projection columns — a two-source transform not expressible via a single declarative endpointSource. Rendered through the page slot widget-cashflow-chart -> CashflowChartWidget."
 					},
 					{
 						"id": "billable-hours-chart",
 						"title": "Billable hours",
-						"type": "custom",
-						"iconClass": "icon-history"
+						"type": "chart",
+						"iconClass": "icon-history",
+						"content": {
+							"chartKind": "bar",
+							"height": 240,
+							"endpointSource": {
+								"url": "/apps/shillinq/api/dashboard/financial-series",
+								"params": { "from": "@workspace.dateFrom?", "to": "@workspace.dateTo?" },
+								"labelsPath": "months",
+								"series": [
+									{ "name": "Billable", "path": "billableHours" },
+									{ "name": "Non-billable", "path": "nonBillableHours" },
+									{ "name": "Billable %", "path": "billablePct" }
+								]
+							},
+							"views": [
+								{ "key": "total", "label": "Hours", "series": [ "Billable", "Non-billable" ] },
+								{ "key": "pct", "label": "%", "series": [ "Billable %" ], "valueFormat": "percent" }
+							]
+						}
 					},
 					{
 						"id": "open-debtors",
 						"title": "Open debtors",
-						"type": "custom",
+						"type": "object-table",
 						"iconClass": "icon-toggle-filelist",
-						"props": {
-							"kind": "debtors"
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "ARInvoice",
+								"filter": { "state": [ "issued", "overdue" ] },
+								"order": { "dueDate": "asc" },
+								"limit": 8
+							},
+							"rowRoute": "ARInvoiceDetail",
+							"emptyText": "No open debtor invoices — everything is paid.",
+							"columns": [
+								{ "key": "invoiceNumber", "label": "Invoice" },
+								{ "key": "customerId", "label": "Customer" },
+								{ "key": "dueDate", "label": "Due date", "formatter": "daysUntil" },
+								{ "key": "totalAmount", "label": "Amount", "formatter": "currency", "formatterOptions": { "currency": "EUR", "decimals": 2 } },
+								{ "key": "state", "label": "Status", "widget": "badge" }
+							]
 						}
 					},
 					{
 						"id": "open-creditors",
 						"title": "Open creditors",
-						"type": "custom",
+						"type": "object-table",
 						"iconClass": "icon-toggle-filelist",
-						"props": {
-							"kind": "creditors"
+						"content": {
+							"source": {
+								"register": "shillinq",
+								"schema": "APTransaction",
+								"filter": { "state": [ "received", "issued", "partially-paid", "overdue" ] },
+								"order": { "dueDate": "asc" },
+								"limit": 8
+							},
+							"emptyText": "No open creditor invoices — nothing due.",
+							"columns": [
+								{ "key": "invoiceNumber", "label": "Invoice" },
+								{ "key": "vendorId", "label": "Vendor" },
+								{ "key": "dueDate", "label": "Due date", "formatter": "daysUntil" },
+								{ "key": "totalAmount", "label": "Amount", "formatter": "currency", "formatterOptions": { "currency": "EUR", "decimals": 2 } },
+								{ "key": "state", "label": "Status", "widget": "badge" }
+							]
 						}
 					}
 				],

@@ -46,7 +46,10 @@ async function dismissWizard(page: Page): Promise<void> {
 async function openModal(page: Page): Promise<boolean> {
 	await page.goto(`${APP}${ROUTE_FINANCIAL}`)
 	await dismissWizard(page)
-	const importBill = page.locator('[data-testid="fda-import-bill"]')
+	// ADR-049 Phase-4: the "Import bill" launcher is now a declarative
+	// dashboard `config.headerActions[]` open-modal action (id: import-bill),
+	// rendered by CnActionButtons with the testid `cn-action-<id>`.
+	const importBill = page.locator('[data-testid="cn-action-import-bill"]')
 	if (!(await importBill.isVisible().catch(() => false))) {
 		return false
 	}

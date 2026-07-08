@@ -1,14 +1,14 @@
 {
   "info": {
-    "version": "0.1.0-bookings-deposit-to-invoice"
+    "version": "0.1.1-bookings-deposit-to-invoice"
   },
   "components": {
     "schemas": {
-      "Order": {
-        "slug": "Order",
+      "BookingOrder": {
+        "slug": "BookingOrder",
         "icon": "CalendarCheckOutline",
         "version": "0.4.0",
-        "title": "Order",
+        "title": "Booking Order",
         "description": "Base order/agreement primitive. Concrete kinds (booking, sales, purchase, grant, engagement, quote, blanket) discriminate via `orderType` and extend with their own tail; payments (deposits, disbursements) and lines are related objects (Payment / OrderLine), not fields. Booking orders (orderType=booking) keep the completed → invoiced lifecycle: on completion a final Invoice is materialised and linked via invoiceId; on cancellation after invoicing a reversing CreditNote is materialised (REQ-DI-001/002).",
         "x-schema-org": "schema:Order",
         "x-openregister-purpose": "fact",
@@ -547,7 +547,7 @@
         "x-openregister-relations": {
           "order": {
             "localField": "orderId",
-            "relatedSchema": "Order",
+            "relatedSchema": "BookingOrder",
             "relatedField": "orderId",
             "cardinality": "many-to-one",
             "description": "The source booking order."
@@ -802,7 +802,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Order",
+        "schema": "BookingOrder",
         "slug": "bookings-d2i-order-ord-1001"
       },
       "administrationId": "adm-1",

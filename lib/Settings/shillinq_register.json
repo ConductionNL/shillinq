@@ -3,7 +3,7 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.6.0"
+    "version": "0.6.1"
   },
   "x-openregister": {
     "type": "application",
@@ -15220,6 +15220,110 @@
             "nullable": true,
             "example": null,
             "title": "Repayment Plan ID"
+          },
+          "subsidieRegeling": {
+            "type": "string",
+            "enum": [
+              "mit",
+              "sbir",
+              "eu-horizon",
+              "efro",
+              "react-eu",
+              "other"
+            ],
+            "description": "R&D subsidie regeling variant. When set, per-regeling kostencategorie constraints (REQ-RDS-002) apply to linked Kostenpost records. Per REQ-RDS-001.",
+            "nullable": true,
+            "example": "eu-horizon",
+            "title": "Subsidie Regeling"
+          },
+          "approvingAuthority": {
+            "type": "string",
+            "nullable": true,
+            "description": "Issuing municipality/ministry.",
+            "title": "Approving Authority"
+          },
+          "attachmentUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "docudesk reference to the beschikking.",
+            "title": "Attachment URI"
+          },
+          "awardAmount": {
+            "type": "number",
+            "description": "Awarded amount (MonetaryAmount).",
+            "example": 25000,
+            "title": "Award Amount"
+          },
+          "awardDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "When the grant was awarded.",
+            "title": "Award Date"
+          },
+          "budgetYear": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Fiscal year.",
+            "example": 2026,
+            "title": "Budget Year"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217, default EUR.",
+            "title": "Currency"
+          },
+          "disbursementDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "When disbursed.",
+            "title": "Disbursement Date"
+          },
+          "grantProgram": {
+            "type": "string",
+            "nullable": true,
+            "description": "Awb article reference.",
+            "example": "Awb 4.2",
+            "title": "Grant Program"
+          },
+          "granteeOrganization": {
+            "type": "string",
+            "nullable": true,
+            "description": "Recipient organization name (REQ-SUB-002).",
+            "title": "Grantee Organization"
+          },
+          "hasRepaymentPlan": {
+            "type": "boolean",
+            "default": false,
+            "description": "Sub-state indicator: a settlement plan exists (REQ-SUB-009).",
+            "title": "Has Repayment Plan"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator free text.",
+            "title": "Notes"
+          },
+          "purposeDescription": {
+            "type": "string",
+            "nullable": true,
+            "description": "What the grant is for.",
+            "title": "Purpose Description"
+          },
+          "settlementDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "When settled/vastgesteld.",
+            "title": "Settlement Date"
+          },
+          "subsidieName": {
+            "type": "string",
+            "description": "Grant program name.",
+            "example": "Cultuursubsidie 2026",
+            "title": "Subsidie Name"
           }
         },
         "x-openregister-lifecycle": {
@@ -23662,348 +23766,6 @@
         "adminScope": {
           "field": "administrationId",
           "enforce": true
-        }
-      }
-    },
-    "Subsidie": {
-      "slug": "Subsidie",
-      "icon": "FileDocumentOutline",
-      "version": "0.1.0",
-      "title": "Subsidie",
-      "description": "Grant/subsidie record covering the full ASV-model lifecycle (aanvraag → verleend → vastgesteld → uitbetaald). Works for both outgoing grants (gemeente to beneficiary) and incoming grants (beneficiary from granting body). The subsidieRegeling enum field overlays per-regeling R&D constraints (REQ-RDS-001). schema:Grant annotation; schema:ResearchProject materialisation when subsidieRegeling indicates an R&D regeling. Per bookkeeping-subsidie-verantwoording + bookkeeping-r-d-subsidies-mkb.",
-      "x-schema-org": "schema:Grant",
-      "type": "object",
-      "required": [
-        "administrationId",
-        "direction",
-        "subsidieNumber",
-        "counterpartyName",
-        "regelingNaam",
-        "aanvraagDate",
-        "aangevraagdBedrag",
-        "state"
-      ],
-      "properties": {
-        "administrationId": {
-          "type": "string",
-          "description": "FK to the administration owning this subsidie record.",
-          "example": "adm-1"
-        },
-        "direction": {
-          "type": "string",
-          "enum": [
-            "outgoing",
-            "incoming"
-          ],
-          "description": "outgoing: this administration grants to a beneficiary. incoming: this administration receives from a granting body.",
-          "example": "incoming"
-        },
-        "subsidieNumber": {
-          "type": "string",
-          "description": "Unique subsidie identifier per administration and fiscal year.",
-          "example": "SUB-2026-001"
-        },
-        "counterpartyName": {
-          "type": "string",
-          "description": "Beneficiary name (outgoing) or granting body name (incoming).",
-          "example": "RVO.nl"
-        },
-        "counterpartyId": {
-          "type": "string",
-          "nullable": true,
-          "description": "FK to a contact record if available.",
-          "example": "contact-rvo-nl"
-        },
-        "regelingNaam": {
-          "type": "string",
-          "description": "Name of the underlying regeling.",
-          "example": "MIT 2026 haalbaarheidsproject"
-        },
-        "regelingArtikel": {
-          "type": "string",
-          "nullable": true,
-          "description": "Specific article reference within the regeling.",
-          "example": "Art. 3.2"
-        },
-        "subsidieRegeling": {
-          "type": "string",
-          "enum": [
-            "mit",
-            "sbir",
-            "eu-horizon",
-            "efro",
-            "react-eu",
-            "other"
-          ],
-          "description": "R&D subsidie regeling variant. When set, per-regeling kostencategorie constraints (REQ-RDS-002) apply to linked Kostenpost records. Per REQ-RDS-001.",
-          "nullable": true,
-          "example": "eu-horizon"
-        },
-        "aanvraagDate": {
-          "type": "string",
-          "format": "date",
-          "description": "Date of the subsidie aanvraag.",
-          "example": "2026-01-15"
-        },
-        "beschikkingDate": {
-          "type": "string",
-          "format": "date",
-          "nullable": true,
-          "description": "Date of the verleningsbeschikking.",
-          "example": "2026-03-01"
-        },
-        "vaststellingDate": {
-          "type": "string",
-          "format": "date",
-          "nullable": true,
-          "description": "Date of the vaststellingsbeschikking.",
-          "example": "2027-04-01"
-        },
-        "aangevraagdBedrag": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Applied-for amount in euros.",
-          "example": 150000.0
-        },
-        "verleendBedrag": {
-          "type": "number",
-          "minimum": 0,
-          "nullable": true,
-          "description": "Granted amount set on verleen transition.",
-          "example": 135000.0
-        },
-        "vastgesteldBedrag": {
-          "type": "number",
-          "minimum": 0,
-          "nullable": true,
-          "description": "Settled amount set on vaststel transition.",
-          "example": 120000.0
-        },
-        "uitbetaaldBedrag": {
-          "type": "number",
-          "minimum": 0,
-          "nullable": true,
-          "description": "Paid amount set on uitbetaal transition.",
-          "example": 120000.0
-        },
-        "teruggevorderdBedrag": {
-          "type": "number",
-          "minimum": 0,
-          "nullable": true,
-          "description": "Reclaimed amount set on terugvorder transition.",
-          "example": 0.0
-        },
-        "state": {
-          "type": "string",
-          "enum": [
-            "aanvraag",
-            "verleend",
-            "vastgesteld",
-            "uitbetaald",
-            "teruggevorderd",
-            "afgehandeld"
-          ],
-          "description": "ASV-model lifecycle state.",
-          "default": "aanvraag",
-          "example": "aanvraag"
-        },
-        "beschikkingUri": {
-          "type": "string",
-          "nullable": true,
-          "description": "docudesk URI of the verleningsbeschikking PDF.",
-          "example": "docudesk://shillinq/beschikking-sub-2026-001.pdf"
-        },
-        "vaststellingUri": {
-          "type": "string",
-          "nullable": true,
-          "description": "docudesk URI of the vaststellingsbeschikking PDF.",
-          "example": "docudesk://shillinq/vaststelling-sub-2026-001.pdf"
-        },
-        "prestatieverantwoording": {
-          "type": "string",
-          "nullable": true,
-          "description": "Free-text prestatieverantwoording.",
-          "example": "Project afgerond conform plan."
-        }
-      },
-      "x-openregister-lifecycle": {
-        "states": {
-          "aanvraag": "Subsidie is ingediend.",
-          "verleend": "Subsidie is toegekend via verleningsbeschikking.",
-          "vastgesteld": "Subsidie is vastgesteld na prestatieverantwoording.",
-          "uitbetaald": "Subsidiebedrag is uitbetaald.",
-          "teruggevorderd": "Subsidie (deels) teruggevorderd.",
-          "afgehandeld": "Subsidie is volledig afgehandeld."
-        },
-        "transitions": {
-          "verleen": {
-            "from": "aanvraag",
-            "to": "verleend",
-            "label": "Verleen",
-            "description": "Verleningsbeschikking ontvangen.",
-            "requires": {
-              "fields": [
-                "verleendBedrag"
-              ]
-            }
-          },
-          "wijs-af": {
-            "from": "aanvraag",
-            "to": "afgehandeld",
-            "label": "Afwijzing",
-            "description": "Aanvraag afgewezen."
-          },
-          "vaststel": {
-            "from": "verleend",
-            "to": "vastgesteld",
-            "label": "Vaststel",
-            "description": "Vaststellingsbeschikking verwerkt.",
-            "requires": {
-              "fields": [
-                "vastgesteldBedrag",
-                "prestatieverantwoording"
-              ]
-            }
-          },
-          "betaal-uit": {
-            "from": "vastgesteld",
-            "to": "uitbetaald",
-            "label": "Uitbetaal",
-            "description": "Subsidiebedrag uitbetaald.",
-            "requires": {
-              "fields": [
-                "uitbetaaldBedrag"
-              ]
-            }
-          },
-          "vorder-terug": {
-            "from": "uitbetaald",
-            "to": "teruggevorderd",
-            "label": "Terugvordering",
-            "description": "Terugvordering gestart.",
-            "requires": {
-              "fields": [
-                "teruggevorderdBedrag"
-              ]
-            }
-          },
-          "handel-af": {
-            "from": [
-              "uitbetaald",
-              "teruggevorderd"
-            ],
-            "to": "afgehandeld",
-            "label": "Afhandelen",
-            "description": "Subsidie volledig afgehandeld."
-          }
-        }
-      },
-      "x-openregister-aggregations": {
-        "voortgangsrapportage": {
-          "description": "Groups Kostenpost records per kostencategorie and periodId for the parent subsidie. Consumed by per-regeling docudesk voortgangsrapportage templates. Per REQ-RDS-003.",
-          "join": {
-            "schema": "Kostenpost",
-            "filter": {
-              "subsidieId": "@self.id"
-            }
-          },
-          "groupBy": [
-            "kostencategorie",
-            "periodId"
-          ],
-          "operations": {
-            "totalAmount": {
-              "field": "amount",
-              "operation": "sum",
-              "target": "totalAmount"
-            },
-            "count": {
-              "field": "id",
-              "operation": "count",
-              "target": "count"
-            }
-          }
-        },
-        "budgetMonitoringByCategory": {
-          "description": "Aggregates total approved amount per kostencategorie. Feeds per-regeling sub-max calculations (REQ-RDS-005).",
-          "join": {
-            "schema": "Kostenpost",
-            "filter": {
-              "subsidieId": "@self.id",
-              "state": "approved"
-            }
-          },
-          "groupBy": [
-            "kostencategorie"
-          ],
-          "operations": {
-            "totalApproved": {
-              "field": "amount",
-              "operation": "sum",
-              "target": "totalApproved"
-            }
-          }
-        }
-      },
-      "x-openregister-calculations": {
-        "horizonDirectCosts": {
-          "description": "Sum of approved direct-category kostenpost amounts for EU-Horizon subsidies. Basis for indirect-25% cap. Per REQ-RDS-005.",
-          "expression": "@self.subsidieRegeling == 'eu-horizon' ? sum(Kostenpost.amount, filter: {subsidieId: @self.id, state: 'approved', kostencategorie: {not: 'indirect-25-percent'}}) : null",
-          "type": "number",
-          "nullable": true,
-          "example": 100000.0
-        },
-        "horizonIndirect25MaxBedrag": {
-          "description": "Maximum allowed indirect-25-percent amount: 25% of direct costs per EC Grant Agreement Art. 6(2). Per REQ-RDS-005.",
-          "expression": "@self.horizonDirectCosts != null ? 0.25 * @self.horizonDirectCosts : null",
-          "type": "number",
-          "nullable": true,
-          "example": 25000.0
-        },
-        "horizonIndirect25UsageBedrag": {
-          "description": "Current approved total of indirect-25-percent kostenposten. Per REQ-RDS-005.",
-          "expression": "@self.subsidieRegeling == 'eu-horizon' ? sum(Kostenpost.amount, filter: {subsidieId: @self.id, state: 'approved', kostencategorie: 'indirect-25-percent'}) : null",
-          "type": "number",
-          "nullable": true,
-          "example": 22500.0
-        },
-        "horizonIndirect25UsagePercent": {
-          "description": "Current usage percentage of EU-Horizon indirect-25% cap. Warning fires at >=90% per REQ-RDS-005.",
-          "expression": "@self.horizonIndirect25MaxBedrag != null && @self.horizonIndirect25MaxBedrag > 0 ? (@self.horizonIndirect25UsageBedrag / @self.horizonIndirect25MaxBedrag) * 100 : null",
-          "type": "number",
-          "nullable": true,
-          "example": 90.0
-        },
-        "horizonIndirect25Warning": {
-          "description": "TRUE when EU-Horizon indirect-25% usage is >=90% of cap. Per REQ-RDS-005.",
-          "expression": "@self.horizonIndirect25UsagePercent != null && @self.horizonIndirect25UsagePercent >= 90",
-          "type": "boolean",
-          "nullable": true,
-          "warningMessage": "indirect-25% limit of EUR {{horizonIndirect25MaxBedrag}} approaching; current usage {{horizonIndirect25UsagePercent}}%"
-        }
-      },
-      "x-openregister-rbac": {
-        "roles": {
-          "subsidie-coordinator": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "manager": {
-            "permissions": [
-              "create",
-              "read",
-              "update",
-              "delete"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
         }
       }
     },
