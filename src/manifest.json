@@ -7737,9 +7737,9 @@
 						}
 					},
 					{
-						"id": "customer-stats",
+						"id": "customer-stats-open-invoices",
 						"type": "stats-block",
-						"title": "AR position",
+						"title": "Open invoices",
 						"icon": "ChartBar",
 						"content": {
 							"entries": [
@@ -7753,7 +7753,17 @@
 										"lifecycleState": "issued"
 									},
 									"route": "AccountsReceivable"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "customer-stats-overdue-invoices",
+						"type": "stats-block",
+						"title": "Overdue invoices",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Overdue invoices",
 									"register": "shillinq",
@@ -7764,7 +7774,17 @@
 										"lifecycleState": "overdue"
 									},
 									"route": "AccountsReceivable"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "customer-stats-outstanding-gross",
+						"type": "stats-block",
+						"title": "Outstanding (gross)",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Outstanding (gross)",
 									"register": "shillinq",
@@ -7861,18 +7881,34 @@
 						"gridHeight": 4
 					},
 					{
-						"id": "2",
-						"widgetId": "customer-stats",
+						"id": "2-1",
+						"widgetId": "customer-stats-open-invoices",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
-						"gridHeight": 4
+						"gridHeight": 2
+					},
+					{
+						"id": "2-2",
+						"widgetId": "customer-stats-overdue-invoices",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "2-3",
+						"widgetId": "customer-stats-outstanding-gross",
+						"gridX": 8,
+						"gridY": 4,
+						"gridWidth": 4,
+						"gridHeight": 2
 					},
 					{
 						"id": "3",
 						"widgetId": "customer-finance",
 						"gridX": 0,
-						"gridY": 4,
+						"gridY": 6,
 						"gridWidth": 8,
 						"gridHeight": 4
 					},
@@ -7880,7 +7916,7 @@
 						"id": "4",
 						"widgetId": "customer-related",
 						"gridX": 8,
-						"gridY": 4,
+						"gridY": 6,
 						"gridWidth": 4,
 						"gridHeight": 4
 					},
@@ -7888,7 +7924,7 @@
 						"id": "5",
 						"widgetId": "customer-invoices",
 						"gridX": 0,
-						"gridY": 8,
+						"gridY": 10,
 						"gridWidth": 12,
 						"gridHeight": 5
 					}
@@ -7986,9 +8022,9 @@
 						}
 					},
 					{
-						"id": "invoice-stats",
+						"id": "invoice-stats-gross-amount",
 						"type": "stats-block",
-						"title": "Invoice position",
+						"title": "Gross amount",
 						"icon": "ChartBar",
 						"content": {
 							"entries": [
@@ -8002,7 +8038,17 @@
 										"id": "@objectId"
 									},
 									"format": "currency"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "invoice-stats-amount-due",
+						"type": "stats-block",
+						"title": "Amount due",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Amount due",
 									"register": "shillinq",
@@ -8013,7 +8059,17 @@
 										"id": "@objectId"
 									},
 									"format": "currency"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "invoice-stats-paid-amount",
+						"type": "stats-block",
+						"title": "Paid amount",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Paid amount",
 									"register": "shillinq",
@@ -8024,7 +8080,17 @@
 										"id": "@objectId"
 									},
 									"format": "currency"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "invoice-stats-dunning-runs",
+						"type": "stats-block",
+						"title": "Dunning runs",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Dunning runs",
 									"register": "shillinq",
@@ -8128,18 +8194,42 @@
 						"gridHeight": 6
 					},
 					{
-						"id": "2",
-						"widgetId": "invoice-stats",
+						"id": "2-1",
+						"widgetId": "invoice-stats-gross-amount",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
-						"gridHeight": 6
+						"gridHeight": 2
+					},
+					{
+						"id": "2-2",
+						"widgetId": "invoice-stats-amount-due",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "2-3",
+						"widgetId": "invoice-stats-paid-amount",
+						"gridX": 8,
+						"gridY": 4,
+						"gridWidth": 4,
+						"gridHeight": 2
+					},
+					{
+						"id": "2-4",
+						"widgetId": "invoice-stats-dunning-runs",
+						"gridX": 8,
+						"gridY": 6,
+						"gridWidth": 4,
+						"gridHeight": 2
 					},
 					{
 						"id": "3",
 						"widgetId": "invoice-money",
 						"gridX": 0,
-						"gridY": 6,
+						"gridY": 8,
 						"gridWidth": 8,
 						"gridHeight": 4
 					},
@@ -8147,7 +8237,7 @@
 						"id": "4",
 						"widgetId": "invoice-related",
 						"gridX": 8,
-						"gridY": 6,
+						"gridY": 8,
 						"gridWidth": 4,
 						"gridHeight": 4
 					},
@@ -8155,7 +8245,7 @@
 						"id": "5",
 						"widgetId": "invoice-dunning",
 						"gridX": 0,
-						"gridY": 10,
+						"gridY": 12,
 						"gridWidth": 12,
 						"gridHeight": 4
 					},
@@ -8163,7 +8253,7 @@
 						"id": "6",
 						"widgetId": "invoice-files",
 						"gridX": 0,
-						"gridY": 14,
+						"gridY": 16,
 						"gridWidth": 12,
 						"gridHeight": 3
 					}
