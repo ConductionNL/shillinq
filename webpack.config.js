@@ -34,9 +34,11 @@ webpackConfig.entry = {
 	},
 }
 
-// Use local source when available (monorepo dev), otherwise fall back to npm package
+// TEMP: force node_modules — sibling ../nextcloud-vue is beta.111 which lacks
+// restartWalkthroughFromSettings / collapsed-nav reveal / $ref dropdowns.
+// Revert this comment (keep useLocalLib logic) once the sibling is updated to ≥beta.138.
 const localLib = path.resolve(__dirname, '../nextcloud-vue/src')
-const useLocalLib = fs.existsSync(localLib)
+const useLocalLib = false // was: fs.existsSync(localLib)
 
 webpackConfig.resolve = {
 	extensions: ['.vue', '.js'],

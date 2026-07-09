@@ -80,6 +80,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CcmFinding",
+				"_note": "CONTROL/CASE archetype — a Continuous Controls Monitoring finding is an investigation case, not a conversation. Native shillinq detail contract: config.fields[] render the workflow (rule, severity, status, assignee, triggering event, resolution) so an investigator reads the state-of-play first; the sidebar carries a file-references tab for source evidence and an audit-trail tab for the immutable statusHistory / investigationNotes — the correct home for a control finding's change log. NO email/calendar/talk (CcmFinding declares no comms linkedType); no money aggregation (a finding is a case, not a monetary total).",
 				"fields": [
 					{"key": "ruleCode", "label": "Rule", "type": "string"},
 					{"key": "title", "label": "Title", "type": "string"},
@@ -94,6 +95,17 @@
 					{"key": "resolvedAt", "label": "Resolved at", "type": "string"},
 					{"key": "escalated", "label": "Escalated", "type": "boolean"}
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Evidence", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "CcmFinding", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "CcmFindings"
 			}
 		},
@@ -125,6 +137,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CcmRule",
+				"_note": "CONFIG archetype — a CCM rule is a control definition (logic, schedule, COSO assertion, owner/reviewer, SOX key-control flag). Native shillinq detail contract: config.fields[] render the definition (review cadence and versionHistory included); config.relatedLists[] show the findings this rule has fired (CcmFinding, FK ruleCode=@self.ruleCode) so a control owner immediately sees the rule's real-world impact; the sidebar carries an audit-trail tab. NO comms/files — a rule carries no source documents or conversation.",
 				"fields": [
 					{"key": "ruleCode", "label": "Code", "type": "string"},
 					{"key": "name", "label": "Name", "type": "string"},
@@ -138,6 +151,23 @@
 					{"key": "ruleOwner", "label": "Owner", "type": "string"},
 					{"key": "soxKeyControl", "label": "SOX key control", "type": "boolean"}
 				],
+				"relatedLists": [
+					{"id": "rule-findings", "title": "Findings from this rule", "schema": "CcmFinding", "filter": {"ruleCode": "@self.ruleCode"}, "columns": [
+						{"key": "title", "label": "Title"},
+						{"key": "severity", "label": "Severity"},
+						{"key": "status", "label": "Status"},
+						{"key": "assignee", "label": "Assignee"},
+						{"key": "fireTimestamp", "label": "Fired"}
+					]}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "CcmRules"
 			}
 		},
@@ -166,12 +196,21 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CcmSegregationMatrix",
+				"_note": "CONFIG archetype — a segregation-of-duties matrix row defines which business functions conflict with this one and the allowed compensating controls. Native shillinq detail contract: config.fields[] render the definition (function code, label, conflicting functions, severity, rationale); the sidebar carries an audit-trail tab so an auditor can see who changed a conflict rule. Pure policy metadata — NO comms/files/aggregation. Live conflicts surface via the Function Assignments screen; this page is the authoritative rule definition.",
 				"fields": [
 					{"key": "functionCode", "label": "Function code", "type": "string"},
 					{"key": "label", "label": "Label", "type": "string"},
 					{"key": "conflictSeverity", "label": "Conflict severity", "type": "string"},
 					{"key": "rationale", "label": "Rationale", "type": "string"}
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "CcmSegregationMatrix"
 			}
 		},
@@ -201,6 +240,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CcmUserFunctionAssignment",
+				"_note": "MAPPING archetype — a user↔function grant is the join between a person and a controlled function, with a provenance and expiry. Native shillinq detail contract: config.fields[] render the grant (user, function, source, granted/expires, granting authority, and the conflictWith array where SoD violations show up); the sidebar carries an audit-trail tab so an auditor can trace who granted and when. NO comms/files/aggregation — a grant carries no documents or conversation.",
 				"fields": [
 					{"key": "user", "label": "User", "type": "string"},
 					{"key": "functionCode", "label": "Function code", "type": "string"},
@@ -209,6 +249,14 @@
 					{"key": "grantedBy", "label": "Granted by", "type": "string"},
 					{"key": "expiresAt", "label": "Expires at", "type": "string"}
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "CcmUserFunctionAssignments"
 			}
 		},
@@ -239,6 +287,11 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CcmBaseline",
+				"_note": "REPORT/METRIC archetype — a baseline is a computed statistical reference (sample size, computed value, confidence interval) that anomaly rules compare against. Native shillinq detail contract: config.aggregations[] surface the two headline numbers (computed value, sample size) so an analyst reads the metric first; config.fields[] render the full definition (scope, metric, period, distribution, refresh cadence, stability); the sidebar carries an audit-trail tab. NO comms/files — a baseline is derived data, not a document; the KPIs are numeric, not currency.",
+				"aggregations": [
+					{"id": "computedValue", "title": "Computed value", "field": "computedValue", "metric": "value", "format": "number"},
+					{"id": "sampleSize", "title": "Sample size", "field": "sampleSize", "metric": "value", "format": "number"}
+				],
 				"fields": [
 					{"key": "baselineScope", "label": "Scope", "type": "string"},
 					{"key": "scopeKey", "label": "Scope key", "type": "string"},
@@ -248,6 +301,14 @@
 					{"key": "computedValue", "label": "Computed value", "type": "number"},
 					{"key": "stable", "label": "Stable", "type": "boolean"}
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "CcmBaselines"
 			}
 		},
@@ -278,6 +339,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CcmAuditCommitteeReport",
+				"_note": "REPORT/DOCUMENT archetype — a periodic audit-committee report summarises rule firings, SoD compliance and SOX deficiencies for governance sign-off. Native shillinq detail contract: config.fields[] render the narrative (executive summary, recommendations, approver, state); config.relatedLists[] list the open findings the committee reviews so risk reads first; the sidebar carries a file-references tab for the signed PDF and supporting workpapers and an audit-trail tab for the immutable approval/distribution log — governance evidence. NO comms — this is a formal artefact, not correspondence; no money aggregation of its own.",
 				"fields": [
 					{"key": "period", "label": "Period", "type": "string"},
 					{"key": "reportingCadence", "label": "Cadence", "type": "string"},
@@ -287,6 +349,26 @@
 					{"key": "approvalDate", "label": "Approved", "type": "string"},
 					{"key": "state", "label": "State", "type": "string"}
 				],
+				"relatedLists": [
+					{"id": "open-findings", "title": "Open findings", "schema": "CcmFinding", "filter": {"status": "open"}, "columns": [
+						{"key": "ruleCode", "label": "Rule"},
+						{"key": "title", "label": "Title"},
+						{"key": "severity", "label": "Severity"},
+						{"key": "assignee", "label": "Assignee"},
+						{"key": "fireTimestamp", "label": "Fired"}
+					]}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Report documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "CcmAuditCommitteeReport", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "CcmAuditCommitteeReports"
 			}
 		}

@@ -2,7 +2,7 @@
 	"menu": [
 		{
 			"id": "BbvProvincie",
-			"label": "BBV Provincie",
+			"label": "BBV Province",
 			"icon": "MapOutline",
 			"order": 75,
 			"visibilityPredicate": {
@@ -362,6 +362,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "GLLine",
+				"_note": "GL LINE in its programme-assignment role (the BBV-province view of a single general-ledger line being mapped to a budget programme). The body shows the line's ledger data — account, description, amount, side, period — alongside the editable programma assignment and when it was assigned, which is the one action this screen exists for. A ledger posting is not a correspondence: no comms leaves. The audit trail sidebar is the mapping-change record, since re-assigning a line shifts spend between BBV programmes.",
 				"fields": [
 					{
 						"key": "accountNumber",
@@ -408,7 +409,27 @@
 						"type": "string"
 					}
 				],
-				"indexRoute": "BudgetToProgrammeLinker"
+				"indexRoute": "BudgetToProgrammeLinker",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

@@ -5,28 +5,28 @@
 			"children": [
 				{
 					"id": "DetacheringPayroll",
-					"label": "Detachering en payroll",
+					"label": "Secondment & payroll",
 					"icon": "AccountCashOutline",
 					"order": 45,
 					"featureFlag": "mkb-detachering",
 					"children": [
 						{
 							"id": "SalarisFeed",
-							"label": "Salaris-feeds",
+							"label": "Salary feeds",
 							"icon": "FileImportOutline",
 							"route": "SalarisFeed",
 							"order": 10
 						},
 						{
 							"id": "OpdrachtgeversVerklaringen",
-							"label": "Opdrachtgevers-verklaringen",
+							"label": "Client statements",
 							"icon": "FileSignOutline",
 							"route": "OpdrachtgeversVerklaringen",
 							"order": 20
 						},
 						{
 							"id": "IB47Jaarbatch",
-							"label": "IB47-jaarbatch",
+							"label": "IB47 annual batch",
 							"icon": "FileDocumentOutline",
 							"route": "IB47Jaarbatch",
 							"order": 30
@@ -41,7 +41,7 @@
 			"id": "SalarisFeed",
 			"route": "/bookkeeping/detachering-payroll/salaris-feeds",
 			"type": "index",
-			"title": "Salaris-feeds",
+			"title": "Salary feeds",
 			"featureFlag": "mkb-detachering",
 			"config": {
 				"register": "shillinq",
@@ -50,22 +50,22 @@
 				"columns": [
 					{
 						"key": "salarisbureauSlug",
-						"label": "Salarisbureau",
+						"label": "Payroll bureau",
 						"sortable": true
 					},
 					{
 						"key": "loontijdvak",
-						"label": "Loontijdvak",
+						"label": "Pay period",
 						"sortable": true
 					},
 					{
 						"key": "employeeName",
-						"label": "Medewerker",
+						"label": "Employee",
 						"sortable": true
 					},
 					{
 						"key": "loonkosten",
-						"label": "Loonkosten (EUR)",
+						"label": "Labour costs (EUR)",
 						"sortable": true
 					},
 					{
@@ -82,56 +82,57 @@
 			"id": "SalarisFeedDetail",
 			"route": "/bookkeeping/detachering-payroll/salaris-feeds/:id",
 			"type": "detail",
-			"title": "Salaris-feed",
+			"title": "Salary feed",
 			"featureFlag": "mkb-detachering",
 			"config": {
 				"register": "shillinq",
 				"schema": "SalarisFeed",
 				"featureFlag": "mkb-detachering",
+				"_note": "IMPORT TRANSACTION (one employee's payroll line imported from an external salarisbureau, ready to book). The body is the cost breakdown that gets posted — labour cost, net pay, social contributions, payroll tax, pension — with the import status and the resulting journal-entry reference. lifecycleActions drive the import → booked transition. No child schema and no comms (a feed line is data, not a person to email). Audit trail sidebar is the import/booking provenance.",
 				"fields": [
 					{
 						"key": "salarisbureauSlug",
-						"label": "Salarisbureau",
+						"label": "Payroll bureau",
 						"type": "string"
 					},
 					{
 						"key": "loontijdvak",
-						"label": "Loontijdvak",
+						"label": "Pay period",
 						"type": "string"
 					},
 					{
 						"key": "employeeId",
-						"label": "Medewerker-ID",
+						"label": "Employee ID",
 						"type": "string"
 					},
 					{
 						"key": "employeeName",
-						"label": "Medewerker",
+						"label": "Employee",
 						"type": "string"
 					},
 					{
 						"key": "loonkosten",
-						"label": "Loonkosten (EUR)",
+						"label": "Labour costs (EUR)",
 						"type": "number"
 					},
 					{
 						"key": "nettoloon",
-						"label": "Nettoloon (EUR)",
+						"label": "Net pay (EUR)",
 						"type": "number"
 					},
 					{
 						"key": "socialePremies",
-						"label": "Sociale premies (EUR)",
+						"label": "Social contributions (EUR)",
 						"type": "number"
 					},
 					{
 						"key": "loonheffing",
-						"label": "Loonheffing (EUR)",
+						"label": "Payroll tax (EUR)",
 						"type": "number"
 					},
 					{
 						"key": "pensioen",
-						"label": "Pensioen (EUR)",
+						"label": "Pension (EUR)",
 						"type": "number"
 					},
 					{
@@ -141,24 +142,44 @@
 					},
 					{
 						"key": "journalEntryId",
-						"label": "Journaalpost",
+						"label": "Journal entry",
 						"type": "string"
 					},
 					{
 						"key": "administrationId",
-						"label": "Administratie",
+						"label": "Administration",
 						"type": "string"
 					}
 				],
 				"lifecycleActions": true,
-				"indexRoute": "SalarisFeed"
+				"indexRoute": "SalarisFeed",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
 			"id": "OpdrachtgeversVerklaringen",
 			"route": "/bookkeeping/detachering-payroll/opdrachtgeversverklaringen",
 			"type": "index",
-			"title": "Opdrachtgevers-verklaringen",
+			"title": "Client statements",
 			"featureFlag": "mkb-detachering",
 			"config": {
 				"register": "shillinq",
@@ -167,17 +188,17 @@
 				"columns": [
 					{
 						"key": "zzpNaam",
-						"label": "ZZP-er",
+						"label": "Freelancer",
 						"sortable": true
 					},
 					{
 						"key": "looptijdStart",
-						"label": "Startdatum",
+						"label": "Start date",
 						"sortable": true
 					},
 					{
 						"key": "looptijdEind",
-						"label": "Einddatum",
+						"label": "End date",
 						"sortable": true
 					},
 					{
@@ -187,7 +208,7 @@
 					},
 					{
 						"key": "risicoBeoordeling",
-						"label": "Risicobeoordeling",
+						"label": "Risk assessment",
 						"sortable": true
 					}
 				],
@@ -199,36 +220,37 @@
 			"id": "OpdrachtgeversVerklaringDetail",
 			"route": "/bookkeeping/detachering-payroll/opdrachtgeversverklaringen/:id",
 			"type": "detail",
-			"title": "Opdrachtgeversverklaring",
+			"title": "Client statement",
 			"featureFlag": "mkb-detachering",
 			"config": {
 				"register": "shillinq",
 				"schema": "OpdrachtgeversVerklaring",
 				"featureFlag": "mkb-detachering",
+				"_note": "DBA CLIENT STATEMENT (the opdrachtgeversverklaring that fixes the freelancer relationship and its false-self-employment risk). The body carries the assignment, term, model agreement, risk assessment and the generated statement-document link. The existing generate-document action + lifecycleActions confirm the agreement and produce the doc via docudesk. It is a compliance artefact, not correspondence, so no email/calendar; the audit trail sidebar is the who-signed-off record for a labour-law document.",
 				"fields": [
 					{
 						"key": "zzpId",
-						"label": "ZZP-er ID",
+						"label": "Freelancer ID",
 						"type": "string"
 					},
 					{
 						"key": "zzpNaam",
-						"label": "ZZP-er naam",
+						"label": "Freelancer name",
 						"type": "string"
 					},
 					{
 						"key": "opdrachtBeschrijving",
-						"label": "Opdrachtomschrijving",
+						"label": "Assignment description",
 						"type": "string"
 					},
 					{
 						"key": "looptijdStart",
-						"label": "Startdatum",
+						"label": "Start date",
 						"type": "date"
 					},
 					{
 						"key": "looptijdEind",
-						"label": "Einddatum",
+						"label": "End date",
 						"type": "date"
 					},
 					{
@@ -238,22 +260,22 @@
 					},
 					{
 						"key": "modelOvereenkomst",
-						"label": "Modelovereenkomst",
+						"label": "Model agreement",
 						"type": "string"
 					},
 					{
 						"key": "verklaringDocumentUri",
-						"label": "Verklaringsdocument",
+						"label": "Statement document",
 						"type": "link"
 					},
 					{
 						"key": "risicoBeoordeling",
-						"label": "Risicobeoordeling",
+						"label": "Risk assessment",
 						"type": "string"
 					},
 					{
 						"key": "administrationId",
-						"label": "Administratie",
+						"label": "Administration",
 						"type": "string"
 					}
 				],
@@ -261,7 +283,7 @@
 				"actions": [
 					{
 						"id": "generate-verklaring",
-						"label": "Document genereren",
+						"label": "Generate document",
 						"icon": "FileDocumentEditOutline",
 						"visibleWhen": {
 							"field": "verklaringStatus",
@@ -269,17 +291,37 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "overeenkomen",
-						"description": "Bevestig overeenkomst en genereer het opdrachtgeversverklaring-document via docudesk."
+						"description": "Confirm the agreement and generate the client statement document via docudesk."
 					}
 				],
-				"indexRoute": "OpdrachtgeversVerklaringen"
+				"indexRoute": "OpdrachtgeversVerklaringen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
 			"id": "IB47Jaarbatch",
 			"route": "/bookkeeping/detachering-payroll/ib47",
 			"type": "index",
-			"title": "IB47-jaarbatch",
+			"title": "IB47 annual batch",
 			"featureFlag": "mkb-detachering",
 			"config": {
 				"register": "shillinq",
@@ -288,17 +330,17 @@
 				"columns": [
 					{
 						"key": "belastingjaar",
-						"label": "Belastingjaar",
+						"label": "Tax year",
 						"sortable": true
 					},
 					{
 						"key": "ontvangerNaam",
-						"label": "Ontvanger",
+						"label": "Recipient",
 						"sortable": true
 					},
 					{
 						"key": "betalingenTotaal",
-						"label": "Betalingen totaal (EUR)",
+						"label": "Total payments (EUR)",
 						"sortable": true
 					},
 					{
@@ -308,7 +350,7 @@
 					},
 					{
 						"key": "isDryRun",
-						"label": "Proefrun",
+						"label": "Dry run",
 						"sortable": true
 					}
 				],
@@ -320,66 +362,87 @@
 			"id": "IB47RecordDetail",
 			"route": "/bookkeeping/detachering-payroll/ib47/:id",
 			"type": "detail",
-			"title": "IB47-record",
+			"title": "IB47 record",
 			"featureFlag": "mkb-detachering",
 			"config": {
 				"register": "shillinq",
 				"schema": "IB47Record",
 				"featureFlag": "mkb-detachering",
+				"_note": "IB47 TAX RECORD (a single third-party payment reported annually to the Belastingdienst — opgaaf van betalingen aan derden). The body is the reportable data: tax year, client, recipient (with encrypted BSN readable only to the payroll-officer role), address, total payments, type code and the dry-run flag/month used to validate before the real submission. A statutory record, not a correspondence, so no comms; the audit trail sidebar is the submission/dry-run history for a privacy-sensitive filing.",
 				"fields": [
 					{
 						"key": "belastingjaar",
-						"label": "Belastingjaar",
+						"label": "Tax year",
 						"type": "integer"
 					},
 					{
 						"key": "opdrachtgeverId",
-						"label": "Opdrachtgever",
+						"label": "Client",
 						"type": "string"
 					},
 					{
 						"key": "ontvangerNaam",
-						"label": "Ontvanger naam",
+						"label": "Recipient name",
 						"type": "string"
 					},
 					{
 						"key": "ontvangerBSN",
-						"label": "BSN (versleuteld)",
+						"label": "BSN (encrypted)",
 						"type": "string",
-						"help": "Versleuteld en alleen leesbaar voor de payroll-officer rol."
+						"help": "Encrypted and only readable for the payroll-officer role."
 					},
 					{
 						"key": "ontvangerAdres",
-						"label": "Ontvanger adres",
+						"label": "Recipient address",
 						"type": "string"
 					},
 					{
 						"key": "betalingenTotaal",
-						"label": "Betalingen totaal (EUR)",
+						"label": "Total payments (EUR)",
 						"type": "number"
 					},
 					{
 						"key": "betalingTypeCode",
-						"label": "Betalingtype code",
+						"label": "Payment type code",
 						"type": "string"
 					},
 					{
 						"key": "isDryRun",
-						"label": "Proefrun",
+						"label": "Dry run",
 						"type": "boolean"
 					},
 					{
 						"key": "dryRunMonth",
-						"label": "Proefrun maand",
+						"label": "Dry run month",
 						"type": "integer"
 					},
 					{
 						"key": "administrationId",
-						"label": "Administratie",
+						"label": "Administration",
 						"type": "string"
 					}
 				],
-				"indexRoute": "IB47Jaarbatch"
+				"indexRoute": "IB47Jaarbatch",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

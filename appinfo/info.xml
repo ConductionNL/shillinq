@@ -5,7 +5,7 @@
     <name lang="en">Shillinq</name>
     <name lang="nl">Shillinq</name>
     <summary lang="en">Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations.</summary>
-    <summary lang="nl">Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations.</summary>
+    <summary lang="nl">Complete open-source bedrijfsadministratie voor zzp'ers, eenmanszaken, mkb en grotere ondernemingen.</summary>
     <description lang="en"><![CDATA[Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations. Combines bookkeeping, invoicing, procurement, and contract management into one self-hosted.
 
 **Key Features**
@@ -26,41 +26,26 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.9.1</version>
-    <licence>agpl</licence>
+    <version>0.9.12</version>
+    <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
     <documentation>
-        <user>https://github.com/ConductionNL/shillinq</user>
-        <admin>https://github.com/ConductionNL/shillinq</admin>
-        <developer>https://github.com/ConductionNL/shillinq</developer>
+        <user>https://codeberg.org/Conduction/shillinq</user>
+        <admin>https://codeberg.org/Conduction/shillinq</admin>
+        <developer>https://codeberg.org/Conduction/shillinq</developer>
     </documentation>
     <category>organization</category>
-    <website>https://github.com/ConductionNL/shillinq</website>
-    <discussion>https://github.com/ConductionNL/shillinq/discussions</discussion>
-    <bugs>https://github.com/ConductionNL/shillinq/issues</bugs>
-    <repository>https://github.com/ConductionNL/shillinq</repository>
+    <website>https://codeberg.org/Conduction/shillinq</website>
+    <bugs>https://codeberg.org/Conduction/shillinq/issues</bugs>
+    <repository>https://codeberg.org/Conduction/shillinq</repository>
 
-    <screenshot>https://raw.githubusercontent.com/ConductionNL/shillinq/main/img/app-store.svg</screenshot>
+    <screenshot>https://codeberg.org/Conduction/shillinq/raw/branch/main/img/app-store.svg</screenshot>
 
     <dependencies>
-        <nextcloud min-version="28" max-version="34"/>
         <php min-version="8.3"/>
+        <nextcloud min-version="31" max-version="34"/>
     </dependencies>
-
-    <navigations>
-        <navigation>
-            <id>shillinq</id>
-            <name>Shillinq</name>
-            <route>shillinq.dashboard.page</route>
-            <icon>app.svg</icon>
-        </navigation>
-    </navigations>
-
-    <settings>
-        <admin>OCA\OpenRegister\AppHost\Settings\GenericAdminSettings</admin>
-        <admin-section>OCA\OpenRegister\AppHost\Settings\GenericSettingsSection</admin-section>
-    </settings>
 
     <background-jobs>
         <job>OCA\Shillinq\BackgroundJob\HorizonRollingJob</job>
@@ -69,25 +54,6 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Shillinq\BackgroundJob\OverdueVerantwoordingJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
-    </background-jobs>
-
-    <repair-steps>
-        <post-migration>
-            <step>OCA\Shillinq\Repair\InitializeSettings</step>
-            <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
-            <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>
-            <step>OCA\Shillinq\Repair\RetireCostProjectStep</step>
-            <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
-            <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
-            <step>OCA\Shillinq\Repair\Load_CBS_Seeds_Step</step>
-            <step>OCA\Shillinq\Repair\Load_SBR_XBRL_Seeds_Step</step>
-            <step>OCA\Shillinq\Repair\Load_DBA_Seeds_Step</step>
-            <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
-            <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
-        </post-migration>
-    </repair-steps>
-
-    <background-jobs>
         <!-- Cashflow 13wk: weekly horizon roll (Monday 02:00 UTC), daily bankfeed pull,
              daily crisis-mode refresh, monthly calibration. REQ-CF-000/010/012/013. -->
         <job>OCA\Shillinq\Cron\HorizonRollingJob</job>
@@ -155,4 +121,49 @@ Vrij en open source onder de EUPL-1.2-licentie.
              admin UI keep working regardless. -->
         <job>OCA\Shillinq\BackgroundJob\FxRateImportJob</job>
     </background-jobs>
+
+    <repair-steps>
+        <post-migration>
+            <step>OCA\Shillinq\Repair\InitializeSettings</step>
+            <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
+            <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>
+            <step>OCA\Shillinq\Repair\RetireCostProjectStep</step>
+            <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
+            <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
+            <step>OCA\Shillinq\Repair\Load_CBS_Seeds_Step</step>
+            <step>OCA\Shillinq\Repair\Load_SBR_XBRL_Seeds_Step</step>
+            <step>OCA\Shillinq\Repair\Load_DBA_Seeds_Step</step>
+            <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
+            <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
+            <step>OCA\Shillinq\Repair\SetOrderExtensionComposition</step>
+            <step>OCA\Shillinq\Repair\FoldIntoOrder</step>
+            <step>OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice</step>
+            <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
+            <step>OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject</step>
+            <step>OCA\Shillinq\Repair\RetireSubsidieSchema</step>
+        </post-migration>
+    </repair-steps>
+
+    <commands>
+        <!-- Audit the register's bookkeeping objects against the machine-checkable
+             rule corpus (lib/Standards/RuleCatalogue + RuleEngine). Read-only. -->
+        <command>OCA\Shillinq\Command\RulesAuditCommand</command>
+        <!-- Idempotently backfill local TEST data to satisfy the enforced rules
+             (sourceReference + balanced lines on every GL transaction). Test/dev. -->
+        <command>OCA\Shillinq\Command\RulesSeedTestDataCommand</command>
+    </commands>
+
+    <settings>
+        <admin>OCA\Shillinq\Settings\AdminSettings</admin>
+        <admin-section>OCA\Shillinq\Sections\SettingsSection</admin-section>
+    </settings>
+
+    <navigations>
+        <navigation>
+            <id>shillinq</id>
+            <name>Shillinq</name>
+            <route>shillinq.dashboard.page</route>
+            <icon>app.svg</icon>
+        </navigation>
+    </navigations>
 </info>

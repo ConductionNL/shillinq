@@ -27,12 +27,12 @@ permissions:
 jobs:
   frontend-unit:
     name: Frontend unit (Vitest — shillinq)
-    runs-on: docker
+    runs-on: codeberg-medium
     container:
-      image: code.forgejo.org/oci/ci-node:20
+      image: node:20
     steps:
       - name: Checkout
-        uses: https://code.forgejo.org/actions/checkout@v4
+        uses: https://github.com/actions/checkout@v4
 
       - name: Install npm deps
         run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
@@ -53,13 +53,22 @@ jobs:
   # ---------------------------------------------------------------------------
   phpunit-coverage-ratchet:
     name: PHPUnit coverage ratchet (shillinq)
-    runs-on: docker
+    runs-on: codeberg-medium
     continue-on-error: true
     container:
-      image: code.forgejo.org/oci/ci-php:8.3
+      image: php:8.3-cli
     steps:
+      - name: Install base tooling
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            git curl ca-certificates gnupg jq unzip zip \
+            libzip-dev libpng-dev python3 nodejs
+          docker-php-ext-install -j"$(nproc)" zip gd
+          curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
       - name: Checkout
-        uses: https://code.forgejo.org/actions/checkout@v4
+        uses: https://github.com/actions/checkout@v4
 
       - name: Ensure a coverage driver (PCOV)
         run: |
@@ -71,7 +80,10 @@ jobs:
             || echo "coverage driver: ABSENT (ratchet will no-op; see TESTING-CI-ROLLOUT.md)"
 
       - name: Install composer deps
-        run: composer install --no-interaction --no-progress --prefer-dist
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.GH_COMPOSER_TOKEN }}"}}'
+          COMPOSER_MAX_PARALLEL_HTTP: "1"
+        run: n=0; until composer install --no-interaction --no-progress --prefer-dist --ignore-platform-reqs; do n=$((n+1)); [ $n -ge 5 ] && { echo "composer install failed after 5 attempts"; exit 1; }; echo "transient composer download failure, retry $n/5"; sleep 15; done
 
       - name: Run unit suite WITH coverage (clover)
         run: |
@@ -92,12 +104,12 @@ jobs:
   # ---------------------------------------------------------------------------
   frontend-coverage-ratchet:
     name: Frontend coverage ratchet (shillinq)
-    runs-on: docker
+    runs-on: codeberg-medium
     container:
-      image: code.forgejo.org/oci/ci-node:20
+      image: node:20
     steps:
       - name: Checkout
-        uses: https://code.forgejo.org/actions/checkout@v4
+        uses: https://github.com/actions/checkout@v4
 
       - name: Install npm deps (+ coverage-v8)
         run: |

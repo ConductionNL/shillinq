@@ -661,11 +661,16 @@ class Application extends App implements IBootstrap
 
         // Mechanical admin-settings + section → engine generics (the generic
         // AdminSettings also upgrades the plain ISettings to the
-        // IDelegatedSettings #299 pattern). info.xml references the generic
-        // class names directly, so these registerService aliases inject the
-        // leaf metadata (section id "shillinq", priority, icon).
+        // IDelegatedSettings #299 pattern). info.xml references the LEAF class
+        // names (OCA\Shillinq\Settings\AdminSettings / Sections\SettingsSection)
+        // so Nextcloud's settings Manager resolves them through Shillinq's own
+        // DI container — where these factories inject the leaf metadata (appId,
+        // section id "shillinq", priority, icon). Registering under the generic
+        // OCA\OpenRegister\... names instead would route resolution to
+        // OpenRegister's container, which has no appId bound, fatally blanking
+        // every settings page in the instance.
         $context->registerService(
-            'OCA\\OpenRegister\\AppHost\\Settings\\GenericAdminSettings',
+            'OCA\\Shillinq\\Settings\\AdminSettings',
             static function (ContainerInterface $c) use ($appId) {
                 $class = 'OCA\\OpenRegister\\AppHost\\Settings\\GenericAdminSettings';
                 return new $class(
@@ -673,13 +678,14 @@ class Application extends App implements IBootstrap
                     sectionId: $appId,
                     priority: 10,
                     appManager: $c->get('OCP\\App\\IAppManager'),
-                    initialState: $c->get('OCP\\AppFramework\\Services\\IInitialState')
+                    initialState: $c->get('OCP\\AppFramework\\Services\\IInitialState'),
+                    appConfig: $c->get('OCP\\IAppConfig')
                 );
             }
         );
 
         $context->registerService(
-            'OCA\\OpenRegister\\AppHost\\Settings\\GenericSettingsSection',
+            'OCA\\Shillinq\\Sections\\SettingsSection',
             static function (ContainerInterface $c) use ($appId) {
                 $class = 'OCA\\OpenRegister\\AppHost\\Settings\\GenericSettingsSection';
                 return new $class(

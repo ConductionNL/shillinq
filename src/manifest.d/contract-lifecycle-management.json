@@ -92,6 +92,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Contract",
+				"_note": "CONTRACT master. Body leads with the terms a reviewer needs (parties, value, currency, dates, the renewal-decision window) and surfaces the contract's obligations register directly on the page — obligations are the operational heart of a contract. Signed documents, committed-vs-invoiced spend and the audit trail sit in the sidebar. Predecessor/successor links model renewals in-place. Financial governance record — no email/calendar leaf.",
 				"fields": [
 					{"key": "contractNumber", "label": "Contract #", "type": "string"},
 					{"key": "title", "label": "Title", "type": "string"},
@@ -117,25 +118,23 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Contracts",
+				"relatedObjects": [
+					{
+						"id": "obligations",
+						"label": "Obligations",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "ContractObligation",
+							"filterField": "contractReference",
+							"columns": ["title", "obligationType", "dueDate", "responsible", "status", "taskLinkStatus"],
+							"detailRoute": "ContractObligationDetail",
+							"defaultSort": "dueDate"
+						}
+					}
+				],
 				"sidebarProps": {
 					"tabs": [
-						{
-							"id": "obligations",
-							"label": "Obligations",
-							"icon": "ClipboardCheckOutline",
-							"order": 10,
-							"widgets": [
-								{
-									"type": "data",
-									"componentName": "openregister-related-objects",
-									"props": {
-										"register": "shillinq",
-										"schema": "ContractObligation",
-										"filter": {"contractReference": ":id"}
-									}
-								}
-							]
-						},
 						{
 							"id": "spend",
 							"label": "Contract Spend",
@@ -225,6 +224,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ContractObligation",
+				"_note": "OBLIGATION — one clause-level deliverable of a contract. Body shows the parent contract, clause reference, obligation type, due date/recurrence and the responsible party, plus the linked NC-Deck/task URI and its sync status. Evidence files and the audit trail sit in the sidebar. It tracks a deliverable, not a conversation — no comms leaf; the task link is the actionable hook.",
 				"fields": [
 					{"key": "contractReference", "label": "Contract", "type": "string"},
 					{"key": "title", "label": "Title", "type": "string"},

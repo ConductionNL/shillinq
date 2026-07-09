@@ -44,6 +44,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "BookingSmsReminderChannel",
+				"_note": "CONFIG/TECHNICAL archetype — an SMS reminder channel is provider configuration (template, timing, sender ID, retry policy, GDPR opt-out). It configures messaging but is not itself a conversation, so NO email/talk/calendar widget (the record declares no comms linkedType). Native shillinq detail contract: the config renders from config.fields[] (including the calculated renderedPreview / character-count / fallback-valid fields), lifecycleActions activate/deactivate the channel, and the immutable audit trail lives in the sidebar so an admin can see who changed the template or timing. NO files/aggregation — a channel config has no attachments and no financial totals.",
 				"fields": [
 					{ "key": "name", "label": "Name", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" },
@@ -98,7 +99,14 @@
 					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
 				],
 				"lifecycleActions": true,
-				"indexRoute": "SmsReminderChannels"
+				"indexRoute": "SmsReminderChannels",
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				}
 			}
 		}
 	]

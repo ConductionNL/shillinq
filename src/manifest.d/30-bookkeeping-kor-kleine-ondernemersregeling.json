@@ -12,28 +12,28 @@
 			"children": [
 				{
 					"id": "KorAanmelding",
-					"label": "KOR Aanmelding",
+					"label": "KOR registration",
 					"icon": "ShieldPlusOutline",
 					"route": "KorAanmelding",
 					"order": 11
 				},
 				{
 					"id": "KorDashboard",
-					"label": "KOR Dashboard",
+					"label": "KOR dashboard",
 					"icon": "ViewDashboardOutline",
 					"route": "KorDashboard",
 					"order": 12
 				},
 				{
 					"id": "KorDrempelMonitor",
-					"label": "Drempel Monitor",
+					"label": "Threshold monitor",
 					"icon": "GaugeFull",
 					"route": "KorDrempelMonitor",
 					"order": 13
 				},
 				{
 					"id": "KorOpzegging",
-					"label": "KOR Opzegging",
+					"label": "KOR cancellation",
 					"icon": "ShieldRemoveOutline",
 					"route": "KorOpzegging",
 					"order": 14
@@ -46,7 +46,7 @@
 			"id": "KorAanmelding",
 			"route": "/belastingen/kor-aanmelding",
 			"type": "index",
-			"title": "KOR Aanmelding",
+			"title": "KOR registration",
 			"config": {
 				"register": "shillinq",
 				"schema": "KORRegistration",
@@ -64,8 +64,8 @@
 						"type": "enum",
 						"defaultValue": "draft",
 						"options": [
-							{ "value": "draft", "label": "Concept" },
-							{ "value": "ACTIEF", "label": "Actief" }
+							{ "value": "draft", "label": "Draft" },
+							{ "value": "ACTIEF", "label": "Active" }
 						]
 					},
 					{
@@ -79,24 +79,24 @@
 					}
 				],
 				"columns": [
-					{ "key": "ondernemingId", "label": "Onderneming", "sortable": true },
+					{ "key": "ondernemingId", "label": "Business", "sortable": true },
 					{ "key": "regime", "label": "Regime", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true },
-					{ "key": "aanmeldDatum", "label": "Aanmeld-datum", "sortable": true },
-					{ "key": "ingangsDatum", "label": "Ingangs-datum", "sortable": true },
-					{ "key": "lockInEindDatum", "label": "Lock-in einde", "sortable": true },
-					{ "key": "belastingdienstReferentie", "label": "BD-referentie" }
+					{ "key": "aanmeldDatum", "label": "Registration date", "sortable": true },
+					{ "key": "ingangsDatum", "label": "Start date", "sortable": true },
+					{ "key": "lockInEindDatum", "label": "Lock-in end", "sortable": true },
+					{ "key": "belastingdienstReferentie", "label": "BD reference" }
 				],
 				"defaultSort": "-aanmeldDatum",
 				"lifecycleActions": true,
-				"helpText": "Begin een nieuwe KOR-aanmelding. Een aanmelding is een drie-jaars commitment (lock-in). Bevestig de scenario-analyse, de historische omzet, de prognose en de drempel-blokkade voor je submit naar mijnbelastingdienst.nl/zakelijk."
+				"helpText": "Start a new KOR registration. A registration is a three-year commitment (lock-in). Confirm the scenario analysis, the historical turnover, the forecast and the threshold block before you submit to mijnbelastingdienst.nl/zakelijk."
 			}
 		},
 		{
 			"id": "KorDashboard",
 			"route": "/belastingen/kor-dashboard",
 			"type": "index",
-			"title": "KOR Dashboard",
+			"title": "KOR dashboard",
 			"config": {
 				"register": "shillinq",
 				"schema": "KORRegistration",
@@ -114,49 +114,56 @@
 						"type": "enum",
 						"defaultValue": "ACTIEF",
 						"options": [
-							{ "value": "ACTIEF", "label": "Actief" },
-							{ "value": "GEEINDIGD_OVERSCHRIJDING", "label": "Beëindigd — overschrijding" },
-							{ "value": "GEEINDIGD_VRIJWILLIG", "label": "Beëindigd — vrijwillig" }
+							{ "value": "ACTIEF", "label": "Active" },
+							{ "value": "GEEINDIGD_OVERSCHRIJDING", "label": "Ended — exceedance" },
+							{ "value": "GEEINDIGD_VRIJWILLIG", "label": "Ended — voluntary" }
 						]
 					}
 				],
 				"columns": [
-					{ "key": "ondernemingId", "label": "Onderneming", "sortable": true },
+					{ "key": "ondernemingId", "label": "Business", "sortable": true },
 					{ "key": "regime", "label": "Regime" },
 					{ "key": "status", "label": "Status", "sortable": true },
-					{ "key": "ingangsDatum", "label": "Ingangs-datum", "sortable": true },
-					{ "key": "lockInEindDatum", "label": "Lock-in einde", "sortable": true },
-					{ "key": "drempelJaar", "label": "Drempel (EUR)" }
+					{ "key": "ingangsDatum", "label": "Start date", "sortable": true },
+					{ "key": "lockInEindDatum", "label": "Lock-in end", "sortable": true },
+					{ "key": "drempelJaar", "label": "Threshold (EUR)" }
 				],
 				"defaultSort": "-ingangsDatum",
 				"detailRoute": "KorDrempelMonitor",
-				"helpText": "Overzicht van alle KOR-registraties van deze administratie. Klik door naar Drempel Monitor om realtime drempel-benutting, maandprognose en alert-historie te bekijken (REQ-KOR-002, REQ-KOR-003)."
+				"helpText": "Overview of all KOR registrations for this administration. Click through to the Threshold monitor to view real-time threshold utilization, monthly forecast and alert history (REQ-KOR-002, REQ-KOR-003)."
 			}
 		},
 		{
 			"id": "KorDrempelMonitor",
 			"route": "/belastingen/kor-drempel/:id",
 			"type": "detail",
-			"title": "Drempel Monitor",
+			"title": "Threshold monitor",
 			"config": {
 				"register": "shillinq",
 				"schema": "KORAnnualTurnover",
-				"fields": [
-					{ "key": "registrationId", "label": "Registratie", "type": "string" },
-					{ "key": "jaar", "label": "Kalenderjaar", "type": "integer" },
-					{ "key": "lopendeOmzet", "label": "Lopende omzet (EUR)", "type": "money" },
-					{ "key": "drempel", "label": "Drempel (EUR)", "type": "money" },
-					{ "key": "drempelBenutting", "label": "Benutting", "type": "number" },
-					{ "key": "perMaand", "label": "Omzet per maand", "type": "json" },
-					{ "key": "uitgeslotenPosten", "label": "Uitgesloten posten", "type": "array" },
-					{ "key": "prognoseEindeJaar", "label": "Prognose eind jaar (EUR)", "type": "money" },
-					{ "key": "prognoseStatus", "label": "Prognose-status", "type": "string" }
+				"_note": "REPORT/MONITOR archetype — a KOR annual-turnover record tracks a registration's running turnover against the small-business threshold in real time. Native shillinq detail contract: config.aggregations[] surface the three money/utilization KPIs (running turnover, year-end forecast, threshold utilization) so a bookkeeper instantly sees whether the threshold is at risk; config.fields[] render the full turnover data (year, threshold, per-month breakdown, excluded items, forecast status); and the bespoke KOR sidebarProps (alert-history list filtered by registrationId + audit trail) is preserved verbatim — the correct home for the threshold-alert log. NO comms/files — this is a computed monitor, not a document.",
+				"aggregations": [
+					{ "id": "runningTurnover", "title": "Running turnover", "field": "lopendeOmzet", "metric": "value", "format": "currency" },
+					{ "id": "yearEndForecast", "title": "Year-end forecast", "field": "prognoseEindeJaar", "metric": "value", "format": "currency" },
+					{ "id": "thresholdUtilization", "title": "Threshold utilization", "field": "drempelBenutting", "metric": "value", "format": "percentage" }
 				],
+				"fields": [
+					{ "key": "registrationId", "label": "Registration", "type": "string" },
+					{ "key": "jaar", "label": "Calendar year", "type": "integer" },
+					{ "key": "lopendeOmzet", "label": "Running turnover (EUR)", "type": "money" },
+					{ "key": "drempel", "label": "Threshold (EUR)", "type": "money" },
+					{ "key": "drempelBenutting", "label": "Utilization", "type": "number" },
+					{ "key": "perMaand", "label": "Turnover per month", "type": "json" },
+					{ "key": "uitgeslotenPosten", "label": "Excluded items", "type": "array" },
+					{ "key": "prognoseEindeJaar", "label": "Year-end forecast (EUR)", "type": "money" },
+					{ "key": "prognoseStatus", "label": "Forecast status", "type": "string" }
+				],
+				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [
 						{
 							"id": "alerts",
-							"label": "Alert-historie",
+							"label": "Alert history",
 							"icon": "AlertOutline",
 							"order": 10,
 							"widgets": [
@@ -171,10 +178,10 @@
 										"valueFromField": "registrationId"
 									},
 									"columns": [
-										{ "key": "uitgeloostOp", "label": "Tijdstip" },
-										{ "key": "trigger", "label": "Schijf" },
-										{ "key": "ernst", "label": "Ernst" },
-										{ "key": "drempelBenutting", "label": "Benutting" }
+										{ "key": "uitgeloostOp", "label": "Timestamp" },
+										{ "key": "trigger", "label": "Bracket" },
+										{ "key": "ernst", "label": "Severity" },
+										{ "key": "drempelBenutting", "label": "Utilization" }
 									]
 								}
 							]
@@ -193,7 +200,7 @@
 			"id": "KorOpzegging",
 			"route": "/belastingen/kor-opzegging",
 			"type": "index",
-			"title": "KOR Opzegging",
+			"title": "KOR cancellation",
 			"config": {
 				"register": "shillinq",
 				"schema": "KORRegistration",
@@ -211,20 +218,20 @@
 						"type": "enum",
 						"defaultValue": "ACTIEF",
 						"options": [
-							{ "value": "ACTIEF", "label": "Actief" }
+							{ "value": "ACTIEF", "label": "Active" }
 						]
 					}
 				],
 				"columns": [
-					{ "key": "ondernemingId", "label": "Onderneming", "sortable": true },
+					{ "key": "ondernemingId", "label": "Business", "sortable": true },
 					{ "key": "regime", "label": "Regime" },
-					{ "key": "ingangsDatum", "label": "Ingangs-datum", "sortable": true },
-					{ "key": "lockInEindDatum", "label": "Lock-in einde", "sortable": true },
-					{ "key": "vroegsteOpzegDatum", "label": "Vroegste opzeg-datum", "sortable": true }
+					{ "key": "ingangsDatum", "label": "Start date", "sortable": true },
+					{ "key": "lockInEindDatum", "label": "Lock-in end", "sortable": true },
+					{ "key": "vroegsteOpzegDatum", "label": "Earliest cancellation date", "sortable": true }
 				],
 				"defaultSort": "vroegsteOpzegDatum",
 				"lifecycleActions": true,
-				"helpText": "Vrijwillige opzegging van een ACTIEF KOR-registratie. Opzegging is geblokkeerd tot lockInEindDatum (REQ-KOR-007); de vroegste opzeg-datum is drie maanden vóór einde lock-in. De effectieve einddatum is 1-1 van het volgende kalenderjaar. Bij goedkeuring wordt automatisch een KORRevocation met type=VRIJWILLIG_NA_LOCKOUT aangemaakt."
+				"helpText": "Voluntary cancellation of an ACTIVE KOR registration. Cancellation is blocked until lockInEindDatum (REQ-KOR-007); the earliest cancellation date is three months before the end of the lock-in. The effective end date is 1 January of the next calendar year. On approval a KORRevocation with type=VRIJWILLIG_NA_LOCKOUT is created automatically."
 			}
 		}
 	]

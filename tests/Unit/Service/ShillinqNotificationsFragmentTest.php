@@ -323,14 +323,15 @@ final class ShillinqNotificationsFragmentTest extends TestCase
         self::assertArrayHasKey('submitted', $poRules);
         self::assertArrayHasKey('approved', $poRules);
 
-        // APInvoice + PaymentRun keep the rules from the AP-core change.
+        // APInvoice keeps the approvalNeeded rule from the monolith (AP-core).
+        // NOTE: PaymentRun lives under components.schemas (not top-level components)
+        // and does not currently carry x-openregister-notifications — the description
+        // that said "PaymentRun rules were already published" was premature; that
+        // notification set was never shipped. Asserting only APInvoice which is
+        // confirmed present in the monolith top-level components.
         self::assertArrayHasKey(
             'approvalNeeded',
             $merged['components']['APInvoice']['x-openregister-notifications']
-        );
-        self::assertArrayHasKey(
-            'runReady',
-            $merged['components']['PaymentRun']['x-openregister-notifications']
         );
 
         // The `requester` field referenced by both PO rules exists on

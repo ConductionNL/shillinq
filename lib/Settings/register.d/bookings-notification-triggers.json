@@ -28,19 +28,31 @@
             "type": "string",
             "maxLength": 120,
             "description": "Human-readable trigger name shown in the admin list (REQ-BNT-007).",
-            "example": "Booking confirmation — customer (email primary, SMS fallback)"
+            "example": "Booking confirmation — customer (email primary, SMS fallback)",
+            "title": "Name"
           },
           "status": {
             "type": "string",
-            "enum": ["enabled", "disabled", "archived"],
+            "enum": [
+              "enabled",
+              "disabled",
+              "archived"
+            ],
             "default": "enabled",
-            "description": "Lifecycle state (REQ-BNT-007/008). enabled = trigger evaluates and dispatches; disabled = paused (admin disable-all toggle target); archived = retired for audit, cannot be re-enabled."
+            "description": "Lifecycle state (REQ-BNT-007/008). enabled = trigger evaluates and dispatches; disabled = paused (admin disable-all toggle target); archived = retired for audit, cannot be re-enabled.",
+            "title": "Status"
           },
           "triggerType": {
             "type": "string",
-            "enum": ["booking.created", "booking.changed", "booking.cancelled", "booking.reminder"],
+            "enum": [
+              "booking.created",
+              "booking.changed",
+              "booking.cancelled",
+              "booking.reminder"
+            ],
             "description": "Which booking lifecycle event fires this trigger (REQ-BNT-001). booking.created on the Booking pending→confirmed transition; booking.changed on a non-status field change (startTime, organizer, attendee, location); booking.cancelled on confirmed→cancelled / pending→cancelled; booking.reminder fires on a scheduled offset (reminderHoursBeforeStart) before bookingStart.",
-            "example": "booking.created"
+            "example": "booking.created",
+            "title": "Trigger Type"
           },
           "reminderHoursBeforeStart": {
             "type": "integer",
@@ -48,7 +60,8 @@
             "maximum": 720,
             "nullable": true,
             "description": "Only used when triggerType == booking.reminder (REQ-BNT-001). Hours before bookingStart to dispatch the reminder. Common values: 15 (≈15 min via /60), 1, 24. OR's notification engine schedules dispatch at bookingStart − this value (±15 min tolerance); missed windows dispatch immediately.",
-            "example": 24
+            "example": 24,
+            "title": "Reminder Hours Before Start"
           },
           "channels": {
             "type": "array",
@@ -56,10 +69,20 @@
             "maxItems": 5,
             "items": {
               "type": "string",
-              "enum": ["email", "sms", "chat", "teams", "slack"]
+              "enum": [
+                "email",
+                "sms",
+                "chat",
+                "teams",
+                "slack"
+              ]
             },
             "description": "Channel priority order for fallback (REQ-BNT-004). Engine tries channel[0]; on adapter failure falls back to channel[1], etc. Each channel routes through the corresponding openconnector adapter. Recording every attempt in NotificationDelivery is mandatory (REQ-BNT-005).",
-            "example": ["email", "sms"]
+            "example": [
+              "email",
+              "sms"
+            ],
+            "title": "Channels"
           },
           "recipients": {
             "type": "array",
@@ -67,80 +90,104 @@
             "maxItems": 10,
             "items": {
               "type": "object",
-              "required": ["role"],
+              "required": [
+                "role"
+              ],
               "properties": {
                 "role": {
                   "type": "string",
-                  "enum": ["customer", "organizer", "admin_group"],
-                  "description": "Recipient role (REQ-BNT-003). customer = the booking attendee; organizer = the resource staff member; admin_group = members of the Nextcloud 'admin' group."
+                  "enum": [
+                    "customer",
+                    "organizer",
+                    "admin_group"
+                  ],
+                  "description": "Recipient role (REQ-BNT-003). customer = the booking attendee; organizer = the resource staff member; admin_group = members of the Nextcloud 'admin' group.",
+                  "title": "Role"
                 },
                 "channels": {
                   "type": "array",
                   "items": {
                     "type": "string",
-                    "enum": ["email", "sms", "chat", "teams", "slack"]
+                    "enum": [
+                      "email",
+                      "sms",
+                      "chat",
+                      "teams",
+                      "slack"
+                    ]
                   },
-                  "description": "Optional per-rule channel override (REQ-BNT-003). Falls back to the trigger-level channels when omitted."
+                  "description": "Optional per-rule channel override (REQ-BNT-003). Falls back to the trigger-level channels when omitted.",
+                  "title": "Channels"
                 },
                 "condition": {
                   "type": "string",
                   "description": "Optional condition expression evaluated against the booking payload (REQ-BNT-003). Supports comparisons (==, !=, >, <, >=, <=) and boolean literals. Variables: booking.price, booking.status, booking.duration. Empty / true = always send.",
-                  "example": "booking.price > 100"
+                  "example": "booking.price > 100",
+                  "title": "Condition"
                 }
               }
             },
-            "description": "Ordered list of recipient rules (REQ-BNT-003). Each rule resolves at dispatch time to one or more recipients; rules with a false condition are skipped (audited as 'skipped (condition)'). At least one rule is required."
+            "description": "Ordered list of recipient rules (REQ-BNT-003). Each rule resolves at dispatch time to one or more recipients; rules with a false condition are skipped (audited as 'skipped (condition)'). At least one rule is required.",
+            "title": "Recipients"
           },
           "rateLimitPerBookingPerHour": {
             "type": "integer",
             "minimum": 1,
             "maximum": 100,
             "default": 10,
-            "description": "Maximum dispatches per booking per UTC calendar hour (REQ-BNT-006). Default 10. Excess dispatches are queued (status=queued) and visible in the admin monitor (REQ-BNT-008)."
+            "description": "Maximum dispatches per booking per UTC calendar hour (REQ-BNT-006). Default 10. Excess dispatches are queued (status=queued) and visible in the admin monitor (REQ-BNT-008).",
+            "title": "Rate Limit Per Booking Per Hour"
           },
           "rateLimitPerOrganizerPerDay": {
             "type": "integer",
             "minimum": 1,
             "maximum": 1000,
             "default": 100,
-            "description": "Maximum dispatches per organizer per UTC calendar day (REQ-BNT-006). Default 100."
+            "description": "Maximum dispatches per organizer per UTC calendar day (REQ-BNT-006). Default 100.",
+            "title": "Rate Limit Per Organizer Per Day"
           },
           "deduplicationWindowMinutes": {
             "type": "integer",
             "minimum": 1,
             "maximum": 60,
             "default": 5,
-            "description": "Dedupe window in minutes (REQ-BNT-006). If the same (recipient, triggerType, bookingId) tuple already dispatched within this window, the second dispatch is skipped and audited as 'skipped (deduplicated)'."
+            "description": "Dedupe window in minutes (REQ-BNT-006). If the same (recipient, triggerType, bookingId) tuple already dispatched within this window, the second dispatch is skipped and audited as 'skipped (deduplicated)'.",
+            "title": "Deduplication Window Minutes"
           },
           "respectOptOut": {
             "type": "boolean",
             "default": true,
-            "description": "When true (default), a recipient that has opted out of this trigger type (recipient.notificationOptOut[triggerType] === true) is skipped and audited as 'skipped (opt-out)' (REQ-BNT-009). GDPR / AVG mandates honouring opt-out for marketing-style notifications; operators can set false for strictly transactional triggers."
+            "description": "When true (default), a recipient that has opted out of this trigger type (recipient.notificationOptOut[triggerType] === true) is skipped and audited as 'skipped (opt-out)' (REQ-BNT-009). GDPR / AVG mandates honouring opt-out for marketing-style notifications; operators can set false for strictly transactional triggers.",
+            "title": "Respect Opt Out"
           },
           "templateOverrideSlug": {
             "type": "string",
             "nullable": true,
             "maxLength": 120,
             "description": "Optional per-trigger template slug override (REQ-BNT-002). When set, the engine fetches the named template (BookingConfirmationTemplate / BookingReminderTemplate / BookingCancellationTemplate) instead of the locale-matched default published template selected by the bookings-email-templates dispatch.",
-            "example": "default-confirmation-nl"
+            "example": "default-confirmation-nl",
+            "title": "Template Override Slug"
           },
           "appliesToBookingSlug": {
             "type": "string",
             "nullable": true,
             "maxLength": 120,
-            "description": "Optional per-booking scope (REQ-BNT-007). When set, the trigger only fires for that single Booking slug — the modal-driven override pattern. When null, the trigger is global (applies to every Booking of the matching event type)."
+            "description": "Optional per-booking scope (REQ-BNT-007). When set, the trigger only fires for that single Booking slug — the modal-driven override pattern. When null, the trigger is global (applies to every Booking of the matching event type).",
+            "title": "Applies To Booking Slug"
           },
           "lastDispatchedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp of the most recent successful dispatch from this trigger. Surfaced in the admin monitor (REQ-BNT-008). Stamped by the notification engine on each successful send."
+            "description": "Timestamp of the most recent successful dispatch from this trigger. Surfaced in the admin monitor (REQ-BNT-008). Stamped by the notification engine on each successful send.",
+            "title": "Last Dispatched At"
           },
           "activatedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp when the trigger first transitioned to enabled. Stamped on first enable."
+            "description": "Timestamp when the trigger first transitioned to enabled. Stamped on first enable.",
+            "title": "Activated At"
           }
         },
         "x-openregister-lifecycle": {
@@ -216,7 +263,9 @@
             "scheduleOffsetHours": "@self.reminderHoursBeforeStart",
             "appliesWhen": {
               "field": "status",
-              "in": ["enabled"]
+              "in": [
+                "enabled"
+              ]
             },
             "scopeBy": {
               "field": "appliesToBookingSlug",
@@ -236,15 +285,45 @@
             },
             "skipWhen": {
               "any": [
-                {"recipientField": "notificationOptOut[@self.triggerType]", "equals": true, "onlyIf": "@self.respectOptOut"},
-                {"rateLimit": {"scope": "booking", "max": "@self.rateLimitPerBookingPerHour", "windowMinutes": 60}},
-                {"rateLimit": {"scope": "organizer", "max": "@self.rateLimitPerOrganizerPerDay", "windowMinutes": 1440}},
-                {"deduplicate": {"key": ["recipient", "triggerType", "bookingId"], "windowMinutes": "@self.deduplicationWindowMinutes"}}
+                {
+                  "recipientField": "notificationOptOut[@self.triggerType]",
+                  "equals": true,
+                  "onlyIf": "@self.respectOptOut"
+                },
+                {
+                  "rateLimit": {
+                    "scope": "booking",
+                    "max": "@self.rateLimitPerBookingPerHour",
+                    "windowMinutes": 60
+                  }
+                },
+                {
+                  "rateLimit": {
+                    "scope": "organizer",
+                    "max": "@self.rateLimitPerOrganizerPerDay",
+                    "windowMinutes": 1440
+                  }
+                },
+                {
+                  "deduplicate": {
+                    "key": [
+                      "recipient",
+                      "triggerType",
+                      "bookingId"
+                    ],
+                    "windowMinutes": "@self.deduplicationWindowMinutes"
+                  }
+                }
               ]
             },
             "audit": {
               "schema": "NotificationDelivery",
-              "writeOn": ["sent", "failed", "skipped", "queued"],
+              "writeOn": [
+                "sent",
+                "failed",
+                "skipped",
+                "queued"
+              ],
               "fields": {
                 "triggerName": "@self.name",
                 "triggerType": "@self.triggerType",
@@ -266,10 +345,31 @@
         },
         "x-openregister-rbac": {
           "roles": {
-            "notification-administrator": {"permissions": ["create", "read", "update", "delete"]},
-            "booking-administrator": {"permissions": ["read", "update"]},
-            "booking-organizer": {"permissions": ["read", "update"]},
-            "auditor": {"permissions": ["read"]}
+            "notification-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "booking-administrator": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "booking-organizer": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           },
           "permissionMap": {
             "booking:notification:list": "read",
@@ -303,82 +403,147 @@
           "triggerName": {
             "type": "string",
             "maxLength": 120,
-            "description": "Name of the firing trigger (denormalised from BookingNotificationTrigger.name for audit immutability)."
+            "description": "Name of the firing trigger (denormalised from BookingNotificationTrigger.name for audit immutability).",
+            "title": "Trigger Name"
           },
           "triggerType": {
             "type": "string",
-            "enum": ["booking.created", "booking.changed", "booking.cancelled", "booking.reminder"],
-            "description": "Event type that fired the dispatch (REQ-BNT-001)."
+            "enum": [
+              "booking.created",
+              "booking.changed",
+              "booking.cancelled",
+              "booking.reminder"
+            ],
+            "description": "Event type that fired the dispatch (REQ-BNT-001).",
+            "title": "Trigger Type"
           },
           "bookingId": {
             "type": "string",
             "maxLength": 120,
-            "description": "UUID / slug of the Booking. Cross-links to the bookings-resource-calendar Booking record."
+            "description": "UUID / slug of the Booking. Cross-links to the bookings-resource-calendar Booking record.",
+            "title": "Booking ID"
           },
           "recipient": {
             "type": "string",
             "maxLength": 200,
-            "description": "Recipient address (email / E.164 phone / chat id). PII — must be masked in the admin monitor list view; only auditors with the full-read permission see the raw value."
+            "description": "Recipient address (email / E.164 phone / chat id). PII — must be masked in the admin monitor list view; only auditors with the full-read permission see the raw value.",
+            "title": "Recipient"
           },
           "channel": {
             "type": "string",
-            "enum": ["email", "sms", "chat", "teams", "slack"],
-            "description": "Channel attempted for this record (REQ-BNT-004)."
+            "enum": [
+              "email",
+              "sms",
+              "chat",
+              "teams",
+              "slack"
+            ],
+            "description": "Channel attempted for this record (REQ-BNT-004).",
+            "title": "Channel"
           },
           "templateName": {
             "type": "string",
             "nullable": true,
             "maxLength": 120,
-            "description": "Template used (denormalised from BookingConfirmationTemplate / Reminder / Cancellation). Null when status=queued/skipped before template selection."
+            "description": "Template used (denormalised from BookingConfirmationTemplate / Reminder / Cancellation). Null when status=queued/skipped before template selection.",
+            "title": "Template Name"
           },
           "status": {
             "type": "string",
-            "enum": ["sent", "failed", "skipped", "queued"],
-            "description": "Dispatch outcome (REQ-BNT-005). sent = adapter accepted; failed = adapter rejected after retries; skipped = blocked by opt-out / dedupe / condition; queued = rate-limit hit, queued for admin review."
+            "enum": [
+              "sent",
+              "failed",
+              "skipped",
+              "queued"
+            ],
+            "description": "Dispatch outcome (REQ-BNT-005). sent = adapter accepted; failed = adapter rejected after retries; skipped = blocked by opt-out / dedupe / condition; queued = rate-limit hit, queued for admin review.",
+            "title": "Status"
           },
           "skipReason": {
             "type": "string",
-            "enum": ["opt-out", "deduplicated", "rate-limit-booking", "rate-limit-organizer", "condition-false", "no-recipient-address", "all-channels-failed", "template-render-error", "adapter-unavailable"],
+            "enum": [
+              "opt-out",
+              "deduplicated",
+              "rate-limit-booking",
+              "rate-limit-organizer",
+              "condition-false",
+              "no-recipient-address",
+              "all-channels-failed",
+              "template-render-error",
+              "adapter-unavailable"
+            ],
             "nullable": true,
-            "description": "Machine-readable reason when status=skipped or failed (REQ-BNT-005/006/009). Surfaced in the admin monitor for support drill-down."
+            "description": "Machine-readable reason when status=skipped or failed (REQ-BNT-005/006/009). Surfaced in the admin monitor for support drill-down.",
+            "title": "Skip Reason"
           },
           "failureReason": {
             "type": "string",
             "nullable": true,
             "maxLength": 500,
-            "description": "Human-readable error detail when status=failed (REQ-BNT-005). Adapter response message or render error; never contains raw recipient PII."
+            "description": "Human-readable error detail when status=failed (REQ-BNT-005). Adapter response message or render error; never contains raw recipient PII.",
+            "title": "Failure Reason"
           },
           "retryCount": {
             "type": "integer",
             "minimum": 0,
             "default": 0,
-            "description": "Number of fallback / retry attempts before this record's outcome (REQ-BNT-004/005). 0 = first attempt."
+            "description": "Number of fallback / retry attempts before this record's outcome (REQ-BNT-004/005). 0 = first attempt.",
+            "title": "Retry Count"
           },
           "dispatchGroupId": {
             "type": "string",
             "maxLength": 120,
             "nullable": true,
-            "description": "UUID linking multiple NotificationDelivery records that belong to the same logical dispatch (e.g. email failure → SMS fallback). Generated by the engine on first attempt; reused across fallback channels."
+            "description": "UUID linking multiple NotificationDelivery records that belong to the same logical dispatch (e.g. email failure → SMS fallback). Generated by the engine on first attempt; reused across fallback channels.",
+            "title": "Dispatch Group ID"
           },
           "sentAt": {
             "type": "string",
             "format": "date-time",
-            "description": "ISO-8601 UTC timestamp of the dispatch attempt. Write-once."
+            "description": "ISO-8601 UTC timestamp of the dispatch attempt. Write-once.",
+            "title": "Sent At"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
           "initialState": "queued",
           "states": {
-            "queued": {"label": "In wachtrij", "description": "Dispatch queued for processing (rate-limit hit; awaits admin review or window reset)."},
-            "sent": {"label": "Verzonden", "description": "Adapter accepted the notification. Terminal."},
-            "failed": {"label": "Mislukt", "description": "Adapter rejected after retries. Terminal."},
-            "skipped": {"label": "Overgeslagen", "description": "Blocked by opt-out / dedupe / condition / missing address. Terminal."}
+            "queued": {
+              "label": "In wachtrij",
+              "description": "Dispatch queued for processing (rate-limit hit; awaits admin review or window reset)."
+            },
+            "sent": {
+              "label": "Verzonden",
+              "description": "Adapter accepted the notification. Terminal."
+            },
+            "failed": {
+              "label": "Mislukt",
+              "description": "Adapter rejected after retries. Terminal."
+            },
+            "skipped": {
+              "label": "Overgeslagen",
+              "description": "Blocked by opt-out / dedupe / condition / missing address. Terminal."
+            }
           },
           "transitions": {
-            "markSent": {"from": "queued", "to": "sent", "label": "Verzonden", "description": "Engine stamps on successful adapter callback."},
-            "markFailed": {"from": "queued", "to": "failed", "label": "Mislukt", "description": "Engine stamps on terminal failure (all retries exhausted)."},
-            "markSkipped": {"from": "queued", "to": "skipped", "label": "Overgeslagen", "description": "Engine stamps when skipWhen gate matched."}
+            "markSent": {
+              "from": "queued",
+              "to": "sent",
+              "label": "Verzonden",
+              "description": "Engine stamps on successful adapter callback."
+            },
+            "markFailed": {
+              "from": "queued",
+              "to": "failed",
+              "label": "Mislukt",
+              "description": "Engine stamps on terminal failure (all retries exhausted)."
+            },
+            "markSkipped": {
+              "from": "queued",
+              "to": "skipped",
+              "label": "Overgeslagen",
+              "description": "Engine stamps when skipWhen gate matched."
+            }
           }
         },
         "x-openregister-calculations": {
@@ -400,16 +565,41 @@
         },
         "x-openregister-audit": {
           "immutable": true,
-          "writeOnce": ["triggerName", "triggerType", "bookingId", "recipient", "channel", "templateName", "status", "skipReason", "failureReason", "retryCount", "dispatchGroupId", "sentAt"],
+          "writeOnce": [
+            "triggerName",
+            "triggerType",
+            "bookingId",
+            "recipient",
+            "channel",
+            "templateName",
+            "status",
+            "skipReason",
+            "failureReason",
+            "retryCount",
+            "dispatchGroupId",
+            "sentAt"
+          ],
           "retentionDays": 365,
           "tamperEvident": true,
           "description": "Tamper-evident hash-chained audit per ADR-022 (REQ-BNT-005). Records are write-once; the OR engine enforces field-level immutability after the initial write. Retention 365 days (AVG / GDPR; configurable per administration). The admin monitor (REQ-BNT-008) reads from this schema; manual edits are forbidden — operator concerns are addressed by adding a new record (e.g. compensating skip)."
         },
         "x-openregister-rbac": {
           "roles": {
-            "auditor": {"permissions": ["read"]},
-            "notification-administrator": {"permissions": ["read"]},
-            "booking-administrator": {"permissions": ["read"]}
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "notification-administrator": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "booking-administrator": {
+              "permissions": [
+                "read"
+              ]
+            }
           },
           "permissionMap": {
             "booking:notification-monitor:list": "read",
@@ -430,10 +620,24 @@
       "name": "Boekingsbevestiging — klant (e-mail, SMS fallback)",
       "status": "enabled",
       "triggerType": "booking.created",
-      "channels": ["email", "sms"],
+      "channels": [
+        "email",
+        "sms"
+      ],
       "recipients": [
-        {"role": "customer", "channels": ["email", "sms"]},
-        {"role": "organizer", "channels": ["email"]}
+        {
+          "role": "customer",
+          "channels": [
+            "email",
+            "sms"
+          ]
+        },
+        {
+          "role": "organizer",
+          "channels": [
+            "email"
+          ]
+        }
       ],
       "rateLimitPerBookingPerHour": 10,
       "rateLimitPerOrganizerPerDay": 100,
@@ -450,10 +654,22 @@
       "name": "Wijzigingsbericht — klant (e-mail)",
       "status": "enabled",
       "triggerType": "booking.changed",
-      "channels": ["email"],
+      "channels": [
+        "email"
+      ],
       "recipients": [
-        {"role": "customer", "channels": ["email"]},
-        {"role": "organizer", "channels": ["email"]}
+        {
+          "role": "customer",
+          "channels": [
+            "email"
+          ]
+        },
+        {
+          "role": "organizer",
+          "channels": [
+            "email"
+          ]
+        }
       ],
       "rateLimitPerBookingPerHour": 10,
       "rateLimitPerOrganizerPerDay": 100,
@@ -470,11 +686,29 @@
       "name": "Annulering — klant en organisator (e-mail)",
       "status": "enabled",
       "triggerType": "booking.cancelled",
-      "channels": ["email"],
+      "channels": [
+        "email"
+      ],
       "recipients": [
-        {"role": "customer", "channels": ["email"]},
-        {"role": "organizer", "channels": ["email"]},
-        {"role": "admin_group", "channels": ["email"], "condition": "booking.price > 100"}
+        {
+          "role": "customer",
+          "channels": [
+            "email"
+          ]
+        },
+        {
+          "role": "organizer",
+          "channels": [
+            "email"
+          ]
+        },
+        {
+          "role": "admin_group",
+          "channels": [
+            "email"
+          ],
+          "condition": "booking.price > 100"
+        }
       ],
       "rateLimitPerBookingPerHour": 10,
       "rateLimitPerOrganizerPerDay": 100,
@@ -492,9 +726,18 @@
       "status": "enabled",
       "triggerType": "booking.reminder",
       "reminderHoursBeforeStart": 24,
-      "channels": ["email", "sms"],
+      "channels": [
+        "email",
+        "sms"
+      ],
       "recipients": [
-        {"role": "customer", "channels": ["email", "sms"]}
+        {
+          "role": "customer",
+          "channels": [
+            "email",
+            "sms"
+          ]
+        }
       ],
       "rateLimitPerBookingPerHour": 10,
       "rateLimitPerOrganizerPerDay": 100,
@@ -512,9 +755,18 @@
       "status": "enabled",
       "triggerType": "booking.reminder",
       "reminderHoursBeforeStart": 1,
-      "channels": ["sms", "email"],
+      "channels": [
+        "sms",
+        "email"
+      ],
       "recipients": [
-        {"role": "customer", "channels": ["sms", "email"]}
+        {
+          "role": "customer",
+          "channels": [
+            "sms",
+            "email"
+          ]
+        }
       ],
       "rateLimitPerBookingPerHour": 10,
       "rateLimitPerOrganizerPerDay": 100,

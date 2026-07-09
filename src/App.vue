@@ -12,19 +12,45 @@
 -->
 <template>
 	<CnAppRoot
+		:ai-companion="true"
 		:manifest="manifest"
 		:page-types="pageTypes"
 		:custom-components="customComponents"
 		:registry="registry"
 		app-id="shillinq"
 		:translate="translateForApp"
-		:permissions="permissions" />
+		:permissions="permissions">
+		<!--
+		 Per-object integration sidebar (Files / Contacts / Audit trail / …).
+		 CnDetailPage publishes the active object's coordinates into
+		 `objectSidebarState` when a detail page enables `config.sidebar`; this
+		 slot renders the tabs. Mirrors the decidesk / procest shell pattern.
+		-->
+		<template #sidebar>
+			<CnObjectSidebar
+				v-if="objectSidebarState.active"
+				:title="objectSidebarState.title"
+				:subtitle="objectSidebarState.subtitle"
+				:object-type="objectSidebarState.objectType"
+				:object-id="objectSidebarState.objectId"
+				:register="objectSidebarState.register"
+				:schema="objectSidebarState.schema"
+				:hidden-tabs="objectSidebarState.hiddenTabs"
+				:tabs="objectSidebarState.tabs"
+				:use-registry="objectSidebarState.useRegistry"
+				:exclude-integrations="objectSidebarState.excludeIntegrations"
+				:requested-tab="objectSidebarState.requestedTab"
+				:registry="registry"
+				:open="objectSidebarState.open"
+				@update:open="objectSidebarState.open = $event" />
+		</template>
+	</CnAppRoot>
 </template>
 
 <script>
 import Vue from 'vue'
 import { translate as ncT } from '@nextcloud/l10n'
-import { CnAppRoot } from '@conduction/nextcloud-vue'
+import { CnAppRoot, CnObjectSidebar } from '@conduction/nextcloud-vue'
 import { initializeStores } from './store/store.js'
 
 export default {
@@ -32,6 +58,7 @@ export default {
 
 	components: {
 		CnAppRoot,
+		CnObjectSidebar,
 	},
 
 	/**

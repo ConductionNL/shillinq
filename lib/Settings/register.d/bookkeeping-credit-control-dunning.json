@@ -1,1457 +1,1560 @@
 {
-	"_meta": {
-		"spdx-license": "EUPL-1.2",
-		"spdx-copyright": "2026 Conduction B.V.",
-		"change": "bookkeeping-credit-control-dunning",
-		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-		"description": "Tier 2 — Credit Control & Dunning Ladder. Declares seven new registers per ADR-024: DunningLadder (configuration of N-stage ladder per ondernemer/klantgroep), KlantLadderOverride (per-klant exception with motivatie + audit-trail), DunningRun (per-invoice per-stage execution log with evidence, immutable post-execute), IncassoKostenBerekening (BIK-staffel per Besluit BIK + wettelijke rente B2B/B2C per art. 6:119/6:119a BW), DunningPauseDispute (dispute-pause with optional 60-day hard deadline), CreditScore (optional Graydon/Creditsafe/Atradius Insights snapshot), OninbaarAfschrijving (write-off + BTW-teruggaaf per art. 29 OB). Per ADR-031 the BIK-staffel + rente calculations are captured as declarative x-openregister-aggregations on IncassoKostenBerekening; a thin PHP guard (BIKStaffelCalculator + DunningRunService + DunningPauseService) materialises the record when the OR aggregation engine cannot express the staffel arithmetic. Seed objects illustrate a 5-stage default ZZP ladder, overheid override, sample dunning run, BIK calc for €8.400, and sample dispute-pause."
-	},
-	"components": {
-		"schemas": {
-			"DunningLadder": {
-				"slug": "DunningLadder",
-				"icon": "StairsUp",
-				"version": "0.1.0",
-				"title": "Dunning Ladder",
-				"description": "Configuration of a multi-stage dunning ladder per ondernemer or per klantgroep (DEFAULT, OVERHEID, VIP, AGGRESSIVE). Each stage declares dagenNaVervalDatum, kanaal (EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API), template reference (docudesk), and optional wettelijkEffect marker (14_DAGEN_BRIEF_BIK or VERZUIM_INTREDEN). One ondernemer MAY define multiple ladders. The active flag determines whether the ladder participates in automated dunning runs. REQ-CCD-001.",
-				"x-schema-org": "schema:Service",
-				"x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-001",
-				"type": "object",
-				"required": [
-					"naam",
-					"klantGroep",
-					"stages",
-					"actief",
-					"administrationId"
-				],
-				"properties": {
-					"naam": {
-						"type": "string",
-						"description": "Operator-facing ladder name.",
-						"example": "Standaard dunning-ladder ZZP"
-					},
-					"ondernemingId": {
-						"type": "string",
-						"nullable": true,
-						"description": "Optional FK to the owning Administration / ondernemer. When null, the ladder applies tenant-wide within the administration scope.",
-						"example": "ond-zzp-001"
-					},
-					"klantGroep": {
-						"type": "string",
-						"enum": [
-							"DEFAULT",
-							"OVERHEID",
-							"VIP",
-							"AGGRESSIVE"
-						],
-						"description": "Customer cohort the ladder applies to. OVERHEID gets statutory 30-day terms per Wet betalingstermijnen overheid; VIP softens stage 4–5; AGGRESSIVE accelerates timing.",
-						"example": "DEFAULT"
-					},
-					"stages": {
-						"type": "array",
-						"minItems": 1,
-						"description": "Ordered ladder stages. Each entry declares timing, channel, template, and optional wettelijkEffect marker.",
-						"items": {
-							"type": "object",
-							"required": [
-								"nr",
-								"dagenNaVervalDatum",
-								"naam",
-								"kanaal"
-							],
-							"properties": {
-								"nr": {
-									"type": "integer",
-									"minimum": 1,
-									"maximum": 10,
-									"description": "Stage number (1-based)."
-								},
-								"dagenNaVervalDatum": {
-									"type": "integer",
-									"minimum": 0,
-									"description": "Days after the invoice due date that this stage fires."
-								},
-								"naam": {
-									"type": "string",
-									"description": "Human-readable stage label (e.g. 'Vriendelijke reminder', 'Ingebrekestelling')."
-								},
-								"kanaal": {
-									"type": "string",
-									"enum": [
-										"EMAIL",
-										"EMAIL+POSTREGISTRATIE",
-										"AANGETEKENDE_POST",
-										"INCASSOBUREAU_API"
-									],
-									"description": "Delivery channel for this stage."
-								},
-								"templateId": {
-									"type": "string",
-									"nullable": true,
-									"description": "FK to the docudesk template that renders subject + body for this stage."
-								},
-								"wettelijkEffect": {
-									"type": "string",
-									"nullable": true,
-									"enum": [
-										"14_DAGEN_BRIEF_BIK",
-										"VERZUIM_INTREDEN",
-										null
-									],
-									"description": "Optional legal effect marker. 14_DAGEN_BRIEF_BIK triggers the mandatory B2C 14-day grace text (art. 6:96 lid 6 BW); VERZUIM_INTREDEN marks formal default (verzuim van rechtswege)."
-								},
-								"actie": {
-									"type": "string",
-									"nullable": true,
-									"description": "Optional terminal action (e.g. TRANSFER_INCASSO at the overdraft stage)."
-								}
-							}
-						}
-					},
-					"actief": {
-						"type": "boolean",
-						"description": "Whether this ladder participates in automated dunning. Inactive ladders are kept for audit but skipped at run time.",
-						"default": true
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration.",
-						"example": "adm-1"
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Under construction. May be edited freely."
-						},
-						"active": {
-							"label": "Active",
-							"description": "Participates in automated dunning runs."
-						},
-						"archived": {
-							"label": "Archived",
-							"description": "Superseded. Retained for audit; not used at run time."
-						}
-					},
-					"transitions": {
-						"activate": {
-							"from": "draft",
-							"to": "active",
-							"label": "Activate ladder",
-							"description": "Publish the ladder so the scheduler may pick it up."
-						},
-						"archive": {
-							"from": "active",
-							"to": "archived",
-							"label": "Archive ladder",
-							"description": "Take the ladder out of rotation. Existing in-flight DunningRun records keep their snapshot of stages."
-						}
-					},
-					"retention": {
-						"rule": "selectielijst:5.1.2",
-						"years": 7
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"administrator": {
-							"permissions": [
-								"create",
-								"read",
-								"update",
-								"delete"
-							]
-						},
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					},
-					"adminScope": {
-						"field": "administrationId",
-						"enforce": true
-					}
-				}
-			},
-			"KlantLadderOverride": {
-				"slug": "KlantLadderOverride",
-				"icon": "AccountSwitchOutline",
-				"version": "0.1.0",
-				"title": "Klant Ladder Override",
-				"description": "Per-klant exception on a base DunningLadder — overheid extended terms, VIP-skip stage 4/5, aggressive ladder for risk customers. Captures reden + createdBy/createdAt + approvedBy/approvedAt for audit-trail. REQ-CCD-001.",
-				"x-schema-org": "schema:Service",
-				"x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-001",
-				"type": "object",
-				"required": [
-					"klantId",
-					"baseLadderId",
-					"overrides",
-					"reden",
-					"administrationId"
-				],
-				"properties": {
-					"klantId": {
-						"type": "string",
-						"description": "FK to the customer (CustomerMaster) record.",
-						"example": "klant-gemeente-amsterdam"
-					},
-					"baseLadderId": {
-						"type": "string",
-						"description": "FK to the DunningLadder this override layers on top of.",
-						"example": "ladder-zzp-default-2026"
-					},
-					"overrides": {
-						"type": "object",
-						"description": "Override object. The 'stages' array replaces the base ladder's stages wholesale when present.",
-						"properties": {
-							"stages": {
-								"type": "array",
-								"description": "Replacement stages array, same shape as DunningLadder.stages.",
-								"items": {
-									"type": "object"
-								}
-							}
-						}
-					},
-					"reden": {
-						"type": "string",
-						"description": "Free-text motivation for the override. Required for audit-trail.",
-						"example": "Wet betalingstermijnen overheid — 30-dagensbetaaltermijn"
-					},
-					"createdBy": {
-						"type": "string",
-						"nullable": true,
-						"description": "User id of the operator who created the override."
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true,
-						"description": "Creation timestamp."
-					},
-					"approvedBy": {
-						"type": "string",
-						"nullable": true,
-						"description": "User id of the controller / manager who approved the override. Required when the override modifies stage 4/5."
-					},
-					"approvedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true,
-						"description": "Approval timestamp."
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration.",
-						"example": "adm-1"
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Authored but not yet in force."
-						},
-						"active": {
-							"label": "Active",
-							"description": "Applied at dunning-run time for the linked klant."
-						},
-						"superseded": {
-							"label": "Superseded",
-							"description": "Replaced by a newer override or no longer applicable."
-						}
-					},
-					"transitions": {
-						"activate": {
-							"from": "draft",
-							"to": "active",
-							"label": "Activate override",
-							"description": "Put the override into force. Stage 4/5 modifications require the role-gated approval guard.",
-							"requires": "OCA\\Shillinq\\Lifecycle\\KlantLadderOverrideApprovalGuard::isApprovedForElevatedStages"
-						},
-						"supersede": {
-							"from": "active",
-							"to": "superseded",
-							"label": "Supersede override",
-							"description": "Mark this override as superseded; a newer override or the base ladder takes effect."
-						}
-					},
-					"retention": {
-						"rule": "selectielijst:5.1.2",
-						"years": 7
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"administrator": {
-							"permissions": [
-								"create",
-								"read",
-								"update",
-								"delete"
-							]
-						},
-						"controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					},
-					"adminScope": {
-						"field": "administrationId",
-						"enforce": true
-					}
-				}
-			},
-			"DunningRun": {
-				"slug": "DunningRun",
-				"icon": "EmailFastOutline",
-				"version": "0.1.0",
-				"title": "Dunning Run",
-				"description": "Per-invoice per-stage execution log with evidence trail (rendered subject/body, PDF SHA-256 hash, delivery status, optional digital signature, e-mail open tracking, PostNL barcode + delivery confirmation). Immutable once executed. Backs the proof-of-contact requirement of art. 6:96 BW. REQ-CCD-002.",
-				"x-schema-org": "schema:Event",
-				"x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-002",
-				"type": "object",
-				"required": [
-					"factuurId",
-					"ladderId",
-					"stageNr",
-					"kanaal",
-					"templateId",
-					"deliveryStatus",
-					"factuurBedrag",
-					"administrationId"
-				],
-				"properties": {
-					"factuurId": {
-						"type": "string",
-						"description": "FK to the ARInvoice / APTransaction UUID this run targets.",
-						"example": "inv-2026-0247"
-					},
-					"ladderId": {
-						"type": "string",
-						"description": "FK to the DunningLadder applied (after KlantLadderOverride resolution).",
-						"example": "ladder-zzp-default-2026"
-					},
-					"stageNr": {
-						"type": "integer",
-						"minimum": 1,
-						"maximum": 10,
-						"description": "Stage number (1–5 in the default ladder).",
-						"example": 3
-					},
-					"uitgevoerdOp": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true,
-						"description": "Execution timestamp. Set when the run leaves the 'draft' lifecycle state."
-					},
-					"kanaal": {
-						"type": "string",
-						"enum": [
-							"EMAIL",
-							"EMAIL+POSTREGISTRATIE",
-							"AANGETEKENDE_POST",
-							"INCASSOBUREAU_API"
-						],
-						"description": "Delivery channel used for this stage."
-					},
-					"ontvangerEmail": {
-						"type": "string",
-						"nullable": true,
-						"format": "email",
-						"description": "Recipient e-mail (EMAIL or EMAIL+POSTREGISTRATIE kanaal)."
-					},
-					"ontvangerNaam": {
-						"type": "string",
-						"nullable": true,
-						"description": "Recipient display name."
-					},
-					"ontvangerAdres": {
-						"type": "object",
-						"nullable": true,
-						"description": "Recipient postal address (kanaal involving post)."
-					},
-					"templateId": {
-						"type": "string",
-						"description": "FK to the docudesk template used to render this run."
-					},
-					"renderedSubject": {
-						"type": "string",
-						"nullable": true,
-						"description": "Rendered e-mail subject (EMAIL kanaal)."
-					},
-					"renderedBody": {
-						"type": "string",
-						"nullable": true,
-						"description": "Rendered body text (e-mail or letter). For B2C stage 3 MUST contain the verbatim 14-day grace text per art. 6:96 BW."
-					},
-					"renderedPdfHash": {
-						"type": "string",
-						"nullable": true,
-						"description": "SHA-256 hash of the rendered PDF letter (proof-of-contact evidence)."
-					},
-					"deliveryStatus": {
-						"type": "string",
-						"enum": [
-							"PENDING",
-							"DELIVERED",
-							"BOUNCED",
-							"FAILED"
-						],
-						"description": "Outcome of the dispatch attempt.",
-						"default": "PENDING"
-					},
-					"openTracking": {
-						"type": "object",
-						"nullable": true,
-						"description": "EMAIL open-tracking state.",
-						"properties": {
-							"opened": {
-								"type": "boolean"
-							},
-							"openedAt": {
-								"type": "string",
-								"format": "date-time"
-							}
-						}
-					},
-					"postageStatus": {
-						"type": "object",
-						"nullable": true,
-						"description": "PostNL aangetekend tracking state.",
-						"properties": {
-							"barcode": {
-								"type": "string"
-							},
-							"trackingUrl": {
-								"type": "string",
-								"format": "uri"
-							},
-							"deliveredAt": {
-								"type": "string",
-								"format": "date-time"
-							}
-						}
-					},
-					"digitalSignature": {
-						"type": "string",
-						"nullable": true,
-						"description": "Optional digital signature over the rendered letter."
-					},
-					"factuurBedrag": {
-						"type": "number",
-						"multipleOf": 0.01,
-						"description": "Invoice principal at the moment this run executed (EUR)."
-					},
-					"incassokostenBedrag": {
-						"type": "number",
-						"multipleOf": 0.01,
-						"nullable": true,
-						"description": "Incasso costs at the moment this run executed (EUR). Set when the BIK-staffel has been computed."
-					},
-					"renteBedrag": {
-						"type": "number",
-						"multipleOf": 0.01,
-						"nullable": true,
-						"description": "Wettelijke rente at the moment this run executed (EUR)."
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Composed but not yet dispatched. Subject/body/PDF may still be amended."
-						},
-						"executed": {
-							"label": "Executed",
-							"description": "Dispatched to the channel. deliveryStatus reflects the outcome. Immutable from here on."
-						},
-						"locked": {
-							"label": "Locked",
-							"description": "Sealed. No further amendments permitted (typically set once delivery is confirmed or the invoice moved to in_incasso)."
-						}
-					},
-					"transitions": {
-						"execute": {
-							"from": "draft",
-							"to": "executed",
-							"label": "Execute dunning run",
-							"description": "Send via the configured kanaal. Captures uitgevoerdOp + deliveryStatus + evidence hashes. After this transition the record is immutable (REQ-CCD-002).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\DunningRunExecuteGuard::canExecute"
-						},
-						"lock": {
-							"from": "executed",
-							"to": "locked",
-							"label": "Lock dunning run",
-							"description": "Seal the run — used when the invoice moves to in_incasso or written_off."
-						}
-					},
-					"retention": {
-						"rule": "selectielijst:5.1.2",
-						"years": 7
-					}
-				},
-				"x-openregister-aggregations": {
-					"runsPerInvoice": {
-						"label": "Runs per invoice",
-						"description": "How many DunningRun records have been executed per invoice and stage. Drives aging/escalation dashboards.",
-						"register": "shillinq",
-						"schema": "DunningRun",
-						"filter": {
-							"lifecycleState": {
-								"in": [
-									"executed",
-									"locked"
-								]
-							}
-						},
-						"groupBy": [
-							"factuurId",
-							"stageNr"
-						],
-						"operations": {
-							"count": {
-								"operation": "count"
-							},
-							"latestExecutedAt": {
-								"field": "uitgevoerdOp",
-								"operation": "max"
-							}
-						}
-					},
-					"deliveryByStage": {
-						"label": "Delivery by stage",
-						"description": "Successful-delivery ratio per stage (DELIVERED / total). Powers the stage-funnel KPI.",
-						"register": "shillinq",
-						"schema": "DunningRun",
-						"groupBy": [
-							"stageNr",
-							"deliveryStatus"
-						],
-						"operations": {
-							"count": {
-								"operation": "count"
-							}
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"administrator": {
-							"permissions": [
-								"create",
-								"read",
-								"update",
-								"delete"
-							]
-						},
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					},
-					"adminScope": {
-						"field": "administrationId",
-						"enforce": true
-					}
-				}
-			},
-			"IncassoKostenBerekening": {
-				"slug": "IncassoKostenBerekening",
-				"icon": "CalculatorVariantOutline",
-				"version": "0.1.0",
-				"title": "Incasso Kosten Berekening",
-				"description": "BIK-staffel + wettelijke rente computation per invoice. Implements the Besluit BIK staffel (15% / 10% / 5% / 1% / 0,5%, minimum €40) plus handelsrente B2B per art. 6:119a BW (ECB + 8pp → 11,5% per 1-1-2026) or wettelijke rente B2C per art. 6:119 BW (7% per 1-1-2026). Recomputed on partial-payment against the remaining saldo. REQ-CCD-003.",
-				"x-schema-org": "schema:MonetaryAmount",
-				"x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-003",
-				"type": "object",
-				"required": [
-					"factuurId",
-					"hoofdsom",
-					"berekening",
-					"wettelijkeRente",
-					"partyType",
-					"totaalVerschuldigd",
-					"administrationId"
-				],
-				"properties": {
-					"factuurId": {
-						"type": "string",
-						"description": "FK to the invoice UUID."
-					},
-					"hoofdsom": {
-						"type": "number",
-						"multipleOf": 0.01,
-						"minimum": 0,
-						"description": "Principal at the time of calculation (EUR). After partial payment the calculation is re-run against the remaining saldo."
-					},
-					"berekening": {
-						"type": "object",
-						"description": "BIK staffel breakdown. Five graduated slabs plus minimum-floor.",
-						"required": [
-							"totaal",
-							"toegepast"
-						],
-						"properties": {
-							"schaal1_0_2500": {
-								"type": "number",
-								"multipleOf": 0.01,
-								"description": "15% over the slice 0–€2.500."
-							},
-							"schaal2_2500_5000": {
-								"type": "number",
-								"multipleOf": 0.01,
-								"description": "10% over the slice €2.500–€5.000."
-							},
-							"schaal3_5000_10000": {
-								"type": "number",
-								"multipleOf": 0.01,
-								"description": "5% over the slice €5.000–€10.000."
-							},
-							"schaal4_10000_200000": {
-								"type": "number",
-								"multipleOf": 0.01,
-								"description": "1% over the slice €10.000–€200.000."
-							},
-							"schaal5_200000plus": {
-								"type": "number",
-								"multipleOf": 0.01,
-								"description": "0,5% over the slice above €200.000."
-							},
-							"totaal": {
-								"type": "number",
-								"multipleOf": 0.01,
-								"description": "Sum of all staffel slices."
-							},
-							"minimum": {
-								"type": "number",
-								"multipleOf": 0.01,
-								"description": "Statutory minimum (€40).",
-								"default": 40.0
-							},
-							"toegepast": {
-								"type": "number",
-								"multipleOf": 0.01,
-								"description": "max(totaal, minimum) — the amount actually owed."
-							}
-						}
-					},
-					"wettelijkeRente": {
-						"type": "object",
-						"required": [
-							"tarief",
-							"type",
-							"ingangsdatum",
-							"berekendOp",
-							"dagen",
-							"bedrag"
-						],
-						"properties": {
-							"tarief": {
-								"type": "number",
-								"description": "Annual rate as decimal (0.115 for B2B handelsrente, 0.07 for B2C wettelijke rente).",
-								"example": 0.115
-							},
-							"type": {
-								"type": "string",
-								"enum": [
-									"HANDELSRENTE_B2B_6_119A_BW",
-									"WETTELIJKE_RENTE_B2C_6_119_BW"
-								],
-								"description": "Statutory basis for the rate."
-							},
-							"ingangsdatum": {
-								"type": "string",
-								"format": "date",
-								"description": "Date the rente started to accrue (day 0 for B2B / day 44 for B2C)."
-							},
-							"berekendOp": {
-								"type": "string",
-								"format": "date",
-								"description": "Date the calculation was performed."
-							},
-							"dagen": {
-								"type": "integer",
-								"minimum": 0,
-								"description": "Days between ingangsdatum and berekendOp."
-							},
-							"bedrag": {
-								"type": "number",
-								"multipleOf": 0.01,
-								"minimum": 0,
-								"description": "Rente in EUR — (hoofdsom × tarief × dagen / 365), rounded to cents."
-							}
-						}
-					},
-					"partyType": {
-						"type": "string",
-						"enum": [
-							"B2B",
-							"B2C",
-							"GOVERNMENT"
-						],
-						"description": "Counterparty type — controls the rente rate and the B2C 14-day grace block."
-					},
-					"totaalVerschuldigd": {
-						"type": "number",
-						"multipleOf": 0.01,
-						"minimum": 0,
-						"description": "hoofdsom + berekening.toegepast + wettelijkeRente.bedrag (EUR)."
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					}
-				},
-				"x-openregister-aggregations": {
-					"bikStaffel": {
-						"label": "BIK staffel",
-						"description": "Declarative shape of the Besluit BIK staffel arithmetic (per REQ-CCD-003). The PHP BIKStaffelCalculator produces an identical record when the OR aggregation engine cannot express the multi-slab expression directly.",
-						"register": "shillinq",
-						"schema": "IncassoKostenBerekening",
-						"computedFields": {
-							"schaal1_0_2500": {
-								"type": "expression",
-								"expression": "MIN(hoofdsom, 2500) * 0.15"
-							},
-							"schaal2_2500_5000": {
-								"type": "expression",
-								"expression": "MAX(MIN(hoofdsom, 5000) - 2500, 0) * 0.10"
-							},
-							"schaal3_5000_10000": {
-								"type": "expression",
-								"expression": "MAX(MIN(hoofdsom, 10000) - 5000, 0) * 0.05"
-							},
-							"schaal4_10000_200000": {
-								"type": "expression",
-								"expression": "MAX(MIN(hoofdsom, 200000) - 10000, 0) * 0.01"
-							},
-							"schaal5_200000plus": {
-								"type": "expression",
-								"expression": "MAX(hoofdsom - 200000, 0) * 0.005"
-							},
-							"totaal": {
-								"type": "expression",
-								"expression": "schaal1_0_2500 + schaal2_2500_5000 + schaal3_5000_10000 + schaal4_10000_200000 + schaal5_200000plus"
-							},
-							"toegepast": {
-								"type": "expression",
-								"expression": "MAX(totaal, 40)"
-							}
-						}
-					},
-					"renteAccrual": {
-						"label": "Rente accrual",
-						"description": "Declarative shape of the wettelijke rente accrual (REQ-CCD-003). For B2B uses HANDELSRENTE_B2B_6_119A_BW (ECB+8pp → 11,5% default); for B2C uses WETTELIJKE_RENTE_B2C_6_119_BW (7% default).",
-						"register": "shillinq",
-						"schema": "IncassoKostenBerekening",
-						"computedFields": {
-							"renteBedrag": {
-								"type": "expression",
-								"expression": "(hoofdsom * wettelijkeRente.tarief * wettelijkeRente.dagen) / 365"
-							}
-						}
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"administrator": {
-							"permissions": [
-								"create",
-								"read",
-								"update",
-								"delete"
-							]
-						},
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					},
-					"adminScope": {
-						"field": "administrationId",
-						"enforce": true
-					}
-				}
-			},
-			"DunningPauseDispute": {
-				"slug": "DunningPauseDispute",
-				"icon": "PauseCircleOutline",
-				"version": "0.1.0",
-				"title": "Dunning Pause / Dispute",
-				"description": "Pause registration on a dunning ladder for a specific invoice. Halts further DunningRun stage actions and IncassoKostenBerekening rente accrual. Resolved either by operator action or by the auto hard-deadline (default 60 days after pauzeStart). REQ-CCD-004.",
-				"x-schema-org": "schema:Event",
-				"x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-004",
-				"type": "object",
-				"required": [
-					"factuurId",
-					"pauzeStart",
-					"reden",
-					"details",
-					"gepauzeerdDoor",
-					"administrationId"
-				],
-				"properties": {
-					"factuurId": {
-						"type": "string",
-						"description": "FK to the paused invoice."
-					},
-					"pauzeStart": {
-						"type": "string",
-						"format": "date-time",
-						"description": "When the pause began."
-					},
-					"pauzeEind": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true,
-						"description": "When the pause ended. Null = still paused."
-					},
-					"reden": {
-						"type": "string",
-						"enum": [
-							"DISPUTED",
-							"PAYMENT_PLAN",
-							"OTHER"
-						],
-						"description": "Pause cause."
-					},
-					"details": {
-						"type": "string",
-						"description": "Free-text details (e.g. 'Klant betwist 4 uur week-22')."
-					},
-					"gepauzeerdDoor": {
-						"type": "string",
-						"description": "User / actor id who initiated the pause."
-					},
-					"evidenceRefs": {
-						"type": "array",
-						"items": {
-							"type": "string"
-						},
-						"description": "FK URIs to docudesk or openregister evidence records (e-mails, dispute correspondence)."
-					},
-					"hardDeadlineEindigt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true,
-						"description": "Auto-resume timestamp — pauzeStart + dunning.dispute_pause_hard_deadline_days (default 60)."
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "active",
-					"states": {
-						"active": {
-							"label": "Active",
-							"description": "Pause is in force; no dunning runs may execute for the linked invoice and no rente accrues."
-						},
-						"resolved": {
-							"label": "Resolved",
-							"description": "Operator marked the dispute resolved or a partial settlement was reached. Ladder resumes from the stage where the pause began."
-						},
-						"hardDeadlineExpired": {
-							"label": "Hard deadline expired",
-							"description": "The configured deadline elapsed without resolution; ladder auto-resumes."
-						}
-					},
-					"transitions": {
-						"resolve": {
-							"from": "active",
-							"to": "resolved",
-							"label": "Resolve dispute",
-							"description": "Mark the dispute resolved (e.g. partial settlement). Sets pauzeEind."
-						},
-						"expire": {
-							"from": "active",
-							"to": "hardDeadlineExpired",
-							"label": "Hard deadline expired",
-							"description": "Reached hardDeadlineEindigt without operator action; ladder auto-resumes."
-						}
-					},
-					"retention": {
-						"rule": "selectielijst:5.1.2",
-						"years": 7
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"administrator": {
-							"permissions": [
-								"create",
-								"read",
-								"update",
-								"delete"
-							]
-						},
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					},
-					"adminScope": {
-						"field": "administrationId",
-						"enforce": true
-					}
-				}
-			},
-			"CreditScore": {
-				"slug": "CreditScore",
-				"icon": "GaugeLow",
-				"version": "0.1.0",
-				"title": "Credit Score",
-				"description": "Optional external credit-score snapshot per klant (Graydon, Creditsafe, Atradius Insights). Cached for dunning.credit_score_cache_days days (default 30) to limit lookup cost. Triggers a UI warning when the score falls below the configured threshold. REQ-CCD-007.",
-				"x-schema-org": "schema:Rating",
-				"x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-007",
-				"type": "object",
-				"required": [
-					"klantId",
-					"provider",
-					"scoreDatum",
-					"score",
-					"scoreSchaal",
-					"administrationId"
-				],
-				"properties": {
-					"klantId": {
-						"type": "string",
-						"description": "FK to the customer."
-					},
-					"provider": {
-						"type": "string",
-						"enum": [
-							"GRAYDON",
-							"CREDITSAFE",
-							"ATRADIUS_INSIGHTS"
-						]
-					},
-					"scoreDatum": {
-						"type": "string",
-						"format": "date",
-						"description": "Date the score was fetched."
-					},
-					"score": {
-						"type": "number",
-						"description": "Numeric score on the provider-specific scale."
-					},
-					"scoreSchaal": {
-						"type": "string",
-						"description": "Scale description (e.g. '1-10', '0-100')."
-					},
-					"betalingsRisicoIndicatie": {
-						"type": "string",
-						"nullable": true,
-						"enum": [
-							"LAAG",
-							"MIDDEN",
-							"HOOG",
-							null
-						]
-					},
-					"creditLimietAdvies": {
-						"type": "number",
-						"multipleOf": 0.01,
-						"nullable": true,
-						"description": "Recommended credit limit (EUR)."
-					},
-					"kostenLookup": {
-						"type": "number",
-						"multipleOf": 0.01,
-						"nullable": true,
-						"description": "Cost of this lookup (EUR)."
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "active",
-					"states": {
-						"active": {
-							"label": "Active",
-							"description": "Within the cache window; usable at invoice-creation time."
-						},
-						"stale": {
-							"label": "Stale",
-							"description": "Older than dunning.credit_score_cache_days; refresh required before use."
-						}
-					},
-					"transitions": {
-						"markStale": {
-							"from": "active",
-							"to": "stale",
-							"label": "Mark stale",
-							"description": "Mark the snapshot stale once the cache window elapses."
-						}
-					},
-					"retention": {
-						"rule": "selectielijst:5.1.2",
-						"years": 7
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"administrator": {
-							"permissions": [
-								"create",
-								"read",
-								"update",
-								"delete"
-							]
-						},
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					},
-					"adminScope": {
-						"field": "administrationId",
-						"enforce": true
-					}
-				}
-			},
-			"OninbaarAfschrijving": {
-				"slug": "OninbaarAfschrijving",
-				"icon": "FileRemoveOutline",
-				"version": "0.1.0",
-				"title": "Oninbare Afschrijving",
-				"description": "Definitive write-off + BTW-teruggaaf voorbereiding per art. 29 OB. Captures hoofdsomAfgeschreven, btwBedrag, art29OBVerklaring (e.g. 'Faillissement', 'Schuldsanering', '1 jaar onbetaald'), evidence ref (faillissementsvonnis / WSNP-besluit), GL boekingId, and the BTW-aangifte period the teruggaaf is queued for. REQ-CCD-010.",
-				"x-schema-org": "schema:MonetaryAmount",
-				"x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-010",
-				"type": "object",
-				"required": [
-					"factuurId",
-					"hoofdsomAfgeschreven",
-					"art29OBVerklaring",
-					"administrationId"
-				],
-				"properties": {
-					"factuurId": {
-						"type": "string",
-						"description": "FK to the written-off invoice."
-					},
-					"hoofdsomAfgeschreven": {
-						"type": "number",
-						"multipleOf": 0.01,
-						"minimum": 0,
-						"description": "Amount written off, excluding VAT (EUR)."
-					},
-					"btwBedrag": {
-						"type": "number",
-						"multipleOf": 0.01,
-						"minimum": 0,
-						"nullable": true,
-						"description": "VAT amount eligible for teruggaaf per art. 29 OB (EUR)."
-					},
-					"art29OBVerklaring": {
-						"type": "string",
-						"description": "Reason / declaration (e.g. 'Faillissement vonnis 2026-04-12', 'Schuldsanering WSNP', '1 jaar onbetaald')."
-					},
-					"evidenceRef": {
-						"type": "string",
-						"nullable": true,
-						"description": "FK URI to the supporting docudesk evidence (faillissementsvonnis, schuldsaneringsverzoek, etc.)."
-					},
-					"boekingId": {
-						"type": "string",
-						"nullable": true,
-						"description": "FK to the materialised GLTransaction recording the write-off."
-					},
-					"btwAangiftePeriode": {
-						"type": "string",
-						"nullable": true,
-						"description": "VAT filing period the teruggaaf has been queued for (e.g. '2026-Q2')."
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the owning Administration."
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "lifecycleState",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Operator proposed the write-off; GL posting + BTW teruggaaf not yet materialised."
-						},
-						"posted": {
-							"label": "Posted",
-							"description": "GL posting materialised, BTW teruggaaf queued, invoice flipped to written_off."
-						},
-						"voided": {
-							"label": "Voided",
-							"description": "Write-off retracted (rare). Requires compensating GL entry."
-						}
-					},
-					"transitions": {
-						"post": {
-							"from": "draft",
-							"to": "posted",
-							"label": "Post write-off",
-							"description": "Materialise the GL posting + queue BTW teruggaaf for the next aangifte period. Implements REQ-CCD-010."
-						},
-						"void": {
-							"from": "posted",
-							"to": "voided",
-							"label": "Void write-off",
-							"description": "Reverse the write-off; requires a compensating GLTransaction."
-						}
-					},
-					"retention": {
-						"rule": "selectielijst:5.1.2",
-						"years": 7
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"administrator": {
-							"permissions": [
-								"create",
-								"read",
-								"update",
-								"delete"
-							]
-						},
-						"controller": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"bookkeeper": {
-							"permissions": [
-								"read"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					},
-					"adminScope": {
-						"field": "administrationId",
-						"enforce": true
-					}
-				}
-			}
-		}
-	},
-	"objects": [
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "DunningLadder",
-				"slug": "ladder-zzp-default-2026"
-			},
-			"naam": "Standaard dunning-ladder ZZP",
-			"ondernemingId": "ond-zzp-001",
-			"klantGroep": "DEFAULT",
-			"stages": [
-				{
-					"nr": 1,
-					"dagenNaVervalDatum": 0,
-					"naam": "Vriendelijke reminder",
-					"kanaal": "EMAIL",
-					"templateId": "tpl-dunning-stage1-nl",
-					"wettelijkEffect": null
-				},
-				{
-					"nr": 2,
-					"dagenNaVervalDatum": 14,
-					"naam": "Herinnering",
-					"kanaal": "EMAIL",
-					"templateId": "tpl-dunning-stage2-nl",
-					"wettelijkEffect": null
-				},
-				{
-					"nr": 3,
-					"dagenNaVervalDatum": 30,
-					"naam": "Aanmaning + 14d-brief",
-					"kanaal": "EMAIL+POSTREGISTRATIE",
-					"templateId": "tpl-dunning-stage3-nl",
-					"wettelijkEffect": "14_DAGEN_BRIEF_BIK"
-				},
-				{
-					"nr": 4,
-					"dagenNaVervalDatum": 60,
-					"naam": "Ingebrekestelling",
-					"kanaal": "AANGETEKENDE_POST",
-					"templateId": "tpl-dunning-stage4-nl",
-					"wettelijkEffect": "VERZUIM_INTREDEN"
-				},
-				{
-					"nr": 5,
-					"dagenNaVervalDatum": 90,
-					"naam": "Overdracht incasso",
-					"kanaal": "INCASSOBUREAU_API",
-					"templateId": "tpl-dunning-stage5-nl",
-					"actie": "TRANSFER_INCASSO"
-				}
-			],
-			"actief": true,
-			"administrationId": "adm-1"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "DunningLadder",
-				"slug": "ladder-overheid-default-2026"
-			},
-			"naam": "Overheid dunning-ladder (30-dagen termijn)",
-			"ondernemingId": "ond-zzp-001",
-			"klantGroep": "OVERHEID",
-			"stages": [
-				{
-					"nr": 1,
-					"dagenNaVervalDatum": 0,
-					"naam": "Reminder",
-					"kanaal": "EMAIL",
-					"templateId": "tpl-dunning-stage1-nl"
-				},
-				{
-					"nr": 2,
-					"dagenNaVervalDatum": 30,
-					"naam": "Herinnering (overheid 30d)",
-					"kanaal": "EMAIL",
-					"templateId": "tpl-dunning-stage2-nl"
-				},
-				{
-					"nr": 3,
-					"dagenNaVervalDatum": 60,
-					"naam": "Aanmaning",
-					"kanaal": "EMAIL",
-					"templateId": "tpl-dunning-stage3-nl"
-				},
-				{
-					"nr": 4,
-					"dagenNaVervalDatum": 90,
-					"naam": "Escalatie naar account-manager",
-					"kanaal": "EMAIL",
-					"templateId": "tpl-dunning-stage4-nl"
-				}
-			],
-			"actief": true,
-			"administrationId": "adm-1"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "KlantLadderOverride",
-				"slug": "override-gemeente-amsterdam"
-			},
-			"klantId": "klant-gemeente-amsterdam",
-			"baseLadderId": "ladder-zzp-default-2026",
-			"overrides": {
-				"stages": [
-					{
-						"nr": 1,
-						"dagenNaVervalDatum": 0,
-						"naam": "Reminder",
-						"kanaal": "EMAIL"
-					},
-					{
-						"nr": 2,
-						"dagenNaVervalDatum": 30,
-						"naam": "Herinnering (overheid 30d)",
-						"kanaal": "EMAIL"
-					},
-					{
-						"nr": 3,
-						"dagenNaVervalDatum": 60,
-						"naam": "Aanmaning",
-						"kanaal": "EMAIL"
-					},
-					{
-						"nr": 4,
-						"dagenNaVervalDatum": 90,
-						"naam": "Escalatie naar account-manager",
-						"kanaal": "EMAIL"
-					}
-				]
-			},
-			"reden": "Wet betalingstermijnen overheid — 30-dagensbetaaltermijn (Stb. 2017, 226)",
-			"createdBy": "user-zzp-ond-001",
-			"createdAt": "2026-05-01T08:00:00Z",
-			"approvedBy": "user-controller-001",
-			"approvedAt": "2026-05-01T09:30:00Z",
-			"administrationId": "adm-1"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "DunningRun",
-				"slug": "drun-inv-2026-0247-stage3"
-			},
-			"factuurId": "inv-2026-0247",
-			"ladderId": "ladder-zzp-default-2026",
-			"stageNr": 3,
-			"uitgevoerdOp": "2026-06-14T09:00:00Z",
-			"kanaal": "EMAIL+POSTREGISTRATIE",
-			"ontvangerEmail": "finance@acme.nl",
-			"ontvangerNaam": "Crediteurenadministratie Acme BV",
-			"templateId": "tpl-dunning-stage3-nl",
-			"renderedSubject": "Aanmaning factuur 2026-0247 — €8.400",
-			"renderedBody": "Geachte Crediteurenadministratie Acme BV,\n\nUw factuur 2026-0247 van €8.400 staat sinds 2026-05-14 open. U krijgt 14 dagen om de factuur alsnog te voldoen zonder dat incassokosten of rente verschuldigd worden. Na deze termijn kunnen incassokosten en wettelijke rente verschuldigd zijn.\n\nMet vriendelijke groet,\nDe ondernemer",
-			"renderedPdfHash": "0000000000000000000000000000000000000000000000000000000000000000",
-			"deliveryStatus": "DELIVERED",
-			"openTracking": {
-				"opened": true,
-				"openedAt": "2026-06-14T09:42:00Z"
-			},
-			"factuurBedrag": 8400.00,
-			"administrationId": "adm-1"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "IncassoKostenBerekening",
-				"slug": "ik-inv-2026-0247"
-			},
-			"factuurId": "inv-2026-0247",
-			"hoofdsom": 8400.00,
-			"berekening": {
-				"schaal1_0_2500": 375.00,
-				"schaal2_2500_5000": 250.00,
-				"schaal3_5000_10000": 170.00,
-				"schaal4_10000_200000": 0.00,
-				"schaal5_200000plus": 0.00,
-				"totaal": 795.00,
-				"minimum": 40.00,
-				"toegepast": 795.00
-			},
-			"wettelijkeRente": {
-				"tarief": 0.115,
-				"type": "HANDELSRENTE_B2B_6_119A_BW",
-				"ingangsdatum": "2026-05-30",
-				"berekendOp": "2026-06-21",
-				"dagen": 22,
-				"bedrag": 58.13
-			},
-			"partyType": "B2B",
-			"totaalVerschuldigd": 9253.13,
-			"administrationId": "adm-1"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "DunningPauseDispute",
-				"slug": "pause-inv-2026-0247-dispute-001"
-			},
-			"factuurId": "inv-2026-0247",
-			"pauzeStart": "2026-06-02T14:20:00Z",
-			"pauzeEind": null,
-			"reden": "DISPUTED",
-			"details": "Klant betwist 4 uur uit week-22; gesprek gepland 10 juni",
-			"gepauzeerdDoor": "user-zzp-ond-001",
-			"evidenceRefs": [
-				"docudesk:email-2026-06-02-disputereactie.eml"
-			],
-			"hardDeadlineEindigt": "2026-08-01T14:20:00Z",
-			"administrationId": "adm-1"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "CreditScore",
-				"slug": "cs-klant-acme-bv-2026-05"
-			},
-			"klantId": "klant-acme-bv",
-			"provider": "GRAYDON",
-			"scoreDatum": "2026-05-01",
-			"score": 6.4,
-			"scoreSchaal": "1-10",
-			"betalingsRisicoIndicatie": "MIDDEN",
-			"creditLimietAdvies": 25000.00,
-			"kostenLookup": 1.85,
-			"administrationId": "adm-1"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "OninbaarAfschrijving",
-				"slug": "oninb-inv-2025-0089"
-			},
-			"factuurId": "inv-2025-0089",
-			"hoofdsomAfgeschreven": 4200.00,
-			"btwBedrag": 882.00,
-			"art29OBVerklaring": "Faillissement vonnis 2026-04-12 (Rb. Amsterdam)",
-			"evidenceRef": "docudesk:files/oninb/faillissementsvonnis-2026-04-12.pdf",
-			"boekingId": "gl-2026-04-15-oninb-0089",
-			"btwAangiftePeriode": "2026-Q2",
-			"administrationId": "adm-1"
-		}
-	]
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-credit-control-dunning",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 2 — Credit Control & Dunning Ladder. Declares seven new registers per ADR-024: DunningLadder (configuration of N-stage ladder per ondernemer/klantgroep), KlantLadderOverride (per-klant exception with motivatie + audit-trail), DunningRun (per-invoice per-stage execution log with evidence, immutable post-execute), IncassoKostenBerekening (BIK-staffel per Besluit BIK + wettelijke rente B2B/B2C per art. 6:119/6:119a BW), DunningPauseDispute (dispute-pause with optional 60-day hard deadline), CreditScore (optional Graydon/Creditsafe/Atradius Insights snapshot), OninbaarAfschrijving (write-off + BTW-teruggaaf per art. 29 OB). Per ADR-031 the BIK-staffel + rente calculations are captured as declarative x-openregister-aggregations on IncassoKostenBerekening; a thin PHP guard (BIKStaffelCalculator + DunningRunService + DunningPauseService) materialises the record when the OR aggregation engine cannot express the staffel arithmetic. Seed objects illustrate a 5-stage default ZZP ladder, overheid override, sample dunning run, BIK calc for €8.400, and sample dispute-pause."
+  },
+  "components": {
+    "schemas": {
+      "DunningLadder": {
+        "slug": "DunningLadder",
+        "icon": "StairsUp",
+        "version": "0.1.0",
+        "title": "Dunning Ladder",
+        "description": "Configuration of a multi-stage dunning ladder per ondernemer or per klantgroep (DEFAULT, OVERHEID, VIP, AGGRESSIVE). Each stage declares dagenNaVervalDatum, kanaal (EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API), template reference (docudesk), and optional wettelijkEffect marker (14_DAGEN_BRIEF_BIK or VERZUIM_INTREDEN). One ondernemer MAY define multiple ladders. The active flag determines whether the ladder participates in automated dunning runs. REQ-CCD-001.",
+        "x-schema-org": "schema:Service",
+        "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-001",
+        "type": "object",
+        "required": [
+          "naam",
+          "klantGroep",
+          "stages",
+          "actief",
+          "administrationId"
+        ],
+        "properties": {
+          "naam": {
+            "type": "string",
+            "description": "Operator-facing ladder name.",
+            "example": "Standaard dunning-ladder ZZP",
+            "title": "Naam"
+          },
+          "ondernemingId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK to the owning Administration / ondernemer. When null, the ladder applies tenant-wide within the administration scope.",
+            "example": "ond-zzp-001",
+            "title": "Onderneming ID"
+          },
+          "klantGroep": {
+            "type": "string",
+            "enum": [
+              "DEFAULT",
+              "OVERHEID",
+              "VIP",
+              "AGGRESSIVE"
+            ],
+            "description": "Customer cohort the ladder applies to. OVERHEID gets statutory 30-day terms per Wet betalingstermijnen overheid; VIP softens stage 4–5; AGGRESSIVE accelerates timing.",
+            "example": "DEFAULT",
+            "title": "Klant Groep"
+          },
+          "stages": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Ordered ladder stages. Each entry declares timing, channel, template, and optional wettelijkEffect marker.",
+            "items": {
+              "type": "object",
+              "required": [
+                "nr",
+                "dagenNaVervalDatum",
+                "naam",
+                "kanaal"
+              ],
+              "properties": {
+                "nr": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10,
+                  "description": "Stage number (1-based).",
+                  "title": "Nr"
+                },
+                "dagenNaVervalDatum": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Days after the invoice due date that this stage fires.",
+                  "title": "Dagen Na Verval Datum"
+                },
+                "naam": {
+                  "type": "string",
+                  "description": "Human-readable stage label (e.g. 'Vriendelijke reminder', 'Ingebrekestelling').",
+                  "title": "Naam"
+                },
+                "kanaal": {
+                  "type": "string",
+                  "enum": [
+                    "EMAIL",
+                    "EMAIL+POSTREGISTRATIE",
+                    "AANGETEKENDE_POST",
+                    "INCASSOBUREAU_API"
+                  ],
+                  "description": "Delivery channel for this stage.",
+                  "title": "Kanaal"
+                },
+                "templateId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "FK to the docudesk template that renders subject + body for this stage.",
+                  "title": "Template ID"
+                },
+                "wettelijkEffect": {
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    "14_DAGEN_BRIEF_BIK",
+                    "VERZUIM_INTREDEN",
+                    null
+                  ],
+                  "description": "Optional legal effect marker. 14_DAGEN_BRIEF_BIK triggers the mandatory B2C 14-day grace text (art. 6:96 lid 6 BW); VERZUIM_INTREDEN marks formal default (verzuim van rechtswege).",
+                  "title": "Wettelijk Effect"
+                },
+                "actie": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Optional terminal action (e.g. TRANSFER_INCASSO at the overdraft stage).",
+                  "title": "Actie"
+                }
+              }
+            },
+            "title": "Stages"
+          },
+          "actief": {
+            "type": "boolean",
+            "description": "Whether this ladder participates in automated dunning. Inactive ladders are kept for audit but skipped at run time.",
+            "default": true,
+            "title": "Actief"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Under construction. May be edited freely."
+            },
+            "active": {
+              "label": "Active",
+              "description": "Participates in automated dunning runs."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Superseded. Retained for audit; not used at run time."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active",
+              "label": "Activate ladder",
+              "description": "Publish the ladder so the scheduler may pick it up."
+            },
+            "archive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive ladder",
+              "description": "Take the ladder out of rotation. Existing in-flight DunningRun records keep their snapshot of stages."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      },
+      "KlantLadderOverride": {
+        "slug": "KlantLadderOverride",
+        "icon": "AccountSwitchOutline",
+        "version": "0.1.0",
+        "title": "Klant Ladder Override",
+        "description": "Per-klant exception on a base DunningLadder — overheid extended terms, VIP-skip stage 4/5, aggressive ladder for risk customers. Captures reden + createdBy/createdAt + approvedBy/approvedAt for audit-trail. REQ-CCD-001.",
+        "x-schema-org": "schema:Service",
+        "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-001",
+        "type": "object",
+        "required": [
+          "klantId",
+          "baseLadderId",
+          "overrides",
+          "reden",
+          "administrationId"
+        ],
+        "properties": {
+          "klantId": {
+            "type": "string",
+            "description": "FK to the customer (CustomerMaster) record.",
+            "example": "klant-gemeente-amsterdam",
+            "title": "Klant ID"
+          },
+          "baseLadderId": {
+            "type": "string",
+            "description": "FK to the DunningLadder this override layers on top of.",
+            "example": "ladder-zzp-default-2026",
+            "title": "Base Ladder ID"
+          },
+          "overrides": {
+            "type": "object",
+            "description": "Override object. The 'stages' array replaces the base ladder's stages wholesale when present.",
+            "properties": {
+              "stages": {
+                "type": "array",
+                "description": "Replacement stages array, same shape as DunningLadder.stages.",
+                "items": {
+                  "type": "object"
+                },
+                "title": "Stages"
+              }
+            },
+            "title": "Overrides"
+          },
+          "reden": {
+            "type": "string",
+            "description": "Free-text motivation for the override. Required for audit-trail.",
+            "example": "Wet betalingstermijnen overheid — 30-dagensbetaaltermijn",
+            "title": "Reden"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "User id of the operator who created the override.",
+            "title": "Created By"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Creation timestamp.",
+            "title": "Created At"
+          },
+          "approvedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "User id of the controller / manager who approved the override. Required when the override modifies stage 4/5.",
+            "title": "Approved By"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Approval timestamp.",
+            "title": "Approved At"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Authored but not yet in force."
+            },
+            "active": {
+              "label": "Active",
+              "description": "Applied at dunning-run time for the linked klant."
+            },
+            "superseded": {
+              "label": "Superseded",
+              "description": "Replaced by a newer override or no longer applicable."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active",
+              "label": "Activate override",
+              "description": "Put the override into force. Stage 4/5 modifications require the role-gated approval guard.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\KlantLadderOverrideApprovalGuard::isApprovedForElevatedStages"
+            },
+            "supersede": {
+              "from": "active",
+              "to": "superseded",
+              "label": "Supersede override",
+              "description": "Mark this override as superseded; a newer override or the base ladder takes effect."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      },
+      "DunningRun": {
+        "slug": "DunningRun",
+        "icon": "EmailFastOutline",
+        "version": "0.1.0",
+        "title": "Dunning Run",
+        "description": "Per-invoice per-stage execution log with evidence trail (rendered subject/body, PDF SHA-256 hash, delivery status, optional digital signature, e-mail open tracking, PostNL barcode + delivery confirmation). Immutable once executed. Backs the proof-of-contact requirement of art. 6:96 BW. REQ-CCD-002.",
+        "x-schema-org": "schema:Event",
+        "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-002",
+        "type": "object",
+        "required": [
+          "factuurId",
+          "ladderId",
+          "stageNr",
+          "kanaal",
+          "templateId",
+          "deliveryStatus",
+          "factuurBedrag",
+          "administrationId"
+        ],
+        "properties": {
+          "factuurId": {
+            "type": "string",
+            "description": "FK to the ARInvoice / APTransaction UUID this run targets.",
+            "example": "inv-2026-0247",
+            "title": "Factuur ID"
+          },
+          "ladderId": {
+            "type": "string",
+            "description": "FK to the DunningLadder applied (after KlantLadderOverride resolution).",
+            "example": "ladder-zzp-default-2026",
+            "title": "Ladder ID"
+          },
+          "stageNr": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Stage number (1–5 in the default ladder).",
+            "example": 3,
+            "title": "Stage Nr"
+          },
+          "uitgevoerdOp": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Execution timestamp. Set when the run leaves the 'draft' lifecycle state.",
+            "title": "Uitgevoerd Op"
+          },
+          "kanaal": {
+            "type": "string",
+            "enum": [
+              "EMAIL",
+              "EMAIL+POSTREGISTRATIE",
+              "AANGETEKENDE_POST",
+              "INCASSOBUREAU_API"
+            ],
+            "description": "Delivery channel used for this stage.",
+            "title": "Kanaal"
+          },
+          "ontvangerEmail": {
+            "type": "string",
+            "nullable": true,
+            "format": "email",
+            "description": "Recipient e-mail (EMAIL or EMAIL+POSTREGISTRATIE kanaal).",
+            "title": "Ontvanger Email"
+          },
+          "ontvangerNaam": {
+            "type": "string",
+            "nullable": true,
+            "description": "Recipient display name.",
+            "title": "Ontvanger Naam"
+          },
+          "ontvangerAdres": {
+            "type": "object",
+            "nullable": true,
+            "description": "Recipient postal address (kanaal involving post).",
+            "title": "Ontvanger Adres"
+          },
+          "templateId": {
+            "type": "string",
+            "description": "FK to the docudesk template used to render this run.",
+            "title": "Template ID"
+          },
+          "renderedSubject": {
+            "type": "string",
+            "nullable": true,
+            "description": "Rendered e-mail subject (EMAIL kanaal).",
+            "title": "Rendered Subject"
+          },
+          "renderedBody": {
+            "type": "string",
+            "nullable": true,
+            "description": "Rendered body text (e-mail or letter). For B2C stage 3 MUST contain the verbatim 14-day grace text per art. 6:96 BW.",
+            "title": "Rendered Body"
+          },
+          "renderedPdfHash": {
+            "type": "string",
+            "nullable": true,
+            "description": "SHA-256 hash of the rendered PDF letter (proof-of-contact evidence).",
+            "title": "Rendered PDF Hash"
+          },
+          "deliveryStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "DELIVERED",
+              "BOUNCED",
+              "FAILED"
+            ],
+            "description": "Outcome of the dispatch attempt.",
+            "default": "PENDING",
+            "title": "Delivery Status"
+          },
+          "openTracking": {
+            "type": "object",
+            "nullable": true,
+            "description": "EMAIL open-tracking state.",
+            "properties": {
+              "opened": {
+                "type": "boolean",
+                "title": "Opened",
+                "description": "Indicates whether opened applies."
+              },
+              "openedAt": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Opened At",
+                "description": "The date and time for opened at."
+              }
+            },
+            "title": "Open Tracking"
+          },
+          "postageStatus": {
+            "type": "object",
+            "nullable": true,
+            "description": "PostNL aangetekend tracking state.",
+            "properties": {
+              "barcode": {
+                "type": "string",
+                "title": "Barcode",
+                "description": "The barcode."
+              },
+              "trackingUrl": {
+                "type": "string",
+                "format": "uri",
+                "title": "Tracking URL",
+                "description": "The URL for tracking."
+              },
+              "deliveredAt": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Delivered At",
+                "description": "The date and time for delivered at."
+              }
+            },
+            "title": "Postage Status"
+          },
+          "digitalSignature": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional digital signature over the rendered letter.",
+            "title": "Digital Signature"
+          },
+          "factuurBedrag": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "description": "Invoice principal at the moment this run executed (EUR).",
+            "title": "Factuur Bedrag"
+          },
+          "incassokostenBedrag": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "nullable": true,
+            "description": "Incasso costs at the moment this run executed (EUR). Set when the BIK-staffel has been computed.",
+            "title": "Incassokosten Bedrag"
+          },
+          "renteBedrag": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "nullable": true,
+            "description": "Wettelijke rente at the moment this run executed (EUR).",
+            "title": "Rente Bedrag"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration.",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Composed but not yet dispatched. Subject/body/PDF may still be amended."
+            },
+            "executed": {
+              "label": "Executed",
+              "description": "Dispatched to the channel. deliveryStatus reflects the outcome. Immutable from here on."
+            },
+            "locked": {
+              "label": "Locked",
+              "description": "Sealed. No further amendments permitted (typically set once delivery is confirmed or the invoice moved to in_incasso)."
+            }
+          },
+          "transitions": {
+            "execute": {
+              "from": "draft",
+              "to": "executed",
+              "label": "Execute dunning run",
+              "description": "Send via the configured kanaal. Captures uitgevoerdOp + deliveryStatus + evidence hashes. After this transition the record is immutable (REQ-CCD-002).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\DunningRunExecuteGuard::canExecute"
+            },
+            "lock": {
+              "from": "executed",
+              "to": "locked",
+              "label": "Lock dunning run",
+              "description": "Seal the run — used when the invoice moves to in_incasso or written_off."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7
+          }
+        },
+        "x-openregister-aggregations": {
+          "runsPerInvoice": {
+            "label": "Runs per invoice",
+            "description": "How many DunningRun records have been executed per invoice and stage. Drives aging/escalation dashboards.",
+            "register": "shillinq",
+            "schema": "DunningRun",
+            "filter": {
+              "lifecycleState": {
+                "in": [
+                  "executed",
+                  "locked"
+                ]
+              }
+            },
+            "groupBy": [
+              "factuurId",
+              "stageNr"
+            ],
+            "operations": {
+              "count": {
+                "operation": "count"
+              },
+              "latestExecutedAt": {
+                "field": "uitgevoerdOp",
+                "operation": "max"
+              }
+            }
+          },
+          "deliveryByStage": {
+            "label": "Delivery by stage",
+            "description": "Successful-delivery ratio per stage (DELIVERED / total). Powers the stage-funnel KPI.",
+            "register": "shillinq",
+            "schema": "DunningRun",
+            "groupBy": [
+              "stageNr",
+              "deliveryStatus"
+            ],
+            "operations": {
+              "count": {
+                "operation": "count"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      },
+      "IncassoKostenBerekening": {
+        "slug": "IncassoKostenBerekening",
+        "icon": "CalculatorVariantOutline",
+        "version": "0.1.0",
+        "title": "Incasso Kosten Berekening",
+        "description": "BIK-staffel + wettelijke rente computation per invoice. Implements the Besluit BIK staffel (15% / 10% / 5% / 1% / 0,5%, minimum €40) plus handelsrente B2B per art. 6:119a BW (ECB + 8pp → 11,5% per 1-1-2026) or wettelijke rente B2C per art. 6:119 BW (7% per 1-1-2026). Recomputed on partial-payment against the remaining saldo. REQ-CCD-003.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-003",
+        "type": "object",
+        "required": [
+          "factuurId",
+          "hoofdsom",
+          "berekening",
+          "wettelijkeRente",
+          "partyType",
+          "totaalVerschuldigd",
+          "administrationId"
+        ],
+        "properties": {
+          "factuurId": {
+            "type": "string",
+            "description": "FK to the invoice UUID.",
+            "title": "Factuur ID"
+          },
+          "hoofdsom": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "description": "Principal at the time of calculation (EUR). After partial payment the calculation is re-run against the remaining saldo.",
+            "title": "Hoofdsom"
+          },
+          "berekening": {
+            "type": "object",
+            "description": "BIK staffel breakdown. Five graduated slabs plus minimum-floor.",
+            "required": [
+              "totaal",
+              "toegepast"
+            ],
+            "properties": {
+              "schaal1_0_2500": {
+                "type": "number",
+                "multipleOf": 0.01,
+                "description": "15% over the slice 0–€2.500.",
+                "title": "Schaal1 0 2500"
+              },
+              "schaal2_2500_5000": {
+                "type": "number",
+                "multipleOf": 0.01,
+                "description": "10% over the slice €2.500–€5.000.",
+                "title": "Schaal2 2500 5000"
+              },
+              "schaal3_5000_10000": {
+                "type": "number",
+                "multipleOf": 0.01,
+                "description": "5% over the slice €5.000–€10.000.",
+                "title": "Schaal3 5000 10000"
+              },
+              "schaal4_10000_200000": {
+                "type": "number",
+                "multipleOf": 0.01,
+                "description": "1% over the slice €10.000–€200.000.",
+                "title": "Schaal4 10000 200000"
+              },
+              "schaal5_200000plus": {
+                "type": "number",
+                "multipleOf": 0.01,
+                "description": "0,5% over the slice above €200.000.",
+                "title": "Schaal5 200000Plus"
+              },
+              "totaal": {
+                "type": "number",
+                "multipleOf": 0.01,
+                "description": "Sum of all staffel slices.",
+                "title": "Totaal"
+              },
+              "minimum": {
+                "type": "number",
+                "multipleOf": 0.01,
+                "description": "Statutory minimum (€40).",
+                "default": 40.0,
+                "title": "Minimum"
+              },
+              "toegepast": {
+                "type": "number",
+                "multipleOf": 0.01,
+                "description": "max(totaal, minimum) — the amount actually owed.",
+                "title": "Toegepast"
+              }
+            },
+            "title": "Berekening"
+          },
+          "wettelijkeRente": {
+            "type": "object",
+            "required": [
+              "tarief",
+              "type",
+              "ingangsdatum",
+              "berekendOp",
+              "dagen",
+              "bedrag"
+            ],
+            "properties": {
+              "tarief": {
+                "type": "number",
+                "description": "Annual rate as decimal (0.115 for B2B handelsrente, 0.07 for B2C wettelijke rente).",
+                "example": 0.115,
+                "title": "Tarief"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "HANDELSRENTE_B2B_6_119A_BW",
+                  "WETTELIJKE_RENTE_B2C_6_119_BW"
+                ],
+                "description": "Statutory basis for the rate.",
+                "title": "Type"
+              },
+              "ingangsdatum": {
+                "type": "string",
+                "format": "date",
+                "description": "Date the rente started to accrue (day 0 for B2B / day 44 for B2C).",
+                "title": "Ingangsdatum"
+              },
+              "berekendOp": {
+                "type": "string",
+                "format": "date",
+                "description": "Date the calculation was performed.",
+                "title": "Berekend Op"
+              },
+              "dagen": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Days between ingangsdatum and berekendOp.",
+                "title": "Dagen"
+              },
+              "bedrag": {
+                "type": "number",
+                "multipleOf": 0.01,
+                "minimum": 0,
+                "description": "Rente in EUR — (hoofdsom × tarief × dagen / 365), rounded to cents.",
+                "title": "Bedrag"
+              }
+            },
+            "title": "Wettelijke Rente",
+            "description": "A structured wettelijke rente object with nested properties."
+          },
+          "partyType": {
+            "type": "string",
+            "enum": [
+              "B2B",
+              "B2C",
+              "GOVERNMENT"
+            ],
+            "description": "Counterparty type — controls the rente rate and the B2C 14-day grace block.",
+            "title": "Party Type"
+          },
+          "totaalVerschuldigd": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "description": "hoofdsom + berekening.toegepast + wettelijkeRente.bedrag (EUR).",
+            "title": "Totaal Verschuldigd"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration.",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-aggregations": {
+          "bikStaffel": {
+            "label": "BIK staffel",
+            "description": "Declarative shape of the Besluit BIK staffel arithmetic (per REQ-CCD-003). The PHP BIKStaffelCalculator produces an identical record when the OR aggregation engine cannot express the multi-slab expression directly.",
+            "register": "shillinq",
+            "schema": "IncassoKostenBerekening",
+            "computedFields": {
+              "schaal1_0_2500": {
+                "type": "expression",
+                "expression": "MIN(hoofdsom, 2500) * 0.15"
+              },
+              "schaal2_2500_5000": {
+                "type": "expression",
+                "expression": "MAX(MIN(hoofdsom, 5000) - 2500, 0) * 0.10"
+              },
+              "schaal3_5000_10000": {
+                "type": "expression",
+                "expression": "MAX(MIN(hoofdsom, 10000) - 5000, 0) * 0.05"
+              },
+              "schaal4_10000_200000": {
+                "type": "expression",
+                "expression": "MAX(MIN(hoofdsom, 200000) - 10000, 0) * 0.01"
+              },
+              "schaal5_200000plus": {
+                "type": "expression",
+                "expression": "MAX(hoofdsom - 200000, 0) * 0.005"
+              },
+              "totaal": {
+                "type": "expression",
+                "expression": "schaal1_0_2500 + schaal2_2500_5000 + schaal3_5000_10000 + schaal4_10000_200000 + schaal5_200000plus"
+              },
+              "toegepast": {
+                "type": "expression",
+                "expression": "MAX(totaal, 40)"
+              }
+            }
+          },
+          "renteAccrual": {
+            "label": "Rente accrual",
+            "description": "Declarative shape of the wettelijke rente accrual (REQ-CCD-003). For B2B uses HANDELSRENTE_B2B_6_119A_BW (ECB+8pp → 11,5% default); for B2C uses WETTELIJKE_RENTE_B2C_6_119_BW (7% default).",
+            "register": "shillinq",
+            "schema": "IncassoKostenBerekening",
+            "computedFields": {
+              "renteBedrag": {
+                "type": "expression",
+                "expression": "(hoofdsom * wettelijkeRente.tarief * wettelijkeRente.dagen) / 365"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      },
+      "DunningPauseDispute": {
+        "slug": "DunningPauseDispute",
+        "icon": "PauseCircleOutline",
+        "version": "0.1.0",
+        "title": "Dunning Pause / Dispute",
+        "description": "Pause registration on a dunning ladder for a specific invoice. Halts further DunningRun stage actions and IncassoKostenBerekening rente accrual. Resolved either by operator action or by the auto hard-deadline (default 60 days after pauzeStart). REQ-CCD-004.",
+        "x-schema-org": "schema:Event",
+        "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-004",
+        "type": "object",
+        "required": [
+          "factuurId",
+          "pauzeStart",
+          "reden",
+          "details",
+          "gepauzeerdDoor",
+          "administrationId"
+        ],
+        "properties": {
+          "factuurId": {
+            "type": "string",
+            "description": "FK to the paused invoice.",
+            "title": "Factuur ID"
+          },
+          "pauzeStart": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the pause began.",
+            "title": "Pauze Start"
+          },
+          "pauzeEind": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the pause ended. Null = still paused.",
+            "title": "Pauze Eind"
+          },
+          "reden": {
+            "type": "string",
+            "enum": [
+              "DISPUTED",
+              "PAYMENT_PLAN",
+              "OTHER"
+            ],
+            "description": "Pause cause.",
+            "title": "Reden"
+          },
+          "details": {
+            "type": "string",
+            "description": "Free-text details (e.g. 'Klant betwist 4 uur week-22').",
+            "title": "Details"
+          },
+          "gepauzeerdDoor": {
+            "type": "string",
+            "description": "User / actor id who initiated the pause.",
+            "title": "Gepauzeerd Door"
+          },
+          "evidenceRefs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "FK URIs to docudesk or openregister evidence records (e-mails, dispute correspondence).",
+            "title": "Evidence Refs"
+          },
+          "hardDeadlineEindigt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Auto-resume timestamp — pauzeStart + dunning.dispute_pause_hard_deadline_days (default 60).",
+            "title": "Hard Deadline Eindigt"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration.",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Pause is in force; no dunning runs may execute for the linked invoice and no rente accrues."
+            },
+            "resolved": {
+              "label": "Resolved",
+              "description": "Operator marked the dispute resolved or a partial settlement was reached. Ladder resumes from the stage where the pause began."
+            },
+            "hardDeadlineExpired": {
+              "label": "Hard deadline expired",
+              "description": "The configured deadline elapsed without resolution; ladder auto-resumes."
+            }
+          },
+          "transitions": {
+            "resolve": {
+              "from": "active",
+              "to": "resolved",
+              "label": "Resolve dispute",
+              "description": "Mark the dispute resolved (e.g. partial settlement). Sets pauzeEind."
+            },
+            "expire": {
+              "from": "active",
+              "to": "hardDeadlineExpired",
+              "label": "Hard deadline expired",
+              "description": "Reached hardDeadlineEindigt without operator action; ladder auto-resumes."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      },
+      "CreditScore": {
+        "slug": "CreditScore",
+        "icon": "GaugeLow",
+        "version": "0.1.0",
+        "title": "Credit Score",
+        "description": "Optional external credit-score snapshot per klant (Graydon, Creditsafe, Atradius Insights). Cached for dunning.credit_score_cache_days days (default 30) to limit lookup cost. Triggers a UI warning when the score falls below the configured threshold. REQ-CCD-007.",
+        "x-schema-org": "schema:Rating",
+        "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-007",
+        "type": "object",
+        "required": [
+          "klantId",
+          "provider",
+          "scoreDatum",
+          "score",
+          "scoreSchaal",
+          "administrationId"
+        ],
+        "properties": {
+          "klantId": {
+            "type": "string",
+            "description": "FK to the customer.",
+            "title": "Klant ID"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "GRAYDON",
+              "CREDITSAFE",
+              "ATRADIUS_INSIGHTS"
+            ],
+            "title": "Provider",
+            "description": "The provider."
+          },
+          "scoreDatum": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the score was fetched.",
+            "title": "Score Datum"
+          },
+          "score": {
+            "type": "number",
+            "description": "Numeric score on the provider-specific scale.",
+            "title": "Score"
+          },
+          "scoreSchaal": {
+            "type": "string",
+            "description": "Scale description (e.g. '1-10', '0-100').",
+            "title": "Score Schaal"
+          },
+          "betalingsRisicoIndicatie": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "LAAG",
+              "MIDDEN",
+              "HOOG",
+              null
+            ],
+            "title": "Betalings Risico Indicatie",
+            "description": "The date and time for betalings risico indicatie."
+          },
+          "creditLimietAdvies": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "nullable": true,
+            "description": "Recommended credit limit (EUR).",
+            "title": "Credit Limiet Advies"
+          },
+          "kostenLookup": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "nullable": true,
+            "description": "Cost of this lookup (EUR).",
+            "title": "Kosten Lookup"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration.",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Within the cache window; usable at invoice-creation time."
+            },
+            "stale": {
+              "label": "Stale",
+              "description": "Older than dunning.credit_score_cache_days; refresh required before use."
+            }
+          },
+          "transitions": {
+            "markStale": {
+              "from": "active",
+              "to": "stale",
+              "label": "Mark stale",
+              "description": "Mark the snapshot stale once the cache window elapses."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      },
+      "OninbaarAfschrijving": {
+        "slug": "OninbaarAfschrijving",
+        "icon": "FileRemoveOutline",
+        "version": "0.1.0",
+        "title": "Oninbare Afschrijving",
+        "description": "Definitive write-off + BTW-teruggaaf voorbereiding per art. 29 OB. Captures hoofdsomAfgeschreven, btwBedrag, art29OBVerklaring (e.g. 'Faillissement', 'Schuldsanering', '1 jaar onbetaald'), evidence ref (faillissementsvonnis / WSNP-besluit), GL boekingId, and the BTW-aangifte period the teruggaaf is queued for. REQ-CCD-010.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-010",
+        "type": "object",
+        "required": [
+          "factuurId",
+          "hoofdsomAfgeschreven",
+          "art29OBVerklaring",
+          "administrationId"
+        ],
+        "properties": {
+          "factuurId": {
+            "type": "string",
+            "description": "FK to the written-off invoice.",
+            "title": "Factuur ID"
+          },
+          "hoofdsomAfgeschreven": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "description": "Amount written off, excluding VAT (EUR).",
+            "title": "Hoofdsom Afgeschreven"
+          },
+          "btwBedrag": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "nullable": true,
+            "description": "VAT amount eligible for teruggaaf per art. 29 OB (EUR).",
+            "title": "BTW Bedrag"
+          },
+          "art29OBVerklaring": {
+            "type": "string",
+            "description": "Reason / declaration (e.g. 'Faillissement vonnis 2026-04-12', 'Schuldsanering WSNP', '1 jaar onbetaald').",
+            "title": "Art29Ob Verklaring"
+          },
+          "evidenceRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK URI to the supporting docudesk evidence (faillissementsvonnis, schuldsaneringsverzoek, etc.).",
+            "title": "Evidence Ref"
+          },
+          "boekingId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the materialised GLTransaction recording the write-off.",
+            "title": "Boeking ID"
+          },
+          "btwAangiftePeriode": {
+            "type": "string",
+            "nullable": true,
+            "description": "VAT filing period the teruggaaf has been queued for (e.g. '2026-Q2').",
+            "title": "BTW Aangifte Periode"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration.",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Operator proposed the write-off; GL posting + BTW teruggaaf not yet materialised."
+            },
+            "posted": {
+              "label": "Posted",
+              "description": "GL posting materialised, BTW teruggaaf queued, invoice flipped to written_off."
+            },
+            "voided": {
+              "label": "Voided",
+              "description": "Write-off retracted (rare). Requires compensating GL entry."
+            }
+          },
+          "transitions": {
+            "post": {
+              "from": "draft",
+              "to": "posted",
+              "label": "Post write-off",
+              "description": "Materialise the GL posting + queue BTW teruggaaf for the next aangifte period. Implements REQ-CCD-010."
+            },
+            "void": {
+              "from": "posted",
+              "to": "voided",
+              "label": "Void write-off",
+              "description": "Reverse the write-off; requires a compensating GLTransaction."
+            }
+          },
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "years": 7
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "DunningLadder",
+        "slug": "ladder-zzp-default-2026"
+      },
+      "naam": "Standaard dunning-ladder ZZP",
+      "ondernemingId": "ond-zzp-001",
+      "klantGroep": "DEFAULT",
+      "stages": [
+        {
+          "nr": 1,
+          "dagenNaVervalDatum": 0,
+          "naam": "Vriendelijke reminder",
+          "kanaal": "EMAIL",
+          "templateId": "tpl-dunning-stage1-nl",
+          "wettelijkEffect": null
+        },
+        {
+          "nr": 2,
+          "dagenNaVervalDatum": 14,
+          "naam": "Herinnering",
+          "kanaal": "EMAIL",
+          "templateId": "tpl-dunning-stage2-nl",
+          "wettelijkEffect": null
+        },
+        {
+          "nr": 3,
+          "dagenNaVervalDatum": 30,
+          "naam": "Aanmaning + 14d-brief",
+          "kanaal": "EMAIL+POSTREGISTRATIE",
+          "templateId": "tpl-dunning-stage3-nl",
+          "wettelijkEffect": "14_DAGEN_BRIEF_BIK"
+        },
+        {
+          "nr": 4,
+          "dagenNaVervalDatum": 60,
+          "naam": "Ingebrekestelling",
+          "kanaal": "AANGETEKENDE_POST",
+          "templateId": "tpl-dunning-stage4-nl",
+          "wettelijkEffect": "VERZUIM_INTREDEN"
+        },
+        {
+          "nr": 5,
+          "dagenNaVervalDatum": 90,
+          "naam": "Overdracht incasso",
+          "kanaal": "INCASSOBUREAU_API",
+          "templateId": "tpl-dunning-stage5-nl",
+          "actie": "TRANSFER_INCASSO"
+        }
+      ],
+      "actief": true,
+      "administrationId": "adm-1"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "DunningLadder",
+        "slug": "ladder-overheid-default-2026"
+      },
+      "naam": "Overheid dunning-ladder (30-dagen termijn)",
+      "ondernemingId": "ond-zzp-001",
+      "klantGroep": "OVERHEID",
+      "stages": [
+        {
+          "nr": 1,
+          "dagenNaVervalDatum": 0,
+          "naam": "Reminder",
+          "kanaal": "EMAIL",
+          "templateId": "tpl-dunning-stage1-nl"
+        },
+        {
+          "nr": 2,
+          "dagenNaVervalDatum": 30,
+          "naam": "Herinnering (overheid 30d)",
+          "kanaal": "EMAIL",
+          "templateId": "tpl-dunning-stage2-nl"
+        },
+        {
+          "nr": 3,
+          "dagenNaVervalDatum": 60,
+          "naam": "Aanmaning",
+          "kanaal": "EMAIL",
+          "templateId": "tpl-dunning-stage3-nl"
+        },
+        {
+          "nr": 4,
+          "dagenNaVervalDatum": 90,
+          "naam": "Escalatie naar account-manager",
+          "kanaal": "EMAIL",
+          "templateId": "tpl-dunning-stage4-nl"
+        }
+      ],
+      "actief": true,
+      "administrationId": "adm-1"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "KlantLadderOverride",
+        "slug": "override-gemeente-amsterdam"
+      },
+      "klantId": "klant-gemeente-amsterdam",
+      "baseLadderId": "ladder-zzp-default-2026",
+      "overrides": {
+        "stages": [
+          {
+            "nr": 1,
+            "dagenNaVervalDatum": 0,
+            "naam": "Reminder",
+            "kanaal": "EMAIL"
+          },
+          {
+            "nr": 2,
+            "dagenNaVervalDatum": 30,
+            "naam": "Herinnering (overheid 30d)",
+            "kanaal": "EMAIL"
+          },
+          {
+            "nr": 3,
+            "dagenNaVervalDatum": 60,
+            "naam": "Aanmaning",
+            "kanaal": "EMAIL"
+          },
+          {
+            "nr": 4,
+            "dagenNaVervalDatum": 90,
+            "naam": "Escalatie naar account-manager",
+            "kanaal": "EMAIL"
+          }
+        ]
+      },
+      "reden": "Wet betalingstermijnen overheid — 30-dagensbetaaltermijn (Stb. 2017, 226)",
+      "createdBy": "user-zzp-ond-001",
+      "createdAt": "2026-05-01T08:00:00Z",
+      "approvedBy": "user-controller-001",
+      "approvedAt": "2026-05-01T09:30:00Z",
+      "administrationId": "adm-1"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "DunningRun",
+        "slug": "drun-inv-2026-0247-stage3"
+      },
+      "factuurId": "inv-2026-0247",
+      "ladderId": "ladder-zzp-default-2026",
+      "stageNr": 3,
+      "uitgevoerdOp": "2026-06-14T09:00:00Z",
+      "kanaal": "EMAIL+POSTREGISTRATIE",
+      "ontvangerEmail": "finance@acme.nl",
+      "ontvangerNaam": "Crediteurenadministratie Acme BV",
+      "templateId": "tpl-dunning-stage3-nl",
+      "renderedSubject": "Aanmaning factuur 2026-0247 — €8.400",
+      "renderedBody": "Geachte Crediteurenadministratie Acme BV,\n\nUw factuur 2026-0247 van €8.400 staat sinds 2026-05-14 open. U krijgt 14 dagen om de factuur alsnog te voldoen zonder dat incassokosten of rente verschuldigd worden. Na deze termijn kunnen incassokosten en wettelijke rente verschuldigd zijn.\n\nMet vriendelijke groet,\nDe ondernemer",
+      "renderedPdfHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "deliveryStatus": "DELIVERED",
+      "openTracking": {
+        "opened": true,
+        "openedAt": "2026-06-14T09:42:00Z"
+      },
+      "factuurBedrag": 8400.0,
+      "administrationId": "adm-1"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "IncassoKostenBerekening",
+        "slug": "ik-inv-2026-0247"
+      },
+      "factuurId": "inv-2026-0247",
+      "hoofdsom": 8400.0,
+      "berekening": {
+        "schaal1_0_2500": 375.0,
+        "schaal2_2500_5000": 250.0,
+        "schaal3_5000_10000": 170.0,
+        "schaal4_10000_200000": 0.0,
+        "schaal5_200000plus": 0.0,
+        "totaal": 795.0,
+        "minimum": 40.0,
+        "toegepast": 795.0
+      },
+      "wettelijkeRente": {
+        "tarief": 0.115,
+        "type": "HANDELSRENTE_B2B_6_119A_BW",
+        "ingangsdatum": "2026-05-30",
+        "berekendOp": "2026-06-21",
+        "dagen": 22,
+        "bedrag": 58.13
+      },
+      "partyType": "B2B",
+      "totaalVerschuldigd": 9253.13,
+      "administrationId": "adm-1"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "DunningPauseDispute",
+        "slug": "pause-inv-2026-0247-dispute-001"
+      },
+      "factuurId": "inv-2026-0247",
+      "pauzeStart": "2026-06-02T14:20:00Z",
+      "pauzeEind": null,
+      "reden": "DISPUTED",
+      "details": "Klant betwist 4 uur uit week-22; gesprek gepland 10 juni",
+      "gepauzeerdDoor": "user-zzp-ond-001",
+      "evidenceRefs": [
+        "docudesk:email-2026-06-02-disputereactie.eml"
+      ],
+      "hardDeadlineEindigt": "2026-08-01T14:20:00Z",
+      "administrationId": "adm-1"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CreditScore",
+        "slug": "cs-klant-acme-bv-2026-05"
+      },
+      "klantId": "klant-acme-bv",
+      "provider": "GRAYDON",
+      "scoreDatum": "2026-05-01",
+      "score": 6.4,
+      "scoreSchaal": "1-10",
+      "betalingsRisicoIndicatie": "MIDDEN",
+      "creditLimietAdvies": 25000.0,
+      "kostenLookup": 1.85,
+      "administrationId": "adm-1"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "OninbaarAfschrijving",
+        "slug": "oninb-inv-2025-0089"
+      },
+      "factuurId": "inv-2025-0089",
+      "hoofdsomAfgeschreven": 4200.0,
+      "btwBedrag": 882.0,
+      "art29OBVerklaring": "Faillissement vonnis 2026-04-12 (Rb. Amsterdam)",
+      "evidenceRef": "docudesk:files/oninb/faillissementsvonnis-2026-04-12.pdf",
+      "boekingId": "gl-2026-04-15-oninb-0089",
+      "btwAangiftePeriode": "2026-Q2",
+      "administrationId": "adm-1"
+    }
+  ]
 }

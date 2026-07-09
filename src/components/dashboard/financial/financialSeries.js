@@ -406,3 +406,39 @@ function sum(values) {
 function round2(value) {
 	return Math.round(value * 100) / 100
 }
+
+/**
+ * Range-driven KPI metrics: turnover, margin (€ + %) and billable
+ * (hours + %) aggregated over an explicit list of month buckets
+ * (the dashboard's selected date range) rather than the fixed
+ * year-to-date / current-month windows `computeKpis` uses. The
+ * point-in-time metrics (open debtors/creditors, cash balance) do
+ * not vary by range and stay in `computeKpis`.
+ *
+ * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @param {object} input `{ accounts, transactions, lines, hourEntries }`.
+ * @param input.accounts
+ * @param input.transactions
+ * @param input.lines
+ * @param input.hourEntries
+ * @param {string[]} months Month keys (`YYYY-MM`) to aggregate over.
+ * @return {{ turnover: number, margin: number, marginPct: (number|null),
+ *   billableHours: number, billablePct: (number|null) }}
+ */
+export function computeRangeKpis({ accounts, transactions, lines, hourEntries }, months) {
+	const series = monthlyFinancialSeries({ accounts, transactions, lines, months })
+	const turnover = round2(sum(series.revenue))
+	const margin = round2(sum(series.margin))
+
+	const bill = billableSeries(hourEntries, months)
+	const billableHours = sum(bill.billable)
+	const totalHours = billableHours + sum(bill.nonBillable)
+
+	return {
+		turnover,
+		margin,
+		marginPct: turnover > 0 ? round2((margin / turnover) * 100) : null,
+		billableHours: round2(billableHours),
+		billablePct: totalHours > 0 ? round2((billableHours / totalHours) * 100) : null,
+	}
+}

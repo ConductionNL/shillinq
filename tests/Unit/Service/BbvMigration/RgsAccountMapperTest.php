@@ -194,7 +194,6 @@ class RgsAccountMapperTest extends TestCase
         return new RgsAccountMapper(
             container: $this->container,
             appConfig: $this->appConfig,
-            logger: $this->logger,
         );
 
     }//end buildService()

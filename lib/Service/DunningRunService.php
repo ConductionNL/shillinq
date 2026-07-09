@@ -70,16 +70,6 @@ use RuntimeException;
 class DunningRunService
 {
     /**
-     * App-config key for the B2B handelsrente default tarief.
-     */
-    private const CFG_HANDELSRENTE_B2B = 'dunning.ecb_rente_handelsrente_b2b_default';
-
-    /**
-     * App-config key for the B2C wettelijke-rente default tarief.
-     */
-    private const CFG_WETTELIJKE_RENTE_B2C = 'dunning.dnb_rente_wettelijke_b2c_default';
-
-    /**
      * App-config key for the dispute pause hard deadline (days).
      */
     private const CFG_DISPUTE_PAUSE_DAYS = 'dunning.dispute_pause_hard_deadline_days';
@@ -92,15 +82,13 @@ class DunningRunService
     /**
      * Construct the service with lazy DI of OR's ObjectService.
      *
-     * @param ContainerInterface   $container Lazy DI container.
-     * @param IAppConfig           $appConfig App config.
-     * @param BIKStaffelCalculator $bik       Pure BIK + rente calculator.
-     * @param LoggerInterface      $logger    Logger.
+     * @param ContainerInterface $container Lazy DI container.
+     * @param IAppConfig         $appConfig App config.
+     * @param LoggerInterface    $logger    Logger.
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
-        private readonly BIKStaffelCalculator $bik,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()

@@ -278,7 +278,7 @@ class VATReturnService
                 lineCount: $group['lineCount']
             );
 
-            foreach (($group['pendingLines'] ?? []) as $line) {
+            foreach ($group['pendingLines'] as $line) {
                 $line['returnId']         = $returnId;
                 $line['declarationId']    = $declarationId;
                 $line['administrationId'] = $administrationId;

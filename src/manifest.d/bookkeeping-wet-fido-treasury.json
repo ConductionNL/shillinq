@@ -29,14 +29,14 @@
 				},
 				{
 					"id": "Leningen",
-					"label": "Leningen",
+					"label": "Loans",
 					"icon": "CashMultiple",
 					"route": "Leningen",
 					"order": 30
 				},
 				{
 					"id": "Derivaten",
-					"label": "Derivaten",
+					"label": "Derivatives",
 					"icon": "SwapHorizontal",
 					"route": "Derivaten",
 					"order": 40
@@ -61,7 +61,7 @@
 				"widgets": [
 					{
 						"id": "kasgeld-headroom",
-						"title": "Kasgeldlimiet headroom",
+						"title": "Cash limit headroom",
 						"type": "stats-block",
 						"iconClass": "icon-quota",
 						"props": {
@@ -72,7 +72,7 @@
 					},
 					{
 						"id": "rente-risico-headroom",
-						"title": "Rente-risiconorm headroom",
+						"title": "Interest rate risk norm headroom",
 						"type": "stats-block",
 						"iconClass": "icon-quota",
 						"props": {
@@ -83,7 +83,7 @@
 					},
 					{
 						"id": "schatkist-saldo",
-						"title": "Schatkistbankieren saldo",
+						"title": "Treasury banking balance",
 						"type": "stats-block",
 						"iconClass": "icon-category-office",
 						"props": {
@@ -94,7 +94,7 @@
 					},
 					{
 						"id": "open-alerts",
-						"title": "Open limiet alerts",
+						"title": "Open limit alerts",
 						"type": "stats-block",
 						"iconClass": "icon-error",
 						"props": {
@@ -137,6 +137,7 @@
 			"type": "detail",
 			"title": "Treasurystatuut",
 			"config": {
+				"_note": "The treasurystatuut is the governing POLICY DOCUMENT under Wet Fido: it fixes the risk appetite, permitted instruments, counterparty allowlist and signing mandates that every loan and derivative must obey. Body leads with the version/adoption/validity data; the loans and derivatives booked under this statute are listed so a controller can see what the policy actually governs, and the adoption decision document sits with the audit trail in the sidebar. No comms — a policy record.",
 				"register": "shillinq",
 				"schema": "Treasurystatuut",
 				"fields": [
@@ -151,14 +152,33 @@
 					{ "key": "reportingCadence", "label": "Reporting cadence", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
-				"indexRoute": "Treasurystatuten"
+				"relatedLists": [
+					{"id": "loans", "title": "Loans under this statute", "schema": "Lening", "foreignKey": "treasurystatuutId", "columns": [
+						{"key": "counterparty", "label": "Counterparty"},
+						{"key": "principal", "label": "Principal"},
+						{"key": "maturityDate", "label": "Maturity"},
+						{"key": "status", "label": "Status"}
+					], "detailRoute": "LeningDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "Treasurystatuten",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "Treasurystatuut", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
 			"id": "Leningen",
 			"route": "/treasury/leningen",
 			"type": "index",
-			"title": "Leningen",
+			"title": "Loans",
 			"config": {
 				"register": "shillinq",
 				"schema": "Lening",
@@ -177,10 +197,15 @@
 			"id": "LeningDetail",
 			"route": "/treasury/leningen/:id",
 			"type": "detail",
-			"title": "Lening",
+			"title": "Loan",
 			"config": {
+				"_note": "A loan (lening) is a treasury INSTRUMENT booked under a treasurystatuut: principal, rate (type + value), issue/maturity dates, signing mandate and any limit breach with its override rationale. Body leads with the terms; principal and rate are surfaced as KPIs and the limit-breach flag is prominent because a breach is what a Wet Fido reviewer looks for. Source documents (loan agreement) and the audit trail live in the sidebar. No comms.",
 				"register": "shillinq",
 				"schema": "Lening",
+				"aggregations": [
+					{"id": "principal", "title": "Principal", "field": "principal", "metric": "value", "format": "currency"},
+					{"id": "rate", "title": "Rate (%)", "field": "rate", "metric": "value"}
+				],
 				"fields": [
 					{ "key": "counterparty", "label": "Counterparty", "type": "string" },
 					{ "key": "type", "label": "Instrument", "type": "string" },
@@ -192,18 +217,29 @@
 					{ "key": "maturityDate", "label": "Maturity", "type": "string" },
 					{ "key": "signingMandateRole", "label": "Signing mandate role", "type": "string" },
 					{ "key": "purpose", "label": "Purpose", "type": "string" },
-					{ "key": "limietBreach", "label": "Limiet breach", "type": "boolean" },
+					{ "key": "limietBreach", "label": "Limit breach", "type": "boolean" },
 					{ "key": "overrideRationale", "label": "Override rationale", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
-				"indexRoute": "Leningen"
+				"auditTrail": true,
+				"indexRoute": "Leningen",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "Lening", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
 			"id": "Derivaten",
 			"route": "/treasury/derivaten",
 			"type": "index",
-			"title": "Derivaten",
+			"title": "Derivatives",
 			"config": {
 				"register": "shillinq",
 				"schema": "Derivaat",
@@ -222,10 +258,15 @@
 			"id": "DerivaatDetail",
 			"route": "/treasury/derivaten/:id",
 			"type": "detail",
-			"title": "Derivaat",
+			"title": "Derivative",
 			"config": {
+				"_note": "A derivative (derivaat) is a hedging INSTRUMENT: notional, the hedged exposure it offsets, inception/maturity, fair value and the RUDDO justification that Wet Fido requires for any derivative use. Body leads with the instrument terms; notional and fair value are KPIs and the RUDDO justification is prominent because a derivative without it is a compliance finding. Source confirmations and the audit trail live in the sidebar. No comms.",
 				"register": "shillinq",
 				"schema": "Derivaat",
+				"aggregations": [
+					{"id": "notional", "title": "Notional", "field": "notional", "metric": "value", "format": "currency"},
+					{"id": "marketValue", "title": "Fair value", "field": "marketValue", "metric": "value", "format": "currency"}
+				],
 				"fields": [
 					{ "key": "type", "label": "Type", "type": "string" },
 					{ "key": "notional", "label": "Notional", "type": "number" },
@@ -238,7 +279,18 @@
 					{ "key": "counterpartyRating", "label": "Counterparty rating", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
-				"indexRoute": "Derivaten"
+				"auditTrail": true,
+				"indexRoute": "Derivaten",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "Derivaat", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -252,7 +304,7 @@
 				"columns": [
 					{ "key": "auditYear", "label": "Year", "sortable": true },
 					{ "key": "kwartaal", "label": "Quarter", "sortable": true },
-					{ "key": "toezichthouderName", "label": "Toezichthouder", "sortable": true },
+					{ "key": "toezichthouderName", "label": "Supervisor", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "auditYear",
@@ -265,6 +317,7 @@
 			"type": "detail",
 			"title": "Quarterly Fido Report",
 			"config": {
+				"_note": "The quarterly Fido report is the statutory REPORT filed to the toezichthouder: it rolls up kasgeld status, interest-rate-risk status, schatkistbankieren, and the loan/derivative mutations of the quarter into a narrative with dual sign-off (treasurer + concerncontroller) and a submission receipt. Body leads with the period, narrative and submission fields; the underlying loans and derivatives of the organisation are listed for traceability, and the filed PDF + receipt sit with the audit trail in the sidebar. No comms.",
 				"register": "shillinq",
 				"schema": "QuartaalrapportageFido",
 				"fields": [
@@ -272,12 +325,37 @@
 					{ "key": "kwartaal", "label": "Quarter", "type": "string" },
 					{ "key": "organisationId", "label": "Organisation", "type": "string" },
 					{ "key": "narrative", "label": "Narrative", "type": "string" },
-					{ "key": "toezichthouderName", "label": "Toezichthouder", "type": "string" },
+					{ "key": "signOffTreasurer", "label": "Treasurer sign-off", "type": "object" },
+					{ "key": "signOffConcerncontroller", "label": "Controller sign-off", "type": "object" },
+					{ "key": "toezichthouderName", "label": "Supervisor", "type": "string" },
 					{ "key": "submittedToToezichthouder", "label": "Submitted", "type": "string" },
 					{ "key": "submissionReceipt", "label": "Receipt", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
-				"indexRoute": "QuartaalrapportagesFido"
+				"relatedLists": [
+					{"id": "loans", "title": "Loans (organisation)", "schema": "Lening", "foreignKey": "organisationId", "join": "organisationId", "columns": [
+						{"key": "counterparty", "label": "Counterparty"},
+						{"key": "principal", "label": "Principal"},
+						{"key": "maturityDate", "label": "Maturity"}
+					], "detailRoute": "LeningDetail"},
+					{"id": "derivatives", "title": "Derivatives (organisation)", "schema": "Derivaat", "foreignKey": "organisationId", "join": "organisationId", "columns": [
+						{"key": "type", "label": "Type"},
+						{"key": "notional", "label": "Notional"},
+						{"key": "marketValue", "label": "Fair value"}
+					], "detailRoute": "DerivaatDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "QuartaalrapportagesFido",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Filed report", "icon": "FileChartOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "QuartaalrapportageFido", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		}
 	]

@@ -20,6 +20,7 @@
     "test:coverage-ratchet": "npm run test:coverage && bash tests/coverage-ratchet.sh vitest coverage-vitest/coverage-summary.json",
     "check:manifest": "node tests/validate-manifest.js",
     "check:registers": "node tests/validate-registers.js",
+    "check:markers": "node tests/validate-semantic-markers.js",
     "test:e2e": "playwright test",
     "test:e2e:docs": "playwright test --project docs-capture",
     "test:e2e:install": "playwright install chromium",
@@ -30,7 +31,7 @@
     "extends @nextcloud/browserslist-config"
   ],
   "dependencies": {
-    "@conduction/nextcloud-vue": "^1.0.0-beta.101",
+    "@conduction/nextcloud-vue": "1.0.0-beta.162",
     "@nextcloud/axios": "~2.5.2",
     "@nextcloud/dialogs": "^3.2.0",
     "@nextcloud/event-bus": "^3.3.3",
@@ -53,7 +54,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.26.9",
-    "@vitest/coverage-v8": "^1.6.1",
     "@babel/eslint-parser": "^7.16.5",
     "@cyclonedx/cyclonedx-npm": "^4.2.1",
     "@eslint/config-helpers": "^0.4.2",
@@ -68,6 +68,7 @@
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "@vitejs/plugin-vue2": "^2.3.4",
+    "@vitest/coverage-v8": "^1.6.1",
     "@vue/eslint-config-typescript": "^13.0.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",

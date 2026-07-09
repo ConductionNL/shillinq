@@ -15,7 +15,7 @@
         "version": "0.1.0",
         "title": "Quote",
         "description": "Verkoopofferte — a versioned, non-binding sales offer with multi-channel acceptance (REQ-QOI-001, design D1). schema:Offer per ADR-011.",
-        "x-schema-org": "Offer",
+        "x-schema-org": "schema:Offer",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [
@@ -25,67 +25,80 @@
         "properties": {
           "quoteNumber": {
             "type": "string",
-            "description": "Human-readable quote number (e.g. Q-2026-0042)."
+            "description": "Human-readable quote number (e.g. Q-2026-0042).",
+            "title": "Quote Number"
           },
           "customerReference": {
             "type": "string",
-            "description": "FK (slug/uuid) to the customer — a Nextcloud addressbook contact / AR customer master. Never a re-declared Customer schema (guardrail)."
+            "description": "FK (slug/uuid) to the customer — a Nextcloud addressbook contact / AR customer master. Never a re-declared Customer schema (guardrail).",
+            "title": "Customer Reference"
           },
           "version": {
             "type": "integer",
             "description": "Quote version. Each revision increments; prior versions are retained as immutable snapshots (design D1).",
-            "default": 1
+            "default": 1,
+            "title": "Version"
           },
           "supersedesQuote": {
             "type": "string",
             "description": "FK (slug/uuid) to the prior version this quote supersedes.",
-            "nullable": true
+            "nullable": true,
+            "title": "Supersedes Quote"
           },
           "validUntil": {
             "type": "string",
             "format": "date",
             "description": "Validity expiry date — quote auto-expires after this (REQ-QOI-002).",
-            "nullable": true
+            "nullable": true,
+            "title": "Valid Until"
           },
           "currency": {
             "type": "string",
             "description": "ISO 4217 currency code.",
-            "default": "EUR"
+            "default": "EUR",
+            "title": "Currency"
           },
           "language": {
             "type": "string",
             "description": "Quote language (nl / en) for generated document.",
-            "default": "nl"
+            "default": "nl",
+            "title": "Language"
           },
           "headerText": {
             "type": "string",
             "description": "Free-text header / introduction.",
-            "nullable": true
+            "nullable": true,
+            "title": "Header Text"
           },
           "footerText": {
             "type": "string",
             "description": "Free-text footer / terms.",
-            "nullable": true
+            "nullable": true,
+            "title": "Footer Text"
           },
           "paymentTerms": {
             "type": "string",
             "description": "Payment terms (e.g. net30, net45, net60).",
-            "nullable": true
+            "nullable": true,
+            "title": "Payment Terms"
           },
           "deliveryTerms": {
             "type": "string",
             "description": "Incoterms 2020 delivery terms (e.g. EXW, DAP, DDP).",
-            "nullable": true
+            "nullable": true,
+            "title": "Delivery Terms"
           },
           "responsibleSalesperson": {
             "type": "string",
             "description": "NC user id of the responsible salesperson.",
-            "nullable": true
+            "nullable": true,
+            "title": "Responsible Salesperson"
           },
           "relatedOpportunityReference": {
             "type": "string",
             "description": "FK / external id to a CRM opportunity (openconnector sync).",
-            "nullable": true
+            "nullable": true,
+            "title": "Related Opportunity Reference"
           },
           "acceptanceChannel": {
             "type": "string",
@@ -95,28 +108,33 @@
               "manual-backoffice"
             ],
             "description": "How the quote was accepted (design D1).",
-            "nullable": true
+            "nullable": true,
+            "title": "Acceptance Channel"
           },
           "acceptedAt": {
             "type": "string",
             "format": "date-time",
             "description": "Timestamp the quote was accepted.",
-            "nullable": true
+            "nullable": true,
+            "title": "Accepted At"
           },
           "acceptanceEvidenceReference": {
             "type": "string",
             "description": "FK URI (docudesk / e-signature provider) to acceptance evidence.",
-            "nullable": true
+            "nullable": true,
+            "title": "Acceptance Evidence Reference"
           },
           "documentReference": {
             "type": "string",
             "description": "FK URI to the docudesk-generated quote PDF (bookkeeping-document-attachment-integration).",
-            "nullable": true
+            "nullable": true,
+            "title": "Document Reference"
           },
           "administrationId": {
             "type": "string",
             "description": "FK (slug/uuid) to the owning administration (multi-tenant scope).",
-            "nullable": true
+            "nullable": true,
+            "title": "Administration ID"
           },
           "status": {
             "type": "string",
@@ -128,18 +146,34 @@
               "expired"
             ],
             "description": "Quote lifecycle state (REQ-QOI-001).",
-            "default": "draft"
+            "default": "draft",
+            "title": "Status"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
           "initialState": "draft",
           "states": {
-            "draft": { "label": "Draft", "description": "Quote being prepared." },
-            "sent": { "label": "Sent", "description": "Quote sent to the customer, awaiting response." },
-            "accepted": { "label": "Accepted", "description": "Customer accepted; ready to convert to a sales order." },
-            "declined": { "label": "Declined", "description": "Customer declined." },
-            "expired": { "label": "Expired", "description": "Validity period lapsed without acceptance." }
+            "draft": {
+              "label": "Draft",
+              "description": "Quote being prepared."
+            },
+            "sent": {
+              "label": "Sent",
+              "description": "Quote sent to the customer, awaiting response."
+            },
+            "accepted": {
+              "label": "Accepted",
+              "description": "Customer accepted; ready to convert to a sales order."
+            },
+            "declined": {
+              "label": "Declined",
+              "description": "Customer declined."
+            },
+            "expired": {
+              "label": "Expired",
+              "description": "Validity period lapsed without acceptance."
+            }
           },
           "transitions": {
             "send": {
@@ -191,62 +225,74 @@
         "properties": {
           "quote": {
             "type": "string",
-            "description": "FK (slug/uuid) to the owning Quote."
+            "description": "FK (slug/uuid) to the owning Quote.",
+            "title": "Quote"
           },
           "lineNumber": {
             "type": "integer",
             "description": "Ordinal line number on the quote.",
-            "nullable": true
+            "nullable": true,
+            "title": "Line Number"
           },
           "productReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the Product (inventory catalog).",
-            "nullable": true
+            "nullable": true,
+            "title": "Product Reference"
           },
           "description": {
             "type": "string",
             "description": "Line description.",
-            "nullable": true
+            "nullable": true,
+            "title": "Description"
           },
           "quantity": {
             "type": "number",
             "description": "Quantity offered.",
-            "default": 1
+            "default": 1,
+            "title": "Quantity"
           },
           "unitPrice": {
             "type": "number",
             "description": "Resolved unit price (after pricing-tier resolution, design D6).",
-            "default": 0
+            "default": 0,
+            "title": "Unit Price"
           },
           "discount": {
             "type": "number",
             "description": "Line discount (percentage, 0-100).",
-            "default": 0
+            "default": 0,
+            "title": "Discount"
           },
           "appliedTierName": {
             "type": "string",
             "description": "Name of the pricing tier applied (line-level transparency, design D6).",
-            "nullable": true
+            "nullable": true,
+            "title": "Applied Tier Name"
           },
           "btwRate": {
             "type": "number",
             "description": "BTW rate applied to this line (0 / 9 / 21).",
-            "default": 21
+            "default": 21,
+            "title": "BTW Rate"
           },
           "glAccount": {
             "type": "string",
             "description": "FK (slug/uuid) to the revenue GL Account.",
-            "nullable": true
+            "nullable": true,
+            "title": "GL Account"
           },
           "projectReference": {
             "type": "string",
             "description": "FK (slug/uuid) to a Project dimension.",
-            "nullable": true
+            "nullable": true,
+            "title": "Project Reference"
           },
           "costOfGoodsEstimate": {
             "type": "number",
             "description": "Estimated cost of goods for margin reporting.",
-            "nullable": true
+            "nullable": true,
+            "title": "Cost Of Goods Estimate"
           }
         },
         "x-openregister-calculations": {
@@ -263,7 +309,7 @@
         "version": "0.1.0",
         "title": "Sales Order",
         "description": "Verkooporder — a binding sales commitment with partial-delivery / backorder tracking (REQ-QOI-004, design D2). schema:Order per ADR-011.",
-        "x-schema-org": "Order",
+        "x-schema-org": "schema:Order",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [
@@ -273,64 +319,76 @@
         "properties": {
           "orderNumber": {
             "type": "string",
-            "description": "Human-readable order number (e.g. SO-2026-0042)."
+            "description": "Human-readable order number (e.g. SO-2026-0042).",
+            "title": "Order Number"
           },
           "customerReference": {
             "type": "string",
-            "description": "FK (slug/uuid) to the customer (Nextcloud contact / AR customer master)."
+            "description": "FK (slug/uuid) to the customer (Nextcloud contact / AR customer master).",
+            "title": "Customer Reference"
           },
           "sourceQuoteReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the accepted Quote this order was converted from (REQ-QOI-003).",
-            "nullable": true
+            "nullable": true,
+            "title": "Source Quote Reference"
           },
           "contractReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the IFRS 15 Contract created on conversion (bookkeeping-ifrs15-revenue).",
-            "nullable": true
+            "nullable": true,
+            "title": "Contract Reference"
           },
           "orderDate": {
             "type": "string",
             "format": "date",
             "description": "Order date.",
-            "nullable": true
+            "nullable": true,
+            "title": "Order Date"
           },
           "requestedDeliveryDate": {
             "type": "string",
             "format": "date",
             "description": "Customer-requested delivery date.",
-            "nullable": true
+            "nullable": true,
+            "title": "Requested Delivery Date"
           },
           "confirmedDeliveryDate": {
             "type": "string",
             "format": "date",
             "description": "Confirmed delivery date.",
-            "nullable": true
+            "nullable": true,
+            "title": "Confirmed Delivery Date"
           },
           "currency": {
             "type": "string",
             "description": "ISO 4217 currency code.",
-            "default": "EUR"
+            "default": "EUR",
+            "title": "Currency"
           },
           "paymentTerms": {
             "type": "string",
             "description": "Payment terms.",
-            "nullable": true
+            "nullable": true,
+            "title": "Payment Terms"
           },
           "deliveryTerms": {
             "type": "string",
             "description": "Incoterms 2020 delivery terms.",
-            "nullable": true
+            "nullable": true,
+            "title": "Delivery Terms"
           },
           "shippingAddress": {
             "type": "string",
             "description": "Shipping address (free text or FK).",
-            "nullable": true
+            "nullable": true,
+            "title": "Shipping Address"
           },
           "billingAddress": {
             "type": "string",
             "description": "Billing address (free text or FK).",
-            "nullable": true
+            "nullable": true,
+            "title": "Billing Address"
           },
           "invoicingMode": {
             "type": "string",
@@ -340,7 +398,8 @@
               "consolidated-monthly"
             ],
             "description": "When invoices are generated for this order (design D4).",
-            "default": "on-delivery"
+            "default": "on-delivery",
+            "title": "Invoicing Mode"
           },
           "creditCheckResult": {
             "type": "string",
@@ -350,22 +409,26 @@
               "blocked"
             ],
             "description": "Outcome of the AR credit check on confirmation (design D9).",
-            "nullable": true
+            "nullable": true,
+            "title": "Credit Check Result"
           },
           "blanketOrderFlag": {
             "type": "boolean",
             "description": "Whether this order is a call-off release against a blanket order (design D8).",
-            "default": false
+            "default": false,
+            "title": "Blanket Order Flag"
           },
           "masterOrderReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the parent BlanketOrder for a call-off release.",
-            "nullable": true
+            "nullable": true,
+            "title": "Master Order Reference"
           },
           "administrationId": {
             "type": "string",
             "description": "FK (slug/uuid) to the owning administration.",
-            "nullable": true
+            "nullable": true,
+            "title": "Administration ID"
           },
           "status": {
             "type": "string",
@@ -379,20 +442,42 @@
               "cancelled"
             ],
             "description": "Sales-order lifecycle state (REQ-QOI-004).",
-            "default": "draft"
+            "default": "draft",
+            "title": "Status"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
           "initialState": "draft",
           "states": {
-            "draft": { "label": "Draft", "description": "Order being prepared (e.g. just converted from a quote)." },
-            "confirmed": { "label": "Confirmed", "description": "Binding; credit check passed; awaiting fulfilment." },
-            "partial": { "label": "Partially delivered", "description": "Some but not all lines delivered (backorder open)." },
-            "shipped": { "label": "Shipped", "description": "All lines delivered." },
-            "invoiced": { "label": "Invoiced", "description": "All delivered lines invoiced." },
-            "closed": { "label": "Closed", "description": "Fully delivered, invoiced, and paid." },
-            "cancelled": { "label": "Cancelled", "description": "Order cancelled before fulfilment." }
+            "draft": {
+              "label": "Draft",
+              "description": "Order being prepared (e.g. just converted from a quote)."
+            },
+            "confirmed": {
+              "label": "Confirmed",
+              "description": "Binding; credit check passed; awaiting fulfilment."
+            },
+            "partial": {
+              "label": "Partially delivered",
+              "description": "Some but not all lines delivered (backorder open)."
+            },
+            "shipped": {
+              "label": "Shipped",
+              "description": "All lines delivered."
+            },
+            "invoiced": {
+              "label": "Invoiced",
+              "description": "All delivered lines invoiced."
+            },
+            "closed": {
+              "label": "Closed",
+              "description": "Fully delivered, invoiced, and paid."
+            },
+            "cancelled": {
+              "label": "Cancelled",
+              "description": "Order cancelled before fulfilment."
+            }
           },
           "transitions": {
             "confirm": {
@@ -461,73 +546,87 @@
         "properties": {
           "salesOrder": {
             "type": "string",
-            "description": "FK (slug/uuid) to the owning SalesOrder."
+            "description": "FK (slug/uuid) to the owning SalesOrder.",
+            "title": "Sales Order"
           },
           "lineNumber": {
             "type": "integer",
             "description": "Ordinal line number.",
-            "nullable": true
+            "nullable": true,
+            "title": "Line Number"
           },
           "productReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the Product.",
-            "nullable": true
+            "nullable": true,
+            "title": "Product Reference"
           },
           "description": {
             "type": "string",
             "description": "Line description.",
-            "nullable": true
+            "nullable": true,
+            "title": "Description"
           },
           "orderedQuantity": {
             "type": "number",
             "description": "Quantity ordered.",
-            "default": 0
+            "default": 0,
+            "title": "Ordered Quantity"
           },
           "deliveredQuantity": {
             "type": "number",
             "description": "Quantity delivered so far (incremented by delivery confirmations, design D3).",
-            "default": 0
+            "default": 0,
+            "title": "Delivered Quantity"
           },
           "invoicedQuantity": {
             "type": "number",
             "description": "Quantity invoiced so far.",
-            "default": 0
+            "default": 0,
+            "title": "Invoiced Quantity"
           },
           "unitPrice": {
             "type": "number",
             "description": "Resolved unit price (stored at confirmation, design D6).",
-            "default": 0
+            "default": 0,
+            "title": "Unit Price"
           },
           "discountApplied": {
             "type": "number",
             "description": "Discount applied (percentage, 0-100).",
-            "default": 0
+            "default": 0,
+            "title": "Discount Applied"
           },
           "appliedTierName": {
             "type": "string",
             "description": "Pricing tier applied (line-level transparency, design D6).",
-            "nullable": true
+            "nullable": true,
+            "title": "Applied Tier Name"
           },
           "btwRate": {
             "type": "number",
             "description": "BTW rate (0 / 9 / 21).",
-            "default": 21
+            "default": 21,
+            "title": "BTW Rate"
           },
           "requestedDeliveryDate": {
             "type": "string",
             "format": "date",
             "description": "Line-level requested delivery date.",
-            "nullable": true
+            "nullable": true,
+            "title": "Requested Delivery Date"
           },
           "projectReference": {
             "type": "string",
             "description": "FK (slug/uuid) to a Project dimension.",
-            "nullable": true
+            "nullable": true,
+            "title": "Project Reference"
           },
           "performanceObligationReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the IFRS 15 PerformanceObligation (bookkeeping-ifrs15-revenue).",
-            "nullable": true
+            "nullable": true,
+            "title": "Performance Obligation Reference"
           }
         },
         "x-openregister-calculations": {
@@ -549,7 +648,7 @@
         "version": "0.1.0",
         "title": "Delivery",
         "description": "Levering — a shipment record linking a SalesOrder to invoicing (REQ-QOI-005, design D3). schema:ParcelDelivery per ADR-011.",
-        "x-schema-org": "ParcelDelivery",
+        "x-schema-org": "schema:ParcelDelivery",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [
@@ -559,42 +658,52 @@
         "properties": {
           "deliveryNumber": {
             "type": "string",
-            "description": "Human-readable delivery / packing-slip number."
+            "description": "Human-readable delivery / packing-slip number.",
+            "title": "Delivery Number"
           },
           "sourceOrderReference": {
             "type": "string",
-            "description": "FK (slug/uuid) to the SalesOrder being shipped."
+            "description": "FK (slug/uuid) to the SalesOrder being shipped.",
+            "title": "Source Order Reference"
           },
           "shippedAt": {
             "type": "string",
             "format": "date-time",
             "description": "Shipment timestamp.",
-            "nullable": true
+            "nullable": true,
+            "title": "Shipped At"
           },
           "carrier": {
             "type": "string",
             "description": "Carrier (PostNL, DHL, UPS, ...).",
-            "nullable": true
+            "nullable": true,
+            "title": "Carrier"
           },
           "trackingNumber": {
             "type": "string",
             "description": "Carrier tracking number (openconnector shipping integration).",
-            "nullable": true
+            "nullable": true,
+            "title": "Tracking Number"
           },
           "lines": {
             "type": "array",
             "description": "Shipped line quantities: [{ orderLineReference, productReference, quantityShipped }].",
-            "items": { "type": "object" }
+            "items": {
+              "type": "object"
+            },
+            "title": "Lines"
           },
           "proofOfDeliveryReference": {
             "type": "string",
             "description": "FK URI (docudesk) to the proof-of-delivery document.",
-            "nullable": true
+            "nullable": true,
+            "title": "Proof Of Delivery Reference"
           },
           "administrationId": {
             "type": "string",
             "description": "FK (slug/uuid) to the owning administration.",
-            "nullable": true
+            "nullable": true,
+            "title": "Administration ID"
           },
           "status": {
             "type": "string",
@@ -604,16 +713,26 @@
               "shipped"
             ],
             "description": "Delivery lifecycle state (REQ-QOI-005).",
-            "default": "draft"
+            "default": "draft",
+            "title": "Status"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
           "initialState": "draft",
           "states": {
-            "draft": { "label": "Draft", "description": "Delivery being prepared (lines selected)." },
-            "confirmed": { "label": "Confirmed", "description": "Quantities confirmed; order line deliveredQuantity updated; invoicing may trigger." },
-            "shipped": { "label": "Shipped", "description": "Handed to the carrier." }
+            "draft": {
+              "label": "Draft",
+              "description": "Delivery being prepared (lines selected)."
+            },
+            "confirmed": {
+              "label": "Confirmed",
+              "description": "Quantities confirmed; order line deliveredQuantity updated; invoicing may trigger."
+            },
+            "shipped": {
+              "label": "Shipped",
+              "description": "Handed to the carrier."
+            }
           },
           "transitions": {
             "confirm": {
@@ -638,7 +757,7 @@
         "version": "0.1.0",
         "title": "Invoice",
         "description": "Factuur — a sales invoice with Dutch sequential numbering, BTW, and Peppol BIS 3.0 / UBL 2.1 dispatch (REQ-QOI-005..008, design D4/D5/D11). schema:Invoice per ADR-011. No deletion (Belastingdienst) — reverse with a CreditNote only.",
-        "x-schema-org": "Invoice",
+        "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "configuration": {
@@ -670,33 +789,39 @@
         "properties": {
           "invoiceNumber": {
             "type": "string",
-            "description": "Dutch sequential invoice number (no gaps; Belastingdienst)."
+            "description": "Dutch sequential invoice number (no gaps; Belastingdienst).",
+            "title": "Invoice Number"
           },
           "customerReference": {
             "type": "string",
-            "description": "FK (slug/uuid) to the customer (Nextcloud contact / AR customer master)."
+            "description": "FK (slug/uuid) to the customer (Nextcloud contact / AR customer master).",
+            "title": "Customer Reference"
           },
           "invoiceDate": {
             "type": "string",
             "format": "date",
             "description": "Invoice issue date.",
-            "nullable": true
+            "nullable": true,
+            "title": "Invoice Date"
           },
           "dueDate": {
             "type": "string",
             "format": "date",
             "description": "Payment due date (per payment terms).",
-            "nullable": true
+            "nullable": true,
+            "title": "Due Date"
           },
           "currency": {
             "type": "string",
             "description": "ISO 4217 currency code.",
-            "default": "EUR"
+            "default": "EUR",
+            "title": "Currency"
           },
           "paymentTerms": {
             "type": "string",
             "description": "Payment terms (net30, net45, ...).",
-            "nullable": true
+            "nullable": true,
+            "title": "Payment Terms"
           },
           "invoiceType": {
             "type": "string",
@@ -706,72 +831,90 @@
               "consolidated"
             ],
             "description": "Invoice triggering mode (design D4).",
-            "default": "delivery-based"
+            "default": "delivery-based",
+            "title": "Invoice Type"
           },
           "sourceOrderReferences": {
             "type": "array",
             "description": "FK list (slug/uuid) to source SalesOrders.",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Order References"
           },
           "sourceDeliveryReferences": {
             "type": "array",
             "description": "FK list (slug/uuid) to source Deliveries.",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Delivery References"
           },
           "grossAmount": {
             "type": "number",
             "description": "Gross (incl. BTW) invoice total.",
-            "nullable": true
+            "nullable": true,
+            "title": "Gross Amount"
           },
           "netAmount": {
             "type": "number",
             "description": "Net (excl. BTW) invoice total.",
-            "nullable": true
+            "nullable": true,
+            "title": "Net Amount"
           },
           "vatAmount": {
             "type": "number",
             "description": "Total BTW amount.",
-            "nullable": true
+            "nullable": true,
+            "title": "VAT Amount"
           },
           "btwLegend": {
             "type": "string",
             "description": "BTW legend (e.g. reverse-charge / btw verlegd, intracommunautaire levering Article 196).",
-            "nullable": true
+            "nullable": true,
+            "title": "BTW Legend"
           },
           "viesValidated": {
             "type": "boolean",
             "description": "Whether the customer EU VAT number was VIES-validated for reverse-charge (REQ-QOI-006).",
-            "nullable": true
+            "nullable": true,
+            "title": "Vies Validated"
           },
           "glTransactionReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the materialised GL posting (bookkeeping-general-ledger).",
-            "nullable": true
+            "nullable": true,
+            "title": "GL Transaction Reference"
           },
           "arOpenItemReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the AR open item (bookkeeping-accounts-receivable-core).",
-            "nullable": true
+            "nullable": true,
+            "title": "AR Open Item Reference"
           },
           "peppolMessageId": {
             "type": "string",
             "description": "Peppol message id returned by the access point on dispatch (REQ-QOI-008).",
-            "nullable": true
+            "nullable": true,
+            "title": "Peppol Message ID"
           },
           "ublXmlReference": {
             "type": "string",
             "description": "FK URI to the generated UBL 2.1 / Peppol BIS 3.0 XML.",
-            "nullable": true
+            "nullable": true,
+            "title": "Ubl XML Reference"
           },
           "documentReference": {
             "type": "string",
             "description": "FK URI to the docudesk-generated invoice PDF.",
-            "nullable": true
+            "nullable": true,
+            "title": "Document Reference"
           },
           "administrationId": {
             "type": "string",
             "description": "FK (slug/uuid) to the owning administration.",
-            "nullable": true
+            "nullable": true,
+            "title": "Administration ID"
           },
           "status": {
             "type": "string",
@@ -785,20 +928,42 @@
               "credited"
             ],
             "description": "Invoice lifecycle state (REQ-QOI-005/007).",
-            "default": "draft"
+            "default": "draft",
+            "title": "Status"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
           "initialState": "draft",
           "states": {
-            "draft": { "label": "Draft", "description": "Invoice prepared; awaiting operator review." },
-            "sent": { "label": "Sent", "description": "Issued: GL posting materialised, AR open item created, dispatched (optionally via Peppol)." },
-            "partially-paid": { "label": "Partially paid", "description": "Part of the balance settled." },
-            "paid": { "label": "Paid", "description": "Fully settled." },
-            "overdue": { "label": "Overdue", "description": "Past due date, unpaid." },
-            "cancelled": { "label": "Cancelled", "description": "Draft invoice cancelled before issue." },
-            "credited": { "label": "Credited", "description": "Reversed by a credit note." }
+            "draft": {
+              "label": "Draft",
+              "description": "Invoice prepared; awaiting operator review."
+            },
+            "sent": {
+              "label": "Sent",
+              "description": "Issued: GL posting materialised, AR open item created, dispatched (optionally via Peppol)."
+            },
+            "partially-paid": {
+              "label": "Partially paid",
+              "description": "Part of the balance settled."
+            },
+            "paid": {
+              "label": "Paid",
+              "description": "Fully settled."
+            },
+            "overdue": {
+              "label": "Overdue",
+              "description": "Past due date, unpaid."
+            },
+            "cancelled": {
+              "label": "Cancelled",
+              "description": "Draft invoice cancelled before issue."
+            },
+            "credited": {
+              "label": "Credited",
+              "description": "Reversed by a credit note."
+            }
           },
           "transitions": {
             "issue": {
@@ -861,64 +1026,76 @@
         "properties": {
           "invoice": {
             "type": "string",
-            "description": "FK (slug/uuid) to the owning Invoice."
+            "description": "FK (slug/uuid) to the owning Invoice.",
+            "title": "Invoice"
           },
           "lineNumber": {
             "type": "integer",
             "description": "Ordinal line number.",
-            "nullable": true
+            "nullable": true,
+            "title": "Line Number"
           },
           "productReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the Product.",
-            "nullable": true
+            "nullable": true,
+            "title": "Product Reference"
           },
           "description": {
             "type": "string",
             "description": "Line description.",
-            "nullable": true
+            "nullable": true,
+            "title": "Description"
           },
           "quantity": {
             "type": "number",
             "description": "Quantity invoiced.",
-            "default": 0
+            "default": 0,
+            "title": "Quantity"
           },
           "unitPrice": {
             "type": "number",
             "description": "Unit price (carried from the order line).",
-            "default": 0
+            "default": 0,
+            "title": "Unit Price"
           },
           "discountApplied": {
             "type": "number",
             "description": "Discount applied (percentage, 0-100).",
-            "default": 0
+            "default": 0,
+            "title": "Discount Applied"
           },
           "btwRate": {
             "type": "number",
             "description": "BTW rate (0 / 9 / 21).",
-            "default": 21
+            "default": 21,
+            "title": "BTW Rate"
           },
           "glAccount": {
             "type": "string",
             "description": "FK (slug/uuid) to the revenue GL Account.",
-            "nullable": true
+            "nullable": true,
+            "title": "GL Account"
           },
           "periodStartDate": {
             "type": "string",
             "format": "date",
             "description": "Service period start (for period-based revenue).",
-            "nullable": true
+            "nullable": true,
+            "title": "Period Start Date"
           },
           "periodEndDate": {
             "type": "string",
             "format": "date",
             "description": "Service period end.",
-            "nullable": true
+            "nullable": true,
+            "title": "Period End Date"
           },
           "performanceObligationReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the IFRS 15 PerformanceObligation.",
-            "nullable": true
+            "nullable": true,
+            "title": "Performance Obligation Reference"
           }
         },
         "x-openregister-calculations": {
@@ -940,7 +1117,7 @@
         "version": "0.1.0",
         "title": "Credit Note",
         "description": "Creditfactuur — reverses an invoice with automatic AR offset (REQ-QOI-010, design D10). schema:Invoice per ADR-011. Dutch sequential numbering; no deletion.",
-        "x-schema-org": "Invoice",
+        "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [
@@ -950,22 +1127,26 @@
         "properties": {
           "creditNoteNumber": {
             "type": "string",
-            "description": "Dutch sequential credit-note number."
+            "description": "Dutch sequential credit-note number.",
+            "title": "Credit Note Number"
           },
           "sourceInvoiceReference": {
             "type": "string",
-            "description": "FK (slug/uuid) to the Invoice being reversed."
+            "description": "FK (slug/uuid) to the Invoice being reversed.",
+            "title": "Source Invoice Reference"
           },
           "creditDate": {
             "type": "string",
             "format": "date",
             "description": "Credit-note date.",
-            "nullable": true
+            "nullable": true,
+            "title": "Credit Date"
           },
           "totalAmount": {
             "type": "number",
             "description": "Gross credit amount.",
-            "nullable": true
+            "nullable": true,
+            "title": "Total Amount"
           },
           "reason": {
             "type": "string",
@@ -977,27 +1158,32 @@
               "goodwill"
             ],
             "description": "Reason code (Belastingdienst audit trail).",
-            "nullable": true
+            "nullable": true,
+            "title": "Reason"
           },
           "notes": {
             "type": "string",
             "description": "Free-text explanation.",
-            "nullable": true
+            "nullable": true,
+            "title": "Notes"
           },
           "glTransactionReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the materialised GL reversal posting.",
-            "nullable": true
+            "nullable": true,
+            "title": "GL Transaction Reference"
           },
           "arOffsetReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the AR offset / customer credit (bookkeeping-accounts-receivable-core).",
-            "nullable": true
+            "nullable": true,
+            "title": "AR Offset Reference"
           },
           "administrationId": {
             "type": "string",
             "description": "FK (slug/uuid) to the owning administration.",
-            "nullable": true
+            "nullable": true,
+            "title": "Administration ID"
           },
           "status": {
             "type": "string",
@@ -1007,16 +1193,26 @@
               "applied"
             ],
             "description": "Credit-note lifecycle state (REQ-QOI-010).",
-            "default": "draft"
+            "default": "draft",
+            "title": "Status"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
           "initialState": "draft",
           "states": {
-            "draft": { "label": "Draft", "description": "Credit note being prepared." },
-            "issued": { "label": "Issued", "description": "GL reversal posted and AR offset created." },
-            "applied": { "label": "Applied", "description": "Offset applied against the customer balance." }
+            "draft": {
+              "label": "Draft",
+              "description": "Credit note being prepared."
+            },
+            "issued": {
+              "label": "Issued",
+              "description": "GL reversal posted and AR offset created."
+            },
+            "applied": {
+              "label": "Applied",
+              "description": "Offset applied against the customer balance."
+            }
           },
           "transitions": {
             "issue": {
@@ -1049,49 +1245,60 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Pricing-tier name (shown on order lines for transparency)."
+            "description": "Pricing-tier name (shown on order lines for transparency).",
+            "title": "Name"
           },
           "customerReference": {
             "type": "string",
             "description": "FK (slug/uuid) to a specific customer (highest priority). Mutually informative with customerGroupReference.",
-            "nullable": true
+            "nullable": true,
+            "title": "Customer Reference"
           },
           "customerGroupReference": {
             "type": "string",
             "description": "FK / code for a customer group (second priority).",
-            "nullable": true
+            "nullable": true,
+            "title": "Customer Group Reference"
           },
           "productReference": {
             "type": "string",
             "description": "FK (slug/uuid) to a specific Product.",
-            "nullable": true
+            "nullable": true,
+            "title": "Product Reference"
           },
           "productGroupReference": {
             "type": "string",
             "description": "FK / code for a product group (default tier).",
-            "nullable": true
+            "nullable": true,
+            "title": "Product Group Reference"
           },
           "breakpoints": {
             "type": "array",
             "description": "Quantity-break -> unit-price entries: [{ minQuantity, maxQuantity, unitPrice, discountPercent }].",
-            "items": { "type": "object" }
+            "items": {
+              "type": "object"
+            },
+            "title": "Breakpoints"
           },
           "validFrom": {
             "type": "string",
             "format": "date",
             "description": "Validity start.",
-            "nullable": true
+            "nullable": true,
+            "title": "Valid From"
           },
           "validUntil": {
             "type": "string",
             "format": "date",
             "description": "Validity end.",
-            "nullable": true
+            "nullable": true,
+            "title": "Valid Until"
           },
           "priority": {
             "type": "integer",
             "description": "Resolution priority (lower = higher precedence): 1 customer-specific, 2 customer-group, 3 product-group, 4 list.",
-            "default": 4
+            "default": 4,
+            "title": "Priority"
           }
         }
       },
@@ -1110,7 +1317,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Rule name (shown on order lines)."
+            "description": "Rule name (shown on order lines).",
+            "title": "Name"
           },
           "ruleType": {
             "type": "string",
@@ -1119,39 +1327,46 @@
               "percentage-off-above-threshold",
               "free-shipping-above-amount"
             ],
-            "description": "Discount rule type (design D7)."
+            "description": "Discount rule type (design D7).",
+            "title": "Rule Type"
           },
           "thresholdQuantity": {
             "type": "number",
             "description": "Quantity threshold (for buy-x-get-y / quantity rules).",
-            "nullable": true
+            "nullable": true,
+            "title": "Threshold Quantity"
           },
           "thresholdAmount": {
             "type": "number",
             "description": "Amount threshold (for free-shipping / above-amount rules).",
-            "nullable": true
+            "nullable": true,
+            "title": "Threshold Amount"
           },
           "discountPercent": {
             "type": "number",
             "description": "Discount percentage applied when the rule fires.",
-            "nullable": true
+            "nullable": true,
+            "title": "Discount Percent"
           },
           "productReference": {
             "type": "string",
             "description": "FK (slug/uuid) to a specific Product the rule targets.",
-            "nullable": true
+            "nullable": true,
+            "title": "Product Reference"
           },
           "validFrom": {
             "type": "string",
             "format": "date",
             "description": "Validity start.",
-            "nullable": true
+            "nullable": true,
+            "title": "Valid From"
           },
           "validUntil": {
             "type": "string",
             "format": "date",
             "description": "Validity end.",
-            "nullable": true
+            "nullable": true,
+            "title": "Valid Until"
           },
           "customerEligibility": {
             "type": "string",
@@ -1161,17 +1376,22 @@
               "customer-group"
             ],
             "description": "Who the rule applies to (design D7).",
-            "default": "all"
+            "default": "all",
+            "title": "Customer Eligibility"
           },
           "eligibleCustomerReferences": {
             "type": "array",
             "description": "FK list (slug/uuid) of eligible customers (when customerEligibility = customer-list).",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            },
+            "title": "Eligible Customer References"
           },
           "automaticApplication": {
             "type": "boolean",
             "description": "Whether the rule applies automatically at quote / order time.",
-            "default": true
+            "default": true,
+            "title": "Automatic Application"
           }
         }
       },
@@ -1190,48 +1410,59 @@
         "properties": {
           "blanketOrderNumber": {
             "type": "string",
-            "description": "Human-readable blanket-order number."
+            "description": "Human-readable blanket-order number.",
+            "title": "Blanket Order Number"
           },
           "customerReference": {
             "type": "string",
-            "description": "FK (slug/uuid) to the customer."
+            "description": "FK (slug/uuid) to the customer.",
+            "title": "Customer Reference"
           },
           "productReference": {
             "type": "string",
             "description": "FK (slug/uuid) to the committed Product.",
-            "nullable": true
+            "nullable": true,
+            "title": "Product Reference"
           },
           "committedQuantity": {
             "type": "number",
             "description": "Total authorised quantity over the commitment.",
-            "default": 0
+            "default": 0,
+            "title": "Committed Quantity"
           },
           "calledOffQuantity": {
             "type": "number",
             "description": "Quantity released through call-off SalesOrders so far.",
-            "default": 0
+            "default": 0,
+            "title": "Called Off Quantity"
           },
           "agreedUnitPrice": {
             "type": "number",
             "description": "Agreed unit price for the commitment.",
-            "nullable": true
+            "nullable": true,
+            "title": "Agreed Unit Price"
           },
           "callOffOrderReferences": {
             "type": "array",
             "description": "FK list (slug/uuid) of child SalesOrder call-off releases (design D8).",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            },
+            "title": "Call Off Order References"
           },
           "validFrom": {
             "type": "string",
             "format": "date",
             "description": "Commitment start.",
-            "nullable": true
+            "nullable": true,
+            "title": "Valid From"
           },
           "validUntil": {
             "type": "string",
             "format": "date",
             "description": "Commitment expiry.",
-            "nullable": true
+            "nullable": true,
+            "title": "Valid Until"
           },
           "expiryHandling": {
             "type": "string",
@@ -1240,12 +1471,14 @@
               "rollover"
             ],
             "description": "What happens to the remaining quantity on expiry (design D8).",
-            "default": "void-remaining"
+            "default": "void-remaining",
+            "title": "Expiry Handling"
           },
           "administrationId": {
             "type": "string",
             "description": "FK (slug/uuid) to the owning administration.",
-            "nullable": true
+            "nullable": true,
+            "title": "Administration ID"
           }
         },
         "x-openregister-calculations": {
@@ -1271,7 +1504,8 @@
         "properties": {
           "customerReference": {
             "type": "string",
-            "description": "FK (slug/uuid) to the customer under hold."
+            "description": "FK (slug/uuid) to the customer under hold.",
+            "title": "Customer Reference"
           },
           "severity": {
             "type": "string",
@@ -1280,54 +1514,64 @@
               "block-order",
               "block-delivery"
             ],
-            "description": "Hold severity (design D9): warning blocks nothing, block-order prevents order confirmation, block-delivery prevents shipment."
+            "description": "Hold severity (design D9): warning blocks nothing, block-order prevents order confirmation, block-delivery prevents shipment.",
+            "title": "Severity"
           },
           "reason": {
             "type": "string",
             "description": "Why the hold was applied (e.g. open AR > threshold AND > N days overdue).",
-            "nullable": true
+            "nullable": true,
+            "title": "Reason"
           },
           "openBalanceAtTrigger": {
             "type": "number",
             "description": "Open AR balance that triggered the hold.",
-            "nullable": true
+            "nullable": true,
+            "title": "Open Balance At Trigger"
           },
           "daysOverdueAtTrigger": {
             "type": "integer",
             "description": "Days overdue of the oldest open item at trigger.",
-            "nullable": true
+            "nullable": true,
+            "title": "Days Overdue At Trigger"
           },
           "appliedAt": {
             "type": "string",
             "format": "date-time",
             "description": "When the hold was applied.",
-            "nullable": true
+            "nullable": true,
+            "title": "Applied At"
           },
           "createdBy": {
             "type": "string",
             "description": "NC user id (or 'system' for the scheduled workflow) that applied the hold.",
-            "nullable": true
+            "nullable": true,
+            "title": "Created By"
           },
           "releasedAt": {
             "type": "string",
             "format": "date-time",
             "description": "When the hold was released.",
-            "nullable": true
+            "nullable": true,
+            "title": "Released At"
           },
           "releasedBy": {
             "type": "string",
             "description": "NC user id (Credit Controller) that released the hold.",
-            "nullable": true
+            "nullable": true,
+            "title": "Released By"
           },
           "releaseReason": {
             "type": "string",
             "description": "Why the hold was released (e.g. payment plan agreed, dispute resolved).",
-            "nullable": true
+            "nullable": true,
+            "title": "Release Reason"
           },
           "administrationId": {
             "type": "string",
             "description": "FK (slug/uuid) to the owning administration.",
-            "nullable": true
+            "nullable": true,
+            "title": "Administration ID"
           },
           "status": {
             "type": "string",
@@ -1336,15 +1580,22 @@
               "released"
             ],
             "description": "Hold state.",
-            "default": "active"
+            "default": "active",
+            "title": "Status"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
           "initialState": "active",
           "states": {
-            "active": { "label": "Active", "description": "Hold in force." },
-            "released": { "label": "Released", "description": "Hold lifted after negotiation." }
+            "active": {
+              "label": "Active",
+              "description": "Hold in force."
+            },
+            "released": {
+              "label": "Released",
+              "description": "Hold lifted after negotiation."
+            }
           },
           "transitions": {
             "release": {
@@ -1369,9 +1620,24 @@
         "productReference": "qoi-sample-product-widget",
         "productGroupReference": "widgets",
         "breakpoints": [
-          { "minQuantity": 1, "maxQuantity": 9, "unitPrice": 100, "discountPercent": 0 },
-          { "minQuantity": 10, "maxQuantity": 49, "unitPrice": 90, "discountPercent": 10 },
-          { "minQuantity": 50, "maxQuantity": null, "unitPrice": 80, "discountPercent": 20 }
+          {
+            "minQuantity": 1,
+            "maxQuantity": 9,
+            "unitPrice": 100,
+            "discountPercent": 0
+          },
+          {
+            "minQuantity": 10,
+            "maxQuantity": 49,
+            "unitPrice": 90,
+            "discountPercent": 10
+          },
+          {
+            "minQuantity": 50,
+            "maxQuantity": null,
+            "unitPrice": 80,
+            "discountPercent": 20
+          }
         ],
         "validFrom": "2026-01-01",
         "validUntil": "2026-12-31",
@@ -1387,7 +1653,12 @@
         "customerReference": "qoi-sample-customer-industrial",
         "productReference": "qoi-sample-product-widget",
         "breakpoints": [
-          { "minQuantity": 1, "maxQuantity": null, "unitPrice": 75, "discountPercent": 0 }
+          {
+            "minQuantity": 1,
+            "maxQuantity": null,
+            "unitPrice": 75,
+            "discountPercent": 0
+          }
         ],
         "validFrom": "2026-01-01",
         "validUntil": "2026-12-31",
@@ -1538,7 +1809,11 @@
         "carrier": "PostNL",
         "trackingNumber": "3STBJG123456789",
         "lines": [
-          { "orderLineReference": "qoi-sample-orderline-retail-1", "productReference": "qoi-sample-product-widget", "quantityShipped": 60 }
+          {
+            "orderLineReference": "qoi-sample-orderline-retail-1",
+            "productReference": "qoi-sample-product-widget",
+            "quantityShipped": 60
+          }
         ],
         "status": "shipped"
       },
@@ -1552,7 +1827,11 @@
         "sourceOrderReference": "qoi-sample-order-retail-partial",
         "carrier": "PostNL",
         "lines": [
-          { "orderLineReference": "qoi-sample-orderline-retail-1", "productReference": "qoi-sample-product-widget", "quantityShipped": 40 }
+          {
+            "orderLineReference": "qoi-sample-orderline-retail-1",
+            "productReference": "qoi-sample-product-widget",
+            "quantityShipped": 40
+          }
         ],
         "status": "draft"
       },
@@ -1569,8 +1848,12 @@
         "currency": "EUR",
         "paymentTerms": "net30",
         "invoiceType": "delivery-based",
-        "sourceOrderReferences": ["qoi-sample-order-retail-partial"],
-        "sourceDeliveryReferences": ["qoi-sample-delivery-retail-1"],
+        "sourceOrderReferences": [
+          "qoi-sample-order-retail-partial"
+        ],
+        "sourceDeliveryReferences": [
+          "qoi-sample-delivery-retail-1"
+        ],
         "netAmount": 4860,
         "vatAmount": 1020.6,
         "grossAmount": 5880.6,

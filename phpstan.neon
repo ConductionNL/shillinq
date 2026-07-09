@@ -10,11 +10,19 @@ parameters:
         - lib
     bootstrapFiles:
         - phpstan-bootstrap.php
+    # PHPDoc @return bool / @return array types are often intentionally broader than the
+    # inferred type (e.g. SimpleXMLElement methods, third-party SDKs). Treating PHPDoc
+    # types as certain causes spurious `=== true/false` / `=== null` "always false" errors.
+    treatPhpDocTypesAsCertain: false
     excludePaths:
         - vendor
         - vendor-bin
         # Apps that ship a verbatim template snapshot under lib/Resources/template/ (e.g. openbuilt).
         - lib/Resources/template
+        # CustomerBridgeMetricsService implements OCA\OpenRegister\AppHost\IMetricsProvider which is
+        # unavailable at analysis time (cross-app interface, present only at runtime). PHPStan requires
+        # excludePaths for this class of error (not suppressible via ignoreErrors or baseline).
+        - lib/Service/Pipelinq/CustomerBridgeMetricsService.php
     scanDirectories:
         - vendor/nextcloud/ocp
     reportUnmatchedIgnoredErrors: false
@@ -37,6 +45,32 @@ parameters:
         - '#has invalid return type OCA\\OpenRegister\\#'
         - '#has invalid type OCA\\OpenRegister\\#'
         - '#implements unknown interface OCA\\OpenRegister\\#'
+        # OCA\Decidesk (decision module) — cross-app dep, present only at runtime
+        - '#unknown class OCA\\Decidesk\\#'
+        - '#OCA\\Decidesk\\[a-zA-Z\\]+.*not found#'
+        - '#on an unknown class OCA\\Decidesk\\#'
+        - '#has invalid type OCA\\Decidesk\\#'
+        - '#Class OCA\\Decidesk\\[a-zA-Z\\]+.*not found#'
+        # Cross-app events that extend OCP\EventDispatcher\Event at runtime but PHPStan cannot verify
+        - '#expects OCP\\EventDispatcher\\Event, OCA\\Decidesk\\#'
+        # OCA\DocuDesk (document signing) — cross-app dep, present only at runtime
+        - '#unknown class OCA\\DocuDesk\\#'
+        - '#OCA\\DocuDesk\\[a-zA-Z\\]+.*not found#'
+        - '#on an unknown class OCA\\DocuDesk\\#'
+        - '#has invalid type OCA\\DocuDesk\\#'
+        - '#Class OCA\\DocuDesk\\[a-zA-Z\\]+.*not found#'
+        # Cross-app events that extend OCP\EventDispatcher\Event at runtime but PHPStan cannot verify
+        - '#expects OCP\\EventDispatcher\\Event, OCA\\DocuDesk\\#'
+        # PhpOffice\PhpWord — word-processor library available at runtime via NC app deps;
+        # not declared in composer.json to avoid version conflicts with NC's own phpword.
+        - '#unknown class PhpOffice\\#'
+        - '#PhpOffice\\[a-zA-Z\\]+.*not found#'
+        - '#on an unknown class PhpOffice\\#'
+        - '#has invalid return type PhpOffice\\#'
+        - '#has invalid type PhpOffice\\#'
+        - '#Instantiated class PhpOffice\\#'
+        - '#Call to method .+ on an unknown class PhpOffice\\#'
+        - '#Call to static method .+ on an unknown class PhpOffice\\#'
         # GuzzleHttp is available at runtime via Nextcloud but not in composer require
         - '#unknown class GuzzleHttp\\#'
         - '#GuzzleHttp\\[a-zA-Z\\]+.*not found#'
@@ -47,9 +81,23 @@ parameters:
         - '#unknown class Doctrine\\DBAL\\#'
         - '#Doctrine\\DBAL\\[a-zA-Z\\]+.*not found#'
         - '#on an unknown class Doctrine\\DBAL\\#'
+        # AuthorizedAdminSetting attribute — NC allows passing the app-id string (e.g. Application::APP_ID)
+        # at runtime; PHPStan's attribute ctor type is stricter (class-string<IDelegatedSettings>).
+        # This is intentional: all controllers use the fleet-canonical app-id pattern.
+        - '#Parameter (\#\d+ )?\$settings of attribute class OCP\\AppFramework\\Http\\Attribute\\AuthorizedAdminSetting#'
         # Dynamic HTTP status codes from business rule validation results
         # (matches both `Parameter $statusCode` and `Parameter #N $statusCode` forms emitted by phpstan)
         - '#Parameter (\#\d+ )?\$statusCode of class OCP\\AppFramework\\Http\\JSONResponse constructor expects#'
+        # DataResponse body type — NC31's DataResponseType generic is `array<int|string,mixed>|string|int|bool|float|null`
+        # but PHPStan infers stricter union types for complex nested arrays and string bodies (e.g. markdown/PDF).
+        # At runtime DataResponse accepts any serialisable value; the mismatch is a PHPStan generic inference gap.
+        - '#Parameter (\#\d+ )?\$data of class OCP\\AppFramework\\Http\\DataResponse constructor expects#'
+        # Dompdf ReflectionClass: $domPdfClass is verified by class_exists above, but PHPStan
+        # cannot narrow from string to class-string<\Dompdf\Dompdf> through a variable.
+        - '#Parameter (\#\d+ )?\$objectOrClass of class ReflectionClass constructor expects.*string given#'
+        # RuleEngine::providerSeedObjects narrows via class_implements, but PHPStan still sees
+        # CheckProvider (the base type) which does not declare seedObjects().
+        - '#Call to an undefined static method OCA\\Shillinq\\Standards\\Checks\\CheckProvider::seedObjects#'
         # registerRepairStep exists on server; not yet in nextcloud/ocp stub used for analysis
         - '#Call to an undefined method OCP\\AppFramework\\Bootstrap\\IRegistrationContext::registerRepairStep#'
         # OCP stub gaps for methods that exist at runtime

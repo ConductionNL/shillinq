@@ -1,0 +1,117 @@
+{
+  "x-shillinq-fragment": "abstract-project-cost-lines",
+  "components": {
+    "schemas": {
+      "Project": {
+        "version": "0.2.0",
+        "properties": {
+          "costLines": {
+            "type": "array",
+            "nullable": true,
+            "description": "Folded expense/cost lines for this project. Each line captures a single reimbursable cost (receipt, mileage, per-diem, material, …) previously held on the separate Receipt/MileageEntry/PerDiem objects. Source rows are migrated here by the FoldExpensesAndHoursIntoProject repair step (keyed by sourceId for idempotency).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "costDate": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Date the cost was incurred (ISO 8601 date).",
+                  "title": "Cost Date"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "expense",
+                    "mileage",
+                    "perdiem",
+                    "receipt",
+                    "material",
+                    "other"
+                  ],
+                  "description": "Discriminator for the kind of cost line.",
+                  "title": "Type"
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Free-text description of the cost.",
+                  "title": "Description"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "Monetary amount of the cost line in the line currency.",
+                  "title": "Amount"
+                },
+                "currency": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "ISO 4217 currency code of the amount.",
+                  "title": "Currency"
+                },
+                "costCentreCode": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Cost centre / cost carrier code the line is allocated to.",
+                  "title": "Cost Centre Code"
+                },
+                "sourceId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Stable id of the source object this line was folded from (Receipt/MileageEntry/PerDiem). Used as the idempotency key by the migration; do not reuse.",
+                  "title": "Source ID"
+                }
+              }
+            },
+            "title": "Cost Lines"
+          },
+          "hoursLines": {
+            "type": "array",
+            "nullable": true,
+            "description": "Folded time-registration lines for this project. Each line captures a single hours booking previously held on a separate UrenRegistratie object. Source rows are migrated here by the FoldExpensesAndHoursIntoProject repair step (keyed by sourceId for idempotency).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Date the hours were worked (ISO 8601 date).",
+                  "title": "Date"
+                },
+                "hours": {
+                  "type": "number",
+                  "description": "Number of hours booked.",
+                  "title": "Hours"
+                },
+                "personId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Identifier of the person who booked the hours.",
+                  "title": "Person ID"
+                },
+                "recognisedRate": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Rate at which the hours are recognised (revenue/cost rate).",
+                  "title": "Recognised Rate"
+                },
+                "wbsoTagId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "WBSO tag identifier classifying the hours for R&D tax purposes.",
+                  "title": "WBSO Tag ID"
+                },
+                "sourceId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Stable id of the source UrenRegistratie this line was folded from. Used as the idempotency key by the migration; do not reuse.",
+                  "title": "Source ID"
+                }
+              }
+            },
+            "title": "Hours Lines"
+          }
+        }
+      }
+    }
+  }
+}

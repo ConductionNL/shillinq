@@ -1,0 +1,130 @@
+{
+  "x-shillinq-fragment": "order-extensions",
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "abstract-order-primitive",
+    "description": "Phase 2: order extensions via JSON-Schema allOf composition onto the base Order. Grant (subsidie) is folded here as one rich English schema; award amounts map to Order.totalAmount and the disbursement/reclaim amounts become Payment rows."
+  },
+  "components": {
+    "schemas": {
+      "Grant": {
+        "version": "0.1.0",
+        "slug": "Grant",
+        "title": "Grant",
+        "type": "object",
+        "description": "A subsidy/grant — an Order of orderType=grant. Folds the former Subsidie schemas (Dutch + English) into one rich English schema (Awb 4.2 / ASV-model). The award amount is Order.totalAmount; disbursements (uitbetaald) and reclaims (teruggevorderd) are Payment rows; the performance report and auditor statement are related objects. Inherits orderType/direction/counterparty/currency/totalAmount/state/paymentTerms from Order via allOf.",
+        "properties": {
+          "scheme": {
+            "type": "string",
+            "nullable": true,
+            "description": "Grant scheme / programme (regelingNaam / grantProgram).",
+            "title": "Scheme"
+          },
+          "schemeArticle": {
+            "type": "string",
+            "nullable": true,
+            "description": "Scheme article the award rests on (regelingArtikel).",
+            "title": "Scheme Article"
+          },
+          "granteeOrganization": {
+            "type": "string",
+            "nullable": true,
+            "description": "The organisation receiving the grant (when we award) — counterpartyName covers the inbound case.",
+            "title": "Grantee Organization"
+          },
+          "purposeDescription": {
+            "type": "string",
+            "nullable": true,
+            "description": "What the grant funds.",
+            "title": "Purpose Description"
+          },
+          "budgetYear": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Budget year the award is charged to.",
+            "title": "Budget Year"
+          },
+          "approvingAuthority": {
+            "type": "string",
+            "nullable": true,
+            "description": "The authority that issued the beschikking.",
+            "title": "Approving Authority"
+          },
+          "applicationDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Date the grant was applied for (aanvraagDate).",
+            "title": "Application Date"
+          },
+          "decisionDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Award-decision date (beschikkingDate).",
+            "title": "Decision Date"
+          },
+          "settlementDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Final settlement date (vaststellingDate).",
+            "title": "Settlement Date"
+          },
+          "appliedAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Amount applied for (aangevraagdBedrag); the granted amount is Order.totalAmount.",
+            "title": "Applied Amount"
+          },
+          "assessedAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Finally assessed amount (vastgesteldBedrag).",
+            "title": "Assessed Amount"
+          },
+          "performanceReport": {
+            "type": "string",
+            "nullable": true,
+            "description": "Performance accountability narrative (prestatieverantwoording).",
+            "title": "Performance Report"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reason for rejection (afwijzingsReden).",
+            "title": "Rejection Reason"
+          },
+          "auditThresholdApplied": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the >EUR 25k auditor-statement threshold applies.",
+            "title": "Audit Threshold Applied"
+          },
+          "hasRepaymentPlan": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether a reclaim repayment plan exists.",
+            "title": "Has Repayment Plan"
+          },
+          "repaymentPlanId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the reclaim repayment plan (preserved from the folded Subsidie).",
+            "title": "Repayment Plan ID"
+          },
+          "decisionDocumentUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "Beschikking document (file relation).",
+            "title": "Decision Document URI"
+          },
+          "settlementDocumentUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "Vaststelling document (file relation).",
+            "title": "Settlement Document URI"
+          }
+        }
+      }
+    }
+  }
+}

@@ -47,7 +47,6 @@ namespace OCA\Shillinq\Service\BbvMigration;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
 
 /**
  * Produces RGS-decentraal mapping suggestions for unmapped Account records.
@@ -69,12 +68,10 @@ class RgsAccountMapper
      *
      * @param ContainerInterface $container DI container — ObjectService fetched lazily.
      * @param IAppConfig         $appConfig App config for register slug + threshold override.
-     * @param LoggerInterface    $logger    Logger for diagnostics.
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
 

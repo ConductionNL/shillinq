@@ -479,7 +479,7 @@ Het systeem moet een vergelijkingsoverzicht tonen tussen huidige cashflow en dez
 - `pipelinq` — bron voor pipeline-omzet projectie (gewogen kansverwacht), prospects-deals met sluit-waarschijnlijkheid
 - `openconnector` — bank-feed (PSD2) voor realisatie-input + saldo-actualisatie (Bunq, Knab, ING, Rabo)
 - `openregister` — file-export voor PDF-rapportage; scenario-snapshots
-- `mydash` — KPI's voor cashflow-gezondheid over alle cliënten van een advieskantoor
+- `launchpad` — KPI's voor cashflow-gezondheid over alle cliënten van een advieskantoor
 - `nldesign` — government-thema voor publieke MKB-tools
 
 ## Target users

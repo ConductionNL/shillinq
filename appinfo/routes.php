@@ -45,6 +45,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         ['name' => 'pipelinqSettings#index', 'url' => '/api/pipelinq/settings', 'verb' => 'GET'],
         ['name' => 'pipelinqSettings#create', 'url' => '/api/pipelinq/settings', 'verb' => 'POST'],
         ['name' => 'pipelinqSettings#test', 'url' => '/api/pipelinq/settings/test', 'verb' => 'POST'],
+        // First-time setup wizard (ADR-042)
+        ['name' => 'setup#status',     'url' => '/api/setup/status',            'verb' => 'GET'],
+        ['name' => 'setup#saveConfig', 'url' => '/api/setup/config',            'verb' => 'POST'],
+        ['name' => 'setup#runAction',  'url' => '/api/setup/action/{actionId}', 'verb' => 'POST'],
 
         // bookings-pipelinq-customer-bridge slice 09 — admin dead-letter
         // dashboard over the TimelineDeadLetter register populated by
@@ -87,6 +91,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         // Trial balance (Tier 2): read-only per-account period aggregation.
         ['name' => 'trialBalance#index', 'url' => '/api/trial-balance', 'verb' => 'GET'],
 
+        // Financial overview dashboard (Wave-4 endpoint-bound widgets):
+        // read-only monthly series + KPI summary computed server-side over
+        // ALL matching OpenRegister objects (no client-side 2000-row cap).
+        // Both #[NoAdminRequired]; RBAC/multitenancy enforced by OR reads.
+        ['name' => 'financialDashboard#series', 'url' => '/api/dashboard/financial-series', 'verb' => 'GET'],
+        ['name' => 'financialDashboard#summary', 'url' => '/api/dashboard/financial-summary', 'verb' => 'GET'],
+
         // Credit control & dunning ladder (Tier 2 — issue #124).
         // Static segments first; the resume route uses a {pauseId} wildcard.
         ['name' => 'dunning#bik', 'url' => '/api/dunning/bik', 'verb' => 'POST'],
@@ -105,6 +116,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         ['name' => 'administration#context', 'url' => '/api/administrations/context', 'verb' => 'GET'],
         ['name' => 'administration#switch', 'url' => '/api/administrations/switch', 'verb' => 'POST'],
         ['name' => 'administration#exportScope', 'url' => '/api/administrations/{id}/export-scope', 'verb' => 'GET'],
+        ['name' => 'administrationExport#exportXaf', 'url' => '/api/administrations/{id}/export', 'verb' => 'GET'],
         ['name' => 'administration#writableStatus', 'url' => '/api/administrations/{id}/writable', 'verb' => 'GET'],
 
         // Payroll engine (NL loonadministratie): read-only compute endpoints.
@@ -340,6 +352,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         // IFRS 15 revenue cut-off (bookkeeping-ifrs15-revenue, REQ-IFRS15-007/008).
         ['name' => 'revenue#cutoff', 'url' => '/api/revenue/cutoff', 'verb' => 'GET'],
 
+        // Recognized recurring revenue (order-revenue-recognition-engine). Read-only
+        // period-parameterized recognition over SalesOrder/SalesOrderLine: recognized
+        // RECURRING revenue (whole-month overlap × frequency-normalized monthly rate),
+        // ARR run-rate, currency and recurring line count. #[NoAdminRequired] with a
+        // per-administrationId RBAC guard in the controller; reads are scoped via
+        // OpenRegister's ObjectService so no cross-administration leak (ADR-005).
+        ['name' => 'recognition#recurringRevenue', 'url' => '/api/recognition/recurring-revenue', 'verb' => 'GET'],
+
         // KOR drempel-bewaking (bookkeeping-kor-kleine-ondernemersregeling,
         // REQ-KOR-002, REQ-KOR-003). Read-only monitor endpoint.
         ['name' => 'kor#monitor', 'url' => '/api/kor/monitor', 'verb' => 'GET'],
@@ -491,4 +511,35 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         // placeholder selects mollie / stripe. Declared before the SPA catch-all so
         // Symfony matches it first per ADR-016.
         ['name' => 'paymentRequestWebhook#handle', 'url' => '/api/v1/payment-requests/webhook/{gateway}', 'verb' => 'POST'],
+
+        // Reporting & Compliance consolidation (reporting-compliance-consolidation).
+        // The HTTP surface behind the unified "Reporting & Compliance" section:
+        // types() returns the static report catalogue grouped by category (overview
+        // cards); generate() renders a chosen report and stores + tags + records it
+        // via ReportGenerationService; generated() lists the recorded GeneratedReport
+        // objects; download({id}) streams a stored report file. Every endpoint is
+        // #[NoAdminRequired] with an explicit anonymous-rejection guard in the
+        // controller (ADR-005); file access is scoped to the caller's Files home.
+        // Static segments precede the {id} wildcard, and all are declared before the
+        // SPA catch-all so Symfony matches them first per ADR-016.
+        ['name' => 'reporting#types', 'url' => '/api/reporting/types', 'verb' => 'GET'],
+        ['name' => 'reporting#generate', 'url' => '/api/reporting/generate', 'verb' => 'POST'],
+        ['name' => 'reporting#generated', 'url' => '/api/reporting/generated', 'verb' => 'GET'],
+        ['name' => 'reporting#download', 'url' => '/api/reporting/download/{id}', 'verb' => 'GET'],
+
+        // payment-run-sepa-export (REQ-SEPA-006 / REQ-SEPA-007). The HTTP surface
+        // behind the "Export to bank" and "Reconcile / import statement" actions
+        // on the PaymentRun detail page. export({id}) generates the SEPA
+        // pain.001 / CSV bank file, stores + tags it, sets exportedFileRef /
+        // exportedAt and drives approved → exported through the OR lifecycle
+        // engine; reconcile({id}) imports a CAMT.053 statement, matches its
+        // booked entries to the run's lines and drives exported → reconciled on a
+        // full match (a partial match stays exported with a mismatch note). Both
+        // are #[NoAdminRequired] with an explicit user-session guard plus an
+        // ADR-005 per-administration authorisation guard in the controller body
+        // (cross-tenant ids masked as 404). The {id} wildcard is preceded by the
+        // static /export and /reconcile suffixes per Symfony route ordering, and
+        // both are declared before the SPA catch-all per ADR-016.
+        ['name' => 'paymentRun#export', 'url' => '/api/v1/payment-runs/{id}/export', 'verb' => 'POST'],
+        ['name' => 'paymentRun#reconcile', 'url' => '/api/v1/payment-runs/{id}/reconcile', 'verb' => 'POST'],
 ]);

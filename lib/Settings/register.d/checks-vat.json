@@ -1,0 +1,18 @@
+{
+  "x-shillinq-fragment": "checks-vat",
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "version": "0.6.0",
+        "properties": {
+          "vatNote": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text VAT legal note printed on the invoice (VAT Directive art. 226(11a)/(11)/138). Carries the mandatory 'Reverse charge' wording where the customer is liable, and/or the reference to the exemption provision (e.g. 'intra-Community supply, art. 138') where the supply is exempt.",
+            "title": "VAT Note"
+          }
+        }
+      }
+    }
+  }
+}

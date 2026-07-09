@@ -165,6 +165,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ReimbursementPolicy",
+				"_note": "CONFIG archetype (native detail page - CnDetailPage). A reimbursement policy is per-administration master data governing expense settlement: the auto-approve and markup-approval thresholds and the default pass-through debit account. It carries no transactional total, no source documents, and no child line records of its own - it is a settings record consumed by the approval-workflow (ADR-022) and the dual-path GL post action. Body is native `fields` rendering; the only sidebar tab is the change-history Audit Trail, since edits to thresholds/account-code are governance-sensitive and must be traceable per REQ-ERP-004/REQ-ERP-006.",
 				"fields": [
 					{"key": "policyId", "label": "Policy ID", "type": "string"},
 					{"key": "name", "label": "Name", "type": "string"},
@@ -175,7 +176,28 @@
 					{"key": "employeeBankAccountMapping", "label": "Employee Bank Account Mapping", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"},
 					{"key": "notes", "label": "Notes", "type": "string"}
-				]
+				],
+				"indexRoute": "ReimbursementPolicies",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/ReimbursementPolicy/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -237,6 +259,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "PassThroughMarkupRule",
+				"_note": "CONFIG archetype (native detail page - CnDetailPage). A pass-through markup rule is master data: the percentage-or-fixed markup applied when re-billing an expense to a customer, scoped by (customer, category, fiscal-year, priority). It carries no transactional total, no source documents, and no child line records of its own - it is a pricing/settings record consumed declaratively by the Receipt/MileageEntry/PerDiem markupLookup calculation (REQ-ERP-005). Body is native `fields` rendering; the only sidebar tab is the change-history Audit Trail, since rule edits affect future markup calculations and must be traceable (rate is locked per-claim on submission per REQ-ERP-010, so audit history is the mechanism for reviewing rule evolution).",
 				"fields": [
 					{"key": "ruleId", "label": "Rule ID", "type": "string"},
 					{"key": "targetCustomerId", "label": "Target Customer", "type": "string"},
@@ -249,7 +272,28 @@
 					{"key": "priority", "label": "Priority", "type": "number"},
 					{"key": "administrationId", "label": "Administration", "type": "string"},
 					{"key": "notes", "label": "Notes", "type": "string"}
-				]
+				],
+				"indexRoute": "PassThroughMarkupRules",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/PassThroughMarkupRule/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{

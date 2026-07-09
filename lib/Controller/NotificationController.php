@@ -50,8 +50,6 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\Notification\BookingNotificationService;
-use OCA\Shillinq\Service\Notification\NotificationRateLimiter;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -74,21 +72,17 @@ class NotificationController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest                   $request     Request object.
-     * @param ContainerInterface         $container   DI container for lazy ObjectService resolution.
-     * @param SettingsService            $settings    Register slug + OR availability.
-     * @param IUserSession               $userSession Logged-in user for the per-booking authorization gate.
-     * @param BookingNotificationService $service     Orchestration service for trigger evaluation.
-     * @param NotificationRateLimiter    $rateLimiter Counter reset gate (admin action).
-     * @param LoggerInterface            $logger      Logger for failure paths.
+     * @param IRequest           $request     Request object.
+     * @param ContainerInterface $container   DI container for lazy ObjectService resolution.
+     * @param SettingsService    $settings    Register slug + OR availability.
+     * @param IUserSession       $userSession Logged-in user for the per-booking authorization gate.
+     * @param LoggerInterface    $logger      Logger for failure paths.
      */
     public function __construct(
         IRequest $request,
         private readonly ContainerInterface $container,
         private readonly SettingsService $settings,
         private readonly IUserSession $userSession,
-        private readonly BookingNotificationService $service,
-        private readonly NotificationRateLimiter $rateLimiter,
         private readonly LoggerInterface $logger
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);

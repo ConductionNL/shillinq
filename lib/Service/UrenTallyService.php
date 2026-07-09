@@ -56,7 +56,8 @@ final class UrenTallyService
      *
      * @var array<int, string>
      */
-    private const NON_COUNTING_CATEGORIES = [];
+    // phpcs:ignore -- intentional: integration point for future non-counting categories
+    private const NON_COUNTING_CATEGORIES = []; // @phpstan-ignore-line
 
     /**
      * Construct the service.
@@ -97,7 +98,7 @@ final class UrenTallyService
             }
 
             $categorie = (string) ($entry['categorie'] ?? '');
-            if ($categorie === '' || in_array($categorie, self::NON_COUNTING_CATEGORIES, true) === true) {
+            if ($categorie === '') {
                 continue;
             }
 
@@ -150,7 +151,7 @@ final class UrenTallyService
             }
 
             $categorie = (string) ($entry['categorie'] ?? '');
-            if ($categorie === '' || in_array($categorie, self::NON_COUNTING_CATEGORIES, true) === true) {
+            if ($categorie === '') {
                 continue;
             }
 

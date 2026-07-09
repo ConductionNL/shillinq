@@ -1,0 +1,317 @@
+{
+  "x-shillinq-fragment": "checks-national-reporting",
+  "components": {
+    "schemas": {
+      "FinancialStatement": {
+        "slug": "FinancialStatement",
+        "icon": "FileChartOutline",
+        "version": "0.1.0",
+        "title": "Financial Statement",
+        "description": "A set of statutory annual accounts (jaarrekening / Jahresabschluss / comptes annuels) for one reporting period, used by the national-reporting rule domain to evaluate statement-layout, composition, size-classification, audit-duty and filing-deadline obligations (NL BW 2 Titel 9, DE HGB, FR PCG/greffe, EU ESEF iXBRL). Per ADR-022 this is a register object, not an embedded structure.",
+        "type": "object",
+        "x-schema-org": "schema:Report",
+        "required": [
+          "statementType",
+          "reportingPeriodStart",
+          "reportingPeriodEnd",
+          "jurisdiction",
+          "currency"
+        ],
+        "properties": {
+          "statementType": {
+            "type": "string",
+            "description": "The kind of statutory accounts modelled. One of: annual (full annual accounts), abridged (verkort/abridged), consolidated (geconsolideerd/Konzern), interim.",
+            "enum": [
+              "annual",
+              "abridged",
+              "consolidated",
+              "interim"
+            ],
+            "example": "annual",
+            "title": "Statement Type"
+          },
+          "jurisdiction": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 jurisdiction whose statutory framework governs these accounts (NL, DE, FR, ...). EU-wide rules (ESEF) apply on top for EU member states.",
+            "example": "NL",
+            "title": "Jurisdiction"
+          },
+          "framework": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reporting framework applied (e.g. bw for NL Titel 9, hgb for DE, pcg for FR, ifrs).",
+            "example": "bw",
+            "title": "Framework"
+          },
+          "reportingPeriodStart": {
+            "type": "string",
+            "format": "date",
+            "description": "First day of the reporting period (financial year).",
+            "title": "Reporting Period Start"
+          },
+          "reportingPeriodEnd": {
+            "type": "string",
+            "format": "date",
+            "description": "Last day of the reporting period (balance-sheet date / financial year-end).",
+            "title": "Reporting Period End"
+          },
+          "language": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 639-1 language the accounts are drawn up in (nl, de, fr, en). NL BW 2:362(6) requires Dutch unless justified; DE HGB 244 requires German.",
+            "example": "nl",
+            "title": "Language"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency the accounts are presented in. NL BW 2:362(6) and DE HGB 244 require EUR unless justified.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "balanceTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Balance-sheet total (total assets) for the period, used for size classification thresholds.",
+            "title": "Balance Total"
+          },
+          "turnover": {
+            "type": "number",
+            "nullable": true,
+            "description": "Net turnover (revenue) for the period, used for size classification thresholds.",
+            "title": "Turnover"
+          },
+          "employees": {
+            "type": "number",
+            "nullable": true,
+            "description": "Average number of employees during the period, used for size classification thresholds.",
+            "title": "Employees"
+          },
+          "sizeClass": {
+            "type": "string",
+            "nullable": true,
+            "description": "Declared size class. One of: micro, small, medium, large. Must be consistent with the balanceTotal/turnover/employees thresholds of the jurisdiction.",
+            "enum": [
+              "micro",
+              "small",
+              "medium",
+              "large"
+            ],
+            "example": "small",
+            "title": "Size Class"
+          },
+          "sizeClassPriorYear": {
+            "type": "string",
+            "nullable": true,
+            "description": "Size class established on the prior balance-sheet date. A different regime may only be applied after two consecutive balance dates meet it (NL BW 2:398; DE HGB 267(4)).",
+            "enum": [
+              "micro",
+              "small",
+              "medium",
+              "large"
+            ],
+            "title": "Size Class Prior Year"
+          },
+          "balanceSheet": {
+            "type": "object",
+            "nullable": true,
+            "description": "Statutory balance-sheet layout: assets split into fixed (vaste activa / Anlagevermögen) and current (vlottende activa / Umlaufvermögen) assets; credit side into equity, provisions and liabilities (NL BW 2:364; DE HGB 266).",
+            "properties": {
+              "fixedAssets": {
+                "type": "number",
+                "description": "Fixed assets (vaste activa / Anlagevermögen).",
+                "title": "Fixed Assets"
+              },
+              "currentAssets": {
+                "type": "number",
+                "description": "Current assets (vlottende activa / Umlaufvermögen).",
+                "title": "Current Assets"
+              },
+              "equity": {
+                "type": "number",
+                "description": "Equity (eigen vermogen / Eigenkapital).",
+                "title": "Equity"
+              },
+              "provisions": {
+                "type": "number",
+                "description": "Provisions (voorzieningen / Rückstellungen).",
+                "title": "Provisions"
+              },
+              "liabilities": {
+                "type": "number",
+                "description": "Liabilities (schulden / Verbindlichkeiten).",
+                "title": "Liabilities"
+              }
+            },
+            "title": "Balance Sheet"
+          },
+          "profitAndLoss": {
+            "type": "object",
+            "nullable": true,
+            "description": "Statutory profit-and-loss layout showing net turnover, operating expenses, financial result and the result for the period (NL BW 2:377; DE HGB 275).",
+            "properties": {
+              "netTurnover": {
+                "type": "number",
+                "description": "Net turnover (netto-omzet / Umsatzerlöse).",
+                "title": "Net Turnover"
+              },
+              "operatingExpenses": {
+                "type": "number",
+                "description": "Operating expenses (bedrijfslasten).",
+                "title": "Operating Expenses"
+              },
+              "financialResult": {
+                "type": "number",
+                "description": "Financial income and expense (financiële baten en lasten).",
+                "title": "Financial Result"
+              },
+              "result": {
+                "type": "number",
+                "description": "Result for the financial year (resultaat / Jahresüberschuss).",
+                "title": "Result"
+              }
+            },
+            "title": "Profit And Loss"
+          },
+          "plPresentationModel": {
+            "type": "string",
+            "nullable": true,
+            "description": "Statutory P&L model. One of: categorical (type-of-expense / Gesamtkostenverfahren) or functional (cost-of-sales / Umsatzkostenverfahren).",
+            "enum": [
+              "categorical",
+              "functional"
+            ],
+            "example": "categorical",
+            "title": "Pl Presentation Model"
+          },
+          "balanceForm": {
+            "type": "string",
+            "nullable": true,
+            "description": "DE HGB 266 balance presentation form. Account form (Kontoform) is required for the balance sheet.",
+            "enum": [
+              "account",
+              "vertical"
+            ],
+            "example": "account",
+            "title": "Balance Form"
+          },
+          "plForm": {
+            "type": "string",
+            "nullable": true,
+            "description": "DE HGB 275 P&L presentation form. Vertical/staggered form (Staffelform) is required.",
+            "enum": [
+              "vertical",
+              "account"
+            ],
+            "example": "vertical",
+            "title": "Pl Form"
+          },
+          "priorYearComparatives": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when each balance-sheet and P&L item is shown with its corresponding prior-year comparative figure (NL BW 2:363).",
+            "title": "Prior Year Comparatives"
+          },
+          "itemsNetted": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when items have been offset/netted against each other. The gross principle forbids netting unless permitted (NL BW 2:363 / DE HGB 246 Saldierungsverbot) — compliant statements set this false.",
+            "title": "Items Netted"
+          },
+          "components": {
+            "type": "array",
+            "nullable": true,
+            "description": "The component primary statements present. Codes: balance (balans/Bilanz), pnl (winst-en-verliesrekening/GuV), notes (toelichting/Anhang), cashflow, equityChanges, managementReport (bestuursverslag/Lagebericht).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Components"
+          },
+          "audited": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the accounts have been audited by an external statutory auditor who issued an opinion (NL BW 2:393; DE HGB 316; FR commissaire aux comptes).",
+            "title": "Audited"
+          },
+          "auditorType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Registered auditor qualification (RA, AA, Wirtschaftsprüfer, CAC) where audited.",
+            "example": "RA",
+            "title": "Auditor Type"
+          },
+          "preparedDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date management prepared (drew up) the accounts. NL BW 2:210 requires preparation within 5 months of year-end (extendable).",
+            "title": "Prepared Date"
+          },
+          "adoptionDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the accounts were adopted/approved by the general meeting.",
+            "title": "Adoption Date"
+          },
+          "filedDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the accounts were filed/disclosed with the registry (NL KvK, DE Unternehmensregister, FR greffe).",
+            "title": "Filed Date"
+          },
+          "xhtmlFormat": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the annual financial report is prepared in XHTML format (EU ESEF). Required only for issuers on an EU regulated market.",
+            "title": "Xhtml Format"
+          },
+          "iXbrlTagged": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when IFRS consolidated statements are marked up with Inline XBRL (iXBRL) tags from the ESEF taxonomy. Required only for listed issuers.",
+            "title": "I XBRL Tagged"
+          },
+          "detailTaggedPrimary": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the primary financial statements are tagged in detail at individual-value level (EU ESEF). Required only for listed issuers.",
+            "title": "Detail Tagged Primary"
+          },
+          "listedOnRegulatedMarket": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the issuer's securities are admitted to trading on an EU regulated market, bringing the statements into ESEF scope.",
+            "title": "Listed On Regulated Market"
+          },
+          "fecEntries": {
+            "type": "array",
+            "nullable": true,
+            "description": "FR Fichier des Écritures Comptables (FEC) accounting entries underlying the statements. Each entry shall be balanced (total debit equals total credit).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entryNum": {
+                  "type": "string",
+                  "description": "EcritureNum — sequential entry number.",
+                  "title": "Entry Num"
+                },
+                "debit": {
+                  "type": "number",
+                  "description": "Total debit of the balanced entry.",
+                  "title": "Debit"
+                },
+                "credit": {
+                  "type": "number",
+                  "description": "Total credit of the balanced entry.",
+                  "title": "Credit"
+                }
+              }
+            },
+            "title": "Fec Entries"
+          }
+        }
+      }
+    }
+  }
+}

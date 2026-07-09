@@ -127,7 +127,8 @@
             "type": "string",
             "description": "Human-readable template name shown in the admin list.",
             "example": "Default Booking Confirmation",
-            "maxLength": 255
+            "maxLength": 255,
+            "title": "Name"
           },
           "status": {
             "type": "string",
@@ -138,51 +139,60 @@
               "archived"
             ],
             "default": "draft",
-            "example": "published"
+            "example": "published",
+            "title": "Status"
           },
           "subjectLine": {
             "type": "string",
             "description": "Email subject. Supports {{variable}} placeholders. Limited to 78 characters after substitution for cross-client compatibility (NFR-BET-002).",
             "example": "Boeking bevestigd: {{bookingRef}}",
-            "maxLength": 255
+            "maxLength": 255,
+            "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
             "description": "HTML email body. Inline styles only, no external CSS or JavaScript. Supports {{variable}} placeholders (NFR-BET-001).",
-            "example": "<h1>Hallo {{customerName}}</h1><p>Uw boeking is bevestigd.</p>"
+            "example": "<h1>Hallo {{customerName}}</h1><p>Uw boeking is bevestigd.</p>",
+            "title": "Html Body"
           },
           "plainTextBody": {
             "type": "string",
             "description": "Plain-text fallback body for clients without HTML rendering. Supports {{variable}} placeholders (REQ-BET-006).",
-            "example": "Hallo {{customerName}}, uw boeking is bevestigd."
+            "example": "Hallo {{customerName}}, uw boeking is bevestigd.",
+            "title": "Plain Text Body"
           },
           "logoUri": {
             "type": "string",
             "format": "uri",
             "description": "URL to the organization logo image. Loaded from a CDN or document store; inline base64 is not used (NFR-BET-004).",
-            "example": "https://cdn.example.org/logo.png"
+            "example": "https://cdn.example.org/logo.png",
+            "title": "Logo URI"
           },
           "accentColor": {
             "type": "string",
             "description": "Hex colour code for branding accents (e.g. button and header colour).",
             "pattern": "^#[0-9A-Fa-f]{6}$",
-            "example": "#21468B"
+            "example": "#21468B",
+            "title": "Accent Color"
           },
           "footerText": {
             "type": "string",
             "description": "Custom footer text (address, contact, legal notice).",
-            "example": "© 2026 Example BV, Postbus 123, Amsterdam"
+            "example": "© 2026 Example BV, Postbus 123, Amsterdam",
+            "title": "Footer Text"
           },
           "senderName": {
             "type": "string",
             "description": "Display name shown as the email sender.",
-            "example": "Example BV Boekingen"
+            "example": "Example BV Boekingen",
+            "title": "Sender Name"
           },
           "senderAddress": {
             "type": "string",
             "format": "email",
             "description": "From-address used for dispatch. Validated by the notification engine against the configured provider (ADR-022).",
-            "example": "bookings@example.org"
+            "example": "bookings@example.org",
+            "title": "Sender Address"
           },
           "locale": {
             "type": "string",
@@ -192,16 +202,19 @@
               "en"
             ],
             "default": "nl",
-            "example": "nl"
+            "example": "nl",
+            "title": "Locale"
           },
           "activatedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp when the template was first published. Set on the publish transition (REQ-BET-002)."
+            "description": "Timestamp when the template was first published. Set on the publish transition (REQ-BET-002).",
+            "title": "Activated At"
           },
           "administrationId": {
             "type": "string",
-            "description": "Tenant administration this template belongs to. Null for shipped defaults that apply to all administrations."
+            "description": "Tenant administration this template belongs to. Null for shipped defaults that apply to all administrations.",
+            "title": "Administration ID"
           }
         }
       },
@@ -332,7 +345,8 @@
             "type": "string",
             "description": "Human-readable template name.",
             "example": "24-Hour Booking Reminder",
-            "maxLength": 255
+            "maxLength": 255,
+            "title": "Name"
           },
           "status": {
             "type": "string",
@@ -343,58 +357,68 @@
               "archived"
             ],
             "default": "draft",
-            "example": "published"
+            "example": "published",
+            "title": "Status"
           },
           "hoursBeforeBooking": {
             "type": "integer",
             "description": "Number of hours before booking start at which the reminder is dispatched (e.g. 24, 2, 1). Configures timing per REQ-BET-005.",
             "minimum": 0,
             "maximum": 8760,
-            "example": 24
+            "example": 24,
+            "title": "Hours Before Booking"
           },
           "subjectLine": {
             "type": "string",
             "description": "Email subject. Supports {{variable}} placeholders (NFR-BET-002).",
             "example": "Herinnering: uw boeking op {{bookingDate}}",
-            "maxLength": 255
+            "maxLength": 255,
+            "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
             "description": "HTML email body, inline styles only (NFR-BET-001).",
-            "example": "<p>Hallo {{customerName}}, over {{hoursUntilBooking}} uur start uw boeking.</p>"
+            "example": "<p>Hallo {{customerName}}, over {{hoursUntilBooking}} uur start uw boeking.</p>",
+            "title": "Html Body"
           },
           "plainTextBody": {
             "type": "string",
             "description": "Plain-text fallback body (REQ-BET-006).",
-            "example": "Hallo {{customerName}}, over {{hoursUntilBooking}} uur start uw boeking."
+            "example": "Hallo {{customerName}}, over {{hoursUntilBooking}} uur start uw boeking.",
+            "title": "Plain Text Body"
           },
           "logoUri": {
             "type": "string",
             "format": "uri",
             "description": "URL to the organization logo image (NFR-BET-004).",
-            "example": "https://cdn.example.org/logo.png"
+            "example": "https://cdn.example.org/logo.png",
+            "title": "Logo URI"
           },
           "accentColor": {
             "type": "string",
             "description": "Hex colour code for branding accents.",
             "pattern": "^#[0-9A-Fa-f]{6}$",
-            "example": "#21468B"
+            "example": "#21468B",
+            "title": "Accent Color"
           },
           "footerText": {
             "type": "string",
             "description": "Custom footer text.",
-            "example": "© 2026 Example BV"
+            "example": "© 2026 Example BV",
+            "title": "Footer Text"
           },
           "senderName": {
             "type": "string",
             "description": "Display name shown as the email sender.",
-            "example": "Example BV Boekingen"
+            "example": "Example BV Boekingen",
+            "title": "Sender Name"
           },
           "senderAddress": {
             "type": "string",
             "format": "email",
             "description": "From-address used for dispatch (ADR-022).",
-            "example": "bookings@example.org"
+            "example": "bookings@example.org",
+            "title": "Sender Address"
           },
           "locale": {
             "type": "string",
@@ -404,16 +428,19 @@
               "en"
             ],
             "default": "nl",
-            "example": "nl"
+            "example": "nl",
+            "title": "Locale"
           },
           "activatedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp when the template was first published (REQ-BET-002)."
+            "description": "Timestamp when the template was first published (REQ-BET-002).",
+            "title": "Activated At"
           },
           "administrationId": {
             "type": "string",
-            "description": "Tenant administration this template belongs to. Null for shipped defaults."
+            "description": "Tenant administration this template belongs to. Null for shipped defaults.",
+            "title": "Administration ID"
           }
         }
       },
@@ -543,7 +570,8 @@
             "type": "string",
             "description": "Human-readable template name.",
             "example": "Default Booking Cancellation",
-            "maxLength": 255
+            "maxLength": 255,
+            "title": "Name"
           },
           "status": {
             "type": "string",
@@ -554,57 +582,67 @@
               "archived"
             ],
             "default": "draft",
-            "example": "published"
+            "example": "published",
+            "title": "Status"
           },
           "subjectLine": {
             "type": "string",
             "description": "Email subject. Supports {{variable}} placeholders (NFR-BET-002).",
             "example": "Boeking geannuleerd: {{bookingRef}}",
-            "maxLength": 255
+            "maxLength": 255,
+            "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
             "description": "HTML email body, inline styles only (NFR-BET-001).",
-            "example": "<p>Uw boeking {{bookingRef}} is geannuleerd.</p>"
+            "example": "<p>Uw boeking {{bookingRef}} is geannuleerd.</p>",
+            "title": "Html Body"
           },
           "plainTextBody": {
             "type": "string",
             "description": "Plain-text fallback body (REQ-BET-006).",
-            "example": "Uw boeking {{bookingRef}} is geannuleerd."
+            "example": "Uw boeking {{bookingRef}} is geannuleerd.",
+            "title": "Plain Text Body"
           },
           "cancellationReasonRequired": {
             "type": "boolean",
             "description": "Whether the {{cancellationReason}} variable is included in the template bindings (REQ-BET-009).",
             "default": false,
-            "example": true
+            "example": true,
+            "title": "Cancellation Reason Required"
           },
           "logoUri": {
             "type": "string",
             "format": "uri",
             "description": "URL to the organization logo image (NFR-BET-004).",
-            "example": "https://cdn.example.org/logo.png"
+            "example": "https://cdn.example.org/logo.png",
+            "title": "Logo URI"
           },
           "accentColor": {
             "type": "string",
             "description": "Hex colour code for branding accents.",
             "pattern": "^#[0-9A-Fa-f]{6}$",
-            "example": "#21468B"
+            "example": "#21468B",
+            "title": "Accent Color"
           },
           "footerText": {
             "type": "string",
             "description": "Custom footer text.",
-            "example": "© 2026 Example BV"
+            "example": "© 2026 Example BV",
+            "title": "Footer Text"
           },
           "senderName": {
             "type": "string",
             "description": "Display name shown as the email sender.",
-            "example": "Example BV Boekingen"
+            "example": "Example BV Boekingen",
+            "title": "Sender Name"
           },
           "senderAddress": {
             "type": "string",
             "format": "email",
             "description": "From-address used for dispatch (ADR-022).",
-            "example": "bookings@example.org"
+            "example": "bookings@example.org",
+            "title": "Sender Address"
           },
           "locale": {
             "type": "string",
@@ -614,16 +652,19 @@
               "en"
             ],
             "default": "nl",
-            "example": "nl"
+            "example": "nl",
+            "title": "Locale"
           },
           "activatedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp when the template was first published (REQ-BET-002)."
+            "description": "Timestamp when the template was first published (REQ-BET-002).",
+            "title": "Activated At"
           },
           "administrationId": {
             "type": "string",
-            "description": "Tenant administration this template belongs to. Null for shipped defaults."
+            "description": "Tenant administration this template belongs to. Null for shipped defaults.",
+            "title": "Administration ID"
           }
         }
       }

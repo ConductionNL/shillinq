@@ -5,8 +5,9 @@
  InvoiceQuickDraftModal — shillinq-invoice-quick-draft.
 
  A compact single-screen NcDialog launched from the Financial overview
- dashboard's "Create invoice" action (FinancialDashboardActions.vue). It
- covers the common case — a one-or-few-line draft invoice for a known
+ dashboard's "Create invoice" action — a declarative `config.headerActions[]`
+ open-modal action (ADR-049 Phase-4) targeting this component's registry id.
+ It covers the common case — a one-or-few-line draft invoice for a known
  customer — without sending the user to the full AR index + multi-step
  form. On save it creates an ARInvoice in state `draft` directly through
  the OpenRegister object API (ADR-022: invoices are OR objects; no
@@ -14,10 +15,9 @@
  dashboard receivables widget reloads.
 
  Modal isolation (hydra gate-13): this dialog lives in its own .vue file
- under src/modals/ and is imported by FinancialDashboardActions.vue. It
- must never be inlined into the parent. The parent owns nothing but the
- open flag and the launch button; this component owns its own form state,
- customer/GL lookups, the POST and the toast.
+ under src/modals/ and is registered as a kind:"modal" so the dashboard
+ headerAction's open-modal `target` resolves it. This component owns its
+ own form state, customer/GL lookups, the POST and the toast.
 
  @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
 -->
@@ -314,7 +314,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${CUSTOMER_SCHEMA}`),
-					{ params: { limit: 500 } },
+					{ params: { _limit: 500 } },
 				)
 				const rows = response.data?.results ?? response.data?.objects ?? response.data ?? []
 				this.customers = Array.isArray(rows) ? rows : []

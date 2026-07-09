@@ -1,0 +1,11 @@
+{
+  "label": "Accounting standards",
+  "position": 8,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "title": "Accounting & reporting standards",
+    "description": "Reference for the financial- and sustainability-reporting frameworks Shillinq supports — IFRS, Dutch GAAP (BW Title 9 + RJ) and Dutch tax, US GAAP, public-sector (IPSAS / BBV) and sustainability (ESRS / IFRS S1-S2) — plus a cross-framework conflict comparison. Each framework page lists its standards with links to the authoritative source. Use the Standards policy in Shillinq's administration settings to declare which frameworks apply and in which order of precedence."
+  }
+}

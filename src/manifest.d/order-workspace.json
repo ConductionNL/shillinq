@@ -1,0 +1,65 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "abstract-order-primitive",
+		"adr": "ADR-037 modular manifest fragment — the unified Order workspace that replaces the scattered Subsidie / Purchase Order / Quote / Sales Order pages. One Order index (filterable by orderType) + an Order detail that auto-renders the schema and its related Payments + OrderLines."
+	},
+	"menu": [
+		{ "id": "Orders", "label": "Orders", "icon": "FileDocumentMultipleOutline", "route": "Orders", "order": 28 }
+	],
+	"pages": [
+		{
+			"id": "Orders",
+			"title": "Orders",
+			"icon": "FileDocumentMultipleOutline",
+			"route": "/orders",
+			"type": "index",
+			"schema": "Order",
+			"register": "shillinq",
+			"filters": [
+				{ "key": "orderType", "label": "Type", "type": "select", "options": ["booking", "sales", "purchase", "grant", "engagement", "quote", "blanket"] }
+			],
+			"columns": ["orderNumber", "orderType", "counterpartyName", "totalAmount", "orderDate", "state"]
+		},
+		{
+			"id": "OrderDetail",
+			"title": "Order",
+			"route": "/orders/:id",
+			"type": "detail",
+			"schema": "Order",
+			"register": "shillinq",
+			"_note": "Order is the unified transactional WORKSPACE primitive that replaces the scattered Subsidie / Purchase Order / Quote / Sales Order records — one record whose orderType/direction re-skins it. Body leads with the order header (counterparty, type, terms, total) plus a total-amount KPI; the Order lines are the primary child table (the auditable breakdown) with Payments beside them so the operator sees what was ordered and what has been paid. Documents (quote/PO/contract) and the audit trail sit in the sidebar. No email/calendar leaf on the record itself — a transaction workspace, not a comms surface.",
+			"aggregations": [
+				{"id": "total", "title": "Order total", "field": "totalAmount", "metric": "value", "format": "currency"}
+			],
+			"relatedSchemas": [
+				{ "schema": "OrderLine", "foreignKey": "orderId", "label": "Lines", "title": "Order lines", "columns": [
+					{"key": "lineNumber", "label": "#"},
+					{"key": "description", "label": "Description"},
+					{"key": "quantity", "label": "Qty"},
+					{"key": "unitPrice", "label": "Unit price"},
+					{"key": "lineAmount", "label": "Line total"}
+				] },
+				{ "schema": "Payment", "foreignKey": "orderId", "label": "Payments", "title": "Payments", "columns": [
+					{"key": "paymentDate", "label": "Date"},
+					{"key": "paymentType", "label": "Type"},
+					{"key": "method", "label": "Method"},
+					{"key": "amount", "label": "Amount"},
+					{"key": "status", "label": "Status"}
+				] }
+			],
+			"auditTrail": true,
+			"sidebarProps": {
+				"tabs": [
+					{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+						{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "Order", "objectId": ":id"}}
+					]},
+					{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+					]}
+				]
+			}
+		}
+	]
+}

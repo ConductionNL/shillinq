@@ -80,7 +80,7 @@ days instead of 10-15.
 - [ ] Project: n8n — orchestrates the nightly soft-close pipeline
   (sequencing modules, handling retries, routing alerts). Separate
   change.
-- [ ] Project: mydash — tiles for close countdown, flux heatmap,
+- [ ] Project: launchpad — tiles for close countdown, flux heatmap,
   time-to-close trend. Separate change.
 - [ ] Project: docudesk — archives period-end flux narrative and
   signed-off board pack (via `bookkeeping-document-attachment-
@@ -120,8 +120,8 @@ days instead of 10-15.
   lands via `opsx-apply` cycle.
 - **n8n orchestration** — workflow definition belongs in a
   separate n8n change.
-- **mydash tiles** — analytics and dashboards belong in a separate
-  mydash change.
+- **launchpad tiles** — analytics and dashboards belong in a separate
+  launchpad change.
 - **Rolling forecast** — assumes budget/forecast module already
   defined or will be defined separately.
 - **Audit adjustments post-lock** — audit-period extensions are

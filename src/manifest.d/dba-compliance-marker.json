@@ -8,7 +8,7 @@
 			"children": [
 				{
 					"id": "DBAOpdrachten",
-					"label": "DBA Opdrachten",
+					"label": "DBA assignments",
 					"icon": "BriefcaseAccountOutline",
 					"route": "DBAOpdrachten",
 					"order": 10
@@ -22,7 +22,7 @@
 				},
 				{
 					"id": "DBAModelovereenkomsten",
-					"label": "Modelovereenkomst Register",
+					"label": "Model agreement register",
 					"icon": "FileDocumentCheckOutline",
 					"route": "DBAModelovereenkomsten",
 					"order": 30
@@ -56,13 +56,13 @@
 			"id": "DBAOpdrachten",
 			"route": "/dba/opdrachten",
 			"type": "index",
-			"title": "DBA Opdrachten",
+			"title": "DBA assignments",
 			"config": {
 				"register": "shillinq",
 				"schema": "DBAOpdracht",
 				"columns": [
-					{"key": "opdrachtNaam", "label": "Opdracht", "sortable": true},
-					{"key": "klantId", "label": "Klant", "sortable": true},
+					{"key": "opdrachtNaam", "label": "Assignment", "sortable": true},
+					{"key": "klantId", "label": "Client", "sortable": true},
 					{"key": "startDatum", "label": "Start", "sortable": true},
 					{"key": "actueleRisicoscore", "label": "Risk score", "sortable": true},
 					{"key": "risicoNiveau", "label": "Risk band", "sortable": true},
@@ -77,20 +77,26 @@
 			"id": "DBAOpdrachtDetail",
 			"route": "/dba/opdrachten/:id",
 			"type": "detail",
-			"title": "DBA Opdracht",
+			"title": "DBA assignment",
 			"config": {
+				"_note": "DBA assignment (opdracht) is the MASTER engagement record of the DBA-compliance dossier: it anchors intake scoring, the evidence dossier and every risk flag raised against this client relationship. Body leads with assignment/client data plus revenue KPIs (expected vs realised) and open-flag count, then the three FK child collections (intakes, evidence dossiers, risk flags on opdrachtId) so the whole compliance chain is visible in one place. No email/calendar — a compliance/ledger record, not a comms surface; the immutable audit trail sits in a sidebar tab alongside dossier documents.",
 				"register": "shillinq",
 				"schema": "DBAOpdracht",
+				"aggregations": [
+					{"id": "expectedRevenue", "title": "Expected revenue", "field": "verwachteOmzet", "metric": "value", "format": "currency"},
+					{"id": "realisedRevenue", "title": "Realised revenue", "field": "gerealiseerdeOmzet", "metric": "value", "format": "currency"},
+					{"id": "openFlags", "title": "Open risk flags", "field": "openFlags", "metric": "value"}
+				],
 				"fields": [
-					{"key": "opdrachtNaam", "label": "Opdracht", "type": "string"},
-					{"key": "ondernemingId", "label": "Onderneming", "type": "string"},
-					{"key": "klantId", "label": "Klant", "type": "string"},
+					{"key": "opdrachtNaam", "label": "Assignment", "type": "string"},
+					{"key": "ondernemingId", "label": "Company", "type": "string"},
+					{"key": "klantId", "label": "Client", "type": "string"},
 					{"key": "startDatum", "label": "Start date", "type": "string"},
 					{"key": "verwachteEindDatum", "label": "Expected end", "type": "string"},
 					{"key": "feitelijkeEindDatum", "label": "Actual end", "type": "string"},
 					{"key": "verwachteOmzet", "label": "Expected revenue", "type": "number"},
 					{"key": "gerealiseerdeOmzet", "label": "Realised revenue", "type": "number"},
-					{"key": "modelOvereenkomstId", "label": "Modelovereenkomst", "type": "string"},
+					{"key": "modelOvereenkomstId", "label": "Model agreement", "type": "string"},
 					{"key": "intakeStatus", "label": "Intake status", "type": "string"},
 					{"key": "actueleRisicoscore", "label": "Risk score", "type": "number"},
 					{"key": "risicoNiveau", "label": "Risk band", "type": "string"},
@@ -98,7 +104,36 @@
 					{"key": "openFlags", "label": "Open flags", "type": "number"},
 					{"key": "state", "label": "State", "type": "string"}
 				],
-				"indexRoute": "DBAOpdrachten"
+				"relatedLists": [
+					{"id": "intakes", "title": "Intake assessments", "schema": "DBAIntake", "foreignKey": "opdrachtId", "columns": [
+						{"key": "ingevuldOp", "label": "Filled in"},
+						{"key": "totaalScore", "label": "Total score"},
+						{"key": "interpretatie", "label": "Risk band"}
+					], "detailRoute": "DBAIntakeDetail"},
+					{"id": "evidence", "title": "Evidence dossiers", "schema": "DBAEvidenceDossier", "foreignKey": "opdrachtId", "columns": [
+						{"key": "compleetheidScore", "label": "Completeness"},
+						{"key": "bewaarTermijn", "label": "Retention"},
+						{"key": "archiveDate", "label": "Delete-eligible"}
+					], "detailRoute": "DBAEvidenceDossierDetail"},
+					{"id": "flags", "title": "Risk flags", "schema": "DBARisicoflag", "foreignKey": "opdrachtId", "columns": [
+						{"key": "type", "label": "Flag type"},
+						{"key": "ernst", "label": "Severity"},
+						{"key": "detectieMoment", "label": "Detected"},
+						{"key": "status", "label": "Status"}
+					], "detailRoute": "DBARisicoflagDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "DBAOpdrachten",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Documents", "icon": "FolderOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "DBAOpdracht", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -110,7 +145,7 @@
 				"register": "shillinq",
 				"schema": "DBAIntake",
 				"columns": [
-					{"key": "opdrachtId", "label": "Opdracht", "sortable": true},
+					{"key": "opdrachtId", "label": "Assignment", "sortable": true},
 					{"key": "ingevuldOp", "label": "Filled in", "sortable": true},
 					{"key": "gezagSubtotaal", "label": "Authority", "sortable": true},
 					{"key": "arbeidSubtotaal", "label": "Personal service", "sortable": true},
@@ -128,10 +163,15 @@
 			"type": "detail",
 			"title": "DBA Intake",
 			"config": {
+				"_note": "DBA intake is a scored assessment REPORT (gezag / persoonlijke arbeid / financieel risico / Deliveroo criteria) that produces the total risk score and interpretation for one assignment. Body leads with the score fields; KPI surfaces the total score and max, and the parent assignment is linked so the assessor can jump back to the engagement. No comms — a compliance record; audit trail in a sidebar tab.",
 				"register": "shillinq",
 				"schema": "DBAIntake",
+				"aggregations": [
+					{"id": "totalScore", "title": "Total score", "field": "totaalScore", "metric": "value"},
+					{"id": "maxScore", "title": "Max score", "field": "maxScore", "metric": "value"}
+				],
 				"fields": [
-					{"key": "opdrachtId", "label": "Opdracht", "type": "string"},
+					{"key": "opdrachtId", "label": "Assignment", "type": "string"},
 					{"key": "ingevuldOp", "label": "Filled in", "type": "string"},
 					{"key": "gezagSubtotaal", "label": "Authority/control", "type": "number"},
 					{"key": "arbeidSubtotaal", "label": "Personal service", "type": "number"},
@@ -141,14 +181,29 @@
 					{"key": "interpretatie", "label": "Risk band", "type": "string"},
 					{"key": "state", "label": "State", "type": "string"}
 				],
-				"indexRoute": "DBAIntakes"
+				"relatedLists": [
+					{"id": "flags", "title": "Risk flags on this assignment", "schema": "DBARisicoflag", "foreignKey": "opdrachtId", "join": "opdrachtId", "columns": [
+						{"key": "type", "label": "Flag type"},
+						{"key": "ernst", "label": "Severity"},
+						{"key": "status", "label": "Status"}
+					], "detailRoute": "DBARisicoflagDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "DBAIntakes",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
 			"id": "DBAModelovereenkomsten",
 			"route": "/dba/modelovereenkomsten",
 			"type": "index",
-			"title": "Modelovereenkomst Register",
+			"title": "Model agreement register",
 			"config": {
 				"register": "shillinq",
 				"schema": "DBAModelovereenkomst",
@@ -167,8 +222,9 @@
 			"id": "DBAModelovereenkomstDetail",
 			"route": "/dba/modelovereenkomsten/:id",
 			"type": "detail",
-			"title": "Modelovereenkomst",
+			"title": "Model agreement",
 			"config": {
+				"_note": "Model agreement (modelovereenkomst) is a DOCUMENT record — an approved Belastingdienst/branch template with a publication URL, version, validity window and a stored file (fileRef + sha256 integrity hash). Body leads with the identifying/version data; the source document and its integrity hash matter most, so Documents sits on the body-adjacent sidebar with the audit trail. No comms — a reference document, not a conversation.",
 				"register": "shillinq",
 				"schema": "DBAModelovereenkomst",
 				"fields": [
@@ -178,9 +234,22 @@
 					{"key": "goedkeuringDatum", "label": "Approval date", "type": "string"},
 					{"key": "geldigTot", "label": "Valid until", "type": "string"},
 					{"key": "versie", "label": "Version", "type": "string"},
-					{"key": "actueleVersie", "label": "Current version", "type": "boolean"}
+					{"key": "actueleVersie", "label": "Current version", "type": "boolean"},
+					{"key": "fileRef", "label": "Stored file", "type": "string"},
+					{"key": "sha256", "label": "SHA-256 integrity", "type": "string", "copyable": true}
 				],
-				"indexRoute": "DBAModelovereenkomsten"
+				"auditTrail": true,
+				"indexRoute": "DBAModelovereenkomsten",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Document", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "DBAModelovereenkomst", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -192,7 +261,7 @@
 				"register": "shillinq",
 				"schema": "DBAPortfolioRisico",
 				"columns": [
-					{"key": "ondernemingId", "label": "Onderneming", "sortable": true},
+					{"key": "ondernemingId", "label": "Company", "sortable": true},
 					{"key": "peilDatum", "label": "Reference date", "sortable": true},
 					{"key": "actieveOpdrachten", "label": "Active engagements", "sortable": true},
 					{"key": "exclusieveRelaties", "label": "Exclusive relations", "sortable": true},
@@ -208,16 +277,37 @@
 			"type": "detail",
 			"title": "DBA Portfolio Risk",
 			"config": {
+				"_note": "DBA portfolio risk is a company-level REPORT: a dated snapshot of concentration, long-standing and exclusive relations, and the overall portfolio risk band across all DBA engagements of one company. Body leads with the snapshot data + KPIs (active engagements, exclusive relations), then lists the underlying assignments (DBAOpdracht for the same company) so the risk score is traceable to individual engagements. No comms; audit trail in a sidebar tab.",
 				"register": "shillinq",
 				"schema": "DBAPortfolioRisico",
+				"aggregations": [
+					{"id": "activeEngagements", "title": "Active engagements", "field": "actieveOpdrachten", "metric": "value"},
+					{"id": "exclusiveRelations", "title": "Exclusive relations", "field": "exclusieveRelaties", "metric": "value"}
+				],
 				"fields": [
-					{"key": "ondernemingId", "label": "Onderneming", "type": "string"},
+					{"key": "ondernemingId", "label": "Company", "type": "string"},
 					{"key": "peilDatum", "label": "Reference date", "type": "string"},
 					{"key": "actieveOpdrachten", "label": "Active engagements", "type": "number"},
 					{"key": "exclusieveRelaties", "label": "Exclusive relations", "type": "number"},
 					{"key": "overallRisico", "label": "Portfolio risk", "type": "string"}
 				],
-				"indexRoute": "DBAPortfolioRisicos"
+				"relatedLists": [
+					{"id": "engagements", "title": "Engagements in this portfolio", "schema": "DBAOpdracht", "foreignKey": "ondernemingId", "join": "ondernemingId", "columns": [
+						{"key": "opdrachtNaam", "label": "Assignment"},
+						{"key": "klantId", "label": "Client"},
+						{"key": "risicoNiveau", "label": "Risk band"},
+						{"key": "openFlags", "label": "Open flags"}
+					], "detailRoute": "DBAOpdrachtDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "DBAPortfolioRisicos",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -229,7 +319,7 @@
 				"register": "shillinq",
 				"schema": "DBAEvidenceDossier",
 				"columns": [
-					{"key": "opdrachtId", "label": "Opdracht", "sortable": true},
+					{"key": "opdrachtId", "label": "Assignment", "sortable": true},
 					{"key": "compleetheidScore", "label": "Completeness", "sortable": true},
 					{"key": "bewaarTermijn", "label": "Retention", "sortable": true},
 					{"key": "archiveDate", "label": "Delete-eligible", "sortable": true}
@@ -244,16 +334,31 @@
 			"type": "detail",
 			"title": "Evidence Dossier",
 			"config": {
+				"_note": "Evidence dossier is the DOCUMENT store backing a DBA assignment: a bundle of supporting stukken with a completeness score, retention term and delete-eligible date. The attached documents are the point of the record, so Documents leads the sidebar; completeness is surfaced as a KPI. No comms — the email-archive opt-in here is a consent FLAG, not a live mailbox. Audit trail in a sidebar tab for retention defensibility.",
 				"register": "shillinq",
 				"schema": "DBAEvidenceDossier",
+				"aggregations": [
+					{"id": "completeness", "title": "Completeness score", "field": "compleetheidScore", "metric": "value", "format": "percent"}
+				],
 				"fields": [
-					{"key": "opdrachtId", "label": "Opdracht", "type": "string"},
-					{"key": "emailArchiefOptIn", "label": "Email archive opt-in", "type": "boolean"},
+					{"key": "opdrachtId", "label": "Assignment", "type": "string"},
+					{"key": "emailArchiveOptIn", "label": "Email archive opt-in", "type": "boolean"},
 					{"key": "compleetheidScore", "label": "Completeness", "type": "number"},
 					{"key": "bewaarTermijn", "label": "Retention period", "type": "string"},
 					{"key": "archiveDate", "label": "Delete-eligible date", "type": "string"}
 				],
-				"indexRoute": "DBAEvidenceDossiers"
+				"auditTrail": true,
+				"indexRoute": "DBAEvidenceDossiers",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Evidence documents", "icon": "FolderZipOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "DBAEvidenceDossier", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -265,7 +370,7 @@
 				"register": "shillinq",
 				"schema": "DBARisicoflag",
 				"columns": [
-					{"key": "opdrachtId", "label": "Opdracht", "sortable": true},
+					{"key": "opdrachtId", "label": "Assignment", "sortable": true},
 					{"key": "type", "label": "Flag type", "sortable": true},
 					{"key": "ernst", "label": "Severity", "sortable": true},
 					{"key": "detectieMoment", "label": "Detected", "sortable": true},
@@ -281,18 +386,28 @@
 			"type": "detail",
 			"title": "Risk Flag",
 			"config": {
+				"_note": "Risk flag is a single detected DBA-risk signal against an assignment — its type, severity, detection moment, legal basis (fiscaleBron), suggested action and resolution memo. A compact alert record: the body shows the flag detail and resolution, with a link back to the parent assignment. No comms; the audit trail sidebar tab records who acknowledged/resolved the flag.",
 				"register": "shillinq",
 				"schema": "DBARisicoflag",
 				"fields": [
-					{"key": "opdrachtId", "label": "Opdracht", "type": "string"},
+					{"key": "opdrachtId", "label": "Assignment", "type": "string"},
 					{"key": "type", "label": "Flag type", "type": "string"},
 					{"key": "ernst", "label": "Severity", "type": "string"},
 					{"key": "detectieMoment", "label": "Detected", "type": "string"},
 					{"key": "fiscaleBron", "label": "Legal basis", "type": "string"},
 					{"key": "actieSuggestie", "label": "Suggested action", "type": "string"},
-					{"key": "status", "label": "Status", "type": "string"}
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "resolutieMemo", "label": "Resolution memo", "type": "string"}
 				],
-				"indexRoute": "DBARisicoflags"
+				"auditTrail": true,
+				"indexRoute": "DBARisicoflags",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		}
 	]

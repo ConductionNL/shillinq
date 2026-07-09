@@ -1,0 +1,24 @@
+{
+  "x-shillinq-fragment": "checks-chart-of-accounts",
+  "components": {
+    "schemas": {
+      "Account": {
+        "version": "0.2.0",
+        "properties": {
+          "rgsCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Standardised RGS (Referentie Grootboekschema) reference code mapped onto this general-ledger account, enabling uniform SBR exchange to KvK, Belastingdienst and CBS (RGS rgs-coa-standard-codes). Hierarchical alphabetic reference code, e.g. 'BLimVap' (immateriele vaste activa).",
+            "title": "Rgs Code"
+          },
+          "rgsReferenceNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "Unique numeric RGS reference number that maps one-to-one to the corresponding SBR taxonomy element (RGS rgs-code-structure), e.g. '10101010'.",
+            "title": "Rgs Reference Number"
+          }
+        }
+      }
+    }
+  }
+}

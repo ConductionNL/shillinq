@@ -314,8 +314,26 @@ final class GoodsReceiptNoteIntegrationTest extends TestCase
             self::assertNotEmpty($page['component'] ?? '', 'Custom pages must reference a registry component');
         }
 
-        $menuIds = array_column($json['menu'], 'id');
-        self::assertContains('GoodsReceiptNotes', $menuIds);
+        // GoodsReceiptNotes may appear at the top level or as a child of a parent
+        // group (e.g. Purchasing). Collect all ids from all levels.
+        $allMenuIds = [];
+        $queue      = $json['menu'];
+        while ($queue !== []) {
+            $entry = array_shift($queue);
+            if (is_array($entry) === false) {
+                continue;
+            }
+
+            if (isset($entry['id'])) {
+                $allMenuIds[] = $entry['id'];
+            }
+
+            foreach ((array) ($entry['children'] ?? []) as $child) {
+                $queue[] = $child;
+            }
+        }
+
+        self::assertContains('GoodsReceiptNotes', $allMenuIds, 'GoodsReceiptNotes MUST appear in the menu (at any level)');
 
     }//end testManifestFragmentExposesGrnPages()
 

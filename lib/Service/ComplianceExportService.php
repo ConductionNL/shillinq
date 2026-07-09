@@ -326,10 +326,11 @@ class ComplianceExportService
 
         try {
             if (method_exists($auditService, 'findInRange') === true) {
+                // @phpstan-ignore-next-line - cross-app OR AuditTrailService; method exists at runtime
                 $rows = $auditService->findInRange(
-                    register: $this->register(),
-                    from:     $from.'T00:00:00Z',
-                    to:       $to.'T23:59:59Z'
+                    $this->register(),
+                    $from.'T00:00:00Z',
+                    $to.'T23:59:59Z'
                 );
             } else if (method_exists($auditService, 'findAll') === true) {
                 $rows = $auditService->findAll(

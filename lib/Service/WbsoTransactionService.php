@@ -279,7 +279,7 @@ class WbsoTransactionService
     {
         $required = ['transactionNumber', 'transactionType', 'transactionDate', 'amount', 'description', 'administrationId'];
         foreach ($required as $field) {
-            if (isset($payload[$field]) === false || $payload[$field] === '' || $payload[$field] === null) {
+            if (isset($payload[$field]) === false || $payload[$field] === '') {
                 throw new InvalidArgumentException(sprintf('%s is required', $field));
             }
         }

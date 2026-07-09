@@ -256,7 +256,7 @@ class WbsoAccountService
     {
         $required = ['accountNumber', 'name', 'accountType', 'administrationId'];
         foreach ($required as $field) {
-            if (isset($payload[$field]) === false || $payload[$field] === '' || $payload[$field] === null) {
+            if (isset($payload[$field]) === false || $payload[$field] === '') {
                 throw new InvalidArgumentException(sprintf('%s is required', $field));
             }
         }

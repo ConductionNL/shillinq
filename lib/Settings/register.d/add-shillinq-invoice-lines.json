@@ -1,0 +1,312 @@
+{
+  "x-shillinq-fragment": "add-shillinq-invoice-lines",
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "version": "0.5.0",
+        "properties": {
+          "invoiceTypeCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Invoice type code (BT-3), UNTDID 1001 (e.g. 380 commercial invoice).",
+            "title": "Invoice Type Code"
+          },
+          "supplyDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Date on which the supply was made/completed (BT-72 / VAT Directive art. 226(7)).",
+            "title": "Supply Date"
+          },
+          "specificationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Specification identifier (BT-24), e.g. the CIUS/Peppol identifier.",
+            "title": "Specification ID"
+          },
+          "sellerName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller name (BT-27).",
+            "title": "Seller Name"
+          },
+          "sellerIdentifier": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller identifier (BT-29).",
+            "title": "Seller Identifier"
+          },
+          "sellerVatId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller VAT identifier (BT-31); ISO 3166-1 alpha-2 country prefix.",
+            "title": "Seller VAT ID"
+          },
+          "sellerTaxRegId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller tax registration identifier (BT-32).",
+            "title": "Seller Tax Reg ID"
+          },
+          "sellerTaxRepVatId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller tax representative VAT identifier (BT-63).",
+            "title": "Seller Tax Rep VAT ID"
+          },
+          "sellerAddress": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller postal address (BG-5).",
+            "title": "Seller Address"
+          },
+          "sellerCountryCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller country code (BT-40), ISO 3166-1 alpha-2.",
+            "title": "Seller Country Code"
+          },
+          "buyerAddress": {
+            "type": "string",
+            "nullable": true,
+            "description": "Buyer postal address (BG-8).",
+            "title": "Buyer Address"
+          },
+          "buyerVatId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Buyer VAT identifier (BT-48); ISO 3166-1 alpha-2 country prefix.",
+            "title": "Buyer VAT ID"
+          },
+          "buyerLegalRegId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Buyer legal registration identifier (BT-47).",
+            "title": "Buyer Legal Reg ID"
+          },
+          "taxPointDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Value added tax point date (BT-7); mutually exclusive with taxPointDateCode.",
+            "title": "Tax Point Date"
+          },
+          "taxPointDateCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Value added tax point date code (BT-8); mutually exclusive with taxPointDate.",
+            "title": "Tax Point Date Code"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment terms (BT-20).",
+            "title": "Payment Terms"
+          },
+          "invoiceLines": {
+            "type": "array",
+            "nullable": true,
+            "description": "EN 16931 invoice lines (BG-25). Each line carries lineId (BT-126), quantity (BT-129), unitCode (BT-130), netAmount (BT-131), itemName (BT-153), netPrice (BT-146), vatCategory (BT-151), vatRate (BT-152) and optional line-level allowances/charges (BG-27/BG-28).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "lineId": {
+                  "type": "string",
+                  "description": "Invoice line identifier (BT-126).",
+                  "title": "Line ID"
+                },
+                "quantity": {
+                  "type": "number",
+                  "description": "Invoiced quantity (BT-129).",
+                  "title": "Quantity"
+                },
+                "unitCode": {
+                  "type": "string",
+                  "description": "Invoiced quantity unit of measure (BT-130), UN/ECE Recommendation 20.",
+                  "title": "Unit Code"
+                },
+                "netAmount": {
+                  "type": "number",
+                  "description": "Invoice line net amount (BT-131).",
+                  "title": "Net Amount"
+                },
+                "itemName": {
+                  "type": "string",
+                  "description": "Item name (BT-153).",
+                  "title": "Item Name"
+                },
+                "netPrice": {
+                  "type": "number",
+                  "description": "Item net price (BT-146).",
+                  "title": "Net Price"
+                },
+                "vatCategory": {
+                  "type": "string",
+                  "description": "Invoiced item VAT category code (BT-151), UNTDID 5305.",
+                  "title": "VAT Category"
+                },
+                "vatRate": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Invoiced item VAT rate (BT-152); >0 for Standard rated, 0 for the zero/exempt families, absent for 'Not subject to VAT'.",
+                  "title": "VAT Rate"
+                },
+                "lineAllowances": {
+                  "type": "array",
+                  "nullable": true,
+                  "description": "Invoice line allowances (BG-27); each carries amount (BT-136), baseAmount (BT-137) and a reasonText (BT-139) or reasonCode (BT-140).",
+                  "title": "Line Allowances"
+                },
+                "lineCharges": {
+                  "type": "array",
+                  "nullable": true,
+                  "description": "Invoice line charges (BG-28); each carries amount (BT-141), baseAmount (BT-142) and a reasonText (BT-144) or reasonCode (BT-145).",
+                  "title": "Line Charges"
+                }
+              }
+            },
+            "title": "Invoice Lines"
+          },
+          "vatBreakdown": {
+            "type": "array",
+            "nullable": true,
+            "description": "EN 16931 VAT breakdown groups (BG-23). Each group carries category (BT-118), taxableAmount (BT-116), taxAmount (BT-117), rate (BT-119) and exemptionReasonText/Code (BT-120/BT-121).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "description": "VAT category code (BT-118), UNTDID 5305.",
+                  "title": "Category"
+                },
+                "taxableAmount": {
+                  "type": "number",
+                  "description": "VAT category taxable amount (BT-116).",
+                  "title": "Taxable Amount"
+                },
+                "taxAmount": {
+                  "type": "number",
+                  "description": "VAT category tax amount (BT-117).",
+                  "title": "Tax Amount"
+                },
+                "rate": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "VAT category rate (BT-119); absent only for category 'O' (not subject to VAT).",
+                  "title": "Rate"
+                },
+                "exemptionReasonCode": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "VAT exemption reason code (BT-121); present for exempt/reverse-charge/export/intra-community/not-subject, absent for Standard/Zero rated.",
+                  "title": "Exemption Reason Code"
+                },
+                "exemptionReasonText": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "VAT exemption reason text (BT-120).",
+                  "title": "Exemption Reason Text"
+                }
+              }
+            },
+            "title": "VAT Breakdown"
+          },
+          "allowances": {
+            "type": "array",
+            "nullable": true,
+            "description": "EN 16931 document-level allowances (BG-20); each carries amount (BT-92), baseAmount (BT-93), vatCategory (BT-95) and a reasonText (BT-97) or reasonCode (BT-98).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "amount": {
+                  "type": "number",
+                  "description": "Document level allowance amount (BT-92).",
+                  "title": "Amount"
+                },
+                "baseAmount": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Document level allowance base amount (BT-93).",
+                  "title": "Base Amount"
+                },
+                "vatCategory": {
+                  "type": "string",
+                  "description": "Document level allowance VAT category code (BT-95).",
+                  "title": "VAT Category"
+                },
+                "reasonText": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Document level allowance reason (BT-97).",
+                  "title": "Reason Text"
+                },
+                "reasonCode": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Document level allowance reason code (BT-98).",
+                  "title": "Reason Code"
+                }
+              }
+            },
+            "title": "Allowances"
+          },
+          "charges": {
+            "type": "array",
+            "nullable": true,
+            "description": "EN 16931 document-level charges (BG-21); each carries amount (BT-99), baseAmount (BT-100), vatCategory (BT-102) and a reasonText (BT-104) or reasonCode (BT-105).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "amount": {
+                  "type": "number",
+                  "description": "Document level charge amount (BT-99).",
+                  "title": "Amount"
+                },
+                "baseAmount": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Document level charge base amount (BT-100).",
+                  "title": "Base Amount"
+                },
+                "vatCategory": {
+                  "type": "string",
+                  "description": "Document level charge VAT category code (BT-102).",
+                  "title": "VAT Category"
+                },
+                "reasonText": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Document level charge reason (BT-104).",
+                  "title": "Reason Text"
+                },
+                "reasonCode": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Document level charge reason code (BT-105).",
+                  "title": "Reason Code"
+                }
+              }
+            },
+            "title": "Charges"
+          },
+          "allowancesTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Sum of allowances on document level (BT-107) = Σ allowances[].amount.",
+            "title": "Allowances Total"
+          },
+          "chargesTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Sum of charges on document level (BT-108) = Σ charges[].amount.",
+            "title": "Charges Total"
+          },
+          "lineNetTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Sum of Invoice line net amount (BT-106) = Σ invoiceLines[].netAmount.",
+            "title": "Line Net Total"
+          }
+        }
+      }
+    }
+  }
+}

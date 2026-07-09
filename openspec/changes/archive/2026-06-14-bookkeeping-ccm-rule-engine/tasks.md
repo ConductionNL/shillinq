@@ -111,7 +111,7 @@ a Nextcloud user id (FK to the NC user directory), never an invented schema.
 - [x] Task 10: Create `lib/Service/AuditCommitteeReportGenerator.php` with:
   - `draftReport(period): (draft_report, executive_summary_draft)` — assembles findings data, queries trend baselines, LLM-drafts exec summary, returns for CFO review
   - `finalizeAndPublish(draft_report, cfо_approved_summary, approver_user): ccm_audit_committee_report` — creates the final report, stores in register, logs distribution
-  - `publishToMydash(report): void` — calls mydash API to surface findings summary + SoD scorecard
+  - `publishToLaunchpad(report): void` — calls launchpad API to surface findings summary + SoD scorecard
   - Unit tests: report assembly, LLM API integration, distribution log
 
 - [x] Task 11: Create `lib/Service/BaselineMateriaisationJob.php` with:

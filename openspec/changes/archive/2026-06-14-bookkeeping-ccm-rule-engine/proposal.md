@@ -244,7 +244,7 @@ Specs:
   screening reports) stored via docudesk file API.
 - **decidesk** — soft. Escalated findings route into board-governance
   workflows (if enabled).
-- **mydash** — soft consumer. CCM dashboard published to mydash with
+- **launchpad** — soft consumer. CCM dashboard published to launchpad with
   findings by severity, SoD scorecard, top rules, trend chart.
 - **opencatalogi** — soft consumer. CCM capability published with COSO +
   SOX tags.

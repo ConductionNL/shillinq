@@ -2,34 +2,34 @@
 	"menu": [
 		{
 			"id": "IbAangifteZzpGroep",
-			"label": "IB-aangifte ZZP",
+			"label": "IB return (sole trader / ZZP)",
 			"icon": "FileDocumentEditOutline",
 			"order": 26,
 			"children": [
 				{
 					"id": "IbAangiftenZzp",
-					"label": "IB-aangiften",
+					"label": "IB returns",
 					"icon": "FileDocumentEditOutline",
 					"route": "IbAangiftenZzp",
 					"order": 10
 				},
 				{
 					"id": "IbOndernemersaftrekken",
-					"label": "Ondernemersaftrekken",
+					"label": "Entrepreneur allowances",
 					"icon": "AccountCashOutline",
 					"route": "IbOndernemersaftrekken",
 					"order": 20
 				},
 				{
 					"id": "IbLijfrenteBeheer",
-					"label": "Lijfrente Beheer",
+					"label": "Annuity management",
 					"icon": "PiggyBankOutline",
 					"route": "IbLijfrenteBeheer",
 					"order": 30
 				},
 				{
 					"id": "IbBox3Vermogen",
-					"label": "Box 3 Vermogen",
+					"label": "Box 3 assets",
 					"icon": "BankOutline",
 					"route": "IbBox3Vermogen",
 					"order": 40
@@ -42,19 +42,19 @@
 			"id": "IbAangiftenZzp",
 			"route": "/ib-aangifte/aangiften",
 			"type": "index",
-			"title": "IB-aangiften",
+			"title": "IB returns",
 			"config": {
 				"register": "shillinq",
 				"schema": "IBAangifte",
 				"columns": [
 					{
 						"key": "belastingjaar",
-						"label": "Belastingjaar",
+						"label": "Tax year",
 						"sortable": true
 					},
 					{
 						"key": "ondernemingId",
-						"label": "Onderneming",
+						"label": "Business",
 						"sortable": true
 					},
 					{
@@ -69,12 +69,12 @@
 					},
 					{
 						"key": "belastbareWinst",
-						"label": "Belastbare winst",
+						"label": "Taxable profit",
 						"sortable": true
 					},
 					{
 						"key": "teBetalenOfTeOntvangen",
-						"label": "Te betalen / ontvangen",
+						"label": "Payable / receivable",
 						"sortable": true
 					}
 				],
@@ -86,24 +86,83 @@
 			"id": "IbAangifteZzpDetail",
 			"route": "/ib-aangifte/aangiften/:id",
 			"type": "detail",
-			"title": "IB-aangifte",
+			"title": "IB return",
 			"config": {
 				"register": "shillinq",
 				"schema": "IBAangifte",
+				"_note": "FINANCIAL / REPORT archetype (native CnDetailPage). An income-tax (IB) return for a sole trader is a tax filing - a signed/submitted document with a lifecycle (CONCEPT -> GEVALIDEERD -> XBRL_GEVALIDEERD -> INGEDIEND -> CORRECTIE_SUPPLETIE) and a Digipoort acknowledgement. Fields carry the P-formulier totals. relatedLists link to the three schedule schemas that have their own index+detail pages in this fragment (IBOndernemersaftrek, IBLijfrenteAOV, IBBox3Vermogen; all FK aangifteId) so the preparer can drill into each schedule. Sidebar carries a Documents tab (XBRL/Digipoort source documents) and an Audit Trail tab (immutable filing record, REQ-IB-009). NO comms leaves - a tax return is filed, not discussed.",
+				"lifecycleActions": true,
+				"relatedLists": [
+					{
+						"id": "ondernemersaftrekken",
+						"title": "Entrepreneur allowances",
+						"schema": "IBOndernemersaftrek",
+						"foreignKey": "aangifteId",
+						"columns": [
+							{ "key": "mkbWinstvrijstelling", "label": "MKB exemption" },
+							{ "key": "totaalAftrek", "label": "Total deduction" }
+						],
+						"detailRoute": "IbOndernemersaftrekDetail"
+					},
+					{
+						"id": "lijfrente",
+						"title": "Annuity & AOV",
+						"schema": "IBLijfrenteAOV",
+						"foreignKey": "aangifteId",
+						"columns": [
+							{ "key": "totaalAftrekbaar", "label": "Total deductible" }
+						],
+						"detailRoute": "IbLijfrenteBeheerDetail"
+					},
+					{
+						"id": "box3",
+						"title": "Box 3 assets",
+						"schema": "IBBox3Vermogen",
+						"foreignKey": "aangifteId",
+						"columns": [
+							{ "key": "peildatum", "label": "Reference date" },
+							{ "key": "totaalRendementsgrondslag", "label": "Yield basis" },
+							{ "key": "belastbareGrondslag", "label": "Taxable basis" }
+						],
+						"detailRoute": "IbBox3VermogenDetail"
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "documents",
+							"label": "Documents",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "IBAangifte", "objectId": ":id" } }
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
 				"fields": [
 					{
 						"key": "belastingjaar",
-						"label": "Belastingjaar",
+						"label": "Tax year",
 						"type": "number"
 					},
 					{
 						"key": "ondernemingId",
-						"label": "Onderneming",
+						"label": "Business",
 						"type": "string"
 					},
 					{
 						"key": "aangifteType",
-						"label": "Aangiftetype",
+						"label": "Return type",
 						"type": "string"
 					},
 					{
@@ -113,52 +172,52 @@
 					},
 					{
 						"key": "indieningKanaal",
-						"label": "Indieningskanaal",
+						"label": "Filing channel",
 						"type": "string"
 					},
 					{
 						"key": "winstUitOnderneming",
-						"label": "Winst uit onderneming",
+						"label": "Business profit",
 						"type": "number"
 					},
 					{
 						"key": "ondernemersaftrek",
-						"label": "Ondernemersaftrek",
+						"label": "Entrepreneur allowance",
 						"type": "number"
 					},
 					{
 						"key": "mkbWinstvrijstelling",
-						"label": "MKB-winstvrijstelling",
+						"label": "MKB profit exemption",
 						"type": "number"
 					},
 					{
 						"key": "belastbareWinst",
-						"label": "Belastbare winst",
+						"label": "Taxable profit",
 						"type": "number"
 					},
 					{
 						"key": "totaalBox1Inkomen",
-						"label": "Totaal box 1",
+						"label": "Total Box 1",
 						"type": "number"
 					},
 					{
 						"key": "totaalBox3Inkomen",
-						"label": "Totaal box 3",
+						"label": "Total Box 3",
 						"type": "number"
 					},
 					{
 						"key": "heffingskortingen",
-						"label": "Heffingskortingen",
+						"label": "Tax credits",
 						"type": "number"
 					},
 					{
 						"key": "teBetalenOfTeOntvangen",
-						"label": "Te betalen / te ontvangen",
+						"label": "Payable / receivable",
 						"type": "number"
 					},
 					{
 						"key": "digipoortOntvangstBevestigingId",
-						"label": "Digipoort-ontvangstbevestiging",
+						"label": "Digipoort acknowledgement",
 						"type": "string"
 					}
 				],
@@ -169,24 +228,24 @@
 			"id": "IbOndernemersaftrekken",
 			"route": "/ib-aangifte/ondernemersaftrekken",
 			"type": "index",
-			"title": "Ondernemersaftrekken",
+			"title": "Entrepreneur allowances",
 			"config": {
 				"register": "shillinq",
 				"schema": "IBOndernemersaftrek",
 				"columns": [
 					{
 						"key": "aangifteId",
-						"label": "Aangifte",
+						"label": "Return",
 						"sortable": true
 					},
 					{
 						"key": "mkbWinstvrijstelling",
-						"label": "MKB-vrijstelling",
+						"label": "MKB exemption",
 						"sortable": true
 					},
 					{
 						"key": "totaalAftrek",
-						"label": "Totaal aftrek",
+						"label": "Total deduction",
 						"sortable": true
 					}
 				],
@@ -198,24 +257,38 @@
 			"id": "IbOndernemersaftrekDetail",
 			"route": "/ib-aangifte/ondernemersaftrekken/:id",
 			"type": "detail",
-			"title": "Ondernemersaftrek",
+			"title": "Entrepreneur allowance",
 			"config": {
 				"register": "shillinq",
 				"schema": "IBOndernemersaftrek",
+				"_note": "FINANCIAL / TRANSACTION archetype (native CnDetailPage). A supporting entrepreneur-allowance schedule (zelfstandigenaftrek/MKB-vrijstelling) that feeds one parent IB return via FK aangifteId. It is a computed sub-record of the parent filing, so no lifecycle or relatedLists of its own - just fields plus an audit tab for traceability back to the parent filing's audit trail. NO comms leaves and no files - it is a derived line of a filed return.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
 				"fields": [
 					{
 						"key": "aangifteId",
-						"label": "Aangifte",
+						"label": "Return",
 						"type": "string"
 					},
 					{
 						"key": "mkbWinstvrijstelling",
-						"label": "MKB-winstvrijstelling",
+						"label": "MKB profit exemption",
 						"type": "number"
 					},
 					{
 						"key": "totaalAftrek",
-						"label": "Totaal aftrek",
+						"label": "Total deduction",
 						"type": "number"
 					}
 				],
@@ -226,19 +299,19 @@
 			"id": "IbLijfrenteBeheer",
 			"route": "/ib-aangifte/lijfrente",
 			"type": "index",
-			"title": "Lijfrente Beheer",
+			"title": "Annuity management",
 			"config": {
 				"register": "shillinq",
 				"schema": "IBLijfrenteAOV",
 				"columns": [
 					{
 						"key": "aangifteId",
-						"label": "Aangifte",
+						"label": "Return",
 						"sortable": true
 					},
 					{
 						"key": "totaalAftrekbaar",
-						"label": "Totaal aftrekbaar",
+						"label": "Total deductible",
 						"sortable": true
 					}
 				],
@@ -250,19 +323,33 @@
 			"id": "IbLijfrenteBeheerDetail",
 			"route": "/ib-aangifte/lijfrente/:id",
 			"type": "detail",
-			"title": "Lijfrente & AOV",
+			"title": "Annuity & AOV",
 			"config": {
 				"register": "shillinq",
 				"schema": "IBLijfrenteAOV",
+				"_note": "FINANCIAL / TRANSACTION archetype (native CnDetailPage). Annuity & disability-insurance (AOV) deduction schedule feeding one parent IB return via FK aangifteId - a computed sub-record of the parent filing, so no lifecycle or relatedLists of its own - just fields plus an audit tab for traceability. NO comms leaves and no files.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
 				"fields": [
 					{
 						"key": "aangifteId",
-						"label": "Aangifte",
+						"label": "Return",
 						"type": "string"
 					},
 					{
 						"key": "totaalAftrekbaar",
-						"label": "Totaal aftrekbaar",
+						"label": "Total deductible",
 						"type": "number"
 					}
 				],
@@ -273,29 +360,29 @@
 			"id": "IbBox3Vermogen",
 			"route": "/ib-aangifte/box3",
 			"type": "index",
-			"title": "Box 3 Vermogen",
+			"title": "Box 3 assets",
 			"config": {
 				"register": "shillinq",
 				"schema": "IBBox3Vermogen",
 				"columns": [
 					{
 						"key": "aangifteId",
-						"label": "Aangifte",
+						"label": "Return",
 						"sortable": true
 					},
 					{
 						"key": "peildatum",
-						"label": "Peildatum",
+						"label": "Reference date",
 						"sortable": true
 					},
 					{
 						"key": "totaalRendementsgrondslag",
-						"label": "Rendementsgrondslag",
+						"label": "Yield basis",
 						"sortable": true
 					},
 					{
 						"key": "belastbareGrondslag",
-						"label": "Belastbare grondslag",
+						"label": "Taxable basis",
 						"sortable": true
 					}
 				],
@@ -307,49 +394,63 @@
 			"id": "IbBox3VermogenDetail",
 			"route": "/ib-aangifte/box3/:id",
 			"type": "detail",
-			"title": "Box 3 Vermogen",
+			"title": "Box 3 assets",
 			"config": {
 				"register": "shillinq",
 				"schema": "IBBox3Vermogen",
+				"_note": "FINANCIAL / TRANSACTION archetype (native CnDetailPage). Box 3 net-wealth schedule (savings + other assets minus debts) feeding one parent IB return via FK aangifteId - a computed sub-record of the parent filing, so no lifecycle or relatedLists of its own - just fields plus an audit tab for traceability. NO comms leaves and no files - a derived asset line of a filed return.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
 				"fields": [
 					{
 						"key": "aangifteId",
-						"label": "Aangifte",
+						"label": "Return",
 						"type": "string"
 					},
 					{
 						"key": "peildatum",
-						"label": "Peildatum",
+						"label": "Reference date",
 						"type": "string"
 					},
 					{
 						"key": "bankEnSpaartegoeden",
-						"label": "Bank & spaartegoeden",
+						"label": "Bank & savings balances",
 						"type": "number"
 					},
 					{
 						"key": "overigeBezittingen",
-						"label": "Overige bezittingen",
+						"label": "Other assets",
 						"type": "number"
 					},
 					{
 						"key": "schulden",
-						"label": "Schulden",
+						"label": "Debts",
 						"type": "number"
 					},
 					{
 						"key": "totaalRendementsgrondslag",
-						"label": "Rendementsgrondslag",
+						"label": "Yield basis",
 						"type": "number"
 					},
 					{
 						"key": "heffingvrijVermogen",
-						"label": "Heffingvrij vermogen",
+						"label": "Tax-free allowance",
 						"type": "number"
 					},
 					{
 						"key": "belastbareGrondslag",
-						"label": "Belastbare grondslag",
+						"label": "Taxable basis",
 						"type": "number"
 					}
 				],

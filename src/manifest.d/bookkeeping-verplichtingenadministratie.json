@@ -2,27 +2,27 @@
 	"menu": [
 		{
 			"id": "Verplichtingen",
-			"label": "Verplichtingen",
+			"label": "Commitments",
 			"icon": "FileSign",
 			"order": 30,
 			"children": [
 				{
 					"id": "Verplichtingenregister",
-					"label": "Verplichtingenregister",
+					"label": "Commitments register",
 					"icon": "FileSign",
 					"route": "Verplichtingenregister",
 					"order": 10
 				},
 				{
 					"id": "Mandaten",
-					"label": "Mandaten",
+					"label": "Mandates",
 					"icon": "AccountKey",
 					"route": "Mandaten",
 					"order": 20
 				},
 				{
 					"id": "Goedkeuringsstappen",
-					"label": "Goedkeuringen",
+					"label": "Approvals",
 					"icon": "ClipboardCheckOutline",
 					"route": "Goedkeuringsstappen",
 					"order": 30
@@ -35,17 +35,17 @@
 			"id": "Verplichtingenregister",
 			"route": "/verplichtingen",
 			"type": "index",
-			"title": "Verplichtingenregister",
+			"title": "Commitments register",
 			"config": {
 				"register": "shillinq",
 				"schema": "Verplichting",
 				"columns": [
-					{"key": "verplichtingsnummer", "label": "Nummer", "sortable": true},
-					{"key": "soort", "label": "Soort", "sortable": true},
+					{"key": "verplichtingsnummer", "label": "Number", "sortable": true},
+					{"key": "soort", "label": "Kind", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true},
-					{"key": "totaalbedrag_excl_btw", "label": "Bedrag (excl. btw)", "sortable": true},
-					{"key": "aangaandatum", "label": "Aangaandatum", "sortable": true},
-					{"key": "mandaat_toegepast", "label": "Mandaat", "sortable": true}
+					{"key": "totaalbedrag_excl_btw", "label": "Amount (excl. BTW)", "sortable": true},
+					{"key": "aangaandatum", "label": "Start date", "sortable": true},
+					{"key": "mandaat_toegepast", "label": "Mandate", "sortable": true}
 				],
 				"defaultSort": "verplichtingsnummer",
 				"detailRoute": "VerplichtingDetail"
@@ -55,42 +55,98 @@
 			"id": "VerplichtingDetail",
 			"route": "/verplichtingen/:id",
 			"type": "detail",
-			"title": "Verplichting",
+			"title": "Commitment",
 			"config": {
 				"register": "shillinq",
 				"schema": "Verplichting",
+				"_note": "COMMITMENT (the parent obligation an organisation enters into — a purchase order/contract encumbrance). The body pairs the commitment header (amounts, term, BTW, applied mandate) with its three child registers, all filtered on `verplichting`: the budget lines (Verplichtingsregel) that break it down per GL/programme with delivered/invoiced/paid running balances, the movements (Verplichtingsmutatie) that draw it down over time, and the approval steps (Goedkeuringsstap) that authorise it. This is the encumbrance-tracking view. No comms leaves; audit trail sidebar records mandate overrides and amount changes.",
 				"fields": [
-					{"key": "verplichtingsnummer", "label": "Nummer", "type": "string"},
-					{"key": "soort", "label": "Soort", "type": "string"},
+					{"key": "verplichtingsnummer", "label": "Number", "type": "string"},
+					{"key": "soort", "label": "Kind", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"},
-					{"key": "aangaandatum", "label": "Aangaandatum", "type": "string"},
-					{"key": "looptijd_van", "label": "Looptijd van", "type": "string"},
-					{"key": "looptijd_tot", "label": "Looptijd tot", "type": "string"},
-					{"key": "totaalbedrag_excl_btw", "label": "Totaalbedrag (excl. btw)", "type": "number"},
-					{"key": "totaalbedrag_incl_btw", "label": "Totaalbedrag (incl. btw)", "type": "number"},
-					{"key": "valuta", "label": "Valuta", "type": "string"},
-					{"key": "btw_regime", "label": "Btw-regime", "type": "string"},
-					{"key": "mandaat_toegepast", "label": "Mandaat", "type": "string"},
-					{"key": "override_reden", "label": "Override-reden", "type": "string"},
-					{"key": "interne_kenmerk", "label": "Intern kenmerk", "type": "string"}
+					{"key": "aangaandatum", "label": "Start date", "type": "string"},
+					{"key": "looptijd_van", "label": "Term from", "type": "string"},
+					{"key": "looptijd_tot", "label": "Term until", "type": "string"},
+					{"key": "totaalbedrag_excl_btw", "label": "Total amount (excl. BTW)", "type": "number"},
+					{"key": "totaalbedrag_incl_btw", "label": "Total amount (incl. BTW)", "type": "number"},
+					{"key": "valuta", "label": "Currency", "type": "string"},
+					{"key": "btw_regime", "label": "BTW regime", "type": "string"},
+					{"key": "mandaat_toegepast", "label": "Mandate", "type": "string"},
+					{"key": "override_reden", "label": "Override reason", "type": "string"},
+					{"key": "interne_kenmerk", "label": "Internal reference", "type": "string"}
 				],
-				"indexRoute": "Verplichtingenregister"
+				"relatedObjects": [
+					{
+						"id": "lines",
+						"label": "Commitment lines",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "Verplichtingsregel",
+							"filterField": "verplichting",
+							"columns": ["regelnummer", "omschrijving", "bedrag_excl_btw", "geleverd_bedrag", "gefactureerd_bedrag", "restant_verplicht"]
+						}
+					},
+					{
+						"id": "movements",
+						"label": "Movements",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "Verplichtingsmutatie",
+							"filterField": "verplichting",
+							"columns": ["datum", "soort", "bedrag", "gerelateerde_factuur", "journaalpost"]
+						}
+					},
+					{
+						"id": "approvals",
+						"label": "Approvals",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "Goedkeuringsstap",
+							"filterField": "verplichting",
+							"columns": ["stapnummer", "rol_vereist", "toegewezen_aan", "status", "behandeld_op"]
+						}
+					}
+				],
+				"indexRoute": "Verplichtingenregister",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
 			"id": "Mandaten",
 			"route": "/verplichtingen/mandaten",
 			"type": "index",
-			"title": "Mandaten",
+			"title": "Mandates",
 			"config": {
 				"register": "shillinq",
 				"schema": "Mandaat",
 				"columns": [
 					{"key": "mandaatcode", "label": "Code", "sortable": true},
-					{"key": "naam", "label": "Naam", "sortable": true},
-					{"key": "maximumbedrag", "label": "Maximumbedrag", "sortable": true},
+					{"key": "naam", "label": "Name", "sortable": true},
+					{"key": "maximumbedrag", "label": "Maximum amount", "sortable": true},
 					{"key": "is_override", "label": "Override", "sortable": true},
-					{"key": "geldig_tot", "label": "Geldig tot", "sortable": true}
+					{"key": "geldig_tot", "label": "Valid until", "sortable": true}
 				],
 				"defaultSort": "mandaatcode",
 				"detailRoute": "MandaatDetail"
@@ -100,38 +156,59 @@
 			"id": "MandaatDetail",
 			"route": "/verplichtingen/mandaten/:id",
 			"type": "detail",
-			"title": "Mandaat",
+			"title": "Mandate",
 			"config": {
 				"register": "shillinq",
 				"schema": "Mandaat",
+				"_note": "MANDATE (the authority definition that governs who may enter commitments and up to what amount). The body is the rule: holder + holder type, maximum amount, whether it is an override mandate, the second-signature threshold, validity window and the decision that adopted it. A config record with no children of its own; no comms. The audit trail sidebar is critical — a mandate is a delegated-authority control, so every change to its limits or holder must be traceable.",
 				"fields": [
 					{"key": "mandaatcode", "label": "Code", "type": "string"},
-					{"key": "naam", "label": "Naam", "type": "string"},
-					{"key": "houder", "label": "Houder", "type": "string"},
-					{"key": "houder_type", "label": "Houder-type", "type": "string"},
-					{"key": "maximumbedrag", "label": "Maximumbedrag", "type": "number"},
-					{"key": "is_override", "label": "Override-mandaat", "type": "boolean"},
-					{"key": "vereist_tweede_handtekening_boven", "label": "Tweede handtekening boven", "type": "number"},
-					{"key": "geldig_van", "label": "Geldig van", "type": "string"},
-					{"key": "geldig_tot", "label": "Geldig tot", "type": "string"},
-					{"key": "vastgesteld_bij", "label": "Vastgesteld bij", "type": "string"}
+					{"key": "naam", "label": "Name", "type": "string"},
+					{"key": "houder", "label": "Holder", "type": "string"},
+					{"key": "houder_type", "label": "Holder type", "type": "string"},
+					{"key": "maximumbedrag", "label": "Maximum amount", "type": "number"},
+					{"key": "is_override", "label": "Override mandate", "type": "boolean"},
+					{"key": "vereist_tweede_handtekening_boven", "label": "Second signature above", "type": "number"},
+					{"key": "geldig_van", "label": "Valid from", "type": "string"},
+					{"key": "geldig_tot", "label": "Valid until", "type": "string"},
+					{"key": "vastgesteld_bij", "label": "Adopted by", "type": "string"}
 				],
-				"indexRoute": "Mandaten"
+				"indexRoute": "Mandaten",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
 			"id": "Goedkeuringsstappen",
 			"route": "/verplichtingen/goedkeuringen",
 			"type": "index",
-			"title": "Goedkeuringen",
+			"title": "Approvals",
 			"config": {
 				"register": "shillinq",
 				"schema": "Goedkeuringsstap",
 				"columns": [
-					{"key": "verplichting", "label": "Verplichting", "sortable": true},
-					{"key": "stapnummer", "label": "Stap", "sortable": true},
-					{"key": "rol_vereist", "label": "Rol", "sortable": true},
-					{"key": "toegewezen_aan", "label": "Toegewezen aan", "sortable": true},
+					{"key": "verplichting", "label": "Commitment", "sortable": true},
+					{"key": "stapnummer", "label": "Step", "sortable": true},
+					{"key": "rol_vereist", "label": "Role", "sortable": true},
+					{"key": "toegewezen_aan", "label": "Assigned to", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true}
 				],
 				"defaultSort": "verplichting",
@@ -142,21 +219,42 @@
 			"id": "GoedkeuringsstapDetail",
 			"route": "/verplichtingen/goedkeuringen/:id",
 			"type": "detail",
-			"title": "Goedkeuringsstap",
+			"title": "Approval step",
 			"config": {
 				"register": "shillinq",
 				"schema": "Goedkeuringsstap",
+				"_note": "APPROVAL STEP (one node in a commitment's authorisation chain). The body is the step: which commitment, step number, required role, assignee, current status, when it was handled, the remark, and whether a signature is required. A single workflow item with no children; no comms. The audit trail sidebar is the sign-off evidence — approvals must be individually traceable for segregation-of-duties.",
 				"fields": [
-					{"key": "verplichting", "label": "Verplichting", "type": "string"},
-					{"key": "stapnummer", "label": "Stap", "type": "number"},
-					{"key": "rol_vereist", "label": "Rol vereist", "type": "string"},
-					{"key": "toegewezen_aan", "label": "Toegewezen aan", "type": "string"},
+					{"key": "verplichting", "label": "Commitment", "type": "string"},
+					{"key": "stapnummer", "label": "Step", "type": "number"},
+					{"key": "rol_vereist", "label": "Role required", "type": "string"},
+					{"key": "toegewezen_aan", "label": "Assigned to", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"},
-					{"key": "behandeld_op", "label": "Behandeld op", "type": "string"},
-					{"key": "opmerking", "label": "Opmerking", "type": "string"},
-					{"key": "vereist_handtekening", "label": "Handtekening vereist", "type": "boolean"}
+					{"key": "behandeld_op", "label": "Handled on", "type": "string"},
+					{"key": "opmerking", "label": "Remark", "type": "string"},
+					{"key": "vereist_handtekening", "label": "Signature required", "type": "boolean"}
 				],
-				"indexRoute": "Goedkeuringsstappen"
+				"indexRoute": "Goedkeuringsstappen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]
