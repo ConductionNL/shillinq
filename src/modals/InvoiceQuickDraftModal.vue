@@ -223,6 +223,7 @@ export default {
 			loadingCustomers: false,
 			customers: [],
 			selectedCustomer: null,
+			administrationId: '',
 			saving: false,
 			error: '',
 			vatOptions: [
@@ -271,11 +272,17 @@ export default {
 	},
 	watch: {
 		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
-		open(next) {
-			if (next === true) {
-				this.reset()
-				this.fetchCustomers()
-			}
+		open: {
+			// `immediate` so the customer list also loads when the modal is
+			// mounted with `open` already true (the manifest open-modal action
+			// passes props.open=true, so a false→true transition never fires).
+			immediate: true,
+			handler(next) {
+				if (next === true) {
+					this.reset()
+					this.fetchCustomers()
+				}
+			},
 		},
 	},
 	methods: {
@@ -322,6 +329,23 @@ export default {
 				this.customers = []
 			} finally {
 				this.loadingCustomers = false
+			}
+			this.fetchAdministrationId()
+		},
+		/**
+		 * Load the configured administration id. The ARInvoice schema
+		 * requires administrationId, so the quick draft sources it from the
+		 * app settings rather than asking the operator for it.
+		 *
+		 * @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md
+		 * @return {Promise<void>}
+		 */
+		async fetchAdministrationId() {
+			try {
+				const { data } = await axios.get(generateUrl('/apps/shillinq/api/settings'))
+				this.administrationId = data?.administration_id ?? data?.administrationId ?? ''
+			} catch (e) {
+				this.administrationId = ''
 			}
 		},
 		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
@@ -384,6 +408,7 @@ export default {
 					dueDate: this.form.dueDate,
 					reference: this.form.reference,
 					glAccount: this.form.glAccount,
+					administrationId: this.administrationId,
 					lines: this.form.lines,
 				})
 				const response = await axios.post(

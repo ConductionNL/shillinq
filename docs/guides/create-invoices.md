@@ -18,11 +18,27 @@ receive. See [Bookkeeping foundations](../user-guide/bookkeeping/bookkeeping-fou
 for the full breakdown.
 :::
 
-## Create an invoice
+## The fast way: quick draft
 
-1. Open **Bookkeeping → Accounts receivable** (or use the **Create invoice**
-   shortcut on the Financial overview dashboard).
-2. Click **+ New invoice**.
+For everyday invoicing, use the **quick draft** on the **Financial overview**
+dashboard:
+
+1. Click **Create invoice** in the dashboard header.
+2. In the **Quick draft invoice** dialog, pick a **Customer** (search by name),
+   check the invoice and due dates, and add one or more **lines** (description,
+   quantity, unit price, VAT).
+3. Click **Save draft**.
+
+Shillinq numbers the invoice, sets the administration and fiscal period for you,
+and books it to **Accounts receivable** in **Draft** status. This is the
+recommended path for a normal sales invoice. Use the detailed form below only
+when you need the full EN 16931 party, tax, and e-invoicing fields.
+
+## The detailed form
+
+1. Open **Sales → Accounts receivable**.
+2. Click **Add AR Invoice**. This opens the full EN 16931 invoice form, with all
+   party, tax, and e-invoicing fields available.
 3. Fill in the header:
    - `customer` — pick from your Nextcloud contacts list. The customer is
      always a Nextcloud contact; Shillinq never duplicates the contact record.
