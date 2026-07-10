@@ -1,0 +1,99 @@
+#!/usr/bin/env node
+// SPDX-License-Identifier: EUPL-1.2
+// Copyright (C) 2026 Conduction B.V.
+//
+// check-manifest-budget.js — fails the build when the combined byte size of
+// src/manifest.json + src/manifest.d/*.json exceeds a defined budget
+// (shillinq-manifest-boot-payload-reduction, REQ-MBP-001). ALL of this JSON
+// is currently bundled synchronously into the `main` webpack chunk
+// (src/main.js: `import bundledManifest from './manifest.json'` +
+// `require.context('./manifest.d/', ...)`), so every byte here ships on
+// EVERY page load regardless of which feature area the user opens. This
+// script does not implement code-splitting (that is a larger, currently
+// undecided architecture change — see openspec/changes/
+// shillinq-manifest-boot-payload-reduction/design.md) — it only stops the
+// payload from silently growing further while that decision is pending.
+//
+// Usage:
+//   node tests/check-manifest-budget.js
+//   MANIFEST_BUDGET_BYTES=1200000 node tests/check-manifest-budget.js
+//
+// Exit codes:
+//   0 — combined size is at or under the budget
+//   1 — combined size exceeds the budget (or the manifest files are unreadable)
+
+'use strict'
+
+const fs = require('fs')
+const path = require('path')
+
+const REPO_ROOT = path.resolve(__dirname, '..')
+const MANIFEST_PATH = path.join(REPO_ROOT, 'src', 'manifest.json')
+const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
+
+// Budget set just above the measured post-cleanup total (removal of the
+// duplicate bookings-resource-calendar.json fragment, REQ-MBP-002), leaving
+// headroom for organic growth before this check starts failing builds.
+// Re-measure and adjust deliberately if a legitimate large feature area is
+// added — this is a tripwire, not a hard architectural ceiling.
+const DEFAULT_BUDGET_BYTES = 1_050_000
+
+/**
+ * Sum the byte size of every regular file in a directory (non-recursive),
+ * matching the require.context('./manifest.d/', false, /\.json$/) glob
+ * shape used by src/main.js.
+ *
+ * @param {string} dir Directory to scan.
+ * @return {number} Combined byte size of every *.json file in dir.
+ */
+function sumJsonFileSizes(dir) {
+	const entries = fs.readdirSync(dir, { withFileTypes: true })
+	let total = 0
+	for (const entry of entries) {
+		if (entry.isFile() && entry.name.endsWith('.json')) {
+			total += fs.statSync(path.join(dir, entry.name)).size
+		}
+	}
+	return total
+}
+
+function main() {
+	const budget = Number(process.env.MANIFEST_BUDGET_BYTES) || DEFAULT_BUDGET_BYTES
+
+	let manifestSize
+	let fragmentsSize
+	try {
+		manifestSize = fs.statSync(MANIFEST_PATH).size
+		fragmentsSize = sumJsonFileSizes(MANIFEST_D_DIR)
+	} catch (err) {
+		// eslint-disable-next-line no-console
+		console.error(`[check-manifest-budget] could not read manifest files: ${err.message}`)
+		process.exit(1)
+		return
+	}
+
+	const total = manifestSize + fragmentsSize
+
+	// eslint-disable-next-line no-console
+	console.log(
+		`[check-manifest-budget] manifest.json=${manifestSize}B manifest.d/=${fragmentsSize}B `
+		+ `total=${total}B budget=${budget}B`,
+	)
+
+	if (total > budget) {
+		// eslint-disable-next-line no-console
+		console.error(
+			`[check-manifest-budget] FAIL: combined manifest JSON (${total}B) exceeds the `
+			+ `${budget}B budget shipped in the main webpack chunk (REQ-MBP-001). Either trim `
+			+ `the added fragment(s), or raise MANIFEST_BUDGET_BYTES deliberately if the growth `
+			+ `is justified — re-measure with \`du -bc src/manifest.json src/manifest.d/*.json\`.`,
+		)
+		process.exit(1)
+		return
+	}
+
+	// eslint-disable-next-line no-console
+	console.log('[check-manifest-budget] PASS')
+}
+
+main()

@@ -203,7 +203,10 @@
         },
         "x-openregister-notifications": {
           "onSubmitted": {
-            "trigger": "lifecycle.submit",
+            "trigger": {
+              "type": "transition",
+              "action": "submit"
+            },
             "description": "Notify the vat-administrator when a return is submitted.",
             "recipients": {
               "role": "vat-administrator",
@@ -992,7 +995,10 @@
         },
         "x-openregister-notifications": {
           "onSubmitted": {
-            "trigger": "lifecycle.submit",
+            "trigger": {
+              "type": "transition",
+              "action": "submit"
+            },
             "description": "Notify the bcf-administrator when a claim is submitted.",
             "recipients": {
               "role": "bcf-administrator",
@@ -1581,7 +1587,10 @@
         },
         "x-openregister-notifications": {
           "onVerleend": {
-            "trigger": "lifecycle.verlenen",
+            "trigger": {
+              "type": "transition",
+              "action": "verlenen"
+            },
             "description": "Notify the subsidie-coordinator when a grant is awarded.",
             "recipients": {
               "role": "subsidie-coordinator",

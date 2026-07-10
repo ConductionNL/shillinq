@@ -27,15 +27,6 @@ import TransferPage from './views/inventory/TransferPage.vue'
 import StandardsPolicyEditor from './views/settings/StandardsPolicyEditor.vue'
 import PickPage from './views/inventory/PickPage.vue'
 import CountPage from './views/inventory/CountPage.vue'
-// bookings-resource-calendar exception (#117, per design.md):
-//   The booking month/week/day grid and the conflict-aware booking form are
-//   imperative Vue components — they own a custom calendar shell, modal
-//   isolation for the conflict dialog, and an inline POST → 409 retry path
-//   that does not fit any built-in index/detail/dashboard/settings page
-//   type. Registered here as a kind:"page" custom component so the
-//   manifest router still owns the URL → component mapping.
-import BookingsCalendarPage from './views/bookings/CalendarPage.vue'
-
 // bookings-confirm-flow (REQ-BCF-007): the customer-facing confirmation
 // portal at /confirm/:appointmentId is an imperative Vue component — it
 // owns its own URL-parameter parsing (token + appointmentId), runs a
@@ -178,12 +169,15 @@ import BudgetBBVMappingDetail from './components/BudgetBBVMapping/BudgetBBVMappi
 // justification per ADR-024 / ADR-036.
 import AdministrationSwitcherPage from './views/AdministrationSwitcherPage.vue'
 
-// bookings-resource-calendar (#117, REQ-006/REQ-007): the legacy multi-resource
+// bookings-resource-calendar (#117, REQ-006/REQ-007): the multi-resource
 // CalendarView + BookingForm pages live under src/views/bookings/. They target
 // the /api/v2/calendars REST surface (Resource / Calendar / Booking schemas in
-// the shillinq register) — distinct from the customer-confirmation
-// BookingsCalendarPage above. Both are justified per ADR-024 (imperative time
-// grid + inline conflict dialog).
+// the shillinq register). Justified per ADR-024 (imperative time grid +
+// inline conflict dialog). The older single-dropdown "Verkoop → Bookings
+// calendar" shortcut page (CalendarPage.vue, manifest.d/
+// bookings-resource-calendar.json) that wrapped this same CalendarView was
+// removed as dead-weight duplicate navigation — see
+// shillinq-manifest-boot-payload-reduction (REQ-MBP-002).
 import CalendarView from './views/bookings/CalendarView.vue'
 import BookingForm from './views/bookings/BookingForm.vue'
 
@@ -314,7 +308,6 @@ export default {
 	AdminInvoiceList: { kind: 'page', component: AdminInvoiceList },
 	AdminInvoiceDetail: { kind: 'page', component: AdminInvoiceDetail },
 
-	BookingsCalendarPage: { kind: 'page', component: BookingsCalendarPage },
 	BookingsConfirmationPortal: { kind: 'page', component: BookingsConfirmationPortal },
 	AfspraakDetail: { kind: 'page', component: AfspraakDetail },
 

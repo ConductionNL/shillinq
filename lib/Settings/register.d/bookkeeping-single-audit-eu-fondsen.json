@@ -907,7 +907,10 @@
         },
         "x-openregister-notifications": {
           "onSubmitted": {
-            "trigger": "lifecycle.submit",
+            "trigger": {
+              "type": "transition",
+              "action": "submit"
+            },
             "description": "Notify the eu-projectleider when an expenditure is submitted to the MA.",
             "recipients": {
               "role": "eu-projectleider",
@@ -1311,7 +1314,9 @@
         },
         "x-openregister-notifications": {
           "onCreated": {
-            "trigger": "lifecycle.create",
+            "trigger": {
+              "type": "created"
+            },
             "description": "Notify the controller when an irregularity is reported.",
             "recipients": {
               "role": "controller",
