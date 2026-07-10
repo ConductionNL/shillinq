@@ -36,7 +36,7 @@ use OCA\Shillinq\Listener\SigningConcludedListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
 use OCA\Shillinq\Listener\VerplichtingTransitionListener;
-use OCA\Shillinq\Notification\Notifier;
+use OCA\Shillinq\Notification\RoleFallbackResolver;
 use OCA\Shillinq\Service\Dunning\CreditScoreFetchAdapterInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
 use OCA\Shillinq\Service\Dunning\IncassoBureauAdapterInterface;
@@ -83,7 +83,9 @@ use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCA\Shillinq\Service\DoorsnijdingsVerbodValidator;
 use OCA\Shillinq\Service\InnovatieboxAuditEventLogger;
 use OCP\IAppConfig;
+use OCP\IGroupManager;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
@@ -493,8 +495,49 @@ class Application extends App implements IBootstrap
             }
         );
 
-        // Register the notifier for Shillinq in-app notifications (REQ-SUBV-010).
-        $context->registerNotifierService(Notifier::class);
+        // Migrate-legacy-notification-dialect (task 1.3) — register one
+        // RoleFallbackResolver instance per (primary role, fallback role)
+        // pair used by the canonical `recipients: [{kind: "expression",
+        // resolver: "..."}]` rules migrated off the legacy singular
+        // `"recipient": {resolver, fallback}` shape. Each alias is a DI
+        // service id (not a literal FQCN::method call — the OR dispatcher
+        // resolves it via IServerContainer::get($resolverTag)), resolved by
+        // Nextcloud's container the same way any other registered service
+        // is. Group ids follow the `shillinq_<role>` convention established
+        // by WbsoRbacResolver::GROUP_TO_ROLE.
+        $context->registerService(
+            RoleFallbackResolver::class.'::financeOfficer',
+            static function ($c): RoleFallbackResolver {
+                return new RoleFallbackResolver(
+                    groupManager: $c->get(IGroupManager::class),
+                    logger: $c->get(LoggerInterface::class),
+                    primaryGroup: 'shillinq_finance_officer',
+                    fallbackGroup: 'shillinq_subsidie_coordinator',
+                );
+            }
+        );
+        $context->registerService(
+            RoleFallbackResolver::class.'::subsidieCoordinator',
+            static function ($c): RoleFallbackResolver {
+                return new RoleFallbackResolver(
+                    groupManager: $c->get(IGroupManager::class),
+                    logger: $c->get(LoggerInterface::class),
+                    primaryGroup: 'shillinq_subsidie_coordinator',
+                    fallbackGroup: 'shillinq_administration_treasurer',
+                );
+            }
+        );
+        $context->registerService(
+            RoleFallbackResolver::class.'::payrollOfficer',
+            static function ($c): RoleFallbackResolver {
+                return new RoleFallbackResolver(
+                    groupManager: $c->get(IGroupManager::class),
+                    logger: $c->get(LoggerInterface::class),
+                    primaryGroup: 'shillinq_payroll_officer',
+                    fallbackGroup: 'shillinq_administration_treasurer',
+                );
+            }
+        );
 
         // Dba-compliance-marker T31/T32 — optional non-blocking hook into AP/AR
         // factuur creation. The listener runs the VBAR uurtarief-toets

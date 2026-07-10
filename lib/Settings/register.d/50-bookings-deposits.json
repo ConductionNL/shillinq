@@ -439,7 +439,10 @@
         },
         "x-openregister-notifications": {
           "onAuthorized": {
-            "trigger": "lifecycle.authorize",
+            "trigger": {
+              "type": "transition",
+              "action": "authorize"
+            },
             "description": "Confirm to the booking-operator that the deposit was authorized and the invoice was created.",
             "recipients": {
               "role": "booking-operator",
@@ -449,7 +452,10 @@
             "message": "Deposit of @self.amount cents for booking @self.orderId is authorized; invoice @self.arInvoiceId created."
           },
           "onFailed": {
-            "trigger": "lifecycle.fail",
+            "trigger": {
+              "type": "transition",
+              "action": "fail"
+            },
             "description": "Alert the booking-operator that a deposit authorization failed and needs follow-up.",
             "recipients": {
               "role": "booking-operator",
@@ -459,7 +465,13 @@
             "message": "Deposit for booking @self.orderId failed: @self.lastErrorMessage (@self.lastErrorCode)."
           },
           "onVoided": {
-            "trigger": "lifecycle.voidFromAuthorized,lifecycle.voidFromCaptured",
+            "trigger": {
+              "type": "transition",
+              "action": [
+                "voidFromAuthorized",
+                "voidFromCaptured"
+              ]
+            },
             "description": "Confirm a refund was initiated and a credit note created.",
             "recipients": {
               "role": "booking-operator",

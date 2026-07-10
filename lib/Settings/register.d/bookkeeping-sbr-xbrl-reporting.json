@@ -474,7 +474,10 @@
             "message": "Filing @self.name (@self.code) for administration @self.administrationId is due on @self.filingDeadline. Open the SBR Documents page to complete the draft."
           },
           "onRejected": {
-            "trigger": "lifecycle.reject",
+            "trigger": {
+              "type": "transition",
+              "action": "reject"
+            },
             "description": "Notify finance-manager when Belastingdienst rejects a submitted filing (REQ-SBR-005).",
             "recipients": {
               "role": "finance-manager",

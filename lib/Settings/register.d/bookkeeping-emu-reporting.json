@@ -238,7 +238,9 @@
         },
         "x-openregister-notifications": {
           "onConcept": {
-            "trigger": "lifecycle.create",
+            "trigger": {
+              "type": "created"
+            },
             "description": "Notify the concerncontroller when a quarterly concept-aangifte is generated (REQ-EMU-001).",
             "recipients": {
               "role": "emu-concerncontroller",
