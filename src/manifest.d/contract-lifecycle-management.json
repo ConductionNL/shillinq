@@ -118,6 +118,12 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Contracts",
+				"widgets": [
+					{ "id": "contract-decisions", "type": "integration", "integrationId": "decidesk-decisions", "title": "Besluitvorming", "icon": "Gavel" }
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "contract-decisions", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 4 }
+				],
 				"relatedObjects": [
 					{
 						"id": "obligations",
