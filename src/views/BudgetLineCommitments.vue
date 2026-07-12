@@ -149,6 +149,7 @@ export default {
 
 	methods: {
 		formatAmount,
+		/** @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-011 */
 		async loadRows() {
 			this.loading = true
 			this.errorMessage = ''
@@ -173,6 +174,12 @@ export default {
 				this.loading = false
 			}
 		},
+		/**
+		 * Expand/collapse the drilldown for a budget-line row.
+		 *
+		 * @param {object} row Normalised budget-line row.
+		 * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-011
+		 */
 		async toggleDrilldown(row) {
 			if (this.expandedKey === row.key) {
 				this.expandedKey = null

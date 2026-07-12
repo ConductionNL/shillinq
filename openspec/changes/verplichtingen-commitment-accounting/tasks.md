@@ -97,8 +97,15 @@
    data-integrity smell. Instead the service dispatches a `shillinq.rechtmatigheid.commitment_created` CloudEvent (same pattern as
    `BudgetImpactEmitter`) as the commitment-stage trigger, and — because it has no `journaalpost` requirement — writes a `Rechtmatigheidsbevinding`
    afwijking directly when an override-mandate was applied, satisfying REQ-RV-005's aggregation target.
-7. **`check:registers` and the wider hydra fleet-scope gates (30/31/46) are pre-existing, out of scope**, per the apply brief: `check:registers`
-   shows exactly 231 failures before and after this change (`Verplichtingsregel`/`Verplichtingsmutatie` were already on that list).
+7. **`check:registers` and the wider hydra fleet-scope gates are pre-existing, out of scope**, per the apply brief: `check:registers`
+   shows exactly 231 failures before and after this change (`Verplichtingsregel`/`Verplichtingsmutatie` were already on that list). Hydra
+   gate-30 (effective-manifest-crossref) also reports 231 pre-existing assembled-manifest violations, none referencing this change's new
+   `BudgetLineCommitments` menu/page entries. Gate-31 (relation-dialect) flags 4 pre-existing `x-openregister-relations` blocks on
+   `Verplichting`/`Verplichtingsregel`/`Verplichtingsmutatie`/`Goedkeuringsstap` that already existed before this change and are only
+   re-surfaced because the diff touches the same JSON file — migrating them to the canonical property-level `$ref` dialect (ADR-062 rule 7)
+   is a repo-wide convention change outside this narrow delta's scope, and risks the already-shipped REQ-VPL-001..009 relations. Gate-46
+   (spec-anchor-existence) flags this change's own `#req-vpl-010`/`#req-vpl-011` `@spec` anchors as unresolved — the fleet-wide short
+   `spec.md#req-x-nnn` anchor convention this newer gate's slugifier cannot resolve (same documented limitation as prior shillinq changes).
 8. **Manual browser verification of the drilldown page and the live PO-approval fail-closed path were not run against a live Nextcloud instance**
    this session — covered instead by PHPUnit (materialisation logic, idempotency, fail-closed/fail-soft branching), vitest (row/currency/filter
    pure helpers) and a Playwright e2e spec (`tests/e2e/budget-line-commitments.spec.ts`, data-defensive — skips when no seed data is present).
