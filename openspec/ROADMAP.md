@@ -32,6 +32,14 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | Peppol BIS 3.0 outbound transmission | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
 | Dutch KvK and BTW number validation for e-invoicing | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
 
+## Budget & Commitment Accounting Features
+
+| Feature | Status | Priority | OpenSpec Change |
+|---------|--------|----------|----------------|
+| Auto-record a verplichting (commitment) at PO approval / contract signature | planned | must | [verplichtingen-commitment-accounting](changes/verplichtingen-commitment-accounting/) |
+| Committed-vs-realised reporting per budget line | planned | must | [verplichtingen-commitment-accounting](changes/verplichtingen-commitment-accounting/) |
+| Rechtmatigheid tie-in for system-raised commitments | planned | should | [verplichtingen-commitment-accounting](changes/verplichtingen-commitment-accounting/) |
+
 ## Contract Lifecycle Management Features
 
 | Feature | Status | Priority | OpenSpec Change |
