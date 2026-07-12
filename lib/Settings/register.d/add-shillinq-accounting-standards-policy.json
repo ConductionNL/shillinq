@@ -9,6 +9,7 @@
   "components": {
     "schemas": {
       "StandardsPolicy": {
+        "slug": "StandardsPolicy",
         "title": "Standards policy",
         "description": "Per-administration accounting-standards precedence policy (REQ-ASP-001). One object per administration declares which frameworks apply and their order of precedence. Consumed by StandardsPolicyService.resolve(topic).",
         "type": "object",

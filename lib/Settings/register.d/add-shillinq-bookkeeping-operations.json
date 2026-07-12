@@ -1325,9 +1325,12 @@
             "id": "schatkist-position",
             "title": "Schatkist-positie",
             "description": "Daily Treasury position vs drempelbedrag for gemeente administrations.",
-            "type": "line-with-threshold",
-            "register": "shillinq",
-            "schema": "SchatkistPosition",
+            "type": "chart",
+            "dataSource": {
+              "mode": "statistics",
+              "register": "shillinq",
+              "schema": "SchatkistPosition"
+            },
             "visibility": {
               "field": "administrationType",
               "in": [

@@ -80,6 +80,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     upgrade is a no-op for any caller that has not yet wired the
     metrics service.
 
+### Fixed
+- Register-config log noise on every OpenRegister config import
+  (`fix-log-noise-schemas`):
+  - All six `x-openregister-widgets` annotations used custom widget types
+    (`stats-block`, `progress-with-state`, `utilisation-chart`,
+    `state-with-actions`, `line-with-threshold`) rejected by OpenRegister's
+    `WidgetAnnotationValidator`, and none carried the required `dataSource`
+    object. Mapped to supported types (`stats`, `chart`, `tile`) and added
+    `dataSource` objects with the client-side `statistics` mode
+    (`nearing-retention`, `korStatus`, `utilisatieWidget`,
+    `urencriteriumTracker`, `depositStatus`, `schatkistPosition`).
+  - `StandardsPolicy` fragment
+    (`register.d/add-shillinq-accounting-standards-policy.json`) was missing
+    the mandatory `slug`, so the fragment was skipped on every import.
+  - Removed the retired `KostenDrager` tombstone from
+    `register.d/add-shillinq-audit-trail.json` — it merged into the config as
+    a slug-less schema fragment and errored on every import (the schema was
+    folded into `AnalyticalDimension(dimensionType=cost-object)` per
+    REQ-ADIM-201).
+  - `ThreeWayMatch.divergenceDetails.items` `expected`/`actual` properties had
+    no `type` (rejected by OpenRegister's `PropertyValidatorHandler`); now
+    `string`.
+  - Dropped the invalid `"format": "float"` from three `number` properties in
+    `shillinq_register.json` (`BankStatement.amount`,
+    `MatchingRule.confidenceScore`, `ReconciliationMatch.confidence`).
+  - Declared the missing `RJ270Stage` schema as a new ADR-037 fragment
+    (`register.d/add-shillinq-rj270-stages.json`) —
+    `SettingsService::seedRj270Stages()` had been seeding into a schema that
+    was never declared, so every `InitializeSettings` run logged
+    "Shillinq: RJ-270 stages seeding failed".
+
 ## [0.1.4] - 2026-05-31
 
 ### Added
