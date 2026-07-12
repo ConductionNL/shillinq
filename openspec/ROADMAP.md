@@ -40,6 +40,15 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | Committed-vs-realised reporting per budget line | planned | must | [verplichtingen-commitment-accounting](changes/verplichtingen-commitment-accounting/) |
 | Rechtmatigheid tie-in for system-raised commitments | planned | should | [verplichtingen-commitment-accounting](changes/verplichtingen-commitment-accounting/) |
 
+## Compliance Deadline Calendar Features
+
+| Feature | Status | Priority | OpenSpec Change |
+|---------|--------|----------|----------------|
+| Publish BTW/ICP/VPB filing deadlines to Nextcloud Calendar | planned | must | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
+| Payment-run execution dates and (opt-in) AR invoice due dates on calendar | planned | should | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
+| Contract renewal / opzegtermijn calendar alerts | planned | must | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
+| Deadline reminder notifications with per-user category toggles | planned | should | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
+
 ## Contract Lifecycle Management Features
 
 | Feature | Status | Priority | OpenSpec Change |
