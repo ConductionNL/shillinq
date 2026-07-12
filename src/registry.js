@@ -223,6 +223,14 @@ import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
 // the page is registered as a kind:"page" custom component per ADR-024.
 import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashboard.vue'
 
+// verplichtingen-commitment-accounting Task 4 (REQ-VPL-011): the
+// BudgetLineCommitments drilldown composes the declarative
+// committedVsRealisedPerBudgetLine aggregation declared on
+// Verplichtingsregel into a per-budget-line report with a commitment
+// drilldown. Registered as a kind:"page" custom component per ADR-024
+// (same pattern as SegmentPnLDashboard).
+import BudgetLineCommitments from './views/BudgetLineCommitments.vue'
+
 // Shillinq W8 (external-adapters admin UIs): the External Connections
 // section renders an operator roll-up + per-adapter activation panel
 // for the 14 dormant external-API adapter ports (Digipoort/SBR,
@@ -368,6 +376,7 @@ export default {
 
 	// bookkeeping-cost-centers-dimensions Task 14: segment P&L drill-down.
 	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },
+	BudgetLineCommitments: { kind: 'page', component: BudgetLineCommitments },
 
 	// Shillinq W8: External Connections admin pages (index + per-adapter detail).
 	ExternalAdaptersStatus: { kind: 'page', component: ExternalAdaptersStatus },

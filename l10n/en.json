@@ -1758,7 +1758,20 @@
         "No linked spend data": "No linked spend data",
         "Expiring": "Expiring",
         "Renewed": "Renewed",
-        "Terminated": "Terminated"
+        "Terminated": "Terminated",
+        "Committed vs. realised per budget line": "Committed vs. realised per budget line",
+        "Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments (Verplichtingen).": "Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments (Verplichtingen).",
+        "Loading budget lines": "Loading budget lines",
+        "No budget lines": "No budget lines",
+        "No Verplichtingsregel records exist yet. Approve a purchase order or sign a contract to materialise a commitment.": "No Verplichtingsregel records exist yet. Approve a purchase order or sign a contract to materialise a commitment.",
+        "Committed": "Committed",
+        "Realised": "Realised",
+        "No underlying commitments found for this line.": "No underlying commitments found for this line.",
+        "Aggregation endpoint unavailable on this OpenRegister build.": "Aggregation endpoint unavailable on this OpenRegister build.",
+        "Permission required to read budget-line data.": "Permission required to read budget-line data.",
+        "Failed to load budget lines.": "Failed to load budget lines.",
+        "Committed vs. realised": "Committed vs. realised",
+        "Source reference": "Source reference"
     },
     "plurals": ""
 }

@@ -1760,7 +1760,20 @@
         "No linked spend data": "Geen gekoppelde uitgavengegevens",
         "Expiring": "Aflopend",
         "Renewed": "Verlengd",
-        "Terminated": "Beëindigd"
+        "Terminated": "Beëindigd",
+        "Committed vs. realised per budget line": "Verplicht versus gerealiseerd per budgetregel",
+        "Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments (Verplichtingen).": "Per-budgetregel overzicht van geautoriseerd, verplicht, gerealiseerd en vrij budget, met doorklikken naar de onderliggende verplichtingen.",
+        "Loading budget lines": "Budgetregels laden",
+        "No budget lines": "Geen budgetregels",
+        "No Verplichtingsregel records exist yet. Approve a purchase order or sign a contract to materialise a commitment.": "Er zijn nog geen verplichtingsregels. Keur een inkooporder goed of teken een contract om een verplichting te materialiseren.",
+        "Committed": "Verplicht",
+        "Realised": "Gerealiseerd",
+        "No underlying commitments found for this line.": "Geen onderliggende verplichtingen gevonden voor deze regel.",
+        "Aggregation endpoint unavailable on this OpenRegister build.": "Aggregatie-endpoint niet beschikbaar op deze OpenRegister-versie.",
+        "Permission required to read budget-line data.": "Toestemming vereist om budgetregelgegevens te lezen.",
+        "Failed to load budget lines.": "Laden van budgetregels mislukt.",
+        "Committed vs. realised": "Verplicht vs. gerealiseerd",
+        "Source reference": "Bronreferentie"
     },
     "plurals": ""
 }
