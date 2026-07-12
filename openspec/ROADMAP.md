@@ -49,6 +49,14 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | Contract renewal / opzegtermijn calendar alerts | planned | must | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
 | Deadline reminder notifications with per-user category toggles | planned | should | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
 
+## Document Intelligence Features
+
+| Feature | Status | Priority | OpenSpec Change |
+|---------|--------|----------|----------------|
+| Consume docudesk field-extraction to prefill bill import | planned | must | [receipt-extraction-consume](changes/receipt-extraction-consume/) |
+| Receipt/expense capture prefill with per-field confidence | planned | should | [receipt-extraction-consume](changes/receipt-extraction-consume/) |
+| Field correction flow and docudesk re-extraction request | planned | should | [receipt-extraction-consume](changes/receipt-extraction-consume/) |
+
 ## Contract Lifecycle Management Features
 
 | Feature | Status | Priority | OpenSpec Change |
