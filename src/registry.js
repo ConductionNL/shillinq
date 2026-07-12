@@ -257,6 +257,14 @@ import ExternalAdapterDetail from './views/external-adapters/ExternalAdapterDeta
 // (nextcloud-vue#91 Wave-4) that no single declarative endpoint expresses.
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
 
+// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007): the Send
+// e-invoice action + delivery-status indicator on the manifest-driven
+// ARInvoiceDetail page. Resolved as the page's `actionsComponent` (ADR-036 —
+// any registry kind is eligible for slot/actions resolution, only page
+// dispatch itself requires kind:"page"), mounted into CnDetailPage's actions
+// header slot with `{ object, objectId, schema, objectType, store }`.
+import AREInvoiceActions from './components/ar-invoice/AREInvoiceActions.vue'
+
 // recurring-invoicing (REQ-RIN-008, Task 15): the create/edit modal for a
 // RecurringInvoiceProfile is a bespoke multi-line form with period-token
 // preview and an inline next-invoice projection — none of which the
@@ -370,7 +378,18 @@ export default {
 	// forecast (two sources) into one chart — see the import docblock above.
 	// The KPIs / turnover / margin / billable charts / open-invoice tables are
 	// now declarative built-in stat / chart / object-table dashboard widgets.
-	CashflowChartWidget: { kind: 'widget', component: CashflowChartWidget },
+	CashflowChartWidget: {
+		kind: 'widget',
+		component: CashflowChartWidget,
+		_note: 'Merges realized GL lines with the 13-week forecast (two data sources) into one chart — no built-in chart widget joins two sources (ADR-049 Phase-4 survivor).',
+	},
+
+	// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007).
+	AREInvoiceActions: {
+		kind: 'widget',
+		component: AREInvoiceActions,
+		_note: 'Header actionsComponent, not a data widget: pairs a stateful Send e-invoice action (POST + optimistic status update + inline validation errors) with the delivery-status chip — no built-in widget performs writes.',
+	},
 
 	// reporting-compliance-consolidation: Reporting & Compliance pages.
 	ReportingComplianceOverview: { kind: 'page', component: ReportingComplianceOverview },

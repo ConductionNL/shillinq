@@ -105,10 +105,13 @@ final class ShillinqNotificationsFragmentTest extends TestCase
         self::assertFileExists($this->fragmentPath);
         $data = $this->jsonFile($this->fragmentPath);
 
-        self::assertArrayHasKey('ARInvoice', $data['components']);
-        self::assertArrayHasKey('x-openregister-notifications', $data['components']['ARInvoice']);
-
+        // The AR rules live under components.schemas since 42ae3b7b — the
+        // top-level components.ARInvoice sibling was dead config OR's
+        // ImportHandler never read (it iterates components.schemas only).
         self::assertArrayHasKey('schemas', $data['components']);
+        self::assertArrayHasKey('ARInvoice', $data['components']['schemas']);
+        self::assertArrayHasKey('x-openregister-notifications', $data['components']['schemas']['ARInvoice']);
+
         self::assertArrayHasKey('PurchaseOrder', $data['components']['schemas']);
         self::assertArrayHasKey('x-openregister-notifications', $data['components']['schemas']['PurchaseOrder']);
 
@@ -124,22 +127,16 @@ final class ShillinqNotificationsFragmentTest extends TestCase
     public function testArInvoiceOverdueIsScheduledDaily(): void
     {
         $data = $this->jsonFile($this->fragmentPath);
-        $rule = $data['components']['ARInvoice']['x-openregister-notifications']['overdue'];
+        $rule = $data['components']['schemas']['ARInvoice']['x-openregister-notifications']['overdue'];
 
         self::assertSame('scheduled', $rule['trigger']['type']);
         self::assertGreaterThanOrEqual(86400, $rule['trigger']['intervalSec']);
 
-        $filter = $rule['trigger']['filter']['all'];
-        self::assertCount(2, $filter);
-
-        $stateClause = $filter[0];
-        self::assertSame('state', $stateClause['field']);
-        self::assertSame('notIn', $stateClause['operator']);
-        self::assertSame(['paid', 'written-off', 'voided'], $stateClause['values']);
-
-        $dueDateClause = $filter[1];
-        self::assertSame('dueDate', $dueDateClause['field']);
-        self::assertSame('before', $dueDateClause['operator']);
+        // Canonical scheduled-filter grammar since 42ae3b7b: a map of
+        // field => scalar equality. lifecycleState=overdue already encodes
+        // "past due date, not paid/written-off" — the old {all:[...]}
+        // notIn/before grammar was never understood by OR's validator.
+        self::assertSame(['lifecycleState' => 'overdue'], $rule['trigger']['filter']);
 
     }//end testArInvoiceOverdueIsScheduledDaily()
 
@@ -153,12 +150,14 @@ final class ShillinqNotificationsFragmentTest extends TestCase
     public function testArInvoicePaidIsUpdatedConditionRule(): void
     {
         $data = $this->jsonFile($this->fragmentPath);
-        $rule = $data['components']['ARInvoice']['x-openregister-notifications']['paid'];
+        $rule = $data['components']['schemas']['ARInvoice']['x-openregister-notifications']['paid'];
 
         self::assertSame('updated', $rule['trigger']['type']);
 
         $condition = $rule['trigger']['condition'];
-        self::assertSame('state', $condition['field']);
+        // ARInvoice's lifecycle field is lifecycleState (42ae3b7b modernised
+        // the rule away from the non-existent `state` field).
+        self::assertSame('lifecycleState', $condition['field']);
         self::assertSame('equals', $condition['operator']);
         self::assertSame('paid', $condition['value']);
 
@@ -225,7 +224,7 @@ final class ShillinqNotificationsFragmentTest extends TestCase
         $data = $this->jsonFile($this->fragmentPath);
 
         $rules = [];
-        foreach ($data['components']['ARInvoice']['x-openregister-notifications'] as $name => $rule) {
+        foreach ($data['components']['schemas']['ARInvoice']['x-openregister-notifications'] as $name => $rule) {
             $rules['ARInvoice.'.$name] = $rule['subject'];
         }
         foreach ($data['components']['schemas']['PurchaseOrder']['x-openregister-notifications'] as $name => $rule) {
@@ -272,7 +271,7 @@ final class ShillinqNotificationsFragmentTest extends TestCase
         $validChannel = ['nc-notification', 'email', 'activity', 'webhook', 'talk'];
 
         $rules = array_merge(
-            $data['components']['ARInvoice']['x-openregister-notifications'],
+            $data['components']['schemas']['ARInvoice']['x-openregister-notifications'],
             $data['components']['schemas']['PurchaseOrder']['x-openregister-notifications']
         );
 
@@ -313,8 +312,9 @@ final class ShillinqNotificationsFragmentTest extends TestCase
         $merged = $this->merge(base: $monolith, overlay: $poFrag);
         $merged = $this->merge(base: $merged, overlay: $this->jsonFile($this->fragmentPath));
 
-        // ARInvoice's overdue/paid rules are now present.
-        $arRules = $merged['components']['ARInvoice']['x-openregister-notifications'];
+        // ARInvoice's overdue/paid rules are now present (under
+        // components.schemas since 42ae3b7b — the only branch OR reads).
+        $arRules = $merged['components']['schemas']['ARInvoice']['x-openregister-notifications'];
         self::assertArrayHasKey('overdue', $arRules);
         self::assertArrayHasKey('paid', $arRules);
 

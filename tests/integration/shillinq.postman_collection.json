@@ -290,6 +290,77 @@
 			]
 		},
 		{
+			"name": "AR E-Invoicing (Peppol)",
+			"item": [
+				{
+					"name": "Send e-invoice without administrationId is rejected",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/ar-invoices/2026-0042/send-einvoice",
+						"description": "REQ-EINV-005: the send action requires an explicit administration scope — a body without administrationId is a 400, and nothing is transmitted."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('400 administrationId required', function () {",
+									"    pm.response.to.have.status(400);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.error).to.include('administrationId');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Send e-invoice for unknown invoice is an IDOR-safe 404",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"administrationId\": \"{{administration_id}}\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/ar-invoices/NO-SUCH-INVOICE-9999/send-einvoice",
+						"description": "REQ-EINV-005: an invoice that does not exist in the caller's administration (or belongs to another tenant) is masked as 404 — the endpoint never discloses cross-tenant existence (ADR-005, no IDOR)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('404 not found (IDOR-safe mask)', function () {",
+									"    pm.response.to.have.status(404);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.error).to.include('not found');",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
 			"name": "Health Check",
 			"item": [
 				{

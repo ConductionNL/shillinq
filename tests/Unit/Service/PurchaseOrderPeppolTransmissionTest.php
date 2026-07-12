@@ -90,9 +90,9 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase
             /**
              * @inheritDoc
              */
-            public function lookupParticipant(string $administrationId, string $supplierId): ?string
+            public function lookupParticipant(string $administrationId, string $partyId): ?string
             {
-                $this->lastLookup = ['adm' => $administrationId, 'sup' => $supplierId];
+                $this->lastLookup = ['adm' => $administrationId, 'sup' => $partyId];
                 return '0192:1234567890';
             }
 
@@ -104,6 +104,20 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase
             {
                 $this->lastUbl = $ublOrderXml;
                 return 'urn:uuid:dead-beef-cafe';
+            }
+
+
+            /**
+             * Not exercised by sendToPeppol() (which calls submitOrder()) — present
+             * only to satisfy the generalised PeppolTransmissionPortInterface
+             * (REQ-EINV-004) that PeppolTransmissionAdapterInterface now extends.
+             *
+             * @inheritDoc
+             */
+            public function submit(string $participantId, string $documentType, string $payloadFileUri): string
+            {
+                unset($participantId, $documentType, $payloadFileUri);
+                return 'urn:uuid:not-used-by-po-path';
             }
         };
 
@@ -366,9 +380,9 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase
             /**
              * @inheritDoc
              */
-            public function lookupParticipant(string $administrationId, string $supplierId): ?string
+            public function lookupParticipant(string $administrationId, string $partyId): ?string
             {
-                unset($administrationId, $supplierId);
+                unset($administrationId, $partyId);
                 return $this->participant;
             }
 
@@ -384,6 +398,20 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase
                 }
 
                 return 'urn:uuid:test-message-id';
+            }
+
+
+            /**
+             * Not exercised by sendToPeppol() (which calls submitOrder()) — present
+             * only to satisfy the generalised PeppolTransmissionPortInterface
+             * (REQ-EINV-004) that PeppolTransmissionAdapterInterface now extends.
+             *
+             * @inheritDoc
+             */
+            public function submit(string $participantId, string $documentType, string $payloadFileUri): string
+            {
+                unset($participantId, $documentType, $payloadFileUri);
+                return 'urn:uuid:not-used-by-po-path';
             }
         };
 

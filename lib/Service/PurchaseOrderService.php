@@ -45,7 +45,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Service\PurchaseOrder\LogPeppolTransmissionAdapter;
+use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
 use OCA\Shillinq\Service\PurchaseOrder\LogPurchaseOrderMailer;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolBisOrderMapper;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolTransmissionAdapterInterface;
@@ -405,9 +405,11 @@ class PurchaseOrderService
             purchaseOrderId: $purchaseOrderId
         );
         $supplierId  = (string) ($po['supplierId'] ?? '');
+        // The generalised port (REQ-EINV-004) names the parameter partyId —
+        // it resolves suppliers (PO) and debtors (AR) through the same lookup.
         $participant = $this->peppolAdapter->lookupParticipant(
             administrationId: $administrationId,
-            supplierId: $supplierId
+            partyId: $supplierId
         );
 
         // No Peppol participant id = graceful PDF + email fallback (REQ-PO3W-002 D2).

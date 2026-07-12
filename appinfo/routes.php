@@ -229,6 +229,12 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         ['name' => 'purchaseOrder#transmitPeppol', 'url' => '/api/purchase-orders/{id}/transmit/peppol', 'verb' => 'POST'],
         ['name' => 'purchaseOrder#transmitEmail', 'url' => '/api/purchase-orders/{id}/transmit/email', 'verb' => 'POST'],
 
+        // add-invoice-pdf-export-with-ubl-peppol-support — AR outbound e-invoicing
+        // (REQ-EINV-005). Server-authoritative Send e-invoice action on an issued
+        // ARInvoice: pre-send validation, NLCIUS UBL 2.1 + PDF/A-3 hybrid, Peppol
+        // submit via the generalised transmission port, delivery-status queued.
+        ['name' => 'aRInvoiceEInvoice#send', 'url' => '/api/ar-invoices/{invoiceNumber}/send-einvoice', 'verb' => 'POST'],
+
         // Goods Receipt Note (slice 04 of bookkeeping-purchase-order-3way):
         // server-authoritative create / add-line / quality-check / accept /
         // upload-photos endpoints. The accept transition posts a StockMove

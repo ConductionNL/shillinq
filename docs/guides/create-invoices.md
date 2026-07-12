@@ -114,6 +114,31 @@ configure Peppol in **Settings → E-invoicing**:
    **Peppol** delivery method and enter the customer's **OIN** (Organisatie
    Identificatie Nummer) as the Peppol receiver ID.
 
+### Send e-invoice and delivery status
+
+On the invoice detail page, the header shows a **Send e-invoice** action next
+to a **delivery status** chip. The action is only enabled once the invoice is
+**issued**. Before anything is transmitted, Shillinq validates the debtor's
+KvK number and BTW-nummer (live against VIES when available) and looks up the
+customer's Peppol participant ID — if the customer has no Peppol identity, the
+invoice is not queued and Shillinq suggests the PDF + email route instead.
+
+After a successful send, the chip advances through the delivery states as the
+access point reports back:
+
+| Status | Meaning |
+|--------|---------|
+| Not sent | No Peppol transmission attempted (or fallen back to PDF + email) |
+| Queued | Validation passed; handed to the access point |
+| Sent | The access point accepted the transmission |
+| Delivered | The recipient's access point confirmed delivery |
+| Rejected | The document was rejected — finance operators are notified with the reason |
+| Failed | Transmission failed before processing |
+
+The transmitted artefact is a hybrid **PDF/A-3** (human-readable PDF with the
+NLCIUS UBL 2.1 XML embedded as `factur-x.xml`), so one file serves both the
+reader and the machine.
+
 ## Track payment status
 
 After sending, the invoice appears in **Bookkeeping → Accounts receivable →

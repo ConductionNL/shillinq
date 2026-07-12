@@ -29,6 +29,7 @@ use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
+use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
 use OCA\Shillinq\Listener\SignoffDecisionConcludedListener;
@@ -181,6 +182,19 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectCreatedEvent::class,
             listener: PeppolInboundUblInvoiceListener::class
+        );
+
+        // add-invoice-pdf-export-with-ubl-peppol-support REQ-EINV-005 — consume
+        // the cross-app `nl.conduction.peppol.delivery.status` cloud event
+        // openconnector's Peppol access point emits and advance
+        // ARInvoice.deliveryStatus (REQ-AR-011). Registered against the literal
+        // event-name STRING (IRegistrationContext::registerEventListener()
+        // accepts string|class-string<T> — mirrors the emit side in
+        // BudgetImpactEmitter, which dispatches plain string event names via
+        // IEventDispatcher::dispatch()).
+        $context->registerEventListener(
+            event: PeppolDeliveryStatusListener::EVENT_NAME,
+            listener: PeppolDeliveryStatusListener::class
         );
 
         // Bookings-pipelinq-customer-bridge slice 07 — when a new

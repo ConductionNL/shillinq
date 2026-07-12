@@ -6,10 +6,22 @@
  * Narrow port the PurchaseOrderService uses to transmit an approved PO as a UBL
  * 2.1 Order via the openconnector Peppol Access Point. The port is intentionally
  * minimal so the production binding (HTTP-backed against
- * /openconnector/api/peppol/...) can be swapped for the
- * {@see LogPeppolTransmissionAdapter} stub used in dev / CI without touching the
- * orchestration code (mirrors the OpenconnectorAdapterInterface pattern used by
- * BookingNotificationService).
+ * /openconnector/api/peppol/...) can be swapped for a
+ * {@see \OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter} stub used in
+ * dev / CI without touching the orchestration code (mirrors the
+ * OpenconnectorAdapterInterface pattern used by BookingNotificationService).
+ *
+ * REQ-EINV-004 (add-invoice-pdf-export-with-ubl-peppol-support) generalised the
+ * transmission port into a shared, document-type-agnostic
+ * {@see \OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface} so both PO
+ * (Order) and AR (Invoice, e-invoicing) documents transmit through the same
+ * `lookupParticipant()` + `submit()` contract. This interface is now retained
+ * as a THIN ALIAS/EXTENSION of that shared port (pure refactor, no
+ * behavioural regression — design.md Risk 2): it adds only the PO-specific
+ * `submitOrder()` method, which still accepts the raw UBL Order XML directly
+ * (unlike the shared port's `submit()`, which takes a stored document's
+ * `payloadFileUri`) so the existing PurchaseOrderService::sendToPeppol() call
+ * site is untouched.
  *
  * @category Service
  * @package  OCA\Shillinq\Service\PurchaseOrder
@@ -21,6 +33,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,28 +43,17 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\PurchaseOrder;
 
+use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
+
 /**
- * Channel-adapter port for Peppol BIS Ordering 3.0 transmission.
+ * Channel-adapter port for Peppol BIS Ordering 3.0 transmission — a thin
+ * alias/extension of the shared {@see PeppolTransmissionPortInterface}.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+ * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
  */
-interface PeppolTransmissionAdapterInterface
+interface PeppolTransmissionAdapterInterface extends PeppolTransmissionPortInterface
 {
-    /**
-     * Look up the Peppol participant identifier for a supplier.
-     *
-     * Returns the participant id (`scheme:identifier`, e.g. `0192:1234567890`)
-     * when the supplier is registered in the Peppol directory, or `null`
-     * otherwise. A `null` response is the signal for the orchestration layer
-     * to fall back to PDF + email transmission (REQ-PO3W-002).
-     *
-     * @param string $administrationId Administration scope (server-resolved).
-     * @param string $supplierId       The PurchaseOrder.supplierId to look up.
-     *
-     * @return string|null The Peppol participant id, or null when not registered.
-     */
-    public function lookupParticipant(string $administrationId, string $supplierId): ?string;
-
     /**
      * Submit a UBL 2.1 Order to the Peppol Access Point.
      *
@@ -67,6 +69,8 @@ interface PeppolTransmissionAdapterInterface
      * @return string The Peppol message id (URN).
      *
      * @throws \RuntimeException When the access point refuses or fails.
+     *
+     * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
      */
     public function submitOrder(string $participantId, string $ublOrderXml): string;
 }//end interface
