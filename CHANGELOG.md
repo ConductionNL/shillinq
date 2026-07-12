@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Time & expense invoice intake (`time-expense-invoice-intake`) — new
+  authenticated, idempotent `POST /apps/shillinq/api/billing/time-intake`
+  ingress endpoint that accepts a batch of externally-approved time entries
+  from another Conduction app (pipelinq's `time-billing-handoff-emit`
+  change) and materialises them into one draft `BillableInvoice` (T&M),
+  unblocking pipelinq's invoicing capability from `blocked-on-prereq`:
+  - New `BillingIntakeController::timeIntake()` — server-resolved
+    administration + personId (ADR-005), never a client-supplied
+    `administrationId`.
+  - New `TimeIntakeService::ingest()` — validates the batch, materialises
+    `UrenRegistratie` rows stamped with `externalId`/`sourceApp`/
+    `sourceBatchId`, and delegates invoice construction to the existing,
+    unmodified `InvoiceGenerationService::draftInvoice()`.
+  - Idempotency: replaying the same `batchId` returns `duplicated: true`;
+    a `batchId` reused with a different payload returns `409`; a
+    cross-batch duplicate `externalId` returns `422`.
+  - New `TimeIntakeBatch` schema + `externalId`/`sourceApp`/`sourceBatchId`
+    provenance fields on `UrenRegistratie`, shipped as a `register.d`
+    fragment (`lib/Settings/register.d/time-expense-invoice-intake.json`)
+    per ADR-037 — the canonical register is untouched.
+  - PHPUnit coverage: `tests/Unit/Service/TimeIntakeServiceTest.php`,
+    `tests/Unit/Controller/BillingIntakeControllerTest.php`.
 - Waterschappen BBV variant capstone (chain
   `bookkeeping-waterschappen-bbv-variant` member 12 of 12 — docs +
   quality):
