@@ -1,13 +1,16 @@
 ---
-status: done
+status: in-progress
 ---
 
 # Spec: Invoice from Time + Expense
 
-**Status:** proposed
+**Status:** in-progress
 **Scope:** shillinq-bookkeeping
 **Tier:** T2
 **Depends on:** `obligation-financial-administration` (approved), `rate-card-engine` (approved), `retainer-billing-engine` (approved)
+
+**OpenSpec changes:**
+- `time-expense-invoice-intake` (in-progress) — adds the authenticated, idempotent `POST /apps/shillinq/api/billing/time-intake` ingress that materialises a pipelinq-approved time batch into one draft `BillableInvoice` (T&M), unblocking the pipelinq `time-billing-handoff-emit` consumer.
 
 ## Purpose
 
