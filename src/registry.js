@@ -257,6 +257,14 @@ import ExternalAdapterDetail from './views/external-adapters/ExternalAdapterDeta
 // (nextcloud-vue#91 Wave-4) that no single declarative endpoint expresses.
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
 
+// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007): the Send
+// e-invoice action + delivery-status indicator on the manifest-driven
+// ARInvoiceDetail page. Resolved as the page's `actionsComponent` (ADR-036 —
+// any registry kind is eligible for slot/actions resolution, only page
+// dispatch itself requires kind:"page"), mounted into CnDetailPage's actions
+// header slot with `{ object, objectId, schema, objectType, store }`.
+import AREInvoiceActions from './components/ar-invoice/AREInvoiceActions.vue'
+
 // recurring-invoicing (REQ-RIN-008, Task 15): the create/edit modal for a
 // RecurringInvoiceProfile is a bespoke multi-line form with period-token
 // preview and an inline next-invoice projection — none of which the
@@ -371,6 +379,9 @@ export default {
 	// The KPIs / turnover / margin / billable charts / open-invoice tables are
 	// now declarative built-in stat / chart / object-table dashboard widgets.
 	CashflowChartWidget: { kind: 'widget', component: CashflowChartWidget },
+
+	// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007).
+	AREInvoiceActions: { kind: 'widget', component: AREInvoiceActions },
 
 	// reporting-compliance-consolidation: Reporting & Compliance pages.
 	ReportingComplianceOverview: { kind: 'page', component: ReportingComplianceOverview },

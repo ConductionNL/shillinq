@@ -105,6 +105,20 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase
                 $this->lastUbl = $ublOrderXml;
                 return 'urn:uuid:dead-beef-cafe';
             }
+
+
+            /**
+             * Not exercised by sendToPeppol() (which calls submitOrder()) — present
+             * only to satisfy the generalised PeppolTransmissionPortInterface
+             * (REQ-EINV-004) that PeppolTransmissionAdapterInterface now extends.
+             *
+             * @inheritDoc
+             */
+            public function submit(string $participantId, string $documentType, string $payloadFileUri): string
+            {
+                unset($participantId, $documentType, $payloadFileUri);
+                return 'urn:uuid:not-used-by-po-path';
+            }
         };
 
         $mailer = $this->stubMailer(failOnSend: true);
@@ -384,6 +398,20 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase
                 }
 
                 return 'urn:uuid:test-message-id';
+            }
+
+
+            /**
+             * Not exercised by sendToPeppol() (which calls submitOrder()) — present
+             * only to satisfy the generalised PeppolTransmissionPortInterface
+             * (REQ-EINV-004) that PeppolTransmissionAdapterInterface now extends.
+             *
+             * @inheritDoc
+             */
+            public function submit(string $participantId, string $documentType, string $payloadFileUri): string
+            {
+                unset($participantId, $documentType, $payloadFileUri);
+                return 'urn:uuid:not-used-by-po-path';
             }
         };
 
