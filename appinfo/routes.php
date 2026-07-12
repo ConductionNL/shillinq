@@ -555,4 +555,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         // both are declared before the SPA catch-all per ADR-016.
         ['name' => 'paymentRun#export', 'url' => '/api/v1/payment-runs/{id}/export', 'verb' => 'POST'],
         ['name' => 'paymentRun#reconcile', 'url' => '/api/v1/payment-runs/{id}/reconcile', 'verb' => 'POST'],
+
+        // compliance-deadline-calendar (REQ-CDC-006). Per-user category
+        // toggles + reminder lead times for the deadline calendar. Both
+        // endpoints are #[NoAdminRequired] and STRICTLY current-user scoped
+        // (the acting user comes from the session only — no user id is
+        // accepted from the request, so there is no IDOR surface). Static
+        // URLs declared before the SPA catch-all per ADR-016.
+        ['name' => 'deadlineCalendarSettings#index', 'url' => '/api/deadline-calendar/settings', 'verb' => 'GET'],
+        ['name' => 'deadlineCalendarSettings#update', 'url' => '/api/deadline-calendar/settings', 'verb' => 'POST'],
 ]);

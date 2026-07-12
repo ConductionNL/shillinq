@@ -158,7 +158,12 @@
 					"name": "POST start-close (open → closing)",
 					"request": {
 						"method": "POST",
-						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\"administration_id\":\"{{administration_id}}\"}"
@@ -185,7 +190,12 @@
 					"name": "POST close (closing → closed)",
 					"request": {
 						"method": "POST",
-						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\"administration_id\":\"{{administration_id}}\"}"
@@ -212,7 +222,12 @@
 					"name": "POST reopen without reason → 422",
 					"request": {
 						"method": "POST",
-						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\"administration_id\":\"{{administration_id}}\",\"closeReason\":\"\"}"
@@ -238,7 +253,12 @@
 					"name": "POST reopen with reason (closed → open)",
 					"request": {
 						"method": "POST",
-						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\"administration_id\":\"{{administration_id}}\",\"closeReason\":\"Posted correction for invoice #2026-0042\"}"
@@ -265,7 +285,12 @@
 					"name": "POST lock-audit on audit-locked → 409",
 					"request": {
 						"method": "POST",
-						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\"administration_id\":\"{{administration_id}}\"}"
@@ -396,7 +421,12 @@
 					"name": "GET /api/v2/calendars (list)",
 					"request": {
 						"method": "GET",
-						"header": [{ "key": "OCS-APIRequest", "value": "true" }],
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
 						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars",
 						"description": "REQ-005: list all calendars. Returns 200 with a JSON array (possibly empty when no seed data is loaded)."
 					},
@@ -422,7 +452,12 @@
 					"name": "GET /api/v2/calendars?resource=res-001 (filter)",
 					"request": {
 						"method": "GET",
-						"header": [{ "key": "OCS-APIRequest", "value": "true" }],
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
 						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars?resource={{resource_id}}",
 						"description": "REQ-005: filter calendars by resource. Empty array is a valid response on a fresh container."
 					},
@@ -448,7 +483,12 @@
 					"name": "GET /api/v2/calendars/{id} (detail)",
 					"request": {
 						"method": "GET",
-						"header": [{ "key": "OCS-APIRequest", "value": "true" }],
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
 						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}",
 						"description": "REQ-005: fetch a single calendar by id. 200 when seeded, 404 on a fresh container — both are accepted."
 					},
@@ -470,7 +510,12 @@
 					"name": "GET /api/v2/calendars/{id}/bookings?start=...&end=... (range)",
 					"request": {
 						"method": "GET",
-						"header": [{ "key": "OCS-APIRequest", "value": "true" }],
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
 						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}/bookings?start=2026-05-21&end=2026-05-31",
 						"description": "REQ-005: list bookings for a calendar in a date range, sorted by startTime."
 					},
@@ -498,8 +543,14 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" },
-							{ "key": "OCS-APIRequest", "value": "true" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -553,7 +604,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -572,6 +626,157 @@
 									"});"
 								],
 								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Deadline Calendar Settings",
+			"description": "compliance-deadline-calendar REQ-CDC-006: per-user category toggles + reminder lead times. Strictly current-user scoped (the acting user comes from the session; no user id parameter exists). Idempotent: the suite saves a change and restores the defaults.",
+			"item": [
+				{
+					"name": "GET settings returns the four categories",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/shillinq/api/deadline-calendar/settings",
+						"description": "REQ-CDC-006: fetch the current user's deadline-calendar category toggles."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 with the four categories', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json).to.have.property('categories');",
+									"    ['filing', 'payment-run', 'ar-due', 'contract'].forEach(function (category) {",
+									"        pm.expect(json.categories).to.have.property(category);",
+									"        pm.expect(json.categories[category]).to.have.property('enabled');",
+									"        pm.expect(json.categories[category]).to.have.property('leadDays');",
+									"    });",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST toggles the payment-run category off",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"categories\": {\"payment-run\": {\"enabled\": false, \"leadDays\": 5}}}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/deadline-calendar/settings",
+						"description": "REQ-CDC-006: disable one category; the response echoes the saved state and reports the (fail-soft) publication status."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 and payment-run saved as disabled', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.categories['payment-run'].enabled).to.eql(false);",
+									"    pm.expect(json.categories['payment-run'].leadDays).to.eql(5);",
+									"    pm.expect(json).to.have.property('publication');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST malformed categories payload is a 400",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"categories\": \"not-an-object\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/deadline-calendar/settings",
+						"description": "REQ-CDC-006: a non-object categories payload is rejected."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('400 on malformed payload', function () {",
+									"    pm.response.to.have.status(400);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST restores the payment-run default (teardown)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"categories\": {\"payment-run\": {\"enabled\": true, \"leadDays\": 7}}}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/deadline-calendar/settings",
+						"description": "Idempotency teardown: restore the documented payment-run defaults."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 and payment-run restored', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.categories['payment-run'].enabled).to.eql(true);",
+									"});"
+								]
 							}
 						}
 					]

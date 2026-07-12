@@ -119,6 +119,15 @@ Vrij en open source onder de EUPL-1.2-licentie.
              Application::register()); manual operator FxRate entries via the
              admin UI keep working regardless. -->
         <job>OCA\Shillinq\BackgroundJob\FxRateImportJob</job>
+        <!-- compliance-deadline-calendar REQ-CDC-001/007: daily TimedJob
+             that publishes the open BTW/ICP/VPB filing, payment-run,
+             (opt-in) AR due-date and contract deadlines as VEVENTs into
+             each seen user's deadline calendar honouring the per-user
+             category toggles, and raises one NC Notification per upcoming
+             deadline per user within the configured lead time. Fail-soft:
+             a calendar-less instance logs and degrades; cron never
+             crashes. -->
+        <job>OCA\Shillinq\BackgroundJob\DeadlineReminderJob</job>
     </background-jobs>
 
     <repair-steps>

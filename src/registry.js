@@ -231,6 +231,12 @@ import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashbo
 // (same pattern as SegmentPnLDashboard).
 import BudgetLineCommitments from './views/BudgetLineCommitments.vue'
 
+// compliance-deadline-calendar (REQ-CDC-006): per-user category toggles
+// + reminder lead times for the compliance deadline calendar. Talks to
+// the strictly current-user-scoped /api/deadline-calendar/settings
+// endpoints; registered as a kind:"page" custom component per ADR-024.
+import DeadlineCalendarSettings from './views/DeadlineCalendarSettings.vue'
+
 // Shillinq W8 (external-adapters admin UIs): the External Connections
 // section renders an operator roll-up + per-adapter activation panel
 // for the 14 dormant external-API adapter ports (Digipoort/SBR,
@@ -377,6 +383,9 @@ export default {
 	// bookkeeping-cost-centers-dimensions Task 14: segment P&L drill-down.
 	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },
 	BudgetLineCommitments: { kind: 'page', component: BudgetLineCommitments },
+
+	// compliance-deadline-calendar (REQ-CDC-006): deadline calendar settings.
+	DeadlineCalendarSettings: { kind: 'page', component: DeadlineCalendarSettings },
 
 	// Shillinq W8: External Connections admin pages (index + per-adapter detail).
 	ExternalAdaptersStatus: { kind: 'page', component: ExternalAdaptersStatus },
