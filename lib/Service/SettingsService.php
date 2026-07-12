@@ -878,6 +878,8 @@ class SettingsService
      * @param string $logLabel     Label for log messages.
      *
      * @return array<string,mixed>
+     *
+     * @spec exclude system-context adoption
      */
     private function seedGenericFile(
         string $seedFileName,
@@ -913,32 +915,53 @@ class SettingsService
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $registerSlug  = $this->getRegisterSlug();
-            $seeded        = 0;
-            $skipped       = 0;
 
-            foreach ($items as $item) {
-                $existing = $objectService
-                    ->setRegister($registerSlug)
-                    ->setSchema($schema)
-                    ->findAll(
-                            [
-                                'filters' => [$dedupeKey => $item[$dedupeKey]],
-                                'limit'   => 1,
-                            ]
-                            );
+            $seedItems = function () use ($objectService, $registerSlug, $items, $dedupeKey, $schema): array {
+                $seeded  = 0;
+                $skipped = 0;
 
-                if (empty($existing) === false) {
-                    $skipped++;
-                    continue;
-                }
+                foreach ($items as $item) {
+                    $existing = $objectService
+                        ->setRegister($registerSlug)
+                        ->setSchema($schema)
+                        ->findAll(
+                                [
+                                    'filters' => [$dedupeKey => $item[$dedupeKey]],
+                                    'limit'   => 1,
+                                ]
+                                );
 
-                $objectService->saveObject(
-                    object: $item,
-                    register: $registerSlug,
-                    schema: $schema,
-                );
-                $seeded++;
-            }//end foreach
+                    if (empty($existing) === false) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $objectService->saveObject(
+                        object: $item,
+                        register: $registerSlug,
+                        schema: $schema,
+                    );
+                    $seeded++;
+                }//end foreach
+
+                return [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ];
+            };
+
+            // Seeding runs user-less (repair step / boot); without elevation
+            // OpenRegister RBAC denies the reads/writes as 'Anonymous'. The
+            // guard keeps compatibility with released OR versions that do not
+            // ship runAsSystem() yet.
+            if (method_exists($objectService, 'runAsSystem') === true) {
+                $counts = $objectService->runAsSystem($seedItems);
+            } else {
+                $counts = $seedItems();
+            }
+
+            $seeded  = $counts['seeded'];
+            $skipped = $counts['skipped'];
 
             $this->logger->info(
                 'Shillinq: '.$logLabel.' seeded',
@@ -1104,68 +1127,88 @@ class SettingsService
             'facility-by-fixed-percentage.json',
         ];
 
-        $seeded  = 0;
-        $skipped = 0;
-
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-            foreach ($seedFiles as $seedFile) {
-                $seedPath = __DIR__.'/../Settings/seeds/allocation-rules/'.$seedFile;
+            $seedRules = function () use ($objectService, $seedFiles, $administrationId): array {
+                $seeded  = 0;
+                $skipped = 0;
 
-                if (file_exists($seedPath) === false) {
-                    $this->logger->warning('Shillinq: allocation rule seed file not found at '.$seedPath);
-                    continue;
-                }
+                foreach ($seedFiles as $seedFile) {
+                    $seedPath = __DIR__.'/../Settings/seeds/allocation-rules/'.$seedFile;
 
-                $content = file_get_contents($seedPath);
-                if ($content === false) {
-                    $this->logger->warning('Shillinq: failed to read allocation rule seed file: '.$seedFile);
-                    continue;
-                }
-
-                $data = json_decode($content, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    $this->logger->warning('Shillinq: failed to parse allocation rule seed file: '.$seedFile);
-                    continue;
-                }
-
-                // Seed files use the standard ConfigurationService::importFromApp
-                // shape `{ "register": ..., "schema": ..., "objects": [...] }`.
-                // Older variants stored the rules under `allocationRules`; keep
-                // backwards-compat by accepting either.
-                $rules = ($data['objects'] ?? ($data['allocationRules'] ?? []));
-
-                foreach ($rules as $rule) {
-                    $rule['administrationId'] = $administrationId;
-
-                    $registerSlug = $this->getRegisterSlug();
-                    $existing     = $objectService
-                        ->setRegister($registerSlug)
-                        ->setSchema('AllocationRule')
-                        ->findAll(
-                            [
-                                'filters' => [
-                                    'name'             => $rule['name'],
-                                    'administrationId' => $administrationId,
-                                ],
-                                'limit'   => 1,
-                            ]
-                        );
-
-                    if (empty($existing) === false) {
-                        $skipped++;
+                    if (file_exists($seedPath) === false) {
+                        $this->logger->warning('Shillinq: allocation rule seed file not found at '.$seedPath);
                         continue;
                     }
 
-                    $objectService->saveObject(
-                        object: $rule,
-                        register: $registerSlug,
-                        schema: 'AllocationRule',
-                    );
-                    $seeded++;
+                    $content = file_get_contents($seedPath);
+                    if ($content === false) {
+                        $this->logger->warning('Shillinq: failed to read allocation rule seed file: '.$seedFile);
+                        continue;
+                    }
+
+                    $data = json_decode($content, true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        $this->logger->warning('Shillinq: failed to parse allocation rule seed file: '.$seedFile);
+                        continue;
+                    }
+
+                    // Seed files use the standard ConfigurationService::importFromApp
+                    // shape `{ "register": ..., "schema": ..., "objects": [...] }`.
+                    // Older variants stored the rules under `allocationRules`; keep
+                    // backwards-compat by accepting either.
+                    $rules = ($data['objects'] ?? ($data['allocationRules'] ?? []));
+
+                    foreach ($rules as $rule) {
+                        $rule['administrationId'] = $administrationId;
+
+                        $registerSlug = $this->getRegisterSlug();
+                        $existing     = $objectService
+                            ->setRegister($registerSlug)
+                            ->setSchema('AllocationRule')
+                            ->findAll(
+                                [
+                                    'filters' => [
+                                        'name'             => $rule['name'],
+                                        'administrationId' => $administrationId,
+                                    ],
+                                    'limit'   => 1,
+                                ]
+                            );
+
+                        if (empty($existing) === false) {
+                            $skipped++;
+                            continue;
+                        }
+
+                        $objectService->saveObject(
+                            object: $rule,
+                            register: $registerSlug,
+                            schema: 'AllocationRule',
+                        );
+                        $seeded++;
+                    }//end foreach
                 }//end foreach
-            }//end foreach
+
+                return [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ];
+            };
+
+            // Seeding runs user-less (repair step / boot); without elevation
+            // OpenRegister RBAC denies the reads/writes as 'Anonymous'. The
+            // guard keeps compatibility with released OR versions that do not
+            // ship runAsSystem() yet.
+            if (method_exists($objectService, 'runAsSystem') === true) {
+                $counts = $objectService->runAsSystem($seedRules);
+            } else {
+                $counts = $seedRules();
+            }
+
+            $seeded  = $counts['seeded'];
+            $skipped = $counts['skipped'];
 
             $this->logger->info(
                 'Shillinq: allocation rule seeds imported',
