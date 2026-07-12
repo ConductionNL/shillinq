@@ -131,6 +131,8 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
      *
      * @return string|null The Peppol participant id, or null when not registered.
      *
+     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
+     *
      * @inheritDoc
      */
     public function lookupParticipant(string $administrationId, string $partyId): ?string
@@ -164,6 +166,8 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
      *
      * @return string The transmission identifier.
      *
+     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
+     *
      * @inheritDoc
      */
     public function submit(string $participantId, string $documentType, string $payloadFileUri): string
@@ -191,6 +195,8 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
      * @param string $ublOrderXml   The UBL order XML payload.
      *
      * @return string The transmission identifier.
+     *
+     * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
      *
      * @inheritDoc
      */

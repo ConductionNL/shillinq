@@ -77,20 +77,25 @@ export default {
 		}
 	},
 	computed: {
+		/** @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007 */
 		deliveryStatus() {
 			return resolveDeliveryStatus(this.object, this.localDeliveryStatus)
 		},
+		/** @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007 */
 		canSend() {
 			return canSendEInvoice(this.object)
 		},
+		/** @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007 */
 		administrationId() {
 			return this.object?.administrationId || ''
 		},
+		/** @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007 */
 		invoiceNumber() {
 			return this.object?.invoiceNumber || ''
 		},
 	},
 	methods: {
+		/** @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007 */
 		async onSend() {
 			this.sendError = ''
 			this.fallbackNotice = ''

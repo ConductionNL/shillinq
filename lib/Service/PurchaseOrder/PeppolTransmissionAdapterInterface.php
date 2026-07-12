@@ -69,6 +69,8 @@ interface PeppolTransmissionAdapterInterface extends PeppolTransmissionPortInter
      * @return string The Peppol message id (URN).
      *
      * @throws \RuntimeException When the access point refuses or fails.
+     *
+     * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
      */
     public function submitOrder(string $participantId, string $ublOrderXml): string;
 }//end interface

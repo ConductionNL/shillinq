@@ -405,9 +405,11 @@ class PurchaseOrderService
             purchaseOrderId: $purchaseOrderId
         );
         $supplierId  = (string) ($po['supplierId'] ?? '');
+        // The generalised port (REQ-EINV-004) names the parameter partyId —
+        // it resolves suppliers (PO) and debtors (AR) through the same lookup.
         $participant = $this->peppolAdapter->lookupParticipant(
             administrationId: $administrationId,
-            supplierId: $supplierId
+            partyId: $supplierId
         );
 
         // No Peppol participant id = graceful PDF + email fallback (REQ-PO3W-002 D2).

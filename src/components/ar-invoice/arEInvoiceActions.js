@@ -52,7 +52,7 @@ export function sendEInvoiceEndpoint(invoiceNumber) {
  * participant fallback (REQ-EINV-003), a human-readable notice.
  *
  * @param {object} result The parsed response body ({ deliveryStatus, fallback, ... }).
- * @param {Function} t The translate function (app, text) => string.
+ * @param {(app: string, text: string) => string} t The translate function.
  * @return {{deliveryStatus: string, fallbackNotice: string}}
  */
 export function mapSendResult(result, t) {
@@ -68,7 +68,7 @@ export function mapSendResult(result, t) {
  * back to a generic message when the server did not return a structured error.
  *
  * @param {object} error The caught axios error.
- * @param {Function} t The translate function (app, text) => string.
+ * @param {(app: string, text: string) => string} t The translate function.
  * @return {string}
  */
 export function extractSendErrorMessage(error, t) {

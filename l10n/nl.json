@@ -1,5 +1,14 @@
 {
     "translations": {
+        "Send e-invoice": "E-factuur versturen",
+        "Sending...": "Versturen...",
+        "Not sent": "Niet verzonden",
+        "Queued": "In wachtrij",
+        "Sent": "Verzonden",
+        "Delivered": "Afgeleverd",
+        "Invoice queued for Peppol delivery.": "Factuur in wachtrij voor Peppol-bezorging.",
+        "No Peppol participant found for this debtor — use PDF + email instead.": "Geen Peppol-deelnemer gevonden voor deze debiteur — gebruik in plaats daarvan PDF + e-mail.",
+        "Failed to send e-invoice": "E-factuur versturen mislukt",
         "Import bill": "Inkoopfactuur importeren",
         "Upload supplier invoice": "Inkoopfactuur uploaden",
         "Drag and drop a UBL XML or CSV file": "Sleep een UBL-XML- of CSV-bestand hierheen",

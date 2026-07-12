@@ -48,6 +48,9 @@ namespace OCA\Shillinq\Service;
 
 /**
  * Dutch-formatted invoice HTML / PDF builder.
+ *
+ * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
+ * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
  */
 class InvoicePdfGenerator
 {
@@ -70,6 +73,8 @@ class InvoicePdfGenerator
      * @param array<string,mixed>            $recipient Recipient details.
      *
      * @return array{filename:string,html:string,mimeType:string}
+     *
+     * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
      */
     public function generatePdf(
         array $invoice,
@@ -96,18 +101,20 @@ class InvoicePdfGenerator
      * `AFRelationship=Alternative` associated file (REQ-EINV-002).
      *
      * @param array<string,mixed>            $invoice   ARInvoice record (or any invoice-shaped
-     *                                                   array carrying invoiceNumber/grossAmount/
-     *                                                   currency).
+     *                                                  array carrying invoiceNumber/grossAmount/
+     *                                                  currency).
      * @param array<int,array<string,mixed>> $lines     Invoice lines (used for the human-readable
-     *                                                   summary only — the XML itself is supplied
-     *                                                   pre-rendered by the caller).
+     *                                                  summary only — the XML itself is supplied
+     *                                                  pre-rendered by the caller).
      * @param string                         $ublXml    The NLCIUS UBL 2.1 XML document to embed
-     *                                                   (see {@see \OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper::toNlciusXml()}).
+     *                                                  (see {@see \OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper::toNlciusXml()}).
      * @param array<string,mixed>            $creditor  Creditor (issuing party) details.
      * @param array<string,mixed>            $recipient Recipient details.
      *
      * @return array{filename:string,pdf:string,mimeType:string,embeddedXmlFilename:string}
      *                The `pdf` key carries the raw PDF/A-3 binary (not base64).
+     *
+     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
      */
     public function generateHybridPdf(
         array $invoice,
@@ -138,10 +145,10 @@ class InvoicePdfGenerator
      * a correct cross-reference table so the result is a structurally valid
      * PDF any standard viewer/extractor can open.
      *
-     * @param array<string,mixed> $invoice   Invoice record (invoiceNumber / grossAmount / currency).
-     * @param string              $html      Rendered HTML (used only to derive a one-line summary
-     *                                       shown on the PDF page — the HTML markup itself is not
-     *                                       embedded).
+     * @param array<string,mixed> $invoice    Invoice record (invoiceNumber / grossAmount / currency).
+     * @param string              $html       Rendered HTML (used only to derive a one-line summary
+     *                                        shown on the PDF page — the HTML markup itself is
+     *                                        not embedded).
      * @param string              $xmlContent The UBL XML document to embed.
      *
      * @return string Raw PDF bytes.
@@ -223,7 +230,7 @@ class InvoicePdfGenerator
 
         foreach ($objects as $number => $body) {
             $offsets[$number] = strlen($out);
-            $out             .= $number." 0 obj\n".$body."\nendobj\n";
+            $out .= $number." 0 obj\n".$body."\nendobj\n";
         }
 
         $xrefOffset = strlen($out);

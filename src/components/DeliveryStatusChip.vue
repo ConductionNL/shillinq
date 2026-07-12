@@ -33,6 +33,7 @@ export default {
 		},
 	},
 	computed: {
+		/** @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007 */
 		label() {
 			const labels = {
 				'not-sent': this.t('shillinq', 'Not sent'),

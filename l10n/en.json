@@ -1,5 +1,14 @@
 {
     "translations": {
+        "Send e-invoice": "Send e-invoice",
+        "Sending...": "Sending...",
+        "Not sent": "Not sent",
+        "Queued": "Queued",
+        "Sent": "Sent",
+        "Delivered": "Delivered",
+        "Invoice queued for Peppol delivery.": "Invoice queued for Peppol delivery.",
+        "No Peppol participant found for this debtor — use PDF + email instead.": "No Peppol participant found for this debtor — use PDF + email instead.",
+        "Failed to send e-invoice": "Failed to send e-invoice",
         "Import bill": "Import bill",
         "Upload supplier invoice": "Upload supplier invoice",
         "Drag and drop a UBL XML or CSV file": "Drag and drop a UBL XML or CSV file",

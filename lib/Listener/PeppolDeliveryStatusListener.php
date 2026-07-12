@@ -92,25 +92,26 @@ class PeppolDeliveryStatusListener implements IEventListener
      * @var array<string,bool>
      */
     private const ALLOWED_TRANSITIONS = [
-        'queued|sent'      => true,
-        'sent|delivered'   => true,
-        'queued|rejected'  => true,
-        'sent|rejected'    => true,
-        'queued|failed'    => true,
+        'queued|sent'         => true,
+        'sent|delivered'      => true,
+        'queued|rejected'     => true,
+        'sent|rejected'       => true,
+        'queued|failed'       => true,
         // Idempotent re-delivery of the same status is harmless.
-        'sent|sent'        => true,
+        'sent|sent'           => true,
         'delivered|delivered' => true,
-        'rejected|rejected' => true,
-        'failed|failed'    => true,
+        'rejected|rejected'   => true,
+        'failed|failed'       => true,
     ];
 
     /**
      * Construct the listener.
      *
-     * @param ContainerInterface  $container           DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig          $appConfig           App config for the register slug.
+     * @param ContainerInterface   $container           DI container — OR's ObjectService is fetched
+     *                                                  lazily.
+     * @param IAppConfig           $appConfig           App config for the register slug.
      * @param INotificationManager $notificationManager NC notification dispatcher (rejected alert).
-     * @param LoggerInterface     $logger              Logger for fail-soft diagnostics.
+     * @param LoggerInterface      $logger              Logger for fail-soft diagnostics.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -125,9 +126,11 @@ class PeppolDeliveryStatusListener implements IEventListener
      * Handle a `nl.conduction.peppol.delivery.status` event.
      *
      * @param Event $event The dispatched GenericEvent carrying
-     *                      {objectUri, transmissionId, status, timestamp, detail}.
+     *                     {objectUri, transmissionId, status, timestamp, detail}.
      *
      * @return void
+     *
+     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
      */
     public function handle(Event $event): void
     {
@@ -259,7 +262,7 @@ class PeppolDeliveryStatusListener implements IEventListener
     private function notifyFinanceOperators(array $invoice, string $detail): void
     {
         $administrationId = (string) ($invoice['administrationId'] ?? '');
-        $invoiceNumber     = (string) ($invoice['invoiceNumber'] ?? '');
+        $invoiceNumber    = (string) ($invoice['invoiceNumber'] ?? '');
         if ($administrationId === '') {
             return;
         }

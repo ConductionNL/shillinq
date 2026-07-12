@@ -94,12 +94,22 @@ final class BookkeepingOperationsFragmentTest extends TestCase
             'ZzpDeduction',
             'IbAangifteExport',
             'SchatkistPosition',
-            'Subsidie',
             'RepaymentInstallment',
         ];
         foreach ($expected as $name) {
             self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
         }
+
+        // Subsidie was consolidated OUT of this fragment into the canonical
+        // monolith definition (commit 07709a0f, prereq for
+        // abstract-order-primitive) — assert the canonical home still carries
+        // it so the consolidation never silently regresses.
+        $monolith = json_decode((string) file_get_contents($this->registerPath), true);
+        self::assertArrayHasKey(
+            'Subsidie',
+            $monolith['components']['schemas'],
+            'Canonical Subsidie must live in the monolith after the 07709a0f consolidation'
+        );
     }//end testFragmentDeclaresMissingSchemas()
 
     /**
@@ -112,10 +122,17 @@ final class BookkeepingOperationsFragmentTest extends TestCase
         $data    = json_decode((string) file_get_contents($this->fragmentPath), true);
         $schemas = $data['components']['schemas'];
 
-        foreach (['VatReturn', 'BcfClaim', 'Subsidie', 'IcpStatement', 'VatCorrection'] as $name) {
+        foreach (['VatReturn', 'BcfClaim', 'IcpStatement', 'VatCorrection'] as $name) {
             self::assertArrayHasKey('x-openregister-lifecycle', $schemas[$name], "$name must declare a lifecycle");
             self::assertSame('state', $schemas[$name]['x-openregister-lifecycle']['field']);
         }
+
+        // Subsidie's lifecycle moved with it to the canonical monolith
+        // definition (commit 07709a0f) — keep the state-bearing guarantee.
+        $monolith = json_decode((string) file_get_contents($this->registerPath), true);
+        $subsidie = $monolith['components']['schemas']['Subsidie'];
+        self::assertArrayHasKey('x-openregister-lifecycle', $subsidie, 'Subsidie must declare a lifecycle');
+        self::assertSame('state', $subsidie['x-openregister-lifecycle']['field']);
     }//end testStateBearingSchemasDeclareLifecycle()
 
     /**

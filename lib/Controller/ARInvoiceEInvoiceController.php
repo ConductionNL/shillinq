@@ -60,10 +60,10 @@ class ARInvoiceEInvoiceController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest        $request        The request object.
+     * @param IRequest        $request         The request object.
      * @param EInvoiceService $eInvoiceService Orchestrator (server-authoritative).
-     * @param IUserSession    $userSession    User session guard.
-     * @param LoggerInterface $logger         Logger (no stack traces to client).
+     * @param IUserSession    $userSession     User session guard.
+     * @param LoggerInterface $logger          Logger (no stack traces to client).
      *
      * @return void
      */

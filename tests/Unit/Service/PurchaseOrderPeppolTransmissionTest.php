@@ -90,9 +90,9 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase
             /**
              * @inheritDoc
              */
-            public function lookupParticipant(string $administrationId, string $supplierId): ?string
+            public function lookupParticipant(string $administrationId, string $partyId): ?string
             {
-                $this->lastLookup = ['adm' => $administrationId, 'sup' => $supplierId];
+                $this->lastLookup = ['adm' => $administrationId, 'sup' => $partyId];
                 return '0192:1234567890';
             }
 
@@ -380,9 +380,9 @@ final class PurchaseOrderPeppolTransmissionTest extends TestCase
             /**
              * @inheritDoc
              */
-            public function lookupParticipant(string $administrationId, string $supplierId): ?string
+            public function lookupParticipant(string $administrationId, string $partyId): ?string
             {
-                unset($administrationId, $supplierId);
+                unset($administrationId, $partyId);
                 return $this->participant;
             }
 

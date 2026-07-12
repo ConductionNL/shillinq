@@ -378,10 +378,18 @@ export default {
 	// forecast (two sources) into one chart — see the import docblock above.
 	// The KPIs / turnover / margin / billable charts / open-invoice tables are
 	// now declarative built-in stat / chart / object-table dashboard widgets.
-	CashflowChartWidget: { kind: 'widget', component: CashflowChartWidget },
+	CashflowChartWidget: {
+		kind: 'widget',
+		component: CashflowChartWidget,
+		_note: 'Merges realized GL lines with the 13-week forecast (two data sources) into one chart — no built-in chart widget joins two sources (ADR-049 Phase-4 survivor).',
+	},
 
 	// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007).
-	AREInvoiceActions: { kind: 'widget', component: AREInvoiceActions },
+	AREInvoiceActions: {
+		kind: 'widget',
+		component: AREInvoiceActions,
+		_note: 'Header actionsComponent, not a data widget: pairs a stateful Send e-invoice action (POST + optimistic status update + inline validation errors) with the delivery-status chip — no built-in widget performs writes.',
+	},
 
 	// reporting-compliance-consolidation: Reporting & Compliance pages.
 	ReportingComplianceOverview: { kind: 'page', component: ReportingComplianceOverview },

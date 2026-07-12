@@ -194,7 +194,7 @@ is emitted.
 
 #### Scenario: Operator sends an e-invoice from the detail view
 
-- @e2e src/views/**/ARInvoiceDetail*.spec.js
+- @e2e tests/e2e/ar-invoice-einvoice.spec.ts
 - GIVEN a finance operator viewing an issued `ARInvoice` with valid debtor
   identifiers
 - WHEN they click Send e-invoice and confirm

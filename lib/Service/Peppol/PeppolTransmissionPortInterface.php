@@ -56,6 +56,8 @@ interface PeppolTransmissionPortInterface
      *                                 or ARInvoice.customerId).
      *
      * @return string|null The Peppol participant id, or null when not registered.
+     *
+     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
      */
     public function lookupParticipant(string $administrationId, string $partyId): ?string;
 
@@ -76,6 +78,8 @@ interface PeppolTransmissionPortInterface
      * @return string The Peppol message id (URN).
      *
      * @throws \RuntimeException When the access point refuses or fails.
+     *
+     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
      */
     public function submit(string $participantId, string $documentType, string $payloadFileUri): string;
 }//end interface

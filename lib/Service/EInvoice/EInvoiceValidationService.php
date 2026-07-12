@@ -63,10 +63,11 @@ final class EInvoiceValidationService
     /**
      * Construct the validation service.
      *
-     * @param ViesService                      $vies       VIES VAT-ID validator (reused, REQ-EINV-003).
-     * @param PeppolTransmissionPortInterface   $peppolPort Generalised transmission port — its
-     *                                                      lookupParticipant() resolves (and implicitly
-     *                                                      confirms) the debtor's Peppol identity.
+     * @param ViesService                     $vies       VIES VAT-ID validator (reused, REQ-EINV-003).
+     * @param PeppolTransmissionPortInterface $peppolPort Generalised transmission port —
+     *                                                    its lookupParticipant() resolves
+     *                                                    (and implicitly confirms) the
+     *                                                    debtor's Peppol identity.
      */
     public function __construct(
         private readonly ViesService $vies,
@@ -77,11 +78,13 @@ final class EInvoiceValidationService
     /**
      * Validate an ARInvoice's debtor identifiers ahead of a Send e-invoice attempt.
      *
-     * @param string               $administrationId Administration scope (server-resolved).
-     * @param array<string,mixed>  $arInvoice        The ARInvoice record (buyerLegalRegId,
-     *                                               buyerVatId, customerId).
+     * @param string              $administrationId Administration scope (server-resolved).
+     * @param array<string,mixed> $arInvoice        The ARInvoice record (buyerLegalRegId,
+     *                                              buyerVatId, customerId).
      *
      * @return array{valid:bool,errors:array<int,array{field:string,code:string,message:string}>,warnings:array<int,array{field:string,code:string,message:string}>,peppolParticipantId:?string}
+     *
+     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-003
      */
     public function validate(string $administrationId, array $arInvoice): array
     {
@@ -112,7 +115,7 @@ final class EInvoiceValidationService
                     'code'    => 'vies_outage',
                     'message' => 'VIES is temporarily unavailable — BTW-nummer format is valid; proceeding without live confirmation',
                 ];
-            } elseif ($viesResult['valid'] !== true) {
+            } else if ($viesResult['valid'] !== true) {
                 $errors[] = [
                     'field'   => 'buyerVatId',
                     'code'    => 'vat_vies_invalid',

@@ -78,6 +78,8 @@ final class ArInvoiceUblMapper
      *
      * @throws RuntimeException When the invoice is not in the required `issued`
      *                           lifecycle state — no XML is produced (REQ-EINV-001).
+     *
+     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-001
      */
     public function toNlciusXml(array $arInvoice): string
     {
@@ -207,7 +209,7 @@ final class ArInvoiceUblMapper
         $address     = (string) ($arInvoice['buyerAddress'] ?? '');
         $participant = (string) ($arInvoice['buyerPeppolParticipantId'] ?? '');
 
-        $xml = '<cac:AccountingCustomerParty><cac:Party>';
+        $xml        = '<cac:AccountingCustomerParty><cac:Party>';
         $endpointId = $participant;
         if ($endpointId === '') {
             $endpointId = $customerId;
@@ -250,7 +252,7 @@ final class ArInvoiceUblMapper
      */
     private function taxTotal(array $arInvoice, string $currency, float $vatAmount): string
     {
-        $xml = '<cac:TaxTotal>';
+        $xml  = '<cac:TaxTotal>';
         $xml .= $this->amount(name: 'cbc:TaxAmount', value: $vatAmount, currency: $currency);
 
         $breakdown = (array) ($arInvoice['vatBreakdown'] ?? []);
@@ -276,7 +278,7 @@ final class ArInvoiceUblMapper
             $xml .= '<cac:TaxScheme>'.$this->element(name: 'cbc:ID', value: 'VAT').'</cac:TaxScheme>';
             $xml .= '</cac:TaxCategory>';
             $xml .= '</cac:TaxSubtotal>';
-        }
+        }//end foreach
 
         $xml .= '</cac:TaxTotal>';
 
@@ -288,16 +290,16 @@ final class ArInvoiceUblMapper
      * Render one cac:InvoiceLine from an `invoiceLines[]` entry.
      *
      * @param array<string,mixed> $line               One EN 16931 invoice line
-     *                                                 (add-shillinq-invoice-lines.json shape).
-     * @param string              $currency            ISO 4217 currency code.
+     *                                                (add-shillinq-invoice-lines.json shape).
+     * @param string              $currency           ISO 4217 currency code.
      * @param int                 $fallbackLineNumber Position in the document (1-based),
-     *                                                 used when the line carries no lineId.
+     *                                                used when the line carries no lineId.
      *
      * @return string
      */
     private function renderLine(array $line, string $currency, int $fallbackLineNumber): string
     {
-        $lineId    = trim((string) ($line['lineId'] ?? ''));
+        $lineId = trim((string) ($line['lineId'] ?? ''));
         if ($lineId === '') {
             $lineId = (string) $fallbackLineNumber;
         }

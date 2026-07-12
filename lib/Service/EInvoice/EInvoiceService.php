@@ -82,16 +82,17 @@ final class EInvoiceService
     /**
      * Constructor.
      *
-     * @param ContainerInterface            $container             DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig                    $appConfig             App config for the register slug.
-     * @param AdministrationContextService  $administrationContext IDOR + tenant scope.
-     * @param LoggerInterface               $logger                Logger (no PII/document bodies logged).
-     * @param IEventDispatcher              $eventDispatcher       NC event dispatcher (cross-app transport).
-     * @param ArInvoiceUblMapper            $ublMapper             NLCIUS UBL 2.1 mapper (REQ-EINV-001).
-     * @param InvoicePdfGenerator           $pdfGenerator          PDF/A-3 hybrid embed (REQ-EINV-002).
-     * @param EInvoiceValidationService     $validationService     Pre-send validation (REQ-EINV-003).
-     * @param PeppolTransmissionPortInterface|null $peppolPort     Optional transmission port; defaults to
-     *                                                              {@see LogPeppolTransmissionAdapter}.
+     * @param ContainerInterface                   $container             DI container — OR's ObjectService is fetched
+     *                                                                    lazily.
+     * @param IAppConfig                           $appConfig             App config for the register slug.
+     * @param AdministrationContextService         $administrationContext IDOR + tenant scope.
+     * @param LoggerInterface                      $logger                Logger (no PII/document bodies logged).
+     * @param IEventDispatcher                     $eventDispatcher       NC event dispatcher (cross-app transport).
+     * @param ArInvoiceUblMapper                   $ublMapper             NLCIUS UBL 2.1 mapper (REQ-EINV-001).
+     * @param InvoicePdfGenerator                  $pdfGenerator          PDF/A-3 hybrid embed (REQ-EINV-002).
+     * @param EInvoiceValidationService            $validationService     Pre-send validation (REQ-EINV-003).
+     * @param PeppolTransmissionPortInterface|null $peppolPort            Optional transmission port; defaults to
+     *                                                                    {@see LogPeppolTransmissionAdapter}.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -123,6 +124,8 @@ final class EInvoiceService
      * @throws RuntimeException When the invoice is missing/not accessible (IDOR-safe 404),
      *                           not in the required `issued` lifecycle state, or pre-send
      *                           validation fails (400 — no event is ever emitted on failure).
+     *
+     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
      */
     public function sendEInvoice(string $administrationId, string $invoiceNumber): array
     {
@@ -237,10 +240,10 @@ final class EInvoiceService
      * caller — the ARInvoice has already been persisted at `queued`, which is
      * the source of truth; the event is a derived cross-app notification.
      *
-     * @param string               $administrationId  Administration scope.
-     * @param array<string,mixed>  $invoice            The persisted ARInvoice record.
-     * @param string               $recipientPeppolId  Resolved debtor Peppol participant id.
-     * @param string               $payloadFileUri     Stored artefact URI.
+     * @param string              $administrationId  Administration scope.
+     * @param array<string,mixed> $invoice           The persisted ARInvoice record.
+     * @param string              $recipientPeppolId Resolved debtor Peppol participant id.
+     * @param string              $payloadFileUri    Stored artefact URI.
      *
      * @return void
      */
@@ -298,7 +301,7 @@ final class EInvoiceService
      * returned so `ARInvoice.payloadFileUri` is always a stable FK-shaped
      * reference (never inline XML/PDF bytes, REQ-EINV-006).
      *
-     * @param array<string,mixed>                                              $invoice Invoice record.
+     * @param array<string,mixed>                                                          $invoice Invoice record.
      * @param array{filename:string,pdf:string,mimeType:string,embeddedXmlFilename:string} $hybrid  Hybrid PDF payload.
      *
      * @return string The stored artefact URI.
