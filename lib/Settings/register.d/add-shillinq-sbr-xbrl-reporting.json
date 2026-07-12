@@ -251,7 +251,10 @@
         },
         "x-openregister-notifications": {
           "onSubmitted": {
-            "trigger": "lifecycle.submit",
+            "trigger": {
+              "type": "transition",
+              "action": "submit"
+            },
             "description": "Notify the bookkeeper when a filing is successfully submitted (REQ-SBR-003).",
             "recipients": {
               "role": "bookkeeper",
@@ -261,7 +264,10 @@
             "message": "XBRL-instance @self.instanceNumber (@self.entryPoint) is ingediend bij Digipoort."
           },
           "onRejected": {
-            "trigger": "lifecycle.reject",
+            "trigger": {
+              "type": "transition",
+              "action": "reject"
+            },
             "description": "Notify the bookkeeper when Digipoort rejects a submission (REQ-SBR-003).",
             "recipients": {
               "role": "bookkeeper",

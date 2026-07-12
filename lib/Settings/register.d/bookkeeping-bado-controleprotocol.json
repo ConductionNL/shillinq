@@ -203,7 +203,10 @@
         },
         "x-openregister-notifications": {
           "onAdopted": {
-            "trigger": "lifecycle.adopt",
+            "trigger": {
+              "type": "transition",
+              "action": "adopt"
+            },
             "description": "Notify the concerncontroller when a protocol is adopted.",
             "recipients": {
               "role": "concerncontroller",

@@ -226,43 +226,58 @@
         },
         "x-openregister-notifications": {
           "onSubmitted": {
-            "trigger": "lifecycle.submit",
-            "description": "Notify the finance officer when an accountability report is ready for approval (REQ-SUBV-003 / ADR-031).",
-            "recipient": {
-              "resolver": "finance-officer",
-              "fallback": "subsidie-coordinator"
+            "trigger": {
+              "type": "transition",
+              "action": "submit"
             },
+            "description": "Notify the finance officer when an accountability report is ready for approval (REQ-SUBV-003 / ADR-031).",
+            "recipients": [
+              {
+                "kind": "expression",
+                "resolver": "OCA\\Shillinq\\Notification\\RoleFallbackResolver::financeOfficer"
+              }
+            ],
             "channels": [
               "in-app",
               "email"
             ],
-            "title": "Report Ready for Approval",
+            "subject": "Report Ready for Approval",
             "message": "Subsidie verantwoording @self.verantwoordingId is submitted for approval."
           },
           "onApproved": {
-            "trigger": "lifecycle.approve",
-            "description": "Notify the grant owner when the accountability report is approved (ADR-031).",
-            "recipient": {
-              "resolver": "subsidie-coordinator",
-              "fallback": "administration-treasurer"
+            "trigger": {
+              "type": "transition",
+              "action": "approve"
             },
+            "description": "Notify the grant owner when the accountability report is approved (ADR-031).",
+            "recipients": [
+              {
+                "kind": "expression",
+                "resolver": "OCA\\Shillinq\\Notification\\RoleFallbackResolver::subsidieCoordinator"
+              }
+            ],
             "channels": [
               "in-app"
             ],
-            "title": "Accountability Report Approved",
+            "subject": "Accountability Report Approved",
             "message": "Subsidie verantwoording @self.verantwoordingId is approved."
           },
           "onFinal": {
-            "trigger": "lifecycle.finalize",
-            "description": "Notify the grant owner when the accountability report is finalised (ADR-031).",
-            "recipient": {
-              "resolver": "subsidie-coordinator",
-              "fallback": "administration-treasurer"
+            "trigger": {
+              "type": "transition",
+              "action": "finalize"
             },
+            "description": "Notify the grant owner when the accountability report is finalised (ADR-031).",
+            "recipients": [
+              {
+                "kind": "expression",
+                "resolver": "OCA\\Shillinq\\Notification\\RoleFallbackResolver::subsidieCoordinator"
+              }
+            ],
             "channels": [
               "in-app"
             ],
-            "title": "Accountability Report Finalised",
+            "subject": "Accountability Report Finalised",
             "message": "Subsidie verantwoording @self.verantwoordingId is finalised."
           }
         },
@@ -495,58 +510,78 @@
         },
         "x-openregister-notifications": {
           "onUnderReview": {
-            "trigger": "lifecycle.accept",
-            "description": "Notify the grant owner when the auditor accepts the verification task (ADR-031).",
-            "recipient": {
-              "resolver": "subsidie-coordinator",
-              "fallback": "administration-treasurer"
+            "trigger": {
+              "type": "transition",
+              "action": "accept"
             },
+            "description": "Notify the grant owner when the auditor accepts the verification task (ADR-031).",
+            "recipients": [
+              {
+                "kind": "expression",
+                "resolver": "OCA\\Shillinq\\Notification\\RoleFallbackResolver::subsidieCoordinator"
+              }
+            ],
             "channels": [
               "in-app"
             ],
-            "title": "Auditor Statement — Under Review",
+            "subject": "Auditor Statement — Under Review",
             "message": "Auditor statement @self.statementId is now under review."
           },
           "onApproved": {
-            "trigger": "lifecycle.approve",
-            "description": "Notify the grant owner of auditor approval (ADR-031).",
-            "recipient": {
-              "resolver": "subsidie-coordinator",
-              "fallback": "administration-treasurer"
+            "trigger": {
+              "type": "transition",
+              "action": "approve"
             },
+            "description": "Notify the grant owner of auditor approval (ADR-031).",
+            "recipients": [
+              {
+                "kind": "expression",
+                "resolver": "OCA\\Shillinq\\Notification\\RoleFallbackResolver::subsidieCoordinator"
+              }
+            ],
             "channels": [
               "in-app",
               "email"
             ],
-            "title": "Auditor Statement — Approved",
+            "subject": "Auditor Statement — Approved",
             "message": "Auditor statement @self.statementId is approved."
           },
           "onRejected": {
-            "trigger": "lifecycle.reject",
-            "description": "Notify the grant owner of auditor rejection (ADR-031).",
-            "recipient": {
-              "resolver": "subsidie-coordinator",
-              "fallback": "administration-treasurer"
+            "trigger": {
+              "type": "transition",
+              "action": "reject"
             },
+            "description": "Notify the grant owner of auditor rejection (ADR-031).",
+            "recipients": [
+              {
+                "kind": "expression",
+                "resolver": "OCA\\Shillinq\\Notification\\RoleFallbackResolver::subsidieCoordinator"
+              }
+            ],
             "channels": [
               "in-app",
               "email"
             ],
-            "title": "Auditor Statement — Rejected",
+            "subject": "Auditor Statement — Rejected",
             "message": "Auditor statement @self.statementId is rejected; grant settlement is blocked."
           },
           "onConditional": {
-            "trigger": "lifecycle.conditional",
-            "description": "Notify the grant owner of conditional auditor approval (REQ-SUBV-005 / ADR-031).",
-            "recipient": {
-              "resolver": "subsidie-coordinator",
-              "fallback": "administration-treasurer"
+            "trigger": {
+              "type": "transition",
+              "action": "conditional"
             },
+            "description": "Notify the grant owner of conditional auditor approval (REQ-SUBV-005 / ADR-031).",
+            "recipients": [
+              {
+                "kind": "expression",
+                "resolver": "OCA\\Shillinq\\Notification\\RoleFallbackResolver::subsidieCoordinator"
+              }
+            ],
             "channels": [
               "in-app",
               "email"
             ],
-            "title": "Auditor Statement — Conditional Approval",
+            "subject": "Auditor Statement — Conditional Approval",
             "message": "Auditor statement @self.statementId is conditionally approved with caveats."
           }
         },

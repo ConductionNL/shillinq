@@ -206,7 +206,10 @@
         },
         "x-openregister-notifications": {
           "onValidated": {
-            "trigger": "lifecycle.validate",
+            "trigger": {
+              "type": "transition",
+              "action": "validate"
+            },
             "description": "Notify the finance manager when a CBS submission passes validation (REQ-CBS-009).",
             "recipients": {
               "role": "finance-manager",
@@ -216,7 +219,10 @@
             "message": "CBS submission @self.submissionNumber has been validated and is ready for delivery to CBS."
           },
           "onRejected": {
-            "trigger": "lifecycle.reject",
+            "trigger": {
+              "type": "transition",
+              "action": "reject"
+            },
             "description": "Notify the finance manager when CBS rejects a submission (REQ-CBS-003).",
             "recipients": {
               "role": "finance-manager",

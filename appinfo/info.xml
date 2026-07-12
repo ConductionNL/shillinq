@@ -51,7 +51,6 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Shillinq\BackgroundJob\HorizonRollingJob</job>
         <job>OCA\Shillinq\BackgroundJob\CancelUnconfirmedAppointments</job>
         <job>OCA\Shillinq\Job\MandateDormancyExpiryJob</job>
-        <job>OCA\Shillinq\BackgroundJob\OverdueVerantwoordingJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
         <!-- Cashflow 13wk: weekly horizon roll (Monday 02:00 UTC), daily bankfeed pull,

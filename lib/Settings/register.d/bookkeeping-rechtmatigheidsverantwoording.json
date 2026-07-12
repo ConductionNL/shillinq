@@ -680,7 +680,9 @@
         },
         "x-openregister-notifications": {
           "onConcept": {
-            "trigger": "object.create",
+            "trigger": {
+              "type": "created"
+            },
             "description": "REQ-RV-005: notify college secretaris + auditcommissie that the paragraaf is ready for review.",
             "recipients": {
               "role": "auditcommissie",
