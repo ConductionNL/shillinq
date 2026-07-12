@@ -24,6 +24,7 @@ namespace OCA\Shillinq\AppInfo;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
+use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
 use OCA\Shillinq\Listener\DBAFactuurMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
@@ -184,7 +185,7 @@ class Application extends App implements IBootstrap
             listener: PeppolInboundUblInvoiceListener::class
         );
 
-        // add-invoice-pdf-export-with-ubl-peppol-support REQ-EINV-005 — consume
+        // Change add-invoice-pdf-export-with-ubl-peppol-support REQ-EINV-005 — consume
         // the cross-app `nl.conduction.peppol.delivery.status` cloud event
         // openconnector's Peppol access point emits and advance
         // ARInvoice.deliveryStatus (REQ-AR-011). Registered against the literal
@@ -643,6 +644,23 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: \OCA\DocuDesk\Event\SigningConcludedEvent::class,
             listener: SigningConcludedListener::class
+        );
+
+        // Change verplichtingen-commitment-accounting Tasks 1/2 (REQ-VPL-010) —
+        // CommitmentMaterialisationListener auto-materialises a Verplichting
+        // when a PurchaseOrder reaches `approved` or a Contract reaches
+        // `active`, reusing the existing BudgetBlocker/MandaatEnforcer
+        // guards. PO path is fail-closed (denial propagates); Contract path
+        // is fail-soft (design.md Open Question: no separate signed/executed
+        // state exists on the shipped Contract schema, so `active` is
+        // treated as the trigger and any denial is only logged).
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: CommitmentMaterialisationListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: CommitmentMaterialisationListener::class
         );
 
     }//end register()

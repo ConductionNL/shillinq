@@ -32,6 +32,13 @@
             "example": "PO-2026-00874",
             "title": "Verplichtingsnummer"
           },
+          "bronReferentie": {
+            "type": "string",
+            "nullable": true,
+            "description": "Provenance reference for auto-materialised commitments (REQ-VPL-010): the poNumber of the approved PurchaseOrder or the contractNumber of the signed Contract this Verplichting was raised from. Used as the idempotency key so a repeated approval/signature transition never creates a duplicate commitment. Null for manually-created commitments.",
+            "example": "PO-2026-0207",
+            "title": "Bron Referentie"
+          },
           "soort": {
             "type": "string",
             "description": "Kind of commitment.",
@@ -520,6 +527,35 @@
             "relatedField": "verplichtingsnummer",
             "cardinality": "many-to-one",
             "description": "Parent commitment."
+          }
+        },
+        "x-openregister-aggregations": {
+          "committedVsRealisedPerBudgetLine": {
+            "description": "REQ-VPL-011: per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching Budget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures — no parallel PHP reporting service (ADR-031).",
+            "source": "Verplichtingsregel",
+            "groupBy": [
+              "programma",
+              "kostenplaats",
+              "boekjaar",
+              "grootboekrekening"
+            ],
+            "filter": {
+              "administrationId": "@self.administrationId",
+              "afgesloten": false
+            },
+            "join": {
+              "through": "Budget",
+              "on": "Budget.programmaCode",
+              "filter": {},
+              "select": [
+                "Budget.geautoriseerd_bedrag",
+                "Budget.gerealiseerd_bedrag"
+              ]
+            },
+            "sum": [
+              "restant_verplicht",
+              "gefactureerd_bedrag"
+            ]
           }
         }
       },
@@ -1102,6 +1138,165 @@
       "geldig_van": "2026-01-01",
       "geldig_tot": "2026-12-31",
       "vastgesteld_bij": "Mandaatregeling 2026, art. 12 (override)"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Budget",
+        "slug": "vpl-budget-5-1-fac2026-2026"
+      },
+      "administrationId": "adm-demo",
+      "programmaCode": "5.1",
+      "kostenplaats": "FAC-2026",
+      "boekjaar": 2026,
+      "omschrijving": "Programma 5.1 Cultuur 2026",
+      "geautoriseerd_bedrag": 50000000,
+      "gerealiseerd_bedrag": 2500000
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Budget",
+        "slug": "vpl-budget-5-1-fac2027-2027"
+      },
+      "administrationId": "adm-demo",
+      "programmaCode": "5.1",
+      "kostenplaats": "FAC-2027",
+      "boekjaar": 2027,
+      "omschrijving": "Programma 5.1 Cultuur 2027",
+      "geautoriseerd_bedrag": 30000000,
+      "gerealiseerd_bedrag": 0
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Verplichting",
+        "slug": "verplichting-2026-0001"
+      },
+      "administrationId": "adm-demo",
+      "verplichtingsnummer": "VPL-2026-0001",
+      "bronReferentie": "PO-2026-0207",
+      "soort": "inkooporder",
+      "status": "aangegaan",
+      "aangaandatum": "2026-04-15",
+      "totaalbedrag_excl_btw": 7500000,
+      "mandaat_toegepast": "M-DIRECTEUR-250K",
+      "tegenpartij": {
+        "soort": "leverancier",
+        "naam": "ICT Leverancier B.V.",
+        "kvk": "12345678"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Verplichtingsregel",
+        "slug": "vpl-regel-0001"
+      },
+      "administrationId": "adm-demo",
+      "verplichting": "VPL-2026-0001",
+      "regelnummer": 1,
+      "omschrijving": "ICT-diensten 2026",
+      "boekjaar": 2026,
+      "bedrag_excl_btw": 7500000,
+      "grootboekrekening": "4400",
+      "kostenplaats": "FAC-2026",
+      "programma": "5.1",
+      "gefactureerd_bedrag": 2500000,
+      "restant_verplicht": 5000000
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Verplichting",
+        "slug": "verplichting-2026-0002"
+      },
+      "administrationId": "adm-demo",
+      "verplichtingsnummer": "VPL-2026-0002",
+      "bronReferentie": "PO-2026-0231",
+      "soort": "raamovereenkomst",
+      "status": "aangegaan",
+      "aangaandatum": "2026-03-01",
+      "totaalbedrag_excl_btw": 20000000,
+      "mandaat_toegepast": "M-DIRECTEUR-250K",
+      "tegenpartij": {
+        "soort": "leverancier",
+        "naam": "Facilitair Diensten Groep B.V.",
+        "kvk": "87654321"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Verplichtingsregel",
+        "slug": "vpl-regel-0002"
+      },
+      "administrationId": "adm-demo",
+      "verplichting": "VPL-2026-0002",
+      "regelnummer": 1,
+      "omschrijving": "Facilitaire dienstverlening 2026",
+      "boekjaar": 2026,
+      "bedrag_excl_btw": 10000000,
+      "grootboekrekening": "4400",
+      "kostenplaats": "FAC-2026",
+      "programma": "5.1",
+      "gefactureerd_bedrag": 0,
+      "restant_verplicht": 10000000
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Verplichtingsregel",
+        "slug": "vpl-regel-0003"
+      },
+      "administrationId": "adm-demo",
+      "verplichting": "VPL-2026-0002",
+      "regelnummer": 2,
+      "omschrijving": "Facilitaire dienstverlening 2027",
+      "boekjaar": 2027,
+      "bedrag_excl_btw": 10000000,
+      "grootboekrekening": "4400",
+      "kostenplaats": "FAC-2027",
+      "programma": "5.1",
+      "gefactureerd_bedrag": 0,
+      "restant_verplicht": 10000000
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Verplichting",
+        "slug": "verplichting-2026-0003"
+      },
+      "administrationId": "adm-demo",
+      "verplichtingsnummer": "VPL-2026-0003",
+      "bronReferentie": "BES-2026-0044",
+      "soort": "subsidiebeschikking",
+      "status": "aangegaan",
+      "aangaandatum": "2026-02-10",
+      "totaalbedrag_excl_btw": 4000000,
+      "interne_kenmerk": "Eindafrekening 20% restant nog te ontvangen",
+      "tegenpartij": {
+        "soort": "subsidieontvanger",
+        "naam": "Stichting Cultuurhuis Zuidoost"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Verplichtingsregel",
+        "slug": "vpl-regel-0004"
+      },
+      "administrationId": "adm-demo",
+      "verplichting": "VPL-2026-0003",
+      "regelnummer": 1,
+      "omschrijving": "Subsidiebeschikking cultuurhuis 2026",
+      "boekjaar": 2026,
+      "bedrag_excl_btw": 4000000,
+      "grootboekrekening": "4410",
+      "kostenplaats": "FAC-2026",
+      "programma": "5.1",
+      "gefactureerd_bedrag": 0,
+      "restant_verplicht": 4000000
     }
   ]
 }

@@ -26,6 +26,16 @@
 					"icon": "ClipboardCheckOutline",
 					"route": "Goedkeuringsstappen",
 					"order": 30
+				},
+				{
+					"id": "BudgetLineCommitments",
+					"label": "Committed vs. realised",
+					"i18n": {
+						"nl": "Verplicht vs. gerealiseerd"
+					},
+					"icon": "ChartBoxOutline",
+					"route": "BudgetLineCommitments",
+					"order": 40
 				}
 			]
 		}
@@ -73,7 +83,8 @@
 					{"key": "btw_regime", "label": "BTW regime", "type": "string"},
 					{"key": "mandaat_toegepast", "label": "Mandate", "type": "string"},
 					{"key": "override_reden", "label": "Override reason", "type": "string"},
-					{"key": "interne_kenmerk", "label": "Internal reference", "type": "string"}
+					{"key": "interne_kenmerk", "label": "Internal reference", "type": "string"},
+					{"key": "bronReferentie", "label": "Source reference", "type": "string"}
 				],
 				"relatedObjects": [
 					{
@@ -132,6 +143,13 @@
 					]
 				}
 			}
+		},
+		{
+			"id": "BudgetLineCommitments",
+			"route": "/verplichtingen/budget-lines",
+			"type": "custom",
+			"title": "Committed vs. realised",
+			"component": "BudgetLineCommitments"
 		},
 		{
 			"id": "Mandaten",
