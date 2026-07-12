@@ -169,6 +169,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         ['name' => 'invoiceApi#pdf', 'url' => '/api/v1/invoices/{invoiceId}/pdf', 'verb' => 'GET'],
         ['name' => 'invoiceApi#show', 'url' => '/api/v1/invoices/{invoiceId}', 'verb' => 'GET'],
 
+        // Billing intake (time-expense-invoice-intake): authenticated ingress for
+        // pipelinq's time-billing-handoff-emit change to POST a batch of approved
+        // time entries and receive back a draft T&M BillableInvoice reference.
+        // Unversioned per contract.md (billing-ingress convention, additive-only
+        // response). #[NoAdminRequired] declared on the controller method.
+        ['name' => 'billingIntake#timeIntake', 'url' => '/api/billing/time-intake', 'verb' => 'POST'],
+
         // Appointment confirmation flow (bookings-confirm-flow, REQ-BCF-004/006/007).
         // Static segments precede the SPA catch-all so the confirm/resend/validate
         // endpoints match first. `confirm` and `validate-confirmation-token` are
