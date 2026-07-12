@@ -98,6 +98,21 @@ webpackConfig.plugins = [
 
 // Force @nextcloud/dialogs to resolve from this app's node_modules,
 // preventing the nextcloud-vue submodule's nested deps (Vue 3) from leaking in.
+// Register the exact-match style.css alias BEFORE the bare package alias below:
+// enhanced-resolve applies the first matching entry, and the bare alias maps the
+// package to its DIRECTORY, so '@nextcloud/dialogs/style.css' (imported by
+// nextcloud-vue's useAppInstaller) would resolve to a non-existent root style.css.
+// dialogs v6 ships the stylesheet at dist/style.css behind its "exports" map.
+webpackConfig.resolve.alias['@nextcloud/dialogs/style.css$'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs/dist/style.css')
 webpackConfig.resolve.alias['@nextcloud/dialogs'] = path.resolve(__dirname, 'node_modules/@nextcloud/dialogs')
+
+// dialogs v6 drags in a FilePicker chunk that imports node's `path`, and webpack 5 no
+// longer auto-polyfills node core modules — without this the bundle fails to emit with
+// "Can't resolve 'path'". This app only uses the toast APIs (showError/showSuccess), so
+// the FilePicker code path never runs and an empty module is safe.
+webpackConfig.resolve.fallback = {
+	...(webpackConfig.resolve.fallback || {}),
+	path: false,
+}
 
 module.exports = webpackConfig
