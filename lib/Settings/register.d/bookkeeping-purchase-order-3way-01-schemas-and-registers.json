@@ -1043,11 +1043,13 @@
                   "title": "Field"
                 },
                 "expected": {
-                  "description": "Expected value from PO/GRN.",
+                  "type": "string",
+                  "description": "Expected value from PO/GRN, serialised as string (monetary deltas in euro cents live in deltaCents; proportional deltas in deltaPercentage).",
                   "title": "Expected"
                 },
                 "actual": {
-                  "description": "Actual value from invoice.",
+                  "type": "string",
+                  "description": "Actual value from invoice, serialised as string (monetary deltas in euro cents live in deltaCents; proportional deltas in deltaPercentage).",
                   "title": "Actual"
                 },
                 "deltaCents": {

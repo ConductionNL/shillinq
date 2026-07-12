@@ -3,7 +3,7 @@
   "info": {
     "title": "Shillinq Register",
     "description": "Register containing all schemas for the Shillinq application.",
-    "version": "0.6.1"
+    "version": "0.6.2"
   },
   "x-openregister": {
     "type": "application",
@@ -1777,7 +1777,12 @@
         "x-openregister-widgets": {
           "nearing-retention": {
             "title": "Bewaartermijnen verlopen binnenkort",
-            "type": "stats-block",
+            "type": "stats",
+            "dataSource": {
+              "mode": "statistics",
+              "register": "shillinq",
+              "schema": "RetentionRule"
+            },
             "filter": {
               "field": "daysUntilRetention",
               "operator": "lt",
@@ -4556,9 +4561,12 @@
             "id": "kor-status",
             "title": "KOR-status",
             "description": "KOR threshold tracker showing YTD revenue progress bar, regime state, and threshold indicators for mkb/zzp administrations.",
-            "type": "progress-with-state",
-            "register": "shillinq",
-            "schema": "KorRegime",
+            "type": "stats",
+            "dataSource": {
+              "mode": "statistics",
+              "register": "shillinq",
+              "schema": "KorRegime"
+            },
             "visibility": {
               "field": "administrationType",
               "in": [
@@ -6364,8 +6372,9 @@
           "utilisatieWidget": {
             "title": "Utilisatie",
             "description": "Per-person utilisation for the current period with green/yellow/red bands (REQ-CPA-013).",
-            "type": "utilisation-chart",
+            "type": "chart",
             "dataSource": {
+              "mode": "statistics",
               "register": "@register",
               "schema": "ProjectAssignment",
               "calculation": "utilization"
@@ -16141,7 +16150,6 @@
           },
           "amount": {
             "type": "number",
-            "format": "float",
             "description": "Transaction amount. Positive = credit (incoming); negative = debit (outgoing). CAMT convention per REQ-BR-003.",
             "example": 500.0,
             "title": "Amount"
@@ -16424,7 +16432,6 @@
           },
           "confidenceScore": {
             "type": "number",
-            "format": "float",
             "description": "Confidence score (0.0-1.0) assigned to matches produced by this rule.",
             "minimum": 0.0,
             "maximum": 1.0,
@@ -16540,7 +16547,6 @@
           },
           "confidence": {
             "type": "number",
-            "format": "float",
             "description": "Confidence score (0.0-1.0) from the matching rule that produced this candidate.",
             "minimum": 0.0,
             "maximum": 1.0,
@@ -19155,9 +19161,12 @@
             "id": "urencriterium-tracker",
             "title": "Urencriterium",
             "description": "YTD qualifying hours progress toward the 1225-urencriterium (or 800 for starters-opvolgers), green/yellow/red bands. Threshold from urencriterium-thresholds.json per REQ-ZZP-004.",
-            "type": "progress-with-state",
-            "register": "shillinq",
-            "schema": "ZzpDeduction",
+            "type": "stats",
+            "dataSource": {
+              "mode": "statistics",
+              "register": "shillinq",
+              "schema": "ZzpDeduction"
+            },
             "visibility": {
               "field": "administrationType",
               "in": [

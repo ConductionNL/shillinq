@@ -440,9 +440,6 @@
 					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on KorThreshold with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
 				}
 			},
-			"KostenDrager": {
-				"_retired": "Folded into AnalyticalDimension(dimensionType=cost-object) per REQ-ADIM-201. Audit trail now lives on AnalyticalDimension."
-			},
 			"LHAfdracht": {
 				"x-openregister-audit-trail": {
 					"enabled": true,

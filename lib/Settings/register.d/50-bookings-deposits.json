@@ -501,9 +501,12 @@
             "id": "deposit-status",
             "title": "Deposit",
             "description": "Booking-detail widget showing deposit state, amount, payment link and the linked AR invoice (REQ-DP-010).",
-            "type": "state-with-actions",
-            "register": "shillinq",
-            "schema": "DepositPayment",
+            "type": "tile",
+            "dataSource": {
+              "mode": "statistics",
+              "register": "shillinq",
+              "schema": "DepositPayment"
+            },
             "fields": {
               "state": {
                 "label": "Deposit status",
