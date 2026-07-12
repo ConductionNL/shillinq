@@ -32,6 +32,31 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | Peppol BIS 3.0 outbound transmission | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
 | Dutch KvK and BTW number validation for e-invoicing | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
 
+## Budget & Commitment Accounting Features
+
+| Feature | Status | Priority | OpenSpec Change |
+|---------|--------|----------|----------------|
+| Auto-record a verplichting (commitment) at PO approval / contract signature | planned | must | [verplichtingen-commitment-accounting](changes/verplichtingen-commitment-accounting/) |
+| Committed-vs-realised reporting per budget line | planned | must | [verplichtingen-commitment-accounting](changes/verplichtingen-commitment-accounting/) |
+| Rechtmatigheid tie-in for system-raised commitments | planned | should | [verplichtingen-commitment-accounting](changes/verplichtingen-commitment-accounting/) |
+
+## Compliance Deadline Calendar Features
+
+| Feature | Status | Priority | OpenSpec Change |
+|---------|--------|----------|----------------|
+| Publish BTW/ICP/VPB filing deadlines to Nextcloud Calendar | planned | must | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
+| Payment-run execution dates and (opt-in) AR invoice due dates on calendar | planned | should | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
+| Contract renewal / opzegtermijn calendar alerts | planned | must | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
+| Deadline reminder notifications with per-user category toggles | planned | should | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
+
+## Document Intelligence Features
+
+| Feature | Status | Priority | OpenSpec Change |
+|---------|--------|----------|----------------|
+| Consume docudesk field-extraction to prefill bill import | planned | must | [receipt-extraction-consume](changes/receipt-extraction-consume/) |
+| Receipt/expense capture prefill with per-field confidence | planned | should | [receipt-extraction-consume](changes/receipt-extraction-consume/) |
+| Field correction flow and docudesk re-extraction request | planned | should | [receipt-extraction-consume](changes/receipt-extraction-consume/) |
+
 ## Contract Lifecycle Management Features
 
 | Feature | Status | Priority | OpenSpec Change |

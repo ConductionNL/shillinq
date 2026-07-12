@@ -1,13 +1,15 @@
 ---
-status: done
+status: in-progress
 ---
 
 # Spec: bookkeeping-accounts-receivable-core
 
-**Status:** proposed
+**Status:** in-progress
 **Scope:** shillinq
 **Tier:** T2 (compliance + operations)
 **Depends on:** T1 `bookkeeping-general-ledger`, T2 `bookkeeping-document-attachment-integration`, T2 `bookkeeping-bank-reconciliation`
+**OpenSpec changes:**
+- `add-invoice-pdf-export-with-ubl-peppol-support` — adds `ARInvoice.deliveryStatus` field + Peppol delivery sub-lifecycle (REQ-AR-011)
 
 This capability **carries forward the original Shillinq invoicing
 scope** — the customer invoicing surface that was Shillinq's founding
