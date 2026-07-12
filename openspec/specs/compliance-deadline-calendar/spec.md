@@ -20,6 +20,24 @@ publication is fail-soft and never blocks source CRUD.
 
 ## Requirements
 
+### Requirement: REQ-CDC-000 — Shillinq SHALL surface compliance deadlines in the Nextcloud Calendar and Notifications
+
+The system SHALL publish its compliance and operational deadlines (BTW/ICP/VPB
+filing, payment-run execution, opt-in AR invoice due dates, contract renewal /
+opzegtermijn) into a dedicated app-owned Nextcloud calendar as VEVENTs and MUST
+raise reminder Notifications ahead of each deadline, honouring per-user category
+toggles, fail-soft so a missing calendar backend never blocks source CRUD. Detailed
+sub-requirements (REQ-CDC-001 … REQ-CDC-007) are authored in the in-progress change
+delta and synced here on archive.
+
+#### Scenario: A filing deadline appears on the calendar and reminds the user
+
+- GIVEN a BTW-aangifte for period 2026-Q1 with a derivable filing due date and the
+  filing category enabled
+- WHEN the calendar and reminder jobs run
+- THEN a VEVENT MUST appear on the app calendar for that deadline and an NC
+  Notification MUST be raised within the user's lead time
+
 The normative requirements (REQ-CDC-001 … REQ-CDC-007) are authored as the change
 delta at
 `openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md`

@@ -22,6 +22,23 @@ matching, BBV per-programma reporting) were delivered by the archived
 
 ## Requirements
 
+### Requirement: REQ-VPL-000 — Shillinq SHALL reserve budget on commitment and reconcile it through delivery, invoicing and payment
+
+The system SHALL record a `Verplichting` when the organisation becomes legally
+bound (PO approved, contract signed, subsidy awarded), MUST reserve the committed
+amount against the budget's `vrije_ruimte` at that moment (before any invoice), and
+MUST reconcile the commitment through the delivery / invoicing / payment stages. The
+core is implemented (REQ-VPL-001…009, archived change); the in-progress change adds
+auto-materialisation, per-line reporting and the rechtmatigheid linkage
+(REQ-VPL-010…012).
+
+#### Scenario: A commitment reserves budget before an invoice exists
+
+- GIVEN a budget with `vrije_ruimte` EUR 200.000 and a new EUR 75.000 commitment
+- WHEN the `Verplichting` reaches `aangegaan`
+- THEN `openstaande_verplichtingen` MUST increase by EUR 75.000 and `vrije_ruimte`
+  MUST decrease to EUR 125.000, with no invoice required
+
 REQ-VPL-001…009 (already implemented in code) are documented in the archived
 change at
 `openspec/changes/archive/2026-06-14-bookkeeping-verplichtingenadministratie/specs.md`.

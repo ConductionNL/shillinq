@@ -21,6 +21,23 @@ REQ-EC-002).
 
 ## Requirements
 
+### Requirement: REQ-RXC-000 — Shillinq SHALL prefill bill and receipt drafts from docudesk extraction with visible confidence and human confirmation
+
+The system SHALL consume docudesk's `nl.conduction.docudesk.extraction.completed`
+event to prefill a supplier-invoice (BillImportModal) or `Receipt` draft with the
+extracted fields and per-field confidence, MUST let the operator correct any field,
+and MUST require a human confirmation before commit — never fabricating data and
+never running OCR itself (ADR-022). Detailed sub-requirements (REQ-RXC-001 …
+REQ-RXC-006) are authored in the in-progress change delta and synced here on archive.
+
+#### Scenario: An extraction event prefills a draft that a human confirms
+
+- GIVEN a `nl.conduction.docudesk.extraction.completed` event for an uploaded PDF
+- WHEN shillinq processes it
+- THEN an uncommitted draft MUST be created with the extracted values and per-field
+  confidence, and the operator MUST be able to correct fields and MUST confirm before
+  the draft is committed
+
 The normative requirements (REQ-RXC-001 … REQ-RXC-006) are authored as the change
 delta at
 `openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md`
