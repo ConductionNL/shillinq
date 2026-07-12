@@ -1773,7 +1773,25 @@
         "Permission required to read budget-line data.": "Toestemming vereist om budgetregelgegevens te lezen.",
         "Failed to load budget lines.": "Laden van budgetregels mislukt.",
         "Committed vs. realised": "Verplicht vs. gerealiseerd",
-        "Source reference": "Bronreferentie"
+        "Source reference": "Bronreferentie",
+        "Deadline calendar": "Deadlinekalender",
+        "Choose which deadline categories appear on your deadline calendar and when you want to be reminded. Filing, payment-run and contract deadlines are on by default; invoice due dates are opt-in.": "Kies welke deadlinecategorieën op je deadlinekalender verschijnen en wanneer je herinnerd wilt worden. Aangifte-, betaalrun- en contractdeadlines staan standaard aan; vervaldatums van facturen zijn opt-in.",
+        "Loading deadline calendar settings": "Instellingen deadlinekalender laden",
+        "Filing deadlines (BTW / ICP / VPB)": "Aangiftedeadlines (BTW / ICP / VPB)",
+        "Publish BTW, ICP and VPB filing deadlines on your deadline calendar.": "Publiceer BTW-, ICP- en VPB-aangiftedeadlines op je deadlinekalender.",
+        "Payment runs": "Betaalruns",
+        "Publish scheduled payment-run execution dates.": "Publiceer geplande uitvoeringsdatums van betaalruns.",
+        "Invoice due dates": "Vervaldatums facturen",
+        "Publish open AR invoice due dates (off by default — these can be high-volume).": "Publiceer vervaldatums van openstaande verkoopfacturen (standaard uit — dit kunnen er veel zijn).",
+        "Contract deadlines": "Contractdeadlines",
+        "Publish contract renewal and notice-period (opzegtermijn) deadlines.": "Publiceer deadlines voor contractverlenging en opzegtermijnen.",
+        "Reminder lead time (days)": "Herinneringstermijn (dagen)",
+        "Deadline calendar settings saved.": "Instellingen deadlinekalender opgeslagen.",
+        "Failed to load deadline calendar settings.": "Instellingen deadlinekalender laden mislukt.",
+        "Failed to save deadline calendar settings.": "Instellingen deadlinekalender opslaan mislukt.",
+        "Shillinq": "Shillinq",
+        "Deadline approaching: %1$s (due %2$s)": "Deadline nadert: %1$s (vervalt %2$s)",
+        "This deadline is coming up. Open Shillinq to review it.": "Deze deadline komt eraan. Open Shillinq om deze te bekijken."
     },
     "plurals": ""
 }

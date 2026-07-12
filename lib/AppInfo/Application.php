@@ -38,6 +38,7 @@ use OCA\Shillinq\Listener\SigningConcludedListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
 use OCA\Shillinq\Listener\VerplichtingTransitionListener;
+use OCA\Shillinq\Notification\DeadlineReminderNotifier;
 use OCA\Shillinq\Notification\RoleFallbackResolver;
 use OCA\Shillinq\Service\Dunning\CreditScoreFetchAdapterInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
@@ -662,6 +663,13 @@ class Application extends App implements IBootstrap
             event: ObjectTransitionedEvent::class,
             listener: CommitmentMaterialisationListener::class
         );
+
+        // Compliance-deadline-calendar REQ-CDC-007 — render the
+        // `deadline_reminder` notifications raised by
+        // ComplianceDeadlineCalendarService / DeadlineReminderJob in the
+        // notification centre. Without a registered INotifier the raised
+        // notifications would be discarded at display time.
+        $context->registerNotifierService(DeadlineReminderNotifier::class);
 
     }//end register()
 

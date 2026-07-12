@@ -153,7 +153,8 @@ class ObligationTaskBridgeTest extends TestCase
     }//end testMalformedInputDoesNotThrow()
 
     /**
-     * The result always has the documented shape (taskUri + taskLinkStatus keys).
+     * The result always has the documented shape (taskUri + taskLinkStatus
+     * keys, plus the additive REQ-CDC-005 eventUri + eventLinkStatus keys).
      *
      * @return void
      */
@@ -165,5 +166,212 @@ class ObligationTaskBridgeTest extends TestCase
 
         self::assertArrayHasKey('taskUri', $result);
         self::assertArrayHasKey('taskLinkStatus', $result);
+        self::assertArrayHasKey('eventUri', $result);
+        self::assertArrayHasKey('eventLinkStatus', $result);
     }//end testResultShapeIsStable()
+
+    /**
+     * REQ-CDC-005 scenario 2 — with no calendar backend BOTH the VTODO
+     * and the VEVENT surfaces return 'failed' without throwing, so
+     * obligation CRUD proceeds.
+     *
+     * @return void
+     */
+    public function testNoBackendFailsBothVtodoAndVeventSoftly(): void
+    {
+        $this->container->method('has')->willReturn(false);
+
+        $result = $this->bridge->createTaskForObligation(
+            [
+                'title'   => 'Opzegtermijn office lease',
+                'dueDate' => '2026-06-01',
+            ]
+        );
+
+        self::assertSame('failed', $result['taskLinkStatus']);
+        self::assertSame('failed', $result['eventLinkStatus']);
+        self::assertNull($result['taskUri']);
+        self::assertNull($result['eventUri']);
+
+        $event = $this->bridge->publishDeadlineEvent(
+            obligation: [
+                'title'   => 'Opzegtermijn office lease',
+                'dueDate' => '2026-06-01',
+            ]
+        );
+        self::assertSame('failed', $event['eventLinkStatus']);
+        self::assertNull($event['eventUri']);
+    }//end testNoBackendFailsBothVtodoAndVeventSoftly()
+
+    /**
+     * REQ-CDC-005 scenario 1 — with a resolvable backend the bridge
+     * publishes the deadline VEVENT IN ADDITION to the existing VTODO,
+     * with the stable `contract:{objectId}` UID.
+     *
+     * @return void
+     */
+    public function testCreateTaskAlsoPublishesDeadlineVevent(): void
+    {
+        $backend = new class {
+
+            /**
+             * Every createFromString() call as [name, calendarData].
+             *
+             * @var array<int, array{0: string, 1: string}>
+             */
+            public array $writes = [];
+
+            /**
+             * Record a write.
+             *
+             * @param string $name         Object name.
+             * @param string $calendarData Payload.
+             *
+             * @return void
+             */
+            public function createFromString(string $name, string $calendarData): void
+            {
+                $this->writes[] = [$name, $calendarData];
+
+            }//end createFromString()
+        };
+
+        $this->container->method('has')->willReturn(true);
+        $this->container->method('get')->willReturn($backend);
+
+        $result = $this->bridge->createTaskForObligation(
+            [
+                '@self'   => ['slug' => 'obligation-lease-notice'],
+                'title'   => 'Opzegtermijn office lease',
+                'dueDate' => '2026-06-01',
+            ]
+        );
+
+        self::assertSame('linked', $result['taskLinkStatus']);
+        self::assertSame('linked', $result['eventLinkStatus']);
+        self::assertNotNull($result['eventUri']);
+
+        // Two writes: the VTODO and the additive VEVENT.
+        self::assertCount(2, $backend->writes);
+        $vtodo  = $backend->writes[0][1];
+        $vevent = $backend->writes[1][1];
+        self::assertStringContainsString('BEGIN:VTODO', $vtodo);
+        self::assertStringContainsString('BEGIN:VEVENT', $vevent);
+        self::assertStringContainsString('UID:contract:obligation-lease-notice', $vevent);
+        self::assertStringContainsString('DTSTART;VALUE=DATE:20260601', $vevent);
+
+        // Idempotent UID: publishing again targets the same object name.
+        $again = $this->bridge->publishDeadlineEvent(
+            obligation: [
+                '@self'   => ['slug' => 'obligation-lease-notice'],
+                'title'   => 'Opzegtermijn office lease',
+                'dueDate' => '2026-06-01',
+            ]
+        );
+        self::assertSame('linked', $again['eventLinkStatus']);
+        self::assertSame($backend->writes[1][0], $backend->writes[2][0]);
+    }//end testCreateTaskAlsoPublishesDeadlineVevent()
+
+    /**
+     * REQ-CDC-005 — listOpenObligationDeadlines() reads the
+     * ContractObligation rows in the bridge (single home), keeping only
+     * open/in-progress/overdue rows with a dueDate; an unavailable
+     * OpenRegister yields [] fail-soft.
+     *
+     * @return void
+     */
+    public function testListOpenObligationDeadlines(): void
+    {
+        $objectService = new class {
+
+            /**
+             * Fluent register setter.
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
+            public function setRegister(string $register): static
+            {
+                return $this;
+
+            }//end setRegister()
+
+            /**
+             * Fluent schema setter.
+             *
+             * @param string $schema Schema name.
+             *
+             * @return static
+             */
+            public function setSchema(string $schema): static
+            {
+                return $this;
+
+            }//end setSchema()
+
+            /**
+             * Return the stub ContractObligation rows.
+             *
+             * @param array<string, mixed> $params Query parameters (unused).
+             *
+             * @return array<int, array<string, mixed>>
+             */
+            public function findAll(array $params=[]): array
+            {
+                return [
+                    [
+                        '@self'   => ['slug' => 'obligation-crm-sla-review'],
+                        'title'   => 'Quarterly SLA review',
+                        'dueDate' => '2026-06-01',
+                        'status'  => 'open',
+                    ],
+                    [
+                        '@self'   => ['slug' => 'obligation-done'],
+                        'title'   => 'Completed obligation',
+                        'dueDate' => '2026-02-01',
+                        'status'  => 'done',
+                    ],
+                    [
+                        '@self'  => ['slug' => 'obligation-no-due'],
+                        'title'  => 'No deadline',
+                        'status' => 'open',
+                    ],
+                ];
+
+            }//end findAll()
+        };
+
+        $this->container->method('get')->willReturnCallback(
+            static function (string $id) use ($objectService): object {
+                if ($id === 'OCA\OpenRegister\Service\ObjectService') {
+                    return $objectService;
+                }
+
+                throw new \RuntimeException('not available: '.$id);
+            }
+        );
+
+        $deadlines = $this->bridge->listOpenObligationDeadlines();
+
+        self::assertCount(1, $deadlines);
+        self::assertSame('contract:obligation-crm-sla-review', $deadlines[0]['uid']);
+        self::assertSame('contract', $deadlines[0]['category']);
+        self::assertSame('Quarterly SLA review', $deadlines[0]['summary']);
+        self::assertSame('2026-06-01', $deadlines[0]['dueDate']);
+    }//end testListOpenObligationDeadlines()
+
+    /**
+     * listOpenObligationDeadlines() degrades to [] when OpenRegister is
+     * unavailable (fail-soft, no throw).
+     *
+     * @return void
+     */
+    public function testListOpenObligationDeadlinesFailsSoft(): void
+    {
+        $this->container->method('get')
+            ->willThrowException(new \RuntimeException('OpenRegister unavailable'));
+
+        self::assertSame([], $this->bridge->listOpenObligationDeadlines());
+    }//end testListOpenObligationDeadlinesFailsSoft()
 }//end class

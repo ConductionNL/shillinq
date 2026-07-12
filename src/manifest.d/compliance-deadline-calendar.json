@@ -1,0 +1,35 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "compliance-deadline-calendar",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Per-user deadline-calendar settings page (REQ-CDC-006): category toggles (BTW/ICP/VPB filing, payment runs, opt-in AR due dates, contract deadlines) + reminder lead times. The menu leaf is merged into the existing 'Settings' group by id (mergeMenuItems in main.js). The page component (kind:page DeadlineCalendarSettings in src/registry.js) talks to the strictly current-user-scoped /api/deadline-calendar/settings endpoints."
+	},
+	"menu": [
+		{
+			"id": "Settings",
+			"label": "Settings",
+			"icon": "icon-settings",
+			"children": [
+				{
+					"id": "DeadlineCalendarSettings",
+					"label": "Deadline calendar",
+					"icon": "CalendarClock",
+					"route": "DeadlineCalendarSettings",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "DeadlineCalendarSettings",
+			"route": "/settings/deadline-calendar",
+			"type": "custom",
+			"title": "Deadline calendar",
+			"component": "DeadlineCalendarSettings",
+			"_note": "Per-user settings form (category switches + per-category lead-time inputs, saved via the current-user-scoped /api/deadline-calendar/settings endpoint) — no standard index/detail/dashboard page type renders a preference form."
+		}
+	]
+}

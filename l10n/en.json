@@ -1771,7 +1771,25 @@
         "Permission required to read budget-line data.": "Permission required to read budget-line data.",
         "Failed to load budget lines.": "Failed to load budget lines.",
         "Committed vs. realised": "Committed vs. realised",
-        "Source reference": "Source reference"
+        "Source reference": "Source reference",
+        "Deadline calendar": "Deadline calendar",
+        "Choose which deadline categories appear on your deadline calendar and when you want to be reminded. Filing, payment-run and contract deadlines are on by default; invoice due dates are opt-in.": "Choose which deadline categories appear on your deadline calendar and when you want to be reminded. Filing, payment-run and contract deadlines are on by default; invoice due dates are opt-in.",
+        "Loading deadline calendar settings": "Loading deadline calendar settings",
+        "Filing deadlines (BTW / ICP / VPB)": "Filing deadlines (BTW / ICP / VPB)",
+        "Publish BTW, ICP and VPB filing deadlines on your deadline calendar.": "Publish BTW, ICP and VPB filing deadlines on your deadline calendar.",
+        "Payment runs": "Payment runs",
+        "Publish scheduled payment-run execution dates.": "Publish scheduled payment-run execution dates.",
+        "Invoice due dates": "Invoice due dates",
+        "Publish open AR invoice due dates (off by default — these can be high-volume).": "Publish open AR invoice due dates (off by default — these can be high-volume).",
+        "Contract deadlines": "Contract deadlines",
+        "Publish contract renewal and notice-period (opzegtermijn) deadlines.": "Publish contract renewal and notice-period (opzegtermijn) deadlines.",
+        "Reminder lead time (days)": "Reminder lead time (days)",
+        "Deadline calendar settings saved.": "Deadline calendar settings saved.",
+        "Failed to load deadline calendar settings.": "Failed to load deadline calendar settings.",
+        "Failed to save deadline calendar settings.": "Failed to save deadline calendar settings.",
+        "Shillinq": "Shillinq",
+        "Deadline approaching: %1$s (due %2$s)": "Deadline approaching: %1$s (due %2$s)",
+        "This deadline is coming up. Open Shillinq to review it.": "This deadline is coming up. Open Shillinq to review it."
     },
     "plurals": ""
 }
