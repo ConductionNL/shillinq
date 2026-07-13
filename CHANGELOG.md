@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- BTW suppletie detection (`btw-suppletie-detection`) — new
+  `VatSuppletieDetectionService::detect()`/`::prepare()` engine implementing
+  REQ-VBTW-013/014: detects drift between a filed `VATReturn` and its
+  underlying GL ledger by re-running `VATReturnService`'s GL-derivation
+  logic (new non-mutating `computeCurrentDeclarations()`) and diffing it
+  against the persisted as-filed `VATDeclaration` snapshot, compiles the
+  per-rubriek deltas, decides suppletie-eligibility against the statutory
+  €1.000 grens (verified against belastingdienst.nl), stamps an 8-week
+  filing deadline once exceeded, and compiles a companion **draft** GL
+  correction posting — closing the gap where the already-landed
+  `VatCorrection` register + REQ-VBTW-009 had no code path that ever
+  created one.
 - Time & expense invoice intake (`time-expense-invoice-intake`) — new
   authenticated, idempotent `POST /apps/shillinq/api/billing/time-intake`
   ingress endpoint that accepts a batch of externally-approved time entries
