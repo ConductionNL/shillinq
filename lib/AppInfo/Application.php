@@ -27,6 +27,7 @@ use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
 use OCA\Shillinq\Listener\DBAFactuurMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
+use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
@@ -175,6 +176,15 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: StockMoveTransitionedListener::class
+        );
+
+        // Inventory-sales-issue-cogs-trigger REQ-001 / REQ-006 — the missing
+        // outbound trigger: a confirmed Delivery issues stock (feeding the
+        // StockMoveTransitionedListener pipeline above unchanged); a
+        // cancelled Delivery reverses any StockMove it issued.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: DeliveryDispatchListener::class
         );
 
         // Bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004) —
