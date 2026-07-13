@@ -1,6 +1,6 @@
 # gl-account-suggestion-consume Specification
 
-**Status**: in-progress
+**Status**: done
 **Scope**: shillinq
 **OpenSpec changes**:
 - gl-account-suggestion-consume
@@ -18,10 +18,6 @@ extraction-draft surface, `FieldConfidenceBadge`, the `ExtractionRequestControll
 without modifying that capability's requirements.
 
 ## Requirements
-
-@e2e exclude the outbound HTTP clients and the correlation/candidate-resolution logic are
-backend/integration surfaces covered by PHPUnit; the suggestion display, "use suggestion" action
-and graceful-degradation UI are covered by the vitest specs referenced per scenario below.
 
 ### Requirement: REQ-GAC-001 — The system SHALL learn a docudesk financial-extraction id from the synchronous extraction-request response
 
@@ -180,12 +176,12 @@ cases.
 
 ## Acceptance Criteria
 
-- [ ] `docudeskExtractionId` captured from the synchronous extraction-request response and persisted on the draft
-- [ ] Candidate accounts supplied from shillinq's own active, administration-scoped chart of accounts
-- [ ] Suggestion (code/label/confidence/rationale) surfaced via the `FieldConfidenceBadge` pattern; "use suggestion" fills the picker without auto-committing
-- [ ] Human confirmation always required — no auto-booking regardless of confidence
-- [ ] Every committed booking with a known extraction id posts a `glAccountCode` correction back to docudesk, override or not
-- [ ] No known extraction id / docudesk unreachable / empty suggestion all degrade to plain manual booking with no error
+- [x] `docudeskExtractionId` captured from the synchronous extraction-request response and persisted on the draft
+- [x] Candidate accounts supplied from shillinq's own active, administration-scoped chart of accounts
+- [x] Suggestion (code/label/confidence/rationale) surfaced via the `FieldConfidenceBadge` pattern; "use suggestion" fills the picker without auto-committing
+- [x] Human confirmation always required — no auto-booking regardless of confidence
+- [x] Every committed booking with a known extraction id posts a `glAccountCode` correction back to docudesk, override or not
+- [x] No known extraction id / docudesk unreachable / empty suggestion all degrade to plain manual booking with no error
 
 ## Notes
 
@@ -195,3 +191,4 @@ cases.
 - Related: `receipt-extraction-consume` (the extraction-draft surface, `FieldConfidenceBadge`,
   `ExtractionRequestController` proxy pattern this change extends), `bookkeeping-chart-of-accounts`
   (the `Account` schema this change reads as candidates).
+
