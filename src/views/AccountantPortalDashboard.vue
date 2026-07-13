@@ -164,7 +164,7 @@ export default {
 		 *
 		 * @param {object|null} periodClose - { periodId, state, endDate } or null.
 		 * @return {string}
-		 * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md#req-acp-002
+		 * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
 		 */
 		periodCloseLabel(periodClose) {
 			if (!periodClose) {
@@ -178,7 +178,7 @@ export default {
 		 *
 		 * @param {object|null} vatFiling - { statusCode, dueDate, overdue } or null.
 		 * @return {string}
-		 * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md#req-acp-002
+		 * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
 		 */
 		vatFilingLabel(vatFiling) {
 			if (!vatFiling) {
