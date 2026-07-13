@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use DateTimeImmutable;
 use OCA\Shillinq\Service\SoftCloseExecutor;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -29,12 +30,15 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 
 /**
- * Validates the five accrual calculation methods on SoftCloseExecutor (REQ-CLS-003).
+ * Validates the five accrual calculation methods on SoftCloseExecutor (REQ-CLS-003)
+ * plus the FX-delegate correctness fix (fx-period-end-revaluation).
  *
  * Calculations are pure functions — no DI required beyond a stub container +
  * stub config — they only consume the rule + run context.
  *
  * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-30
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
 final class SoftCloseExecutorTest extends TestCase
 {
@@ -87,7 +91,10 @@ final class SoftCloseExecutorTest extends TestCase
     public function testStraightLineFromContractAccrual(): void
     {
         $e       = $this->executor();
-        $rule    = ['calculationMethod' => 'straight-line-from-contract', 'calculationParameters' => ['principalCents' => 10000000, 'annualRate' => 0.05, 'dayCount' => 365]];
+        $rule    = [
+            'calculationMethod'     => 'straight-line-from-contract',
+            'calculationParameters' => ['principalCents' => 10000000, 'annualRate' => 0.05, 'dayCount' => 365],
+        ];
         $context = ['daysElapsed' => 17];
         // 10000000 × 0.05 × 17 / 365 = 23287.67 -> round = 23288 cents.
         self::assertSame(23288, $e->computeAccrualCents(rule: $rule, context: $context));
@@ -130,7 +137,7 @@ final class SoftCloseExecutorTest extends TestCase
      */
     public function testUnknownMethodReturnsZero(): void
     {
-        $e    = $this->executor();
+        $e = $this->executor();
         self::assertSame(0, $e->computeAccrualCents(rule: ['calculationMethod' => 'bogus'], context: []));
 
     }//end testUnknownMethodReturnsZero()
@@ -147,4 +154,178 @@ final class SoftCloseExecutorTest extends TestCase
         self::assertSame(0, $e->computeAccrualCents(rule: $rule, context: []));
 
     }//end testNegativeFixedAmountClampsToZero()
-}
+
+    /**
+     * Build a fake OpenRegister ObjectService supporting the fluent
+     * setRegister/setSchema/findAll/saveObject shape `SoftCloseExecutor`
+     * consumes for every step (accruals, PeriodStatus, alerts). Every
+     * `findAll()` returns empty (no accrual rules, no prior PeriodStatus)
+     * so `execute()` can run all the way to `status: completed` and
+     * `fxPostings` reflects only the FX delegate's contribution.
+     *
+     * @return object
+     */
+    private function fakeObjectService(): object
+    {
+        return new class {
+
+            /**
+             * Objects saved during the run, keyed by schema.
+             *
+             * @var array<string,array<int,array<string,mixed>>>
+             */
+            public array $saved = [];
+
+            /**
+             * Fluent register selector (no-op fake).
+             *
+             * @param string $register Register slug.
+             *
+             * @return self
+             */
+            public function setRegister(string $register): self
+            {
+                return $this;
+            }//end setRegister()
+
+            /**
+             * Fluent schema selector (no-op fake).
+             *
+             * @param string $schema Schema slug.
+             *
+             * @return self
+             */
+            public function setSchema(string $schema): self
+            {
+                return $this;
+            }//end setSchema()
+
+            /**
+             * Always empty — no accrual rules, no prior PeriodStatus.
+             *
+             * @param array<string,mixed> $options Query options (ignored).
+             *
+             * @return array<int,mixed>
+             */
+            public function findAll(array $options): array
+            {
+                return [];
+            }//end findAll()
+
+            /**
+             * Record the saved object under its schema.
+             *
+             * @param array<string,mixed> $object   Object payload.
+             * @param string              $register Register slug.
+             * @param string              $schema   Schema slug.
+             *
+             * @return array<string,mixed>
+             */
+            public function saveObject(array $object, string $register, string $schema): array
+            {
+                $this->saved[$schema][] = $object;
+                return $object;
+            }//end saveObject()
+        };
+
+    }//end fakeObjectService()
+
+    /**
+     * Correctness fix proof (fx-period-end-revaluation): before this
+     * change, `container->has('OCA\Shillinq\Service\Treasury\FxRevaluationService')`
+     * was unconditionally `false` because the class did not exist, so
+     * `delegateFxRevaluation()` always returned 0 and
+     * `execute()['fxPostings']` was permanently 0. With the delegate now
+     * bound and resolving a material posting, `fxPostings` MUST be > 0.
+     *
+     * @return void
+     */
+    public function testExecuteReportsNonZeroFxPostingsWhenDelegatePresent(): void
+    {
+        $objectService = $this->fakeObjectService();
+        $fxDelegate    = new class {
+            /**
+             * Fake FxRevaluationService::reval() returning a fixed material posting.
+             *
+             * @param string $administrationId The administration scope.
+             * @param string $periodId         The yyyy-mm period.
+             *
+             * @return array<string,mixed>
+             */
+            public function reval(string $administrationId, string $periodId): array
+            {
+                return [
+                    'postingCount'       => 2,
+                    'positionsEvaluated' => 2,
+                    'functionalCurrency' => 'EUR',
+                    'periodId'           => $periodId,
+                ];
+            }//end reval()
+        };
+
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('has')->willReturnCallback(
+            static fn (string $id): bool => $id === 'OCA\Shillinq\Service\Treasury\FxRevaluationService'
+        );
+        $container->method('get')->willReturnCallback(
+            static function (string $id) use ($objectService, $fxDelegate): object {
+                if ($id === 'OCA\Shillinq\Service\Treasury\FxRevaluationService') {
+                    return $fxDelegate;
+                }
+
+                return $objectService;
+            }
+        );
+
+        $config = $this->createStub(IAppConfig::class);
+        $config->method('getValueString')->willReturn('shillinq');
+
+        $executor = new SoftCloseExecutor($container, $config, new NullLogger());
+        $report   = $executor->execute(
+            administrationId: 'adm-holding-nl',
+            periodId: '2026-03',
+            asOf: new DateTimeImmutable('2026-03-31T23:30:00+02:00')
+        );
+
+        self::assertSame('completed', $report['status']);
+        self::assertSame(
+            2,
+            $report['fxPostings'],
+            'fxPostings must reflect the delegate postingCount — was unconditionally 0 before FxRevaluationService existed'
+        );
+        self::assertGreaterThan(0, $report['fxPostings']);
+        self::assertGreaterThanOrEqual($report['fxPostings'], $report['postingCount']);
+
+    }//end testExecuteReportsNonZeroFxPostingsWhenDelegatePresent()
+
+    /**
+     * Companion regression check: with no delegate bound (the pre-fix
+     * state — `container->has()` false for every optional delegate),
+     * `fxPostings` stays exactly 0 and the run still completes. Documents
+     * the exact behaviour this change replaces.
+     *
+     * @return void
+     */
+    public function testExecuteReportsZeroFxPostingsWhenDelegateAbsent(): void
+    {
+        $objectService = $this->fakeObjectService();
+
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('has')->willReturn(false);
+        $container->method('get')->willReturn($objectService);
+
+        $config = $this->createStub(IAppConfig::class);
+        $config->method('getValueString')->willReturn('shillinq');
+
+        $executor = new SoftCloseExecutor($container, $config, new NullLogger());
+        $report   = $executor->execute(
+            administrationId: 'adm-holding-nl',
+            periodId: '2026-03',
+            asOf: new DateTimeImmutable('2026-03-31T23:30:00+02:00')
+        );
+
+        self::assertSame('completed', $report['status']);
+        self::assertSame(0, $report['fxPostings']);
+
+    }//end testExecuteReportsZeroFxPostingsWhenDelegateAbsent()
+}//end class
