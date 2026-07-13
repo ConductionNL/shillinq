@@ -49,11 +49,19 @@ Two additional pre-existing facts constrain the design:
    lists (list values are `array_merge`d, not deduped). This is real,
    pre-existing behavior, not a bug this change introduces.
 
-Neither `VatReturn` nor `VatCorrection` currently declares
-`x-openregister-audit: true`, even though REQ-VBTW-012 explicitly requires
-audit on `VatCorrection`. This is a pre-existing gap directly touching this
-change's "audit trail" requirement, so it is closed here (additive, one
-boolean flag per schema).
+**Correction during research:** an earlier draft of this design believed
+`VatReturn`/`VatCorrection` lacked audit coverage (REQ-VBTW-012). That was
+wrong — `lib/Settings/register.d/add-shillinq-audit-trail.json` already
+declares `x-openregister-audit-trail: { enabled: true, ... }` (the actual
+canonical key/shape, confirmed against `tests/validate-registers.js`'s
+`x-openregister-audit-trail.enabled` check and its 214/445-compliant
+baseline) on both schemas. This fragment therefore does **not** touch the
+audit flag at all — adding a second, differently-shaped declaration would
+have been redundant at best and confusing at worst. The "audit trail of the
+original filed figures" requirement is satisfied by the `filedSnapshot`
+field this change adds (the data payload) plus OR's already-active
+audit-trail on the object (the access/change log) — two complementary
+concerns, both already covered.
 
 ## Goals / Non-Goals
 
@@ -67,7 +75,6 @@ boolean flag per schema).
 - Compile a `VatCorrection` draft with the diff, a filed-figures snapshot
   for audit, an 8-week filing-deadline stamp, and a **draft** GL correction
   posting.
-- Close the `x-openregister-audit` gap on `VatReturn` / `VatCorrection`.
 
 **Non-Goals:**
 - Unifying the two VAT schema families (flagged, not fixed).
@@ -172,18 +179,19 @@ inventing a single suspense line for the whole correction.
   already existed before this change.
 - [Risk] Writing both field-name variants (Decision on the dual-field
   schema) means a future cleanup that removes one variant will need to
-  update this service too → Mitigation: both writes go through one private
-  helper (`applyCorrectionFields()`) so the fix is one method, not scattered
-  call sites.
+  update this service too → Mitigation: both writes are confined to
+  `VatSuppletieDetectionService::detect()` and `::prepare()` (the only two
+  places a `VatCorrection` is constructed by this service), so the fix is
+  two known call sites, not scattered ones.
 - [Risk] The clearing-account default (`1699`) is a guess in the absence of
   seed data → Mitigation: configurable via `IAppConfig`, logged as a
   warning when the default is used, and documented as Risk 3.
 
 ## Migration Plan
 
-Purely additive: new PHP service, new register fragment (additive fields +
-`x-openregister-audit: true` on two existing schemas), new unit tests. No
-data migration. Deploy = merge + existing `SettingsService` re-import
+Purely additive: new PHP service, new register fragment (additive fields
+on `VatCorrection` only), new unit tests. No data migration. Deploy = merge
++ existing `SettingsService` re-import
 picks up the fragment on next configuration load (same mechanism every
 other `register.d/*.json` fragment uses). Rollback = revert the PR; no
 existing field, state, or transition is altered.

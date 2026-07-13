@@ -87,9 +87,9 @@ whether and when to file, per REQ-VBTW-009's existing non-auto-decide rule.
 - **THEN** `filedSnapshot` MUST reproduce the exact figures that were true
   at filing time, independent of any later GL changes
 - **AND** the `VatCorrection` object itself MUST be covered by OR's
-  immutable audit-trail (`x-openregister-audit: true`, closing a
-  pre-existing gap against REQ-VBTW-012's requirement that every
-  `VatCorrection` operation be audited).
+  immutable audit-trail (already satisfied by
+  `add-shillinq-audit-trail.json`'s `x-openregister-audit-trail.enabled`
+  flag per REQ-VBTW-012 — confirmed, not modified, by this change).
 
 @e2e exclude pure backend/data: threshold decision + GL posting compilation is not browser-testable
 

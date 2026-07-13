@@ -187,6 +187,157 @@ class VATReturnService
             ];
         }
 
+        $scan = $this->scanRubrieken(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);
+        $declarationsByKey   = $scan['declarationsByKey'];
+        $totalVATCollectedCt = $scan['totalVATCollectedCt'];
+        $totalVATPaidCt      = $scan['totalVATPaidCt'];
+        $totalTaxableCt      = $scan['totalTaxableCt'];
+        $lineNumber          = $scan['lineNumber'];
+
+        // Persist declarations + their lines.
+        foreach ($declarationsByKey as $group) {
+            $declarationId = $this->persistDeclaration(
+                returnId: $returnId,
+                administrationId: $administrationId,
+                type: $group['type'],
+                taxRate: $group['taxRate'],
+                totalVATCents: $group['totalVATAmountCents'],
+                totalTaxableCents: $group['totalTaxableCents'],
+                lineCount: $group['lineCount']
+            );
+
+            foreach ($group['pendingLines'] as $line) {
+                $line['returnId']         = $returnId;
+                $line['declarationId']    = $declarationId;
+                $line['administrationId'] = $administrationId;
+                $this->saveObject(schema: 'VATLine', data: $line);
+            }
+        }
+
+        $totalVATCollected = $this->fromCents(cents: $totalVATCollectedCt);
+        $totalVATPaid      = $this->fromCents(cents: $totalVATPaidCt);
+        $vatBalance        = $this->fromCents(cents: ($totalVATPaidCt - $totalVATCollectedCt));
+        $totalTaxable      = $this->fromCents(cents: $totalTaxableCt);
+
+        $this->updateReturnTotals(
+            returnId: $returnId,
+            totalVATCollected: $totalVATCollected,
+            totalVATPaid: $totalVATPaid,
+            vatBalance: $vatBalance,
+            totalTaxableAmount: $totalTaxable
+        );
+
+        return [
+            'lineCount'          => $lineNumber,
+            'totalVATCollected'  => $totalVATCollected,
+            'totalVATPaid'       => $totalVATPaid,
+            'vatBalance'         => $vatBalance,
+            'totalTaxableAmount' => $totalTaxable,
+        ];
+
+    }//end deriveVATLines()
+
+    /**
+     * Non-mutating recompute of the GL-derived per-rubriek grouping (REQ-VBTW-013).
+     *
+     * Mirrors the scan `deriveVATLines()` performs but never persists anything
+     * — no `VATLine`, `VATDeclaration`, or `VATReturn` write. Used by
+     * `VatSuppletieDetectionService::detect()` to compute "what the return
+     * would look like today" without disturbing the filed record, which is
+     * exactly the as-filed snapshot because nothing else re-derives it
+     * outside of an explicit `rebase`.
+     *
+     * @param string $administrationId Administration scope.
+     * @param string $startDate        Period start (inclusive, ISO-8601).
+     * @param string $endDate          Period end (inclusive, ISO-8601).
+     *
+     * @return array<int,array{type:string,taxRate:float,totalVATAmount:float,totalTaxableAmount:float,lineCount:int}>
+     *
+     * @spec openspec/changes/btw-suppletie-detection/specs/bookkeeping-vat-btw-filing/spec.md#req-vbtw-013
+     */
+    public function computeCurrentDeclarations(string $administrationId, string $startDate, string $endDate): array
+    {
+        $scan   = $this->scanRubrieken(administrationId: $administrationId, startDate: $startDate, endDate: $endDate);
+        $result = [];
+        foreach ($scan['declarationsByKey'] as $group) {
+            $result[] = [
+                'type'               => $group['type'],
+                'taxRate'            => $group['taxRate'],
+                'totalVATAmount'     => $this->fromCents(cents: $group['totalVATAmountCents']),
+                'totalTaxableAmount' => $this->fromCents(cents: $group['totalTaxableCents']),
+                'lineCount'          => $group['lineCount'],
+            ];
+        }
+
+        return $result;
+
+    }//end computeCurrentDeclarations()
+
+    /**
+     * Fetch the persisted (as-filed) `VATDeclaration` rows for a return, grouped
+     * the same shape `computeCurrentDeclarations()` returns, so callers can diff
+     * the two directly (REQ-VBTW-013).
+     *
+     * @param string $returnId The VATReturn id.
+     *
+     * @return array<int,array{type:string,taxRate:float,totalVATAmount:float,totalTaxableAmount:float,lineCount:int}>
+     *
+     * @spec openspec/changes/btw-suppletie-detection/specs/bookkeeping-vat-btw-filing/spec.md#req-vbtw-013
+     */
+    public function fetchFiledDeclarations(string $returnId): array
+    {
+        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+        $rows          = $objectService
+            ->setRegister($this->register())
+            ->setSchema('VATDeclaration')
+            ->findAll(['filters' => ['returnId' => $returnId]]);
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[] = [
+                'type'               => (string) ($row['type'] ?? ''),
+                'taxRate'            => (float) ($row['taxRate'] ?? 0.0),
+                'totalVATAmount'     => (float) ($row['totalVATAmount'] ?? 0.0),
+                'totalTaxableAmount' => (float) ($row['totalTaxableAmount'] ?? 0.0),
+                'lineCount'          => (int) ($row['lineCount'] ?? 0),
+            ];
+        }
+
+        return $result;
+
+    }//end fetchFiledDeclarations()
+
+    /**
+     * Public accessor for a VATReturn record, used by
+     * VatSuppletieDetectionService to resolve the administration + period
+     * bounds it needs for detection without duplicating the OR lookup.
+     *
+     * @param string $returnId The VATReturn id.
+     *
+     * @return array<string,mixed> The VATReturn record.
+     *
+     * @spec openspec/changes/btw-suppletie-detection/specs/bookkeeping-vat-btw-filing/spec.md#req-vbtw-013
+     */
+    public function getReturn(string $returnId): array
+    {
+        return $this->fetchReturn(returnId: $returnId);
+
+    }//end getReturn()
+
+    /**
+     * Scan GL transactions in the period and group VAT-applicable postings
+     * into rubriek buckets (type × taxRate). Shared scanning core for
+     * `deriveVATLines()` (persists) and `computeCurrentDeclarations()`
+     * (read-only) so the grouping logic exists exactly once.
+     *
+     * @param string $administrationId Administration scope.
+     * @param string $startDate        Period start (inclusive, ISO-8601).
+     * @param string $endDate          Period end (inclusive, ISO-8601).
+     *
+     * @return array{declarationsByKey:array<string,array<string,mixed>>,totalVATCollectedCt:int,totalVATPaidCt:int,totalTaxableCt:int,lineNumber:int}
+     */
+    private function scanRubrieken(string $administrationId, string $startDate, string $endDate): array
+    {
         $accounts     = $this->fetchVATAccounts(administrationId: $administrationId);
         $transactions = $this->fetchGLTransactions(
             administrationId: $administrationId,
@@ -266,48 +417,15 @@ class VATReturnService
             }//end foreach
         }//end foreach
 
-        // Persist declarations + their lines.
-        foreach ($declarationsByKey as $group) {
-            $declarationId = $this->persistDeclaration(
-                returnId: $returnId,
-                administrationId: $administrationId,
-                type: $group['type'],
-                taxRate: $group['taxRate'],
-                totalVATCents: $group['totalVATAmountCents'],
-                totalTaxableCents: $group['totalTaxableCents'],
-                lineCount: $group['lineCount']
-            );
-
-            foreach ($group['pendingLines'] as $line) {
-                $line['returnId']         = $returnId;
-                $line['declarationId']    = $declarationId;
-                $line['administrationId'] = $administrationId;
-                $this->saveObject(schema: 'VATLine', data: $line);
-            }
-        }
-
-        $totalVATCollected = $this->fromCents(cents: $totalVATCollectedCt);
-        $totalVATPaid      = $this->fromCents(cents: $totalVATPaidCt);
-        $vatBalance        = $this->fromCents(cents: ($totalVATPaidCt - $totalVATCollectedCt));
-        $totalTaxable      = $this->fromCents(cents: $totalTaxableCt);
-
-        $this->updateReturnTotals(
-            returnId: $returnId,
-            totalVATCollected: $totalVATCollected,
-            totalVATPaid: $totalVATPaid,
-            vatBalance: $vatBalance,
-            totalTaxableAmount: $totalTaxable
-        );
-
         return [
-            'lineCount'          => $lineNumber,
-            'totalVATCollected'  => $totalVATCollected,
-            'totalVATPaid'       => $totalVATPaid,
-            'vatBalance'         => $vatBalance,
-            'totalTaxableAmount' => $totalTaxable,
+            'declarationsByKey'   => $declarationsByKey,
+            'totalVATCollectedCt' => $totalVATCollectedCt,
+            'totalVATPaidCt'      => $totalVATPaidCt,
+            'totalTaxableCt'      => $totalTaxableCt,
+            'lineNumber'          => $lineNumber,
         ];
 
-    }//end deriveVATLines()
+    }//end scanRubrieken()
 
     /**
      * Submit a VAT return (REQ-VAT-005) — draft → submitted with non-negative totals.
