@@ -4,13 +4,19 @@
  * Three-Way Matching Engine
  *
  * Slice 06 of the bookkeeping-purchase-order-3way chain (REQ-PO3W-004,
- * REQ-PO3W-006): server-authoritative line-level matching of a
- * SupplierInvoice against the originating PurchaseOrder(s) and
- * GoodsReceiptNote(s). Computes per-line price_delta, quantity_delta,
- * vat_delta, date_delta in integer cents / thousandths / days, resolves
- * the most-specific applicable ToleranceProfile (delegated to
- * {@see ToleranceProfileService::getApplicableProfile()}), evaluates each
- * divergence under the "more permissive" tolerance rule, and writes a
+ * REQ-PO3W-006, REQ-PO3W-011): server-authoritative line-level matching of
+ * a SupplierInvoice against the originating PurchaseOrder(s) and its third
+ * leg — either GoodsReceiptNote(s) for goods lines, or SvcReceipt(s)
+ * (prestatieverklaring / service-entry-sheet, member 12) for service
+ * lines, which will never have a physical goods receipt. Both receipt
+ * types are resolved and merged before line matching so
+ * matchLineItems()/calculateDivergence() need zero receipt-type
+ * branching — see ServiceReceiptService for why SvcReceiptLine reuses
+ * GoodsReceiptLine's exact field names. Computes per-line price_delta,
+ * quantity_delta, vat_delta, date_delta in integer cents / thousandths /
+ * days, resolves the most-specific applicable ToleranceProfile (delegated
+ * to {@see ToleranceProfileService::getApplicableProfile()}), evaluates
+ * each divergence under the "more permissive" tolerance rule, and writes a
  * ThreeWayMatch record with the resulting match_status and a structured
  * divergenceDetails breakdown.
  *
@@ -172,6 +178,22 @@ class ThreeWayMatchingEngine
     private const SCHEMA_GRN_LINE = 'GoodsReceiptLine';
 
     /**
+     * Schema slug for the SvcReceipt register (member 12) — the
+     * service-PO alternative third leg to GoodsReceiptNote
+     * (REQ-PO3W-011).
+     *
+     * @var string
+     */
+    private const SCHEMA_SVC_RECEIPT = 'SvcReceipt';
+
+    /**
+     * Schema slug for the SvcReceiptLine register (member 12).
+     *
+     * @var string
+     */
+    private const SCHEMA_SVC_RECEIPT_LINE = 'SvcReceiptLine';
+
+    /**
      * Schema slug for the ThreeWayMatch register (slice 01).
      *
      * @var string
@@ -321,14 +343,40 @@ class ThreeWayMatchingEngine
             }
         }
 
-        // No accepted GRN at all = exception_missing_grn (services-only
-        // invoices land here too; their resolution is operator-driven via
-        // the slice-08 exception UI).
+        // REQ-PO3W-011: a service PurchaseOrderLine will never have a
+        // GoodsReceiptNote — resolve an accepted SvcReceipt (prestatieverklaring)
+        // as the alternative third leg so the matching engine is not
+        // goods-only.
+        $svcReceipts        = $this->findAll(
+            schema: self::SCHEMA_SVC_RECEIPT,
+            filters: ['administrationId' => $invoiceAdmin]
+        );
+        $matchedSvcReceipts = [];
+        foreach ($svcReceipts as $svcReceipt) {
+            $svcPoIds = (array) ($svcReceipt['poIds'] ?? []);
+            if (in_array($poId, $svcPoIds, true) === true) {
+                $matchedSvcReceipts[] = $svcReceipt;
+            }
+        }
+
+        // No accepted GRN AND no accepted SvcReceipt = exception_missing_grn
+        // (their resolution is operator-driven via the slice-08 exception
+        // UI). Before REQ-PO3W-011 this was the ONLY outcome for a service
+        // PO — every service invoice was permanently stuck here.
         $hasAcceptedGrn = false;
         foreach ($matchedGrns as $grn) {
             $status = (string) ($grn['statusCode'] ?? '');
             if ($status === 'accepted' || $status === 'quality_checked') {
                 $hasAcceptedGrn = true;
+                break;
+            }
+        }
+
+        $hasAcceptedSvcReceipt = false;
+        foreach ($matchedSvcReceipts as $svcReceipt) {
+            $status = (string) ($svcReceipt['statusCode'] ?? '');
+            if ($status === 'accepted') {
+                $hasAcceptedSvcReceipt = true;
                 break;
             }
         }
@@ -341,7 +389,19 @@ class ThreeWayMatchingEngine
             }
         }
 
-        if ($hasAcceptedGrn === false) {
+        foreach ($matchedSvcReceipts as $svcReceipt) {
+            $id = (string) ($svcReceipt['id'] ?? ($svcReceipt['@self']['id'] ?? ''));
+            if ($id !== '') {
+                // SvcReceipt ids are recorded in matchedGrnIds alongside GRN
+                // ids — both registers feed the same "third leg" concept and
+                // ThreeWayMatch.matchedGrnIds is the historical field name
+                // for it; splitting into a parallel matchedSvcReceiptIds
+                // field would only fragment the audit trail for no benefit.
+                $matchedGrnIds[] = $id;
+            }
+        }
+
+        if ($hasAcceptedGrn === false && $hasAcceptedSvcReceipt === false) {
             return $this->routeToException(
                 administrationId: $invoiceAdmin,
                 invoice: $invoice,
@@ -366,6 +426,25 @@ class ThreeWayMatchingEngine
             $rows = $this->findAll(
                 schema: self::SCHEMA_GRN_LINE,
                 filters: ['grnId' => $grnId, 'administrationId' => $invoiceAdmin]
+            );
+            foreach ($rows as $row) {
+                $grnLines[] = $row;
+            }
+        }
+
+        // Merge in SvcReceiptLine rows — they carry the same
+        // quantityAccepted/quantityReceived field names as GoodsReceiptLine
+        // by design (see ServiceReceiptService), so matchLineItems() /
+        // calculateDivergence() need zero receipt-type branching.
+        foreach ($matchedSvcReceipts as $svcReceipt) {
+            $svcReceiptId = (string) ($svcReceipt['id'] ?? ($svcReceipt['@self']['id'] ?? ''));
+            if ($svcReceiptId === '') {
+                continue;
+            }
+
+            $rows = $this->findAll(
+                schema: self::SCHEMA_SVC_RECEIPT_LINE,
+                filters: ['serviceReceiptId' => $svcReceiptId, 'administrationId' => $invoiceAdmin]
             );
             foreach ($rows as $row) {
                 $grnLines[] = $row;

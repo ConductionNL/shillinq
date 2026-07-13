@@ -19,9 +19,16 @@
  *                             is under a block-order / block-delivery credit hold
  *                             (REQ-QOI-004 / design D9).
  *  - canConfirmDelivery():    a Delivery may not be confirmed while the customer is
- *                             under a block-delivery credit hold, and every line must
+ *                             under a block-delivery credit hold, every line must
  *                             reference an order line and a positive quantity
- *                             (REQ-QOI-005 / design D3/D9).
+ *                             (REQ-QOI-005 / design D3/D9), AND — per
+ *                             inventory-sales-issue-cogs-trigger REQ-005 — every
+ *                             stock-tracked line's quantityShipped must not exceed
+ *                             available InventoryStock at the resolved warehouse,
+ *                             unless the administration's InventoryGLConfig sets
+ *                             allowNegativeStockOnDispatch.
+ *  - canCancelDelivery():     a Delivery may only be cancelled before it has shipped
+ *                             (inventory-sales-issue-cogs-trigger REQ-006).
  *  - canIssueInvoice():       an Invoice may only be issued with a sequential number,
  *                             at least one line, and a balanced net + vat = gross total
  *                             (REQ-QOI-005 / Belastingdienst).
@@ -49,6 +56,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md
+ * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -190,7 +198,11 @@ class QuoteOrderInvoiceGuard
      *
      * REQ-QOI-005 / design D3/D9: every delivery line must reference an order line
      * and carry a positive shipped quantity, and the customer must not be under an
-     * active block-delivery credit hold.
+     * active block-delivery credit hold. Per
+     * inventory-sales-issue-cogs-trigger REQ-005: every stock-tracked line's
+     * quantityShipped MUST NOT exceed available InventoryStock at the resolved
+     * warehouse, unless the administration's InventoryGLConfig sets
+     * allowNegativeStockOnDispatch=true.
      *
      * @param string                   $deliveryId The Delivery id (call-signature parity).
      * @param array<string,mixed>|null $object     The delivery being transitioned.
@@ -198,6 +210,7 @@ class QuoteOrderInvoiceGuard
      * @return bool True when the delivery may be confirmed.
      *
      * @spec openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md
+     * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md#req-005
      */
     public function canConfirmDelivery(string $deliveryId, ?array $object=null): bool
     {
@@ -220,14 +233,51 @@ class QuoteOrderInvoiceGuard
                     return false;
                 }
 
-                return $this->customerIsBlocked(
+                if ($this->customerIsBlocked(
                     customerReference: $customer,
                     blockingSeverities: ['block-delivery']
-                ) === false;
+                ) === true
+                ) {
+                    return false;
+                }
+
+                return $this->deliveryStockAvailable(delivery: $delivery);
             }
         );
 
     }//end canConfirmDelivery()
+
+    /**
+     * Returns true iff a Delivery may be cancelled (draft|confirmed -> cancelled).
+     *
+     * Per inventory-sales-issue-cogs-trigger REQ-006: a Delivery may only be
+     * cancelled before it has shipped — once `shipped`, any issued StockMove
+     * must be reversed through a CreditNote / RMA flow instead (out of this
+     * capability's scope).
+     *
+     * @param string                   $deliveryId The Delivery id (call-signature parity).
+     * @param array<string,mixed>|null $object     The delivery being transitioned.
+     *
+     * @return bool True when the delivery may be cancelled.
+     *
+     * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md#req-006
+     */
+    public function canCancelDelivery(string $deliveryId, ?array $object=null): bool
+    {
+        return $this->evaluate(
+            context: 'cancel-delivery',
+            id: $deliveryId,
+            check: function () use ($deliveryId, $object): bool {
+                $delivery = $this->resolveObject(schema: 'Delivery', id: $deliveryId, object: $object);
+                if ($delivery === null) {
+                    return false;
+                }
+
+                return (string) ($delivery['status'] ?? '') !== 'shipped';
+            }
+        );
+
+    }//end canCancelDelivery()
 
     /**
      * Returns true iff an Invoice may be issued (draft -> sent).
@@ -382,6 +432,132 @@ class QuoteOrderInvoiceGuard
         return true;
 
     }//end deliveryLinesComplete()
+
+    /**
+     * Returns true iff every stock-tracked line of the delivery has sufficient
+     * available InventoryStock at its resolved warehouse, or the administration
+     * has opted into allowNegativeStockOnDispatch (inventory-sales-issue-cogs-trigger
+     * REQ-005). Non-stock-tracked lines (no matching InventoryStock row for their
+     * SKU in this administration) are always permitted — they are service lines.
+     *
+     * @param array<string,mixed> $delivery The delivery being confirmed.
+     *
+     * @return bool True when every stock-tracked line clears its availability check.
+     */
+    private function deliveryStockAvailable(array $delivery): bool
+    {
+        $administrationId = trim((string) ($delivery['administrationId'] ?? ''));
+        $lines            = ($delivery['lines'] ?? []);
+        if (is_array($lines) === false) {
+            return true;
+        }
+
+        $allowNegative = $this->allowNegativeStockOnDispatch(administrationId: $administrationId);
+
+        foreach ($lines as $line) {
+            if (is_array($line) === false) {
+                continue;
+            }
+
+            $sku      = trim((string) ($line['productReference'] ?? ''));
+            $quantity = (float) ($line['quantityShipped'] ?? 0);
+            if ($sku === '' || $quantity <= 0) {
+                continue;
+            }
+
+            $stockRows = $this->findChildren(schema: 'InventoryStock', field: 'sku', parentId: $sku);
+            $stockRows = array_values(
+                array_filter(
+                    $stockRows,
+                    static fn(array $row): bool => ((string) ($row['administrationId'] ?? '')) === $administrationId
+                )
+            );
+
+            if (count($stockRows) === 0) {
+                // Not stock-tracked (service line) — nothing to check.
+                continue;
+            }
+
+            $locationId = trim(
+                (string) ($line['sourceLocationId'] ?? ($delivery['sourceLocationId'] ?? ''))
+            );
+
+            $available = $this->availableForLocation(rows: $stockRows, locationId: $locationId);
+
+            if ($available < $quantity && $allowNegative === false) {
+                return false;
+            }
+        }//end foreach
+
+        return true;
+
+    }//end deliveryStockAvailable()
+
+    /**
+     * Resolve available quantity (quantity - reservedQuantity) for the given
+     * InventoryStock rows. When $locationId is non-empty, only that location's
+     * row is considered (0 when no row exists there); otherwise the row with the
+     * largest available quantity is used — the same fallback documented in
+     * inventory-sales-issue-cogs-trigger REQ-003.
+     *
+     * @param array<int,array<string,mixed>> $rows       Candidate InventoryStock rows.
+     * @param string                         $locationId Preferred location, or '' for best-of.
+     *
+     * @return float Available quantity.
+     */
+    private function availableForLocation(array $rows, string $locationId): float
+    {
+        if ($locationId !== '') {
+            foreach ($rows as $row) {
+                if ((string) ($row['locationId'] ?? '') === $locationId) {
+                    return ((float) ($row['quantity'] ?? 0) - (float) ($row['reservedQuantity'] ?? 0));
+                }
+            }
+
+            return 0.0;
+        }
+
+        $best = 0.0;
+        foreach ($rows as $index => $row) {
+            $candidate = ((float) ($row['quantity'] ?? 0) - (float) ($row['reservedQuantity'] ?? 0));
+            if ($index === 0 || $candidate > $best) {
+                $best = $candidate;
+            }
+        }
+
+        return $best;
+
+    }//end availableForLocation()
+
+    /**
+     * Resolve InventoryGLConfig.allowNegativeStockOnDispatch for the administration,
+     * defaulting to false (block) per REQ-005 / REQ-IST-013 intent.
+     *
+     * @param string $administrationId Tenant scope.
+     *
+     * @return bool True when negative stock on dispatch is explicitly allowed.
+     */
+    private function allowNegativeStockOnDispatch(string $administrationId): bool
+    {
+        if ($administrationId === '') {
+            return false;
+        }
+
+        $configs = $this->findChildren(
+            schema: 'InventoryGLConfig',
+            field: 'administrationId',
+            parentId: $administrationId
+        );
+
+        foreach ($configs as $config) {
+            if (((bool) ($config['allowNegativeStockOnDispatch'] ?? false)) === true) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }//end allowNegativeStockOnDispatch()
 
     /**
      * Returns true iff the customer has any active CreditHold whose severity is in
