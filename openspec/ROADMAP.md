@@ -89,13 +89,17 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | Schedule payments strategically | planned | must | [scheduling](changes/scheduling/) |
 | Schedule payment date | planned | must | [scheduling](changes/scheduling/) |
 
-## Accountant Portal Features
+## Reconciliation (Aansluitingen) Framework Features
 
 | Feature | Status | Priority | OpenSpec Change |
 |---------|--------|----------|----------------|
-| Scoped multi-client dashboard (period-close, BTW filing, missing documents, open items) built on existing AdministrationMembership RBAC | done | must | [archived: accountant-portal](changes/archive/2026-07-13-accountant-portal/) |
-| One-click handover pack (XAF, trial balance, general ledger, BTW-overzicht) via the existing report generators | done | must | [archived: accountant-portal](changes/archive/2026-07-13-accountant-portal/) |
-| External, no-Nextcloud-account accountant portal via portaliq (separate audience, read-only) | done | must | [archived: 2026-07-07-shillinq-accountant-portal-audience](changes/archive/2026-07-07-shillinq-accountant-portal-audience/) |
+| `Aansluiting`/`AansluitingResult` tie-out framework (definition + per-period computed instance, tolerance, drill-down, open/explained/resolved lifecycle) | planned | must | [bookkeeping-aansluitingen](changes/bookkeeping-aansluitingen/) |
+| BTW-ledger -> aangifte tie-out | planned | must | [bookkeeping-aansluitingen](changes/bookkeeping-aansluitingen/) |
+| Subledger (AR/AP) -> GL control-account tie-out | planned | must | [bookkeeping-aansluitingen](changes/bookkeeping-aansluitingen/) |
+| Year-end balance reconciliation pack | planned | should | follow-up (not yet filed) |
+| ICP <-> BTW rubriek 3b tie-out on the shared framework | planned | could | follow-up (not yet filed) |
+| Bank-balance tie-out on the shared framework (extends `bookkeeping-reconciliation-reports`) | planned | could | follow-up (not yet filed) |
+| XAF/auditfile completeness check | planned | could | follow-up (not yet filed) |
 
 ## Phases
 
