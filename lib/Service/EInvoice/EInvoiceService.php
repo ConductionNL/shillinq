@@ -5,7 +5,8 @@
  *
  * Drives the "Send e-invoice" flow (REQ-EINV-005) for an issued `ARInvoice`:
  * pre-send validation (KvK/BTW/Peppol participant, REQ-EINV-003) -> NLCIUS UBL
- * 2.1 rendering (REQ-EINV-001) -> PDF/A-3 hybrid embed (REQ-EINV-002) -> store
+ * 2.1 rendering (REQ-EINV-001) -> hybrid PDF embed (REQ-EINV-002; NL/Peppol
+ * UBL, not Factur-X/ZUGFeRD CII — see REQ-EINV-008) -> store
  * the artefact -> Peppol transmission port submit -> emit
  * `nl.conduction.peppol.outbound.requested` -> advance `ARInvoice.deliveryStatus`
  * to `queued` (REQ-AR-011). Mirrors {@see \OCA\Shillinq\Service\PurchaseOrderService::sendToPeppol()}'s
@@ -89,7 +90,7 @@ final class EInvoiceService
      * @param LoggerInterface                      $logger                Logger (no PII/document bodies logged).
      * @param IEventDispatcher                     $eventDispatcher       NC event dispatcher (cross-app transport).
      * @param ArInvoiceUblMapper                   $ublMapper             NLCIUS UBL 2.1 mapper (REQ-EINV-001).
-     * @param InvoicePdfGenerator                  $pdfGenerator          PDF/A-3 hybrid embed (REQ-EINV-002).
+     * @param InvoicePdfGenerator                  $pdfGenerator          Hybrid PDF embed (REQ-EINV-002).
      * @param EInvoiceValidationService            $validationService     Pre-send validation (REQ-EINV-003).
      * @param PeppolTransmissionPortInterface|null $peppolPort            Optional transmission port; defaults to
      *                                                                    {@see LogPeppolTransmissionAdapter}.
@@ -294,7 +295,7 @@ final class EInvoiceService
     }//end objectUri()
 
     /**
-     * Best-effort hand-off of the hybrid PDF/A-3 artefact to Docudesk/Files
+     * Best-effort hand-off of the hybrid PDF artefact to Docudesk/Files
      * storage. No live docudesk integration exists in this fleet yet (mirrors
      * {@see \OCA\Shillinq\Service\AuditExportService}'s archival hand-off
      * pattern): the intent is logged and a deterministic placeholder URI is
@@ -312,7 +313,7 @@ final class EInvoiceService
 
         try {
             $this->logger->info(
-                'EInvoiceService: hybrid PDF/A-3 artefact ready for docudesk hand-off',
+                'EInvoiceService: hybrid PDF artefact ready for docudesk hand-off',
                 [
                     'invoiceNumber' => (string) ($invoice['invoiceNumber'] ?? ''),
                     'filename'      => $hybrid['filename'],

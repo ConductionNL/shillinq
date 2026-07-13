@@ -28,7 +28,7 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 
 | Feature | Status | Priority | OpenSpec Change |
 |---------|--------|----------|----------------|
-| Invoice PDF export with embedded UBL 2.1 XML (PDF/A-3 / ZUGFeRD / Factur-X) | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
+| Invoice PDF export with embedded NLCIUS UBL 2.1 XML (NL/Peppol; not Factur-X/ZUGFeRD) | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
 | Peppol BIS 3.0 outbound transmission | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
 | Dutch KvK and BTW number validation for e-invoicing | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
 
