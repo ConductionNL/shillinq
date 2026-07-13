@@ -159,3 +159,47 @@ export function importErrorMessage(error) {
 export function refreshEventPayload() {
 	return { widget: CREDITORS_WIDGET }
 }
+
+// ---------------------------------------------------------------------------
+// receipt-extraction-consume (REQ-RXC-002) — extraction prefill, per-field
+// confidence display, and correction-flow helpers. The schema-agnostic
+// pieces live in ../utils/extractionConfidence.js (shared with
+// ../views/receiptCapture.js); re-exported here so existing BillImportModal
+// imports/tests keep working from one place.
+// ---------------------------------------------------------------------------
+
+export {
+	REVIEW_THRESHOLD,
+	ONE_CLICK_CONFIDENCE_GATE,
+	isExtractionDraft,
+	confidenceForField,
+	isFieldCorrected,
+	requiresExplicitReview,
+} from '../utils/extractionConfidence.js'
+
+/**
+ * Map a pending SupplierInvoice extraction draft into the review-form shape
+ * (REQ-RXC-002) — the same shape as `reviewFormFromRecord`, extraction drafts
+ * and manually-parsed UBL/CSV records share one review step.
+ *
+ * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-002
+ * @param {object} record The extraction-draft SupplierInvoice record.
+ * @return {object} The review form values.
+ */
+export function reviewFormFromDraft(record) {
+	return reviewFormFromRecord(record)
+}
+
+/**
+ * Summarise a pending SupplierInvoice extraction draft for the "pending
+ * reviews" list (invoice-number/supplier label + overall confidence).
+ *
+ * @param {object} record The draft record.
+ * @return {{id: string, label: string, overallConfidence: number|null}}
+ */
+export function pendingDraftSummary(record) {
+	const r = record || {}
+	const label = String(r.invoiceNumber || r.supplierId || r.id || '')
+	const overall = typeof r.overallConfidence === 'number' ? r.overallConfidence : null
+	return { id: String(r.id ?? ''), label, overallConfidence: overall }
+}

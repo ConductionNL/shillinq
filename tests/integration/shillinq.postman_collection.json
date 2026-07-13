@@ -782,6 +782,152 @@
 					]
 				}
 			]
+		},
+		{
+			"name": "Extraction (receipt-extraction-consume)",
+			"description": "receipt-extraction-consume REQ-RXC-004/REQ-RXC-005: the thin ExtractionRequestController proxy to docudesk (request) and the correction-commit endpoint (confirm). docudesk is not guaranteed installed in every test environment, so the re-request assertion accepts either 202 Accepted (docudesk present) or 503 Service Unavailable (docudesk absent) — both are honest, non-fabricating outcomes per REQ-RXC-005's design.",
+			"item": [
+				{
+					"name": "POST extraction/request rejects an invalid docType",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"documentUri\": \"docudesk://attachments/00000000-0000-0000-0000-000000000000/x.pdf\", \"docType\": \"invalid\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v1/extraction/request",
+						"description": "REQ-RXC-005: docType must be receipt|supplier-invoice."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 for an invalid docType', function () {",
+									"    pm.response.to.have.status(422);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST extraction/request proxies to docudesk (or fails soft when absent)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"documentUri\": \"docudesk://attachments/00000000-0000-0000-0000-000000000000/invoice.pdf\", \"docType\": \"supplier-invoice\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v1/extraction/request",
+						"description": "REQ-RXC-005: re-request a fresh extraction. Accepts 202 (docudesk present) or 503 (docudesk absent) — never a 5xx crash and never a fabricated 200 with fake fields."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('202 accepted or 503 docudesk unavailable, never a crash', function () {",
+									"    pm.expect([202, 503]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PUT extraction/drafts/{id} rejects an unknown schema",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"glAccount\": \"4500\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v1/extraction/drafts/does-not-exist?schema=NotASchema",
+						"description": "REQ-RXC-004: schema must be SupplierInvoice|Receipt."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 for an unknown schema', function () {",
+									"    pm.response.to.have.status(422);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PUT extraction/drafts/{id} returns 404 for an unknown draft",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"glAccount\": \"4500\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v1/extraction/drafts/does-not-exist?schema=SupplierInvoice",
+						"description": "REQ-RXC-004: a masked 404 (never a 403) for an id that does not resolve — mirrors the IDOR-safe masking used across the fleet (ADR-005)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('404 for an unknown draft id', function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
 		}
 	]
 }
