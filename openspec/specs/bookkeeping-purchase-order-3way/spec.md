@@ -6,6 +6,10 @@ status: done
 
 **Primary spec for:** `bookkeeping-purchase-order-3way`
 
+**Status**: in-progress
+**OpenSpec changes**:
+- prestatieverklaring-service-receipt
+
 ## Purpose
 
 @e2e exclude pure backend/schema: 3-way match purchase order — not browser-testable

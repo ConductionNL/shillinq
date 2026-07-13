@@ -531,6 +531,126 @@ final class ThreeWayMatchingEngineTest extends TestCase
     }//end testEvaluateMatchRoutesToExceptionMissingPoWhenNoPoMatches()
 
     /**
+     * REQ-PO3W-011 proof: a service PO — which will NEVER have a
+     * GoodsReceiptNote — previously had exactly one possible outcome:
+     * exception_missing_grn forever (see
+     * testEvaluateMatchRoutesToExceptionMissingGrnWhenNoAcceptedReceipt
+     * above, which is the goods-only-engine behaviour this same fixture
+     * shape would have hit before this change). With an accepted SvcReceipt
+     * confirming delivery, the same invoice now reaches auto_approved —
+     * a state that was structurally unreachable for any service PO prior
+     * to this change.
+     *
+     * @return void
+     */
+    public function testEvaluateMatchAutoApprovesServicePoWithAcceptedServiceReceipt(): void
+    {
+        $saved   = [];
+        $invoice = [
+            'id'               => 'inv-svc-1',
+            'invoiceNumber'    => 'INV-CONSULT-001',
+            'supplierId'       => 'vendor-consult',
+            'totalInclVat'     => 605000,
+            'statusCode'       => 'received',
+            'administrationId' => 'adm-1',
+            'matchedPoIds'     => ['po-svc-1'],
+            'lines'            => [
+                [
+                    'lineNumber'    => 1,
+                    'productCode'   => 'SVC-CONSULTANCY-JUL',
+                    'quantity'      => 1.0,
+                    'unitPrice'     => 500000,
+                    'lineExtension' => 500000,
+                    'vatRate'       => 0.21,
+                ],
+            ],
+        ];
+
+        $data = [
+            'SupplierInvoice'   => [$invoice],
+            'PurchaseOrder'     => [
+                [
+                    'id'               => 'po-svc-1',
+                    'poNumber'         => 'PO-SVC-001',
+                    'supplierId'       => 'vendor-consult',
+                    'costCenter'       => 'CC-CONSULT',
+                    'administrationId' => 'adm-1',
+                ],
+            ],
+            'PurchaseOrderLine' => [
+                [
+                    'id'                   => 'pol-svc-1',
+                    'poId'                 => 'po-svc-1',
+                    'lineNumber'           => 1,
+                    'productOrServiceCode' => 'SVC-CONSULTANCY-JUL',
+                    'quantityOrdered'      => 1.0,
+                    'unitPrice'            => 500000,
+                    'vatRate'              => 2100,
+                    'vatAmount'            => 105000,
+                    'administrationId'     => 'adm-1',
+                ],
+            ],
+            // No GoodsReceiptNote at all — this PO line is a service and
+            // will never physically receive goods.
+            'GoodsReceiptNote'  => [],
+            'GoodsReceiptLine'  => [],
+            // The prestatieverklaring / service-entry-sheet third leg —
+            // an approver confirmed 100% delivery for the July period.
+            'SvcReceipt'        => [
+                [
+                    'id'               => 'svr-1',
+                    'receiptNumber'    => 'SVR-2026-adm-1-000001',
+                    'poIds'            => ['po-svc-1'],
+                    'statusCode'       => 'accepted',
+                    'administrationId' => 'adm-1',
+                ],
+            ],
+            'SvcReceiptLine'    => [
+                [
+                    'id'               => 'svrl-1',
+                    'serviceReceiptId' => 'svr-1',
+                    'poLineId'         => 'pol-svc-1',
+                    'quantityReceived' => 1.0,
+                    'quantityAccepted' => 1.0,
+                    'administrationId' => 'adm-1',
+                ],
+            ],
+            'ToleranceProfile'  => [
+                [
+                    'profileId'                   => 'TP-GLOBAL',
+                    'scope'                       => 'global',
+                    'priceToleranceAmount'        => 1000,
+                    'priceTolerancePercentage'    => 50,
+                    'quantityTolerancePercentage' => 100,
+                    'dateToleranceDays'           => 3,
+                    'status'                      => 'active',
+                    'administrationId'            => 'adm-1',
+                ],
+            ],
+            'ThreeWayMatch'     => [],
+        ];
+
+        $engine = $this->buildEngine(data: $data, saved: $saved);
+        $result = $engine->evaluateMatch(administrationId: 'adm-1', invoiceId: 'inv-svc-1');
+
+        self::assertSame(ThreeWayMatchingEngine::STATUS_AUTO_APPROVED, $result['matchStatus']);
+        self::assertSame(['po-svc-1'], $result['matchedPoIds']);
+        self::assertSame(['svr-1'], $result['matchedGrnIds']);
+        self::assertSame('adm-1', $result['administrationId']);
+
+        // SupplierInvoice transitioned received → matching → matched — a
+        // state a service PO could never reach before this change (the
+        // only possible outcome was exception_missing_grn, see the
+        // sibling test above using the same fixture shape minus the
+        // SvcReceipt).
+        $invoiceSaves = array_values(array_filter($saved, static fn ($r) => $r['schema'] === 'SupplierInvoice'));
+        self::assertCount(2, $invoiceSaves);
+        self::assertSame('matching', $invoiceSaves[0]['object']['statusCode']);
+        self::assertSame('matched', $invoiceSaves[1]['object']['statusCode']);
+
+    }//end testEvaluateMatchAutoApprovesServicePoWithAcceptedServiceReceipt()
+
+    /**
      * Unknown invoice id is masked as not-found (no leak of cross-tenant ids).
      *
      * @return void
