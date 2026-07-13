@@ -751,7 +751,7 @@ class Application extends App implements IBootstrap
         // methods, InventoryPostingGuard, KorThresholdGuard, ...) reference
         // tags shaped the same way and are NOT registered — every one of
         // those transitions also hard-fails today. That fleet-wide gap is
-        // filed separately as shillinq#429 and intentionally not fixed here.
+        // filed separately as shillinq#433 and intentionally not fixed here.
         $context->registerService(
             'OCA\Shillinq\Guard\Iv3XmlValidationGuard::requireValidXml',
             static function ($c): RegisterRequiresGuardAdapter {

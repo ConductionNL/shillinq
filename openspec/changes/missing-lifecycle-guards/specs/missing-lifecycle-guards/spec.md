@@ -90,8 +90,8 @@ The system MUST remove the `RateResolutionGuard::resolveByTierPrecedence` (decla
 - Two implemented guards (`GLReversalGuard` on APInvoice/ARInvoice,
   `WBSOExportValidationGuard`) target schemas that are separately mis-nested
   in the JSON and never actually imported by OpenRegister
-  (shillinq#430) — the guard code is correct and unit-tested; it becomes
+  (shillinq#434) — the guard code is correct and unit-tested; it becomes
   reachable once that separate defect is fixed.
 - The dozens of other pre-existing guards sharing the same DI-registration
   gap this change's root-cause analysis uncovered are tracked as
-  shillinq#429 and are explicitly out of scope here.
+  shillinq#433 and are explicitly out of scope here.

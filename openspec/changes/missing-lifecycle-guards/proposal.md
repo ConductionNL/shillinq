@@ -29,7 +29,7 @@ classes would still leave every transition broken unless the exact literal
 tag is also registered in `Application.php`. This change fixes both halves
 for the 17 classes (+1 method) shillinq#425 covers; the same registration
 gap affecting dozens of other, already-existing guards elsewhere in this
-app is filed separately (shillinq#429) and intentionally not fixed here.
+app is filed separately (shillinq#433) and intentionally not fixed here.
 
 ## Motivation
 
@@ -89,7 +89,7 @@ that they instead hard-fail, and fixes them the same way as the rest.
   in this app (`MandaatEnforcer`, `BudgetBlocker`, `PeriodCloseGuard`'s
   other 3 methods, `InventoryPostingGuard`, `KorThresholdGuard`, ...) share
   the exact same "never registered, therefore never resolves" defect. Filed
-  as shillinq#429; fixing all of them is a much larger, separate change.
+  as shillinq#433; fixing all of them is a much larger, separate change.
 - The 23 schemas declared at the wrong JSON nesting level
   (`components.<Schema>` instead of `components.schemas.<Schema>`, e.g.
   `APInvoice`, `ARInvoice`, `WBSOExportLog`, `WBSOActivityCode`), which
@@ -97,13 +97,13 @@ that they instead hard-fail, and fixes them the same way as the rest.
   implemented guards (`GLReversalGuard` on APInvoice/ARInvoice,
   `WBSOExportValidationGuard`) target schemas affected by this — the code
   is correct and will function once that bug is fixed, but the schemas
-  themselves are not reachable today. Filed as shillinq#430.
+  themselves are not reachable today. Filed as shillinq#434.
 - Adding an approval-evidence field to `VatReturn`/`BcfClaim` so
   over-threshold submissions can ever be unblocked (no such field exists on
-  either schema today). Filed as shillinq#431.
+  either schema today). Filed as shillinq#435.
 - Giving OpenRegister's aggregation engine an actual PHP-guard-fallback seam
   (it never reads `guard`/`fallbackGuard` keys today, on any aggregation).
-  Filed as shillinq#432.
+  Filed as shillinq#436.
 
 ## Approach
 
@@ -146,7 +146,7 @@ registered aliases first), not conflicting.
 ### Risk 2: `GLReversalGuard`/`WBSOExportValidationGuard` cannot be exercised end-to-end today
 **Severity:** Low — **Mitigation:** documented explicitly in both classes'
 docblocks and in this proposal's Out of Scope; the code is correct and unit
-tests prove its logic, it is simply unreachable until shillinq#430 lands.
+tests prove its logic, it is simply unreachable until shillinq#434 lands.
 
 ## Rollback Strategy
 

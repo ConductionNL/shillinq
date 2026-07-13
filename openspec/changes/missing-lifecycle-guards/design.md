@@ -36,7 +36,7 @@ Two independent defects stacked on top of each other, both fixed here:
    unit-tested in isolation (`MandaatEnforcer`, `BudgetBlocker`,
    `PeriodCloseGuard`, `InventoryPostingGuard`, `KorThresholdGuard`, ...).
    Those are pre-existing, independently broken, and out of scope
-   (shillinq#429) — but this file's own precedent
+   (shillinq#433) — but this file's own precedent
    (`RoleFallbackResolver::class.'::financeOfficer'` registered at
    `Application.php` ~line 549 for notification resolvers) proves the
    codebase's authors already knew arbitrary string tags need an explicit
@@ -66,16 +66,16 @@ blanket-deleted.
 | 5 | `ProjectTransitionGuard::requireReason` | `Project.putOnHold` (monolith) | same | **Implement** | Literal rule (`closureJustification` required). |
 | 6 | `ProjectCloseGuard::requireWipJustificationOrZero` | `Project.close` (monolith) | same | **Implement** | Literal rule: zero WIP or a recorded justification. |
 | 7 | `FiscalYearGuard::requireAllPeriodsClosedForYear` | `FiscalYear.beginClose` (monolith) | same | **Implement** | REQ-YEC-007, cross-schema FiscalPeriod lookup — genuinely needs a PHP guard (ADR-031 exception path). |
-| 8 | `GLReversalGuard::isReversed` | `ExpenseClaimEntry.void` (monolith, live schema), `APInvoice.void`/`ARInvoice.void` (monolith, **mis-nested schemas**, shillinq#430) | same | **Implement** | T1 REQ-GL-004 ("materialised GLTransaction MUST already be reversed"). `ExpenseClaimEntry` is reachable today; the AP/AR uses are correct code waiting on shillinq#430. |
-| 9 | `WriteOffReasonGuard::requireReason` | `ARInvoice.writeOff` (monolith, mis-nested, shillinq#430) | same | **Implement** | Literal rule; same #430 caveat. |
-| 10 | `VatSubmissionGuard::requireApproval` | `VatReturn.submit` (register.d) | same | **Implement** | Originally suspected a silent OWASP A01 bypass — confirmed instead to hard-fail. No approval-evidence field exists (verified); implemented the threshold check literally and fail-closed (shillinq#431 tracks adding real evidence). |
+| 8 | `GLReversalGuard::isReversed` | `ExpenseClaimEntry.void` (monolith, live schema), `APInvoice.void`/`ARInvoice.void` (monolith, **mis-nested schemas**, shillinq#434) | same | **Implement** | T1 REQ-GL-004 ("materialised GLTransaction MUST already be reversed"). `ExpenseClaimEntry` is reachable today; the AP/AR uses are correct code waiting on shillinq#434. |
+| 9 | `WriteOffReasonGuard::requireReason` | `ARInvoice.writeOff` (monolith, mis-nested, shillinq#434) | same | **Implement** | Literal rule; same #434 caveat. |
+| 10 | `VatSubmissionGuard::requireApproval` | `VatReturn.submit` (register.d) | same | **Implement** | Originally suspected a silent OWASP A01 bypass — confirmed instead to hard-fail. No approval-evidence field exists (verified); implemented the threshold check literally and fail-closed (shillinq#435 tracks adding real evidence). |
 | 11 | `BcfSubmissionGuard::requireApproval` | `BcfClaim.submit` (register.d) | same | **Implement** | Same shape as #10. |
 | 12/13 | `APGuard::isInvoiceNumberUnique` / `::requireWriteOffReason` | `APTransaction.receive`/`.writeOff` (register.d) | same | **Implement** | #12 is a genuine AP duplicate-invoice control (REQ-AP-003 scenario 2) — this is the concrete shape of the exact OWASP A01 risk the initial triage worried about; now real and tested. #13 is a literal reason-required rule. |
-| 14 | `WBSOExportValidationGuard` (bare class) | `WBSOExportLog.validate` (monolith, mis-nested, shillinq#430) | same (bare-class tag) | **Implement** | REQ-WBSO-006. Core tag-completeness check is fully real; the `isAllowed` eligibility cross-check against the ALSO-mis-nested `WBSOActivityCode` degrades gracefully (logs, doesn't deny) rather than let an unrelated bug permanently block every export. |
+| 14 | `WBSOExportValidationGuard` (bare class) | `WBSOExportLog.validate` (monolith, mis-nested, shillinq#434) | same (bare-class tag) | **Implement** | REQ-WBSO-006. Core tag-completeness check is fully real; the `isAllowed` eligibility cross-check against the ALSO-mis-nested `WBSOActivityCode` degrades gracefully (logs, doesn't deny) rather than let an unrelated bug permanently block every export. |
 | 15 | `SubsidieRepaymentGuard::requireZeroRepaymentBalance` | `Subsidie.afhandelenVanuitTeruggevorderd` (monolith) | **shape bug**: `requires` was `{"guard": "..."}`, an object — `LifecycleValidationListener` only acts when `is_string($requires)`, so this was **silently skipped entirely**, not even attempted | **Implement + fix JSON shape** | This one WAS the silent bypass the initial triage suspected for the whole set — a dossier could close with money still owed. Fixed the shape to a plain string (now a real, enforced `requires`) and implemented the class against the real `RepaymentInstallment` schema. |
 | 16 | `RateScheduleOverlapGuard::requireNonOverlappingWindow` | Declared under `x-openregister-lifecycle.preconditions.save` (monolith) — **`preconditions` is a key `LifecycleValidationListener` never reads at all** (only `transitions.<action>.requires`); confirmed via a fleet-wide grep of OR core for the literal string `preconditions` — zero hits outside unrelated docstrings | **Implement + relocate** | REQ-RATE-006 ("(tier, entityId) pairs MUST NOT have overlapping windows") is a real, valuable rule and the `reactivate` transition (`inactive → active`) is a genuine, already-existing hook this check can attach to for real. Relocated the `requires` there instead of leaving it under a key nothing reads. Does not catch a brand-new schedule created directly in `active` state — OpenRegister does not dispatch `ObjectTransitionedEvent` for a lifecycle field set at create time (pre-existing OR limitation, not addressed here). |
-| 17 | `RateResolutionGuard::resolveByTierPrecedence` | `x-openregister-aggregations.resolveRate.fallbackGuard` (monolith) | **dead key** — grepped OR's entire `AggregationRunner`/`AggregationQuery`/`AggregationAnnotationValidator`/`AggregationCache` for any read of a `fallbackGuard`/`guard` key: zero hits. Never invoked, class-exists-or-not | **Remove** | Implementing a PHP class here would fix nothing (still never called) without also extending OR's aggregation engine (out of scope, OR is read-only per this task's brief). Removed the dead key + corrected the aggregation's description text. Filed shillinq#432 for the underlying "aggregation engine has no PHP-guard-fallback seam" gap if it's ever needed for real. |
-| 18 | `SteekproefSampler::computeDeterministicSample` | `x-openregister-aggregations.steekproef.guard` (register.d fragment) | same dead-key defect as #17 (confirmed: same missing read path) — **also** a near-duplicate of the monolith's own `steekproef` aggregation, which references a THIRD, also-nonexistent class (`OCA\Shillinq\Audit\SteekproefSampler::sample`) under `_meta.engineLimitFallback` — also dead | **Remove** | Same reasoning as #17. Did not touch the monolith's separate `engineLimitFallback` reference (different aggregation key path, same dead-key defect, but outside this fragment file) — noted for shillinq#432. |
+| 17 | `RateResolutionGuard::resolveByTierPrecedence` | `x-openregister-aggregations.resolveRate.fallbackGuard` (monolith) | **dead key** — grepped OR's entire `AggregationRunner`/`AggregationQuery`/`AggregationAnnotationValidator`/`AggregationCache` for any read of a `fallbackGuard`/`guard` key: zero hits. Never invoked, class-exists-or-not | **Remove** | Implementing a PHP class here would fix nothing (still never called) without also extending OR's aggregation engine (out of scope, OR is read-only per this task's brief). Removed the dead key + corrected the aggregation's description text. Filed shillinq#436 for the underlying "aggregation engine has no PHP-guard-fallback seam" gap if it's ever needed for real. |
+| 18 | `SteekproefSampler::computeDeterministicSample` | `x-openregister-aggregations.steekproef.guard` (register.d fragment) | same dead-key defect as #17 (confirmed: same missing read path) — **also** a near-duplicate of the monolith's own `steekproef` aggregation, which references a THIRD, also-nonexistent class (`OCA\Shillinq\Audit\SteekproefSampler::sample`) under `_meta.engineLimitFallback` — also dead | **Remove** | Same reasoning as #17. Did not touch the monolith's separate `engineLimitFallback` reference (different aggregation key path, same dead-key defect, but outside this fragment file) — noted for shillinq#436. |
 
 **Count:** 15 implemented (13 hard-fail fixes + 1 shape-bug fix + 1
 relocation-and-implement) + 1 method added to an existing class + 2 removed
@@ -88,10 +88,10 @@ guarded (class + method + DI registration all real) or cleanly guard-free.
 Real, tested logic — no stubs, no invented business rules.
 
 **Non-Goals:** fixing the dozens of OTHER pre-existing guards sharing the
-DI-registration gap (shillinq#429); fixing the 23 mis-nested schemas
-(shillinq#430); adding approval-evidence fields to VatReturn/BcfClaim
-(shillinq#431); giving OR's aggregation engine a PHP-guard-fallback seam
-(shillinq#432).
+DI-registration gap (shillinq#433); fixing the 23 mis-nested schemas
+(shillinq#434); adding approval-evidence fields to VatReturn/BcfClaim
+(shillinq#435); giving OR's aggregation engine a PHP-guard-fallback seam
+(shillinq#436).
 
 ## Decisions
 
@@ -160,7 +160,7 @@ established convention. `APGuard::isInvoiceNumberUnique` and
 `VatSubmissionGuard`/`BcfSubmissionGuard::requireApproval` are the concrete
 shape of the exact controls (AP duplicate-invoice detection, VAT/BCF
 submission approval) the initial mis-diagnosis worried were silently
-bypassed; they are now real, tested, and enforced (once shillinq#429's
+bypassed; they are now real, tested, and enforced (once shillinq#433's
 registration gap for THIS change's 16 tags — fixed here — is in place).
 `SubsidieRepaymentGuard` was a genuine silent bypass (JSON shape bug) and is
 now fixed both in class and in JSON shape.
@@ -217,7 +217,7 @@ psalm.xml                              (modified — 2 referencedClass entries)
 ## Trade-offs
 
 Considered fixing all ~40+ pre-existing broken guard registrations
-(shillinq#429) in the same change, since the root-cause fix
+(shillinq#433) in the same change, since the root-cause fix
 (`RegisterRequiresGuardAdapter` + registration pattern) is identical.
 Rejected: shillinq#425 is scoped to 17 named classes + 1 method; expanding
 to every guard in the app would 3-5x the diff, mixing well-understood,

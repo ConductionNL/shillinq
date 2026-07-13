@@ -45,7 +45,7 @@ namespace OCA\Shillinq\Guard;
  * invent a field the schema does not declare, this guard enforces the
  * documented rule literally and fails closed: over-threshold returns are
  * rejected outright until a follow-up change adds an approval-evidence
- * field and threads it through here (filed as shillinq#431). Below-threshold
+ * field and threads it through here (filed as shillinq#435). Below-threshold
  * returns, and returns with no threshold configured, submit normally.
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2

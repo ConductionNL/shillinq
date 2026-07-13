@@ -17,7 +17,7 @@
  * `components.schemas.*`), so OpenRegister's ImportHandler — which reads
  * strictly from `components.schemas` (openregister/lib/Service/
  * Configuration/ImportHandler.php:1602) — never creates either schema. That
- * is a separate, pre-existing defect (filed as shillinq#430) and out of
+ * is a separate, pre-existing defect (filed as shillinq#434) and out of
  * scope here. UrenRegistratie (the entries this guard validates) IS
  * correctly nested and live today. Because WBSOActivityCode is not
  * reachable yet, the eligibility (`isAllowed`) cross-check below degrades
@@ -153,7 +153,7 @@ class WBSOExportValidationGuard
      *
      * Logs (does not deny) when the lookup itself is unavailable, so this
      * guard's core tag-completeness enforcement is not held hostage by the
-     * separate WBSOActivityCode schema-registration defect (shillinq#430).
+     * separate WBSOActivityCode schema-registration defect (shillinq#434).
      *
      * @param array<int,array<string,mixed>> $entries UrenRegistratie entries already
      *                                                confirmed to carry activityCodeId.
@@ -180,7 +180,7 @@ class WBSOExportValidationGuard
                     ->setSchema('WBSOActivityCode')
                     ->findAll(['filters' => ['activityCode' => $activityCodeId], 'limit' => 1]);
             } catch (\Throwable) {
-                // WBSOActivityCode not reachable (shillinq#430) — skip this
+                // WBSOActivityCode not reachable (shillinq#434) — skip this
                 // sub-check rather than deny the whole export on its account.
                 return;
             }

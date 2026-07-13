@@ -78,9 +78,9 @@ final class WBSOExportValidationGuardTest extends TestCase
             public function findAll(array $params=[]): array
             {
                 if ($this->schema === 'WBSOActivityCode') {
-                    // Not reachable in tests (shillinq#430) — guard degrades
+                    // Not reachable in tests (shillinq#434) — guard degrades
                     // gracefully via its own try/catch around this lookup.
-                    throw new \RuntimeException('WBSOActivityCode schema not registered (shillinq#430)');
+                    throw new \RuntimeException('WBSOActivityCode schema not registered (shillinq#434)');
                 }
 
                 return $this->entries;

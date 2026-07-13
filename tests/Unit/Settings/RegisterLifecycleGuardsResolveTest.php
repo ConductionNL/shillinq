@@ -47,7 +47,7 @@ use PHPUnit\Framework\TestCase;
  * `\`) are checked. Several other pre-existing `requires` shapes in this
  * codebase are NOT FQCNs at all (a bare field name, a boolean expression, or
  * the `x-openregister-approval` sentinel) — those are separate, already
- * pre-existing defects (see shillinq#429/#431 filed alongside this change)
+ * pre-existing defects (see shillinq#433/#435 filed alongside this change)
  * and intentionally out of scope for this regression guard, which targets
  * exactly the bug class shillinq#425 describes.
  */
@@ -185,7 +185,7 @@ final class RegisterLifecycleGuardsResolveTest extends TestCase
      * to just those 16: dozens of OTHER pre-existing guards in this app
      * (e.g. OCA\Shillinq\Lifecycle\BalanceGuard::isBalanced) share the same
      * class-exists-but-never-registered gap and are tracked separately as
-     * shillinq#429 — fixing all of them is out of scope here.
+     * shillinq#433 — fixing all of them is out of scope here.
      *
      * @return void
      *

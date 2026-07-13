@@ -25,7 +25,7 @@
  * class already existed (MandaatEnforcer, BudgetBlocker, PeriodCloseGuard,
  * InventoryPostingGuard, KorThresholdGuard, ...): every one of those
  * transitions ALSO hard-fails today. That pre-existing, fleet-wide gap is
- * filed separately (see shillinq#429) — fixing it for the dozens of
+ * filed separately (see shillinq#433) — fixing it for the dozens of
  * already-shipped guards is out of scope for shillinq#425, which is limited
  * to the 17 named classes + PeriodCloseGuard::trialBalanceVerifies.
  *

@@ -19,7 +19,7 @@
  * `components.schemas.ARInvoice`), so OpenRegister's ImportHandler — which
  * reads strictly from `components.schemas` (openregister/lib/Service/
  * Configuration/ImportHandler.php:1602) — never creates those two schemas at
- * all. That is a separate, pre-existing defect (filed as shillinq#430) and
+ * all. That is a separate, pre-existing defect (filed as shillinq#434) and
  * out of scope here; this guard is still correct and will function the
  * moment that nesting bug is fixed. ExpenseClaimEntry (properly nested) is
  * unaffected and already exercises this guard for real today.

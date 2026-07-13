@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Guard;
  * Same schema-gap situation as VatSubmissionGuard (see its docblock): no
  * approval-evidence field exists on BcfClaim yet, so this guard enforces
  * the documented threshold rule literally and fails closed rather than
- * inventing an evidence field. Filed alongside shillinq#431.
+ * inventing an evidence field. Filed alongside shillinq#435.
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
