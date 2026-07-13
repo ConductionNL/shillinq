@@ -21,8 +21,11 @@
 			"route": "/accountant-portal",
 			"type": "custom",
 			"title": "Accountant portal",
+			"icon": "AccountTieOutline",
+			"component": "AccountantPortalDashboard",
+			"_note": "Custom because the page composes a per-client card from FOUR independently-queried signals (period-close, BTW filing, missing documents, open items) plus a per-card imperative file-download action — none of which fits the declarative index/detail/dashboard page types (see registry.js import docblock + design.md D3).",
 			"config": {
-				"component": "AccountantPortalDashboard"
+				"register": "shillinq"
 			}
 		}
 	]

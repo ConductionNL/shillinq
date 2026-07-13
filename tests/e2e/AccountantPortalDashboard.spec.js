@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Accountant portal dashboard — Playwright UI shell-smoke for the
+ * AccountantPortalDashboard — Playwright UI shell-smoke for the
  * `accountant-portal` change (REQ-ACP-001, REQ-ACP-002).
  *
  * Covers the browser-visible surface only (fleet rule: Playwright stays
