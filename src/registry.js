@@ -324,6 +324,17 @@ import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.
 // src/manifest.d/bank-import-settings.json declares the route + menu entry.
 import BankImportPage from './components/settings/BankImportPage.vue'
 
+// accountant-portal: the multi-client dashboard composes a per-card status
+// (period-close state, BTW filing + deadline, missing documents, open items
+// from PeriodCloseAssistantService) plus a per-card "Download handover pack"
+// action. The built-in `dashboard` page type's widgets (summary/table/chart)
+// bind to a single register+schema; this page aggregates four signals across
+// AccountantDashboardService and triggers a file download per card, neither
+// of which fits that vocabulary (mirrors the reporting-compliance-consolidation
+// precedent above). kind:"page" custom component per ADR-024 / ADR-036; the
+// manifest fragment src/manifest.d/accountant-portal.json declares the route.
+import AccountantPortalDashboard from './views/AccountantPortalDashboard.vue'
+
 export default {
 	RecurringInvoiceProfileModal: { kind: 'modal', component: RecurringInvoiceProfileModal },
 
@@ -421,4 +432,7 @@ export default {
 	ReportingComplianceOverview: { kind: 'page', component: ReportingComplianceOverview },
 	GeneratedReportsIndex: { kind: 'page', component: GeneratedReportsIndex },
 	BankImportPage: { kind: 'page', component: BankImportPage },
+
+	// accountant-portal: scoped multi-client dashboard + handover-pack export.
+	AccountantPortalDashboard: { kind: 'page', component: AccountantPortalDashboard },
 }

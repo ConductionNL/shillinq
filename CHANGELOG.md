@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Accountant portal (`accountant-portal`) — in-app, scoped multi-client
+  surface for an accountant/bookkeeper with `AdministrationMembership` grants
+  across several client administraties (REQ-ACP-001..004): a dashboard
+  listing every granted client with its period-close state, BTW filing
+  status + statutory deadline, missing-document count and open/attention
+  items (reusing `PeriodCloseAssistantService`), and a one-click handover
+  pack streaming a ZIP of the XAF auditfile, trial balance, general ledger
+  and BTW-overzicht via the existing report generators. Built entirely on
+  the existing `AdministrationContextService` RBAC — a non-granted
+  administration is masked as a 404 on every endpoint, never a 403. Distinct
+  from the archived external, no-Nextcloud-account portaliq `accountant`
+  audience (`2026-07-07-shillinq-accountant-portal-audience`).
 - BTW suppletie detection (`btw-suppletie-detection`) — new
   `VatSuppletieDetectionService::detect()`/`::prepare()` engine implementing
   REQ-VBTW-013/014: detects drift between a filed `VATReturn` and its

@@ -119,6 +119,11 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         ['name' => 'administrationExport#exportXaf', 'url' => '/api/administrations/{id}/export', 'verb' => 'GET'],
         ['name' => 'administration#writableStatus', 'url' => '/api/administrations/{id}/writable', 'verb' => 'GET'],
 
+        // Accountant portal (accountant-portal): scoped multi-client dashboard +
+        // handover-pack export, built on the same administratie-aware RBAC above.
+        ['name' => 'accountantPortal#dashboard', 'url' => '/api/accountant/dashboard', 'verb' => 'GET'],
+        ['name' => 'accountantPortal#handoverPack', 'url' => '/api/accountant/administrations/{id}/handover-pack', 'verb' => 'GET'],
+
         // Payroll engine (NL loonadministratie): read-only compute endpoints.
         ['name' => 'payroll#loonstrook', 'url' => '/api/payroll/loonstrook', 'verb' => 'GET'],
         ['name' => 'payroll#lhAfdracht', 'url' => '/api/payroll/lh-afdracht', 'verb' => 'GET'],
