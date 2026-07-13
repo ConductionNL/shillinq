@@ -57,7 +57,7 @@ class AansluitingController extends Controller
     /**
      * Construct the controller with its service dependency.
      *
-     * @param IRequest           $request           The request object.
+     * @param IRequest           $request            The request object.
      * @param AansluitingService $aansluitingService The tie-out compute/explain/resolve/reopen service.
      * @param IUserSession       $userSession        The session for the acting user id (auth + audit actor).
      * @param LoggerInterface    $logger             Logger for diagnostics (no stack traces to client).

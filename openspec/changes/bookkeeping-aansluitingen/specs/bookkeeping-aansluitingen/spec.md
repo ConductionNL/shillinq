@@ -25,12 +25,12 @@ and subledger -> GL control account. It explicitly does NOT re-implement
 `bookkeeping-icp-opgaaf`'s ICP<->rubriek-3b tie-out — both are named as
 follow-up integration work (see the change's proposal.md).
 
-## Requirements
+## ADDED Requirements
 
 @e2e exclude unbuilt UI: aansluitingen index/detail pages not yet built
 against a live Playwright target
 
-### REQ-AANS-001: `Aansluiting` SHALL be declared as a definition register
+### Requirement: REQ-AANS-001: `Aansluiting` SHALL be declared as a definition register
 
 An `Aansluiting` MUST be expressed as a new register in
 `lib/Settings/register.d/bookkeeping-aansluitingen.json` per ADR-037,
@@ -58,7 +58,7 @@ one definition is computed once per fiscal period, producing one
 - **THEN** at least one carries `expectedRelationship: "equal"` and at
   least one carries `expectedRelationship: "equal-with-sign-flip"`.
 
-### REQ-AANS-002: `AansluitingService::compute()` SHALL dispatch on `aansluitingType` to a resolver
+### Requirement: REQ-AANS-002: `AansluitingService::compute()` SHALL dispatch on `aansluitingType` to a resolver
 
 The system SHALL satisfy this requirement: `AansluitingService::compute()`
 SHALL dispatch on `aansluitingType` to a resolver.
@@ -79,7 +79,7 @@ XAF/auditfile completeness) are out of scope and named as follow-up work.
 - **THEN** the call MUST throw, naming the unsupported type; it MUST NOT
   return a zero-total `AansluitingResult`.
 
-### REQ-AANS-003: The tolerance decision SHALL be computed per the declared `expectedRelationship`
+### Requirement: REQ-AANS-003: The tolerance decision SHALL be computed per the declared `expectedRelationship`
 
 For `expectedRelationship: "equal"`, the signed difference MUST be computed
 as `toCents(sourceATotal) - toCents(sourceBTotal)`. For
@@ -105,7 +105,7 @@ A result is `withinTolerance` when `abs(differenceCents) <= toleranceCents`.
 - **THEN** `differenceCents` MUST be `0` and the result MUST be
   `withinTolerance`.
 
-### REQ-AANS-004: `compute()` SHALL persist an `AansluitingResult` and auto-resolve within-tolerance differences
+### Requirement: REQ-AANS-004: `compute()` SHALL persist an `AansluitingResult` and auto-resolve within-tolerance differences
 
 The system SHALL satisfy this requirement: `compute()` SHALL persist an
 `AansluitingResult` and auto-resolve within-tolerance differences.
@@ -138,7 +138,7 @@ operator's explanation is never silently overwritten; the caller must
 - **THEN** the existing record MUST be returned unchanged; no new totals
   MUST be written.
 
-### REQ-AANS-005: The `subledger-gl-control` resolver SHALL compare a GL control account's cumulative balance to its open subledger total
+### Requirement: REQ-AANS-005: The `subledger-gl-control` resolver SHALL compare a GL control account's cumulative balance to its open subledger total
 
 The system SHALL satisfy this requirement: the `subledger-gl-control`
 resolver SHALL compare a GL control account's cumulative balance to its
@@ -178,7 +178,7 @@ detectOpenSubLedger()` never makes — that method only counts draft/unposted
   `open`, and `lineDeltas` MUST include a row keyed by the open
   `APTransaction`'s id with `sourceBAmount: 9350.0`.
 
-### REQ-AANS-006: `AansluitingResult` SHALL support an audit-trailed `open -> explained -> resolved` lifecycle
+### Requirement: REQ-AANS-006: `AansluitingResult` SHALL support an audit-trailed `open -> explained -> resolved` lifecycle
 
 `AansluitingResult` MUST declare an `x-openregister-lifecycle` with states
 `open` (initial), `explained`, `resolved`, and transitions:
@@ -217,7 +217,7 @@ timestamp) via `x-openregister-audit-trail`.
 - **THEN** `status` MUST become `open`, `resolvedBy`/`resolvedAt` MUST be
   cleared, and the reason MUST be audit-trailed.
 
-### REQ-AANS-007: The `btw-ledger-aangifte` resolver SHALL cross-reference an existing `VatCorrection` rather than duplicating it
+### Requirement: REQ-AANS-007: The `btw-ledger-aangifte` resolver SHALL cross-reference an existing `VatCorrection` rather than duplicating it
 
 The system SHALL satisfy this requirement: the `btw-ledger-aangifte`
 resolver SHALL cross-reference an existing `VatCorrection` rather than
@@ -252,7 +252,7 @@ existing suppletie-detection write path.
   equal that `VatCorrection`'s id; no second `VatCorrection` MUST be
   created.
 
-### REQ-AANS-008: Aansluitingen SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-AANS-008: Aansluitingen SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare:
 

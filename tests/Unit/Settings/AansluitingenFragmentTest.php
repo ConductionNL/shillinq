@@ -172,7 +172,7 @@ final class AansluitingenFragmentTest extends TestCase
         $objects = $this->fragment()['components']['objects'];
         self::assertNotEmpty($objects);
 
-        $slugs           = [];
+        $slugs            = [];
         $aansluitingTypes = [];
         $relationships    = [];
         foreach ($objects as $object) {

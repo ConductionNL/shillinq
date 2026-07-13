@@ -51,6 +51,8 @@ class AansluitingCalculator
      * @param mixed $amount Money amount (float|int|numeric-string|null).
      *
      * @return int Amount in whole cents.
+     *
+     * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md#req-aans-003
      */
     public function toCents(mixed $amount): int
     {
@@ -64,6 +66,8 @@ class AansluitingCalculator
      * @param int $cents Amount in whole cents.
      *
      * @return float Money amount.
+     *
+     * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md#req-aans-003
      */
     public function fromCents(int $cents): float
     {
@@ -89,6 +93,8 @@ class AansluitingCalculator
      * @param string $relationship 'equal' or 'equal-with-sign-flip'.
      *
      * @return int The signed difference in whole cents.
+     *
+     * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md#req-aans-003
      */
     public function differenceCents(float $sourceATotal, float $sourceBTotal, string $relationship): int
     {
@@ -111,6 +117,8 @@ class AansluitingCalculator
      * @param int $toleranceCents  The maximum absolute difference still considered within tolerance.
      *
      * @return bool True when abs(differenceCents) <= toleranceCents.
+     *
+     * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md#req-aans-003
      */
     public function isWithinTolerance(int $differenceCents, int $toleranceCents): bool
     {
@@ -124,13 +132,15 @@ class AansluitingCalculator
      * lineDeltas shape (REQ-AANS-005). A bucket present in only one list is
      * still emitted, with the other side's amount reported as null.
      *
-     * @param array<string,float> $bucketsA Source A amounts keyed by bucketKey.
-     * @param array<string,float> $bucketsB Source B amounts keyed by bucketKey.
-     * @param string               $relationship 'equal' or 'equal-with-sign-flip'; controls how deltaAmount
+     * @param array<string,float> $bucketsA     Source A amounts keyed by bucketKey.
+     * @param array<string,float> $bucketsB     Source B amounts keyed by bucketKey.
+     * @param string              $relationship 'equal' or 'equal-with-sign-flip'; controls how deltaAmount
      *                                          is computed per bucket, consistent with differenceCents().
      *
      * @return array<int,array{bucketKey:string,sourceAAmount:?float,sourceBAmount:?float,deltaAmount:float}>
      *         Sorted by bucketKey ascending, TOTAL excluded (callers prepend their own TOTAL row).
+     *
+     * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md#req-aans-005
      */
     public function diffBuckets(array $bucketsA, array $bucketsB, string $relationship='equal'): array
     {

@@ -18,6 +18,10 @@
         "x-spec": "openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md",
         "type": "object",
         "x-openregister-audit": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "REQ-AT-001: changes to the declarative tie-out definition (tolerance, expected relationship, source resolvers) are audit-trailed — this is master data that governs how every AansluitingResult for this tie-out is computed."
+        },
         "required": [
           "name",
           "aansluitingType",

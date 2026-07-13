@@ -104,12 +104,13 @@ class AansluitingService
      * direct dependencies on the two services whose computation this class
      * reuses rather than duplicating (REQ-AANS-002).
      *
-     * @param ContainerInterface               $container        DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig                        $appConfig        App config for the register slug.
-     * @param LoggerInterface                   $logger           Logger for diagnostics.
-     * @param AansluitingCalculator             $calculator       Pure-logic tolerance/diff helper.
-     * @param VATReturnService                  $vatReturnService The BTW ledger-derivation engine this service diffs against.
-     * @param AansluitingResolutionGuard $resolutionGuard The ADR-031 exception guard for explained -> resolved.
+     * @param ContainerInterface         $container        DI container — OR's ObjectService is fetched
+     *                                                     lazily.
+     * @param IAppConfig                 $appConfig        App config for the register slug.
+     * @param LoggerInterface            $logger           Logger for diagnostics.
+     * @param AansluitingCalculator      $calculator       Pure-logic tolerance/diff helper.
+     * @param VATReturnService           $vatReturnService The BTW ledger-derivation engine this service diffs against.
+     * @param AansluitingResolutionGuard $resolutionGuard  The ADR-031 exception guard for explained -> resolved.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -245,9 +246,9 @@ class AansluitingService
             );
         }
 
-        $result['status']                = 'explained';
-        $result['explainedBy']           = $actor;
-        $result['explainedAt']           = $this->now();
+        $result['status']      = 'explained';
+        $result['explainedBy'] = $actor;
+        $result['explainedAt'] = $this->now();
         $result['explanationReasonCode'] = $reasonCode;
         $result['explanationReasonText'] = $reasonText;
 
@@ -299,6 +300,8 @@ class AansluitingService
      * @param string $reason   Free-text reason for reopening (audit-trailed).
      *
      * @return array<string,mixed> The updated AansluitingResult record.
+     *
+     * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md#req-aans-006
      */
     public function reopen(string $resultId, string $actor, string $reason): array
     {
@@ -376,14 +379,14 @@ class AansluitingService
      * PeriodCloseAssistantService::detectOpenSubLedger() never makes.
      *
      * @param array<string,mixed> $definition       The Aansluiting definition record.
-     * @param string               $administrationId Administration scope.
+     * @param string              $administrationId Administration scope.
      *
      * @return array{sourceATotal:float,sourceBTotal:float,lineDeltas:array<int,array<string,mixed>>,relatedVatCorrectionId:?string}
      */
     private function resolveSubledgerGlControl(array $definition, string $administrationId): array
     {
         $controlAccountNumber = (string) ($definition['controlAccountNumber'] ?? '');
-        $subLedgerType         = (string) ($definition['subLedgerType'] ?? '');
+        $subLedgerType        = (string) ($definition['subLedgerType'] ?? '');
 
         $sourceATotal = $this->controlAccountBalance(
             administrationId: $administrationId,
@@ -405,8 +408,8 @@ class AansluitingService
                 continue;
             }
 
-            $sourceBTotal          += $item['amount'];
-            $itemBuckets[$itemId]   = $item['amount'];
+            $sourceBTotal        += $item['amount'];
+            $itemBuckets[$itemId] = $item['amount'];
         }
 
         // Item-level rows only decompose sourceB (the GL control account

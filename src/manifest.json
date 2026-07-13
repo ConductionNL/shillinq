@@ -201,7 +201,7 @@
 					"label": "Aansluitingen",
 					"icon": "FileCompareOutline",
 					"route": "Aansluitingen",
-					"order": 29.5
+					"order": 29
 				},
 				{
 					"id": "FixedAssets",

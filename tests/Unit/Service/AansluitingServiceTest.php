@@ -80,7 +80,7 @@ final class AansluitingServiceTest extends TestCase
         parent::setUp();
         $this->container = $this->createMock(ContainerInterface::class);
         $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger     = $this->createMock(LoggerInterface::class);
+        $this->logger    = $this->createMock(LoggerInterface::class);
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
     }//end setUp()
@@ -287,6 +287,7 @@ final class AansluitingServiceTest extends TestCase
 
     /**
      * btw-ledger-aangifte: the ledger's current recompute (4200.0 collected
+     *
      * @21%) diverges from the as-filed declaration (4450.0) by more than the
      * EUR 1 tolerance, so compute() persists an `open` AansluitingResult with
      * a matching TOTAL + rubriek-bucket drill-down (REQ-AANS-002, REQ-AANS-004).
@@ -311,24 +312,24 @@ final class AansluitingServiceTest extends TestCase
                 ],
                 'GLTransaction'  => [
                     [
-                        'id'                => 'gltx-1',
-                        'administrationId'  => 'adm-1',
-                        'transactionDate'   => '2026-06-15',
-                        'lines'             => [
+                        'id'               => 'gltx-1',
+                        'administrationId' => 'adm-1',
+                        'transactionDate'  => '2026-06-15',
+                        'lines'            => [
                             ['accountNumber' => '4000', 'taxableAmount' => 20000.0, 'taxRate' => 21.0],
                         ],
                     ],
                 ],
                 'VATReturn'      => [
                     [
-                        'id'                => 'vatret-1',
-                        'administrationId'  => 'adm-1',
-                        'statusCode'        => 'submitted',
-                        'period'            => 'quarter',
-                        'periodYear'        => 2026,
-                        'periodNumber'      => 2,
-                        'startDate'         => '2026-04-01',
-                        'endDate'           => '2026-06-30',
+                        'id'               => 'vatret-1',
+                        'administrationId' => 'adm-1',
+                        'statusCode'       => 'submitted',
+                        'period'           => 'quarter',
+                        'periodYear'       => 2026,
+                        'periodNumber'     => 2,
+                        'startDate'        => '2026-04-01',
+                        'endDate'          => '2026-06-30',
                     ],
                 ],
                 'VATDeclaration' => [
@@ -450,13 +451,13 @@ final class AansluitingServiceTest extends TestCase
             [
                 'Aansluiting'   => [
                     [
-                        'id'                    => 'aansl-ar-1',
-                        'aansluitingType'       => 'subledger-gl-control',
-                        'controlAccountNumber'  => '1300',
-                        'subLedgerType'         => 'ar',
-                        'toleranceCents'        => 100,
-                        'expectedRelationship'  => 'equal',
-                        'administrationId'      => 'adm-2',
+                        'id'                   => 'aansl-ar-1',
+                        'aansluitingType'      => 'subledger-gl-control',
+                        'controlAccountNumber' => '1300',
+                        'subLedgerType'        => 'ar',
+                        'toleranceCents'       => 100,
+                        'expectedRelationship' => 'equal',
+                        'administrationId'     => 'adm-2',
                     ],
                 ],
                 'GLTransaction' => [
