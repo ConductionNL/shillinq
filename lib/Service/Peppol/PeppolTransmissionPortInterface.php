@@ -73,7 +73,7 @@ interface PeppolTransmissionPortInterface
      * @param string $documentType   Peppol document-type identifier (e.g. `ubl-invoice-2.1`,
      *                               `ubl-order-2.1`).
      * @param string $payloadFileUri Docudesk/Files FK URI of the stored document (UBL XML or
-     *                               PDF/A-3 hybrid artefact) to transmit. Never inline XML.
+     *                               hybrid PDF artefact) to transmit. Never inline XML.
      *
      * @return string The Peppol message id (URN).
      *

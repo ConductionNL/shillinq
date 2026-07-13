@@ -135,9 +135,11 @@ access point reports back:
 | Rejected | The document was rejected — finance operators are notified with the reason |
 | Failed | Transmission failed before processing |
 
-The transmitted artefact is a hybrid **PDF/A-3** (human-readable PDF with the
-NLCIUS UBL 2.1 XML embedded as `factur-x.xml`), so one file serves both the
-reader and the machine.
+The transmitted artefact is a hybrid PDF (human-readable PDF with the NLCIUS
+UBL 2.1 XML embedded as `ubl-invoice.xml`), so one file serves both the reader
+and the machine. This is the NL/Peppol UBL format — it is not a Factur-X /
+ZUGFeRD document (those require UN/CEFACT CII XML, not UBL) and is not
+declared PDF/A-3-conformant.
 
 ## Track payment status
 

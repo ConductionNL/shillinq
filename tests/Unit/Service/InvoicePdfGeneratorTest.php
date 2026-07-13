@@ -1,8 +1,14 @@
 <?php
 
 /**
- * Unit tests for InvoicePdfGenerator, including the hybrid PDF/A-3 embed path
- * added by add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-002).
+ * Unit tests for InvoicePdfGenerator, including the hybrid PDF embed path
+ * added by add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-002)
+ * and corrected by facturx-cii-conformance (REQ-EINV-002 / REQ-EINV-008):
+ * the embedded filename is `ubl-invoice.xml` (not the Factur-X/ZUGFeRD
+ * well-known `factur-x.xml`, since the payload is UBL not CII) and the
+ * PDF's XMP metadata does NOT assert `pdfaid:part`/`pdfaid:conformance`
+ * (the byte-writer emits no ICC OutputIntent and does not embed its font,
+ * so no PDF/A conformance level is actually met).
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Service
@@ -13,7 +19,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
+ * @spec openspec/changes/facturx-cii-conformance/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
+ * @spec openspec/changes/facturx-cii-conformance/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-008
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,8 +34,8 @@ use OCA\Shillinq\Service\InvoicePdfGenerator;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Covers the pre-existing plain-PDF path (regression) and the new hybrid
- * PDF/A-3 embed path (REQ-EINV-002).
+ * Covers the pre-existing plain-PDF path (regression) and the hybrid embed
+ * path (REQ-EINV-002 / REQ-EINV-008).
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -59,7 +66,9 @@ final class InvoicePdfGeneratorTest extends TestCase
 
     /**
      * REQ-EINV-002 scenario 1: the hybrid export embeds the XML as
-     * AFRelationship=Alternative in a well-formed PDF/A-3-shaped binary.
+     * AFRelationship=Alternative under the truthful `ubl-invoice.xml`
+     * filename — NOT the Factur-X/ZUGFeRD well-known `factur-x.xml` name,
+     * since the embedded payload is UBL, not UN/CEFACT CII.
      *
      * @return void
      */
@@ -77,6 +86,7 @@ final class InvoicePdfGeneratorTest extends TestCase
         self::assertSame(['filename', 'pdf', 'mimeType', 'embeddedXmlFilename'], array_keys($result));
         self::assertSame('application/pdf', $result['mimeType']);
         self::assertSame(InvoicePdfGenerator::HYBRID_XML_FILENAME, $result['embeddedXmlFilename']);
+        self::assertSame('ubl-invoice.xml', $result['embeddedXmlFilename']);
 
         $pdf = $result['pdf'];
         self::assertStringStartsWith('%PDF-1.7', $pdf);
@@ -85,9 +95,13 @@ final class InvoicePdfGeneratorTest extends TestCase
         self::assertStringContainsString('/Type /EmbeddedFile', $pdf);
         // The embedded XML bytes are retrievable verbatim from the PDF stream.
         self::assertStringContainsString($ublXml, $pdf);
-        // PDF/A-3B conformance declared via XMP.
-        self::assertStringContainsString('<pdfaid:part>3</pdfaid:part>', $pdf);
-        self::assertStringContainsString('<pdfaid:conformance>B</pdfaid:conformance>', $pdf);
+        // Neither the Factur-X/ZUGFeRD filename nor a false PDF/A
+        // conformance claim is present (REQ-EINV-002 / REQ-EINV-008 —
+        // this generator emits no ICC OutputIntent and does not embed its
+        // font, so it does not meet any PDF/A conformance level).
+        self::assertStringNotContainsString('factur-x.xml', $pdf);
+        self::assertStringNotContainsString('pdfaid:part', $pdf);
+        self::assertStringNotContainsString('pdfaid:conformance', $pdf);
 
     }//end testHybridExportEmbedsXmlAsAlternativeAssociatedFile()
 
@@ -106,7 +120,7 @@ final class InvoicePdfGeneratorTest extends TestCase
             lines: [],
             ublXml: '<Invoice/>'
         );
-        $pdf = $result['pdf'];
+        $pdf       = $result['pdf'];
 
         $xrefPos = strpos($pdf, "\nxref\n");
         self::assertNotFalse($xrefPos);

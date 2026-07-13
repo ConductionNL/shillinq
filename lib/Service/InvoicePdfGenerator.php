@@ -12,18 +12,22 @@
  *
  * REQ-EINV-002 (add-invoice-pdf-export-with-ubl-peppol-support) adds a hybrid
  * path: {@see generateHybridPdf()} embeds a NLCIUS UBL 2.1 XML document (see
- * {@see \OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper}) into a real,
- * self-contained PDF/A-3 binary (Factur-X / ZUGFeRD pattern) as an
- * `AFRelationship=Alternative` embedded file, written with a small
+ * {@see \OCA\Shillinq\Service\EInvoice\ArInvoiceUblMapper}) into a single,
+ * self-contained PDF binary as an `AFRelationship=Alternative` embedded file
+ * (ISO 32000-2's Associated-Files mechanism), written with a small
  * dependency-free PDF byte-writer (no new composer dependency — design.md's
  * Trade-offs section rejects a heavy PDF/A-3 toolchain as gold-plating: the
  * XML is the compliance artefact and is transmitted to the Peppol access
- * point independently of the PDF's fidelity). The written document declares
- * PDF/A-3B conformance via an XMP `pdfaid:part=3`/`pdfaid:conformance=B`
- * metadata stream and the ISO 32000-1 `/AF` + `/EmbeddedFiles` machinery
- * required by PDF/A-3's Associated-Files extension; it does NOT embed an
- * ICC output-intent profile, so it is a best-effort PDF/A-3-shaped document,
- * not independently veraPDF/Schematron-validated (see tasks.md Deviations).
+ * point independently of the PDF's fidelity). This artefact serves the
+ * NL/Peppol UBL send path ONLY — it is explicitly NOT a Factur-X/ZUGFeRD
+ * document (those mandate UN/CEFACT CII syntax; the embedded payload here
+ * is UBL, see REQ-EINV-008) and it does NOT declare PDF/A-3 conformance in
+ * its XMP metadata, because it does not meet PDF/A-3's hard requirements:
+ * no ICC `OutputIntent` is emitted and the page's Helvetica font is a
+ * standard-14 reference, not embedded (both are independently disqualifying
+ * under ISO 19005-3). Asserting `pdfaid:conformance` without meeting them
+ * would be a false machine-readable claim (facturx-cii-conformance fixed an
+ * earlier version of this file that did exactly that — see git history).
  * The existing plain-HTML {@see generatePdf()} path is untouched.
  *
  * @category Service
@@ -36,7 +40,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
+ * @spec openspec/changes/facturx-cii-conformance/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
+ * @spec openspec/changes/facturx-cii-conformance/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-008
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,19 +55,21 @@ namespace OCA\Shillinq\Service;
  * Dutch-formatted invoice HTML / PDF builder.
  *
  * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
+ * @spec openspec/changes/facturx-cii-conformance/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
  */
 class InvoicePdfGenerator
 {
     /**
-     * Well-known embedded-filename convention for the Factur-X / ZUGFeRD
-     * hybrid attachment (open question in design.md, resolved to the
-     * established cross-industry convention so third-party Peppol viewers
-     * recognise it automatically).
+     * Embedded-filename for the NLCIUS UBL hybrid attachment. Deliberately
+     * NOT the Factur-X/ZUGFeRD well-known name (`factur-x.xml`) — the
+     * embedded payload is UBL, not UN/CEFACT CII, so naming it as if it
+     * were Factur-X/ZUGFeRD would make DE/FR e-invoicing software
+     * auto-detect and attempt to parse it as the wrong syntax
+     * (facturx-cii-conformance / REQ-EINV-008).
      *
      * @var string
      */
-    public const HYBRID_XML_FILENAME = 'factur-x.xml';
+    public const HYBRID_XML_FILENAME = 'ubl-invoice.xml';
 
     /**
      * Generate the renderable invoice payload.
@@ -95,10 +102,12 @@ class InvoicePdfGenerator
     }//end generatePdf()
 
     /**
-     * Generate the hybrid PDF/A-3 (Factur-X / ZUGFeRD) export: the same
-     * human-readable HTML/summary as {@see generatePdf()}, materialised as a
-     * real PDF binary with the NLCIUS UBL XML embedded as an
-     * `AFRelationship=Alternative` associated file (REQ-EINV-002).
+     * Generate the hybrid PDF export: the same human-readable HTML/summary
+     * as {@see generatePdf()}, materialised as a real PDF binary with the
+     * NLCIUS UBL XML embedded as an `AFRelationship=Alternative` associated
+     * file (REQ-EINV-002). This is the NL/Peppol UBL artefact — it is
+     * explicitly NOT Factur-X/ZUGFeRD (CII) and does NOT declare PDF/A-3
+     * conformance (REQ-EINV-008; see the class docblock for why).
      *
      * @param array<string,mixed>            $invoice   ARInvoice record (or any invoice-shaped
      *                                                  array carrying invoiceNumber/grossAmount/
@@ -112,9 +121,9 @@ class InvoicePdfGenerator
      * @param array<string,mixed>            $recipient Recipient details.
      *
      * @return array{filename:string,pdf:string,mimeType:string,embeddedXmlFilename:string}
-     *                The `pdf` key carries the raw PDF/A-3 binary (not base64).
+     *                The `pdf` key carries the raw PDF binary (not base64).
      *
-     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
+     * @spec openspec/changes/facturx-cii-conformance/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
      */
     public function generateHybridPdf(
         array $invoice,
@@ -125,7 +134,7 @@ class InvoicePdfGenerator
     ): array {
         $invoiceNumber = (string) ($invoice['invoiceNumber'] ?? 'INVOICE');
         $html          = $this->renderHtml(invoice: $invoice, lines: $lines, creditor: $creditor, recipient: $recipient);
-        $pdfBytes      = $this->buildPdfA3Bytes(invoice: $invoice, html: $html, xmlContent: $ublXml);
+        $pdfBytes      = $this->buildHybridPdfBytes(invoice: $invoice, html: $html, xmlContent: $ublXml);
         $filename      = sprintf('invoice-%s-hybrid.pdf', $invoiceNumber);
 
         return [
@@ -138,12 +147,17 @@ class InvoicePdfGenerator
     }//end generateHybridPdf()
 
     /**
-     * Build a minimal, self-contained PDF/A-3-shaped binary with the UBL XML
-     * embedded as an Associated File (`/AFRelationship /Alternative`), per
-     * the Factur-X / ZUGFeRD hybrid pattern. Written by hand (no PDF library
-     * dependency — see the class docblock) using a fixed 9-object layout with
-     * a correct cross-reference table so the result is a structurally valid
-     * PDF any standard viewer/extractor can open.
+     * Build a minimal, self-contained PDF binary with the NLCIUS UBL XML
+     * embedded as an Associated File (`/AFRelationship /Alternative`,
+     * ISO 32000-2 §14.13). Written by hand (no PDF library dependency — see
+     * the class docblock) using a fixed 9-object layout with a correct
+     * cross-reference table so the result is a structurally valid PDF any
+     * standard viewer/extractor can open. Deliberately does NOT assert
+     * `pdfaid:part`/`pdfaid:conformance` XMP metadata — this byte-writer
+     * emits no ICC `OutputIntent` and does not embed the Helvetica font it
+     * references, so it does not meet PDF/A-3 (or any PDF/A level)
+     * conformance; asserting one would be a false claim
+     * (facturx-cii-conformance / REQ-EINV-002).
      *
      * @param array<string,mixed> $invoice    Invoice record (invoiceNumber / grossAmount / currency).
      * @param string              $html       Rendered HTML (used only to derive a one-line summary
@@ -153,7 +167,7 @@ class InvoicePdfGenerator
      *
      * @return string Raw PDF bytes.
      */
-    private function buildPdfA3Bytes(array $invoice, string $html, string $xmlContent): string
+    private function buildHybridPdfBytes(array $invoice, string $html, string $xmlContent): string
     {
         unset($html);
 
@@ -166,13 +180,13 @@ class InvoicePdfGenerator
 
         $contentStream = "BT /F1 14 Tf 56 770 Td (".$this->pdfEscape(value: $summaryLine).") Tj ET";
 
+        // Only a dc:title entry — no pdfaid:part/pdfaid:conformance
+        // assertion (see this method's docblock for why: no ICC
+        // OutputIntent, no embedded font, so no PDF/A conformance level is
+        // actually met).
         $xmp = '<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>'
             .'<x:xmpmeta xmlns:x="adobe:ns:meta/">'
             .'<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
-            .'<rdf:Description rdf:about="" xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">'
-            .'<pdfaid:part>3</pdfaid:part>'
-            .'<pdfaid:conformance>B</pdfaid:conformance>'
-            .'</rdf:Description>'
             .'<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
             .'<dc:title><rdf:Alt><rdf:li xml:lang="x-default">'.htmlspecialchars($summaryLine, ENT_QUOTES).'</rdf:li></rdf:Alt></dc:title>'
             .'</rdf:Description>'
@@ -208,7 +222,7 @@ class InvoicePdfGenerator
 
         return $this->assemblePdf(objects: $objects);
 
-    }//end buildPdfA3Bytes()
+    }//end buildHybridPdfBytes()
 
     /**
      * Serialise a set of PDF objects (indexed by object number starting at 1)
