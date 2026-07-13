@@ -1,0 +1,29 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "accountant-portal",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-024/036 custom kind:\"page\" component (see registry.js import docblock for why the declarative dashboard page type does not fit).",
+		"description": "In-app accountant portal: a top-level 'Accountant portal' menu entry hosting the scoped multi-client dashboard (AccountantPortalDashboard.vue), built on the existing AdministrationContextService RBAC — no new auth surface."
+	},
+	"menu": [
+		{
+			"id": "AccountantPortal",
+			"label": "Accountant portal",
+			"icon": "AccountTieOutline",
+			"route": "AccountantPortalDashboard",
+			"order": 15
+		}
+	],
+	"pages": [
+		{
+			"id": "AccountantPortalDashboard",
+			"route": "/accountant-portal",
+			"type": "custom",
+			"title": "Accountant portal",
+			"config": {
+				"component": "AccountantPortalDashboard"
+			}
+		}
+	]
+}

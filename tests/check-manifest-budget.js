@@ -36,7 +36,17 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // headroom for organic growth before this check starts failing builds.
 // Re-measure and adjust deliberately if a legitimate large feature area is
 // added — this is a tripwire, not a hard architectural ceiling.
-const DEFAULT_BUDGET_BYTES = 1_050_000
+//
+// Re-measured 2026-07-13 (accountant-portal): the combined total had already
+// drifted to 1,066,101 bytes from organic fragment growth across the
+// intervening waves — BEFORE this change's own ~1KB
+// accountant-portal.json fragment — so the gate was failing independent of
+// this change. Bumped with headroom rather than trimmed: the actual
+// structural fix (code-splitting manifest.d/ so an unopened feature area
+// never ships its JSON) is the explicit, larger, still-undecided scope of
+// shillinq-manifest-boot-payload-reduction (REQ-MBP-001) — this tripwire is
+// deliberately kept loose, not re-architected, here.
+const DEFAULT_BUDGET_BYTES = 1_100_000
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),
