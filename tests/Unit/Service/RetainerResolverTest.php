@@ -94,10 +94,10 @@ final class RetainerResolverTest extends TestCase
             public function setRegister(string $r): self { return $this; }
             public function setSchema(string $s): self { return $this; }
             /**
-             * @param array<string,mixed> $filters Filters (ignored).
+             * @param array<string,mixed> $config Find configuration (ignored).
              * @return array<int, array<string,mixed>>
              */
-            public function findAll(array $filters = []): array { return $this->rows; }
+            public function findAll(array $config = []): array { return $this->rows; }
         };
 
         $this->container->method('get')->willReturn($fake);

@@ -201,13 +201,18 @@ final class SupplierInvoiceImportControllerTest extends TestCase
             }
 
             /**
-             * @param array<string,mixed> $filters Query filters.
+             * Mirrors OpenRegister ObjectService::findAll(array $config) — the filter
+             * map travels inside $config['filters'], never as a top-level `filters:`
+             * argument. Recording the unwrapped map keeps the test asserting the exact
+             * filters OpenRegister would receive.
+             *
+             * @param array<string,mixed> $config Find configuration (filters, limit, …).
              *
              * @return array<int,array<string,mixed>>
              */
-            public function findAll(array $filters=[]): array
+            public function findAll(array $config=[]): array
             {
-                $this->test->recordFilters($filters);
+                $this->test->recordFilters((array) ($config['filters'] ?? []));
                 return $this->test->stubRowsForTest();
             }
 

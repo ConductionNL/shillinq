@@ -75,14 +75,18 @@ final class FakeIntakeObjectService
     }//end setSchema()
 
     /**
-     * @param array<string,mixed> $filters Exact-match filters against stored rows.
+     * Mirrors OpenRegister ObjectService::findAll(array $config) — the filter map
+     * travels inside $config['filters'], never as a top-level `filters:` argument.
+     *
+     * @param array<string,mixed> $config Find configuration (filters, limit, offset, …).
      *
      * @return array<int,array<string,mixed>>
      */
-    public function findAll(array $filters=[]): array
+    public function findAll(array $config=[]): array
     {
-        $rows   = ($this->stored[$this->schema] ?? []);
-        $result = [];
+        $filters = (array) ($config['filters'] ?? []);
+        $rows    = ($this->stored[$this->schema] ?? []);
+        $result  = [];
         foreach ($rows as $row) {
             $match = true;
             foreach ($filters as $key => $value) {
