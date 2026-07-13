@@ -33,7 +33,7 @@
 - **spec_ref**: `openspec/changes/fx-period-end-revaluation/specs/bookkeeping-multi-currency/spec.md#req-mc-008`
 - **files**: `lib/Service/Treasury/FxRevaluationService.php`
 - **acceptance_criteria**:
-  - GIVEN a material revaluation WHEN posted THEN the `FxRevaluationPosting` carries `targetGLAccount`/`contraGLAccount` resolved from the `fx_revaluation_gain_account`/`fx_revaluation_loss_account`/`fx_revaluation_adjustment_account` `IAppConfig` keys (documented defaults) and `postedBy: SoftCloseExecutor::SYSTEM_ACTOR`
+  - GIVEN a material revaluation WHEN posted THEN the `FxRevaluationPosting` carries `targetGLAccount`/`contraGLAccount` resolved from the `fx_revaluation_gain_account`/`fx_revaluation_loss_account`/`fx_revaluation_adjustment_account` `IAppConfig` keys (documented defaults) and `postedBy: FxRevaluationService::SYSTEM_ACTOR`
   - GIVEN `reval(administrationId, periodId): array` WHEN called by `SoftCloseExecutor::delegateFxRevaluation()` THEN the return shape satisfies `array{postingCount: int, ...}` exactly as that existing call-site already reads it (no `SoftCloseExecutor` code change required)
 - [x] Implement
 - [x] Test

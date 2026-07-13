@@ -145,7 +145,9 @@ produces a material revaluation movement per REQ-MC-006.
 - **WHEN** an auditor inspects it
 - **THEN** `positionId` MUST resolve to the exact `FXPosition` revalued,
   `priorRate`/`closingRate`/`rateSource` MUST explain the computed delta,
-  and `postedBy` MUST be `SoftCloseExecutor::SYSTEM_ACTOR`
-  (`"SYSTEM:SoftCloseExecutor"`)
+  and `postedBy` MUST be `FxRevaluationService::SYSTEM_ACTOR`
+  (`"SYSTEM:FxRevaluationService"` — REQ-CLS-010 permits either the
+  orchestrator or "specific service" as the posting actor; this change
+  attributes to the specific service that computed the revaluation)
 
 @e2e exclude pure backend: FX revaluation posting is nightly soft-close orchestration logic with no operator-facing UI in this change — not browser-testable; covered by PHPUnit (`tests/Unit/Service/Treasury/FxRevaluationServiceTest.php`, `tests/Unit/Service/SoftCloseExecutorTest.php`).
