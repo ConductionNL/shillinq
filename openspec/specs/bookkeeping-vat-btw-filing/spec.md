@@ -1,13 +1,17 @@
 ---
-status: done
+status: in-progress
 ---
 
 # Spec: bookkeeping-vat-btw-filing
 
-**Status:** proposed
+**Status:** in-progress
 **Scope:** shillinq
 **Tier:** T3 (operations + NL compliance core)
 **Depends on:** bookkeeping-general-ledger (T1), bookkeeping-period-close (T2)
+**OpenSpec changes**:
+- [bookkeeping-vat-btw-filing](../../changes/archive/2026-06-14-bookkeeping-vat-btw-filing/) _(archived 2026-06-14)_
+- [add-shillinq-bookkeeping-operations](../../changes/archive/2026-06-14-add-shillinq-bookkeeping-operations/) _(archived 2026-06-14)_
+- [btw-suppletie-detection](../../changes/btw-suppletie-detection/) _(in-progress)_
 
 ## Purpose
 
