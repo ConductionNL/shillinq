@@ -24,6 +24,15 @@
  * (proposal.md Risk 3 — the PDF path already falls back to the honest 422
  * deferral; the re-request is simply retriable).
  *
+ * gl-account-suggestion-consume (REQ-GAC-001) additionally reads the
+ * `financialExtraction` object id out of the synchronous 201 response body
+ * (verified by reading `FinancialExtractionService::extractFinancial()` on
+ * docudesk `origin/development` — it returns the OR-saved object, which
+ * includes its `id`, as the response). Neither docudesk event
+ * (`extraction.completed`, `gl-account.suggested`) carries this id, so this
+ * synchronous response is the ONLY channel available to correlate a later
+ * GL-account suggestion request back to the right extraction.
+ *
  * @category Service
  * @package  OCA\Shillinq\Service\Extraction
  *
@@ -34,6 +43,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-005
+ * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-001
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,6 +54,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Extraction;
 
 use OCP\Http\Client\IClientService;
+use OCP\Http\Client\IResponse;
 use OCP\IURLGenerator;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -99,9 +110,13 @@ class DocudeskExtractionClient
      * @param string $documentUri The docudesk source document URI.
      * @param string $docType     `receipt` or `supplier-invoice`.
      *
-     * @return array{success: bool, statusCode: int, error: string|null} Outcome; never throws.
+     * @return array{success: bool, statusCode: int, error: string|null, extractionId: string|null}
+     *         Outcome; never throws. `extractionId` is the docudesk `financialExtraction` object
+     *         id read from the synchronous response (REQ-GAC-001), or null when the request
+     *         failed or the response body carried no usable id.
      *
      * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-005
+     * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-001
      */
     public function requestExtraction(string $documentUri, string $docType): array
     {
@@ -113,9 +128,10 @@ class DocudeskExtractionClient
                 ['exception' => $e->getMessage()]
             );
             return [
-                'success'    => false,
-                'statusCode' => 0,
-                'error'      => 'docudesk is not available',
+                'success'      => false,
+                'statusCode'   => 0,
+                'error'        => 'docudesk is not available',
+                'extractionId' => null,
             ];
         }
 
@@ -147,9 +163,10 @@ class DocudeskExtractionClient
             );
 
             return [
-                'success'    => ($status >= 200 && $status < 300),
-                'statusCode' => $status,
-                'error'      => null,
+                'success'      => ($status >= 200 && $status < 300),
+                'statusCode'   => $status,
+                'error'        => null,
+                'extractionId' => $this->extractExtractionId(response: $response),
             ];
         } catch (Throwable $e) {
             $status = 0;
@@ -166,11 +183,49 @@ class DocudeskExtractionClient
             );
 
             return [
-                'success'    => false,
-                'statusCode' => $status,
-                'error'      => 'docudesk request failed',
+                'success'      => false,
+                'statusCode'   => $status,
+                'error'        => 'docudesk request failed',
+                'extractionId' => null,
             ];
         }//end try
 
     }//end requestExtraction()
+
+    /**
+     * Read the `financialExtraction` object id out of the synchronous
+     * response body of `POST /api/extraction/financial` (REQ-GAC-001). The
+     * response is the OR-saved object itself (see class docblock), so its
+     * `id` key is the extraction id; a malformed/unexpected body degrades to
+     * null rather than throwing — the caller treats a missing id exactly
+     * like "docudesk did not tell us" (REQ-GAC-006 graceful degradation).
+     *
+     * @param IResponse $response The HTTP response.
+     *
+     * @return string|null The extraction id, or null when unavailable.
+     */
+    private function extractExtractionId(IResponse $response): ?string
+    {
+        try {
+            $body = (string) $response->getBody();
+            if ($body === '') {
+                return null;
+            }
+
+            $decoded = json_decode($body, true);
+            if (is_array($decoded) === false) {
+                return null;
+            }
+
+            $id = ($decoded['id'] ?? $decoded['uuid'] ?? null);
+            if (is_string($id) === true && $id !== '') {
+                return $id;
+            }
+
+            return null;
+        } catch (Throwable $e) {
+            return null;
+        }
+
+    }//end extractExtractionId()
 }//end class

@@ -37,6 +37,10 @@ export function reviewFormFromReceipt(record) {
 		description: String(r.description ?? ''),
 		costCentreCode: String(r.costCentreCode ?? ''),
 		claimId: String(r.claimId ?? ''),
+		// gl-account-suggestion-consume (REQ-GAC-003) — the booking account,
+		// mirroring SupplierInvoice.glAccount; never auto-filled from a
+		// suggestion without an explicit operator action (REQ-GAC-004).
+		glAccount: String(r.glAccount ?? ''),
 	}
 }
 
@@ -81,6 +85,7 @@ export function buildReceiptConfirmPayload(form) {
 		description: f.description,
 		costCentreCode: f.costCentreCode,
 		claimId: f.claimId,
+		glAccount: f.glAccount,
 	}
 }
 

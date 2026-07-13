@@ -175,6 +175,8 @@ export {
 	confidenceForField,
 	isFieldCorrected,
 	requiresExplicitReview,
+	hasKnownExtractionId,
+	glAccountSuggestionSummary,
 } from '../utils/extractionConfidence.js'
 
 /**

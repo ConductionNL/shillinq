@@ -25,8 +25,10 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\ExtractionRequestController;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\Extraction\ChartOfAccountsCandidateService;
 use OCA\Shillinq\Service\Extraction\DocudeskExtractionClient;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
+use OCA\Shillinq\Service\Extraction\GlAccountSuggestionClient;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;
@@ -60,6 +62,20 @@ final class ExtractionRequestControllerTest extends TestCase
      * @var DocudeskExtractionClient&MockObject
      */
     private DocudeskExtractionClient&MockObject $extractionClient;
+
+    /**
+     * Mock GlAccountSuggestionClient.
+     *
+     * @var GlAccountSuggestionClient&MockObject
+     */
+    private GlAccountSuggestionClient&MockObject $suggestionClient;
+
+    /**
+     * Mock ChartOfAccountsCandidateService.
+     *
+     * @var ChartOfAccountsCandidateService&MockObject
+     */
+    private ChartOfAccountsCandidateService&MockObject $candidateService;
 
     /**
      * Mock AdministrationContextService.
@@ -112,6 +128,8 @@ final class ExtractionRequestControllerTest extends TestCase
         parent::setUp();
         $this->request          = $this->createMock(IRequest::class);
         $this->extractionClient = $this->createMock(DocudeskExtractionClient::class);
+        $this->suggestionClient = $this->createMock(GlAccountSuggestionClient::class);
+        $this->candidateService = $this->createMock(ChartOfAccountsCandidateService::class);
         $this->administrationContext = $this->createMock(AdministrationContextService::class);
         $this->session   = $this->createMock(IUserSession::class);
         $this->container = $this->createMock(ContainerInterface::class);
@@ -138,6 +156,8 @@ final class ExtractionRequestControllerTest extends TestCase
         return new ExtractionRequestController(
             request: $this->request,
             extractionClient: $this->extractionClient,
+            suggestionClient: $this->suggestionClient,
+            candidateService: $this->candidateService,
             prefillService: new ExtractionPrefillService(),
             administrationContext: $this->administrationContext,
             session: $this->session,
@@ -262,6 +282,8 @@ final class ExtractionRequestControllerTest extends TestCase
         $controller = new ExtractionRequestController(
             request: $this->request,
             extractionClient: $this->extractionClient,
+            suggestionClient: $this->suggestionClient,
+            candidateService: $this->candidateService,
             prefillService: new ExtractionPrefillService(),
             administrationContext: $this->administrationContext,
             session: $session,
@@ -350,6 +372,41 @@ final class ExtractionRequestControllerTest extends TestCase
     }//end testRequestSurfaces503WhenDocudeskUnavailable()
 
     /**
+     * REQ-GAC-001: a successful re-request against an EXISTING draft
+     * captures the docudesk financialExtraction id from the synchronous
+     * response and persists it onto that draft.
+     *
+     * @return void
+     */
+    public function testRequestCapturesAndPersistsExtractionId(): void
+    {
+        $this->stubRows['SupplierInvoice'] = [
+            ['id' => 'draft-1', 'administrationId' => 'adm-1', 'sourceDocumentUri' => 'docudesk://attachments/x/invoice.pdf'],
+        ];
+
+        $this->request->method('getParam')->willReturnCallback(
+            static function (string $key, mixed $default=null): mixed {
+                return match ($key) {
+                    'documentUri' => 'docudesk://attachments/x/invoice.pdf',
+                    'docType'     => 'supplier-invoice',
+                    'id'          => 'draft-1',
+                    default       => $default,
+                };
+            }
+        );
+        $this->extractionClient->method('requestExtraction')->willReturn(
+            ['success' => true, 'statusCode' => 201, 'error' => null, 'extractionId' => 'ext-123']
+        );
+
+        $response = $this->buildController()->request();
+        self::assertSame(Http::STATUS_ACCEPTED, $response->getStatus());
+
+        self::assertCount(1, $this->savedObjects);
+        self::assertSame('ext-123', $this->savedObjects[0]['object']['docudeskExtractionId']);
+
+    }//end testRequestCapturesAndPersistsExtractionId()
+
+    /**
      * Confirm() rejects an unknown/missing schema before touching OR.
      *
      * @return void
@@ -414,6 +471,8 @@ final class ExtractionRequestControllerTest extends TestCase
         // DecodeBody() prefers php://input which is empty under PHPUnit, so
         // it falls back to getParams() — matches SupplierInvoiceImportController's
         // established test pattern.
+        $this->suggestionClient->expects(self::never())->method('postCorrection');
+
         $response = $this->buildController()->confirm(id: 'draft-1', schema: 'SupplierInvoice');
         self::assertSame(Http::STATUS_OK, $response->getStatus());
 
@@ -424,4 +483,187 @@ final class ExtractionRequestControllerTest extends TestCase
         self::assertSame('confirmed', $saved['extractionStatus']);
 
     }//end testConfirmRecordsCorrectionAndPersists()
+
+    /**
+     * REQ-GAC-005: booking to a DIFFERENT account than the docudesk
+     * suggestion still posts the operator's chosen code back as a
+     * correction (never the original suggestion) when the draft carries a
+     * known docudeskExtractionId.
+     *
+     * @return void
+     */
+    public function testConfirmPostsOverriddenCorrectionWhenExtractionIdKnown(): void
+    {
+        $this->stubRows['SupplierInvoice'] = [
+            [
+                'id'                   => 'draft-1',
+                'administrationId'     => 'adm-1',
+                'glAccount'            => '',
+                'docudeskExtractionId' => 'ext-123',
+                'suggestedGlAccount'   => ['code' => '4300', 'label' => 'Kantoorkosten'],
+                'fieldConfidence'      => [],
+                'humanCorrected'       => [],
+                'extractionStatus'     => 'pending-review',
+            ],
+        ];
+
+        $this->request->method('getParams')->willReturn(['glAccount' => '4900', 'id' => 'draft-1']);
+
+        $this->suggestionClient->expects(self::once())
+            ->method('postCorrection')
+            ->with('ext-123', '4900', null)
+            ->willReturn(['success' => true, 'statusCode' => 200, 'error' => null]);
+
+        $response = $this->buildController()->confirm(id: 'draft-1', schema: 'SupplierInvoice');
+        self::assertSame(Http::STATUS_OK, $response->getStatus());
+
+    }//end testConfirmPostsOverriddenCorrectionWhenExtractionIdKnown()
+
+    /**
+     * REQ-GAC-005: a docudesk-side correction-post failure never blocks or
+     * undoes the already-successful local booking.
+     *
+     * @return void
+     */
+    public function testConfirmSucceedsEvenWhenCorrectionPostFails(): void
+    {
+        $this->stubRows['SupplierInvoice'] = [
+            [
+                'id'                   => 'draft-1',
+                'administrationId'     => 'adm-1',
+                'glAccount'            => '',
+                'docudeskExtractionId' => 'ext-123',
+                'fieldConfidence'      => [],
+                'humanCorrected'       => [],
+                'extractionStatus'     => 'pending-review',
+            ],
+        ];
+
+        $this->request->method('getParams')->willReturn(['glAccount' => '4300', 'id' => 'draft-1']);
+
+        $this->suggestionClient->method('postCorrection')->willReturn(
+            ['success' => false, 'statusCode' => 0, 'error' => 'docudesk correction request failed']
+        );
+
+        $response = $this->buildController()->confirm(id: 'draft-1', schema: 'SupplierInvoice');
+        self::assertSame(Http::STATUS_OK, $response->getStatus());
+        self::assertCount(1, $this->savedObjects);
+
+    }//end testConfirmSucceedsEvenWhenCorrectionPostFails()
+
+    /**
+     * REQ-GAC-006: a draft with no known docudeskExtractionId degrades
+     * gracefully — no error, no suggestion.
+     *
+     * @return void
+     */
+    public function testSuggestGlAccountDegradesWhenExtractionIdUnknown(): void
+    {
+        $this->stubRows['SupplierInvoice'] = [
+            ['id' => 'draft-1', 'administrationId' => 'adm-1'],
+        ];
+
+        $this->suggestionClient->expects(self::never())->method('requestSuggestion');
+
+        $response = $this->buildController()->suggestGlAccount(id: 'draft-1', schema: 'SupplierInvoice');
+        self::assertSame(Http::STATUS_OK, $response->getStatus());
+        self::assertNull($response->getData()['suggestion']);
+        self::assertSame('extraction-id-unknown', $response->getData()['reason']);
+
+    }//end testSuggestGlAccountDegradesWhenExtractionIdUnknown()
+
+    /**
+     * REQ-GAC-002/003: candidates are resolved from shillinq's own chart of
+     * accounts and a history-backed suggestion is returned.
+     *
+     * @return void
+     */
+    public function testSuggestGlAccountReturnsTopRankedSuggestion(): void
+    {
+        $this->stubRows['SupplierInvoice'] = [
+            ['id' => 'draft-1', 'administrationId' => 'adm-1', 'docudeskExtractionId' => 'ext-123'],
+        ];
+
+        $this->candidateService->expects(self::once())
+            ->method('activeCandidates')
+            ->with('adm-1')
+            ->willReturn([['code' => '4300', 'label' => 'Kantoorkosten']]);
+
+        $this->suggestionClient->expects(self::once())
+            ->method('requestSuggestion')
+            ->with('ext-123', [['code' => '4300', 'label' => 'Kantoorkosten']])
+            ->willReturn(
+                [
+                    'success'    => true,
+                    'statusCode' => 200,
+                    'error'      => null,
+                    'suggestion' => [
+                        'extractionId'      => 'ext-123',
+                        'suggestedAccounts' => [
+                            [
+                                'code'       => '4300',
+                                'label'      => 'Kantoorkosten',
+                                'confidence' => 0.8,
+                                'rationale'  => 'Booked to 4300 in 8 of the last 10 invoices from this supplier',
+                            ],
+                        ],
+                        'source'            => 'history',
+                    ],
+                ]
+            );
+
+        $response = $this->buildController()->suggestGlAccount(id: 'draft-1', schema: 'SupplierInvoice');
+        self::assertSame(Http::STATUS_OK, $response->getStatus());
+        $suggestion = $response->getData()['suggestion'];
+        self::assertSame('4300', $suggestion['code']);
+        self::assertSame(0.8, $suggestion['confidence']);
+        self::assertSame('history', $suggestion['source']);
+        // The cached suggestion is persisted onto the draft (design.md Seed Data).
+        self::assertCount(1, $this->savedObjects);
+        self::assertSame('4300', $this->savedObjects[0]['object']['suggestedGlAccount']['code']);
+
+    }//end testSuggestGlAccountReturnsTopRankedSuggestion()
+
+    /**
+     * REQ-GAC-006: when docudesk is unreachable the proxy degrades
+     * gracefully — no error, no suggestion.
+     *
+     * @return void
+     */
+    public function testSuggestGlAccountDegradesWhenProviderUnavailable(): void
+    {
+        $this->stubRows['SupplierInvoice'] = [
+            ['id' => 'draft-1', 'administrationId' => 'adm-1', 'docudeskExtractionId' => 'ext-123'],
+        ];
+
+        $this->candidateService->method('activeCandidates')->willReturn([]);
+        $this->suggestionClient->method('requestSuggestion')->willReturn(
+            ['success' => false, 'statusCode' => 0, 'error' => 'docudesk is not available', 'suggestion' => null]
+        );
+
+        $response = $this->buildController()->suggestGlAccount(id: 'draft-1', schema: 'SupplierInvoice');
+        self::assertSame(Http::STATUS_OK, $response->getStatus());
+        self::assertNull($response->getData()['suggestion']);
+        self::assertSame('provider-unavailable', $response->getData()['reason']);
+
+    }//end testSuggestGlAccountDegradesWhenProviderUnavailable()
+
+    /**
+     * REQ-GAC-006 / ADR-005: suggestGlAccount() masks a draft in another
+     * administration as 404, never 403 (IDOR guard).
+     *
+     * @return void
+     */
+    public function testSuggestGlAccountMasksDraftInOtherAdministration(): void
+    {
+        $this->stubRows['SupplierInvoice'] = [
+            ['id' => 'draft-2', 'administrationId' => 'adm-OTHER', 'docudeskExtractionId' => 'ext-123'],
+        ];
+
+        $this->suggestionClient->expects(self::never())->method('requestSuggestion');
+
+        $response = $this->buildController()->suggestGlAccount(id: 'draft-2', schema: 'SupplierInvoice');
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+    }//end testSuggestGlAccountMasksDraftInOtherAdministration()
 }//end class
