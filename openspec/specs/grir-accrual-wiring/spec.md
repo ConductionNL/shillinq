@@ -1,9 +1,9 @@
 # grir-accrual-wiring Specification
 
-**Status**: in-progress
+**Status**: done
 **Scope**: shillinq
 **OpenSpec changes**:
-- grir-accrual-wiring (this change)
+- grir-accrual-wiring (2026-07-13, archived)
 
 ## Purpose
 
@@ -11,8 +11,8 @@ Wires the missing GR/IR accrual-posting trigger into shillinq's
 `bookkeeping-purchase-order-3way` chain. `GRIRClearingService::createGRIRPosting()`
 and `settleGRIRPosting()` (member 09, REQ-PO3W-009) already correctly
 materialise the balanced clearing and settlement GL postings, but nothing
-ever calls either method — goods/service receipts accept and matched
-invoices approve without a single GR/IR entry reaching the ledger. This
+ever called either method — goods/service receipts accepted and matched
+invoices approved without a single GR/IR entry reaching the ledger. This
 capability closes that gap: a `GoodsReceiptNote`/`SvcReceipt` accept posts
 the clearing entry, and a `SupplierInvoice` reaching `matched` posts the
 settlement. No posting logic is duplicated — this capability is purely the
@@ -110,31 +110,3 @@ established by `DeliveryDispatchListener` and
 
 @e2e exclude pure backend/lifecycle-listener fail-soft contract — not
 browser-testable; proven by `GRIRClearingListenerTest`.
-
-## Non-Functional Requirements
-
-- **Performance:** Per-receipt fan-out (one `createGRIRPosting()` call per
-  accepted line) MUST complete within the same per-request budget already
-  used by `GoodsReceiptNoteService::acceptGRN()`'s existing per-line
-  StockMove fan-out — no new performance budget introduced.
-- **Accessibility:** N/A — no new UI surface.
-- **Internationalization:** N/A — no new user-facing strings; posting
-  descriptions reuse `GRIRClearingService`'s existing English-only format.
-
-## Acceptance Criteria
-
-- A `GoodsReceiptNote` accepted with at least one accepted line posts a
-  balanced GR/IR clearing `GLTransaction`.
-- A `SvcReceipt` accepted with at least one accepted line posts a balanced
-  GR/IR clearing `GLTransaction`.
-- A `SupplierInvoice` reaching `matched` with an approved `ThreeWayMatch`
-  posts a balanced GR/IR settlement `GLTransaction`, and the clearing
-  account nets to zero across both postings.
-- A downstream posting failure never blocks the triggering transition.
-
-## Notes
-
-`reconcileGRIRSaldoForPeriod()` remains uncalled by any controller/route —
-it is an operator-invoked reconciliation report, not a lifecycle reaction,
-and wiring an HTTP surface for it is out of scope for this change (tracked
-separately, see the wave's orphan-capability sweep report).
