@@ -149,7 +149,7 @@ class RetainerResolver
             $rs  = $svc
                 ->setRegister($this->register())
                 ->setSchema($schema)
-                ->findAll(filters: $filters);
+                ->findAll(['filters' => $filters]);
 
             if (is_array($rs) === true) {
                 return $rs;

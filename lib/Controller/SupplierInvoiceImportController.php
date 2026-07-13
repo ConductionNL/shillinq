@@ -313,10 +313,12 @@ class SupplierInvoiceImportController extends Controller
                 ->setRegister(self::REGISTER_SLUG)
                 ->setSchema(self::SUPPLIER_INVOICE_SCHEMA)
                 ->findAll(
-                    filters: [
-                        'administrationId' => $administrationId,
-                        'invoiceNumber'    => $invoiceNumber,
-                        'supplierId'       => $supplierId,
+                    [
+                        'filters' => [
+                            'administrationId' => $administrationId,
+                            'invoiceNumber'    => $invoiceNumber,
+                            'supplierId'       => $supplierId,
+                        ],
                     ]
                 );
         } catch (\Throwable $e) {

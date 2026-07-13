@@ -750,7 +750,7 @@ class TimeIntakeService
     {
         try {
             $svc = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rs  = $svc->setRegister($this->register())->setSchema($schema)->findAll(filters: $filters);
+            $rs  = $svc->setRegister($this->register())->setSchema($schema)->findAll(['filters' => $filters]);
             if (is_array($rs) === true) {
                 return $rs;
             }

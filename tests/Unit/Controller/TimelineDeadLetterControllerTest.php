@@ -111,11 +111,11 @@ final class TimelineDeadLetterControllerTest extends TestCase
             }//end setSchema()
 
             /**
-             * @param array<string, mixed> $filters Optional filter map.
+             * @param array<string, mixed> $config Optional find configuration.
              *
              * @return array<int, array<string, mixed>>
              */
-            public function findAll(array $filters=[]): array
+            public function findAll(array $config=[]): array
             {
                 $schema = (string) $this->schema;
                 return array_values($this->store[$schema] ?? []);

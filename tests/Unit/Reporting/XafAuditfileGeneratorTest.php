@@ -88,11 +88,11 @@ final class FakeXafObjectService
     }//end setSchema()
 
     /**
-     * @param array<string,mixed> $filters Ignored on purpose.
+     * @param array<string,mixed> $config Ignored on purpose.
      *
      * @return array<int, array<string,mixed>>
      */
-    public function findAll(array $filters=[]): array
+    public function findAll(array $config=[]): array
     {
         return ($this->bySchema[$this->schema] ?? []);
 

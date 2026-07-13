@@ -632,7 +632,7 @@ class InvoiceGenerationService
         try {
             $rs = $existing->setRegister($this->register())
                 ->setSchema('BillableInvoice')
-                ->findAll(filters: ['administrationId' => $administrationId]);
+                ->findAll(['filters' => ['administrationId' => $administrationId]]);
             if (is_array($rs) === true) {
                 $count = count($rs);
             } else {

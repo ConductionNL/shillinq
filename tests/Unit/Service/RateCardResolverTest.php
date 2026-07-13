@@ -72,13 +72,13 @@ final class FakeRateObjectService
 
 
     /**
-     * @param array<string,mixed> $filters Filters (ignored — we return all
-     *                                     rows for the current schema and
-     *                                     let the resolver pick).
+     * @param array<string,mixed> $config Find configuration (ignored — we return
+     *                                    all rows for the current schema and
+     *                                    let the resolver pick).
      *
      * @return array<int, array<string,mixed>>
      */
-    public function findAll(array $filters = []): array
+    public function findAll(array $config = []): array
     {
         return ($this->rows[$this->schema] ?? []);
 
@@ -307,7 +307,7 @@ final class RateCardResolverTest extends TestCase
             public function setSchema(string $s): self { $this->schema = $s; return $this; }
             public string $schema = '';
             /** @return array<int,array<string,mixed>> */
-            public function findAll(array $filters = []): array
+            public function findAll(array $config = []): array
             {
                 $this->calls++;
                 if ($this->schema === 'RateRecord') {
@@ -317,7 +317,7 @@ final class RateCardResolverTest extends TestCase
                 if ($this->schema === 'RateCard') {
                     // first call (scheduleId filter) → empty
                     // second call (id filter) → return the card
-                    if (isset($filters['filters']['id']) === true || isset($filters['id']) === true) {
+                    if (isset($config['filters']['id']) === true || isset($config['id']) === true) {
                         return [['id' => 'rc-1', 'defaultHourlyRate' => 88.00, 'version' => 'v1']];
                     }
 

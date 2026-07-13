@@ -107,7 +107,7 @@ final class InvoiceDeduplicationServiceTest extends TestCase
             public function setRegister(string $r): self { return $this; }
             public function setSchema(string $s): self { return $this; }
             /** @return array<int,array<string,mixed>> */
-            public function findAll(array $filters = []): array { return $this->rows; }
+            public function findAll(array $config = []): array { return $this->rows; }
         };
 
         $this->container->method('get')

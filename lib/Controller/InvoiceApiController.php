@@ -147,7 +147,7 @@ class InvoiceApiController extends Controller
             $all           = $objectService
                 ->setRegister('shillinq')
                 ->setSchema('BillableInvoice')
-                ->findAll(filters: $filters);
+                ->findAll(['filters' => $filters]);
 
             $items = [];
             if (is_array($all) === true) {
@@ -196,7 +196,7 @@ class InvoiceApiController extends Controller
             $lines = $objectService
                 ->setRegister('shillinq')
                 ->setSchema('BillableInvoiceLine')
-                ->findAll(filters: ['invoiceId' => $invoiceId]);
+                ->findAll(['filters' => ['invoiceId' => $invoiceId]]);
 
             $lineItems = [];
             if (is_array($lines) === true) {
@@ -290,7 +290,10 @@ class InvoiceApiController extends Controller
                 return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
             }
 
-            $lines     = $objectService->setRegister('shillinq')->setSchema('BillableInvoiceLine')->findAll(filters: ['invoiceId' => $invoiceId]);
+            $lines     = $objectService
+                ->setRegister('shillinq')
+                ->setSchema('BillableInvoiceLine')
+                ->findAll(['filters' => ['invoiceId' => $invoiceId]]);
             $lineItems = [];
             if (is_array($lines) === true) {
                 $lineItems = $lines;

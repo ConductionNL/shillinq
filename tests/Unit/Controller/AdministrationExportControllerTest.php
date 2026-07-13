@@ -70,11 +70,11 @@ final class FakeXafObjectService
     }//end setSchema()
 
     /**
-     * @param array<string,mixed> $filters Ignored.
+     * @param array<string,mixed> $config Ignored.
      *
      * @return array<int, array<string,mixed>>
      */
-    public function findAll(array $filters=[]): array
+    public function findAll(array $config=[]): array
     {
         return [];
 
