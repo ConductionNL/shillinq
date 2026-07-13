@@ -49,6 +49,13 @@ import BookingsConfirmationPortal from './views/bookings/ConfirmationPortal.vue'
 // the manifest fragment now points at.
 import AfspraakDetail from './views/bookings/AfspraakDetail.vue'
 
+// receipt-extraction-consume (REQ-RXC-003) — custom detail page for a single
+// Receipt record: prefills from a docudesk extraction draft with per-field
+// confidence + correction + re-request, none of which fits the built-in
+// `detail` page type. Registered kind:"page" for
+// src/manifest.d/receipt-extraction-consume.json's `type: "custom"` entry.
+import ReceiptCapture from './views/ReceiptCapture.vue'
+
 // invoice-from-time-and-expense (issue #111): drafting form + admin list
 // + detail page are imperative because the generator combines multi-source
 // dynamic look-ups (time entries + expenses + rate card + retainer) into
@@ -338,6 +345,7 @@ export default {
 
 	BookingsConfirmationPortal: { kind: 'page', component: BookingsConfirmationPortal },
 	AfspraakDetail: { kind: 'page', component: AfspraakDetail },
+	ReceiptCapture: { kind: 'page', component: ReceiptCapture },
 
 	PurchaseOrderForm: { kind: 'page', component: PurchaseOrderForm },
 	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },

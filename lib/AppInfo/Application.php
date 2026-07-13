@@ -27,6 +27,7 @@ use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
 use OCA\Shillinq\Listener\DBAFactuurMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
+use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
@@ -645,6 +646,21 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: \OCA\DocuDesk\Event\SigningConcludedEvent::class,
             listener: SigningConcludedListener::class
+        );
+
+        // Change receipt-extraction-consume (REQ-RXC-001) — consume docudesk's
+        // cross-app OCA\DocuDesk\Event\FinancialExtractionCompletedEvent (the
+        // canonical nl.conduction.docudesk.extraction.completed wire contract,
+        // owned by docudesk's financial-document-field-extraction spec) into an
+        // uncommitted, confidence-scored SupplierInvoice/Receipt draft
+        // (ExtractionCompletedListener + ExtractionPrefillService). Registering
+        // by the docudesk event FQCN is safe even when the class is not
+        // autoloadable — NC only needs the string key; handle() itself is
+        // class_exists-guarded so the listener is inert when docudesk is not
+        // installed. Fail-soft: never blocks docudesk's synchronous dispatch.
+        $context->registerEventListener(
+            event: \OCA\DocuDesk\Event\FinancialExtractionCompletedEvent::class,
+            listener: ExtractionCompletedListener::class
         );
 
         // Change verplichtingen-commitment-accounting Tasks 1/2 (REQ-VPL-010) —

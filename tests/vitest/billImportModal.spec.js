@@ -24,6 +24,13 @@ import {
 	refreshEventPayload,
 	CREDITORS_WIDGET,
 	PDF_DEFERRAL_MESSAGE,
+	isExtractionDraft,
+	confidenceForField,
+	isFieldCorrected,
+	requiresExplicitReview,
+	pendingDraftSummary,
+	REVIEW_THRESHOLD,
+	ONE_CLICK_CONFIDENCE_GATE,
 } from '../../src/modals/billImportModal.js'
 
 describe('billImportModal — format detection', () => {
@@ -128,5 +135,42 @@ describe('billImportModal — dashboard refresh (REQ-BIM-004)', () => {
 	it('emits the open-creditors widget payload', () => {
 		expect(CREDITORS_WIDGET).toBe('widget-open-creditors')
 		expect(refreshEventPayload()).toEqual({ widget: 'widget-open-creditors' })
+	})
+})
+
+describe('billImportModal — extraction confidence (REQ-RXC-001/002/004/006)', () => {
+	it('recognises an uncommitted extraction draft', () => {
+		expect(isExtractionDraft({ extractionStatus: 'pending-review' })).toBe(true)
+		expect(isExtractionDraft({ extractionStatus: 'confirmed' })).toBe(false)
+		expect(isExtractionDraft(null)).toBe(false)
+	})
+
+	it('reads per-field confidence, null when absent', () => {
+		const record = { fieldConfidence: { invoiceNumber: 0.97 } }
+		expect(confidenceForField(record, 'invoiceNumber')).toBe(0.97)
+		expect(confidenceForField(record, 'glAccount')).toBeNull()
+		expect(confidenceForField(null, 'invoiceNumber')).toBeNull()
+	})
+
+	it('flags a field as human-corrected only when listed', () => {
+		const record = { humanCorrected: ['glAccount'] }
+		expect(isFieldCorrected(record, 'glAccount')).toBe(true)
+		expect(isFieldCorrected(record, 'invoiceNumber')).toBe(false)
+		expect(isFieldCorrected(null, 'glAccount')).toBe(false)
+	})
+
+	it('gates explicit review on overallConfidence below the one-click threshold', () => {
+		expect(REVIEW_THRESHOLD).toBe(0.8)
+		expect(ONE_CLICK_CONFIDENCE_GATE).toBe(0.9)
+		expect(requiresExplicitReview({ overallConfidence: 0.61 })).toBe(true)
+		expect(requiresExplicitReview({ overallConfidence: 0.93 })).toBe(false)
+		expect(requiresExplicitReview({ overallConfidence: 0.9 })).toBe(false)
+		expect(requiresExplicitReview({})).toBe(false)
+	})
+
+	it('summarises a pending draft for the review list', () => {
+		expect(pendingDraftSummary({ id: 'd1', invoiceNumber: 'F-88', overallConfidence: 0.93 }))
+			.toEqual({ id: 'd1', label: 'F-88', overallConfidence: 0.93 })
+		expect(pendingDraftSummary({ id: 'd2', supplierId: 'ACME' }).label).toBe('ACME')
 	})
 })

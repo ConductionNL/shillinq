@@ -28,7 +28,23 @@
  headerAction's open-modal `target` resolves it. The non-trivial logic
  lives in the sibling billImportModal.js so it is unit testable without the SFC.
 
+ receipt-extraction-consume (REQ-RXC-002 / REQ-RXC-004 / REQ-RXC-005): when
+ opened without a file (Step 1), any uncommitted docudesk extraction drafts
+ (`extractionStatus: pending-review`, created asynchronously by
+ ExtractionCompletedListener from the nl.conduction.docudesk.extraction.completed
+ event) are listed above the dropzone; picking one jumps straight to Step 2
+ with every field pre-filled AND its per-field confidence shown
+ (FieldConfidenceBadge), sub-threshold fields flagged for review. Editing a
+ field before Save records it as human-corrected server-side
+ (ExtractionPrefillService::recordCorrection, never silently discarding the
+ original extracted value/confidence). A "Request extraction" action
+ (re-)asks docudesk for a fresh extraction via the ExtractionRequestController
+ proxy; the resulting event round-trips back through REQ-RXC-001. Confidence
+ never bypasses the explicit Save click (REQ-RXC-006) — it only changes
+ whether the badges + review copy are shown.
+
  @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+ @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
 -->
 
 <template>
@@ -70,6 +86,29 @@
 				<p v-if="error" class="bim__error" data-testid="bim-upload-error">
 					{{ error }}
 				</p>
+
+				<!-- receipt-extraction-consume (REQ-RXC-001/002) — pending
+				     extraction drafts awaiting operator review. -->
+				<div v-if="pendingDrafts.length > 0" class="bim__pending" data-testid="bim-pending-drafts">
+					<p class="bim__intro">
+						{{ t('shillinq', 'Extracted fields') }}
+					</p>
+					<ul class="bim__pending-list">
+						<li
+							v-for="draft in pendingDrafts"
+							:key="draft.id"
+							class="bim__pending-item"
+							:data-testid="`bim-pending-${draft.id}`">
+							<button
+								type="button"
+								class="bim__pending-button"
+								@click="openDraft(draft.id)">
+								<span>{{ draft.label || t('shillinq', '(no invoice number)') }}</span>
+								<FieldConfidenceBadge :confidence="draft.overallConfidence" />
+							</button>
+						</li>
+					</ul>
+				</div>
 			</div>
 
 			<!-- Step 2 — Review & confirm -->
@@ -78,45 +117,79 @@
 					{{ t('shillinq', 'Review and confirm') }}
 				</p>
 
+				<p v-if="isDraftReview" class="bim__hint" data-testid="bim-review-hint">
+					{{ requiresReview
+						? t('shillinq', 'Some fields have low confidence — please review before confirming.')
+						: t('shillinq', 'Extraction confidence is high. Review and confirm.') }}
+				</p>
+
 				<div class="bim__field">
 					<label class="bim__label" for="bim-supplier">{{ t('shillinq', 'Supplier') }}</label>
-					<input
-						id="bim-supplier"
-						v-model="form.supplier"
-						type="text"
-						class="bim__input"
-						data-testid="bim-supplier">
+					<div class="bim__field-row">
+						<input
+							id="bim-supplier"
+							v-model="form.supplier"
+							type="text"
+							class="bim__input"
+							data-testid="bim-supplier">
+						<FieldConfidenceBadge
+							v-if="isDraftReview"
+							field="supplierId"
+							:confidence="confidenceFor('supplierId')"
+							:corrected="isCorrected('supplierId')" />
+					</div>
 				</div>
 
 				<div class="bim__field">
 					<label class="bim__label" for="bim-invoice-number">{{ t('shillinq', 'Invoice number') }}</label>
-					<input
-						id="bim-invoice-number"
-						v-model="form.invoiceNumber"
-						type="text"
-						class="bim__input"
-						data-testid="bim-invoice-number">
+					<div class="bim__field-row">
+						<input
+							id="bim-invoice-number"
+							v-model="form.invoiceNumber"
+							type="text"
+							class="bim__input"
+							data-testid="bim-invoice-number">
+						<FieldConfidenceBadge
+							v-if="isDraftReview"
+							field="invoiceNumber"
+							:confidence="confidenceFor('invoiceNumber')"
+							:corrected="isCorrected('invoiceNumber')" />
+					</div>
 				</div>
 
 				<div class="bim__row">
 					<div class="bim__field">
 						<label class="bim__label" for="bim-invoice-date">{{ t('shillinq', 'Invoice date') }}</label>
-						<input
-							id="bim-invoice-date"
-							v-model="form.invoiceDate"
-							type="date"
-							class="bim__input"
-							data-testid="bim-invoice-date">
+						<div class="bim__field-row">
+							<input
+								id="bim-invoice-date"
+								v-model="form.invoiceDate"
+								type="date"
+								class="bim__input"
+								data-testid="bim-invoice-date">
+							<FieldConfidenceBadge
+								v-if="isDraftReview"
+								field="invoiceDate"
+								:confidence="confidenceFor('invoiceDate')"
+								:corrected="isCorrected('invoiceDate')" />
+						</div>
 					</div>
 					<div class="bim__field">
 						<label class="bim__label" for="bim-amount">{{ t('shillinq', 'Amount') }}</label>
-						<input
-							id="bim-amount"
-							v-model.number="form.amount"
-							type="number"
-							step="0.01"
-							class="bim__input"
-							data-testid="bim-amount">
+						<div class="bim__field-row">
+							<input
+								id="bim-amount"
+								v-model.number="form.amount"
+								type="number"
+								step="0.01"
+								class="bim__input"
+								data-testid="bim-amount">
+							<FieldConfidenceBadge
+								v-if="isDraftReview"
+								field="totalInclVat"
+								:confidence="confidenceFor('totalInclVat')"
+								:corrected="isCorrected('totalInclVat')" />
+						</div>
 					</div>
 					<div class="bim__field">
 						<label class="bim__label" for="bim-vat-amount">{{ t('shillinq', 'VAT amount') }}</label>
@@ -131,10 +204,26 @@
 				</div>
 
 				<div class="bim__field">
-					<GlAccountPicker
-						v-model="form.glAccount"
-						data-testid="bim-gl-account" />
+					<div class="bim__field-row">
+						<GlAccountPicker
+							v-model="form.glAccount"
+							data-testid="bim-gl-account" />
+						<FieldConfidenceBadge
+							v-if="isDraftReview"
+							field="glAccount"
+							:confidence="confidenceFor('glAccount')"
+							:corrected="isCorrected('glAccount')" />
+					</div>
 				</div>
+
+				<NcButton
+					v-if="isDraftReview && canRerequest"
+					type="secondary"
+					:disabled="busy"
+					data-testid="bim-rerequest"
+					@click="onRerequest">
+					{{ t('shillinq', 'Request extraction') }}
+				</NcButton>
 
 				<p v-if="error" class="bim__error" data-testid="bim-review-error">
 					{{ error }}
@@ -170,6 +259,7 @@ import { translate as t } from '@nextcloud/l10n'
 import { showSuccess, showError } from '@nextcloud/dialogs'
 import { emit } from '@nextcloud/event-bus'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
+import FieldConfidenceBadge from '../components/FieldConfidenceBadge.vue'
 import {
 	detectFormat,
 	isDeferredPdf,
@@ -179,6 +269,11 @@ import {
 	importErrorMessage,
 	refreshEventPayload,
 	PDF_DEFERRAL_MESSAGE,
+	isExtractionDraft,
+	confidenceForField,
+	isFieldCorrected,
+	requiresExplicitReview,
+	pendingDraftSummary,
 } from './billImportModal.js'
 
 const REGISTER_SLUG = 'shillinq'
@@ -186,7 +281,7 @@ const SUPPLIER_INVOICE_SCHEMA = 'SupplierInvoice'
 
 export default {
 	name: 'BillImportModal',
-	components: { NcDialog, NcButton, GlAccountPicker },
+	components: { NcDialog, NcButton, GlAccountPicker, FieldConfidenceBadge },
 	props: {
 		open: {
 			type: Boolean,
@@ -202,6 +297,7 @@ export default {
 			pdfDeferred: false,
 			importedRecord: null,
 			form: this.emptyForm(),
+			pendingDraftRows: [],
 		}
 	},
 	computed: {
@@ -209,12 +305,29 @@ export default {
 		canSave() {
 			return canSaveReview(this.form)
 		},
+		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		isDraftReview() {
+			return isExtractionDraft(this.importedRecord)
+		},
+		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		requiresReview() {
+			return requiresExplicitReview(this.importedRecord)
+		},
+		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		canRerequest() {
+			return !!this.importedRecord?.sourceDocumentUri
+		},
+		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		pendingDrafts() {
+			return this.pendingDraftRows.map(pendingDraftSummary)
+		},
 	},
 	watch: {
 		/** @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md */
 		open(next) {
 			if (next === true) {
 				this.reset()
+				this.loadPendingDrafts()
 			}
 		},
 	},
@@ -239,6 +352,87 @@ export default {
 			this.pdfDeferred = false
 			this.importedRecord = null
 			this.form = this.emptyForm()
+			this.pendingDraftRows = []
+		},
+		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		confidenceFor(field) {
+			return confidenceForField(this.importedRecord, field)
+		},
+		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		isCorrected(field) {
+			return isFieldCorrected(this.importedRecord, field)
+		},
+		/**
+		 * Load pending SupplierInvoice extraction drafts (REQ-RXC-001/002) so
+		 * the operator can jump straight to the confidence-scored review step
+		 * instead of only being able to start a fresh UBL/CSV upload.
+		 *
+		 * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
+		 */
+		async loadPendingDrafts() {
+			try {
+				const response = await axios.get(
+					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SUPPLIER_INVOICE_SCHEMA}`),
+					{ params: { extractionStatus: 'pending-review' } },
+				)
+				const rows = response.data?.results ?? response.data?.objects ?? response.data ?? []
+				this.pendingDraftRows = Array.isArray(rows) ? rows : []
+			} catch (e) {
+				// Non-blocking — the upload path still works without the list.
+				this.pendingDraftRows = []
+			}
+		},
+		/**
+		 * Open an extraction draft directly into the review step, pre-filled
+		 * with per-field confidence (REQ-RXC-002).
+		 *
+		 * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
+		 * @param {string} id The draft's OR object id.
+		 */
+		async openDraft(id) {
+			this.error = ''
+			this.busy = true
+			try {
+				const response = await axios.get(
+					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SUPPLIER_INVOICE_SCHEMA}/${id}`),
+				)
+				const record = response.data?.object ?? response.data ?? {}
+				this.importedRecord = record
+				this.form = reviewFormFromRecord(record)
+				this.step = 'review'
+			} catch (e) {
+				this.error = importErrorMessage(e)
+				showError(this.error)
+			} finally {
+				this.busy = false
+			}
+		},
+		/**
+		 * (Re-)request docudesk extraction for the currently reviewed draft
+		 * (REQ-RXC-005) via the shillinq proxy endpoint.
+		 *
+		 * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
+		 */
+		async onRerequest() {
+			if (this.busy || !this.canRerequest) return
+			this.busy = true
+			this.error = ''
+			try {
+				await axios.post(
+					generateUrl('/apps/shillinq/api/v1/extraction/request'),
+					{
+						documentUri: this.importedRecord.sourceDocumentUri,
+						docType: 'supplier-invoice',
+						id: this.importedRecord.id ?? '',
+					},
+				)
+				showSuccess(t('shillinq', 'Extraction requested. The draft will update once docudesk responds.'))
+			} catch (e) {
+				this.error = importErrorMessage(e)
+				showError(this.error)
+			} finally {
+				this.busy = false
+			}
 		},
 		/** @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md */
 		onDrop(event) {
@@ -291,7 +485,16 @@ export default {
 				this.busy = false
 			}
 		},
-		/** @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md */
+		/**
+		 * REQ-BIM-003/004 (manual UBL/CSV import) OR, for an extraction draft
+		 * (REQ-RXC-004), commits any operator corrections through the
+		 * ExtractionRequestController confirm proxy — which records
+		 * `humanCorrected` provenance server-side — instead of creating a
+		 * second SupplierInvoice record.
+		 *
+		 * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+		 * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
+		 */
 		async onSave() {
 			if (!this.canSave || this.busy) return
 			this.busy = true
@@ -306,11 +509,30 @@ export default {
 				record.totalVat = Math.round((Number(this.form.vatAmount) || 0) * 100)
 				record.statusCode = record.statusCode || 'received'
 
-				const response = await axios.post(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SUPPLIER_INVOICE_SCHEMA}`),
-					record,
-				)
-				const created = response.data?.object ?? response.data ?? {}
+				let created
+				if (this.isDraftReview && record.id) {
+					// REQ-RXC-004: commit the correction on the existing draft —
+					// never fabricates a duplicate SupplierInvoice.
+					const response = await axios.put(
+						generateUrl(`/apps/shillinq/api/v1/extraction/drafts/${record.id}?schema=${SUPPLIER_INVOICE_SCHEMA}`),
+						{
+							supplierId: record.supplierId,
+							invoiceNumber: record.invoiceNumber,
+							invoiceDate: record.invoiceDate,
+							glAccount: record.glAccount,
+							totalInclVat: record.totalInclVat,
+							totalVat: record.totalVat,
+						},
+					)
+					created = response.data?.record ?? response.data ?? {}
+				} else {
+					const response = await axios.post(
+						generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${SUPPLIER_INVOICE_SCHEMA}`),
+						record,
+					)
+					created = response.data?.object ?? response.data ?? {}
+				}
+
 				showSuccess(t('shillinq', 'Bill imported.'))
 				// REQ-BIM-004: refresh the payables widget without navigation.
 				emit('cn:widget:refresh', refreshEventPayload())
@@ -414,5 +636,50 @@ export default {
 .bim__error {
 	color: var(--color-error);
 	margin: 0;
+}
+
+.bim__field-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.bim__field-row .bim__input {
+	flex: 1;
+}
+
+.bim__pending {
+	border-top: 1px solid var(--color-border);
+	padding-top: 12px;
+	margin-top: 4px;
+}
+
+.bim__pending-list {
+	list-style: none;
+	margin: 8px 0 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.bim__pending-button {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	width: 100%;
+	padding: 8px 10px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	background: var(--color-main-background);
+	color: var(--color-main-text);
+	cursor: pointer;
+	text-align: left;
+}
+
+.bim__pending-button:hover,
+.bim__pending-button:focus {
+	background: var(--color-background-hover);
 }
 </style>

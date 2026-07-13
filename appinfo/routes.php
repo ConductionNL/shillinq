@@ -504,6 +504,17 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         // Symfony route ordering matches it first per ADR-016.
         ['name' => 'supplierInvoiceImport#import', 'url' => '/api/v1/supplier-invoices/import', 'verb' => 'POST'],
 
+        // receipt-extraction-consume (REQ-RXC-004 / REQ-RXC-005) — thin proxy
+        // so the frontend never needs docudesk credentials directly. request()
+        // forwards a (re-)extraction request to docudesk; the resulting
+        // nl.conduction.docudesk.extraction.completed event flows back through
+        // ExtractionCompletedListener. confirm() records an operator
+        // correction on an existing extraction draft. Both #[NoAdminRequired],
+        // IDOR-guarded server-side (ADR-005). Declared before the SPA
+        // catch-all per ADR-016.
+        ['name' => 'extractionRequest#request', 'url' => '/api/v1/extraction/request', 'verb' => 'POST'],
+        ['name' => 'extractionRequest#confirm', 'url' => '/api/v1/extraction/drafts/{id}', 'verb' => 'PUT'],
+
         // Bank statement import (shillinq-bank-statement-wizard, REQ-BSW-004).
         // The real import endpoint behind the BankStatementWizard: accepts a
         // CAMT.053 / MT940 / CSV file (multipart upload or JSON body), parses it
