@@ -98,6 +98,15 @@ use RuntimeException;
  *  - reconcileGRIRSaldoForPeriod(): sum the GR/IR account saldo across
  *    a period; the result MUST equal zero when every GRN has a matching
  *    approved invoice.
+ *  - postGRIRForGoodsReceiptAccept(): (grir-accrual-wiring) fan out
+ *    createGRIRPosting() over every accepted GoodsReceiptLine of a
+ *    just-accepted GoodsReceiptNote — the caller wired by
+ *    {@see \OCA\Shillinq\Listener\GRIRClearingListener}.
+ *  - postGRIRForServiceReceiptAccept(): (grir-accrual-wiring) same fan-out
+ *    for an accepted SvcReceipt's SvcReceiptLine rows.
+ *  - settleGRIRForMatchedInvoice(): (grir-accrual-wiring) resolve the
+ *    driving auto_approved/within_tolerance ThreeWayMatch for a matched
+ *    SupplierInvoice and call settleGRIRPosting().
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)   Service touches multiple
  * registers (PurchaseOrder, PurchaseOrderLine, GoodsReceiptNote,
@@ -113,6 +122,7 @@ use RuntimeException;
  * is a single straight-through compute + post pipeline.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
+ * @spec openspec/changes/grir-accrual-wiring/specs/grir-accrual-wiring/spec.md
  */
 class GRIRClearingService
 {
@@ -188,6 +198,22 @@ class GRIRClearingService
     private const SCHEMA_PO_LINE = 'PurchaseOrderLine';
 
     /**
+     * Schema slug for the GoodsReceiptLine register (grir-accrual-wiring
+     * per-line fan-out on GRN accept).
+     *
+     * @var string
+     */
+    private const SCHEMA_GRN_LINE = 'GoodsReceiptLine';
+
+    /**
+     * Schema slug for the SvcReceiptLine register (grir-accrual-wiring
+     * per-line fan-out on SvcReceipt accept).
+     *
+     * @var string
+     */
+    private const SCHEMA_SVC_RECEIPT_LINE = 'SvcReceiptLine';
+
+    /**
      * Schema slug for the SupplierInvoice register.
      *
      * @var string
@@ -214,6 +240,34 @@ class GRIRClearingService
      * @var string
      */
     private const SCHEMA_GL_LINE = 'GLLine';
+
+    /**
+     * Schema slug for the ThreeWayMatch register (grir-accrual-wiring
+     * resolution of the driving match for a matched SupplierInvoice).
+     *
+     * @var string
+     */
+    private const SCHEMA_THREE_WAY_MATCH = 'ThreeWayMatch';
+
+    /**
+     * ThreeWayMatch.matchStatus value that authorises settlement — exact
+     * 3-way match, zero divergence. Mirrors
+     * {@see \OCA\Shillinq\Service\ThreeWayMatchingEngine::STATUS_AUTO_APPROVED}
+     * without a hard class dependency (this service only reads the
+     * ThreeWayMatch data shape, per design D6).
+     *
+     * @var string
+     */
+    private const MATCH_STATUS_AUTO_APPROVED = 'auto_approved';
+
+    /**
+     * ThreeWayMatch.matchStatus value that authorises settlement —
+     * divergence detected but within tolerance. Mirrors
+     * {@see \OCA\Shillinq\Service\ThreeWayMatchingEngine::STATUS_WITHIN_TOLERANCE}.
+     *
+     * @var string
+     */
+    private const MATCH_STATUS_WITHIN_TOLERANCE = 'within_tolerance';
 
     /**
      * Constructor.
@@ -675,6 +729,201 @@ class GRIRClearingService
         ];
 
     }//end reconcileGRIRSaldoForPeriod()
+
+    /**
+     * Fan out {@see createGRIRPosting()} over every accepted
+     * `GoodsReceiptLine` of a just-accepted `GoodsReceiptNote`
+     * (grir-accrual-wiring REQ-001). Wired by
+     * {@see \OCA\Shillinq\Listener\GRIRClearingListener} on the
+     * `GoodsReceiptNote` `* -> accepted` transition.
+     *
+     * @param string              $administrationId Tenant scope.
+     * @param array<string,mixed> $grn              The accepted GoodsReceiptNote.
+     *
+     * @return array<string,mixed> Result envelope: {posted:int, skipped:int, results:array}.
+     *
+     * @spec openspec/changes/grir-accrual-wiring/specs/grir-accrual-wiring/spec.md#req-001
+     */
+    public function postGRIRForGoodsReceiptAccept(string $administrationId, array $grn): array
+    {
+        return $this->postGRIRForReceiptLines(
+            administrationId: $administrationId,
+            receipt: $grn,
+            lineSchema: self::SCHEMA_GRN_LINE,
+            parentField: 'grnId'
+        );
+
+    }//end postGRIRForGoodsReceiptAccept()
+
+    /**
+     * Fan out {@see createGRIRPosting()} over every accepted
+     * `SvcReceiptLine` of a just-accepted `SvcReceipt` (grir-accrual-wiring
+     * REQ-002). `SvcReceipt` carries no `grnNumber`/`receivedAt` fields —
+     * this normalises the receipt array to the shape `createGRIRPosting()`
+     * expects (`receiptNumber` -> `grnNumber`, `periodEnd`/`confirmedAt`
+     * -> `receivedAt`) without changing `createGRIRPosting()` itself.
+     * Wired by {@see \OCA\Shillinq\Listener\GRIRClearingListener} on the
+     * `SvcReceipt` `confirmed -> accepted` transition.
+     *
+     * @param string              $administrationId Tenant scope.
+     * @param array<string,mixed> $receipt          The accepted SvcReceipt.
+     *
+     * @return array<string,mixed> Result envelope: {posted:int, skipped:int, results:array}.
+     *
+     * @spec openspec/changes/grir-accrual-wiring/specs/grir-accrual-wiring/spec.md#req-002
+     */
+    public function postGRIRForServiceReceiptAccept(string $administrationId, array $receipt): array
+    {
+        $normalised = $receipt;
+        if (trim((string) ($normalised['grnNumber'] ?? '')) === '') {
+            $normalised['grnNumber'] = (string) ($receipt['receiptNumber'] ?? '');
+        }
+
+        if (trim((string) ($normalised['receivedAt'] ?? '')) === '') {
+            $normalised['receivedAt'] = (string) ($receipt['periodEnd'] ?? ($receipt['confirmedAt'] ?? ''));
+        }
+
+        return $this->postGRIRForReceiptLines(
+            administrationId: $administrationId,
+            receipt: $normalised,
+            lineSchema: self::SCHEMA_SVC_RECEIPT_LINE,
+            parentField: 'serviceReceiptId'
+        );
+
+    }//end postGRIRForServiceReceiptAccept()
+
+    /**
+     * Resolve the driving `auto_approved`/`within_tolerance` `ThreeWayMatch`
+     * for a `SupplierInvoice` that just reached `matched`, and call
+     * {@see settleGRIRPosting()} (grir-accrual-wiring REQ-003). When no
+     * qualifying match is found the settlement is skipped without error
+     * (the invoice may have been matched by a path this service does not
+     * recognise, or the match is not yet visible — fail-soft per REQ-004).
+     * Wired by {@see \OCA\Shillinq\Listener\GRIRClearingListener} on the
+     * `SupplierInvoice` `matching -> matched` transition.
+     *
+     * @param string $administrationId Tenant scope.
+     * @param string $invoiceId        SupplierInvoice id.
+     *
+     * @return array<string,mixed> Result envelope (see {@see settleGRIRPosting()}),
+     *                             or {posted:false, message} when no
+     *                             qualifying match is found.
+     *
+     * @spec openspec/changes/grir-accrual-wiring/specs/grir-accrual-wiring/spec.md#req-003
+     */
+    public function settleGRIRForMatchedInvoice(string $administrationId, string $invoiceId): array
+    {
+        if ($invoiceId === '') {
+            return [
+                'posted'  => false,
+                'message' => 'invoiceId is required',
+            ];
+        }
+
+        $matches = $this->findAll(
+            schema: self::SCHEMA_THREE_WAY_MATCH,
+            filters: [
+                'invoiceId'        => $invoiceId,
+                'administrationId' => $administrationId,
+            ]
+        );
+
+        $candidate     = null;
+        $candidateTime = '';
+        foreach ($matches as $match) {
+            $status = (string) ($match['matchStatus'] ?? '');
+            if ($status !== self::MATCH_STATUS_AUTO_APPROVED && $status !== self::MATCH_STATUS_WITHIN_TOLERANCE) {
+                continue;
+            }
+
+            $createdAt = (string) ($match['createdAt'] ?? '');
+            if ($candidate === null || $createdAt > $candidateTime) {
+                $candidate     = $match;
+                $candidateTime = $createdAt;
+            }
+        }
+
+        if ($candidate === null) {
+            $this->logger->debug(
+                'GRIRClearingService: no auto_approved/within_tolerance ThreeWayMatch found for matched invoice; settlement skipped',
+                ['invoiceId' => $invoiceId]
+            );
+            return [
+                'posted'  => false,
+                'message' => 'No approved ThreeWayMatch found for invoice',
+            ];
+        }
+
+        return $this->settleGRIRPosting(administrationId: $administrationId, threeWayMatch: $candidate);
+
+    }//end settleGRIRForMatchedInvoice()
+
+    /**
+     * Shared per-line fan-out for {@see postGRIRForGoodsReceiptAccept()}
+     * and {@see postGRIRForServiceReceiptAccept()}: loads every child line
+     * row for the given receipt (by parent-FK field) and posts
+     * {@see createGRIRPosting()} for every line with `quantityAccepted > 0`.
+     *
+     * @param string              $administrationId Tenant scope.
+     * @param array<string,mixed> $receipt          The accepted receipt (GRN or SvcReceipt).
+     * @param string              $lineSchema       Child line schema slug.
+     * @param string              $parentField      FK field on the line row that references the receipt id.
+     *
+     * @return array<string,mixed> Result envelope: {posted:int, skipped:int, results:array}.
+     */
+    private function postGRIRForReceiptLines(
+        string $administrationId,
+        array $receipt,
+        string $lineSchema,
+        string $parentField
+    ): array {
+        $receiptId = (string) ($receipt['id'] ?? ($receipt['@self']['id'] ?? ''));
+        if ($receiptId === '') {
+            return [
+                'posted'  => 0,
+                'skipped' => 0,
+                'results' => [],
+            ];
+        }
+
+        $lines = $this->findAll(
+            schema: $lineSchema,
+            filters: [
+                $parentField       => $receiptId,
+                'administrationId' => $administrationId,
+            ]
+        );
+
+        $posted  = 0;
+        $skipped = 0;
+        $results = [];
+        foreach ($lines as $line) {
+            $accepted = (float) ($line['quantityAccepted'] ?? 0);
+            if ($accepted <= 0.0) {
+                $skipped++;
+                continue;
+            }
+
+            $result    = $this->createGRIRPosting(
+                administrationId: $administrationId,
+                grn: $receipt,
+                grnLine: $line
+            );
+            $results[] = $result;
+            if (($result['posted'] ?? false) === true) {
+                $posted++;
+            } else {
+                $skipped++;
+            }
+        }//end foreach
+
+        return [
+            'posted'  => $posted,
+            'skipped' => $skipped,
+            'results' => $results,
+        ];
+
+    }//end postGRIRForReceiptLines()
 
     /**
      * Compute the clearing line amount in integer cents.

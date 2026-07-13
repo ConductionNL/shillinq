@@ -505,4 +505,226 @@ final class GRIRClearingServiceTest extends TestCase
         self::assertSame(33327, $result['amountCents']);
 
     }//end testQuantityTimesUnitPriceRoundsHalfUp()
+
+    /**
+     * Grir-accrual-wiring REQ-001: postGRIRForGoodsReceiptAccept() fans out
+     * over every accepted GoodsReceiptLine for the GRN and skips lines with
+     * quantityAccepted <= 0.
+     *
+     * @return void
+     */
+    public function testPostGRIRForGoodsReceiptAcceptFansOutOverAcceptedLinesOnly(): void
+    {
+        $os = new InMemoryObjectService();
+        $os->seed(
+            'PurchaseOrderLine',
+            [
+                [
+                    'id'               => 'poline-a',
+                    'poId'             => 'po-a',
+                    'administrationId' => 'adm-1',
+                    'unitPrice'        => 1000,
+                    'glAccount'        => '1200',
+                ],
+                [
+                    'id'               => 'poline-b',
+                    'poId'             => 'po-b',
+                    'administrationId' => 'adm-1',
+                    'unitPrice'        => 2000,
+                    'glAccount'        => '1200',
+                ],
+            ]
+        );
+        $os->seed(
+            'GoodsReceiptLine',
+            [
+                [
+                    'id'               => 'grnline-1',
+                    'grnId'            => 'grn-1',
+                    'poLineId'         => 'poline-a',
+                    'quantityAccepted' => 10.0,
+                    'administrationId' => 'adm-1',
+                ],
+                [
+                    'id'               => 'grnline-2',
+                    'grnId'            => 'grn-1',
+                    'poLineId'         => 'poline-b',
+                    'quantityAccepted' => 0.0,
+                    'administrationId' => 'adm-1',
+                ],
+            ]
+        );
+
+        $service = $this->makeService(
+            os: $os,
+            config: [
+                'register'                                      => 'shillinq',
+                GRIRClearingService::CFG_GR_IR_CLEARING_ACCOUNT => '2910',
+            ]
+        );
+
+        $result = $service->postGRIRForGoodsReceiptAccept(
+            administrationId: 'adm-1',
+            grn: ['id' => 'grn-1', 'grnNumber' => 'GRN-1', 'receivedAt' => '2026-07-01']
+        );
+
+        self::assertSame(1, $result['posted']);
+        self::assertSame(1, $result['skipped']);
+
+        $txns = $os->setSchema('GLTransaction')->findAll();
+        self::assertCount(1, $txns);
+
+    }//end testPostGRIRForGoodsReceiptAcceptFansOutOverAcceptedLinesOnly()
+
+    /**
+     * Grir-accrual-wiring REQ-002: postGRIRForServiceReceiptAccept()
+     * normalises SvcReceipt's receiptNumber/periodEnd to the
+     * grnNumber/receivedAt shape createGRIRPosting() expects, and fans out
+     * over SvcReceiptLine rows keyed by serviceReceiptId.
+     *
+     * @return void
+     */
+    public function testPostGRIRForServiceReceiptAcceptNormalisesFieldsAndFansOut(): void
+    {
+        $os = new InMemoryObjectService();
+        $os->seed(
+            'PurchaseOrderLine',
+            [
+                [
+                    'id'               => 'poline-svc',
+                    'poId'             => 'po-svc',
+                    'administrationId' => 'adm-1',
+                    'unitPrice'        => 5000,
+                    'glAccount'        => '4200',
+                ],
+            ]
+        );
+        $os->seed(
+            'SvcReceiptLine',
+            [
+                [
+                    'id'               => 'svcline-1',
+                    'serviceReceiptId' => 'svr-1',
+                    'poLineId'         => 'poline-svc',
+                    'quantityAccepted' => 2.0,
+                    'administrationId' => 'adm-1',
+                ],
+            ]
+        );
+
+        $service = $this->makeService(
+            os: $os,
+            config: [
+                'register'                                      => 'shillinq',
+                GRIRClearingService::CFG_GR_IR_CLEARING_ACCOUNT => '2910',
+            ]
+        );
+
+        $result = $service->postGRIRForServiceReceiptAccept(
+            administrationId: 'adm-1',
+            receipt: ['id' => 'svr-1', 'receiptNumber' => 'SVR-1', 'periodEnd' => '2026-07-05']
+        );
+
+        self::assertSame(1, $result['posted']);
+        self::assertSame(0, $result['skipped']);
+
+        $txns = $os->setSchema('GLTransaction')->findAll();
+        self::assertCount(1, $txns);
+        // 2.0 units * 5000 cents = 10000 cents.
+        self::assertSame(10000, $result['results'][0]['amountCents']);
+
+    }//end testPostGRIRForServiceReceiptAcceptNormalisesFieldsAndFansOut()
+
+    /**
+     * Grir-accrual-wiring REQ-003: settleGRIRForMatchedInvoice() resolves
+     * the auto_approved/within_tolerance ThreeWayMatch for the invoice and
+     * calls settleGRIRPosting(); it returns posted=false without throwing
+     * when no qualifying match exists.
+     *
+     * @return void
+     */
+    public function testSettleGRIRForMatchedInvoiceResolvesApprovedMatch(): void
+    {
+        $os = new InMemoryObjectService();
+        $os->seed(
+            'PurchaseOrderLine',
+            [
+                [
+                    'id'               => 'poline-m',
+                    'poId'             => 'po-m',
+                    'administrationId' => 'adm-1',
+                    'glAccount'        => '1200',
+                ],
+            ]
+        );
+        $os->seed(
+            'SupplierInvoice',
+            [
+                [
+                    'id'               => 'inv-m',
+                    'administrationId' => 'adm-1',
+                    'invoiceNumber'    => 'INV-M',
+                    'totalExclVat'     => 20000,
+                    'totalVat'         => 4200,
+                    'totalInclVat'     => 24200,
+                ],
+            ]
+        );
+        $os->seed(
+            'ThreeWayMatch',
+            [
+                [
+                    'id'               => 'match-exc',
+                    'invoiceId'        => 'inv-m',
+                    'administrationId' => 'adm-1',
+                    'matchStatus'      => 'exception_price',
+                    'createdAt'        => '2026-07-01T00:00:00Z',
+                    'matchedPoIds'     => ['po-m'],
+                    'matchedPoLineIds' => ['poline-m'],
+                ],
+                [
+                    'id'               => 'match-ok',
+                    'invoiceId'        => 'inv-m',
+                    'administrationId' => 'adm-1',
+                    'matchStatus'      => 'auto_approved',
+                    'createdAt'        => '2026-07-02T00:00:00Z',
+                    'matchedPoIds'     => ['po-m'],
+                    'matchedPoLineIds' => ['poline-m'],
+                ],
+            ]
+        );
+
+        $service = $this->makeService(
+            os: $os,
+            config: [
+                'register'                                        => 'shillinq',
+                GRIRClearingService::CFG_ACCOUNTS_PAYABLE_ACCOUNT => '4400',
+                GRIRClearingService::CFG_VAT_PAYABLE_ACCOUNT      => '2100',
+            ]
+        );
+
+        $result = $service->settleGRIRForMatchedInvoice(administrationId: 'adm-1', invoiceId: 'inv-m');
+
+        self::assertTrue($result['posted']);
+        self::assertSame(24200, $result['amountCents']);
+
+    }//end testSettleGRIRForMatchedInvoiceResolvesApprovedMatch()
+
+    /**
+     * Grir-accrual-wiring REQ-003 fail-soft: no auto_approved/within_tolerance
+     * ThreeWayMatch exists for the invoice — settlement is skipped without
+     * throwing.
+     *
+     * @return void
+     */
+    public function testSettleGRIRForMatchedInvoiceReturnsUnpostedWhenNoApprovedMatchExists(): void
+    {
+        $os      = new InMemoryObjectService();
+        $service = $this->makeService(os: $os);
+
+        $result = $service->settleGRIRForMatchedInvoice(administrationId: 'adm-1', invoiceId: 'inv-none');
+
+        self::assertFalse($result['posted']);
+
+    }//end testSettleGRIRForMatchedInvoiceReturnsUnpostedWhenNoApprovedMatchExists()
 }//end class
