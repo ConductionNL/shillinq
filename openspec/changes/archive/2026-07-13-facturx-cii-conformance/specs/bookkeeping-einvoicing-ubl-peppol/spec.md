@@ -1,6 +1,6 @@
 # bookkeeping-einvoicing-ubl-peppol Specification (delta)
 
-**Status**: in-progress
+**Status**: archived 2026-07-13 (synced into the canonical spec)
 **Scope**: shillinq
 **OpenSpec changes**:
 - facturx-cii-conformance
