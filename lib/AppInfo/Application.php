@@ -21,6 +21,23 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\AppInfo;
 
+use OCA\Shillinq\Guard\BcfSubmissionGuard;
+use OCA\Shillinq\Guard\Iv3SubmissionGuard;
+use OCA\Shillinq\Guard\Iv3XmlValidationGuard;
+use OCA\Shillinq\Guard\KorLockoutGuard;
+use OCA\Shillinq\Guard\ProjectActivationGuard;
+use OCA\Shillinq\Guard\ProjectCloseGuard;
+use OCA\Shillinq\Guard\ProjectTransitionGuard;
+use OCA\Shillinq\Guard\RateScheduleOverlapGuard;
+use OCA\Shillinq\Guard\SubsidieRepaymentGuard;
+use OCA\Shillinq\Guard\VatSubmissionGuard;
+use OCA\Shillinq\Lifecycle\APGuard;
+use OCA\Shillinq\Lifecycle\FiscalYearGuard;
+use OCA\Shillinq\Lifecycle\GLReversalGuard;
+use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
+use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
+use OCA\Shillinq\Lifecycle\WBSOExportValidationGuard;
+use OCA\Shillinq\Lifecycle\WriteOffReasonGuard;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
@@ -710,6 +727,218 @@ class Application extends App implements IBootstrap
         // notification centre. Without a registered INotifier the raised
         // notifications would be discarded at display time.
         $context->registerNotifierService(DeadlineReminderNotifier::class);
+
+        // Shillinq#425 fix — register every lifecycle guard tag this change
+        // adds so it actually resolves via OpenRegister's
+        // LifecycleGuardRegistry::resolve(), instead of merely existing as
+        // an unreachable class. LifecycleGuardRegistry treats the ENTIRE
+        // `requires` string (including any `::method` suffix) as a single
+        // DI container tag and calls `->check()` on whatever resolves; a
+        // tag containing `::` can NEVER autowire (PHP class names cannot
+        // contain `::`; confirmed empirically — `new ReflectionClass('Foo::
+        // bar')` always throws ReflectionException), so every one of these
+        // tags MUST be explicitly registered here, mapped through the
+        // shared RegisterRequiresGuardAdapter onto each guard's existing
+        // `bool <method>(array $object): bool` precondition method. This
+        // mirrors the already-established pattern this file uses for
+        // notification resolver tags (see the `RoleFallbackResolver::class.
+        // '::financeOfficer'` registrations above) — arbitrary string tags
+        // are ordinary Nextcloud container aliases once registered.
+        //
+        // This is deliberately scoped to the 17 guards + PeriodCloseGuard
+        // method shillinq#425 covers. Dozens of pre-existing guards
+        // (MandaatEnforcer, BudgetBlocker, PeriodCloseGuard's other three
+        // methods, InventoryPostingGuard, KorThresholdGuard, ...) reference
+        // tags shaped the same way and are NOT registered — every one of
+        // those transitions also hard-fails today. That fleet-wide gap is
+        // filed separately as shillinq#429 and intentionally not fixed here.
+        $context->registerService(
+            'OCA\Shillinq\Guard\Iv3XmlValidationGuard::requireValidXml',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(Iv3XmlValidationGuard::class),
+                    method: 'requireValidXml',
+                    denyMessage: 'The export must have a generated XML attachment and at least one aggregated bucket before it can be validated.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Guard\Iv3SubmissionGuard::requireApproval',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(Iv3SubmissionGuard::class),
+                    method: 'requireApproval',
+                    denyMessage: 'This export has already been submitted, or is missing its generated XML/buckets.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Guard\KorLockoutGuard::requireLockoutExpired',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(KorLockoutGuard::class),
+                    method: 'requireLockoutExpired',
+                    denyMessage: 'The 3-year KOR re-entry lock-out (Wet OB 1968 art. 25 lid 3) has not yet elapsed.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Guard\ProjectActivationGuard::requireStartDate',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(ProjectActivationGuard::class),
+                    method: 'requireStartDate',
+                    denyMessage: 'startDate must be set before the project can be activated.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Guard\ProjectTransitionGuard::requireReason',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(ProjectTransitionGuard::class),
+                    method: 'requireReason',
+                    denyMessage: 'closureJustification must be set before the project can be put on hold.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Guard\ProjectCloseGuard::requireWipJustificationOrZero',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(ProjectCloseGuard::class),
+                    method: 'requireWipJustificationOrZero',
+                    denyMessage: 'This project has an open WIP balance; record closureJustification before closing.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Lifecycle\FiscalYearGuard::requireAllPeriodsClosedForYear',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(FiscalYearGuard::class),
+                    method: 'requireAllPeriodsClosedForYear',
+                    denyMessage: 'Every FiscalPeriod within this fiscal year must be closed before the year-end close can begin.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Lifecycle\GLReversalGuard::isReversed',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(GLReversalGuard::class),
+                    method: 'isReversed',
+                    denyMessage: 'The linked GLTransaction must already be reversed before this record can be voided.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Lifecycle\WriteOffReasonGuard::requireReason',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(WriteOffReasonGuard::class),
+                    method: 'requireReason',
+                    denyMessage: 'writeOffReason must be set before the invoice can be written off.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Guard\VatSubmissionGuard::requireApproval',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(VatSubmissionGuard::class),
+                    method: 'requireApproval',
+                    denyMessage: 'This return exceeds the configured approval threshold and cannot be submitted yet.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Guard\BcfSubmissionGuard::requireApproval',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(BcfSubmissionGuard::class),
+                    method: 'requireApproval',
+                    denyMessage: 'This claim exceeds the configured approval threshold and cannot be submitted yet.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Lifecycle\APGuard::isInvoiceNumberUnique',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(APGuard::class),
+                    method: 'isInvoiceNumberUnique',
+                    denyMessage: 'A vendor invoice with this invoice number already exists for this administration.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Lifecycle\APGuard::requireWriteOffReason',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(APGuard::class),
+                    method: 'requireWriteOffReason',
+                    denyMessage: 'writeOffReason must be set before the AP transaction can be written off.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Lifecycle\WBSOExportValidationGuard',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(WBSOExportValidationGuard::class),
+                    method: 'requireEligibleEntries',
+                    denyMessage: 'Every included Urenregistratie entry must carry wbsoTagId and activityCodeId before this export can be validated.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Guard\SubsidieRepaymentGuard::requireZeroRepaymentBalance',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(SubsidieRepaymentGuard::class),
+                    method: 'requireZeroRepaymentBalance',
+                    denyMessage: 'The outstanding repayment balance must be zero before this dossier can be closed.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Guard\RateScheduleOverlapGuard::requireNonOverlappingWindow',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(RateScheduleOverlapGuard::class),
+                    method: 'requireNonOverlappingWindow',
+                    denyMessage: 'Another active rate schedule for this tier/entity already covers an overlapping effective-date window.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+        $context->registerService(
+            'OCA\Shillinq\Lifecycle\PeriodCloseGuard::trialBalanceVerifies',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(PeriodCloseGuard::class),
+                    method: 'trialBalanceVerifies',
+                    denyMessage: 'Total posted debits must equal total posted credits for this period before the close can begin.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
 
     }//end register()
 

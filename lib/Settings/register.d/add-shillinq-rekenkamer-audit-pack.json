@@ -78,7 +78,7 @@
 						}
 					},
 					"steekproef": {
-						"description": "Deterministic random sample of posted GLTransaction records for substantive testing. Given periodId, sampleSize, and seed, returns a reproducible ordered sample — re-running with the same seed yields the same records in the same order per REQ-REK-003. If the aggregation engine cannot guarantee seed-reproducibility, guard OCA\\Shillinq\\Guard\\SteekproefSampler::computeDeterministicSample is invoked per ADR-031 exception path.",
+						"description": "Deterministic random sample of posted GLTransaction records for substantive testing. Given periodId, sampleSize, and seed, returns a reproducible ordered sample — re-running with the same seed yields the same records in the same order per REQ-REK-003. shillinq#425: the previously-declared `guard` (OCA\\Shillinq\\Guard\\SteekproefSampler) referenced a class that did not exist, AND OpenRegister's aggregation engine never reads a `guard` key on any aggregation at all — it was dead, unconsumed configuration regardless of the class (same defect shape as the near-duplicate `engineLimitFallback` reference on this same aggregation key in lib/Settings/shillinq_register.json, which points at a different nonexistent class, OCA\\Shillinq\\Audit\\SteekproefSampler — filed as shillinq#432 for both).",
 						"params": {
 							"periodId": {
 								"type": "string",
@@ -122,7 +122,6 @@
 								"description": "All debit/credit lines for sampled transactions."
 							}
 						},
-						"guard": "OCA\\Shillinq\\Guard\\SteekproefSampler::computeDeterministicSample",
 						"template": "shillinq/steekproef-werkpapier",
 						"meta": {
 							"reproducible": true,

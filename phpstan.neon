@@ -23,6 +23,10 @@ parameters:
         # unavailable at analysis time (cross-app interface, present only at runtime). PHPStan requires
         # excludePaths for this class of error (not suppressible via ignoreErrors or baseline).
         - lib/Service/Pipelinq/CustomerBridgeMetricsService.php
+        # shillinq#425: RegisterRequiresGuardAdapter implements
+        # OCA\OpenRegister\Lifecycle\LifecycleGuardInterface, a cross-app interface present only at
+        # runtime — same class of error as CustomerBridgeMetricsService above.
+        - lib/Lifecycle/RegisterRequiresGuardAdapter.php
     scanDirectories:
         - vendor/nextcloud/ocp
     reportUnmatchedIgnoredErrors: false

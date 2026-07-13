@@ -3,7 +3,7 @@
 /**
  * Period Close Guard
  *
- * ADR-031 exception-path lifecycle guards for the period-close feature. Three
+ * ADR-031 exception-path lifecycle guards for the period-close feature. Four
  * declarative-precondition methods, each referenced from a register fragment
  * lifecycle transition that the OpenRegister x-openregister-lifecycle engine
  * cannot yet express purely declaratively:
@@ -17,7 +17,14 @@
  *    every mandatory checklist item (AP, AR) marked resolved (REQ-PC-002).
  *  - closeReasonSupplied(): referenced from PeriodClose.reopen — requires a
  *    non-empty close reason before a closed period may be reopened (REQ-PC-006).
+ *  - trialBalanceVerifies(): referenced from FiscalPeriod.beginClose
+ *    (lib/Settings/register.d/add-shillinq-bookkeeping-compliance.json,
+ *    open -> closing) — requires total posted debits to equal total posted
+ *    credits for the period before the close may start (REQ-TB-003).
+ *    shillinq#425: this method did not exist prior to this change, so
+ *    beginClose hard-failed (RuntimeException from LifecycleGuardRegistry).
  *
+
  * All three fail closed: any exception denies the transition (CWE-863).
  *
  * @category Lifecycle
@@ -139,6 +146,73 @@ class PeriodCloseGuard
         }//end try
 
     }//end periodOpen()
+
+    /**
+     * Returns true iff total posted debits equal total posted credits for the
+     * period (REQ-TB-003), computed directly from GLLine records (`side` +
+     * `amount`) filtered by the period's business `periodId`. A period with
+     * no posted lines yet is trivially balanced (0 === 0) and permitted to
+     * begin closing, mirroring periodOpen()'s "no scope, allow" convention.
+     * Fail-closed on any error.
+     *
+     * @param array<string,mixed>|string $period The FiscalPeriod record (or its id).
+     *
+     * @return bool True when the period's trial balance verifies.
+     *
+     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+     */
+    public function trialBalanceVerifies(array | string $period): bool
+    {
+        try {
+            $resolved = $this->resolvePeriod(period: $period);
+            if ($resolved === null) {
+                return false;
+            }
+
+            $periodId = (string) ($resolved['periodId'] ?? '');
+            if ($periodId === '') {
+                return true;
+            }
+
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $lines         = $objectService
+                ->setRegister($this->register())
+                ->setSchema('GLLine')
+                ->findAll(['filters' => ['periodId' => $periodId]]);
+
+            if (is_array($lines) === false || $lines === []) {
+                return true;
+            }
+
+            $debitCents  = 0;
+            $creditCents = 0;
+            foreach ($lines as $line) {
+                $amountCents = (int) round(((float) ($line['amount'] ?? 0)) * 100);
+                if ((string) ($line['side'] ?? '') === 'debit') {
+                    $debitCents += $amountCents;
+                } else if ((string) ($line['side'] ?? '') === 'credit') {
+                    $creditCents += $amountCents;
+                }
+            }
+
+            if ($debitCents !== $creditCents) {
+                $this->logger->info(
+                    'PeriodCloseGuard: trial balance does not verify — denying beginClose',
+                    ['periodId' => $periodId, 'debitCents' => $debitCents, 'creditCents' => $creditCents]
+                );
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'PeriodCloseGuard: trialBalanceVerifies check failed — denying beginClose (fail-closed)',
+                ['exception' => $e->getMessage()]
+            );
+            return false;
+        }//end try
+
+    }//end trialBalanceVerifies()
 
     /**
      * Returns true iff every mandatory checklist item on the period is resolved (REQ-PC-002).
