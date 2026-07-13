@@ -76,6 +76,8 @@
                 <referencedClass name="OCA\OpenRegister\Service\FileService"/>
                 <referencedClass name="OCA\OpenRegister\Service\CalendarEventService"/>
                 <referencedClass name="OCA\OpenRegister\Mcp\IMcpToolProvider"/>
+                <referencedClass name="OCA\OpenRegister\Lifecycle\LifecycleGuardInterface"/>
+                <referencedClass name="OCA\OpenRegister\Lifecycle\GuardResult"/>
                 <!-- OpenRegister AppHost (GenericController/Settings wrappers) -->
                 <referencedClass name="OCA\OpenRegister\AppHost\IMetricsProvider"/>
                 <referencedClass name="OCA\OpenRegister\AppHost\Controller\GenericDashboardController"/>

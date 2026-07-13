@@ -6993,7 +6993,8 @@
               "from": "inactive",
               "to": "active",
               "label": "Reactivate",
-              "description": "Restore this schedule for rate lookups."
+              "description": "Restore this schedule for rate lookups. Guard: no other active schedule for the same (tier, entityId) may have an overlapping effective-date window (REQ-RATE-006).",
+              "requires": "OCA\\Shillinq\\Guard\\RateScheduleOverlapGuard::requireNonOverlappingWindow"
             },
             "archive": {
               "from": [
@@ -7004,14 +7005,11 @@
               "label": "Archive",
               "description": "Retire this schedule permanently."
             }
-          },
-          "preconditions": {
-            "save": "OCA\\Shillinq\\Guard\\RateScheduleOverlapGuard::requireNonOverlappingWindow"
           }
         },
         "x-openregister-aggregations": {
           "resolveRate": {
-            "description": "Rate-lookup aggregation (REQ-RATE-005): given (userId, roleId, projectId, clientId, lookupDate), resolves the most-specific applicable rate by tier precedence (user > role > project > client > blended). Filters by effectiveDate <= lookupDate <= expiryDate, status = active. Returns first match ranked by tier precedence. Per ADR-031: declarative aggregation preferred; falls back to OCA\\Shillinq\\Guard\\RateResolutionGuard if OR aggregation engine does not support parameterised tier-rank sorting.",
+            "description": "Rate-lookup aggregation (REQ-RATE-005): given (userId, roleId, projectId, clientId, lookupDate), resolves the most-specific applicable rate by tier precedence (user > role > project > client > blended). Filters by effectiveDate <= lookupDate <= expiryDate, status = active. Returns first match ranked by tier precedence. shillinq#425: the previously-declared `fallbackGuard` (OCA\\Shillinq\\Guard\\RateResolutionGuard) referenced a class that did not exist, AND OpenRegister's aggregation engine (openregister/lib/Service/Aggregation/AggregationRunner.php) never reads a `fallbackGuard` key on any aggregation at all — it was dead, unconsumed configuration regardless of the class. Removed rather than implemented; filed as shillinq#436 if/when the aggregation engine needs a real PHP-guard fallback seam.",
             "parameters": {
               "userId": {
                 "type": "string",
@@ -7055,8 +7053,7 @@
               "project",
               "client",
               "blended"
-            ],
-            "fallbackGuard": "OCA\\Shillinq\\Guard\\RateResolutionGuard::resolveByTierPrecedence"
+            ]
           },
           "activeSchedulesByTier": {
             "description": "Count of active schedules per tier for a given administrationId. Used by Rate Cards index page.",
@@ -15489,9 +15486,7 @@
               "to": "afgehandeld",
               "label": "Dossier sluiten (terugbetaling voltooid)",
               "description": "Sluit het subsidiedossier na volledige terugbetaling (repaymentBalance = 0).",
-              "requires": {
-                "guard": "OCA\\Shillinq\\Guard\\SubsidieRepaymentGuard::requireZeroRepaymentBalance"
-              }
+              "requires": "OCA\\Shillinq\\Guard\\SubsidieRepaymentGuard::requireZeroRepaymentBalance"
             }
           },
           "notifications": {
