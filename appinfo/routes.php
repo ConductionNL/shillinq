@@ -529,6 +529,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         ['name' => 'extractionRequest#request', 'url' => '/api/v1/extraction/request', 'verb' => 'POST'],
         ['name' => 'extractionRequest#confirm', 'url' => '/api/v1/extraction/drafts/{id}', 'verb' => 'PUT'],
 
+        // gl-account-suggestion-consume (REQ-GAC-003 / REQ-GAC-006) — proxies
+        // a GL-account suggestion request to docudesk's already-shipped
+        // ai-gl-account-suggestion endpoint, supplying shillinq's own chart
+        // of accounts as candidates. #[NoAdminRequired], IDOR-guarded
+        // server-side (ADR-005). Declared before the SPA catch-all per
+        // ADR-016.
+        ['name' => 'extractionRequest#suggestGlAccount', 'url' => '/api/v1/extraction/drafts/{id}/suggest-account', 'verb' => 'POST'],
+
         // Bank statement import (shillinq-bank-statement-wizard, REQ-BSW-004).
         // The real import endpoint behind the BankStatementWizard: accepts a
         // CAMT.053 / MT940 / CSV file (multipart upload or JSON body), parses it

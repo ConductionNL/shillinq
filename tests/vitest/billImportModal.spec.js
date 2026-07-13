@@ -31,6 +31,8 @@ import {
 	pendingDraftSummary,
 	REVIEW_THRESHOLD,
 	ONE_CLICK_CONFIDENCE_GATE,
+	hasKnownExtractionId,
+	glAccountSuggestionSummary,
 } from '../../src/modals/billImportModal.js'
 
 describe('billImportModal — format detection', () => {
@@ -69,7 +71,9 @@ describe('billImportModal — import payload', () => {
 	it('builds a FormData carrying file + explicit format', () => {
 		const calls = []
 		class FakeFormData {
+
 			append(k, v) { calls.push([k, v]) }
+
 		}
 		buildImportFormData({ name: 'invoice.xml' }, 'ubl', FakeFormData)
 		expect(calls).toEqual([
@@ -172,5 +176,46 @@ describe('billImportModal — extraction confidence (REQ-RXC-001/002/004/006)', 
 		expect(pendingDraftSummary({ id: 'd1', invoiceNumber: 'F-88', overallConfidence: 0.93 }))
 			.toEqual({ id: 'd1', label: 'F-88', overallConfidence: 0.93 })
 		expect(pendingDraftSummary({ id: 'd2', supplierId: 'ACME' }).label).toBe('ACME')
+	})
+})
+
+describe('billImportModal — GL-account suggestion (REQ-GAC-001/003/006)', () => {
+	it('recognises a draft with a known docudesk extraction id', () => {
+		expect(hasKnownExtractionId({ docudeskExtractionId: 'ext-123' })).toBe(true)
+		expect(hasKnownExtractionId({ docudeskExtractionId: '' })).toBe(false)
+		expect(hasKnownExtractionId({ docudeskExtractionId: '   ' })).toBe(false)
+		expect(hasKnownExtractionId({})).toBe(false)
+		expect(hasKnownExtractionId(null)).toBe(false)
+	})
+
+	it('summarises a history-backed suggestion response', () => {
+		const summary = glAccountSuggestionSummary({
+			suggestion: {
+				code: '4300',
+				label: 'Kantoorkosten',
+				confidence: 0.8,
+				rationale: 'Booked to 4300 in 8 of the last 10 invoices from this supplier',
+				source: 'history',
+			},
+		})
+		expect(summary).toEqual({
+			code: '4300',
+			label: 'Kantoorkosten',
+			confidence: 0.8,
+			rationale: 'Booked to 4300 in 8 of the last 10 invoices from this supplier',
+			source: 'history',
+		})
+	})
+
+	it('degrades to null for a graceful "no suggestion" response (REQ-GAC-006)', () => {
+		expect(glAccountSuggestionSummary({ suggestion: null, reason: 'extraction-id-unknown' })).toBeNull()
+		expect(glAccountSuggestionSummary({ suggestion: null, reason: 'provider-unavailable' })).toBeNull()
+		expect(glAccountSuggestionSummary({})).toBeNull()
+		expect(glAccountSuggestionSummary(null)).toBeNull()
+	})
+
+	it('degrades to null when the suggestion carries no usable code', () => {
+		expect(glAccountSuggestionSummary({ suggestion: { code: '' } })).toBeNull()
+		expect(glAccountSuggestionSummary({ suggestion: {} })).toBeNull()
 	})
 })

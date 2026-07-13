@@ -57,6 +57,8 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | Consume docudesk field-extraction to prefill bill import | planned | must | [receipt-extraction-consume](changes/receipt-extraction-consume/) |
 | Receipt/expense capture prefill with per-field confidence | planned | should | [receipt-extraction-consume](changes/receipt-extraction-consume/) |
 | Field correction flow and docudesk re-extraction request | planned | should | [receipt-extraction-consume](changes/receipt-extraction-consume/) |
+| Consume docudesk GL-account booking suggestion with confidence + rationale | in-progress | should | [gl-account-suggestion-consume](changes/gl-account-suggestion-consume/) |
+| Feed booked GL account back to docudesk as a correction (learning loop) | in-progress | should | [gl-account-suggestion-consume](changes/gl-account-suggestion-consume/) |
 
 ## Contract Lifecycle Management Features
 

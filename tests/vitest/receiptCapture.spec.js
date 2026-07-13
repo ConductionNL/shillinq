@@ -102,6 +102,7 @@ describe('receiptCapture — correction commit payload (REQ-RXC-004)', () => {
 			description: 'lunch',
 			costCentreCode: 'CC100',
 			claimId: '',
+			glAccount: '4400',
 		})
 		expect(payload).toEqual({
 			receiptNumber: 'REC-1',
@@ -117,8 +118,16 @@ describe('receiptCapture — correction commit payload (REQ-RXC-004)', () => {
 			description: 'lunch',
 			costCentreCode: 'CC100',
 			claimId: '',
+			glAccount: '4400',
 		})
 		expect(payload.fieldConfidence).toBeUndefined()
+	})
+})
+
+describe('receiptCapture — GL account (gl-account-suggestion-consume)', () => {
+	it('maps glAccount from the record, defaulting to empty', () => {
+		expect(reviewFormFromReceipt({ glAccount: '4400' }).glAccount).toBe('4400')
+		expect(reviewFormFromReceipt({}).glAccount).toBe('')
 	})
 })
 

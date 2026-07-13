@@ -216,6 +216,31 @@
 					</div>
 				</div>
 
+				<!-- gl-account-suggestion-consume (REQ-GAC-003/004) — docudesk's
+				     suggested booking account, reusing FieldConfidenceBadge; the
+				     operator must still click "Use suggestion" AND Save — never
+				     auto-filled/auto-booked (REQ-GAC-004/REQ-RXC-006). -->
+				<div v-if="glSuggestion" class="bim__suggestion" data-testid="bim-gl-suggestion">
+					<div class="bim__field-row">
+						<FieldConfidenceBadge
+							field="suggestedGlAccount"
+							:confidence="glSuggestion.confidence" />
+						<span class="bim__suggestion-text">
+							{{ t('shillinq', 'Suggested: {code} {label}', { code: glSuggestion.code, label: glSuggestion.label }) }}
+						</span>
+						<NcButton
+							type="tertiary"
+							:disabled="busy"
+							data-testid="bim-use-suggestion"
+							@click="onUseSuggestion">
+							{{ t('shillinq', 'Use suggestion') }}
+						</NcButton>
+					</div>
+					<p class="bim__suggestion-rationale" data-testid="bim-gl-suggestion-rationale">
+						{{ glSuggestion.rationale }}
+					</p>
+				</div>
+
 				<NcButton
 					v-if="isDraftReview && canRerequest"
 					type="secondary"
@@ -274,6 +299,8 @@ import {
 	isFieldCorrected,
 	requiresExplicitReview,
 	pendingDraftSummary,
+	hasKnownExtractionId,
+	glAccountSuggestionSummary,
 } from './billImportModal.js'
 
 const REGISTER_SLUG = 'shillinq'
@@ -298,6 +325,7 @@ export default {
 			importedRecord: null,
 			form: this.emptyForm(),
 			pendingDraftRows: [],
+			glSuggestion: null,
 		}
 	},
 	computed: {
@@ -353,6 +381,7 @@ export default {
 			this.importedRecord = null
 			this.form = this.emptyForm()
 			this.pendingDraftRows = []
+			this.glSuggestion = null
 		},
 		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
 		confidenceFor(field) {
@@ -384,9 +413,11 @@ export default {
 		},
 		/**
 		 * Open an extraction draft directly into the review step, pre-filled
-		 * with per-field confidence (REQ-RXC-002).
+		 * with per-field confidence (REQ-RXC-002), then requests a GL-account
+		 * suggestion for it (gl-account-suggestion-consume, REQ-GAC-003).
 		 *
 		 * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
+		 * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-003
 		 * @param {string} id The draft's OR object id.
 		 */
 		async openDraft(id) {
@@ -400,12 +431,47 @@ export default {
 				this.importedRecord = record
 				this.form = reviewFormFromRecord(record)
 				this.step = 'review'
+				this.fetchGlSuggestion()
 			} catch (e) {
 				this.error = importErrorMessage(e)
 				showError(this.error)
 			} finally {
 				this.busy = false
 			}
+		},
+		/**
+		 * Request a GL-account suggestion for the currently-reviewed draft
+		 * (gl-account-suggestion-consume, REQ-GAC-003) via the shillinq proxy.
+		 * Degrades gracefully when the draft has no known docudesk extraction
+		 * id or docudesk returns no suggestion (REQ-GAC-006); the operator's
+		 * plain manual booking is unaffected either way.
+		 *
+		 * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-003
+		 */
+		async fetchGlSuggestion() {
+			this.glSuggestion = null
+			if (!hasKnownExtractionId(this.importedRecord)) {
+				return
+			}
+
+			try {
+				const response = await axios.post(
+					generateUrl(`/apps/shillinq/api/v1/extraction/drafts/${this.importedRecord.id}/suggest-account?schema=${SUPPLIER_INVOICE_SCHEMA}`),
+				)
+				this.glSuggestion = glAccountSuggestionSummary(response.data)
+			} catch (e) {
+				this.glSuggestion = null
+			}
+		},
+		/**
+		 * Fill the GL-account picker with the suggested code — the operator
+		 * still must click Save to commit anything (REQ-GAC-004).
+		 *
+		 * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-004
+		 */
+		onUseSuggestion() {
+			if (!this.glSuggestion) return
+			this.form.glAccount = this.glSuggestion.code
 		},
 		/**
 		 * (Re-)request docudesk extraction for the currently reviewed draft
@@ -681,5 +747,26 @@ export default {
 .bim__pending-button:hover,
 .bim__pending-button:focus {
 	background: var(--color-background-hover);
+}
+
+.bim__suggestion {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 8px 10px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	background: var(--color-background-hover);
+}
+
+.bim__suggestion-text {
+	flex: 1;
+	color: var(--color-main-text);
+}
+
+.bim__suggestion-rationale {
+	margin: 0;
+	font-size: 0.85em;
+	color: var(--color-text-maxcontrast);
 }
 </style>

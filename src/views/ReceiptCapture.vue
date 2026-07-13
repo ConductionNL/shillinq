@@ -149,6 +149,44 @@
 			</div>
 
 			<div class="receipt-capture__field">
+				<div class="receipt-capture__field-row">
+					<GlAccountPicker
+						v-model="form.glAccount"
+						data-testid="rc-gl-account" />
+					<FieldConfidenceBadge
+						v-if="isDraftReview"
+						field="glAccount"
+						:confidence="confidenceFor('glAccount')"
+						:corrected="isCorrected('glAccount')" />
+				</div>
+			</div>
+
+			<!-- gl-account-suggestion-consume (REQ-GAC-003/004) — same pattern as
+			     BillImportModal: the operator must click "Use suggestion" AND
+			     Save — never auto-filled/auto-booked. -->
+			<div v-if="glSuggestion" class="receipt-capture__suggestion" data-testid="rc-gl-suggestion">
+				<div class="receipt-capture__field-row">
+					<FieldConfidenceBadge
+						field="suggestedGlAccount"
+						:confidence="glSuggestion.confidence" />
+					<span class="receipt-capture__suggestion-text">
+						{{ t('shillinq', 'Suggested: {code} {label}', { code: glSuggestion.code, label: glSuggestion.label }) }}
+					</span>
+					<button
+						type="button"
+						class="receipt-capture__secondary"
+						:disabled="busy"
+						data-testid="rc-use-suggestion"
+						@click="onUseSuggestion">
+						{{ t('shillinq', 'Use suggestion') }}
+					</button>
+				</div>
+				<p class="receipt-capture__suggestion-rationale" data-testid="rc-gl-suggestion-rationale">
+					{{ glSuggestion.rationale }}
+				</p>
+			</div>
+
+			<div class="receipt-capture__field">
 				<label class="receipt-capture__label" for="rc-vendor">{{ t('shillinq', 'Vendor') }}</label>
 				<input
 					id="rc-vendor"
@@ -260,7 +298,15 @@ import { translate as t } from '@nextcloud/l10n'
 import { showSuccess, showError } from '@nextcloud/dialogs'
 
 import FieldConfidenceBadge from '../components/FieldConfidenceBadge.vue'
-import { isExtractionDraft, confidenceForField, isFieldCorrected, requiresExplicitReview } from '../utils/extractionConfidence.js'
+import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
+import {
+	isExtractionDraft,
+	confidenceForField,
+	isFieldCorrected,
+	requiresExplicitReview,
+	hasKnownExtractionId,
+	glAccountSuggestionSummary,
+} from '../utils/extractionConfidence.js'
 import { reviewFormFromReceipt, canSaveReceipt, buildReceiptConfirmPayload, receiptErrorMessage } from './receiptCapture.js'
 
 const REGISTER_SLUG = 'shillinq'
@@ -268,7 +314,7 @@ const RECEIPT_SCHEMA = 'Receipt'
 
 export default {
 	name: 'ReceiptCapture',
-	components: { FieldConfidenceBadge },
+	components: { FieldConfidenceBadge, GlAccountPicker },
 	props: {
 		/** Receipt OR object id, supplied by the manifest router (props: true on `/receipts/:id`). */
 		id: {
@@ -284,6 +330,7 @@ export default {
 			loadError: '',
 			busy: false,
 			saveError: '',
+			glSuggestion: null,
 		}
 	},
 	computed: {
@@ -327,6 +374,7 @@ export default {
 		isCorrected(field) {
 			return isFieldCorrected(this.record, field)
 		},
+		/** @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-003 */
 		async reload() {
 			this.loading = true
 			this.loadError = ''
@@ -340,11 +388,45 @@ export default {
 				}
 				this.record = body
 				this.form = reviewFormFromReceipt(body)
+				this.fetchGlSuggestion()
 			} catch (e) {
 				this.loadError = receiptErrorMessage(e)
 			} finally {
 				this.loading = false
 			}
+		},
+		/**
+		 * Request a GL-account suggestion for this receipt draft
+		 * (gl-account-suggestion-consume, REQ-GAC-003) via the shillinq proxy.
+		 * Degrades gracefully when the draft has no known docudesk extraction
+		 * id or docudesk returns no suggestion (REQ-GAC-006).
+		 *
+		 * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-003
+		 */
+		async fetchGlSuggestion() {
+			this.glSuggestion = null
+			if (!hasKnownExtractionId(this.record)) {
+				return
+			}
+
+			try {
+				const response = await axios.post(
+					generateUrl(`/apps/shillinq/api/v1/extraction/drafts/${this.id}/suggest-account?schema=${RECEIPT_SCHEMA}`),
+				)
+				this.glSuggestion = glAccountSuggestionSummary(response.data)
+			} catch (e) {
+				this.glSuggestion = null
+			}
+		},
+		/**
+		 * Fill the GL-account picker with the suggested code — the operator
+		 * still must click Save to commit anything (REQ-GAC-004).
+		 *
+		 * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-004
+		 */
+		onUseSuggestion() {
+			if (!this.glSuggestion) return
+			this.form.glAccount = this.glSuggestion.code
 		},
 		/**
 		 * REQ-RXC-004: commit an extraction-draft correction through the
@@ -543,5 +625,26 @@ export default {
 .receipt-capture__error {
 	color: var(--color-error);
 	margin: 0;
+}
+
+.receipt-capture__suggestion {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 8px 10px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+	background: var(--color-background-hover);
+}
+
+.receipt-capture__suggestion-text {
+	flex: 1;
+	color: var(--color-main-text);
+}
+
+.receipt-capture__suggestion-rationale {
+	margin: 0;
+	font-size: 0.85em;
+	color: var(--color-text-maxcontrast);
 }
 </style>

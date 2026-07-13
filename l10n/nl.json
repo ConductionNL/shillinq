@@ -1801,6 +1801,8 @@
         "Extraction confidence is high. Review and confirm.": "De betrouwbaarheid van de herkenning is hoog. Controleer en bevestig.",
         "Request extraction": "Opnieuw herkennen",
         "Extraction requested. The draft will update once docudesk responds.": "Herkenning aangevraagd. Het concept wordt bijgewerkt zodra docudesk reageert.",
+        "Suggested: {code} {label}": "Voorgesteld: {code} {label}",
+        "Use suggestion": "Suggestie gebruiken",
         "Back to receipts": "Terug naar bonnetjes",
         "Loading receipt...": "Bonnetje laden...",
         "Receipt date": "Bonnetjesdatum",

@@ -1799,6 +1799,8 @@
         "Extraction confidence is high. Review and confirm.": "Extraction confidence is high. Review and confirm.",
         "Request extraction": "Request extraction",
         "Extraction requested. The draft will update once docudesk responds.": "Extraction requested. The draft will update once docudesk responds.",
+        "Suggested: {code} {label}": "Suggested: {code} {label}",
+        "Use suggestion": "Use suggestion",
         "Back to receipts": "Back to receipts",
         "Loading receipt...": "Loading receipt...",
         "Receipt date": "Receipt date",
