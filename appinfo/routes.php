@@ -119,11 +119,6 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         ['name' => 'administrationExport#exportXaf', 'url' => '/api/administrations/{id}/export', 'verb' => 'GET'],
         ['name' => 'administration#writableStatus', 'url' => '/api/administrations/{id}/writable', 'verb' => 'GET'],
 
-        // Accountant portal (accountant-portal): scoped multi-client dashboard +
-        // handover-pack export, built on the same administratie-aware RBAC above.
-        ['name' => 'accountantPortal#dashboard', 'url' => '/api/accountant/dashboard', 'verb' => 'GET'],
-        ['name' => 'accountantPortal#handoverPack', 'url' => '/api/accountant/administrations/{id}/handover-pack', 'verb' => 'GET'],
-
         // Payroll engine (NL loonadministratie): read-only compute endpoints.
         ['name' => 'payroll#loonstrook', 'url' => '/api/payroll/loonstrook', 'verb' => 'GET'],
         ['name' => 'payroll#lhAfdracht', 'url' => '/api/payroll/lh-afdracht', 'verb' => 'GET'],
@@ -374,6 +369,33 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         ['name' => 'icp#correction', 'url' => '/api/icp/correction', 'verb' => 'POST'],
         ['name' => 'icp#auditExport', 'url' => '/api/icp/audit-export', 'verb' => 'GET'],
         ['name' => 'icp#renderInvoicePdf', 'url' => '/api/icp/invoice-pdf', 'verb' => 'GET'],
+
+        // Aansluiting (tie-out) framework (bookkeeping-aansluitingen,
+        // REQ-AANS-004, REQ-AANS-006). compute() resolves source A / source B
+        // per the Aansluiting definition's aansluitingType and persists an
+        // AansluitingResult; explain()/resolve()/reopen() drive its
+        // open -> explained -> resolved lifecycle. All #[NoAdminRequired] +
+        // IDOR-safe (each write re-fetches the target record server-side).
+        [
+            'name' => 'aansluiting#compute',
+            'url'  => '/api/aansluitingen/{aansluitingId}/compute',
+            'verb' => 'POST',
+        ],
+        [
+            'name' => 'aansluiting#explain',
+            'url'  => '/api/aansluitingen/results/{resultId}/explain',
+            'verb' => 'POST',
+        ],
+        [
+            'name' => 'aansluiting#resolve',
+            'url'  => '/api/aansluitingen/results/{resultId}/resolve',
+            'verb' => 'POST',
+        ],
+        [
+            'name' => 'aansluiting#reopen',
+            'url'  => '/api/aansluitingen/results/{resultId}/reopen',
+            'verb' => 'POST',
+        ],
 
         // IFRS 16 lease accounting (bookkeeping-ifrs-16-lease, REQ-LA-002,
         // REQ-LD-001). Per-contract amortization schedule + per-period

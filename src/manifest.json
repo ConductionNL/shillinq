@@ -197,6 +197,13 @@
 					"order": 29
 				},
 				{
+					"id": "Aansluitingen",
+					"label": "Aansluitingen",
+					"icon": "FileCompareOutline",
+					"route": "Aansluitingen",
+					"order": 29.5
+				},
+				{
 					"id": "FixedAssets",
 					"label": "Fixed Assets",
 					"icon": "OfficeBuildingOutline",
@@ -11115,6 +11122,139 @@
 					]
 				},
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/tax/btw-vat"
+			}
+		},
+		{
+			"id": "Aansluitingen",
+			"route": "/aansluitingen",
+			"type": "index",
+			"title": "Aansluitingen",
+			"config": {
+				"register": "shillinq",
+				"_note": "Aansluiting (tie-out) framework definitions — one row per declared tie-out (source A, source B, expected relationship, tolerance). Click through to AansluitingResultaten for the per-period computed instances.",
+				"schema": "Aansluiting",
+				"columns": [
+					{ "key": "name", "label": "Naam", "sortable": true },
+					{ "key": "aansluitingType", "label": "Type", "sortable": true },
+					{ "key": "sourceALabel", "label": "Bron A" },
+					{ "key": "sourceBLabel", "label": "Bron B" },
+					{ "key": "active", "label": "Actief", "sortable": true }
+				],
+				"defaultSort": "name",
+				"detailRoute": "AansluitingDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/aansluitingen"
+			}
+		},
+		{
+			"id": "AansluitingDetail",
+			"route": "/aansluitingen/:id",
+			"type": "detail",
+			"title": "Aansluiting",
+			"config": {
+				"register": "shillinq",
+				"_note": "Aansluiting definition detail. Computing a new period's result is driven via AansluitingController#compute (POST /api/aansluitingen/{id}/compute?period_id=...); the resulting AansluitingResult rows appear on AansluitingResultaten filtered to this aansluitingId.",
+				"schema": "Aansluiting",
+				"fields": [
+					{ "key": "name", "label": "Naam", "type": "string" },
+					{ "key": "aansluitingType", "label": "Type", "type": "string" },
+					{ "key": "sourceALabel", "label": "Bron A", "type": "string" },
+					{ "key": "sourceBLabel", "label": "Bron B", "type": "string" },
+					{ "key": "expectedRelationship", "label": "Verwachte relatie", "type": "string" },
+					{ "key": "toleranceCents", "label": "Tolerantie (cent)", "type": "number" },
+					{ "key": "controlAccountNumber", "label": "Grootboekrekening", "type": "string" },
+					{ "key": "subLedgerType", "label": "Subgrootboek", "type": "string" },
+					{ "key": "active", "label": "Actief", "type": "boolean" }
+				],
+				"indexRoute": "Aansluitingen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/aansluitingen"
+			}
+		},
+		{
+			"id": "AansluitingResultaten",
+			"route": "/aansluitingen/resultaten",
+			"type": "index",
+			"title": "Aansluiting Resultaten",
+			"config": {
+				"register": "shillinq",
+				"_note": "Per-period computed AansluitingResult rows across all Aansluiting definitions. Filter by status=open to see every unresolved tie-out difference across BTW, AR and AP (REQ-AANS-008).",
+				"schema": "AansluitingResult",
+				"columns": [
+					{ "key": "aansluitingId", "label": "Aansluiting", "sortable": true },
+					{ "key": "periodId", "label": "Periode", "sortable": true },
+					{ "key": "sourceATotal", "label": "Bron A totaal" },
+					{ "key": "sourceBTotal", "label": "Bron B totaal" },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "periodId",
+				"detailRoute": "AansluitingResultDetail",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/aansluitingen"
+			}
+		},
+		{
+			"id": "AansluitingResultDetail",
+			"route": "/aansluitingen/resultaten/:id",
+			"type": "detail",
+			"title": "Aansluiting Resultaat",
+			"config": {
+				"register": "shillinq",
+				"_note": "Difference + bucket-level drill-down (lineDeltas) for one computed period. Lifecycle action buttons (explain, resolve, reopen) render per REQ-AANS-006 status via the standard lifecycle-transition action surface, backed by AansluitingController.",
+				"auditTrail": true,
+				"schema": "AansluitingResult",
+				"fields": [
+					{ "key": "aansluitingId", "label": "Aansluiting", "type": "string" },
+					{ "key": "periodId", "label": "Periode", "type": "string" },
+					{ "key": "sourceATotal", "label": "Bron A totaal", "type": "number" },
+					{ "key": "sourceBTotal", "label": "Bron B totaal", "type": "number" },
+					{ "key": "differenceCents", "label": "Verschil (cent)", "type": "number" },
+					{ "key": "withinTolerance", "label": "Binnen tolerantie", "type": "boolean" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "lineDeltas", "label": "Detail (drill-down)", "type": "array" },
+					{ "key": "explanationReasonCode", "label": "Reden (code)", "type": "string" },
+					{ "key": "explanationReasonText", "label": "Toelichting", "type": "string" },
+					{ "key": "relatedVatCorrectionId", "label": "Gekoppelde BTW-correctie", "type": "string" }
+				],
+				"indexRoute": "AansluitingResultaten",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/aansluitingen"
 			}
 		},
 		{

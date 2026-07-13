@@ -8,18 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Accountant portal (`accountant-portal`) — in-app, scoped multi-client
-  surface for an accountant/bookkeeper with `AdministrationMembership` grants
-  across several client administraties (REQ-ACP-001..004): a dashboard
-  listing every granted client with its period-close state, BTW filing
-  status + statutory deadline, missing-document count and open/attention
-  items (reusing `PeriodCloseAssistantService`), and a one-click handover
-  pack streaming a ZIP of the XAF auditfile, trial balance, general ledger
-  and BTW-overzicht via the existing report generators. Built entirely on
-  the existing `AdministrationContextService` RBAC — a non-granted
-  administration is masked as a 404 on every endpoint, never a 403. Distinct
-  from the archived external, no-Nextcloud-account portaliq `accountant`
-  audience (`2026-07-07-shillinq-accountant-portal-audience`).
+- Aansluiting (tie-out) framework (`bookkeeping-aansluitingen`) — new
+  `Aansluiting`/`AansluitingResult` registers, `AansluitingCalculator`
+  (pure tolerance/diff engine), `AansluitingService` (compute/explain/
+  resolve/reopen orchestrator), `AansluitingResolutionGuard` lifecycle
+  guard, and `AansluitingController` (`POST /api/aansluitingen/...`)
+  implementing a declarative-first (ADR-031) tie-out framework: each
+  `Aansluiting` declares source A, source B, an expected relationship
+  (`equal` / `equal-with-sign-flip`), and a tolerance; `compute()` resolves
+  both totals, computes the signed difference and bucket-level drill-down
+  (`lineDeltas`), auto-resolves within-tolerance results, and otherwise
+  opens an `open -> explained -> resolved` operator workflow with an
+  audit-trailed explanation. Ships two resolvers: BTW-ledger -> aangifte
+  (reuses `VATReturnService::computeCurrentDeclarations()`/
+  `::fetchFiledDeclarations()`; cross-references an existing
+  `VatCorrection` from `btw-suppletie-detection` rather than duplicating
+  it) and subledger -> GL control account (AR/Debiteuren 1300,
+  AP/Crediteuren 1600) — the comparison
+  `PeriodCloseAssistantService::detectOpenSubLedger()` never made (it only
+  counts draft/unposted `GLTransaction`s, never a control-account balance
+  against a subledger total). New manifest navigation:
+  `Bookkeeping > Aansluitingen` + `Aansluiting Resultaten`. Four more
+  aansluitingen (year-end balance pack, ICP<->rubriek-3b, bank-balance
+  tie-out extending `bookkeeping-reconciliation-reports`, XAF/auditfile
+  completeness) are named follow-up work, not implemented in this change.
 - BTW suppletie detection (`btw-suppletie-detection`) — new
   `VatSuppletieDetectionService::detect()`/`::prepare()` engine implementing
   REQ-VBTW-013/014: detects drift between a filed `VATReturn` and its
