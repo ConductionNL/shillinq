@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Tests\Unit\Service;
  */
 class InMemoryObjectService
 {
+
     /**
      * Records keyed by schema slug.
      *
@@ -43,7 +44,7 @@ class InMemoryObjectService
     /**
      * Auto-incrementing id counter.
      *
-     * @var int
+     * @var integer
      */
     private int $nextId = 1;
 
@@ -55,6 +56,8 @@ class InMemoryObjectService
     private string $schema = '';
 
     /**
+     * Fluent register setter (no-op — tests use a single register).
+     *
      * @param string $register OR register slug (ignored — tests use one register).
      *
      * @return self
@@ -66,6 +69,8 @@ class InMemoryObjectService
     }//end setRegister()
 
     /**
+     * Fluent schema setter.
+     *
      * @param string $schema Active schema.
      *
      * @return self
@@ -80,8 +85,8 @@ class InMemoryObjectService
     /**
      * Pre-populate the in-memory store.
      *
-     * @param string                                  $schema Schema slug.
-     * @param array<int,array<string,mixed>>          $rows   Records to seed.
+     * @param string                         $schema Schema slug.
+     * @param array<int,array<string,mixed>> $rows   Records to seed.
      *
      * @return void
      */
@@ -91,6 +96,7 @@ class InMemoryObjectService
             if (isset($row['id']) === false) {
                 $row['id'] = 'auto-'.($this->nextId++);
             }
+
             $this->records[$schema][] = $row;
         }
 
@@ -103,7 +109,7 @@ class InMemoryObjectService
      *
      * @return array<int,array<string,mixed>>
      */
-    public function findAll(array $args = []): array
+    public function findAll(array $args=[]): array
     {
         $rows    = ($this->records[$this->schema] ?? []);
         $filters = (array) ($args['filters'] ?? []);
@@ -121,6 +127,7 @@ class InMemoryObjectService
                             return false;
                         }
                     }
+
                     return true;
                 }
             )
@@ -129,7 +136,12 @@ class InMemoryObjectService
     }//end findAll()
 
     /**
-     * Persist a record on the active schema.
+     * Persist a record on the active schema. Upserts by id: when a row
+     * with the same `id` already exists on the active schema it is
+     * replaced in place (mirroring OpenRegister's real ObjectService
+     * update-by-id semantics); otherwise the row is appended as a new
+     * record. Without this, a multi-step lifecycle (create -> transition
+     * -> re-read) would see stale, duplicated rows for the same object.
      *
      * @param array<string,mixed> $data Record body.
      *
@@ -140,7 +152,21 @@ class InMemoryObjectService
         if (isset($data['id']) === false) {
             $data['id'] = 'auto-'.($this->nextId++);
         }
-        $this->records[$this->schema][] = $data;
+
+        $rows    = ($this->records[$this->schema] ?? []);
+        $updated = false;
+        foreach ($rows as $i => $row) {
+            if (($row['id'] ?? null) === $data['id']) {
+                $this->records[$this->schema][$i] = $data;
+                $updated = true;
+                break;
+            }
+        }
+
+        if ($updated === false) {
+            $this->records[$this->schema][] = $data;
+        }
+
         return $data;
 
     }//end saveObject()
@@ -157,5 +183,4 @@ class InMemoryObjectService
         return ($this->records[$schema] ?? []);
 
     }//end dump()
-
 }//end class

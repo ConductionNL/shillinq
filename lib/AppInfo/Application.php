@@ -30,6 +30,7 @@ use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
+use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
@@ -195,6 +196,19 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectCreatedEvent::class,
             listener: PeppolInboundUblInvoiceListener::class
+        );
+
+        // Grir-accrual-wiring (shillinq#412) — member 09's GRIRClearingService
+        // (REQ-PO3W-009) fully implements the clearing/settlement GL
+        // postings but had zero callers. This listener wires the existing,
+        // unmodified GoodsReceiptNote/SvcReceipt accept transitions and the
+        // SupplierInvoice matching->matched transition (already fired by
+        // ThreeWayMatchingEngine::evaluateMatch()) to
+        // GRIRClearingService::postGRIRForGoodsReceiptAccept() /
+        // postGRIRForServiceReceiptAccept() / settleGRIRForMatchedInvoice().
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: GRIRClearingListener::class
         );
 
         // Change add-invoice-pdf-export-with-ubl-peppol-support REQ-EINV-005 — consume
