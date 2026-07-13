@@ -248,6 +248,20 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
         ['name' => 'goodsReceiptNote#accept', 'url' => '/api/goods-receipt-notes/{id}/accept', 'verb' => 'POST'],
         ['name' => 'goodsReceiptNote#uploadPhotos', 'url' => '/api/goods-receipt-notes/{id}/photos', 'verb' => 'POST'],
 
+        // Service Receipt / prestatieverklaring (member 12 of
+        // bookkeeping-purchase-order-3way, REQ-PO3W-011): the service-PO
+        // alternative to Goods Receipt Note — server-authoritative create /
+        // add-line / confirm / accept endpoints. accept() recomputes the
+        // originating PO(s) receipt lifecycle exactly as acceptGRN() does,
+        // minus the StockMove posting (services never move inventory).
+        // Every endpoint is #[NoAdminRequired] with a per-administration IDOR
+        // guard inside the controller (ADR-005). Static path segments precede
+        // the {id} wildcard so Symfony's route ordering matches them first.
+        ['name' => 'serviceReceipt#create', 'url' => '/api/service-receipts', 'verb' => 'POST'],
+        ['name' => 'serviceReceipt#addLine', 'url' => '/api/service-receipts/{id}/lines', 'verb' => 'POST'],
+        ['name' => 'serviceReceipt#confirm', 'url' => '/api/service-receipts/{id}/confirm', 'verb' => 'POST'],
+        ['name' => 'serviceReceipt#accept', 'url' => '/api/service-receipts/{id}/accept', 'verb' => 'POST'],
+
         // Three-Way Matching Engine (slice 06 of bookkeeping-purchase-order-3way):
         // server-authoritative trigger endpoint that evaluates a SupplierInvoice
         // against its PO + GRN candidates, applies the most-specific
