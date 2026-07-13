@@ -1,9 +1,9 @@
 # accountant-portal Specification
 
-**Status**: in-progress
+**Status**: done
 **Scope**: shillinq
 **OpenSpec changes**:
-- accountant-portal (this change)
+- accountant-portal (2026-07-13, archived)
 
 ## Purpose
 
@@ -17,7 +17,7 @@ authorization model is introduced. This is distinct from the archived
 *external*, no-Nextcloud-account bookkeeper through portaliq; see this
 change's design.md D1 for why the two do not overlap.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: REQ-ACP-001 The accountant dashboard MUST list exactly the administrations the authenticated user has a valid membership for
 
@@ -95,10 +95,13 @@ administration MUST NOT be able to discover or reach client B's data.
 
 @e2e exclude tenant-isolation across two accounts is a same-origin,
 multi-session security proof, not a rendering concern — proven by
-`AccountantPortalControllerTest::testDashboardMaskedForNonMember()` /
-`testHandoverPackMaskedForNonMember()` / `testAnonymousRejected()` (PHPUnit),
-mirroring `AdministrationExportControllerTest`'s existing masked-404 proof
-for the sibling XAF export endpoint.
+`AccountantPortalControllerTest::testHandoverPackMaskedForNonMember()` /
+`testHandoverPackAnonymousRejected()` / `testDashboardRequiresAuthentication()`
+(PHPUnit), mirroring `AdministrationExportControllerTest`'s existing
+masked-404 proof for the sibling XAF export endpoint. The dashboard's own
+scoping has no `{id}` to mask — its isolation guarantee is that a
+non-granted administration never appears in the list at all, proven by
+`AccountantDashboardServiceTest`.
 
 ### Requirement: REQ-ACP-004 The handover pack MUST bundle the journal export, BTW-overzicht, trial balance and XAF auditfile via the existing report generators
 

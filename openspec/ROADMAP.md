@@ -93,8 +93,8 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 
 | Feature | Status | Priority | OpenSpec Change |
 |---------|--------|----------|----------------|
-| Scoped multi-client dashboard (period-close, BTW filing, missing documents, open items) built on existing AdministrationMembership RBAC | in-progress | must | [accountant-portal](changes/accountant-portal/) |
-| One-click handover pack (XAF, trial balance, general ledger, BTW-overzicht) via the existing report generators | in-progress | must | [accountant-portal](changes/accountant-portal/) |
+| Scoped multi-client dashboard (period-close, BTW filing, missing documents, open items) built on existing AdministrationMembership RBAC | done | must | [archived: accountant-portal](changes/archive/2026-07-13-accountant-portal/) |
+| One-click handover pack (XAF, trial balance, general ledger, BTW-overzicht) via the existing report generators | done | must | [archived: accountant-portal](changes/archive/2026-07-13-accountant-portal/) |
 | External, no-Nextcloud-account accountant portal via portaliq (separate audience, read-only) | done | must | [archived: 2026-07-07-shillinq-accountant-portal-audience](changes/archive/2026-07-07-shillinq-accountant-portal-audience/) |
 
 ## Phases
