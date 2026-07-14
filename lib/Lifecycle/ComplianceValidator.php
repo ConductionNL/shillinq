@@ -136,7 +136,7 @@ class ComplianceValidator
 
             $blockingFailures = [];
             foreach ($rules as $rule) {
-                $passed = $this->evaluateRule(rule: $rule, account: $account);
+                $passed = $this->evaluateRule(rule: $rule, account: $account, objectService: $objectService);
                 if ($passed === false) {
                     $severity = ($rule['severity'] ?? 'blocking');
                     if ($severity === 'blocking') {
@@ -183,16 +183,22 @@ class ComplianceValidator
      *
      * Per REQ-SCHATKIST-003 ruleType semantics:
      * - iban-format: validates account.iban against evaluationCriteria.pattern
-     * - segregation: always passes here (IBAN uniqueness is enforced at save time by OR)
+     * - segregation: no other TreasuryAccount in the same administration may share
+     *   this account's IBAN (evaluationCriteria.checkDuplicates) — see evaluateSegregation().
      * - approval-required: checks that approvalStatus is 'approved' or 'not-required'
-     * - Other types: returns true (not yet implemented; non-blocking default)
+     * - Other types (transaction-limit, reporting-period): returns true (not yet
+     *   implemented; non-blocking default — no seed rule uses these ruleTypes today,
+     *   tracked separately, see shillinq issue filed alongside this change)
      *
-     * @param array<string, mixed> $rule    BankingRule object.
-     * @param array<string, mixed> $account TreasuryAccount object.
+     * @param array<string, mixed> $rule          BankingRule object.
+     * @param array<string, mixed> $account       TreasuryAccount object.
+     * @param object               $objectService OR ObjectService, already resolved by the caller
+     *                                            (reused here so a duplicate-IBAN lookup does not
+     *                                            re-fetch the service from the container).
      *
      * @return bool True when the rule passes.
      */
-    private function evaluateRule(array $rule, array $account): bool
+    private function evaluateRule(array $rule, array $account, object $objectService): bool
     {
         $ruleType = ($rule['ruleType'] ?? '');
         $criteria = ($rule['evaluationCriteria'] ?? []);
@@ -200,7 +206,7 @@ class ComplianceValidator
         return match ($ruleType) {
             'iban-format'       => $this->evaluateIbanFormat(criteria: $criteria, account: $account),
             'approval-required' => $this->evaluateApprovalRequired(criteria: $criteria, account: $account),
-            'segregation'       => true,
+            'segregation'       => $this->evaluateSegregation(criteria: $criteria, account: $account, objectService: $objectService),
             default             => true,
         };
 
@@ -227,6 +233,117 @@ class ComplianceValidator
         return (@preg_match(pattern: '~'.$pattern.'~', subject: $iban) === 1);
 
     }//end evaluateIbanFormat()
+
+    /**
+     * Evaluate a `segregation` BankingRule: per REQ-SCHATKIST-003's scenario
+     * "Segregation rule prevents duplicate IBANs within administration" and the
+     * `activate` transition's declared precondition ("no other TreasuryAccount in
+     * administrationId has the same iban when evaluationCriteria.checkDuplicates=true"),
+     * no other `TreasuryAccount` in the same administration may share this account's IBAN.
+     *
+     * Honest tri-state result: a genuine duplicate IBAN returns false (violation —
+     * logged with the account, IBAN, administration, and the conflicting account
+     * id(s) so an auditor can follow it). Missing data (no IBAN/administrationId)
+     * or a lookup failure ALSO returns false — fail-closed — but is logged
+     * distinctly as *indeterminate* rather than a violation, so the audit trail
+     * never conflates "we could not check" with either a genuine pass or a
+     * genuine failure. This method never fabricates a pass.
+     *
+     * @param array<string, mixed> $criteria      Rule's evaluationCriteria (checkDuplicates).
+     * @param array<string, mixed> $account       TreasuryAccount object under evaluation.
+     * @param object               $objectService OR ObjectService (already resolved by the caller).
+     *
+     * @return bool True when no duplicate IBAN exists in the administration (or the
+     *              duplicate check is explicitly disabled via checkDuplicates=false);
+     *              false on a genuine duplicate OR when the check cannot be performed.
+     *
+     * @spec openspec/changes/bookkeeping-schatkistbankieren/specs/bookkeeping-schatkistbankieren/spec.md#REQ-SCHATKIST-003
+     */
+    private function evaluateSegregation(array $criteria, array $account, object $objectService): bool
+    {
+        $checkDuplicates = ($criteria['checkDuplicates'] ?? true);
+        if ($checkDuplicates === false) {
+            // Rule explicitly configured to skip the duplicate-IBAN check.
+            return true;
+        }
+
+        $iban = ($account['iban'] ?? '');
+        $administrationId = ($account['administrationId'] ?? '');
+        $accountId        = ($account['id'] ?? null);
+        $accountNumber    = ($account['accountNumber'] ?? null);
+        $logAccountRef    = ($accountId ?? $accountNumber ?? 'unknown');
+
+        if ($iban === '' || $administrationId === '') {
+            $this->logger->warning(
+                'ComplianceValidator: segregation check indeterminate — missing iban or administrationId; denying (fail-closed, NOT a pass)',
+                ['accountId' => $logAccountRef, 'administrationId' => $administrationId]
+            );
+            return false;
+        }
+
+        try {
+            $siblings = $objectService
+                ->setRegister($this->getRegisterSlug())
+                ->setSchema('TreasuryAccount')
+                ->findAll(
+                    [
+                        'filters' => [
+                            'administrationId' => $administrationId,
+                            'iban'             => $iban,
+                        ],
+                    ]
+                );
+        } catch (\Throwable $e) {
+            $this->logger->warning(
+                'ComplianceValidator: segregation check indeterminate — TreasuryAccount lookup failed; denying (fail-closed, NOT a pass)',
+                ['accountId' => $logAccountRef, 'administrationId' => $administrationId, 'exception' => $e->getMessage()]
+            );
+            return false;
+        }
+
+        if (is_array($siblings) === false) {
+            $this->logger->warning(
+                'ComplianceValidator: segregation check indeterminate — unexpected lookup result; denying (fail-closed, NOT a pass)',
+                ['accountId' => $logAccountRef, 'administrationId' => $administrationId]
+            );
+            return false;
+        }
+
+        $conflictingAccountIds = [];
+        foreach ($siblings as $sibling) {
+            if (is_array($sibling) === false) {
+                continue;
+            }
+
+            $siblingId     = ($sibling['id'] ?? null);
+            $siblingNumber = ($sibling['accountNumber'] ?? null);
+
+            $isSelf = ($accountId !== null && $siblingId === $accountId)
+                || ($accountId === null && $accountNumber !== null && $siblingNumber === $accountNumber);
+
+            if ($isSelf === true) {
+                continue;
+            }
+
+            $conflictingAccountIds[] = ($siblingId ?? $siblingNumber ?? 'unknown');
+        }
+
+        if (count($conflictingAccountIds) > 0) {
+            $this->logger->warning(
+                'ComplianceValidator: segregation rule violation — duplicate IBAN within administration',
+                [
+                    'accountId'             => $logAccountRef,
+                    'administrationId'      => $administrationId,
+                    'iban'                  => $iban,
+                    'conflictingAccountIds' => $conflictingAccountIds,
+                ]
+            );
+            return false;
+        }
+
+        return true;
+
+    }//end evaluateSegregation()
 
     /**
      * Check that the account's approvalStatus satisfies the approval-required rule.
