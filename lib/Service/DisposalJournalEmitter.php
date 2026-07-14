@@ -91,8 +91,16 @@ class DisposalJournalEmitter
      *                                      `disposalDate` (Y-m-d),
      *                                      `disposalAccountingTreatment` (sale|scrap|donation|transfer),
      *                                      `disposalProceeds` (numeric, in the asset's base currency).
-     * @param array<string,mixed> $accounts Account overrides:
-     *                                      `gainAccountNumber`, `lossAccountNumber`, `clearingAccountNumber`.
+     * @param array<string,mixed> $accounts  Account overrides:
+     *                                       `gainAccountNumber`, `lossAccountNumber`, `clearingAccountNumber`.
+     * @param float|null          $bookValue Authoritative net book value at the disposal date. When
+     *                                       supplied, it overrides the value {@see DepreciationCalculator::currentBookValue()}
+     *                                       would recompute. {@see \OCA\Shillinq\Service\FixedAssetDisposalService}
+     *                                       passes `purchaseCost − DepreciationSchedule.accumulatedDepreciation`,
+     *                                       i.e. the depreciation that was actually POSTED to the GL: reversing a
+     *                                       recomputed figure that differs by even a cent would leave a residual
+     *                                       balance on the accumulated-depreciation account (design D3). Null
+     *                                       keeps the pre-existing behaviour exactly.
      *
      * @return array{
      *   header: array<string,mixed>,
@@ -103,8 +111,9 @@ class DisposalJournalEmitter
      * }
      *
      * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
      */
-    public function emit(array $asset, array $disposal, array $accounts=[]): array
+    public function emit(array $asset, array $disposal, array $accounts=[], ?float $bookValue=null): array
     {
         $accounts = array_merge(self::DEFAULT_ACCOUNTS, $accounts);
 
@@ -112,11 +121,15 @@ class DisposalJournalEmitter
         $cost        = (float) ($asset['acquisitionCost'] ?? 0);
         $costCents   = $this->calculator->toCents(amount: $cost);
 
-        $disposalDate    = (string) ($disposal['disposalDate'] ?? date('Y-m-d'));
-        $treatment       = (string) ($disposal['disposalAccountingTreatment'] ?? 'sale');
-        $proceeds        = (float) ($disposal['disposalProceeds'] ?? 0);
-        $proceedsCents   = $this->calculator->toCents(amount: $proceeds);
-        $bookValue       = $this->calculator->currentBookValue(asset: $asset, referenceDate: $disposalDate);
+        $disposalDate  = (string) ($disposal['disposalDate'] ?? date('Y-m-d'));
+        $treatment     = (string) ($disposal['disposalAccountingTreatment'] ?? 'sale');
+        $proceeds      = (float) ($disposal['disposalProceeds'] ?? 0);
+        $proceedsCents = $this->calculator->toCents(amount: $proceeds);
+
+        if ($bookValue === null) {
+            $bookValue = $this->calculator->currentBookValue(asset: $asset, referenceDate: $disposalDate);
+        }
+
         $bookValueCents  = $this->calculator->toCents(amount: $bookValue);
         $accumDepCents   = max(0, ($costCents - $bookValueCents));
         $gainOrLossCents = ($proceedsCents - $bookValueCents);

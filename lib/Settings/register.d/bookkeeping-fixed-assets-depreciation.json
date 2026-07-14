@@ -136,11 +136,53 @@
             "nullable": true,
             "example": "uuid-of-original-asset",
             "title": "Transfer Source Asset Ref"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration — the tenant scope this asset belongs to. Already written by SettingsService::seedFixedAssetsDemo() and required by the disposal GL posting (revive-gl-tax-capabilities REQ-GLTAX-001) to scope the GLTransaction; declared here so the record shape is honest.",
+            "nullable": true,
+            "example": "adm-1",
+            "title": "Administration Id"
+          },
+          "disposalAccountingTreatment": {
+            "type": "string",
+            "description": "REQ-FA-008 — How the retirement is treated for accounting purposes. `sale` books the proceeds against the clearing account and the difference with the book value as boekwinst/boekverlies; `scrap` and `donation` (typically zero proceeds) book the full residual carrying amount as a loss; `transfer` moves the asset out at book value. Read by DisposalJournalEmitter::emit() when the asset transitions to retired.",
+            "enum": [
+              "sale",
+              "scrap",
+              "donation",
+              "transfer"
+            ],
+            "nullable": true,
+            "example": "sale",
+            "title": "Disposal Accounting Treatment"
           }
         },
         "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "REQ-FA-002 — The asset is in use and depreciating."
+            },
+            "inactive": {
+              "label": "Inactive",
+              "description": "REQ-FA-002 — The asset is registered but not yet (or no longer) in use; no depreciation is scheduled."
+            },
+            "retired": {
+              "label": "Retired",
+              "description": "REQ-FA-002 / REQ-FA-008 — The asset has been disposed of; its carrying amount has been zeroed by the disposal journal."
+            }
+          },
           "transitions": {
             "activate": {
+              "from": [
+                "inactive"
+              ],
+              "to": "active",
+              "label": "Activate",
+              "description": "REQ-FA-008 — Put the asset into service.",
               "action": {
                 "type": "emit-journal-entry-and-schedule",
                 "subType": "acquisition",
@@ -178,8 +220,16 @@
               }
             },
             "dispose": {
+              "from": [
+                "active"
+              ],
+              "to": "retired",
+              "label": "Dispose",
+              "description": "REQ-FA-008 — Retire the asset and post its closing journal. Before revive-gl-tax-capabilities this transition declared neither `from` nor `to`, so OpenRegister's TransitionEngine rejected every attempt with \"Transition dispose is not allowed from current state ''\" and no ObjectTransitionedEvent was ever dispatched — the disposal journal could not fire even in principle.",
               "action": {
-                "description": "REQ-FA-008 — Materialises a balanced JournalEntry zeroing the asset account and accumulated depreciation; if disposalAccountingTreatment = sale and salvageProceeds > 0, posts the gain or loss (salvageProceeds − currentBookValue) to the configured P&L account; if scrap or donation with zero proceeds, the residual carrying amount books to loss on disposal."
+                "type": "emit-journal-entry",
+                "subType": "disposal",
+                "description": "REQ-FA-008 — Materialises a balanced JournalEntry zeroing the asset account and accumulated depreciation; if disposalAccountingTreatment = sale and salvageProceeds > 0, posts the gain or loss (salvageProceeds − currentBookValue) to the configured P&L account; if scrap or donation with zero proceeds, the residual carrying amount books to loss on disposal. Materialised on the ADR-031 exception path by FixedAssetDisposalListener → FixedAssetDisposalService → DisposalJournalEmitter::emit(): the declarative DSL cannot read the sibling DepreciationSchedule rows, do integer-cent arithmetic and write a multi-row GLTransaction."
               }
             }
           }
@@ -446,6 +496,17 @@
             "field": "depreciationAmount",
             "operation": "sum",
             "groupBy": "assetRef"
+          }
+        }
+      },
+      "GLLine": {
+        "properties": {
+          "subLedgerType": {
+            "enum": [
+              "fixed-asset"
+            ],
+            "description": "Sub-ledger discriminator. `fixed-asset` added by revive-gl-tax-capabilities REQ-GLTAX-001 (list-concat with the base enum, the same additive mechanism inventory-cogs-posting uses for `inventory`): every line of the disposal journal DisposalJournalEmitter::emit() shapes carries subLedgerType `fixed-asset` with the FixedAsset UUID as subLedgerRef, so the trial balance and the audit trail can trace the closing entry back to the asset. Without this member the disposal lines would be rejected by schema validation.",
+            "title": "Sub Ledger Type"
           }
         }
       }
