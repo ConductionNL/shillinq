@@ -16,9 +16,7 @@
 	},
 	"autoload-dev": {
 		"psr-4": {
-			"OCA\\Shillinq\\Tests\\": "tests/",
-			"OCP\\": "vendor/nextcloud/ocp/OCP/",
-			"NCU\\": "vendor/nextcloud/ocp/NCU/"
+			"OCA\\Shillinq\\Tests\\": "tests/"
 		}
 	},
 	"require": {

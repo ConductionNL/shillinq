@@ -1,8 +1,9 @@
----
-status: draft
----
-
 # consume-platform-abstractions Specification
+
+**Status**: in-progress
+**Scope**: shillinq
+**OpenSpec changes**:
+- consume-platform-abstractions
 
 ## Purpose
 
@@ -12,7 +13,7 @@ instead of reimplementing them, per ADR-022. This spec also records — as a fir
 class outcome, not a gap — the two items whose "zero PHP" premise did not survive
 verification against HEAD and were refused rather than forced through.
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: REQ-CPA-001 — shillinq's JS bundle SHALL populate the shared integration registry
 
@@ -55,10 +56,10 @@ shillinq MUST surface "documents lacking a source-document reference" via a
 
 ### Requirement: REQ-CPA-003 — A platform-capability claim MUST be verified against HEAD before code is written, and refused rather than forced when false
 
-When an audit or gap-sweep claims a "zero PHP" / declarative fix exists for a
-capability, the claim MUST be verified against the actual HEAD state (schema
-content, consuming code paths, and the platform engine's actually-read keys)
-before implementation. When verification shows the claim false — the described
+A platform-capability claim MUST be verified against the actual HEAD state
+(schema content, consuming code paths, and the platform engine's actually-read
+keys) before implementation — whenever an audit/gap-sweep asserts a "zero PHP"
+or declarative fix already exists. When verification shows the claim false — the described
 mechanism does not exist, targets the wrong schema, or is not wired to any
 enforcement point — the item MUST be refused rather than forced through with a
 declarative-looking edit that has no runtime effect, and the refusal MUST be
@@ -73,11 +74,11 @@ recorded with the concrete evidence (file:line citations) that falsified the cla
 
 ### Requirement: REQ-CPA-004 — A cross-repo config dependency MUST NOT be authored inside the wrong repository
 
-When exposing a leaf app's data through a platform gateway requires configuration
-objects (e.g. an openconnector `Endpoint` + `Consumer`) that are only declaratively
-authorable from within the gateway app's own repository/folder structure (not the
-leaf's), the leaf app change MUST NOT create those objects or a facsimile of that
-config inside its own repository. It MUST document the real, verified path/auth
+A leaf app change MUST NOT author, inside its own repository, config objects
+(e.g. an openconnector `Endpoint` + `Consumer`) that are only declaratively
+authorable from within the gateway app's own repository/folder structure — nor a
+facsimile of that config — when exposing the leaf's data through a platform
+gateway requires them. It MUST document the real, verified path/auth
 shape for the sanctioned gateway and file the cross-repo gap as a follow-up issue
 in the owning repository.
 
