@@ -224,6 +224,19 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'purchaseOrder#create', 'url' => '/api/purchase-orders', 'verb' => 'POST'],
             ['name' => 'purchaseOrder#send', 'url' => '/api/purchase-orders/{id}/send', 'verb' => 'POST'],
 
+        // Purchase requisition (aanvraag) — server-authoritative create /
+        // submit / approve / reject / convert-to-PO. Approval reuses
+        // BudgetBlocker/MandaatEnforcer from bookkeeping-verplichtingenadministratie
+        // (no parallel approval system). Every endpoint is #[NoAdminRequired]
+        // with a per-administration IDOR guard in the controller (ADR-005).
+        // Static segments precede the {id} wildcard so Symfony's route
+        // ordering matches them first.
+            ['name' => 'requisition#create', 'url' => '/api/requisitions', 'verb' => 'POST'],
+            ['name' => 'requisition#submit', 'url' => '/api/requisitions/{id}/submit', 'verb' => 'POST'],
+            ['name' => 'requisition#approve', 'url' => '/api/requisitions/{id}/approve', 'verb' => 'POST'],
+            ['name' => 'requisition#reject', 'url' => '/api/requisitions/{id}/reject', 'verb' => 'POST'],
+            ['name' => 'requisition#convert', 'url' => '/api/requisitions/{id}/convert', 'verb' => 'POST'],
+
         // Purchase Order 3-way-match slice 03 — Peppol transmission + PDF/email
         // fallback. Static segments precede the {id} wildcard so they are matched
         // first (Symfony route ordering).
