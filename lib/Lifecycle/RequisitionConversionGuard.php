@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchase-requisition/tasks.md
+ * @spec openspec/specs/purchase-requisition/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any error or non-approved status denies the conversion (CWE-863).
  *
- * @spec openspec/changes/purchase-requisition/tasks.md
+ * @spec openspec/specs/purchase-requisition/spec.md
  */
 class RequisitionConversionGuard
 {
@@ -71,7 +71,7 @@ class RequisitionConversionGuard
      *
      * @return bool True when the requisition may be converted.
      *
-     * @spec openspec/changes/purchase-requisition/tasks.md
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     public function canConvert(string $requisitionId, ?array $object=null): bool
     {

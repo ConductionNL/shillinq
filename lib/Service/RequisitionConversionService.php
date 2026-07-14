@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchase-requisition/tasks.md
+ * @spec openspec/specs/purchase-requisition/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use RuntimeException;
 /**
  * Materialises an approved Requisition into a PurchaseOrder (REQ-REQ-005).
  *
- * @spec openspec/changes/purchase-requisition/tasks.md
+ * @spec openspec/specs/purchase-requisition/spec.md
  */
 class RequisitionConversionService
 {
@@ -56,12 +56,12 @@ class RequisitionConversionService
      * Constructor.
      *
      * @param ContainerInterface           $container             DI container — OR's ObjectService
-     *                                                             is fetched lazily.
-     * @param IAppConfig                   $appConfig              App config for the register slug.
+     *                                                            is fetched lazily.
+     * @param IAppConfig                   $appConfig             App config for the register slug.
      * @param AdministrationContextService $administrationContext IDOR + tenant scope.
-     * @param RequisitionConversionGuard   $guard                  Fail-closed status precondition.
-     * @param PurchaseOrderService         $purchaseOrderService   Reused, unmodified PO creation.
-     * @param LoggerInterface               $logger                Logger (no sensitive payloads).
+     * @param RequisitionConversionGuard   $guard                 Fail-closed status precondition.
+     * @param PurchaseOrderService         $purchaseOrderService  Reused, unmodified PO creation.
+     * @param LoggerInterface              $logger                Logger (no sensitive payloads).
      *
      * @return void
      */
@@ -97,7 +97,7 @@ class RequisitionConversionService
      * @throws \RuntimeException When the requisition is missing, not approved,
      *                            has no preferred supplier, or PO creation fails.
      *
-     * @spec openspec/changes/purchase-requisition/tasks.md
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     public function convertToPurchaseOrder(string $administrationId, string $requisitionId): array
     {
@@ -166,9 +166,9 @@ class RequisitionConversionService
 
         $poId = (string) ($purchaseOrder['id'] ?? ($purchaseOrder['@self']['id'] ?? ''));
 
-        $requisition['statusCode']              = 'converted';
+        $requisition['statusCode'] = 'converted';
         $requisition['convertedPurchaseOrderId'] = $poId;
-        $requisition['convertedAt']              = date('c');
+        $requisition['convertedAt'] = date('c');
 
         $updatedRequisition = $this->saveObject(schema: 'Requisition', object: $requisition);
 

@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchase-requisition/tasks.md
+ * @spec openspec/specs/purchase-requisition/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use RuntimeException;
 /**
  * Requisition create / submit / approve / reject (REQ-REQ-001..004).
  *
- * @spec openspec/changes/purchase-requisition/tasks.md
+ * @spec openspec/specs/purchase-requisition/spec.md
  */
 class RequisitionService
 {
@@ -58,11 +58,11 @@ class RequisitionService
      * Constructor.
      *
      * @param ContainerInterface           $container             DI container — OR's ObjectService
-     *                                                             is fetched lazily.
-     * @param IAppConfig                   $appConfig              App config for the register slug.
+     *                                                            is fetched lazily.
+     * @param IAppConfig                   $appConfig             App config for the register slug.
      * @param AdministrationContextService $administrationContext IDOR + tenant scope.
-     * @param BudgetBlocker                $budgetBlocker          Reused, unmodified budget/mandate guard.
-     * @param LoggerInterface               $logger                Logger (no sensitive payloads).
+     * @param BudgetBlocker                $budgetBlocker         Reused, unmodified budget/mandate guard.
+     * @param LoggerInterface              $logger                Logger (no sensitive payloads).
      *
      * @return void
      */
@@ -92,7 +92,7 @@ class RequisitionService
      *
      * @throws \RuntimeException When the requester lacks access or a required field is missing.
      *
-     * @spec openspec/changes/purchase-requisition/tasks.md
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     public function createRequisition(string $administrationId, array $payload): array
     {
@@ -144,24 +144,24 @@ class RequisitionService
         $requisitionNumber = $this->generateRequisitionNumber(administrationId: $administrationId);
 
         $requisition = [
-            'requisitionNumber'    => $requisitionNumber,
-            'administrationId'     => $administrationId,
-            'requester'            => $requester,
-            'programma'            => $programma,
-            'boekjaar'             => $boekjaar,
-            'neededByDate'         => $neededByDate,
-            'justification'        => $justification,
-            'soort'                => $soort,
-            'preferredSupplierId'  => trim((string) ($payload['preferredSupplierId'] ?? '')),
+            'requisitionNumber'     => $requisitionNumber,
+            'administrationId'      => $administrationId,
+            'requester'             => $requester,
+            'programma'             => $programma,
+            'boekjaar'              => $boekjaar,
+            'neededByDate'          => $neededByDate,
+            'justification'         => $justification,
+            'soort'                 => $soort,
+            'preferredSupplierId'   => trim((string) ($payload['preferredSupplierId'] ?? '')),
             'totaalbedrag_excl_btw' => $totalCent,
-            'statusCode'           => 'draft',
+            'statusCode'            => 'draft',
         ];
 
-        $persisted        = $this->saveObject(schema: 'Requisition', object: $requisition);
-        $requisitionId    = (string) ($persisted['id'] ?? ($persisted['@self']['id'] ?? $requisitionNumber));
+        $persisted     = $this->saveObject(schema: 'Requisition', object: $requisition);
+        $requisitionId = (string) ($persisted['id'] ?? ($persisted['@self']['id'] ?? $requisitionNumber));
 
         foreach ($lines as $line) {
-            $line['requisitionId']  = $requisitionId;
+            $line['requisitionId']    = $requisitionId;
             $line['administrationId'] = $administrationId;
             $this->saveObject(schema: 'RequisitionLine', object: $line);
         }
@@ -185,7 +185,7 @@ class RequisitionService
      * @throws \RuntimeException When the requisition is missing, not in draft,
      *                            or has no positive total.
      *
-     * @spec openspec/changes/purchase-requisition/tasks.md
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     public function submitRequisition(string $administrationId, string $requisitionId): array
     {
@@ -225,7 +225,7 @@ class RequisitionService
      * @throws \RuntimeException When the requisition is missing, not submitted,
      *                            or the budget check fails.
      *
-     * @spec openspec/changes/purchase-requisition/tasks.md
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     public function approveRequisition(string $administrationId, string $requisitionId, string $approverId): array
     {
@@ -263,7 +263,7 @@ class RequisitionService
      * @throws \RuntimeException When the requisition is missing, not submitted,
      *                            or the reason is blank.
      *
-     * @spec openspec/changes/purchase-requisition/tasks.md
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     public function rejectRequisition(
         string $administrationId,
@@ -299,6 +299,8 @@ class RequisitionService
      * @return array<string,mixed>
      *
      * @throws \RuntimeException When access is denied or the requisition is missing.
+     *
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     public function loadRequisition(string $administrationId, string $requisitionId): array
     {
@@ -329,7 +331,7 @@ class RequisitionService
      *
      * @return array<int,array<string,mixed>>
      *
-     * @spec openspec/changes/purchase-requisition/tasks.md
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     public function findLines(string $administrationId, string $requisitionId): array
     {

@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchase-requisition/tasks.md
+ * @spec openspec/specs/purchase-requisition/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Purchase-requisition REST endpoints (create / submit / approve / reject / convert).
  *
- * @spec openspec/changes/purchase-requisition/tasks.md
+ * @spec openspec/specs/purchase-requisition/spec.md
  */
 class RequisitionController extends Controller
 {
@@ -61,12 +61,12 @@ class RequisitionController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest                      $request                The request object.
-     * @param RequisitionService            $requisitionService     Create/submit/approve/reject.
-     * @param RequisitionConversionService  $conversionService      Convert-to-PO.
-     * @param AdministrationContextService  $administrationContext  IDOR + tenant scope.
-     * @param IUserSession                  $userSession            User session guard.
-     * @param LoggerInterface                $logger                 Logger (no stack traces to client).
+     * @param IRequest                     $request               The request object.
+     * @param RequisitionService           $requisitionService    Create/submit/approve/reject.
+     * @param RequisitionConversionService $conversionService     Convert-to-PO.
+     * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+     * @param IUserSession                 $userSession           User session guard.
+     * @param LoggerInterface              $logger                Logger (no stack traces to client).
      *
      * @return void
      */
@@ -93,7 +93,7 @@ class RequisitionController extends Controller
      * @return JSONResponse 201 with the persisted Requisition; 400 on validation;
      *                       401 anonymous; 404 on cross-tenant; 500 without stack trace.
      *
-     * @spec openspec/changes/purchase-requisition/tasks.md
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     #[NoAdminRequired]
     public function create(): JSONResponse
@@ -152,7 +152,7 @@ class RequisitionController extends Controller
      *                       401 anonymous; 404 on cross-tenant/missing; 409 on
      *                       invalid state; 500 without stack trace.
      *
-     * @spec openspec/changes/purchase-requisition/tasks.md
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     #[NoAdminRequired]
     public function submit(string $id): JSONResponse
@@ -180,7 +180,7 @@ class RequisitionController extends Controller
                 requisitionId: $id
             );
         } catch (\RuntimeException $e) {
-            return $this->mapRuntimeError($e);
+            return $this->mapRuntimeError(e: $e);
         } catch (\Throwable $e) {
             $this->logger->error(
                 'RequisitionController: failed to submit requisition',
@@ -207,7 +207,7 @@ class RequisitionController extends Controller
      *                       401 anonymous; 404 on cross-tenant/missing; 409 when
      *                       not submitted or budget insufficient; 500 without stack trace.
      *
-     * @spec openspec/changes/purchase-requisition/tasks.md
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     #[NoAdminRequired]
     public function approve(string $id): JSONResponse
@@ -237,7 +237,7 @@ class RequisitionController extends Controller
                 approverId: $user->getUID()
             );
         } catch (\RuntimeException $e) {
-            return $this->mapRuntimeError($e);
+            return $this->mapRuntimeError(e: $e);
         } catch (\Throwable $e) {
             $this->logger->error(
                 'RequisitionController: failed to approve requisition',
@@ -262,7 +262,7 @@ class RequisitionController extends Controller
      *                       401 anonymous; 404 on cross-tenant/missing; 409 on
      *                       invalid state; 500 without stack trace.
      *
-     * @spec openspec/changes/purchase-requisition/tasks.md
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     #[NoAdminRequired]
     public function reject(string $id): JSONResponse
@@ -295,7 +295,7 @@ class RequisitionController extends Controller
                 reason: $reason
             );
         } catch (\RuntimeException $e) {
-            return $this->mapRuntimeError($e);
+            return $this->mapRuntimeError(e: $e);
         } catch (\Throwable $e) {
             $this->logger->error(
                 'RequisitionController: failed to reject requisition',
@@ -323,7 +323,7 @@ class RequisitionController extends Controller
      *                       409 when not approved / no supplier / no lines;
      *                       500 without stack trace.
      *
-     * @spec openspec/changes/purchase-requisition/tasks.md
+     * @spec openspec/specs/purchase-requisition/spec.md
      */
     #[NoAdminRequired]
     public function convert(string $id): JSONResponse
@@ -351,7 +351,7 @@ class RequisitionController extends Controller
                 requisitionId: $id
             );
         } catch (\RuntimeException $e) {
-            return $this->mapRuntimeError($e);
+            return $this->mapRuntimeError(e: $e);
         } catch (\Throwable $e) {
             $this->logger->error(
                 'RequisitionController: failed to convert requisition',

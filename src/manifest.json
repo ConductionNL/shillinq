@@ -981,6 +981,13 @@
 			"order": 35,
 			"children": [
 				{
+					"id": "Requisitions",
+					"label": "Requisitions",
+					"icon": "ClipboardTextOutline",
+					"route": "Requisitions",
+					"order": 4
+				},
+				{
 					"id": "PurchaseOrders",
 					"label": "Purchase Orders",
 					"icon": "ClipboardListOutline",
@@ -13247,6 +13254,289 @@
 					]
 				},
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
+			}
+		},
+		{
+			"id": "Requisitions",
+			"route": "/inkoop/requisitions",
+			"type": "index",
+			"title": "Requisitions",
+			"config": {
+				"register": "shillinq",
+				"_note": "Purchase requisition (aanvraag) sub-ledger — an employee raises a Requisition before a PurchaseOrder exists. Lifecycle draft -> submitted -> approved|rejected -> converted; approve is gated server-side by BudgetBlocker (budget availability or override-mandate), reused unmodified from bookkeeping-verplichtingenadministratie. Click through to RequisitionDetail for lines, approve/reject and convert-to-PO actions.",
+				"schema": "Requisition",
+				"columns": [
+					{
+						"key": "requisitionNumber",
+						"label": "Requisition #",
+						"sortable": true
+					},
+					{
+						"key": "requester",
+						"label": "Requester",
+						"sortable": true
+					},
+					{
+						"key": "programma",
+						"label": "Cost Centre",
+						"sortable": true
+					},
+					{
+						"key": "boekjaar",
+						"label": "Fiscal Year",
+						"sortable": true
+					},
+					{
+						"key": "neededByDate",
+						"label": "Needed By",
+						"sortable": true
+					},
+					{
+						"key": "totaalbedrag_excl_btw",
+						"label": "Amount (excl. VAT)",
+						"sortable": true
+					},
+					{
+						"key": "statusCode",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-requisitionNumber",
+				"detailRoute": "RequisitionDetail",
+				"description": "Purchase requisitions (aanvragen) raised by employees prior to purchase-order creation. Member of the purchase-requisition change — approval reuses the bookkeeping-verplichtingenadministratie budget/mandate infrastructure.",
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/requisitions"
+			}
+		},
+		{
+			"id": "RequisitionDetail",
+			"route": "/inkoop/requisitions/:id",
+			"type": "detail",
+			"title": "Requisition",
+			"config": {
+				"register": "shillinq",
+				"_note": "Requisition detail. submit/approve/reject/convert are server-authoritative custom endpoints on RequisitionController — NOT the generic OR lifecycle-transition engine — because approve stamps approvedBy/approvedAt (and is gated by BudgetBlocker::canCommit), reject requires a non-blank rejectionReason, and convertToPO materialises a new PurchaseOrder via RequisitionConversionService (a genuine cross-schema write the generic engine cannot perform). To reject, first fill in the Rejection Reason field via the standard edit affordance, then click Reject.",
+				"auditTrail": true,
+				"schema": "Requisition",
+				"fields": [
+					{
+						"key": "requisitionNumber",
+						"label": "Requisition #",
+						"type": "string"
+					},
+					{
+						"key": "requester",
+						"label": "Requester",
+						"type": "string"
+					},
+					{
+						"key": "programma",
+						"label": "Cost Centre / Budget Programme",
+						"type": "string"
+					},
+					{
+						"key": "boekjaar",
+						"label": "Fiscal Year",
+						"type": "number"
+					},
+					{
+						"key": "neededByDate",
+						"label": "Needed By Date",
+						"type": "date"
+					},
+					{
+						"key": "justification",
+						"label": "Justification",
+						"type": "string"
+					},
+					{
+						"key": "soort",
+						"label": "Commitment Type",
+						"type": "string"
+					},
+					{
+						"key": "preferredSupplierId",
+						"label": "Preferred Supplier",
+						"type": "string"
+					},
+					{
+						"key": "totaalbedrag_excl_btw",
+						"label": "Estimated Amount (excl. VAT)",
+						"type": "number"
+					},
+					{
+						"key": "statusCode",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "approvedBy",
+						"label": "Approved By",
+						"type": "string"
+					},
+					{
+						"key": "approvedAt",
+						"label": "Approved At",
+						"type": "date-time"
+					},
+					{
+						"key": "rejectedBy",
+						"label": "Rejected By",
+						"type": "string"
+					},
+					{
+						"key": "rejectionReason",
+						"label": "Rejection Reason",
+						"type": "string"
+					},
+					{
+						"key": "convertedPurchaseOrderId",
+						"label": "Converted Purchase Order",
+						"type": "string"
+					},
+					{
+						"key": "convertedAt",
+						"label": "Converted At",
+						"type": "date-time"
+					}
+				],
+				"relatedLists": [
+					{
+						"id": "requisition-lines",
+						"title": "Lines",
+						"schema": "RequisitionLine",
+						"filter": {
+							"requisitionId": "@self.id"
+						},
+						"columns": [
+							{
+								"key": "lineNumber",
+								"label": "#"
+							},
+							{
+								"key": "description",
+								"label": "Description"
+							},
+							{
+								"key": "quantity",
+								"label": "Qty"
+							},
+							{
+								"key": "unitPrice",
+								"label": "Unit price (cents)"
+							},
+							{
+								"key": "lineTotal",
+								"label": "Line total (cents)"
+							},
+							{
+								"key": "glAccountSuggestion",
+								"label": "GL Account"
+							}
+						]
+					}
+				],
+				"actions": [
+					{
+						"id": "submit-requisition",
+						"label": "Submit for approval",
+						"icon": "SendOutline",
+						"type": "api-call",
+						"url": "/apps/shillinq/api/requisitions/@objectId/submit",
+						"method": "POST",
+						"params": {
+							"administrationId": "@self.administrationId"
+						},
+						"visibleWhen": {
+							"field": "statusCode",
+							"in": ["draft"]
+						},
+						"successMessage": "Requisition submitted for approval.",
+						"errorMessage": "Could not submit the requisition.",
+						"description": "Submit the draft requisition for approval (REQ-REQ-002)."
+					},
+					{
+						"id": "approve-requisition",
+						"label": "Approve",
+						"icon": "CheckCircleOutline",
+						"type": "api-call",
+						"url": "/apps/shillinq/api/requisitions/@objectId/approve",
+						"method": "POST",
+						"params": {
+							"administrationId": "@self.administrationId"
+						},
+						"confirm": true,
+						"visibleWhen": {
+							"field": "statusCode",
+							"in": ["submitted"]
+						},
+						"successMessage": "Requisition approved.",
+						"errorMessage": "Requisition exceeds available budget.",
+						"description": "Approve the submitted requisition. Server-side gated by BudgetBlocker::canCommit — budget availability or an override-mandate (REQ-REQ-003)."
+					},
+					{
+						"id": "reject-requisition",
+						"label": "Reject",
+						"icon": "CloseCircleOutline",
+						"type": "api-call",
+						"url": "/apps/shillinq/api/requisitions/@objectId/reject",
+						"method": "POST",
+						"params": {
+							"administrationId": "@self.administrationId",
+							"reason": "@self.rejectionReason"
+						},
+						"confirm": true,
+						"variant": "error",
+						"visibleWhen": {
+							"field": "statusCode",
+							"in": ["submitted"]
+						},
+						"successMessage": "Requisition rejected.",
+						"errorMessage": "Could not reject the requisition — fill in the Rejection Reason field first.",
+						"description": "Reject the submitted requisition (REQ-REQ-004). Fill in the Rejection Reason field via edit before clicking Reject."
+					},
+					{
+						"id": "convert-to-purchase-order",
+						"label": "Convert to purchase order",
+						"icon": "ClipboardArrowRightOutline",
+						"type": "api-call",
+						"url": "/apps/shillinq/api/requisitions/@objectId/convert",
+						"method": "POST",
+						"params": {
+							"administrationId": "@self.administrationId"
+						},
+						"confirm": true,
+						"visibleWhen": {
+							"field": "statusCode",
+							"in": ["approved"]
+						},
+						"successMessage": "Requisition converted to a purchase order.",
+						"errorMessage": "Could not convert the requisition — check preferred supplier and lines.",
+						"description": "Materialise the approved requisition into a PurchaseOrder via RequisitionConversionService (REQ-REQ-005)."
+					}
+				],
+				"indexRoute": "Requisitions",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "HistoryIcon",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/requisitions"
 			}
 		},
 		{

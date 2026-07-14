@@ -404,11 +404,11 @@ class PurchaseOrderService
      */
     public function sendToPeppol(string $administrationId, string $purchaseOrderId): array
     {
-        $po          = $this->loadPurchaseOrderForTransmission(
+        $po         = $this->loadPurchaseOrderForTransmission(
             administrationId: $administrationId,
             purchaseOrderId: $purchaseOrderId
         );
-        $supplierId  = (string) ($po['supplierId'] ?? '');
+        $supplierId = (string) ($po['supplierId'] ?? '');
         // The generalised port (REQ-EINV-004) names the parameter partyId —
         // it resolves suppliers (PO) and debtors (AR) through the same lookup.
         $participant = $this->peppolAdapter->lookupParticipant(

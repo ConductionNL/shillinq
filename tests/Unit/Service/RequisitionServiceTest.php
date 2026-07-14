@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchase-requisition/tasks.md
+ * @spec openspec/specs/purchase-requisition/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -74,7 +74,7 @@ final class RequisitionServiceTest extends TestCase
      * Build an in-memory ObjectService stub honouring equality filters.
      *
      * @param array<string,array<int,array<string,mixed>>> $data  Schema => rows.
-     * @param array<int,array<string,mixed>>                $saved Captured saves (by reference).
+     * @param array<int,array<string,mixed>>               $saved Captured saves (by reference).
      *
      * @return object
      */
@@ -215,8 +215,8 @@ final class RequisitionServiceTest extends TestCase
      *
      * @param array<string,array<int,array<string,mixed>>> $data                      Schema => rows.
      * @param array<int,array<string,mixed>>               $saved                     Captured saves (by reference).
-     * @param string                                        $userId                    Authenticated uid.
-     * @param array<int,string>                              $accessibleAdministrations Tenants canAccess returns true for.
+     * @param string                                       $userId                    Authenticated uid.
+     * @param array<int,string>                            $accessibleAdministrations Tenants canAccess returns true for.
      *
      * @return RequisitionService
      */
@@ -252,8 +252,8 @@ final class RequisitionServiceTest extends TestCase
     }//end buildService()
 
     /**
-     * createRequisition() computes totaalbedrag_excl_btw as the sum of its
-     * lines and persists each RequisitionLine.
+     * Verifies createRequisition() computes totaalbedrag_excl_btw as the sum
+     * of its lines and persists each RequisitionLine.
      *
      * @return void
      */
@@ -287,7 +287,8 @@ final class RequisitionServiceTest extends TestCase
     }//end testCreateRequisitionComputesTotalAndPersistsLines()
 
     /**
-     * createRequisition() refuses a caller with no access to the administration.
+     * Verifies createRequisition() refuses a caller with no access to the
+     * administration.
      *
      * @return void
      */
@@ -301,22 +302,40 @@ final class RequisitionServiceTest extends TestCase
 
         $service->createRequisition(
             administrationId: 'adm-1',
-            payload: ['programma' => '5.1', 'boekjaar' => 2026, 'neededByDate' => '2026-08-15', 'justification' => 'x', 'soort' => 'inkoop', 'lines' => [['description' => 'x', 'quantity' => 1, 'unitPrice' => 1, 'glAccountSuggestion' => '4400']]]
+            payload: [
+                'programma'     => '5.1',
+                'boekjaar'      => 2026,
+                'neededByDate'  => '2026-08-15',
+                'justification' => 'x',
+                'soort'         => 'inkoop',
+                'lines'         => [
+                    ['description' => 'x', 'quantity' => 1, 'unitPrice' => 1, 'glAccountSuggestion' => '4400'],
+                ],
+            ]
         );
 
     }//end testCreateRequisitionDeniesCrossTenantAccess()
 
     /**
-     * submitRequisition() moves draft -> submitted when a positive total exists.
+     * Verifies submitRequisition() moves draft -> submitted when a positive
+     * total exists.
      *
      * @return void
      */
     public function testSubmitRequisitionMovesFromDraftToSubmitted(): void
     {
-        $saved = [];
-        $data  = [
+        $saved   = [];
+        $data    = [
             'Requisition' => [
-                ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'draft', 'totaalbedrag_excl_btw' => 50000, 'programma' => '5.1', 'boekjaar' => 2026, 'soort' => 'inkoop'],
+                [
+                    'id'                    => 'req-1',
+                    'administrationId'      => 'adm-1',
+                    'statusCode'            => 'draft',
+                    'totaalbedrag_excl_btw' => 50000,
+                    'programma'             => '5.1',
+                    'boekjaar'              => 2026,
+                    'soort'                 => 'inkoop',
+                ],
             ],
         ];
         $service = $this->buildService(data: $data, saved: $saved, userId: 'employee-1', accessibleAdministrations: ['adm-1']);
@@ -328,14 +347,15 @@ final class RequisitionServiceTest extends TestCase
     }//end testSubmitRequisitionMovesFromDraftToSubmitted()
 
     /**
-     * submitRequisition() refuses a requisition that is not in draft.
+     * Verifies submitRequisition() refuses a requisition that is not in
+     * draft.
      *
      * @return void
      */
     public function testSubmitRequisitionRejectsWhenNotDraft(): void
     {
-        $saved = [];
-        $data  = [
+        $saved   = [];
+        $data    = [
             'Requisition' => [
                 ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'totaalbedrag_excl_btw' => 50000],
             ],
@@ -350,15 +370,16 @@ final class RequisitionServiceTest extends TestCase
     }//end testSubmitRequisitionRejectsWhenNotDraft()
 
     /**
-     * approveRequisition() approves when the requisition fits the seeded
-     * Budget's free room (REQ-REQ-003 — reused, unmodified BudgetBlocker).
+     * Verifies approveRequisition() approves when the requisition fits the
+     * seeded Budget's free room (REQ-REQ-003 — reused, unmodified
+     * BudgetBlocker).
      *
      * @return void
      */
     public function testApproveRequisitionWithinBudgetApproves(): void
     {
-        $saved = [];
-        $data  = [
+        $saved   = [];
+        $data    = [
             'Requisition' => [
                 [
                     'id'                    => 'req-1',
@@ -370,14 +391,14 @@ final class RequisitionServiceTest extends TestCase
                     'totaalbedrag_excl_btw' => 500000,
                 ],
             ],
-            'Budget' => [
+            'Budget'      => [
                 [
                     'administrationId'           => 'adm-1',
-                    'programmaCode'               => '5.1',
-                    'boekjaar'                    => 2026,
-                    'geautoriseerd_bedrag'        => 1000000,
-                    'gerealiseerd_bedrag'         => 0,
-                    'openstaande_verplichtingen'  => 0,
+                    'programmaCode'              => '5.1',
+                    'boekjaar'                   => 2026,
+                    'geautoriseerd_bedrag'       => 1000000,
+                    'gerealiseerd_bedrag'        => 0,
+                    'openstaande_verplichtingen' => 0,
                 ],
             ],
         ];
@@ -392,16 +413,17 @@ final class RequisitionServiceTest extends TestCase
     }//end testApproveRequisitionWithinBudgetApproves()
 
     /**
-     * approveRequisition() is BLOCKED when the requisition total exceeds the
-     * matching Budget's free room — the core acceptance scenario for
+     * Verifies approveRequisition() is BLOCKED when the requisition total
+     * exceeds the matching Budget's free room — the core acceptance scenario
+     * for
      * "reuse the existing budget infra" (REQ-REQ-003).
      *
      * @return void
      */
     public function testApproveRequisitionOverBudgetIsBlocked(): void
     {
-        $saved = [];
-        $data  = [
+        $saved   = [];
+        $data    = [
             'Requisition' => [
                 [
                     'id'                    => 'req-1',
@@ -414,14 +436,14 @@ final class RequisitionServiceTest extends TestCase
                     'totaalbedrag_excl_btw' => 2000000,
                 ],
             ],
-            'Budget' => [
+            'Budget'      => [
                 [
                     'administrationId'           => 'adm-1',
-                    'programmaCode'               => '5.1',
-                    'boekjaar'                    => 2026,
-                    'geautoriseerd_bedrag'        => 1000000,
-                    'gerealiseerd_bedrag'         => 0,
-                    'openstaande_verplichtingen'  => 0,
+                    'programmaCode'              => '5.1',
+                    'boekjaar'                   => 2026,
+                    'geautoriseerd_bedrag'       => 1000000,
+                    'gerealiseerd_bedrag'        => 0,
+                    'openstaande_verplichtingen' => 0,
                 ],
             ],
         ];
@@ -448,14 +470,15 @@ final class RequisitionServiceTest extends TestCase
     }//end testApproveRequisitionOverBudgetIsBlocked()
 
     /**
-     * approveRequisition() refuses a requisition that is not submitted.
+     * Verifies approveRequisition() refuses a requisition that is not
+     * submitted.
      *
      * @return void
      */
     public function testApproveRequisitionRejectsWhenNotSubmitted(): void
     {
-        $saved = [];
-        $data  = [
+        $saved   = [];
+        $data    = [
             'Requisition' => [
                 ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'draft', 'totaalbedrag_excl_btw' => 50000],
             ],
@@ -470,14 +493,14 @@ final class RequisitionServiceTest extends TestCase
     }//end testApproveRequisitionRejectsWhenNotSubmitted()
 
     /**
-     * rejectRequisition() requires a non-blank reason.
+     * Verifies rejectRequisition() requires a non-blank reason.
      *
      * @return void
      */
     public function testRejectRequisitionRequiresReason(): void
     {
-        $saved = [];
-        $data  = [
+        $saved   = [];
+        $data    = [
             'Requisition' => [
                 ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'totaalbedrag_excl_btw' => 50000],
             ],
@@ -492,14 +515,15 @@ final class RequisitionServiceTest extends TestCase
     }//end testRejectRequisitionRequiresReason()
 
     /**
-     * rejectRequisition() sets statusCode=rejected with the reason and actor.
+     * Verifies rejectRequisition() sets statusCode=rejected with the reason
+     * and actor.
      *
      * @return void
      */
     public function testRejectRequisitionSetsRejected(): void
     {
-        $saved = [];
-        $data  = [
+        $saved   = [];
+        $data    = [
             'Requisition' => [
                 ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'totaalbedrag_excl_btw' => 50000],
             ],

@@ -15,7 +15,7 @@
         "title": "Purchase Requisition",
         "description": "Internal purchase requisition (aanvraag) raised by an employee before a PurchaseOrder exists (REQ-REQ-001). Lifecycle draft -> submitted -> approved|rejected -> converted. Approval reuses BudgetBlocker (budget availability + override-mandate) and MandaatEnforcer (mandate resolution) from bookkeeping-verplichtingenadministratie via a shared field contract (programma/boekjaar/totaalbedrag_excl_btw/soort) — no parallel approval engine is built. An approved Requisition converts to a PurchaseOrder via RequisitionConversionService, which reuses PurchaseOrderService::createPurchaseOrder() unmodified.",
         "x-schema-org": "schema:OrderAction",
-        "x-spec": "openspec/changes/purchase-requisition/specs/purchase-requisition/spec.md",
+        "x-spec": "openspec/specs/purchase-requisition/spec.md",
         "type": "object",
         "required": [
           "requisitionNumber",
@@ -254,7 +254,7 @@
         "description": "Line item on a Requisition (REQ-REQ-001). Money fields are integer cents per ADR-022; unitPrice is integer cents so quantity * unitPrice -> lineTotal stays exact. glAccountSuggestion is carried forward as the PurchaseOrderLine.glAccount when the parent Requisition converts.",
         "x-schema-org": "schema:OrderItem",
         "x-openregister-purpose": "fact",
-        "x-spec": "openspec/changes/purchase-requisition/specs/purchase-requisition/spec.md",
+        "x-spec": "openspec/specs/purchase-requisition/spec.md",
         "type": "object",
         "required": [
           "requisitionId",

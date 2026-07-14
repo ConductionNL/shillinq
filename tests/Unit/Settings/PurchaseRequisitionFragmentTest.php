@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/purchase-requisition/specs/purchase-requisition/spec.md
+ * @spec openspec/specs/purchase-requisition/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -206,8 +206,16 @@ final class PurchaseRequisitionFragmentTest extends TestCase
     public function testFragmentDoesNotRedeclareSiblingSchemas(): void
     {
         $schemas = $this->fragment()['components']['schemas'];
-        self::assertArrayNotHasKey('PurchaseOrder', $schemas, 'PurchaseOrder is owned by bookkeeping-purchase-order-3way-01; this fragment must not redeclare it');
-        self::assertArrayNotHasKey('Verplichting', $schemas, 'Verplichting is owned by bookkeeping-verplichtingenadministratie; this fragment must not redeclare it');
+        self::assertArrayNotHasKey(
+            'PurchaseOrder',
+            $schemas,
+            'PurchaseOrder is owned by bookkeeping-purchase-order-3way-01; this fragment must not redeclare it'
+        );
+        self::assertArrayNotHasKey(
+            'Verplichting',
+            $schemas,
+            'Verplichting is owned by bookkeeping-verplichtingenadministratie; this fragment must not redeclare it'
+        );
 
     }//end testFragmentDoesNotRedeclareSiblingSchemas()
 
@@ -222,9 +230,9 @@ final class PurchaseRequisitionFragmentTest extends TestCase
      */
     public function testSeedDataCoversLifecycleStates(): void
     {
-        $objects       = $this->fragment()['objects'];
-        $requisitions  = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'Requisition'));
-        $lines         = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'RequisitionLine'));
+        $objects      = $this->fragment()['objects'];
+        $requisitions = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'Requisition'));
+        $lines        = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'RequisitionLine'));
 
         $statuses = array_map(static fn ($r) => $r['statusCode'], $requisitions);
         foreach (['draft', 'submitted', 'approved'] as $expected) {
@@ -233,13 +241,19 @@ final class PurchaseRequisitionFragmentTest extends TestCase
 
         foreach ($requisitions as $requisition) {
             $ownLines = array_filter($lines, static fn ($l) => $l['requisitionId'] === $requisition['requisitionNumber']);
-            self::assertNotEmpty($ownLines, "Seeded Requisition {$requisition['requisitionNumber']} must have at least one RequisitionLine");
+            self::assertNotEmpty(
+                $ownLines,
+                "Seeded Requisition {$requisition['requisitionNumber']} must have at least one RequisitionLine"
+            );
 
             $sum = array_sum(array_map(static fn ($l) => $l['lineTotal'], $ownLines));
             self::assertSame($requisition['totaalbedrag_excl_btw'], $sum, "Seeded totaalbedrag_excl_btw must equal the sum of its lines' lineTotal");
 
             if ($requisition['statusCode'] === 'approved') {
-                self::assertNotEmpty($requisition['preferredSupplierId'] ?? '', 'An approved seed Requisition must carry a preferredSupplierId so it can be converted');
+                self::assertNotEmpty(
+                    $requisition['preferredSupplierId'] ?? '',
+                    'An approved seed Requisition must carry a preferredSupplierId so it can be converted'
+                );
             }
 
             self::assertSame('5.1', $requisition['programma']);
