@@ -10,7 +10,10 @@ import {
 	buildManifest,
 	CnPageRenderer,
 	defaultPageTypes,
+	installIntegrationRegistry,
+	registerBuiltinIntegrations,
 	registerIcons,
+	registerLeafIntegrations,
 	registerTranslations,
 } from '@conduction/nextcloud-vue'
 import pinia from './pinia.js'
@@ -29,6 +32,20 @@ import './assets/app.css'
 Vue.mixin({ methods: { t, n } })
 Vue.use(PiniaVuePlugin)
 Vue.use(VueRouter)
+
+// Populate the shared `window.OCA.OpenRegister.integrations` registry from
+// shillinq's OWN bundle. OpenRegister's main.js calls the same three
+// functions at ITS bootstrap, but Nextcloud only loads an app's JS bundle
+// when a route under that app is active — so on /apps/shillinq routes
+// OpenRegister's bootstrap never runs and the registry stays empty unless a
+// consuming app populates it itself (mirrors decidesk / pipelinq). This is
+// what surfaces the `flow` (NC Flow) and `talk` (NC Talk) — plus every other
+// leaf — sidebar tab and widget on shillinq's object detail pages; per
+// CnObjectSidebar's `useRegistry` default, no per-page manifest change is
+// needed for pages that don't already declare a bespoke `sidebarProps.tabs`.
+installIntegrationRegistry()
+registerBuiltinIntegrations()
+registerLeafIntegrations()
 
 // Register the app's MDI icon set + lib translations once at bootstrap.
 // registerIcons() merges the given map into the lib's ICON_MAP registry;
