@@ -40,6 +40,9 @@ use Psr\Log\LoggerInterface;
  * - No active rules: empty rule set → transition permitted
  * - Missing administrationId → fail-closed (false)
  * - ObjectService exception → fail-closed (false)
+ * - Segregation rule: duplicate IBAN in administration → violation (false)
+ * - Segregation rule: no duplicate → passes (true)
+ * - Segregation rule: missing data / lookup failure → indeterminate, fail-closed (false)
  */
 class ComplianceValidatorTest extends TestCase
 {
@@ -122,21 +125,108 @@ class ComplianceValidatorTest extends TestCase
     }//end buildAccount()
 
     /**
-     * Build a mock ObjectService that returns the given rules from findAll().
+     * Build a mock ObjectService that returns per-schema fixtures from findAll(),
+     * routed by the most recent setSchema() call — mirrors OR's real fluent API
+     * where BankingRule and TreasuryAccount lookups go through the same service.
      *
-     * @param array<array<string, mixed>> $rules Rules to return.
+     * @param array<array<string, mixed>> $bankingRuleRules    Rules returned when schema=BankingRule.
+     * @param array<array<string, mixed>> $treasuryAccountRows Rows returned when schema=TreasuryAccount.
      *
      * @return object
      */
-    private function buildObjectServiceMock(array $rules): object
+    private function buildObjectServiceMock(array $bankingRuleRules, array $treasuryAccountRows=[]): object
     {
-        $objectService = new class($rules) {
+        $objectService = new class($bankingRuleRules, $treasuryAccountRows) {
+
             /**
-             * Construct with pre-configured rule fixtures.
+             * Currently selected schema, set by the most recent setSchema() call.
              *
-             * @param array<array<string, mixed>> $rules Rules returned from findAll().
+             * @var string
              */
-            public function __construct(private readonly array $rules)
+            private string $currentSchema = '';
+
+            /**
+             * Construct with pre-configured per-schema fixtures.
+             *
+             * @param array<array<string, mixed>> $bankingRuleRules    BankingRule fixtures.
+             * @param array<array<string, mixed>> $treasuryAccountRows TreasuryAccount fixtures.
+             */
+            public function __construct(
+                private readonly array $bankingRuleRules,
+                private readonly array $treasuryAccountRows,
+            ) {
+            }//end __construct()
+
+            /**
+             * Fluent register setter stub — returns self for chaining.
+             *
+             * @param string $register Register slug (ignored).
+             *
+             * @return static
+             */
+            public function setRegister(string $register): static
+            {
+                return $this;
+            }//end setRegister()
+
+            /**
+             * Fluent schema setter stub — records the schema so findAll() can route.
+             *
+             * @param string $schema Schema name.
+             *
+             * @return static
+             */
+            public function setSchema(string $schema): static
+            {
+                $this->currentSchema = $schema;
+                return $this;
+            }//end setSchema()
+
+            /**
+             * Return the pre-configured fixture for the most recently selected schema.
+             *
+             * @param array<string, mixed> $params Find parameters (ignored).
+             *
+             * @return array<array<string, mixed>>
+             */
+            public function findAll(array $params=[]): array
+            {
+                return match ($this->currentSchema) {
+                    'TreasuryAccount' => $this->treasuryAccountRows,
+                    default           => $this->bankingRuleRules,
+                };
+            }//end findAll()
+        };
+
+        return $objectService;
+
+    }//end buildObjectServiceMock()
+
+    /**
+     * Build a mock ObjectService whose TreasuryAccount lookup (used by the
+     * segregation check) throws, to exercise the indeterminate/fail-closed path.
+     *
+     * @param array<array<string, mixed>> $bankingRuleRules Rules returned when schema=BankingRule.
+     *
+     * @return object
+     */
+    private function buildObjectServiceMockWithFailingTreasuryLookup(array $bankingRuleRules): object
+    {
+        $objectService = new class($bankingRuleRules) {
+
+            /**
+             * Currently selected schema, set by the most recent setSchema() call.
+             *
+             * @var string
+             */
+            private string $currentSchema = '';
+
+            /**
+             * Construct with pre-configured BankingRule fixtures.
+             *
+             * @param array<array<string, mixed>> $bankingRuleRules BankingRule fixtures.
+             */
+            public function __construct(private readonly array $bankingRuleRules)
             {
             }//end __construct()
 
@@ -153,33 +243,40 @@ class ComplianceValidatorTest extends TestCase
             }//end setRegister()
 
             /**
-             * Fluent schema setter stub — returns self for chaining.
+             * Fluent schema setter stub — records the schema so findAll() can route.
              *
-             * @param string $schema Schema name (ignored).
+             * @param string $schema Schema name.
              *
              * @return static
              */
             public function setSchema(string $schema): static
             {
+                $this->currentSchema = $schema;
                 return $this;
             }//end setSchema()
 
             /**
-             * Return the pre-configured rule fixtures.
+             * Return BankingRule fixtures, or throw for TreasuryAccount lookups.
              *
              * @param array<string, mixed> $params Find parameters (ignored).
              *
              * @return array<array<string, mixed>>
+             *
+             * @throws \RuntimeException When schema=TreasuryAccount (simulates a lookup failure).
              */
             public function findAll(array $params=[]): array
             {
-                return $this->rules;
+                if ($this->currentSchema === 'TreasuryAccount') {
+                    throw new \RuntimeException('TreasuryAccount lookup unavailable');
+                }
+
+                return $this->bankingRuleRules;
             }//end findAll()
         };
 
         return $objectService;
 
-    }//end buildObjectServiceMock()
+    }//end buildObjectServiceMockWithFailingTreasuryLookup()
 
     /**
      * All active rules pass → isCompliant returns true (happy path).
@@ -207,7 +304,7 @@ class ComplianceValidatorTest extends TestCase
 
         $this->container
             ->method('get')
-            ->willReturn($this->buildObjectServiceMock(rules: $rules));
+            ->willReturn($this->buildObjectServiceMock(bankingRuleRules: $rules));
 
         $account = $this->buildAccount();
         $result  = $this->validator->isCompliant(account: $account);
@@ -235,7 +332,7 @@ class ComplianceValidatorTest extends TestCase
 
         $this->container
             ->method('get')
-            ->willReturn($this->buildObjectServiceMock(rules: $rules));
+            ->willReturn($this->buildObjectServiceMock(bankingRuleRules: $rules));
 
         // Invalid IBAN — too short.
         $account = $this->buildAccount(overrides: ['iban' => 'NL91ABNA04171643']);
@@ -264,7 +361,7 @@ class ComplianceValidatorTest extends TestCase
 
         $this->container
             ->method('get')
-            ->willReturn($this->buildObjectServiceMock(rules: $rules));
+            ->willReturn($this->buildObjectServiceMock(bankingRuleRules: $rules));
 
         $account = $this->buildAccount(overrides: ['approvalStatus' => 'pending']);
         $result  = $this->validator->isCompliant(account: $account);
@@ -282,7 +379,7 @@ class ComplianceValidatorTest extends TestCase
     {
         $this->container
             ->method('get')
-            ->willReturn($this->buildObjectServiceMock(rules: []));
+            ->willReturn($this->buildObjectServiceMock(bankingRuleRules: []));
 
         $account = $this->buildAccount();
         $result  = $this->validator->isCompliant(account: $account);
@@ -344,7 +441,7 @@ class ComplianceValidatorTest extends TestCase
 
         $this->container
             ->method('get')
-            ->willReturn($this->buildObjectServiceMock(rules: $rules));
+            ->willReturn($this->buildObjectServiceMock(bankingRuleRules: $rules));
 
         // Invalid IBAN but the rule is only a warning, not blocking.
         $account = $this->buildAccount(overrides: ['iban' => 'NL91ABNA04171643']);
@@ -382,7 +479,7 @@ class ComplianceValidatorTest extends TestCase
 
         $this->container
             ->method('get')
-            ->willReturn($this->buildObjectServiceMock(rules: $rules));
+            ->willReturn($this->buildObjectServiceMock(bankingRuleRules: $rules));
 
         // IBAN passes, but approval is still pending.
         $account = $this->buildAccount(overrides: ['approvalStatus' => 'pending']);
@@ -394,4 +491,200 @@ class ComplianceValidatorTest extends TestCase
         );
 
     }//end testMultiCriteriaBlockingFailureReturnsFalse()
+
+    /**
+     * BAD PATH: another TreasuryAccount in the same administration already has the
+     * same IBAN → the segregation rule MUST report a violation (isCompliant() false).
+     *
+     * Proves the fix: prior to this change, ruleType=segregation was hardcoded
+     * `=> true` in evaluateRule() and this exact scenario would have wrongly passed.
+     *
+     * Corresponds to REQ-SCHATKIST-003 scenario: "Segregation rule prevents
+     * duplicate IBANs within administration".
+     *
+     * @return void
+     */
+    public function testSegregationRuleDetectsDuplicateIbanInAdministration(): void
+    {
+        $rules = [
+            [
+                'ruleNumber'         => 'rule-segregation',
+                'ruleType'           => 'segregation',
+                'severity'           => 'blocking',
+                'isActive'           => true,
+                'evaluationCriteria' => ['checkDuplicates' => true],
+            ],
+        ];
+
+        // A different, already-existing TreasuryAccount in the same administration
+        // shares this account's IBAN.
+        $treasuryAccounts = [
+            [
+                'id'               => 'acct-002',
+                'accountNumber'    => 'TR-NL-002',
+                'iban'             => 'NL91ABNA0417164300',
+                'administrationId' => 'adm-1',
+            ],
+        ];
+
+        $this->container
+            ->method('get')
+            ->willReturn(
+                $this->buildObjectServiceMock(bankingRuleRules: $rules, treasuryAccountRows: $treasuryAccounts)
+            );
+
+        $account = $this->buildAccount(overrides: ['id' => 'acct-001']);
+        $result  = $this->validator->isCompliant(account: $account);
+
+        $this->assertFalse(
+            condition: $result,
+            message: 'Expected isCompliant() to return false (violation) when another TreasuryAccount in the same administration shares this IBAN.'
+        );
+
+    }//end testSegregationRuleDetectsDuplicateIbanInAdministration()
+
+    /**
+     * GOOD PATH: no other TreasuryAccount in the administration shares this IBAN →
+     * the segregation rule passes.
+     *
+     * @return void
+     */
+    public function testSegregationRulePassesWhenNoDuplicateIban(): void
+    {
+        $rules = [
+            [
+                'ruleNumber'         => 'rule-segregation',
+                'ruleType'           => 'segregation',
+                'severity'           => 'blocking',
+                'isActive'           => true,
+                'evaluationCriteria' => ['checkDuplicates' => true],
+            ],
+        ];
+
+        // The TreasuryAccount findAll() stub only ever returns rows that "matched"
+        // the filter; the account under evaluation matching itself is the only row.
+        $treasuryAccounts = [
+            [
+                'id'               => 'acct-001',
+                'accountNumber'    => 'TR-NL-001',
+                'iban'             => 'NL91ABNA0417164300',
+                'administrationId' => 'adm-1',
+            ],
+        ];
+
+        $this->container
+            ->method('get')
+            ->willReturn(
+                $this->buildObjectServiceMock(bankingRuleRules: $rules, treasuryAccountRows: $treasuryAccounts)
+            );
+
+        $account = $this->buildAccount(overrides: ['id' => 'acct-001']);
+        $result  = $this->validator->isCompliant(account: $account);
+
+        $this->assertTrue(
+            condition: $result,
+            message: 'Expected isCompliant() to return true when the only IBAN match is the account itself (no real duplicate).'
+        );
+
+    }//end testSegregationRulePassesWhenNoDuplicateIban()
+
+    /**
+     * NO-DATA PATH: the TreasuryAccount lookup required to evaluate the segregation
+     * rule fails → the control MUST report indeterminate (fail-closed, false), NOT
+     * a fabricated pass.
+     *
+     * @return void
+     */
+    public function testSegregationRuleIndeterminateOnLookupFailureDoesNotPass(): void
+    {
+        $rules = [
+            [
+                'ruleNumber'         => 'rule-segregation',
+                'ruleType'           => 'segregation',
+                'severity'           => 'blocking',
+                'isActive'           => true,
+                'evaluationCriteria' => ['checkDuplicates' => true],
+            ],
+        ];
+
+        $this->container
+            ->method('get')
+            ->willReturn($this->buildObjectServiceMockWithFailingTreasuryLookup(bankingRuleRules: $rules));
+
+        $account = $this->buildAccount(overrides: ['id' => 'acct-001']);
+        $result  = $this->validator->isCompliant(account: $account);
+
+        $this->assertFalse(
+            condition: $result,
+            message: 'Expected isCompliant() to return false (indeterminate, fail-closed) when the '
+                .'segregation duplicate-IBAN lookup fails — never a fabricated pass.'
+        );
+
+    }//end testSegregationRuleIndeterminateOnLookupFailureDoesNotPass()
+
+    /**
+     * NO-DATA PATH: missing IBAN on the account under evaluation → segregation
+     * check cannot run → indeterminate, fail-closed (false), not a pass.
+     *
+     * @return void
+     */
+    public function testSegregationRuleIndeterminateOnMissingIbanDoesNotPass(): void
+    {
+        $rules = [
+            [
+                'ruleNumber'         => 'rule-segregation',
+                'ruleType'           => 'segregation',
+                'severity'           => 'blocking',
+                'isActive'           => true,
+                'evaluationCriteria' => ['checkDuplicates' => true],
+            ],
+        ];
+
+        $this->container
+            ->method('get')
+            ->willReturn($this->buildObjectServiceMock(bankingRuleRules: $rules, treasuryAccountRows: []));
+
+        $account = $this->buildAccount(overrides: ['iban' => '']);
+        $result  = $this->validator->isCompliant(account: $account);
+
+        $this->assertFalse(
+            condition: $result,
+            message: 'Expected isCompliant() to return false (indeterminate, fail-closed) when the account has no IBAN to check.'
+        );
+
+    }//end testSegregationRuleIndeterminateOnMissingIbanDoesNotPass()
+
+    /**
+     * The checkDuplicates=false criterion explicitly disables the duplicate-IBAN
+     * check → rule passes without querying TreasuryAccount at all.
+     *
+     * @return void
+     */
+    public function testSegregationRuleSkipsCheckWhenCheckDuplicatesIsFalse(): void
+    {
+        $rules = [
+            [
+                'ruleNumber'         => 'rule-segregation',
+                'ruleType'           => 'segregation',
+                'severity'           => 'blocking',
+                'isActive'           => true,
+                'evaluationCriteria' => ['checkDuplicates' => false],
+            ],
+        ];
+
+        // A failing TreasuryAccount lookup proves the rule genuinely short-circuits
+        // rather than happening to pass because the stub returns no rows.
+        $this->container
+            ->method('get')
+            ->willReturn($this->buildObjectServiceMockWithFailingTreasuryLookup(bankingRuleRules: $rules));
+
+        $account = $this->buildAccount();
+        $result  = $this->validator->isCompliant(account: $account);
+
+        $this->assertTrue(
+            condition: $result,
+            message: 'Expected isCompliant() to return true when checkDuplicates=false disables the segregation check.'
+        );
+
+    }//end testSegregationRuleSkipsCheckWhenCheckDuplicatesIsFalse()
 }//end class
