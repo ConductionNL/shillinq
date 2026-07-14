@@ -22,9 +22,11 @@ declare(strict_types=1);
 namespace OCA\Shillinq\AppInfo;
 
 use OCA\Shillinq\Guard\BcfSubmissionGuard;
+use OCA\Shillinq\Guard\IntercompanyEliminationGuard;
 use OCA\Shillinq\Guard\Iv3SubmissionGuard;
 use OCA\Shillinq\Guard\Iv3XmlValidationGuard;
 use OCA\Shillinq\Guard\KorLockoutGuard;
+use OCA\Shillinq\Guard\OssPaymentGuard;
 use OCA\Shillinq\Guard\ProjectActivationGuard;
 use OCA\Shillinq\Guard\ProjectCloseGuard;
 use OCA\Shillinq\Guard\ProjectTransitionGuard;
@@ -46,10 +48,13 @@ use OCA\Shillinq\Listener\DBAFactuurMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
+use OCA\Shillinq\Listener\FixedAssetDisposalListener;
 use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
+use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
+use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
@@ -226,6 +231,49 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: GRIRClearingListener::class
+        );
+
+        // Revive-gl-tax-capabilities (shillinq#417/#446) REQ-GLTAX-001 — the
+        // missing fixed-asset disposal trigger. DisposalJournalEmitter fully
+        // implements the closing GLTransaction for a retired FixedAsset and
+        // had zero callers, so an asset could be retired while its gross
+        // value and accumulated depreciation both stayed on the balance
+        // sheet. This listener wires the (now executable — see the repaired
+        // FixedAsset x-openregister-lifecycle) `active -> retired` transition
+        // to FixedAssetDisposalService, which normalises the record, reverses
+        // the depreciation ACTUALLY posted (DepreciationSchedule) and
+        // persists the balanced journal. Fail-soft.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: FixedAssetDisposalListener::class
+        );
+
+        // Revive-gl-tax-capabilities (shillinq#418/#446) REQ-GLTAX-002 — the
+        // missing intercompany mirror + reconciliation trigger.
+        // IntercompanyJournalService (REQ-MA-004) implements buildMirror() /
+        // reconcileVariance() / isBalanced() and NONE of them had a caller.
+        // This listener wires the `IntercompanyJournalEntry` `concept ->
+        // gekoppeld` transition — the one whose own description promises "the
+        // mirrored journal entry is created in the destination
+        // administration" — to IntercompanyLinkService. Fail-soft.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: IntercompanyLinkListener::class
+        );
+
+        // Revive-gl-tax-capabilities (shillinq#446) REQ-GLTAX-004 — the
+        // missing OSS-VAT distribution check.
+        // OssPaymentReconciliation::reconcileDistribution() (REQ-OSS-008) is
+        // the only control that catches the Belastingdienst distributing a
+        // consolidated EU-VAT payment differently from what was declared, and
+        // it had zero callers. An OssPayment carries the confirmed
+        // per-country distribution, so its creation is the trigger: the
+        // listener reconciles it against the linked OssReturn and drives the
+        // record to `reconciled` or `discrepancy` (both declared transitions
+        // out of `pending`). Fail-soft.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: OssPaymentReconciliationListener::class
         );
 
         // Change add-invoice-pdf-export-with-ubl-peppol-support REQ-EINV-005 — consume
@@ -935,6 +983,47 @@ class Application extends App implements IBootstrap
                     guard: $c->get(PeriodCloseGuard::class),
                     method: 'trialBalanceVerifies',
                     denyMessage: 'Total posted debits must equal total posted credits for this period before the close can begin.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+
+        // Revive-gl-tax-capabilities design D2 — the OSS money transitions
+        // (`OssReturn.pay`, `OssPayment.reconcile`) have named
+        // `OCA\Shillinq\Service\OssPaymentReconciliation::canMarkPaid` as
+        // their `requires` guard since the bookkeeping-btw-oss-eu register
+        // shipped, but the tag was never registered: OssPaymentReconciliation
+        // is a plain pure-logic class and its canMarkPaid() takes TWO arrays,
+        // so LifecycleGuardRegistry::resolve() threw and BOTH transitions
+        // hard-failed with HTTP 500 (the shillinq#425/#433 defect class).
+        // OssPaymentGuard is the single-array adapter that string always
+        // implied — it resolves the counterpart record (payment -> its
+        // OssReturn, return -> its OssPayment) and delegates to the
+        // unmodified kernel. Registered under the EXACT literal tag the
+        // register.d names. Fail-closed via RegisterRequiresGuardAdapter.
+        $context->registerService(
+            'OCA\Shillinq\Service\OssPaymentReconciliation::canMarkPaid',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(OssPaymentGuard::class),
+                    method: 'canMarkPaid',
+                    denyMessage: 'A matching bank transaction settling this OSS return in full must be linked before it can be marked paid.',
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+
+        // Revive-gl-tax-capabilities REQ-GLTAX-002 — the `eliminate`
+        // transition on IntercompanyJournalEntry may only fire once the pair
+        // reconciles (zero variance between the two booked sides). Fail-closed
+        // when the counter-side entry cannot be resolved.
+        $context->registerService(
+            'OCA\Shillinq\Guard\IntercompanyEliminationGuard::requireReconciledPair',
+            static function ($c): RegisterRequiresGuardAdapter {
+                return new RegisterRequiresGuardAdapter(
+                    guard: $c->get(IntercompanyEliminationGuard::class),
+                    method: 'requireReconciledPair',
+                    denyMessage: 'The two sides of this intercompany pair do not reconcile; resolve the variance before booking the elimination.',
                     logger: $c->get(LoggerInterface::class),
                 );
             }
