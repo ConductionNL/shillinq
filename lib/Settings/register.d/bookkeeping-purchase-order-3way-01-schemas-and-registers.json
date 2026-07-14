@@ -53,6 +53,15 @@
             "example": "admin",
             "title": "Requester"
           },
+          "requisitionId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "Requisition",
+            "description": "FK to the Requisition (purchase-requisition change, REQ-REQ-005) this order was materialised from, when it was created via requisition conversion rather than directly. Blank for orders created by the pre-existing direct-create flow. When app config `require_approved_requisition_for_po` is enabled, PurchaseOrderService requires this to reference an approved/converted Requisition.",
+            "nullable": true,
+            "example": null,
+            "title": "Requisition ID"
+          },
           "costCenter": {
             "type": "string",
             "description": "Dimensional cost-centre tag propagated to all lines, GRNs, invoices and matches that descend from this PO (REQ-PO-010).",

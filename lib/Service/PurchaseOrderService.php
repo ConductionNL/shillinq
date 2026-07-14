@@ -236,6 +236,9 @@ class PurchaseOrderService
             addCents: $totalCent
         );
 
+        $requisitionId = trim((string) ($payload['requisitionId'] ?? ''));
+        $this->assertRequisitionPolicy(administrationId: $administrationId, requisitionId: $requisitionId);
+
         $approvalChain = $this->determineApprovalChain(amount: $totalAmount);
         $poNumber      = $this->generatePoNumber(administrationId: $administrationId);
 
@@ -251,6 +254,7 @@ class PurchaseOrderService
             'requesterId'      => $requesterId,
             'costCenter'       => $costCenter,
             'projectCode'      => $projectCode,
+            'requisitionId'    => $requisitionId,
             'lines'            => $lines,
             'totalAmount'      => $totalAmount,
             'currency'         => (string) ($payload['currency'] ?? 'EUR'),
@@ -889,6 +893,58 @@ class PurchaseOrderService
         }
 
     }//end assertCostCenterBudget()
+
+    /**
+     * Policy gate: when enabled, refuse to create a PurchaseOrder unless it
+     * traces back to an approved (or already-converted) Requisition
+     * (purchase-requisition change, REQ-REQ-006). Defaults OFF via the
+     * `require_approved_requisition_for_po` app-config flag so existing PO
+     * creation flows — which never reference a requisition — keep working
+     * unchanged. When the flag is ON: a blank requisitionId is refused, and a
+     * non-blank requisitionId must resolve to a Requisition in this
+     * administration whose statusCode is 'approved' or 'converted'.
+     *
+     * @param string $administrationId Administration scope.
+     * @param string $requisitionId    Requisition id from the payload (may be blank).
+     *
+     * @return void
+     *
+     * @throws \RuntimeException When the policy is enabled and the requisition
+     *                            is missing, blank, or not approved/converted.
+     */
+    private function assertRequisitionPolicy(string $administrationId, string $requisitionId): void
+    {
+        $required = $this->appConfig->getValueString(
+            Application::APP_ID,
+            'require_approved_requisition_for_po',
+            'false'
+        );
+        if ($required !== 'true') {
+            return;
+        }
+
+        if ($requisitionId === '') {
+            throw new RuntimeException('A purchase order requires an approved requisition');
+        }
+
+        $requisition = $this->findOne(
+            schema: 'Requisition',
+            filters: [
+                'id'               => $requisitionId,
+                'administrationId' => $administrationId,
+            ]
+        );
+
+        if ($requisition === null) {
+            throw new RuntimeException('Purchase order requires an approved requisition');
+        }
+
+        $status = (string) ($requisition['statusCode'] ?? '');
+        if (in_array($status, ['approved', 'converted'], true) === false) {
+            throw new RuntimeException('Purchase order requires an approved requisition');
+        }
+
+    }//end assertRequisitionPolicy()
 
     /**
      * Generate a CBS-conform PO number for the administration.
