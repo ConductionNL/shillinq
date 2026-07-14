@@ -54,7 +54,6 @@ use OCA\Shillinq\Service\IntercompanyLinkService;
  */
 class IntercompanyEliminationGuard
 {
-
     /**
      * Construct the guard.
      *

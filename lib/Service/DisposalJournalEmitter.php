@@ -86,11 +86,16 @@ class DisposalJournalEmitter
     /**
      * Build the disposal `GLTransaction` payload (REQ-FA-006).
      *
-     * @param array<string,mixed> $asset    FixedAsset record.
-     * @param array<string,mixed> $disposal Disposal input:
-     *                                      `disposalDate` (Y-m-d),
-     *                                      `disposalAccountingTreatment` (sale|scrap|donation|transfer),
-     *                                      `disposalProceeds` (numeric, in the asset's base currency).
+     * @param array<string,mixed> $asset     FixedAsset record.
+     * @param array<string,mixed> $disposal  Disposal input:
+     *                                       `disposalDate`
+     *                                       (Y-m-d),
+     *                                       `disposalAccountingTreatment`
+     *                                       (sale|scrap|donation|transfer),
+     *                                       `disposalProceeds`
+     *                                       (numeric, in
+     *                                       the asset's
+     *                                       base currency).
      * @param array<string,mixed> $accounts  Account overrides:
      *                                       `gainAccountNumber`, `lossAccountNumber`, `clearingAccountNumber`.
      * @param float|null          $bookValue Authoritative net book value at the disposal date. When

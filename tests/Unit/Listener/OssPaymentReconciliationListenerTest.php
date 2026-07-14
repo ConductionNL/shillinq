@@ -106,10 +106,10 @@ class OssPaymentReconciliationListenerTest extends TestCase
             'OssReturn',
             [
                 [
-                    'id'              => 'ossret-1',
+                    'id'               => 'ossret-1',
                     'administrationId' => 'adm-1',
-                    'totalVatAmount'  => 3242.0,
-                    'lineItems'       => [
+                    'totalVatAmount'   => 3242.0,
+                    'lineItems'        => [
                         ['countryCode' => 'DE', 'vatAmount' => 1802.0],
                         ['countryCode' => 'FR', 'vatAmount' => 1440.0],
                     ],

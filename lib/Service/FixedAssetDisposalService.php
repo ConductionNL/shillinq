@@ -91,13 +91,6 @@ class FixedAssetDisposalService
     public const CFG_CLEARING_ACCOUNT = 'fixed_asset_disposal_clearing_account';
 
     /**
-     * FixedAsset schema slug.
-     *
-     * @var string
-     */
-    private const SCHEMA_ASSET = 'FixedAsset';
-
-    /**
      * DepreciationSchedule schema slug.
      *
      * @var string
@@ -129,10 +122,10 @@ class FixedAssetDisposalService
      * Construct the service.
      *
      * @param ContainerInterface           $container             DI container for the lazy ObjectService resolution.
-     * @param IAppConfig                   $appConfig            App config (account codes + register slug).
-     * @param DisposalJournalEmitter       $emitter              The pure-logic disposal journal kernel.
+     * @param IAppConfig                   $appConfig             App config (account codes + register slug).
+     * @param DisposalJournalEmitter       $emitter               The pure-logic disposal journal kernel.
      * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
-     * @param LoggerInterface              $logger               Logger (no sensitive payloads).
+     * @param LoggerInterface              $logger                Logger (no sensitive payloads).
      *
      * @SuppressWarnings(PHPMD.LongVariable) administrationContext is the
      * canonical name fleet-wide.
@@ -235,7 +228,7 @@ class FixedAssetDisposalService
         $normalised = $asset;
 
         $normalised['assetNumber'] = $this->firstNonEmpty(
-            [
+            candidates: [
                 ($asset['assetNumber'] ?? null),
                 ($asset['id'] ?? null),
                 (($asset['@self'] ?? [])['id'] ?? null),
@@ -243,34 +236,34 @@ class FixedAssetDisposalService
         );
 
         $normalised['acquisitionCost'] = $this->firstNumeric(
-            [
+            candidates: [
                 ($asset['acquisitionCost'] ?? null),
                 ($asset['purchaseCost'] ?? null),
             ]
         );
 
         $normalised['assetAccountNumber'] = $this->firstNonEmpty(
-            [
+            candidates: [
                 ($asset['assetAccountNumber'] ?? null),
                 ($asset['capitalizationAccountNumber'] ?? null),
             ]
         );
 
         $normalised['accumulatedDepAccountNumber'] = $this->firstNonEmpty(
-            [
+            candidates: [
                 ($asset['accumulatedDepAccountNumber'] ?? null),
                 ($asset['accumulatedDepreciationAccountNumber'] ?? null),
             ]
         );
 
         $normalised['disposalProceeds'] = $this->firstNumeric(
-            [
+            candidates: [
                 ($asset['disposalProceeds'] ?? null),
                 ($asset['salvageProceeds'] ?? null),
             ]
         );
 
-        $normalised['currency'] = $this->firstNonEmpty([($asset['currency'] ?? null), 'EUR']);
+        $normalised['currency'] = $this->firstNonEmpty(candidates: [($asset['currency'] ?? null), 'EUR']);
 
         return $normalised;
 
@@ -286,7 +279,7 @@ class FixedAssetDisposalService
     private function disposalDate(array $asset): string
     {
         $date = $this->firstNonEmpty(
-            [
+            candidates: [
                 ($asset['disposalDate'] ?? null),
                 ($asset['retirementDate'] ?? null),
             ]
@@ -440,7 +433,7 @@ class FixedAssetDisposalService
                     ]
                 );
                 $lineNumber++;
-            }
+            }//end foreach
 
             return [
                 'posted'      => true,

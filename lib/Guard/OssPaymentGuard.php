@@ -60,7 +60,6 @@ use OCA\Shillinq\Service\OssRecordResolver;
  */
 class OssPaymentGuard
 {
-
     /**
      * Construct the guard.
      *

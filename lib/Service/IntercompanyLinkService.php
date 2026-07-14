@@ -77,10 +77,10 @@ class IntercompanyLinkService
     /**
      * Construct the service.
      *
-     * @param ContainerInterface        $container      DI container for the lazy ObjectService resolution.
-     * @param IAppConfig                $appConfig      App config (register slug).
+     * @param ContainerInterface         $container      DI container for the lazy ObjectService resolution.
+     * @param IAppConfig                 $appConfig      App config (register slug).
      * @param IntercompanyJournalService $journalService The pure-logic REQ-MA-004 kernel.
-     * @param LoggerInterface           $logger         Logger (no sensitive payloads).
+     * @param LoggerInterface            $logger         Logger (no sensitive payloads).
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -119,8 +119,8 @@ class IntercompanyLinkService
             $mirror = $this->journalService->buildMirror(source: $entry);
             $mirror['intercompanyNumber'] = $intercompanyNumber;
             $mirror['description']        = (string) ($entry['description'] ?? '');
-            $counter                      = $this->saveEntry(data: $mirror);
-            $mirrorCreated                = true;
+            $counter       = $this->saveEntry(data: $mirror);
+            $mirrorCreated = true;
         }
 
         $sourceAmount      = ($entry['amount'] ?? 0);
@@ -218,8 +218,8 @@ class IntercompanyLinkService
             return;
         }
 
-        $data                   = $entry;
-        $data['id']             = $entryId;
+        $data       = $entry;
+        $data['id'] = $entryId;
         $data['varianceAmount'] = $variance;
         if (trim((string) ($data['status'] ?? '')) === '') {
             $data['status'] = self::STATE_LINKED;

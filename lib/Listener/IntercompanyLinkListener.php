@@ -109,7 +109,7 @@ class IntercompanyLinkListener implements IEventListener
                 'IntercompanyLinkListener: failed to mirror/reconcile the intercompany pair',
                 ['exception' => $e->getMessage()]
             );
-        }
+        }//end try
 
     }//end handle()
 }//end class

@@ -87,7 +87,7 @@ class FixedAssetDisposalListenerTest extends TestCase
         $appConfig->method('getValueString')->willReturnCallback(
             static function (string $app, string $key, string $default='') {
                 $map = [
-                    'register'                                            => 'shillinq',
+                    'register'                                      => 'shillinq',
                     FixedAssetDisposalService::CFG_GAIN_ACCOUNT     => '8000',
                     FixedAssetDisposalService::CFG_LOSS_ACCOUNT     => '8001',
                     FixedAssetDisposalService::CFG_CLEARING_ACCOUNT => '1100',

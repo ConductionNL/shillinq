@@ -89,9 +89,9 @@ class GRIRReconciliationControllerTest extends TestCase
     /**
      * Build the controller with the given access + session posture.
      *
-     * @param boolean $canAccess    Whether the caller can see the administration.
-     * @param boolean $loggedIn     Whether a user session exists.
-     * @param array<string,string> $params The request parameters.
+     * @param boolean              $canAccess Whether the caller can see the administration.
+     * @param boolean              $loggedIn  Whether a user session exists.
+     * @param array<string,string> $params    The request parameters.
      *
      * @return GRIRReconciliationController
      */

@@ -145,8 +145,8 @@ class OssPaymentReconciliationListener implements IEventListener
                 $status = self::STATE_RECONCILED;
             }
 
-            $data                            = $payment;
-            $data['id']                      = $this->paymentId(payment: $payment);
+            $data       = $payment;
+            $data['id'] = $this->paymentId(payment: $payment);
             $data['reconciliationStatus']    = $status;
             $data['distributionDifferences'] = ($result['differences'] ?? []);
             unset($data['@self']);
