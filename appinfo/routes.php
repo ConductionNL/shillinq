@@ -316,6 +316,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // catch-all is not at risk.
             ['name' => 'threeWayMatchAudit#ledger', 'url' => '/api/three-way-match/audit-trail', 'verb' => 'GET'],
             ['name' => 'threeWayMatchAudit#export', 'url' => '/api/three-way-match/audit-trail/export', 'verb' => 'POST'],
+        // Revive-gl-tax-capabilities REQ-GLTAX-003 (shillinq#424) — the
+        // GR/IR period-end reconciliation control. GRIRClearingService's
+        // two POSTING methods were wired by grir-accrual-wiring, but
+        // reconcileGRIRSaldoForPeriod() had no route, no controller and no
+        // CLI command, so an operator could not run the period-end check
+        // REQ-PO3W-009 requires. #[NoAdminRequired] with a
+        // per-administration IDOR guard in the controller (ADR-005).
+            ['name' => 'gRIRReconciliation#saldo', 'url' => '/api/gr-ir/saldo', 'verb' => 'GET'],
         // Bookkeeping-rekenkamer-audit-pack REQ-RAP-005 — RBAC-scoped
         // compliance export over the OR audit-trail (CSV / JSON;
         // PII fields stripped; auditor / admin group only; the

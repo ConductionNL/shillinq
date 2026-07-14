@@ -741,6 +741,18 @@
             "default": "pending",
             "description": "Reconciliation outcome (REQ-OSS-008).",
             "title": "Reconciliation Status"
+          },
+          "distributionDifferences": {
+            "type": "object",
+            "nullable": true,
+            "description": "REQ-OSS-008 / revive-gl-tax-capabilities REQ-GLTAX-004 — the per-country differences (confirmed minus declared, in euro) OssPaymentReconciliation::reconcileDistribution() found between the Belastingdienst's confirmed perCountryDistribution and the OssReturn's declared line items. Empty when the payment reconciles; populated (and reconciliationStatus = discrepancy) when it does not, so the divergence is stored on the record instead of only being logged.",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "example": {
+              "FR": -40
+            },
+            "title": "Distribution Differences"
           }
         },
         "x-openregister-lifecycle": {
