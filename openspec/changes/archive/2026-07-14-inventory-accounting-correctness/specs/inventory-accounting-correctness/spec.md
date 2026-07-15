@@ -1,6 +1,6 @@
 # Spec: inventory-accounting-correctness
 
-**Status:** in-progress
+**Status:** done
 **Scope:** shillinq
 **Kind:** code
 
