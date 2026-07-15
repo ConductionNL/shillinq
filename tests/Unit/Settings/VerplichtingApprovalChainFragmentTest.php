@@ -47,7 +47,6 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
      */
     private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json';
 
-
     /**
      * Load the fragment as an array.
      *
@@ -59,7 +58,6 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
 
     }//end fragment()
 
-
     /**
      * Load the Verplichting schema definition from the fragment.
      *
@@ -67,12 +65,11 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
      */
     private function verplichting(): array
     {
-        $schemas = ($this->fragment()['schemas'] ?? []);
+        $schemas = ($this->fragment()['components']['schemas'] ?? []);
         self::assertArrayHasKey('Verplichting', $schemas, 'Fragment must declare the Verplichting schema');
         return $schemas['Verplichting'];
 
     }//end verplichting()
-
 
     /**
      * Load the declared approval chain.
@@ -89,7 +86,6 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
 
     }//end chain()
 
-
     /**
      * The fragment is present and valid JSON.
      *
@@ -102,7 +98,6 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
         self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
 
     }//end testFragmentIsValidJson()
-
 
     /**
      * The declared chain names the real `goedkeuren` lifecycle transition
@@ -123,7 +118,6 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
 
     }//end testChainTargetsGoedkeurenTransition()
 
-
     /**
      * The chain routes by a real integer amount field (REQ-VPL-013 / OR REQ-008).
      *
@@ -139,7 +133,6 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
         self::assertSame('integer', $properties['totaalbedrag_excl_btw']['type']);
 
     }//end testChainRoutesByRealAmountField()
-
 
     /**
      * Two ordered approver tiers, each carrying role + min + minAmount, routing
@@ -174,7 +167,6 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
 
     }//end testChainDeclaresOrderedApproverTiers()
 
-
     /**
      * Approver roles are declared in the schema's own RBAC block, so the gate
      * resolves them against real groups.
@@ -190,7 +182,6 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
 
     }//end testApproverRolesAreDeclaredRbacRoles()
 
-
     /**
      * Separation of duties and auto-advance are declared (OR REQ-009 / REQ-010).
      *
@@ -203,7 +194,6 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
         self::assertSame('advanceTransition', $chain['onApprove']);
 
     }//end testChainEnforcesSodAndAutoAdvances()
-
 
     /**
      * No dead control: the imperative mandate-record routing (MandaatEnforcer)
@@ -224,6 +214,4 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
         );
 
     }//end testMandateEnforcerIsRetained()
-
-
 }//end class
