@@ -99,6 +99,12 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'financialDashboard#series', 'url' => '/api/dashboard/financial-series', 'verb' => 'GET'],
             ['name' => 'financialDashboard#summary', 'url' => '/api/dashboard/financial-summary', 'verb' => 'GET'],
 
+        // Spend analytics (spend-analytics): single-dimension spend analysis
+        // (by supplier / category / cost-centre / period) computed server-side
+        // by CONSUMING OpenRegister's aggregation-api (runAdhocByRef, ADR-022).
+        // #[NoAdminRequired]; RBAC/multitenancy enforced by OR aggregation.
+            ['name' => 'spendAnalytics#spend', 'url' => '/api/analytics/spend', 'verb' => 'GET'],
+
         // Credit control & dunning ladder (Tier 2 — issue #124).
         // Static segments first; the resume route uses a {pauseId} wildcard.
             ['name' => 'dunning#bik', 'url' => '/api/dunning/bik', 'verb' => 'POST'],

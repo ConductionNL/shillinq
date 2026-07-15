@@ -1,5 +1,9 @@
 {
     "translations": {
+        "Spend by supplier": "Spend by supplier",
+        "Spend by category": "Spend by category",
+        "Spend by cost centre": "Spend by cost centre",
+        "Spend by period": "Spend by period",
         "Self-approval is not permitted: you prepared or modified this payment run, so you cannot also approve it. A different authorised user must approve the batch before it can be exported.": "Self-approval is not permitted: you prepared or modified this payment run, so you cannot also approve it. A different authorised user must approve the batch before it can be exported.",
         "The payment run cannot be approved: the approving user could not be identified. Sign in and retry; an unidentified approver is blocked (fail-closed).": "The payment run cannot be approved: the approving user could not be identified. Sign in and retry; an unidentified approver is blocked (fail-closed).",
         "The payment run cannot be approved: the batch could not be identified for the segregation-of-duties check (fail-closed).": "The payment run cannot be approved: the batch could not be identified for the segregation-of-duties check (fail-closed).",
