@@ -45,6 +45,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Lifecycle\FrameworkAgreementDrawdownGuard;
+use OCA\Shillinq\Lifecycle\SupplierQualificationGuard;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
 use OCA\Shillinq\Service\PurchaseOrder\LogPurchaseOrderMailer;
 use OCA\Shillinq\Service\PurchaseOrder\PeppolBisOrderMapper;
@@ -129,21 +131,46 @@ class PurchaseOrderService
     private readonly PeppolBisOrderMapper $peppolMapper;
 
     /**
+     * Supplier-qualification gate (procurement-governance). Blocks a PO to an
+     * unqualified supplier when the require_supplier_qualification_for_po policy
+     * is on. Resolved at construction; defaults to a self-constructed instance so
+     * existing callers keep working (default-inert while the policy is off).
+     *
+     * @var SupplierQualificationGuard
+     */
+    private readonly SupplierQualificationGuard $supplierQualificationGuard;
+
+    /**
+     * Framework-agreement ceiling gate (procurement-governance). Blocks a PO
+     * call-off that would exceed the agreement ceiling; only engaged when the
+     * payload carries a frameworkAgreementId. Resolved at construction.
+     *
+     * @var FrameworkAgreementDrawdownGuard
+     */
+    private readonly FrameworkAgreementDrawdownGuard $frameworkAgreementDrawdownGuard;
+
+    /**
      * Constructor.
      *
-     * @param ContainerInterface                      $container             DI container — OR's ObjectService
-     *                                                                       is fetched lazily.
-     * @param IAppConfig                              $appConfig             App config for the register slug.
-     * @param AdministrationContextService            $administrationContext IDOR + tenant scope.
-     * @param INotificationManager                    $notificationManager   NC notification dispatcher.
-     * @param LoggerInterface                         $logger                Logger (no sensitive payloads).
-     * @param PeppolTransmissionAdapterInterface|null $peppolAdapter         Optional Peppol port (slice 03);
-     *                                                                       defaults to
-     *                                                                       LogPeppolTransmissionAdapter.
-     * @param PurchaseOrderMailerInterface|null       $purchaseOrderMailer   Optional PDF+email mailer (slice 03);
-     *                                                                       defaults to LogPurchaseOrderMailer.
-     * @param PeppolBisOrderMapper|null               $peppolMapper          Optional UBL mapper (slice 03);
-     *                                                                       defaults to a fresh instance.
+     * @param ContainerInterface                      $container                       DI container — OR's
+     *                                                                                 ObjectService is fetched lazily.
+     * @param IAppConfig                              $appConfig                       App config for the register slug.
+     * @param AdministrationContextService            $administrationContext           IDOR + tenant scope.
+     * @param INotificationManager                    $notificationManager             NC notification dispatcher.
+     * @param LoggerInterface                         $logger                          Logger (no sensitive payloads).
+     * @param PeppolTransmissionAdapterInterface|null $peppolAdapter                   Optional Peppol port (slice 03);
+     *                                                                                 defaults to
+     *                                                                                 LogPeppolTransmissionAdapter.
+     * @param PurchaseOrderMailerInterface|null       $purchaseOrderMailer             Optional PDF+email mailer (slice 03);
+     *                                                                                 defaults to LogPurchaseOrderMailer.
+     * @param PeppolBisOrderMapper|null               $peppolMapper                    Optional UBL mapper (slice 03);
+     *                                                                                 defaults to a fresh instance.
+     * @param SupplierQualificationGuard|null         $supplierQualificationGuard      Optional supplier-qualification
+     *                                                                                 gate (procurement-governance); defaults
+     *                                                                                 to a self-constructed instance.
+     * @param FrameworkAgreementDrawdownGuard|null    $frameworkAgreementDrawdownGuard Optional framework-agreement
+     *                                                                                 ceiling gate (procurement-governance);
+     *                                                                                 defaults to a self-constructed instance.
      *
      * @return void
      */
@@ -156,6 +183,8 @@ class PurchaseOrderService
         ?PeppolTransmissionAdapterInterface $peppolAdapter=null,
         ?PurchaseOrderMailerInterface $purchaseOrderMailer=null,
         ?PeppolBisOrderMapper $peppolMapper=null,
+        ?SupplierQualificationGuard $supplierQualificationGuard=null,
+        ?FrameworkAgreementDrawdownGuard $frameworkAgreementDrawdownGuard=null,
     ) {
         $this->peppolAdapter       = ($peppolAdapter ?? new LogPeppolTransmissionAdapter(
             container: $container,
@@ -164,6 +193,16 @@ class PurchaseOrderService
         ));
         $this->purchaseOrderMailer = ($purchaseOrderMailer ?? new LogPurchaseOrderMailer(logger: $logger));
         $this->peppolMapper        = ($peppolMapper ?? new PeppolBisOrderMapper());
+        $this->supplierQualificationGuard      = ($supplierQualificationGuard ?? new SupplierQualificationGuard(
+            container: $container,
+            appConfig: $appConfig,
+            logger: $logger
+        ));
+        $this->frameworkAgreementDrawdownGuard = ($frameworkAgreementDrawdownGuard ?? new FrameworkAgreementDrawdownGuard(
+            container: $container,
+            appConfig: $appConfig,
+            logger: $logger
+        ));
     }//end __construct()
 
     /**
@@ -239,6 +278,23 @@ class PurchaseOrderService
         $requisitionId = trim((string) ($payload['requisitionId'] ?? ''));
         $this->assertRequisitionPolicy(administrationId: $administrationId, requisitionId: $requisitionId);
 
+        // Procurement-governance gate (REQ-PG-002): block a PO to an unqualified
+        // supplier when the require_supplier_qualification_for_po policy is on.
+        $this->assertSupplierQualificationPolicy(administrationId: $administrationId, supplierId: $supplierId);
+
+        // Procurement-governance gate (REQ-PG-004): when the PO is a call-off
+        // against a framework agreement, block it if it exceeds the remaining
+        // ceiling. The resolved agreement is drawn down after the PO persists.
+        $frameworkAgreement   = null;
+        $frameworkAgreementId = trim((string) ($payload['frameworkAgreementId'] ?? ''));
+        if ($frameworkAgreementId !== '') {
+            $frameworkAgreement = $this->frameworkAgreementDrawdownGuard->assertWithinCeiling(
+                administrationId: $administrationId,
+                frameworkAgreementId: $frameworkAgreementId,
+                addCents: $totalCent
+            );
+        }
+
         $approvalChain = $this->determineApprovalChain(amount: $totalAmount);
         $poNumber      = $this->generatePoNumber(administrationId: $administrationId);
 
@@ -248,20 +304,21 @@ class PurchaseOrderService
         }
 
         $purchaseOrder = [
-            'poNumber'         => $poNumber,
-            'administrationId' => $administrationId,
-            'supplierId'       => $supplierId,
-            'requesterId'      => $requesterId,
-            'costCenter'       => $costCenter,
-            'projectCode'      => $projectCode,
-            'requisitionId'    => $requisitionId,
-            'lines'            => $lines,
-            'totalAmount'      => $totalAmount,
-            'currency'         => (string) ($payload['currency'] ?? 'EUR'),
-            'approvalChain'    => $this->initialiseApprovalChainEntries(chain: $approvalChain),
-            'lifecycleState'   => $lifecycleState,
-            'createdAt'        => $this->nowIso(),
-            'notes'            => trim((string) ($payload['notes'] ?? '')),
+            'poNumber'             => $poNumber,
+            'administrationId'     => $administrationId,
+            'supplierId'           => $supplierId,
+            'requesterId'          => $requesterId,
+            'costCenter'           => $costCenter,
+            'projectCode'          => $projectCode,
+            'requisitionId'        => $requisitionId,
+            'frameworkAgreementId' => $frameworkAgreementId,
+            'lines'                => $lines,
+            'totalAmount'          => $totalAmount,
+            'currency'             => (string) ($payload['currency'] ?? 'EUR'),
+            'approvalChain'        => $this->initialiseApprovalChainEntries(chain: $approvalChain),
+            'lifecycleState'       => $lifecycleState,
+            'createdAt'            => $this->nowIso(),
+            'notes'                => trim((string) ($payload['notes'] ?? '')),
         ];
 
         $persisted = $this->saveObject(schema: 'PurchaseOrder', object: $purchaseOrder);
@@ -273,6 +330,13 @@ class PurchaseOrderService
             poNumber: $poNumber,
             chain: $approvalChain
         );
+
+        // Record the framework-agreement call-off drawdown now the PO is persisted
+        // (REQ-PG-004). The guard already verified this fits the remaining ceiling.
+        if ($frameworkAgreement !== null) {
+            $frameworkAgreement['drawnAmount'] = ((int) ($frameworkAgreement['drawnAmount'] ?? 0) + $totalCent);
+            $this->saveObject(schema: 'FrameworkAgreement', object: $frameworkAgreement);
+        }
 
         return $persisted;
 
@@ -945,6 +1009,39 @@ class PurchaseOrderService
         }
 
     }//end assertRequisitionPolicy()
+
+    /**
+     * Policy gate (procurement-governance, REQ-PG-002): when the
+     * `require_supplier_qualification_for_po` app-config flag is enabled, refuse
+     * to create a PurchaseOrder for a supplier that is not qualified — no
+     * `qualified` SupplierQualification, or a required document that is missing or
+     * expired. Defaults OFF so existing PO flows keep working unchanged. Delegates
+     * to the reused, unmodified SupplierQualificationGuard (fail-closed).
+     *
+     * @param string $administrationId Administration scope.
+     * @param string $supplierId       Supplier reference from the payload.
+     *
+     * @return void
+     *
+     * @throws \RuntimeException When the policy is enabled and the supplier is not qualified.
+     */
+    private function assertSupplierQualificationPolicy(string $administrationId, string $supplierId): void
+    {
+        $required = $this->appConfig->getValueString(
+            Application::APP_ID,
+            'require_supplier_qualification_for_po',
+            'false'
+        );
+        if ($required !== 'true') {
+            return;
+        }
+
+        $this->supplierQualificationGuard->assertQualifiedForPo(
+            administrationId: $administrationId,
+            supplierId: $supplierId
+        );
+
+    }//end assertSupplierQualificationPolicy()
 
     /**
      * Generate a CBS-conform PO number for the administration.
