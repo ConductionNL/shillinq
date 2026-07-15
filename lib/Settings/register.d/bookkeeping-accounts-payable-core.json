@@ -609,7 +609,7 @@
         },
         "x-openregister-aggregations": {
           "agedPayablesDetail": {
-            "description": "REQ-AP-006: Aged Payables Detail report — per-invoice breakdown grouped by vendor and due-date bucket. Excludes paid / written-off / voided.",
+            "description": "REQ-AP-006: Aged Payables Detail report — per-invoice breakdown grouped by vendor and due-date bucket. Excludes paid / written-off / voided. BLOCKED (cross-tab): OpenRegister's aggregation engine honours only a single-field groupBy ({field: <name>}) today — this multi-field groupBy [vendorId, dueDateBucket] plus the buckets/return projection are INERT engine-side and must not be read as a working capability. Tracked by openregister#432 (honour multi-field groupBy); the shillinq spend-analytics feature ships single-dimension views against the honoured path meanwhile.",
             "source": "APTransaction",
             "where": {
               "state": {
@@ -671,7 +671,7 @@
             ]
           },
           "agedPayablesSummary": {
-            "description": "REQ-AP-007: Aged Payables Summary report — vendor totals grouped by aging bucket. Excludes paid / written-off / voided.",
+            "description": "REQ-AP-007: Aged Payables Summary report — vendor totals grouped by aging bucket. Excludes paid / written-off / voided. BLOCKED (cross-tab): the multi-field groupBy [vendorId, agingBucket] and the aggregate/buckets/return projection maps are INERT — OpenRegister honours only a single-field groupBy ({field: <name>}) today. Tracked by openregister#432.",
             "source": "APTransaction",
             "where": {
               "state": {
