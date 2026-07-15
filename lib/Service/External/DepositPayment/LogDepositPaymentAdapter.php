@@ -103,6 +103,49 @@ class LogDepositPaymentAdapter implements DepositPaymentAdapterInterface
     }//end requestPayment()
 
     /**
+     * Log the capture intent + synthesise a `captured` /
+     * `PAYMENT_DEFERRED` result.
+     *
+     * Used by the no-show-fee-capture flow (bookings-depth) on the
+     * authorise-now / capture-later rail. The dormant adapter reports a
+     * synthetic `captured` lifecycle state so the caller can finalise
+     * the no-show-fee bookkeeping; the `dormant=true` flag signals that
+     * no actual capture hit the gateway.
+     *
+     * @param string              $paymentIntentId Gateway-side authorization intent id.
+     * @param array<string,mixed> $payload         Capture envelope.
+     *
+     * @return DepositPaymentResult The capture outcome.
+     *
+     * @spec openspec/changes/bookings-depth/specs/bookings-cancellation-rules/spec.md
+     */
+    public function capturePayment(string $paymentIntentId, array $payload): DepositPaymentResult
+    {
+        $this->logger->info(
+            'Shillinq DepositPayment capturePayment deferred (no outbound PSP binding bound)',
+            [
+                'paymentIntentId' => $paymentIntentId,
+                'payload'         => $payload,
+            ]
+        );
+
+        return new DepositPaymentResult(
+            lifecycleState: 'captured',
+            gatewayStatus: 'PAYMENT_DEFERRED',
+            paymentIntentId: $paymentIntentId,
+            paymentLink: '',
+            gateway: 'LOG_DEFERRED',
+            dormant: true,
+            extras: [
+                'reason' => 'no-outbound-psp-bound',
+                'note'   => 'No actual capture was dispatched. Override DepositPaymentAdapterInterface in '
+                    .'Application::register() to a production implementation delegating to '
+                    .'MolliePaymentAdapterInterface (capture of an authorized payment) or a sibling PSP adapter.',
+            ],
+        );
+    }//end capturePayment()
+
+    /**
      * Log the status-fetch intent + synthesise a `pending` /
      * `PAYMENT_DEFERRED` result.
      *

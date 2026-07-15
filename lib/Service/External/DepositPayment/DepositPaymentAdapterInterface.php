@@ -104,6 +104,37 @@ interface DepositPaymentAdapterInterface
     public function requestPayment(array $payload): DepositPaymentResult;
 
     /**
+     * Capture a previously-authorized charge (authorise-now /
+     * capture-later rail).
+     *
+     * Used by the no-show-fee-capture flow (bookings-depth): when a
+     * card hold / deposit authorization already exists, the defined
+     * no-show fee is captured against that authorization instead of
+     * opening a fresh payment. Implementations MUST clamp the captured
+     * amount to the authorized amount and MUST be side-effect-free when
+     * dormant (returning a synthetic `captured` / `PAYMENT_DEFERRED`
+     * outcome so the surrounding lifecycle stays observable).
+     *
+     * @param string              $paymentIntentId Gateway-side
+     *                                             authorization intent
+     *                                             id to capture against.
+     * @param array<string,mixed> $payload         Capture envelope —
+     *                                             amount {value,currency},
+     *                                             reason (`noShowFee` |
+     *                                             `operatorCapture`),
+     *                                             metadata{
+     *                                             appointmentId,
+     *                                             administrationId,
+     *                                             correlationId}.
+     *
+     * @return DepositPaymentResult The capture outcome (lifecycle state
+     *                              `captured` on success).
+     *
+     * @spec openspec/changes/bookings-depth/specs/bookings-cancellation-rules/spec.md
+     */
+    public function capturePayment(string $paymentIntentId, array $payload): DepositPaymentResult;
+
+    /**
      * Fetch the current gateway status for an open
      * DepositPayment intent.
      *

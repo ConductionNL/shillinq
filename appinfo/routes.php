@@ -144,6 +144,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'widgetApi#services', 'url' => '/api/widget/services', 'verb' => 'GET'],
             ['name' => 'widgetApi#slots', 'url' => '/api/widget/slots', 'verb' => 'GET'],
             ['name' => 'widgetApi#appointments', 'url' => '/api/widget/appointments', 'verb' => 'POST'],
+        // bookings-depth — no-show-fee capture + recurring appointment series.
+        // Both are operator actions (#[NoAdminRequired] + per-administration
+        // guard). no-show captures the defined noShowFee via the DepositPayment
+        // provider rails; appointment-series expands an RRULE into individual
+        // appointments (skipping availability/conflict violations).
+            ['name' => 'bookingDepth#captureNoShow', 'url' => '/api/v1/appointments/{appointmentId}/no-show', 'verb' => 'POST'],
+            ['name' => 'bookingDepth#createSeries', 'url' => '/api/v1/appointment-series', 'verb' => 'POST'],
         // BTW-aangifte (Tier 3, bookkeeping-vat-btw-filing, issue #127). Specific
         // {returnId}/{action} routes precede the bare {returnId} routes so Symfony
         // matches them first; declaration + line endpoints are read-only.
