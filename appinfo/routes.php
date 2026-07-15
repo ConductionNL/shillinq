@@ -144,6 +144,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'widgetApi#services', 'url' => '/api/widget/services', 'verb' => 'GET'],
             ['name' => 'widgetApi#slots', 'url' => '/api/widget/slots', 'verb' => 'GET'],
             ['name' => 'widgetApi#appointments', 'url' => '/api/widget/appointments', 'verb' => 'POST'],
+        // bookings-depth — no-show-fee capture + recurring appointment series.
+        // Both are operator actions (#[NoAdminRequired] + per-administration
+        // guard). no-show captures the defined noShowFee via the DepositPayment
+        // provider rails; appointment-series expands an RRULE into individual
+        // appointments (skipping availability/conflict violations).
+            ['name' => 'bookingDepth#captureNoShow', 'url' => '/api/v1/appointments/{appointmentId}/no-show', 'verb' => 'POST'],
+            ['name' => 'bookingDepth#createSeries', 'url' => '/api/v1/appointment-series', 'verb' => 'POST'],
         // BTW-aangifte (Tier 3, bookkeeping-vat-btw-filing, issue #127). Specific
         // {returnId}/{action} routes precede the bare {returnId} routes so Symfony
         // matches them first; declaration + line endpoints are read-only.
@@ -222,6 +229,19 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // (masked 404 for non-members). Declared before the SPA catch-all so Symfony matches it
         // first per ADR-016.
             ['name' => 'stockLedger#trace', 'url' => '/api/stock-ledger/trace', 'verb' => 'GET'],
+
+        // Inventory accounting correctness (inventory-accounting-correctness).
+        // valuation-report replays the immutable StockMove ledger to return the
+        // stock value as-of a cut-off date (jaarrekening voorraadwaarde per 31-12),
+        // optionally with a FIFO ageing breakdown. landed-cost capitalises a
+        // receipt's freight + duties into unit cost and posts one balanced
+        // GLTransaction; nrv-writedown applies lower-of-cost-or-NRV (RJ 220 / IAS 2.9)
+        // and posts the balanced period-end adjustment. All #[NoAdminRequired] with
+        // AdministrationContextService enforcing tenant IDOR (masked 404). Static
+        // segments precede the SPA catch-all per ADR-016.
+            ['name' => 'inventoryValuationReport#report', 'url' => '/api/inventory/valuation-report', 'verb' => 'GET'],
+            ['name' => 'inventoryAdjustment#landedCost', 'url' => '/api/inventory/landed-cost', 'verb' => 'POST'],
+            ['name' => 'inventoryAdjustment#nrvWriteDown', 'url' => '/api/inventory/nrv-writedown', 'verb' => 'POST'],
 
         // Purchase Order 3-way-match core (slice 02): server-authoritative create +
         // approval-chain preview + send-block guard. Static segments precede the

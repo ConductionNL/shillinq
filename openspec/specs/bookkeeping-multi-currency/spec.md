@@ -13,6 +13,9 @@ status: done
   open `FXPosition` balances, closing-rate resolution with manual-entry
   fallback, and auditable `FxRevaluationPosting` records
   (REQ-MC-006, REQ-MC-007, REQ-MC-008).
+- `ar-billing-completeness` — adds settlement-time realised FX gain/loss
+  posting for foreign-currency AR invoices, with balanced `GLTransaction` and
+  auditable `RealisedFxPosting` records (REQ-MC-010).
 
 ## Purpose
 
@@ -334,9 +337,48 @@ produces a material revaluation movement per REQ-MC-006.
 
 @e2e exclude pure backend: FX revaluation posting is nightly soft-close orchestration logic with no operator-facing UI in this change — not browser-testable; covered by PHPUnit (`tests/Unit/Service/Treasury/FxRevaluationServiceTest.php`, `tests/Unit/Service/SoftCloseExecutorTest.php`).
 
+### Requirement: REQ-MC-010: Settlement of a foreign-currency AR invoice MUST post the realised FX gain/loss as a balanced GL entry
+
+When an `ARInvoice` whose `currency` differs from the administration's
+`Administration.functionalCurrency` is settled,
+`OCA\Shillinq\Service\Treasury\RealisedFxSettlementService` MUST compute the
+realised difference `foreignAmount x (paymentRate - invoiceRate)` in
+functional-currency cents and, when non-zero, post a self-balancing two-line
+`GLTransaction`: a realised GAIN debits the AR-control clearing account and
+credits the realised-gain account (default `8022`); a realised LOSS debits the
+realised-loss account (default `8023`) and credits AR-control (default `1130`).
+In both directions `debit == credit == |difference|` and `isBalanced` is true.
+The invoice-date rate is the invoice's booked `fxRate` when present, else the
+`FxRate` register at the invoice date; the payment-date rate is the
+gateway-reported rate when present, else the `FxRate` register at the
+settlement date. A parallel append-only `RealisedFxPosting` audit record MUST
+be written. Resolution gaps (same currency, missing rate, zero movement) post
+nothing and MUST NOT block or un-settle the payment (fail-open). The realised
+accounts are distinct from the unrealised `8020`/`8021` pair so the two FX legs
+never conflate.
+
+#### Scenario: Foreign-currency invoice collected at a stronger rate posts a realised gain
+- **GIVEN** a USD invoice for 100000 booked at invoice-date rate 0.90 in a EUR-functional administration
+- **WHEN** it settles at payment-date rate 0.93
+- **THEN** a balanced `GLTransaction` debits AR-control `1130` €3000.00 and credits realised-gain `8022` €3000.00 (debit == credit == 300000 cents), and a `RealisedFxPosting` with `direction: "gain"`, `realisedDeltaCents: 300000` is written
+
+#### Scenario: Foreign-currency invoice collected at a weaker rate posts a realised loss
+- **GIVEN** the same USD invoice booked at invoice-date rate 0.93
+- **WHEN** it settles at payment-date rate 0.90
+- **THEN** a balanced `GLTransaction` debits realised-loss `8023` €3000.00 and credits AR-control `1130` €3000.00 (debit == credit == 300000 cents), and a `RealisedFxPosting` with `direction: "loss"`, `realisedDeltaCents: -300000` is written
+
+#### Scenario: Missing rate or same-currency settlement posts nothing and never blocks the payment
+- **GIVEN** a functional-currency (EUR) invoice, or a foreign-currency invoice for which no rate resolves
+- **WHEN** it settles
+- **THEN** no `GLTransaction` and no `RealisedFxPosting` are written, the settlement still succeeds, and the reason is reported
+
+@e2e exclude pure backend/ledger: realised-FX settlement posting is schema + service + balanced GL behaviour exercised by PHPUnit (`tests/Unit/Service/Treasury/RealisedFxSettlementServiceTest.php`) — not browser-testable.
+
 ## Summary
 
 This spec formalizes multi-currency bank account management as a core
 Shillinq T3 capability, enabling Dutch SMBs and enterprises with
 foreign operations to track EUR, USD, GBP, and other currency balances
-natively without manual spreadsheets or account segregation.
+natively without manual spreadsheets or account segregation. Foreign-currency
+AR invoices are revalued at period-end (unrealised, REQ-MC-006/007/008) and
+post their realised FX gain/loss on settlement (REQ-MC-010).

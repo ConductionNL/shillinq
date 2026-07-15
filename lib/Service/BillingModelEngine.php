@@ -294,6 +294,67 @@ class BillingModelEngine
     }//end calculateMixed()
 
     /**
+     * Usage: one line per rated MeterReading + expenses (REQ-UMB-003). The
+     * readings are pre-rated by UsageRatingCalculator so this method only
+     * formats them into the shared line-draft shape every other billing model
+     * emits — the same shape InvoiceGenerationService totals and persists, so
+     * usage billing reuses the entire existing invoice pipeline (no fork).
+     *
+     * @param array<int,array<string,mixed>> $ratedReadings Rated readings (readingId, resourceType,
+     *                                                      description, billableUnits, unitPriceCents,
+     *                                                      costAmountCents, vatRate, ratePlanId,
+     *                                                      periodStart, periodEnd, meterId).
+     * @param array<int,array<string,mixed>> $expenses      Optional expense lines.
+     *
+     * @return array<int,array<string,mixed>>
+     *
+     * @spec openspec/changes/ar-billing-completeness/specs/usage-metered-billing/spec.md#req-umb-003
+     */
+    public function calculateUsage(array $ratedReadings, array $expenses=[]): array
+    {
+        $lines = [];
+        $line  = 1;
+
+        foreach ($ratedReadings as $reading) {
+            if (isset($reading['unitPriceCents']) === true && $reading['unitPriceCents'] !== null) {
+                $unitPriceCents = (int) $reading['unitPriceCents'];
+            } else {
+                $unitPriceCents = null;
+            }
+
+            $lines[] = [
+                'lineNumber'          => ($line++),
+                'sourceType'          => 'usage',
+                'sourceId'            => ($reading['readingId'] ?? null),
+                'description'         => (string) ($reading['description'] ?? 'Metered usage'),
+                'billableUnits'       => (float) ($reading['billableUnits'] ?? 0.0),
+                'rateApplied'         => [
+                    'ratePlanId'     => (string) ($reading['ratePlanId'] ?? ''),
+                    'ratingMethod'   => (string) ($reading['ratingMethod'] ?? ''),
+                    'unitPriceCents' => $unitPriceCents,
+                ],
+                'markup'              => 0.0,
+                'costAmountCents'     => (int) ($reading['costAmountCents'] ?? 0),
+                'vatRate'             => (float) ($reading['vatRate'] ?? self::DEFAULT_VAT_RATE),
+                'modelSpecificFields' => [
+                    'meterId'      => (string) ($reading['meterId'] ?? ''),
+                    'resourceType' => (string) ($reading['resourceType'] ?? ''),
+                    'unit'         => (string) ($reading['unit'] ?? ''),
+                    'periodStart'  => (string) ($reading['periodStart'] ?? ''),
+                    'periodEnd'    => (string) ($reading['periodEnd'] ?? ''),
+                ],
+            ];
+        }//end foreach
+
+        foreach ($expenses as $exp) {
+            $lines[] = $this->expenseLine(expense: $exp, lineNumber: ($line++));
+        }
+
+        return $lines;
+
+    }//end calculateUsage()
+
+    /**
      * Build an expense line.
      *
      * @param array<string,mixed> $expense    Expense (expenseId, description, costAmountCents, vatRate).

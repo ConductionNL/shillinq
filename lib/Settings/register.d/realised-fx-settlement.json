@@ -1,0 +1,216 @@
+{
+    "_meta": {
+        "spdx-license": "EUPL-1.2",
+        "spdx-copyright": "2026 Conduction B.V.",
+        "change": "ar-billing-completeness",
+        "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+        "description": "Declares RealisedFxPosting, the append-only audit record produced by OCA\\Shillinq\\Service\\Treasury\\RealisedFxSettlementService when a foreign-currency ARInvoice is settled at a payment-date rate different from its invoice-date rate (REQ-MC-010 of bookkeeping-multi-currency). Complements FxRevaluationPosting (the UNREALISED period-end leg from fx-period-end-revaluation) with the REALISED settlement leg. The balanced two-line GLTransaction is emitted by the service; this record is the parallel audit trail."
+    },
+    "components": {
+        "schemas": {
+            "RealisedFxPosting": {
+                "slug": "RealisedFxPosting",
+                "icon": "CurrencyEur",
+                "version": "0.1.0",
+                "title": "Realised FX Posting",
+                "description": "Append-only audit record per foreign-currency ARInvoice settlement (REQ-MC-010). Carries the settled invoice, the foreign amount, the invoice-date and payment-date rates, the signed realised difference in functional cents, the direction (gain/loss) and the GL account attribution (realised gain/loss account plus AR-control clearing). The realised difference equals foreignAmount x (paymentRate - invoiceRate); a positive value is a gain, negative a loss. Distinct from FxRevaluationPosting which records the UNREALISED period-end mark of open balances.",
+                "x-schema-org": "schema:MonetaryAmount",
+                "x-spec": "openspec/changes/ar-billing-completeness/specs/bookkeeping-multi-currency/spec.md",
+                "x-openregister-audit-trail": {
+                    "enabled": true,
+                    "description": "Realised FX postings drive the P&L and are immutable once posted (REQ-AT-001 / ADR-022)."
+                },
+                "type": "object",
+                "required": [
+                    "administrationId",
+                    "invoiceId",
+                    "foreignCurrency",
+                    "functionalCurrency",
+                    "foreignAmount",
+                    "invoiceRate",
+                    "paymentRate",
+                    "realisedDeltaCents",
+                    "direction",
+                    "gainLossGLAccount",
+                    "arControlGLAccount",
+                    "postedAt",
+                    "postedBy"
+                ],
+                "properties": {
+                    "administrationId": {
+                        "type": "string",
+                        "description": "Administration the settled ARInvoice belongs to (REQ-MC-010).",
+                        "example": "adm-holding-nl",
+                        "title": "Administration ID"
+                    },
+                    "invoiceId": {
+                        "type": "string",
+                        "description": "FK to the settled ARInvoice record.",
+                        "example": "arinv-usd-0007",
+                        "title": "Invoice ID"
+                    },
+                    "invoiceNumber": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Human-readable invoice number, copied for operator readability.",
+                        "example": "AR-2026-0007",
+                        "title": "Invoice Number"
+                    },
+                    "foreignCurrency": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{3}$",
+                        "description": "ISO 4217 currency the invoice was issued in (REQ-MC-010).",
+                        "example": "USD",
+                        "title": "Foreign Currency"
+                    },
+                    "functionalCurrency": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{3}$",
+                        "description": "ISO 4217 functional currency of the administration.",
+                        "example": "EUR",
+                        "title": "Functional Currency"
+                    },
+                    "foreignAmount": {
+                        "type": "number",
+                        "description": "Gross invoice amount in the foreign currency that was settled.",
+                        "example": 100000.0,
+                        "title": "Foreign Amount"
+                    },
+                    "invoiceRate": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Foreign -> functional rate the receivable was booked at on the invoice date.",
+                        "example": 0.9,
+                        "title": "Invoice Rate"
+                    },
+                    "paymentRate": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Foreign -> functional rate applied at settlement.",
+                        "example": 0.93,
+                        "title": "Payment Rate"
+                    },
+                    "realisedDeltaCents": {
+                        "type": "integer",
+                        "description": "Signed realised FX difference in functional-currency cents: foreignAmount x (paymentRate - invoiceRate) x 100. Positive = gain, negative = loss.",
+                        "example": 300000,
+                        "title": "Realised Delta Cents"
+                    },
+                    "direction": {
+                        "type": "string",
+                        "enum": [
+                            "gain",
+                            "loss"
+                        ],
+                        "description": "Whether the realised difference is a gain or a loss.",
+                        "example": "gain",
+                        "title": "Direction"
+                    },
+                    "gainLossGLAccount": {
+                        "type": "string",
+                        "description": "Realised FX gain (default 8022) or loss (default 8023) account credited/debited.",
+                        "example": "8022",
+                        "title": "Gain/Loss GL Account"
+                    },
+                    "arControlGLAccount": {
+                        "type": "string",
+                        "description": "AR-control clearing account (default 1130) the contra leg hits.",
+                        "example": "1130",
+                        "title": "AR Control GL Account"
+                    },
+                    "settlementDate": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "ISO settlement date used for the payment-date rate lookup and journal date.",
+                        "example": "2026-04-15",
+                        "title": "Settlement Date"
+                    },
+                    "postedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601 UTC timestamp when the realised-FX posting was written.",
+                        "example": "2026-04-15T10:00:00+00:00",
+                        "title": "Posted At"
+                    },
+                    "postedBy": {
+                        "type": "string",
+                        "description": "Actor attribution — always SYSTEM:RealisedFxSettlementService.",
+                        "example": "SYSTEM:RealisedFxSettlementService",
+                        "title": "Posted By"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "field": "reversalState",
+                    "initialState": "posted",
+                    "states": {
+                        "posted": {
+                            "label": "Posted",
+                            "description": "Realised FX gain/loss is live in the trial balance."
+                        },
+                        "reversed": {
+                            "label": "Reversed",
+                            "description": "Manually reversed by a controller to correct an erroneous posting; original entry preserved for audit (REQ-MC-010)."
+                        }
+                    },
+                    "transitions": {
+                        "reverse": {
+                            "from": "posted",
+                            "to": "reversed",
+                            "label": "Reverse posting",
+                            "description": "Mark the realised-FX posting as reversed; the original entry is preserved."
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "objects": [
+        {
+            "@self": {
+                "register": "shillinq",
+                "schema": "RealisedFxPosting",
+                "slug": "realisedfx-seed-usd-gain"
+            },
+            "administrationId": "adm-holding-nl",
+            "invoiceId": "arinv-usd-seed-gain",
+            "invoiceNumber": "AR-2026-9001",
+            "foreignCurrency": "USD",
+            "functionalCurrency": "EUR",
+            "foreignAmount": 100000.0,
+            "invoiceRate": 0.9,
+            "paymentRate": 0.93,
+            "realisedDeltaCents": 300000,
+            "direction": "gain",
+            "gainLossGLAccount": "8022",
+            "arControlGLAccount": "1130",
+            "settlementDate": "2026-04-15",
+            "postedAt": "2026-04-15T10:00:00+00:00",
+            "postedBy": "SYSTEM:RealisedFxSettlementService",
+            "reversalState": "posted"
+        },
+        {
+            "@self": {
+                "register": "shillinq",
+                "schema": "RealisedFxPosting",
+                "slug": "realisedfx-seed-usd-loss"
+            },
+            "administrationId": "adm-holding-nl",
+            "invoiceId": "arinv-usd-seed-loss",
+            "invoiceNumber": "AR-2026-9002",
+            "foreignCurrency": "USD",
+            "functionalCurrency": "EUR",
+            "foreignAmount": 100000.0,
+            "invoiceRate": 0.93,
+            "paymentRate": 0.9,
+            "realisedDeltaCents": -300000,
+            "direction": "loss",
+            "gainLossGLAccount": "8023",
+            "arControlGLAccount": "1130",
+            "settlementDate": "2026-05-15",
+            "postedAt": "2026-05-15T10:00:00+00:00",
+            "postedBy": "SYSTEM:RealisedFxSettlementService",
+            "reversalState": "posted"
+        }
+    ]
+}

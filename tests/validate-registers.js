@@ -60,6 +60,7 @@ const NON_BOOKKEEPING = new Set([
 	// bookings capability — appointment / reservation scheduling.
 	'Booking',
 	'Appointment',
+	'AppointmentSeries',
 	'AvailabilityRule',
 	'ConfirmationToken',
 	'BookingConfirmationTemplate',
