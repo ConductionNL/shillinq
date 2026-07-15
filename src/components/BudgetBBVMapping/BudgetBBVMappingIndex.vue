@@ -198,6 +198,18 @@ export default {
 				startDate: null,
 				endDate: null,
 			},
+			// Live-updates handle for the
+			// or-collection-{register-slug}-{schema-slug} subscription of
+			// the budgetBBVMapping collection (nc-vue beta.212,
+			// liveUpdatesPlugin default-on). Managed by
+			// syncLiveSubscription(); livePending marks an in-flight
+			// subscribe so a concurrent call doesn't double-subscribe;
+			// liveEpoch invalidates in-flight resolutions after a release
+			// (destroy).
+			liveHandle: null,
+			livePending: false,
+			liveEpoch: 0,
+			liveUnwatch: null,
 		}
 	},
 	computed: {
@@ -325,13 +337,82 @@ export default {
 	async created() {
 		await this.loadScope()
 		await this.loadMappings()
+		this.syncLiveSubscription()
 	},
 	beforeDestroy() {
 		if (this.searchDebounce) {
 			clearTimeout(this.searchDebounce)
 		}
+		this.releaseLiveSubscription()
 	},
 	methods: {
+		/**
+		 * Subscribe to live updates for the budgetBBVMapping collection
+		 * (or-collection-shillinq-budget-bbv-mapping). Events are refetch
+		 * hints only: the liveUpdatesPlugin re-runs fetchCollection with
+		 * the last-used params (current page preserved), so the store's
+		 * collection cache refreshes; the watcher installed here bridges
+		 * the fresh rows + pagination into this view's local copies.
+		 * Idempotent (single-shot per mount — the type is fixed). Uses
+		 * notify_push when available, visibility-gated polling otherwise.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/realtime-updates/spec.md
+		 */
+		async syncLiveSubscription() {
+			if (typeof this.store.subscribe !== 'function' || this.liveHandle || this.livePending) {
+				return
+			}
+			this.livePending = true
+			const epoch = this.liveEpoch
+			try {
+				const handle = await this.store.subscribe(TYPE_SLUG)
+				this.livePending = false
+				if (this.liveEpoch !== epoch) {
+					// Released while awaiting (component destroyed) — drop the
+					// now-stale subscription instead of leaking it.
+					this.store.unsubscribe(handle)
+					return
+				}
+				this.liveHandle = handle
+				// Bridge: event → plugin refetch → store collection cache →
+				// local rows/pagination (which the table renders from).
+				this.liveUnwatch = this.$watch(
+					() => this.store.getCollection(TYPE_SLUG),
+					(fresh) => {
+						if (Array.isArray(fresh) && this.liveHandle) {
+							this.objects = fresh
+							this.pagination = this.store.pagination?.[TYPE_SLUG] || null
+						}
+					},
+				)
+			} catch (e) {
+				this.livePending = false
+				this.liveHandle = null
+				// eslint-disable-next-line no-console
+				console.warn('[BudgetBBVMappingIndex] live subscription failed:', e?.message ?? e)
+			}
+		},
+		/**
+		 * Release the live collection subscription and its cache watcher,
+		 * and invalidate any in-flight subscribe (its resolution
+		 * unsubscribes itself via the epoch check).
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/realtime-updates/spec.md
+		 */
+		releaseLiveSubscription() {
+			this.liveEpoch += 1
+			this.livePending = false
+			if (this.liveUnwatch) {
+				this.liveUnwatch()
+				this.liveUnwatch = null
+			}
+			if (this.liveHandle && typeof this.store.unsubscribe === 'function') {
+				this.store.unsubscribe(this.liveHandle)
+			}
+			this.liveHandle = null
+		},
 		/**
 		 * Load the active administration + fiscal-year scope from the
 		 * slice-04 envelope so the page header surfaces "FY YYYY" and the
