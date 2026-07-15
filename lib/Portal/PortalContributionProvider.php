@@ -17,10 +17,26 @@
  * orders, contracts) and `supplier` (purchase orders, supplier invoices).
  * Every collection is read-only and scoped by a verified UUID domain
  * reference on the row, matched against a shillinq-namespaced claim
- * (claims.shillinq.customerId / claims.shillinq.supplierId) — never a
- * Nextcloud user id (externals have no NC account by premise). The verified
- * scoping map and all exclusions (ARInvoice, PaymentRequest, dunning, goods
- * receipts) are documented in the change's design.md.
+ * (claims.shillinq.customerId / claims.shillinq.supplierId /
+ * claims.shillinq.customerMasterId) — never a Nextcloud user id (externals
+ * have no NC account by premise). The verified scoping map is documented in
+ * the change design.md.
+ *
+ * Wave 2 (customer-invoice-portal-wave2) lifts the Wave-1 customer-side
+ * exclusion of ARInvoice and PaymentRequest: debtors can now see and pay their
+ * own AR invoices. AR invoices are scoped by ARInvoice.customerId — the
+ * CustomerMaster OBJECT UUID (base schema: `format: uuid`, `$ref:
+ * CustomerMaster`, `inversedBy: invoices`) — matched against the new
+ * claims.shillinq.customerMasterId claim. Because the CustomerMaster object
+ * UUID is globally unique (unlike the per-administration customer CODE the
+ * Wave-1 design conservatively read from a stale fragment description), this
+ * cannot collide across administrations. PaymentRequest carries no customer
+ * property, so it is reached through a one-hop reverse `via` join through
+ * ARInvoice.customerId (contract v2.2, `match: 'scopeField'`): a payment
+ * request is visible only when its ARInvoice belongs to the subject's
+ * CustomerMaster. Dunning is surfaced read-only as the ARInvoice.dunning
+ * summary group (no separate DunningRun collection — that carries recipient
+ * PII). Still excluded: goods receipts, AP/vendor dunning; see design.md.
  *
  * @category Portal
  * @package  OCA\Shillinq\Portal
@@ -144,19 +160,39 @@ class PortalContributionProvider
     /**
      * The read-only customer (AR-side) manifest.
      *
-     * Every scopeField below is a verified UUID domain reference to the
-     * customer record (Nextcloud contact / AR customer master) and every
-     * collection matches it against claims.shillinq.customerId (bare-name
-     * scopeClaim). ARInvoice and PaymentRequest are deliberately absent:
-     * ARInvoice scopes by CustomerMaster.customerId — an internal customer
-     * CODE, not a UUID — and PaymentRequest only reaches a customer through
-     * that same non-UUID property (deferred to Wave 2; see design.md).
-     * Dunning schemas are absent because DunningNotice is AP-side vendor
-     * dunning and the AR dunning records carry no customer scope property.
+     * The first five collections (Q2C: Invoice / BillableInvoice / Quote /
+     * SalesOrder / Contract) are scoped by a verified UUID domain reference to
+     * the customer record (Nextcloud contact / AR customer master) matched
+     * against claims.shillinq.customerId — unchanged from Wave 1.
+     *
+     * Wave 2 adds the AR sub-ledger surface the Wave-1 slice deferred:
+     *
+     * - `salesInvoices` (schema ARInvoice) — scoped by `customerId`, the
+     *   CustomerMaster OBJECT UUID (base schema declares it `format: uuid`,
+     *   `$ref: CustomerMaster`, `inversedBy: invoices`), matched against the
+     *   new bare-name claim `customerMasterId`. The CustomerMaster object UUID
+     *   is globally unique, so — unlike the per-administration customer CODE —
+     *   it cannot leak across administrations. A `fields` whitelist projects
+     *   the row to the customer-safe subset (invoice header, lines, artefact
+     *   URIs, the dunning summary group) and deliberately drops internal
+     *   accounting fields (glTransactionId, matchedBankLineId, the writeOff
+     *   bad-debt group, administrationId) so a debtor never sees them.
+     * - `paymentRequests` (schema PaymentRequest) — carries no customer
+     *   property, so it is reached through a one-hop reverse `via` join
+     *   through ARInvoice.customerId (contract v2.2, `match: 'scopeField'`):
+     *   the join collects the subject's own ARInvoice ids, then keeps only
+     *   PaymentRequests whose `invoiceReference` is in that set. The computed
+     *   `paymentLink` (OpenConnector hosted payment UI, short-lived signed
+     *   token; null unless state=pending) is the pay-now surface — clicking it
+     *   settles the invoice through the existing capture → matchPaid flow.
+     *
+     * Dunning is surfaced read-only via the ARInvoice.dunning summary group
+     * (currentStage / nextDunningDate / incassokosten / rente); the DunningRun
+     * schema itself stays excluded (recipient PII + rendered letters).
      *
      * @return array<string, mixed> The customer manifest.
      *
-     * @spec openspec/changes/portal-contribution/tasks.md#task-2
+     * @spec openspec/specs/portal-contribution/spec.md
      */
     private function customerManifest(): array
     {
@@ -207,6 +243,144 @@ class PortalContributionProvider
                     'scopeClaim' => 'customerId',
                     'label'      => 'My contracts',
                     'listable'   => true,
+                ],
+                [
+                    'id'          => 'salesInvoices',
+                    'register'    => 'shillinq',
+                    'schema'      => 'ARInvoice',
+                    'scopeField'  => 'customerId',
+                    'scopeClaim'  => 'customerMasterId',
+                    'label'       => 'My invoices',
+                    'listable'    => true,
+                    'fields'      => [
+                        'invoiceNumber',
+                        'invoiceType',
+                        'invoiceDate',
+                        'dueDate',
+                        'currency',
+                        'totalAmount',
+                        'taxAmount',
+                        'lines',
+                        'state',
+                        'sourceDocumentUri',
+                        'ublXml',
+                        'dunning',
+                    ],
+                    'columns'     => [
+                        [
+                            'field'  => 'invoiceNumber',
+                            'label'  => 'Invoice',
+                            'render' => 'text',
+                        ],
+                        [
+                            'field'  => 'invoiceDate',
+                            'label'  => 'Date',
+                            'render' => 'date',
+                        ],
+                        [
+                            'field'  => 'dueDate',
+                            'label'  => 'Due',
+                            'render' => 'date',
+                        ],
+                        [
+                            'field'  => 'totalAmount',
+                            'label'  => 'Amount',
+                            'render' => 'currency',
+                        ],
+                        [
+                            'field'  => 'state',
+                            'label'  => 'Status',
+                            'render' => 'badge',
+                        ],
+                    ],
+                    'detail'      => [
+                        'layout' => 'card',
+                        'fields' => [
+                            'invoiceNumber',
+                            'invoiceType',
+                            'invoiceDate',
+                            'dueDate',
+                            'currency',
+                            'totalAmount',
+                            'taxAmount',
+                            'lines',
+                            'state',
+                            'sourceDocumentUri',
+                            'ublXml',
+                            'dunning',
+                        ],
+                    ],
+                    'defaultSort' => [
+                        'field'     => 'invoiceDate',
+                        'direction' => 'desc',
+                    ],
+                ],
+                [
+                    'id'          => 'paymentRequests',
+                    'register'    => 'shillinq',
+                    'schema'      => 'PaymentRequest',
+                    'scopeField'  => 'invoiceReference',
+                    'scopeClaim'  => 'customerMasterId',
+                    'via'         => [
+                        'register'    => 'shillinq',
+                        'schema'      => 'ARInvoice',
+                        'scopeField'  => 'customerId',
+                        'targetField' => 'id',
+                        'match'       => 'scopeField',
+                    ],
+                    'label'       => 'Pay my invoices',
+                    'listable'    => true,
+                    'fields'      => [
+                        'invoiceReference',
+                        'amount',
+                        'currency',
+                        'paymentGateway',
+                        'state',
+                        'paymentLink',
+                        'expiresAt',
+                        'capturedAt',
+                        'failureReason',
+                    ],
+                    'columns'     => [
+                        [
+                            'field'  => 'invoiceReference',
+                            'label'  => 'Invoice',
+                            'render' => 'text',
+                        ],
+                        [
+                            'field'  => 'amount',
+                            'label'  => 'Amount',
+                            'render' => 'currency',
+                        ],
+                        [
+                            'field'  => 'state',
+                            'label'  => 'Status',
+                            'render' => 'badge',
+                        ],
+                        [
+                            'field'  => 'paymentLink',
+                            'label'  => 'Pay now',
+                            'render' => 'link',
+                        ],
+                    ],
+                    'detail'      => [
+                        'layout' => 'card',
+                        'fields' => [
+                            'invoiceReference',
+                            'amount',
+                            'currency',
+                            'paymentGateway',
+                            'state',
+                            'paymentLink',
+                            'expiresAt',
+                            'capturedAt',
+                            'failureReason',
+                        ],
+                    ],
+                    'defaultSort' => [
+                        'field'     => 'expiresAt',
+                        'direction' => 'desc',
+                    ],
                 ],
             ],
             'actions'       => [],
