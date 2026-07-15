@@ -332,6 +332,27 @@
             }
           }
         },
+        "x-openregister-approval-chains": {
+          "verplichting-goedkeuring": {
+            "description": "Approval chain that gates the Verplichting in_goedkeuring -> aangegaan `goedkeuren` transition (REQ-VPL-013). A commitment reaches in_goedkeuring only when MandaatEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient (REQ-VPL-002); this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
+            "transition": "goedkeuren",
+            "amountField": "totaalbedrag_excl_btw",
+            "separationOfDuties": true,
+            "approvers": [
+              {
+                "role": "commitment-administrator",
+                "min": 1,
+                "minAmount": 0
+              },
+              {
+                "role": "finance-director",
+                "min": 1,
+                "minAmount": 25000000
+              }
+            ],
+            "onApprove": "advanceTransition"
+          }
+        },
         "x-openregister-relations": {
           "regels": {
             "localField": "verplichtingsnummer",
