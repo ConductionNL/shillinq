@@ -41,6 +41,7 @@ use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\WBSOExportValidationGuard;
 use OCA\Shillinq\Lifecycle\WriteOffReasonGuard;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
+use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
@@ -208,6 +209,22 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: DeliveryDispatchListener::class
+        );
+
+        // revive-lease-capabilities (shillinq#446) — IFRS-16 lease schedule
+        // trigger. When a LeaseContract is created already `active` or is
+        // updated across the `draft → active` edge, materialise its
+        // amortization schedule. OR has no lifecycle action executor and the
+        // lease's list-form transitions block ObjectTransitionedEvent
+        // (design D1), so the executing trigger is the create/update event
+        // dispatched by MagicMapper on the generic lease CRUD save path.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: LeaseActivationListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectUpdatedEvent::class,
+            listener: LeaseActivationListener::class
         );
 
         // Bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004) —
