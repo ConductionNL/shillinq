@@ -152,6 +152,16 @@ final class PeriodCloseFragmentTest extends TestCase
             'OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::closeReasonSupplied',
             $transitions['reopen']['preconditions']
         );
+        // Close is gated on both the mandatory checklist (REQ-PC-002) and the
+        // bank-reconciliation suspense worklist being empty (payment-control-guards REQ-PCG-003).
+        self::assertContains(
+            'OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::mandatoryChecklistResolved',
+            $transitions['close']['preconditions']
+        );
+        self::assertContains(
+            'OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::suspenseAccountDrained',
+            $transitions['close']['preconditions']
+        );
 
     }//end testDeclaresLifecycleStatesAndRoleGates()
 

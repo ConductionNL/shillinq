@@ -47,6 +47,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\SuspenseAgeingService;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -265,6 +266,63 @@ class PeriodCloseGuard
         }//end try
 
     }//end mandatoryChecklistResolved()
+
+    /**
+     * Returns true iff the bank-reconciliation suspense worklist is empty for the
+     * period's administration (payment-control-guards REQ-PCG-003).
+     *
+     * A period cannot be closed while unmatched / routed-to-suspense bank items
+     * remain: those are money the bank moved that the ledger has not yet matched,
+     * so the trial balance carries an unexplained suspense balance. Delegates the
+     * cross-schema BankStatementLine ageing to SuspenseAgeingService (resolved
+     * lazily from the container so this guard's constructor is unchanged). A
+     * period with no administration scope, or an empty worklist, is allowed to
+     * close (mirroring the "no scope, allow" convention). Fail-closed on any
+     * error — an indeterminate suspense check blocks the close.
+     *
+     * This is the declarative-parity method referenced from PeriodClose.close
+     * `preconditions`; the enforced block also lives imperatively in
+     * PeriodCloseService::closePeriod() (mirroring mandatoryChecklistResolved).
+     *
+     * @param array<string,mixed>|string $period The FiscalPeriod record (or its id).
+     *
+     * @return bool True when the period may close (suspense worklist empty).
+     *
+     * @spec openspec/specs/payment-control-guards/spec.md (REQ-PCG-003)
+     */
+    public function suspenseAccountDrained(array | string $period): bool
+    {
+        try {
+            $resolved = $this->resolvePeriod(period: $period);
+            if ($resolved === null) {
+                return false;
+            }
+
+            $administrationId = trim((string) ($resolved['administrationId'] ?? ''));
+            if ($administrationId === '') {
+                // No administration scope to check against — allow.
+                return true;
+            }
+
+            $ageing = $this->container->get(SuspenseAgeingService::class);
+            if ($ageing->hasUnresolvedItems($administrationId) === true) {
+                $this->logger->info(
+                    'PeriodCloseGuard: suspense worklist non-empty — denying close',
+                    ['administrationId' => $administrationId]
+                );
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'PeriodCloseGuard: suspenseAccountDrained check failed — denying close (fail-closed)',
+                ['exception' => $e->getMessage()]
+            );
+            return false;
+        }//end try
+
+    }//end suspenseAccountDrained()
 
     /**
      * Returns true iff a non-empty close reason is supplied for a reopen (REQ-PC-006).

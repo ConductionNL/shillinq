@@ -11,7 +11,7 @@
       "FiscalPeriod": {
         "slug": "FiscalPeriod",
         "icon": "CalendarLock",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "title": "Fiscal Period",
         "description": "An accounting period with lifecycle state, close audit-trail, and task checklist for guided month-end / quarter-end close workflows (REQ-PC-001). The open → closing → closed → audit-locked lifecycle freezes the period for audit; postings against a closed or audit-locked period are rejected by the GLTransaction.post precondition (REQ-PC-004). Canonical fleet schema referenced by AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas (per add-shillinq-period-close).",
         "x-schema-org": "schema:DateRange",
@@ -284,12 +284,13 @@
               "from": "closing",
               "to": "closed",
               "label": "Close period",
-              "description": "Freeze the period after the mandatory checklist items are resolved (REQ-PC-002). Sets closedAt / closedBy.",
+              "description": "Freeze the period after the mandatory checklist items are resolved (REQ-PC-002) and the bank-reconciliation suspense worklist is empty (payment-control-guards REQ-PCG-003). Sets closedAt / closedBy.",
               "roles": [
                 "period-closer"
               ],
               "preconditions": [
-                "OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::mandatoryChecklistResolved"
+                "OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::mandatoryChecklistResolved",
+                "OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::suspenseAccountDrained"
               ],
               "actions": [
                 {

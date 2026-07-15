@@ -1017,7 +1017,7 @@
       "PaymentRun": {
         "slug": "PaymentRun",
         "icon": "BankTransferOutline",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "title": "Payment Run",
         "description": "A batch of approved Payee payments per REQ-AP-013 (consolidate-accounts-payable). Groups open AP invoices into a single outgoing payment instruction with a declarative lifecycle draft → approved → exported → reconciled. Approval (RBAC controller) is a hard gate before export — there is NO direct draft → exported transition. The actual SEPA pain.001 / CSV bank-file GENERATION is the separate payment-run-sepa-export change (writes exportedFileRef); this schema models only the batch + its lifecycle. Each paymentLines[] entry references one Payee + one APTransaction. bankAccount.iban / bankAccount.bic on the referenced Payee are the SEPA creditor source of truth.",
         "x-openregister-audit-trail": {
@@ -1211,7 +1211,8 @@
               "from": "approved",
               "to": "exported",
               "label": "Export payment run",
-              "description": "Generate the SEPA pain.001 / CSV bank file (payment-run-sepa-export change) and set exportedFileRef + exportedAt. Only an approved batch can be exported."
+              "description": "Generate the SEPA pain.001 / CSV bank file (payment-run-sepa-export change) and set exportedFileRef + exportedAt. Only an approved batch can be exported. Duplicate-payment control (payment-control-guards, REQ-PCG-001): PaymentRunDuplicateGuard rejects the export server-side when any paymentLines[].apTransactionRef settles an AP invoice that is already paid, or is already queued in another open/executed PaymentRun (draft/approved/exported). Export is the last declarative choke point before money leaves — the approve transition's requires slot is occupied by FourEyesPaymentRunGuard and the OR lifecycle engine resolves a single requires guard per transition. Fails closed on any indeterminate check.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\PaymentRunDuplicateGuard"
             },
             "reconcile": {
               "from": "exported",

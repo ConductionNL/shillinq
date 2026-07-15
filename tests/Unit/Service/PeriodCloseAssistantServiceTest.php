@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\PeriodCloseAssistantService;
+use OCA\Shillinq\Service\SuspenseAgeingService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -132,7 +133,21 @@ final class PeriodCloseAssistantServiceTest extends TestCase
         $appConfig = $this->createMock(IAppConfig::class);
         $appConfig->method('getValueString')->willReturn('shillinq');
 
-        return new PeriodCloseAssistantService(container: $container, appConfig: $appConfig);
+        $suspenseAgeing = $this->createMock(SuspenseAgeingService::class);
+        $suspenseAgeing->method('agedUnmatchedItems')->willReturn(
+            [
+                'items'                 => [],
+                'count'                 => 0,
+                'oldestDaysOutstanding' => 0,
+                'totalAmountCents'      => 0,
+            ]
+        );
+
+        return new PeriodCloseAssistantService(
+            container: $container,
+            appConfig: $appConfig,
+            suspenseAgeing: $suspenseAgeing,
+        );
 
     }//end buildService()
 

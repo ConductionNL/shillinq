@@ -27,6 +27,7 @@ use OCA\Shillinq\Service\PeriodCloseService;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Shillinq\Service\SuspenseAgeingService;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -69,13 +70,38 @@ final class PeriodCloseServiceTest extends TestCase
     }//end setUp()
 
     /**
+     * Build a SuspenseAgeingService double returning a fixed worklist size.
+     *
+     * @param int $count  The unmatched-item count the ageing reports.
+     * @param int $oldest The oldest days-outstanding the ageing reports.
+     *
+     * @return SuspenseAgeingService&MockObject
+     */
+    private function ageingReturning(int $count, int $oldest=0): SuspenseAgeingService
+    {
+        $ageing = $this->createMock(SuspenseAgeingService::class);
+        $ageing->method('agedUnmatchedItems')->willReturn(
+            [
+                'items'                 => [],
+                'count'                 => $count,
+                'oldestDaysOutstanding' => $oldest,
+                'totalAmountCents'      => 0,
+            ]
+        );
+        $ageing->method('hasUnresolvedItems')->willReturn($count > 0);
+        return $ageing;
+
+    }//end ageingReturning()
+
+    /**
      * Build the service over a single seeded PeriodClose record.
      *
-     * @param array<string,mixed> $record The PeriodClose record the stub returns.
+     * @param array<string,mixed>            $record         The PeriodClose record the stub returns.
+     * @param SuspenseAgeingService|null     $suspenseAgeing Optional suspense ageing double (defaults to an empty worklist).
      *
      * @return PeriodCloseService
      */
-    private function buildService(array $record): PeriodCloseService
+    private function buildService(array $record, ?SuspenseAgeingService $suspenseAgeing=null): PeriodCloseService
     {
         $this->objectService = new class($record) {
 
@@ -189,6 +215,7 @@ final class PeriodCloseServiceTest extends TestCase
             container: $container,
             appConfig: $appConfig,
             groupManager: $this->groupManager,
+            suspenseAgeing: ($suspenseAgeing ?? $this->ageingReturning(0)),
             logger: $this->createMock(LoggerInterface::class),
         );
 
@@ -270,6 +297,54 @@ final class PeriodCloseServiceTest extends TestCase
         }
 
     }//end testClosePeriodRejectedWhenChecklistIncomplete()
+
+    /**
+     * Closing is BLOCKED while the bank-reconciliation suspense worklist is non-empty
+     * (payment-control-guards REQ-PCG-003) — the failing-path proof.
+     *
+     * @return void
+     */
+    public function testClosePeriodBlockedWhenSuspenseNonEmpty(): void
+    {
+        $checklist = [
+            ['category' => 'ap', 'resolved' => true],
+            ['category' => 'ar', 'resolved' => true],
+        ];
+        // Checklist is clean, but 3 unmatched suspense items remain (oldest 47 days).
+        $service = $this->buildService($this->period('closing', $checklist), $this->ageingReturning(3, 47));
+        $this->groupManager->method('isAdmin')->willReturn(true);
+
+        $this->expectException(PeriodCloseException::class);
+        try {
+            $service->closePeriod('2026-01', 'adm-1', 'alice@org.nl');
+        } catch (PeriodCloseException $e) {
+            self::assertSame(PeriodCloseService::ERR_VALIDATION, $e->getStatus());
+            self::assertStringContainsString('unmatched bank/suspense', $e->getMessage());
+            self::assertNull($this->objectService->saved, 'The period must NOT be persisted as closed');
+            throw $e;
+        }
+
+    }//end testClosePeriodBlockedWhenSuspenseNonEmpty()
+
+    /**
+     * Closing succeeds once the suspense worklist is empty (REQ-PCG-003).
+     *
+     * @return void
+     */
+    public function testClosePeriodAllowedWhenSuspenseEmpty(): void
+    {
+        $checklist = [
+            ['category' => 'ap', 'resolved' => true],
+            ['category' => 'ar', 'resolved' => true],
+        ];
+        $service = $this->buildService($this->period('closing', $checklist), $this->ageingReturning(0));
+        $this->groupManager->method('isAdmin')->willReturn(true);
+
+        $result = $service->closePeriod('2026-01', 'adm-1', 'alice@org.nl');
+
+        self::assertSame('closed', $result['state']);
+
+    }//end testClosePeriodAllowedWhenSuspenseEmpty()
 
     /**
      * A user without the period-closer role cannot close (REQ-PC-008).

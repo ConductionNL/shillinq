@@ -59,12 +59,14 @@ class PeriodCloseAssistantService
     /**
      * Construct the service.
      *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
+     * @param ContainerInterface    $container      DI container for lazy ObjectService resolution.
+     * @param IAppConfig            $appConfig      App config for the register slug.
+     * @param SuspenseAgeingService $suspenseAgeing Aged suspense worklist source (REQ-PCG-002).
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
+        private readonly SuspenseAgeingService $suspenseAgeing,
     ) {
     }//end __construct()
 
@@ -98,6 +100,7 @@ class PeriodCloseAssistantService
                 endDate: $endDate
             ),
             'expense-claims' => $this->detectOutstandingExpenseClaims(administrationId: $administrationId),
+            'suspense'       => $this->detectAgedSuspense(administrationId: $administrationId, endDate: $endDate),
         ];
 
         return $this->generateFlags(detections: $detections);
@@ -290,6 +293,32 @@ class PeriodCloseAssistantService
     }//end detectOutstandingExpenseClaims()
 
     /**
+     * Summarise the aged bank-reconciliation suspense worklist (REQ-PCG-002).
+     *
+     * Surfaces unmatched / routed-to-suspense bank items and their oldest age so
+     * the operator sees, before attempting to close, why the close will be
+     * blocked (REQ-PCG-003). Delegates the ageing to SuspenseAgeingService.
+     *
+     * @param string $administrationId The administration scope.
+     * @param string $endDate          The period end date (ISO date) to age against; '' means today.
+     *
+     * @return array{count:int, total:float, oldest:int} Detection summary (total is the euro amount).
+     *
+     * @spec openspec/specs/payment-control-guards/spec.md (REQ-PCG-002)
+     */
+    public function detectAgedSuspense(string $administrationId, string $endDate=''): array
+    {
+        $ageing = $this->suspenseAgeing->agedUnmatchedItems(administrationId: $administrationId, asOf: $endDate);
+
+        return [
+            'count'  => (int) $ageing['count'],
+            'total'  => ((float) $ageing['totalAmountCents'] / 100),
+            'oldest' => (int) $ageing['oldestDaysOutstanding'],
+        ];
+
+    }//end detectAgedSuspense()
+
+    /**
      * Format the detection summary into close-assistant flags (REQ-PC-004).
      *
      * Categories with zero detections produce no flag (a clean period yields an
@@ -350,6 +379,22 @@ class PeriodCloseAssistantService
                 'category'   => 'expense-claims',
                 'message'    => $claims['count'].' expense claim(s) totalling '
                     .$this->euro(amount: $claims['total']).' are awaiting approval or reimbursement',
+                'detectedAt' => $now,
+            ];
+        }
+
+        // payment-control-guards REQ-PCG-002/003: the aged suspense worklist is a
+        // BLOCKER (the close is refused while it is non-empty), so it is surfaced
+        // as an error-severity flag, not a warning.
+        $suspense = ($detections['suspense'] ?? ['count' => 0, 'total' => 0.0, 'oldest' => 0]);
+        if ($suspense['count'] > 0) {
+            $flags[] = [
+                'id'         => 'flag-suspense',
+                'severity'   => 'error',
+                'category'   => 'suspense',
+                'message'    => $suspense['count'].' unmatched bank/suspense item(s) totalling '
+                    .$this->euro(amount: $suspense['total']).' remain (oldest '
+                    .((int) ($suspense['oldest'] ?? 0)).' day(s) outstanding) — the period cannot be closed until they are resolved',
                 'detectedAt' => $now,
             ];
         }
