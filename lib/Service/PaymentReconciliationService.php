@@ -396,6 +396,12 @@ class PaymentReconciliationService
                 schema: 'ARInvoice',
             );
 
+            // Post the realised FX gain/loss when the invoice was issued in a
+            // foreign currency and settles at a different rate (REQ-MC-010).
+            // Fail-open: a realised-FX resolution gap never un-settles a paid
+            // invoice — the payment stands, the FX leg is logged and skipped.
+            $this->postRealisedFxOnSettlement(invoice: $invoice, request: $request);
+
             return true;
         } catch (\Throwable $e) {
             // Never silently drop a captured payment (REQ-APL-005). Routing to
@@ -407,6 +413,50 @@ class PaymentReconciliationService
             return false;
         }//end try
     }//end settleLinkedInvoice()
+
+    /**
+     * Post the settlement-time realised FX gain/loss for a just-paid ARInvoice
+     * through RealisedFxSettlementService (REQ-MC-010). The settlement rate is
+     * taken from the PaymentRequest when the gateway reported one
+     * (`settlementFxRate`), otherwise the service resolves it from the FxRate
+     * register at the payment date. Fail-open: any failure is logged and
+     * swallowed so a foreign-currency invoice still settles.
+     *
+     * @param array<string, mixed> $invoice The ARInvoice that was just marked paid.
+     * @param array<string, mixed> $request The captured PaymentRequest (may carry settlementFxRate/capturedAt).
+     *
+     * @return void
+     *
+     * @spec openspec/changes/ar-billing-completeness/specs/bookkeeping-multi-currency/spec.md (REQ-MC-010)
+     */
+    private function postRealisedFxOnSettlement(array $invoice, array $request): void
+    {
+        try {
+            $service = $this->container->get('OCA\Shillinq\Service\Treasury\RealisedFxSettlementService');
+
+            $settlementRate = null;
+            if (isset($request['settlementFxRate']) === true && (float) $request['settlementFxRate'] > 0.0) {
+                $settlementRate = (float) $request['settlementFxRate'];
+            }
+
+            $settlementDate = null;
+            if (isset($request['capturedAt']) === true && (string) $request['capturedAt'] !== '') {
+                $settlementDate = substr((string) $request['capturedAt'], 0, 10);
+            }
+
+            $service->postRealisedFxOnSettlement(
+                invoice: $invoice,
+                settlementRate: $settlementRate,
+                settlementDate: $settlementDate,
+            );
+        } catch (\Throwable $e) {
+            $this->logger->warning(
+                'Shillinq: realised-FX posting on settlement failed (payment still settled)',
+                ['exception' => $e->getMessage()]
+            );
+        }//end try
+
+    }//end postRealisedFxOnSettlement()
 
     /**
      * Polling fallback for missed webhooks (REQ-APL-004 polling fallback).

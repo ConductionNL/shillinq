@@ -32,7 +32,7 @@ use InvalidArgumentException;
  */
 final class InvoiceGenerationRequest
 {
-    public const MODELS = ['t_and_m', 'fixed_fee', 'milestone', 'retainer', 'mixed'];
+    public const MODELS = ['t_and_m', 'fixed_fee', 'milestone', 'retainer', 'mixed', 'usage'];
 
     /**
      * Construct a validated invoice-generation request.
@@ -52,6 +52,8 @@ final class InvoiceGenerationRequest
      * @param string|null       $milestoneId        Required for milestone.
      * @param string|null       $projectId          Optional FK to Project.
      * @param string|null       $notes              Free-text notes.
+     * @param array<int,string> $meterReadingIds    FKs to MeterReading rows; required for usage.
+     * @param string|null       $usageRatePlanId    Default UsageRatePlan FK when a reading declares none.
      */
     public function __construct(
         public readonly string $administrationId,
@@ -67,6 +69,8 @@ final class InvoiceGenerationRequest
         public readonly ?string $milestoneId=null,
         public readonly ?string $projectId=null,
         public readonly ?string $notes=null,
+        public readonly array $meterReadingIds=[],
+        public readonly ?string $usageRatePlanId=null,
     ) {
         $this->assertValid();
 
@@ -117,6 +121,12 @@ final class InvoiceGenerationRequest
             $notes = null;
         }
 
+        if (isset($body['usageRatePlanId']) === true) {
+            $usageRatePlanId = (string) $body['usageRatePlanId'];
+        } else {
+            $usageRatePlanId = null;
+        }
+
         return new self(
             administrationId: $administrationId,
             billingModel: (string) ($body['billingModel'] ?? ''),
@@ -131,6 +141,8 @@ final class InvoiceGenerationRequest
             milestoneId: $milestoneId,
             projectId: $projectId,
             notes: $notes,
+            meterReadingIds: array_values(array_map('strval', (array) ($body['meterReadingIds'] ?? []))),
+            usageRatePlanId: $usageRatePlanId,
         );
 
     }//end fromArray()
@@ -178,6 +190,10 @@ final class InvoiceGenerationRequest
 
         if ($this->billingModel === 'milestone' && $this->milestoneId === null) {
             throw new InvalidArgumentException('milestoneId is required for milestone model.');
+        }
+
+        if ($this->billingModel === 'usage' && $this->meterReadingIds === []) {
+            throw new InvalidArgumentException('meterReadingIds is required for usage model.');
         }
 
     }//end assertValid()
