@@ -168,24 +168,28 @@ Each rule MUST declare:
 - **THEN** rule A's match MUST be emitted; rule B MUST NOT
   produce a duplicate match for the same line.
 
-### REQ-BR-005: Predicates SHALL include exact-amount, amount-range, reference-match, counterparty-fuzzy, and date-window
+### REQ-BR-005: Predicates SHALL include exact-amount, amount-range, reference-match, counterparty-fuzzy, date-window, and counterparty-iban; a rule MAY declare a target GL account
 
-The system SHALL satisfy this requirement: Predicates SHALL include exact-amount, amount-range, reference-match, counterparty-fuzzy, and date-window.
+The system SHALL satisfy this requirement: Predicates SHALL include exact-amount, amount-range, reference-match, counterparty-fuzzy, date-window, and counterparty-iban.
 
-The supported predicate shapes (T2 baseline; extensible in later
-tiers) MUST include:
+The supported predicate shapes (extensible in later tiers) MUST include:
 
 | Predicate | Shape | Semantics |
 |---|---|---|
-| `exact-amount` | `{op: "exact-amount", amount: <number>}` | Line amount equals the predicate amount |
-| `amount-range` | `{op: "amount-range", min: <n>, max: <n>}` | Line amount within range |
-| `reference-match` | `{op: "reference-match", pattern: "<regex>"}` | Line reference matches the regex |
-| `counterparty-fuzzy` | `{op: "counterparty-fuzzy", name: "<string>", threshold: <0-1>}` | Levenshtein similarity ≥ threshold |
-| `date-window` | `{op: "date-window", days: <integer>}` | Line date within N days of the target object's `invoiceDate` / `dueDate` |
+| `exact-amount` | `{op: "exact-amount", amount: <number>}` | `abs(line.amount)` equals the predicate amount to the cent |
+| `amount-range` | `{op: "amount-range", min: <n>, max: <n>}` | `abs(line.amount)` within range |
+| `reference-match` | `{op: "reference-match", pattern: "<regex>"}` | Line reference (or narrative) matches the regex; an invalid regex fails closed |
+| `counterparty-fuzzy` | `{op: "counterparty-fuzzy", name: "<string>", threshold: <0-1>}` | Normalised Levenshtein similarity on `counterpartyName` ≥ threshold |
+| `counterparty-iban` | `{op: "counterparty-iban", iban: "<IBAN>"}` | Case-insensitive exact equality on `counterpartyIban` |
+| `date-window` | `{op: "date-window", days: <integer>}` | Line date within N days of the target/anchor date; INDETERMINATE (never a match on its own) when no anchor is available |
 
 Predicates in the same rule MUST be combined with logical AND.
 Cross-rule combinations are handled by REQ-BR-004's priority
-ordering.
+ordering. A `MatchingRule` MAY additionally declare an optional
+`targetGlAccount` string — the GL account a matched line is
+categorised to (used with `targetType: gl-transaction`). The
+`counterparty-iban` op and `targetGlAccount` field are additive and
+non-breaking; rules without them behave exactly as before.
 
 #### Scenario: Exact-amount + reference-match rule matches an AR invoice
 
@@ -399,3 +403,87 @@ out of scope).
   state per line; **AND** a candidate-matches sub-grid showing
   the 5 unmatched candidates with one-click confirm /
   route-to-suspense actions.
+
+### REQ-BR-011: An operator SHALL be able to dry-run a draft matching rule against recent unmatched transactions before saving
+
+The system MUST provide a read-only preview that evaluates a supplied (possibly
+unsaved) `MatchingRule`'s predicates against a bounded window of recent
+`matchState = unmatched` `BankStatementLine`s for the resolved administration and
+returns which lines the rule WOULD match. The preview MUST NOT create, update, or
+delete any `ReconciliationMatch`, `BankStatementLine`, or `MatchingRule` — it has
+no side effects. A line is reported as matched iff ALL of the rule's determinable
+predicates pass (AND, per REQ-BR-005); a `date-window` predicate with no anchor is
+indeterminate and MUST NOT by itself cause a match.
+
+The preview is exposed at `POST /api/v1/bank-rules/preview` (`#[NoAdminRequired]`,
+administration resolved server-side per ADR-005) and returns `{matchedLineIds,
+matchedCount, totalEvaluated, sample, predicateBreakdown}`. A companion
+`POST /api/v1/bank-rules/suggest-account` returns, for one bank line, the target
+GL account of the highest-priority active rule that matches it (or null). Per
+ADR-031 the evaluator is an exception (1) — OpenRegister's `candidateMatches`
+aggregation has no dry-run-an-unsaved-rule primitive; the service is read-only and
+bound to the REQ-BR-005 predicate vocabulary (not a generic rule engine).
+
+@e2e exclude backend/data: predicate evaluation over statement lines is service + data behaviour, asserted via PHPUnit, not the browser
+
+#### Scenario: Dry-run preview matches the right transactions and none of the wrong ones
+
+- **GIVEN** five unmatched bank lines: L1 €500 ref `INV-C-2026-0001` from
+  `Acme B.V.`, L2 €500 ref `INV-C-2026-0002` from `Acme B.V.`, L3 €500 ref
+  `INV-C-2026-0001` from `Globex`, L4 €99 ref `INV-C-2026-0001` from `Acme B.V.`,
+  L5 €500 no reference from `Acme B.V.`
+- **AND** a draft rule with predicates `[{op: "exact-amount", amount: 500},
+  {op: "reference-match", pattern: "INV-C-2026-0001"}, {op: "counterparty-fuzzy",
+  name: "Acme BV", threshold: 0.8}]`
+- **WHEN** the rule is previewed against the five lines
+- **THEN** the result MUST report exactly `[L1]` as matched — matchedCount 1,
+  totalEvaluated 5.
+
+#### Scenario: A saved rule suggests a GL account on a matching transaction
+
+- **GIVEN** an active `MatchingRule` `priority: 10` matching an IBAN with
+  `targetGlAccount: "4000"`, and a `priority: 50` rule also matching the same
+  IBAN with `targetGlAccount: "4500"`, and an unmatched line from that IBAN
+- **WHEN** `suggest-account` runs for the line
+- **THEN** it MUST return the `priority: 10` rule's `targetGlAccount: "4000"`
+  (lowest-priority wins, REQ-BR-004); **AND** null for a line from an unknown IBAN.
+
+### REQ-BR-012: The system SHALL suggest a matching rule from repeated manual categorisations, and MUST never auto-apply it
+
+When the same counterparty has been manually categorised to the same GL account
+K or more times across confirmed reconciliation history, the system MUST offer a
+*proposed* `MatchingRule` (deterministic, history-based — no AI required). The
+proposal MUST NOT be persisted or activated automatically; it becomes a real
+`MatchingRule` only when the operator explicitly accepts it via
+`POST /api/v1/bank-rules/suggestions/accept`. Below K repeats, no suggestion is
+offered for that counterparty.
+
+If a Nextcloud TaskProcessing / Assistant provider is present, it MAY re-rank the
+suggestions; when no provider is available, or the provider errors or returns a
+malformed result, the system MUST degrade gracefully to deterministic ordering
+(occurrences desc) and MUST still return the suggestions. Suggestions are exposed
+at `GET /api/v1/bank-rules/suggestions`. Per ADR-031 the suggestion service is a
+permitted domain heuristic that only PROPOSES — it persists nothing (the accept
+endpoint does the single OpenRegister write, ADR-022).
+
+@e2e exclude backend/data: history grouping + threshold + proposal materialisation are service + data behaviour, asserted via PHPUnit, not the browser
+
+#### Scenario: Repeated categorisation suggests a rule after K repeats but does not apply it
+
+- **GIVEN** confirmed history where `Acme B.V.` was categorised to GL `4000`
+  three times and `Globex` to GL `4500` once, with K = 3
+- **WHEN** suggestions are computed from the history
+- **THEN** exactly one proposal MUST be returned — for `Acme B.V.` → `4000`,
+  with `occurrences: 3`; **AND** no `MatchingRule` MUST be persisted by computing
+  the suggestion; **AND** the single `Globex` categorisation MUST NOT produce a
+  proposal (below K).
+
+#### Scenario: Suggestions degrade gracefully without an AI provider
+
+- **GIVEN** history yielding two proposals (`Acme B.V.` ×4, `Beta N.V.` ×3) and
+  no TaskProcessing/Assistant provider available
+- **WHEN** suggestions are computed
+- **THEN** both proposals MUST be returned in deterministic order (`Acme B.V.`
+  first, by occurrences desc); **AND** the same call with a ranker that throws
+  MUST also return both proposals in the deterministic order — the absence or
+  failure of AI MUST NOT drop or error the suggestions.
