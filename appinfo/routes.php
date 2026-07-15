@@ -223,6 +223,19 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // first per ADR-016.
             ['name' => 'stockLedger#trace', 'url' => '/api/stock-ledger/trace', 'verb' => 'GET'],
 
+        // Inventory accounting correctness (inventory-accounting-correctness).
+        // valuation-report replays the immutable StockMove ledger to return the
+        // stock value as-of a cut-off date (jaarrekening voorraadwaarde per 31-12),
+        // optionally with a FIFO ageing breakdown. landed-cost capitalises a
+        // receipt's freight + duties into unit cost and posts one balanced
+        // GLTransaction; nrv-writedown applies lower-of-cost-or-NRV (RJ 220 / IAS 2.9)
+        // and posts the balanced period-end adjustment. All #[NoAdminRequired] with
+        // AdministrationContextService enforcing tenant IDOR (masked 404). Static
+        // segments precede the SPA catch-all per ADR-016.
+            ['name' => 'inventoryValuationReport#report', 'url' => '/api/inventory/valuation-report', 'verb' => 'GET'],
+            ['name' => 'inventoryAdjustment#landedCost', 'url' => '/api/inventory/landed-cost', 'verb' => 'POST'],
+            ['name' => 'inventoryAdjustment#nrvWriteDown', 'url' => '/api/inventory/nrv-writedown', 'verb' => 'POST'],
+
         // Purchase Order 3-way-match core (slice 02): server-authoritative create +
         // approval-chain preview + send-block guard. Static segments precede the
         // {id} wildcard so they are matched first (Symfony route ordering).

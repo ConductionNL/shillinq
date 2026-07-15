@@ -1,5 +1,11 @@
 {
     "translations": {
+        "Inventory value as of date": "Voorraadwaarde per peildatum",
+        "Landed cost allocation": "Toerekening aankoopbijkomende kosten",
+        "NRV write-down": "Afwaardering naar opbrengstwaarde",
+        "Inventory ageing": "Voorraadveroudering",
+        "Inventory turnover": "Voorraadomloopsnelheid",
+        "Days on hand": "Dagen op voorraad",
         "Spend by supplier": "Uitgaven per leverancier",
         "Spend by category": "Uitgaven per categorie",
         "Spend by cost centre": "Uitgaven per kostenplaats",
