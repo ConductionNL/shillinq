@@ -35,7 +35,6 @@ use Psr\Log\LoggerInterface;
  */
 final class SupplierQualificationGuardTest extends TestCase
 {
-
     /**
      * Build an in-memory ObjectService stub honouring equality filters.
      *
@@ -46,6 +45,7 @@ final class SupplierQualificationGuardTest extends TestCase
     private function buildStub(array $data): object
     {
         return new class ($data) {
+
             /**
              * Schema rows.
              *
@@ -115,6 +115,7 @@ final class SupplierQualificationGuardTest extends TestCase
                                     return false;
                                 }
                             }
+
                             return true;
                         }
                     )

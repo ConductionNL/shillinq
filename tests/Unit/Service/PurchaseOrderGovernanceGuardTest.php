@@ -41,14 +41,13 @@ use Psr\Log\LoggerInterface;
  */
 final class PurchaseOrderGovernanceGuardTest extends TestCase
 {
-
     /**
      * Build the PO service (with self-constructed governance guards sharing the
      * same in-memory stub) under the given qualification policy.
      *
-     * @param array<string,array<int,array<string,mixed>>> $data                     Seed rows.
-     * @param string                                       $qualificationPolicy      'true' or 'false'.
-     * @param InMemoryObjectServiceStub|null               $stubOut                  Receives the stub.
+     * @param array<string,array<int,array<string,mixed>>> $data                Seed rows.
+     * @param string                                       $qualificationPolicy 'true' or 'false'.
+     * @param InMemoryObjectServiceStub|null               $stubOut             Receives the stub.
      *
      * @return PurchaseOrderService
      */
@@ -178,7 +177,12 @@ final class PurchaseOrderGovernanceGuardTest extends TestCase
         $service = $this->buildService(data: $data, qualificationPolicy: 'false', stubOut: $stub);
 
         // Line total 300 000 cents (€3 000) drives drawn 4 800 000 -> 5 100 000 > ceiling.
-        $payload = $this->payload(['frameworkAgreementId' => 'FA-1', 'lines' => [['productCode' => 'P1', 'quantity' => 1, 'unitPrice' => 3000.00, 'vatRate' => 0, 'glAccount' => '4400']]]);
+        $payload = $this->payload(
+            [
+                'frameworkAgreementId' => 'FA-1',
+                'lines'                => [['productCode' => 'P1', 'quantity' => 1, 'unitPrice' => 3000.00, 'vatRate' => 0, 'glAccount' => '4400']],
+            ]
+        );
 
         try {
             $service->createPurchaseOrder(administrationId: 'adm-1', payload: $payload);
@@ -215,7 +219,12 @@ final class PurchaseOrderGovernanceGuardTest extends TestCase
         $service = $this->buildService(data: $data, qualificationPolicy: 'false', stubOut: $stub);
 
         // Line total 100 000 cents (€1 000): 4 800 000 -> 4 900 000, within ceiling.
-        $payload = $this->payload(['frameworkAgreementId' => 'FA-1', 'lines' => [['productCode' => 'P1', 'quantity' => 1, 'unitPrice' => 1000.00, 'vatRate' => 0, 'glAccount' => '4400']]]);
+        $payload = $this->payload(
+            [
+                'frameworkAgreementId' => 'FA-1',
+                'lines'                => [['productCode' => 'P1', 'quantity' => 1, 'unitPrice' => 1000.00, 'vatRate' => 0, 'glAccount' => '4400']],
+            ]
+        );
 
         $po = $service->createPurchaseOrder(administrationId: 'adm-1', payload: $payload);
         self::assertSame('FA-1', $po['frameworkAgreementId']);

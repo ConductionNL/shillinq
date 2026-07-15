@@ -152,25 +152,25 @@ class PurchaseOrderService
     /**
      * Constructor.
      *
-     * @param ContainerInterface                      $container             DI container — OR's ObjectService
-     *                                                                       is fetched lazily.
-     * @param IAppConfig                              $appConfig             App config for the register slug.
-     * @param AdministrationContextService            $administrationContext IDOR + tenant scope.
-     * @param INotificationManager                    $notificationManager   NC notification dispatcher.
-     * @param LoggerInterface                         $logger                Logger (no sensitive payloads).
-     * @param PeppolTransmissionAdapterInterface|null $peppolAdapter         Optional Peppol port (slice 03);
-     *                                                                       defaults to
-     *                                                                       LogPeppolTransmissionAdapter.
-     * @param PurchaseOrderMailerInterface|null       $purchaseOrderMailer   Optional PDF+email mailer (slice 03);
-     *                                                                       defaults to LogPurchaseOrderMailer.
-     * @param PeppolBisOrderMapper|null               $peppolMapper          Optional UBL mapper (slice 03);
-     *                                                                       defaults to a fresh instance.
+     * @param ContainerInterface                      $container                       DI container — OR's
+     *                                                                                 ObjectService is fetched lazily.
+     * @param IAppConfig                              $appConfig                       App config for the register slug.
+     * @param AdministrationContextService            $administrationContext           IDOR + tenant scope.
+     * @param INotificationManager                    $notificationManager             NC notification dispatcher.
+     * @param LoggerInterface                         $logger                          Logger (no sensitive payloads).
+     * @param PeppolTransmissionAdapterInterface|null $peppolAdapter                   Optional Peppol port (slice 03);
+     *                                                                                 defaults to
+     *                                                                                 LogPeppolTransmissionAdapter.
+     * @param PurchaseOrderMailerInterface|null       $purchaseOrderMailer             Optional PDF+email mailer (slice 03);
+     *                                                                                 defaults to LogPurchaseOrderMailer.
+     * @param PeppolBisOrderMapper|null               $peppolMapper                    Optional UBL mapper (slice 03);
+     *                                                                                 defaults to a fresh instance.
      * @param SupplierQualificationGuard|null         $supplierQualificationGuard      Optional supplier-qualification
-     *                                                                       gate (procurement-governance); defaults
-     *                                                                       to a self-constructed instance.
+     *                                                                                 gate (procurement-governance); defaults
+     *                                                                                 to a self-constructed instance.
      * @param FrameworkAgreementDrawdownGuard|null    $frameworkAgreementDrawdownGuard Optional framework-agreement
-     *                                                                       ceiling gate (procurement-governance);
-     *                                                                       defaults to a self-constructed instance.
+     *                                                                                 ceiling gate (procurement-governance);
+     *                                                                                 defaults to a self-constructed instance.
      *
      * @return void
      */
@@ -304,21 +304,21 @@ class PurchaseOrderService
         }
 
         $purchaseOrder = [
-            'poNumber'         => $poNumber,
-            'administrationId' => $administrationId,
-            'supplierId'       => $supplierId,
-            'requesterId'      => $requesterId,
-            'costCenter'       => $costCenter,
-            'projectCode'      => $projectCode,
-            'requisitionId'    => $requisitionId,
+            'poNumber'             => $poNumber,
+            'administrationId'     => $administrationId,
+            'supplierId'           => $supplierId,
+            'requesterId'          => $requesterId,
+            'costCenter'           => $costCenter,
+            'projectCode'          => $projectCode,
+            'requisitionId'        => $requisitionId,
             'frameworkAgreementId' => $frameworkAgreementId,
-            'lines'            => $lines,
-            'totalAmount'      => $totalAmount,
-            'currency'         => (string) ($payload['currency'] ?? 'EUR'),
-            'approvalChain'    => $this->initialiseApprovalChainEntries(chain: $approvalChain),
-            'lifecycleState'   => $lifecycleState,
-            'createdAt'        => $this->nowIso(),
-            'notes'            => trim((string) ($payload['notes'] ?? '')),
+            'lines'                => $lines,
+            'totalAmount'          => $totalAmount,
+            'currency'             => (string) ($payload['currency'] ?? 'EUR'),
+            'approvalChain'        => $this->initialiseApprovalChainEntries(chain: $approvalChain),
+            'lifecycleState'       => $lifecycleState,
+            'createdAt'            => $this->nowIso(),
+            'notes'                => trim((string) ($payload['notes'] ?? '')),
         ];
 
         $persisted = $this->saveObject(schema: 'PurchaseOrder', object: $purchaseOrder);
@@ -1009,7 +1009,6 @@ class PurchaseOrderService
         }
 
     }//end assertRequisitionPolicy()
-
 
     /**
      * Policy gate (procurement-governance, REQ-PG-002): when the

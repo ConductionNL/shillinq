@@ -46,7 +46,6 @@ use RuntimeException;
  */
 class SupplierQualificationGuard
 {
-
     /**
      * Construct the guard with DI dependencies.
      *
@@ -60,7 +59,6 @@ class SupplierQualificationGuard
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Assert the supplier is qualified for a PurchaseOrder, or throw (REQ-PG-002).
@@ -89,7 +87,6 @@ class SupplierQualificationGuard
         }
 
     }//end assertQualifiedForPo()
-
 
     /**
      * Is the supplier qualified for a PurchaseOrder (REQ-PG-002)?
@@ -135,7 +132,6 @@ class SupplierQualificationGuard
 
     }//end isQualifiedForPo()
 
-
     /**
      * Are all required documents provided and unexpired?
      *
@@ -170,7 +166,6 @@ class SupplierQualificationGuard
 
     }//end documentsValid()
 
-
     /**
      * Fetch one record via the real ObjectService API (findAll then first).
      *
@@ -196,7 +191,6 @@ class SupplierQualificationGuard
         return null;
 
     }//end findOne()
-
 
     /**
      * Resolve the OpenRegister register slug from app config (defaults to "shillinq").

@@ -85,6 +85,7 @@ final class ProcurementGovernanceFragmentTest extends TestCase
         foreach (['supplierId', 'statusCode', 'requiredDocuments', 'administrationId'] as $field) {
             self::assertArrayHasKey($field, $schema['properties'], $field.' must be declared');
         }
+
         self::assertContains('qualified', $schema['properties']['statusCode']['enum']);
     }//end testSupplierQualificationDeclaresRequiredFields()
 
@@ -99,6 +100,7 @@ final class ProcurementGovernanceFragmentTest extends TestCase
         foreach (['ceilingAmount', 'drawnAmount', 'supplierId', 'statusCode'] as $field) {
             self::assertArrayHasKey($field, $schema['properties'], $field.' must be declared');
         }
+
         self::assertSame('integer', $schema['properties']['ceilingAmount']['type']);
     }//end testFrameworkAgreementDeclaresCeilingFields()
 
@@ -119,6 +121,7 @@ final class ProcurementGovernanceFragmentTest extends TestCase
             if ($schema === 'SupplierQualification' && ($object['statusCode'] ?? '') === 'draft') {
                 $expiredSupplier = $object;
             }
+
             if ($schema === 'FrameworkAgreement' && ($object['statusCode'] ?? '') === 'active') {
                 $agreement = $object;
             }
@@ -132,6 +135,7 @@ final class ProcurementGovernanceFragmentTest extends TestCase
                 $expired = true;
             }
         }
+
         self::assertTrue($expired, 'The draft supplier seed should carry an expired document.');
 
         self::assertNotNull($agreement, 'An active FrameworkAgreement seed is expected.');

@@ -47,7 +47,6 @@ use RuntimeException;
  */
 class FrameworkAgreementDrawdownGuard
 {
-
     /**
      * Construct the guard with DI dependencies.
      *
@@ -61,7 +60,6 @@ class FrameworkAgreementDrawdownGuard
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Assert a call-off of $addCents fits the agreement's remaining ceiling, or
@@ -92,16 +90,7 @@ class FrameworkAgreementDrawdownGuard
                 throw new RuntimeException('Framework agreement not found.');
             }
 
-            if ((string) ($agreement['statusCode'] ?? '') !== 'active') {
-                throw new RuntimeException('Framework agreement is not active.');
-            }
-
-            $today     = date('Y-m-d');
-            $validFrom = trim((string) ($agreement['validFrom'] ?? ''));
-            $validTo   = trim((string) ($agreement['validUntil'] ?? ''));
-            if (($validFrom !== '' && $today < $validFrom) || ($validTo !== '' && $today > $validTo)) {
-                throw new RuntimeException('Framework agreement is outside its validity window.');
-            }
+            $this->assertUsable(agreement: $agreement);
 
             $ceiling = (int) ($agreement['ceilingAmount'] ?? 0);
             $drawn   = (int) ($agreement['drawnAmount'] ?? 0);
@@ -131,6 +120,29 @@ class FrameworkAgreementDrawdownGuard
 
     }//end assertWithinCeiling()
 
+    /**
+     * Assert the agreement is active and within its validity window, or throw.
+     *
+     * @param array<string,mixed> $agreement The resolved FrameworkAgreement.
+     *
+     * @return void
+     *
+     * @throws RuntimeException When the agreement is not active or out of window.
+     */
+    private function assertUsable(array $agreement): void
+    {
+        if ((string) ($agreement['statusCode'] ?? '') !== 'active') {
+            throw new RuntimeException('Framework agreement is not active.');
+        }
+
+        $today     = date('Y-m-d');
+        $validFrom = trim((string) ($agreement['validFrom'] ?? ''));
+        $validTo   = trim((string) ($agreement['validUntil'] ?? ''));
+        if (($validFrom !== '' && $today < $validFrom) || ($validTo !== '' && $today > $validTo)) {
+            throw new RuntimeException('Framework agreement is outside its validity window.');
+        }
+
+    }//end assertUsable()
 
     /**
      * Resolve an agreement by agreementNumber, then by object id.
@@ -163,7 +175,6 @@ class FrameworkAgreementDrawdownGuard
 
     }//end resolveAgreement()
 
-
     /**
      * Fetch one record via the real ObjectService API (findAll then first).
      *
@@ -189,7 +200,6 @@ class FrameworkAgreementDrawdownGuard
         return null;
 
     }//end findOne()
-
 
     /**
      * Resolve the OpenRegister register slug from app config (defaults to "shillinq").

@@ -56,7 +56,7 @@ final class InMemoryObjectServiceStub
     /**
      * Auto-increment id counter.
      *
-     * @var int
+     * @var integer
      */
     private int $idCounter = 0;
 
@@ -115,6 +115,7 @@ final class InMemoryObjectServiceStub
                             return false;
                         }
                     }
+
                     return true;
                 }
             )

@@ -35,7 +35,6 @@ use Psr\Log\LoggerInterface;
  */
 final class FrameworkAgreementDrawdownGuardTest extends TestCase
 {
-
     /**
      * Build an in-memory ObjectService stub honouring equality filters.
      *
@@ -46,6 +45,7 @@ final class FrameworkAgreementDrawdownGuardTest extends TestCase
     private function buildStub(array $agreements): object
     {
         return new class (['FrameworkAgreement' => $agreements]) {
+
             /**
              * Schema rows.
              *
@@ -115,6 +115,7 @@ final class FrameworkAgreementDrawdownGuardTest extends TestCase
                                     return false;
                                 }
                             }
+
                             return true;
                         }
                     )
@@ -199,9 +200,9 @@ final class FrameworkAgreementDrawdownGuardTest extends TestCase
      */
     public function testCallOffAgainstInactiveAgreementIsBlocked(): void
     {
-        $agreement               = $this->nearCeilingAgreement();
+        $agreement = $this->nearCeilingAgreement();
         $agreement['statusCode'] = 'closed';
-        $guard                   = $this->buildGuard(agreements: [$agreement]);
+        $guard = $this->buildGuard(agreements: [$agreement]);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('not active');

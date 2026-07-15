@@ -37,7 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 final class SupplierQualificationServiceTest extends TestCase
 {
-
     /**
      * Build the service over an in-memory ObjectService stub.
      *
@@ -75,7 +74,13 @@ final class SupplierQualificationServiceTest extends TestCase
         $service = $this->buildService(
             data: [
                 'SupplierQualification' => [
-                    ['administrationId' => 'adm-1', 'supplierId' => 'SUP-1', 'taxId' => 'NL001234567B01', 'iban' => 'NL91ABNA0417164300', 'statusCode' => 'qualified'],
+                    [
+                        'administrationId' => 'adm-1',
+                        'supplierId'       => 'SUP-1',
+                        'taxId'            => 'NL001234567B01',
+                        'iban'             => 'NL91ABNA0417164300',
+                        'statusCode'       => 'qualified',
+                    ],
                 ],
             ]
         );
@@ -98,7 +103,13 @@ final class SupplierQualificationServiceTest extends TestCase
         $service = $this->buildService(
             data: [
                 'SupplierQualification' => [
-                    ['administrationId' => 'adm-1', 'supplierId' => 'SUP-1', 'taxId' => 'NL001234567B01', 'iban' => 'NL91ABNA0417164300', 'statusCode' => 'qualified'],
+                    [
+                        'administrationId' => 'adm-1',
+                        'supplierId'       => 'SUP-1',
+                        'taxId'            => 'NL001234567B01',
+                        'iban'             => 'NL91ABNA0417164300',
+                        'statusCode'       => 'qualified',
+                    ],
                 ],
             ]
         );
@@ -136,7 +147,7 @@ final class SupplierQualificationServiceTest extends TestCase
     }//end testRegisterUniqueSupplierPersistsDraft()
 
     /**
-     * qualify() refuses a supplier with an expired required document.
+     * The qualify() method refuses a supplier with an expired required document.
      *
      * @return void
      */
@@ -162,7 +173,7 @@ final class SupplierQualificationServiceTest extends TestCase
     }//end testQualifyRefusesExpiredDocument()
 
     /**
-     * qualify() promotes a draft supplier with all valid documents to qualified.
+     * The qualify() method promotes a draft supplier with valid documents.
      *
      * @return void
      */

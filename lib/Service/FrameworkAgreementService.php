@@ -44,15 +44,14 @@ use RuntimeException;
  */
 class FrameworkAgreementService
 {
-
     /**
      * Construct the service with DI dependencies.
      *
-     * @param ContainerInterface             $container             DI container for lazy ObjectService resolution.
-     * @param IAppConfig                     $appConfig            App config for register slug resolution.
-     * @param AdministrationContextService   $administrationContext Tenant access/identity resolver.
-     * @param FrameworkAgreementDrawdownGuard $drawdownGuard       Ceiling guard (reused, unmodified).
-     * @param LoggerInterface                $logger               Logger for diagnostics.
+     * @param ContainerInterface              $container             DI container for lazy ObjectService resolution.
+     * @param IAppConfig                      $appConfig             App config for register slug resolution.
+     * @param AdministrationContextService    $administrationContext Tenant access/identity resolver.
+     * @param FrameworkAgreementDrawdownGuard $drawdownGuard         Ceiling guard (reused, unmodified).
+     * @param LoggerInterface                 $logger                Logger for diagnostics.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -62,7 +61,6 @@ class FrameworkAgreementService
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Create a framework agreement.
@@ -92,23 +90,27 @@ class FrameworkAgreementService
             throw new RuntimeException('ceilingAmount must be positive (integer cents)');
         }
 
+        $agreementNumber = trim((string) ($payload['agreementNumber'] ?? ''));
+        if ($agreementNumber === '') {
+            $agreementNumber = $this->generateAgreementNumber(administrationId: $administrationId);
+        }
+
         $record = [
-            'agreementNumber' => (trim((string) ($payload['agreementNumber'] ?? '')) ?: $this->generateAgreementNumber(administrationId: $administrationId)),
+            'agreementNumber'  => $agreementNumber,
             'administrationId' => $administrationId,
-            'supplierId'      => $supplierId,
-            'title'           => trim((string) ($payload['title'] ?? '')),
-            'ceilingAmount'   => $ceiling,
-            'drawnAmount'     => 0,
-            'currency'        => (string) ($payload['currency'] ?? 'EUR'),
-            'validFrom'       => trim((string) ($payload['validFrom'] ?? '')),
-            'validUntil'      => trim((string) ($payload['validUntil'] ?? '')),
-            'statusCode'      => 'active',
+            'supplierId'       => $supplierId,
+            'title'            => trim((string) ($payload['title'] ?? '')),
+            'ceilingAmount'    => $ceiling,
+            'drawnAmount'      => 0,
+            'currency'         => (string) ($payload['currency'] ?? 'EUR'),
+            'validFrom'        => trim((string) ($payload['validFrom'] ?? '')),
+            'validUntil'       => trim((string) ($payload['validUntil'] ?? '')),
+            'statusCode'       => 'active',
         ];
 
         return $this->saveObject(schema: 'FrameworkAgreement', object: $record);
 
     }//end createAgreement()
-
 
     /**
      * Record a PurchaseOrder call-off against a framework agreement (REQ-PG-004).
@@ -145,7 +147,6 @@ class FrameworkAgreementService
 
     }//end recordCallOff()
 
-
     /**
      * Generate a per-administration framework-agreement number.
      *
@@ -164,7 +165,6 @@ class FrameworkAgreementService
         return 'FA-'.date('Y').'-'.$administrationId.'-'.$sequence;
 
     }//end generateAgreementNumber()
-
 
     /**
      * Persist an object via the real ObjectService API.
@@ -197,7 +197,6 @@ class FrameworkAgreementService
         }
 
     }//end saveObject()
-
 
     /**
      * Fetch all matching records via the real ObjectService API (findAll).
@@ -233,7 +232,6 @@ class FrameworkAgreementService
         return $result;
 
     }//end findAll()
-
 
     /**
      * Resolve the OpenRegister register slug from app config (defaults to "shillinq").

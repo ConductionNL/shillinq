@@ -39,7 +39,6 @@ use Psr\Log\LoggerInterface;
  */
 final class FrameworkAgreementServiceTest extends TestCase
 {
-
     /**
      * Build the service + real guard over one shared in-memory stub.
      *

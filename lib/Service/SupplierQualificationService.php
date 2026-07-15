@@ -44,14 +44,13 @@ use RuntimeException;
  */
 class SupplierQualificationService
 {
-
     /**
      * Construct the service with DI dependencies.
      *
-     * @param ContainerInterface            $container             DI container for lazy ObjectService resolution.
-     * @param IAppConfig                    $appConfig            App config for register slug resolution.
-     * @param AdministrationContextService  $administrationContext Tenant access/identity resolver.
-     * @param LoggerInterface               $logger               Logger for diagnostics.
+     * @param ContainerInterface           $container             DI container for lazy ObjectService resolution.
+     * @param IAppConfig                   $appConfig             App config for register slug resolution.
+     * @param AdministrationContextService $administrationContext Tenant access/identity resolver.
+     * @param LoggerInterface              $logger                Logger for diagnostics.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -60,7 +59,6 @@ class SupplierQualificationService
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Register a supplier for qualification, rejecting a duplicate on taxId or
@@ -115,7 +113,6 @@ class SupplierQualificationService
 
     }//end registerSupplier()
 
-
     /**
      * Qualify a draft supplier once every required document is provided and
      * unexpired (REQ-PG-002).
@@ -156,7 +153,6 @@ class SupplierQualificationService
 
     }//end qualify()
 
-
     /**
      * Reject registration when a SupplierQualification with the same taxId or
      * IBAN already exists in the administration (REQ-PG-003).
@@ -193,7 +189,6 @@ class SupplierQualificationService
 
     }//end assertNoDuplicate()
 
-
     /**
      * Are all required documents provided and unexpired?
      *
@@ -224,7 +219,6 @@ class SupplierQualificationService
 
     }//end documentsValid()
 
-
     /**
      * Normalise raw required-document entries.
      *
@@ -250,7 +244,6 @@ class SupplierQualificationService
         return $documents;
 
     }//end normaliseDocuments()
-
 
     /**
      * Persist an object via the real ObjectService API.
@@ -283,7 +276,6 @@ class SupplierQualificationService
         }
 
     }//end saveObject()
-
 
     /**
      * Fetch one record via the real ObjectService API (findAll then first).
@@ -318,7 +310,6 @@ class SupplierQualificationService
         return null;
 
     }//end findOne()
-
 
     /**
      * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
