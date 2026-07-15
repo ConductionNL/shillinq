@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/wik-dunning-legal-calculations/specs/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-003
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -59,7 +59,7 @@ use InvalidArgumentException;
  *   - B2B (HANDELSRENTE_B2B_6_119A_BW) — ECB Main Refinancing Rate + 8pp.
  *   - B2C (WETTELIJKE_RENTE_B2C_6_119_BW) — wettelijke rente per AMvB.
  *
- * @spec openspec/changes/wik-dunning-legal-calculations/specs/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-003
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 class BIKStaffelCalculator
 {
@@ -166,7 +166,7 @@ class BIKStaffelCalculator
      *
      * @return array{schaal1_0_2500:float,schaal2_2500_5000:float,schaal3_5000_10000:float,schaal4_10000_200000:float,schaal5_200000plus:float,totaal:float,minimum:float,maximum:float,toegepast:float,btwVerrekenbaar:bool,btwPercentage:float,btwBedrag:float,toegepastInclBtw:float}
      *
-     * @spec openspec/changes/wik-dunning-legal-calculations/specs/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-003
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function staffel(
         float $hoofdsom,
@@ -245,7 +245,7 @@ class BIKStaffelCalculator
      *
      * @return array{tarief:float,type:string,ingangsdatum:string,berekendOp:string,dagen:int,bedrag:float,perioden:array<int,array{van:string,tot:string,dagen:int,tarief:float,bedrag:float}>}
      *
-     * @spec openspec/changes/wik-dunning-legal-calculations/specs/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-003
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function rente(
         string $partyType,
@@ -411,7 +411,7 @@ class BIKStaffelCalculator
      *
      * @return bool True when the calculation is permitted.
      *
-     * @spec openspec/changes/wik-dunning-legal-calculations/specs/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-003
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function isCalculationPermitted(string $partyType, int $dagenVerzuim): bool
     {
@@ -439,7 +439,7 @@ class BIKStaffelCalculator
      *
      * @return array<string,mixed> Body ready to persist via ObjectService::saveObject.
      *
-     * @spec openspec/changes/wik-dunning-legal-calculations/specs/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-003
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
      */
     public function compose(
         string $factuurId,
