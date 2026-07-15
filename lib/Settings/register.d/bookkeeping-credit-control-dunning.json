@@ -653,9 +653,9 @@
       "IncassoKostenBerekening": {
         "slug": "IncassoKostenBerekening",
         "icon": "CalculatorVariantOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Incasso Kosten Berekening",
-        "description": "BIK-staffel + wettelijke rente computation per invoice. Implements the Besluit BIK staffel (15% / 10% / 5% / 1% / 0,5%, minimum €40) plus handelsrente B2B per art. 6:119a BW (ECB + 8pp → 11,5% per 1-1-2026) or wettelijke rente B2C per art. 6:119 BW (7% per 1-1-2026). Recomputed on partial-payment against the remaining saldo. REQ-CCD-003.",
+        "description": "BIK-staffel + wettelijke rente computation per invoice. Implements the Besluit BIK staffel (15% / 10% / 5% / 1% / 0,5%, minimum €40, maximum €6.775 reached at €1.000.000) plus optional BTW-over-incassokosten (art. 2 lid 2 Besluit BIK, +21% when the creditor cannot offset VAT). Rente uses a maintained date-keyed rate table: handelsrente B2B per art. 6:119a BW (10,15% per 1-1-2026) or wettelijke rente B2C per art. 6:119 BW (4% per 1-1-2026); a window crossing a statutory rate boundary splits per sub-period. Recomputed on partial-payment against the remaining saldo. REQ-CCD-003.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-003",
         "type": "object",
@@ -732,11 +732,43 @@
                 "default": 40.0,
                 "title": "Minimum"
               },
+              "maximum": {
+                "type": "number",
+                "multipleOf": 0.01,
+                "description": "Statutory maximum per Besluit BIK (€6.775, reached at a €1.000.000 hoofdsom).",
+                "default": 6775.0,
+                "title": "Maximum"
+              },
               "toegepast": {
                 "type": "number",
                 "multipleOf": 0.01,
-                "description": "max(totaal, minimum) — the amount actually owed.",
+                "description": "min(max(totaal, minimum), maximum) — the normed fee excl. BTW.",
                 "title": "Toegepast"
+              },
+              "btwVerrekenbaar": {
+                "type": "boolean",
+                "description": "True when the creditor can offset the VAT on the collection service (no surcharge). When false, art. 2 lid 2 Besluit BIK adds BTW to the fee.",
+                "default": true,
+                "title": "BTW Verrekenbaar"
+              },
+              "btwPercentage": {
+                "type": "number",
+                "description": "VAT percentage applied to the fee when btwVerrekenbaar is false (0 otherwise).",
+                "default": 0.0,
+                "title": "BTW Percentage"
+              },
+              "btwBedrag": {
+                "type": "number",
+                "multipleOf": 0.01,
+                "description": "BTW surcharge on the incassokosten (art. 2 lid 2 Besluit BIK); 0 when the creditor can offset VAT.",
+                "default": 0.0,
+                "title": "BTW Bedrag"
+              },
+              "toegepastInclBtw": {
+                "type": "number",
+                "multipleOf": 0.01,
+                "description": "toegepast + btwBedrag — the incassokosten actually owed.",
+                "title": "Toegepast Incl BTW"
               }
             },
             "title": "Berekening"
@@ -754,8 +786,8 @@
             "properties": {
               "tarief": {
                 "type": "number",
-                "description": "Annual rate as decimal (0.115 for B2B handelsrente, 0.07 for B2C wettelijke rente).",
-                "example": 0.115,
+                "description": "Headline annual rate as decimal (the rate in force on berekendOp). Per 1-1-2026: 0.1015 B2B handelsrente, 0.04 B2C wettelijke rente. Resolved from the maintained date-keyed rate table.",
+                "example": 0.1015,
                 "title": "Tarief"
               },
               "type": {
@@ -789,12 +821,46 @@
                 "type": "number",
                 "multipleOf": 0.01,
                 "minimum": 0,
-                "description": "Rente in EUR — (hoofdsom × tarief × dagen / 365), rounded to cents.",
+                "description": "Total rente in EUR — sum over per-rate sub-periods of (hoofdsom × tarief × dagen / 365), rounded to cents.",
                 "title": "Bedrag"
+              },
+              "perioden": {
+                "type": "array",
+                "description": "Per-rate accrual sub-periods (audit trail). A window crossing a statutory rate boundary splits so each sub-period accrues at its own rate.",
+                "title": "Perioden",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "van": {
+                      "type": "string",
+                      "format": "date",
+                      "title": "Van"
+                    },
+                    "tot": {
+                      "type": "string",
+                      "format": "date",
+                      "title": "Tot"
+                    },
+                    "dagen": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "title": "Dagen"
+                    },
+                    "tarief": {
+                      "type": "number",
+                      "title": "Tarief"
+                    },
+                    "bedrag": {
+                      "type": "number",
+                      "multipleOf": 0.01,
+                      "title": "Bedrag"
+                    }
+                  }
+                }
               }
             },
             "title": "Wettelijke Rente",
-            "description": "A structured wettelijke rente object with nested properties."
+            "description": "A structured wettelijke rente object with nested per-rate sub-periods."
           },
           "partyType": {
             "type": "string",
@@ -852,13 +918,13 @@
               },
               "toegepast": {
                 "type": "expression",
-                "expression": "MAX(totaal, 40)"
+                "expression": "MIN(MAX(totaal, 40), 6775)"
               }
             }
           },
           "renteAccrual": {
             "label": "Rente accrual",
-            "description": "Declarative shape of the wettelijke rente accrual (REQ-CCD-003). For B2B uses HANDELSRENTE_B2B_6_119A_BW (ECB+8pp → 11,5% default); for B2C uses WETTELIJKE_RENTE_B2C_6_119_BW (7% default).",
+            "description": "Declarative shape of the wettelijke rente accrual (REQ-CCD-003). For B2B uses HANDELSRENTE_B2B_6_119A_BW (ECB+8pp → 10,15% per 1-1-2026); for B2C uses WETTELIJKE_RENTE_B2C_6_119_BW (4% per 1-1-2026). Rates are resolved from a maintained date-keyed table; the BIKStaffelCalculator PHP guard splits a boundary-crossing window per sub-period.",
             "register": "shillinq",
             "schema": "IncassoKostenBerekening",
             "computedFields": {
@@ -1493,18 +1559,32 @@
         "schaal5_200000plus": 0.0,
         "totaal": 795.0,
         "minimum": 40.0,
-        "toegepast": 795.0
+        "maximum": 6775.0,
+        "toegepast": 795.0,
+        "btwVerrekenbaar": true,
+        "btwPercentage": 0.0,
+        "btwBedrag": 0.0,
+        "toegepastInclBtw": 795.0
       },
       "wettelijkeRente": {
-        "tarief": 0.115,
+        "tarief": 0.1015,
         "type": "HANDELSRENTE_B2B_6_119A_BW",
         "ingangsdatum": "2026-05-30",
         "berekendOp": "2026-06-21",
         "dagen": 22,
-        "bedrag": 58.13
+        "bedrag": 51.39,
+        "perioden": [
+          {
+            "van": "2026-05-30",
+            "tot": "2026-06-21",
+            "dagen": 22,
+            "tarief": 0.1015,
+            "bedrag": 51.39
+          }
+        ]
       },
       "partyType": "B2B",
-      "totaalVerschuldigd": 9253.13,
+      "totaalVerschuldigd": 9246.39,
       "administrationId": "adm-1"
     },
     {

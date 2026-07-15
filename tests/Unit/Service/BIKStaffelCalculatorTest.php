@@ -136,11 +136,14 @@ final class BIKStaffelCalculatorTest extends TestCase
     }//end testStaffelRejectsNegativeHoofdsom()
 
     /**
-     * Spec scenario: B2B handelsrente per art. 6:119a BW.
+     * Spec scenario: B2B handelsrente per art. 6:119a BW (current 2026 rate).
      *
-     * 8.400 × 0.115 × 22 / 365 ≈ €58.22; tarief 0.115; type
-     * HANDELSRENTE_B2B_6_119A_BW. The spec example text mentions €58.13;
-     * that example carries a small rounding slip — the correct calc is €58.22.
+     * The rate is resolved from the maintained date-keyed table: for a 2026
+     * accrual window the handelsrente is 10,15% (per 1-1-2026, Wieringa /
+     * wettelijke-rente.com), NOT the stale 11,5% the pre-WIK code hard-coded.
+     *
+     * 8.400 × 0.1015 × 22 / 365 = €51.39; tarief 0.1015; type
+     * HANDELSRENTE_B2B_6_119A_BW.
      *
      * @return void
      */
@@ -153,18 +156,22 @@ final class BIKStaffelCalculatorTest extends TestCase
             berekendOp: new DateTimeImmutable('2026-06-21')
         );
 
-        self::assertSame(0.115, $r['tarief']);
+        self::assertSame(0.1015, $r['tarief']);
         self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $r['type']);
         self::assertSame(22, $r['dagen']);
-        self::assertEqualsWithDelta(58.22, $r['bedrag'], 0.01);
+        // 840000 × 0.1015 × 22 / 365 = 5138.96 → 5139 cents.
+        self::assertEqualsWithDelta(51.39, $r['bedrag'], 0.01);
 
     }//end testRenteB2BHandelsrenteOn8400Eur22Days()
 
     /**
-     * Spec scenario: B2C wettelijke rente per art. 6:119 BW.
+     * Spec scenario: B2C wettelijke rente per art. 6:119 BW (current 2026 rate).
      *
-     * 820 × 0.07 × 31 / 365 ≈ €4.88 (the spec example mentions €4.92,
-     * a small rounding slip in the example text).
+     * For a 2026 accrual window the wettelijke rente is 4% (per 1-1-2026,
+     * AMvB 10-12-2025), NOT the stale 7% the pre-WIK code hard-coded.
+     *
+     * 820 × 0.04 × 31 / 365 = €2.79; tarief 0.04; type
+     * WETTELIJKE_RENTE_B2C_6_119_BW.
      *
      * @return void
      */
@@ -177,10 +184,11 @@ final class BIKStaffelCalculatorTest extends TestCase
             berekendOp: new DateTimeImmutable('2026-06-30')
         );
 
-        self::assertSame(0.07, $r['tarief']);
+        self::assertSame(0.04, $r['tarief']);
         self::assertSame('WETTELIJKE_RENTE_B2C_6_119_BW', $r['type']);
         self::assertSame(31, $r['dagen']);
-        self::assertEqualsWithDelta(4.88, $r['bedrag'], 0.01);
+        // 82000 × 0.04 × 31 / 365 = 278.6 → 279 cents.
+        self::assertEqualsWithDelta(2.79, $r['bedrag'], 0.01);
 
     }//end testRenteB2CWettelijkeRenteOn820Eur31Days()
 
@@ -239,9 +247,113 @@ final class BIKStaffelCalculatorTest extends TestCase
         self::assertSame(8400.0, $body['hoofdsom']);
         self::assertSame(795.0, $body['berekening']['toegepast']);
         self::assertSame('HANDELSRENTE_B2B_6_119A_BW', $body['wettelijkeRente']['type']);
-        // 8400 + 795 + ~58.22 = 9253.22 (within 0.01).
-        self::assertEqualsWithDelta(9253.22, $body['totaalVerschuldigd'], 0.01);
+        // 8400 + 795 (no BTW surcharge, creditor can offset) + 51.39 rente = 9246.39.
+        self::assertEqualsWithDelta(9246.39, $body['totaalVerschuldigd'], 0.01);
 
     }//end testComposeYieldsPersistenceShape()
+
+    /**
+     * Worked example — statutory maximum €6.775 cap (Besluit BIK).
+     *
+     * Uncapped, a €2.000.000 hoofdsom would yield
+     *   375 + 250 + 250 + 1900 + 0,5% × 1.800.000 (=9000) = €11.775.
+     * The legal ceiling is €6.775, reached at a €1.000.000 claim, so both
+     * €1.000.000 and €2.000.000 MUST return toegepast = €6.775.
+     *
+     * @return void
+     */
+    public function testStaffelMaximumCapAt6775(): void
+    {
+        $atCap = $this->calc->staffel(hoofdsom: 1000000.00);
+        self::assertSame(6775.0, $atCap['maximum']);
+        self::assertSame(6775.0, $atCap['toegepast']);
+        // Raw staffel at exactly €1M lands on the cap: 375+250+250+1900+4000.
+        self::assertSame(6775.0, $atCap['totaal']);
+
+        $overCap = $this->calc->staffel(hoofdsom: 2000000.00);
+        // Uncapped totaal is €11.775, but toegepast is clamped to €6.775.
+        self::assertSame(11775.0, $overCap['totaal']);
+        self::assertSame(6775.0, $overCap['toegepast']);
+
+    }//end testStaffelMaximumCapAt6775()
+
+    /**
+     * Worked example — BTW-over-incassokosten (art. 2 lid 2 Besluit BIK).
+     *
+     * When the creditor cannot offset VAT (btwVerrekenbaar=false) and declares
+     * this, the €795 staffel fee is increased by 21%: €166.95 BTW →
+     * €961.95 incl. BTW. When the creditor CAN offset (default), no surcharge.
+     *
+     * @return void
+     */
+    public function testStaffelBtwSurchargeWhenNotDeductible(): void
+    {
+        $withBtw = $this->calc->staffel(hoofdsom: 8400.00, btwVerrekenbaar: false);
+        self::assertSame(795.0, $withBtw['toegepast']);
+        self::assertSame(0.21, $withBtw['btwPercentage']);
+        // 79500 × 0.21 = 16695 cents.
+        self::assertSame(166.95, $withBtw['btwBedrag']);
+        self::assertSame(961.95, $withBtw['toegepastInclBtw']);
+
+        $noBtw = $this->calc->staffel(hoofdsom: 8400.00);
+        self::assertTrue($noBtw['btwVerrekenbaar']);
+        self::assertSame(0.0, $noBtw['btwBedrag']);
+        self::assertSame(795.0, $noBtw['toegepastInclBtw']);
+
+    }//end testStaffelBtwSurchargeWhenNotDeductible()
+
+    /**
+     * Worked example — rente accrual that crosses a statutory rate boundary.
+     *
+     * A €10.000 B2C claim accruing 2025-12-17 → 2026-01-16 spans the
+     * 1-1-2026 boundary where wettelijke rente drops 6% → 4%:
+     *   - 2025-12-17 → 2026-01-01 : 15 days @ 6% = €24.66
+     *   - 2026-01-01 → 2026-01-16 : 15 days @ 4% = €16.44
+     *   total 30 days = €41.10 (a single flat 4% would wrongly yield €32.88).
+     *
+     * @return void
+     */
+    public function testRenteSplitsAcrossRateBoundary(): void
+    {
+        $r = $this->calc->rente(
+            partyType: 'B2C',
+            hoofdsom: 10000.00,
+            ingangsdatum: new DateTimeImmutable('2025-12-17'),
+            berekendOp: new DateTimeImmutable('2026-01-16')
+        );
+
+        self::assertSame(30, $r['dagen']);
+        self::assertCount(2, $r['perioden']);
+        self::assertSame(0.06, $r['perioden'][0]['tarief']);
+        self::assertSame(0.04, $r['perioden'][1]['tarief']);
+        self::assertEqualsWithDelta(24.66, $r['perioden'][0]['bedrag'], 0.01);
+        self::assertEqualsWithDelta(16.44, $r['perioden'][1]['bedrag'], 0.01);
+        self::assertEqualsWithDelta(41.10, $r['bedrag'], 0.01);
+        // Headline tarief is the rate in force on berekendOp (4% in 2026).
+        self::assertSame(0.04, $r['tarief']);
+
+    }//end testRenteSplitsAcrossRateBoundary()
+
+    /**
+     * Explicit B2B override forces a flat rate (art. 6:119a lid 3 contractual).
+     *
+     * @return void
+     */
+    public function testRenteHonoursExplicitOverride(): void
+    {
+        $r = $this->calc->rente(
+            partyType: 'B2B',
+            hoofdsom: 8400.00,
+            ingangsdatum: new DateTimeImmutable('2026-05-30'),
+            berekendOp: new DateTimeImmutable('2026-06-21'),
+            tariefB2B: 0.12
+        );
+
+        self::assertSame(0.12, $r['tarief']);
+        self::assertCount(1, $r['perioden']);
+        // 840000 × 0.12 × 22 / 365 = 6075.6 → 6076 cents.
+        self::assertEqualsWithDelta(60.76, $r['bedrag'], 0.01);
+
+    }//end testRenteHonoursExplicitOverride()
 
 }//end class
