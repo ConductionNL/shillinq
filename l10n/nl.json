@@ -1819,7 +1819,15 @@
         "Amount (EUR)": "Bedrag (EUR)",
         "Exchange Rate": "Wisselkoers",
         "Cost Centre": "Kostenplaats",
-        "Claim": "Declaratie"
+        "Claim": "Declaratie",
+        "Test rule against recent transactions": "Regel testen op recente transacties",
+        "This rule would match {count} of {total} unmatched transactions": "Deze regel zou {count} van {total} niet-gematchte transacties matchen",
+        "Suggested rules": "Voorgestelde regels",
+        "Suggested from {count} repeated categorisations": "Voorgesteld op basis van {count} herhaalde categoriseringen",
+        "Accept suggestion": "Voorstel accepteren",
+        "Target GL Account": "Doel-grootboekrekening",
+        "Counterparty IBAN": "IBAN tegenpartij",
+        "No matching transactions found for this rule": "Geen overeenkomende transacties gevonden voor deze regel"
     },
     "plurals": ""
 }

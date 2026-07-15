@@ -1817,7 +1817,15 @@
         "Amount (EUR)": "Amount (EUR)",
         "Exchange Rate": "Exchange Rate",
         "Cost Centre": "Cost Centre",
-        "Claim": "Claim"
+        "Claim": "Claim",
+        "Test rule against recent transactions": "Test rule against recent transactions",
+        "This rule would match {count} of {total} unmatched transactions": "This rule would match {count} of {total} unmatched transactions",
+        "Suggested rules": "Suggested rules",
+        "Suggested from {count} repeated categorisations": "Suggested from {count} repeated categorisations",
+        "Accept suggestion": "Accept suggestion",
+        "Target GL Account": "Target GL Account",
+        "Counterparty IBAN": "Counterparty IBAN",
+        "No matching transactions found for this rule": "No matching transactions found for this rule"
     },
     "plurals": ""
 }

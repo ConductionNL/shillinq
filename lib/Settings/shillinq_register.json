@@ -16327,7 +16327,7 @@
           },
           "predicates": {
             "type": "array",
-            "description": "List of predicate objects (AND-combined per REQ-BR-005). Supported ops: exact-amount, amount-range, reference-match, counterparty-fuzzy, date-window.",
+            "description": "List of predicate objects (AND-combined per REQ-BR-005). Supported ops: exact-amount, amount-range, reference-match, counterparty-fuzzy, counterparty-iban, date-window.",
             "items": {
               "type": "object",
               "properties": {
@@ -16338,10 +16338,16 @@
                     "amount-range",
                     "reference-match",
                     "counterparty-fuzzy",
+                    "counterparty-iban",
                     "date-window"
                   ],
                   "description": "Predicate operation type per REQ-BR-005.",
                   "title": "Op"
+                },
+                "iban": {
+                  "type": "string",
+                  "description": "For counterparty-iban: the counterparty IBAN matched case-insensitively against the bank line's counterpartyIban.",
+                  "title": "IBAN"
                 },
                 "amount": {
                   "type": "number",
@@ -16433,6 +16439,13 @@
             "example": 0.95,
             "default": 1.0,
             "title": "Confidence Score"
+          },
+          "targetGlAccount": {
+            "type": "string",
+            "description": "Optional GL account code that matched bank lines are categorised to (used with targetType gl-transaction). This is the target a history-based rule suggestion proposes per REQ-BR-012.",
+            "nullable": true,
+            "example": "4000",
+            "title": "Target GL Account"
           }
         },
         "x-openregister-lifecycle": {
