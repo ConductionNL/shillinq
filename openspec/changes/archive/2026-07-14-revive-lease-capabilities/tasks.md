@@ -14,18 +14,18 @@
 
 ## Schedule generation (`LeasePaymentScheduleService::generateSchedule`)
 
-- [ ] 3. New `lib/Listener/LeaseActivationListener.php` on `ObjectUpdatedEvent`
+- [x] 3. New `lib/Listener/LeaseActivationListener.php` on `ObjectUpdatedEvent`
   + `ObjectCreatedEvent`, filtered to schema `LeaseContract`, firing
   `generateSchedule` on the edge into `active` (`ObjectUpdatedEvent`:
   `old.status !== 'active' && new.status === 'active'`; `ObjectCreatedEvent`:
   `status === 'active'`). Fail-soft; resolve lease id + `administrationId`
   from the object.
-- [ ] 4. Register `LeaseActivationListener` for both events in
+- [x] 4. Register `LeaseActivationListener` for both events in
   `Application::register()` next to `StockMoveTransitionedListener`.
 
 ## Reassessment events (four `LeaseReassessmentService::record*` methods)
 
-- [ ] 5. New `lib/Controller/LeaseReassessmentController.php`: four
+- [x] 5. New `lib/Controller/LeaseReassessmentController.php`: four
   `#[NoAdminRequired]` `POST` endpoints — `indexation`,
   `extensionOption`, `modification`, `impairment` — each rejecting the
   anonymous caller (401), validating `administrationId` via
@@ -33,22 +33,22 @@
   the lease-id slug + the event body, calling the matching `record*` method,
   and returning the persisted event payload (201) / structured errors with
   no stack trace.
-- [ ] 6. Four routes in `appinfo/routes.php` under `leaseReassessment#…`
+- [x] 6. Four routes in `appinfo/routes.php` under `leaseReassessment#…`
   (`POST /api/leases/reassessment/{indexation|extension-option|modification|impairment}`).
 
 ## Tests (the gate)
 
-- [ ] 7. `tests/Unit/Listener/LeaseActivationListenerTest.php` — a
+- [x] 7. `tests/Unit/Listener/LeaseActivationListenerTest.php` — a
   `LeaseContract` `draft → active` `ObjectUpdatedEvent` persists one
   `LeasePaymentSchedule` row per period whose amounts amortize (final-period
   closing lease liability ≈ 0; each row `interest + principal ≈ payment`);
   an exempt lease and a non-edge save (already `active`, or a non-lease
   schema) persist nothing; a `created active` lease also generates.
-- [ ] 8. `tests/Unit/Controller/LeaseReassessmentControllerTest.php` — each of
+- [x] 8. `tests/Unit/Controller/LeaseReassessmentControllerTest.php` — each of
   the four endpoints invokes its `record*` method and returns a payload whose
   `glLines` **balance** (`sum(debit) === sum(credit)`) and whose RoU
   adjustment equals the liability delta (catch-up) / the impairment magnitude;
   plus 401 anonymous and 404 cross-tenant.
-- [ ] 9. Full unit suite green in a `php:8.3-cli` container
+- [x] 9. Full unit suite green in a `php:8.3-cli` container
   (`phpunit-unit.xml`) with no new failures vs the baseline; `phpcs` +
   `phpstan` clean on the changed paths.

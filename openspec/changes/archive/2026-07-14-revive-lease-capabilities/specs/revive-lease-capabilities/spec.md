@@ -1,6 +1,6 @@
 # revive-lease-capabilities Specification
 
-**Status**: in-progress
+**Status**: done
 **Scope**: shillinq
 **OpenSpec changes**:
 - revive-lease-capabilities (this change)
