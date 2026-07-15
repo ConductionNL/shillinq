@@ -83,15 +83,17 @@ class PeriodCloseService
     /**
      * Construct the service.
      *
-     * @param ContainerInterface $container    DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig    App config for the register slug.
-     * @param IGroupManager      $groupManager Group manager for role resolution.
-     * @param LoggerInterface    $logger       Logger for diagnostics.
+     * @param ContainerInterface    $container      DI container for lazy ObjectService resolution.
+     * @param IAppConfig            $appConfig      App config for the register slug.
+     * @param IGroupManager         $groupManager   Group manager for role resolution.
+     * @param SuspenseAgeingService $suspenseAgeing Suspense worklist ageing (close blocker, REQ-PCG-003).
+     * @param LoggerInterface       $logger         Logger for diagnostics.
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
         private readonly IGroupManager $groupManager,
+        private readonly SuspenseAgeingService $suspenseAgeing,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -175,6 +177,37 @@ class PeriodCloseService
         if ($this->mandatoryChecklistResolved(record: $record) === false) {
             throw new PeriodCloseException(
                 message: 'All mandatory checklist items (AP, AR) must be resolved before close',
+                status: self::ERR_VALIDATION
+            );
+        }
+
+        // Payment-control-guards REQ-PCG-003: block the close while the
+        // bank-reconciliation suspense worklist is non-empty (unmatched /
+        // routed-to-suspense bank items). Scoped to the period's own
+        // administration, falling back to the caller's scope. Fail closed: an
+        // unreadable worklist blocks the close rather than being treated as empty.
+        $suspenseScope = (string) ($record['administrationId'] ?? $administrationId);
+        try {
+            $suspenseBlocked = $this->suspenseAgeing->hasUnresolvedItems(administrationId: $suspenseScope);
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'PeriodCloseService: suspense worklist could not be verified — blocking close (fail-closed)',
+                ['administrationId' => $suspenseScope, 'exception' => $e->getMessage()]
+            );
+            throw new PeriodCloseException(
+                message: 'Cannot close the period: the bank-reconciliation suspense worklist could not be verified (fail-closed). Retry once the reconciliation data is available.',
+                status: self::ERR_VALIDATION
+            );
+        }
+
+        if ($suspenseBlocked === true) {
+            $summary = $this->suspenseAgeing->agedUnmatchedItems(administrationId: $suspenseScope);
+            throw new PeriodCloseException(
+                message: sprintf(
+                    'Cannot close the period: %d unmatched bank/suspense item(s) remain (oldest %d day(s) outstanding). Match, route or resolve every suspense item before closing.',
+                    $summary['count'],
+                    $summary['oldestDaysOutstanding']
+                ),
                 status: self::ERR_VALIDATION
             );
         }
