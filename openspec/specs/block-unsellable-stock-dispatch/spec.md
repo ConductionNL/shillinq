@@ -1,9 +1,9 @@
 # block-unsellable-stock-dispatch Specification
 
-**Status**: in-progress
+**Status**: done
 **Scope**: shillinq
 **OpenSpec changes**:
-- block-unsellable-stock-dispatch
+- block-unsellable-stock-dispatch (2026-07-14, archived)
 
 ## Purpose
 
