@@ -605,6 +605,20 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // before the SPA catch-all so Symfony matches it first per ADR-016.
             ['name' => 'bankStatementImport#import', 'url' => '/api/v1/bank-statements/import', 'verb' => 'POST'],
 
+            // Bank matching-rule preview + learning (bank-rule-automation-ux,
+            // REQ-BR-011 / REQ-BR-012). preview dry-runs an unsaved rule against
+            // recent unmatched lines (read-only, no ReconciliationMatch written);
+            // suggest-account returns the GL account of the highest-priority active
+            // rule matching one line; suggestions returns history-based proposals;
+            // suggestions/accept is the ONLY write — persists an accepted proposal
+            // as a MatchingRule. #[NoAdminRequired] with the administration resolved
+            // server-side (IDOR-safe per ADR-005). Static segments only — declared
+            // before the SPA catch-all so Symfony matches them first per ADR-016.
+            ['name' => 'bankRule#preview', 'url' => '/api/v1/bank-rules/preview', 'verb' => 'POST'],
+            ['name' => 'bankRule#suggestAccount', 'url' => '/api/v1/bank-rules/suggest-account', 'verb' => 'POST'],
+            ['name' => 'bankRule#suggestions', 'url' => '/api/v1/bank-rules/suggestions', 'verb' => 'GET'],
+            ['name' => 'bankRule#acceptSuggestion', 'url' => '/api/v1/bank-rules/suggestions/accept', 'verb' => 'POST'],
+
             // AR invoice payment-request webhook (ar-invoice-payment-links, REQ-APL-004).
             // The GENERALIZED, shared payment webhook surface: one route, one
             // signature-verification implementation, one PaymentReconciliationService,
