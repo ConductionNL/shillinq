@@ -425,6 +425,15 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'lease#schedule', 'url' => '/api/leases/schedule', 'verb' => 'GET'],
             ['name' => 'lease#disclosure', 'url' => '/api/leases/disclosure', 'verb' => 'GET'],
 
+            // IFRS 16 lease remeasurement write surface (revive-lease-capabilities,
+            // shillinq#446, REQ-LR-001..REQ-LR-004). Records indexation,
+            // extension-option, modification and impairment events; each posts a
+            // balanced RoU / lease-liability remeasurement.
+            ['name' => 'leaseReassessment#indexation', 'url' => '/api/leases/reassessment/indexation', 'verb' => 'POST'],
+            ['name' => 'leaseReassessment#extensionOption', 'url' => '/api/leases/reassessment/extension-option', 'verb' => 'POST'],
+            ['name' => 'leaseReassessment#modification', 'url' => '/api/leases/reassessment/modification', 'verb' => 'POST'],
+            ['name' => 'leaseReassessment#impairment', 'url' => '/api/leases/reassessment/impairment', 'verb' => 'POST'],
+
             // IFRS 15 revenue cut-off (bookkeeping-ifrs15-revenue, REQ-IFRS15-007/008).
             ['name' => 'revenue#cutoff', 'url' => '/api/revenue/cutoff', 'verb' => 'GET'],
 
