@@ -29,7 +29,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
 use OCA\Shillinq\Service\SalesDispatchStockIssueService;
+use OCA\Shillinq\Sort\FefoSort;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -85,10 +87,11 @@ class SalesDispatchStockIssueServiceTest extends TestCase
      * container by class name.
      *
      * @param array<int,array<string,mixed>> $inventoryStock Seed InventoryStock rows.
+     * @param array<int,array<string,mixed>> $inventoryLot   Seed InventoryLot rows.
      *
      * @return void
      */
-    private function setUpService(array $inventoryStock=[]): void
+    private function setUpService(array $inventoryStock=[], array $inventoryLot=[]): void
     {
         $this->container = $this->createMock(ContainerInterface::class);
         $this->appConfig = $this->createMock(IAppConfig::class);
@@ -99,6 +102,7 @@ class SalesDispatchStockIssueServiceTest extends TestCase
         $store = new \stdClass();
         $store->stockMoves     = [];
         $store->inventoryStock = $inventoryStock;
+        $store->inventoryLot   = $inventoryLot;
         $store->nextId         = 1;
 
         $this->fakeObjectService = new class ($store) {
@@ -221,6 +225,8 @@ class SalesDispatchStockIssueServiceTest extends TestCase
             {
                 if ($this->currentSchema === 'InventoryStock') {
                     $items = $this->store->inventoryStock;
+                } else if ($this->currentSchema === 'InventoryLot') {
+                    $items = $this->store->inventoryLot;
                 } else if ($this->currentSchema === 'StockMove') {
                     $items = array_values($this->store->stockMoves);
                 } else {
@@ -320,6 +326,7 @@ class SalesDispatchStockIssueServiceTest extends TestCase
             container: $this->container,
             appConfig: $this->appConfig,
             logger: $this->logger,
+            lotGuard: new LotSellabilityGuard(fefoSort: new FefoSort()),
         );
 
     }//end setUpService()
@@ -442,6 +449,184 @@ class SalesDispatchStockIssueServiceTest extends TestCase
         self::assertSame(0, $result['failed']);
 
     }//end testReverseForDeliveryCancelsIssuedMoves()
+
+    /**
+     * A confirmed delivery line whose only lot is QUARANTINED MUST NOT be
+     * issued — fail closed, no StockMove, no COGS (REQ-BLK-001).
+     *
+     * @return void
+     */
+    public function testIssueForDeliveryBlocksQuarantinedLot(): void
+    {
+        $this->setUpService(
+            inventoryStock: [
+                ['sku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 50, 'reservedQuantity' => 0],
+            ],
+            inventoryLot: [
+                ['id' => 'lot-q', 'lotNumber' => 'LOT-Q-001', 'productId' => 'prod-a', 'productSku' => 'sku-a', 'administrationId' => 'adm-1', 'quantity' => 50, 'lotStatus' => 'quarantined', 'expiryDate' => '2027-01-15'],
+            ]
+        );
+
+        $result = $this->service->issueForDelivery(
+            delivery: [
+                'id'               => 'dn-q',
+                'administrationId' => 'adm-1',
+                'lines'            => [
+                    ['orderLineReference' => 'sol-1', 'productReference' => 'sku-a', 'quantityShipped' => 5],
+                ],
+            ]
+        );
+
+        self::assertSame(0, $result['issued']);
+        self::assertSame(1, $result['blocked']);
+        self::assertCount(0, $result['moves']);
+        self::assertCount(1, $result['blockedLines']);
+        self::assertSame('LOT-Q-001', $result['blockedLines'][0]['offendingLots'][0]['lotNumber']);
+        self::assertStringContainsString('quarantined', $result['blockedLines'][0]['offendingLots'][0]['reason']);
+
+    }//end testIssueForDeliveryBlocksQuarantinedLot()
+
+    /**
+     * A confirmed delivery line whose only lot has `lotStatus: expired` MUST
+     * NOT be issued — fail closed (REQ-BLK-001).
+     *
+     * @return void
+     */
+    public function testIssueForDeliveryBlocksLotMarkedExpired(): void
+    {
+        $this->setUpService(
+            inventoryStock: [
+                ['sku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 50, 'reservedQuantity' => 0],
+            ],
+            inventoryLot: [
+                ['id' => 'lot-e', 'lotNumber' => 'LOT-E-001', 'productId' => 'prod-a', 'productSku' => 'sku-a', 'administrationId' => 'adm-1', 'quantity' => 50, 'lotStatus' => 'expired', 'expiryDate' => '2026-06-15'],
+            ]
+        );
+
+        $result = $this->service->issueForDelivery(
+            delivery: [
+                'id'               => 'dn-e',
+                'administrationId' => 'adm-1',
+                'lines'            => [
+                    ['orderLineReference' => 'sol-1', 'productReference' => 'sku-a', 'quantityShipped' => 5],
+                ],
+            ]
+        );
+
+        self::assertSame(0, $result['issued']);
+        self::assertSame(1, $result['blocked']);
+        self::assertCount(0, $result['moves']);
+        self::assertStringContainsString('expired', $result['blockedLines'][0]['offendingLots'][0]['reason']);
+
+    }//end testIssueForDeliveryBlocksLotMarkedExpired()
+
+    /**
+     * Expiry is first-class: a lot with `lotStatus: active` but an
+     * `expiryDate` in the past is unsellable and MUST NOT be issued
+     * (REQ-BLK-001). Today (2026-07-14) is after the 2026-06-15 expiry.
+     *
+     * @return void
+     */
+    public function testIssueForDeliveryBlocksActiveLotPastExpiryDate(): void
+    {
+        $this->setUpService(
+            inventoryStock: [
+                ['sku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 50, 'reservedQuantity' => 0],
+            ],
+            inventoryLot: [
+                ['id' => 'lot-pastexp', 'lotNumber' => 'LOT-PX-001', 'productId' => 'prod-a', 'productSku' => 'sku-a', 'administrationId' => 'adm-1', 'quantity' => 50, 'lotStatus' => 'active', 'expiryDate' => '2026-06-15'],
+            ]
+        );
+
+        $result = $this->service->issueForDelivery(
+            delivery: [
+                'id'               => 'dn-px',
+                'administrationId' => 'adm-1',
+                'lines'            => [
+                    ['orderLineReference' => 'sol-1', 'productReference' => 'sku-a', 'quantityShipped' => 5],
+                ],
+            ]
+        );
+
+        self::assertSame(0, $result['issued']);
+        self::assertSame(1, $result['blocked']);
+        self::assertStringContainsString('past expiry date 2026-06-15', $result['blockedLines'][0]['offendingLots'][0]['reason']);
+
+    }//end testIssueForDeliveryBlocksActiveLotPastExpiryDate()
+
+    /**
+     * A clean, active, non-expired lot with sufficient quantity still
+     * dispatches exactly one posted `issue` StockMove — proving the
+     * enforcement does not regress PR #404's happy path, which feeds the
+     * balanced-COGS pipeline (CogsPosterServiceTest proves the balance).
+     *
+     * @return void
+     */
+    public function testIssueForDeliveryDispatchesFromSellableLot(): void
+    {
+        $this->setUpService(
+            inventoryStock: [
+                ['sku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 50, 'reservedQuantity' => 0],
+            ],
+            inventoryLot: [
+                ['id' => 'lot-ok', 'lotNumber' => 'LOT-OK-001', 'productId' => 'prod-a', 'productSku' => 'sku-a', 'administrationId' => 'adm-1', 'quantity' => 50, 'lotStatus' => 'active', 'expiryDate' => '2027-01-15'],
+            ]
+        );
+
+        $result = $this->service->issueForDelivery(
+            delivery: [
+                'id'               => 'dn-ok',
+                'administrationId' => 'adm-1',
+                'lines'            => [
+                    ['orderLineReference' => 'sol-1', 'productReference' => 'sku-a', 'quantityShipped' => 5],
+                ],
+            ]
+        );
+
+        self::assertSame(1, $result['issued']);
+        self::assertSame(0, $result['blocked']);
+        self::assertCount(1, $result['moves']);
+        self::assertSame('issue', $result['moves'][0]['movementType']);
+        self::assertSame('posted', $result['moves'][0]['lifecycleState']);
+        self::assertSame(5.0, $result['moves'][0]['quantity']);
+        self::assertSame('sku-a', $result['moves'][0]['itemId']);
+
+    }//end testIssueForDeliveryDispatchesFromSellableLot()
+
+    /**
+     * When a sellable lot CAN satisfy the line, a quarantined sibling lot
+     * does not hard-fail the dispatch — the line issues from sellable stock
+     * (REQ-BLK-002, prefer-sellable-over-hard-fail).
+     *
+     * @return void
+     */
+    public function testIssueForDeliveryPrefersSellableLotOverQuarantinedSibling(): void
+    {
+        $this->setUpService(
+            inventoryStock: [
+                ['sku' => 'sku-a', 'productId' => 'prod-a', 'administrationId' => 'adm-1', 'locationId' => 'loc-1', 'quantity' => 50, 'reservedQuantity' => 0],
+            ],
+            inventoryLot: [
+                ['id' => 'lot-bad', 'lotNumber' => 'LOT-BAD-001', 'productId' => 'prod-a', 'productSku' => 'sku-a', 'administrationId' => 'adm-1', 'quantity' => 100, 'lotStatus' => 'quarantined', 'expiryDate' => '2027-01-15'],
+                ['id' => 'lot-good', 'lotNumber' => 'LOT-GOOD-001', 'productId' => 'prod-a', 'productSku' => 'sku-a', 'administrationId' => 'adm-1', 'quantity' => 10, 'lotStatus' => 'active', 'expiryDate' => '2027-02-01'],
+            ]
+        );
+
+        $result = $this->service->issueForDelivery(
+            delivery: [
+                'id'               => 'dn-mix',
+                'administrationId' => 'adm-1',
+                'lines'            => [
+                    ['orderLineReference' => 'sol-1', 'productReference' => 'sku-a', 'quantityShipped' => 5],
+                ],
+            ]
+        );
+
+        self::assertSame(1, $result['issued']);
+        self::assertSame(0, $result['blocked']);
+        self::assertCount(1, $result['moves']);
+
+    }//end testIssueForDeliveryPrefersSellableLotOverQuarantinedSibling()
 
     // phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class
