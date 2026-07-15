@@ -190,7 +190,7 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
                 ['paymentRun' => $objectId, 'action' => $action, 'error' => $e->getMessage()]
             );
             return GuardResult::deny(self::MESSAGE_INDETERMINATE);
-        }
+        }//end try
 
         return GuardResult::allow();
 

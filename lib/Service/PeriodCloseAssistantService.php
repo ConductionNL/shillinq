@@ -383,7 +383,7 @@ class PeriodCloseAssistantService
             ];
         }
 
-        // payment-control-guards REQ-PCG-002/003: the aged suspense worklist is a
+        // Payment-control-guards REQ-PCG-002/003: the aged suspense worklist is a
         // BLOCKER (the close is refused while it is non-empty), so it is surfaced
         // as an error-severity flag, not a warning.
         $suspense = ($detections['suspense'] ?? ['count' => 0, 'total' => 0.0, 'oldest' => 0]);

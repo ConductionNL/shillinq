@@ -1048,7 +1048,7 @@ class Application extends App implements IBootstrap
             }
         );
 
-        // payment-run-four-eyes REQ-PR4E-001 — segregation of duties on the
+        // Payment-run-four-eyes REQ-PR4E-001 — segregation of duties on the
         // outgoing SEPA payment-run `approve` transition. This guard
         // implements LifecycleGuardInterface directly (it needs the caller
         // uid, which the shared RegisterRequiresGuardAdapter does not forward),
@@ -1068,7 +1068,7 @@ class Application extends App implements IBootstrap
             }
         );
 
-        // payment-control-guards REQ-PCG-001 — duplicate-payment control on the
+        // Payment-control-guards REQ-PCG-001 — duplicate-payment control on the
         // outgoing SEPA payment-run `export` transition. Rejects exporting a
         // batch whose line settles an AP invoice that is already paid or already
         // queued in another open/executed batch. Implements

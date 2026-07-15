@@ -181,7 +181,7 @@ class PeriodCloseService
             );
         }
 
-        // payment-control-guards REQ-PCG-003: block the close while the
+        // Payment-control-guards REQ-PCG-003: block the close while the
         // bank-reconciliation suspense worklist is non-empty (unmatched /
         // routed-to-suspense bank items). Scoped to the period's own
         // administration, falling back to the caller's scope. Fail closed: an

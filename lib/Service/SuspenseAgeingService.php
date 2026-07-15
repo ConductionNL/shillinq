@@ -219,7 +219,7 @@ class SuspenseAgeingService
      * Days a line has been outstanding, floored at zero (future dates → 0).
      *
      * @param array<string,mixed> $line     The BankStatementLine record.
-     * @param DateTimeImmutable    $asOfDate The as-of reference date.
+     * @param DateTimeImmutable   $asOfDate The as-of reference date.
      *
      * @return int The whole days outstanding.
      */
