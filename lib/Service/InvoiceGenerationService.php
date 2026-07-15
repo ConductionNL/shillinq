@@ -50,6 +50,7 @@ class InvoiceGenerationService
      * @param BillingModelEngine          $billingEngine Pure model logic.
      * @param InvoiceDeduplicationService $deduper       Source-id conflict scanner.
      * @param VATCalculationService       $vat           VAT totaller.
+     * @param UsageRatingCalculator       $usageRating   Meter-quantity rating (usage model).
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -60,6 +61,7 @@ class InvoiceGenerationService
         private readonly BillingModelEngine $billingEngine,
         private readonly InvoiceDeduplicationService $deduper,
         private readonly VATCalculationService $vat,
+        private readonly UsageRatingCalculator $usageRating,
     ) {
     }//end __construct()
 
@@ -122,6 +124,7 @@ class InvoiceGenerationService
             'dueDate'            => $dueDate,
             'timeEntryIds'       => $request->timeEntryIds,
             'expenseIds'         => $request->expenseIds,
+            'meterReadingIds'    => $request->meterReadingIds,
             'rateCardId'         => $request->rateCardId,
             'retainerScheduleId' => $request->retainerScheduleId,
             'lineItemsByModel'   => $this->summariseLineItemsByModel(lineDrafts: $lineDrafts),
@@ -379,6 +382,7 @@ class InvoiceGenerationService
             'fixed_fee', 'milestone' => '4200',
             'retainer'  => '4300',
             'mixed'     => '4400',
+            'usage'     => '4500',
             default     => '4000',
         };
 
@@ -431,6 +435,15 @@ class InvoiceGenerationService
                     ),
                     retainerMonth: substr($request->toDate, 0, 7),
                     hoursLogged: $hoursLogged,
+                    expenses: $expenses
+                );
+
+            case 'usage':
+                return $this->billingEngine->calculateUsage(
+                    ratedReadings: $this->loadMeterReadings(
+                        ids: $request->meterReadingIds,
+                        defaultRatePlanId: $request->usageRatePlanId
+                    ),
                     expenses: $expenses
                 );
 
@@ -542,6 +555,79 @@ class InvoiceGenerationService
         return $rows;
 
     }//end loadExpenses()
+
+    /**
+     * Load MeterReading records, resolve each reading's UsageRatePlan, and rate
+     * the metered quantity into the engine's rated-reading input shape
+     * (REQ-UMB-003). The plan is the reading's own `ratePlanId`, falling back to
+     * the request-level default. Readings whose plan cannot be resolved are
+     * skipped (never billed at a zero rate).
+     *
+     * @param array<int,string> $ids               MeterReading ids.
+     * @param string|null       $defaultRatePlanId Fallback UsageRatePlan id.
+     *
+     * @return array<int,array<string,mixed>>
+     *
+     * @spec openspec/changes/ar-billing-completeness/specs/usage-metered-billing/spec.md#req-umb-003
+     */
+    private function loadMeterReadings(array $ids, ?string $defaultRatePlanId): array
+    {
+        if (count($ids) === 0) {
+            return [];
+        }
+
+        $rated = [];
+        foreach ($ids as $id) {
+            $reading = $this->find(schema: 'MeterReading', id: $id);
+            if ($reading === null) {
+                continue;
+            }
+
+            $planId = (string) ($reading['ratePlanId'] ?? ($defaultRatePlanId ?? ''));
+            if ($planId === '') {
+                $this->logger->warning(sprintf('MeterReading %s has no ratePlanId; skipping.', $id));
+                continue;
+            }
+
+            $plan = $this->find(schema: 'UsageRatePlan', id: $planId);
+            if ($plan === null) {
+                $this->logger->warning(sprintf('UsageRatePlan %s not found for MeterReading %s; skipping.', $planId, $id));
+                continue;
+            }
+
+            $quantity = (float) ($reading['quantity'] ?? 0.0);
+            $priced   = $this->usageRating->rate(quantity: $quantity, plan: $plan);
+
+            $description = (string) ($reading['description'] ?? '');
+            if ($description === '') {
+                $description = sprintf(
+                    '%s — %s %s',
+                    (string) ($plan['name'] ?? 'Metered usage'),
+                    rtrim(rtrim(number_format($quantity, 4, '.', ''), '0'), '.'),
+                    (string) ($plan['unit'] ?? ($reading['unit'] ?? 'units'))
+                );
+            }
+
+            $rated[] = [
+                'readingId'       => $id,
+                'meterId'         => (string) ($reading['meterId'] ?? ''),
+                'resourceType'    => (string) ($reading['resourceType'] ?? ($plan['resourceType'] ?? '')),
+                'unit'            => (string) ($plan['unit'] ?? ($reading['unit'] ?? '')),
+                'description'     => $description,
+                'billableUnits'   => $priced['billableUnits'],
+                'unitPriceCents'  => $priced['unitPriceCents'],
+                'costAmountCents' => $priced['costAmountCents'],
+                'vatRate'         => $priced['vatRate'],
+                'ratingMethod'    => $priced['ratingMethod'],
+                'ratePlanId'      => $planId,
+                'periodStart'     => (string) ($reading['periodStart'] ?? ''),
+                'periodEnd'       => (string) ($reading['periodEnd'] ?? ''),
+            ];
+        }//end foreach
+
+        return $rated;
+
+    }//end loadMeterReadings()
 
     /**
      * Load milestone metadata or return a stub on lookup failure.
