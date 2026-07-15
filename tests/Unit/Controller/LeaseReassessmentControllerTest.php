@@ -45,7 +45,6 @@ use Psr\Log\LoggerInterface;
  */
 final class LeaseReassessmentControllerTest extends TestCase
 {
-
     /**
      * Build a controller with the given request params, auth and IDOR verdict.
      *

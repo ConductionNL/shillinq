@@ -339,10 +339,10 @@ final class LeaseActivationListenerTest extends TestCase
      */
     public function testExemptLeaseWritesNothing(): void
     {
-        $exemptActive         = $this->lease('active');
+        $exemptActive = $this->lease('active');
         $exemptActive['classification'] = 'short-term-exempt';
-        $exemptDraft          = $this->lease('draft');
-        $exemptDraft['classification']  = 'short-term-exempt';
+        $exemptDraft = $this->lease('draft');
+        $exemptDraft['classification'] = 'short-term-exempt';
 
         $listener = $this->buildListener([$exemptActive]);
 

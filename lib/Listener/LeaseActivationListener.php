@@ -103,6 +103,10 @@ class LeaseActivationListener implements IEventListener
 
         try {
             $entity = $event->getObject();
+            if ($entity === null) {
+                return;
+            }
+
             if ($this->isLeaseContractSchema(schema: (string) $entity->getSchema()) === false) {
                 return;
             }
@@ -126,7 +130,7 @@ class LeaseActivationListener implements IEventListener
                 return;
             }
 
-            // generateSchedule re-guards classification (IFRS16-capitalised
+            // The schedule service re-guards classification (IFRS16-capitalised
             // only) and the administration scope (ADR-005), so the listener
             // stays thin.
             $this->scheduleService->generateSchedule(

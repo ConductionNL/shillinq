@@ -122,7 +122,7 @@ class LeaseReassessmentController extends Controller
         }
 
         return $this->run(
-            fn (): ?array => $this->reassessmentService->recordIndexationEvent(
+            record: fn (): ?array => $this->reassessmentService->recordIndexationEvent(
                 leaseContractId: $leaseId,
                 administrationId: $administrationId,
                 newPaymentAmount: $newPaymentAmount,
@@ -163,7 +163,7 @@ class LeaseReassessmentController extends Controller
         }
 
         return $this->run(
-            fn (): ?array => $this->reassessmentService->recordExtensionOptionReassessment(
+            record: fn (): ?array => $this->reassessmentService->recordExtensionOptionReassessment(
                 leaseContractId: $leaseId,
                 administrationId: $administrationId,
                 updatedExtensionOptions: $options,
@@ -209,7 +209,7 @@ class LeaseReassessmentController extends Controller
         }
 
         return $this->run(
-            fn (): ?array => $this->reassessmentService->recordModification(
+            record: fn (): ?array => $this->reassessmentService->recordModification(
                 leaseContractId: $leaseId,
                 administrationId: $administrationId,
                 newTerms: $newTerms,
@@ -251,7 +251,7 @@ class LeaseReassessmentController extends Controller
         }
 
         return $this->run(
-            fn (): ?array => $this->reassessmentService->recordImpairment(
+            record: fn (): ?array => $this->reassessmentService->recordImpairment(
                 leaseContractId: $leaseId,
                 administrationId: $administrationId,
                 recoverableValue: (float) $recoverableValueRaw,

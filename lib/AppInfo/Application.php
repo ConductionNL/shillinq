@@ -211,8 +211,8 @@ class Application extends App implements IBootstrap
             listener: DeliveryDispatchListener::class
         );
 
-        // revive-lease-capabilities (shillinq#446) — IFRS-16 lease schedule
-        // trigger. When a LeaseContract is created already `active` or is
+        // IFRS-16 lease schedule trigger (revive-lease-capabilities,
+        // shillinq#446). When a LeaseContract is created already `active` or is
         // updated across the `draft → active` edge, materialise its
         // amortization schedule. OR has no lifecycle action executor and the
         // lease's list-form transitions block ObjectTransitionedEvent
