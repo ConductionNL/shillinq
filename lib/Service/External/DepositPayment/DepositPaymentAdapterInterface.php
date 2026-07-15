@@ -100,6 +100,8 @@ interface DepositPaymentAdapterInterface
      * @return DepositPaymentResult The dispatch outcome (lifecycle
      *                              state + gateway-side intent id +
      *                              paymentLink).
+     *
+     * @spec openspec/changes/bookings-depth/specs/bookings-cancellation-rules/spec.md
      */
     public function requestPayment(array $payload): DepositPaymentResult;
 
