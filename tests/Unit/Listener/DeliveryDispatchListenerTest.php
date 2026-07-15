@@ -35,9 +35,11 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Service\CogsPosterService;
+use OCA\Shillinq\Sort\FefoSort;
 use OCA\Shillinq\Service\FifoValuationService;
 use OCA\Shillinq\Service\MovingAverageValuationService;
 use OCA\Shillinq\Service\SalesDispatchStockIssueService;
@@ -511,7 +513,12 @@ class DeliveryDispatchListenerTest extends TestCase
             logger: $logger,
         );
 
-        $dispatchService  = new SalesDispatchStockIssueService(container: $container, appConfig: $appConfig, logger: $logger);
+        $dispatchService  = new SalesDispatchStockIssueService(
+            container: $container,
+            appConfig: $appConfig,
+            logger: $logger,
+            lotGuard: new LotSellabilityGuard(fefoSort: new FefoSort()),
+        );
         $deliveryListener = new DeliveryDispatchListener(dispatchService: $dispatchService, logger: $logger);
 
         // Step 1: confirm a Delivery for 3 units of sku-a -> expect exactly

@@ -62,6 +62,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Lifecycle\LotSellabilityGuard;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -86,14 +87,16 @@ class SalesDispatchStockIssueService
     /**
      * Construct the service.
      *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for diagnostics; never logs full payloads.
+     * @param ContainerInterface   $container DI container for lazy ObjectService resolution.
+     * @param IAppConfig           $appConfig App config for the register slug.
+     * @param LoggerInterface      $logger    Logger for diagnostics; never logs full payloads.
+     * @param LotSellabilityGuard  $lotGuard  Decides whether a line may be issued from its lots.
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
+        private readonly LotSellabilityGuard $lotGuard,
     ) {
 
     }//end __construct()
@@ -104,9 +107,10 @@ class SalesDispatchStockIssueService
      *
      * @param array<string,mixed> $delivery The confirmed Delivery.
      *
-     * @return array<string,mixed> Result envelope: {issued: int, skipped: int, moves: array}.
+     * @return array<string,mixed> Result envelope: {issued: int, skipped: int, blocked: int, moves: array, blockedLines: array}.
      *
      * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md#req-001
+     * @spec openspec/changes/block-unsellable-stock-dispatch/specs/block-unsellable-stock-dispatch/spec.md#req-blk-001
      */
     public function issueForDelivery(array $delivery): array
     {
@@ -120,15 +124,19 @@ class SalesDispatchStockIssueService
                 ['deliveryId' => $deliveryId]
             );
             return [
-                'issued'  => 0,
-                'skipped' => 0,
-                'moves'   => [],
+                'issued'       => 0,
+                'skipped'      => 0,
+                'blocked'      => 0,
+                'moves'        => [],
+                'blockedLines' => [],
             ];
         }
 
-        $issued  = 0;
-        $skipped = 0;
-        $moves   = [];
+        $issued       = 0;
+        $skipped      = 0;
+        $blocked      = 0;
+        $moves        = [];
+        $blockedLines = [];
 
         foreach (array_values($lines) as $index => $line) {
             if (is_array($line) === false) {
@@ -157,6 +165,55 @@ class SalesDispatchStockIssueService
                 $skipped++;
                 continue;
             }
+
+            // REQ-BLK-001/002: for a lot-controlled product (≥1 InventoryLot
+            // exists for the sku in this administration), refuse to issue when
+            // no SELLABLE lot can satisfy the line — quarantined / expired
+            // (by status or by date) / exhausted stock MUST NOT be dispatched.
+            // Fail CLOSED: the StockMove is never created, so no COGS is
+            // posted for unsellable stock. When sellable lots CAN cover the
+            // line, quarantined/expired siblings do not block it.
+            $productId = $this->productIdFromStock(stockRows: $stockRows);
+            $lots      = $this->inventoryLotRows(
+                administrationId: $administrationId,
+                sku: $sku,
+                productId: $productId
+            );
+            if (count($lots) > 0) {
+                $verdict = $this->lotGuard->evaluate(
+                    lots: $lots,
+                    requiredQuantity: $quantity,
+                    today: gmdate('Y-m-d')
+                );
+                if ($verdict['sellable'] === false) {
+                    $blocked++;
+                    $offending = $verdict['offendingLots'];
+                    $named     = array_map(
+                        static fn(array $lot): string => ($lot['lotNumber'].' ('.$lot['reason'].')'),
+                        $offending
+                    );
+                    $this->logger->error(
+                        'SalesDispatchStockIssueService: dispatch BLOCKED — no sellable lot can '
+                        .'satisfy delivery line; unsellable stock MUST NOT be dispatched.',
+                        [
+                            'deliveryId'        => $deliveryId,
+                            'lineIndex'         => $index,
+                            'sku'               => $sku,
+                            'quantityRequired'  => $quantity,
+                            'sellableAvailable' => $verdict['availableSellable'],
+                            'offendingLots'     => $named,
+                        ]
+                    );
+                    $blockedLines[] = [
+                        'lineIndex'         => $index,
+                        'sku'               => $sku,
+                        'quantityRequired'  => $quantity,
+                        'sellableAvailable' => $verdict['availableSellable'],
+                        'offendingLots'     => $offending,
+                    ];
+                    continue;
+                }//end if
+            }//end if
 
             $locationId = $this->resolveLocation(
                 line: $line,
@@ -192,12 +249,95 @@ class SalesDispatchStockIssueService
         }//end foreach
 
         return [
-            'issued'  => $issued,
-            'skipped' => $skipped,
-            'moves'   => $moves,
+            'issued'       => $issued,
+            'skipped'      => $skipped,
+            'blocked'      => $blocked,
+            'moves'        => $moves,
+            'blockedLines' => $blockedLines,
         ];
 
     }//end issueForDelivery()
+
+    /**
+     * Extract the first non-empty productId from the InventoryStock rows for a
+     * sku — used to link the line to its InventoryLot rows (the lot register
+     * keys on productId; productSku is a transitional alias).
+     *
+     * @param array<int,array<string,mixed>> $stockRows InventoryStock rows for the sku.
+     *
+     * @return string The productId, or '' when none is present.
+     */
+    private function productIdFromStock(array $stockRows): string
+    {
+        foreach ($stockRows as $row) {
+            $productId = trim((string) ($row['productId'] ?? ''));
+            if ($productId !== '') {
+                return $productId;
+            }
+        }
+
+        return '';
+
+    }//end productIdFromStock()
+
+    /**
+     * Fetch every InventoryLot row for the line's product in this
+     * administration. Matches by productId (canonical FK) when known, and
+     * additionally by the transitional productSku alias, merged and
+     * de-duplicated by id — so a lot-controlled product is detected whichever
+     * key its lots carry. Presence of ≥1 row marks the product lot-controlled.
+     *
+     * @param string $administrationId Tenant scope.
+     * @param string $sku              Product SKU (Delivery line productReference).
+     * @param string $productId        Canonical product FK, or '' when unknown.
+     *
+     * @return array<int,array<string,mixed>> Matching InventoryLot rows.
+     */
+    private function inventoryLotRows(string $administrationId, string $sku, string $productId): array
+    {
+        $merged = [];
+        $seen   = [];
+
+        $collect = function (array $filters) use (&$merged, &$seen): void {
+            try {
+                $rows = $this->objectService()
+                    ->setRegister($this->register())
+                    ->setSchema('InventoryLot')
+                    ->findAll(['filters' => $filters]);
+            } catch (\Throwable $e) {
+                $this->logger->debug(
+                    'SalesDispatchStockIssueService: inventoryLotRows lookup failed',
+                    ['exception' => $e->getMessage()]
+                );
+                return;
+            }
+
+            if (is_array($rows) === false) {
+                return;
+            }
+
+            foreach ($rows as $row) {
+                $rowArray = $this->asArray(row: $row);
+                $id       = (string) ($rowArray['id'] ?? ($rowArray['@self']['id'] ?? ''));
+                $key      = ($id !== '') ? $id : ('lot-'.count($seen));
+                if (isset($seen[$key]) === true) {
+                    continue;
+                }
+
+                $seen[$key] = true;
+                $merged[]   = $rowArray;
+            }
+        };
+
+        if ($productId !== '') {
+            $collect(['administrationId' => $administrationId, 'productId' => $productId]);
+        }
+
+        $collect(['administrationId' => $administrationId, 'productSku' => $sku]);
+
+        return $merged;
+
+    }//end inventoryLotRows()
 
     /**
      * Reverse every StockMove this Delivery issued via the existing
