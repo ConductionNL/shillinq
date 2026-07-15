@@ -35,7 +35,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/payment-run-four-eyes/specs/payment-run-four-eyes/spec.md
+ * @spec openspec/specs/payment-run-four-eyes/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,7 +53,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Enforces approver != preparer on the PaymentRun approve transition.
  *
- * @spec openspec/changes/payment-run-four-eyes/specs/payment-run-four-eyes/spec.md
+ * @spec openspec/specs/payment-run-four-eyes/spec.md
  */
 final class FourEyesPaymentRunGuard implements LifecycleGuardInterface
 {
@@ -115,7 +115,7 @@ final class FourEyesPaymentRunGuard implements LifecycleGuardInterface
      *
      * @return GuardResult Allow when approver != preparer; deny (fail-closed) otherwise.
      *
-     * @spec openspec/changes/payment-run-four-eyes/specs/payment-run-four-eyes/spec.md
+     * @spec openspec/specs/payment-run-four-eyes/spec.md
      */
     public function check(array $object, string $action, string $userId): GuardResult
     {
