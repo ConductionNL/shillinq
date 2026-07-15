@@ -1,9 +1,9 @@
 # portal-contribution Specification
 
-**Status**: in-progress
+**Status**: done
 **Scope**: shillinq
 **OpenSpec changes**:
-- customer-invoice-portal-wave2 (this change)
+- customer-invoice-portal-wave2 (this change) — archived 2026-07-14; synced into `openspec/specs/portal-contribution/spec.md` (REQ-SPC-020…022)
 
 ## Purpose
 
