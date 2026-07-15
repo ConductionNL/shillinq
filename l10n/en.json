@@ -1,5 +1,9 @@
 {
     "translations": {
+        "Self-approval is not permitted: you prepared or modified this payment run, so you cannot also approve it. A different authorised user must approve the batch before it can be exported.": "Self-approval is not permitted: you prepared or modified this payment run, so you cannot also approve it. A different authorised user must approve the batch before it can be exported.",
+        "The payment run cannot be approved: the approving user could not be identified. Sign in and retry; an unidentified approver is blocked (fail-closed).": "The payment run cannot be approved: the approving user could not be identified. Sign in and retry; an unidentified approver is blocked (fail-closed).",
+        "The payment run cannot be approved: the batch could not be identified for the segregation-of-duties check (fail-closed).": "The payment run cannot be approved: the batch could not be identified for the segregation-of-duties check (fail-closed).",
+        "The payment run cannot be approved: the preparer could not be determined from the audit trail, so the four-eyes check cannot be satisfied (fail-closed).": "The payment run cannot be approved: the preparer could not be determined from the audit trail, so the four-eyes check cannot be satisfied (fail-closed).",
         "Send e-invoice": "Send e-invoice",
         "Sending...": "Sending...",
         "Not sent": "Not sent",

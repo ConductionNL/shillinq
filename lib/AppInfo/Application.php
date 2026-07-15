@@ -35,6 +35,7 @@ use OCA\Shillinq\Guard\SubsidieRepaymentGuard;
 use OCA\Shillinq\Guard\VatSubmissionGuard;
 use OCA\Shillinq\Lifecycle\APGuard;
 use OCA\Shillinq\Lifecycle\FiscalYearGuard;
+use OCA\Shillinq\Lifecycle\FourEyesPaymentRunGuard;
 use OCA\Shillinq\Lifecycle\GLReversalGuard;
 use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
@@ -1046,6 +1047,26 @@ class Application extends App implements IBootstrap
             }
         );
 
+        // payment-run-four-eyes REQ-PR4E-001 — segregation of duties on the
+        // outgoing SEPA payment-run `approve` transition. This guard
+        // implements LifecycleGuardInterface directly (it needs the caller
+        // uid, which the shared RegisterRequiresGuardAdapter does not forward),
+        // so it is registered under its own FQCN tag — the exact string the
+        // PaymentRun schema's `transitions.approve.requires` names. Registering
+        // explicitly (rather than relying on container autowiring) matches the
+        // shillinq#425 convention and guarantees LifecycleGuardRegistry can
+        // resolve it. Fail-closed: an indeterminate preparer blocks the
+        // release (ADR-022 audit trail is the sole preparer-of-record).
+        $context->registerService(
+            FourEyesPaymentRunGuard::class,
+            static function ($c): FourEyesPaymentRunGuard {
+                return new FourEyesPaymentRunGuard(
+                    container: $c->get(ContainerInterface::class),
+                    logger: $c->get(LoggerInterface::class),
+                );
+            }
+        );
+
     }//end register()
 
     /**
@@ -1074,7 +1095,7 @@ class Application extends App implements IBootstrap
      *
      * @return void
      *
-     * @spec openspec/changes/adopt-apphost/specs/apphost-adoption/spec.md
+     * @spec openspec/specs/apphost-adoption/spec.md
      */
     private function registerAppHostGenerics(IRegistrationContext $context): void
     {
