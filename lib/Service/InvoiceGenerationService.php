@@ -72,6 +72,8 @@ class InvoiceGenerationService
      * @param InvoiceGenerationRequest $request Validated request.
      *
      * @return array<string,mixed> Persisted BillableInvoice (with id).
+     *
+     * @spec openspec/changes/ar-billing-completeness/specs/usage-metered-billing/spec.md#req-umb-003
      */
     public function draftInvoice(InvoiceGenerationRequest $request): array
     {
