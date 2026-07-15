@@ -1,5 +1,9 @@
 {
     "translations": {
+        "Self-approval is not permitted: you prepared or modified this payment run, so you cannot also approve it. A different authorised user must approve the batch before it can be exported.": "Zelf goedkeuren is niet toegestaan: u heeft deze betaalbatch voorbereid of gewijzigd en kunt deze daarom niet ook goedkeuren. Een andere geautoriseerde gebruiker moet de batch goedkeuren voordat deze kan worden geëxporteerd.",
+        "The payment run cannot be approved: the approving user could not be identified. Sign in and retry; an unidentified approver is blocked (fail-closed).": "De betaalbatch kan niet worden goedgekeurd: de goedkeurende gebruiker kon niet worden vastgesteld. Log in en probeer opnieuw; een niet-geïdentificeerde goedkeurder wordt geblokkeerd (fail-closed).",
+        "The payment run cannot be approved: the batch could not be identified for the segregation-of-duties check (fail-closed).": "De betaalbatch kan niet worden goedgekeurd: de batch kon niet worden geïdentificeerd voor de functiescheidingscontrole (fail-closed).",
+        "The payment run cannot be approved: the preparer could not be determined from the audit trail, so the four-eyes check cannot be satisfied (fail-closed).": "De betaalbatch kan niet worden goedgekeurd: de voorbereider kon niet worden bepaald op basis van het audittrail, waardoor de vierogencontrole niet kan worden uitgevoerd (fail-closed).",
         "Send e-invoice": "E-factuur versturen",
         "Sending...": "Versturen...",
         "Not sent": "Niet verzonden",

@@ -1017,7 +1017,7 @@
       "PaymentRun": {
         "slug": "PaymentRun",
         "icon": "BankTransferOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Payment Run",
         "description": "A batch of approved Payee payments per REQ-AP-013 (consolidate-accounts-payable). Groups open AP invoices into a single outgoing payment instruction with a declarative lifecycle draft → approved → exported → reconciled. Approval (RBAC controller) is a hard gate before export — there is NO direct draft → exported transition. The actual SEPA pain.001 / CSV bank-file GENERATION is the separate payment-run-sepa-export change (writes exportedFileRef); this schema models only the batch + its lifecycle. Each paymentLines[] entry references one Payee + one APTransaction. bankAccount.iban / bankAccount.bic on the referenced Payee are the SEPA creditor source of truth.",
         "x-openregister-audit-trail": {
@@ -1203,8 +1203,9 @@
               "from": "draft",
               "to": "approved",
               "label": "Approve payment run",
-              "description": "Controller approves the batch. Single-approver gate (D4) — there is NO direct draft → exported transition. Approval is the control point before export.",
-              "x-rbac-role": "controller"
+              "description": "Controller approves the batch. Four-eyes segregation of duties (payment-run-four-eyes, REQ-PR4E-001): the approver MUST differ from whoever prepared the batch — enforced server-side by FourEyesPaymentRunGuard, which derives the preparer from OpenRegister's immutable audit trail (ADR-022) and fails closed when the preparer is indeterminate. There is NO direct draft → exported transition. Approval is the control point before money leaves the administration.",
+              "x-rbac-role": "controller",
+              "requires": "OCA\\Shillinq\\Lifecycle\\FourEyesPaymentRunGuard"
             },
             "export": {
               "from": "approved",
