@@ -3,14 +3,23 @@
 /**
  * Unit tests for PortalContributionProvider.
  *
- * Pins shillinq's Wave-1 ADR-046 contribution contract: the dual v2/v1
- * audience declaration (customer + supplier), the fail-closed null for
- * non-matching subjects, both declarative manifests' exact shape (verified
+ * Pins shillinq's ADR-046 contribution contract: the dual v2/v1 audience
+ * declaration (customer + supplier + accountant), the fail-closed null for
+ * non-matching subjects, every declarative manifest's exact shape (verified
  * UUID scopeFields + bare-name scopeClaims, read-only: no actions, no
- * notifications), and the documented exclusions (ARInvoice, PaymentRequest,
- * dunning, goods receipts, cross-audience leakage). The provider is
- * constructed directly — it is a plain dependency-free class by contract
- * (amendment A1), so no mocks and no container are involved.
+ * notifications), and the documented exclusions (dunning, goods receipts,
+ * cross-audience leakage). The provider is constructed directly — it is a
+ * plain dependency-free class by contract (amendment A1), so no mocks and no
+ * container are involved.
+ *
+ * Wave 2 (customer-invoice-portal-wave2) lifts the Wave-1 customer-side
+ * exclusion of ARInvoice and PaymentRequest: this suite additionally pins that
+ * the customer sees their own AR invoices (scoped by the CustomerMaster object
+ * UUID against claims.shillinq.customerMasterId) and their payment requests
+ * (reached only through the one-hop reverse `via` join on ARInvoice.customerId)
+ * and — the security headline — that neither surface is ever scoped by
+ * administrationId or any client-supplied id, so another debtor's invoice is
+ * unreachable (IDOR).
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Portal
@@ -90,11 +99,13 @@ class PortalContributionProviderTest extends TestCase
     /**
      * Schemas that must never appear in any manifest (design.md Exclusions).
      *
+     * ARInvoice and PaymentRequest are NO LONGER excluded from the customer
+     * manifest (Wave 2 surfaces them, UUID-scoped). Dunning-run and
+     * goods-receipt schemas stay excluded (recipient PII / no scalar scope).
+     *
      * @var array<int, string>
      */
     private const EXCLUDED_SCHEMAS = [
-        'ARInvoice',
-        'PaymentRequest',
         'DunningNotice',
         'DunningRecord',
         'DunningRun',
@@ -179,9 +190,12 @@ class PortalContributionProviderTest extends TestCase
     }//end testGetContributionReturnsNullForNonMatchingSubjects()
 
     /**
-     * The customer manifest carries exactly the five verified collections.
+     * The customer manifest carries the five Wave-1 collections plus the two
+     * Wave-2 AR-side surfaces (salesInvoices, paymentRequests).
      *
      * @return void
+     *
+     * @spec openspec/specs/portal-contribution/spec.md
      */
     public function testCustomerManifestShape(): void
     {
@@ -192,27 +206,142 @@ class PortalContributionProviderTest extends TestCase
         $this->assertSame([], $manifest['actions']);
         $this->assertSame([], $manifest['notifications']);
 
+        // [schema, scopeField, scopeClaim] per collection id.
         $expected = [
-            'invoices'        => ['Invoice', 'customerReference'],
-            'projectInvoices' => ['BillableInvoice', 'customerId'],
-            'quotes'          => ['Quote', 'customerReference'],
-            'salesOrders'     => ['SalesOrder', 'customerReference'],
-            'contracts'       => ['Contract', 'customerId'],
+            'invoices'        => ['Invoice', 'customerReference', 'customerId'],
+            'projectInvoices' => ['BillableInvoice', 'customerId', 'customerId'],
+            'quotes'          => ['Quote', 'customerReference', 'customerId'],
+            'salesOrders'     => ['SalesOrder', 'customerReference', 'customerId'],
+            'contracts'       => ['Contract', 'customerId', 'customerId'],
+            'salesInvoices'   => ['ARInvoice', 'customerId', 'customerMasterId'],
+            'paymentRequests' => ['PaymentRequest', 'invoiceReference', 'customerMasterId'],
         ];
 
         $this->assertSame(array_keys($expected), array_column($manifest['collections'], 'id'));
 
         foreach ($manifest['collections'] as $collection) {
-            [$schema, $scopeField] = $expected[$collection['id']];
+            [$schema, $scopeField, $scopeClaim] = $expected[$collection['id']];
             $this->assertSame('shillinq', $collection['register'], $collection['id']);
             $this->assertSame($schema, $collection['schema'], $collection['id']);
             $this->assertSame($scopeField, $collection['scopeField'], $collection['id']);
-            $this->assertSame('customerId', $collection['scopeClaim'], $collection['id']);
+            $this->assertSame($scopeClaim, $collection['scopeClaim'], $collection['id']);
             $this->assertTrue($collection['listable'], $collection['id']);
             $this->assertNotSame('', $collection['label'], $collection['id']);
         }
 
     }//end testCustomerManifestShape()
+
+    /**
+     * Wave 2: the ARInvoice + PaymentRequest surfaces are UUID-scoped.
+     *
+     * salesInvoices scopes ARInvoice by `customerId` (the CustomerMaster object
+     * UUID) against the `customerMasterId` claim, with a customer-safe `fields`
+     * projection that hides internal accounting fields. paymentRequests reaches
+     * PaymentRequest ONLY through a one-hop reverse `via` join on
+     * ARInvoice.customerId, and exposes the computed `paymentLink` (pay-now).
+     *
+     * @return void
+     *
+     * @spec openspec/specs/portal-contribution/spec.md
+     */
+    public function testCustomerManifestArInvoiceAndPaymentRequestWiring(): void
+    {
+        $manifest    = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
+        $collections = [];
+        foreach ($manifest['collections'] as $collection) {
+            $collections[$collection['id']] = $collection;
+        }
+
+        // AR invoices — CustomerMaster-UUID scoped, projected to safe fields.
+        $ar = $collections['salesInvoices'];
+        $this->assertSame('ARInvoice', $ar['schema']);
+        $this->assertSame('customerId', $ar['scopeField']);
+        $this->assertSame('customerMasterId', $ar['scopeClaim']);
+        $this->assertContains('invoiceNumber', $ar['fields']);
+        $this->assertContains('dunning', $ar['fields'], 'dunning summary is surfaced read-only');
+        // Internal accounting fields must never be projected to a debtor.
+        foreach (['glTransactionId', 'matchedBankLineId', 'writeOff', 'administrationId', 'settlementReference'] as $internal) {
+            $this->assertNotContains($internal, $ar['fields'], $internal);
+        }
+
+        // Payment requests — reached ONLY via the reverse join through
+        // ARInvoice.customerId; the pay-now link is exposed.
+        $pr = $collections['paymentRequests'];
+        $this->assertSame('PaymentRequest', $pr['schema']);
+        $this->assertSame('invoiceReference', $pr['scopeField']);
+        $this->assertSame('customerMasterId', $pr['scopeClaim']);
+        $this->assertSame(
+            [
+                'register'    => 'shillinq',
+                'schema'      => 'ARInvoice',
+                'scopeField'  => 'customerId',
+                'targetField' => 'id',
+                'match'       => 'scopeField',
+            ],
+            $pr['via'],
+            'PaymentRequest must be scoped by a one-hop reverse join through ARInvoice.customerId'
+        );
+        $this->assertContains('paymentLink', $pr['fields'], 'pay-now link is surfaced');
+
+    }//end testCustomerManifestArInvoiceAndPaymentRequestWiring()
+
+    /**
+     * SECURITY HEADLINE (mandatory, non-negotiable): another debtor's invoice
+     * is unreachable — no customer collection is ever scoped by
+     * administrationId (cross-tenant) or an unscoped/client-supplied id (IDOR).
+     *
+     * The provider is pure data; portaliq's PortalObjectReader enforces the
+     * scope at runtime (per-row verifyScope + reverse-via membership, tested in
+     * portaliq). This test pins the declaration that FEEDS that enforcement:
+     *  - every customer collection carries a bare-name scopeClaim (server-issued
+     *    value, never client input);
+     *  - the AR surfaces scope by the globally-unique CustomerMaster object UUID
+     *    (`customerId` → `customerMasterId`), NOT the per-administration
+     *    customer CODE and NOT `administrationId` (which would leak every
+     *    debtor in the administration);
+     *  - PaymentRequest — which has no customer field — is reachable ONLY
+     *    through the reverse `via` join whose join scopeField is
+     *    ARInvoice.customerId, so a payment request whose invoice belongs to a
+     *    different CustomerMaster can never enter the result set.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/portal-contribution/spec.md
+     */
+    public function testCustomerInvoiceIdorBoundary(): void
+    {
+        $manifest = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
+
+        foreach ($manifest['collections'] as $collection) {
+            // No portal collection may scope by the administration tenancy key —
+            // that would surface EVERY debtor's rows in the administration.
+            $this->assertNotSame('administrationId', $collection['scopeField'], $collection['id']);
+            // Server-issued claim on every collection: the scope value can never
+            // be supplied by the client (the classic IDOR vector).
+            $this->assertArrayHasKey('scopeClaim', $collection, $collection['id']);
+            $this->assertNotSame('', $collection['scopeClaim'], $collection['id']);
+        }
+
+        $byId = [];
+        foreach ($manifest['collections'] as $collection) {
+            $byId[$collection['id']] = $collection;
+        }
+
+        // AR invoices: UUID scope, not the guessable per-administration code.
+        $this->assertSame('customerId', $byId['salesInvoices']['scopeField']);
+        $this->assertSame('customerMasterId', $byId['salesInvoices']['scopeClaim']);
+        $this->assertArrayNotHasKey('via', $byId['salesInvoices']);
+
+        // PaymentRequest: NOT directly scoped by administrationId or a raw id —
+        // only via the join through the subject's own ARInvoices.
+        $pr = $byId['paymentRequests'];
+        $this->assertArrayHasKey('via', $pr);
+        $this->assertSame('ARInvoice', $pr['via']['schema']);
+        $this->assertSame('customerId', $pr['via']['scopeField']);
+        $this->assertSame('scopeField', $pr['via']['match']);
+        $this->assertNotSame('administrationId', $pr['scopeField']);
+
+    }//end testCustomerInvoiceIdorBoundary()
 
     /**
      * The supplier manifest carries exactly the two verified collections.
@@ -250,10 +379,11 @@ class PortalContributionProviderTest extends TestCase
     /**
      * Excluded schemas never surface and audiences never cross-leak.
      *
-     * ARInvoice/PaymentRequest (non-UUID customer code), dunning (AP-side /
-     * PII), and goods receipts (no scalar supplier ref) are documented
-     * exclusions; supplier collections must not appear in the customer
-     * manifest and vice versa (other parties' data stays out).
+     * Dunning-run (AP-side / recipient PII) and goods receipts (no scalar
+     * supplier ref) remain documented exclusions in both audiences; supplier
+     * collections must not appear in the customer manifest and vice versa
+     * (other parties' data stays out). ARInvoice/PaymentRequest are now
+     * customer-legitimate (Wave 2) so they left the exclusion set.
      *
      * @return void
      */
@@ -376,10 +506,11 @@ class PortalContributionProviderTest extends TestCase
     }//end testAccountantManifestIsReadOnlyAndAdministrationScoped()
 
     /**
-     * Adding the accountant audience leaves customer/supplier manifests intact.
+     * The Wave-1 collections are untouched; Wave 2 only appends.
      *
-     * Byte-for-byte snapshot of the existing manifests (task 3.1): no
-     * collection, scopeField or scopeClaim of the Wave-1 surfaces changed.
+     * The five original customer collections keep their exact ids/scope wiring
+     * and stay first (Wave 2 appends salesInvoices + paymentRequests after
+     * them); the supplier and accountant manifests are byte-for-byte unchanged.
      *
      * @return void
      *
@@ -390,10 +521,17 @@ class PortalContributionProviderTest extends TestCase
         $customer = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
         $supplier = $this->provider->getContribution(self::SUPPLIER_SUBJECT);
 
+        // Wave-1 customer collections stay first and in order; the two Wave-2
+        // AR surfaces are appended after them.
         $this->assertSame(
-            ['invoices', 'projectInvoices', 'quotes', 'salesOrders', 'contracts'],
+            ['invoices', 'projectInvoices', 'quotes', 'salesOrders', 'contracts', 'salesInvoices', 'paymentRequests'],
             array_column($customer['collections'], 'id')
         );
+
+        foreach (array_slice($customer['collections'], 0, 5) as $collection) {
+            $this->assertSame('customerId', $collection['scopeClaim'], $collection['id']);
+        }
+
         $this->assertSame(
             ['purchaseOrders', 'supplierInvoices'],
             array_column($supplier['collections'], 'id')
