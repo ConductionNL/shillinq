@@ -131,7 +131,7 @@
 						"id": "framework-calloffs",
 						"type": "object-list",
 						"title": "Call-offs (purchase orders)",
-						"icon": "ClipboardListOutline",
+						"icon": "ClipboardList",
 						"content": {
 							"register": "shillinq",
 							"schema": "PurchaseOrder",
