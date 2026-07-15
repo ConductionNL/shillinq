@@ -215,13 +215,15 @@ class BankRulePreviewService
         $counterpartyIban = (string) ($line['counterpartyIban'] ?? '');
         $valueDate        = (string) ($line['valueDate'] ?? '');
 
-        $breakdown = [];
-        $allPass   = true;
+        $breakdown       = [];
+        $allPass         = true;
+        $determinateCount = 0;
 
         foreach ($predicates as $index => $predicate) {
             if (is_array($predicate) === false) {
                 $breakdown[$index] = false;
                 $allPass           = false;
+                $determinateCount++;
                 continue;
             }
 
@@ -262,7 +264,8 @@ class BankRulePreviewService
                     break;
 
                 case 'date-window':
-                    // Indeterminate without an anchor date — MUST NOT count as a match.
+                    // Indeterminate without an anchor date — excluded from the AND
+                    // (not counted determinate); MUST NOT by itself cause a match.
                     if ($anchorDate === null || $anchorDate === '' || $valueDate === '') {
                         $breakdown[$index] = false;
                         continue 2;
@@ -274,6 +277,7 @@ class BankRulePreviewService
                     if ($lineTs === false || $anchorTs === false) {
                         $breakdown[$index] = false;
                         $allPass           = false;
+                        $determinateCount++;
                         continue 2;
                     }
 
@@ -288,13 +292,16 @@ class BankRulePreviewService
             }//end switch
 
             $breakdown[$index] = $pass;
+            $determinateCount++;
             if ($pass === false) {
                 $allPass = false;
             }
         }//end foreach
 
+        // A rule that is entirely indeterminate (e.g. a lone anchorless
+        // date-window) matches nothing — never a false positive.
         return [
-            'matches'   => $allPass,
+            'matches'   => ($allPass === true && $determinateCount > 0),
             'breakdown' => $breakdown,
         ];
 
@@ -363,8 +370,16 @@ class BankRulePreviewService
             return 0.0;
         }
 
-        $al = strtolower($a);
-        $bl = strtolower($b);
+        // Normalise away case + punctuation/whitespace so "Acme B.V." and
+        // "Acme BV" compare as equal (bank names carry inconsistent punctuation).
+        $al = preg_replace('/[^a-z0-9]/', '', strtolower($a));
+        $bl = preg_replace('/[^a-z0-9]/', '', strtolower($b));
+        $al = ($al ?? '');
+        $bl = ($bl ?? '');
+
+        if ($al === '' || $bl === '') {
+            return 0.0;
+        }
 
         if (str_contains($al, $bl) === true || str_contains($bl, $al) === true) {
             return 1.0;
