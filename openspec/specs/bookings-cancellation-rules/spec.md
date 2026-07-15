@@ -369,6 +369,35 @@ English (`src/locales/en_US.json`) and Dutch (`src/locales/nl_NL.json`) translat
 
 ---
 
+### Requirement: No-Show Fee Capture (realised by bookings-depth)
+
+The system SHALL provide `OCA\Shillinq\Service\NoShowFeeCaptureService` (invoked from the
+ADR-003 `BookingDepthController`, `POST /api/v1/appointments/{id}/no-show`) that, on a
+recorded no-show, computes the fee as `round(appointmentCost × noShowFee / 100)` in integer
+cents (percentage clamped `[0,100]`, fee clamped to cost) and CAPTURES it through the
+`DepositPaymentAdapterInterface` payment-provider rails — `capturePayment()` against an
+existing `depositPaymentIntentId` (authorise-now / capture-later card hold) when present,
+else a fresh `requestPayment()` charge. When the fee is 0 (no cost / no snapshotted policy /
+`noShowFee ≤ 0`) NO provider call SHALL be dispatched. The `Appointment` register is extended
+with `noShowFeeAmount`, `noShowFeeStatus` (`none|pending|captured|failed|waived`),
+`noShowFeePaymentIntentId`, and `noShowFeeCapturedAt`. This realises the previously
+-unenforceable `CancellationPolicy.noShowFee` field.
+
+#### Scenario: No-show charges the defined fee
+
+- **GIVEN** an appointment with `appointmentCost = 10000` and `appliedPolicy.noShowFee = 100`
+- **WHEN** the no-show is recorded
+- **THEN** a `10000`-cent fee is captured through the provider and the appointment is stamped
+  `noShowFeeStatus = captured`, `noShowFeeAmount = 10000`, `status = no_show`
+
+#### Scenario: A booking without a defined fee is not charged
+
+- **GIVEN** an appointment whose `appliedPolicy.noShowFee` is 0 or absent
+- **WHEN** the no-show is recorded
+- **THEN** no provider call is dispatched and `noShowFeeStatus = none`
+
+---
+
 ## Conformance
 
 This spec conforms to:
