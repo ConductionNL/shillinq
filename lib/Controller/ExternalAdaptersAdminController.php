@@ -272,7 +272,8 @@ class ExternalAdaptersAdminController extends Controller
             'configKeys'   => ['mollie.api.key', 'mollie.webhook.secret'],
             'featureFlag'  => 'payments-mollie',
             'sourceSlug'   => 'mollie-payments',
-            'description'  => 'Creates deposit-payment intents (iDEAL / Bancontact / SEPA) and verifies webhook callbacks. '
+            'description'  => 'Creates deposit-payment intents (iDEAL / Bancontact / SEPA). Inbound webhook callbacks are '
+                .'verified by the fail-closed HMAC gate on the webhook controllers (never this adapter). '
                 .'Dormant by default; returns PAYMENT_DEFERRED so DepositReconciliationService never advances the lifecycle '
                 .'without a live confirmation.',
             'steps'        => [
