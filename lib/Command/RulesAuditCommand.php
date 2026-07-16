@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rule-audit/specs/bookkeeping-rule-engine/spec.md
+ * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment
  */
@@ -70,7 +70,7 @@ class RulesAuditCommand extends Command
      *
      * @return int
      *
-     * @spec openspec/changes/bookkeeping-rule-audit/specs/bookkeeping-rule-engine/spec.md
+     * @spec openspec/specs/bookkeeping-rule-engine/spec.md
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {

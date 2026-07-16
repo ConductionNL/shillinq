@@ -12,7 +12,7 @@
  OpenRegister's existing aggregation + list API — no bespoke shillinq
  controller/endpoint (REQ-VPL-011: "no parallel PHP reporting service").
 
- @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-011
+ @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 -->
 <template>
 	<NcAppContent>
@@ -149,7 +149,7 @@ export default {
 
 	methods: {
 		formatAmount,
-		/** @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-011 */
+		/** @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md */
 		async loadRows() {
 			this.loading = true
 			this.errorMessage = ''
@@ -178,7 +178,7 @@ export default {
 		 * Expand/collapse the drilldown for a budget-line row.
 		 *
 		 * @param {object} row Normalised budget-line row.
-		 * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-011
+		 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 		 */
 		async toggleDrilldown(row) {
 			if (this.expandedKey === row.key) {

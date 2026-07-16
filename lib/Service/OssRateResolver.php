@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use Psr\Container\ContainerInterface;
  * invoice/counterparty, never a trust boundary the caller can spoof past the
  * register scope.
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
 class OssRateResolver
 {
@@ -107,7 +107,7 @@ class OssRateResolver
      *
      * @return bool True when the country is an OSS destination (EU, non-NL).
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function isOssDestination(string $countryCode): bool
     {
@@ -133,7 +133,7 @@ class OssRateResolver
      *
      * @return array<string,mixed>|null The applicable rate row, or null when none is in force.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function selectRateInForce(array $rates, string $invoiceDate): ?array
     {
@@ -173,7 +173,7 @@ class OssRateResolver
      *
      * @return array{appliedVatRate: float, appliedRateCategory: string, tedbRateVersion: string}|null
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function resolve(string $countryCode, string $rateCategory, string $invoiceDate): ?array
     {

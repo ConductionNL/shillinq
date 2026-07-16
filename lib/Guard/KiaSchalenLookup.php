@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
  * persistence): callers pass the pre-fetched KIA-tier table (seeded from
  * investeringsaftrek-kia-tiers-2026.json) and the running jaartotaal.
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
  */
 class KiaSchalenLookup
 {
@@ -64,7 +64,7 @@ class KiaSchalenLookup
      *
      * @return array<string,mixed>|null The matching tier row, or null if none matches.
      *
-     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
      */
     public function resolveTier(array $tiers, int $jaartotaal): ?array
     {
@@ -98,7 +98,7 @@ class KiaSchalenLookup
      *
      * @return int KIA-aftrek in EUR cents (never negative).
      *
-     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
      */
     public function computeAftrek(array $tiers, int $jaartotaal): int
     {
@@ -160,7 +160,7 @@ class KiaSchalenLookup
      *
      * @return int Marginal KIA contribution of the asset, EUR cents (may be zero, never negative).
      *
-     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
      */
     public function marginalEffect(array $tiers, int $priorTotaal, int $assetValue): int
     {

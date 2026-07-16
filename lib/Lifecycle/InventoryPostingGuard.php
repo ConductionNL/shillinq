@@ -71,7 +71,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/inventory-cogs-posting/tasks.md
+ * @spec openspec/specs/inventory-cogs-posting/spec.md
  */
 class InventoryPostingGuard
 {

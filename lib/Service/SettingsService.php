@@ -387,7 +387,7 @@ class SettingsService
      *
      * @return array<string,mixed> Result with success flag, seeded count, skipped count.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-vat-btw-filing/spec.md
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     public function seedBtwTariffs(): array
     {
@@ -409,7 +409,7 @@ class SettingsService
      *
      * @return array<string,mixed> Result with success flag, seeded count, skipped count.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-bbv-compliance/spec.md
+     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
      */
     public function seedBbvTaakvelden(): array
     {
@@ -614,7 +614,7 @@ class SettingsService
      * @return array<string,mixed> Result with success flag, seeded count,
      *                             skipped count.
      *
-     * @spec openspec/changes/add-shillinq-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
      */
     public function seedBbvAccountMappings(string $administrationId, string $administrationType): array
     {
@@ -2762,7 +2762,7 @@ class SettingsService
      *
      * @return array<string,mixed> Result with success flag, seeded count, skipped count.
      *
-     * @spec openspec/changes/bookkeeping-archiefwet-retention/tasks.md (Task 13, REQ-RET-012)
+     * @spec openspec/specs/bookkeeping-archiefwet-retention/spec.md (Task 13, REQ-RET-012)
      */
     public function seedRetentionPolicies(): array
     {

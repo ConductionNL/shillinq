@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-007
+ * @spec openspec/specs/compliance-deadline-calendar/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use OCP\Notification\UnknownNotificationException;
 /**
  * Prepares `deadline_reminder` notifications for display (REQ-CDC-007).
  *
- * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-007
+ * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
 class DeadlineReminderNotifier implements INotifier
 {
@@ -60,7 +60,7 @@ class DeadlineReminderNotifier implements INotifier
      *
      * @return string The identifier.
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-007
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function getID(): string
     {
@@ -73,7 +73,7 @@ class DeadlineReminderNotifier implements INotifier
      *
      * @return string The name.
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-007
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function getName(): string
     {
@@ -91,7 +91,7 @@ class DeadlineReminderNotifier implements INotifier
      *
      * @throws UnknownNotificationException When the notification is not ours.
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-007
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function prepare(INotification $notification, string $languageCode): INotification
     {

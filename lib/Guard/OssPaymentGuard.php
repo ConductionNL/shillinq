@@ -35,7 +35,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+ * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -56,7 +56,7 @@ use OCA\Shillinq\Service\OssRecordResolver;
  * Application.php (via RegisterRequiresGuardAdapter), which is exactly the
  * string the two transitions name.
  *
- * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+ * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
 class OssPaymentGuard
 {
@@ -80,7 +80,7 @@ class OssPaymentGuard
      *
      * @return bool True when the transition is permitted.
      *
-     * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
      */
     public function canMarkPaid(array $object): bool
     {

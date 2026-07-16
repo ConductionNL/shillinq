@@ -12,7 +12,7 @@
   only — the invoiceApi feed, columns, filters and row actions are unchanged.
 
   @spec openspec/changes/invoice-from-time-and-expense/tasks.md#task-17
-  @spec openspec/changes/migrate-list-views-to-cndatatable/specs/list-views-cndatatable/spec.md
+  @spec openspec/specs/list-views-cndatatable/spec.md
 
   SPDX-FileCopyrightText: 2026 Conduction B.V.
   SPDX-License-Identifier: EUPL-1.2

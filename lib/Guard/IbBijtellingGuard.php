@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md
+ * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
  * gross bijtelling amount; the netto bijtelling (minus eigen bijdrage) is
  * derived declaratively.
  *
- * @spec openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md
+ * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
  */
 class IbBijtellingGuard
 {
@@ -70,7 +70,7 @@ class IbBijtellingGuard
      *
      * @return float The gross bijtelling amount, rounded to cents (>= 0).
      *
-     * @spec openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md
+     * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
      */
     public function computeBijtelling(
         float $cataloguswaarde,

@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ namespace OCA\Shillinq\Service;
  *
  * @psalm-api
  *
- * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
  */
 class BankRulePreviewService
 {
@@ -72,7 +72,7 @@ class BankRulePreviewService
      *
      * @return array{matchedLineIds:list<string>,matchedCount:int,totalEvaluated:int,sample:list<array<string,mixed>>,predicateBreakdown:array<string,int>}
      *
-     * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
+     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
      */
     public function previewRule(array $rule, array $candidateLines, ?string $anchorDate=null): array
     {
@@ -135,7 +135,7 @@ class BankRulePreviewService
      *
      * @return array{matchingRuleId:?string,ruleName:string,targetType:string,targetGlAccount:?string,confidence:float}|null
      *
-     * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
+     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
      */
     public function suggestForLine(array $line, array $activeRules): ?array
     {

@@ -3,7 +3,7 @@
   from posted GL lines on liquid-asset accounts, with the 13-week
   CashflowWeek forecast appended as dimmed projection columns.
 
-  @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+  @spec openspec/specs/financial-dashboard-graphs/spec.md
 -->
 <template>
 	<div class="cashflow-chart" data-testid="cashflow-chart">

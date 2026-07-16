@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
  * (administrationType not in {gemeente, provincie, waterschap}) bypass every
  * check so generic SMB/ZZP administrations remain unaffected (REQ-BBV-001).
  *
- * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  */
 class BbvComplianceGuard
 {
@@ -131,7 +131,7 @@ class BbvComplianceGuard
      *
      * @return bool True when the RGS-decentraal mapping requirement is satisfied.
      *
-     * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-001)
+     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-001)
      */
     public function requireBbvAccountMapping(array $account): bool
     {
@@ -165,7 +165,7 @@ class BbvComplianceGuard
      *
      * @return bool True when the line's BBV classification/routing is valid.
      *
-     * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-002, REQ-BBV-004)
+     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-002, REQ-BBV-004)
      */
     public function requireLineClassification(array $line): bool
     {
@@ -345,7 +345,7 @@ class BbvComplianceGuard
      *
      * @return bool True when all horizons are sluitend or an override is present.
      *
-     * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-003)
+     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-003)
      */
     public function requireMeerjarenramingSluitend(array $programma): bool
     {
@@ -461,7 +461,7 @@ class BbvComplianceGuard
      *
      * @return bool True when the MVA is correctly activated (or out of scope).
      *
-     * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-005)
+     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-005)
      */
     public function requireMvaActivation(array $mva): bool
     {
@@ -525,7 +525,7 @@ class BbvComplianceGuard
      *
      * @return bool True when all seven paragrafen are vastgesteld, false otherwise.
      *
-     * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-007)
+     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-007)
      */
     public function requireParagrafenCompleet(array $jaarrekening): bool
     {
@@ -607,7 +607,7 @@ class BbvComplianceGuard
      *
      * @return string|null First depreciation month as `YYYY-MM`, or null.
      *
-     * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-005)
+     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-005)
      */
     public function depreciationStartMonth(array $mva): ?string
     {

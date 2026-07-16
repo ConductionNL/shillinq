@@ -20,8 +20,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookings-deposits/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,8 +36,8 @@ use Psr\Log\LoggerInterface;
 /**
  * Dormant log-backed Mollie Payments adapter.
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookings-deposits/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface
 {
@@ -64,7 +64,7 @@ class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface
      *
      * @return MolliePaymentResult The dispatch outcome.
      *
-     * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+     * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
      */
     public function createPayment(array $payload): MolliePaymentResult
     {
@@ -101,7 +101,7 @@ class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface
      *
      * @inheritDoc
      *
-     * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
+     * @spec openspec/specs/bookings-deposits/spec.md
      */
     public function isDormant(): bool
     {

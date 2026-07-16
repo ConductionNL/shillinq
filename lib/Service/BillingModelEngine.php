@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -308,7 +308,7 @@ class BillingModelEngine
      *
      * @return array<int,array<string,mixed>>
      *
-     * @spec openspec/changes/ar-billing-completeness/specs/usage-metered-billing/spec.md#req-umb-003
+     * @spec openspec/specs/usage-metered-billing/spec.md
      */
     public function calculateUsage(array $ratedReadings, array $expenses=[]): array
     {

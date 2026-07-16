@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use Psr\Log\LoggerInterface;
  * accidentally would post zero interest, which is a visible audit hole
  * the caller MUST guard against.
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  */
 class LogTreasuryRateAdapter implements TreasuryRateAdapterInterface
 {

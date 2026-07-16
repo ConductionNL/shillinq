@@ -41,11 +41,11 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-005
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-004
- * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-001
- * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-005
- * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-006
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
+ * @spec openspec/specs/gl-account-suggestion-consume/spec.md
+ * @spec openspec/specs/gl-account-suggestion-consume/spec.md
+ * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -76,9 +76,9 @@ use Throwable;
  * GL-account suggestion proxy (receipt-extraction-consume,
  * gl-account-suggestion-consume).
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-004
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-005
- * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
+ * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -143,7 +143,7 @@ class ExtractionRequestController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-005
+     * @spec openspec/specs/receipt-extraction-consume/spec.md
      */
     #[NoAdminRequired]
     public function request(): JSONResponse
@@ -237,7 +237,7 @@ class ExtractionRequestController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-004
+     * @spec openspec/specs/receipt-extraction-consume/spec.md
      */
     #[NoAdminRequired]
     public function confirm(string $id, string $schema=''): JSONResponse
@@ -312,7 +312,7 @@ class ExtractionRequestController extends Controller
      *
      * @return void
      *
-     * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-005
+     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
      */
     private function feedBookingBack(array $record): void
     {
@@ -348,8 +348,8 @@ class ExtractionRequestController extends Controller
      *
      * @return JSONResponse `{suggestion: {...}|null, reason?: string}`.
      *
-     * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-003
-     * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-006
+     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
+     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
      */
     #[NoAdminRequired]
     public function suggestGlAccount(string $id, string $schema=''): JSONResponse

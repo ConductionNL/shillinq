@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rule-engine/specs/bookkeeping-rule-engine/spec.md
+ * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.Commenting.InlineComment, Squiz.PHP.DisallowInlineIf
  */

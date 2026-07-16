@@ -32,8 +32,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-001
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-004
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ namespace OCA\Shillinq\Service\Extraction;
  * Maps docudesk extraction payloads onto shillinq drafts and records
  * operator corrections with provenance.
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  */
 class ExtractionPrefillService
 {
@@ -86,7 +86,7 @@ class ExtractionPrefillService
      *
      * @return string|null The schema slug, or NULL for an unknown docType.
      *
-     * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-001
+     * @spec openspec/specs/receipt-extraction-consume/spec.md
      */
     public function schemaForDocType(string $docType): ?string
     {
@@ -115,7 +115,7 @@ class ExtractionPrefillService
      *
      * @return array<string,mixed> The draft payload to persist via OR ObjectService.
      *
-     * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-001
+     * @spec openspec/specs/receipt-extraction-consume/spec.md
      */
     public function buildDraft(
         string $docType,
@@ -285,7 +285,7 @@ class ExtractionPrefillService
      *
      * @return array<string,mixed> The updated draft payload to persist.
      *
-     * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-004
+     * @spec openspec/specs/receipt-extraction-consume/spec.md
      */
     public function recordCorrection(array $existingDraft, array $incomingFields): array
     {

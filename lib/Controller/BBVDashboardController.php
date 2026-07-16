@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,7 +53,7 @@ use OCP\IUserSession;
 /**
  * Thin page controller for the waterschappen BBV compliance dashboard.
  *
- * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
 class BBVDashboardController extends Controller
 {
@@ -158,7 +158,7 @@ class BBVDashboardController extends Controller
      *   generatedAt: string
      * }
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     #[NoAdminRequired]
     public function index(): JSONResponse

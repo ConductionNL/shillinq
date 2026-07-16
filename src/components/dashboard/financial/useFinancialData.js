@@ -36,7 +36,7 @@ let inflight = null
  * A failing schema resolves to an empty list (and records the
  * error) so one missing schema cannot blank the whole dashboard.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {string} schema Schema slug.
  * @return {Promise<object[]>}
  */
@@ -69,7 +69,7 @@ async function fetchAll() {
  * `reload()` drops the cache and refetches into the same refs, so
  * every mounted widget updates.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @return {{ loading: import('vue').Ref<boolean>, error: import('vue').Ref<Error|null>,
  *   data: import('vue').Ref<object|null>, load: Function, reload: Function }}
  */

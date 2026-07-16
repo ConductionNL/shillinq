@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
  * Pure over (collection, preNotification, noticeDays) so it unit-tests
  * directly; the caller supplies the queried PreNotification record.
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
 class PreNotificationGuard
 {
@@ -76,7 +76,7 @@ class PreNotificationGuard
      *
      * @return bool True when the collection may be batched.
      *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      */
     public function canIncludeInBatch(
         array $collection,

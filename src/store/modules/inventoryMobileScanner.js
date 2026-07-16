@@ -17,7 +17,7 @@
  * touches IndexedDB directly so the optimistic / sync semantics stay
  * deterministic.
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 
 import { defineStore } from 'pinia'

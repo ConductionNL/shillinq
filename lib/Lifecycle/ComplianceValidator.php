@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-schatkistbankieren/specs/bookkeeping-schatkistbankieren/spec.md#REQ-SCHATKIST-005
+ * @spec openspec/specs/bookkeeping-schatkistbankieren/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use Psr\Log\LoggerInterface;
  *
  * ADR-031 exception: multi-criteria conditional logic not yet expressible declaratively.
  *
- * @spec openspec/changes/bookkeeping-schatkistbankieren/specs/bookkeeping-schatkistbankieren/spec.md#REQ-SCHATKIST-005
+ * @spec openspec/specs/bookkeeping-schatkistbankieren/spec.md
  */
 class ComplianceValidator
 {
@@ -96,7 +96,7 @@ class ComplianceValidator
      *
      * @return bool True when all active blocking rules pass; false otherwise.
      *
-     * @spec openspec/changes/bookkeeping-schatkistbankieren/specs/bookkeeping-schatkistbankieren/spec.md#REQ-SCHATKIST-005
+     * @spec openspec/specs/bookkeeping-schatkistbankieren/spec.md
      */
     public function isCompliant(array $account): bool
     {
@@ -257,7 +257,7 @@ class ComplianceValidator
      *              duplicate check is explicitly disabled via checkDuplicates=false);
      *              false on a genuine duplicate OR when the check cannot be performed.
      *
-     * @spec openspec/changes/bookkeeping-schatkistbankieren/specs/bookkeeping-schatkistbankieren/spec.md#REQ-SCHATKIST-003
+     * @spec openspec/specs/bookkeeping-schatkistbankieren/spec.md
      */
     private function evaluateSegregation(array $criteria, array $account, object $objectService): bool
     {

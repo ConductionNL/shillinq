@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+ * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use RuntimeException;
 /**
  * Reads OssReturn / OssPayment records through the real ObjectService API.
  *
- * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+ * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
 class OssRecordResolver
 {
@@ -86,7 +86,7 @@ class OssRecordResolver
      *
      * @return array<string,mixed>|null The linked return, or null when unresolvable.
      *
-     * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
      */
     public function findReturnForPayment(array $ossPayment): ?array
     {
@@ -115,7 +115,7 @@ class OssRecordResolver
      *
      * @return array<string,mixed>|null The linked payment, or null when none exists.
      *
-     * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
      */
     public function findPaymentForReturn(array $ossReturn): ?array
     {
@@ -146,7 +146,7 @@ class OssRecordResolver
      *
      * @throws \RuntimeException When the row type is unsupported.
      *
-     * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
      */
     public function savePayment(array $data): array
     {

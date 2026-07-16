@@ -35,7 +35,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-001
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -61,7 +61,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-001
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  */
 class ExtractionCompletedListener implements IEventListener
 {
@@ -106,7 +106,7 @@ class ExtractionCompletedListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-001
+     * @spec openspec/specs/receipt-extraction-consume/spec.md
      */
     public function handle(Event $event): void
     {

@@ -28,7 +28,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 
 declare(strict_types=1);
@@ -46,7 +46,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 class DBAFactuurMonitorListener implements IEventListener
 {
@@ -70,7 +70,7 @@ class DBAFactuurMonitorListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function handle(Event $event): void
     {

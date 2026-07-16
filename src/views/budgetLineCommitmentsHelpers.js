@@ -12,7 +12,7 @@
  * client-side from the three declared figures — display arithmetic, not a
  * parallel PHP reporting service (ADR-031 / REQ-VPL-011).
  *
- * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-011
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
 
 /**

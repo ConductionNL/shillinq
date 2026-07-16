@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
+ * @spec openspec/specs/bookings-deposits/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Dormant log-backed DepositPayment lifecycle adapter.
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
+ * @spec openspec/specs/bookings-deposits/spec.md
  */
 class LogDepositPaymentAdapter implements DepositPaymentAdapterInterface
 {
@@ -117,7 +117,7 @@ class LogDepositPaymentAdapter implements DepositPaymentAdapterInterface
      *
      * @return DepositPaymentResult The capture outcome.
      *
-     * @spec openspec/changes/bookings-depth/specs/bookings-cancellation-rules/spec.md
+     * @spec openspec/specs/bookings-cancellation-rules/spec.md
      */
     public function capturePayment(string $paymentIntentId, array $payload): DepositPaymentResult
     {

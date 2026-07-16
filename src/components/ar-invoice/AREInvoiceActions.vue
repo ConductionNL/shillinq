@@ -16,7 +16,7 @@
  from the server are shown inline before any event is emitted; a successful
  send shows a toast and updates the status chip in place.
 
- @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007
+ @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
 -->
 <template>
 	<div class="ar-einvoice-actions" data-testid="ar-einvoice-actions">
@@ -77,25 +77,25 @@ export default {
 		}
 	},
 	computed: {
-		/** @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007 */
+		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		deliveryStatus() {
 			return resolveDeliveryStatus(this.object, this.localDeliveryStatus)
 		},
-		/** @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007 */
+		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		canSend() {
 			return canSendEInvoice(this.object)
 		},
-		/** @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007 */
+		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		administrationId() {
 			return this.object?.administrationId || ''
 		},
-		/** @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007 */
+		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		invoiceNumber() {
 			return this.object?.invoiceNumber || ''
 		},
 	},
 	methods: {
-		/** @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007 */
+		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		async onSend() {
 			this.sendError = ''
 			this.fallbackNotice = ''

@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Psr\Log\LoggerInterface;
  * (algemene reserve, taakveld 0.10) for every BBV-tenant. Skipped for non-BBV
  * administrations so generic SMB/ZZP installs are untouched.
  *
- * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  */
 class InitializeBbvAdministration implements IRepairStep
 {

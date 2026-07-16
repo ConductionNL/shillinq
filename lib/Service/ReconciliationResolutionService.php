@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
  * Persists REQ-REC-004 resolutions onto ReconciliationMatch records and
  * audit-trails the action against the parent BankReconciliation.
  *
- * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
  */
 class ReconciliationResolutionService
 {
@@ -81,7 +81,7 @@ class ReconciliationResolutionService
      *                               closed/cancelled (locked) per REQ-REC-003.
      * @throws \Throwable            On any OR/service error.
      *
-     * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
+     * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
      */
     public function resolveMatch(
         string $reconId,

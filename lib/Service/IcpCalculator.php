@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ namespace OCA\Shillinq\Service;
  * arrays/scalars so the logic is unit-testable in isolation. IcpService wires this
  * helper to live IcpSupply / IcpOpgaaf / VatReturn data.
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
 class IcpCalculator
 {
@@ -70,7 +70,7 @@ class IcpCalculator
      *
      * @return int Amount in whole cents (half-even rounding).
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function toCents(mixed $amount): int
     {
@@ -85,7 +85,7 @@ class IcpCalculator
      *
      * @return float Money amount.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function fromCents(int $cents): float
     {
@@ -107,7 +107,7 @@ class IcpCalculator
      *
      * @return array<int,array{buyerVatId:string,supplyType:string,amountExclVat:float}> Sorted lines.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function aggregateLines(array $supplies): array
     {
@@ -169,7 +169,7 @@ class IcpCalculator
      *
      * @return array{total:float,totalGoods:float,totalServices:float,totalTriangulation:float}
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function totals(array $lines): array
     {
@@ -214,7 +214,7 @@ class IcpCalculator
      *
      * @return array{breached:bool,goodsCumulative:float} Decision plus the cumulative goods amount.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function periodicityBreach(array $quarterSupplies): array
     {
@@ -245,7 +245,7 @@ class IcpCalculator
      *
      * @return array{matches:bool,missing:bool,differenceCents:int} Reconciliation outcome.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function reconcile(float $icpTotal, ?float $rubriek3b): array
     {
@@ -277,7 +277,7 @@ class IcpCalculator
      *
      * @return string The zero-rated account number, or '' when the type is unknown.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function accountForSupplyType(string $supplyType): string
     {
@@ -308,7 +308,7 @@ class IcpCalculator
      *
      * @return string A well-formed XBRL-instance XML string.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function composeXbrl(string $period, string $filerVatId, array $lines): string
     {
@@ -351,7 +351,7 @@ class IcpCalculator
      *
      * @return string The CSV content.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function buildSuppliesCsv(array $supplies, array $requestIds): string
     {

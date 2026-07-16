@@ -33,7 +33,7 @@
  — the bespoke pickers + per-account sum feedback do not fit the
  built-in `detail` page type slice 04 declared. ADR-036 / ADR-037.
 
- @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-07-mapping-detail/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 -->
 <template>
 	<div class="bbv-budget-mapping-detail-root">

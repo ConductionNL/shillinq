@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
  * arrays — no ObjectService dependency — so they unit-test directly and the
  * caller (collection creation flow) supplies the queried history.
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
 class SequenceTypeGuard
 {
@@ -94,7 +94,7 @@ class SequenceTypeGuard
      *
      * @return string One of FRST, RCUR, OOFF.
      *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      */
     public function deriveSequenceType(array $mandate, array $priorCollections=[]): string
     {
@@ -127,7 +127,7 @@ class SequenceTypeGuard
      *
      * @return bool True when a collection may be scheduled.
      *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      */
     public function canScheduleCollection(array $mandate, array $priorCollections=[]): bool
     {

@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
  *
  * All monetary amounts are integer EUR cents.
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
  */
 class InvesteringsaftrekEligibilityGuard
 {
@@ -91,7 +91,7 @@ class InvesteringsaftrekEligibilityGuard
      *
      * @return array{kia: bool, eia: bool, mia: bool, vamil: bool, rationale: array<string,string>}
      *
-     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
      */
     public function classify(
         int $aanschafwaarde,
@@ -221,7 +221,7 @@ class InvesteringsaftrekEligibilityGuard
      *
      * @return array{allowed: bool, violation: ?string}
      *
-     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
      */
     public function validateCumulation(array $schemes): array
     {
@@ -252,7 +252,7 @@ class InvesteringsaftrekEligibilityGuard
      *
      * @return bool True when at or above 80% of the EUR 392.230 plafond.
      *
-     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
      */
     public function isApproachingKiaPlafond(int $kiaJaartotaal): bool
     {

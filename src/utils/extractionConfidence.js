@@ -28,7 +28,7 @@ export const ONE_CLICK_CONFIDENCE_GATE = 0.9
  * Whether a SupplierInvoice/Receipt record is an uncommitted extraction
  * draft awaiting operator review (REQ-RXC-001).
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-001
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  * @param {object} record The OR record.
  * @return {boolean}
  */
@@ -40,7 +40,7 @@ export function isExtractionDraft(record) {
  * Read a field's extraction confidence, or null when unavailable (e.g. an
  * operator-only field docudesk never extracts).
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-002
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  * @param {object} record The OR record.
  * @param {string} field The field name.
  * @return {number|null}
@@ -53,7 +53,7 @@ export function confidenceForField(record, field) {
 /**
  * Whether a field was already human-corrected (REQ-RXC-004).
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-004
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  * @param {object} record The OR record.
  * @param {string} field The field name.
  * @return {boolean}
@@ -68,7 +68,7 @@ export function isFieldCorrected(record, field) {
  * this only affects how much review the UI demands — commit is always an
  * explicit human action either way.
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-002
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  * @param {object} record The OR record.
  * @return {boolean}
  */
@@ -106,7 +106,7 @@ export function pendingDraftSummary(record, labelField = 'id') {
  * NOT an error — it is the honest "docudesk was never asked for this draft"
  * case that degrades to plain manual booking (REQ-GAC-006).
  *
- * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-001
+ * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  * @param {object} record The OR record.
  * @return {boolean}
  */
@@ -119,7 +119,7 @@ export function hasKnownExtractionId(record) {
  * into a renderable summary, or null when there is nothing to show
  * (REQ-GAC-006 — absence, not an error).
  *
- * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-003
+ * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  * @param {object} response The `suggestGlAccount` proxy response body.
  * @return {{code: string, label: string, confidence: number|null, rationale: string, source: string}|null}
  */

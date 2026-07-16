@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md
+ * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Throwable;
  * reversal per REQ-GL-004; false otherwise (surfaced to the operator as
  * "storneer eerst de grootboektransactie").
  *
- * @spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md (REQ-JE-010)
+ * @spec openspec/specs/bookkeeping-journal-entries/spec.md (REQ-JE-010)
  */
 class JournalVoidGuard
 {
@@ -94,7 +94,7 @@ class JournalVoidGuard
      *
      * @return bool True when the journal may be voided
      *
-     * @spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md (REQ-JE-010)
+     * @spec openspec/specs/bookkeeping-journal-entries/spec.md (REQ-JE-010)
      */
     public function requireReversedGLTransaction(array $journal): bool
     {

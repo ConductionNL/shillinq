@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md
+ * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  *
- * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md
+ * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
  */
 class TaxCalculationService
 {
@@ -85,7 +85,7 @@ class TaxCalculationService
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function calculateAllPeriodEnd(string $periodId, string $administrationId): void
     {
@@ -129,7 +129,7 @@ class TaxCalculationService
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-001
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function detectTemporaryDifferences(string $periodId, string $administrationId): void
     {
@@ -231,7 +231,7 @@ class TaxCalculationService
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-003
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function compensateLosses(string $periodId, string $administrationId): void
     {
@@ -335,7 +335,7 @@ class TaxCalculationService
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-004
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function assessRecoverability(string $periodId, string $administrationId): void
     {
@@ -386,7 +386,7 @@ class TaxCalculationService
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-005
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function applyRateChanges(string $periodId, string $administrationId): void
     {
@@ -487,7 +487,7 @@ class TaxCalculationService
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-009
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function calculateMovements(string $periodId, string $administrationId, string $jurisdiction): void
     {
@@ -589,7 +589,7 @@ class TaxCalculationService
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-008
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function calculateTaxProvision(string $periodId, string $administrationId, string $jurisdiction): void
     {

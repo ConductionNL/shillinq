@@ -40,7 +40,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/btw-suppletie-detection/specs/bookkeeping-vat-btw-filing/spec.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -61,7 +61,7 @@ use RuntimeException;
 /**
  * Detects filed-vs-ledger drift on a VATReturn and compiles a VatCorrection.
  *
- * @spec openspec/changes/btw-suppletie-detection/specs/bookkeeping-vat-btw-filing/spec.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  */
 class VatSuppletieDetectionService
 {
@@ -128,7 +128,7 @@ class VatSuppletieDetectionService
      *
      * @return array<string,mixed>|null The created VatCorrection record, or null if no drift.
      *
-     * @spec openspec/changes/btw-suppletie-detection/specs/bookkeeping-vat-btw-filing/spec.md#req-vbtw-013
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     public function detect(string $vatReturnId): ?array
     {
@@ -203,7 +203,7 @@ class VatSuppletieDetectionService
      *
      * @return array<string,mixed> The updated VatCorrection record.
      *
-     * @spec openspec/changes/btw-suppletie-detection/specs/bookkeeping-vat-btw-filing/spec.md#req-vbtw-014
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     public function prepare(string $vatCorrectionId): array
     {

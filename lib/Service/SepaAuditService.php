@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ use ZipArchive;
 /**
  * Builds the SEPA mandate audit dossier ZIP (REQ-SDD-010).
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
 class SepaAuditService
 {
@@ -66,7 +66,7 @@ class SepaAuditService
      *
      * @return array{data:string,filename:string}|null The ZIP payload + filename, or null.
      *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      */
     public function buildMandateDossier(string $mandateId): ?array
     {

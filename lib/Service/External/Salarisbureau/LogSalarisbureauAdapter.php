@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -36,7 +36,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Dormant log-backed Salarisbureau adapter.
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  */
 class LogSalarisbureauAdapter implements SalarisbureauAdapterInterface

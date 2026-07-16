@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
+ * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  */
 
 declare(strict_types=1);
@@ -38,7 +38,7 @@ use Psr\Log\LoggerInterface;
  * year, excluding cancelled invoices and credit notes (negative documents). The
  * resulting total drives the KOR threshold-warning/threshold-exceeded lifecycle.
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
+ * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  */
 class KorThresholdGuard
 {
@@ -61,7 +61,7 @@ class KorThresholdGuard
      *
      * @return float Sum of qualifying invoice revenue for the administration in the year.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function currentYtdRevenue(array $invoices, string $administrationId, int $year): float
     {

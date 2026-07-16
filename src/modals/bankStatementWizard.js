@@ -14,7 +14,7 @@ const IBAN_MAP_TTL_MS = 365 * 24 * 60 * 60 * 1000 // 1 year (REQ-BSW-006)
  * The three supported statement formats with their picker labels + accept
  * hints. The `value` is the parser format key the import endpoint expects.
  *
- * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+ * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
  * @return {Array<object>} Format option descriptors.
  */
 export function formatOptions() {
@@ -39,7 +39,7 @@ export function normalizeIban(iban) {
  * Read the full IBAN → glAccountId map from localStorage, dropping the whole
  * map when it is older than the 1-year TTL. Returns {} on any failure.
  *
- * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+ * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
  * @return {object} The { savedAt, map } payload's map, or {}.
  */
 function readIbanStore() {
@@ -62,7 +62,7 @@ function readIbanStore() {
  * Look up the remembered GL account for an IBAN. Returns null when absent,
  * expired or unreadable (REQ-BSW-006).
  *
- * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+ * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
  * @param {string} iban The statement IBAN.
  * @return {string|null} The stored glAccountId, or null.
  */
@@ -77,7 +77,7 @@ export function loadIbanMapping(iban) {
  * Persist the IBAN → glAccountId mapping, refreshing the 1-year timestamp.
  * Never throws when localStorage is unavailable.
  *
- * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+ * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
  * @param {string} iban The statement IBAN.
  * @param {string} glAccountId The mapped GL account id.
  * @return {void}
@@ -100,7 +100,7 @@ export function saveIbanMapping(iban, glAccountId) {
 /**
  * Build the JSON import payload POSTed to /api/v1/bank-statements/import.
  *
- * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+ * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
  * @param {object} input The collected wizard values.
  * @param {string} input.format Parser format key (camt053/mt940/csv).
  * @param {string} input.contents Raw file contents.
@@ -124,7 +124,7 @@ export const BREADCRUMB_FLAG = 'shillinq:bank-import-breadcrumb'
  * reconciliation page can offer a Back-to-overview link (REQ-BSW-005).
  * Never throws.
  *
- * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+ * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
  * @param {string} statementId The just-imported statement id.
  * @return {void}
  */

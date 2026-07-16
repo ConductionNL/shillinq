@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-zzp-tax-regime/spec.md
+ * @spec openspec/specs/bookkeeping-zzp-tax-regime/spec.md
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
  * not "excluded" (sick / parental-leave / vacation / non-billable-admin do not
  * qualify per Wet IB 2001 art. 3.6). Returns the qualifying-hours total.
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-zzp-tax-regime/spec.md
+ * @spec openspec/specs/bookkeeping-zzp-tax-regime/spec.md
  */
 class UrencriteriumGuard
 {
@@ -62,7 +62,7 @@ class UrencriteriumGuard
      *
      * @return float Sum of qualifying hours (category != 'excluded') for personId in year.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-zzp-tax-regime/spec.md
+     * @spec openspec/specs/bookkeeping-zzp-tax-regime/spec.md
      */
     public function currentYtdHours(array $hourRecords, string $personId, int $year): float
     {

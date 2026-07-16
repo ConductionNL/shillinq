@@ -38,7 +38,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/invoice-from-time-and-expense/specs/invoice-from-time-and-expense/spec.md
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  */
 
 declare(strict_types=1);
@@ -59,7 +59,7 @@ use Psr\Log\LoggerInterface;
  * as OCA\Shillinq\Lifecycle\InvoiceGuard::canCancel. Every guard fails closed:
  * any exception or malformed input denies the transition (CWE-863).
  *
- * @spec openspec/changes/invoice-from-time-and-expense/specs/invoice-from-time-and-expense/spec.md
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  */
 class InvoiceGuard
 {
@@ -88,7 +88,7 @@ class InvoiceGuard
      *
      * @return bool True when the invoice may post.
      *
-     * @spec openspec/changes/invoice-from-time-and-expense/specs/invoice-from-time-and-expense/spec.md
+     * @spec openspec/specs/invoice-from-time-and-expense/spec.md
      */
     public function canPost(string $invoiceId, ?array $object=null): bool
     {
@@ -159,7 +159,7 @@ class InvoiceGuard
      *
      * @return bool True when the invoice may be cancelled.
      *
-     * @spec openspec/changes/invoice-from-time-and-expense/specs/invoice-from-time-and-expense/spec.md
+     * @spec openspec/specs/invoice-from-time-and-expense/spec.md
      */
     public function canCancel(string $invoiceId, ?array $object=null): bool
     {

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Service\External\Bunq;
  * `expired` and the operator needs to renew consent before the next
  * pull will succeed; `SYNC_DEFERRED` is the dormant default.
  *
- * @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  */
 final class BunqSyncResult
 {

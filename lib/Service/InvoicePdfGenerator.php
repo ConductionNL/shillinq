@@ -39,9 +39,9 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
- * @spec openspec/changes/facturx-cii-conformance/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
- * @spec openspec/changes/facturx-cii-conformance/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-008
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,8 +54,8 @@ namespace OCA\Shillinq\Service;
 /**
  * Dutch-formatted invoice HTML / PDF builder.
  *
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
- * @spec openspec/changes/facturx-cii-conformance/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
 class InvoicePdfGenerator
 {
@@ -81,7 +81,7 @@ class InvoicePdfGenerator
      *
      * @return array{filename:string,html:string,mimeType:string}
      *
-     * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
+     * @spec openspec/specs/invoice-from-time-and-expense/spec.md
      */
     public function generatePdf(
         array $invoice,
@@ -123,7 +123,7 @@ class InvoicePdfGenerator
      * @return array{filename:string,pdf:string,mimeType:string,embeddedXmlFilename:string}
      *                The `pdf` key carries the raw PDF binary (not base64).
      *
-     * @spec openspec/changes/facturx-cii-conformance/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-002
+     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
      */
     public function generateHybridPdf(
         array $invoice,

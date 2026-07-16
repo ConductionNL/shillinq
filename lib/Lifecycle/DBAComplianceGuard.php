@@ -51,7 +51,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -75,7 +75,7 @@ use Psr\Log\LoggerInterface;
  * OCA\Shillinq\Lifecycle\DBAComplianceGuard::<method>. Every guard fails
  * closed: any exception or malformed input denies the transition (CWE-863).
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 class DBAComplianceGuard
 {
@@ -138,7 +138,7 @@ class DBAComplianceGuard
      *
      * @return bool True when the opdracht may be activated.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function canActivateOpdracht(string $opdrachtId, ?array $object=null): bool
     {
@@ -173,7 +173,7 @@ class DBAComplianceGuard
      *
      * @return bool True when the opdracht may be beeindigd.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function canBeeindigOpdracht(string $opdrachtId, ?array $object=null): bool
     {
@@ -209,7 +209,7 @@ class DBAComplianceGuard
      *
      * @return bool True when the intake may be completed.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function canCompleteIntake(string $intakeId, ?array $object=null): bool
     {
@@ -253,7 +253,7 @@ class DBAComplianceGuard
      *
      * @return int The total risk score (0-100).
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function computeTotaalScore(array $intake): int
     {
@@ -278,7 +278,7 @@ class DBAComplianceGuard
      *
      * @return string The risk band, or '' when the score is not derivable.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function deriveRiskBand(int $score): string
     {
@@ -311,7 +311,7 @@ class DBAComplianceGuard
      *
      * @return array{score: float, missing: array<string>} Completeness result.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function computeCompleteness(array $stukken): array
     {
@@ -364,7 +364,7 @@ class DBAComplianceGuard
      *
      * @return array{breach: bool, rate: float, grens: float} VBAR check result.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function effectiveHourlyRateBreach(float $bedrag, float $uren): array
     {
@@ -401,7 +401,7 @@ class DBAComplianceGuard
      *
      * @return bool True when the model is expired.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function isModelExpired(array $model, string $referenceYmd=''): bool
     {

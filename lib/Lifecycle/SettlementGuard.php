@@ -35,7 +35,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md
+ * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
  */
 
 declare(strict_types=1);
@@ -57,7 +57,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  *
- * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md
+ * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
  */
 class SettlementGuard
 {
@@ -157,7 +157,7 @@ class SettlementGuard
      *
      * @return bool True when the claim may be submitted.
      *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/specs/expense-reimbursement-or-passthrough/spec.md
+     * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
      */
     public function requireSettlementClassification(array $claim): bool
     {
@@ -215,7 +215,7 @@ class SettlementGuard
      *
      * @return bool True when the mode change is permitted.
      *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/specs/expense-reimbursement-or-passthrough/spec.md
+     * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
      */
     public function canChangeSettlementMode(array $claim, array $actor=[]): bool
     {
@@ -260,7 +260,7 @@ class SettlementGuard
      *
      * @return float|null The markup amount, or null when not pass-through.
      *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/specs/expense-reimbursement-or-passthrough/spec.md
+     * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
      */
     public function computeMarkupAmount(array $receipt): ?float
     {
@@ -303,7 +303,7 @@ class SettlementGuard
      *
      * @return array<string, mixed>|null The matched rule, or null when none.
      *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/specs/expense-reimbursement-or-passthrough/spec.md
+     * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
      */
     public function matchMarkupRule(
         string $customerId,
@@ -430,7 +430,7 @@ class SettlementGuard
      *
      * @return array{totalReimbursableAmount: float, totalPassThroughAmount: float, passThroughCustomerIds: array<int, string>}
      *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/specs/expense-reimbursement-or-passthrough/spec.md
+     * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
      */
     public function aggregateClaimTotals(array $claim): array
     {
@@ -480,7 +480,7 @@ class SettlementGuard
      *
      * @return array<string, mixed>|null The notification payload, or null.
      *
-     * @spec openspec/changes/expense-reimbursement-or-passthrough/specs/expense-reimbursement-or-passthrough/spec.md
+     * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
      */
     public function onReimbursablePosted(array $claim, string $policyId=''): ?array
     {

@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
+ * @spec openspec/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -59,7 +59,7 @@ use Psr\Log\LoggerInterface;
  * OCA\Shillinq\Lifecycle\DualGaapGuard::<method>. Every guard fails closed:
  * any exception or malformed input denies the transition (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
+ * @spec openspec/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
  */
 class DualGaapGuard
 {
@@ -91,7 +91,7 @@ class DualGaapGuard
      *
      * @return bool True when the transaction may be reconciled.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
+     * @spec openspec/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
      */
     public function canReconcileTransaction(string $transactionId, ?array $object=null): bool
     {
@@ -144,7 +144,7 @@ class DualGaapGuard
      *
      * @return bool True when the election may be activated.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
+     * @spec openspec/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md
      */
     public function canActivateElection(string $electionId, ?array $object=null): bool
     {

@@ -24,7 +24,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ use Throwable;
 /**
  * Idempotently seeds DBAModelovereenkomst fixtures (REQ-DBA-002).
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 class Load_DBA_Seeds_Step implements IRepairStep
 {
@@ -74,7 +74,7 @@ class Load_DBA_Seeds_Step implements IRepairStep
      *
      * @return string
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function getName(): string
     {
@@ -88,7 +88,7 @@ class Load_DBA_Seeds_Step implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function run(IOutput $output): void
     {

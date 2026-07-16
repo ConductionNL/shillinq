@@ -34,7 +34,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/payment-run-sepa-export/specs/payment-run-sepa-export/spec.md
+ * @spec openspec/specs/payment-run-sepa-export/spec.md
  */
 
 declare(strict_types=1);
@@ -57,7 +57,7 @@ use Psr\Log\LoggerInterface;
 /**
  * HTTP API for exporting + reconciling a PaymentRun.
  *
- * @spec openspec/changes/payment-run-sepa-export/specs/payment-run-sepa-export/spec.md
+ * @spec openspec/specs/payment-run-sepa-export/spec.md
  */
 class PaymentRunController extends Controller
 {
@@ -101,7 +101,7 @@ class PaymentRunController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/payment-run-sepa-export/specs/payment-run-sepa-export/spec.md
+     * @spec openspec/specs/payment-run-sepa-export/spec.md
      */
     #[NoAdminRequired]
     public function export(string $id): JSONResponse
@@ -151,7 +151,7 @@ class PaymentRunController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/payment-run-sepa-export/specs/payment-run-sepa-export/spec.md
+     * @spec openspec/specs/payment-run-sepa-export/spec.md
      */
     #[NoAdminRequired]
     public function reconcile(string $id): JSONResponse

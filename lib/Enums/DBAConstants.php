@@ -19,7 +19,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 
 declare(strict_types=1);
@@ -29,7 +29,7 @@ namespace OCA\Shillinq\Enums;
 /**
  * Constant pool for the DBA monitoring engine.
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 final class DBAConstants
 {

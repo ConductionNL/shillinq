@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Re-validates pending-outage VAT-IDs daily and escalates after 14 days.
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
 class ViesOutageRetryJob extends TimedJob
 {
@@ -86,7 +86,7 @@ class ViesOutageRetryJob extends TimedJob
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     protected function run($argument): void
     {

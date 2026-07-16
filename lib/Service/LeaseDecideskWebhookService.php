@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-reassessment/spec.md
+ * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Throwable;
 /**
  * Delivers the decidesk approval webhook for material lease-reassessment events.
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-reassessment/spec.md
+ * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
  */
 class LeaseDecideskWebhookService
 {

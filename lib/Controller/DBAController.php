@@ -27,7 +27,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 
 declare(strict_types=1);
@@ -56,7 +56,7 @@ use Throwable;
 /**
  * DBA Compliance Marker endpoint façade.
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 class DBAController extends Controller
 {
@@ -90,7 +90,7 @@ class DBAController extends Controller
      *
      * @return JSONResponse The score breakdown.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     #[NoAdminRequired]
     public function scoreIntake(): JSONResponse
@@ -120,7 +120,7 @@ class DBAController extends Controller
      *
      * @return JSONResponse The persisted intake + updated opdracht.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     #[NoAdminRequired]
     public function saveIntake(): JSONResponse
@@ -184,7 +184,7 @@ class DBAController extends Controller
      *
      * @return JSONResponse The assessment result.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     #[NoAdminRequired]
     public function vbarCheck(): JSONResponse
@@ -223,7 +223,7 @@ class DBAController extends Controller
      *
      * @return JSONResponse The updated opdracht.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     #[NoAdminRequired]
     public function uploadWba(): JSONResponse
@@ -265,7 +265,7 @@ class DBAController extends Controller
      *
      * @return JSONResponse The updated opdracht.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     #[NoAdminRequired]
     public function beeindigen(): JSONResponse
@@ -311,7 +311,7 @@ class DBAController extends Controller
      *
      * @return JSONResponse The persisted mode.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     #[NoAdminRequired]
     public function setMode(): JSONResponse
@@ -350,7 +350,7 @@ class DBAController extends Controller
      *
      * @return JSONResponse The updated opdracht.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     #[NoAdminRequired]
     public function setTussenkomstMode(): JSONResponse
@@ -389,7 +389,7 @@ class DBAController extends Controller
      *
      * @return JSONResponse The updated dossier.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     #[NoAdminRequired]
     public function evidenceConsent(): JSONResponse
@@ -435,7 +435,7 @@ class DBAController extends Controller
      *
      * @return JSONResponse The result.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     #[NoAdminRequired]
     public function inhuurIntake(): JSONResponse
@@ -479,7 +479,7 @@ class DBAController extends Controller
      *
      * @return JSONResponse|DataDownloadResponse The audit-rapport payload.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     #[NoAdminRequired]
     public function auditReport(string $opdrachtId): JSONResponse|DataDownloadResponse

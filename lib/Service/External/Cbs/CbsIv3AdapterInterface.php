@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,7 +35,7 @@ namespace OCA\Shillinq\Service\External\Cbs;
 /**
  * CBS Iv3 quarterly/annual submission port.
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  */
 interface CbsIv3AdapterInterface
 {

@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rule-audit/specs/bookkeeping-rule-engine/spec.md
+ * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */
@@ -73,7 +73,7 @@ class RuleAuditService
      *
      * @return array<string, mixed>
      *
-     * @spec openspec/changes/bookkeeping-rule-audit/specs/bookkeeping-rule-engine/spec.md
+     * @spec openspec/specs/bookkeeping-rule-engine/spec.md
      */
     public function audit(array $context=[]): array
     {

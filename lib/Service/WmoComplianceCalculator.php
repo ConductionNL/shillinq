@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ namespace OCA\Shillinq\Service;
  * scheduled IKP runner, the allocation splitter and the jaarrekening exporter
  * wire this helper to live GL + register data via the ObjectService.
  *
- * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+ * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
  */
 class WmoComplianceCalculator
 {
@@ -71,7 +71,7 @@ class WmoComplianceCalculator
      *
      * @return int Amount in whole cents.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function toCents(mixed $amount): int
     {
@@ -86,7 +86,7 @@ class WmoComplianceCalculator
      *
      * @return float Money amount.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function fromCents(int $cents): float
     {
@@ -101,7 +101,7 @@ class WmoComplianceCalculator
      *
      * @return int Total overhead in cents.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function overheadTotalCents(array $overhead): int
     {
@@ -129,7 +129,7 @@ class WmoComplianceCalculator
      *
      * @return array{totaleKosten: float, kostprijsPerEenheid: float|null} The cost totals.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function integralCostPrice(array $componenten, ?float $verkochteEenheden=null): array
     {
@@ -165,7 +165,7 @@ class WmoComplianceCalculator
      *
      * @return float Vermogenskosten in EUR rounded to whole cents.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function vermogenskosten(float $capitalBase, ?float $waccRate=null): float
     {
@@ -182,7 +182,7 @@ class WmoComplianceCalculator
      *
      * @return float Winstopslag in EUR rounded to whole cents.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function winstopslag(float $costsBeforeMarkup, ?float $rate=null): float
     {
@@ -206,7 +206,7 @@ class WmoComplianceCalculator
      *
      * @return array{compliant: bool, marge: float, margePercentage: float} The compliance verdict.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function complianceVerdict(?float $gehanteerdTarief, float $totaleKosten, ?float $kostprijsPerEenheid=null): array
     {
@@ -254,7 +254,7 @@ class WmoComplianceCalculator
      *
      * @return array<int,array<string,mixed>> The split lines with conserved amounts.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function splitTransaction(float $originalAmount, array $ruleTargets): array
     {
@@ -301,7 +301,7 @@ class WmoComplianceCalculator
      *
      * @return bool True when the split amounts sum exactly to the original.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function splitsAreBalanced(float $originalAmount, array $splits): bool
     {
@@ -327,7 +327,7 @@ class WmoComplianceCalculator
      *
      * @return array{ratio: float, compliant: bool} The coverage ratio and compliance verdict.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function kostendekkingsratio(float $omzet, float $integraleKostprijs): array
     {
@@ -361,7 +361,7 @@ class WmoComplianceCalculator
      *
      * @return bool True when an annual review task should be generated.
      *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md
+     * @spec openspec/specs/bookkeeping-market-government-separation/spec.md
      */
     public function reviewIsDue(?string $lastReviewedAt, string $referenceDate): bool
     {

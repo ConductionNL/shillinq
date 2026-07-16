@@ -42,8 +42,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-005
- * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-001
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
+ * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -62,7 +62,7 @@ use Throwable;
 /**
  * Thin, fail-soft HTTP client for docudesk's financial-extraction request endpoint.
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-005
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  */
 class DocudeskExtractionClient
 {
@@ -115,8 +115,8 @@ class DocudeskExtractionClient
      *         id read from the synchronous response (REQ-GAC-001), or null when the request
      *         failed or the response body carried no usable id.
      *
-     * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-005
-     * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-001
+     * @spec openspec/specs/receipt-extraction-consume/spec.md
+     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
      */
     public function requestExtraction(string $documentUri, string $docType): array
     {

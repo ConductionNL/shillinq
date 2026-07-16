@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
  * (invoice-save precondition / OssRegistration lifecycle transition) wires the
  * methods to live OssThresholdCounter + OssRegistration + Invoice data.
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
 class OssThresholdGuard
 {
@@ -96,7 +96,7 @@ class OssThresholdGuard
      *
      * @return float Running B2C-to-EU turnover for the administration in the year.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function currentB2cEuTurnover(array $invoices, string $administrationId, int $year): float
     {
@@ -151,7 +151,7 @@ class OssThresholdGuard
      *
      * @return string One of: ok, warning, block, registered.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function evaluate(float $currentTurnover, float $incrementAmount, bool $hasRegistration): string
     {
@@ -184,7 +184,7 @@ class OssThresholdGuard
      *
      * @return bool True when voluntary opt-in is permitted.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function canEnableVoluntary(array $registration): bool
     {
@@ -206,7 +206,7 @@ class OssThresholdGuard
      *
      * @return bool True when deregistration is permitted on the given date.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function canDeregister(array $registration, string $onDate): bool
     {

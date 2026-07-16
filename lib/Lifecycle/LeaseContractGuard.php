@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-contracts/spec.md
+ * @spec openspec/specs/bookkeeping-lease-contracts/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use Psr\Log\LoggerInterface;
  * x-openregister-lifecycle transitions.{draft→active}.guard as
  * OCA\Shillinq\Lifecycle\LeaseContractGuard::guardActivation.
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-contracts/spec.md
+ * @spec openspec/specs/bookkeeping-lease-contracts/spec.md
  */
 class LeaseContractGuard
 {
@@ -104,7 +104,7 @@ class LeaseContractGuard
      *
      * @return bool True when the lease may activate.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-contracts/spec.md
+     * @spec openspec/specs/bookkeeping-lease-contracts/spec.md
      */
     public function guardActivation(string $leaseContractId, ?array $object=null): bool
     {
@@ -132,7 +132,7 @@ class LeaseContractGuard
      *
      * @return bool True when the lease satisfies every activation precondition.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-contracts/spec.md
+     * @spec openspec/specs/bookkeeping-lease-contracts/spec.md
      */
     private function passesActivationChecks(?array $object): bool
     {

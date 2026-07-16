@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-007
+ * @spec openspec/specs/compliance-deadline-calendar/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
  * Runs once per day: publishes deadline VEVENTs and raises the due
  * deadline reminders (REQ-CDC-001 / REQ-CDC-007).
  *
- * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-007
+ * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
 class DeadlineReminderJob extends TimedJob
 {
@@ -72,7 +72,7 @@ class DeadlineReminderJob extends TimedJob
      *
      * @return void
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-007
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */

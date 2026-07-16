@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ namespace OCA\Shillinq\Service\External\Cbs;
  * a synthetic DEFERRED outcome so the surrounding lifecycle can advance
  * into `submitted` without contacting CBS.
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  */
 interface CbsBestandenAdapterInterface
 {

@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use DOMDocument;
  * Pure rendering logic with no persistence: the caller archives the returned
  * strings on the OssReturn record for the 10-year bewaarplicht (REQ-OSS-016).
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
 class OssReturnFormatter
 {
@@ -62,7 +62,7 @@ class OssReturnFormatter
      *
      * @return bool True when finalisation is permitted.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function canFinalize(array $ossReturn, array $registration): bool
     {
@@ -107,7 +107,7 @@ class OssReturnFormatter
      *
      * @return string The XML payload.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function toXml(array $ossReturn, string $ossId, string $sellerIban): string
     {
@@ -155,7 +155,7 @@ class OssReturnFormatter
      *
      * @return string The CSV payload.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function toCsv(array $ossReturn, string $ossId): string
     {

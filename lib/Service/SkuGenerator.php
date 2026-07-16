@@ -44,7 +44,7 @@ use InvalidArgumentException;
 /**
  * Declarative SKU generator (ADR-031 exception per inventory-barcode-sku D2).
  *
- * @spec openspec/changes/inventory-barcode-sku/specs/inventory-barcode-sku/spec.md
+ * @spec openspec/specs/inventory-barcode-sku/spec.md
  */
 class SkuGenerator
 {

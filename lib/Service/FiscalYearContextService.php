@@ -38,7 +38,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -60,7 +60,7 @@ use Throwable;
 /**
  * Active-fiscal-year resolver for the BBV consumers (slices 05–08).
  *
- * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
 class FiscalYearContextService
 {
@@ -102,7 +102,7 @@ class FiscalYearContextService
      * @return array{fiscalYear:int,startDate:string,endDate:string,administrationId:string}|null
      *         Active FY window or null when access is denied / unresolved.
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     public function resolveActiveWindow(
         string $administrationId,
@@ -140,7 +140,7 @@ class FiscalYearContextService
      *
      * @return array{fiscalYear:int,startDate:string,endDate:string,administrationId:string}|null
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     public function resolveDefaultWindow(?DateTimeInterface $now=null): ?array
     {
@@ -168,7 +168,7 @@ class FiscalYearContextService
      *
      * @return int Fiscal year integer (e.g. 2026).
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     public function fiscalYearFor(array $administration, ?DateTimeInterface $now=null): int
     {
@@ -192,7 +192,7 @@ class FiscalYearContextService
      *
      * @return array{fiscalYear:int,startDate:string,endDate:string}
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     public function windowForFiscalYear(array $administration, int $fiscalYear): array
     {

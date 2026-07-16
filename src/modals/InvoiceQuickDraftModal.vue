@@ -241,7 +241,7 @@ export default {
 		}
 	},
 	computed: {
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		customerOptions() {
 			return this.customers.map((c) => ({
 				value: String(c.customerId ?? c.id ?? ''),
@@ -249,19 +249,19 @@ export default {
 				customer: c,
 			}))
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		netAmount() {
 			return computeTotals(this.form.lines).net
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		vatAmount() {
 			return computeTotals(this.form.lines).vat
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		grossAmount() {
 			return computeTotals(this.form.lines).gross
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		canSave() {
 			if (this.saving) return false
 			if (!this.selectedCustomer || !this.selectedCustomer.value) return false
@@ -271,7 +271,7 @@ export default {
 		},
 	},
 	watch: {
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		open: {
 			// `immediate` so the customer list also loads when the modal is
 			// mounted with `open` already true (the manifest open-modal action
@@ -287,23 +287,23 @@ export default {
 	},
 	methods: {
 		t,
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		today() {
 			return new Date().toISOString().slice(0, 10)
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		formatEuro(amount) {
 			return new Intl.NumberFormat('nl-NL', {
 				style: 'currency',
 				currency: 'EUR',
 			}).format(Number(amount) || 0)
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		vatOptionFor(line) {
 			return this.vatOptions.find((o) => o.value === Number(line.btwRate))
 				|| this.vatOptions[0]
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		reset() {
 			this.error = ''
 			this.selectedCustomer = null
@@ -315,7 +315,7 @@ export default {
 				lines: [defaultDraftLine()],
 			}
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		async fetchCustomers() {
 			this.loadingCustomers = true
 			try {
@@ -337,7 +337,7 @@ export default {
 		 * requires administrationId, so the quick draft sources it from the
 		 * app settings rather than asking the operator for it.
 		 *
-		 * @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
 		 * @return {Promise<void>}
 		 */
 		async fetchAdministrationId() {
@@ -348,7 +348,7 @@ export default {
 				this.administrationId = ''
 			}
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		onCustomerSelected(option) {
 			this.selectedCustomer = option || null
 			const customer = option?.customer
@@ -370,7 +370,7 @@ export default {
 			}
 			this.recomputeDueDate(customer)
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		recomputeDueDate(customerOrEvent) {
 			const customer = customerOrEvent && customerOrEvent.customerId
 				? customerOrEvent
@@ -378,25 +378,25 @@ export default {
 			const terms = customer?.paymentTerms || 'net30'
 			this.form.dueDate = dueDateFromTerms(this.form.invoiceDate, terms)
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		onVatSelected(line, option) {
 			line.btwRate = option ? Number(option.value) : 21
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		addLine() {
 			this.form.lines.push(defaultDraftLine())
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		removeLine(idx) {
 			if (this.form.lines.length <= 1) return
 			this.form.lines.splice(idx, 1)
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		onClose() {
 			if (this.saving) return
 			this.$emit('close')
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		async onSave() {
 			if (!this.canSave) return
 			this.saving = true

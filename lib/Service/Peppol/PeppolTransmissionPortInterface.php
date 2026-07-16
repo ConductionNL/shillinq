@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ namespace OCA\Shillinq\Service\Peppol;
 /**
  * Document-type-agnostic Peppol transmission port shared by PO and AR.
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
 interface PeppolTransmissionPortInterface
 {
@@ -57,7 +57,7 @@ interface PeppolTransmissionPortInterface
      *
      * @return string|null The Peppol participant id, or null when not registered.
      *
-     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
+     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
      */
     public function lookupParticipant(string $administrationId, string $partyId): ?string;
 
@@ -79,7 +79,7 @@ interface PeppolTransmissionPortInterface
      *
      * @throws \RuntimeException When the access point refuses or fails.
      *
-     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
+     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
      */
     public function submit(string $participantId, string $documentType, string $payloadFileUri): string;
 }//end interface

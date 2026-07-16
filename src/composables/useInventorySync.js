@@ -18,7 +18,7 @@
  * handling come for free. All retries are bounded; failures keep the
  * pendingOp un-synced so the next cycle retries from a clean slate.
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 
 import axios from '@nextcloud/axios'

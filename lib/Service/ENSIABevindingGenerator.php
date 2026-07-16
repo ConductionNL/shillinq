@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ namespace OCA\Shillinq\Service;
  * Generates concept Bevinding records from a peer-reviewed ENSIA cyclus
  * (REQ-ENSIA-005).
  *
- * @spec openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  */
 class ENSIABevindingGenerator
 {

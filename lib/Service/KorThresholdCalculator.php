@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+ * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ namespace OCA\Shillinq\Service;
  * plain arrays/scalars so the logic is unit-testable in isolation. KorMonitorService
  * wires this helper to live AR-invoice + KORRegistration data.
  *
- * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+ * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  */
 class KorThresholdCalculator
 {
@@ -57,7 +57,7 @@ class KorThresholdCalculator
      *
      * @return int Amount in whole cents.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function toCents(mixed $amount): int
     {
@@ -72,7 +72,7 @@ class KorThresholdCalculator
      *
      * @return float Money amount.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function fromCents(int $cents): float
     {
@@ -93,7 +93,7 @@ class KorThresholdCalculator
      *
      * @return int Running KOR omzet in cents.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function runningOmzetCents(array $invoices, int $year): int
     {
@@ -118,7 +118,7 @@ class KorThresholdCalculator
      *
      * @return bool True when the invoice is KOR-eligible revenue for the year.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function isKorEligible(array $invoice, int $year): bool
     {
@@ -144,7 +144,7 @@ class KorThresholdCalculator
      *
      * @return float Benutting fraction (0..1+); zero when the threshold is zero.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function benutting(int $omzetCents, int $drempelCents): float
     {
@@ -167,7 +167,7 @@ class KorThresholdCalculator
      *
      * @return int Projected end-of-year omzet in cents.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function prognoseEndOfYearCents(int $lopendeCents, int $currentMonth): int
     {
@@ -186,7 +186,7 @@ class KorThresholdCalculator
      *
      * @return string ONDER_DREMPEL | WAARSCHUWING | OVERSCHRIJDING_VERWACHT.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function prognoseStatus(int $prognoseCents, int $drempelCents): string
     {
@@ -215,7 +215,7 @@ class KorThresholdCalculator
      *
      * @return array{trigger:string,ernst:string}|null The crossed schijf or null.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function crossedSchijf(float $previousBenutting, float $newBenutting): ?array
     {
@@ -249,7 +249,7 @@ class KorThresholdCalculator
      *
      * @return int Suppletie-bedrag in cents.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function suppletieBedragCents(array $invoices, string $ingangsDatum, string $revocatieDatum): int
     {
@@ -281,7 +281,7 @@ class KorThresholdCalculator
      *
      * @return string Date plus three years in YYYY-MM-DD; empty string when input invalid.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function plusThreeYears(string $date): string
     {
@@ -320,7 +320,7 @@ class KorThresholdCalculator
      *
      * @return array{lockInEindDatum:string,vroegsteOpzegDatum:string}|null Window or null on invalid input.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function lockInWindow(string $ingangsDatum): ?array
     {
@@ -395,7 +395,7 @@ class KorThresholdCalculator
      *
      * @return bool True when an operator-initiated opt-out is permitted.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function isOptOutPermitted(string $today, string $vroegsteOpzegDatum, string $lockInEindDatum): bool
     {
@@ -421,7 +421,7 @@ class KorThresholdCalculator
      *
      * @return array<string,array{omzet:float,drempel:float,benutting:float}> Per-lidstaat aggregate.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function perLidstaatAggregate(array $invoices, array $drempelsPerLidstaat, int $year): array
     {
@@ -479,7 +479,7 @@ class KorThresholdCalculator
      *
      * @return array{verdict:string,reden:string} Verdict (OK|WARN|BLOCK) + reden.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function brancheCompatibility(array $branche): array
     {
@@ -533,7 +533,7 @@ class KorThresholdCalculator
      *
      * @return int Total voorraad-correctie suppletie in cents.
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function voorraadCorrectieCents(array $assets): int
     {
@@ -566,7 +566,7 @@ class KorThresholdCalculator
      *
      * @return int Recoverable voorbelasting in cents (clamped to 0..vatCents).
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function herzieningRecoveryCents(int $vatCents, int $remainingMonths, int $totalMonths): int
     {

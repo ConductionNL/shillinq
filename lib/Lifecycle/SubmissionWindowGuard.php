@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
  * Pure arithmetic over (scheme, sequenceType, requestedCollectionDate,
  * generationDate) so it unit-tests directly without external dependencies.
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
 class SubmissionWindowGuard
 {
@@ -130,7 +130,7 @@ class SubmissionWindowGuard
      *
      * @return bool True when the batch is within its submission window.
      *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      */
     public function isWithinWindow(
         string $scheme,

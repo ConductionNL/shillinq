@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bank-reconciliation/specs/bookkeeping-bank-reconciliation/spec.md
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
  * precondition is satisfied (transition / save permitted), false otherwise.
  * Fail-closed on any error: a failed check denies the write.
  *
- * @spec openspec/changes/bookkeeping-bank-reconciliation/specs/bookkeeping-bank-reconciliation/spec.md
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
 class BankReconciliationGuard
 {
@@ -112,7 +112,7 @@ class BankReconciliationGuard
      *
      * @return bool True when the save is permitted.
      *
-     * @spec openspec/changes/bookkeeping-bank-reconciliation/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BBR-001, REQ-BBR-006)
+     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BBR-001, REQ-BBR-006)
      */
     public function requireUnlockedAndValidDates(array $object): bool
     {
@@ -171,7 +171,7 @@ class BankReconciliationGuard
      *
      * @return bool True when the match save is permitted.
      *
-     * @spec openspec/changes/bookkeeping-bank-reconciliation/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BBR-008)
+     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BBR-008)
      */
     public function requireParentUnlocked(array $object): bool
     {
@@ -215,7 +215,7 @@ class BankReconciliationGuard
      *
      * @return bool True when approval is permitted (and balance has been recomputed).
      *
-     * @spec openspec/changes/bookkeeping-bank-reconciliation/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BBR-005, REQ-BBR-006)
+     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BBR-005, REQ-BBR-006)
      */
     public function requireResolvedMatches(array $object): bool
     {
@@ -268,7 +268,7 @@ class BankReconciliationGuard
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bank-reconciliation/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BBR-005)
+     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BBR-005)
      */
     public function recalculateBalance(array $reconciliation, ?array $matches=null): void
     {

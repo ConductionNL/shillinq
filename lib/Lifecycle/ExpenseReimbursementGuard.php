@@ -59,7 +59,7 @@ use Psr\Log\LoggerInterface;
  * exception per ADR-031 / CWE-863. The lifecycle engine then surfaces the
  * denial through the standard transition-rejected pathway.
  *
- * @spec openspec/changes/expense-reimbursement-or-passthrough/tasks.md
+ * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
  */
 class ExpenseReimbursementGuard
 {

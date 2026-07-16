@@ -24,8 +24,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/tasks.md
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,8 +40,8 @@ use Psr\Log\LoggerInterface;
 /**
  * Dormant log-backed RvO aanvraag adapter.
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/tasks.md
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
 class LogRvOAanvraagAdapter implements RvOAanvraagAdapterInterface
 {

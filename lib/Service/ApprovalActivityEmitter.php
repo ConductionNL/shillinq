@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rekenkamer-audit-pack/tasks.md
+ * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -59,7 +59,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/bookkeeping-rekenkamer-audit-pack/tasks.md
+ * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
  */
 class ApprovalActivityEmitter
 {

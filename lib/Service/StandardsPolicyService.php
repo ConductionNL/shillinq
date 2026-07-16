@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-accounting-standards-policy/specs/accounting-standards-policy/spec.md
+ * @spec openspec/specs/accounting-standards-policy/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.PHP.DisallowInlineIf
  */

@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ namespace OCA\Shillinq\Service;
  * OSS rate resolution (OssRateResolver) for `oss`, 0% reverse-charge for `icp`,
  * domestic BTW for `domestic`.
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
 class OssInvoiceRouter
 {
@@ -66,7 +66,7 @@ class OssInvoiceRouter
      *
      * @return array{route: string, reason: string, warning: ?string}
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function route(string $customerType, string $destinationCountry, string $vatValidationStatus=''): array
     {

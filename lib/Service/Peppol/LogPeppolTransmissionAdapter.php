@@ -33,7 +33,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,7 +54,7 @@ use Psr\Log\NullLogger;
  * Log-only Peppol adapter (default DI binding for both PO and AR).
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
 final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInterface
 {
@@ -131,7 +131,7 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
      *
      * @return string|null The Peppol participant id, or null when not registered.
      *
-     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
+     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
      *
      * @inheritDoc
      */
@@ -166,7 +166,7 @@ final class LogPeppolTransmissionAdapter implements PeppolTransmissionAdapterInt
      *
      * @return string The transmission identifier.
      *
-     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
+     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
      *
      * @inheritDoc
      */

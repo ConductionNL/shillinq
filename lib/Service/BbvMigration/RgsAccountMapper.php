@@ -34,7 +34,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -51,7 +51,7 @@ use Psr\Container\ContainerInterface;
 /**
  * Produces RGS-decentraal mapping suggestions for unmapped Account records.
  *
- * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  */
 class RgsAccountMapper
 {

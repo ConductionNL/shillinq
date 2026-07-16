@@ -38,7 +38,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+ * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
  */
 
 declare(strict_types=1);
@@ -55,7 +55,7 @@ use Psr\Log\LoggerInterface;
  * - Rechtmatigheidsbevinding.lifecycle.oplossen.requires   -> canResolveBevinding
  * - Rechtmatigheidsparagraaf.lifecycle.vaststellen_college.requires -> canVaststellenParagraaf
  *
- * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+ * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
  */
 class RechtmatigheidGuard
 {
@@ -94,7 +94,7 @@ class RechtmatigheidGuard
      *
      * @return bool True when the toets may be finalised.
      *
-     * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+     * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
      */
     public function canFinaliseToets(array $toets): bool
     {
@@ -151,7 +151,7 @@ class RechtmatigheidGuard
      *
      * @return bool True when the bevinding may be resolved.
      *
-     * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+     * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
      */
     public function canResolveBevinding(array $bevinding): bool
     {
@@ -190,7 +190,7 @@ class RechtmatigheidGuard
      *
      * @return bool True when the paragraaf may be vastgesteld by college.
      *
-     * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+     * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
      */
     public function canVaststellenParagraaf(array $paragraaf): bool
     {
@@ -233,7 +233,7 @@ class RechtmatigheidGuard
      *
      * @return bool True when the paragraaf may be exported.
      *
-     * @spec openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
+     * @spec openspec/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md
      */
     public function canExportParagraaf(array $paragraaf): bool
     {

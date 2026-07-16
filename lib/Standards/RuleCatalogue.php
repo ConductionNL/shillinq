@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/expand-standards-eu-us/specs/accounting-standards-policy/spec.md
+ * @spec openspec/specs/accounting-standards-policy/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.Operators.ComparisonOperatorUsage, Squiz.PHP.DisallowInlineIf
  */

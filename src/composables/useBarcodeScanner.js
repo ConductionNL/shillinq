@@ -19,7 +19,7 @@
  * The helpers exposed here keep the camera-lifecycle / decoding logic
  * out of the Vue component so they are unit-testable.
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 
 const DEFAULT_FORMATS = ['qr_code', 'ean_13', 'code_128', 'code_39', 'code_93']

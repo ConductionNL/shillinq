@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-aansluitingen/tasks.md
+ * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use Psr\Log\LoggerInterface;
 /**
  * POST compute / explain / resolve / reopen endpoints for the Aansluiting framework.
  *
- * @spec openspec/changes/bookkeeping-aansluitingen/tasks.md
+ * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
  */
 class AansluitingController extends Controller
 {
@@ -102,7 +102,7 @@ class AansluitingController extends Controller
      *
      * @return JSONResponse 200 with the AansluitingResult; 400 / 500 as below.
      *
-     * @spec openspec/changes/bookkeeping-aansluitingen/tasks.md
+     * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
      */
     #[NoAdminRequired]
     public function compute(string $aansluitingId): JSONResponse
@@ -142,7 +142,7 @@ class AansluitingController extends Controller
      *
      * @return JSONResponse 200 with the updated AansluitingResult; 400 / 500 as below.
      *
-     * @spec openspec/changes/bookkeeping-aansluitingen/tasks.md
+     * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
      */
     #[NoAdminRequired]
     public function explain(string $resultId): JSONResponse
@@ -185,7 +185,7 @@ class AansluitingController extends Controller
      *
      * @return JSONResponse 200 with the updated AansluitingResult; 400 / 500 as below.
      *
-     * @spec openspec/changes/bookkeeping-aansluitingen/tasks.md
+     * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
      */
     #[NoAdminRequired]
     public function resolve(string $resultId): JSONResponse
@@ -220,7 +220,7 @@ class AansluitingController extends Controller
      *
      * @return JSONResponse 200 with the updated AansluitingResult; 400 / 500 as below.
      *
-     * @spec openspec/changes/bookkeeping-aansluitingen/tasks.md
+     * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
      */
     #[NoAdminRequired]
     public function reopen(string $resultId): JSONResponse

@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Daily background job expiring dormant SEPA mandates (REQ-SDD-008).
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
 class MandateDormancyExpiryJob extends TimedJob
 {
@@ -84,7 +84,7 @@ class MandateDormancyExpiryJob extends TimedJob
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */

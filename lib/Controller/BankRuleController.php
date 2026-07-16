@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -57,7 +57,7 @@ use Psr\Log\LoggerInterface;
 /**
  * REST surface for bank matching-rule preview + suggestion (REQ-BR-011/012).
  *
- * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  */
 class BankRuleController extends Controller
 {
@@ -108,7 +108,7 @@ class BankRuleController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
+     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
      */
     #[NoAdminRequired]
     public function preview(): JSONResponse
@@ -152,7 +152,7 @@ class BankRuleController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
+     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
      */
     #[NoAdminRequired]
     public function suggestAccount(): JSONResponse
@@ -199,7 +199,7 @@ class BankRuleController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
+     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
      */
     #[NoAdminRequired]
     public function suggestions(): JSONResponse
@@ -237,7 +237,7 @@ class BankRuleController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
+     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
      */
     #[NoAdminRequired]
     public function acceptSuggestion(): JSONResponse

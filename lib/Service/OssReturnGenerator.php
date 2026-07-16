@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use Psr\Container\ContainerInterface;
  * Reads are delegated to OpenRegister's ObjectService (findAll) and scoped to the
  * server-resolved administration + reporting period, never a client trust boundary.
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
 class OssReturnGenerator
 {
@@ -84,7 +84,7 @@ class OssReturnGenerator
      *
      * @return array{lineItems: array<int,array<string,mixed>>, totalTaxableBase: float, totalVatAmount: float}
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function aggregate(array $documents): array
     {
@@ -172,7 +172,7 @@ class OssReturnGenerator
      *
      * @return array<string,mixed> Draft OssReturn payload.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function generateDraft(string $administrationId, int $periodYear, string $periodQuarter, string $registrationId): array
     {
@@ -224,7 +224,7 @@ class OssReturnGenerator
      *
      * @return array<string,mixed> Draft correction OssReturn payload.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function buildCorrection(
         string $administrationId,

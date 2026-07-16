@@ -37,7 +37,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -62,7 +62,7 @@ use Psr\Log\LoggerInterface;
  * permitted, false = denied. Both fail-closed on any internal error per
  * ADR-031 §"PHP guards default to deny on failure".
  *
- * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  */
 class StatementVerifyGuard
 {
@@ -137,7 +137,7 @@ class StatementVerifyGuard
      *              recomputation completes. Returns false only when the
      *              reconciliation has no id (cannot persist results).
      *
-     * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-002)
+     * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-002)
      */
     public function verifyStatementBalance(array $object): bool
     {
@@ -214,7 +214,7 @@ class StatementVerifyGuard
      *
      * @return bool True when the transition is permitted, false otherwise.
      *
-     * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004, REQ-REC-006)
+     * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004, REQ-REC-006)
      */
     public function requireResolvedAndSignedOff(array $object): bool
     {

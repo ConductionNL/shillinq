@@ -42,7 +42,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+ * @spec openspec/specs/recurring-invoicing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -64,7 +64,7 @@ use RuntimeException;
  * Generates ordinary ARInvoice records from due RecurringInvoiceProfile
  * records and advances their schedule.
  *
- * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+ * @spec openspec/specs/recurring-invoicing/spec.md
  */
 class RecurringInvoiceGenerator
 {
@@ -147,7 +147,7 @@ class RecurringInvoiceGenerator
      *
      * @throws \RuntimeException When the profile is malformed.
      *
-     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+     * @spec openspec/specs/recurring-invoicing/spec.md
      */
     public function generateForProfile(array $profile): array
     {
@@ -246,7 +246,7 @@ class RecurringInvoiceGenerator
      *
      * @return array<int,array<string,mixed>> Per-profile results.
      *
-     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+     * @spec openspec/specs/recurring-invoicing/spec.md
      */
     public function runScheduled(?string $asOf=null): array
     {
@@ -290,7 +290,7 @@ class RecurringInvoiceGenerator
      *
      * @return array<string,mixed> The ARInvoice payload.
      *
-     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+     * @spec openspec/specs/recurring-invoicing/spec.md
      */
     public static function buildArInvoicePayload(
         array $profile,
@@ -372,7 +372,7 @@ class RecurringInvoiceGenerator
      *
      * @return string The expanded description.
      *
-     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+     * @spec openspec/specs/recurring-invoicing/spec.md
      */
     public static function expandTokens(string $description, string $periodStart, string $language): string
     {
@@ -409,7 +409,7 @@ class RecurringInvoiceGenerator
      *
      * @return string The period key (Y-m).
      *
-     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+     * @spec openspec/specs/recurring-invoicing/spec.md
      */
     public static function dueBillingPeriod(array $profile): string
     {
@@ -443,7 +443,7 @@ class RecurringInvoiceGenerator
      *
      * @return string Period start date (Y-m-d).
      *
-     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+     * @spec openspec/specs/recurring-invoicing/spec.md
      */
     public static function periodStartDate(string $billingPeriod): string
     {
@@ -465,7 +465,7 @@ class RecurringInvoiceGenerator
      *
      * @return string Invoice date (Y-m-d).
      *
-     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+     * @spec openspec/specs/recurring-invoicing/spec.md
      */
     public static function clampedInvoiceDate(array $profile, string $billingPeriod): string
     {
@@ -499,7 +499,7 @@ class RecurringInvoiceGenerator
      *
      * @return string nextRunDate (Y-m-d), or '' when undeterminable.
      *
-     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+     * @spec openspec/specs/recurring-invoicing/spec.md
      */
     public static function nextRunDate(
         string $frequency,
@@ -617,7 +617,7 @@ class RecurringInvoiceGenerator
      *
      * @return string The resulting date (Y-m-d).
      *
-     * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+     * @spec openspec/specs/recurring-invoicing/spec.md
      */
     public static function addDays(string $date, int $days): string
     {

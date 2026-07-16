@@ -37,7 +37,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -60,7 +60,7 @@ use RuntimeException;
  * to the server-resolved administration, never to a client-supplied trust
  * boundary (REQ-VAT-001..REQ-VAT-011, REQ-VAT-008).
  *
- * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  */
 class VATReturnService
 {
@@ -89,7 +89,7 @@ class VATReturnService
      *
      * @return array<string,mixed> The created VATReturn record (incl. id).
      *
-     * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     public function createReturn(
         string $administrationId,
@@ -160,7 +160,7 @@ class VATReturnService
      *
      * @return array{lineCount:int,totalVATCollected:float,totalVATPaid:float,vatBalance:float,totalTaxableAmount:float}
      *
-     * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     public function deriveVATLines(
         string $returnId,
@@ -253,7 +253,7 @@ class VATReturnService
      *
      * @return array<int,array{type:string,taxRate:float,totalVATAmount:float,totalTaxableAmount:float,lineCount:int}>
      *
-     * @spec openspec/changes/btw-suppletie-detection/specs/bookkeeping-vat-btw-filing/spec.md#req-vbtw-013
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     public function computeCurrentDeclarations(string $administrationId, string $startDate, string $endDate): array
     {
@@ -282,7 +282,7 @@ class VATReturnService
      *
      * @return array<int,array{type:string,taxRate:float,totalVATAmount:float,totalTaxableAmount:float,lineCount:int}>
      *
-     * @spec openspec/changes/btw-suppletie-detection/specs/bookkeeping-vat-btw-filing/spec.md#req-vbtw-013
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     public function fetchFiledDeclarations(string $returnId): array
     {
@@ -316,7 +316,7 @@ class VATReturnService
      *
      * @return array<string,mixed> The VATReturn record.
      *
-     * @spec openspec/changes/btw-suppletie-detection/specs/bookkeeping-vat-btw-filing/spec.md#req-vbtw-013
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     public function getReturn(string $returnId): array
     {
@@ -435,7 +435,7 @@ class VATReturnService
      *
      * @return array<string,mixed> The updated VATReturn record.
      *
-     * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     public function submitReturn(string $returnId, string $userId): array
     {
@@ -477,7 +477,7 @@ class VATReturnService
      *
      * @return array<string,mixed> The refreshed VATReturn record.
      *
-     * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     public function rebaseReturn(string $returnId, string $userId): array
     {

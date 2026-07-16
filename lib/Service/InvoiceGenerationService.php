@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -73,7 +73,7 @@ class InvoiceGenerationService
      *
      * @return array<string,mixed> Persisted BillableInvoice (with id).
      *
-     * @spec openspec/changes/ar-billing-completeness/specs/usage-metered-billing/spec.md#req-umb-003
+     * @spec openspec/specs/usage-metered-billing/spec.md
      */
     public function draftInvoice(InvoiceGenerationRequest $request): array
     {
@@ -570,7 +570,7 @@ class InvoiceGenerationService
      *
      * @return array<int,array<string,mixed>>
      *
-     * @spec openspec/changes/ar-billing-completeness/specs/usage-metered-billing/spec.md#req-umb-003
+     * @spec openspec/specs/usage-metered-billing/spec.md
      */
     private function loadMeterReadings(array $ids, ?string $defaultRatePlanId): array
     {

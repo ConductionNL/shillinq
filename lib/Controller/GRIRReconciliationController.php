@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+ * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,7 +53,7 @@ use Psr\Log\LoggerInterface;
 /**
  * GR/IR period-end reconciliation endpoint (REQ-GLTAX-003).
  *
- * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+ * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
 class GRIRReconciliationController extends Controller
 {
@@ -104,7 +104,7 @@ class GRIRReconciliationController extends Controller
      *                      validation; 401 anonymous; 404 cross-tenant; 500
      *                      without a stack trace.
      *
-     * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
      */
     #[NoAdminRequired]
     public function saldo(): JSONResponse

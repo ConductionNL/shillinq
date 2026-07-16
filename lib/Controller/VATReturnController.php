@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,7 +54,7 @@ use Psr\Log\LoggerInterface;
 /**
  * HTTP API for VAT returns (REQ-VAT-001 .. REQ-VAT-012).
  *
- * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
  */
 class VATReturnController extends Controller
 {
@@ -88,7 +88,7 @@ class VATReturnController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     #[NoAdminRequired]
     public function index(): JSONResponse
@@ -141,7 +141,7 @@ class VATReturnController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     #[NoAdminRequired]
     public function show(string $returnId): JSONResponse
@@ -194,7 +194,7 @@ class VATReturnController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     #[NoAdminRequired]
     public function create(): JSONResponse
@@ -265,7 +265,7 @@ class VATReturnController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     #[NoAdminRequired]
     public function update(string $returnId): JSONResponse
@@ -316,7 +316,7 @@ class VATReturnController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     #[NoAdminRequired]
     public function submit(string $returnId): JSONResponse
@@ -355,7 +355,7 @@ class VATReturnController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     #[NoAdminRequired]
     public function rebase(string $returnId): JSONResponse
@@ -394,7 +394,7 @@ class VATReturnController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
      */
     #[NoAdminRequired]
     public function destroy(string $returnId): JSONResponse

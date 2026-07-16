@@ -65,7 +65,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-001
+ * @spec openspec/specs/compliance-deadline-calendar/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -96,7 +96,7 @@ use Throwable;
  * a 'failed' status — it never throws into a CRUD path or crashes cron
  * (REQ-CDC-001).
  *
- * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-001
+ * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
 class ComplianceDeadlineCalendarService
 {
@@ -243,7 +243,7 @@ class ComplianceDeadlineCalendarService
      *
      * @return bool True when the category is enabled.
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function isCategoryEnabled(string $userId, string $category): bool
     {
@@ -268,7 +268,7 @@ class ComplianceDeadlineCalendarService
      *
      * @return void
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function setCategoryEnabled(string $userId, string $category, bool $enabled): void
     {
@@ -299,7 +299,7 @@ class ComplianceDeadlineCalendarService
      *
      * @return int Lead time in days (>= 0).
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-007
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function leadTimeDays(string $userId, string $category): int
     {
@@ -329,7 +329,7 @@ class ComplianceDeadlineCalendarService
      *
      * @return void
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function setLeadTimeDays(string $userId, string $category, int $days): void
     {
@@ -360,7 +360,7 @@ class ComplianceDeadlineCalendarService
      *
      * @return array<int,array<string,string>> Open deadlines.
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-002
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function collectDeadlines(): array
     {
@@ -539,7 +539,7 @@ class ComplianceDeadlineCalendarService
      * @return array{status: string, published: int, removed: int} Outcome —
      *         status 'ok' or 'failed' (fail-soft, never throws).
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-001
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function publishForUser(string $userId): array
     {
@@ -621,7 +621,7 @@ class ComplianceDeadlineCalendarService
      *
      * @return int The number of users processed.
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-001
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function publishAll(): int
     {
@@ -658,7 +658,7 @@ class ComplianceDeadlineCalendarService
      *
      * @return int Number of notifications raised.
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-007
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function dispatchDueReminders(?DateTimeInterface $now=null): int
     {
@@ -1004,7 +1004,7 @@ class ComplianceDeadlineCalendarService
      *
      * @return string The VCALENDAR payload.
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-001
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     private function buildVevent(array $deadline, bool $cancelled): string
     {
@@ -1082,7 +1082,7 @@ class ComplianceDeadlineCalendarService
      *
      * @return string|null The due date (Y-m-d), or null when unparseable.
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-002
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     private function filingDueDateFromPeriodEnd(string $periodEnd): ?string
     {

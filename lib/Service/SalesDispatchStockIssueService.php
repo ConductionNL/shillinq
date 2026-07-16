@@ -51,7 +51,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md
+ * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -73,7 +73,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md
+ * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
  */
 class SalesDispatchStockIssueService
 {
@@ -109,8 +109,8 @@ class SalesDispatchStockIssueService
      *
      * @return array<string,mixed> Result envelope: {issued: int, skipped: int, blocked: int, moves: array, blockedLines: array}.
      *
-     * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md#req-001
-     * @spec openspec/changes/block-unsellable-stock-dispatch/specs/block-unsellable-stock-dispatch/spec.md#req-blk-001
+     * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
+     * @spec openspec/specs/block-unsellable-stock-dispatch/spec.md
      */
     public function issueForDelivery(array $delivery): array
     {
@@ -348,7 +348,7 @@ class SalesDispatchStockIssueService
      *
      * @return array<string,mixed> Result envelope: {reversed: int, failed: int}.
      *
-     * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md#req-006
+     * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
      */
     public function reverseForDelivery(array $delivery): array
     {

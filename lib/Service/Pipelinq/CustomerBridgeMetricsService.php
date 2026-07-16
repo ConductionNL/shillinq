@@ -69,7 +69,7 @@ use OCP\ICacheFactory;
  * sample names here omit it).
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-11-docs-observability/tasks.md
- * @spec openspec/changes/adopt-apphost/specs/apphost-adoption/spec.md
+ * @spec openspec/specs/apphost-adoption/spec.md
  */
 final class CustomerBridgeMetricsService implements IMetricsProvider
 {
@@ -382,7 +382,7 @@ final class CustomerBridgeMetricsService implements IMetricsProvider
      *
      * @return MetricSample[] The provider's samples.
      *
-     * @spec openspec/changes/adopt-apphost/specs/apphost-adoption/spec.md
+     * @spec openspec/specs/apphost-adoption/spec.md
      */
     public function metrics(): array
     {

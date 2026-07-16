@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md
+ * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use Throwable;
  * Server-authoritative amounts: balances are computed from the stored
  * `lines[].amountCents` integers only — never from any client-supplied total.
  *
- * @spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md
+ * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  */
 class JournalPostingGuard
 {
@@ -149,7 +149,7 @@ class JournalPostingGuard
      *
      * @return bool True when the journal is balanced
      *
-     * @spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md (REQ-JE-007)
+     * @spec openspec/specs/bookkeeping-journal-entries/spec.md (REQ-JE-007)
      */
     public function requireBalanced(array $journal): bool
     {
@@ -184,7 +184,7 @@ class JournalPostingGuard
      *
      * @return bool True when the journal may be posted
      *
-     * @spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md (REQ-JE-007, REQ-JE-008)
+     * @spec openspec/specs/bookkeeping-journal-entries/spec.md (REQ-JE-007, REQ-JE-008)
      */
     public function requirePostable(array $journal): bool
     {
@@ -235,7 +235,7 @@ class JournalPostingGuard
      *
      * @return bool True when the GLTransaction was materialised and posted
      *
-     * @spec openspec/changes/bookkeeping-journal-entries/specs/bookkeeping-journal-entries/spec.md (REQ-JE-007)
+     * @spec openspec/specs/bookkeeping-journal-entries/spec.md (REQ-JE-007)
      */
     public function materializeGLTransaction(array $journal): bool
     {

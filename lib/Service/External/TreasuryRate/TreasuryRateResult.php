@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,7 +35,7 @@ namespace OCA\Shillinq\Service\External\TreasuryRate;
  * and a stub rate is returned. `SNAPSHOT_ERROR` is reserved for live-binding
  * failures.
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  */
 final class TreasuryRateResult
 {

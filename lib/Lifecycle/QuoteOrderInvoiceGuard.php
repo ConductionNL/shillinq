@@ -56,7 +56,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md
- * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md
+ * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -210,7 +210,7 @@ class QuoteOrderInvoiceGuard
      * @return bool True when the delivery may be confirmed.
      *
      * @spec openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md
-     * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md#req-005
+     * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
      */
     public function canConfirmDelivery(string $deliveryId, ?array $object=null): bool
     {
@@ -260,7 +260,7 @@ class QuoteOrderInvoiceGuard
      *
      * @return bool True when the delivery may be cancelled.
      *
-     * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md#req-006
+     * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
      */
     public function canCancelDelivery(string $deliveryId, ?array $object=null): bool
     {

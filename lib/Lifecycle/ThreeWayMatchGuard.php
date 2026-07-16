@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-accounts-payable-core/spec.md (REQ-AP-006)
+ * @spec openspec/specs/bookkeeping-accounts-payable-core/spec.md (REQ-AP-006)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

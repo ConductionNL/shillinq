@@ -41,8 +41,8 @@
  * @link https://conduction.nl
  * @link https://developers.kvk.nl/apis/handelsregister
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  * @spec openspec/changes/bookkeeping-consolidation-commercial/proposal.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -71,8 +71,8 @@ namespace OCA\Shillinq\Service\External\Kvk;
  *     `Application::register()` to the openconnector-backed
  *     implementation.
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 interface KvkHandelsregisterAdapterInterface
 {

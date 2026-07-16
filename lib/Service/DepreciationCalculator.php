@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+ * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ namespace OCA\Shillinq\Service;
  * from the OpenRegister ObjectService; the lifecycle disposal action uses
  * it to read `currentBookValue` at transition time.
  *
- * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+ * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
  */
 class DepreciationCalculator
 {
@@ -71,7 +71,7 @@ class DepreciationCalculator
      *
      * @return float Value rounded to the configured precision.
      *
-     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md#REQ-FA-005
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function applyFloatPrecision(float $value, ?int $floatPrecision=null): float
     {
@@ -106,7 +106,7 @@ class DepreciationCalculator
      *
      * @return float Yearly depreciation amount (>= 0, rounded).
      *
-     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md#REQ-FA-007
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function yearlyDepreciation(array $asset, string $referenceDate='', ?int $floatPrecision=null): float
     {
@@ -174,7 +174,7 @@ class DepreciationCalculator
      *
      * @return float Gain (positive) or loss (negative) on disposal.
      *
-     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md#REQ-FA-008
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function gainOrLossOnDisposal(array $asset, string $referenceDate='', ?int $floatPrecision=null): float
     {
@@ -203,7 +203,7 @@ class DepreciationCalculator
      *     split:array{purchaseCost:float, residualValue:float, transferSourceAssetRef:?string}
      * }
      *
-     * @spec openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md#REQ-FA-006
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function splitTransferAllocations(array $asset, float $splitPercentage, ?int $floatPrecision=null): array
     {
@@ -244,7 +244,7 @@ class DepreciationCalculator
      *
      * @return int Amount in whole cents.
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function toCents(mixed $amount): int
     {
@@ -259,7 +259,7 @@ class DepreciationCalculator
      *
      * @return float Money amount (two decimals).
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function fromCents(int $cents): float
     {
@@ -278,7 +278,7 @@ class DepreciationCalculator
      *
      * @return int Whole months elapsed (>= 0).
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function monthsElapsed(string $acquisitionDate, string $referenceDate): int
     {
@@ -319,7 +319,7 @@ class DepreciationCalculator
      *
      * @return float Monthly depreciation charge (>= 0, two decimals).
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function monthlyDepreciation(array $asset, string $referenceDate=''): float
     {
@@ -379,7 +379,7 @@ class DepreciationCalculator
      *
      * @return float Current book value (>= residualValue, two decimals).
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function currentBookValue(array $asset, string $referenceDate=''): float
     {
@@ -441,7 +441,7 @@ class DepreciationCalculator
      *
      * @return float Commercial-stream book value (>= 0, two decimals).
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function commercialBookValue(array $asset, string $referenceDate=''): float
     {
@@ -470,7 +470,7 @@ class DepreciationCalculator
      *
      * @return float Fiscal-stream book value (>= 0, two decimals).
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function fiscalBookValue(array $asset, string $referenceDate=''): float
     {
@@ -499,7 +499,7 @@ class DepreciationCalculator
      *
      * @return array{monthlyDepreciation:float, currentBookValue:float, commercialBookValue:float, fiscalBookValue:float}
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function derivedFields(array $asset, string $referenceDate=''): array
     {
@@ -525,7 +525,7 @@ class DepreciationCalculator
      *
      * @return float Stream book value (>= 0, two decimals).
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     private function streamBookValue(array $asset, string $referenceDate, float $annualRate): float
     {

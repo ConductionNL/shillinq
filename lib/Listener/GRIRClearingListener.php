@@ -39,7 +39,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/grir-accrual-wiring/specs/grir-accrual-wiring/spec.md
+ * @spec openspec/specs/grir-accrual-wiring/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -62,7 +62,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/grir-accrual-wiring/specs/grir-accrual-wiring/spec.md
+ * @spec openspec/specs/grir-accrual-wiring/spec.md
  */
 class GRIRClearingListener implements IEventListener
 {
@@ -86,7 +86,7 @@ class GRIRClearingListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/grir-accrual-wiring/specs/grir-accrual-wiring/spec.md#req-001
+     * @spec openspec/specs/grir-accrual-wiring/spec.md
      */
     public function handle(Event $event): void
     {

@@ -21,7 +21,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 
 declare(strict_types=1);
@@ -45,7 +45,7 @@ use Throwable;
  * detectXxx() methods so they are unit-testable without a live OpenRegister
  * instance. run() wires them to the ObjectService (ADR-022).
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 class DBAFlagGenerationJob extends TimedJob
 {
@@ -84,7 +84,7 @@ class DBAFlagGenerationJob extends TimedJob
      *
      * @return bool True when the pattern triggers a flag.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function detectVasteMaandfactuur(array $facturen): bool
     {
@@ -159,7 +159,7 @@ class DBAFlagGenerationJob extends TimedJob
      *
      * @return bool True when the effective hourly rate falls below threshold.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function detectVbarGrensOnderschreden(int $bedragCents, float $uren, int $vbarGrensCents): bool
     {
@@ -179,7 +179,7 @@ class DBAFlagGenerationJob extends TimedJob
      *
      * @return bool True when the model's geldigheid has expired.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function detectModelovereenkomstVerlopen(?string $geldigTot, DateTimeImmutable $now): bool
     {
@@ -208,7 +208,7 @@ class DBAFlagGenerationJob extends TimedJob
      *
      * @return bool True when theoretical-only substitutability is detected.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function detectVervangbaarheidTheoretisch(int $vervangbaarScore, int $vervangingFeitelijkScore, float $duurInMaanden): bool
     {
@@ -227,7 +227,7 @@ class DBAFlagGenerationJob extends TimedJob
      *
      * @return bool True when the relation qualifies as langjarige hoofdrelatie.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function detectLangjarigeHoofdrelatie(float $duurInJaren, float $omzetAandeel): bool
     {
@@ -243,7 +243,7 @@ class DBAFlagGenerationJob extends TimedJob
      *
      * @return bool True when intake is older than 12 months + 30 days grace.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function detectHerbeoordelingOverdue(?string $intakeDatum, DateTimeImmutable $now): bool
     {
@@ -269,7 +269,7 @@ class DBAFlagGenerationJob extends TimedJob
      *
      * @return void
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)

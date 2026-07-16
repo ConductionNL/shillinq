@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md
+ * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,7 +53,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md
+ * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
  */
 class DeliveryDispatchListener implements IEventListener
 {
@@ -77,7 +77,7 @@ class DeliveryDispatchListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/inventory-sales-issue-cogs-trigger/specs/inventory-sales-issue-cogs-trigger/spec.md#req-001
+     * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
      */
     public function handle(Event $event): void
     {

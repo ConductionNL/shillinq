@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rule-testdata-seed/specs/bookkeeping-rule-engine/spec.md
+ * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment
  */

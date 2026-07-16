@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+ * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use OCA\Shillinq\Service\IntercompanyLinkService;
  * LifecycleGuardRegistry resolves the ENTIRE `requires` string, `::method`
  * suffix included, as one container tag (shillinq#425).
  *
- * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+ * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
 class IntercompanyEliminationGuard
 {
@@ -74,7 +74,7 @@ class IntercompanyEliminationGuard
      *
      * @return bool True when the pair reconciles to the cent.
      *
-     * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
      */
     public function requireReconciledPair(array $entry): bool
     {

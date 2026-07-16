@@ -297,7 +297,7 @@ class InitializeSettings implements IRepairStep
      * @return void
      *
      * @spec openspec/changes/bookkeeping-consultancy-project-accounting/tasks.md#task-16
-     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
      *       (REQ-CPA-110, REQ-CPA-111, REQ-CPA-112)
      */
     private function seedConsultancyProjectAccountingTemplates(IOutput $output): void
@@ -350,7 +350,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-110)
+     * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-110)
      * @spec openspec/changes/retire-cost-project/specs/retire-cost-project/spec.md (REQ-RCP-003)
      */
     private function seedConsultancyProjectTemplates(
@@ -453,7 +453,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-consultancy-project-accounting/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-111)
+     * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md (REQ-CPA-111)
      */
     private function seedConsultancyCostCenterTemplates(
         IOutput $output,
@@ -651,7 +651,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     private function registerFixedAssetsMonthlyDepreciationWorkflow(IOutput $output): void
     {
@@ -893,7 +893,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/add-shillinq-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
+     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-006)
      */
     private function seedBbvMappingsForMunicipalAdministrations(IOutput $output): void
     {
@@ -1589,7 +1589,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-financial-statements/spec.md (REQ-FS-002)
+     * @spec openspec/specs/bookkeeping-financial-statements/spec.md (REQ-FS-002)
      */
     private function importStatementManifests(IOutput $output): void
     {
@@ -1663,7 +1663,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-archiefwet-retention/tasks.md (Task 13)
+     * @spec openspec/specs/bookkeeping-archiefwet-retention/spec.md (Task 13)
      */
     private function seedRetentionPolicies(IOutput $output): void
     {

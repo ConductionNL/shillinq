@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Dormant log-backed Bunq Bank Connector adapter.
  *
- * @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  */
 class LogBunqBankConnectorAdapter implements BunqBankConnectorAdapterInterface
 {

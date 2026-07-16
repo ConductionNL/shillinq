@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+ * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Read-only computed IFRS 16 lease endpoints (schedule preview + disclosure table).
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+ * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  */
 class LeaseController extends Controller
 {
@@ -85,7 +85,7 @@ class LeaseController extends Controller
      *
      * @return JSONResponse 200 with { data, total }; 400 on invalid input.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     #[NoAdminRequired]
     public function schedule(): JSONResponse
@@ -132,7 +132,7 @@ class LeaseController extends Controller
      *
      * @return JSONResponse 200 with the disclosure payload; 400 on invalid input.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
      */
     #[NoAdminRequired]
     public function disclosure(): JSONResponse

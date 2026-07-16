@@ -14,7 +14,7 @@
  Reads /api/admin/external-adapters
  (ExternalAdaptersAdminController#index — admin-gated).
 
- @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+ @spec openspec/specs/bookkeeping-bank-connectors/spec.md
 -->
 <template>
 	<NcAppContent>

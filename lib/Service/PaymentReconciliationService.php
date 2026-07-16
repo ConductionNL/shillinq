@@ -427,7 +427,7 @@ class PaymentReconciliationService
      *
      * @return void
      *
-     * @spec openspec/changes/ar-billing-completeness/specs/bookkeeping-multi-currency/spec.md (REQ-MC-010)
+     * @spec openspec/specs/bookkeeping-multi-currency/spec.md (REQ-MC-010)
      */
     private function postRealisedFxOnSettlement(array $invoice, array $request): void
     {

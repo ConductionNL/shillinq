@@ -35,7 +35,7 @@ use OCP\IAppConfig;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md
+ * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  * @spec openspec/changes/shillinq-ap-push-notifications/specs/bookkeeping-accounts-payable-core/spec.md
  */
 class DeepLinkRegistrationListener implements IEventListener
@@ -67,7 +67,7 @@ class DeepLinkRegistrationListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md
+     * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
      * @spec openspec/changes/shillinq-ap-push-notifications/specs/bookkeeping-accounts-payable-core/spec.md
      */
     public function handle(Event $event): void

@@ -44,7 +44,7 @@
  * @link https://conduction.nl
  * @link https://www.uwv.nl/werkgevers/gegevens-doorgeven-en-aanvragen/polisadministratie
  *
- * @spec openspec/changes/add-shillinq-detachering-payroll-administratie/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-000-werkgever-setup.md
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-011-lh-aangifte.md
  *

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
+ * @spec openspec/specs/bookings-deposits/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,7 +35,7 @@ namespace OCA\Shillinq\Service\External\DepositPayment;
  * `lifecycleState` is then a synthetic projection so the surrounding
  * lifecycle stays observable.
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
+ * @spec openspec/specs/bookings-deposits/spec.md
  */
 final class DepositPaymentResult
 {
