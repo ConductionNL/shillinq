@@ -18,12 +18,16 @@
  *     `pending_payment → confirmed` once Mollie reports
  *     `authorized` / `paid`.
  *
- * The port is intentionally narrow — `createPayment()` +
- * `verifyWebhook()` returning structured results — so the
+ * The port is intentionally narrow — `createPayment()` returning a
+ * structured result — so the
  * production binding (openconnector source slug `mollie-payments`,
  * per-tenant Mollie API key + webhook HMAC secret) can be swapped in
  * via `Application::register()` without touching the AR / bookings
- * orchestrators. Until that binding is configured, the default
+ * orchestrators. Inbound webhook signature verification is NOT part of
+ * this port: the shared, fail-closed HMAC gate lives on the
+ * `#[PublicPage]` webhook controllers (`PaymentRequestWebhookController`
+ * + `DepositWebhookController`, one implementation per REQ-APL-004
+ * "ONE shared surface — never a fork"). Until that binding is configured, the default
  * binding is dormant: it logs the intent and returns a synthetic
  * PAYMENT_DEFERRED outcome so the surrounding lifecycle stays
  * observable in test + staging environments.
@@ -89,37 +93,18 @@ interface MolliePaymentAdapterInterface
      *
      * @return MolliePaymentResult The dispatch outcome (status +
      *                             Mollie-side paymentId + checkoutUrl).
+     *
+     * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
      */
     public function createPayment(array $payload): MolliePaymentResult;
-
-    /**
-     * Verify the HMAC signature on an inbound Mollie webhook + load
-     * the matching payment record.
-     *
-     * The dormant default returns a STUBBED MolliePaymentResult so
-     * the webhook listener can branch on the synthetic id without
-     * crashing.
-     *
-     * @param string               $mollieId Mollie paymentId from
-     *                                       the inbound `id` body
-     *                                       parameter.
-     * @param array<string,string> $headers  Request headers
-     *                                       (signature is
-     *                                       in
-     *                                       `Mollie-Signature`
-     *                                       or the v2
-     *                                       header set).
-     *
-     * @return MolliePaymentResult Loaded payment record (status reflects
-     *                             Mollie-side state).
-     */
-    public function verifyWebhook(string $mollieId, array $headers): MolliePaymentResult;
 
     /**
      * Whether the adapter is dormant — i.e. wired but not contacting
      * Mollie.
      *
      * @return bool TRUE when the adapter is a log-only stub.
+     *
+     * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
      */
     public function isDormant(): bool;
 }//end interface

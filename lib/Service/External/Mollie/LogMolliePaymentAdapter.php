@@ -3,7 +3,7 @@
 /**
  * Dormant default Mollie Payments adapter.
  *
- * Records the would-be payment intent / webhook verification to the
+ * Records the would-be payment intent to the
  * structured logger and returns a synthetic PAYMENT_DEFERRED result
  * so the surrounding lifecycle (AR collection, booking-deposit
  * confirmation) stays observable until an openconnector-backed
@@ -63,6 +63,8 @@ class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface
      * @param array<string,mixed> $payload Payment envelope.
      *
      * @return MolliePaymentResult The dispatch outcome.
+     *
+     * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
      */
     public function createPayment(array $payload): MolliePaymentResult
     {
@@ -93,55 +95,13 @@ class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface
     }//end createPayment()
 
     /**
-     * Log the webhook intent + synthesise a stub result.
-     *
-     * @param string               $mollieId Mollie paymentId from inbound webhook.
-     * @param array<string,string> $headers  Request headers.
-     *
-     * @return MolliePaymentResult Stubbed payment record.
-     */
-    public function verifyWebhook(string $mollieId, array $headers): MolliePaymentResult
-    {
-        // The signature header itself is logged at DEBUG since a leaked
-        // signature could enable replay; the rest of the headers go
-        // through unredacted so the audit trail records the inbound
-        // shape.
-        $signature = $headers['Mollie-Signature'] ?? ($headers['mollie-signature'] ?? '');
-        unset($headers['Mollie-Signature'], $headers['mollie-signature']);
-
-        if ($signature === '') {
-            $signaturePresence = 'absent';
-        } else {
-            $signaturePresence = 'present';
-        }
-
-        $this->logger->info(
-            'Shillinq Mollie verifyWebhook deferred (no outbound connector bound)',
-            [
-                'molliePaymentId'   => $mollieId,
-                'headers'           => $headers,
-                'signaturePresence' => $signaturePresence,
-            ]
-        );
-
-        return new MolliePaymentResult(
-            paymentStatus: 'PAYMENT_DEFERRED',
-            molliePaymentId: $mollieId,
-            checkoutUrl: '',
-            dormant: true,
-            extras: [
-                'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `mollie-payments` + verify webhook HMAC in openconnector to enable real verification.',
-            ],
-        );
-    }//end verifyWebhook()
-
-    /**
      * Report whether this adapter is dormant.
      *
      * @return bool True when no outbound connector is bound.
      *
      * @inheritDoc
+     *
+     * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
      */
     public function isDormant(): bool
     {
