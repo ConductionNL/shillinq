@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/fx-period-end-revaluation/specs/bookkeeping-multi-currency/spec.md
+ * @spec openspec/specs/bookkeeping-multi-currency/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -57,7 +57,7 @@ use Throwable;
 /**
  * Period-end FX revaluation of open FXPosition balances (ADR-031 exception).
  *
- * @spec openspec/changes/fx-period-end-revaluation/specs/bookkeeping-multi-currency/spec.md
+ * @spec openspec/specs/bookkeeping-multi-currency/spec.md
  */
 class FxRevaluationService
 {
@@ -125,7 +125,7 @@ class FxRevaluationService
      *
      * @return array{postingCount:int,positionsEvaluated:int,functionalCurrency:string,periodId:string}
      *
-     * @spec openspec/changes/fx-period-end-revaluation/specs/bookkeeping-multi-currency/spec.md#req-mc-006
+     * @spec openspec/specs/bookkeeping-multi-currency/spec.md
      */
     public function reval(string $administrationId, string $periodId): array
     {

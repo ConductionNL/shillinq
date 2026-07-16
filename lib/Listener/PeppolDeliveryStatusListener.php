@@ -33,8 +33,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-accounts-receivable-core/spec.md#req-ar-011
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -59,7 +59,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
 class PeppolDeliveryStatusListener implements IEventListener
 {
@@ -130,7 +130,7 @@ class PeppolDeliveryStatusListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
+     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
      */
     public function handle(Event $event): void
     {

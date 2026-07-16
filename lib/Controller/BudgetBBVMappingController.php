@@ -97,7 +97,7 @@ class BudgetBBVMappingController extends Controller
      *
      * @return JSONResponse {register: string, schema: string, detailRoute: string}
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-04-manifest-routes/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-page-routes
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     #[NoAdminRequired]
     public function index(): JSONResponse
@@ -133,7 +133,7 @@ class BudgetBBVMappingController extends Controller
      *
      * @return JSONResponse {id: string, register: string, schema: string, indexRoute: string}
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-04-manifest-routes/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-page-routes
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     #[NoAdminRequired]
     public function show(string $id): JSONResponse
@@ -166,7 +166,7 @@ class BudgetBBVMappingController extends Controller
      *
      * @return array{administrationId:?string,fiscalYear:?int,startDate:?string,endDate:?string}
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     private function resolveScope(): array
     {

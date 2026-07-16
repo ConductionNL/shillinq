@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ namespace OCA\Shillinq\Service;
  * Pure logic with no persistence: the caller transitions the OssReturn / OssPayment
  * lifecycle on the returned decisions.
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
 class OssPaymentReconciliation
 {
@@ -65,7 +65,7 @@ class OssPaymentReconciliation
      *
      * @return bool True when the transaction reconciles the return.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function matches(array $ossReturn, array $transaction, string $expectedIban): bool
     {
@@ -91,7 +91,7 @@ class OssPaymentReconciliation
      *
      * @return bool True when the paid transition is permitted.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function canMarkPaid(array $ossPayment, array $ossReturn): bool
     {
@@ -116,7 +116,7 @@ class OssPaymentReconciliation
      *
      * @return array{status: string, differences: array<string,float>}
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function reconcileDistribution(array $ossReturn, array $confirmation): array
     {

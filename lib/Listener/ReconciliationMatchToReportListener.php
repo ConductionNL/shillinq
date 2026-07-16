@@ -50,7 +50,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -74,7 +74,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-010)
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-010)
  */
 final class ReconciliationMatchToReportListener implements IEventListener
 {

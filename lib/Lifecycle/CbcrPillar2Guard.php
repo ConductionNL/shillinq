@@ -43,7 +43,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md
+ * @spec openspec/specs/bookkeeping-cbcr-pillar2/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -66,7 +66,7 @@ use Psr\Log\LoggerInterface;
  * CbcrReturn) as OCA\Shillinq\Lifecycle\CbcrPillar2Guard::<method>. Every guard
  * fails closed: any exception or malformed input denies the transition (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md
+ * @spec openspec/specs/bookkeeping-cbcr-pillar2/spec.md
  */
 class CbcrPillar2Guard
 {
@@ -95,7 +95,7 @@ class CbcrPillar2Guard
      *
      * @return bool True when the summary may be reconciled.
      *
-     * @spec openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md
+     * @spec openspec/specs/bookkeeping-cbcr-pillar2/spec.md
      */
     public function canReconcileSummary(string $summaryId, ?array $object=null): bool
     {
@@ -142,7 +142,7 @@ class CbcrPillar2Guard
      *
      * @return bool True when the computation may be approved.
      *
-     * @spec openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md
+     * @spec openspec/specs/bookkeeping-cbcr-pillar2/spec.md
      */
     public function canApproveComputation(string $computationId, ?array $object=null): bool
     {
@@ -187,7 +187,7 @@ class CbcrPillar2Guard
      *
      * @return bool True when the return may be submitted.
      *
-     * @spec openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md
+     * @spec openspec/specs/bookkeeping-cbcr-pillar2/spec.md
      */
     public function canSubmitQdmtt(string $returnId, ?array $object=null): bool
     {
@@ -228,7 +228,7 @@ class CbcrPillar2Guard
      *
      * @return bool True when the return may be reconciled.
      *
-     * @spec openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md
+     * @spec openspec/specs/bookkeeping-cbcr-pillar2/spec.md
      */
     public function canReconcileCbcrReturn(string $returnId, ?array $object=null): bool
     {

@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+ * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -52,7 +52,7 @@ namespace OCA\Shillinq\Service;
  * shares the production code path (no parallel maths). Pure-logic — no
  * OpenRegister dependency, fully unit-testable.
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+ * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  */
 class LeaseTransitionWizard
 {
@@ -87,7 +87,7 @@ class LeaseTransitionWizard
      *   disclosureNoteSeed:string
      * }
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function compute(
         array $leases,

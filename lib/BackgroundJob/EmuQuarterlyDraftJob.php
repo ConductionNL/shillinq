@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+ * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Daily TimedJob that produces the quarterly EMU concept-aangifte (REQ-EMU-001).
  *
- * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+ * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
  */
 class EmuQuarterlyDraftJob extends TimedJob
 {
@@ -94,7 +94,7 @@ class EmuQuarterlyDraftJob extends TimedJob
      *
      * @return array{0:int,1:int}|null Year + quarter, or null when not the day.
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function isDueForQuarter(\DateTimeImmutable $today): ?array
     {
@@ -137,7 +137,7 @@ class EmuQuarterlyDraftJob extends TimedJob
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */

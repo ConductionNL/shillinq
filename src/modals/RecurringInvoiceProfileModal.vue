@@ -18,7 +18,7 @@
  operator can confirm before saving (REQ-RIN-008). Every NcSelect carries
  an inputLabel (hydra gate-12).
 
- @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+ @spec openspec/specs/recurring-invoicing/spec.md
 -->
 
 <template>
@@ -268,19 +268,19 @@ export default {
 		}
 	},
 	computed: {
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		frequencyOption() {
 			return this.frequencyOptions.find((o) => o.value === this.form.frequency) || this.frequencyOptions[1]
 		},
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		issueModeOption() {
 			return this.issueModeOptions.find((o) => o.value === this.form.issueMode) || this.issueModeOptions[0]
 		},
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		perPeriodNetAmount() {
 			return perPeriodNet(this.form.lines)
 		},
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		previewDescriptions() {
 			const month = MONTHS[new Date().getMonth()]
 			const year = String(new Date().getFullYear())
@@ -293,7 +293,7 @@ export default {
 		},
 	},
 	watch: {
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		open(next) {
 			if (next === true) {
 				this.errors = []
@@ -306,7 +306,7 @@ export default {
 	},
 	methods: {
 		t,
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		blankForm() {
 			return {
 				name: '',
@@ -323,32 +323,32 @@ export default {
 				lines: [defaultRecurringLine()],
 			}
 		},
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		formatEuro(amount) {
 			return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(Number(amount) || 0)
 		},
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		vatOptionFor(line) {
 			return this.vatOptions.find((o) => o.value === Number(line.vatCode)) || this.vatOptions[0]
 		},
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		onSelect(field, option) {
 			this.form[field] = option ? option.value : this.form[field]
 		},
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		onVatSelected(line, option) {
 			line.vatCode = option ? Number(option.value) : 21
 		},
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		addLine() {
 			this.form.lines.push(defaultRecurringLine())
 		},
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		removeLine(idx) {
 			if (this.form.lines.length <= 1) return
 			this.form.lines.splice(idx, 1)
 		},
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		async fetchProfile() {
 			try {
 				const response = await axios.get(
@@ -360,12 +360,12 @@ export default {
 				showError(t('shillinq', 'Failed to load recurring profile.'))
 			}
 		},
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		onClose() {
 			if (this.saving) return
 			this.$emit('close')
 		},
-		/** @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md */
+		/** @spec openspec/specs/recurring-invoicing/spec.md */
 		async onSave() {
 			this.errors = validateProfile(this.form)
 			if (this.errors.length) return

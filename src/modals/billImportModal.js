@@ -29,7 +29,7 @@ export const PDF_DEFERRAL_MESSAGE = 'PDF OCR extraction is not yet available. Pl
  * Detect the import format from a file name (falling back to a content
  * sniff). Returns 'ubl' | 'csv' | 'pdf' | '' (unknown).
  *
- * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+ * @spec openspec/specs/shillinq-bill-import-modal/spec.md
  * @param {string} fileName The file name (may be empty).
  * @param {string} [contents] Optional raw text for the sniff fallback.
  * @return {string} The detected format.
@@ -52,7 +52,7 @@ export function detectFormat(fileName, contents = '') {
  * (REQ-BIM-002). Used to short-circuit the upload and show the deferral
  * notice instead of POSTing a fabricated extraction.
  *
- * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+ * @spec openspec/specs/shillinq-bill-import-modal/spec.md
  * @param {string} format The detected format.
  * @return {boolean} True when the format is pdf.
  */
@@ -64,7 +64,7 @@ export function isDeferredPdf(format) {
  * Build the multipart FormData posted to the import endpoint. The format
  * is always sent explicitly so the server does not have to re-sniff.
  *
- * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+ * @spec openspec/specs/shillinq-bill-import-modal/spec.md
  * @param {File|Blob} file The selected file.
  * @param {string} format The detected format.
  * @param {function} [FormDataCtor] Optional FormData constructor (test seam).
@@ -87,7 +87,7 @@ export function buildImportFormData(file, format, FormDataCtor) {
  * shape (REQ-BIM-003). Monetary fields arrive as integer cents from the
  * server and are presented as decimal euros.
  *
- * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+ * @spec openspec/specs/shillinq-bill-import-modal/spec.md
  * @param {object} record The persisted SupplierInvoice record.
  * @return {object} The review form values.
  */
@@ -119,7 +119,7 @@ function centsToEuro(cents) {
  * Whether the review form satisfies the required fields before save
  * (REQ-BIM-003): supplier, invoiceNumber, invoiceDate and glAccount.
  *
- * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+ * @spec openspec/specs/shillinq-bill-import-modal/spec.md
  * @param {object} form The review form values.
  * @return {boolean} True when all required fields are present.
  */
@@ -133,7 +133,7 @@ export function canSaveReview(form) {
  * Extract a user-facing error message from an axios error, mapping the
  * 409 duplicate response to the canonical inline warning (REQ-BIM-005).
  *
- * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+ * @spec openspec/specs/shillinq-bill-import-modal/spec.md
  * @param {object} error An axios-style error.
  * @return {string} The message to show inline.
  */
@@ -153,7 +153,7 @@ export function importErrorMessage(error) {
  * The event-bus payload the dashboard payables widget listens for
  * (REQ-BIM-004).
  *
- * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+ * @spec openspec/specs/shillinq-bill-import-modal/spec.md
  * @return {{widget: string}} The refresh event payload.
  */
 export function refreshEventPayload() {
@@ -184,7 +184,7 @@ export {
  * (REQ-RXC-002) — the same shape as `reviewFormFromRecord`, extraction drafts
  * and manually-parsed UBL/CSV records share one review step.
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-002
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  * @param {object} record The extraction-draft SupplierInvoice record.
  * @return {object} The review form values.
  */

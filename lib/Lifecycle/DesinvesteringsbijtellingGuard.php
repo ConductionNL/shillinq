@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
  *
  * All monetary amounts are integer EUR cents. Pure logic, no persistence.
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
  */
 class DesinvesteringsbijtellingGuard
 {
@@ -83,7 +83,7 @@ class DesinvesteringsbijtellingGuard
      *
      * @return string|null Deadline as YYYY-MM-DD, or null if the input is malformed.
      *
-     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
      */
     public function computeMeldingDeadline(string $opdrachtDatum): ?string
     {
@@ -108,7 +108,7 @@ class DesinvesteringsbijtellingGuard
      *
      * @return bool True when on/before the deadline; false when past it or input is malformed.
      *
-     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
      */
     public function canSubmitDefinitief(string $opdrachtDatum, string $onDate): bool
     {
@@ -128,7 +128,7 @@ class DesinvesteringsbijtellingGuard
      *
      * @return array{0: string, 1: string}|null [reminder-14d, reminder-3d], or null if malformed.
      *
-     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
      */
     public function reminderDates(string $opdrachtDatum): ?array
     {
@@ -157,7 +157,7 @@ class DesinvesteringsbijtellingGuard
      *
      * @return string The watch-expiry date as YYYY-MM-DD (1 jan of acquisitionYear + 5).
      *
-     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
      */
     public function disposalWatchExpiry(int $acquisitionYear): string
     {
@@ -175,7 +175,7 @@ class DesinvesteringsbijtellingGuard
      *
      * @return bool True when the disposal falls within the 5-year window.
      *
-     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
      */
     public function isWithinDisposalWindow(int $acquisitionYear, string $disposalDate): bool
     {
@@ -201,7 +201,7 @@ class DesinvesteringsbijtellingGuard
      *
      * @return int Desinvesteringsbijtelling in EUR cents (never negative, never above the cap).
      *
-     * @spec openspec/changes/bookkeeping-investeringsaftrek/specs/bookkeeping-investeringsaftrek/spec.md
+     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
      */
     public function computeBijtelling(
         float $aftrekPercentage,

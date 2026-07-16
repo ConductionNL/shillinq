@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -65,7 +65,7 @@ use RuntimeException;
  * Every persistence call uses the canonical OR ObjectService method names
  * (see [[or-objectservice-api]]) — no createFromArray / deleteFromId / etc.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 class DunningRunService
 {

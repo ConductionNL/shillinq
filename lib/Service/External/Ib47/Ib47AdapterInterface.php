@@ -40,8 +40,8 @@
  * @link https://conduction.nl
  * @link https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/programmas_en_formulieren/opgaaf_uitbetaalde_bedragen_aan_derden
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-btw-oss-eu/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -73,8 +73,8 @@ namespace OCA\Shillinq\Service\External\Ib47;
  *     `Application::register()` to the openconnector-backed
  *     implementation.
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-btw-oss-eu/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
 interface Ib47AdapterInterface
 {

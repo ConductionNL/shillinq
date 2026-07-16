@@ -12,8 +12,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
- * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+ * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,8 +32,8 @@ namespace OCA\Shillinq\Service\External\Digipoort;
  * callers can persist a non-null reference even when no outbound
  * call took place.
  *
- * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
- * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+ * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
  */
 final class DigipoortSubmissionResult
 {

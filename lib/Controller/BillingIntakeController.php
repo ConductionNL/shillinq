@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/time-expense-invoice-intake/specs/time-expense-invoice-intake/spec.md
+ * @spec openspec/specs/time-expense-invoice-intake/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -51,7 +51,7 @@ use Psr\Log\LoggerInterface;
 /**
  * HTTP API for the pipelinq time-billing handoff ingress.
  *
- * @spec openspec/changes/time-expense-invoice-intake/specs/time-expense-invoice-intake/spec.md
+ * @spec openspec/specs/time-expense-invoice-intake/spec.md
  */
 class BillingIntakeController extends Controller
 {
@@ -80,7 +80,7 @@ class BillingIntakeController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/time-expense-invoice-intake/specs/time-expense-invoice-intake/spec.md
+     * @spec openspec/specs/time-expense-invoice-intake/spec.md
      */
     #[NoAdminRequired]
     public function timeIntake(): JSONResponse

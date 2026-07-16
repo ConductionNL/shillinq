@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+ * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -55,7 +55,7 @@ namespace OCA\Shillinq\Service;
  * `subLedgerType: "fixed-asset"` so the trial balance and audit trail
  * can trace the closing entry back to the asset.
  *
- * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+ * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
  */
 class DisposalJournalEmitter
 {
@@ -115,8 +115,8 @@ class DisposalJournalEmitter
      *   loss: float
      * }
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
-     * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
      */
     public function emit(array $asset, array $disposal, array $accounts=[], ?float $bookValue=null): array
     {
@@ -234,7 +234,7 @@ class DisposalJournalEmitter
      *
      * @return bool True when debits equal credits.
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     public function linesBalance(array $lines): bool
     {
@@ -265,7 +265,7 @@ class DisposalJournalEmitter
      *
      * @return array<string,mixed> GL line.
      *
-     * @spec openspec/changes/add-shillinq-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md
+     * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
      */
     private function line(
         string $accountNumber,

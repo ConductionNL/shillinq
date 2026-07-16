@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use RuntimeException;
  * schema, and the BTW-aangifte builder calls assertNoOssAccountsOnBtwReturn before
  * it emits a regular return.
  *
- * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
 class OssLedgerGuard
 {
@@ -98,7 +98,7 @@ class OssLedgerGuard
      *
      * @return array{revenue: array{accountNumber: string, name: string}, payable: array{accountNumber: string, name: string}}
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function accountsForCountry(string $countryCode): array
     {
@@ -130,7 +130,7 @@ class OssLedgerGuard
      *
      * @return bool True when the account is an OSS VAT-payable account.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function isOssVatAccount(array $account): bool
     {
@@ -153,7 +153,7 @@ class OssLedgerGuard
      *
      * @throws RuntimeException When an OSS VAT account is found on the regular BTW return.
      *
-     * @spec openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md
+     * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
      */
     public function assertNoOssAccountsOnBtwReturn(array $rubriekAccounts): bool
     {

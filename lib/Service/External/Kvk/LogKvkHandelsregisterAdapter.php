@@ -21,8 +21,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,8 +37,8 @@ use Psr\Log\LoggerInterface;
 /**
  * Dormant log-backed KvK Handelsregister adapter.
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 class LogKvkHandelsregisterAdapter implements KvkHandelsregisterAdapterInterface
 {

@@ -12,8 +12,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-btw-oss-eu/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,8 +32,8 @@ namespace OCA\Shillinq\Service\External\Ib47;
  * can persist a non-null reference even when no outbound call took
  * place.
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-btw-oss-eu/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
 final class Ib47SubmissionResult
 {

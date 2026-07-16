@@ -23,7 +23,7 @@
  robust to a missing prop — it then falls back to the trailing path
  segment of the current route so deep-links still work.
 
- @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+ @spec openspec/specs/bookkeeping-bank-connectors/spec.md
 -->
 <template>
 	<NcAppContent>

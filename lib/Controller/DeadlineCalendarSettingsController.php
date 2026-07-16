@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
+ * @spec openspec/specs/compliance-deadline-calendar/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Per-user deadline-calendar category toggles (REQ-CDC-006).
  *
- * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
+ * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
 class DeadlineCalendarSettingsController extends Controller
 {
@@ -76,7 +76,7 @@ class DeadlineCalendarSettingsController extends Controller
      *
      * @return JSONResponse `{categories: {filing: {enabled, leadDays}, …}}`.
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     #[NoAdminRequired]
     public function index(): JSONResponse
@@ -112,7 +112,7 @@ class DeadlineCalendarSettingsController extends Controller
      *
      * @return JSONResponse The saved settings (same shape as index()).
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     #[NoAdminRequired]
     public function update(): JSONResponse

@@ -25,7 +25,7 @@
  * Vue store (inventoryMobileScanner.js) and sync scheduler can layer
  * higher-level semantics on top.
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 
 const DB_NAME = 'shillinq-inventory-mobile-scanner'

@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Psr\Container\ContainerInterface;
  * a client-supplied trust boundary. The OpenRegister ObjectService enforces the
  * multitenancy / RBAC boundary on every find.
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
 class IcpService
 {
@@ -78,7 +78,7 @@ class IcpService
      *
      * @return array{period:string,lines:array<int,array<string,mixed>>,total:float,totalGoods:float,totalServices:float,totalTriangulation:float,supplyCount:int}
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function ledger(string $administrationId, string $period): array
     {
@@ -106,7 +106,7 @@ class IcpService
      *
      * @return array{quarter:string,breached:bool,goodsCumulative:float}
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function periodicityCheck(string $administrationId, string $quarter): array
     {
@@ -134,7 +134,7 @@ class IcpService
      *
      * @return array{period:string,icpTotal:float,rubriek3b:float|null,matches:bool,missing:bool,difference:float}
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function reconcile(string $administrationId, string $period): array
     {
@@ -164,7 +164,7 @@ class IcpService
      *
      * @return array<int,array<string,mixed>> In-period IcpSupply records.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function suppliesInPeriod(string $administrationId, string $period): array
     {

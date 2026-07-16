@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+ * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ namespace OCA\Shillinq\Service;
  * LeaseRecognitionService wire this helper to live lease-contract data fetched
  * from the OpenRegister ObjectService.
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+ * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  */
 class LeaseAmortizationCalculator
 {
@@ -64,7 +64,7 @@ class LeaseAmortizationCalculator
      *
      * @return int Amount in whole cents.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function toCents(mixed $amount): int
     {
@@ -79,7 +79,7 @@ class LeaseAmortizationCalculator
      *
      * @return float Money amount (two decimals).
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function fromCents(int $cents): float
     {
@@ -97,7 +97,7 @@ class LeaseAmortizationCalculator
      *
      * @return int Periods per year (1, 4 or 12).
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function periodsPerYear(string $paymentFrequency): int
     {
@@ -117,7 +117,7 @@ class LeaseAmortizationCalculator
      *
      * @return float Periodic rate as a fraction (e.g. 0.003333 for 4% monthly).
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function periodicRate(float $annualIbrPercent, string $paymentFrequency): float
     {
@@ -143,7 +143,7 @@ class LeaseAmortizationCalculator
      *
      * @return float Present value of the payment stream.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function presentValue(
         float $paymentAmount,
@@ -179,7 +179,7 @@ class LeaseAmortizationCalculator
      *
      * @return float Present value of the obligation.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function discountToPresent(float $amount, float $annualRate, float $years): float
     {
@@ -207,7 +207,7 @@ class LeaseAmortizationCalculator
      *
      * @return array{liability:float, rouAsset:float, restorationPv:float, periods:int}
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function openingBalances(array $lease): array
     {
@@ -258,7 +258,7 @@ class LeaseAmortizationCalculator
      *
      * @return int Count of payment periods.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function scheduleLength(array $lease): int
     {
@@ -292,7 +292,7 @@ class LeaseAmortizationCalculator
      *
      * @return array<int,array<string,float|int>> Amortization rows (period-sequence 1..N).
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function buildSchedule(array $lease): array
     {
@@ -368,7 +368,7 @@ class LeaseAmortizationCalculator
      *
      * @return int Per-period charge in cents (floored; the final period absorbs the remainder).
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function straightLinePerPeriodCents(int $totalCents, int $periods): int
     {

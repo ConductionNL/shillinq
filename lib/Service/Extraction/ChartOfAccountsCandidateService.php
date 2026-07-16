@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-002
+ * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use Throwable;
 /**
  * Resolves the administration-scoped, active chart-of-accounts candidate set.
  *
- * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-002
+ * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  */
 class ChartOfAccountsCandidateService
 {
@@ -92,7 +92,7 @@ class ChartOfAccountsCandidateService
      *         (never an error) when OR is unavailable or the administration has no active
      *         accounts.
      *
-     * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-002
+     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
      */
     public function activeCandidates(string $administrationId): array
     {

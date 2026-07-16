@@ -34,7 +34,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md
+ * @spec openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -58,7 +58,7 @@ use Psr\Log\LoggerInterface;
  * transitions.{vaststellen,vaststellenZonderReview}.requires as
  * OCA\Shillinq\Lifecycle\AnnualReportGuard::canVaststellen.
  *
- * @spec openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md
+ * @spec openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md
  */
 class AnnualReportGuard
 {
@@ -93,7 +93,7 @@ class AnnualReportGuard
      *
      * @return bool True when the balans balances and the report may opmaken.
      *
-     * @spec openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md
+     * @spec openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md
      */
     public function canOpmaken(string $annualReportId, ?array $object=null): bool
     {
@@ -141,7 +141,7 @@ class AnnualReportGuard
      *
      * @return bool True when the report may be vastgesteld.
      *
-     * @spec openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md
+     * @spec openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md
      */
     public function canVaststellen(string $annualReportId, ?array $object=null): bool
     {

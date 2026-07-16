@@ -11,7 +11,7 @@
  the type/status/filed-date filters and the upload action are unchanged.
 
  @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-22
- @spec openspec/changes/migrate-list-views-to-cndatatable/specs/list-views-cndatatable/spec.md
+ @spec openspec/specs/list-views-cndatatable/spec.md
 -->
 <template>
 	<NcAppContent>

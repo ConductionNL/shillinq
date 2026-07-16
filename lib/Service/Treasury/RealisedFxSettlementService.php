@@ -40,7 +40,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ar-billing-completeness/specs/bookkeeping-multi-currency/spec.md
+ * @spec openspec/specs/bookkeeping-multi-currency/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -61,7 +61,7 @@ use Throwable;
 /**
  * Settlement-time realised FX gain/loss posting (ADR-031 exception).
  *
- * @spec openspec/changes/ar-billing-completeness/specs/bookkeeping-multi-currency/spec.md
+ * @spec openspec/specs/bookkeeping-multi-currency/spec.md
  */
 class RealisedFxSettlementService
 {
@@ -120,7 +120,7 @@ class RealisedFxSettlementService
      *
      * @return array{posted:bool,direction:?string,realisedCents:int,reason:?string,invoiceRate:?float,paymentRate:?float}
      *
-     * @spec openspec/changes/ar-billing-completeness/specs/bookkeeping-multi-currency/spec.md#req-mc-010
+     * @spec openspec/specs/bookkeeping-multi-currency/spec.md
      */
     public function postRealisedFxOnSettlement(
         array $invoice,

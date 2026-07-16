@@ -42,7 +42,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/spend-analytics/specs/spend-analytics/spec.md
+ * @spec openspec/specs/spend-analytics/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -62,7 +62,7 @@ use RuntimeException;
 /**
  * Single-dimension spend analytics that consume OR's aggregation-api.
  *
- * @spec openspec/changes/spend-analytics/specs/spend-analytics/spec.md
+ * @spec openspec/specs/spend-analytics/spec.md
  */
 class SpendAnalyticsService
 {
@@ -123,7 +123,7 @@ class SpendAnalyticsService
      *
      * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
      *
-     * @spec openspec/changes/spend-analytics/specs/spend-analytics/spec.md
+     * @spec openspec/specs/spend-analytics/spec.md
      */
     public function spendBySupplier(): array
     {
@@ -143,7 +143,7 @@ class SpendAnalyticsService
      *
      * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
      *
-     * @spec openspec/changes/spend-analytics/specs/spend-analytics/spec.md
+     * @spec openspec/specs/spend-analytics/spec.md
      */
     public function spendByCategory(): array
     {
@@ -163,7 +163,7 @@ class SpendAnalyticsService
      *
      * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
      *
-     * @spec openspec/changes/spend-analytics/specs/spend-analytics/spec.md
+     * @spec openspec/specs/spend-analytics/spec.md
      */
     public function spendByCostCentre(): array
     {
@@ -183,7 +183,7 @@ class SpendAnalyticsService
      *
      * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
      *
-     * @spec openspec/changes/spend-analytics/specs/spend-analytics/spec.md
+     * @spec openspec/specs/spend-analytics/spec.md
      */
     public function spendByPeriod(): array
     {
@@ -226,7 +226,7 @@ class SpendAnalyticsService
      *
      * @throws RuntimeException When OR's aggregation runner is unavailable.
      *
-     * @spec openspec/changes/spend-analytics/specs/spend-analytics/spec.md
+     * @spec openspec/specs/spend-analytics/spec.md
      */
     private function aggregate(
         string $dimension,

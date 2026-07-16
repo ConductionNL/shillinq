@@ -18,7 +18,7 @@
  `config.headerActions[]` (ADR-049 Phase-4) via a type:"open-modal" action
  targeting this component's registry id ("PaymentRunReconcileModal").
 
- @spec openspec/changes/payment-run-sepa-export/specs/payment-run-sepa-export/spec.md
+ @spec openspec/specs/payment-run-sepa-export/spec.md
 -->
 
 <template>

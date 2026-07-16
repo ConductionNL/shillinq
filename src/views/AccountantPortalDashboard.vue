@@ -18,7 +18,7 @@
  client they have no membership for (REQ-ACP-003; the server masks any other
  id as 404).
 
- @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+ @spec openspec/specs/accountant-portal/spec.md
 -->
 <template>
 	<NcAppContent>
@@ -127,7 +127,7 @@ export default {
 		 * Load the authenticated user's accountant dashboard.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+		 * @spec openspec/specs/accountant-portal/spec.md
 		 */
 		async loadDashboard() {
 			this.loading = true
@@ -153,7 +153,7 @@ export default {
 		 *
 		 * @param {string} administrationId - The client administration id.
 		 * @return {void}
-		 * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+		 * @spec openspec/specs/accountant-portal/spec.md
 		 */
 		downloadPack(administrationId) {
 			downloadHandoverPack(administrationId)
@@ -164,7 +164,7 @@ export default {
 		 *
 		 * @param {object|null} periodClose - { periodId, state, endDate } or null.
 		 * @return {string}
-		 * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+		 * @spec openspec/specs/accountant-portal/spec.md
 		 */
 		periodCloseLabel(periodClose) {
 			if (!periodClose) {
@@ -178,7 +178,7 @@ export default {
 		 *
 		 * @param {object|null} vatFiling - { statusCode, dueDate, overdue } or null.
 		 * @return {string}
-		 * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+		 * @spec openspec/specs/accountant-portal/spec.md
 		 */
 		vatFilingLabel(vatFiling) {
 			if (!vatFiling) {

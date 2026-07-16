@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+ * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Service;
  * carries the RoU asset into the depreciation engine. No persistence here —
  * LeasePaymentScheduleService / the lifecycle listener wires this to the GL.
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+ * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  */
 class LeaseRecognitionService
 {
@@ -84,7 +84,7 @@ class LeaseRecognitionService
      *   fixedAsset: array<string,mixed>
      * }
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function recognise(array $lease): array
     {
@@ -158,7 +158,7 @@ class LeaseRecognitionService
      *
      * @return bool True when debits equal credits.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function linesBalance(array $journalLines): bool
     {

@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-007, REQ-DP-011)
+ * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-007, REQ-DP-011)
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Idempotent reconciliation of DepositPayment records against gateway outcomes.
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-007)
+ * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-007)
  */
 class DepositReconciliationService
 {
@@ -150,7 +150,7 @@ class DepositReconciliationService
      *
      * @return string One of the RESULT_* constants.
      *
-     * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-011)
+     * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-011)
      */
     public function reconcile(
         string $paymentIntentId,
@@ -238,7 +238,7 @@ class DepositReconciliationService
      *
      * @return array{scanned: int, reconciled: int} Counters for observability.
      *
-     * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-007)
+     * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-007)
      */
     public function pollPending(callable $statusProvider): array
     {
@@ -325,7 +325,7 @@ class DepositReconciliationService
      *
      * @return array{scanned: int, reconciled: int} Counters for observability.
      *
-     * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-007)
+     * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-007)
      */
     public function pollPendingViaAdapter(): array
     {

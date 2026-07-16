@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
  * OCA\Shillinq\Lifecycle\IcpFinalizeGuard::canFinalize. Fail-closed: any error
  * denies finalization (REQ-ICP-004 / CWE-863).
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
 class IcpFinalizeGuard
 {
@@ -77,7 +77,7 @@ class IcpFinalizeGuard
      *
      * @return bool True when finalization may proceed.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function canFinalize(string $administrationId, string $period): bool
     {

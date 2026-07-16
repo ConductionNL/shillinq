@@ -31,7 +31,7 @@
  *   * auditTrailsPlugin  — surfaces who-changed-what for the slice-09
  *                          fiscal/audit overlay.
  *
- * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-06-mapping-index/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
 
 import { generateUrl } from '@nextcloud/router'

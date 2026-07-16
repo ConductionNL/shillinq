@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md
+ * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use InvalidArgumentException;
  * id as `goodsReceiptId`. The guard rejects the save when the product is
  * marked `requiresLotTracking: true` and no lot references the receipt.
  *
- * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md
+ * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
  */
 class LotTrackingReceiptGuard
 {
@@ -61,7 +61,7 @@ class LotTrackingReceiptGuard
      *
      * @throws InvalidArgumentException When the product requires lot tracking and no lot is supplied.
      *
-     * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md#REQ-LOT-008
+     * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
      */
     public function validate(array $receipt, ?array $product, array $lots): void
     {

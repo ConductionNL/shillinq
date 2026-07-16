@@ -42,7 +42,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md
+ * @spec openspec/specs/bookkeeping-wet-fido-treasury/spec.md
  */
 
 declare(strict_types=1);
@@ -70,7 +70,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  *
- * @spec openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md
+ * @spec openspec/specs/bookkeeping-wet-fido-treasury/spec.md
  */
 class FidoTreasuryGuard
 {
@@ -109,7 +109,7 @@ class FidoTreasuryGuard
      *
      * @return bool True when the lening may be recorded.
      *
-     * @spec openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md
+     * @spec openspec/specs/bookkeeping-wet-fido-treasury/spec.md
      */
     public function canRecordLening(string $leningId, ?array $object=null): bool
     {
@@ -150,7 +150,7 @@ class FidoTreasuryGuard
      *
      * @return bool True when the derivaat may be recorded.
      *
-     * @spec openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md
+     * @spec openspec/specs/bookkeeping-wet-fido-treasury/spec.md
      */
     public function canRecordDerivaat(string $derivaatId, ?array $object=null): bool
     {
@@ -238,7 +238,7 @@ class FidoTreasuryGuard
      *
      * @return bool True when the rapportage may be submitted.
      *
-     * @spec openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md
+     * @spec openspec/specs/bookkeeping-wet-fido-treasury/spec.md
      */
     public function canSubmitRapportage(string $reportId, ?array $object=null): bool
     {

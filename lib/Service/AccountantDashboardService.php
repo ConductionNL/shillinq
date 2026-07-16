@@ -42,7 +42,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+ * @spec openspec/specs/accountant-portal/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -63,7 +63,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Composes the accountant multi-client dashboard from existing bookkeeping surfaces.
  *
- * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+ * @spec openspec/specs/accountant-portal/spec.md
  */
 class AccountantDashboardService
 {
@@ -103,7 +103,7 @@ class AccountantDashboardService
      *
      * @return array{userId:?string,administrations:array<int,array<string,mixed>>}
      *
-     * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+     * @spec openspec/specs/accountant-portal/spec.md
      */
     public function buildDashboard(): array
     {

@@ -34,7 +34,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-reassessment/spec.md
+ * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -57,7 +57,7 @@ use Psr\Log\LoggerInterface;
  * with the failure recorded via the logger). The arithmetic is delegated to
  * LeaseAmortizationCalculator so the maths is unit-testable in isolation.
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-reassessment/spec.md
+ * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
  */
 class LeaseReassessmentService
 {
@@ -112,7 +112,7 @@ class LeaseReassessmentService
      *
      * @return array<string,mixed>|null The persisted event payload, or null when out of scope.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-reassessment/spec.md
+     * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
      */
     public function recordIndexationEvent(
         string $leaseContractId,
@@ -163,7 +163,7 @@ class LeaseReassessmentService
      *
      * @return array<string,mixed>|null The persisted event payload.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-reassessment/spec.md
+     * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
      */
     public function recordExtensionOptionReassessment(
         string $leaseContractId,
@@ -216,7 +216,7 @@ class LeaseReassessmentService
      *
      * @return array<string,mixed>|null The persisted event payload.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-reassessment/spec.md
+     * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
      */
     public function recordModification(
         string $leaseContractId,
@@ -271,7 +271,7 @@ class LeaseReassessmentService
      *
      * @return array<string,mixed>|null The persisted event payload.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-reassessment/spec.md
+     * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
      */
     public function recordImpairment(
         string $leaseContractId,

@@ -42,8 +42,8 @@
  * @link https://conduction.nl
  * @link https://docs.mollie.com/reference/v2/payments-api/create-payment
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookings-deposits/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -74,8 +74,8 @@ namespace OCA\Shillinq\Service\External\Mollie;
  *     `Application::register()` to the openconnector-backed
  *     implementation.
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookings-deposits/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 interface MolliePaymentAdapterInterface
 {
@@ -94,7 +94,7 @@ interface MolliePaymentAdapterInterface
      * @return MolliePaymentResult The dispatch outcome (status +
      *                             Mollie-side paymentId + checkoutUrl).
      *
-     * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+     * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
      */
     public function createPayment(array $payload): MolliePaymentResult;
 
@@ -104,7 +104,7 @@ interface MolliePaymentAdapterInterface
      *
      * @return bool TRUE when the adapter is a log-only stub.
      *
-     * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
+     * @spec openspec/specs/bookings-deposits/spec.md
      */
     public function isDormant(): bool;
 }//end interface

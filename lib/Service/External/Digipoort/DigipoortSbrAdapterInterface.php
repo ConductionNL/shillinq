@@ -31,9 +31,9 @@
  * @link https://conduction.nl
  * @link https://www.logius.nl/diensten/digipoort
  *
- * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
- * @spec openspec/changes/bookkeeping-financial-statements/tasks.md
- * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+ * @spec openspec/specs/bookkeeping-financial-statements/spec.md
+ * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
  * @spec openspec/changes/bookkeeping-csrd-esrs/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -62,9 +62,9 @@ namespace OCA\Shillinq\Service\External\Digipoort;
  *     `Application::register()` to the openconnector-backed
  *     implementation (`OpenConnectorDigipoortSbrAdapter`).
  *
- * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
- * @spec openspec/changes/bookkeeping-financial-statements/tasks.md
- * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+ * @spec openspec/specs/bookkeeping-financial-statements/spec.md
+ * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
  * @spec openspec/changes/bookkeeping-csrd-esrs/tasks.md
  */
 interface DigipoortSbrAdapterInterface

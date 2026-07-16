@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-archiefwet-retention/spec.md
+ * @spec openspec/specs/bookkeeping-archiefwet-retention/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,7 +35,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Seeds T3 compliance reference data into OpenRegister.
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-archiefwet-retention/spec.md
+ * @spec openspec/specs/bookkeeping-archiefwet-retention/spec.md
  */
 class ComplianceSeeder
 {
@@ -71,7 +71,7 @@ class ComplianceSeeder
      *
      * @return array<string,mixed> Result with success flag and per-schema counts.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-archiefwet-retention/spec.md (Task 3.11)
+     * @spec openspec/specs/bookkeeping-archiefwet-retention/spec.md (Task 3.11)
      */
     public function seedAll(): array
     {

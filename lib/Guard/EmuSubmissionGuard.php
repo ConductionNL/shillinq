@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+ * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
  */
 
 declare(strict_types=1);
@@ -36,7 +36,7 @@ use Psr\Log\LoggerInterface;
  * BBV-reconciliation control has passed (REQ-EMU-009), and the report has not
  * already been submitted. Returns true to permit, false to block.
  *
- * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+ * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
  */
 class EmuSubmissionGuard
 {
@@ -62,7 +62,7 @@ class EmuSubmissionGuard
      *
      * @return bool True when submission to CBS is permitted.
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function requireApproval(array $emuReport): bool
     {

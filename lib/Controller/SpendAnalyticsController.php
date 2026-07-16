@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/spend-analytics/specs/spend-analytics/spec.md
+ * @spec openspec/specs/spend-analytics/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
 /**
  * GET /api/analytics/spend?dimension=...
  *
- * @spec openspec/changes/spend-analytics/specs/spend-analytics/spec.md
+ * @spec openspec/specs/spend-analytics/spec.md
  */
 class SpendAnalyticsController extends Controller
 {
@@ -96,7 +96,7 @@ class SpendAnalyticsController extends Controller
      *
      * @return JSONResponse The spend payload or an error envelope.
      *
-     * @spec openspec/changes/spend-analytics/specs/spend-analytics/spec.md
+     * @spec openspec/specs/spend-analytics/spec.md
      */
     #[NoAdminRequired]
     public function spend(): JSONResponse

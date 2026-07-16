@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+ * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Psr\Log\LoggerInterface;
  * the deterministic file layout, and stamps the operator + generated-at
  * timestamp on the index.
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+ * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
  */
 class LeaseAuditPackGenerator
 {
@@ -85,7 +85,7 @@ class LeaseAuditPackGenerator
      *
      * @return array<string,mixed>|null The audit-pack index manifest, or null when out of scope.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
      */
     public function generate(string $leaseContractId, string $administrationId, string $operatorId): ?array
     {

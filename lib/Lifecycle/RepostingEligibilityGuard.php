@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
  *
  * Pure over the collection's pain002ReasonCode so it unit-tests directly.
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
 class RepostingEligibilityGuard
 {
@@ -110,7 +110,7 @@ class RepostingEligibilityGuard
      *
      * @return bool True when reposting is permitted.
      *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      */
     public function canRepost(string $reasonCode, ?array $object=null): bool
     {
@@ -145,7 +145,7 @@ class RepostingEligibilityGuard
      *
      * @return bool True when the code is a debtor refusal.
      *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      */
     public function isDebtorRefusal(string $reasonCode): bool
     {

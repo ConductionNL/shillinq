@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+ * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
  */
 
 declare(strict_types=1);
@@ -35,7 +35,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Read-only ADR-031 exception service for the EMU reporting pipeline.
  *
- * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+ * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
  */
 class EmuReportingService
 {
@@ -94,7 +94,7 @@ class EmuReportingService
      *
      * @return array<string,mixed>|null A partial EMUAdjustment object array, or null when no rule applies.
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function classifyAdjustment(array $glLine, string $reportId): ?array
     {
@@ -155,7 +155,7 @@ class EmuReportingService
      *
      * @return float Net effect in euro (positive = saldo-verhogend net).
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function netAdjustmentEffect(array $adjustments): float
     {
@@ -185,7 +185,7 @@ class EmuReportingService
      *
      * @return array{bruto:float,perCategorie:array<string,float>} Total + breakdown.
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function computeBrutoSchuld(array $debtPositions): array
     {
@@ -227,7 +227,7 @@ class EmuReportingService
      *
      * @return array{afwijking:float,afwijkingPercentage:float} Variance result.
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function computeVariance(float $berekend, float $begroot): array
     {
@@ -255,7 +255,7 @@ class EmuReportingService
      *
      * @return array<int,array<string,mixed>> The top contributors.
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function topContributors(array $adjustments, int $limit=3): array
     {
@@ -284,7 +284,7 @@ class EmuReportingService
      *
      * @return bool True when the alert threshold is reached or exceeded.
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function shouldAlertReferentiewaarde(float $cumulatiefSaldo, float $referentiewaarde, float $drempel=0.80): bool
     {
@@ -312,7 +312,7 @@ class EmuReportingService
      *
      * @return array{controle:string,verschil:float,totaleAdjustments:float} Reconciliation result.
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function reconcile(
         float $bbvSaldoBatenLasten,
@@ -360,7 +360,7 @@ class EmuReportingService
      *
      * @return array{cumulatief:float,deltas:array<int,float>} Cumulative + per-Q delta.
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function computeTrend(array $kwartaalSaldi): array
     {
@@ -406,7 +406,7 @@ class EmuReportingService
      *
      * @return bool True when the macro-ruimte alert threshold is reached.
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function shouldAlertSectorMacro(float $sectorCumulatief, float $sectorMacroNorm, float $drempel=0.80): bool
     {
@@ -432,7 +432,7 @@ class EmuReportingService
      *
      * @return array<int,array{regel:int,label:string,bedrag:float}> The 10 CBS-tussenregels.
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function renderCbsTussenregels(float $bbvSaldoBatenLasten, array $adjustments, float $emuSaldoBerekend): array
     {
@@ -505,7 +505,7 @@ class EmuReportingService
      *
      * @return string CSV body (no BOM).
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function exportCsv(array $tussenregels): string
     {
@@ -538,7 +538,7 @@ class EmuReportingService
      *
      * @return array<string,string>|null Resolved iv3 object or null.
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function mapIv3Classification(array $item, array $taakveldMap=[], array $accountMap=[]): ?array
     {
@@ -589,7 +589,7 @@ class EmuReportingService
      *
      * @return string One of "extern" / "intern-S1313" / "internal-entity".
      *
-     * @spec openspec/changes/bookkeeping-emu-reporting/specs/bookkeeping-emu-reporting/spec.md
+     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
     public function resolveConsolidatieEmu(array $tegenpartij): string
     {

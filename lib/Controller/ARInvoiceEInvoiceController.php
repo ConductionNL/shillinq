@@ -19,8 +19,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-006
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Throwable;
 /**
  * ARInvoice e-invoicing REST endpoint (send-einvoice).
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
 class ARInvoiceEInvoiceController extends Controller
 {
@@ -90,7 +90,7 @@ class ARInvoiceEInvoiceController extends Controller
      *                       anonymous; 404 on cross-tenant / missing invoice; 500
      *                       without stack trace.
      *
-     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
+     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
      */
     #[NoAdminRequired]
     public function send(string $invoiceNumber): JSONResponse

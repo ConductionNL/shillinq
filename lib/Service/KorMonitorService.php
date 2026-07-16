@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+ * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Psr\Container\ContainerInterface;
  * year; vrijgestelde / intracommunautaire / onroerend-goed omzet is excluded because
  * it never carries that grondslag. The arithmetic lives in KorThresholdCalculator.
  *
- * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+ * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  */
 class KorMonitorService
 {
@@ -75,7 +75,7 @@ class KorMonitorService
      *   prognoseStatus:string, ernst:?string, trigger:?string, optOutPermitted:bool
      * }
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     public function status(string $administrationId, int $year): array
     {

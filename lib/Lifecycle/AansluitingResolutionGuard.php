@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md
+ * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Psr\Log\LoggerInterface;
  * CWE-863 — a resolved-without-explanation record would be indistinguishable
  * from a genuinely reconciled one in the audit trail).
  *
- * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md
+ * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
  */
 class AansluitingResolutionGuard
 {
@@ -75,7 +75,7 @@ class AansluitingResolutionGuard
      *
      * @return bool True when resolution may proceed.
      *
-     * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md#req-aans-006
+     * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
      */
     public function canResolve(array $result): bool
     {

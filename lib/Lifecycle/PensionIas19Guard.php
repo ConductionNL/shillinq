@@ -40,7 +40,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md
+ * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
  */
 
 declare(strict_types=1);
@@ -60,7 +60,7 @@ use Psr\Log\LoggerInterface;
  * OCA\Shillinq\Lifecycle\PensionIas19Guard::<method>. Every guard fails closed:
  * any exception or malformed input denies the transition (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md
+ * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
  */
 class PensionIas19Guard
 {
@@ -90,7 +90,7 @@ class PensionIas19Guard
      *
      * @return bool True when the plan may be activated.
      *
-     * @spec openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md
+     * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
      */
     public function canActivatePlan(string $planId, ?array $object=null): bool
     {
@@ -143,7 +143,7 @@ class PensionIas19Guard
      *
      * @return bool True when the valuation may be approved.
      *
-     * @spec openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md
+     * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
      */
     public function canApproveValuation(string $valuationId, ?array $object=null): bool
     {
@@ -233,7 +233,7 @@ class PensionIas19Guard
      *
      * @return bool True when the valuation may be locked.
      *
-     * @spec openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md
+     * @spec openspec/specs/bookkeeping-pension-ias19/spec.md
      */
     public function canLockValuation(string $valuationId, ?array $object=null): bool
     {

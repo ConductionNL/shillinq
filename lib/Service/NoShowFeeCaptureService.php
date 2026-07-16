@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-depth/specs/bookings-cancellation-rules/spec.md
+ * @spec openspec/specs/bookings-cancellation-rules/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
  * Computes and captures the no-show fee for an appointment through the
  * DepositPayment payment-provider rails.
  *
- * @spec openspec/changes/bookings-depth/specs/bookings-cancellation-rules/spec.md
+ * @spec openspec/specs/bookings-cancellation-rules/spec.md
  */
 class NoShowFeeCaptureService
 {
@@ -105,7 +105,7 @@ class NoShowFeeCaptureService
      *
      * @return int Fee in integer cents (0 <= fee <= appointmentCost).
      *
-     * @spec openspec/changes/bookings-depth/specs/bookings-cancellation-rules/spec.md
+     * @spec openspec/specs/bookings-cancellation-rules/spec.md
      */
     public function computeNoShowFeeCents(array $appointment): int
     {
@@ -169,7 +169,7 @@ class NoShowFeeCaptureService
      *
      * @return array{appointment: array<string, mixed>, feeCents: int, charged: bool, result: DepositPaymentResult|null}
      *
-     * @spec openspec/changes/bookings-depth/specs/bookings-cancellation-rules/spec.md
+     * @spec openspec/specs/bookings-cancellation-rules/spec.md
      */
     public function captureNoShowFee(array $appointment, ?DateTimeImmutable $capturedAt=null): array
     {

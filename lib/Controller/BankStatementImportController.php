@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+ * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,7 +53,7 @@ use Psr\Log\LoggerInterface;
 /**
  * HTTP API for importing a bank statement file into BankStatement + lines.
  *
- * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+ * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
  */
 class BankStatementImportController extends Controller
 {
@@ -105,7 +105,7 @@ class BankStatementImportController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+     * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
      */
     #[NoAdminRequired]
     public function import(): JSONResponse
@@ -205,7 +205,7 @@ class BankStatementImportController extends Controller
      *
      * @return array<string,mixed> The BankStatementLine payload.
      *
-     * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+     * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
      */
     private function mapLine(array $line, string $statementId, string $admin, int $lineNumber): array
     {
@@ -236,7 +236,7 @@ class BankStatementImportController extends Controller
      *
      * @return array<string,mixed>
      *
-     * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+     * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
      */
     private function readPayload(): array
     {
@@ -296,7 +296,7 @@ class BankStatementImportController extends Controller
      *
      * @return string
      *
-     * @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+     * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
      */
     private function resolveAdministrationId(): string
     {

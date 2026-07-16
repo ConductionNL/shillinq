@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/ar-billing-completeness/specs/usage-metered-billing/spec.md
+ * @spec openspec/specs/usage-metered-billing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -58,7 +58,7 @@ class UsageRatingCalculator
      *
      * @return array{costAmountCents:int,billableUnits:float,unitPriceCents:?int,vatRate:float,ratingMethod:string}
      *
-     * @spec openspec/changes/ar-billing-completeness/specs/usage-metered-billing/spec.md#req-umb-002
+     * @spec openspec/specs/usage-metered-billing/spec.md
      */
     public function rate(float $quantity, array $plan): array
     {

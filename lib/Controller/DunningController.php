@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -58,7 +58,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Dunning API surface.
  *
- * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
  */
 class DunningController extends Controller
 {

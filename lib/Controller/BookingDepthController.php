@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-depth/specs/bookings-recurring-series/spec.md
+ * @spec openspec/specs/bookings-recurring-series/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -58,7 +58,7 @@ use Throwable;
 /**
  * Operator endpoints for no-show-fee capture and recurring-series generation.
  *
- * @spec openspec/changes/bookings-depth/specs/bookings-recurring-series/spec.md
+ * @spec openspec/specs/bookings-recurring-series/spec.md
  */
 class BookingDepthController extends Controller
 {
@@ -99,7 +99,7 @@ class BookingDepthController extends Controller
      *                      paymentIntentId}`; 401 anonymous; 403 not authorised;
      *                      404 missing; 503 when OpenRegister is unavailable.
      *
-     * @spec openspec/changes/bookings-depth/specs/bookings-cancellation-rules/spec.md
+     * @spec openspec/specs/bookings-cancellation-rules/spec.md
      */
     #[NoAdminRequired]
     public function captureNoShow(string $appointmentId=''): JSONResponse
@@ -172,7 +172,7 @@ class BookingDepthController extends Controller
      *                      input; 401 anonymous; 403 not authorised; 404 resource
      *                      missing; 503 when OpenRegister is unavailable.
      *
-     * @spec openspec/changes/bookings-depth/specs/bookings-recurring-series/spec.md
+     * @spec openspec/specs/bookings-recurring-series/spec.md
      */
     #[NoAdminRequired]
     public function createSeries(): JSONResponse

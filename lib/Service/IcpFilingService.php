@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use ZipArchive;
 /**
  * Owns the ICP filing write path: corrections, audit-export bundles, outage scan.
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
 class IcpFilingService
 {
@@ -83,7 +83,7 @@ class IcpFilingService
      *
      * @return array<string,mixed> The draft correction opgaaf plus `evidence` and a `saved` flag.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function createCorrection(
         string $administrationId,
@@ -146,7 +146,7 @@ class IcpFilingService
      *
      * @throws RuntimeException When the ZIP cannot be created.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function exportForInspection(string $administrationId, string $period): array
     {
@@ -202,7 +202,7 @@ class IcpFilingService
      *
      * @return array<int,array{vatId:string,viesValidationId:string,ageDays:int,escalate:bool}>
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function pendingOutages(string $administrationId, string $now=''): array
     {

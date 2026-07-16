@@ -34,8 +34,8 @@
  * @link https://www.rvo.nl/subsidies-financiering/wbso
  * @link https://www.rvo.nl/subsidies-financiering/investeringsregelingen
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/tasks.md
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -65,8 +65,8 @@ namespace OCA\Shillinq\Service\External\RvO;
  *     `Application::register()` to the openconnector-backed
  *     implementation.
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/tasks.md
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
 interface RvOAanvraagAdapterInterface
 {

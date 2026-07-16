@@ -12,8 +12,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,8 +32,8 @@ namespace OCA\Shillinq\Service\External\Kvk;
  * persist the lookup intent and re-run once a live binding is
  * provisioned.
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
 final class KvkLookupResult
 {

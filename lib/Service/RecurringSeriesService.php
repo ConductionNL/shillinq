@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-depth/specs/bookings-recurring-series/spec.md
+ * @spec openspec/specs/bookings-recurring-series/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
  * Expands an RRULE-style recurrence into individual appointments, reusing
  * SlotService for the availability/conflict decision (no fork).
  *
- * @spec openspec/changes/bookings-depth/specs/bookings-recurring-series/spec.md
+ * @spec openspec/specs/bookings-recurring-series/spec.md
  */
 class RecurringSeriesService
 {
@@ -104,7 +104,7 @@ class RecurringSeriesService
      *
      * @throws InvalidArgumentException When FREQ is missing or unsupported.
      *
-     * @spec openspec/changes/bookings-depth/specs/bookings-recurring-series/spec.md
+     * @spec openspec/specs/bookings-recurring-series/spec.md
      */
     public function expandRule(string $rrule, DateTimeImmutable $seriesStart): array
     {
@@ -181,7 +181,7 @@ class RecurringSeriesService
      *
      * @throws InvalidArgumentException When the series definition is incomplete or the rule is invalid.
      *
-     * @spec openspec/changes/bookings-depth/specs/bookings-recurring-series/spec.md
+     * @spec openspec/specs/bookings-recurring-series/spec.md
      */
     public function planSeries(array $seriesDef): array
     {

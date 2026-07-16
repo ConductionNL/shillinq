@@ -10,7 +10,7 @@
  confidence-derived label since a human-entered value is authoritative
  regardless of the original extraction confidence (REQ-RXC-004).
 
- @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-002
+ @spec openspec/specs/receipt-extraction-consume/spec.md
 -->
 
 <template>

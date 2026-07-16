@@ -45,7 +45,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+ * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -64,7 +64,7 @@ use RuntimeException;
 /**
  * Posts the closing GL journal for a disposed FixedAsset (REQ-GLTAX-001).
  *
- * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+ * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
 class FixedAssetDisposalService
 {
@@ -156,7 +156,7 @@ class FixedAssetDisposalService
      * @throws \RuntimeException When the administration is inaccessible or the
      *                            emitted lines do not balance.
      *
-     * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
      */
     public function postDisposalJournal(string $administrationId, array $asset): array
     {
@@ -221,7 +221,7 @@ class FixedAssetDisposalService
      *
      * @return array<string,mixed> The normalised record.
      *
-     * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
      */
     private function normaliseAsset(array $asset): array
     {
@@ -307,7 +307,7 @@ class FixedAssetDisposalService
      *
      * @return float|null The posted book value, or null when no schedule exists.
      *
-     * @spec openspec/changes/revive-gl-tax-capabilities/specs/revive-gl-tax-capabilities/spec.md
+     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
      */
     private function postedBookValue(string $administrationId, array $asset): ?float
     {

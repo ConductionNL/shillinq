@@ -9,7 +9,7 @@
  label, never colour alone (WCAG 2.1 AA) — the colour class is purely a
  secondary visual cue layered on top of the label.
 
- @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007
+ @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
 -->
 <template>
 	<span
@@ -33,7 +33,7 @@ export default {
 		},
 	},
 	computed: {
-		/** @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-007 */
+		/** @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md */
 		label() {
 			const labels = {
 				'not-sent': this.t('shillinq', 'Not sent'),

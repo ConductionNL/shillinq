@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-foundation/specs/bookkeeping-journal-entries/spec.md
+ * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  */
 
 declare(strict_types=1);
@@ -52,7 +52,7 @@ use Psr\Log\LoggerInterface;
  * OCA\Shillinq\Lifecycle\JournalEntryGuard::canPost and transitions.void.requires
  * as OCA\Shillinq\Lifecycle\JournalEntryGuard::canVoid.
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-foundation/specs/bookkeeping-journal-entries/spec.md
+ * @spec openspec/specs/bookkeeping-journal-entries/spec.md
  */
 class JournalEntryGuard
 {
@@ -90,7 +90,7 @@ class JournalEntryGuard
      *
      * @return bool True when the journal entry's lines balance and it may post.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-foundation/specs/bookkeeping-journal-entries/spec.md
+     * @spec openspec/specs/bookkeeping-journal-entries/spec.md
      */
     public function canPost(string $journalEntryId, ?array $object=null): bool
     {
@@ -151,7 +151,7 @@ class JournalEntryGuard
      *
      * @return bool True when the journal may be voided.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-foundation/specs/bookkeeping-journal-entries/spec.md
+     * @spec openspec/specs/bookkeeping-journal-entries/spec.md
      */
     public function canVoid(string $journalEntryId, ?array $object=null): bool
     {

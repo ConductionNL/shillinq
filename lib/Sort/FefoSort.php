@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md
+ * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ namespace OCA\Shillinq\Sort;
  * is not enforced at the API query layer; the spec stays shape-neutral
  * per design.md D2.
  *
- * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md
+ * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
  */
 class FefoSort
 {
@@ -57,7 +57,7 @@ class FefoSort
      *
      * @return array<int,array<string,mixed>> The same rows reordered FEFO.
      *
-     * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md#REQ-LOT-005
+     * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
      */
     public function sortLots(array $lots): array
     {

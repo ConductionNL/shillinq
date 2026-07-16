@@ -33,7 +33,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
  * alias/extension of the shared {@see PeppolTransmissionPortInterface}.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-004
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
 interface PeppolTransmissionAdapterInterface extends PeppolTransmissionPortInterface
 {

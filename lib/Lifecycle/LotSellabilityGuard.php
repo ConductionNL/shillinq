@@ -43,7 +43,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/block-unsellable-stock-dispatch/specs/block-unsellable-stock-dispatch/spec.md
+ * @spec openspec/specs/block-unsellable-stock-dispatch/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -59,7 +59,7 @@ use OCA\Shillinq\Sort\FefoSort;
  * Decides whether the InventoryLot rows for a Delivery line can satisfy the
  * line quantity from SELLABLE stock only.
  *
- * @spec openspec/changes/block-unsellable-stock-dispatch/specs/block-unsellable-stock-dispatch/spec.md#req-blk-001
+ * @spec openspec/specs/block-unsellable-stock-dispatch/spec.md
  */
 class LotSellabilityGuard
 {
@@ -109,7 +109,7 @@ class LotSellabilityGuard
      *    offendingLots: list<array{lotId:string, lotNumber:string,
      *      lotStatus:string, expiryDate:?string, reason:string, reasonNl:string}>}.
      *
-     * @spec openspec/changes/block-unsellable-stock-dispatch/specs/block-unsellable-stock-dispatch/spec.md#req-blk-001
+     * @spec openspec/specs/block-unsellable-stock-dispatch/spec.md
      */
     public function evaluate(array $lots, float $requiredQuantity, string $today): array
     {

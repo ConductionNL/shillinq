@@ -21,7 +21,7 @@
  ADR-031: no derived data is recomputed client-side beyond bucket
  counting. ADR-036 / ADR-037: uses CnStatsBlock from @conduction/nextcloud-vue.
 
- @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-05-dashboard-widgets/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 -->
 <template>
 	<div class="bbv-kpi-cards" data-testid="bbv-kpi-cards">

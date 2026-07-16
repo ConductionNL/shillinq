@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rekenkamer-audit-pack/tasks.md
+ * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -64,7 +64,7 @@ use RuntimeException;
 /**
  * RBAC-scoped compliance export endpoint (REQ-RAP-005).
  *
- * @spec openspec/changes/bookkeeping-rekenkamer-audit-pack/tasks.md
+ * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
  */
 class ComplianceExportController extends Controller
 {
@@ -112,7 +112,7 @@ class ComplianceExportController extends Controller
      * @return Response 200 with CSV/JSON; 400 on validation; 401 anonymous;
      *                  403 non-auditor; 500 without stack trace.
      *
-     * @spec openspec/changes/bookkeeping-rekenkamer-audit-pack/tasks.md
+     * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
      */
     #[NoAdminRequired]
     public function export(): Response

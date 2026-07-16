@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -56,7 +56,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
 final class GLTransactionComplianceCacheListener implements IEventListener
 {
@@ -96,7 +96,7 @@ final class GLTransactionComplianceCacheListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     public function handle(Event $event): void
     {

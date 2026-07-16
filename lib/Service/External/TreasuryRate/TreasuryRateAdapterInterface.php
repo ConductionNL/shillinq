@@ -41,7 +41,7 @@
  * @link https://conduction.nl
  * @link https://data.ecb.europa.eu/help/api/overview
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -74,7 +74,7 @@ namespace OCA\Shillinq\Service\External\TreasuryRate;
  *     `Application::register()` to the openconnector-backed
  *     implementation.
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  */
 interface TreasuryRateAdapterInterface
 {

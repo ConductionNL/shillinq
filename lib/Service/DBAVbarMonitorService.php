@@ -19,7 +19,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use Throwable;
 /**
  * Service that audits factuur lines for VBAR uurtarief-onderschrijding (REQ-DBA-016).
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 class DBAVbarMonitorService
 {
@@ -76,7 +76,7 @@ class DBAVbarMonitorService
      *
      * @return array<string,mixed> { result, uurtariefCents, vbarGrensCents, message }
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function assess(int $bedragCents, float $uren, string $administrationId): array
     {
@@ -137,7 +137,7 @@ class DBAVbarMonitorService
      *
      * @return bool True when a flag record was written.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function emitFlag(
         string $opdrachtId,

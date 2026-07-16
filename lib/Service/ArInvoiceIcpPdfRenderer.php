@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,7 +53,7 @@ use OCP\IL10N;
  * resolved administration scope) and pass the records in. This keeps the rendering
  * deterministic and unit-testable without a live instance.
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
 class ArInvoiceIcpPdfRenderer
 {
@@ -92,7 +92,7 @@ class ArInvoiceIcpPdfRenderer
      * @throws InvalidArgumentException When buyer VAT-ID is missing on a treatAsIcp
      *                                    invoice (error code icp.invoice.vatid.missing).
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function render(array $invoice, array $customer, array $seller): array
     {

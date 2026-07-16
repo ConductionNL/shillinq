@@ -31,7 +31,7 @@
  manifest router can dispatch `customComponent: "BBVComplianceDashboard"`
  once slice 04 declares the route. ADR-036 / ADR-037.
 
- @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-05-dashboard-widgets/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 -->
 <template>
 	<div class="bbv-dashboard">

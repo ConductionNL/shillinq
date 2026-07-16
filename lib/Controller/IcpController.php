@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Psr\Log\LoggerInterface;
 /**
  * GET ICP ledger / reconciliation / periodicity endpoints.
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
 class IcpController extends Controller
 {
@@ -117,7 +117,7 @@ class IcpController extends Controller
      * @return JSONResponse 200 with { period, lines, totals, supplyCount }; 400 on
      *                      a missing/malformed parameter; 500 (no stack trace) on failure.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     #[NoAdminRequired]
     public function ledger(): JSONResponse
@@ -148,7 +148,7 @@ class IcpController extends Controller
      *
      * @return JSONResponse 200 with the reconciliation outcome; 400 / 500 as above.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     #[NoAdminRequired]
     public function reconcile(): JSONResponse
@@ -183,7 +183,7 @@ class IcpController extends Controller
      *
      * @return JSONResponse 200 with the threshold decision; 400 / 500 as above.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     #[NoAdminRequired]
     public function periodicity(): JSONResponse
@@ -227,7 +227,7 @@ class IcpController extends Controller
      * @return JSONResponse 200 with the validation outcome; 400 on a bad parameter;
      *                      500 (no stack trace) on failure.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     #[NoAdminRequired]
     public function lookupVatId(): JSONResponse
@@ -271,7 +271,7 @@ class IcpController extends Controller
      *
      * @return JSONResponse 200 with the draft correction; 400 / 500 as above.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     #[NoAdminRequired]
     public function correction(): JSONResponse
@@ -325,7 +325,7 @@ class IcpController extends Controller
      *                      is delivered by the OpenRegister file surface once a live
      *                      instance is available (documented deferral).
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     #[NoAdminRequired]
     public function auditExport(): JSONResponse
@@ -375,7 +375,7 @@ class IcpController extends Controller
      *                                            500 JSONResponse on validation /
      *                                            internal failure.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     #[NoAdminRequired]
     public function renderInvoicePdf(): DataDisplayResponse | JSONResponse

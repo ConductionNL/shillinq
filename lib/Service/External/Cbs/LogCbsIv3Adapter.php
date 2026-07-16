@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Dormant log-backed CBS Iv3 adapter.
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  */
 class LogCbsIv3Adapter implements CbsIv3AdapterInterface
 {

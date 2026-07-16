@@ -41,7 +41,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/retainer-billing-engine/specs/retainer-billing-management/spec.md
+ * @spec openspec/specs/retainer-billing-management/spec.md
  */
 
 declare(strict_types=1);
@@ -61,7 +61,7 @@ use Psr\Log\LoggerInterface;
  * as OCA\Shillinq\Lifecycle\RetainerGuard::<method>. Every guard fails closed:
  * any exception or malformed input denies the transition (CWE-863).
  *
- * @spec openspec/changes/retainer-billing-engine/specs/retainer-billing-management/spec.md
+ * @spec openspec/specs/retainer-billing-management/spec.md
  */
 class RetainerGuard
 {
@@ -91,7 +91,7 @@ class RetainerGuard
      *
      * @return bool True when the pool may be activated.
      *
-     * @spec openspec/changes/retainer-billing-engine/specs/retainer-billing-management/spec.md
+     * @spec openspec/specs/retainer-billing-management/spec.md
      */
     public function canActivatePool(string $poolId, ?array $object=null): bool
     {
@@ -152,7 +152,7 @@ class RetainerGuard
      *
      * @return bool True when the drawdown may be materialized.
      *
-     * @spec openspec/changes/retainer-billing-engine/specs/retainer-billing-management/spec.md
+     * @spec openspec/specs/retainer-billing-management/spec.md
      */
     public function canMaterializeDrawdown(string $drawdownId, ?array $object=null): bool
     {
@@ -225,7 +225,7 @@ class RetainerGuard
      *
      * @return bool True when the true-up may be approved.
      *
-     * @spec openspec/changes/retainer-billing-engine/specs/retainer-billing-management/spec.md
+     * @spec openspec/specs/retainer-billing-management/spec.md
      */
     public function canApproveTrueUp(string $trueUpId, ?array $object=null): bool
     {

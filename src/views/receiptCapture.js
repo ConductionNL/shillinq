@@ -17,7 +17,7 @@
  * unaffected — it is recorded server-side regardless of which UI renders
  * the object).
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-003
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  * @param {object} record The Receipt record.
  * @return {object} The review form values.
  */
@@ -48,7 +48,7 @@ export function reviewFormFromReceipt(record) {
  * Whether the review form satisfies the Receipt schema's required fields
  * (amount, currency, receiptDate, category — REQ-EC-002) before commit.
  *
- * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-003
+ * @spec openspec/specs/receipt-extraction-consume/spec.md
  * @param {object} form The review form values.
  * @return {boolean} True when all required fields are present.
  */

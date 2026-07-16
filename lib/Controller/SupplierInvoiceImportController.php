@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+ * @spec openspec/specs/shillinq-bill-import-modal/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -123,7 +123,7 @@ class SupplierInvoiceImportController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+     * @spec openspec/specs/shillinq-bill-import-modal/spec.md
      */
     #[NoAdminRequired]
     public function import(): JSONResponse
@@ -182,7 +182,7 @@ class SupplierInvoiceImportController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+     * @spec openspec/specs/shillinq-bill-import-modal/spec.md
      */
     private function importUbl(string $administrationId, string $ublXml): JSONResponse
     {
@@ -227,7 +227,7 @@ class SupplierInvoiceImportController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+     * @spec openspec/specs/shillinq-bill-import-modal/spec.md
      */
     private function importCsv(string $administrationId, string $csv): JSONResponse
     {
@@ -299,7 +299,7 @@ class SupplierInvoiceImportController extends Controller
      *
      * @return bool True when a matching record already exists.
      *
-     * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+     * @spec openspec/specs/shillinq-bill-import-modal/spec.md
      */
     private function duplicateExists(string $administrationId, string $invoiceNumber, string $supplierId): bool
     {
@@ -349,7 +349,7 @@ class SupplierInvoiceImportController extends Controller
      *
      * @return array<string,mixed>
      *
-     * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+     * @spec openspec/specs/shillinq-bill-import-modal/spec.md
      */
     private function saveSupplierInvoice(array $record): array
     {
@@ -377,7 +377,7 @@ class SupplierInvoiceImportController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+     * @spec openspec/specs/shillinq-bill-import-modal/spec.md
      */
     private function mapServiceException(RuntimeException $e): JSONResponse
     {
@@ -407,7 +407,7 @@ class SupplierInvoiceImportController extends Controller
      *
      * @return array{0:string,1:string} [contents, format]
      *
-     * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+     * @spec openspec/specs/shillinq-bill-import-modal/spec.md
      */
     private function readUpload(): array
     {
@@ -449,7 +449,7 @@ class SupplierInvoiceImportController extends Controller
      *
      * @return string One of ubl|csv|pdf|'' (unknown).
      *
-     * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+     * @spec openspec/specs/shillinq-bill-import-modal/spec.md
      */
     private function inferFormat(string $fileName, string $contents): string
     {
@@ -492,7 +492,7 @@ class SupplierInvoiceImportController extends Controller
      *
      * @return array<int,array<string,string>>
      *
-     * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+     * @spec openspec/specs/shillinq-bill-import-modal/spec.md
      */
     private function parseCsv(string $csv): array
     {
@@ -538,7 +538,7 @@ class SupplierInvoiceImportController extends Controller
      *
      * @return int|null Cents, or null when no usable value.
      *
-     * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+     * @spec openspec/specs/shillinq-bill-import-modal/spec.md
      */
     private function toCents(mixed $value): ?int
     {
@@ -560,7 +560,7 @@ class SupplierInvoiceImportController extends Controller
      *
      * @return array<string,mixed>
      *
-     * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+     * @spec openspec/specs/shillinq-bill-import-modal/spec.md
      */
     private function decodeBody(): array
     {
@@ -586,7 +586,7 @@ class SupplierInvoiceImportController extends Controller
      *
      * @return string
      *
-     * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
+     * @spec openspec/specs/shillinq-bill-import-modal/spec.md
      */
     private function resolveAdministrationId(): string
     {

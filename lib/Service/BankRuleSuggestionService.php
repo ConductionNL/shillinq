@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use Psr\Log\LoggerInterface;
  *
  * @psalm-api
  *
- * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
+ * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
  */
 class BankRuleSuggestionService
 {
@@ -88,7 +88,7 @@ class BankRuleSuggestionService
      *
      * @return list<array<string,mixed>> Proposed rules (never persisted).
      *
-     * @spec openspec/changes/bank-rule-automation-ux/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
+     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
      */
     public function suggestRulesFromHistory(array $history, int $k=self::DEFAULT_THRESHOLD, ?object $aiRanker=null): array
     {

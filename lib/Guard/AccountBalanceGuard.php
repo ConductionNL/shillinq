@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md
+ * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
  * x-openregister-lifecycle `requires:` clauses. Each returns true when the
  * precondition is satisfied (transition / save permitted), false otherwise.
  *
- * @spec openspec/changes/add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md
+ * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md
  */
 class AccountBalanceGuard
 {
@@ -96,7 +96,7 @@ class AccountBalanceGuard
      *
      * @return bool True when archive is permitted
      *
-     * @spec openspec/changes/add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md (REQ-CoA-005)
+     * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md (REQ-CoA-005)
      */
     public function requireZeroBalance(array $account): bool
     {
@@ -178,7 +178,7 @@ class AccountBalanceGuard
      *
      * @return bool True when the closing-account invariant holds
      *
-     * @spec openspec/changes/add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md (REQ-CoA-009)
+     * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md (REQ-CoA-009)
      */
     public function requireSingleClosingAccount(array $account): bool
     {

@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md
+ * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use Throwable;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md
+ * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
  */
 class LotExpiryAlertJob extends TimedJob
 {
@@ -105,7 +105,7 @@ class LotExpiryAlertJob extends TimedJob
      *
      * @return void
      *
-     * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md#REQ-LOT-007
+     * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
      */
     protected function run($argument): void
     {

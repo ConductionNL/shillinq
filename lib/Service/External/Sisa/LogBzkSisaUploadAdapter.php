@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md
+ * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Dormant log-backed BZK SiSa upload adapter.
  *
- * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md
+ * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
  */
 class LogBzkSisaUploadAdapter implements BzkSisaUploadAdapterInterface
 {

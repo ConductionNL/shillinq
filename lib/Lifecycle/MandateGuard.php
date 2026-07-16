@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,7 +53,7 @@ use Psr\Log\LoggerInterface;
  * x-openregister-lifecycle transitions as
  * OCA\Shillinq\Lifecycle\MandateGuard::canActivate / ::canCancel / ::canExpire.
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
 class MandateGuard
 {
@@ -85,7 +85,7 @@ class MandateGuard
      *
      * @return bool True when the mandate may activate.
      *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      */
     public function canActivate(string $mandateId, ?array $object=null): bool
     {
@@ -123,7 +123,7 @@ class MandateGuard
      *
      * @return bool True when the mandate may be cancelled.
      *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      */
     public function canCancel(string $mandateId, ?array $object=null): bool
     {
@@ -156,7 +156,7 @@ class MandateGuard
      *
      * @return bool True when the mandate is dormant and may expire.
      *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      */
     public function canExpire(string $mandateId, ?array $object=null): bool
     {
@@ -211,7 +211,7 @@ class MandateGuard
      *
      * @return bool True when scheme and account type are consistent.
      *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      */
     public static function schemeMatchesAccountType(string $scheme, string $accountType): bool
     {

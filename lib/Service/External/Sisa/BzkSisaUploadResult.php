@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md
+ * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Service\External\Sisa;
 /**
  * Result of a BZK SiSa upload attempt.
  *
- * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md
+ * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
  */
 final class BzkSisaUploadResult
 {

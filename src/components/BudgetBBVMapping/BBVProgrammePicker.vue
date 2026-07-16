@@ -17,7 +17,7 @@
  to keep the screen-reader association NcSelect builds internally —
  a manual <label> would break it.
 
- @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-07-mapping-detail/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 -->
 <template>
 	<NcSelect

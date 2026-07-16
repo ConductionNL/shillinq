@@ -22,7 +22,7 @@
  is discoverability only; the real PSD2 connection is owned by the
  bank-connectors capability under Settings.
 
- @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+ @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
 -->
 
 <template>
@@ -183,7 +183,7 @@ export default {
 		}
 	},
 	computed: {
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		formatSelectOptions() {
 			return [
 				{ value: 'camt053', display: t('shillinq', 'CAMT.053 XML') },
@@ -191,11 +191,11 @@ export default {
 				{ value: 'csv', display: t('shillinq', 'CSV') },
 			]
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		selectedFormatOption() {
 			return this.formatSelectOptions.find((o) => o.value === this.form.format) || null
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		formatInstructions() {
 			const map = {
 				camt053: t('shillinq', 'Most Dutch banks (ING, Rabobank, ABN AMRO, SNS). Export from your bank: Downloads → Account overview → Format: CAMT.053 → Date range: last 30 days.'),
@@ -204,13 +204,13 @@ export default {
 			}
 			return map[this.form.format] || ''
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		canLeaveStep1() {
 			return Boolean(this.form.format) && Boolean(this.form.contents)
 		},
 	},
 	watch: {
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		open(next) {
 			if (next === true) {
 				this.reset()
@@ -219,7 +219,7 @@ export default {
 	},
 	methods: {
 		t,
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		reset() {
 			this.step = 1
 			this.importing = false
@@ -229,16 +229,16 @@ export default {
 			this.statementName = ''
 			this.form = { format: '', contents: '', fileName: '', glAccountId: '' }
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		acceptFor(format) {
 			const opt = formatOptions().find((o) => o.value === format)
 			return opt ? opt.accept : ''
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		onFormatSelected(option) {
 			this.form.format = option ? String(option.value) : ''
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		onFileChosen(event) {
 			const file = event?.target?.files?.[0]
 			if (!file) {
@@ -254,14 +254,14 @@ export default {
 			}
 			reader.readAsText(file)
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		extractStatementMeta() {
 			// Lightweight pre-parse: pull the first IBAN-shaped token so the
 			// account-mapping step can show it and consult the IBAN memory.
 			const m = String(this.form.contents).match(/\b([A-Z]{2}\d{2}[A-Z0-9]{10,30})\b/)
 			this.statementIban = m ? m[1] : ''
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		advanceFromStep1() {
 			if (!this.canLeaveStep1) return
 			// REQ-BSW-006: skip the mapping step for a remembered IBAN.
@@ -274,13 +274,13 @@ export default {
 			}
 			this.step = 2
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		advanceFromStep2() {
 			if (!this.form.glAccountId) return
 			this.step = 3
 			this.runImport()
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		async runImport() {
 			this.importing = true
 			this.error = ''
@@ -304,7 +304,7 @@ export default {
 				this.importing = false
 			}
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		reviewMatches() {
 			if (!this.result) return
 			// REQ-BSW-005: the only navigation away from the dashboard.
@@ -313,18 +313,18 @@ export default {
 			this.$emit('close')
 			this.$router.push({ name: 'BankReconciliation' })
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		refreshDashboardWidgets() {
 			// REQ-BSW-005: reload the payables + receivables widgets.
 			emit('cn:widget:refresh', { widget: 'widget-open-debtors' })
 			emit('cn:widget:refresh', { widget: 'widget-open-creditors' })
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		goToBankConnections() {
 			this.$emit('close')
 			window.location.href = generateUrl('/settings/admin/shillinq')
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		onClose() {
 			if (this.importing) return
 			// If an import completed but the user closes instead of reviewing,

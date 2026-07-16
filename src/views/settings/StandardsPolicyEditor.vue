@@ -8,7 +8,7 @@
   written as the 1-based index on save. The resolver preview mirrors
   StandardsPolicyService.resolveFromPolicy — the first enabled framework wins.
 
-  @spec openspec/changes/add-accounting-standards-policy/specs/accounting-standards-policy/spec.md
+  @spec openspec/specs/accounting-standards-policy/spec.md
 -->
 <template>
 	<div class="standards-policy">

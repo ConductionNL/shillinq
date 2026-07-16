@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-003
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use OCA\Shillinq\Service\ViesService;
 /**
  * KvK / BTW-nummer / Peppol participant pre-send validation (REQ-EINV-003).
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-003
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
 final class EInvoiceValidationService
 {
@@ -84,7 +84,7 @@ final class EInvoiceValidationService
      *
      * @return array{valid:bool,errors:array<int,array{field:string,code:string,message:string}>,warnings:array<int,array{field:string,code:string,message:string}>,peppolParticipantId:?string}
      *
-     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-003
+     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
      */
     public function validate(string $administrationId, array $arInvoice): array
     {

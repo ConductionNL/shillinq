@@ -122,7 +122,7 @@ use RuntimeException;
  * is a single straight-through compute + post pipeline.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
- * @spec openspec/changes/grir-accrual-wiring/specs/grir-accrual-wiring/spec.md
+ * @spec openspec/specs/grir-accrual-wiring/spec.md
  */
 class GRIRClearingService
 {
@@ -742,7 +742,7 @@ class GRIRClearingService
      *
      * @return array<string,mixed> Result envelope: {posted:int, skipped:int, results:array}.
      *
-     * @spec openspec/changes/grir-accrual-wiring/specs/grir-accrual-wiring/spec.md#req-001
+     * @spec openspec/specs/grir-accrual-wiring/spec.md
      */
     public function postGRIRForGoodsReceiptAccept(string $administrationId, array $grn): array
     {
@@ -770,7 +770,7 @@ class GRIRClearingService
      *
      * @return array<string,mixed> Result envelope: {posted:int, skipped:int, results:array}.
      *
-     * @spec openspec/changes/grir-accrual-wiring/specs/grir-accrual-wiring/spec.md#req-002
+     * @spec openspec/specs/grir-accrual-wiring/spec.md
      */
     public function postGRIRForServiceReceiptAccept(string $administrationId, array $receipt): array
     {
@@ -809,7 +809,7 @@ class GRIRClearingService
      *                             or {posted:false, message} when no
      *                             qualifying match is found.
      *
-     * @spec openspec/changes/grir-accrual-wiring/specs/grir-accrual-wiring/spec.md#req-003
+     * @spec openspec/specs/grir-accrual-wiring/spec.md
      */
     public function settleGRIRForMatchedInvoice(string $administrationId, string $invoiceId): array
     {

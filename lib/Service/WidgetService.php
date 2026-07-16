@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-self-service-widget/specs/bookings-self-service-widget/spec.md
+ * @spec openspec/specs/bookings-self-service-widget/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
  * unit-tested in isolation; createAppointment() wires them to OpenRegister and
  * the slot cache.
  *
- * @spec openspec/changes/bookings-self-service-widget/specs/bookings-self-service-widget/spec.md
+ * @spec openspec/specs/bookings-self-service-widget/spec.md
  */
 class WidgetService
 {

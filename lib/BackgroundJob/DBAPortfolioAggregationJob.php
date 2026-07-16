@@ -19,7 +19,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ use Throwable;
 /**
  * Monthly DBA portfolio aggregation.
  *
- * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 class DBAPortfolioAggregationJob extends TimedJob
 {
@@ -75,7 +75,7 @@ class DBAPortfolioAggregationJob extends TimedJob
      *
      * @return array<string,mixed> concentratie object { grootsteKlant, aandeelOmzet12mnd, drempelHoog, status }.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function computeConcentratie(array $opdrachten): array
     {
@@ -136,7 +136,7 @@ class DBAPortfolioAggregationJob extends TimedJob
      *
      * @return array<int,array<string,mixed>> List of langjarige relaties.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function computeLangjarigeRelaties(array $opdrachten, DateTimeImmutable $now): array
     {
@@ -204,7 +204,7 @@ class DBAPortfolioAggregationJob extends TimedJob
      *
      * @return string LAAG / MIDDEN / HOOG.
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function computeOverallRisico(array $concentratie, array $langjarigeRelaties): string
     {
@@ -227,7 +227,7 @@ class DBAPortfolioAggregationJob extends TimedJob
      *
      * @return void
      *
-     * @spec openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      *
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */

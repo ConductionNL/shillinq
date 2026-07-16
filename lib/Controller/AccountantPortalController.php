@@ -34,7 +34,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+ * @spec openspec/specs/accountant-portal/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -64,7 +64,7 @@ use ZipArchive;
 /**
  * Scoped accountant dashboard + handover-pack export.
  *
- * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+ * @spec openspec/specs/accountant-portal/spec.md
  */
 class AccountantPortalController extends Controller
 {
@@ -108,7 +108,7 @@ class AccountantPortalController extends Controller
      *
      * @return JSONResponse 200 with the dashboard; 401 when no user is authenticated.
      *
-     * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+     * @spec openspec/specs/accountant-portal/spec.md
      */
     #[NoAdminRequired]
     public function dashboard(): JSONResponse
@@ -141,7 +141,7 @@ class AccountantPortalController extends Controller
      * @return Response 200 with the ZIP bytes; 400 bad id; 401 anonymous;
      *                  404 masked non-membership; 500 when no report could be rendered.
      *
-     * @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+     * @spec openspec/specs/accountant-portal/spec.md
      */
     #[NoAdminRequired]
     public function handoverPack(string $id): Response

@@ -85,7 +85,7 @@ class ObligationTaskBridge
      *
      * @return array{taskUri: ?string, taskLinkStatus: string, eventUri: ?string, eventLinkStatus: string} Bridge result.
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-005
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function createTaskForObligation(array $obligation): array
     {
@@ -166,7 +166,7 @@ class ObligationTaskBridge
      *
      * @return array{eventUri: ?string, eventLinkStatus: string} Event result.
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-005
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function publishDeadlineEvent(array $obligation): array
     {
@@ -222,7 +222,7 @@ class ObligationTaskBridge
      * @return array<int,array<string,string>> Deadline entries (uid,
      *         category, summary, dueDate, source, objectId).
      *
-     * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-005
+     * @spec openspec/specs/compliance-deadline-calendar/spec.md
      */
     public function listOpenObligationDeadlines(): array
     {

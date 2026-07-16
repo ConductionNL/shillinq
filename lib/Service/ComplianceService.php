@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -64,7 +64,7 @@ use Throwable;
  * trade-off is intentional — fewer branches per method beats fewer
  * methods per class for this service's correctness review surface.
  *
- * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  */
@@ -131,7 +131,7 @@ final class ComplianceService
      *         `utilization=0.0`, `status="unconfigured"`, `budget=0`,
      *         `ytdSpend=0`.
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     public function computeComplianceStatus(array|string $programme, ?int $fiscalYear=null): array
     {
@@ -215,7 +215,7 @@ final class ComplianceService
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-09-fiscal-audit/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-bbv-queries-and-views-shall-be-scoped-to-the-active-fiscal-year
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     public function invalidate(string $programmeCode, ?int $fiscalYear=null): void
     {
@@ -259,7 +259,7 @@ final class ComplianceService
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-the-system-shall-expose-a-compliance-service-that-reads-the-declarative-aggregation
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     public function invalidateAll(): void
     {

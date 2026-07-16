@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,7 +54,7 @@ use Throwable;
 /**
  * Pure envelope assembler — does not own the HTTP boundary.
  *
- * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  */
 final class BBVComplianceWidget
 {
@@ -102,7 +102,7 @@ final class BBVComplianceWidget
      *   generatedAt: string
      * }
      *
-     * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-08-compliance-service/specs/bookkeeping-waterschappen-bbv-variant/spec.md#requirement-the-dashboard-controller-shall-return-the-widget-data-envelope
+     * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
      */
     public function buildEnvelope(?int $fiscalYear=null, ?string $administrationId=null): array
     {

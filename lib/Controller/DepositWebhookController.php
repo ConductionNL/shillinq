@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-011)
+ * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006, REQ-DP-011)
  */
 
 declare(strict_types=1);
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Signature-verified deposit-payment webhook endpoint (REQ-DP-006).
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-006)
+ * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006)
  */
 class DepositWebhookController extends Controller
 {
@@ -81,7 +81,7 @@ class DepositWebhookController extends Controller
      * @return JSONResponse 200 on success, 202 when queued, 400 on bad signature
      *                       or malformed payload, 404 when no deposit matches.
      *
-     * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md (REQ-DP-006)
+     * @spec openspec/specs/bookings-deposits/spec.md (REQ-DP-006)
      */
     #[PublicPage]
     #[NoCSRFRequired]

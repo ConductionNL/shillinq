@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+ * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Psr\Log\LoggerInterface;
  * aggregation is deterministic and side-effect-free given the lease set, so the
  * arithmetic core (aggregateFromLeases) is unit-testable without OpenRegister.
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+ * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
  */
 class LeaseDisclosureService
 {
@@ -80,7 +80,7 @@ class LeaseDisclosureService
      *
      * @return array<string,mixed> The LeaseDisclosureTable payload.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
      */
     public function generateForPeriod(string $administrationId, string $fiscalPeriod): array
     {
@@ -132,7 +132,7 @@ class LeaseDisclosureService
      *
      * @return array<string,mixed> Quantitative disclosure figures.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
      */
     public function aggregateFromLeases(array $leases): array
     {
@@ -182,7 +182,7 @@ class LeaseDisclosureService
      *
      * @return array<string,mixed> The updated aggregate.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
      */
     private function accumulateLease(array $acc, array $lease): array
     {
@@ -229,7 +229,7 @@ class LeaseDisclosureService
      *
      * @return array<string,mixed> The updated aggregate.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
      */
     private function accumulateCapitalised(array $acc, array $lease, string $class, array $rows): array
     {
@@ -370,7 +370,7 @@ class LeaseDisclosureService
      *
      * @return string CSV body (RFC 4180, comma delimited, LF terminated).
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
      */
     public function exportToCSV(array $disclosure): string
     {
@@ -445,7 +445,7 @@ class LeaseDisclosureService
      *
      * @return string The rendered HTML document.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
      */
     public function exportDisclosureNoteToHtml(array $disclosure, string $language='en'): string
     {
@@ -527,7 +527,7 @@ class LeaseDisclosureService
      *
      * @return array<string,mixed> The render envelope.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
      */
     public function exportDisclosureNoteToPDF(array $disclosure, string $language='en'): array
     {
@@ -565,7 +565,7 @@ class LeaseDisclosureService
      *
      * @return array<string,mixed> { status, contextRef, facts:array<string,string|float|int> }
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md
+     * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
      */
     public function exportToXBRL(array $disclosure): array
     {

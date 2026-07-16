@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,7 +54,7 @@ use Psr\Log\LoggerInterface;
  * client-supplied trust boundary. The OpenRegister ObjectService enforces the
  * multitenancy / RBAC boundary on every find / save.
  *
- * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+ * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
 class ViesService
 {
@@ -109,7 +109,7 @@ class ViesService
      *
      * @return array{vatId:string,valid:bool,outage:bool,requestId:string,validationTimestamp:string,validUntil:string,name:string,address:string,saved:bool,reusedPrior:bool}
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function validate(string $administrationId, string $vatId, string $now=''): array
     {
@@ -177,7 +177,7 @@ class ViesService
      *
      * @return array{vatId:string,valid:bool,outage:bool,requestId:string,name:string,address:string,validationTimestamp:string,validUntil:string,reusedPrior:bool}
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function parseViesResponse(string $body, string $vatId, string $now): array
     {
@@ -223,7 +223,7 @@ class ViesService
      *
      * @return string The canonical VAT-ID (e.g. "DE123456789").
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function canonicalVatId(string $vatId): string
     {
@@ -244,7 +244,7 @@ class ViesService
      *
      * @return array<string,mixed>|null The newest valid record, or null when none.
      *
-     * @spec openspec/changes/bookkeeping-icp-opgaaf/tasks.md
+     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
      */
     public function findRecentValid(string $administrationId, string $vatId): ?array
     {

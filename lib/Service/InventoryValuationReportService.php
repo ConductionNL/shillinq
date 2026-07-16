@@ -40,7 +40,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-accounting-correctness/specs/inventory-accounting-correctness/spec.md
+ * @spec openspec/specs/inventory-accounting-correctness/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -61,7 +61,7 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  *
- * @spec openspec/changes/inventory-accounting-correctness/specs/inventory-accounting-correctness/spec.md
+ * @spec openspec/specs/inventory-accounting-correctness/spec.md
  */
 class InventoryValuationReportService
 {
@@ -90,7 +90,7 @@ class InventoryValuationReportService
      *
      * @return array<string,mixed> { asOfDate, totalValue, totalQuantity, lines:[{sku,warehouse,method,quantity,unitCost,totalValue}] }
      *
-     * @spec openspec/changes/inventory-accounting-correctness/specs/inventory-accounting-correctness/spec.md
+     * @spec openspec/specs/inventory-accounting-correctness/spec.md
      */
     public function valuationAsOf(
         string $administrationId,
@@ -152,7 +152,7 @@ class InventoryValuationReportService
      *
      * @return array<string,mixed> { asOfDate, sku, warehouse, buckets:{0-30,31-60,61-90,90+}, totalValue }
      *
-     * @spec openspec/changes/inventory-accounting-correctness/specs/inventory-accounting-correctness/spec.md
+     * @spec openspec/specs/inventory-accounting-correctness/spec.md
      */
     public function ageing(string $administrationId, string $asOfDate, string $sku, string $warehouse): array
     {
@@ -220,7 +220,7 @@ class InventoryValuationReportService
      *
      * @return array<string,mixed> { from, to, cogs, averageInventoryValue, turnoverRatio, daysOnHand }
      *
-     * @spec openspec/changes/inventory-accounting-correctness/specs/inventory-accounting-correctness/spec.md
+     * @spec openspec/specs/inventory-accounting-correctness/spec.md
      */
     public function turnover(string $administrationId, string $from, string $to, string $sku, string $warehouse): array
     {

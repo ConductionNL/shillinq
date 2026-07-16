@@ -15,7 +15,7 @@ export const OPEN_AP_STATES = ['received', 'issued', 'partially-paid', 'overdue'
  * Month bucket key (`YYYY-MM`) for a date-ish string, or null when
  * the value does not start with a parsable year-month.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {string|null|undefined} dateStr Date string (ISO or `YYYY-MM-DD hh:mm:ss`).
  * @return {string|null}
  */
@@ -28,7 +28,7 @@ export function monthKey(dateStr) {
 /**
  * Trailing `count` month keys ending at `now`, ascending.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {number} count Number of months.
  * @param {Date} now Reference date.
  * @return {string[]}
@@ -68,7 +68,7 @@ export function monthsInRange(from, to) {
  * Human label for a `YYYY-MM` key (e.g. `Jan ’26`), localised via
  * Intl in the browser's language.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {string} key Month key.
  * @return {string}
  */
@@ -83,7 +83,7 @@ export function monthLabel(key) {
  * RGS-style account numbers starting with `10`, or a bank/kas/cash
  * name.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object[]} accounts Account objects from the register.
  * @return {{ revenue: Set<string>, expenses: Set<string>, liquid: Set<string> }}
  */
@@ -110,7 +110,7 @@ export function classifyAccounts(accounts) {
  * the human `transactionNumber`; only `state: "posted"` parents
  * contribute, and the parent's `postingDate` decides the bucket.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object[]} transactions GLTransaction objects.
  * @param {object[]} lines GLLine objects.
  * @return {Map<string, object[]>} month key → lines posted in that month.
@@ -140,7 +140,7 @@ export function postedLinesByMonth(transactions, lines) {
  * grows on credit; expenses grow on debit; liquid assets grow on
  * debit (money in).
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} line GLLine object.
  * @param {'revenue'|'expenses'|'liquid'} kind Account class.
  * @return {number}
@@ -155,7 +155,7 @@ export function signedAmount(line, kind) {
  * Monthly turnover / cost / margin / cashflow series over `months`,
  * from posted GL lines classified by the chart of accounts.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} input `{ accounts, transactions, lines, months }`.
  * @param input.accounts
  * @param input.transactions
@@ -205,7 +205,7 @@ export function monthlyFinancialSeries({ accounts, transactions, lines, months }
  * Monthly billable vs non-billable hours from UrenRegistratie.
  * Billable = `recognisedRate` greater than zero.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object[]} entries UrenRegistratie objects.
  * @param {string[]} months Month keys to bucket into.
  * @return {{ billable: number[], nonBillable: number[], pct: (number|null)[] }}
@@ -240,7 +240,7 @@ export function billableSeries(entries, months) {
  * `afterMonth`, so the cashflow chart can append dimmed projection
  * columns. Months overlapping realized data are dropped.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object[]} weeks CashflowWeek objects.
  * @param {string} afterMonth Last realized month key (`YYYY-MM`).
  * @return {{ months: string[], cashIn: number[], cashOut: number[], cashNet: number[] }}
@@ -269,7 +269,7 @@ export function forecastByMonth(weeks, afterMonth) {
  * date ascending. `overdue` is set when the state says so or the
  * due date has passed.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object[]} invoices ARInvoice objects.
  * @param {object[]} customers CustomerMaster objects (name lookup).
  * @param {Date} now Reference date for the overdue flag.
@@ -296,7 +296,7 @@ export function openArRows(invoices, customers, now = new Date()) {
  * Open-payables table rows from APTransaction objects, sorted by
  * due date ascending.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object[]} transactions APTransaction objects.
  * @param {object[]} vendors Payee objects (name lookup).
  * @param {Date} now Reference date for the overdue flag.
@@ -322,7 +322,7 @@ export function openApRows(transactions, vendors, now = new Date()) {
 /**
  * The six KPI-strip metrics.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} input `{ accounts, transactions, lines, arInvoices, apTransactions, hourEntries }`.
  * @param input.accounts
  * @param input.transactions
@@ -378,7 +378,7 @@ export function computeKpis({ accounts, transactions, lines, arInvoices, apTrans
 /**
  * EUR formatter for KPI tiles, charts and tables.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {number|null|undefined} value Amount in euros.
  * @param {number} maximumFractionDigits Decimals to keep (default 0).
  * @return {string}
@@ -415,7 +415,7 @@ function round2(value) {
  * point-in-time metrics (open debtors/creditors, cash balance) do
  * not vary by range and stay in `computeKpis`.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} input `{ accounts, transactions, lines, hourEntries }`.
  * @param input.accounts
  * @param input.transactions

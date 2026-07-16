@@ -15,7 +15,7 @@
  — accessibility wiring (label, aria, combobox listbox) is provided by
  NcSelect itself; a manual <label> would break that wiring.
 
- @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-07-mapping-detail/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 -->
 <template>
 	<NcSelect

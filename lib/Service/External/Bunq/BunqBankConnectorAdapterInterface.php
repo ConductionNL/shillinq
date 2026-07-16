@@ -43,7 +43,7 @@
  * @link https://conduction.nl
  * @link https://doc.bunq.com/
  *
- * @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -76,7 +76,7 @@ namespace OCA\Shillinq\Service\External\Bunq;
  *     in `Application::register()` to the
  *     openconnector-backed implementation.
  *
- * @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  */
 interface BunqBankConnectorAdapterInterface
 {

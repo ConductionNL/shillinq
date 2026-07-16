@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -56,7 +56,7 @@ use Psr\Log\LoggerInterface;
  * IntercompanyLoan schema transitions.activate.requires as
  * OCA\Shillinq\Lifecycle\IntercompanyTransactionGuard::canActivateLoan.
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  */
 class IntercompanyTransactionGuard
 {
@@ -114,7 +114,7 @@ class IntercompanyTransactionGuard
      *
      * @return bool True when both administrations' periods are open and the movement may post.
      *
-     * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+     * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
      */
     public function canPost(string $transactionId, ?array $object=null): bool
     {
@@ -157,7 +157,7 @@ class IntercompanyTransactionGuard
      *
      * @return bool Always true (drawdown permitted); warnings are logged.
      *
-     * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+     * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
      */
     public function canActivateLoan(string $loanId, ?array $object=null): bool
     {

@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/expand-standards-eu-us/specs/accounting-standards-policy/spec.md
+ * @spec openspec/specs/accounting-standards-policy/spec.md
  *
  * phpcs:disable Generic.Files.LineLength
  */

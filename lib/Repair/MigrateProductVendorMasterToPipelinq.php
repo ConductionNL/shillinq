@@ -55,7 +55,7 @@ use Psr\Log\LoggerInterface;
  *   next upgrade once pipelinq is deployed.
  *
  * @spec openspec/changes/shillinq-product-vendor-to-pipelinq/tasks.md#phase-5
- * @spec openspec/changes/shillinq-product-vendor-to-pipelinq/specs/shillinq-product-vendor-to-pipelinq/spec.md (REQ-SPVP-009)
+ * @spec openspec/specs/shillinq-product-vendor-to-pipelinq/spec.md (REQ-SPVP-009)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V.
  * SPDX-License-Identifier: EUPL-1.2
@@ -99,7 +99,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/shillinq-product-vendor-to-pipelinq/specs/shillinq-product-vendor-to-pipelinq/spec.md (REQ-SPVP-009)
+     * @spec openspec/specs/shillinq-product-vendor-to-pipelinq/spec.md (REQ-SPVP-009)
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
@@ -179,7 +179,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
      *
      * @return array<string,mixed>|null Payload array, or null if OR is unavailable.
      *
-     * @spec openspec/changes/shillinq-product-vendor-to-pipelinq/specs/shillinq-product-vendor-to-pipelinq/spec.md (REQ-SPVP-009)
+     * @spec openspec/specs/shillinq-product-vendor-to-pipelinq/spec.md (REQ-SPVP-009)
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */

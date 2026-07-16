@@ -20,8 +20,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-btw-oss-eu/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,8 +36,8 @@ use Psr\Log\LoggerInterface;
 /**
  * Dormant log-backed Belastingdienst IB47 adapter.
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-btw-oss-eu/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
 class LogIb47Adapter implements Ib47AdapterInterface
 {

@@ -33,7 +33,7 @@
  once slice 04's manifest fragment swaps the `BudgetBBVMappings` page
  from `type: index` to `type: custom`. ADR-036 / ADR-037.
 
- @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-06-mapping-index/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 -->
 <template>
 	<div class="bbv-mapping-index" data-testid="bbv-mapping-index">

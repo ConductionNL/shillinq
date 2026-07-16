@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -25,7 +25,7 @@ namespace OCA\Shillinq\Service\External\Cbs;
 /**
  * Result of a CBS Bestanden upload attempt.
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  */
 final class CbsSubmissionResult
 {

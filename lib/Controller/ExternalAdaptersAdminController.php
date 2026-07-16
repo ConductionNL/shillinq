@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -74,7 +74,7 @@ use Throwable;
 /**
  * Read-only admin endpoints over the 14 external-API adapter ports.
  *
- * @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+ * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
  */
 class ExternalAdaptersAdminController extends Controller
 {
@@ -466,7 +466,7 @@ class ExternalAdaptersAdminController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+     * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
      */
     #[AuthorizedAdminSetting(Application::class)]
     public function index(): JSONResponse
@@ -503,7 +503,7 @@ class ExternalAdaptersAdminController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
+     * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
      */
     #[AuthorizedAdminSetting(Application::class)]
     public function show(string $id): JSONResponse

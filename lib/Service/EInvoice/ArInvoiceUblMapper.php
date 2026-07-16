@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-001
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use RuntimeException;
 /**
  * Stateless ARInvoice -> UBL 2.1 / NLCIUS Invoice document mapper.
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-001
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
 final class ArInvoiceUblMapper
 {
@@ -79,7 +79,7 @@ final class ArInvoiceUblMapper
      * @throws RuntimeException When the invoice is not in the required `issued`
      *                           lifecycle state — no XML is produced (REQ-EINV-001).
      *
-     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-001
+     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
      */
     public function toNlciusXml(array $arInvoice): string
     {

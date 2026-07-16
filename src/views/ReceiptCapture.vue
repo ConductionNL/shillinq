@@ -31,7 +31,7 @@
  audit trail itself is unaffected; it is recorded server-side regardless of
  which UI renders the object).
 
- @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md#req-rxc-003
+ @spec openspec/specs/receipt-extraction-consume/spec.md
 -->
 
 <template>
@@ -337,15 +337,15 @@ export default {
 		hasIndexRoute() {
 			return !!this.$router?.options?.routes?.some?.((r) => r.name === 'Receipts')
 		},
-		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		isDraftReview() {
 			return isExtractionDraft(this.record)
 		},
-		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		requiresReview() {
 			return requiresExplicitReview(this.record)
 		},
-		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		canRerequest() {
 			return !!this.record?.sourceDocumentUri
 		},
@@ -366,15 +366,15 @@ export default {
 	},
 	methods: {
 		t,
-		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		confidenceFor(field) {
 			return confidenceForField(this.record, field)
 		},
-		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		isCorrected(field) {
 			return isFieldCorrected(this.record, field)
 		},
-		/** @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-003 */
+		/** @spec openspec/specs/gl-account-suggestion-consume/spec.md */
 		async reload() {
 			this.loading = true
 			this.loadError = ''
@@ -401,7 +401,7 @@ export default {
 		 * Degrades gracefully when the draft has no known docudesk extraction
 		 * id or docudesk returns no suggestion (REQ-GAC-006).
 		 *
-		 * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-003
+		 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 		 */
 		async fetchGlSuggestion() {
 			this.glSuggestion = null
@@ -422,7 +422,7 @@ export default {
 		 * Fill the GL-account picker with the suggested code — the operator
 		 * still must click Save to commit anything (REQ-GAC-004).
 		 *
-		 * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-004
+		 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 		 */
 		onUseSuggestion() {
 			if (!this.glSuggestion) return
@@ -433,7 +433,7 @@ export default {
 		 * confirm proxy (records humanCorrected server-side); otherwise a
 		 * plain OR object update.
 		 *
-		 * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
+		 * @spec openspec/specs/receipt-extraction-consume/spec.md
 		 */
 		async onSave() {
 			if (!this.canSave || this.busy) return
@@ -466,7 +466,7 @@ export default {
 		/**
 		 * REQ-RXC-005: (re-)request docudesk extraction for this receipt.
 		 *
-		 * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
+		 * @spec openspec/specs/receipt-extraction-consume/spec.md
 		 */
 		async onRerequest() {
 			if (this.busy || !this.canRerequest) return

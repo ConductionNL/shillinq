@@ -26,8 +26,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-006
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,7 +53,7 @@ use Throwable;
 /**
  * Orchestrates ARInvoice e-invoice generation, validation and Peppol dispatch.
  *
- * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
+ * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
 final class EInvoiceService
 {
@@ -126,7 +126,7 @@ final class EInvoiceService
      *                           not in the required `issued` lifecycle state, or pre-send
      *                           validation fails (400 — no event is ever emitted on failure).
      *
-     * @spec openspec/changes/add-invoice-pdf-export-with-ubl-peppol-support/specs/bookkeeping-einvoicing-ubl-peppol/spec.md#req-einv-005
+     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
      */
     public function sendEInvoice(string $administrationId, string $invoiceNumber): array
     {

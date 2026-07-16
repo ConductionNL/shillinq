@@ -43,8 +43,8 @@
  never bypasses the explicit Save click (REQ-RXC-006) — it only changes
  whether the badges + review copy are shown.
 
- @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
- @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
+ @spec openspec/specs/shillinq-bill-import-modal/spec.md
+ @spec openspec/specs/receipt-extraction-consume/spec.md
 -->
 
 <template>
@@ -329,29 +329,29 @@ export default {
 		}
 	},
 	computed: {
-		/** @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md */
+		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
 		canSave() {
 			return canSaveReview(this.form)
 		},
-		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		isDraftReview() {
 			return isExtractionDraft(this.importedRecord)
 		},
-		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		requiresReview() {
 			return requiresExplicitReview(this.importedRecord)
 		},
-		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		canRerequest() {
 			return !!this.importedRecord?.sourceDocumentUri
 		},
-		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		pendingDrafts() {
 			return this.pendingDraftRows.map(pendingDraftSummary)
 		},
 	},
 	watch: {
-		/** @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md */
+		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
 		open(next) {
 			if (next === true) {
 				this.reset()
@@ -361,7 +361,7 @@ export default {
 	},
 	methods: {
 		t,
-		/** @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md */
+		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
 		emptyForm() {
 			return {
 				supplier: '',
@@ -372,7 +372,7 @@ export default {
 				glAccount: '',
 			}
 		},
-		/** @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md */
+		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
 		reset() {
 			this.step = 'upload'
 			this.busy = false
@@ -383,11 +383,11 @@ export default {
 			this.pendingDraftRows = []
 			this.glSuggestion = null
 		},
-		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		confidenceFor(field) {
 			return confidenceForField(this.importedRecord, field)
 		},
-		/** @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md */
+		/** @spec openspec/specs/receipt-extraction-consume/spec.md */
 		isCorrected(field) {
 			return isFieldCorrected(this.importedRecord, field)
 		},
@@ -396,7 +396,7 @@ export default {
 		 * the operator can jump straight to the confidence-scored review step
 		 * instead of only being able to start a fresh UBL/CSV upload.
 		 *
-		 * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
+		 * @spec openspec/specs/receipt-extraction-consume/spec.md
 		 */
 		async loadPendingDrafts() {
 			try {
@@ -416,8 +416,8 @@ export default {
 		 * with per-field confidence (REQ-RXC-002), then requests a GL-account
 		 * suggestion for it (gl-account-suggestion-consume, REQ-GAC-003).
 		 *
-		 * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
-		 * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-003
+		 * @spec openspec/specs/receipt-extraction-consume/spec.md
+		 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 		 * @param {string} id The draft's OR object id.
 		 */
 		async openDraft(id) {
@@ -446,7 +446,7 @@ export default {
 		 * id or docudesk returns no suggestion (REQ-GAC-006); the operator's
 		 * plain manual booking is unaffected either way.
 		 *
-		 * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-003
+		 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 		 */
 		async fetchGlSuggestion() {
 			this.glSuggestion = null
@@ -467,7 +467,7 @@ export default {
 		 * Fill the GL-account picker with the suggested code — the operator
 		 * still must click Save to commit anything (REQ-GAC-004).
 		 *
-		 * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-004
+		 * @spec openspec/specs/gl-account-suggestion-consume/spec.md
 		 */
 		onUseSuggestion() {
 			if (!this.glSuggestion) return
@@ -477,7 +477,7 @@ export default {
 		 * (Re-)request docudesk extraction for the currently reviewed draft
 		 * (REQ-RXC-005) via the shillinq proxy endpoint.
 		 *
-		 * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
+		 * @spec openspec/specs/receipt-extraction-consume/spec.md
 		 */
 		async onRerequest() {
 			if (this.busy || !this.canRerequest) return
@@ -500,17 +500,17 @@ export default {
 				this.busy = false
 			}
 		},
-		/** @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md */
+		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
 		onDrop(event) {
 			const file = event?.dataTransfer?.files?.[0]
 			if (file) this.handleFile(file)
 		},
-		/** @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md */
+		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
 		onFileSelected(event) {
 			const file = event?.target?.files?.[0]
 			if (file) this.handleFile(file)
 		},
-		/** @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md */
+		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
 		async handleFile(file) {
 			this.error = ''
 			this.pdfDeferred = false
@@ -558,8 +558,8 @@ export default {
 		 * `humanCorrected` provenance server-side — instead of creating a
 		 * second SupplierInvoice record.
 		 *
-		 * @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md
-		 * @spec openspec/changes/receipt-extraction-consume/specs/receipt-extraction-consume/spec.md
+		 * @spec openspec/specs/shillinq-bill-import-modal/spec.md
+		 * @spec openspec/specs/receipt-extraction-consume/spec.md
 		 */
 		async onSave() {
 			if (!this.canSave || this.busy) return
@@ -611,7 +611,7 @@ export default {
 				this.busy = false
 			}
 		},
-		/** @spec openspec/changes/shillinq-bill-import-modal/specs/shillinq-bill-import-modal/spec.md */
+		/** @spec openspec/specs/shillinq-bill-import-modal/spec.md */
 		onClose() {
 			if (this.busy) return
 			this.$emit('close')

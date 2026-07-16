@@ -54,7 +54,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/time-expense-invoice-intake/specs/time-expense-invoice-intake/spec.md
+ * @spec openspec/specs/time-expense-invoice-intake/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -75,7 +75,7 @@ use RuntimeException;
 /**
  * Validates, materialises, and delegates a pipelinq time-billing batch.
  *
- * @spec openspec/changes/time-expense-invoice-intake/specs/time-expense-invoice-intake/spec.md
+ * @spec openspec/specs/time-expense-invoice-intake/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -120,7 +120,7 @@ class TimeIntakeService
      *
      * @return array{invoiceId:string,invoiceNumber:string,status:string,lines:int,duplicated:bool}
      *
-     * @spec openspec/changes/time-expense-invoice-intake/specs/time-expense-invoice-intake/spec.md
+     * @spec openspec/specs/time-expense-invoice-intake/spec.md
      */
     public function ingest(string $administrationId, string $personId, array $body): array
     {

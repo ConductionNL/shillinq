@@ -50,7 +50,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -77,7 +77,7 @@ use Throwable;
  * PurchaseOrder or an activated Contract and drives it through the
  * existing MandaatEnforcer / BudgetBlocker guards (REQ-VPL-010).
  *
- * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-010
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
 class CommitmentMaterialisationService
 {
@@ -122,7 +122,7 @@ class CommitmentMaterialisationService
      *
      * @throws InsufficientCommitmentBudgetException When budget denies and no override applies.
      *
-     * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-010
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function materialiseFromPurchaseOrder(array $purchaseOrder): ?array
     {
@@ -162,7 +162,7 @@ class CommitmentMaterialisationService
      *
      * @return array<string, mixed>|null The materialised (or pre-existing) Verplichting, or null.
      *
-     * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-010
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function materialiseFromContract(array $contract): ?array
     {

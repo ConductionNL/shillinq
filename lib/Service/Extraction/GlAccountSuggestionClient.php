@@ -33,8 +33,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-003
- * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-005
+ * @spec openspec/specs/gl-account-suggestion-consume/spec.md
+ * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -52,7 +52,7 @@ use Throwable;
 /**
  * Thin, fail-soft HTTP client for docudesk's GL-account suggestion endpoints.
  *
- * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md
+ * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  */
 class GlAccountSuggestionClient
 {
@@ -109,7 +109,7 @@ class GlAccountSuggestionClient
      *         Outcome; never throws. `suggestion` is docudesk's decoded response body, or null on
      *         any failure (REQ-GAC-006 graceful degradation).
      *
-     * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-003
+     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
      */
     public function requestSuggestion(string $extractionId, array $candidateAccounts): array
     {
@@ -180,7 +180,7 @@ class GlAccountSuggestionClient
      * @return array{success: bool, statusCode: int, error: string|null} Outcome; never throws —
      *         best-effort, MUST NOT block or undo the already-committed local booking.
      *
-     * @spec openspec/changes/gl-account-suggestion-consume/specs/gl-account-suggestion-consume/spec.md#requirement-req-gac-005
+     * @spec openspec/specs/gl-account-suggestion-consume/spec.md
      */
     public function postCorrection(string $extractionId, string $accountCode, ?string $accountLabel): array
     {

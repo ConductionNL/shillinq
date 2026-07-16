@@ -12,8 +12,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/tasks.md
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,8 +31,8 @@ namespace OCA\Shillinq\Service\External\RvO;
  * synthesises one so callers can persist a non-null reference even
  * when no outbound call took place.
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/tasks.md
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
 final class RvORequestResult
 {

@@ -35,7 +35,7 @@
  * @link https://developer.loket.nl/
  * @link https://support.nmbrs.com/hc/nl/articles/360013506839
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -64,7 +64,7 @@ namespace OCA\Shillinq\Service\External\Salarisbureau;
  *     `Application::register()` to the vendor-specific
  *     implementation (e.g. `OpenConnectorAdpSalarisbureauAdapter`).
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  */
 interface SalarisbureauAdapterInterface

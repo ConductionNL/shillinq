@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -32,7 +32,7 @@ namespace OCA\Shillinq\Service\External\Salarisbureau;
  * one so callers can persist a non-null reference even when no
  * outbound call took place.
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  */
 final class SalarisbureauPayrollRunResult
 {

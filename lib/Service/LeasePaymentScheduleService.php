@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+ * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use Psr\Log\LoggerInterface;
  * context, never a client-supplied trust boundary; only schedule rows whose
  * parent lease belongs to that administration are written or returned.
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+ * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  */
 class LeasePaymentScheduleService
 {
@@ -75,7 +75,7 @@ class LeasePaymentScheduleService
      *
      * @return array<int,array<string,float|int>> Amortization rows (empty if out of scope / not found).
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function buildSchedule(string $leaseContractId, string $administrationId): array
     {
@@ -101,7 +101,7 @@ class LeasePaymentScheduleService
      *
      * @return int Count of rows written.
      *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+     * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
      */
     public function generateSchedule(string $leaseContractId, string $administrationId, int $fromSequence=1): int
     {

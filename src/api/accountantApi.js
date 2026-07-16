@@ -7,7 +7,7 @@
 // as a 404 (never 403), so the caller never needs to know which client
 // administrations exist beyond what the dashboard already returned.
 //
-// @spec openspec/changes/accountant-portal/specs/accountant-portal/spec.md
+// @spec openspec/specs/accountant-portal/spec.md
 
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'

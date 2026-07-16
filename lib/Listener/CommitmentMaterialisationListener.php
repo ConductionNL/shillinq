@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-010
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -58,7 +58,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-010
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
 class CommitmentMaterialisationListener implements IEventListener
 {
@@ -84,7 +84,7 @@ class CommitmentMaterialisationListener implements IEventListener
      *
      * @throws InsufficientCommitmentBudgetException When a PO approval denies for insufficient budget (fail-closed).
      *
-     * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-010
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function handle(Event $event): void
     {

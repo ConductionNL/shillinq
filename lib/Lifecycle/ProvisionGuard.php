@@ -52,7 +52,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md
+ * @spec openspec/specs/bookkeeping-voorzieningen-claims/spec.md
  */
 
 declare(strict_types=1);
@@ -72,7 +72,7 @@ use Psr\Log\LoggerInterface;
  * OCA\Shillinq\Lifecycle\ProvisionGuard::<method>. Every guard fails closed:
  * any exception or malformed input denies the transition (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md
+ * @spec openspec/specs/bookkeeping-voorzieningen-claims/spec.md
  */
 class ProvisionGuard
 {
@@ -130,7 +130,7 @@ class ProvisionGuard
      *
      * @return bool True when the provision may be activated.
      *
-     * @spec openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md
+     * @spec openspec/specs/bookkeeping-voorzieningen-claims/spec.md
      */
     public function canActivateProvision(string $provisionId, ?array $object=null): bool
     {
@@ -239,7 +239,7 @@ class ProvisionGuard
      *
      * @return bool True when the movement may be closed.
      *
-     * @spec openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md
+     * @spec openspec/specs/bookkeeping-voorzieningen-claims/spec.md
      */
     public function canCloseMovement(string $movementId, ?array $object=null): bool
     {

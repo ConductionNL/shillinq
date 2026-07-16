@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Psr\Log\LoggerInterface;
 /**
  * REST surface for the REQ-REC-004 unmatched-item resolution workflow.
  *
- * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
  */
 class ReconciliationResolutionController extends Controller
 {
@@ -106,7 +106,7 @@ class ReconciliationResolutionController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
+     * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-004)
      */
     #[NoAdminRequired]
     public function resolve(string $reconId, string $matchId): JSONResponse
@@ -179,7 +179,7 @@ class ReconciliationResolutionController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-008)
+     * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-008)
      */
     #[NoAdminRequired]
     public function bulkResolve(string $reconId): JSONResponse

@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-003)
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-003)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -319,7 +319,7 @@ class BbvComplianceGuard
      *
      * @return bool True when posting is permitted; false to block.
      *
-     * @spec openspec/changes/add-shillinq-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-003)
+     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md (REQ-BBV-003)
      */
     public function allLinesMappedForMunicipalAdmin(array $transaction): bool
     {

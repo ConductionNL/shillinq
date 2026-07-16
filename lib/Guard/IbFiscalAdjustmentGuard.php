@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md
+ * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
  * profit base. Returns the non-deductible correction (the amount that must be
  * added back to fiscal profit), never a negative value.
  *
- * @spec openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md
+ * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
  */
 class IbFiscalAdjustmentGuard
 {
@@ -74,7 +74,7 @@ class IbFiscalAdjustmentGuard
      *
      * @return float The non-deductible correction to add back to fiscal profit (>= 0).
      *
-     * @spec openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md
+     * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
      */
     public function representatieDrempel(float $representatiekosten, float $winstBasis): float
     {

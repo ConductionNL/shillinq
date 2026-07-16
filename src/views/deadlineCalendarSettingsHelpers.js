@@ -53,7 +53,7 @@ export const CATEGORY_META = [
  *
  * @param {object|null|undefined} data Raw response body ({categories: {…}}).
  * @return {Array<{id: string, label: string, description: string, enabled: boolean, leadDays: number}>}
- * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
+ * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
 export function normaliseSettings(data) {
 	const categories = (data && typeof data === 'object' && data.categories && typeof data.categories === 'object')
@@ -79,7 +79,7 @@ export function normaliseSettings(data) {
  *
  * @param {Array<{id: string, enabled: boolean, leadDays: number}>} rows The form model.
  * @return {{categories: {[key: string]: {enabled: boolean, leadDays: number}}}}
- * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
+ * @spec openspec/specs/compliance-deadline-calendar/spec.md
  */
 export function buildSavePayload(rows) {
 	const known = new Set(CATEGORY_META.map((meta) => meta.id))

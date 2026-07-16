@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-self-service-widget/specs/bookings-self-service-widget/spec.md
+ * @spec openspec/specs/bookings-self-service-widget/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use OCP\IUserSession;
 /**
  * Admin endpoints to generate, rotate, and revoke widget API keys.
  *
- * @spec openspec/changes/bookings-self-service-widget/specs/bookings-self-service-widget/spec.md
+ * @spec openspec/specs/bookings-self-service-widget/spec.md
  */
 class WidgetSettingsController extends Controller
 {

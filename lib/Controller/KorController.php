@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+ * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ use Psr\Log\LoggerInterface;
 /**
  * GET /api/kor/monitor — KOR drempel-status for an administration + year.
  *
- * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+ * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  */
 class KorController extends Controller
 {
@@ -81,7 +81,7 @@ class KorController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/tasks.md
+     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
      */
     #[NoAdminRequired]
     public function monitor(): JSONResponse

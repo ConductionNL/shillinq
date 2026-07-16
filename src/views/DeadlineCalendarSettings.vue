@@ -10,7 +10,7 @@
  immediately re-publishes the user's calendar so a disabled category's
  VEVENTs are removed (REQ-CDC-006).
 
- @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
+ @spec openspec/specs/compliance-deadline-calendar/spec.md
 -->
 <template>
 	<NcAppContent>
@@ -104,7 +104,7 @@ export default {
 	},
 
 	methods: {
-		/** @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006 */
+		/** @spec openspec/specs/compliance-deadline-calendar/spec.md */
 		async load() {
 			this.loading = true
 			this.errorMessage = ''
@@ -128,7 +128,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006 */
+		/** @spec openspec/specs/compliance-deadline-calendar/spec.md */
 		async save() {
 			this.saving = true
 			this.errorMessage = ''

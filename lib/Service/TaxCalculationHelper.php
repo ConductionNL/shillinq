@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md
+ * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,7 +45,7 @@ namespace OCA\Shillinq\Service;
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  *
- * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md
+ * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
  */
 class TaxCalculationHelper
 {
@@ -85,7 +85,7 @@ class TaxCalculationHelper
      *
      * @return int Amount in whole euro cents.
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function toCents(mixed $amount): int
     {
@@ -100,7 +100,7 @@ class TaxCalculationHelper
      *
      * @return float Money amount in euros.
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function fromCents(int $cents): float
     {
@@ -120,7 +120,7 @@ class TaxCalculationHelper
      *
      * @return int Deferred-tax balance in euro cents.
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-001
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function computeDeferredTaxCents(int $differenceInCents, int $taxRateBps): int
     {
@@ -141,7 +141,7 @@ class TaxCalculationHelper
      *
      * @return int Rate-change adjustment in euro cents.
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-005
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function computeRateChangeAdjustmentCents(int $differenceInCents, int $oldRateBps, int $newRateBps): int
     {
@@ -163,7 +163,7 @@ class TaxCalculationHelper
      *
      * @return int Utilisable loss amount in euro cents (the amount that reduces taxable income).
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-003
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function computeUtilisableLoss(int $remainingLossCents, int $availableProfitCents, string $regime): int
     {
@@ -202,7 +202,7 @@ class TaxCalculationHelper
      *
      * @return int Utilisable loss in euro cents.
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-003
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function applyFiftyCentCapLoss(int $remainingLossCents, int $availableProfitCents): int
     {
@@ -230,7 +230,7 @@ class TaxCalculationHelper
      *
      * @return int NL Vpb tax payable in euro cents.
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-003
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function computeNlVpbTaxCents(int $taxableIncomeCents): int
     {
@@ -263,7 +263,7 @@ class TaxCalculationHelper
      *
      * @return int ETR in basis points.
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-006
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function computeEffectiveTaxRateBps(int $taxExpenseCents, int $profitCents): int
     {
@@ -282,7 +282,7 @@ class TaxCalculationHelper
      *
      * @return int Sum of all taxEffect values in euro cents.
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-006
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function sumReconciliationItems(array $reconciliationItems): int
     {
@@ -316,7 +316,7 @@ class TaxCalculationHelper
      *
      * @SuppressWarnings(PHPMD.LongVariable)
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-009
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function computeMovementClosingBalance(
         int $openingBalance,
@@ -351,7 +351,7 @@ class TaxCalculationHelper
      *
      * @SuppressWarnings(PHPMD.LongVariable)
      *
-     * @spec openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md#req-dt-009
+     * @spec openspec/specs/bookkeeping-deferred-tax/spec.md
      */
     public function computeMovementRecognisedInPL(
         int $originatedInPeriod,

@@ -48,7 +48,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md
+ * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -70,7 +70,7 @@ use RuntimeException;
 /**
  * Computes, explains, resolves, and reopens AansluitingResult records.
  *
- * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md
+ * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
  */
 class AansluitingService
 {
@@ -138,7 +138,7 @@ class AansluitingService
      *
      * @return array<string,mixed> The (created or updated) AansluitingResult record.
      *
-     * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md#req-aans-004
+     * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
      */
     public function compute(string $aansluitingId, string $periodId): array
     {
@@ -231,7 +231,7 @@ class AansluitingService
      *
      * @return array<string,mixed> The updated AansluitingResult record.
      *
-     * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md#req-aans-006
+     * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
      */
     public function explain(string $resultId, string $reasonCode, string $reasonText, string $actor): array
     {
@@ -266,7 +266,7 @@ class AansluitingService
      *
      * @return array<string,mixed> The updated AansluitingResult record.
      *
-     * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md#req-aans-006
+     * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
      */
     public function resolve(string $resultId, string $actor): array
     {
@@ -301,7 +301,7 @@ class AansluitingService
      *
      * @return array<string,mixed> The updated AansluitingResult record.
      *
-     * @spec openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md#req-aans-006
+     * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
      */
     public function reopen(string $resultId, string $actor, string $reason): array
     {
