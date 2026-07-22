@@ -32,6 +32,10 @@ parameters:
         # interface" error at analysis time; only resolvable via excludePaths.
         - lib/Lifecycle/FourEyesPaymentRunGuard.php
         - lib/Lifecycle/PaymentRunDuplicateGuard.php
+        # RoleFallbackResolver implements the cross-app
+        # OCA\OpenRegister\Service\Notification\RecipientResolverInterface — same
+        # non-ignorable "implements unknown interface" class as the guards above.
+        - lib/Notification/RoleFallbackResolver.php
     scanDirectories:
         - vendor/nextcloud/ocp
     reportUnmatchedIgnoredErrors: false
