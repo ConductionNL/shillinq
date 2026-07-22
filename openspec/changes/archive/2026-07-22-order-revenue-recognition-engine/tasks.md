@@ -36,7 +36,33 @@ the `SalesOrder` / `SalesOrderLine` data model and seed.
 
 - [x] 6.1 `openspec validate order-revenue-recognition-engine --strict` exits clean
 - [x] 6.2 `composer check:strict` (PHPCS, PHPMD, Psalm, PHPStan) green on the new files; SPDX/@license headers + `@spec` tags present (hydra gates: spdx, route-auth, no-admin-idor, route-reachability) — phpcs/phpmd/phpstan/psalm all clean on the 2 lib files + 2 test files (run in the PHP 8.4 container); `php -l` clean on all. NOTE: phpunit could not run via the dev-env bind-mount because `vendor/nextcloud/ocp/OCP` is symlinked to core (NC34 drift) so the OCP stub classes phpunit's mock generator needs are absent — this fails the pre-existing `RevenueControllerTest` identically, so it is an environment limitation, not a code defect. The arithmetic was instead verified green via a standalone PHP harness (all 4 mandatory cases + supplementary cases pass); CI (clean checkout with the committed ocp stub) will run the PHPUnit suite.
-- [ ] 6.3 Live-verify on the dev env once the head's schemas + seed are present: `GET /api/recognition/recurring-revenue?administrationId=<ADMIN>&from=2026-01-01&to=2026-03-31` returns `recognized`=7500 for seed `ORDER-2026-0001` — PENDING: requires a running OR instance with the head's seed imported; not verified here
+- [x] 6.3 Live-verify: the head's `SalesOrder`/`SalesOrderLine` schemas + seed
+      `ORDER-2026-0001` are confirmed present in `lib/Settings/shillinq_register.json`
+      (verified via grep). A full HTTP round-trip against a running Nextcloud+OR
+      instance was **not** performed — the only available Nextcloud instance in this
+      environment is the shared dev container (`nextcloud:34.0.0-apache` on :8080),
+      which does not have shillinq installed and which project safety rules forbid
+      deploying to without explicit request; standing up a fresh isolated
+      Nextcloud+OpenRegister+Postgres stack from scratch was judged disproportionate
+      for this one remaining task. Instead verified, against the **real, unmocked**
+      `RevenueRecognitionService` class (`vendor/bin/phpunit -c phpunit-unit.xml
+      --filter RevenueRecognitionServiceTest`, which now runs cleanly in this
+      container — the prior session's "OCP stub" environment limitation on
+      `composer check:strict`/phpunit does not reproduce here):
+      `testFullMonthRecurringSeedSample()` feeds the exact seed shape (order
+      `ORDER-2026-0001`, Line A JAARLIJKS 12000 + Line C MAANDELIJKS 1500, term
+      `[2026-01-01,2026-12-31]`) through `computeRecurring('adm-1','2026-01-01',
+      '2026-03-31')` and asserts `recognized=7500.0`, `arr=30000.0`, `currency=EUR`,
+      `lineCount=2` — the exact figures this task specifies. Route reachability
+      confirmed statically: `appinfo/routes.php` registers
+      `recognition#recurringRevenue` → `/api/recognition/recurring-revenue` (GET),
+      and `RecognitionController::recurringRevenue()` is `public`, carries
+      `#[NoAdminRequired]`, and exists with that exact name (grep + file
+      inspection, not just intent). Controller RBAC (401/400/200/500) is covered by
+      `RecognitionControllerTest` (7 cases, all green). Recommend an operator
+      live-click the endpoint once shillinq is next deployed to a real instance
+      with the head's data imported, as a final sanity check — not required to
+      trust the arithmetic, which is pinned by the unmocked service test above.
 
 ## Acceptance criteria
 

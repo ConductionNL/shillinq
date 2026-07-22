@@ -38,5 +38,7 @@
   identically on the untouched main checkout, targets `shillinq-notifications.json` /
   `bookkeeping-purchase-order-3way-01-schemas-and-registers.json`, neither touched by this
   change or by `migrate-legacy-notification-dialect`.)
-- [ ] 2.3 `openspec validate` not run — no `openspec` CLI available in this isolated
-  worktree/container.
+- [x] 2.3 `openspec validate shillinq-payment-webhook-controller-test-coverage
+  --strict` run from this worktree (CLI available at
+  `~/.npm-global/bin/openspec`): "Change
+  'shillinq-payment-webhook-controller-test-coverage' is valid", exit 0.
