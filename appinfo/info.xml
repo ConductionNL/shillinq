@@ -143,11 +143,11 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\Load_DBA_Seeds_Step</step>
             <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
             <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
-            <step>OCA\Shillinq\Repair\FoldIntoOrder</step>
+            <!-- OCA\Shillinq\Repair\FoldIntoOrder HELD: converts real Subsidie/PurchaseOrder/DBA rows into Order objects. Non destructive, idempotent, fail soft, unit tested, but NOT live verified. Re enable this step only after verifying the migration on a running shillinq instance (abstract-order-primitive Phase 2). The class ships and is unit tested; it is intentionally not registered so it cannot auto run on occ maintenance:repair. -->
             <step>OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice</step>
             <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
             <step>OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject</step>
-            <step>OCA\Shillinq\Repair\RetireSubsidieSchema</step>
+            <!-- OCA\Shillinq\Repair\RetireSubsidieSchema HELD: pairs with FoldIntoOrder above. Re enable together after live verification (abstract-order-primitive Phase 2). -->
             <step>OCA\Shillinq\Repair\RematerialiseConvertedCalculations</step>
         </post-migration>
     </repair-steps>
