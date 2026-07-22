@@ -42,6 +42,7 @@ use OCA\Shillinq\Lifecycle\PeriodCloseGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\WBSOExportValidationGuard;
 use OCA\Shillinq\Lifecycle\WriteOffReasonGuard;
+use OCA\Shillinq\Listener\ACMReportSignTransitionListener;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
@@ -735,6 +736,21 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: \OCA\Decidesk\Event\DecisionConcludedEvent::class,
             listener: SignoffDecisionConcludedListener::class
+        );
+
+        // Change shillinq-signing-via-events (REQ-SIGN-001) — wire the
+        // declarative `ACMReport.sign` lifecycle transition (`draft` ->
+        // `ready-for-submission`, register.d/bookkeeping-market-government-
+        // separation.json) onto the docudesk document e-signature REQUEST
+        // path. The transition itself carries no handler; OpenRegister
+        // fires ObjectTransitionedEvent once it has committed, and this
+        // listener is the sole production caller of
+        // SigningDelegationService::requestSignature() for ACMReport.
+        // Without this registration the request side never fires (the
+        // orphaned-capability defect this change closes).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ACMReportSignTransitionListener::class
         );
 
         // Change shillinq-signing-via-events (REQ-SIGN-001/006) — consume the

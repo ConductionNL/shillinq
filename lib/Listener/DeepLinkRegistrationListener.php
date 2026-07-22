@@ -91,14 +91,15 @@ class DeepLinkRegistrationListener implements IEventListener
         );
 
         // Register deep link for the APTransaction (accounts-payable invoice)
-        // schema. Targets the APInvoiceDetail route declared in src/manifest.json
-        // (/bookkeeping/accounts-payable/:id, schema APTransaction). This is the
+        // schema. Targets the APTransactionDetail route declared in
+        // src/manifest.d/bookkeeping-accounts-payable-core.json
+        // (/bookkeeping/ap-transactions/:id, schema APTransaction). This is the
         // route the "Open invoice" web-push notification action deeplinks to.
         $event->register(
             appId: 'shillinq',
             registerSlug: $registerSlug,
             schemaSlug: 'APTransaction',
-            urlTemplate: '/apps/shillinq/bookkeeping/accounts-payable/{uuid}'
+            urlTemplate: '/apps/shillinq/bookkeeping/ap-transactions/{uuid}'
         );
 
     }//end handle()

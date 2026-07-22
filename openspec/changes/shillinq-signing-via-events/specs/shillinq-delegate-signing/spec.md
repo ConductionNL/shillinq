@@ -18,6 +18,18 @@ integration exception path; it owns no signing engine, PKI material, or local tr
   `isHandled()` is false OR `getSigningRequestId()` is null it MUST fail closed (throw). On
   success it MUST store the returned signing-request id as `signingRequestRef` and set
   `signingStatus = requested`.
+- `requestSignature()` MUST have a real production caller — a transport that is correctly
+  rewired but never invoked is the same defect as no transport at all. The `ACMReport.sign`
+  lifecycle transition (`draft` -> `ready-for-submission`,
+  `lib/Settings/register.d/bookkeeping-market-government-separation.json`) is purely
+  declarative (from/to/label only, no handler); `ACMReportSignTransitionListener` consumes the
+  `OCA\OpenRegister\Event\ObjectTransitionedEvent` OR fires once that transition commits,
+  filters to schema `ACMReport` + action `sign`, calls `requestSignature()`, and persists the
+  returned `signingRequestRef` + `signingStatus` back onto the object via OR `ObjectService`
+  (registered in `lib/AppInfo/Application.php`, mirroring the established
+  `*TransitionListener` pattern used elsewhere in shillinq). Fail-soft: the transition has
+  already committed by the time the event fires, so a docudesk outage on the request side logs
+  and leaves the object without a `signingRequestRef` rather than corrupting the transition.
 - A registered listener on `OCA\DocuDesk\Event\SigningConcludedEvent` MUST consume the terminal
   outcome, filtering to `getSourceApp() === 'shillinq'`, and MUST project the
   `signed` / `declined` / `expired` / `cancelled` status onto the originating finance object
@@ -39,6 +51,12 @@ integration exception path; it owns no signing engine, PKI material, or local tr
 - **GIVEN** a finance document (`ACMReport` / jaarrekening / management letter) in shillinq that requires a signature
 - **WHEN** an operator requests the signature
 - **THEN** shillinq MUST dispatch `OCA\DocuDesk\Event\DocumentSigningRequestedEvent` via `IEventDispatcher`, and only on `isHandled() === true` with a non-null `getSigningRequestId()` set `signingRequestRef` and `signingStatus = requested`; if docudesk is not installed or did not handle the event it MUST throw and MUST NOT advance, mark signed, or produce any local signature/PKI fingerprint
+
+#### Scenario: The ACMReport `sign` transition is the production trigger that reaches requestSignature()
+
+- **GIVEN** an `ACMReport` in state `draft`
+- **WHEN** it transitions via the declarative `sign` action to `ready-for-submission`
+- **THEN** OpenRegister fires `ObjectTransitionedEvent`, `ACMReportSignTransitionListener` filters to schema `ACMReport` + action `sign`, calls `SigningDelegationService::requestSignature()`, and persists the returned `signingRequestRef` + `signingStatus = requested` back onto the object; a repeated transition delivery, or an object whose `signingStatus` is already `requested` / `in-progress` / `signed`, MUST NOT raise a duplicate docudesk request
 
 #### Scenario: The concluded signing outcome is consumed by a listener and drives the local GL consequence
 
