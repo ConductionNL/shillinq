@@ -61,30 +61,45 @@ and replace singular `"recipient": {"resolver": R, "fallback": F}` with
 - [x] 2.9 `lib/Settings/register.d/bookkeeping-cbs-bestanden-extended.json` — `CBSSubmission` (onValidated, onRejected) — both converted, verified real transitions.
 - [ ] 2.10 `lib/Settings/register.d/bookkeeping-ccm-rule-engine.json` — `CcmFinding` (onCreate, onAutoEscalate) — DEFERRED. `onCreate` carries a freeform `"condition": "@self.severity in [...]"` string the `created`-trigger dispatcher does NOT read (it only reads a single-field `filter: {field, operator, value}`); converting the trigger alone would make the rule fire on EVERY finding instead of only critical/high severity ones — a behavioural regression, not a safe mechanical fix. `onAutoEscalate` (`scheduled.autoEscalate`) needs a `scheduled` trigger with `intervalSec` + a `filter` grammar match — same risk, deferred.
 - [x] 2.11 `lib/Settings/register.d/bookkeeping-emu-reporting.json` — `EMUReport.onConcept` converted to `{"type":"created"}` (verified: `EMUReport`'s lifecycle has NO `create` transition — `lifecycle.create` meant "on object creation", not a transition action; `lifecycle.indienen` correctly maps to the real `indienen` transition). `EMUReport.onIngediend` converted. `DebtPosition.onSchatkistNegatief` (`"field.instrument=='...'"`) NOT converted — deferred, non-lifecycle expression trigger.
-- [ ] 2.12 `lib/Settings/register.d/bookkeeping-market-government-separation.json` — `ACMReport` (signingStatusSigned, signingStatusDeclined, decisionOutcomeApproved, decisionOutcomeRejected) — DEFERRED. Trigger is bare string `"updated"` (also legacy — a bare string, not `{"type":"updated"}` — so equally broken) paired with a `"conditions": {...}` equality map; the dispatcher's `updated` trigger reads `condition` (singular) with an operator-map grammar (`{field: {op: value}}`), not `conditions` (plural, plain equality). Wrapping the trigger alone without also correcting the condition key/grammar would make these 4 rules fire on ANY update to the object (over-notify) rather than the intended status match — deferred as a distinct, larger dialect-mismatch needing a design decision, not covered by this change's "trigger only" description.
-- [ ] 2.13 `lib/Settings/register.d/bookkeeping-pension-ias19.json` — `ActuarialValuation` (decisionApproved, decisionRejected) — DEFERRED, same bare-`"updated"` + `conditions` mismatch as 2.12.
+- [x] 2.12 `lib/Settings/register.d/bookkeeping-market-government-separation.json` — `ACMReport` (signingStatusSigned, signingStatusDeclined, decisionOutcomeApproved, decisionOutcomeRejected) — CONVERTED. Re-verified against `AnnotationNotificationDispatcher::matches()` (openregister `lib/Service/Notification/AnnotationNotificationDispatcher.php:1582-1594`): the `updated` trigger's `condition` key is a **single-field** `{field, operator: changed|equals, value, from?}` shape (`fieldChangeConditionMatches()`), NOT the `{field: {op: value}}` operator-map previously assumed — that assumption (recorded in an earlier pass of this file) was wrong; each of these 4 rules' legacy `"conditions"` object already carries exactly one key, so the mechanical mapping is safe with zero behaviour risk: `"trigger": "updated", "conditions": {"signingStatus": "signed"}` → `"trigger": {"type": "updated", "condition": {"field": "signingStatus", "operator": "equals", "value": "signed"}}` (same pattern for `decisionOutcome`/declined/approved/rejected). Both `signingStatus` and `decisionOutcome` confirmed as real enum properties on `ACMReport` with matching enum members. Also fixed `"kind": "acl"` → `"kind": "object-acl"` on all 4 rules' second recipient — `"acl"` is not in `NotificationAnnotationValidator::VALID_RECIPIENT_KINDS` (`users, field, groups, relation, object-acl, expression`) and would have silently dropped that recipient at runtime even after the trigger fix; the shape (`{"kind": "object-acl", "permission": "manage"}`) already matches the dispatcher's `resolveObjectAclRecipients()` contract and the house convention in `tests/Unit/Service/ShillinqNotificationsFragmentTest.php`. Covered by new `tests/Unit/Service/MigratedNotificationDialectFragmentTest.php`.
+- [x] 2.13 `lib/Settings/register.d/bookkeeping-pension-ias19.json` — `ActuarialValuation` (decisionApproved, decisionRejected) — CONVERTED, same pattern as 2.12 (single-field `decisionOutcome` condition + `acl`→`object-acl` recipient fix). Covered by the same new test file.
 - [x] 2.14 `lib/Settings/register.d/bookkeeping-rechtmatigheidsverantwoording.json` — `Rechtmatigheidsparagraaf.onConcept` converted to `{"type":"created"}` (verified no `create`/matching transition exists; no condition attached, safe). `Rechtmatigheidsbevinding.onBudgetOvershoot` NOT converted — deferred: its `"condition": {criterium, soort}` is a 2-field AND that the `created`-trigger's single-field `filter` shape cannot express without an engine change.
 - [x] 2.15 `lib/Settings/register.d/bookkeeping-sbr-xbrl-reporting.json` — `SBRDocumentType.onRejected` converted (verified `reject` is a real transition). `filingDeadlineApproaching` NOT converted — deferred: its custom `schedule: {fireAt, skipIf}` shape needs translation to the canonical `scheduled` trigger's `intervalSec`/`filter` grammar, a bigger design decision than a mechanical wrap.
 - [x] 2.16 `lib/Settings/register.d/bookkeeping-single-audit-eu-fondsen.json` — `EuExpenditure.onSubmitted` converted (verified `submit` transition). `IrregularityReport.onCreated` converted to `{"type":"created"}` (verified no `create` transition exists on this schema either — same "lifecycle.create actually means object-creation" pattern as EMUReport; no condition attached, safe).
 - [x] 2.17 `lib/Settings/register.d/bookkeeping-subsidie-verantwoording.json` — `SubsidieVerantwoording` (onSubmitted, onApproved, onFinal), `AuditorStatement` (onUnderReview, onApproved, onRejected, onConditional) — all 7 rules converted: triggers to canonical `{type:transition, action}` (all 7 actions verified against this schema's own lifecycle transitions), recipients to `RoleFallbackResolver::financeOfficer` / `::subsidieCoordinator` expression resolvers, and `title` renamed to `subject` (the dispatcher reads `subject`, not `title` — required for these rules to pass `NotificationAnnotationValidator`'s subject check and actually dispatch).
-- [ ] 2.18 `lib/Settings/register.d/bookkeeping-titel-9-jaarrekening.json` — `AnnualReport` (adoptionApproved, adoptionRejected) — DEFERRED, same bare-`"updated"` + `conditions` mismatch as 2.12/2.13.
+- [x] 2.18 `lib/Settings/register.d/bookkeeping-titel-9-jaarrekening.json` — `AnnualReport` (adoptionApproved, adoptionRejected) — CONVERTED, same pattern as 2.12/2.13 (single-field `decisionOutcome` condition + `acl`→`object-acl` recipient fix). Covered by the same new test file.
 - [ ] 2.19 `lib/Settings/register.d/recurring-invoicing.json` — `RecurringInvoiceProfile` (onDraftGenerated, onGenerationFailed, onProfileEndingSoon, onIndexationApplied) — DEFERRED. None of the 4 triggers (`generation.draft`, `field-change`+field, `scheduled` bare, `generation.indexation`) are `lifecycle.*` strings; each needs its own non-trivial mapping decision (calculatedChange field-condition grammar, scheduled intervalSec, or a trigger type this dialect doesn't have at all) that risks behavioural change if guessed.
 
-**Net result of task 2**: 11 of 19 files fully or mostly converted (2.1, 2.2 partial, 2.3 partial, 2.4, 2.8, 2.9, 2.11 partial, 2.14 partial, 2.15 partial, 2.16, 2.17) restoring dispatch for roughly 30 of the 48 originally-broken rules (all the unambiguous `lifecycle.<transition-action>` and clear "on object creation" cases). The remaining ~18 rules across 8 files (2.5, 2.6, 2.7, 2.10, 2.12, 2.13, 2.18, 2.19 fully; parts of 2.2/2.3/2.11/2.14/2.15) use non-`lifecycle.*` legacy shapes (custom `booking.*` event dialect, bare-`"updated"`+`conditions` equality maps, freeform `condition` expression strings, custom `schedule` blocks) that this change's own scope description ("trigger only") undersells — converting them safely requires either extending the OR dispatcher's condition/filter grammar or a per-rule design decision, not a mechanical string-to-object wrap. Left as-is (unchanged behaviour, not worse than before) with the rationale recorded above per rule.
+**Net result of task 2**: 14 of 19 files fully or mostly converted (2.1, 2.2 partial, 2.3 partial, 2.4, 2.8, 2.9, 2.11 partial, 2.12, 2.13, 2.14 partial, 2.15 partial, 2.16, 2.17, 2.18) restoring dispatch for roughly 38 of the 48 originally-broken rules. The 2.12/2.13/2.18 bare-`"updated"`+`conditions` mismatch flagged in an earlier pass of this file turned out to be a **misreading of the dispatcher's grammar**, not a real design gap — re-checking `AnnotationNotificationDispatcher::matches()`/`fieldChangeConditionMatches()` directly (rather than trusting the earlier note) showed the `updated` trigger's `condition` is single-field, exactly matching what these 8 rules' single-key `conditions` objects already express, so all 8 converted mechanically with zero behaviour change (see 2.12/2.13/2.18 notes). The remaining ~10 rules across 5 files (2.5, 2.6, 2.7, 2.10, 2.19 fully; parts of 2.2/2.3/2.11/2.14/2.15) use non-`lifecycle.*` legacy shapes (custom `booking.*` event dialect with `@self.`-driven meta-triggers/`skipWhen`/`audit` blocks entirely outside `NotificationAnnotationValidator::VALID_TRIGGERS`; `CcmFinding`'s rules are consumed by shillinq's own bespoke `CcmRuleEngine` service, not OR's dispatcher, confirmed via `grep -rl CcmRuleEngine lib`; freeform `condition` expression strings; custom `schedule` blocks) that converting safely requires either extending the OR dispatcher's trigger vocabulary or a per-rule design decision, not a mechanical string-to-object wrap. Left as-is (unchanged behaviour, not worse than before) with the rationale recorded above per rule.
 
 ## 3. Add the declarative overdue rule for SubsidieVerantwoording
 
-- [ ] 3.1 DEFERRED. `SubsidieVerantwoording` has no `awardDate` field; the
-      original job derived the reference date by splitting `reportingPeriod`
-      (format `"2024-01-01 to 2024-12-31"`) on `" to "` and taking the first
-      10 chars. OR's `x-openregister-calculations` operator vocabulary
-      (`CalculationAnnotationValidator::VALID_OPS`) has no substring/split
-      operator, so this exact rule cannot be expressed declaratively without
-      either (a) adding a real `awardDate` field to the schema, or (b)
-      extending the calc engine with a string-split op — both are schema/
-      engine design decisions out of safe scope for a dialect-migration pass.
-      Not attempted, to avoid fabricating an incorrect calculation for
-      real financial/compliance logic.
+- [ ] 3.1 DEFERRED — re-verified independently (not just re-reading this
+      note): pulled the deleted `OverdueVerantwoordingJob.php` back out of
+      git history (`git show <pre-deletion-sha>:lib/BackgroundJob/OverdueVerantwoordingJob.php`)
+      to check the *actual* runtime call, not just the method signature —
+      `run()` calls `isOverdue(verantwoording: $record, now: $now)` and
+      **never supplies `$awardDate`**, so in production the "explicit award
+      date" branch was always dead code; every real invocation split
+      `reportingPeriod` (format `"2024-01-01 to 2024-12-31"`) on `" to "`
+      and parsed the first segment. `SubsidieVerantwoording`'s schema
+      (`lib/Settings/register.d/bookkeeping-subsidie-verantwoording.json`)
+      confirmed to have no `awardDate` field — only `reportDate` (report
+      generation date, not award date — not a safe substitute, would
+      change which reports are flagged overdue) and `reportingPeriod`
+      (the composite string). Confirmed `CalculationAnnotationValidator::VALID_OPS`
+      (openregister `lib/Service/Calculation/CalculationAnnotationValidator.php:61-94`)
+      has no substring/split/explode operator in its 29-op vocabulary
+      (`prop, lit, concat, if, not, and, or, +, -, *, /, %, eq, ne, lt,
+      lte, gt, gte, now, diffDays, formatDate, dateDiff, dateAdd, sequence,
+      max, min, coalesce, abs, round, year, monthsElapsed, sha256`) — so
+      `reportingPeriod`'s start date genuinely cannot be extracted
+      declaratively today. Still requires either (a) adding a real
+      `awardDate` field to the schema, or (b) extending the calc engine
+      with a string-split op — both schema/engine design decisions out of
+      safe scope for a dialect-migration pass. Not attempted, to avoid
+      fabricating an incorrect calculation for real financial/compliance
+      logic.
 - [ ] 3.2 DEFERRED (blocked by 3.1 — no `isOverdue` calculated field to
       filter on).
 
@@ -118,7 +133,16 @@ and replace singular `"recipient": {"resolver": R, "fallback": F}` with
       singular `"recipient":` in the files actually converted; remaining
       occurrences elsewhere are unrelated schema fields/blocks (verified
       by inspection, documented per-file in task 2 above) or the
-      explicitly-deferred rules.
+      explicitly-deferred rules. Additionally ran hydra's actual
+      `check_notification_dialect.py` scanner (the exact script backing
+      `hydra-gate-notification-dialect`) against every `register.d/*.json`
+      file: zero findings on the 3 newly-converted files (2.12/2.13/2.18)
+      and zero findings on every previously-converted file; the only
+      remaining hits are the legitimate `@self.<field>` message-template
+      interpolation syntax already used by the canonical, merged
+      `bookkeeping-subsidie-verantwoording.json` (2.17) — a gate false
+      positive, not a real legacy-dialect marker — plus the
+      explicitly-deferred booking/CCM/recurring-invoicing files.
 - [x] 5.4 Ran the hydra mechanical gates that apply to this app locally
       (phpcs.xml custom sniffs, phpcs, phpunit) — see gate results in the
       final report; the repo-level `run-hydra-gates.sh` orchestrator itself
@@ -127,5 +151,6 @@ and replace singular `"recipient": {"resolver": R, "fallback": F}` with
       on new/changed PHP, phpmd clean on new PHP, phpunit-unit green.
       Psalm/PHPStan not run (not requested by the calling brief's gate
       list; can be added on request).
-- [ ] 5.6 `openspec validate` not run (no `openspec` CLI available in this
-      isolated worktree/container).
+- [x] 5.6 `openspec validate migrate-legacy-notification-dialect --strict`
+      run from the worktree (openspec CLI 1.2.0 available at
+      `~/.npm-global/bin/openspec`) — `Change 'migrate-legacy-notification-dialect' is valid`.
