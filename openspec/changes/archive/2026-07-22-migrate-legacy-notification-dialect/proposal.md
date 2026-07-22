@@ -1,5 +1,21 @@
 # Change: migrate-legacy-notification-dialect
 
+> **Scope (narrowed on archive, 2026-07-22):** this change covers the
+> **bare-`lifecycle.*`-string dialect bug** on the register fragments consumed
+> by OpenRegister's `AnnotationNotificationDispatcher` — ~38 of the 48 rules,
+> across the 14 files listed `[x]` in tasks.md, are migrated to the canonical
+> dialect and dispatch again. The remaining ~10 rules (5 files) are marked
+> **OUT OF SCOPE** in tasks.md and deferred to a follow-up change: they use
+> shapes that are *not* the lifecycle-string bug — the custom `booking.*`
+> event dialect (`@self`-driven meta-triggers, `selectBy`/`scheduleOffsetHours`,
+> outside OR's `VALID_TRIGGERS`), `CcmFinding` rules consumed by shillinq's own
+> `CcmRuleEngine` (not OR's dispatcher), freeform `condition` expression
+> strings, and the `SubsidieVerantwoording.isOverdue` calc which needs either a
+> new `awardDate` schema field or a string-split calc operator that
+> OpenRegister does not have. Converting those safely requires OR-engine or
+> schema design decisions, not a mechanical migration — see the per-rule
+> rationale in tasks.md and the follow-up items.
+
 ## Why
 
 19 register fragments under `lib/Settings/register.d/*.json` declare
