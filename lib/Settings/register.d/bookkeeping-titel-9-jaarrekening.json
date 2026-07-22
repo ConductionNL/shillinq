@@ -392,9 +392,13 @@
         },
         "x-openregister-notifications": {
           "adoptionApproved": {
-            "trigger": "updated",
-            "conditions": {
-              "decisionOutcome": "approved"
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "decisionOutcome",
+                "operator": "equals",
+                "value": "approved"
+              }
             },
             "recipients": [
               {
@@ -402,7 +406,7 @@
                 "field": "owner"
               },
               {
-                "kind": "acl",
+                "kind": "object-acl",
                 "permission": "manage"
               }
             ],
@@ -417,9 +421,13 @@
             "metadataOnly": true
           },
           "adoptionRejected": {
-            "trigger": "updated",
-            "conditions": {
-              "decisionOutcome": "rejected"
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "decisionOutcome",
+                "operator": "equals",
+                "value": "rejected"
+              }
             },
             "recipients": [
               {
@@ -427,7 +435,7 @@
                 "field": "owner"
               },
               {
-                "kind": "acl",
+                "kind": "object-acl",
                 "permission": "manage"
               }
             ],
