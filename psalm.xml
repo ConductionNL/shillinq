@@ -71,6 +71,8 @@
                 <referencedClass name="OCA\OpenRegister\Event\ObjectDeletedEvent"/>
                 <referencedClass name="OCA\OpenRegister\Event\ObjectTransitionedEvent"/>
                 <referencedClass name="OCA\OpenRegister\Service\ObjectService"/>
+                <referencedClass name="OCA\OpenRegister\Service\Aggregation\AggregationQuery"/>
+                <referencedClass name="OCA\OpenRegister\Service\Notification\RecipientResolverInterface"/>
                 <referencedClass name="OCA\OpenRegister\Service\ConfigurationService"/>
                 <referencedClass name="OCA\OpenRegister\Service\RegisterService"/>
                 <referencedClass name="OCA\OpenRegister\Service\FileService"/>
@@ -90,6 +92,7 @@
                 <referencedClass name="OCA\Decidesk\Event\DecisionRequestedEvent"/>
                 <!-- DocuDesk cross-app dep (document signing) -->
                 <referencedClass name="OCA\DocuDesk\Event\SigningConcludedEvent"/>
+                <referencedClass name="OCA\DocuDesk\Event\FinancialExtractionCompletedEvent"/>
                 <referencedClass name="OCA\DocuDesk\Event\DocumentSigningRequestedEvent"/>
                 <!-- PhpOffice\PhpWord — available at runtime via NC app deps -->
                 <referencedClass name="PhpOffice\PhpWord\PhpWord"/>

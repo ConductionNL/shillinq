@@ -43,6 +43,7 @@ use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
 use OCA\Shillinq\Lifecycle\WBSOExportValidationGuard;
 use OCA\Shillinq\Lifecycle\WriteOffReasonGuard;
 use OCA\Shillinq\Listener\ACMReportSignTransitionListener;
+use OCA\Shillinq\Listener\AnnualReportSignoffRequestListener;
 use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;

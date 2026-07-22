@@ -497,7 +497,14 @@ class RecurringSeriesService
     private function weekAnchor(DateTimeImmutable $day): DateTimeImmutable
     {
         $isoDow = (int) $day->format('N');
-        return $day->setTime(0, 0, 0)->modify('-'.($isoDow - 1).' days');
+        $anchor = $day->setTime(0, 0, 0)->modify('-'.($isoDow - 1).' days');
+        if ($anchor === false) {
+            // Unreachable: `-0..-6 days` is always a valid relative modifier;
+            // guard only to satisfy the DateTimeImmutable|false return contract.
+            throw new \RuntimeException('weekAnchor: unexpected DateTime modify failure');
+        }
+
+        return $anchor;
 
     }//end weekAnchor()
 
