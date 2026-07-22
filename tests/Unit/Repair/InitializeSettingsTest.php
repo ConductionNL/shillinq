@@ -138,7 +138,7 @@ class InitializeSettingsTest extends TestCase
             ->willReturn(false);
 
         $this->settingsService->expects($this->never())
-            ->method('loadConfigurationForced');
+            ->method('loadConfiguration');
 
         $this->output->expects($this->once())
             ->method('warning')
@@ -162,7 +162,7 @@ class InitializeSettingsTest extends TestCase
             ->willReturn(true);
 
         $this->settingsService->expects($this->once())
-            ->method('loadConfigurationForced')
+            ->method('loadConfiguration')
             ->willReturn(['success' => true, 'version' => '0.3.0']);
 
         // The default Administration seed (Task 14) runs first; stub it green.
@@ -237,7 +237,7 @@ class InitializeSettingsTest extends TestCase
             ->willReturn(true);
 
         $this->settingsService->expects($this->once())
-            ->method('loadConfigurationForced')
+            ->method('loadConfiguration')
             ->willReturn(['success' => true, 'version' => '0.2.0']);
 
         // The default Administration is seeded regardless of administration_id (REQ-MA-001);
@@ -286,7 +286,7 @@ class InitializeSettingsTest extends TestCase
             ->willReturn(true);
 
         $this->settingsService->expects($this->once())
-            ->method('loadConfigurationForced')
+            ->method('loadConfiguration')
             ->willReturn(['success' => false, 'message' => 'Config import error']);
 
         // H2: seedRgsTemplate and seedAllocationRules must NOT be called when schema import failed.
@@ -321,7 +321,7 @@ class InitializeSettingsTest extends TestCase
             ->willReturn(true);
 
         $this->settingsService->expects($this->once())
-            ->method('loadConfigurationForced')
+            ->method('loadConfiguration')
             ->willReturn(['success' => true, 'version' => '0.2.0', 'skipped' => false]);
 
         $this->settingsService->expects($this->atLeastOnce())
