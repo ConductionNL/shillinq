@@ -25992,7 +25992,8 @@
       "@self": {
         "register": "shillinq",
         "schema": "GLTransaction",
-        "slug": "gl-txn-2026-q1-revenue"
+        "slug": "gl-txn-2026-q1-revenue",
+        "id": "b05aafc6-0987-4b44-bbf8-3efaa32cf2d8"
       },
       "transactionNumber": "GL-2026-0001",
       "postingDate": "2026-01-31",
@@ -26037,9 +26038,10 @@
         "schema": "GLLine",
         "slug": "gl-line-revenue-1-debit"
       },
-      "transactionId": "gl-txn-2026-q1-revenue",
+      "transactionId": "b05aafc6-0987-4b44-bbf8-3efaa32cf2d8",
       "lineNumber": 1,
       "accountNumber": "1300",
+      "accountRef": "0d2af6c3-c69b-4e76-abdc-20639e2be795",
       "side": "debit",
       "amount": 12100.0,
       "currency": "EUR",
@@ -26051,9 +26053,10 @@
         "schema": "GLLine",
         "slug": "gl-line-revenue-2-credit-revenue"
       },
-      "transactionId": "gl-txn-2026-q1-revenue",
+      "transactionId": "b05aafc6-0987-4b44-bbf8-3efaa32cf2d8",
       "lineNumber": 2,
       "accountNumber": "8000",
+      "accountRef": "e7186cdc-aa76-4fac-9a51-1590af7bcf7c",
       "side": "credit",
       "amount": 10000.0,
       "currency": "EUR",
@@ -26065,9 +26068,10 @@
         "schema": "GLLine",
         "slug": "gl-line-revenue-3-credit-vat"
       },
-      "transactionId": "gl-txn-2026-q1-revenue",
+      "transactionId": "b05aafc6-0987-4b44-bbf8-3efaa32cf2d8",
       "lineNumber": 3,
       "accountNumber": "1510",
+      "accountRef": "d9bec692-d4a6-4353-b309-1c7449be9fe7",
       "side": "credit",
       "amount": 2100.0,
       "currency": "EUR",
@@ -27202,6 +27206,97 @@
       "validationErrors": [],
       "submittedAt": "2026-04-10T10:30:00Z",
       "fileUri": "docudesk://attachments/shillinq/wbso-2026-q1.csv",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Account",
+        "slug": "account-ar-1300",
+        "id": "0d2af6c3-c69b-4e76-abdc-20639e2be795"
+      },
+      "accountNumber": "1300",
+      "name": "Debiteuren",
+      "accountType": "assets",
+      "currency": "EUR",
+      "administrationId": "adm-consultancy-nl",
+      "lifecycleState": "active",
+      "description": "AR control account referenced by GLLine.accountRef (model-or-references-pilot Cluster A)."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Account",
+        "slug": "account-revenue-8000",
+        "id": "e7186cdc-aa76-4fac-9a51-1590af7bcf7c"
+      },
+      "accountNumber": "8000",
+      "name": "Omzet consultancy",
+      "accountType": "revenue",
+      "currency": "EUR",
+      "administrationId": "adm-consultancy-nl",
+      "lifecycleState": "active",
+      "description": "Consulting revenue account referenced by GLLine.accountRef (model-or-references-pilot Cluster A)."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Account",
+        "slug": "account-vat-payable-1510",
+        "id": "d9bec692-d4a6-4353-b309-1c7449be9fe7"
+      },
+      "accountNumber": "1510",
+      "name": "Te betalen omzetbelasting",
+      "accountType": "liabilities",
+      "currency": "EUR",
+      "administrationId": "adm-consultancy-nl",
+      "lifecycleState": "active",
+      "description": "VAT-payable account referenced by GLLine.accountRef (model-or-references-pilot Cluster A)."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CustomerMaster",
+        "slug": "customer-master-demo",
+        "id": "f7289fb3-3597-4d68-8e84-9b4c73200abe"
+      },
+      "customerNumber": "C-2026-001",
+      "name": "Demo Klant BV",
+      "kvkNumber": "87654321",
+      "btwNumber": "NL876543210B01",
+      "paymentTermDays": 30,
+      "defaultRevenueAccountNumber": "8000",
+      "email": "facturen@democonsult.nl",
+      "administrationId": "adm-consultancy-nl",
+      "lifecycleState": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ARInvoice",
+        "slug": "ar-invoice-demo",
+        "id": "cea78cc8-20fd-405d-bd2b-07e0cbbf9153"
+      },
+      "invoiceNumber": "INV-2026-0042",
+      "customerId": "f7289fb3-3597-4d68-8e84-9b4c73200abe",
+      "invoiceDate": "2026-01-15",
+      "dueDate": "2026-02-14",
+      "currency": "EUR",
+      "totalAmount": 12100.0,
+      "taxAmount": 2100.0,
+      "lines": [
+        {
+          "description": "Q1 consulting services",
+          "accountNumber": "8000",
+          "amount": 10000.0,
+          "vatRate": 21,
+          "vatAmount": 2100.0,
+          "serviceCategory": "service"
+        }
+      ],
+      "state": "issued",
+      "glTransactionId": "b05aafc6-0987-4b44-bbf8-3efaa32cf2d8",
+      "periodId": "2026-Q1",
       "administrationId": "adm-consultancy-nl"
     }
   ]

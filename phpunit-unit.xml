@@ -25,6 +25,12 @@
                 tasks.md 5.2/5.3.
             -->
             <file>tests/Integration/SalesOrderSeedDataIntegrationTest.php</file>
+            <!--
+                model-or-references-pilot (kind:config, ADR-032): same pure
+                declarative (register-JSON + seed-fixture) shape, no
+                OpenRegister runtime dependency. See tasks.md #verification.
+            -->
+            <file>tests/Integration/ModelOrReferencesPilotSeedIntegrationTest.php</file>
         </testsuite>
     </testsuites>
 
