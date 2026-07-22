@@ -674,6 +674,12 @@
 					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Subsidie with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
 				}
 			},
+			"Order": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Order (subsidie/purchase/engagement) with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
 			"TaxEstimate": {
 				"x-openregister-audit-trail": {
 					"enabled": true,

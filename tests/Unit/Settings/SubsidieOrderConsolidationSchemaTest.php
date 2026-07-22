@@ -10,8 +10,10 @@
  *    fields — no regulatory field dropped (regeling/beschikking/vaststelling,
  *    the five state-amounts, prestatie-verantwoording, repayment) AND the
  *    English operations fields + subsidieRegeling folded in;
- *  - the generic `Order` slug is freed (renamed to `BookingOrder`) while
- *    `SalesOrder` / `PurchaseOrder` remain their own schemas.
+ *  - the generic `Order` slug was freed (renamed to `BookingOrder`) while
+ *    `SalesOrder` / `PurchaseOrder` remain their own schemas, and is now
+ *    claimed EXACTLY ONCE by the abstract-order-primitive change (no
+ *    re-collision).
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Settings
@@ -179,7 +181,15 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase
     {
         $slugs = array_column($this->allSchemaDefinitions(), 'slug');
 
-        $this->assertNotContains('Order', $slugs, 'Generic Order slug must be freed for the abstract primitive');
+        // The slug was freed by this change and is now claimed EXACTLY ONCE
+        // by abstract-order-primitive's shipped Order primitive — a second
+        // definition would be the exact collision this prereq change existed
+        // to prevent.
+        $this->assertSame(
+            1,
+            count(array_filter($slugs, static fn (string $slug): bool => $slug === 'Order')),
+            'Order slug must be claimed exactly once (by the abstract-order-primitive primitive)'
+        );
         $this->assertContains('BookingOrder', $slugs, 'Booking order must be renamed to BookingOrder');
         $this->assertContains('SalesOrder', $slugs, 'SalesOrder must remain its own schema');
         $this->assertContains('PurchaseOrder', $slugs, 'PurchaseOrder must remain its own schema');
