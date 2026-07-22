@@ -68,5 +68,7 @@
       stub-scan has strictly less surface than before. The repo-level
       `run-hydra-gates.sh` orchestrator itself was not invoked (out of scope
       for an isolated single-app worktree).
-- [ ] 4.5 `openspec validate` not run — no `openspec` CLI available in this
-      isolated worktree/container.
+- [x] 4.5 `openspec validate remove-dead-notification-orchestration-stack
+      --strict` run from this worktree (CLI available at
+      `~/.npm-global/bin/openspec`): "Change
+      'remove-dead-notification-orchestration-stack' is valid", exit 0.
