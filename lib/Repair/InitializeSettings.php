@@ -128,10 +128,22 @@ class InitializeSettings implements IRepairStep
         }
 
         try {
-            // C8: use loadConfigurationForced() so OR's per-register/per-schema
-            // version_compare provides the real idempotency — no silent no-ops on
-            // routine upgrades when the shillinq_register.json version hasn't changed.
-            $result = $this->settingsService->loadConfigurationForced();
+            // NOT forced. The C8 workaround used to force this import because OpenRegister's
+            // app-level gate compared only the APP version, so a shillinq_register.json change
+            // silently no-op'd whenever the app version was unchanged. Forcing dodged that, but
+            // `force: true` also bypasses OR's app-level fast-skip entirely — so this step
+            // re-parsed the 1 MB descriptor + 146 register.d fragments and walked every
+            // register/schema on EVERY upgrade, to conclude "nothing changed": 711s, ~70% of the
+            // instance's whole `occ maintenance:repair`.
+            //
+            // OpenRegister#426 removed the reason to force: its gate is now content-aware
+            // (app version NOT newer AND a sha256 of the definitional payload identical to the
+            // last import). A descriptor change therefore re-imports even when the app version
+            // is unchanged — exactly what C8 wanted — while a genuinely unchanged config
+            // fast-skips in milliseconds. Requires an OpenRegister that ships #426; on an older
+            // one this degrades to the app-version-only gate (fast, but a content change with an
+            // unchanged app version would no-op again — bump the app version to force it).
+            $result = $this->settingsService->loadConfiguration();
 
             if ($result['success'] === true) {
                 $skipped = (($result['skipped'] ?? false) === true);
