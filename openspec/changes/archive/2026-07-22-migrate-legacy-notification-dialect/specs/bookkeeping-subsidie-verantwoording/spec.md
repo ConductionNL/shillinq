@@ -1,6 +1,6 @@
 # Spec: bookkeeping-subsidie-verantwoording (delta)
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: SubsidieVerantwoording notification rules SHALL use the canonical `x-openregister-notifications` dialect
 
@@ -30,31 +30,14 @@ NC-group semantics in PHP.
 - **WHEN** an operator transitions it to `submitted` (the `submit` lifecycle action)
 - **THEN** `AnnotationNotificationDispatcher` MUST resolve at least one recipient via `RoleFallbackResolver::finance-officer` (falling back to the configured fallback NC group when the primary group has zero members) and dispatch the declared notification — replacing the current silent no-op caused by the missing `recipients` key
 
-## ADDED Requirements
+<!--
+  OUT OF SCOPE (deferred to follow-up): the declarative `isOverdue` calculated
+  field + `onOverdue` scheduled rule are NOT part of this narrowed change —
+  they need either a new `awardDate` schema field or a string-split calc
+  operator OpenRegister does not have (see tasks 3.1/3.2). ⚠️ FOLLOW-UP GAP:
+  the bespoke `OverdueVerantwoordingJob` was already deleted on development, so
+  overdue-report notification currently has NO implementation (neither the job
+  nor the declarative replacement). This must be restored by the follow-up
+  change.
+-->
 
-### Requirement: Overdue accountability reports SHALL be flagged via a declarative calculated field and notified via a scheduled rule
-
-`SubsidieVerantwoording` MUST declare `x-openregister-calculations.isOverdue`
-as a pure function of `status` (non-final: `draft`/`submitted`/`approved`)
-and the elapsed days since the award date (explicit award date, or the
-`reportingPeriod` start when absent) exceeding 90 days — porting the exact
-rule from the (to-be-deleted) `OverdueVerantwoordingJob::isOverdue()`. The
-schema MUST also declare an `onOverdue` notification rule with
-`trigger: {type: "scheduled", intervalSec: 86400, filter: {isOverdue:
-true}}` and `recipients: [{"kind": "field", "field": "approverUserId"}]`.
-The bespoke `lib/BackgroundJob/OverdueVerantwoordingJob.php` and
-`lib/Notification/Notifier.php` (a hand-rolled `INotifier` registered via
-`registerNotifierService()`) MUST be removed — OpenRegister's own
-`AnnotationNotifier` renders the declarative rule instead.
-
-#### Scenario: An overdue report notifies its approver on the daily schedule
-
-- **GIVEN** a `SubsidieVerantwoording` object in state `submitted` whose award date is more than 90 days in the past and whose `approverUserId` field holds a valid Nextcloud uid
-- **WHEN** the scheduled notification engine evaluates the `onOverdue` rule on its 24-hour interval
-- **THEN** the calculated `isOverdue` field MUST evaluate `true`, the rule's `filter` MUST match, and the engine MUST notify the user identified by `approverUserId` — with no dedicated `OverdueVerantwoordingJob` TimedJob class present in the codebase
-
-#### Scenario: A report with no assigned approver notifies nobody
-
-- **GIVEN** an overdue `SubsidieVerantwoording` object whose `approverUserId` field is empty
-- **WHEN** the scheduled `onOverdue` rule evaluates
-- **THEN** the `field` recipient kind MUST resolve to zero recipients and no notification MUST be dispatched — preserving the current job's "no assigned approver" skip behaviour
