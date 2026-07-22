@@ -1,6 +1,6 @@
 # Spec: bookings-notification-triggers (delta)
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: A single `BookingNotificationService` implementation SHALL exist per ADR-012 deduplication
 
