@@ -84,8 +84,64 @@ reachability.
 
 ## Follow-up (not done here)
 
-- Implement option (a) (or re-evaluate against `useAppManifest`) as its own
-  change, with a design review covering the loading-state UX and deep-link
-  guard behaviour called out above.
 - Wire `check:manifest` / `check:manifest-budget` / `check:registers` into
   the app's CI workflow.
+
+## Addendum — option (a) implemented via a route-static, page-lazy variant (task 2.2)
+
+The four risk items above assumed option (a)'s literal shape: a MINIMAL
+initial route table (`router.addRoute()` on navigation-into-group) plus a
+new loading-state component plus an async deep-link guard plus
+re-validating `useAppManifest` for a new per-fragment-fetch use case. On
+closer reading of `CnPageRenderer`'s actual dependency shape
+(`node_modules/@conduction/nextcloud-vue/src/components/CnPageRenderer/
+CnPageRenderer.vue`: `pageById` is a `Map<id, page>` built from
+`manifest.pages`, and `resolvedProps` reactively reads `currentPage.config`)
+a materially lower-risk variant sidesteps three of those four items
+entirely, and was implemented:
+
+- **Routes stay 100% static from boot** — a new build step
+  (`scripts/generate-manifest-shell.js`, wired as `prebuild`/`predev`/
+  `prewatch`/`pretest:unit`) projects every `manifest.d/*.json` fragment down
+  to a SLIM shell (`id`/`route`/`type`/`title` per page, full `menu` tree —
+  ~15-20% of a fragment's bytes; `config`, the bulk, is dropped) into the
+  committed `src/manifest.d.shell.json`. `src/main.js` builds `mergedManifest`
+  (now `Vue.observable()`-wrapped) and the ENTIRE route table from the shell,
+  not the full fragments — so risk item 1 (route restructure) and risk item 3
+  (async deep-link guard / 404 fallback) do not apply: every route is known
+  and registered upfront exactly as before, deep links always resolve.
+- **Only each page's `config` is deferred**, fetched via
+  `require.context('./manifest.d/', false, /\.json$/, 'lazy')` (webpack
+  code-splits each fragment into its own chunk — verified: 80 separate
+  `shillinq-src_manifest_d_*_json.js` chunk files emitted by `npm run build`,
+  none of the 80 fragments' full content present in `shillinq-main.js`) and
+  merged in place via `src/utils/mergeFragmentIntoManifest.js`'s
+  `mergeFullFragmentIntoManifest`, gated by a `router.beforeEach` guard that
+  awaits the load before calling `next()`.
+- **No bespoke loading-state component (risk item 2) was needed**: vue-router
+  keeps the FROM view mounted until an async `beforeEach` guard's `next()`
+  resolves, so the round-trip is naturally masked for the fast/common case; a
+  failed/slow load is caught and logged (`console.warn`), then `next()` is
+  still called with the slim page data rather than blocking navigation —
+  satisfying the proposal's BREAKING-caveat requirement to mask, not
+  surface, the round-trip without new UI.
+- **`useAppManifest` (risk item 4) is untouched** — this is a purely local
+  `main.js` + one new util + one new build script change; the shared
+  `@conduction/nextcloud-vue` ADR-036 async backend-merge path is not
+  exercised or modified.
+- **The load-bearing subtlety** — Vue 2 does not auto-track a brand-new
+  object property (the slim page objects never declare `config`) — is
+  handled with `Vue.set()` in `mergeFullFragmentIntoManifest`, and PROVEN
+  (not just asserted) by `tests/vitest/mergeFragmentIntoManifest.spec.js`'s
+  reactivity test: a Vue `computed` reading `page.config` — the same
+  dependency shape as `CnPageRenderer.resolvedProps` — transitions from
+  `undefined` to the merged value after the lazy merge runs, with no
+  `nextTick`/remount involved.
+- **What was NOT live-browser-verified** — matching this change's own
+  established bar (task 1.3 / 3.1 already accept "no running instance
+  available in this isolated worktree"): an actual in-browser navigation
+  into a lazy-loaded feature area was not click-tested. What IS verified in
+  this worktree: `npm run build` succeeds and emits one chunk per fragment
+  (not bundled into `main`), `node tests/validate-manifest.js` passes,
+  `npx vitest run` passes (167 tests, including the reactivity proof above),
+  and ESLint is clean on every changed source file.
