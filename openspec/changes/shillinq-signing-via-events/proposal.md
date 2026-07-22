@@ -44,6 +44,15 @@ is **not touched** here.
   consequence on `signed`. Registered in `lib/AppInfo/Application.php`.
 - Fail-closed (never sign on local authority) and the local GL consequence are preserved
   exactly (REQ-SIGN-001 / 003 / 006).
+- **Orphaned-capability fix (2026-07-22):** the rewired transport had **zero production
+  callers** — `requestSignature()` was correct but nothing invoked it, because the
+  `ACMReport.sign` transition (`draft` -> `ready-for-submission`,
+  `bookkeeping-market-government-separation.json`) is purely declarative with no handler. A
+  new `ACMReportSignTransitionListener` consumes `ObjectTransitionedEvent`, filters to schema
+  `ACMReport` + action `sign`, calls `requestSignature()`, and persists the returned
+  `signingRequestRef` + `signingStatus` back onto the object. Registered in
+  `lib/AppInfo/Application.php`, mirroring the established `*TransitionListener` pattern
+  (`VerplichtingTransitionListener`, `OpdrachtUitvoeringTransitionListener`).
 
 ## Out of Scope
 
@@ -57,5 +66,8 @@ is **not touched** here.
 
 - Affected specs: `shillinq-delegate-signing` (REQ-SIGN-001 modified).
 - Affected code: `lib/Service/Signing/SigningDelegationService.php`,
-  `lib/Listener/SigningConcludedListener.php` (new), `lib/AppInfo/Application.php`,
-  `tests/Unit/Service/Signing/SigningDelegationServiceTest.php`.
+  `lib/Listener/SigningConcludedListener.php` (new),
+  `lib/Listener/ACMReportSignTransitionListener.php` (new — orphaned-capability fix),
+  `lib/AppInfo/Application.php`,
+  `tests/Unit/Service/Signing/SigningDelegationServiceTest.php`,
+  `tests/Unit/Listener/ACMReportSignTransitionListenerTest.php` (new).
