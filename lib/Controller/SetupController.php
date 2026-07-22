@@ -150,9 +150,28 @@ class SetupController extends Controller
     {
         if ($actionId === 'init-administration') {
             $this->settingsService->loadConfigurationForced();
-            $result  = $this->settingsService->seedDefaultAdministration();
-            $adminId = ($result['administrationId'] ?? $result['id'] ?? 'ADM-001');
-            $this->appConfig->setValueString(Application::APP_ID, 'administration_id', (string) $adminId);
+            $result = $this->settingsService->seedDefaultAdministration();
+
+            if (($result['success'] ?? false) !== true) {
+                return new DataResponse(
+                    ['success' => false, 'message' => ($result['message'] ?? 'Failed to create default administration.')],
+                    Http::STATUS_INTERNAL_SERVER_ERROR,
+                );
+            }
+
+            // Read the real administrationCode the seed created/found — never
+            // guess it, so a future change to the seed file (or seeding onto an
+            // instance where it was already created under a different code)
+            // never silently sets the wrong administration_id.
+            $adminId = (string) ($result['administrationCode'] ?? '');
+            if ($adminId === '') {
+                return new DataResponse(
+                    ['success' => false, 'message' => 'Default administration seed did not report an administrationCode.'],
+                    Http::STATUS_INTERNAL_SERVER_ERROR,
+                );
+            }
+
+            $this->appConfig->setValueString(Application::APP_ID, 'administration_id', $adminId);
             return new DataResponse(['success' => true, 'message' => 'Default administration created.', 'detail' => $result]);
         }
 
@@ -170,6 +189,10 @@ class SetupController extends Controller
             $this->settingsService->seedRgsTemplate(templateVariant: $template, administrationId: $adminId);
             $this->settingsService->seedBtwTariffs();
             $this->settingsService->seedBbvTaakvelden();
+            // Statutory retention rules (region-specific per REQ-ARC-002); idempotent,
+            // and re-running here matters when OpenRegister was enabled AFTER shillinq
+            // so the install-time repair step never seeded it (ADR-042 recovery path).
+            $this->settingsService->seedSelectielijst();
             $this->appConfig->setValueString(Application::APP_ID, 'setup_seed_done', '1');
             return new DataResponse(['success' => true, 'message' => 'Chart of accounts and reference data seeded.']);
         }

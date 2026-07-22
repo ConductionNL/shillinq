@@ -49,6 +49,7 @@ class SettingsService
         'register',
         'rgs_template',
         'administration_id',
+        'legal_region',
     ];
 
     /**
@@ -363,13 +364,21 @@ class SettingsService
      * administrationCode, so re-runs create no duplicates and operator edits to the
      * default administration are preserved (REQ-MA-007).
      *
-     * @return array<string,mixed> Result with success flag, seeded count, skipped count.
+     * The result carries `administrationCode` (read from the seed file, not
+     * guessed) alongside `success`/`seeded`/`skipped` so callers — notably
+     * SetupController's `init-administration` action — can persist the real
+     * identifier of the created/existing record as `administration_id`
+     * instead of hardcoding it.
+     *
+     * @return array<string,mixed> Result with success flag, seeded count, skipped
+     *                             count, and administrationCode.
      *
      * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-14
+     * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
      */
     public function seedDefaultAdministration(): array
     {
-        return $this->seedGenericFile(
+        $result = $this->seedGenericFile(
             seedFileName: 'administraties/default.json',
             itemsKey: 'administrations',
             dedupeKey: 'administrationCode',
@@ -377,7 +386,42 @@ class SettingsService
             logLabel: 'Default administration'
         );
 
+        if (($result['success'] ?? false) === true) {
+            $result['administrationCode'] = $this->readDefaultAdministrationCode();
+        }
+
+        return $result;
+
     }//end seedDefaultAdministration()
+
+    /**
+     * Read the `administrationCode` of the bundled default-administration seed.
+     *
+     * Single source of truth for the identifier `seedDefaultAdministration()`
+     * creates/finds, so callers never need to hardcode it.
+     *
+     * @return string The administrationCode, or '' if the seed file is missing/invalid.
+     */
+    private function readDefaultAdministrationCode(): string
+    {
+        $seedPath = __DIR__.'/../Settings/seeds/administraties/default.json';
+        if (file_exists($seedPath) === false) {
+            return '';
+        }
+
+        $content = file_get_contents($seedPath);
+        if ($content === false) {
+            return '';
+        }
+
+        $data = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return '';
+        }
+
+        return (string) ($data['administrations'][0]['administrationCode'] ?? '');
+
+    }//end readDefaultAdministrationCode()
 
     /**
      * Seed statutory BTW tariffs from btw-tariffs-2026.json, idempotently.

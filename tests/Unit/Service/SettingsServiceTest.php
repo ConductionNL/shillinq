@@ -393,6 +393,30 @@ class SettingsServiceTest extends TestCase
     }//end testDefaultAdministrationSeedFileIsValid()
 
     /**
+     * readDefaultAdministrationCode() reads the real administrationCode from the
+     * bundled seed file rather than a hardcoded guess. This backs
+     * SetupController::runAction('init-administration'), which used to fall back
+     * to a literal 'ADM-001' string when seedDefaultAdministration()'s result
+     * carried no id — silently "working" only because it happened to match the
+     * seed file's current value. Reading it here means a future change to the
+     * seed file can never desync the two.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/first-time-setup/specs/first-time-setup/spec.md
+     */
+    public function testReadDefaultAdministrationCodeReturnsSeedFileValue(): void
+    {
+        $reflection = new \ReflectionMethod(SettingsService::class, 'readDefaultAdministrationCode');
+        $reflection->setAccessible(true);
+
+        $code = $reflection->invoke($this->service);
+
+        self::assertSame('ADM-001', $code);
+
+    }//end testReadDefaultAdministrationCodeReturnsSeedFileValue()
+
+    /**
      * Test seedDefaultAdministration resolves ObjectService when OpenRegister is available.
      *
      * @return void
