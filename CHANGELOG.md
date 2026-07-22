@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Read-only MCP tool surface (`shillinq-mcp-adoption`, ADR-063) — new
+  `lib/Settings/register.d/zzz-mcp-tool-surface.json` declares the
+  `x-openregister-mcp` dialect on 12 curated schemas (`ARInvoice`,
+  `SupplierInvoice`, `CustomerMaster`, `Payment`, `Account`,
+  `GLTransaction`, `UrenRegistratie`, `ExpenseClaimEntry`, `Project`,
+  `VatReturn`, `TrialBalance`, `BankStatement`) — `search` + `get` only,
+  `scope: read`, `readOnlyHint: true`. OpenRegister derives 24
+  `shillinq.{schema}.{verb}` tools from the declaration; **zero write
+  verbs** (`create`/`update`/`delete`) are declared on any of shillinq's
+  482 unique schema slugs — refused outright per design.md D3 (financial
+  writes are a real-money/Archiefwet hazard and the ledger is legally
+  append-only). Credential- and BSN-bearing schemas
+  (`WidgetAccessKey`, `ConfirmationToken`, `Employee`, `Werknemer`,
+  `IBAangifte`, `IB47Record`) are excluded outright (D4). No PHP, no MCP
+  provider — shillinq ships none and this change adds none; the fragment
+  is inert until OpenRegister's `SchemaDerivedToolProvider` is deployed.
 - Aansluiting (tie-out) framework (`bookkeeping-aansluitingen`) — new
   `Aansluiting`/`AansluitingResult` registers, `AansluitingCalculator`
   (pure tolerance/diff engine), `AansluitingService` (compute/explain/
