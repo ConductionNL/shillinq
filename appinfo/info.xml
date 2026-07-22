@@ -143,7 +143,6 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\Load_DBA_Seeds_Step</step>
             <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
             <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
-            <step>OCA\Shillinq\Repair\SetOrderExtensionComposition</step>
             <step>OCA\Shillinq\Repair\FoldIntoOrder</step>
             <step>OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice</step>
             <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
@@ -160,6 +159,9 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <!-- Idempotently backfill local TEST data to satisfy the enforced rules
              (sourceReference + balanced lines on every GL transaction). Test/dev. -->
         <command>OCA\Shillinq\Command\RulesSeedTestDataCommand</command>
+        <!-- Count-equality audit for the Subsidie/PurchaseOrder/DBAOpdracht -> Order
+             fold (abstract-order-primitive, REQ-ORD-003). Read-only. -->
+        <command>OCA\Shillinq\Command\OrdersAuditCommand</command>
     </commands>
 
     <settings>

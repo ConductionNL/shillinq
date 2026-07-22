@@ -5,21 +5,22 @@
  *
  * Idempotent, fail-soft cleanup that retires the legacy `Subsidie` schema AFTER
  * the FoldIntoOrder repair step (which runs earlier in the same post-migration
- * repair list) has folded every Subsidie row onto a `Grant` (orderType=grant).
+ * repair list) has folded every Subsidie row onto an `Order` (orderType=subsidie).
  *
- * FoldIntoOrder stamps each new Grant with the marker
- * `migratedFromSubsidie = <subsidieNumber|id>` (the source Subsidie's stable
- * migration key). This step uses that exact marker to verify a Grant exists
- * before it removes the corresponding Subsidie object — so unmigrated data is
- * NEVER lost.
+ * FoldIntoOrder stamps each new Order with the marker
+ * `migratedFrom = {schema: "Subsidie", key: <subsidieNumber|id>}` (the source
+ * Subsidie's stable migration key). This step uses that exact marker to verify
+ * an Order exists before it removes the corresponding Subsidie object — so
+ * unmigrated data is NEVER lost.
  *
  * ## Behaviour
  *
  *   1. For every remaining Subsidie object: derive its migration key (prefer
- *      subsidieNumber, else id/uuid — the same rule FoldIntoOrder used). If a
- *      Grant exists carrying `migratedFromSubsidie = <key>`, delete the Subsidie
- *      object (deleteObject, _rbac:false). A Subsidie with NO corresponding
- *      Grant is left in place (deleting it would lose unmigrated data).
+ *      subsidieNumber, else id/uuid — the same rule FoldIntoOrder used). If an
+ *      Order exists carrying `migratedFrom.schema=Subsidie` +
+ *      `migratedFrom.key=<key>`, delete the Subsidie object (deleteObject,
+ *      _rbac:false). A Subsidie with NO corresponding Order is left in place
+ *      (deleting it would lose unmigrated data).
  *
  *   2. After the loop, when ZERO Subsidie objects remain, delete the Subsidie
  *      SCHEMA row from `openregister_schemas` — but only via a SQL guard that
@@ -33,7 +34,7 @@
  *     are no-ops (no Subsidie objects to scan, no schema id to resolve).
  *   - Fail-soft: a top-level \Throwable catch + per-object catch ensure a
  *     cleanup failure NEVER blocks the Nextcloud upgrade path.
- *   - Data-safe: never deletes a Subsidie that has no folded Grant; never drops
+ *   - Data-safe: never deletes a Subsidie that has no folded Order; never drops
  *     the schema row while any object still references it.
  *
  * All OR reads/writes pass `_rbac:false` + `_multitenancy:false` as NAMED
@@ -75,8 +76,9 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Retires the Subsidie schema after FoldIntoOrder has folded every Subsidie row
- * onto a Grant. Idempotent, fail-soft, data-safe (never removes a Subsidie that
- * lacks a corresponding Grant, never drops the schema row while objects remain).
+ * onto an Order. Idempotent, fail-soft, data-safe (never removes a Subsidie
+ * that lacks a corresponding Order, never drops the schema row while objects
+ * remain).
  *
  * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
  */
@@ -91,12 +93,12 @@ class RetireSubsidieSchema implements IRepairStep
     /**
      * The target schema that Subsidie rows were folded onto.
      */
-    private const TARGET = 'Grant';
+    private const TARGET = 'Order';
 
     /**
-     * The idempotency marker FoldIntoOrder stamps on each folded Grant.
+     * The source-schema tag FoldIntoOrder stamps in migratedFrom.schema.
      */
-    private const MARKER = 'migratedFromSubsidie';
+    private const MARKER_SCHEMA = 'Subsidie';
 
     /**
      * Constructor.
@@ -120,10 +122,12 @@ class RetireSubsidieSchema implements IRepairStep
      * The repair-step display name shown in occ maintenance:repair output.
      *
      * @return string The display name.
+     *
+     * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
      */
     public function getName(): string
     {
-        return 'Shillinq: retire the legacy Subsidie schema (after FoldIntoOrder has folded every Subsidie onto a Grant)';
+        return 'Shillinq: retire the legacy Subsidie schema (after FoldIntoOrder has folded every Subsidie onto an Order)';
 
     }//end getName()
 
@@ -133,6 +137,8 @@ class RetireSubsidieSchema implements IRepairStep
      * @param IOutput $output The repair-step output (progress + warnings).
      *
      * @return void
+     *
+     * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
      */
     public function run(IOutput $output): void
     {
@@ -166,9 +172,9 @@ class RetireSubsidieSchema implements IRepairStep
 
             try {
                 // Data-safety: only delete a Subsidie that was actually folded
-                // (a Grant carries its migration marker). No Grant → keep it.
-                if ($this->grantExists($objectService, $registerSlug, $migrationKey) === false) {
-                    $output->warning('Shillinq: RetireSubsidieSchema — Subsidie "'.$migrationKey.'" has no migrated Grant; left in place (unmigrated data).');
+                // (an Order carries its migration marker). No Order → keep it.
+                if ($this->orderExists($objectService, $registerSlug, $migrationKey) === false) {
+                    $output->warning('Shillinq: RetireSubsidieSchema — Subsidie "'.$migrationKey.'" has no migrated Order; left in place (unmigrated data).');
                     $kept++;
                     continue;
                 }
@@ -266,7 +272,7 @@ class RetireSubsidieSchema implements IRepairStep
 
     /**
      * Derive the stable migration key for a Subsidie row, mirroring exactly the
-     * rule FoldIntoOrder used to stamp the Grant marker: prefer the unique
+     * rule FoldIntoOrder used to stamp the Order marker: prefer the unique
      * subsidieNumber, else fall back to the source id/uuid.
      *
      * @param array<string,mixed> $src The source Subsidie row.
@@ -285,16 +291,16 @@ class RetireSubsidieSchema implements IRepairStep
     }//end migrationKey()
 
     /**
-     * Whether a Grant exists carrying the given migration marker — proof that
+     * Whether an Order exists carrying the given migration marker — proof that
      * the Subsidie was folded and is therefore safe to delete.
      *
      * @param object $objectService The OR ObjectService.
      * @param string $registerSlug  The shillinq register slug.
      * @param string $migrationKey  The stable source marker.
      *
-     * @return bool True when a matching Grant exists.
+     * @return bool True when a matching Order exists.
      */
-    private function grantExists(object $objectService, string $registerSlug, string $migrationKey): bool
+    private function orderExists(object $objectService, string $registerSlug, string $migrationKey): bool
     {
         try {
             $found = $objectService
@@ -302,7 +308,10 @@ class RetireSubsidieSchema implements IRepairStep
                 ->setSchema(self::TARGET)
                 ->findAll(
                     [
-                        'filters'       => [self::MARKER => $migrationKey],
+                        'filters'       => [
+                            'migratedFrom.schema' => self::MARKER_SCHEMA,
+                            'migratedFrom.key'    => $migrationKey,
+                        ],
                         'limit'         => 1,
                         '_rbac'         => false,
                         '_multitenancy' => false,
@@ -311,12 +320,12 @@ class RetireSubsidieSchema implements IRepairStep
 
             return is_array($found) === true && $found !== [];
         } catch (\Throwable) {
-            // On lookup error, conservatively report "no Grant" so the Subsidie
+            // On lookup error, conservatively report "no Order" so the Subsidie
             // is KEPT (never delete on an ambiguous read).
             return false;
-        }
+        }//end try
 
-    }//end grantExists()
+    }//end orderExists()
 
     /**
      * Delete the Subsidie schema row from openregister_schemas — but only when

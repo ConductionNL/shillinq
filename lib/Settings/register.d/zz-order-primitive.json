@@ -1,0 +1,953 @@
+{
+  "x-shillinq-fragment": "order-primitive",
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "abstract-order-primitive",
+    "description": "The abstract Order primitive (REQ-ORD-001..003): ONE schema, discriminated by orderType, that models Subsidie (subsidie), PurchaseOrder (purchase) and DBAOpdracht (engagement) as a single transactional workspace, per the menu-IA audit's 'fold into the primitive' decision. `sales` is reserved on the discriminator for the future SalesOrder fold (NOT built by this change — no SalesOrder migration ships here). Each orderType keeps its OWN full field set as an optional, type-namespaced group (`subsidie`/`purchase`/`engagement`) so no regulatory or audit field is dropped, and its OWN lifecycle state vocabulary on the shared `state` field (gated per-transition by `orderType` — see x-openregister-lifecycle below). Money-unit note: PurchaseOrder's amounts are integer EURO CENTS (ADR-022); Subsidie/DBAOpdracht amounts are decimal EUR. The shared `totalAmount` is always decimal EUR — the purchase-group cent fields (totalExclVat/totalVat/totalInclVat) are preserved verbatim and totalAmount is derived by dividing by 100 at fold time. Composition-via-allOf was evaluated (see openspec/changes/abstract-order-primitive/SCHEMA-ANALYTICS-AND-PLAN.md) and REJECTED for this build: OpenRegister's ObjectService::findAll() is schema-scoped only (no allOf-aware cross-schema query — confirmed against SchemaMapper::resolveAllOf(), which merges `properties`/`required` but never queries across schemas), so a single-schema 'Order workspace' index can only ever show literal `Order` rows. The earlier partial build's `Grant` extension schema (zz-order-extensions.json, now removed) was ALSO a live slug collision with the pre-existing `Grant` (WBSO/BBV/NSO/Tozo) schema in shillinq_register.json — the two would have deep-merged via SettingsService::deepMergeConfig, corrupting the unrelated WBSO Grant schema. See tasks.md for the full account."
+  },
+  "components": {
+    "schemas": {
+      "Order": {
+        "slug": "Order",
+        "icon": "FileDocumentMultipleOutline",
+        "version": "0.1.0",
+        "title": "Order",
+        "x-schema-org": "schema:Order",
+        "type": "object",
+        "description": "The unified transactional workspace primitive (REQ-ORD-001) folding Subsidie (subsidie), PurchaseOrder (purchase) and DBAOpdracht (engagement) behind one `orderType` discriminator. `sales`/`booking`/`quote`/`blanket` are reserved discriminator values for future folds and are NOT populated by this change. Each type's full field set lives, unabridged, in its own optional field group (`subsidie`/`purchase`/`engagement`); the shared core (number, counterparty, currency, dates, total, state) is common. Lifecycle: `state` carries the UNION of every type's own vocabulary; each transition is scoped to exactly one `orderType` (x-openregister-lifecycle.transitions.*.orderType) so a subsidie Order can never attempt a purchase transition and vice-versa (REQ-ORD-002).",
+        "required": [
+          "administrationId",
+          "orderType",
+          "direction",
+          "orderNumber",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns this order (tenant scoping, RBAC-consistent with sibling registers).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "orderType": {
+            "type": "string",
+            "enum": [
+              "purchase",
+              "sales",
+              "subsidie",
+              "engagement",
+              "booking",
+              "quote",
+              "blanket"
+            ],
+            "description": "Discriminator. Only `purchase`, `subsidie` and `engagement` are populated by this change's migration; the others are reserved for future folds (REQ-ORD-001).",
+            "example": "subsidie",
+            "title": "Order Type"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "incoming",
+              "outgoing"
+            ],
+            "description": "outgoing: this administration grants/orders/engages out. incoming: this administration receives.",
+            "example": "outgoing",
+            "title": "Direction"
+          },
+          "orderNumber": {
+            "type": "string",
+            "description": "Unique order number per administration (subsidieNumber / poNumber / synthesised DBA reference).",
+            "example": "SUB-2026-001",
+            "title": "Order Number"
+          },
+          "counterpartyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to a contact/vendor/client record for the counterparty.",
+            "title": "Counterparty ID"
+          },
+          "counterpartyName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Counterparty display name (beneficiary, supplier, or client).",
+            "title": "Counterparty Name"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217 currency for `totalAmount` (always decimal EUR units, never cents).",
+            "title": "Currency"
+          },
+          "orderDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "The order's opening date (aanvraagDate / order raised date / startDatum).",
+            "title": "Order Date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "The order's closing/expected-end date, when applicable.",
+            "title": "End Date"
+          },
+          "totalAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Headline amount in decimal EUR (verleendBedrag / totalInclVat÷100 / verwachteOmzet). See the type group for the authoritative source field(s).",
+            "title": "Total Amount"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text description (purposeDescription / deliveryAddress / opdrachtNaam).",
+            "title": "Description"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-form payment terms, where applicable (purchase only today).",
+            "title": "Payment Terms"
+          },
+          "projectReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Dimensional project tag, where applicable (purchase's projectCode today).",
+            "title": "Project Reference"
+          },
+          "costCenter": {
+            "type": "string",
+            "nullable": true,
+            "description": "Dimensional cost-centre tag, where applicable (purchase's costCenter today).",
+            "title": "Cost Center"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "aanvraag",
+              "verleend",
+              "vastgesteld",
+              "uitbetaald",
+              "teruggevorderd",
+              "afgehandeld",
+              "draft",
+              "approved",
+              "sent",
+              "partial_received",
+              "fully_received",
+              "invoiced",
+              "closed",
+              "cancelled",
+              "DRAFT",
+              "INTAKE_VEREIST",
+              "INTAKE_VOLTOOID",
+              "ACTIEF",
+              "BEEINDIGD"
+            ],
+            "description": "Lifecycle state. The legal subset and transitions depend on `orderType` — see x-openregister-lifecycle.initialStateByType and .transitions.*.orderType (REQ-ORD-002). subsidie: aanvraag..afgehandeld (identical to the retired Subsidie schema). purchase: draft..cancelled (identical to PurchaseOrder.statusCode). engagement: DRAFT..BEEINDIGD (identical to DBAOpdracht.intakeStatus).",
+            "example": "aanvraag",
+            "title": "State"
+          },
+          "subsidie": {
+            "type": "object",
+            "nullable": true,
+            "description": "Populated only when orderType=subsidie. The full field set of the retired Subsidie schema (per Awb afdeling 4.2 + VNG ASV-model 2022) — no regulatory field dropped (REQ-ORD-002/003).",
+            "properties": {
+              "subsidieNumber": {
+                "type": "string",
+                "nullable": true,
+                "description": "Source Subsidie's own number (also mirrored to the base orderNumber).",
+                "title": "Subsidie Number"
+              },
+              "regelingNaam": {
+                "type": "string",
+                "nullable": true,
+                "description": "Name of the underlying subsidieregeling.",
+                "title": "Regeling Naam"
+              },
+              "regelingArtikel": {
+                "type": "string",
+                "nullable": true,
+                "description": "Specific article reference within the regeling.",
+                "title": "Regeling Artikel"
+              },
+              "subsidieRegeling": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "mit",
+                  "sbir",
+                  "eu-horizon",
+                  "efro",
+                  "react-eu",
+                  "other"
+                ],
+                "description": "R&D subsidie regeling variant (REQ-RDS-001).",
+                "title": "Subsidie Regeling"
+              },
+              "aanvraagDate": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Date of the subsidie aanvraag (Awb 4:5).",
+                "title": "Aanvraag Date"
+              },
+              "beschikkingDate": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Date of the verleningsbeschikking (Awb 4:43/4:48).",
+                "title": "Beschikking Date"
+              },
+              "vaststellingDate": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Date of the vaststellingsbeschikking (Awb 4:46). Retention trigger start (REQ-SUB-009).",
+                "title": "Vaststelling Date"
+              },
+              "settlementDate": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Alias settlement date (English operations variant).",
+                "title": "Settlement Date"
+              },
+              "disbursementDate": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "When disbursed (English operations variant).",
+                "title": "Disbursement Date"
+              },
+              "aangevraagdBedrag": {
+                "type": "number",
+                "minimum": 0,
+                "nullable": true,
+                "description": "Applied-for amount in EUR.",
+                "title": "Aangevraagd Bedrag"
+              },
+              "verleendBedrag": {
+                "type": "number",
+                "minimum": 0,
+                "nullable": true,
+                "description": "Granted amount in EUR. Required on verleen transition. Mirrored to base totalAmount.",
+                "title": "Verleend Bedrag"
+              },
+              "vastgesteldBedrag": {
+                "type": "number",
+                "minimum": 0,
+                "nullable": true,
+                "description": "Settled amount in EUR. Required on vaststellen transition.",
+                "title": "Vastgesteld Bedrag"
+              },
+              "uitbetaaldBedrag": {
+                "type": "number",
+                "minimum": 0,
+                "nullable": true,
+                "description": "Paid amount in EUR. Required on uitbetalen transition.",
+                "title": "Uitbetaald Bedrag"
+              },
+              "teruggevorderdBedrag": {
+                "type": "number",
+                "minimum": 0,
+                "nullable": true,
+                "description": "Reclaimed amount in EUR. Required on terugvorderen transition.",
+                "title": "Teruggevorderd Bedrag"
+              },
+              "beschikkingUri": {
+                "type": "string",
+                "nullable": true,
+                "description": "docudesk URI of the verleningsbeschikking PDF.",
+                "title": "Beschikking URI"
+              },
+              "vaststellingUri": {
+                "type": "string",
+                "nullable": true,
+                "description": "docudesk URI of the vaststellingsbeschikking PDF.",
+                "title": "Vaststelling URI"
+              },
+              "attachmentUri": {
+                "type": "string",
+                "nullable": true,
+                "description": "docudesk reference to the beschikking (English operations variant).",
+                "title": "Attachment URI"
+              },
+              "prestatieverantwoording": {
+                "type": "string",
+                "nullable": true,
+                "description": "Free-text or structured prestatieverantwoording. Required on vaststellen transition.",
+                "title": "Prestatieverantwoording"
+              },
+              "afwijzingsReden": {
+                "type": "string",
+                "nullable": true,
+                "description": "Reason for rejection. Required on afwijzen transition.",
+                "title": "Afwijzings Reden"
+              },
+              "repaymentPlanId": {
+                "type": "string",
+                "nullable": true,
+                "description": "FK to a RepaymentInstallment parent record if a terugvorderingsplan applies.",
+                "title": "Repayment Plan ID"
+              },
+              "hasRepaymentPlan": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether a terugvorderingsplan (settlement plan) exists (REQ-SUB-009).",
+                "title": "Has Repayment Plan"
+              },
+              "approvingAuthority": {
+                "type": "string",
+                "nullable": true,
+                "description": "Issuing municipality/ministry.",
+                "title": "Approving Authority"
+              },
+              "budgetYear": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Fiscal year the award is charged to.",
+                "title": "Budget Year"
+              },
+              "grantProgram": {
+                "type": "string",
+                "nullable": true,
+                "description": "Awb article reference (English operations variant).",
+                "title": "Grant Program"
+              },
+              "granteeOrganization": {
+                "type": "string",
+                "nullable": true,
+                "description": "Recipient organization name (REQ-SUB-002, English operations variant).",
+                "title": "Grantee Organization"
+              },
+              "notes": {
+                "type": "string",
+                "nullable": true,
+                "description": "Operator free text.",
+                "title": "Notes"
+              }
+            }
+          },
+          "purchase": {
+            "type": "object",
+            "nullable": true,
+            "description": "Populated only when orderType=purchase. The full field set of PurchaseOrder — amounts stay in integer EURO CENTS per ADR-022 (REQ-ORD-002/003).",
+            "properties": {
+              "poNumber": {
+                "type": "string",
+                "nullable": true,
+                "description": "Source PurchaseOrder's own number (also mirrored to the base orderNumber).",
+                "title": "PO Number"
+              },
+              "supplierId": {
+                "type": "string",
+                "nullable": true,
+                "description": "FK to the Vendor (supplier).",
+                "title": "Supplier ID"
+              },
+              "supplierReference": {
+                "type": "string",
+                "nullable": true,
+                "description": "Supplier's own reference for the order.",
+                "title": "Supplier Reference"
+              },
+              "requester": {
+                "type": "string",
+                "nullable": true,
+                "description": "User ID of the requester who raised the order.",
+                "title": "Requester"
+              },
+              "requisitionId": {
+                "type": "string",
+                "nullable": true,
+                "description": "FK to the Requisition this order was materialised from, when applicable.",
+                "title": "Requisition ID"
+              },
+              "deliveryAddress": {
+                "type": "string",
+                "nullable": true,
+                "description": "Delivery address text.",
+                "title": "Delivery Address"
+              },
+              "expectedDeliveryDate": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Expected delivery date for the order overall.",
+                "title": "Expected Delivery Date"
+              },
+              "totalExclVat": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Order total excluding VAT in euro CENTS (ADR-022).",
+                "title": "Total Excl VAT"
+              },
+              "totalVat": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Order VAT total in euro CENTS (ADR-022).",
+                "title": "Total VAT"
+              },
+              "totalInclVat": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Order total including VAT in euro CENTS (ADR-022). base totalAmount = totalInclVat / 100.",
+                "title": "Total Incl VAT"
+              },
+              "approvalChain": {
+                "type": "array",
+                "nullable": true,
+                "description": "Ordered list of approvers traversed for this order.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "userId": {
+                      "type": "string",
+                      "title": "User ID",
+                      "description": "The identifier of the approver."
+                    },
+                    "decision": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "approved",
+                        "rejected",
+                        "delegated"
+                      ],
+                      "title": "Decision",
+                      "description": "The recorded decision."
+                    },
+                    "decidedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true,
+                      "title": "Decided At",
+                      "description": "Timestamp of the decision."
+                    },
+                    "comment": {
+                      "type": "string",
+                      "nullable": true,
+                      "title": "Comment",
+                      "description": "Optional comment from the approver."
+                    }
+                  }
+                },
+                "title": "Approval Chain"
+              },
+              "peppolSentAt": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "Timestamp the order was transmitted via Peppol.",
+                "title": "Peppol Sent At"
+              },
+              "peppolMessageId": {
+                "type": "string",
+                "nullable": true,
+                "description": "Peppol message identifier returned by the access point.",
+                "title": "Peppol Message ID"
+              },
+              "peppolFallbackReason": {
+                "type": "string",
+                "nullable": true,
+                "description": "Manual-fallback reason when Peppol transmission failed.",
+                "title": "Peppol Fallback Reason"
+              }
+            }
+          },
+          "engagement": {
+            "type": "object",
+            "nullable": true,
+            "description": "Populated only when orderType=engagement. The full field set of DBAOpdracht — Wet DBA compliance engagement (modelovereenkomst + risicoklasse), per REQ-ORD-002/003.",
+            "properties": {
+              "ondernemingId": {
+                "type": "string",
+                "nullable": true,
+                "description": "FK to the onderneming (ZZP/eenmanszaak/MKB) executing or hiring for this engagement.",
+                "title": "Onderneming ID"
+              },
+              "klantId": {
+                "type": "string",
+                "nullable": true,
+                "description": "FK to the client (also mirrored to the base counterpartyId).",
+                "title": "Klant ID"
+              },
+              "opdrachtNaam": {
+                "type": "string",
+                "nullable": true,
+                "description": "Free name of the engagement (also mirrored to the base description).",
+                "title": "Opdracht Naam"
+              },
+              "verwachteEindDatum": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Expected end date (also mirrored to the base endDate).",
+                "title": "Verwachte Eind Datum"
+              },
+              "feitelijkeEindDatum": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Actual end date; filled on the beeindiging procedure (REQ-DBA-018).",
+                "title": "Feitelijke Eind Datum"
+              },
+              "verwachteOmzet": {
+                "type": "integer",
+                "minimum": 0,
+                "nullable": true,
+                "description": "Expected total revenue in euro cents.",
+                "title": "Verwachte Omzet"
+              },
+              "gerealiseerdeOmzet": {
+                "type": "integer",
+                "minimum": 0,
+                "default": 0,
+                "description": "Revenue realised so far, in euro cents (REQ-DBA-004).",
+                "title": "Gerealiseerde Omzet"
+              },
+              "eenmaligLageDrempel": {
+                "type": "boolean",
+                "default": false,
+                "description": "Marked 'one-off, total < EUR 5000' — shortened intake offered (REQ-DBA-001).",
+                "title": "Eenmalig Lage Drempel"
+              },
+              "modelOvereenkomstId": {
+                "type": "string",
+                "nullable": true,
+                "description": "FK to the applicable DBAModelovereenkomst (REQ-DBA-002).",
+                "title": "Model Overeenkomst ID"
+              },
+              "intakeDatum": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Date the DBA intake was completed.",
+                "title": "Intake Datum"
+              },
+              "actueleRisicoscore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "nullable": true,
+                "description": "Running DBA risk score 0-100 (REQ-DBA-003).",
+                "title": "Actuele Risicoscore"
+              },
+              "risicoNiveau": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "LAAG",
+                  "LAAG_MIDDEN",
+                  "MIDDEN_HOOG",
+                  "HOOG",
+                  "VERKORT_LAGE_DREMPEL"
+                ],
+                "description": "Risk band derived from actueleRisicoscore (REQ-DBA-003).",
+                "title": "Risico Niveau"
+              },
+              "openFlags": {
+                "type": "integer",
+                "minimum": 0,
+                "default": 0,
+                "description": "Count of open DBARisicoflag records (REQ-DBA-004).",
+                "title": "Open Flags"
+              },
+              "evidenceDossierId": {
+                "type": "string",
+                "nullable": true,
+                "description": "FK to the DBAEvidenceDossier for this engagement (REQ-DBA-007).",
+                "title": "Evidence Dossier ID"
+              },
+              "wbaBeoordelingResultaat": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "BUITEN_DIENSTBETREKKING",
+                  "BINNEN_DIENSTBETREKKING",
+                  "GEEN_OORDEEL",
+                  "NIET_VAN_TOEPASSING"
+                ],
+                "description": "Belastingdienst WBA assessment outcome (REQ-DBA-013).",
+                "title": "Wba Beoordeling Resultaat"
+              },
+              "wbaGeldigTot": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "WBA assessment validity date (1 year policy).",
+                "title": "Wba Geldig Tot"
+              },
+              "intermediairMode": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether the tussenkomst triangle applies (REQ-DBA-017).",
+                "title": "Intermediair Mode"
+              },
+              "perspectief": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "OPDRACHTNEMER",
+                  "OPDRACHTGEVER"
+                ],
+                "description": "ZZP perspective vs opdrachtgever/hire-in flow (REQ-DBA-010).",
+                "title": "Perspectief"
+              },
+              "retentieDeadline": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Date after which the evidence dossier becomes deletable (7y after feitelijkeEindDatum, AWR art. 52, REQ-DBA-018).",
+                "title": "Retentie Deadline"
+              }
+            }
+          },
+          "migratedFrom": {
+            "type": "object",
+            "nullable": true,
+            "description": "Idempotency + provenance marker stamped by the FoldIntoOrder repair step. Never set by users.",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "nullable": true,
+                "description": "The legacy schema this Order was folded from (Subsidie / PurchaseOrder / DBAOpdracht).",
+                "title": "Schema"
+              },
+              "key": {
+                "type": "string",
+                "nullable": true,
+                "description": "The stable migration key (source subsidieNumber/poNumber/id) used for idempotency.",
+                "title": "Key"
+              }
+            }
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "aanvraag",
+          "initialStateByType": {
+            "subsidie": "aanvraag",
+            "purchase": "draft",
+            "engagement": "DRAFT"
+          },
+          "states": {
+            "aanvraag": {
+              "orderType": "subsidie",
+              "label": "Aanvraag",
+              "description": "Subsidie aanvraag ingediend (Awb 4:5)."
+            },
+            "verleend": {
+              "orderType": "subsidie",
+              "label": "Verleend",
+              "description": "Subsidie verleend per beschikking (Awb 4:43/4:48)."
+            },
+            "vastgesteld": {
+              "orderType": "subsidie",
+              "label": "Vastgesteld",
+              "description": "Subsidie vastgesteld op basis van verantwoording (Awb 4:46)."
+            },
+            "uitbetaald": {
+              "orderType": "subsidie",
+              "label": "Uitbetaald",
+              "description": "Subsidie uitbetaald (Awb 4:52)."
+            },
+            "teruggevorderd": {
+              "orderType": "subsidie",
+              "label": "Teruggevorderd",
+              "description": "Subsidie (gedeeltelijk) teruggevorderd (Awb 4:57)."
+            },
+            "afgehandeld": {
+              "orderType": "subsidie",
+              "label": "Afgehandeld",
+              "description": "Subsidie-dossier gesloten."
+            },
+            "draft": {
+              "orderType": "purchase",
+              "label": "Concept",
+              "description": "Order is editable; not yet submitted for approval."
+            },
+            "approved": {
+              "orderType": "purchase",
+              "label": "Goedgekeurd",
+              "description": "Approval chain complete; order may now be sent."
+            },
+            "sent": {
+              "orderType": "purchase",
+              "label": "Verzonden",
+              "description": "Order transmitted to supplier."
+            },
+            "partial_received": {
+              "orderType": "purchase",
+              "label": "Deels ontvangen",
+              "description": "Some but not all line quantities have been receipted."
+            },
+            "fully_received": {
+              "orderType": "purchase",
+              "label": "Volledig ontvangen",
+              "description": "All line quantities have been receipted."
+            },
+            "invoiced": {
+              "orderType": "purchase",
+              "label": "Gefactureerd",
+              "description": "Supplier invoice matched and approved against this order."
+            },
+            "closed": {
+              "orderType": "purchase",
+              "label": "Afgesloten",
+              "description": "Order is closed; no further activity expected."
+            },
+            "cancelled": {
+              "orderType": "purchase",
+              "label": "Geannuleerd",
+              "description": "Order cancelled before completion (terminal state)."
+            },
+            "DRAFT": {
+              "orderType": "engagement",
+              "label": "Concept",
+              "description": "Engagement created, intake not yet required."
+            },
+            "INTAKE_VEREIST": {
+              "orderType": "engagement",
+              "label": "Intake vereist",
+              "description": "First invoice pending; DBA intake must complete first (REQ-DBA-001)."
+            },
+            "INTAKE_VOLTOOID": {
+              "orderType": "engagement",
+              "label": "Intake voltooid",
+              "description": "DBA intake completed; engagement ready to go active."
+            },
+            "ACTIEF": {
+              "orderType": "engagement",
+              "label": "Actief",
+              "description": "Engagement running; periodic monitoring active."
+            },
+            "BEEINDIGD": {
+              "orderType": "engagement",
+              "label": "Beeindigd",
+              "description": "Engagement closed; evidence trail closed, retention clock running."
+            }
+          },
+          "transitions": {
+            "verleen": {
+              "orderType": "subsidie",
+              "from": "aanvraag",
+              "to": "verleend",
+              "label": "Verlenen",
+              "requires": {
+                "fields": [
+                  "subsidie.verleendBedrag"
+                ]
+              }
+            },
+            "afwijzen": {
+              "orderType": "subsidie",
+              "from": "aanvraag",
+              "to": "afgehandeld",
+              "label": "Afwijzen",
+              "requires": {
+                "fields": [
+                  "subsidie.afwijzingsReden"
+                ]
+              }
+            },
+            "vaststellen": {
+              "orderType": "subsidie",
+              "from": "verleend",
+              "to": "vastgesteld",
+              "label": "Vaststellen",
+              "requires": {
+                "fields": [
+                  "subsidie.prestatieverantwoording",
+                  "subsidie.vastgesteldBedrag"
+                ]
+              }
+            },
+            "uitbetalen": {
+              "orderType": "subsidie",
+              "from": "vastgesteld",
+              "to": "uitbetaald",
+              "label": "Uitbetalen",
+              "requires": {
+                "fields": [
+                  "subsidie.uitbetaaldBedrag"
+                ]
+              }
+            },
+            "terugvorderen": {
+              "orderType": "subsidie",
+              "from": "uitbetaald",
+              "to": "teruggevorderd",
+              "label": "Terugvorderen",
+              "requires": {
+                "fields": [
+                  "subsidie.teruggevorderdBedrag",
+                  "subsidie.afwijzingsReden"
+                ]
+              }
+            },
+            "afhandelenVanuitUitbetaald": {
+              "orderType": "subsidie",
+              "from": "uitbetaald",
+              "to": "afgehandeld",
+              "label": "Dossier sluiten (na bewaartermijn)"
+            },
+            "afhandelenVanuitTeruggevorderd": {
+              "orderType": "subsidie",
+              "from": "teruggevorderd",
+              "to": "afgehandeld",
+              "label": "Dossier sluiten (terugbetaling voltooid)",
+              "requires": "OCA\\Shillinq\\Guard\\SubsidieRepaymentGuard::requireZeroRepaymentBalance"
+            },
+            "approve": {
+              "orderType": "purchase",
+              "from": "draft",
+              "to": "approved",
+              "label": "Goedkeuren"
+            },
+            "send": {
+              "orderType": "purchase",
+              "from": "approved",
+              "to": "sent",
+              "label": "Verzenden"
+            },
+            "receivePartial": {
+              "orderType": "purchase",
+              "from": "sent",
+              "to": "partial_received",
+              "label": "Deels ontvangen"
+            },
+            "receiveAll": {
+              "orderType": "purchase",
+              "from": "partial_received",
+              "to": "fully_received",
+              "label": "Volledig ontvangen"
+            },
+            "receiveAllDirect": {
+              "orderType": "purchase",
+              "from": "sent",
+              "to": "fully_received",
+              "label": "Volledig ontvangen"
+            },
+            "invoice": {
+              "orderType": "purchase",
+              "from": "fully_received",
+              "to": "invoiced",
+              "label": "Factureren"
+            },
+            "close": {
+              "orderType": "purchase",
+              "from": "invoiced",
+              "to": "closed",
+              "label": "Afsluiten"
+            },
+            "cancelDraft": {
+              "orderType": "purchase",
+              "from": "draft",
+              "to": "cancelled",
+              "label": "Annuleren"
+            },
+            "cancelApproved": {
+              "orderType": "purchase",
+              "from": "approved",
+              "to": "cancelled",
+              "label": "Annuleren"
+            },
+            "cancelSent": {
+              "orderType": "purchase",
+              "from": "sent",
+              "to": "cancelled",
+              "label": "Annuleren"
+            },
+            "requireIntake": {
+              "orderType": "engagement",
+              "from": "DRAFT",
+              "to": "INTAKE_VEREIST",
+              "label": "Intake vereist"
+            },
+            "completeIntake": {
+              "orderType": "engagement",
+              "from": "INTAKE_VEREIST",
+              "to": "INTAKE_VOLTOOID",
+              "label": "Intake voltooid"
+            },
+            "activate": {
+              "orderType": "engagement",
+              "from": "INTAKE_VOLTOOID",
+              "to": "ACTIEF",
+              "label": "Activeren"
+            },
+            "endEngagement": {
+              "orderType": "engagement",
+              "from": [
+                "DRAFT",
+                "INTAKE_VEREIST",
+                "INTAKE_VOLTOOID",
+                "ACTIEF"
+              ],
+              "to": "BEEINDIGD",
+              "label": "Beeindigen"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "subsidie-coordinator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ],
+              "description": "Full CRUD on subsidie-type Orders; initiates lifecycle transitions."
+            },
+            "manager": {
+              "permissions": [
+                "read",
+                "approve"
+              ],
+              "description": "Read + approval authority on subsidie verleen/terugvorderen and purchase approve transitions."
+            },
+            "ondernemer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ],
+              "description": "Full CRUD on engagement-type Orders (DBA)."
+            },
+            "compliance_officer": {
+              "permissions": [
+                "read",
+                "update"
+              ],
+              "description": "Read + update on engagement-type Orders (DBA compliance)."
+            },
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ],
+              "description": "Full CRUD on purchase-type Orders; read access to subsidie for reconciliation."
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ],
+              "description": "Read-only access across every order type for compliance audit."
+            },
+            "controleur": {
+              "permissions": [
+                "read"
+              ],
+              "description": "Read-only access on engagement-type Orders (DBA)."
+            }
+          }
+        }
+      }
+    }
+  }
+}

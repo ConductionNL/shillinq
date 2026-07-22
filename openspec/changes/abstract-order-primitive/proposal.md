@@ -59,6 +59,17 @@ hand against the real merged field set with the IUser + `_rbac:false` fixes. Unt
 stays in DESIGN state — the nav entries are NOT collapsed (removing them without the fold would
 strand the pages).
 
+## STATUS (2026-07-22) — Phase 1+2 built and unit-tested; Phase 3+4 NOT built
+A prior wave marked all of tasks.md `[x]` despite NO `Order` schema existing anywhere in the
+register — a textbook orphaned-capability defect. This pass built and wired Phase 1 (the `Order`
+schema, flat single-schema model — see the design-divergence note in
+`specs/order-primitive/spec.md` for why the allOf-composition model this proposal originally
+sketched was rejected) and Phase 2 (the `FoldIntoOrder` migration + `RetireSubsidieSchema` +
+`occ shillinq:orders:audit`), all unit-tested and green (3867/3867, up from a 3844 baseline). Phase
+3 (UI + nav collapse) and Phase 4 (compliance re-point) are explicitly NOT built — only a manifest
+schema-reference fix landed. Live-instance verification of the migration is PENDING. See tasks.md
+for the full, honest breakdown.
+
 ## UNBLOCK (2026-07-07) — schema-consolidation prerequisite landed
 The prerequisite `consolidate-order-subsidie-collisions` change has shipped the non-destructive
 schema consolidation this change was blocked on: (1) `Subsidie` is now **one canonical schema**

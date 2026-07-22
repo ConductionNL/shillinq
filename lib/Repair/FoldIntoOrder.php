@@ -3,31 +3,33 @@
 /**
  * Shillinq FoldIntoOrder Repair Step
  *
- * Idempotent data migration that folds the legacy order-family rows onto the
- * unified Order primitive (abstract-order-primitive change). The Order base
- * carries an `orderType` discriminator (booking / sales / purchase / grant /
- * engagement / quote / blanket) and the concrete kinds compose onto it via the
- * `allOf` set by the SetOrderExtensionComposition repair step. This step only
- * migrates DATA — it creates no schemas (Grant/Order/PurchaseOrder/Quote/
- * SalesOrder/BlanketOrder already exist):
+ * Idempotent data migration that folds Subsidie, PurchaseOrder and DBAOpdracht
+ * rows onto the unified `Order` primitive (abstract-order-primitive change).
+ * Each row becomes a genuine `Order` object (orderType=subsidie|purchase|
+ * engagement) carrying its full original field set, unabridged, on the
+ * corresponding `subsidie`/`purchase`/`engagement` field group — no regulatory
+ * or audit field is dropped (REQ-ORD-003).
  *
- *   - Each legacy `Subsidie` row becomes a `Grant` (orderType=grant). The
- *     granted amount (verleendBedrag / awardAmount) maps to Order.totalAmount;
- *     the Dutch + English variant fields map onto Grant's English tail; the
- *     uitbetaald / teruggevorderd amounts, when present, become `Payment`
- *     rows (paymentType disbursement / reclaim).
- *   - Each `PurchaseOrder` row gets orderType=purchase + direction=incoming and
- *     its supplier / 3-way / peppol / total fields mapped onto the base Order
- *     fields it already inherits via composition.
- *   - Each bookings `Order` row (no orderType yet) gets orderType=booking and
- *     its depositAmount / depositPaymentId moved to a `Payment` row
- *     (paymentType=deposit).
- *   - Each `Quote` / `SalesOrder` / `BlanketOrder` row gets orderType set
- *     accordingly (quote / sales / blanket) plus base-field mapping.
+ * WHY A NEW `Order` OBJECT (not an in-place field patch): OpenRegister's
+ * ObjectService::findAll() is schema-scoped — there is no allOf-aware
+ * cross-schema query (confirmed against SchemaMapper::resolveAllOf(), which
+ * only merges `properties`/`required` for validation, never object storage).
+ * The 'Order workspace' manifest page (src/manifest.d/order-workspace.json)
+ * therefore can only ever show literal `Order` rows, so folding must create
+ * real Order objects rather than merely tagging the source schema in place.
+ * Source rows (Subsidie/PurchaseOrder/DBAOpdracht) are NEVER deleted or
+ * modified by this step — see RetireSubsidieSchema for the separate,
+ * data-safe Subsidie cleanup that runs after this step.
  *
- * IDEMPOTENT: a source row already folded (detected by a stable marker —
- * `orderType` already set on an in-place row, or a Grant already carrying the
- * source `subsidieNumber`) is skipped. Source rows are NEVER deleted.
+ * MONEY UNITS: PurchaseOrder amounts are integer EURO CENTS (ADR-022);
+ * Subsidie/DBAOpdracht amounts are decimal EUR. The shared Order.totalAmount
+ * is always decimal EUR — purchase.totalInclVat is divided by 100 when
+ * projected onto totalAmount; the original cent value is preserved verbatim
+ * inside the `purchase` group.
+ *
+ * IDEMPOTENT: keyed on `migratedFrom.schema` + `migratedFrom.key` (the source
+ * schema name + its stable migration key — subsidieNumber/poNumber/id). A
+ * second run finds the existing Order via that marker and skips it.
  * Fail-soft per row (catch \Throwable -> $output->warning).
  *
  * @category Repair
@@ -44,7 +46,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, Squiz.Commenting.InlineComment, Squiz.PHP.DisallowInlineIf
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Generic.Files.LineLength, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -60,14 +62,18 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Folds the legacy Subsidie / PurchaseOrder / booking-Order / Quote /
- * SalesOrder / BlanketOrder rows onto the unified Order family. Idempotent,
- * fail-soft, never deletes source rows.
+ * Folds Subsidie / PurchaseOrder / DBAOpdracht rows into the unified `Order`
+ * schema. Idempotent, fail-soft, never deletes or mutates source rows.
  *
  * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
  */
 class FoldIntoOrder implements IRepairStep
 {
+    /**
+     * The target schema every fold writes to.
+     */
+    public const TARGET = 'Order';
+
     /**
      * Constructor.
      *
@@ -88,20 +94,24 @@ class FoldIntoOrder implements IRepairStep
      * The repair-step display name shown in occ maintenance:repair output.
      *
      * @return string The display name.
+     *
+     * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
      */
     public function getName(): string
     {
-        return 'Shillinq: fold legacy Subsidie/PurchaseOrder/booking-Order/Quote/SalesOrder/BlanketOrder rows onto the unified Order family';
+        return 'Shillinq: fold Subsidie/PurchaseOrder/DBAOpdracht rows onto the unified Order primitive';
 
     }//end getName()
 
     /**
-     * Run the fold. Idempotent — never duplicates Grant/Payment rows and never
-     * deletes source rows.
+     * Run the fold. Idempotent — never duplicates Order rows and never deletes
+     * or mutates source rows.
      *
      * @param IOutput $output The repair-step output (progress + warnings).
      *
      * @return void
+     *
+     * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
      */
     public function run(IOutput $output): void
     {
@@ -119,13 +129,9 @@ class FoldIntoOrder implements IRepairStep
         }
 
         $summary = [];
-
-        $summary['Subsidie']      = $this->foldSubsidies($objectService, $registerSlug, $admin, $output);
-        $summary['PurchaseOrder'] = $this->foldInPlace($objectService, $registerSlug, $admin, $output, 'PurchaseOrder', 'purchase', 'incoming');
-        $summary['Order']         = $this->foldBookingOrders($objectService, $registerSlug, $admin, $output);
-        $summary['Quote']         = $this->foldInPlace($objectService, $registerSlug, $admin, $output, 'Quote', 'quote', 'outgoing');
-        $summary['SalesOrder']    = $this->foldInPlace($objectService, $registerSlug, $admin, $output, 'SalesOrder', 'sales', 'outgoing');
-        $summary['BlanketOrder']  = $this->foldInPlace($objectService, $registerSlug, $admin, $output, 'BlanketOrder', 'blanket', 'outgoing');
+        $summary['Subsidie']      = $this->foldRows($objectService, $registerSlug, $admin, $output, 'Subsidie', $this->buildSubsidieOrder(...));
+        $summary['PurchaseOrder'] = $this->foldRows($objectService, $registerSlug, $admin, $output, 'PurchaseOrder', $this->buildPurchaseOrder(...));
+        $summary['DBAOpdracht']   = $this->foldRows($objectService, $registerSlug, $admin, $output, 'DBAOpdracht', $this->buildEngagementOrder(...));
 
         foreach ($summary as $schema => $counts) {
             $output->info(
@@ -163,12 +169,12 @@ class FoldIntoOrder implements IRepairStep
     }//end resolveAdminUser()
 
     /**
-     * Read all rows of a schema. Returns [] when the schema is absent or empty
-     * (a fresh tenant has ~0 source rows — a valid no-op).
+     * Read all rows of a source schema. Returns [] when the schema is absent
+     * or empty (a valid no-op — e.g. a fresh tenant with 0 source rows).
      *
      * @param object  $objectService The OR ObjectService.
      * @param string  $registerSlug  The shillinq register slug.
-     * @param string  $schema        The schema slug to read.
+     * @param string  $schema        The source schema slug to read.
      * @param IOutput $output        The repair output.
      *
      * @return array<int,mixed> The list of rows (may be empty).
@@ -200,342 +206,52 @@ class FoldIntoOrder implements IRepairStep
     }//end readRows()
 
     /**
-     * Fold every legacy Subsidie row onto a Grant (orderType=grant). The
-     * granted amount maps to Order.totalAmount; uitbetaald / teruggevorderd
-     * amounts become Payment rows. Source Subsidie rows are NOT deleted.
+     * Generic fold driver: read every row of a source schema, skip rows already
+     * folded (an Order with matching migratedFrom marker exists), otherwise
+     * build + save a new Order via the supplied builder callback.
      *
-     * Unions the two source field sets:
-     *   - operations Subsidie: subsidieNumber, subsidieName, granteeOrganization,
-     *     grantProgram, purposeDescription, awardAmount, budgetYear, currency,
-     *     approvingAuthority, state, hasRepaymentPlan, awardDate,
-     *     disbursementDate, settlementDate, attachmentUri, notes
-     *   - register Subsidie (Dutch variant): direction, counterpartyName,
-     *     counterpartyId, regelingNaam, regelingArtikel, aanvraagDate,
-     *     beschikkingDate, vaststellingDate, aangevraagdBedrag, verleendBedrag,
-     *     vastgesteldBedrag, uitbetaaldBedrag, teruggevorderdBedrag,
-     *     beschikkingUri, vaststellingUri, prestatieverantwoording,
-     *     afwijzingsReden, repaymentPlanId
-     *
-     * @param object  $objectService The OR ObjectService.
-     * @param string  $registerSlug  The shillinq register slug.
-     * @param IUser   $admin         The admin user for OR writes.
-     * @param IOutput $output        The repair output.
+     * @param object   $objectService The OR ObjectService.
+     * @param string   $registerSlug  The shillinq register slug.
+     * @param IUser    $admin         The admin user for OR writes.
+     * @param IOutput  $output        The repair output.
+     * @param string   $sourceSchema  The source schema slug to read.
+     * @param callable $builder       fn(array $src, string $migrationKey): array|null — builds the Order record, or null to skip an unresolvable row.
      *
      * @return array{migrated:int,skipped:int,failed:int} Per-schema counts.
      */
-    private function foldSubsidies(object $objectService, string $registerSlug, IUser $admin, IOutput $output): array
+    private function foldRows(object $objectService, string $registerSlug, IUser $admin, IOutput $output, string $sourceSchema, callable $builder): array
     {
         $migrated = 0;
         $skipped  = 0;
         $failed   = 0;
 
-        foreach ($this->readRows($objectService, $registerSlug, 'Subsidie', $output) as $row) {
-            $src = (array) $row;
+        foreach ($this->readRows($objectService, $registerSlug, $sourceSchema, $output) as $row) {
+            $src          = (array) $row;
+            $migrationKey = $this->migrationKey($src, $sourceSchema);
 
-            // Stable migration key: prefer the unique subsidieNumber.
-            $subsidieNumber = (string) ($src['subsidieNumber'] ?? '');
-            $sourceId       = (string) ($src['id'] ?? ($src['uuid'] ?? ''));
-            $migrationKey   = ($subsidieNumber !== '' ? $subsidieNumber : $sourceId);
             if ($migrationKey === '') {
-                $output->warning('Shillinq: FoldIntoOrder — Subsidie row without subsidieNumber or id; skipping.');
+                $output->warning('Shillinq: FoldIntoOrder — '.$sourceSchema.' row without a stable id; skipping.');
                 $failed++;
                 continue;
             }
 
             try {
-                if ($this->grantExists($objectService, $registerSlug, $migrationKey) === true) {
+                if ($this->orderExists($objectService, $registerSlug, $sourceSchema, $migrationKey) === true) {
                     $skipped++;
                     continue;
                 }
 
-                $grant = $this->buildGrantRecord($src, $migrationKey);
-
-                $saved = $objectService->saveObject(
-                    object: $grant,
-                    register: $registerSlug,
-                    schema: 'Grant',
-                    _rbac: false,
-                    _multitenancy: false,
-                    currentUser: $admin,
-                );
-
-                $grantOrderId = $this->extractObjectId($saved, $grant);
-
-                $this->materialiseGrantPayments($objectService, $registerSlug, $admin, $output, $src, $grantOrderId);
-
-                $migrated++;
-            } catch (\Throwable $e) {
-                $output->warning('Shillinq: FoldIntoOrder — Subsidie "'.$migrationKey.'" fold failed: '.$e->getMessage());
-                $this->logger->warning('Shillinq: FoldIntoOrder — Subsidie fold failed', ['key' => $migrationKey, 'exception' => $e->getMessage()]);
-                $failed++;
-            }//end try
-        }//end foreach
-
-        return ['migrated' => $migrated, 'skipped' => $skipped, 'failed' => $failed];
-
-    }//end foldSubsidies()
-
-    /**
-     * Build the Grant record from a legacy Subsidie row, unioning the Dutch +
-     * English source fields onto the Grant tail. The granted amount becomes
-     * Order.totalAmount; nothing from the source is dropped (amounts that do
-     * not map to a Grant field — uitbetaald / teruggevorderd — are emitted as
-     * Payment rows by materialiseGrantPayments).
-     *
-     * @param array<string,mixed> $src          The source Subsidie row.
-     * @param string              $migrationKey The stable migration marker.
-     *
-     * @return array<string,mixed> The Grant record (orderType=grant).
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     */
-    private function buildGrantRecord(array $src, string $migrationKey): array
-    {
-        // Granted amount → Order.totalAmount: prefer the Dutch verleendBedrag,
-        // then the operations awardAmount.
-        $grantedAmount = $src['verleendBedrag'] ?? ($src['awardAmount'] ?? null);
-
-        $scheme = $this->firstNonEmpty([($src['regelingNaam'] ?? null), ($src['grantProgram'] ?? null), ($src['subsidieName'] ?? null)]);
-
-        $record = [
-            // ---- Order base fields (inherited via allOf composition) --------.
-            'orderType'             => 'grant',
-            'direction'             => (string) ($src['direction'] ?? 'outgoing'),
-            'orderNumber'           => $migrationKey,
-            'counterpartyId'        => $this->stringOrNull($src['counterpartyId'] ?? null),
-            'counterpartyName'      => $this->firstNonEmpty([($src['counterpartyName'] ?? null), ($src['granteeOrganization'] ?? null)]),
-            'totalAmount'           => ($grantedAmount === null ? null : (float) $grantedAmount),
-            'currency'              => (string) ($src['currency'] ?? 'EUR'),
-            'orderDate'             => $this->toDateTime($src['awardDate'] ?? ($src['beschikkingDate'] ?? null)),
-            'administrationId'      => (string) ($src['administrationId'] ?? 'unknown'),
-            'state'                 => $this->mapGrantState((string) ($src['state'] ?? '')),
-            'description'           => $this->stringOrNull($src['purposeDescription'] ?? ($src['notes'] ?? null)),
-
-            // ---- Grant tail (English) --------------------------------------.
-            'scheme'                => $scheme,
-            'schemeArticle'         => $this->firstNonEmpty([($src['regelingArtikel'] ?? null), ($src['grantProgram'] ?? null)]),
-            'granteeOrganization'   => $this->stringOrNull($src['granteeOrganization'] ?? null),
-            'purposeDescription'    => $this->stringOrNull($src['purposeDescription'] ?? null),
-            'budgetYear'            => $this->intOrNull($src['budgetYear'] ?? null),
-            'approvingAuthority'    => $this->stringOrNull($src['approvingAuthority'] ?? null),
-            'applicationDate'       => $this->toDateTime($src['aanvraagDate'] ?? null),
-            'decisionDate'          => $this->toDateTime($src['beschikkingDate'] ?? ($src['awardDate'] ?? null)),
-            'settlementDate'        => $this->toDateTime($src['vaststellingDate'] ?? ($src['settlementDate'] ?? null)),
-            'appliedAmount'         => $this->floatOrNull($src['aangevraagdBedrag'] ?? null),
-            'assessedAmount'        => $this->floatOrNull($src['vastgesteldBedrag'] ?? null),
-            'performanceReport'     => $this->stringOrNull($src['prestatieverantwoording'] ?? null),
-            'rejectionReason'       => $this->stringOrNull($src['afwijzingsReden'] ?? null),
-            'hasRepaymentPlan'      => $this->boolOrNull($src['hasRepaymentPlan'] ?? null),
-            'repaymentPlanId'       => $this->stringOrNull($src['repaymentPlanId'] ?? null),
-            'decisionDocumentUri'   => $this->firstNonEmpty([($src['beschikkingUri'] ?? null), ($src['attachmentUri'] ?? null)]),
-            'settlementDocumentUri' => $this->stringOrNull($src['vaststellingUri'] ?? null),
-
-            // Stable migration marker so re-runs are idempotent.
-            'migratedFromSubsidie'  => $migrationKey,
-        ];
-
-        return $record;
-
-    }//end buildGrantRecord()
-
-    /**
-     * Emit Payment rows for a folded Grant: the uitbetaald amount becomes a
-     * disbursement Payment, the teruggevorderd amount a reclaim Payment. No
-     * source amount is dropped — anything not mappable to a Grant field lands
-     * here as a Payment. Idempotent (skips when a matching Payment exists).
-     *
-     * @param object              $objectService The OR ObjectService.
-     * @param string              $registerSlug  The shillinq register slug.
-     * @param IUser               $admin         The admin user for OR writes.
-     * @param IOutput             $output        The repair output.
-     * @param array<string,mixed> $src           The source Subsidie row.
-     * @param string              $grantOrderId  The folded Grant/Order id (Payment.orderId).
-     *
-     * @return void
-     */
-    private function materialiseGrantPayments(object $objectService, string $registerSlug, IUser $admin, IOutput $output, array $src, string $grantOrderId): void
-    {
-        if ($grantOrderId === '') {
-            return;
-        }
-
-        $administrationId = (string) ($src['administrationId'] ?? 'unknown');
-        $currency         = (string) ($src['currency'] ?? 'EUR');
-
-        $disbursed = $this->floatOrNull($src['uitbetaaldBedrag'] ?? null);
-        if ($disbursed !== null && $disbursed > 0) {
-            $this->createPaymentIfAbsent(
-                $objectService,
-                    $registerSlug,
-                    $admin,
-                    $output,
-                    $grantOrderId,
-                    'disbursement',
-                    $disbursed,
-                    $currency,
-                    $administrationId,
-                $this->toDateTime($src['disbursementDate'] ?? null)
-            );
-        }
-
-        $reclaimed = $this->floatOrNull($src['teruggevorderdBedrag'] ?? null);
-        if ($reclaimed !== null && $reclaimed > 0) {
-            $this->createPaymentIfAbsent(
-                $objectService,
-                    $registerSlug,
-                    $admin,
-                    $output,
-                    $grantOrderId,
-                    'reclaim',
-                    $reclaimed,
-                    $currency,
-                    $administrationId,
-                null
-            );
-        }
-
-    }//end materialiseGrantPayments()
-
-    /**
-     * Fold a bookings Order row in place: set orderType=booking and move the
-     * deposit (depositAmount / depositPaymentId) onto a deposit Payment row.
-     * The booking deposit amount is stored in EUR cents (minor units) on the
-     * Order; the Payment.amount is the same minor-unit value converted to a
-     * major-unit number for the generic Payment schema.
-     *
-     * @param object  $objectService The OR ObjectService.
-     * @param string  $registerSlug  The shillinq register slug.
-     * @param IUser   $admin         The admin user for OR writes.
-     * @param IOutput $output        The repair output.
-     *
-     * @return array{migrated:int,skipped:int,failed:int} Per-schema counts.
-     */
-    private function foldBookingOrders(object $objectService, string $registerSlug, IUser $admin, IOutput $output): array
-    {
-        $migrated = 0;
-        $skipped  = 0;
-        $failed   = 0;
-
-        foreach ($this->readRows($objectService, $registerSlug, 'Order', $output) as $row) {
-            $src      = (array) $row;
-            $sourceId = (string) ($src['id'] ?? ($src['uuid'] ?? ''));
-
-            if ($sourceId === '') {
-                $output->warning('Shillinq: FoldIntoOrder — Order row without id; skipping.');
-                $failed++;
-                continue;
-            }
-
-            // Idempotent: an Order already carrying an orderType has been folded
-            // (or was created post-migration). Skip.
-            if (($src['orderType'] ?? '') !== '') {
-                $skipped++;
-                continue;
-            }
-
-            try {
-                $patch = $src;
-                $patch['orderType'] = 'booking';
-                if (($patch['direction'] ?? '') === '') {
-                    $patch['direction'] = 'incoming';
+                $order = $builder($src, $migrationKey);
+                if ($order === null) {
+                    $output->warning('Shillinq: FoldIntoOrder — '.$sourceSchema.' "'.$migrationKey.'": could not build an Order record; skipping.');
+                    $failed++;
+                    continue;
                 }
 
                 $objectService->saveObject(
-                    object: $patch,
+                    object: $order,
                     register: $registerSlug,
-                    schema: 'Order',
-                    uuid: $sourceId,
-                    _rbac: false,
-                    _multitenancy: false,
-                    currentUser: $admin,
-                );
-
-                // Move the deposit onto a Payment row (idempotent).
-                $depositAmount    = $this->floatOrNull($src['depositAmount'] ?? null);
-                $depositPaymentId = (string) ($src['depositPaymentId'] ?? '');
-                if ($depositAmount !== null && $depositAmount > 0) {
-                    // depositAmount is minor units (cents) on the Order; express
-                    // the generic Payment.amount in major units.
-                    $this->createPaymentIfAbsent(
-                        $objectService,
-                            $registerSlug,
-                            $admin,
-                            $output,
-                            $sourceId,
-                            'deposit',
-                        ($depositAmount / 100.0),
-                            (string) ($src['currency'] ?? 'EUR'),
-                        (string) ($src['administrationId'] ?? 'unknown'),
-                            null,
-                        ($depositPaymentId !== '' ? $depositPaymentId : null)
-                    );
-                }
-
-                $migrated++;
-            } catch (\Throwable $e) {
-                $output->warning('Shillinq: FoldIntoOrder — booking Order id='.$sourceId.' fold failed: '.$e->getMessage());
-                $this->logger->warning('Shillinq: FoldIntoOrder — booking Order fold failed', ['id' => $sourceId, 'exception' => $e->getMessage()]);
-                $failed++;
-            }//end try
-        }//end foreach
-
-        return ['migrated' => $migrated, 'skipped' => $skipped, 'failed' => $failed];
-
-    }//end foldBookingOrders()
-
-    /**
-     * Fold an Order-extension schema (PurchaseOrder/Quote/SalesOrder/
-     * BlanketOrder) in place: set its orderType discriminator + direction and
-     * map its source-specific fields onto the base Order fields it already
-     * inherits via composition. Idempotent (skips rows already carrying an
-     * orderType). Source rows are updated in place — never duplicated.
-     *
-     * @param object  $objectService The OR ObjectService.
-     * @param string  $registerSlug  The shillinq register slug.
-     * @param IUser   $admin         The admin user for OR writes.
-     * @param IOutput $output        The repair output.
-     * @param string  $schema        The extension schema slug.
-     * @param string  $orderType     The discriminator value to set.
-     * @param string  $direction     The order direction (incoming/outgoing).
-     *
-     * @return array{migrated:int,skipped:int,failed:int} Per-schema counts.
-     */
-    private function foldInPlace(object $objectService, string $registerSlug, IUser $admin, IOutput $output, string $schema, string $orderType, string $direction): array
-    {
-        $migrated = 0;
-        $skipped  = 0;
-        $failed   = 0;
-
-        foreach ($this->readRows($objectService, $registerSlug, $schema, $output) as $row) {
-            $src      = (array) $row;
-            $sourceId = (string) ($src['id'] ?? ($src['uuid'] ?? ''));
-
-            if ($sourceId === '') {
-                $output->warning('Shillinq: FoldIntoOrder — '.$schema.' row without id; skipping.');
-                $failed++;
-                continue;
-            }
-
-            if (($src['orderType'] ?? '') !== '') {
-                $skipped++;
-                continue;
-            }
-
-            try {
-                $patch = $src;
-                $patch['orderType'] = $orderType;
-                if (($patch['direction'] ?? '') === '') {
-                    $patch['direction'] = $direction;
-                }
-
-                $this->mapBaseFields($patch, $src, $schema);
-
-                $objectService->saveObject(
-                    object: $patch,
-                    register: $registerSlug,
-                    schema: $schema,
-                    uuid: $sourceId,
+                    schema: self::TARGET,
                     _rbac: false,
                     _multitenancy: false,
                     currentUser: $admin,
@@ -543,181 +259,66 @@ class FoldIntoOrder implements IRepairStep
 
                 $migrated++;
             } catch (\Throwable $e) {
-                $output->warning('Shillinq: FoldIntoOrder — '.$schema.' id='.$sourceId.' fold failed: '.$e->getMessage());
-                $this->logger->warning('Shillinq: FoldIntoOrder — '.$schema.' fold failed', ['id' => $sourceId, 'exception' => $e->getMessage()]);
+                $output->warning('Shillinq: FoldIntoOrder — '.$sourceSchema.' "'.$migrationKey.'" fold failed: '.$e->getMessage());
+                $this->logger->warning(
+                    'Shillinq: FoldIntoOrder — fold failed',
+                    ['schema' => $sourceSchema, 'key' => $migrationKey, 'exception' => $e->getMessage()]
+                );
                 $failed++;
             }//end try
         }//end foreach
 
         return ['migrated' => $migrated, 'skipped' => $skipped, 'failed' => $failed];
 
-    }//end foldInPlace()
+    }//end foldRows()
 
     /**
-     * Map source-specific fields onto the base Order fields (orderNumber,
-     * counterpartyId, counterpartyName, totalAmount, paymentTerms, orderDate,
-     * currency) for an in-place extension fold. Only fills base fields that are
-     * not already populated, so a hand-curated row is never clobbered. The
-     * source-specific fields themselves are preserved on the row (nothing is
-     * dropped) — this only ADDS the base projection.
+     * Derive the stable migration key for a source row.
      *
-     * @param array<string,mixed> $patch  The patch being built (by reference).
      * @param array<string,mixed> $src    The source row.
-     * @param string              $schema The extension schema slug.
+     * @param string              $schema The source schema slug.
      *
-     * @return void
+     * @return string The migration key (may be empty when unresolvable).
      */
-    private function mapBaseFields(array &$patch, array $src, string $schema): void
+    private function migrationKey(array $src, string $schema): string
     {
-        $map = match ($schema) {
-            'PurchaseOrder' => [
-                'orderNumber'      => ['poNumber'],
-                'counterpartyId'   => ['supplierId'],
-                'counterpartyName' => ['supplierReference'],
-                'totalAmount'      => ['totalInclVat'],
-                'paymentTerms'     => ['paymentTerms'],
-                'projectReference' => ['projectCode'],
-            ],
-            'Quote' => [
-                'orderNumber'    => ['quoteNumber'],
-                'counterpartyId' => ['customerReference'],
-                'paymentTerms'   => ['paymentTerms'],
-            ],
-            'SalesOrder' => [
-                'orderNumber'    => ['orderNumber', 'orderId'],
-                'counterpartyId' => ['customerReference', 'klantId'],
-                'orderDate'      => ['orderDate'],
-                'paymentTerms'   => ['paymentTerms'],
-            ],
-            'BlanketOrder' => [
-                'orderNumber'    => ['blanketOrderNumber'],
-                'counterpartyId' => ['customerReference'],
-                'totalAmount'    => ['committedQuantity'],
-            ],
-            default => [],
-        };//end match
+        $preferred = match ($schema) {
+            'Subsidie'      => (string) ($src['subsidieNumber'] ?? ''),
+            'PurchaseOrder' => (string) ($src['poNumber'] ?? ''),
+            default         => '',
+        };
 
-        foreach ($map as $target => $candidates) {
-            if (($patch[$target] ?? '') !== '' && ($patch[$target] ?? null) !== null) {
-                continue;
-            }
-
-            $value = $this->firstNonEmpty(array_map(static fn ($k) => ($src[$k] ?? null), $candidates));
-            if ($value === null) {
-                continue;
-            }
-
-            if ($target === 'totalAmount') {
-                $patch[$target] = (float) $value;
-                continue;
-            }
-
-            $patch[$target] = $value;
+        if ($preferred !== '') {
+            return $preferred;
         }
 
-        // Currency default for the base projection.
-        if (($patch['currency'] ?? '') === '') {
-            $patch['currency'] = (string) ($src['currency'] ?? 'EUR');
-        }
+        return (string) ($src['id'] ?? ($src['uuid'] ?? ''));
 
-    }//end mapBaseFields()
+    }//end migrationKey()
 
     /**
-     * Create a Payment row when an equivalent one does not already exist
-     * (idempotency keyed on orderId + paymentType). Fail-soft.
-     *
-     * @param object      $objectService    The OR ObjectService.
-     * @param string      $registerSlug     The shillinq register slug.
-     * @param IUser       $admin            The admin user for OR writes.
-     * @param IOutput     $output           The repair output.
-     * @param string      $orderId          The owning Order/Grant id.
-     * @param string      $paymentType      deposit / disbursement / reclaim.
-     * @param float       $amount           The payment amount (major units).
-     * @param string      $currency         ISO 4217 currency.
-     * @param string      $administrationId The owning administration.
-     * @param string|null $paymentDate      ISO date-time, or null.
-     * @param string|null $linkedDepositId  Existing deposit-payment id, or null.
-     *
-     * @return void
-     */
-    private function createPaymentIfAbsent(
-        object $objectService,
-        string $registerSlug,
-        IUser $admin,
-        IOutput $output,
-        string $orderId,
-        string $paymentType,
-        float $amount,
-        string $currency,
-        string $administrationId,
-        ?string $paymentDate,
-        ?string $linkedDepositId=null
-    ): void {
-        try {
-            $existing = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('Payment')
-                ->findAll(
-                    [
-                        'filters'       => ['orderId' => $orderId, 'paymentType' => $paymentType],
-                        'limit'         => 1,
-                        '_rbac'         => false,
-                        '_multitenancy' => false,
-                    ]
-                );
-
-            if (is_array($existing) === true && $existing !== []) {
-                return;
-            }
-
-            $payment = [
-                'orderId'          => $orderId,
-                'paymentType'      => $paymentType,
-                'amount'           => $amount,
-                'currency'         => $currency,
-                'administrationId' => $administrationId,
-            ];
-            if ($paymentDate !== null) {
-                $payment['paymentDate'] = $paymentDate;
-            }
-
-            if ($linkedDepositId !== null) {
-                $payment['linkedInvoiceId'] = $linkedDepositId;
-            }
-
-            $objectService->saveObject(
-                object: $payment,
-                register: $registerSlug,
-                schema: 'Payment',
-                _rbac: false,
-                _multitenancy: false,
-                currentUser: $admin,
-            );
-        } catch (\Throwable $e) {
-            $output->warning('Shillinq: FoldIntoOrder — Payment ('.$paymentType.') for order '.$orderId.' failed: '.$e->getMessage());
-        }//end try
-
-    }//end createPaymentIfAbsent()
-
-    /**
-     * Whether a Grant already exists carrying the given migration marker
-     * (idempotency for the Subsidie fold).
+     * Whether an Order already exists carrying the given source marker
+     * (idempotency for every fold).
      *
      * @param object $objectService The OR ObjectService.
      * @param string $registerSlug  The shillinq register slug.
+     * @param string $sourceSchema  The source schema slug.
      * @param string $migrationKey  The stable source marker.
      *
-     * @return bool True when a matching Grant exists.
+     * @return bool True when a matching Order exists.
      */
-    private function grantExists(object $objectService, string $registerSlug, string $migrationKey): bool
+    private function orderExists(object $objectService, string $registerSlug, string $sourceSchema, string $migrationKey): bool
     {
         try {
             $found = $objectService
                 ->setRegister($registerSlug)
-                ->setSchema('Grant')
+                ->setSchema(self::TARGET)
                 ->findAll(
                     [
-                        'filters'       => ['migratedFromSubsidie' => $migrationKey],
+                        'filters'       => [
+                            'migratedFrom.schema' => $sourceSchema,
+                            'migratedFrom.key'    => $migrationKey,
+                        ],
                         'limit'         => 1,
                         '_rbac'         => false,
                         '_multitenancy' => false,
@@ -729,64 +330,176 @@ class FoldIntoOrder implements IRepairStep
             return false;
         }
 
-    }//end grantExists()
+    }//end orderExists()
 
     /**
-     * Map the Dutch Subsidie lifecycle state onto the Order lifecycle enum
-     * (draft / pending_payment / confirmed / completed / cancelled). Unknown
-     * states fall back to draft.
+     * Build an Order record (orderType=subsidie) from a legacy Subsidie row.
+     * Every Subsidie field is preserved verbatim on the `subsidie` group.
      *
-     * @param string $state The source state.
+     * @param array<string,mixed> $src          The source Subsidie row.
+     * @param string              $migrationKey The stable migration marker.
      *
-     * @return string The mapped Order state.
+     * @return array<string,mixed> The Order record.
      */
-    private function mapGrantState(string $state): string
+    private function buildSubsidieOrder(array $src, string $migrationKey): array
     {
-        return match ($state) {
-            'aanvraag'                => 'draft',
-            'verleend', 'gewijzigd'   => 'confirmed',
-            'vastgesteld', 'uitbetaald', 'afgehandeld' => 'completed',
-            'ingetrokken'             => 'cancelled',
-            'teruggevorderd', 'afbetalingsregeling'    => 'completed',
-            default                   => 'draft',
-        };
+        $grantedAmount = $src['verleendBedrag'] ?? ($src['awardAmount'] ?? null);
 
-    }//end mapGrantState()
+        return [
+            'administrationId' => (string) ($src['administrationId'] ?? 'unknown'),
+            'orderType'        => 'subsidie',
+            'direction'        => (string) ($src['direction'] ?? 'outgoing'),
+            'orderNumber'      => $migrationKey,
+            'counterpartyId'   => $this->stringOrNull($src['counterpartyId'] ?? null),
+            'counterpartyName' => $this->firstNonEmpty([($src['counterpartyName'] ?? null), ($src['granteeOrganization'] ?? null)]),
+            'currency'         => (string) ($src['currency'] ?? 'EUR'),
+            'orderDate'        => $this->toDateTime($src['aanvraagDate'] ?? ($src['awardDate'] ?? null)),
+            'totalAmount'      => ($grantedAmount === null ? null : (float) $grantedAmount),
+            'description'      => $this->stringOrNull($src['purposeDescription'] ?? ($src['notes'] ?? null)),
+            'state'            => (string) ($src['state'] ?? 'aanvraag'),
+            'subsidie'         => [
+                'subsidieNumber'          => $this->stringOrNull($src['subsidieNumber'] ?? null),
+                'regelingNaam'            => $this->firstNonEmpty([($src['regelingNaam'] ?? null), ($src['grantProgram'] ?? null), ($src['subsidieName'] ?? null)]),
+                'regelingArtikel'         => $this->firstNonEmpty([($src['regelingArtikel'] ?? null), ($src['grantProgram'] ?? null)]),
+                'subsidieRegeling'        => $this->stringOrNull($src['subsidieRegeling'] ?? null),
+                'aanvraagDate'            => $this->toDateTime($src['aanvraagDate'] ?? null),
+                'beschikkingDate'         => $this->toDateTime($src['beschikkingDate'] ?? ($src['awardDate'] ?? null)),
+                'vaststellingDate'        => $this->toDateTime($src['vaststellingDate'] ?? ($src['settlementDate'] ?? null)),
+                'settlementDate'          => $this->toDateTime($src['settlementDate'] ?? null),
+                'disbursementDate'        => $this->toDateTime($src['disbursementDate'] ?? null),
+                'aangevraagdBedrag'       => $this->floatOrNull($src['aangevraagdBedrag'] ?? null),
+                'verleendBedrag'          => $this->floatOrNull($src['verleendBedrag'] ?? ($src['awardAmount'] ?? null)),
+                'vastgesteldBedrag'       => $this->floatOrNull($src['vastgesteldBedrag'] ?? null),
+                'uitbetaaldBedrag'        => $this->floatOrNull($src['uitbetaaldBedrag'] ?? null),
+                'teruggevorderdBedrag'    => $this->floatOrNull($src['teruggevorderdBedrag'] ?? null),
+                'beschikkingUri'          => $this->stringOrNull($src['beschikkingUri'] ?? null),
+                'vaststellingUri'         => $this->stringOrNull($src['vaststellingUri'] ?? null),
+                'attachmentUri'           => $this->stringOrNull($src['attachmentUri'] ?? null),
+                'prestatieverantwoording' => $this->stringOrNull($src['prestatieverantwoording'] ?? null),
+                'afwijzingsReden'         => $this->stringOrNull($src['afwijzingsReden'] ?? null),
+                'repaymentPlanId'         => $this->stringOrNull($src['repaymentPlanId'] ?? null),
+                'hasRepaymentPlan'        => $this->boolOrNull($src['hasRepaymentPlan'] ?? null),
+                'approvingAuthority'      => $this->stringOrNull($src['approvingAuthority'] ?? null),
+                'budgetYear'              => $this->intOrNull($src['budgetYear'] ?? null),
+                'grantProgram'            => $this->stringOrNull($src['grantProgram'] ?? null),
+                'granteeOrganization'     => $this->stringOrNull($src['granteeOrganization'] ?? null),
+                'notes'                   => $this->stringOrNull($src['notes'] ?? null),
+            ],
+            'migratedFrom'     => [
+                'schema' => 'Subsidie',
+                'key'    => $migrationKey,
+            ],
+        ];
+
+    }//end buildSubsidieOrder()
 
     /**
-     * Extract the persisted object id from a saveObject return value, falling
-     * back to the source record's own id.
+     * Build an Order record (orderType=purchase) from a legacy PurchaseOrder
+     * row. Amounts stay in integer EURO CENTS inside the `purchase` group;
+     * the shared totalAmount is the decimal-EUR projection (totalInclVat/100).
      *
-     * @param mixed               $saved  The saveObject return (ObjectEntity).
-     * @param array<string,mixed> $record The record that was saved.
+     * @param array<string,mixed> $src          The source PurchaseOrder row.
+     * @param string              $migrationKey The stable migration marker.
      *
-     * @return string The object id (may be empty when unresolvable).
+     * @return array<string,mixed> The Order record.
      */
-    private function extractObjectId(mixed $saved, array $record): string
+    private function buildPurchaseOrder(array $src, string $migrationKey): array
     {
-        if (is_object($saved) === true && method_exists($saved, 'getUuid') === true) {
-            $uuid = (string) $saved->getUuid();
-            if ($uuid !== '') {
-                return $uuid;
-            }
-        }
+        $totalInclVat = $this->intOrNull($src['totalInclVat'] ?? null);
 
-        if (is_object($saved) === true && method_exists($saved, 'getId') === true) {
-            $id = (string) $saved->getId();
-            if ($id !== '') {
-                return $id;
-            }
-        }
+        return [
+            'administrationId' => (string) ($src['administrationId'] ?? 'unknown'),
+            'orderType'        => 'purchase',
+            'direction'        => 'incoming',
+            'orderNumber'      => $migrationKey,
+            'counterpartyId'   => $this->stringOrNull($src['supplierId'] ?? null),
+            'counterpartyName' => $this->stringOrNull($src['supplierReference'] ?? null),
+            'currency'         => (string) ($src['currency'] ?? 'EUR'),
+            'orderDate'        => null,
+            'totalAmount'      => ($totalInclVat === null ? null : ($totalInclVat / 100.0)),
+            'description'      => $this->stringOrNull($src['deliveryAddress'] ?? null),
+            'paymentTerms'     => $this->stringOrNull($src['paymentTerms'] ?? null),
+            'projectReference' => $this->stringOrNull($src['projectCode'] ?? null),
+            'costCenter'       => $this->stringOrNull($src['costCenter'] ?? null),
+            'state'            => (string) ($src['statusCode'] ?? 'draft'),
+            'purchase'         => [
+                'poNumber'             => $this->stringOrNull($src['poNumber'] ?? null),
+                'supplierId'           => $this->stringOrNull($src['supplierId'] ?? null),
+                'supplierReference'    => $this->stringOrNull($src['supplierReference'] ?? null),
+                'requester'            => $this->stringOrNull($src['requester'] ?? null),
+                'requisitionId'        => $this->stringOrNull($src['requisitionId'] ?? null),
+                'deliveryAddress'      => $this->stringOrNull($src['deliveryAddress'] ?? null),
+                'expectedDeliveryDate' => $this->toDateTime($src['expectedDeliveryDate'] ?? null),
+                'totalExclVat'         => $this->intOrNull($src['totalExclVat'] ?? null),
+                'totalVat'             => $this->intOrNull($src['totalVat'] ?? null),
+                'totalInclVat'         => $totalInclVat,
+                'approvalChain'        => $src['approvalChain'] ?? [],
+                'peppolSentAt'         => $this->toDateTime($src['peppolSentAt'] ?? null),
+                'peppolMessageId'      => $this->stringOrNull($src['peppolMessageId'] ?? null),
+                'peppolFallbackReason' => $this->stringOrNull($src['peppolFallbackReason'] ?? null),
+            ],
+            'migratedFrom'     => [
+                'schema' => 'PurchaseOrder',
+                'key'    => $migrationKey,
+            ],
+        ];
 
-        $arr     = (array) $saved;
-        $fromArr = (string) ($arr['uuid'] ?? ($arr['id'] ?? ''));
-        if ($fromArr !== '') {
-            return $fromArr;
-        }
+    }//end buildPurchaseOrder()
 
-        return (string) ($record['id'] ?? ($record['uuid'] ?? ''));
+    /**
+     * Build an Order record (orderType=engagement) from a legacy DBAOpdracht
+     * row.
+     *
+     * @param array<string,mixed> $src          The source DBAOpdracht row.
+     * @param string              $migrationKey The stable migration marker.
+     *
+     * @return array<string,mixed> The Order record.
+     */
+    private function buildEngagementOrder(array $src, string $migrationKey): array
+    {
+        $verwachteOmzet = $this->intOrNull($src['verwachteOmzet'] ?? null);
 
-    }//end extractObjectId()
+        return [
+            'administrationId' => (string) ($src['administrationId'] ?? 'unknown'),
+            'orderType'        => 'engagement',
+            'direction'        => 'outgoing',
+            'orderNumber'      => 'DBA-'.$migrationKey,
+            'counterpartyId'   => $this->stringOrNull($src['klantId'] ?? null),
+            'counterpartyName' => $this->stringOrNull($src['klantId'] ?? null),
+            'currency'         => 'EUR',
+            'orderDate'        => $this->toDateTime($src['startDatum'] ?? null),
+            'endDate'          => $this->toDateTime($src['verwachteEindDatum'] ?? null),
+            'totalAmount'      => ($verwachteOmzet === null ? null : ($verwachteOmzet / 100.0)),
+            'description'      => $this->stringOrNull($src['opdrachtNaam'] ?? null),
+            'state'            => (string) ($src['intakeStatus'] ?? 'DRAFT'),
+            'engagement'       => [
+                'ondernemingId'           => $this->stringOrNull($src['ondernemingId'] ?? null),
+                'klantId'                 => $this->stringOrNull($src['klantId'] ?? null),
+                'opdrachtNaam'            => $this->stringOrNull($src['opdrachtNaam'] ?? null),
+                'verwachteEindDatum'      => $this->toDateTime($src['verwachteEindDatum'] ?? null),
+                'feitelijkeEindDatum'     => $this->toDateTime($src['feitelijkeEindDatum'] ?? null),
+                'verwachteOmzet'          => $verwachteOmzet,
+                'gerealiseerdeOmzet'      => $this->intOrNull($src['gerealiseerdeOmzet'] ?? null),
+                'eenmaligLageDrempel'     => $this->boolOrNull($src['eenmaligLageDrempel'] ?? null),
+                'modelOvereenkomstId'     => $this->stringOrNull($src['modelOvereenkomstId'] ?? null),
+                'intakeDatum'             => $this->toDateTime($src['intakeDatum'] ?? null),
+                'actueleRisicoscore'      => $this->intOrNull($src['actueleRisicoscore'] ?? null),
+                'risicoNiveau'            => $this->stringOrNull($src['risicoNiveau'] ?? null),
+                'openFlags'               => $this->intOrNull($src['openFlags'] ?? null),
+                'evidenceDossierId'       => $this->stringOrNull($src['evidenceDossierId'] ?? null),
+                'wbaBeoordelingResultaat' => $this->stringOrNull($src['wbaBeoordelingResultaat'] ?? null),
+                'wbaGeldigTot'            => $this->toDateTime($src['wbaGeldigTot'] ?? null),
+                'intermediairMode'        => $this->boolOrNull($src['intermediairMode'] ?? null),
+                'perspectief'             => $this->stringOrNull($src['perspectief'] ?? null),
+                'retentieDeadline'        => $this->toDateTime($src['retentieDeadline'] ?? null),
+            ],
+            'migratedFrom'     => [
+                'schema' => 'DBAOpdracht',
+                'key'    => $migrationKey,
+            ],
+        ];
+
+    }//end buildEngagementOrder()
 
     /**
      * Return the first non-empty (non-null, non-'') value from a list, or null.
@@ -903,7 +616,6 @@ class FoldIntoOrder implements IRepairStep
         }
 
         try {
-            // A bare YYYY-MM-DD is widened to midnight UTC.
             if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $str) === 1) {
                 $str .= 'T00:00:00+00:00';
             }

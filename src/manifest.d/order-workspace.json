@@ -18,7 +18,7 @@
 			"schema": "Order",
 			"register": "shillinq",
 			"filters": [
-				{ "key": "orderType", "label": "Type", "type": "select", "options": ["booking", "sales", "purchase", "grant", "engagement", "quote", "blanket"] }
+				{ "key": "orderType", "label": "Type", "type": "select", "options": ["purchase", "subsidie", "engagement"] }
 			],
 			"columns": ["orderNumber", "orderType", "counterpartyName", "totalAmount", "orderDate", "state"]
 		},
