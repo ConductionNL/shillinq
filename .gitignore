@@ -56,6 +56,12 @@ phpqa_output.log
 **/rebase*
 **/setup*
 
+# The mistake-filename globs above are broad enough to also match legitimate
+# openspec change/spec slugs (e.g. "model-or-references-pilot" contains
+# "references"), silently swallowing real archived changes from git status.
+# Never let them exclude anything under openspec/.
+!openspec/**
+
 # Temporary test files that shouldn't be committed
 simple-solr-test.php
 test-solr-connection.php
