@@ -1627,9 +1627,13 @@
         },
         "x-openregister-notifications": {
           "signingStatusSigned": {
-            "trigger": "updated",
-            "conditions": {
-              "signingStatus": "signed"
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "signingStatus",
+                "operator": "equals",
+                "value": "signed"
+              }
             },
             "recipients": [
               {
@@ -1637,7 +1641,7 @@
                 "field": "owner"
               },
               {
-                "kind": "acl",
+                "kind": "object-acl",
                 "permission": "manage"
               }
             ],
@@ -1652,9 +1656,13 @@
             "metadataOnly": true
           },
           "signingStatusDeclined": {
-            "trigger": "updated",
-            "conditions": {
-              "signingStatus": "declined"
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "signingStatus",
+                "operator": "equals",
+                "value": "declined"
+              }
             },
             "recipients": [
               {
@@ -1662,7 +1670,7 @@
                 "field": "owner"
               },
               {
-                "kind": "acl",
+                "kind": "object-acl",
                 "permission": "manage"
               }
             ],
@@ -1677,9 +1685,13 @@
             "metadataOnly": true
           },
           "decisionOutcomeApproved": {
-            "trigger": "updated",
-            "conditions": {
-              "decisionOutcome": "approved"
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "decisionOutcome",
+                "operator": "equals",
+                "value": "approved"
+              }
             },
             "recipients": [
               {
@@ -1687,7 +1699,7 @@
                 "field": "owner"
               },
               {
-                "kind": "acl",
+                "kind": "object-acl",
                 "permission": "manage"
               }
             ],
@@ -1702,9 +1714,13 @@
             "metadataOnly": true
           },
           "decisionOutcomeRejected": {
-            "trigger": "updated",
-            "conditions": {
-              "decisionOutcome": "rejected"
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "decisionOutcome",
+                "operator": "equals",
+                "value": "rejected"
+              }
             },
             "recipients": [
               {
@@ -1712,7 +1728,7 @@
                 "field": "owner"
               },
               {
-                "kind": "acl",
+                "kind": "object-acl",
                 "permission": "manage"
               }
             ],
