@@ -720,6 +720,21 @@ class Application extends App implements IBootstrap
             listener: OpdrachtUitvoeringTransitionListener::class
         );
 
+        // Change shillinq-delegation-via-events (REQ-SIGN-005) — the REAL
+        // production trigger for SignoffDecisionService::requestSignoff().
+        // AnnualReportSignoffRequestListener raises the decidesk adoption
+        // Decision the moment an AnnualReport transitions to `opgemaakt`
+        // (bestuur-signed) — the single state shared by both `vaststellen`
+        // (post-review) and `vaststellenZonderReview` (klein/micro) before
+        // the algemene vergadering votes. Idempotent (one request per
+        // adoption cycle) and fail-soft at the listener boundary; the
+        // fail-CLOSED guarantee (never auto-approve) lives in
+        // requestSignoff() itself.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: AnnualReportSignoffRequestListener::class
+        );
+
         // Change shillinq-delegation-via-events (REQ-SIGN-005/006) — consume
         // the terminal governance-decision outcome decidesk publishes via
         // OCA\Decidesk\Event\DecisionConcludedEvent. The sign-off DECISION

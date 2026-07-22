@@ -35,9 +35,7 @@ transport actually shipped: both delegation paths now use `IEventDispatcher`
 event contracts, not a registry. See
 [Conduction/shillinq#491](https://codeberg.org/Conduction/shillinq/issues/491)
 for the reconstruction history.
-
 ## Requirements
-
 ### Requirement: REQ-SIGN-001 — Document e-signature on a shillinq finance document SHALL be delegated to docudesk via IEventDispatcher, request-then-consume-outcome; shillinq stores only the returned reference and mirrored status and NEVER signs on local authority
 
 shillinq MUST NOT sign documents itself. Any e-signature on a finance document
@@ -192,6 +190,14 @@ REQ-SIGN-001 (also `IEventDispatcher`-based); it is not restated here.
   the synchronous result `isHandled()` / `getDecisionId()`. If `isHandled()` is false OR
   `getDecisionId()` is null it MUST fail closed (throw). On success it MUST store the returned
   decision id as `decisionRef` and set `decisionOutcome = pending`.
+- The request MUST be raised from a REAL production trigger, not merely be callable —
+  `AnnualReportSignoffRequestListener` reacts to `OCA\OpenRegister\Event\ObjectTransitionedEvent`
+  on the AnnualReport schema transitioning to `opgemaakt` (the state shared by both the
+  `vaststellen` and `vaststellenZonderReview` AV-adoption transitions) and is the sole
+  production caller of `requestSignoff()`. It is idempotent — skipped once the object already
+  carries a non-empty `decisionOutcome` — and fail-soft at the listener boundary (the
+  `opgemaakt` transition has already committed by the time the event fires; a request failure
+  leaves `decisionOutcome` unset rather than corrupting the record or auto-approving).
 - A registered listener (`SignoffDecisionConcludedListener`) on
   `OCA\Decidesk\Event\DecisionConcludedEvent` MUST consume the terminal outcome, filtering to
   `getSourceApp() === 'shillinq'`, and MUST project the `approved` / `rejected` outcome onto
@@ -208,6 +214,12 @@ REQ-SIGN-001 (also `IEventDispatcher`-based); it is not restated here.
 - **GIVEN** a finance object (`ACMReport` / `ActuarialValuation` / `AnnualReport`) awaiting governance sign-off
 - **WHEN** an operator requests the sign-off
 - **THEN** shillinq MUST dispatch `OCA\Decidesk\Event\DecisionRequestedEvent` via `IEventDispatcher`, and only on `isHandled() === true` with a non-null `getDecisionId()` set `decisionRef` and `decisionOutcome = pending`; if decidesk is not installed or did not handle the event it MUST throw and MUST NOT advance or auto-approve
+
+#### Scenario: The decision request is wired to a real AnnualReport lifecycle trigger, not left orphaned
+
+- **GIVEN** an AnnualReport with no `decisionOutcome` set yet
+- **WHEN** the AnnualReport transitions to `opgemaakt` (via `opmaken` or `reviewAnnuleren`)
+- **THEN** `AnnualReportSignoffRequestListener` MUST call `SignoffDecisionService::requestSignoff()` exactly once and persist the returned `decisionRef` / `decisionOutcome = pending`; a subsequent re-entry into `opgemaakt` while `decisionOutcome` is already set MUST NOT raise a duplicate decision
 
 #### Scenario: The concluded decision outcome is consumed by a listener and drives the local GL consequence
 
