@@ -7,13 +7,17 @@
     "npm": "^10.0.0"
   },
   "scripts": {
+    "prebuild": "node scripts/generate-manifest-shell.js",
     "build": "NODE_ENV=production webpack --config webpack.config.js --progress",
     "postbuild": "[ -d ../openregister/custom_apps/shillinq/js ] && cp -r js/. ../openregister/custom_apps/shillinq/js/ || true",
+    "predev": "node scripts/generate-manifest-shell.js",
     "dev": "NODE_ENV=development webpack --config webpack.config.js --progress",
     "postdev": "[ -d ../openregister/custom_apps/shillinq/js ] && cp -r js/. ../openregister/custom_apps/shillinq/js/ || true",
+    "prewatch": "node scripts/generate-manifest-shell.js",
     "watch": "NODE_ENV=development webpack --config webpack.config.js --progress --watch",
     "lint": "eslint src",
     "lint-fix": "npm run lint -- --fix",
+    "pretest:unit": "node scripts/generate-manifest-shell.js",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.reporter=json-summary --coverage.reporter=text-summary --coverage.include=src/** --coverage.reportsDirectory=coverage-vitest",

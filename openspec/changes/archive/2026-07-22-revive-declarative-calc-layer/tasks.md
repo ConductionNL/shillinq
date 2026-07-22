@@ -24,11 +24,53 @@
 
 - [x] 4.1 Re-import the register (`occ maintenance:repair`); import succeeded ("Shillinq configuration imported successfully") with NO `x-openregister-calculations annotation … invalid` / `calculation-unknown-op` warnings — all JSON-AST calcs validated at schema-save
 - [x] 4.2 POST'd one object per representative schema and asserted the derived field materialises: MileageEntry.totalAmount=31.5 (150×0.21); PerDiem.allowanceAmount=300 (3×100), nightCountWarning=null; BankConnection.consentRemainingDays=194; RateSchedule.isCurrentlyEffective=true + effectiveWindowLabel="2026-01-01 – open-ended" (Bucket-2 coalesce+concat); FixedAsset.monthlyDepreciation=200, currentBookValue=11000, commercial/fiscalBookValue=11000 (Bucket-2 max+monthsElapsed); SisaReport.auditOpinion="adverse" (nested if). Test objects deleted after verification.
-- [ ] 4.3 Run `RematerialiseCalculationsCommand` to backfill existing objects — DEFERRED to operator (no pre-existing seeded objects present to backfill; new saves materialise correctly as verified in 4.2)
+- [x] 4.3 The "no pre-existing seeded objects" claim was checked against `shillinq_register.json`'s
+  `objects` array and found FALSE for 3 of the converted schemas: `RateSchedule` (5 seeded
+  objects), `SisaReport` (3), `InventoryReorderRule` (3) — their calc'd fields (e.g.
+  `isCurrentlyEffective`, `auditOpinion`, `reorderPointCalculated`) would stay unmaterialised
+  until each object is next saved. Rather than leave this to a manual operator step (which
+  OR's `RematerialiseCalculationsCommand` requires running by hand), added an automatic
+  in-app repair step: `lib/Repair/RematerialiseConvertedCalculations.php`, registered in
+  `appinfo/info.xml`'s `<repair-steps><post-migration>` (runs on every `occ maintenance:repair`
+  / `occ app:enable shillinq`, same as the fleet's other backfill repair steps, e.g.
+  `BackfillFiscalPeriods`). It re-saves every existing object on the 17 schemas this change
+  actually converted (Bucket 1 ∪ Bucket 2 per-object calcs, EXCLUDING the 3 fields reclassified
+  to guard in task 1.2, and EXCLUDING `Account.emuAggregationHash`/`MileageEntry.ratePerKm`/
+  `PerDiem.dailyRate`/`ZzpDeduction`'s rate-lookup fields/`UrenRegistratie.utilizationPercent`/
+  `DepreciationSchedule.*` — those belong to the separate, already-archived
+  `guards-to-declarative-calc-refs` change's scope, confirmed while researching task 5.1 below).
+  Re-saving via `ObjectService::saveObject()` with the object's own data (carrying its `id`, so
+  it resolves as an UPDATE) triggers `CalculationOnSaveListener` exactly as a genuine edit
+  would. Unit tests: `tests/Unit/Repair/RematerialiseConvertedCalculationsTest.php` (7 tests —
+  every existing object resaved with its own id; every one of the 17 schemas visited even when
+  empty; objects without an id/uuid skipped; a save/findAll failure on one schema/object is
+  best-effort and does not block the rest), all green.
 
 ## 5. Follow-up handoff (out of scope here)
 
-- [ ] 5.1 Confirm the 9 Bucket-3b cross-object/external calcs (3 lookups grouped under rate-lookup, emuAggregationHash, multiCurrencyConversion, the 3 ZzpDeduction rate lookups, 2 ComplianceReport folds) are carried into `revive-declarative-calc-layer-guards` (kind:code, depends_on this) — do NOT implement guards here
+- [x] 5.1 Confirmed the Bucket-3b carry-forward by tracing the actual chain (NOT the
+  originally-envisioned `revive-declarative-calc-layer-guards`; the real follow-up shipped
+  under a different name): `openspec/changes/archive/2026-06-20-guards-to-declarative-calc-refs`
+  (already archived/landed) declares `chain: [revive-declarative-calc-layer,
+  guards-to-declarative-calc-refs]` and converts 10 of the deferred calcs — `MileageEntry.ratePerKm`,
+  `Receipt.amountInBaseCurrency` (was `multiCurrencyConversion`), `PerDiem.dailyRate`, the 3
+  `ZzpDeduction` rate-lookup fields, `DepreciationSchedule.bookValue`/`depreciationAmount`,
+  `UrenRegistratie.utilizationPercent`, `Account.emuAggregationHash` — to the newer `@ref`/
+  `@aggregate` declarative primitives (`x-openregister-references`/`x-openregister-aggregate-refs`,
+  shipped by OR's `calc-engine-reference-lookup`/`calc-engine-aggregate-reference` deps) once
+  those primitives existed, instead of writing PHP guards for them. Verified live against
+  `shillinq_register.json` HEAD: all 10 are present with `materialise: true` + `@ref.*`/
+  `@aggregate.*` JSON-AST expressions.
+  **Gap found and NOT silently passed over**: `ComplianceReport.complianceScore` /
+  `criteriaResults` — the remaining 2 of the original 9 — were explicitly carved out by
+  `guards-to-declarative-calc-refs`'s own proposal as "kept as PHP guards — justified ADR-031
+  exception" (a heterogeneous per-rule array fold no `@ref`/`@aggregate` scalar can express),
+  but verified against HEAD that guard service was never actually written: both fields still
+  declare the OLD `formula`/`source`/`filter` shape (no `materialise: true`, no `guard:` key),
+  and no `ComplianceReportService`-like class exists anywhere in `lib/`. Still dead. Filed
+  https://codeberg.org/Conduction/shillinq/issues/490 documenting the gap and the required
+  guard service shape, rather than either implementing it here (task explicitly says do NOT) or
+  silently marking this task done without flagging the incomplete carry-forward.
 
 ## Criteria / quality
 

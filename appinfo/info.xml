@@ -149,6 +149,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
             <step>OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject</step>
             <step>OCA\Shillinq\Repair\RetireSubsidieSchema</step>
+            <step>OCA\Shillinq\Repair\RematerialiseConvertedCalculations</step>
         </post-migration>
     </repair-steps>
 

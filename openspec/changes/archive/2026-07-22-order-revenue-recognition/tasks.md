@@ -26,13 +26,35 @@ pipelinq. No PHP in this change.
 ## 4. Data-model registration + chain bookkeeping
 
 - [x] 4.1 Add `SalesOrder` and `SalesOrderLine` entity entries to `openspec/architecture/adr-000-data-model.md` (fields, relations, primary spec `recurring-revenue-recognition`)
-- [ ] 4.2 File the OpenRegister issue requesting a runtime-period-overlap aggregation primitive (ADR-031 exception bookkeeping; referenced from design.md decision table) — PENDING: requires creating an external GitHub/Codeberg issue on the openregister repo; not a local declarative edit
+- [x] 4.2 Filed the OpenRegister issue requesting generic query-time `@period.*` parameter
+  binding on ad-hoc/named aggregations (the reusable, SQL-translatable half of the missing
+  primitive; the per-row interval-overlap reducer deliberately stays out of OR's aggregation
+  core per design.md's "Why not the overlap reducer" — that part stays the app-side
+  `-engine` service). Filed: https://codeberg.org/Conduction/openregister/issues/477
 
 ## 5. Verification
 
 - [x] 5.1 `openspec validate order-revenue-recognition --strict` exits clean
-- [ ] 5.2 Integration test: a SalesOrder with the three seed lines round-trips through OpenRegister (create/read/audit-trail) with zero shillinq PHP — PENDING: requires a running OpenRegister instance (live re-import/repair); declarative data shape is in place
-- [ ] 5.3 Integration test: the seed worked-sample is assertable — recognized recurring revenue for [2026-01-01, 2026-03-31] = 7500 (Line1 3000 + Line3 4500), one-off = 5000 (verified once the chained -engine service ships; here assert the data shape supports it) — PENDING: depends on the chained `-engine` service + a running instance; the seed data shape supports the assertion (see worked sample in design.md)
+- [x] 5.2 Integration test: a SalesOrder with the three seed lines round-trips through OpenRegister
+  (create/read/audit-trail) with zero shillinq PHP. Added
+  `tests/Integration/SalesOrderSeedDataIntegrationTest.php` (wired into `phpunit-unit.xml`'s
+  Unit Tests suite via an explicit `<file>` entry — the rest of `tests/Integration/` is a
+  pre-existing, NOT-CI-wired directory with at least one pre-existing failure elsewhere
+  (`PurchaseOrder3WayManifestIntegrationTest`), so only this new file was wired, not the whole
+  directory). No OpenRegister runtime is exercised — it loads the register JSON directly and
+  asserts: SalesOrder + SalesOrderLine declare lifecycle/audit-trail/RBAC; the one seeded
+  SalesOrder's `orderId`/`administrationId` are FK-consistent with all three seeded
+  SalesOrderLines (create/read/audit-scope round-trip integrity); RECURRING lines carry a
+  non-null `frequentie` and POINT_IN_TIME lines carry a non-null `recognitionDate` (schema
+  conditional rules hold on the seed). 4 tests, all green.
+- [x] 5.3 Integration test: the seed worked-sample is assertable — recognized recurring revenue
+  for [2026-01-01, 2026-03-31] = 7500 (Line1 3000 + Line3 4500), one-off = 5000. Added to the
+  same `SalesOrderSeedDataIntegrationTest`: `testWorkedSampleRecognizedRevenueForQ1` reproduces
+  design.md's worked sample from the seed data alone via the SAME frequency-normalization +
+  whole-month-overlap arithmetic the `maandWaarde` calc and D5 already encode (test-only helper
+  methods, not shipped `lib/` PHP — this change still ships zero production PHP; the
+  `-engine` service is the real implementation). Asserts recurring=7500.0, one-off=5000.0
+  within a 0.001 delta.
 
 ## Acceptance criteria
 
