@@ -281,7 +281,7 @@ class FoldIntoOrderTest extends TestCase
         );
         $step->run($this->output);
 
-        $saved = $fakeOs->saved('Order');
+        $saved = $fakeOs->saved('OrderPrimitive');
         self::assertCount(1, $saved);
 
         $order = $saved[0];
@@ -340,7 +340,7 @@ class FoldIntoOrderTest extends TestCase
         );
         $step->run($this->output);
 
-        $saved = $fakeOs->saved('Order');
+        $saved = $fakeOs->saved('OrderPrimitive');
         self::assertCount(1, $saved);
 
         $order = $saved[0];
@@ -390,7 +390,7 @@ class FoldIntoOrderTest extends TestCase
         );
         $step->run($this->output);
 
-        $saved = $fakeOs->saved('Order');
+        $saved = $fakeOs->saved('OrderPrimitive');
         self::assertCount(1, $saved);
 
         $order = $saved[0];
@@ -422,8 +422,8 @@ class FoldIntoOrderTest extends TestCase
 
         $fakeOs = $this->fakeObjectService(
             [
-                'Subsidie' => [$subsidie],
-                'Order'    => [$alreadyFolded],
+                'Subsidie'        => [$subsidie],
+                'OrderPrimitive'  => [$alreadyFolded],
             ]
         );
         $this->container->method('get')->willReturn($fakeOs);
@@ -436,7 +436,7 @@ class FoldIntoOrderTest extends TestCase
         );
         $step->run($this->output);
 
-        self::assertCount(1, $fakeOs->saved('Order'), 'no second Order must be created for an already-folded row');
+        self::assertCount(1, $fakeOs->saved('OrderPrimitive'), 'no second Order must be created for an already-folded row');
 
     }//end testSkipsAlreadyFoldedRows()
 
@@ -458,7 +458,7 @@ class FoldIntoOrderTest extends TestCase
         );
         $step->run($this->output);
 
-        self::assertCount(0, $fakeOs->saved('Order'));
+        self::assertCount(0, $fakeOs->saved('OrderPrimitive'));
 
     }//end testSkipsRowWithoutId()
 
@@ -478,7 +478,7 @@ class FoldIntoOrderTest extends TestCase
         );
         $step->run($this->output);
 
-        self::assertCount(0, $fakeOs->saved('Order'));
+        self::assertCount(0, $fakeOs->saved('OrderPrimitive'));
 
     }//end testEmptySourcesHandledGracefully()
 

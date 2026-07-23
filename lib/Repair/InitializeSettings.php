@@ -941,12 +941,16 @@ class InitializeSettings implements IRepairStep
         $totalSkipped   = 0;
 
         foreach ($administrations as $administration) {
-            $administrationType = (string) ($administration['administrationType'] ?? '');
+            // OpenRegister's findAll() returns ObjectEntity instances, not plain
+            // arrays; array-indexing one directly throws "Cannot use object of
+            // type ...ObjectEntity as array" (issue #508). Normalise first.
+            $administrationRow  = $this->asArray(row: $administration);
+            $administrationType = (string) ($administrationRow['administrationType'] ?? '');
             if (in_array($administrationType, $municipalTypes, true) === false) {
                 continue;
             }
 
-            $administrationId = (string) ($administration['administrationCode'] ?? $administration['id'] ?? $administration['uuid'] ?? '');
+            $administrationId = (string) ($administrationRow['administrationCode'] ?? $administrationRow['id'] ?? $administrationRow['uuid'] ?? '');
             if ($administrationId === '') {
                 continue;
             }
@@ -981,6 +985,48 @@ class InitializeSettings implements IRepairStep
         );
 
     }//end seedBbvMappingsForMunicipalAdministrations()
+
+    /**
+     * Normalise an OpenRegister ObjectService row (ObjectEntity or array) to a
+     * plain array<string,mixed>.
+     *
+     * OpenRegister's findAll()/find() return ObjectEntity instances, not plain
+     * arrays; array-indexing an ObjectEntity directly (`$row['field']`) throws
+     * "Cannot use object of type OCA\OpenRegister\Db\ObjectEntity as array"
+     * (issue #508). Mirrors the `asArray()` helper used elsewhere in this app
+     * (e.g. LeasePaymentScheduleService, TrialBalanceService).
+     *
+     * @param mixed $row Raw row from ObjectService::findAll()/find().
+     *
+     * @return array<string,mixed> The object as an array (empty array when unusable).
+     */
+    private function asArray(mixed $row): array
+    {
+        if (is_array($row) === true) {
+            return $row;
+        }
+
+        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+            $out = $row->jsonSerialize();
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
+        }
+
+        if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+            $out = $row->getObject();
+            if (is_array($out) === true) {
+                return $out;
+            }
+
+            return [];
+        }
+
+        return [];
+
+    }//end asArray()
 
     /**
      * Seed the KOR thresholds from kor-thresholds-2026.json, idempotently.

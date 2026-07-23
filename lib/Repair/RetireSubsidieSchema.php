@@ -92,8 +92,14 @@ class RetireSubsidieSchema implements IRepairStep
 
     /**
      * The target schema that Subsidie rows were folded onto.
+     *
+     * SLUG NOTE (issue #503, 2026-07-23): renamed from `Order` to
+     * `OrderPrimitive` — see FoldIntoOrder::TARGET and
+     * zz-order-primitive.json's _meta description for the collision this
+     * avoids (a live, foreign `decidesk` schema already held slug `order`,
+     * case-insensitively, in the shared organisation).
      */
-    private const TARGET = 'Order';
+    private const TARGET = 'OrderPrimitive';
 
     /**
      * The source-schema tag FoldIntoOrder stamps in migratedFrom.schema.
