@@ -163,6 +163,14 @@
             "example": 50000,
             "title": "Awarded Amount"
           },
+          "awardDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Grant award date snapshot copied from the Subsidie grant at verantwoording creation, used by the isOverdue calculation (REQ-SUBV-010) to evaluate the 90-day accountability deadline without a cross-schema join at evaluation time. Null on records created before this field existed; isOverdue treats a null awardDate as never-overdue rather than guessing a fallback date.",
+            "example": "2026-01-01",
+            "title": "Award Date"
+          },
           "administrationId": {
             "type": "string",
             "description": "FK to the Administration owning this record.",
@@ -173,6 +181,9 @@
         "x-openregister-lifecycle": {
           "field": "status",
           "initialState": "draft",
+          "final": [
+            "final"
+          ],
           "retention": {
             "rule": "selectielijst:5.1.3",
             "period": "P10Y",
@@ -224,6 +235,30 @@
             }
           }
         },
+        "x-openregister-calculations": {
+          "daysSinceAward": {
+            "expression": {
+              "diffDays": [
+                { "now": [] },
+                { "prop": "awardDate" }
+              ]
+            },
+            "type": "integer",
+            "materialise": true,
+            "description": "Elapsed whole days since the grant award date (REQ-SUBV-010). Null when awardDate is not set, which flows through to isOverdue resolving false (diffDays returns null on an unparseable/missing operand; gt(null, 90) is false) rather than guessing a fallback reference date."
+          },
+          "isOverdue": {
+            "expression": {
+              "and": [
+                { "ne": [{ "prop": "status" }, { "lit": "final" }] },
+                { "gt": [{ "prop": "daysSinceAward" }, { "lit": 90 }] }
+              ]
+            },
+            "type": "boolean",
+            "materialise": true,
+            "description": "True when this accountability report is in a non-final state (draft/submitted/approved) and more than 90 days have elapsed since the grant award date (REQ-SUBV-010) — the declarative restoration of the retired OverdueVerantwoordingJob::isOverdue() rule. Materialised so the onOverdue scheduled notification can filter on it, and re-evaluated daily without an object write by OpenRegister's TemporalCalculationSweepJob (daysSinceAward references `now`, which flags this schema as temporal); `final` is declared as x-openregister-lifecycle's terminal state so already-finalised records are excluded from the sweep."
+          }
+        },
         "x-openregister-notifications": {
           "onSubmitted": {
             "trigger": {
@@ -238,7 +273,7 @@
               }
             ],
             "channels": [
-              "in-app",
+              "nc-notification",
               "email"
             ],
             "subject": "Report Ready for Approval",
@@ -257,7 +292,7 @@
               }
             ],
             "channels": [
-              "in-app"
+              "nc-notification"
             ],
             "subject": "Accountability Report Approved",
             "message": "Subsidie verantwoording @self.verantwoordingId is approved."
@@ -275,10 +310,31 @@
               }
             ],
             "channels": [
-              "in-app"
+              "nc-notification"
             ],
             "subject": "Accountability Report Finalised",
             "message": "Subsidie verantwoording @self.verantwoordingId is finalised."
+          },
+          "onOverdue": {
+            "trigger": {
+              "type": "scheduled",
+              "intervalSec": 86400,
+              "filter": {
+                "isOverdue": true
+              }
+            },
+            "description": "Daily reminder to the assigned approver while an accountability report remains overdue (REQ-SUBV-010) — restores the retired OverdueVerantwoordingJob's 24h re-check cadence declaratively (ADR-031). Skips records with no assigned approverUserId, matching the job's original behaviour: the `field` recipient kind resolves an empty field value to zero recipients.",
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "approverUserId"
+              }
+            ],
+            "channels": [
+              "nc-notification"
+            ],
+            "subject": "Accountability Report Overdue",
+            "message": "Subsidie verantwoording @self.verantwoordingId is overdue for approval (grant @self.grantId)."
           }
         },
         "x-openregister-relations": {
@@ -522,7 +578,7 @@
               }
             ],
             "channels": [
-              "in-app"
+              "nc-notification"
             ],
             "subject": "Auditor Statement — Under Review",
             "message": "Auditor statement @self.statementId is now under review."
@@ -540,7 +596,7 @@
               }
             ],
             "channels": [
-              "in-app",
+              "nc-notification",
               "email"
             ],
             "subject": "Auditor Statement — Approved",
@@ -559,7 +615,7 @@
               }
             ],
             "channels": [
-              "in-app",
+              "nc-notification",
               "email"
             ],
             "subject": "Auditor Statement — Rejected",
@@ -578,7 +634,7 @@
               }
             ],
             "channels": [
-              "in-app",
+              "nc-notification",
               "email"
             ],
             "subject": "Auditor Statement — Conditional Approval",
@@ -632,6 +688,7 @@
       "status": "draft",
       "reportContent": "Verantwoording cultuursubsidie 2026: besteding conform beschikking.",
       "awardedAmount": 50000,
+      "awardDate": "2026-01-01",
       "administrationId": "adm-gemeente-1"
     },
     {
