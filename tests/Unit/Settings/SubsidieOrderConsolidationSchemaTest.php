@@ -11,9 +11,15 @@
  *    the five state-amounts, prestatie-verantwoording, repayment) AND the
  *    English operations fields + subsidieRegeling folded in;
  *  - the generic `Order` slug was freed (renamed to `BookingOrder`) while
- *    `SalesOrder` / `PurchaseOrder` remain their own schemas, and is now
- *    claimed EXACTLY ONCE by the abstract-order-primitive change (no
- *    re-collision).
+ *    `SalesOrder` / `PurchaseOrder` remain their own schemas. UPDATE (issue
+ *    #503, 2026-07-23): abstract-order-primitive does NOT reclaim the bare
+ *    `Order` slug after all — live-verification on 8080 found it collides
+ *    (case-insensitively, instance-wide — OpenRegister's schema-import lookup
+ *    bypasses multitenancy) with a live, foreign `decidesk` schema (id 1585)
+ *    in the same organisation. The freed `Order` slug therefore stays
+ *    UNCLAIMED; the primitive ships under the distinct slug `OrderPrimitive`
+ *    instead. See zz-order-primitive.json's _meta description for the full
+ *    account.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Settings
@@ -173,7 +179,9 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase
     }//end testCanonicalSubsidieIsTheFieldUnion()
 
     /**
-     * The generic Order slug is freed; BookingOrder + SalesOrder/PurchaseOrder exist.
+     * The generic Order slug is freed and stays UNCLAIMED; BookingOrder +
+     * SalesOrder/PurchaseOrder exist; the abstract-order-primitive ships
+     * under the distinct `OrderPrimitive` slug instead (issue #503).
      *
      * @return void
      */
@@ -181,14 +189,22 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase
     {
         $slugs = array_column($this->allSchemaDefinitions(), 'slug');
 
-        // The slug was freed by this change and is now claimed EXACTLY ONCE
-        // by abstract-order-primitive's shipped Order primitive — a second
-        // definition would be the exact collision this prereq change existed
-        // to prevent.
+        // UPDATE (issue #503, 2026-07-23): the freed slug is NOT reclaimed.
+        // Live-verification on 8080 found the bare `Order` slug collides
+        // (case-insensitively, instance-wide) with a live, foreign `decidesk`
+        // schema (id 1585) in the same organisation — reclaiming it would
+        // have overwritten that schema on import. abstract-order-primitive
+        // ships under `OrderPrimitive` instead, so `Order` stays free (0
+        // definitions), not "claimed exactly once" as originally planned.
         $this->assertSame(
-            1,
+            0,
             count(array_filter($slugs, static fn (string $slug): bool => $slug === 'Order')),
-            'Order slug must be claimed exactly once (by the abstract-order-primitive primitive)'
+            'Order slug must stay unclaimed — it collides instance-wide with a live foreign schema (issue #503)'
+        );
+        $this->assertContains(
+            'OrderPrimitive',
+            $slugs,
+            'abstract-order-primitive must ship under the distinct OrderPrimitive slug, not the freed (collision-prone) Order slug'
         );
         $this->assertContains('BookingOrder', $slugs, 'Booking order must be renamed to BookingOrder');
         $this->assertContains('SalesOrder', $slugs, 'SalesOrder must remain its own schema');

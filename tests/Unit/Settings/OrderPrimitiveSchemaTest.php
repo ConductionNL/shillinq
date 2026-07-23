@@ -3,8 +3,14 @@
 /**
  * Register schema tests for abstract-order-primitive.
  *
- * Asserts the shipped `Order` schema against the register JSON:
- *  - exactly ONE `Order` schema definition exists (no slug collision);
+ * Asserts the shipped `OrderPrimitive` schema against the register JSON:
+ *  - exactly ONE `OrderPrimitive` schema definition exists (no slug collision);
+ *  - the bare `Order` slug is NEVER used (issue #503 regression guard — a
+ *    live, foreign `decidesk` schema (id 1585) already holds slug `order`,
+ *    case-insensitively, in the shared organisation; OpenRegister's schema
+ *    slug lookup is case-insensitive AND bypasses multitenancy on import, so
+ *    a slug is unique instance-wide, not per-app — see
+ *    zz-order-primitive.json's _meta description);
  *  - exactly ONE `Grant` schema definition survives — the pre-existing
  *    WBSO/BBV/NSO/Tozo stub — regression guard for the live collision bug
  *    found during this build (the earlier partial work's `Grant` extension
@@ -105,21 +111,50 @@ final class OrderPrimitiveSchemaTest extends TestCase
     }//end allSchemaDefinitions()
 
     /**
-     * Exactly one `Order` schema definition exists across every register file.
+     * Exactly one `OrderPrimitive` schema definition exists across every
+     * register file.
      *
      * @return void
      */
     public function testExactlyOneOrderSchemaDefinitionExists(): void
     {
-        $matches = array_values(array_filter($this->allSchemaDefinitions(), static fn (array $row): bool => $row['slug'] === 'Order'));
+        $matches = array_values(array_filter($this->allSchemaDefinitions(), static fn (array $row): bool => $row['slug'] === 'OrderPrimitive'));
 
         self::assertCount(
             1,
             $matches,
-            'Expected exactly one Order schema definition; found in: '.implode(', ', array_column($matches, 'file'))
+            'Expected exactly one OrderPrimitive schema definition; found in: '.implode(', ', array_column($matches, 'file'))
         );
 
     }//end testExactlyOneOrderSchemaDefinitionExists()
+
+    /**
+     * Regression guard (issue #503): the bare `Order` slug is NEVER used by
+     * any shillinq schema definition. OpenRegister's schema-import lookup
+     * (`ImportHandler::importSchema()` -> `SchemaMapper::find()`) is
+     * case-insensitive AND passes `_multitenancy: false`, so a slug is
+     * unique INSTANCE-WIDE across every app/organisation, not per-app. Live
+     * verification on 8080 found a `decidesk` schema (id 1585, slug `order`)
+     * already occupying that identifier in the SAME organisation as
+     * shillinq's own schemas — had abstract-order-primitive shipped a schema
+     * literally named `Order`, importing it would have matched and
+     * OVERWRITTEN decidesk's live schema via `SchemaMapper::updateFromArray()`.
+     *
+     * @return void
+     */
+    public function testBareOrderSlugIsNeverUsed(): void
+    {
+        $slugs = array_column($this->allSchemaDefinitions(), 'slug');
+
+        self::assertNotContains(
+            'Order',
+            $slugs,
+            'The bare "Order" slug must never be reused — it collides (case-insensitively, '
+            .'instance-wide) with a live, foreign schema on shared instances (issue #503). '
+            .'Use a distinctive slug such as OrderPrimitive instead.'
+        );
+
+    }//end testBareOrderSlugIsNeverUsed()
 
     /**
      * Regression guard: exactly one `Grant` schema definition survives (the
@@ -292,14 +327,14 @@ final class OrderPrimitiveSchemaTest extends TestCase
     }//end testOrderSchemaDeclaresRbacRoles()
 
     /**
-     * Locate the canonical Order schema definition.
+     * Locate the canonical OrderPrimitive schema definition.
      *
      * @return array<string,mixed>
      */
     private function orderSchema(): array
     {
-        $matches = array_values(array_filter($this->allSchemaDefinitions(), static fn (array $row): bool => $row['slug'] === 'Order'));
-        self::assertNotEmpty($matches, 'Order schema definition not found');
+        $matches = array_values(array_filter($this->allSchemaDefinitions(), static fn (array $row): bool => $row['slug'] === 'OrderPrimitive'));
+        self::assertNotEmpty($matches, 'OrderPrimitive schema definition not found');
 
         return $matches[0]['def'];
 

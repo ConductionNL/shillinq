@@ -256,6 +256,32 @@ class BookingCancellationGuardTest extends TestCase
     }//end testCanCancelHappyPath()
 
     /**
+     * Regression guard (issue #503, 2026-07-23): when no $object is
+     * pre-supplied, canCancel must resolve the order via the CURRENT
+     * `BookingOrder` schema slug, not the stale `Order` slug the booking
+     * context was renamed away from in 07709a0f. Before the fix this
+     * fallback silently found nothing (schema `Order` no longer exists for
+     * bookings) and denied every cancellation reached through this path.
+     *
+     * @return void
+     */
+    public function testCanCancelResolvesOrderViaBookingOrderSchemaFallback(): void
+    {
+        $this->withObjectService(
+            $this->buildObjectServiceStub(
+                [
+                    'BookingOrder' => [$this->order()],
+                    'Invoice'      => [$this->invoice()],
+                    'CreditNote'   => [],
+                ]
+            )
+        );
+
+        $this->assertTrue($this->guard->canCancel('ord-1001'), 'fallback lookup must resolve against schema BookingOrder');
+
+    }//end testCanCancelResolvesOrderViaBookingOrderSchemaFallback()
+
+    /**
      * The `canCancel` is denied when the order has no invoice.
      *
      * @return void
