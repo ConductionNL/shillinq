@@ -59,6 +59,12 @@ use Psr\Log\LoggerInterface;
  * rules deserving an integer-cent computation, not policy logic.
  *
  * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-20
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * Pre-existing debt (issue #506): inherent branch complexity in this
+ * domain logic; early-return refactor deferred pending full behavioral
+ * verification of each branch.
  */
 class SoftCloseExecutor
 {

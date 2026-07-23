@@ -67,6 +67,9 @@ use Throwable;
  * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)           Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class ComplianceService
 {

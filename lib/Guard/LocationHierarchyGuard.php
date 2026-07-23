@@ -31,6 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -45,6 +46,10 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
  * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-18
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class LocationHierarchyGuard
 {
@@ -67,14 +72,14 @@ class LocationHierarchyGuard
      * Validate that the new location does not exceed MAX_DEPTH in the hierarchy.
      *
      * Called by x-openregister-lifecycle `validations.onCreate.maxDepth` guard clause.
-     * Throws \InvalidArgumentException when depth ≥ MAX_DEPTH.
+     * Throws InvalidArgumentException when depth ≥ MAX_DEPTH.
      *
      * @param string|null           $parentLocationId The proposed parent location id (null = top-level).
      * @param array<string,mixed>[] $allLocations     All locations in the administration keyed by id.
      *
      * @return void
      *
-     * @throws \InvalidArgumentException When hierarchy depth would exceed MAX_DEPTH.
+     * @throws InvalidArgumentException When hierarchy depth would exceed MAX_DEPTH.
      *
      * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-7
      */
@@ -92,7 +97,7 @@ class LocationHierarchyGuard
         );
 
         if ($depth >= self::MAX_DEPTH) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 'Location hierarchy exceeds maximum depth of '.self::MAX_DEPTH.'.'
             );
         }
@@ -103,7 +108,7 @@ class LocationHierarchyGuard
      * Validate that setting parentLocationId does not create a circular reference.
      *
      * Called by x-openregister-lifecycle `validations.onCreate.noCircularReference` guard.
-     * Throws \InvalidArgumentException when a cycle is detected.
+     * Throws InvalidArgumentException when a cycle is detected.
      *
      * @param string                $locationId       The location being saved (new or updated).
      * @param string|null           $parentLocationId The proposed parent location id.
@@ -111,7 +116,7 @@ class LocationHierarchyGuard
      *
      * @return void
      *
-     * @throws \InvalidArgumentException When circular reference would be created.
+     * @throws InvalidArgumentException When circular reference would be created.
      *
      * @spec openspec/changes/inventory-multi-warehouse/tasks.md#task-18
      */
@@ -126,7 +131,7 @@ class LocationHierarchyGuard
 
         while ($current !== null) {
             if (isset($visited[$current]) === true) {
-                throw new \InvalidArgumentException(
+                throw new InvalidArgumentException(
                     'Circular reference detected in location hierarchy.'
                 );
             }

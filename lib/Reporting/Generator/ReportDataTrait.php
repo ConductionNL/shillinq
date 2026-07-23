@@ -30,6 +30,10 @@ namespace OCA\Shillinq\Reporting\Generator;
 
 /**
  * Common ObjectService access and value formatting for native generators.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 trait ReportDataTrait
 {

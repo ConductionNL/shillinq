@@ -467,11 +467,11 @@ class AccountantsdossierExportService
             $attachments[] = sprintf('attachments/materialiteit/row-%04d.json', ($index + 1));
         }
 
-        foreach ($bundle['auditSamples'] as $index => $sample) {
+        foreach ($bundle['auditSamples'] as $index => $row) {
             $attachments[] = sprintf('attachments/audit-samples/sample-%04d.json', ($index + 1));
         }
 
-        foreach ($bundle['auditFindings'] as $index => $finding) {
+        foreach ($bundle['auditFindings'] as $index => $row) {
             $attachments[] = sprintf('attachments/audit-findings/finding-%04d.json', ($index + 1));
         }
 

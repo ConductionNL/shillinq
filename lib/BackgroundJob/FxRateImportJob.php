@@ -56,6 +56,10 @@ use Psr\Log\LoggerInterface;
  * Daily ECB FX-rate import for the FxRate register (REQ-MC-003).
  *
  * @spec openspec/changes/add-shillinq-multi-currency/tasks.md#task-11
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class FxRateImportJob extends TimedJob
 {

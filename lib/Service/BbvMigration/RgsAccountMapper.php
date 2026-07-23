@@ -52,6 +52,10 @@ use Psr\Container\ContainerInterface;
  * Produces RGS-decentraal mapping suggestions for unmapped Account records.
  *
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
+ *     #506): inherent branch complexity in this domain logic; deferred
+ *     pending a dedicated refactor.
  */
 class RgsAccountMapper
 {

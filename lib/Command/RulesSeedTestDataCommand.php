@@ -67,6 +67,10 @@ class RulesSeedTestDataCommand extends Command
      * @param OutputInterface $output Console output.
      *
      * @return int
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $input is required by
+     *     Symfony Command::execute()'s signature; this command takes no
+     *     console input.
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {

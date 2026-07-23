@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Signing;
 
 use InvalidArgumentException;
+use OCA\DocuDesk\Event\DocumentSigningRequestedEvent;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -122,7 +123,7 @@ class SigningDelegationService
         }
 
         // Fail closed when docudesk is not installed — never sign on local authority.
-        if (class_exists(\OCA\DocuDesk\Event\DocumentSigningRequestedEvent::class) === false) {
+        if (class_exists(DocumentSigningRequestedEvent::class) === false) {
             $this->logger->warning(
                 'SigningDelegationService: docudesk not installed — signing cannot be delegated (fail closed)'
             );
@@ -136,7 +137,7 @@ class SigningDelegationService
             $docReference = (string) ($financeObject['documentReference'] ?? $financeObject['pdfRef'] ?? '');
         }
 
-        $event = new \OCA\DocuDesk\Event\DocumentSigningRequestedEvent(
+        $event = new DocumentSigningRequestedEvent(
             sourceApp: 'shillinq',
             subjectRegister: $this->settingsService->getRegisterSlug(),
             subjectSchema: $subjectSchema,

@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Booking;
 
+use LogicException;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 
@@ -154,7 +155,7 @@ class TransactionalGuard
         }
 
         if ($this->db->inTransaction() === false) {
-            throw new \LogicException('lockResourceRow must be called inside a transaction');
+            throw new LogicException('lockResourceRow must be called inside a transaction');
         }
 
         try {

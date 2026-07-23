@@ -46,6 +46,10 @@ namespace OCA\Shillinq\Service;
  * (REQ-ENSIA-001).
  *
  * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class ENSIAQuestionSetLoader
 {

@@ -3,7 +3,7 @@
 /**
  * Bank Rule Preview Service
  *
- * bank-rule-automation-ux — the read-only evaluator behind the
+ * Bank-rule-automation-ux — the read-only evaluator behind the
  * MatchingRule authoring "test / dry-run" UX (REQ-BR-011). Given a
  * (possibly unsaved) MatchingRule and a window of unmatched
  * BankStatementLine rows, it reports exactly which lines the rule WOULD
@@ -48,6 +48,13 @@ namespace OCA\Shillinq\Service;
  * @psalm-api
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.ErrorControlOperator)
+ * Pre-existing debt (issue #506): inherent branch complexity; the `@`
+ * suppresses a PHP warning on an externally-supplied, possibly-malformed
+ * regex pattern, and the return value is explicitly checked (fail-closed).
  */
 class BankRulePreviewService
 {
@@ -66,7 +73,7 @@ class BankRulePreviewService
      * indeterminate and never by itself causes a match.
      *
      * @param array<string,mixed>       $rule           The (possibly unsaved) MatchingRule.
-     *                                                   Expected key: predicates (list of predicate maps).
+     *                                                  Expected key: predicates (list of predicate maps).
      * @param list<array<string,mixed>> $candidateLines Unmatched BankStatementLine rows.
      * @param string|null               $anchorDate     Optional Y-m-d anchor for date-window predicates.
      *
@@ -178,8 +185,13 @@ class BankRulePreviewService
             $glAccount = (string) $best['targetGlAccount'];
         }
 
+        $matchingRuleId = null;
+        if (isset($best['id']) === true) {
+            $matchingRuleId = (string) $best['id'];
+        }
+
         return [
-            'matchingRuleId'  => isset($best['id']) === true ? (string) $best['id'] : null,
+            'matchingRuleId'  => $matchingRuleId,
             'ruleName'        => (string) ($best['ruleName'] ?? ''),
             'targetType'      => (string) ($best['targetType'] ?? 'gl-transaction'),
             'targetGlAccount' => $glAccount,
@@ -215,8 +227,8 @@ class BankRulePreviewService
         $counterpartyIban = (string) ($line['counterpartyIban'] ?? '');
         $valueDate        = (string) ($line['valueDate'] ?? '');
 
-        $breakdown       = [];
-        $allPass         = true;
+        $breakdown        = [];
+        $allPass          = true;
         $determinateCount = 0;
 
         foreach ($predicates as $index => $predicate) {
@@ -260,7 +272,7 @@ class BankRulePreviewService
                 case 'counterparty-iban':
                     $iban = (string) ($predicate['iban'] ?? '');
                     $pass = ($iban !== '' && $counterpartyIban !== ''
-                        && $this->normaliseIban($counterpartyIban) === $this->normaliseIban($iban));
+                        && $this->normaliseIban(iban: $counterpartyIban) === $this->normaliseIban(iban: $iban));
                     break;
 
                 case 'date-window':
@@ -271,9 +283,9 @@ class BankRulePreviewService
                         continue 2;
                     }
 
-                    $days      = (int) ($predicate['days'] ?? 0);
-                    $lineTs    = strtotime($valueDate);
-                    $anchorTs  = strtotime($anchorDate);
+                    $days     = (int) ($predicate['days'] ?? 0);
+                    $lineTs   = strtotime($valueDate);
+                    $anchorTs = strtotime($anchorDate);
                     if ($lineTs === false || $anchorTs === false) {
                         $breakdown[$index] = false;
                         $allPass           = false;

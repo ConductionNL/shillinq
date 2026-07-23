@@ -102,6 +102,9 @@ class DocumentArchiveCron extends TimedJob
      * @return void
      *
      * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-29
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
+     *     TimedJob::run()'s signature; this job takes no argument.
      */
     protected function run($argument): void
     {

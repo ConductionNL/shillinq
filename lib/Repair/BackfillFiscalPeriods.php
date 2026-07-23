@@ -48,6 +48,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use DateTimeImmutable;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -274,7 +275,7 @@ class BackfillFiscalPeriods implements IRepairStep
      */
     private function derivePeriodFields(string $periodId): array
     {
-        $now          = new \DateTimeImmutable();
+        $now          = new DateTimeImmutable();
         $fallbackYear = (int) $now->format('Y');
 
         // YYYY-Qn (calendar quarter).
@@ -284,7 +285,7 @@ class BackfillFiscalPeriods implements IRepairStep
             $startMonth = (($quarter - 1) * 3) + 1;
             $endMonth   = $startMonth + 2;
             $start      = sprintf('%04d-%02d-01', $year, $startMonth);
-            $endDay     = (int) (new \DateTimeImmutable(sprintf('%04d-%02d-01', $year, $endMonth)))->format('t');
+            $endDay     = (int) (new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $endMonth)))->format('t');
             $end        = sprintf('%04d-%02d-%02d', $year, $endMonth, $endDay);
 
             return [
@@ -302,7 +303,7 @@ class BackfillFiscalPeriods implements IRepairStep
             $year   = (int) $m[1];
             $month  = (int) $m[2];
             $start  = sprintf('%04d-%02d-01', $year, $month);
-            $endDay = (int) (new \DateTimeImmutable($start))->format('t');
+            $endDay = (int) (new DateTimeImmutable($start))->format('t');
             $end    = sprintf('%04d-%02d-%02d', $year, $month, $endDay);
 
             $names = [
@@ -333,8 +334,8 @@ class BackfillFiscalPeriods implements IRepairStep
             $year = (int) $m[1];
             $week = (int) $m[2];
             try {
-                $start = (new \DateTimeImmutable())->setISODate($year, $week, 1)->format('Y-m-d');
-                $end   = (new \DateTimeImmutable())->setISODate($year, $week, 7)->format('Y-m-d');
+                $start = (new DateTimeImmutable())->setISODate($year, $week, 1)->format('Y-m-d');
+                $end   = (new DateTimeImmutable())->setISODate($year, $week, 7)->format('Y-m-d');
             } catch (\Throwable) {
                 $start = sprintf('%04d-01-01', $year);
                 $end   = sprintf('%04d-12-31', $year);

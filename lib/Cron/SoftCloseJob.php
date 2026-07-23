@@ -82,6 +82,9 @@ class SoftCloseJob extends TimedJob
      * @param mixed $argument Unused.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
+     *     TimedJob::run()'s signature; this job takes no argument.
      */
     protected function run($argument): void
     {

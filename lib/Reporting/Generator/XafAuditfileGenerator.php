@@ -60,6 +60,10 @@ use XMLWriter;
 
 /**
  * Dutch XAF 3.2 Auditfile Financieel generator, byte-native via XMLWriter.
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
+ *     #506): inherent branch complexity in this domain logic; deferred
+ *     pending a dedicated refactor.
  */
 final class XafAuditfileGenerator implements ReportGeneratorInterface
 {

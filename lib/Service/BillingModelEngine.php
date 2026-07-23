@@ -31,6 +31,10 @@ namespace OCA\Shillinq\Service;
 
 /**
  * Pure billing-model logic: takes prepared inputs, returns line-item drafts.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class BillingModelEngine
 {
@@ -45,7 +49,7 @@ class BillingModelEngine
      *
      * @return array<int,array<string,mixed>>
      */
-    public function calculateT_AND_M(array $timeEntries, array $expenses, float $markupPercent=0.0): array
+    public function calculateTAndM(array $timeEntries, array $expenses, float $markupPercent=0.0): array
     {
         $grouped = [];
         foreach ($timeEntries as $entry) {
@@ -98,7 +102,7 @@ class BillingModelEngine
 
         return $lines;
 
-    }//end calculateT_AND_M()
+    }//end calculateTAndM()
 
     /**
      * Fixed-fee: flat amount + expenses, time entries shown in audit only.

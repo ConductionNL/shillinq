@@ -44,6 +44,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTime;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\FrameworkAgreementDrawdownGuard;
 use OCA\Shillinq\Lifecycle\SupplierQualificationGuard;
@@ -74,6 +75,11 @@ use RuntimeException;
  *   persists the lifecycle change and returns the updated record.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.LongVariable)
+ * Pre-existing debt (issue #506): broad domain surface area; variable
+ * renames deferred pending a dedicated pass.
  */
 class PurchaseOrderService
 {
@@ -739,7 +745,7 @@ class PurchaseOrderService
                 $notification
                     ->setApp(Application::APP_ID)
                     ->setUser($approverId)
-                    ->setDateTime(new \DateTime())
+                    ->setDateTime(new DateTime())
                     ->setObject(self::NOTIFICATION_OBJECT_TYPE, $purchaseOrderId)
                     ->setSubject(
                             self::NOTIFICATION_SUBJECT_APPROVAL_REQUESTED,

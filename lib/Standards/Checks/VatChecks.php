@@ -37,6 +37,10 @@ namespace OCA\Shillinq\Standards\Checks;
 
 /**
  * Executable EU VAT Directive checks against ARInvoice / APTransaction content.
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
+ *     #506): this class enumerates every EU VAT Directive rule the
+ *     catalogue defines; inherent complexity. Deferred to a follow-up.
  */
 class VatChecks implements CheckProvider
 {

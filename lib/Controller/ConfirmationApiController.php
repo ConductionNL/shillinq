@@ -43,6 +43,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
@@ -489,7 +490,7 @@ class ConfirmationApiController extends Controller
     private function nowIso(): string
     {
         return $this->time->getDateTime()
-            ->setTimezone(new \DateTimeZone('UTC'))
+            ->setTimezone(new DateTimeZone('UTC'))
             ->format('Y-m-d\TH:i:s\Z');
 
     }//end nowIso()

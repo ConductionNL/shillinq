@@ -41,6 +41,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use DateTimeImmutable;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\IGroupManager;
 use OCP\IUser;
@@ -128,7 +129,6 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
                 projectArrays: $projectArrays,
                 claimIndex: $claimIndex,
                 mapper: [$this, 'mapReceipt'],
-                touched: $touched,
                 output: $output
             ) + $touched);
 
@@ -141,7 +141,6 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
                 projectArrays: $projectArrays,
                 claimIndex: $claimIndex,
                 mapper: [$this, 'mapMileage'],
-                touched: $touched,
                 output: $output
             ) + $touched);
 
@@ -154,7 +153,6 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
                 projectArrays: $projectArrays,
                 claimIndex: $claimIndex,
                 mapper: [$this, 'mapPerDiem'],
-                touched: $touched,
                 output: $output
             ) + $touched);
 
@@ -164,13 +162,12 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
                 registerSlug: $registerSlug,
                 byKey: $byKey,
                 projectArrays: $projectArrays,
-                touched: $touched,
                 output: $output
             ) + $touched);
 
             // Persist every project we appended at least one line to.
             $saved = 0;
-            foreach ($touched as $projectKey => $true) {
+            foreach (array_keys($touched) as $projectKey) {
                 if (isset($projectArrays[$projectKey]) === false) {
                     continue;
                 }
@@ -346,7 +343,6 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
      *                                                         projectId.
      * @param callable                          $mapper        Source-row → costLine
      *                                                         mapper.
-     * @param array<string,bool>                $touched       Projects touched so far.
      * @param IOutput                           $output        Repair output.
      *
      * @return array<string,bool> The newly-touched project keys.
@@ -360,7 +356,6 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
         array &$projectArrays,
         array $claimIndex,
         callable $mapper,
-        array $touched,
         IOutput $output
     ): array {
         $newlyTouched = [];
@@ -423,7 +418,6 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
      * @param string                            $registerSlug  The register slug.
      * @param array<string,string>              $byKey         Identifier → projectKey index.
      * @param array<string,array<string,mixed>> $projectArrays ProjectKey → mutable record (by ref).
-     * @param array<string,bool>                $touched       Projects touched so far.
      * @param IOutput                           $output        Repair output.
      *
      * @return array<string,bool> The newly-touched project keys.
@@ -433,7 +427,6 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
         string $registerSlug,
         array $byKey,
         array &$projectArrays,
-        array $touched,
         IOutput $output
     ): array {
         $newlyTouched = [];
@@ -564,6 +557,11 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
      * @param array<string,mixed> $arr The Receipt row.
      *
      * @return array<string,mixed> The costLine (without type/sourceId).
+     *
+     * @SuppressWarnings(PHPMD.UnusedPrivateMethod) Invoked via the
+     *     `[$this, 'mapReceipt']` callable passed as foldCostFamily()'s
+     *     $mapper argument — PHPMD's static analysis does not follow
+     *     callable-array method references.
      */
     private function mapReceipt(array $arr): array
     {
@@ -585,6 +583,11 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
      * @param array<string,mixed> $arr The MileageEntry row.
      *
      * @return array<string,mixed> The costLine (without type/sourceId).
+     *
+     * @SuppressWarnings(PHPMD.UnusedPrivateMethod) Invoked via the
+     *     `[$this, 'mapMileage']` callable passed as foldCostFamily()'s
+     *     $mapper argument — PHPMD's static analysis does not follow
+     *     callable-array method references.
      */
     private function mapMileage(array $arr): array
     {
@@ -609,6 +612,11 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
      * @param array<string,mixed> $arr The PerDiem row.
      *
      * @return array<string,mixed> The costLine (without type/sourceId).
+     *
+     * @SuppressWarnings(PHPMD.UnusedPrivateMethod) Invoked via the
+     *     `[$this, 'mapPerDiem']` callable passed as foldCostFamily()'s
+     *     $mapper argument — PHPMD's static analysis does not follow
+     *     callable-array method references.
      */
     private function mapPerDiem(array $arr): array
     {
@@ -662,7 +670,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
         }
 
         try {
-            return (new \DateTimeImmutable($value))->format('Y-m-d');
+            return (new DateTimeImmutable($value))->format('Y-m-d');
         } catch (\Throwable $e) {
             return '';
         }

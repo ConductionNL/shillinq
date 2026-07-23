@@ -72,6 +72,9 @@ use Psr\Log\LoggerInterface;
  * pipeline.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ElseExpression)         Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  *
  * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
  */
@@ -87,10 +90,10 @@ class SalesDispatchStockIssueService
     /**
      * Construct the service.
      *
-     * @param ContainerInterface   $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig           $appConfig App config for the register slug.
-     * @param LoggerInterface      $logger    Logger for diagnostics; never logs full payloads.
-     * @param LotSellabilityGuard  $lotGuard  Decides whether a line may be issued from its lots.
+     * @param ContainerInterface  $container DI container for lazy ObjectService resolution.
+     * @param IAppConfig          $appConfig App config for the register slug.
+     * @param LoggerInterface     $logger    Logger for diagnostics; never logs full payloads.
+     * @param LotSellabilityGuard $lotGuard  Decides whether a line may be issued from its lots.
      */
     public function __construct(
         private readonly ContainerInterface $container,
@@ -319,7 +322,11 @@ class SalesDispatchStockIssueService
             foreach ($rows as $row) {
                 $rowArray = $this->asArray(row: $row);
                 $id       = (string) ($rowArray['id'] ?? ($rowArray['@self']['id'] ?? ''));
-                $key      = ($id !== '') ? $id : ('lot-'.count($seen));
+                $key      = 'lot-'.count($seen);
+                if ($id !== '') {
+                    $key = $id;
+                }
+
                 if (isset($seen[$key]) === true) {
                     continue;
                 }

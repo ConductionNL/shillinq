@@ -33,6 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Booking;
 
+use DateTimeZone;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -113,7 +114,7 @@ final class TimezoneResolver
     private function isValidTimezone(string $tz): bool
     {
         try {
-            new \DateTimeZone($tz);
+            new DateTimeZone($tz);
             return true;
         } catch (Throwable $e) {
             return false;

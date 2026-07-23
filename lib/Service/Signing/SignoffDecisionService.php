@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Signing;
 
 use InvalidArgumentException;
+use OCA\Decidesk\Event\DecisionRequestedEvent;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -109,7 +110,7 @@ class SignoffDecisionService
         }
 
         // Fail closed when decidesk is not installed — never auto-approve.
-        if (class_exists(\OCA\Decidesk\Event\DecisionRequestedEvent::class) === false) {
+        if (class_exists(DecisionRequestedEvent::class) === false) {
             $this->logger->warning(
                 'SignoffDecisionService: decidesk not installed — sign-off cannot be delegated (fail closed)'
             );
@@ -119,7 +120,7 @@ class SignoffDecisionService
         $subjectId    = (string) ($financeObject['id'] ?? $financeObject['_id'] ?? '');
         $subjectLabel = (string) ($financeObject['name'] ?? $financeObject['title'] ?? $subjectId);
 
-        $event = new \OCA\Decidesk\Event\DecisionRequestedEvent(
+        $event = new DecisionRequestedEvent(
             sourceApp: 'shillinq',
             subjectRegister: $this->settingsService->getRegisterSlug(),
             subjectSchema: $subjectSchema,

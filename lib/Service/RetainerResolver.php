@@ -34,6 +34,10 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Resolve RetainerSchedule entries from the OR engine.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class RetainerResolver
 {

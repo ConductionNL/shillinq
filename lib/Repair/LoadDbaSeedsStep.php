@@ -1,22 +1,16 @@
 <?php
 
 /**
- * CBS Submissions Seed Repair Step.
+ * DBA Modelovereenkomst Seed Repair Step.
  *
- * Declarative repair step that idempotently seeds the CBSSubmission and
- * CBSLine example records shipped with the bookkeeping-cbs-bestanden-extended
- * change. Per ADR-037 the canonical seeds live in
- * `lib/Settings/register.d/bookkeeping-cbs-bestanden-extended.json` `objects[]`
- * and are auto-loaded by `SettingsService::loadConfigurationForced()` (which
- * `InitializeSettings` already runs). This repair step is an explicit
- * additional safety net: when the main configuration import is skipped because
- * the register fragment version is unchanged but the operator has manually
- * cleared the seed records, this step deduplicates on slug and re-creates the
- * three canonical CBSSubmission + three CBSLine fixtures.
+ * Idempotently seeds the Belastingdienst-goedgekeurde DBAModelovereenkomst
+ * fixtures shipped with the dba-compliance-marker change (REQ-DBA-002, T18).
+ * Canonical seed data lives in `lib/Settings/register.d/dba-compliance-marker.json`
+ * `objects[]` per ADR-037 and is auto-loaded by SettingsService; this repair
+ * step is the explicit safety net for upgrades that skip the configuration
+ * import.
  *
- * The step is non-fatal — a failure here logs a warning but does not abort the
- * upgrade. The post-migration phase is the appropriate hook (we depend on
- * OpenRegister being installed and the shillinq register slug being available).
+ * Non-fatal: failures log a warning but do not abort the upgrade.
  *
  * @category Repair
  * @package  OCA\Shillinq\Repair
@@ -27,10 +21,10 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md#task-91
- *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
+ *
+ * @spec openspec/specs/dba-compliance-marker/spec.md
  */
 
 declare(strict_types=1);
@@ -43,13 +37,18 @@ use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
- * Idempotently seeds CBSSubmission + CBSLine fixtures from the change fragment.
+ * Idempotently seeds DBAModelovereenkomst fixtures (REQ-DBA-002).
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md#task-91
+ * @spec openspec/specs/dba-compliance-marker/spec.md
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
+ *     #506): inherent branch complexity in this domain logic; deferred
+ *     pending a dedicated refactor.
  */
-class Load_CBS_Seeds_Step implements IRepairStep
+class LoadDbaSeedsStep implements IRepairStep
 {
 
     /**
@@ -60,78 +59,72 @@ class Load_CBS_Seeds_Step implements IRepairStep
     private string $seedPath;
 
     /**
-     * Construct the repair step.
+     * Constructor.
      *
      * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
      * @param IAppConfig         $appConfig App config for the register slug lookup.
      * @param LoggerInterface    $logger    Logger for diagnostics.
-     *
-     * @return void
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
     ) {
-        $this->seedPath = __DIR__.'/../Settings/register.d/bookkeeping-cbs-bestanden-extended.json';
-
+        $this->seedPath = __DIR__.'/../Settings/register.d/dba-compliance-marker.json';
     }//end __construct()
 
     /**
      * Human-readable name of this repair step.
      *
      * @return string
+     *
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function getName(): string
     {
-        return 'Seed CBS Submissions example records (bookkeeping-cbs-bestanden-extended)';
-
+        return 'Seed DBAModelovereenkomst Belastingdienst-templates (dba-compliance-marker)';
     }//end getName()
 
     /**
-     * Run the repair step.
+     * Run the repair step (REQ-DBA-002).
      *
-     * Reads the canonical fragment, walks the `objects[]` array, and for each
-     * CBSSubmission / CBSLine object checks whether an object with the same
-     * `@self.slug` already exists in OpenRegister; if not, saves it via the
-     * real OR ObjectService API (`saveObject` named-arg form per the OR-API
-     * memory). Non-fatal on any failure.
-     *
-     * @param IOutput $output Progress output interface.
+     * @param IOutput $output Progress output.
      *
      * @return void
+     *
+     * @spec openspec/specs/dba-compliance-marker/spec.md
      */
     public function run(IOutput $output): void
     {
-        $output->info('Seeding CBSSubmission + CBSLine example records...');
+        $output->info('Seeding DBAModelovereenkomst Belastingdienst-templates...');
 
         if (file_exists($this->seedPath) === false) {
-            $output->warning('CBS seed fragment not found at '.$this->seedPath.', skipping');
+            $output->warning('DBA seed fragment not found at '.$this->seedPath.', skipping');
             return;
         }
 
         $content = file_get_contents($this->seedPath);
         if ($content === false) {
-            $output->warning('Failed to read CBS seed fragment, skipping');
+            $output->warning('Failed to read DBA seed fragment, skipping');
             return;
         }
 
         $data = json_decode($content, true);
         if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
-            $output->warning('Failed to parse CBS seed fragment: '.json_last_error_msg());
+            $output->warning('Failed to parse DBA seed fragment: '.json_last_error_msg());
             return;
         }
 
         $objects = ($data['objects'] ?? []);
         if (is_array($objects) === false || $objects === []) {
-            $output->info('CBS seed fragment carries no objects; nothing to seed');
+            $output->info('DBA seed fragment carries no objects; nothing to seed');
             return;
         }
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        } catch (\Throwable $e) {
-            $output->warning('OpenRegister ObjectService unavailable; skipping CBS seed: '.$e->getMessage());
+        } catch (Throwable $e) {
+            $output->warning('OpenRegister ObjectService unavailable; skipping DBA seed: '.$e->getMessage());
             return;
         }
 
@@ -151,7 +144,7 @@ class Load_CBS_Seeds_Step implements IRepairStep
                 continue;
             }
 
-            if (in_array($schema, ['CBSSubmission', 'CBSLine'], true) === false) {
+            if ($schema !== 'DBAModelovereenkomst') {
                 continue;
             }
 
@@ -159,20 +152,12 @@ class Load_CBS_Seeds_Step implements IRepairStep
                 $existing = $objectService
                     ->setRegister($registerSlug)
                     ->setSchema($schema)
-                    ->findAll(
-                        [
-                            'filters' => ['slug' => $slug],
-                            'limit'   => 1,
-                        ]
-                    );
-
+                    ->findAll(['filters' => ['slug' => $slug], 'limit' => 1]);
                 if (empty($existing) === false) {
                     $skipped++;
                     continue;
                 }
 
-                // Drop the @self envelope before persisting — the OR backend
-                // honours register + schema named args, not the inline block.
                 $payload = $object;
                 unset($payload['@self']);
                 $payload['slug'] = $slug;
@@ -189,9 +174,9 @@ class Load_CBS_Seeds_Step implements IRepairStep
                     _multitenancy: false,
                 );
                 $seeded++;
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $this->logger->warning(
-                    'CBS seed: failed to save record',
+                    'DBA seed: failed to save record',
                     ['schema' => $schema, 'slug' => $slug, 'exception' => $e->getMessage()]
                 );
             }//end try
@@ -199,12 +184,11 @@ class Load_CBS_Seeds_Step implements IRepairStep
 
         $output->info(
             sprintf(
-                'CBS seed: %d created, %d skipped (already exist).',
+                'DBA modelovereenkomst seed: %d created, %d skipped (already exist).',
                 $seeded,
                 $skipped,
             )
         );
-
     }//end run()
 
     /**
@@ -220,6 +204,5 @@ class Load_CBS_Seeds_Step implements IRepairStep
         }
 
         return $register;
-
     }//end register()
 }//end class

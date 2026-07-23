@@ -67,6 +67,12 @@ namespace OCA\Shillinq\Standards\Checks;
 
 /**
  * Executable VAT-tail, NL-BBV and ledger-integrity-tail checks.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): this class enumerates every VAT-tail/
+ * NL-BBV/ledger-integrity-tail rule the catalogue defines; inherent
+ * complexity. Variable renames deferred pending a dedicated pass.
  */
 final class VatBbvLedgerTailChecks implements CheckProvider, SeedsObjects
 {

@@ -41,8 +41,14 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use DateTimeImmutable;
+
 /**
  * Executable ledger-integrity, immutability and retention checks.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class LedgerIntegrityChecks implements CheckProvider
 {
@@ -489,9 +495,9 @@ final class LedgerIntegrityChecks implements CheckProvider
      *
      * @param string $value The date string.
      *
-     * @return \DateTimeImmutable|null
+     * @return DateTimeImmutable|null
      */
-    private static function parseDate(string $value): ?\DateTimeImmutable
+    private static function parseDate(string $value): ?DateTimeImmutable
     {
         $value = trim($value);
         if ($value === '') {
@@ -499,7 +505,7 @@ final class LedgerIntegrityChecks implements CheckProvider
         }
 
         try {
-            return new \DateTimeImmutable($value);
+            return new DateTimeImmutable($value);
         } catch (\Exception $e) {
             return null;
         }

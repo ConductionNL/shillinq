@@ -38,6 +38,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service\Booking;
 
+use DateTimeZone;
 use OCA\Shillinq\Service\IcsService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Util\TokenValidator;
@@ -529,7 +530,7 @@ class ConfirmationTokenService
     private function nowIso(): string
     {
         return $this->time->getDateTime()
-            ->setTimezone(new \DateTimeZone('UTC'))
+            ->setTimezone(new DateTimeZone('UTC'))
             ->format('Y-m-d\TH:i:s\Z');
 
     }//end nowIso()

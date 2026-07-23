@@ -48,6 +48,10 @@ use RuntimeException;
  * Document REST API (REQ-WBSO-003 / REQ-WBSO-005 / REQ-WBSO-007 / REQ-WBSO-009).
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-28
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class WbsoDocumentApiController extends Controller
 {
@@ -86,7 +90,8 @@ class WbsoDocumentApiController extends Controller
     #[NoAdminRequired]
     public function index(): JSONResponse
     {
-        if (($auth = $this->requireAuthenticated()) !== null) {
+        $auth = $this->requireAuthenticated();
+        if ($auth !== null) {
             return $auth;
         }
 
@@ -149,7 +154,8 @@ class WbsoDocumentApiController extends Controller
     #[NoAdminRequired]
     public function show(string $id): JSONResponse
     {
-        if (($auth = $this->requireAuthenticated()) !== null) {
+        $auth = $this->requireAuthenticated();
+        if ($auth !== null) {
             return $auth;
         }
 
@@ -184,7 +190,8 @@ class WbsoDocumentApiController extends Controller
     #[NoAdminRequired]
     public function create(): JSONResponse
     {
-        if (($auth = $this->requireAuthenticated()) !== null) {
+        $auth = $this->requireAuthenticated();
+        if ($auth !== null) {
             return $auth;
         }
 
@@ -230,7 +237,8 @@ class WbsoDocumentApiController extends Controller
     #[NoAdminRequired]
     public function file(string $id): JSONResponse
     {
-        if (($auth = $this->requireAuthenticated()) !== null) {
+        $auth = $this->requireAuthenticated();
+        if ($auth !== null) {
             return $auth;
         }
 
@@ -282,7 +290,8 @@ class WbsoDocumentApiController extends Controller
     #[NoAdminRequired]
     public function archive(string $id): JSONResponse
     {
-        if (($auth = $this->requireAuthenticated()) !== null) {
+        $auth = $this->requireAuthenticated();
+        if ($auth !== null) {
             return $auth;
         }
 

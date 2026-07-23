@@ -57,9 +57,18 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use DateTimeImmutable;
+
 /**
  * Executable national extra-tail checks over FinancialStatement, EInvoiceMandate and
  * SaftExportProfile content.
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * Pre-existing debt (issue #506): this class enumerates every national
+ * extra-tail rule the catalogue defines; inherent complexity. Deferred
+ * to a follow-up.
  */
 class NationalExtraTailChecks implements CheckProvider, SeedsObjects
 {
@@ -102,7 +111,7 @@ class NationalExtraTailChecks implements CheckProvider, SeedsObjects
                 // ===== IT — Codice civile / OIC. =====
                 // art. 2423 c.c.: the financial statements are expressed in euro and
                 // may be rounded to the euro (currency EUR + roundedToEuro flag set).
-                'it-cc-art2423-euro-rounding'             => static fn(array $o): bool => self::eq($o, 'currency', 'EUR')
+                'it-cc-art2423-euro-rounding'             => static fn(array $o): bool => self::equalsField($o, 'currency', 'EUR')
                     && self::isTrue($o, 'roundedToEuro'),
 
                 // art. 2424 c.c.: the balance sheet follows the statutory layout —
@@ -785,12 +794,12 @@ class NationalExtraTailChecks implements CheckProvider, SeedsObjects
      *
      * @return bool
      */
-    private static function eq(array $o, string $key, string $value): bool
+    private static function equalsField(array $o, string $key, string $value): bool
     {
         return self::present($o, $key) === true
             && strcasecmp(trim((string) $o[$key]), $value) === 0;
 
-    }//end eq()
+    }//end equalsField()
 
     /**
      * The boolean field under $key is explicitly true (true / 1 / '1' / 'true').
@@ -838,9 +847,9 @@ class NationalExtraTailChecks implements CheckProvider, SeedsObjects
      * @param array<string, mixed> $o   The object.
      * @param string               $key The field name.
      *
-     * @return \DateTimeImmutable|null
+     * @return DateTimeImmutable|null
      */
-    private static function date(array $o, string $key): ?\DateTimeImmutable
+    private static function date(array $o, string $key): ?DateTimeImmutable
     {
         if (self::present($o, $key) === false) {
             return null;
@@ -856,9 +865,9 @@ class NationalExtraTailChecks implements CheckProvider, SeedsObjects
      *
      * @param string $value The date string.
      *
-     * @return \DateTimeImmutable|null
+     * @return DateTimeImmutable|null
      */
-    private static function dateOf(string $value): ?\DateTimeImmutable
+    private static function dateOf(string $value): ?DateTimeImmutable
     {
         $value = trim($value);
         if ($value === '') {
@@ -866,7 +875,7 @@ class NationalExtraTailChecks implements CheckProvider, SeedsObjects
         }
 
         try {
-            return new \DateTimeImmutable(substr($value, 0, 10));
+            return new DateTimeImmutable(substr($value, 0, 10));
         } catch (\Exception $e) {
             return null;
         }

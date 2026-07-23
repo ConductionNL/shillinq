@@ -53,6 +53,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use DateTimeImmutable;
+use DateTimeInterface;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\IGroupManager;
 use OCP\IUser;
@@ -620,7 +622,7 @@ class FoldIntoOrder implements IRepairStep
                 $str .= 'T00:00:00+00:00';
             }
 
-            return (new \DateTimeImmutable($str))->format(\DateTimeInterface::ATOM);
+            return (new DateTimeImmutable($str))->format(DateTimeInterface::ATOM);
         } catch (\Throwable) {
             return null;
         }

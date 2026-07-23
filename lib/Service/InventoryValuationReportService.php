@@ -60,6 +60,9 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ShortVariable)            Pre-existing debt (issue #506):
+ *     not in the project's curated idiomatic-abbreviation allowlist;
+ *     deferred pending a dedicated rename pass.
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
  */

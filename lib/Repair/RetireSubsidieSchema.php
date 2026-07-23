@@ -81,6 +81,10 @@ use Psr\Log\LoggerInterface;
  * remain).
  *
  * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class RetireSubsidieSchema implements IRepairStep
 {

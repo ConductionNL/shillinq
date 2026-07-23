@@ -30,8 +30,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DomainException;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
+use OutOfBoundsException;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -76,8 +78,8 @@ class ReconciliationResolutionService
      * @return array<string,mixed> The updated ReconciliationMatch as
      *                              returned by OR.
      *
-     * @throws \OutOfBoundsException When the match or parent does not exist.
-     * @throws \DomainException      When the parent reconciliation is
+     * @throws OutOfBoundsException When the match or parent does not exist.
+     * @throws DomainException      When the parent reconciliation is
      *                               closed/cancelled (locked) per REQ-REC-003.
      * @throws \Throwable            On any OR/service error.
      *
@@ -101,7 +103,7 @@ class ReconciliationResolutionService
                 ->find($reconId);
             $parent = $this->toArray(result: $parent);
         } catch (\Throwable $e) {
-            throw new \OutOfBoundsException(
+            throw new OutOfBoundsException(
                 'reconciliation '.$reconId.' not found',
                 0,
                 $e
@@ -109,12 +111,12 @@ class ReconciliationResolutionService
         }
 
         if ($parent === null) {
-            throw new \OutOfBoundsException('reconciliation '.$reconId.' not found');
+            throw new OutOfBoundsException('reconciliation '.$reconId.' not found');
         }
 
         $parentStatus = (string) ($parent['reconciliationStatus'] ?? 'draft');
         if (in_array($parentStatus, ['closed', 'cancelled'], true) === true) {
-            throw new \DomainException(
+            throw new DomainException(
                 'reconciliation is '.$parentStatus.' — resolutions are not permitted'
             );
         }
@@ -127,7 +129,7 @@ class ReconciliationResolutionService
                 ->find($matchId);
             $match = $this->toArray(result: $match);
         } catch (\Throwable $e) {
-            throw new \OutOfBoundsException(
+            throw new OutOfBoundsException(
                 'match '.$matchId.' not found',
                 0,
                 $e
@@ -135,13 +137,13 @@ class ReconciliationResolutionService
         }
 
         if ($match === null) {
-            throw new \OutOfBoundsException('match '.$matchId.' not found');
+            throw new OutOfBoundsException('match '.$matchId.' not found');
         }
 
         // Verify the match belongs to the recon (REQ-REC-004 + IDOR guard).
         $matchReconId = (string) ($match['reconId'] ?? '');
         if ($matchReconId !== '' && $matchReconId !== $reconId) {
-            throw new \OutOfBoundsException(
+            throw new OutOfBoundsException(
                 'match '.$matchId.' does not belong to reconciliation '.$reconId
             );
         }

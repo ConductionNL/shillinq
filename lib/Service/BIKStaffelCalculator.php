@@ -60,6 +60,14 @@ use InvalidArgumentException;
  *   - B2C (WETTELIJKE_RENTE_B2C_6_119_BW) — wettelijke rente per AMvB.
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
+ *
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Pre-existing debt (issue
+ *     #506): changing this public signature would ripple to callers;
+ *     deferred.
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): early-return refactor and variable
+ * renames deferred pending a dedicated pass.
  */
 class BIKStaffelCalculator
 {
@@ -205,8 +213,10 @@ class BIKStaffelCalculator
 
         // BTW-over-incassokosten (art. 2 lid 2 Besluit BIK) on the normed fee.
         $btwCents = 0;
+        $appliedBtwPercentage = 0.0;
         if ($btwVerrekenbaar === false) {
             $btwCents = (int) round($toegepastCents * $btwPercentage);
+            $appliedBtwPercentage = $btwPercentage;
         }
 
         return [
@@ -220,7 +230,7 @@ class BIKStaffelCalculator
             'maximum'              => $this->fromCents(cents: self::MAXIMUM_CENTS),
             'toegepast'            => $this->fromCents(cents: $toegepastCents),
             'btwVerrekenbaar'      => $btwVerrekenbaar,
-            'btwPercentage'        => ($btwVerrekenbaar === false) ? $btwPercentage : 0.0,
+            'btwPercentage'        => $appliedBtwPercentage,
             'btwBedrag'            => $this->fromCents(cents: $btwCents),
             'toegepastInclBtw'     => $this->fromCents(cents: ($toegepastCents + $btwCents)),
         ];
@@ -334,7 +344,7 @@ class BIKStaffelCalculator
      * table is authoritative for the accrual window in practice).
      *
      * @param array<string,float> $table Rate table (effectiveFrom => rate).
-     * @param DateTimeImmutable    $on    Date to resolve.
+     * @param DateTimeImmutable   $on    Date to resolve.
      *
      * @return float Annual rate as a decimal.
      */
@@ -360,8 +370,8 @@ class BIKStaffelCalculator
      * Split an accrual window at every statutory rate boundary it crosses.
      *
      * @param array<string,float> $table Rate table (effectiveFrom => rate).
-     * @param DateTimeImmutable    $from  Start of accrual (inclusive).
-     * @param DateTimeImmutable    $to    End of accrual (exclusive of the day).
+     * @param DateTimeImmutable   $from  Start of accrual (inclusive).
+     * @param DateTimeImmutable   $to    End of accrual (exclusive of the day).
      *
      * @return array<int,array{van:DateTimeImmutable,tot:DateTimeImmutable,tarief:float}>
      */
@@ -386,7 +396,7 @@ class BIKStaffelCalculator
                 'tot'    => $cut,
                 'tarief' => $this->resolveRateOn(table: $table, on: $cursor),
             ];
-            $cursor = $cut;
+            $cursor     = $cut;
         }
 
         $segments[] = [

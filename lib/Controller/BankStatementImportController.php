@@ -38,6 +38,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\StatementParser;
 use OCA\Shillinq\Service\AdministrationContextService;
@@ -54,6 +55,10 @@ use Psr\Log\LoggerInterface;
  * HTTP API for importing a bank statement file into BankStatement + lines.
  *
  * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class BankStatementImportController extends Controller
 {
@@ -151,7 +156,7 @@ class BankStatementImportController extends Controller
                     [
                         'bankConnectionId' => 'manual-import',
                         'statementFormat'  => $format,
-                        'statementDate'    => (new \DateTimeImmutable())->format('Y-m-d'),
+                        'statementDate'    => (new DateTimeImmutable())->format('Y-m-d'),
                         'transactionCount' => $transactionCount,
                         'administrationId' => $admin,
                         'glAccountId'      => $glAccountId,

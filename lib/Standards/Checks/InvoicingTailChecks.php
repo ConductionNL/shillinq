@@ -54,6 +54,13 @@ namespace OCA\Shillinq\Standards\Checks;
 /**
  * Remaining EN 16931 / VAT-Directive invoicing checks over the ARInvoice header,
  * invoice lines (BG-25) and VAT breakdown (BG-23) — the corpus "tail".
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.TooManyMethods)
+ * Pre-existing debt (issue #506): this class enumerates every EN 16931/
+ * VAT-Directive tail rule the catalogue defines; inherent complexity.
+ * Deferred to a follow-up.
  */
 final class InvoicingTailChecks implements CheckProvider
 {

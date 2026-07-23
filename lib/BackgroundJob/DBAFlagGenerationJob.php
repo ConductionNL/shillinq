@@ -115,8 +115,9 @@ class DBAFlagGenerationJob extends TimedJob
 
         // Sort by date ascending.
         usort($dates, fn(DateTimeImmutable $a, DateTimeImmutable $b): int => $a <=> $b);
-        $intervals = [];
-        for ($i = 1; $i < count($dates); $i++) {
+        $intervals  = [];
+        $datesCount = count($dates);
+        for ($i = 1; $i < $datesCount; $i++) {
             $intervals[] = (int) $dates[$i - 1]->diff($dates[$i])->days;
         }
 

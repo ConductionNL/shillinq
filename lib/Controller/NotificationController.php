@@ -51,6 +51,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\SettingsService;
+use RuntimeException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -66,6 +67,10 @@ use Throwable;
  * Admin / per-booking notification REST controller.
  *
  * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class NotificationController extends Controller
 {
@@ -358,7 +363,7 @@ class NotificationController extends Controller
             return $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
         }
 
-        throw new \RuntimeException('OR ObjectService not bound');
+        throw new RuntimeException('OR ObjectService not bound');
     }//end resolveObjectService()
 
     /**

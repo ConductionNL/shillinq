@@ -65,7 +65,6 @@ class SuspenseAgeingService
      */
     private const OBJECT_SERVICE = 'OCA\OpenRegister\Service\ObjectService';
 
-
     /**
      * Construct the service.
      *
@@ -80,7 +79,6 @@ class SuspenseAgeingService
     ) {
     }//end __construct()
 
-
     /**
      * Build the aged suspense worklist for an administration.
      *
@@ -94,7 +92,7 @@ class SuspenseAgeingService
     public function agedUnmatchedItems(string $administrationId, string $asOf=''): array
     {
         try {
-            return $this->computeWorklist($administrationId, $asOf);
+            return $this->computeWorklist(administrationId: $administrationId, asOf: $asOf);
         } catch (\Throwable $e) {
             // Reporting path (close assistant): a broken worklist must not crash
             // the assistant, so it degrades to empty. The CONTROL path
@@ -112,7 +110,6 @@ class SuspenseAgeingService
         }//end try
 
     }//end agedUnmatchedItems()
-
 
     /**
      * Whether any unmatched / routed-to-suspense item remains for an administration.
@@ -132,10 +129,9 @@ class SuspenseAgeingService
      */
     public function hasUnresolvedItems(string $administrationId, string $asOf=''): bool
     {
-        return ($this->computeWorklist($administrationId, $asOf)['count'] > 0);
+        return ($this->computeWorklist(administrationId: $administrationId, asOf: $asOf)['count'] > 0);
 
     }//end hasUnresolvedItems()
-
 
     /**
      * Compute the aged worklist; throws on any lookup/parse failure.
@@ -147,8 +143,8 @@ class SuspenseAgeingService
      */
     private function computeWorklist(string $administrationId, string $asOf): array
     {
-        $asOfDate       = $this->asOfDate($asOf);
-        $scopeStatement = $this->statementScope($administrationId);
+        $asOfDate       = $this->asOfDate(asOf: $asOf);
+        $scopeStatement = $this->statementScope(administrationId: $administrationId);
 
         $items      = [];
         $oldest     = 0;
@@ -164,7 +160,7 @@ class SuspenseAgeingService
                 continue;
             }
 
-            $days        = $this->daysOutstanding($line, $asOfDate);
+            $days        = $this->daysOutstanding(line: $line, asOfDate: $asOfDate);
             $amountCents = (int) round(((float) ($line['amount'] ?? 0)) * 100);
 
             $items[]     = [
@@ -196,7 +192,6 @@ class SuspenseAgeingService
 
     }//end computeWorklist()
 
-
     /**
      * Resolve the as-of date used to age items.
      *
@@ -213,7 +208,6 @@ class SuspenseAgeingService
         return new DateTimeImmutable($asOf);
 
     }//end asOfDate()
-
 
     /**
      * Days a line has been outstanding, floored at zero (future dates → 0).
@@ -244,7 +238,6 @@ class SuspenseAgeingService
         return (int) floor($seconds / 86400);
 
     }//end daysOutstanding()
-
 
     /**
      * Build the set of BankStatement ids belonging to an administration.
@@ -284,7 +277,6 @@ class SuspenseAgeingService
 
     }//end statementScope()
 
-
     /**
      * Fetch every unmatched / routed-to-suspense BankStatementLine.
      *
@@ -311,7 +303,6 @@ class SuspenseAgeingService
         return $lines;
 
     }//end unresolvedLines()
-
 
     /**
      * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

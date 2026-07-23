@@ -40,6 +40,10 @@ use Throwable;
  * Monthly DBA portfolio aggregation.
  *
  * @spec openspec/specs/dba-compliance-marker/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class DBAPortfolioAggregationJob extends TimedJob
 {

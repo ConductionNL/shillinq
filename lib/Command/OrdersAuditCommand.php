@@ -43,6 +43,10 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Order fold.
  *
  * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class OrdersAuditCommand extends Command
 {
@@ -92,6 +96,10 @@ class OrdersAuditCommand extends Command
      * @return int 0 when every source row has a matching Order, 1 otherwise.
      *
      * @spec openspec/changes/abstract-order-primitive/specs/order-primitive/spec.md
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $input is required by
+     *     Symfony Command::execute()'s signature; this command takes no
+     *     console input.
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {

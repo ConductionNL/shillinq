@@ -45,6 +45,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use DateTime;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
 use OCP\EventDispatcher\Event;
@@ -298,7 +299,7 @@ class ExtractionCompletedListener implements IEventListener
             $notification
                 ->setApp(Application::APP_ID)
                 ->setUser($requestedBy)
-                ->setDateTime(new \DateTime())
+                ->setDateTime(new DateTime())
                 ->setObject(self::NOTIFICATION_OBJECT_TYPE, $reference)
                 ->setSubject(
                         self::NOTIFICATION_SUBJECT,

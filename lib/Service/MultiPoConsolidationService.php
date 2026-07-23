@@ -58,6 +58,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateInterval;
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
@@ -89,6 +90,9 @@ use RuntimeException;
  * canonical surface for the matching engine in slice 06.
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)           Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
  */
@@ -792,7 +796,7 @@ class MultiPoConsolidationService
             return ['from' => null, 'to' => null];
         }
 
-        $interval = new \DateInterval('P'.$days.'D');
+        $interval = new DateInterval('P'.$days.'D');
 
         return [
             'from' => $center->sub($interval),

@@ -34,6 +34,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use OCA\Shillinq\Service\EmuReportingService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -43,6 +45,10 @@ use Psr\Log\LoggerInterface;
  * Daily TimedJob that produces the quarterly EMU concept-aangifte (REQ-EMU-001).
  *
  * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class EmuQuarterlyDraftJob extends TimedJob
 {
@@ -90,13 +96,13 @@ class EmuQuarterlyDraftJob extends TimedJob
      * quarter-end (inclusive). Returns null otherwise. Pure function — public
      * so the unit test can exercise it without a TimedJob frame.
      *
-     * @param \DateTimeImmutable $today Today's date (UTC).
+     * @param DateTimeImmutable $today Today's date (UTC).
      *
      * @return array{0:int,1:int}|null Year + quarter, or null when not the day.
      *
      * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
      */
-    public function isDueForQuarter(\DateTimeImmutable $today): ?array
+    public function isDueForQuarter(DateTimeImmutable $today): ?array
     {
         $month = (int) $today->format('n');
         $year  = (int) $today->format('Y');
@@ -109,16 +115,16 @@ class EmuQuarterlyDraftJob extends TimedJob
             // Q4 of the previous year just closed (Oct-Dec).
             $closedQuarter      = 4;
             $closedYear         = ($year - 1);
-            $closedQuarterStart = new \DateTimeImmutable($closedYear.'-12-31');
+            $closedQuarterStart = new DateTimeImmutable($closedYear.'-12-31');
         } else if ($month <= 6) {
             $closedQuarter      = 1;
-            $closedQuarterStart = new \DateTimeImmutable($year.'-03-31');
+            $closedQuarterStart = new DateTimeImmutable($year.'-03-31');
         } else if ($month <= 9) {
             $closedQuarter      = 2;
-            $closedQuarterStart = new \DateTimeImmutable($year.'-06-30');
+            $closedQuarterStart = new DateTimeImmutable($year.'-06-30');
         } else {
             $closedQuarter      = 3;
-            $closedQuarterStart = new \DateTimeImmutable($year.'-09-30');
+            $closedQuarterStart = new DateTimeImmutable($year.'-09-30');
         }
 
         $days = (int) $today->diff($closedQuarterStart)->days;
@@ -144,7 +150,7 @@ class EmuQuarterlyDraftJob extends TimedJob
     protected function run($argument): void
     {
         try {
-            $today = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+            $today = new DateTimeImmutable('now', new DateTimeZone('UTC'));
             $due   = $this->isDueForQuarter(today: $today);
             if ($due === null) {
                 $this->logger->debug('EmuQuarterlyDraftJob: not within quarter-close window, skipping');

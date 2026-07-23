@@ -40,6 +40,10 @@ use Psr\Log\LoggerInterface;
  * is missing approvedBy / approvedAt. Fail-closed on any exception.
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-6
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable) Pre-existing debt (issue #506):
+ *     not in the project's curated idiomatic-abbreviation allowlist;
+ *     deferred pending a dedicated rename pass.
  */
 class KlantLadderOverrideApprovalGuard
 {

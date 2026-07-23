@@ -73,28 +73,32 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
      *
      * @var string
      */
-    public const MESSAGE_ALREADY_PAID = 'This payment run cannot be exported: at least one invoice in the batch has already been paid. Remove the settled invoice before exporting; paying it again would be a duplicate payment.';
+    public const MESSAGE_ALREADY_PAID = 'This payment run cannot be exported: at least one invoice in the batch has already been paid. '
+        .'Remove the settled invoice before exporting; paying it again would be a duplicate payment.';
 
     /**
      * User-facing denial when a line settles an invoice already in another batch.
      *
      * @var string
      */
-    public const MESSAGE_ALREADY_BATCHED = 'This payment run cannot be exported: at least one invoice in the batch is already queued in another open or executed payment batch. Remove the duplicate line before exporting to prevent a double payment.';
+    public const MESSAGE_ALREADY_BATCHED = 'This payment run cannot be exported: at least one invoice in the batch is already queued in '
+        .'another open or executed payment batch. Remove the duplicate line before exporting to prevent a double payment.';
 
     /**
      * User-facing denial when the batch itself cannot be identified (fail-closed).
      *
      * @var string
      */
-    public const MESSAGE_NO_OBJECT = 'This payment run cannot be exported: the batch could not be identified for the duplicate-payment check (fail-closed).';
+    public const MESSAGE_NO_OBJECT = 'This payment run cannot be exported: the batch could not be identified for the duplicate-payment check '
+        .'(fail-closed).';
 
     /**
      * User-facing denial when a line is malformed or a lookup fails (fail-closed).
      *
      * @var string
      */
-    public const MESSAGE_INDETERMINATE = 'This payment run cannot be exported: the duplicate-payment check could not be completed, so the disbursement is blocked (fail-closed).';
+    public const MESSAGE_INDETERMINATE = 'This payment run cannot be exported: the duplicate-payment check could not be completed, '
+        .'so the disbursement is blocked (fail-closed).';
 
     /**
      * FQCN of OpenRegister's ObjectService, resolved lazily from the container.
@@ -117,7 +121,6 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
         'exported',
     ];
 
-
     /**
      * Construct the guard.
      *
@@ -132,7 +135,6 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
     ) {
     }//end __construct()
 
-
     /**
      * Authorise (or deny) the payment-run export transition.
      *
@@ -143,16 +145,20 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
      * @return GuardResult Allow when no line is a duplicate/paid invoice; deny (fail-closed) otherwise.
      *
      * @spec openspec/specs/payment-control-guards/spec.md
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $userId is required by
+     *     LifecycleGuardInterface::check()'s signature; this guard does not
+     *     discriminate by caller.
      */
     public function check(array $object, string $action, string $userId): GuardResult
     {
-        $objectId = $this->resolveObjectId($object);
+        $objectId = $this->resolveObjectId(object: $object);
         if ($objectId === '') {
             $this->logger->warning('PaymentRunDuplicateGuard: payment-run id is empty — denying (fail-closed).', ['action' => $action]);
             return GuardResult::deny(self::MESSAGE_NO_OBJECT);
         }
 
-        $refs = $this->resolveLineRefs($object);
+        $refs = $this->resolveLineRefs(object: $object);
         if ($refs === null) {
             $this->logger->error(
                 'PaymentRunDuplicateGuard: a payment line has no apTransactionRef — denying (fail-closed).',
@@ -169,7 +175,7 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
         $administrationId = trim((string) ($object['administrationId'] ?? ''));
 
         try {
-            if ($this->anyAlreadyPaid($refs, $administrationId) === true) {
+            if ($this->anyAlreadyPaid(refs: $refs, administrationId: $administrationId) === true) {
                 $this->logger->warning(
                     'PaymentRunDuplicateGuard: a line settles an already-paid invoice — denying export.',
                     ['paymentRun' => $objectId, 'action' => $action]
@@ -177,7 +183,7 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
                 return GuardResult::deny(self::MESSAGE_ALREADY_PAID);
             }
 
-            if ($this->anyAlreadyBatched($refs, $administrationId, $objectId) === true) {
+            if ($this->anyAlreadyBatched(refs: $refs, administrationId: $administrationId, selfId: $objectId) === true) {
                 $this->logger->warning(
                     'PaymentRunDuplicateGuard: a line is already queued in another batch — denying export.',
                     ['paymentRun' => $objectId, 'action' => $action]
@@ -196,7 +202,6 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
 
     }//end check()
 
-
     /**
      * Extract the object uuid from the transition payload.
      *
@@ -214,7 +219,6 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
         return trim($id);
 
     }//end resolveObjectId()
-
 
     /**
      * Collect the distinct, non-empty apTransactionRef values from the batch's lines.
@@ -252,7 +256,6 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
 
     }//end resolveLineRefs()
 
-
     /**
      * Whether any referenced APTransaction is already in a paid/settled state.
      *
@@ -263,13 +266,13 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
      */
     private function anyAlreadyPaid(array $refs, string $administrationId): bool
     {
-        $transactions = $this->findBySchema('APTransaction', $administrationId);
+        $transactions = $this->findBySchema(schema: 'APTransaction', administrationId: $administrationId);
         foreach ($transactions as $transaction) {
             if (is_array($transaction) === false) {
                 continue;
             }
 
-            if ($this->recordMatchesRef($transaction, $refs) === false) {
+            if ($this->recordMatchesRef(record: $transaction, refs: $refs) === false) {
                 continue;
             }
 
@@ -283,7 +286,6 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
 
     }//end anyAlreadyPaid()
 
-
     /**
      * Whether any referenced invoice is already in another open/executed batch.
      *
@@ -295,13 +297,13 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
      */
     private function anyAlreadyBatched(array $refs, string $administrationId, string $selfId): bool
     {
-        $runs = $this->findBySchema('PaymentRun', $administrationId);
+        $runs = $this->findBySchema(schema: 'PaymentRun', administrationId: $administrationId);
         foreach ($runs as $run) {
             if (is_array($run) === false) {
                 continue;
             }
 
-            if ($this->recordIdentity($run) === $selfId) {
+            if ($this->recordIdentity(record: $run) === $selfId) {
                 // The batch being exported never counts as a duplicate of itself.
                 continue;
             }
@@ -331,7 +333,6 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
         return false;
 
     }//end anyAlreadyBatched()
-
 
     /**
      * Fetch every record of a schema, scoped by administration when known.
@@ -366,7 +367,6 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
 
     }//end findBySchema()
 
-
     /**
      * Read the stable identity of a record, tolerating id / uuid / slug shapes.
      *
@@ -386,7 +386,6 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
         return '';
 
     }//end recordIdentity()
-
 
     /**
      * Whether any of a record's identities (id / uuid / slug) is in the ref set.
@@ -411,7 +410,6 @@ final class PaymentRunDuplicateGuard implements LifecycleGuardInterface
         return false;
 
     }//end recordMatchesRef()
-
 
     /**
      * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

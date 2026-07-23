@@ -67,6 +67,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -95,6 +96,14 @@ use RuntimeException;
  * a multi-axis decision (price + qty + date + presence).
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * Pre-existing debt (issue #506): inherent branch complexity in this
+ * domain logic (multi-axis match decision); deferred pending a dedicated
+ * refactor.
  */
 class ThreeWayMatchingEngine
 {
@@ -1008,8 +1017,8 @@ class ThreeWayMatchingEngine
     private function dateDeltaDays(string $expected, string $actual): int
     {
         try {
-            $expectedDt = new \DateTimeImmutable($expected);
-            $actualDt   = new \DateTimeImmutable(substr($actual, 0, 10));
+            $expectedDt = new DateTimeImmutable($expected);
+            $actualDt   = new DateTimeImmutable(substr($actual, 0, 10));
         } catch (\Throwable $e) {
             return 0;
         }

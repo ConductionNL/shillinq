@@ -41,6 +41,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\PaymentRun;
 
 use OCA\Shillinq\PaymentRun\Generator\PaymentRunGeneratorInterface;
+use ReflectionClass;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\IUserSession;
@@ -292,7 +293,7 @@ class PaymentRunExportService
                 continue;
             }
 
-            if ((new \ReflectionClass($class))->isInstantiable() === false) {
+            if ((new ReflectionClass($class))->isInstantiable() === false) {
                 continue;
             }
 

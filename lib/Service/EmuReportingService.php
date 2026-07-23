@@ -36,6 +36,10 @@ use Psr\Log\LoggerInterface;
  * Read-only ADR-031 exception service for the EMU reporting pipeline.
  *
  * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class EmuReportingService
 {
@@ -556,7 +560,7 @@ class EmuReportingService
         if ($account !== '') {
             // Longest-prefix wins.
             $bestKey = null;
-            foreach ($accountMap as $prefix => $iv3) {
+            foreach (array_keys($accountMap) as $prefix) {
                 if (str_starts_with($account, (string) $prefix) === false) {
                     continue;
                 }

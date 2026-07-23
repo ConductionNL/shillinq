@@ -58,6 +58,10 @@ use Psr\Log\LoggerInterface;
  * .transitions.cancel.requires.
  *
  * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-10
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class StockMoveImmutabilityGuard
 {

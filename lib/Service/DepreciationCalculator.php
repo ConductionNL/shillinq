@@ -46,6 +46,10 @@ namespace OCA\Shillinq\Service;
  * it to read `currentBookValue` at transition time.
  *
  * @spec openspec/specs/bookkeeping-fixed-assets-depreciation/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class DepreciationCalculator
 {

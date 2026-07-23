@@ -100,6 +100,10 @@ final class RegisterRequiresGuardAdapter implements LifecycleGuardInterface
      * @return GuardResult Allow or deny + optional message.
      *
      * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-1
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $userId is required by
+     *     LifecycleGuardInterface::check()'s signature; this adapter does
+     *     not discriminate by caller.
      */
     public function check(array $object, string $action, string $userId): GuardResult
     {

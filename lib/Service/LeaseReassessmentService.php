@@ -58,6 +58,11 @@ use Psr\Log\LoggerInterface;
  * LeaseAmortizationCalculator so the maths is unit-testable in isolation.
  *
  * @spec openspec/specs/bookkeeping-lease-reassessment/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.LongVariable)
+ * Pre-existing debt (issue #506): early-return refactor and variable
+ * renames deferred pending a dedicated pass.
  */
 class LeaseReassessmentService
 {
@@ -420,6 +425,12 @@ class LeaseReassessmentService
      * @param int                 $preEventLiabilityCents Pre-event liability in cents (for event numbering only).
      *
      * @return array<string,mixed> The persisted event payload (saved row + status).
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $preEventLiabilityCents
+     *     is documented above as used "for event numbering only" but is not
+     *     read in this method body. Flagged during issue #506 as a possible
+     *     gap between docblock and implementation, not confirmed as
+     *     intentional. Left unchanged here (style/quality pass only).
      */
     private function save(
         array $lease,

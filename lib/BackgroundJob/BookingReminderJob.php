@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\BackgroundJob;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\BookingNotificationService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -96,6 +98,9 @@ class BookingReminderJob extends TimedJob
      * @return void
      *
      * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-7
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
+     *     TimedJob::run()'s signature; this job takes no argument.
      */
     protected function run(mixed $argument): void
     {
@@ -138,7 +143,7 @@ class BookingReminderJob extends TimedJob
                 $registerSlug = 'shillinq';
             }
 
-            $now         = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+            $now         = new DateTimeImmutable('now', new DateTimeZone('UTC'));
             $windowStart = $now->modify('+'.($windowMinutes - self::MATCH_TOLERANCE_MINUTES).' minutes');
             $windowEnd   = $now->modify('+'.($windowMinutes + self::MATCH_TOLERANCE_MINUTES).' minutes');
 

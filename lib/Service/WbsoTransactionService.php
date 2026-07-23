@@ -33,6 +33,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTimeImmutable;
+use DateTimeInterface;
 use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
@@ -161,7 +163,7 @@ class WbsoTransactionService
     {
         $payload['administrationId'] = $administrationId;
         $payload['status']           = 'draft';
-        $payload['createdAt']        = $payload['createdAt'] ?? (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM);
+        $payload['createdAt']        = $payload['createdAt'] ?? (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
         $payload['createdBy']        = $payload['createdBy'] ?? $this->currentUserId();
 
         $this->validateTransactionPayload(payload: $payload);
@@ -200,7 +202,7 @@ class WbsoTransactionService
         }
 
         $existing['status']   = 'posted';
-        $existing['postedAt'] = (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM);
+        $existing['postedAt'] = (new DateTimeImmutable())->format(DateTimeInterface::ATOM);
 
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
@@ -246,12 +248,12 @@ class WbsoTransactionService
         $reversal = [
             'transactionNumber'       => (string) $existing['transactionNumber'].'-REV',
             'transactionType'         => 'credit-note',
-            'transactionDate'         => (new \DateTimeImmutable())->format('Y-m-d'),
+            'transactionDate'         => (new DateTimeImmutable())->format('Y-m-d'),
             'amount'                  => (float) ($existing['amount'] ?? 0.0),
             'description'             => 'Reversal of '.((string) ($existing['description'] ?? '')),
             'status'                  => 'reversed',
             'administrationId'        => $administrationId,
-            'createdAt'               => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+            'createdAt'               => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
             'createdBy'               => $this->currentUserId(),
             'reversalOfTransactionId' => (string) ($existing['id'] ?? $existing['transactionNumber']),
             'reversalReason'          => $reason,

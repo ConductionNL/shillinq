@@ -64,6 +64,10 @@ namespace OCA\Shillinq\Standards\Checks;
 /**
  * Executable tail checks: EN 16931 special VAT categories + margin scheme over
  * ARInvoice, and OECD SAF-T file structure over a new SaftFile object.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Pre-existing debt
+ *     (issue #506): this class enumerates every tail rule the catalogue
+ *     defines; inherent complexity. Deferred to a follow-up.
  */
 class ComplianceTailChecks implements CheckProvider, SeedsObjects
 {

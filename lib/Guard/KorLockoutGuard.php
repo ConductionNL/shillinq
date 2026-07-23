@@ -31,6 +31,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
+use DateInterval;
+use DateTimeImmutable;
+
 /**
  * Guards KorRegime `returnToOutside` — an administration that opted out of
  * KOR may only return to the "outside" (regime-free) state after a 3-year
@@ -71,13 +74,13 @@ class KorLockoutGuard
         }
 
         try {
-            $optedOut = new \DateTimeImmutable($optedOutAt);
+            $optedOut = new DateTimeImmutable($optedOutAt);
         } catch (\Throwable) {
             return false;
         }
 
-        $lockoutEnds = $optedOut->add(new \DateInterval(self::LOCKOUT_PERIOD));
-        $now         = new \DateTimeImmutable('now');
+        $lockoutEnds = $optedOut->add(new DateInterval(self::LOCKOUT_PERIOD));
+        $now         = new DateTimeImmutable('now');
 
         return $now >= $lockoutEnds;
 

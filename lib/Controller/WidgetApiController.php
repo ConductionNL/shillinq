@@ -57,6 +57,10 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): inherent branch complexity in this
+ * domain logic; variable renames deferred pending a dedicated pass.
  */
 class WidgetApiController extends Controller
 {

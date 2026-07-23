@@ -53,6 +53,10 @@ use Throwable;
  * helper rejects unknown ids so missing data cannot bypass the block.
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class AdministrationArchivalService
 {

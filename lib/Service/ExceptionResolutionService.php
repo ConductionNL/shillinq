@@ -60,6 +60,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTime;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\PurchaseOrder\CreditNoteRequestAdapterInterface;
 use OCA\Shillinq\Service\PurchaseOrder\LogCreditNoteRequestAdapter;
@@ -735,7 +736,7 @@ class ExceptionResolutionService
                 $notification
                     ->setApp(Application::APP_ID)
                     ->setUser($userId)
-                    ->setDateTime(new \DateTime())
+                    ->setDateTime(new DateTime())
                     ->setObject(self::NOTIFICATION_OBJECT_TYPE, $matchId)
                     ->setSubject($subject, $parameters);
                 $this->notificationManager->notify($notification);

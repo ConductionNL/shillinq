@@ -41,6 +41,14 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Makes the local test data compliant with the enforced rules (idempotent).
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): this seeder enumerates every rule
+ * family's test fixtures; inherent complexity. Deferred to a follow-up.
  */
 class RuleTestDataSeeder
 {

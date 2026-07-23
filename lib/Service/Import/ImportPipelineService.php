@@ -52,6 +52,15 @@ use Psr\Log\LoggerInterface;
  * Staged XAF/CSV import pipeline (REQ-AIM-005 .. REQ-AIM-009).
  *
  * @spec openspec/changes/administration-import-migration/tasks.md#task-11
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ * @SuppressWarnings(PHPMD.TooManyMethods)
+ * Pre-existing debt (issue #506): this pipeline covers every import stage
+ * (parse/map/validate/post) for every supported source format; splitting
+ * is out of scope for a mechanical phpcs/phpmd cleanup. Deferred to a
+ * follow-up.
  */
 class ImportPipelineService
 {

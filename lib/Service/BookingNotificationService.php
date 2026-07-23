@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -279,7 +281,7 @@ class BookingNotificationService
                 'status'        => $status,
                 'failureReason' => $failureReason,
                 'retryCount'    => (int) ($notification['retryCount'] ?? 0),
-                'sentAt'        => (new \DateTimeImmutable())->format('c'),
+                'sentAt'        => (new DateTimeImmutable())->format('c'),
             ];
 
             $objectService->saveObject(
@@ -496,7 +498,7 @@ class BookingNotificationService
 
             // Check per-booking hourly limit.
             if ($bookingId !== '') {
-                $hourStart  = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d\TH:00:00\Z');
+                $hourStart  = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:00:00\Z');
                 $bookingHit = $objectService
                     ->setRegister($registerSlug)
                     ->setSchema('NotificationDelivery')
@@ -517,7 +519,7 @@ class BookingNotificationService
 
             // Check per-organizer daily limit.
             if ($organizerId !== '') {
-                $dayStart     = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d\T00:00:00\Z');
+                $dayStart     = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d\T00:00:00\Z');
                 $organizerHit = $objectService
                     ->setRegister($registerSlug)
                     ->setSchema('NotificationDelivery')
@@ -575,9 +577,9 @@ class BookingNotificationService
                 $registerSlug = 'shillinq';
             }
 
-            $windowStart = (new \DateTimeImmutable(
+            $windowStart = (new DateTimeImmutable(
                 '-'.$windowMinutes.' minutes',
-                new \DateTimeZone('UTC')
+                new DateTimeZone('UTC')
             ))->format('c');
 
             $existing = $objectService
@@ -674,6 +676,13 @@ class BookingNotificationService
      * @return array<mixed> Active trigger objects.
      *
      * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-6
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $bookingId is accepted
+     *     and documented above as filtering "booking-specific triggers that
+     *     match", but the query below only filters on eventType+active —
+     *     flagged during issue #506 as a possible gap between docblock and
+     *     implementation, not confirmed as intentional. Left unchanged here
+     *     (style/quality pass only); worth a follow-up look.
      */
     private function loadActiveTriggers(string $eventType, ?string $bookingId): array
     {
@@ -846,7 +855,7 @@ class BookingNotificationService
                 }
 
                 try {
-                    return (new \DateTimeImmutable($raw))->format($m[2]);
+                    return (new DateTimeImmutable($raw))->format($m[2]);
                 } catch (\Throwable) {
                     return $raw;
                 }

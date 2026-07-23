@@ -50,6 +50,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
@@ -62,6 +63,10 @@ use RuntimeException;
  * Detects filed-vs-ledger drift on a VATReturn and compiles a VatCorrection.
  *
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class VatSuppletieDetectionService
 {
@@ -246,7 +251,7 @@ class VatSuppletieDetectionService
 
         $filingDeadline = null;
         if ($thresholdExceeded === true) {
-            $deadline       = $preparedAt->add(new \DateInterval(self::FILING_DEADLINE_INTERVAL));
+            $deadline       = $preparedAt->add(new DateInterval(self::FILING_DEADLINE_INTERVAL));
             $filingDeadline = $deadline->format('Y-m-d');
         }
 

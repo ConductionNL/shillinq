@@ -44,6 +44,11 @@ use DateTimeZone;
  * Side-effect-free financial-dashboard arithmetic (port of financialSeries.js).
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * Pre-existing debt (issue #506): early-return refactor deferred pending
+ * full behavioral verification of each branch.
  */
 class FinancialSeriesCalculator
 {
@@ -126,6 +131,10 @@ class FinancialSeriesCalculator
      * @return array<int,string> Month keys, ascending.
      *
      * @spec openspec/specs/financial-dashboard-graphs/spec.md
+     *
+     * @SuppressWarnings(PHPMD.CountInLoopExpression) $months grows inside the
+     *     loop body — the loop bound is genuinely the running count, it
+     *     cannot be hoisted.
      */
     public function monthsInRange(string $from, string $to): array
     {

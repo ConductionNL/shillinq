@@ -61,6 +61,9 @@ use Throwable;
  * the sweep runs for the just-closed month.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ElseExpression)         Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
  */
@@ -126,6 +129,9 @@ class VendorPerformanceAggregationJob extends TimedJob
      * @return void
      *
      * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
+     *     TimedJob::run()'s signature; this job takes no argument.
      */
     protected function run($argument): void
     {

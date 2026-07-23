@@ -78,6 +78,11 @@ use RuntimeException;
  * decomposing further would only obscure the service-PO third leg.
  *
  * @spec openspec/changes/prestatieverklaring-service-receipt/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * Pre-existing debt (issue #506): inherent branch complexity in this
+ * domain logic; deferred pending a dedicated refactor.
  */
 class ServiceReceiptService
 {

@@ -44,6 +44,13 @@ namespace OCA\Shillinq\Standards\Checks;
 
 /**
  * Executable CSRD/ESRS + IFRS-S2 sustainability checks against EsrsStatement.
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * Pre-existing debt (issue #506): this class enumerates every CSRD/ESRS/
+ * IFRS-S2 rule the catalogue defines; inherent complexity. Deferred to a
+ * follow-up.
  */
 final class SustainabilityChecks implements CheckProvider, SeedsObjects
 {

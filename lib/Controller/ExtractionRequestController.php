@@ -81,6 +81,10 @@ use Throwable;
  * @spec openspec/specs/gl-account-suggestion-consume/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class ExtractionRequestController extends Controller
 {

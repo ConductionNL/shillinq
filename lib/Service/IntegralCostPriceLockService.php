@@ -39,6 +39,10 @@ use InvalidArgumentException;
  * Side-effect-free year-end IKP definitief lock (REQ-WMO-002 §year-end lock).
  *
  * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-8
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
+ *     #506): inherent branch complexity in this domain logic; deferred
+ *     pending a dedicated refactor.
  */
 class IntegralCostPriceLockService
 {

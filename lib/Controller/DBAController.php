@@ -57,6 +57,15 @@ use Throwable;
  * DBA Compliance Marker endpoint façade.
  *
  * @spec openspec/specs/dba-compliance-marker/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Pre-existing debt
+ *     (issue #506): DBA compliance scoring/audit-report surface area is
+ *     inherent domain complexity; deferred pending a dedicated refactor.
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)     Pre-existing debt
+ *     (issue #506), see above.
+ * @SuppressWarnings(PHPMD.ElseExpression)           Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class DBAController extends Controller
 {

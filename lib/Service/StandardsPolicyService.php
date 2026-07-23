@@ -102,6 +102,9 @@ class StandardsPolicyService
      * @param string|null                      $topic      Conflict topic; reserved for future use.
      *
      * @return string|null The winning framework key, or null.
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $topic is explicitly
+     *     reserved for future use per its own docblock line above.
      */
     public function resolveFromPolicy(array $frameworks, ?string $topic=null): ?string
     {

@@ -46,6 +46,10 @@ use Psr\Log\LoggerInterface;
  * arithmetic core (aggregateFromLeases) is unit-testable without OpenRegister.
  *
  * @spec openspec/specs/bookkeeping-lease-disclosures/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class LeaseDisclosureService
 {

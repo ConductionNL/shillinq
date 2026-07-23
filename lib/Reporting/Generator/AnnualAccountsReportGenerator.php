@@ -231,6 +231,11 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
      * @param string                             $currency  The presentation currency.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $currency kept for
+     *     signature parity with the sibling buildBalanceSheet()/
+     *     buildProfitAndLoss() phases the orchestrator calls uniformly;
+     *     this phase does not itself render a currency-denominated figure.
      */
     private function buildNotes(\PhpOffice\PhpWord\Element\Section $section, array $statement, string $currency): void
     {

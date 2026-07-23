@@ -30,6 +30,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Util;
 
+use DateTimeImmutable;
+use DateTimeZone;
+use InvalidArgumentException;
+
 /**
  * Side-effect-free generator + verifier for confirmation tokens.
  *
@@ -153,8 +157,8 @@ final class TokenValidator
     public static function isExpired(string $expiresAt, string $now): bool
     {
         try {
-            $expiresDt = new \DateTimeImmutable($expiresAt);
-            $nowDt     = new \DateTimeImmutable($now);
+            $expiresDt = new DateTimeImmutable($expiresAt);
+            $nowDt     = new DateTimeImmutable($now);
         } catch (\Throwable $e) {
             // Fail closed: an unparseable timestamp is treated as expired.
             return true;
@@ -173,18 +177,18 @@ final class TokenValidator
      *
      * @return string ISO 8601 UTC `expiresAt` (suffix `Z`).
      *
-     * @throws \InvalidArgumentException When `$createdAt` is not parseable.
+     * @throws InvalidArgumentException When `$createdAt` is not parseable.
      */
     public static function expiresAtFor(string $createdAt, int $ttlSeconds=self::DEFAULT_TTL_SECONDS): string
     {
         try {
-            $dt = new \DateTimeImmutable($createdAt, new \DateTimeZone('UTC'));
+            $dt = new DateTimeImmutable($createdAt, new DateTimeZone('UTC'));
         } catch (\Throwable $e) {
-            throw new \InvalidArgumentException('createdAt is not a valid ISO 8601 timestamp: '.$createdAt, 0, $e);
+            throw new InvalidArgumentException('createdAt is not a valid ISO 8601 timestamp: '.$createdAt, 0, $e);
         }
 
         $expires = $dt->modify('+'.max(0, $ttlSeconds).' seconds');
-        return $expires->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
+        return $expires->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
 
     }//end expiresAtFor()
 }//end class

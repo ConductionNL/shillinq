@@ -50,8 +50,12 @@ use Psr\Log\LoggerInterface;
  * Idempotently seeds XBRLTaxonomy / SBRDocumentType / XBRLMapping fixtures from the change fragment.
  *
  * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md#task-13
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
+ *     #506): inherent branch complexity in this domain logic; deferred
+ *     pending a dedicated refactor.
  */
-class Load_SBR_XBRL_Seeds_Step implements IRepairStep
+class LoadSbrXbrlSeedsStep implements IRepairStep
 {
     /**
      * Schemas this step is responsible for seeding.

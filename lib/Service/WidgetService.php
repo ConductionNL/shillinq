@@ -28,6 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -41,6 +43,11 @@ use Psr\Log\LoggerInterface;
  * the slot cache.
  *
  * @spec openspec/specs/bookings-self-service-widget/spec.md
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * Pre-existing debt (issue #506): inherent branch complexity in this
+ * domain logic; deferred pending a dedicated refactor.
  */
 class WidgetService
 {
@@ -277,7 +284,7 @@ class WidgetService
         }
 
         try {
-            $start = new \DateTimeImmutable($startTime);
+            $start = new DateTimeImmutable($startTime);
         } catch (\Throwable) {
             return ['code' => 400, 'error' => 'invalid_start_time'];
         }
@@ -305,7 +312,7 @@ class WidgetService
             return ['code' => 404, 'error' => 'service_not_bookable'];
         }
 
-        $startUtc = $start->setTimezone(new \DateTimeZone('UTC'));
+        $startUtc = $start->setTimezone(new DateTimeZone('UTC'));
         $endUtc   = $startUtc->modify('+'.$duration.' minutes');
 
         // Server-authoritative double-booking check (REQ-WSW-003 race scenario).
@@ -370,7 +377,7 @@ class WidgetService
         $this->slotService->invalidate(
             serviceId: $serviceId,
             resourceId: $resourceId,
-            date: $startUtc->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d')
+            date: $startUtc->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d')
         );
 
         // Design D6: never echo customer PII back to the public API.
@@ -388,11 +395,11 @@ class WidgetService
     /**
      * Whether a confirmed appointment overlaps the candidate interval.
      *
-     * @param object             $objectService    OR ObjectService.
-     * @param string             $resourceId       The resource.
-     * @param string             $administrationId Tenant scope.
-     * @param \DateTimeImmutable $startUtc         Candidate start (UTC).
-     * @param \DateTimeImmutable $endUtc           Candidate end (UTC).
+     * @param object            $objectService    OR ObjectService.
+     * @param string            $resourceId       The resource.
+     * @param string            $administrationId Tenant scope.
+     * @param DateTimeImmutable $startUtc         Candidate start (UTC).
+     * @param DateTimeImmutable $endUtc           Candidate end (UTC).
      *
      * @return bool True when a conflict exists (or the check could not be made safely).
      */
@@ -400,8 +407,8 @@ class WidgetService
         object $objectService,
         string $resourceId,
         string $administrationId,
-        \DateTimeImmutable $startUtc,
-        \DateTimeImmutable $endUtc
+        DateTimeImmutable $startUtc,
+        DateTimeImmutable $endUtc
     ): bool {
         try {
             $appointments = $objectService
@@ -436,8 +443,8 @@ class WidgetService
             }
 
             try {
-                $existStart = (new \DateTimeImmutable((string) ($appointment['startTime'] ?? '')))->getTimestamp();
-                $existEnd   = (new \DateTimeImmutable((string) ($appointment['endTime'] ?? '')))->getTimestamp();
+                $existStart = (new DateTimeImmutable((string) ($appointment['startTime'] ?? '')))->getTimestamp();
+                $existEnd   = (new DateTimeImmutable((string) ($appointment['endTime'] ?? '')))->getTimestamp();
             } catch (\Throwable) {
                 continue;
             }

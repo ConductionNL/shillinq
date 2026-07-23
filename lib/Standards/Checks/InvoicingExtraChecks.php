@@ -41,6 +41,12 @@ namespace OCA\Shillinq\Standards\Checks;
 /**
  * Remaining EN 16931 / VAT-Directive invoicing checks over the ARInvoice header,
  * invoice lines (BG-25), and VAT breakdown (BG-23).
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * Pre-existing debt (issue #506): this class enumerates every EN 16931/
+ * VAT-Directive invoicing rule the catalogue defines; inherent
+ * complexity. Deferred to a follow-up.
  */
 final class InvoicingExtraChecks implements CheckProvider
 {

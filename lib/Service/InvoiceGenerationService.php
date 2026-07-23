@@ -36,6 +36,10 @@ use RuntimeException;
 
 /**
  * Drafting, validation, and GL posting of BillableInvoice rows.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class InvoiceGenerationService
 {
@@ -408,7 +412,7 @@ class InvoiceGenerationService
     ): array {
         switch ($request->billingModel) {
             case 't_and_m':
-                return $this->billingEngine->calculateT_AND_M(timeEntries: $timeEntries, expenses: $expenses);
+                return $this->billingEngine->calculateTAndM(timeEntries: $timeEntries, expenses: $expenses);
 
             case 'fixed_fee':
                 if (empty($request->notes) === false) {

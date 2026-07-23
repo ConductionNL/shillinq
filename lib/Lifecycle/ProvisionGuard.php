@@ -73,6 +73,11 @@ use Psr\Log\LoggerInterface;
  * any exception or malformed input denies the transition (CWE-863).
  *
  * @spec openspec/specs/bookkeeping-voorzieningen-claims/spec.md
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * Pre-existing debt (issue #506): inherent branch complexity in this
+ * domain logic; deferred pending a dedicated refactor.
  */
 class ProvisionGuard
 {
