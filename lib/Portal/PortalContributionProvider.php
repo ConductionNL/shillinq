@@ -38,6 +38,17 @@
  * summary group (no separate DunningRun collection — that carries recipient
  * PII). Still excluded: goods receipts, AP/vendor dunning; see design.md.
  *
+ * portal-payment-initiation adds the write leg: a `pay` `endpoint-forward`
+ * action (contract v2, A6) forwarded server-to-server to
+ * `PortalPaymentInitiationController`, referenced as a `rowAction` on the
+ * open-invoice rows of `salesInvoices` / `paymentRequests` so portaliq renders
+ * a per-row pay-now control. The action itself is pure data (no I/O) — the
+ * imperative ownership + PSP work lives entirely in the receiver
+ * (`PortalPaymentSessionService`), keeping this provider plain/dependency-free
+ * (ADR-046 A1). `confirmationSummary` (written by `PaymentReconciliationService`
+ * on settlement) joins the `paymentRequests` field whitelist so the debtor
+ * reads a plain-language receipt through the existing read-only collection.
+ *
  * @category Portal
  * @package  OCA\Shillinq\Portal
  *
@@ -53,6 +64,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/portal-contribution/tasks.md#task-1
+ * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-006)
  */
 
 declare(strict_types=1);
@@ -78,7 +90,13 @@ namespace OCA\Shillinq\Portal;
  * stay at default (low) trust until the eHerkenning broker lands, after which
  * the financial collections move to minTrust `substantial` (Wave 2).
  *
+ * portal-payment-initiation adds exactly one `endpoint-forward` action (`pay`)
+ * on the `customer` manifest, referenced as a `rowAction` on the open-invoice
+ * rows of `salesInvoices` / `paymentRequests` (REQ-SPPI-006). `supplier` /
+ * `accountant` manifests keep empty `actions` — the write leg is customer-only.
+ *
  * @spec openspec/changes/portal-contribution/tasks.md#task-1
+ * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-006)
  *
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Pre-existing debt (issue
  *     #506): deferred pending a dedicated refactor.
@@ -184,7 +202,9 @@ class PortalContributionProvider
      *   property, so it is reached through a one-hop reverse `via` join
      *   through ARInvoice.customerId (contract v2.2, `match: 'scopeField'`):
      *   the join collects the subject's own ARInvoice ids, then keeps only
-     *   PaymentRequests whose `invoiceReference` is in that set. The computed
+     *   PaymentRequests whose `invoiceReference` is in that set. `confirmationSummary`
+     *   (portal-payment-initiation, REQ-SPPI-005) joins the whitelist so a
+     *   settled request shows the debtor a plain-language receipt. The computed
      *   `paymentLink` (OpenConnector hosted payment UI, short-lived signed
      *   token; null unless state=pending) is the pay-now surface — clicking it
      *   settles the invoice through the existing capture → matchPaid flow.
@@ -192,6 +212,14 @@ class PortalContributionProvider
      * Dunning is surfaced read-only via the ARInvoice.dunning summary group
      * (currentStage / nextDunningDate / incassokosten / rente); the DunningRun
      * schema itself stays excluded (recipient PII + rendered letters).
+     *
+     * portal-payment-initiation (REQ-SPPI-006) adds the write leg: a single
+     * `pay` `endpoint-forward` action, referenced as a `rowAction` on
+     * `salesInvoices` and `paymentRequests` so portaliq renders a per-row
+     * pay-now control. The action is pure declarative data (no I/O, no state)
+     * exactly like every other key on this manifest; the imperative ownership
+     * + PSP work is the receiver's job (`PortalPaymentInitiationController` /
+     * `PortalPaymentSessionService`).
      *
      * @return array<string, mixed> The customer manifest.
      *
@@ -255,6 +283,7 @@ class PortalContributionProvider
                     'scopeClaim'  => 'customerMasterId',
                     'label'       => 'My invoices',
                     'listable'    => true,
+                    'rowAction'   => 'pay',
                     'fields'      => [
                         'invoiceNumber',
                         'invoiceType',
@@ -333,6 +362,7 @@ class PortalContributionProvider
                     ],
                     'label'       => 'Pay my invoices',
                     'listable'    => true,
+                    'rowAction'   => 'pay',
                     'fields'      => [
                         'invoiceReference',
                         'amount',
@@ -343,6 +373,7 @@ class PortalContributionProvider
                         'expiresAt',
                         'capturedAt',
                         'failureReason',
+                        'confirmationSummary',
                     ],
                     'columns'     => [
                         [
@@ -378,6 +409,7 @@ class PortalContributionProvider
                             'expiresAt',
                             'capturedAt',
                             'failureReason',
+                            'confirmationSummary',
                         ],
                     ],
                     'defaultSort' => [
@@ -386,7 +418,24 @@ class PortalContributionProvider
                     ],
                 ],
             ],
-            'actions'       => [],
+            // Portal-payment-initiation REQ-SPPI-006: exactly one endpoint-forward
+            // action, forwarded server-to-server by portaliq to
+            // PortalPaymentInitiationController (route declared in
+            // appinfo/routes.php). minTrust tracks the AR surface — salesInvoices /
+            // paymentRequests above declare no explicit minTrust (default 'low'), so
+            // the action does not gate any tighter than the data it acts on; bump
+            // both together if/when the AR surface moves to 'substantial' (Wave 2
+            // note above).
+            'actions'       => [
+                [
+                    'id'       => 'pay',
+                    'label'    => 'Pay now',
+                    'type'     => 'endpoint-forward',
+                    'endpoint' => '/apps/shillinq/api/portal/payments/initiate',
+                    'method'   => 'POST',
+                    'minTrust' => 'low',
+                ],
+            ],
             'notifications' => [],
         ];
 

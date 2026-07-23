@@ -27,8 +27,10 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Tests the shared idempotent reconciliation across PaymentRequest +
- * DepositPayment, the captured→invoice settlement handoff, and the
- * captured_unapplied exception path (REQ-APL-004/005).
+ * DepositPayment, the captured→invoice settlement handoff, the
+ * captured_unapplied exception path (REQ-APL-004/005), and — added by
+ * portal-payment-initiation — the subject-safe confirmationSummary write on
+ * settlement (REQ-SPPI-005).
  */
 final class PaymentReconciliationServiceTest extends TestCase
 {
@@ -158,7 +160,9 @@ final class PaymentReconciliationServiceTest extends TestCase
 
     /**
      * A capture against an already-settled invoice becomes captured_unapplied,
-     * never a silent drop (REQ-APL-005 exception path).
+     * never a silent drop (REQ-APL-005 exception path). No confirmation is
+     * written for an unapplied capture — the invoice was NOT actually settled
+     * by this event (portal-payment-initiation REQ-SPPI-005).
      *
      * @return void
      */
@@ -179,7 +183,68 @@ final class PaymentReconciliationServiceTest extends TestCase
         self::assertSame(PaymentReconciliationService::RESULT_UNAPPLIED, $out['result']);
         $request = array_values(array_filter($saved, static fn (array $s): bool => $s['schema'] === 'PaymentRequest'))[0]['object'];
         self::assertSame('captured_unapplied', $request['state']);
+        self::assertArrayNotHasKey('confirmationSummary', $request);
     }//end testCaptureOnSettledInvoiceBecomesUnapplied()
+
+    /**
+     * A captured event writes a subject-safe confirmationSummary onto the
+     * PaymentRequest, readable through the invoice's own human number, the
+     * capture date and the settlement reference — never raw PCI/internal
+     * detail (portal-payment-initiation REQ-SPPI-005).
+     *
+     * @return void
+     */
+    public function testCaptureWritesConfirmationSummary(): void
+    {
+        $saved   = [];
+        $stub    = $this->buildObjectServiceStub(
+            [
+                'PaymentRequest' => [['paymentIntentId' => 'tr_1', 'state' => 'pending', 'invoiceReference' => 'inv-1']],
+                'ARInvoice'      => [['id' => 'inv-1', 'state' => 'issued', 'invoiceNumber' => 'INV-2026-0042']],
+            ],
+            $saved
+        );
+        $service = $this->makeService($stub);
+
+        $out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_1', 'outcome' => 'captured', 'settlementReference' => 'po_1']);
+
+        self::assertSame(PaymentReconciliationService::RESULT_APPLIED, $out['result']);
+        $request = array_values(array_filter($saved, static fn (array $s): bool => $s['schema'] === 'PaymentRequest'))[0]['object'];
+        self::assertArrayHasKey('confirmationSummary', $request);
+        self::assertStringContainsString('INV-2026-0042', $request['confirmationSummary']);
+        self::assertStringContainsString('po_1', $request['confirmationSummary']);
+    }//end testCaptureWritesConfirmationSummary()
+
+    /**
+     * Replaying a capture webhook on an already-captured request is an
+     * idempotent no-op — the confirmationSummary already written is NEVER
+     * overwritten or double-composed (portal-payment-initiation REQ-SPPI-005).
+     *
+     * @return void
+     */
+    public function testReplayedCaptureDoesNotOverwriteConfirmationSummary(): void
+    {
+        $saved   = [];
+        $stub    = $this->buildObjectServiceStub(
+            [
+                'PaymentRequest' => [
+                    [
+                        'paymentIntentId'     => 'tr_1',
+                        'state'               => 'captured',
+                        'invoiceReference'    => 'inv-1',
+                        'confirmationSummary' => 'Invoice INV-2026-0042 paid on 2026-07-20, reference po_1.',
+                    ],
+                ],
+            ],
+            $saved
+        );
+        $service = $this->makeService($stub);
+
+        $out = $service->reconcile('mollie', ['paymentIntentId' => 'tr_1', 'outcome' => 'captured']);
+
+        self::assertSame(PaymentReconciliationService::RESULT_NOOP, $out['result']);
+        self::assertCount(0, $saved);
+    }//end testReplayedCaptureDoesNotOverwriteConfirmationSummary()
 
     /**
      * Replaying a capture webhook on an already-captured request is an idempotent

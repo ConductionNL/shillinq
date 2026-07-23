@@ -656,6 +656,15 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // Symfony matches it first per ADR-016.
             ['name' => 'paymentRequestWebhook#handle', 'url' => '/api/v1/payment-requests/webhook/{gateway}', 'verb' => 'POST'],
 
+            // Portal payment initiation (portal-payment-initiation, ADR-046 contract
+            // v2 A6). Receives portaliq's server-to-server forward of the `pay`
+            // endpoint-forward action declared on the customer manifest
+            // (PortalContributionProvider). #[PublicPage] because the caller is
+            // portaliq's backend, not a browser — the X-Portal-Subject assertion IS
+            // the authentication (PortalAssertionVerifier). Static URL, declared
+            // before the SPA catch-all per ADR-016.
+            ['name' => 'portalPaymentInitiation#initiate', 'url' => '/api/portal/payments/initiate', 'verb' => 'POST'],
+
             // Reporting & Compliance consolidation (reporting-compliance-consolidation).
             // The HTTP surface behind the unified "Reporting & Compliance" section:
             // types() returns the static report catalogue grouped by category (overview

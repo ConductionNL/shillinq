@@ -29,6 +29,12 @@
  * the two onto this single path once both have soaked. Neither stores any PCI
  * data — only opaque references (REQ-APL-001 / REQ-DP-001).
  *
+ * portal-payment-initiation (REQ-SPPI-005) adds one scalar write on the same
+ * capture path: a subject-safe `confirmationSummary` on the PaymentRequest, so
+ * a debtor who paid through the portal's subject-initiated `pay` action sees a
+ * plain-language receipt through the existing read-only `paymentRequests`
+ * portal collection — no dedicated inbox schema, no new orchestration path.
+ *
  * @category Service
  * @package  OCA\Shillinq\Service
  *
@@ -39,6 +45,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005, REQ-APL-006)
+ * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-005)
  */
 
 declare(strict_types=1);
@@ -210,6 +217,7 @@ class PaymentReconciliationService
      * @return array{result: string, schema: ?string} Result constant + which schema matched (or null).
      *
      * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005, REQ-APL-006)
+     * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-005)
      */
     public function reconcile(string $gateway, array $event): array
     {
@@ -291,12 +299,12 @@ class PaymentReconciliationService
         // (REQ-APL-005). DepositPayment capture handling is unchanged from the
         // deposits path (its own lifecycle owns AR materialisation).
         if ($outcome === self::OUTCOME_CAPTURED && $schema === self::SCHEMA_PAYMENT_REQUEST) {
-            $applied = $this->settleLinkedInvoice(
+            $settledInvoice = $this->settleLinkedInvoice(
                 objectService: $objectService,
                 registerSlug: $registerSlug,
                 request: $record,
             );
-            if ($applied === false) {
+            if ($settledInvoice === null) {
                 $record['state'] = 'captured_unapplied';
                 $objectService->saveObject(
                     object: $record,
@@ -305,7 +313,12 @@ class PaymentReconciliationService
                 );
                 return ['result' => self::RESULT_UNAPPLIED, 'schema' => $schema];
             }
-        }
+
+            // Write a subject-safe confirmation the debtor reads through the
+            // existing read-only paymentRequests portal collection — no
+            // dedicated inbox schema (portal-payment-initiation REQ-SPPI-005).
+            $record['confirmationSummary'] = $this->buildConfirmationSummary(invoice: $settledInvoice, request: $record);
+        }//end if
 
         $objectService->saveObject(
             object: $record,
@@ -322,25 +335,27 @@ class PaymentReconciliationService
      * posting, dunning stop, and ageing — this method posts nothing; it triggers
      * the transition with the PaymentRequest as payment evidence.
      *
-     * Returns false (so the caller sets captured_unapplied) when the invoice is
+     * Returns null (so the caller sets captured_unapplied) when the invoice is
      * missing or already in a non-settleable state (paid / written-off / voided /
      * credited) — REQ-APL-005's "capture against an already-settled invoice
-     * becomes an exception, not a silent drop".
+     * becomes an exception, not a silent drop". On success, returns the
+     * just-settled invoice so the caller can compose the portal-payment-initiation
+     * REQ-SPPI-005 confirmation summary (invoiceNumber) without a second read.
      *
      * @param object               $objectService The OR ObjectService.
      * @param string               $registerSlug  The register slug.
      * @param array<string, mixed> $request       The captured PaymentRequest record.
      *
-     * @return bool True when the invoice was settled; false to route to captured_unapplied.
+     * @return array<string, mixed>|null The settled ARInvoice, or null to route to captured_unapplied.
      *
      * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-005)
      */
-    private function settleLinkedInvoice(object $objectService, string $registerSlug, array $request): bool
+    private function settleLinkedInvoice(object $objectService, string $registerSlug, array $request): ?array
     {
         $invoiceRef = (string) ($request['invoiceReference'] ?? '');
         if ($invoiceRef === '') {
             $this->logger->warning('Shillinq: captured PaymentRequest has no invoiceReference; routing to captured_unapplied');
-            return false;
+            return null;
         }
 
         try {
@@ -371,7 +386,7 @@ class PaymentReconciliationService
                     'Shillinq: captured PaymentRequest references an unknown ARInvoice; routing to captured_unapplied',
                     ['invoiceReference' => $invoiceRef]
                 );
-                return false;
+                return null;
             }
 
             $invoice      = $invoices[0];
@@ -385,7 +400,7 @@ class PaymentReconciliationService
                     'Shillinq: ARInvoice is not in a settleable state for the captured payment; routing to captured_unapplied',
                     ['invoiceReference' => $invoiceRef, 'invoiceState' => $invoiceState]
                 );
-                return false;
+                return null;
             }
 
             // Trigger the existing AR lifecycle transition to paid, with the
@@ -406,7 +421,7 @@ class PaymentReconciliationService
             // invoice — the payment stands, the FX leg is logged and skipped.
             $this->postRealisedFxOnSettlement(invoice: $invoice, request: $request);
 
-            return true;
+            return $invoice;
         } catch (\Throwable $e) {
             // Never silently drop a captured payment (REQ-APL-005). Routing to
             // captured_unapplied surfaces the exception for operator action.
@@ -414,9 +429,38 @@ class PaymentReconciliationService
                 'Shillinq: ARInvoice settlement for a captured payment failed; routing to captured_unapplied',
                 ['invoiceReference' => $invoiceRef, 'exception' => $e->getMessage()]
             );
-            return false;
+            return null;
         }//end try
     }//end settleLinkedInvoice()
+
+    /**
+     * Compose the subject-safe settlement confirmation (portal-payment-initiation,
+     * REQ-SPPI-005) — a plain-language receipt the debtor reads through the
+     * existing read-only paymentRequests portal collection. Never includes any
+     * internal/PCI detail — only the invoice's own human-readable number, the
+     * capture date and the opaque settlement/payment reference.
+     *
+     * @param array<string, mixed> $invoice The just-settled ARInvoice (state=paid).
+     * @param array<string, mixed> $request The captured PaymentRequest record.
+     *
+     * @return string The confirmation summary.
+     *
+     * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-005)
+     */
+    private function buildConfirmationSummary(array $invoice, array $request): string
+    {
+        $invoiceNumber = (string) ($invoice['invoiceNumber'] ?? ($request['invoiceReference'] ?? ''));
+
+        $capturedAt = (string) ($request['capturedAt'] ?? '');
+        $date       = gmdate('Y-m-d');
+        if ($capturedAt !== '') {
+            $date = substr($capturedAt, 0, 10);
+        }
+
+        $reference = (string) ($request['settlementReference'] ?? ($request['paymentIntentId'] ?? ''));
+
+        return sprintf('Invoice %s paid on %s, reference %s.', $invoiceNumber, $date, $reference);
+    }//end buildConfirmationSummary()
 
     /**
      * Post the settlement-time realised FX gain/loss for a just-paid ARInvoice
