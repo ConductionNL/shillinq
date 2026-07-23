@@ -236,8 +236,8 @@ class RetireSubsidieSchemaTest extends TestCase
 
         $fakeOs = $this->fakeObjectService(
             [
-                'Subsidie' => [$subsidie],
-                'Order'    => [$order],
+                'Subsidie'       => [$subsidie],
+                'OrderPrimitive' => [$order],
             ]
         );
         $this->container->method('get')->willReturn($fakeOs);
@@ -289,8 +289,8 @@ class RetireSubsidieSchemaTest extends TestCase
 
         $fakeOs = $this->fakeObjectService(
             [
-                'Subsidie' => [$subsidie],
-                'Order'    => [$unrelatedOrder],
+                'Subsidie'       => [$subsidie],
+                'OrderPrimitive' => [$unrelatedOrder],
             ]
         );
         $this->container->method('get')->willReturn($fakeOs);

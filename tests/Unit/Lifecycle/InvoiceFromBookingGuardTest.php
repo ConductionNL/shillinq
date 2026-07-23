@@ -258,6 +258,31 @@ class InvoiceFromBookingGuardTest extends TestCase
     }//end testCanCompleteHappyPath()
 
     /**
+     * Regression guard (issue #503, 2026-07-23): when no $object is
+     * pre-supplied, canComplete must resolve the order via the CURRENT
+     * `BookingOrder` schema slug, not the stale `Order` slug the booking
+     * context was renamed away from in 07709a0f. Before the fix this
+     * fallback silently found nothing (schema `Order` no longer exists for
+     * bookings) and denied every completion reached through this path.
+     *
+     * @return void
+     */
+    public function testCanCompleteResolvesOrderViaBookingOrderSchemaFallback(): void
+    {
+        $this->withObjectService(
+            $this->buildObjectServiceStub(
+                [
+                    'BookingOrder'    => [$this->order()],
+                    'DepositPayment'  => [$this->authorizedDeposit()],
+                ]
+            )
+        );
+
+        $this->assertTrue($this->guard->canComplete('ord-1001'), 'fallback lookup must resolve against schema BookingOrder');
+
+    }//end testCanCompleteResolvesOrderViaBookingOrderSchemaFallback()
+
+    /**
      * The `canComplete` is denied when completedAt is not set (REQ-DI-002).
      *
      * @return void

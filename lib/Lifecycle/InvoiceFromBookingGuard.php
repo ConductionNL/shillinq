@@ -16,7 +16,7 @@
  * (REQ-DI-003/004/005). These are deterministic, side-effect-free, and unit
  * tested directly.
  *
- * Referenced from the Order schema's x-openregister-lifecycle transition
+ * Referenced from the BookingOrder schema's x-openregister-lifecycle transition
  * `complete.requires` in lib/Settings/register.d/bookings-deposit-to-invoice.json.
  *
  * ADR-031 exception reason: the deposit-credit calculation must resolve the
@@ -52,7 +52,8 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Completion precondition + invoice-composition helpers for the Order schema.
+ * Completion precondition + invoice-composition helpers for the BookingOrder
+ * schema.
  *
  * Fail-closed: any unexpected exception denies the completion (CWE-863).
  *
@@ -104,7 +105,14 @@ class InvoiceFromBookingGuard
     public function canComplete(string $orderId, ?array $object=null): bool
     {
         try {
-            $order = ($object ?? $this->findOne(schema: 'Order', filters: ['orderId' => $orderId]));
+            // BUGFIX (issue #503, 2026-07-23): this literal was still 'Order'
+            // after the booking-context order schema was renamed to
+            // 'BookingOrder' in 07709a0f (to free the `Order` slug for
+            // abstract-order-primitive). Untested because every existing
+            // test pre-supplies $object, never exercising this fallback
+            // lookup — the fallback silently resolved 0 rows against a
+            // schema slug that no longer existed.
+            $order = ($object ?? $this->findOne(schema: 'BookingOrder', filters: ['orderId' => $orderId]));
             if ($order === null) {
                 $this->logger->info(
                     'InvoiceFromBookingGuard: order not found — denying completion',
