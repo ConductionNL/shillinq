@@ -852,38 +852,59 @@ class SettingsService
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $registerSlug  = $this->getRegisterSlug();
-            $seeded        = 0;
-            $skipped       = 0;
 
-            foreach ($rateCards as $rateCard) {
-                $rateCard['administrationId'] = $administrationId;
+            $seedItems = function () use ($objectService, $registerSlug, $rateCards, $administrationId): array {
+                $seeded  = 0;
+                $skipped = 0;
 
-                $existing = $objectService
-                    ->setRegister($registerSlug)
-                    ->setSchema('RateCard')
-                    ->findAll(
-                            [
-                                'filters' => [
-                                    'level'            => $rateCard['level'],
-                                    'effectiveFrom'    => $rateCard['effectiveFrom'],
-                                    'administrationId' => $administrationId,
-                                ],
-                                'limit'   => 1,
-                            ]
-                            );
+                foreach ($rateCards as $rateCard) {
+                    $rateCard['administrationId'] = $administrationId;
 
-                if (empty($existing) === false) {
-                    $skipped++;
-                    continue;
-                }
+                    $existing = $objectService
+                        ->setRegister($registerSlug)
+                        ->setSchema('RateCard')
+                        ->findAll(
+                                [
+                                    'filters' => [
+                                        'level'            => $rateCard['level'],
+                                        'effectiveFrom'    => $rateCard['effectiveFrom'],
+                                        'administrationId' => $administrationId,
+                                    ],
+                                    'limit'   => 1,
+                                ]
+                                );
 
-                $objectService->saveObject(
-                    object: $rateCard,
-                    register: $registerSlug,
-                    schema: 'RateCard',
-                );
-                $seeded++;
-            }//end foreach
+                    if (empty($existing) === false) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $objectService->saveObject(
+                        object: $rateCard,
+                        register: $registerSlug,
+                        schema: 'RateCard',
+                    );
+                    $seeded++;
+                }//end foreach
+
+                return [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ];
+            };
+
+            // Seeding runs user-less (repair step / boot); without elevation
+            // OpenRegister RBAC denies the reads/writes as 'Anonymous' (issue
+            // #508). The guard keeps compatibility with released OR versions
+            // that do not ship runAsSystem() yet.
+            if (method_exists($objectService, 'runAsSystem') === true) {
+                $counts = $objectService->runAsSystem($seedItems);
+            } else {
+                $counts = $seedItems();
+            }
+
+            $seeded  = $counts['seeded'];
+            $skipped = $counts['skipped'];
 
             $this->logger->info(
                 'Shillinq: rate-card templates seeded',
@@ -1076,36 +1097,57 @@ class SettingsService
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $registerSlug  = $this->getRegisterSlug();
-            $seeded        = 0;
-            $skipped       = 0;
 
-            foreach ($rules as $rule) {
-                $code     = ($rule['selectielijstCode'] ?? '');
-                $existing = $objectService
-                    ->setRegister($registerSlug)
-                    ->setSchema('RetentionRule')
-                    ->findAll(
-                        [
-                            'filters' => [
-                                'selectielijstCode' => $code,
-                                'administrationId'  => null,
-                            ],
-                            'limit'   => 1,
-                        ]
+            $seedItems = function () use ($objectService, $registerSlug, $rules): array {
+                $seeded  = 0;
+                $skipped = 0;
+
+                foreach ($rules as $rule) {
+                    $code     = ($rule['selectielijstCode'] ?? '');
+                    $existing = $objectService
+                        ->setRegister($registerSlug)
+                        ->setSchema('RetentionRule')
+                        ->findAll(
+                            [
+                                'filters' => [
+                                    'selectielijstCode' => $code,
+                                    'administrationId'  => null,
+                                ],
+                                'limit'   => 1,
+                            ]
+                        );
+
+                    if (empty($existing) === false) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $objectService->saveObject(
+                        object: $rule,
+                        register: $registerSlug,
+                        schema: 'RetentionRule',
                     );
+                    $seeded++;
+                }//end foreach
 
-                if (empty($existing) === false) {
-                    $skipped++;
-                    continue;
-                }
+                return [
+                    'seeded'  => $seeded,
+                    'skipped' => $skipped,
+                ];
+            };
 
-                $objectService->saveObject(
-                    object: $rule,
-                    register: $registerSlug,
-                    schema: 'RetentionRule',
-                );
-                $seeded++;
-            }//end foreach
+            // Seeding runs user-less (repair step / boot); without elevation
+            // OpenRegister RBAC denies the reads/writes as 'Anonymous' (issue
+            // #508). The guard keeps compatibility with released OR versions
+            // that do not ship runAsSystem() yet.
+            if (method_exists($objectService, 'runAsSystem') === true) {
+                $counts = $objectService->runAsSystem($seedItems);
+            } else {
+                $counts = $seedItems();
+            }
+
+            $seeded  = $counts['seeded'];
+            $skipped = $counts['skipped'];
 
             $this->logger->info(
                 'Shillinq: Selectielijst retention rules seeded',
