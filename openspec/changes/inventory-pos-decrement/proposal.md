@@ -63,7 +63,24 @@ change** to emit a sold-line stock event, and this change to consume it.
 
 ## Status
 
-**Blocked on the pipelinq producer event.** This proposal replaces the draft
-triage brief with a real design; implementation waits on the companion pipelinq
-change. Do not archive until both sides ship and the decrement is verified
-end-to-end on a running instance.
+**Both sides built (2026-07-23), NOT yet archivable.** The companion pipelinq
+producer (`PosStockMovedEvent`, branch `wip/pipelinq-pos-stock-moved-event`)
+and this shillinq consumer (`PosStockDecrementListener`, branch
+`wip/shillinq-i504`) landed in the same session. Both are unit-tested
+(pipelinq: 9 new tests; shillinq: 8 new tests including an end-to-end
+in-memory correctness proof of decrement + COGS + posTxnId idempotency) and
+statically wiring-verified (matching FQCN on both ends, proper `use` import
+on the listener registration — not a #507-class phantom).
+
+**Still open before archiving**: a LIVE end-to-end run on a running instance
+with both apps installed — a real pipelinq POS sale settling and shillinq's
+matching inventory item decrementing + COGS posting. Not attempted this
+session. Do not archive until that live verification is done.
+
+Also note a correction against this proposal's own text above: the COGS post
+is NOT via `InventoryGlAdjustmentPoster` (that service is the landed-cost/NRV
+valuation adapter, unrelated to sales COGS) — it is `CogsPosterService`,
+fired automatically by the pre-existing `StockMoveTransitionedListener`
+pipeline once `SalesDispatchStockIssueService::issueForDelivery()` posts the
+StockMove. See `tasks.md` §2 and the listener's docblock for the full
+correction.
