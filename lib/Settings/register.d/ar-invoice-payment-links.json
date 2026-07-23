@@ -11,9 +11,9 @@
       "PaymentRequest": {
         "slug": "PaymentRequest",
         "icon": "CreditCardOutline",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "title": "Payment Request",
-        "description": "An online payment attempt against an AR invoice per REQ-APL-001. One AR invoice can carry several payment requests over its life (link expired and regenerated, a failed attempt then a new link, a link voided after partial credit) — each request has its own lifecycle, gateway identity and audit needs, so payment state lives here and never folds onto ARInvoice (design D1). Mirrors the proven DepositPayment shape minus booking fields, FK'd to ARInvoice. STORES NO PCI DATA: no card number, CVV, PAN, IBAN credential, or authorization token is ever persisted — OpenConnector (PCI-certified) handles all sensitive payment data and only opaque references (paymentIntentId, settlementReference) are stored here, identical to DepositPayment REQ-DP-001.",
+        "description": "An online payment attempt against an AR invoice per REQ-APL-001. One AR invoice can carry several payment requests over its life (link expired and regenerated, a failed attempt then a new link, a link voided after partial credit) — each request has its own lifecycle, gateway identity and audit needs, so payment state lives here and never folds onto ARInvoice (design D1). Mirrors the proven DepositPayment shape minus booking fields, FK'd to ARInvoice. STORES NO PCI DATA: no card number, CVV, PAN, IBAN credential, or authorization token is ever persisted — OpenConnector (PCI-certified) handles all sensitive payment data and only opaque references (paymentIntentId, settlementReference) are stored here, identical to DepositPayment REQ-DP-001. v0.1.1 (portal-payment-initiation, REQ-SPPI-005) adds confirmationSummary — a subject-safe settlement receipt written on capture and surfaced through the customer portal's read-only paymentRequests collection.",
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Payment-attempt register; every create / update / lifecycle transition (authorize / capture / markUnapplied / fail / expire / void) is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. The captured PaymentRequest is the canonical payment-evidence chain linked to the settled ARInvoice (REQ-APL-005)."
@@ -133,6 +133,13 @@
             "x-openconnector-resolved": true,
             "description": "COMPUTED (REQ-APL-002): the customer-facing payment URL embedding the payment-request id, the invoice id, and a short-lived signed token, resolving to the OpenConnector hosted payment UI — resolved by the shared payment adapter (the REQ-DP-005 pattern). The app MUST NOT construct a direct Mollie/Stripe URL anywhere. Null unless state=pending AND the invoice is unsettled (visibleWhen); following a link for a non-pending request shows a friendly already-paid/expired page from the hosted UI, never a second charge.",
             "title": "Payment Link"
+          },
+          "confirmationSummary": {
+            "type": "string",
+            "nullable": true,
+            "description": "Subject-safe, plain-language settlement receipt written by PaymentReconciliationService on capture (portal-payment-initiation, REQ-SPPI-005) — e.g. 'Invoice INV-2026-014 paid on 2026-07-23, reference tr_xxx'. Surfaced through the customer portal's read-only paymentRequests collection so the debtor sees a receipt without a dedicated portal inbox. Never overwritten by a replayed/idempotent webhook.",
+            "example": "Invoice INV-2026-0042 paid on 2026-07-23, reference tr_WDqYK6vllg.",
+            "title": "Confirmation Summary"
           }
         },
         "x-openregister-calculations": {

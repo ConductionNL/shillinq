@@ -21,6 +21,13 @@
  * administrationId or any client-supplied id, so another debtor's invoice is
  * unreachable (IDOR).
  *
+ * portal-payment-initiation (REQ-SPPI-006) adds the write leg: this suite
+ * additionally pins the exact shape of the `pay` endpoint-forward action (id,
+ * type, instance-local relative endpoint, method, minTrust), that both
+ * `salesInvoices` and `paymentRequests` reference it as a `rowAction`, that
+ * `confirmationSummary` joins the `paymentRequests` field whitelist, and that
+ * the `supplier` / `accountant` manifests keep empty `actions`.
+ *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Portal
  *
@@ -36,6 +43,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/portal-contribution/tasks.md#task-3
+ * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-006)
  */
 
 declare(strict_types=1);
@@ -203,7 +211,8 @@ class PortalContributionProviderTest extends TestCase
 
         $this->assertIsArray($manifest);
         $this->assertSame('Shillinq', $manifest['label']);
-        $this->assertSame([], $manifest['actions']);
+        $this->assertCount(1, $manifest['actions'], 'exactly one pay action (REQ-SPPI-006)');
+        $this->assertSame('pay', $manifest['actions'][0]['id']);
         $this->assertSame([], $manifest['notifications']);
 
         // [schema, scopeField, scopeClaim] per collection id.
@@ -282,8 +291,48 @@ class PortalContributionProviderTest extends TestCase
             'PaymentRequest must be scoped by a one-hop reverse join through ARInvoice.customerId'
         );
         $this->assertContains('paymentLink', $pr['fields'], 'pay-now link is surfaced');
+        $this->assertContains('confirmationSummary', $pr['fields'], 'REQ-SPPI-005 settlement receipt is surfaced');
 
     }//end testCustomerManifestArInvoiceAndPaymentRequestWiring()
+
+    /**
+     * REQ-SPPI-006: the customer manifest declares exactly one `pay`
+     * endpoint-forward action, referenced as a `rowAction` on the open-invoice
+     * rows of both AR-side collections.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/portal-payment-initiation/spec.md (REQ-SPPI-006)
+     */
+    public function testCustomerManifestPayActionAndRowAction(): void
+    {
+        $manifest    = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
+        $collections = [];
+        foreach ($manifest['collections'] as $collection) {
+            $collections[$collection['id']] = $collection;
+        }
+
+        $this->assertCount(1, $manifest['actions']);
+        $action = $manifest['actions'][0];
+        $this->assertSame('pay', $action['id']);
+        $this->assertSame('endpoint-forward', $action['type']);
+        $this->assertSame('POST', $action['method']);
+        $this->assertArrayHasKey('minTrust', $action);
+        $this->assertNotSame('', $action['label']);
+
+        // Instance-local relative endpoint under the declared path — no
+        // scheme, no host, no `..` (SSRF hardening, REQ-SPPI-006).
+        $endpoint = $action['endpoint'];
+        $this->assertStringStartsWith('/apps/shillinq/api/portal/payments/', $endpoint);
+        $this->assertStringStartsWith('/', $endpoint);
+        $this->assertStringNotContainsString('://', $endpoint);
+        $this->assertStringNotContainsString('..', $endpoint);
+
+        // Both AR-side collections reference the action as a rowAction.
+        $this->assertSame('pay', $collections['salesInvoices']['rowAction']);
+        $this->assertSame('pay', $collections['paymentRequests']['rowAction']);
+
+    }//end testCustomerManifestPayActionAndRowAction()
 
     /**
      * SECURITY HEADLINE (mandatory, non-negotiable): another debtor's invoice

@@ -16,7 +16,8 @@
         StaticAccess exceptions (issue #506): every class below was audited and is
         either (a) a static factory / immutable value-object constructor
         (GuardResult, KlantbeeldResult/Transaction, PipelinqContact,
-        InvoiceGenerationRequest, AggregationQuery, MetricSample), (b) a static
+        InvoiceGenerationRequest, AggregationQuery, MetricSample,
+        PortalPaymentSessionResult), (b) a static
         config/catalogue/rule registry deliberately designed as a stateless
         lookup table (RuleEngine, RuleCatalogue, ReportCatalogue, DBAConstants,
         TokenValidator), (c) a native PHP class (DateTimeImmutable), or (d) a
@@ -41,6 +42,7 @@
                 OCA\Shillinq\Service\Pipelinq\PipelinqContact,
                 OCA\Shillinq\Service\Pipelinq\KlantbeeldResult,
                 OCA\Shillinq\Service\Pipelinq\KlantbeeldTransaction,
+                OCA\Shillinq\Service\Payment\PortalPaymentSessionResult,
                 PhpOffice\PhpWord\Shared\Converter,
                 PhpOffice\PhpWord\Settings,
                 PhpOffice\PhpWord\IOFactory

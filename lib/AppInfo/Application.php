@@ -100,6 +100,8 @@ use OCA\Shillinq\Service\External\Kvk\KvkHandelsregisterAdapterInterface;
 use OCA\Shillinq\Service\External\Kvk\LogKvkHandelsregisterAdapter;
 use OCA\Shillinq\Service\External\Mollie\LogMolliePaymentAdapter;
 use OCA\Shillinq\Service\External\Mollie\MolliePaymentAdapterInterface;
+use OCA\Shillinq\Service\Payment\MolliePaymentProvider;
+use OCA\Shillinq\Service\Payment\PaymentProviderInterface;
 use OCA\Shillinq\Service\External\Bunq\BunqBankConnectorAdapterInterface;
 use OCA\Shillinq\Service\External\Bunq\LogBunqBankConnectorAdapter;
 use OCA\Shillinq\Service\External\Uwv\LogUwvLoonaangifteAdapter;
@@ -551,6 +553,21 @@ class Application extends App implements IBootstrap
             MolliePaymentAdapterInterface::class,
             static function ($c): MolliePaymentAdapterInterface {
                 return $c->get(LogMolliePaymentAdapter::class);
+            }
+        );
+
+        // Portal-payment-initiation REQ-SPPI-001 — the payment-provider port
+        // the subject-initiated pay-now flow drives. Sits one layer ABOVE
+        // MolliePaymentAdapterInterface (already wired immediately above):
+        // the shipped MolliePaymentProvider binding delegates EVERY call to
+        // whichever MolliePaymentAdapterInterface is currently bound, so this
+        // port is dormant-by-default (LogMolliePaymentAdapter) and turns live
+        // automatically the moment the openconnector `mollie-payments` source
+        // is bound — no further change needed here.
+        $context->registerService(
+            PaymentProviderInterface::class,
+            static function ($c): PaymentProviderInterface {
+                return new MolliePaymentProvider(mollie: $c->get(MolliePaymentAdapterInterface::class));
             }
         );
         $context->registerService(
