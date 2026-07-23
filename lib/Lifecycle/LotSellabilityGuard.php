@@ -60,6 +60,10 @@ use OCA\Shillinq\Sort\FefoSort;
  * line quantity from SELLABLE stock only.
  *
  * @spec openspec/specs/block-unsellable-stock-dispatch/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class LotSellabilityGuard
 {
@@ -208,7 +212,10 @@ class LotSellabilityGuard
     {
         $status    = (string) ($lot['lotStatus'] ?? self::STATUS_ACTIVE);
         $expiryRaw = ($lot['expiryDate'] ?? null);
-        $expiry    = ($expiryRaw === null || $expiryRaw === '') ? null : (string) $expiryRaw;
+        $expiry    = null;
+        if ($expiryRaw !== null && $expiryRaw !== '') {
+            $expiry = (string) $expiryRaw;
+        }
 
         if ($status === 'quarantined') {
             $reason   = 'quarantined (held for quality inspection)';

@@ -40,6 +40,11 @@ namespace OCA\Shillinq\Service;
  * wires this helper to live AR-invoice + KORRegistration data.
  *
  * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): early-return refactor and variable
+ * renames deferred pending a dedicated pass.
  */
 class KorThresholdCalculator
 {

@@ -43,6 +43,9 @@ use RuntimeException;
  * Document-register helper service (REQ-WBSO-003 / REQ-WBSO-007 / REQ-WBSO-009).
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-25
+ *
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Pre-existing debt (issue
+ *     #506): changing this signature would ripple to callers; deferred.
  */
 class WbsoDocumentService
 {

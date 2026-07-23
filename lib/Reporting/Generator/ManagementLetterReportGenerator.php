@@ -35,6 +35,10 @@ use Throwable;
 
 /**
  * Renders a management letter from the RuleAuditService compliance findings.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class ManagementLetterReportGenerator extends AbstractDocumentReportGenerator
 {

@@ -62,28 +62,32 @@ final class FourEyesPaymentRunGuard implements LifecycleGuardInterface
      *
      * @var string
      */
-    public const MESSAGE_SELF_APPROVAL = 'Self-approval is not permitted: you prepared or modified this payment run, so you cannot also approve it. A different authorised user must approve the batch before it can be exported.';
+    public const MESSAGE_SELF_APPROVAL = 'Self-approval is not permitted: you prepared or modified this payment run, so you cannot also approve it. '
+        .'A different authorised user must approve the batch before it can be exported.';
 
     /**
      * User-facing denial when the caller (approver) identity is unknown.
      *
      * @var string
      */
-    public const MESSAGE_NO_APPROVER = 'The payment run cannot be approved: the approving user could not be identified. Sign in and retry; an unidentified approver is blocked (fail-closed).';
+    public const MESSAGE_NO_APPROVER = 'The payment run cannot be approved: the approving user could not be identified. Sign in and retry; '
+        .'an unidentified approver is blocked (fail-closed).';
 
     /**
      * User-facing denial when the batch itself cannot be identified.
      *
      * @var string
      */
-    public const MESSAGE_NO_OBJECT = 'The payment run cannot be approved: the batch could not be identified for the segregation-of-duties check (fail-closed).';
+    public const MESSAGE_NO_OBJECT = 'The payment run cannot be approved: the batch could not be identified for the segregation-of-duties check '
+        .'(fail-closed).';
 
     /**
      * User-facing denial when the preparer cannot be established from the audit trail.
      *
      * @var string
      */
-    public const MESSAGE_INDETERMINATE = 'The payment run cannot be approved: the preparer could not be determined from the audit trail, so the four-eyes check cannot be satisfied (fail-closed).';
+    public const MESSAGE_INDETERMINATE = 'The payment run cannot be approved: the preparer could not be determined from the audit trail, '
+        .'so the four-eyes check cannot be satisfied (fail-closed).';
 
     /**
      * FQCN of OpenRegister's ObjectService, resolved lazily from the container.
@@ -91,7 +95,6 @@ final class FourEyesPaymentRunGuard implements LifecycleGuardInterface
      * @var string
      */
     private const OBJECT_SERVICE = 'OCA\OpenRegister\Service\ObjectService';
-
 
     /**
      * Construct the guard.
@@ -104,7 +107,6 @@ final class FourEyesPaymentRunGuard implements LifecycleGuardInterface
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
-
 
     /**
      * Authorise (or deny) the payment-run approval transition.
@@ -125,14 +127,14 @@ final class FourEyesPaymentRunGuard implements LifecycleGuardInterface
             return GuardResult::deny(self::MESSAGE_NO_APPROVER);
         }
 
-        $objectId = $this->resolveObjectId($object);
+        $objectId = $this->resolveObjectId(object: $object);
         if ($objectId === '') {
             $this->logger->warning('FourEyesPaymentRunGuard: payment-run id is empty — denying (fail-closed).', ['action' => $action]);
             return GuardResult::deny(self::MESSAGE_NO_OBJECT);
         }
 
         try {
-            $preparers = $this->resolvePreparers($objectId);
+            $preparers = $this->resolvePreparers(objectId: $objectId);
         } catch (\Throwable $e) {
             $this->logger->error(
                 'FourEyesPaymentRunGuard: audit-trail read threw — denying (fail-closed).',
@@ -162,7 +164,6 @@ final class FourEyesPaymentRunGuard implements LifecycleGuardInterface
 
     }//end check()
 
-
     /**
      * Extract the object uuid from the transition payload.
      *
@@ -183,7 +184,6 @@ final class FourEyesPaymentRunGuard implements LifecycleGuardInterface
         return trim($id);
 
     }//end resolveObjectId()
-
 
     /**
      * Build the set of preparer uids from the object's immutable audit trail.
@@ -212,8 +212,8 @@ final class FourEyesPaymentRunGuard implements LifecycleGuardInterface
         $preparers   = [];
         $createActor = false;
         foreach ($logs as $log) {
-            $logAction = $this->logField($log, 'action', 'getAction');
-            $logUser   = $this->logField($log, 'user', 'getUser');
+            $logAction = $this->logField(log: $log, key: 'action', getter: 'getAction');
+            $logUser   = $this->logField(log: $log, key: 'user', getter: 'getUser');
 
             if ($logAction !== 'create' && $logAction !== 'update') {
                 continue;
@@ -235,7 +235,6 @@ final class FourEyesPaymentRunGuard implements LifecycleGuardInterface
         return $preparers;
 
     }//end resolvePreparers()
-
 
     /**
      * Read a field from an audit-trail row that may be an entity or an array.

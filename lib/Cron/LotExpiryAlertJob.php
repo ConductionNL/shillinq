@@ -36,6 +36,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Cron;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
@@ -106,6 +108,9 @@ class LotExpiryAlertJob extends TimedJob
      * @return void
      *
      * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
+     *     TimedJob::run()'s signature; this job takes no argument.
      */
     protected function run($argument): void
     {
@@ -291,8 +296,8 @@ class LotExpiryAlertJob extends TimedJob
      */
     private function daysBetween(string $earlier, string $later): int
     {
-        $earlierDt = new \DateTimeImmutable($earlier);
-        $laterDt   = new \DateTimeImmutable($later);
+        $earlierDt = new DateTimeImmutable($earlier);
+        $laterDt   = new DateTimeImmutable($later);
         $diff      = $laterDt->diff($earlierDt);
         $days      = (int) $diff->days;
         if ($diff->invert === 1) {
@@ -311,7 +316,7 @@ class LotExpiryAlertJob extends TimedJob
     private function todayDate(): string
     {
         return $this->timeFactory->getDateTime()
-            ->setTimezone(new \DateTimeZone('UTC'))
+            ->setTimezone(new DateTimeZone('UTC'))
             ->format('Y-m-d');
 
     }//end todayDate()

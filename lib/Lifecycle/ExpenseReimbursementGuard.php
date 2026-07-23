@@ -60,6 +60,10 @@ use Psr\Log\LoggerInterface;
  * denial through the standard transition-rejected pathway.
  *
  * @spec openspec/specs/expense-reimbursement-or-passthrough/spec.md
+ *
+ * @SuppressWarnings(PHPMD.LongVariable) Pre-existing debt (issue #506):
+ *     not in the project's calibrated length threshold; deferred pending
+ *     a dedicated rename pass.
  */
 class ExpenseReimbursementGuard
 {

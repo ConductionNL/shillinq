@@ -51,6 +51,10 @@ use Psr\Log\LoggerInterface;
  * GET /api/dashboard/financial-series + /api/dashboard/financial-summary.
  *
  * @spec openspec/specs/financial-dashboard-graphs/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class FinancialDashboardController extends Controller
 {

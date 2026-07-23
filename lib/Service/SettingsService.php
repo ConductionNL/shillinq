@@ -36,6 +36,18 @@ use Psr\Log\LoggerInterface;
  * Service for managing Shillinq application configuration and settings.
  *
  * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * @SuppressWarnings(PHPMD.TooManyMethods)
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)
+ * Pre-existing debt (issue #506): this service owns every app-config
+ * getter/setter/seed operation the app exposes, so its size scales with
+ * the app's configuration surface; splitting is out of scope for a
+ * mechanical phpcs/phpmd cleanup. Deferred to a follow-up.
  */
 class SettingsService
 {

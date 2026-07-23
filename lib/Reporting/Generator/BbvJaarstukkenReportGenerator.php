@@ -34,6 +34,10 @@ use PhpOffice\PhpWord\PhpWord;
 
 /**
  * Renders BBV jaarstukken / programmaverantwoording from a BbvStatement object.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerator
 {

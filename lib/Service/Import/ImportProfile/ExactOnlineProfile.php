@@ -35,6 +35,10 @@ use OCA\Shillinq\Service\Import\ImportProfileInterface;
  * Exact Online import profile (REQ-AIM-003).
  *
  * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class ExactOnlineProfile implements ImportProfileInterface
 {

@@ -58,6 +58,14 @@ namespace OCA\Shillinq\Standards\Checks;
 /**
  * Executable remaining VAT-Directive checks over ARInvoice / APTransaction content
  * and the periodic VatReturn / recapitulative-statement object.
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): this class enumerates every remaining
+ * VAT-Directive rule the catalogue defines; inherent complexity.
+ * Variable renames deferred pending a dedicated pass.
  */
 class RemainingVatChecks implements CheckProvider, SeedsObjects
 {

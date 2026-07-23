@@ -52,6 +52,11 @@ use Throwable;
  * Read-only admin endpoint for the FxRate import status.
  *
  * @spec openspec/changes/add-shillinq-multi-currency/tasks.md#task-14
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): early-return refactor and variable
+ * renames deferred pending a dedicated pass.
  */
 class FxRateAdminController extends Controller
 {

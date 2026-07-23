@@ -33,6 +33,10 @@ use Psr\Log\LoggerInterface;
 
 /**
  * General-ledger CSV generator built natively from GLLine + Account.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class GeneralLedgerReportGenerator implements ReportGeneratorInterface
 {

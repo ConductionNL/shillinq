@@ -82,6 +82,10 @@ use SimpleXMLElement;
  * container) so the test stub in slice 02 is straightforward to port here.
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * Pre-existing debt (issue #506): inherent branch complexity in this
+ * domain logic; deferred pending a dedicated refactor.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md
  */

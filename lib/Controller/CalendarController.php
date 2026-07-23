@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use InvalidArgumentException;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
@@ -51,6 +52,11 @@ use Psr\Log\LoggerInterface;
  * Calendar + Booking REST controller (REQ-005).
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * Pre-existing debt (issue #506): inherent branch complexity in this
+ * domain logic; early-return refactor deferred pending full behavioral
+ * verification of each branch.
  */
 class CalendarController extends Controller
 {
@@ -222,7 +228,7 @@ class CalendarController extends Controller
                 start: (string) $this->request->getParam('start', ''),
                 end: (string) $this->request->getParam('end', ''),
             );
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
         }
 
@@ -521,7 +527,7 @@ class CalendarController extends Controller
      *
      * @return array{0: DateTimeImmutable, 1: DateTimeImmutable} Inclusive lower / exclusive upper bounds.
      *
-     * @throws \InvalidArgumentException When the inputs are malformed or inverted.
+     * @throws InvalidArgumentException When the inputs are malformed or inverted.
      */
     private function resolveRange(string $start, string $end): array
     {
@@ -540,7 +546,7 @@ class CalendarController extends Controller
         }
 
         if ($endDt <= $startDt) {
-            throw new \InvalidArgumentException('end must be after start');
+            throw new InvalidArgumentException('end must be after start');
         }
 
         return [$startDt->setTimezone($tz), $endDt->setTimezone($tz)];

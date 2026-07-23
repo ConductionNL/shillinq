@@ -33,6 +33,10 @@ use PhpOffice\PhpWord\PhpWord;
 
 /**
  * Renders a profit-and-loss account from revenue/expense account totals.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator
 {

@@ -35,6 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTimeImmutable;
 use RuntimeException;
 use ZipArchive;
 
@@ -42,6 +43,13 @@ use ZipArchive;
  * Generates VNG-template college-verklaring DOCX documents (REQ-ENSIA-006).
  *
  * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ *
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Pre-existing debt (issue
+ *     #506): changing this signature would ripple to callers; deferred.
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): early-return refactor and variable
+ * renames deferred pending a dedicated pass.
  */
 class ENSIAVerklaringGenerator
 {
@@ -161,7 +169,7 @@ class ENSIAVerklaringGenerator
         $paras[] = $this->para(text: 'College-verklaring ENSIA '.$jaar, bold: true);
         $paras[] = $this->para(text: 'Organisatie: '.$orgNaam.' (KvK '.$orgKvk.')');
         $paras[] = $this->para(text: 'Verslagjaar: '.$jaar);
-        $paras[] = $this->para(text: 'Datum opmaak: '.(new \DateTimeImmutable('now'))->format('Y-m-d'));
+        $paras[] = $this->para(text: 'Datum opmaak: '.(new DateTimeImmutable('now'))->format('Y-m-d'));
         $paras[] = $this->para(text: '');
 
         // Per-domein summary.

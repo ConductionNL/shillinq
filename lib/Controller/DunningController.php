@@ -59,6 +59,12 @@ use Psr\Log\LoggerInterface;
  * Dunning API surface.
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * Pre-existing debt (issue #506): inherent branch complexity in this
+ * domain logic; early-return refactor deferred pending full behavioral
+ * verification of each branch.
  */
 class DunningController extends Controller
 {

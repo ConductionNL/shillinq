@@ -41,7 +41,7 @@ final class BillingModelEngineTest extends TestCase
     public function testTAndMMixedResources(): void
     {
         $eng   = new BillingModelEngine();
-        $lines = $eng->calculateT_AND_M(
+        $lines = $eng->calculateTAndM(
             timeEntries: [
                 ['timeEntryId' => 't1', 'resourceType' => 'senior', 'hours' => 40.0, 'rateCents' => 15000, 'rateApplied' => ['rateCents' => 15000]],
                 ['timeEntryId' => 't2', 'resourceType' => 'junior', 'hours' => 20.0, 'rateCents' => 10000, 'rateApplied' => ['rateCents' => 10000]],

@@ -26,6 +26,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use DateTimeImmutable;
+use DateTimeInterface;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Contacts\IManager as IContactsManager;
 use OCP\IConfig;
@@ -59,6 +61,10 @@ use Psr\Log\LoggerInterface;
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V.
  * SPDX-License-Identifier: EUPL-1.2
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable) Pre-existing debt (issue #506):
+ *     not in the project's curated idiomatic-abbreviation allowlist;
+ *     deferred pending a dedicated rename pass.
  */
 class MigrateProductVendorMasterToPipelinq implements IRepairStep
 {
@@ -249,7 +255,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
 
         return [
             'version'           => '1.0',
-            'exportedAt'        => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+            'exportedAt'        => (new DateTimeImmutable())->format(DateTimeInterface::ATOM),
             'products'          => $productsOut,
             'productAttributes' => $productAttributesOut,
             'vendorMasterData'  => $vendorMasterData,

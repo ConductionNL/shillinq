@@ -42,12 +42,17 @@ use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Expands an RRULE-style recurrence into individual appointments, reusing
  * SlotService for the availability/conflict decision (no fork).
  *
  * @spec openspec/specs/bookings-recurring-series/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class RecurringSeriesService
 {
@@ -286,6 +291,10 @@ class RecurringSeriesService
      * @param int                    $hardCap     Max occurrences.
      *
      * @return array<int, DateTimeImmutable>
+     *
+     * @SuppressWarnings(PHPMD.CountInLoopExpression) $occurrences grows
+     *     conditionally inside the loop body — the loop bound is genuinely
+     *     the running count, it cannot be hoisted.
      */
     private function expandDailyWeekly(
         DateTimeImmutable $seriesStart,
@@ -346,6 +355,10 @@ class RecurringSeriesService
      * @param int                    $hardCap     Max occurrences.
      *
      * @return array<int, DateTimeImmutable>
+     *
+     * @SuppressWarnings(PHPMD.CountInLoopExpression) $occurrences grows
+     *     conditionally inside the loop body — the loop bound is genuinely
+     *     the running count, it cannot be hoisted.
      */
     private function expandMonthly(
         DateTimeImmutable $seriesStart,
@@ -501,7 +514,7 @@ class RecurringSeriesService
         if ($anchor === false) {
             // Unreachable: `-0..-6 days` is always a valid relative modifier;
             // guard only to satisfy the DateTimeImmutable|false return contract.
-            throw new \RuntimeException('weekAnchor: unexpected DateTime modify failure');
+            throw new RuntimeException('weekAnchor: unexpected DateTime modify failure');
         }
 
         return $anchor;

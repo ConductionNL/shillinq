@@ -44,6 +44,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting\Generator;
 
 use OCA\Shillinq\Reporting\GeneratedFile;
+use ReflectionClass;
 use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use PhpOffice\PhpWord\Element\Section;
@@ -420,6 +421,11 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
      * @param string  $format  docx | odt | pdf.
      *
      * @return string The rendered file bytes.
+     *
+     * @SuppressWarnings(PHPMD.ErrorControlOperator) `@unlink()` is
+     *     best-effort temp-file cleanup in a `finally` block; a failure to
+     *     remove it (already gone, permissions) must not mask the
+     *     underlying render outcome.
      */
     protected function render(PhpWord $phpWord, string $format): string
     {
@@ -490,7 +496,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
             }
 
             $domPdfClass = '\\Dompdf\\Dompdf';
-            $reflection  = new \ReflectionClass($domPdfClass);
+            $reflection  = new ReflectionClass($domPdfClass);
             $file        = $reflection->getFileName();
             if ($file === false) {
                 return null;

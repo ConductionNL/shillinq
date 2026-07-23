@@ -35,6 +35,9 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTimeImmutable;
+use DateTimeZone;
+
 /**
  * Side-effect-free Integral Cost Price arithmetic helper (REQ-WMO-002).
  *
@@ -357,7 +360,7 @@ class IntegralCostPriceCalculator
         return [
             'commercialActivityId' => (string) $input['commercialActivityId'],
             'periode'              => (string) $input['periode'],
-            'berekendOp'           => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeImmutable::ATOM),
+            'berekendOp'           => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
             'status'               => (string) ($input['status'] ?? 'voorlopig'),
             'componenten'          => [
                 'directeLoonkosten'     => $this->fromCents(cents: $loonkostenCents),

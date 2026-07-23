@@ -88,6 +88,9 @@ class BankfeedReconciliationJob extends TimedJob
      * @return void
      *
      * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-20
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
+     *     TimedJob::run()'s signature; this job takes no argument.
      */
     protected function run($argument): void
     {

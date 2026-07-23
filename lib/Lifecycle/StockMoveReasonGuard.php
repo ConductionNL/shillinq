@@ -45,6 +45,10 @@ use Psr\Log\LoggerInterface;
  * Fail-closed: missing or empty `movementReason` denies the transition.
  *
  * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-11
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class StockMoveReasonGuard
 {

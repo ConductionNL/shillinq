@@ -108,15 +108,12 @@ class PosStockUnmatchedLineNotifier implements INotifier
         $productRef = (string) ($parameters['productRef'] ?? '');
         $posTxnId   = (string) ($parameters['posTxnId'] ?? '');
 
-        if ($productRef === '') {
-            $notification->setParsedSubject(
-                $l->t('POS sale %1$s: a sold line has no matching product reference', [$posTxnId])
-            );
-        } else {
-            $notification->setParsedSubject(
-                $l->t('POS sale %1$s: product %2$s could not be matched to inventory', [$posTxnId, $productRef])
-            );
+        $subject = $l->t('POS sale %1$s: a sold line has no matching product reference', [$posTxnId]);
+        if ($productRef !== '') {
+            $subject = $l->t('POS sale %1$s: product %2$s could not be matched to inventory', [$posTxnId, $productRef]);
         }
+
+        $notification->setParsedSubject($subject);
 
         $notification->setParsedMessage(
             $l->t('Stock was not decremented for this line. Review it in Shillinq inventory reconciliation.')

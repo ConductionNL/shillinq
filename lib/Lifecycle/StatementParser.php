@@ -293,10 +293,10 @@ class StatementParser
             return [];
         }
 
-        $header = str_getcsv(array_shift($rows));
+        $header = str_getcsv(array_shift($rows), escape: '\\');
         $lines  = [];
         foreach ($rows as $row) {
-            $cols = str_getcsv($row);
+            $cols = str_getcsv($row, escape: '\\');
             $map  = [];
             foreach ($header as $i => $key) {
                 $map[trim($key)] = ($cols[$i] ?? '');

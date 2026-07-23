@@ -63,6 +63,10 @@ use Psr\Log\LoggerInterface;
  * ADR-031 §"PHP guards default to deny on failure".
  *
  * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class StatementVerifyGuard
 {

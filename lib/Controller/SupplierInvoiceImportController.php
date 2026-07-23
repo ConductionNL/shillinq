@@ -63,6 +63,10 @@ use RuntimeException;
  * HTTP API for the dashboard "Import bill" modal (shillinq-bill-import-modal).
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class SupplierInvoiceImportController extends Controller
 {
@@ -501,7 +505,7 @@ class SupplierInvoiceImportController extends Controller
             return [];
         }
 
-        $header = str_getcsv((string) array_shift($lines));
+        $header = str_getcsv((string) array_shift($lines), escape: '\\');
         $header = array_map(static fn ($h): string => trim((string) $h), $header);
 
         $rows = [];
@@ -510,7 +514,7 @@ class SupplierInvoiceImportController extends Controller
                 continue;
             }
 
-            $cells = str_getcsv((string) $line);
+            $cells = str_getcsv((string) $line, escape: '\\');
             $row   = [];
             foreach ($header as $index => $key) {
                 if ($key === '') {

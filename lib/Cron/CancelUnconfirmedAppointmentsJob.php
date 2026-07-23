@@ -28,6 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Cron;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
@@ -104,6 +106,9 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
      * @return void
      *
      * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-15
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
+     *     TimedJob::run()'s signature; this job takes no argument.
      */
     protected function run($argument): void
     {
@@ -167,8 +172,8 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
                 return false;
             }
 
-            $deadlineDt = new \DateTimeImmutable($deadline);
-            $nowDt      = new \DateTimeImmutable($now);
+            $deadlineDt = new DateTimeImmutable($deadline);
+            $nowDt      = new DateTimeImmutable($now);
             if ($deadlineDt > $nowDt) {
                 return false;
             }
@@ -209,7 +214,7 @@ class CancelUnconfirmedAppointmentsJob extends TimedJob
     private function nowIso(): string
     {
         return $this->timeFactory->getDateTime()
-            ->setTimezone(new \DateTimeZone('UTC'))
+            ->setTimezone(new DateTimeZone('UTC'))
             ->format('Y-m-d\TH:i:s\Z');
 
     }//end nowIso()

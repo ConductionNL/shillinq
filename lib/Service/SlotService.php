@@ -48,6 +48,8 @@ use Psr\Log\LoggerInterface;
  * for 5 minutes per (service, resource, date) tuple per REQ-WSW-002.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag)    Pre-existing debt (issue
+ *     #506): changing this signature would ripple to callers; deferred.
  */
 class SlotService
 {

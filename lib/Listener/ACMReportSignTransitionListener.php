@@ -84,7 +84,7 @@ class ACMReportSignTransitionListener implements IEventListener
     private const ACTION = 'sign';
 
     /**
-     * signingStatus values that must never trigger a duplicate outbound
+     * The signingStatus values that must never trigger a duplicate outbound
      * request (defensive — the `sign` transition is one-way from `draft`,
      * so a legitimate re-fire should not occur, but a repeated
      * ObjectTransitionedEvent delivery must still be a no-op).

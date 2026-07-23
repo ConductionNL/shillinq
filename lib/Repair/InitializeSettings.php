@@ -36,6 +36,13 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/add-shillinq-archiefwet-retention/tasks.md#task-11
  * @spec openspec/changes/add-shillinq-consultancy-project-accounting/tasks.md#task-15
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ * Pre-existing debt (issue #506): this repair step configures every
+ * register/schema the app ships, so its size scales with the app's
+ * feature surface; splitting is out of scope for a mechanical phpcs/phpmd
+ * cleanup. Deferred to a follow-up.
  */
 class InitializeSettings implements IRepairStep
 {

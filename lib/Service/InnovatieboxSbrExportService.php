@@ -50,6 +50,10 @@ namespace OCA\Shillinq\Service;
  * (REQ-IBA-006).
  *
  * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-8-1
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class InnovatieboxSbrExportService
 {

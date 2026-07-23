@@ -36,11 +36,16 @@ namespace OCA\Shillinq\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * Side-effect-free ACM report generator (REQ-WMO-006).
  *
  * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-7
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class AcmReportGenerator
 {
@@ -204,7 +209,7 @@ class AcmReportGenerator
     {
         $encoded = json_encode($report, (JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         if ($encoded === false) {
-            throw new \RuntimeException('Failed to encode report as JSON');
+            throw new RuntimeException('Failed to encode report as JSON');
         }
 
         return $encoded;

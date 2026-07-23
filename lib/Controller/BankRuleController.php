@@ -3,7 +3,7 @@
 /**
  * Bank Rule Controller
  *
- * bank-rule-automation-ux — the REST surface for the MatchingRule
+ * Bank-rule-automation-ux — the REST surface for the MatchingRule
  * "test / dry-run" UX (REQ-BR-011) and the history-based rule-suggestion
  * learning path (REQ-BR-012).
  *
@@ -78,13 +78,13 @@ class BankRuleController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest                      $request           Inbound request.
-     * @param BankRulePreviewService        $previewService    Read-only predicate evaluator.
-     * @param BankRuleSuggestionService     $suggestionService History-based learning path.
-     * @param AdministrationContextService  $administration    Server-resolved tenant scope.
-     * @param ContainerInterface            $container         DI container (lazy OR ObjectService).
-     * @param IUserSession                  $userSession       Current NC user.
-     * @param LoggerInterface               $logger            Logger.
+     * @param IRequest                     $request           Inbound request.
+     * @param BankRulePreviewService       $previewService    Read-only predicate evaluator.
+     * @param BankRuleSuggestionService    $suggestionService History-based learning path.
+     * @param AdministrationContextService $administration    Server-resolved tenant scope.
+     * @param ContainerInterface           $container         DI container (lazy OR ObjectService).
+     * @param IUserSession                 $userSession       Current NC user.
+     * @param LoggerInterface              $logger            Logger.
      *
      * @return void
      */
@@ -126,7 +126,9 @@ class BankRuleController extends Controller
         }
 
         $anchorDate = $this->request->getParam('anchorDate');
-        $anchorDate = (is_string($anchorDate) === true && $anchorDate !== '') ? $anchorDate : null;
+        if (is_string($anchorDate) === false || $anchorDate === '') {
+            $anchorDate = null;
+        }
 
         try {
             $admin = $this->resolveAdministrationId();
@@ -278,7 +280,7 @@ class BankRuleController extends Controller
                 ->setSchema('MatchingRule')
                 ->saveObject($payload);
 
-            $created = $this->toArray($created) ?? [];
+            $created = $this->toArray(result: $created) ?? [];
         } catch (\Throwable $e) {
             $this->logger->error('BankRuleController.acceptSuggestion failed: '.$e->getMessage());
             return new JSONResponse(['error' => 'accept failed; see server log'], Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -354,9 +356,13 @@ class BankRuleController extends Controller
             ->setSchema($schema)
             ->findAll(['filters' => $filters, 'limit' => self::READ_CAP]);
 
+        if (is_array($rows) === false) {
+            $rows = [];
+        }
+
         $out = [];
-        foreach ((is_array($rows) === true ? $rows : []) as $row) {
-            $arr = $this->toArray($row);
+        foreach ($rows as $row) {
+            $arr = $this->toArray(result: $row);
             if ($arr !== null) {
                 $out[] = $arr;
             }
@@ -383,7 +389,7 @@ class BankRuleController extends Controller
                 ->setSchema($schema)
                 ->find($id);
 
-            return $this->toArray($row);
+            return $this->toArray(result: $row);
         } catch (\Throwable $e) {
             return null;
         }

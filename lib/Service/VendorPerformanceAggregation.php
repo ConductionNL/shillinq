@@ -115,6 +115,11 @@ use Throwable;
  * four distinct rate computations + trend + eligibility.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): deferred pending a dedicated refactor
+ * and rename pass.
  */
 class VendorPerformanceAggregation
 {

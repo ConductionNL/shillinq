@@ -36,6 +36,10 @@ namespace OCA\Shillinq\Standards;
 
 /**
  * Read-only accessor over the per-domain rule JSON files.
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable) Pre-existing debt (issue #506):
+ *     not in the project's curated idiomatic-abbreviation allowlist;
+ *     deferred pending a dedicated rename pass.
  */
 final class RuleCatalogue
 {

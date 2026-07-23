@@ -43,6 +43,10 @@ use OCA\Shillinq\Service\ViesService;
  * KvK / BTW-nummer / Peppol participant pre-send validation (REQ-EINV-003).
  *
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class EInvoiceValidationService
 {

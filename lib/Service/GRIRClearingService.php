@@ -123,6 +123,10 @@ use RuntimeException;
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-09-gl-gr-ir-clearing/tasks.md
  * @spec openspec/specs/grir-accrual-wiring/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class GRIRClearingService
 {

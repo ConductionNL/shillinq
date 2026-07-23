@@ -37,6 +37,12 @@ use InvalidArgumentException;
  * Side-effect-free ABB lifecycle state-machine (REQ-WMO-005).
  *
  * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-2
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * Pre-existing debt (issue #506): inherent branch complexity in this
+ * domain logic; early-return refactor deferred pending full behavioral
+ * verification of each branch.
  */
 class AbbLifecycleService
 {

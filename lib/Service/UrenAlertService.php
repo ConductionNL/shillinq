@@ -38,6 +38,10 @@ use Psr\Log\LoggerInterface;
  * Generates UrenAlert records from UrencriteriumYear state transitions and quarter-end dates.
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-13
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class UrenAlertService
 {
@@ -210,7 +214,6 @@ final class UrenAlertService
      */
     public function handelingsperspectief(array $year): array
     {
-        $lopende  = (float) ($year['lopendeUren'] ?? 0);
         $prognose = (float) ($year['prognoseEindeJaar'] ?? 0);
         $norm     = (int) ($year['doelNorm'] ?? 1225);
         $tekort   = max(0.0, ($norm - $prognose));

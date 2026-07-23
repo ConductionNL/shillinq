@@ -132,6 +132,13 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
  * Main application class for the Shillinq Nextcloud app.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * Pre-existing debt (issue #506): register() wires every service/listener/
+ * guard the app defines, so its length and the class's coupling count scale
+ * with the app's feature surface; splitting is out of scope for a mechanical
+ * phpcs/phpmd cleanup. Deferred to a follow-up.
  */
 class Application extends App implements IBootstrap
 {

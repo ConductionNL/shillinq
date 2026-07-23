@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Guard;
 
+use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -247,8 +248,8 @@ class BbvComplianceGuard
         }
 
         try {
-            $installDate = new \DateTimeImmutable(datetime: $installRaw);
-            $postingDate = new \DateTimeImmutable(datetime: $postingRaw);
+            $installDate = new DateTimeImmutable(datetime: $installRaw);
+            $postingDate = new DateTimeImmutable(datetime: $postingRaw);
         } catch (\Throwable $e) {
             return false;
         }
@@ -617,7 +618,7 @@ class BbvComplianceGuard
         }
 
         try {
-            $date = new \DateTimeImmutable(datetime: $raw);
+            $date = new DateTimeImmutable(datetime: $raw);
         } catch (\Throwable $e) {
             $this->logger->info(
                 'BbvComplianceGuard: ingebruiknameDatum unparseable, depreciation start unknown',

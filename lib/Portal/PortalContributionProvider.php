@@ -79,6 +79,9 @@ namespace OCA\Shillinq\Portal;
  * the financial collections move to minTrust `substantial` (Wave 2).
  *
  * @spec openspec/changes/portal-contribution/tasks.md#task-1
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength) Pre-existing debt (issue
+ *     #506): deferred pending a dedicated refactor.
  */
 class PortalContributionProvider
 {

@@ -46,6 +46,12 @@ use Psr\Log\LoggerInterface;
  * Variance calculation + driver decomposition for continuous-close (REQ-CLS-005..007).
  *
  * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-21
+ *
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Pre-existing debt (issue
+ *     #506): changing this signature would ripple to callers; deferred.
+ * @SuppressWarnings(PHPMD.ElseExpression)      Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class FluxService
 {
@@ -317,7 +323,7 @@ class FluxService
             if ($status === 'escalated') {
                 $escalationSla = $runTimestamp->modify('+'.self::OWNER_SLA_HOURS.' hours')
                     ->format(DateTimeInterface::ATOM);
-                $escalatedTo   = $this->ownerForAccount(glAccount: $glAccount, group: $group);
+                $escalatedTo   = $this->ownerForAccount(group: $group);
             }
 
             $items[] = [
@@ -604,12 +610,11 @@ class FluxService
     /**
      * Derive an owner identifier for an account / group.
      *
-     * @param string $glAccount GL account number.
-     * @param string $group     Account group.
+     * @param string $group Account group.
      *
      * @return string Owner identifier.
      */
-    private function ownerForAccount(string $glAccount, string $group): string
+    private function ownerForAccount(string $group): string
     {
         if ($group !== '') {
             return $group.'-owner';

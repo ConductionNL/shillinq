@@ -56,6 +56,10 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/specs/invoice-from-time-and-expense/spec.md
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class InvoicePdfGenerator
 {

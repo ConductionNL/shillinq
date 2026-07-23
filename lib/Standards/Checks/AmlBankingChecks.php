@@ -52,8 +52,18 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use DateTimeImmutable;
+
 /**
  * Executable AML / cash-handling / bank-integrity rule checks.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.TooManyMethods)
+ * Pre-existing debt (issue #506): this class enumerates every AML/cash/
+ * bank-integrity rule the catalogue defines; inherent complexity.
+ * Deferred to a follow-up.
  */
 final class AmlBankingChecks implements CheckProvider, SeedsObjects
 {
@@ -1299,9 +1309,9 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects
      *
      * @param string $value The date string.
      *
-     * @return \DateTimeImmutable|null
+     * @return DateTimeImmutable|null
      */
-    private static function parseDate(string $value): ?\DateTimeImmutable
+    private static function parseDate(string $value): ?DateTimeImmutable
     {
         $value = trim($value);
         if ($value === '') {
@@ -1309,7 +1319,7 @@ final class AmlBankingChecks implements CheckProvider, SeedsObjects
         }
 
         try {
-            return new \DateTimeImmutable($value);
+            return new DateTimeImmutable($value);
         } catch (\Exception $e) {
             return null;
         }

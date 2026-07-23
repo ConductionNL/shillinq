@@ -44,6 +44,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use DateTime;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\GenericEvent;
@@ -286,7 +287,7 @@ class PeppolDeliveryStatusListener implements IEventListener
                 $notification
                     ->setApp(Application::APP_ID)
                     ->setUser($userId)
-                    ->setDateTime(new \DateTime())
+                    ->setDateTime(new DateTime())
                     ->setObject(self::NOTIFICATION_OBJECT_TYPE, $invoiceNumber)
                     ->setSubject(
                             self::NOTIFICATION_SUBJECT_REJECTED,

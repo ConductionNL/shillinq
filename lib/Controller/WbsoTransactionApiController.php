@@ -86,7 +86,8 @@ class WbsoTransactionApiController extends Controller
     #[NoAdminRequired]
     public function index(): JSONResponse
     {
-        if (($auth = $this->requireAuthenticated()) !== null) {
+        $auth = $this->requireAuthenticated();
+        if ($auth !== null) {
             return $auth;
         }
 
@@ -128,7 +129,8 @@ class WbsoTransactionApiController extends Controller
     #[NoAdminRequired]
     public function show(string $id): JSONResponse
     {
-        if (($auth = $this->requireAuthenticated()) !== null) {
+        $auth = $this->requireAuthenticated();
+        if ($auth !== null) {
             return $auth;
         }
 
@@ -163,7 +165,8 @@ class WbsoTransactionApiController extends Controller
     #[NoAdminRequired]
     public function create(): JSONResponse
     {
-        if (($auth = $this->requireAuthenticated()) !== null) {
+        $auth = $this->requireAuthenticated();
+        if ($auth !== null) {
             return $auth;
         }
 
@@ -206,7 +209,8 @@ class WbsoTransactionApiController extends Controller
     #[NoAdminRequired]
     public function post(string $id): JSONResponse
     {
-        if (($auth = $this->requireAuthenticated()) !== null) {
+        $auth = $this->requireAuthenticated();
+        if ($auth !== null) {
             return $auth;
         }
 
@@ -247,7 +251,8 @@ class WbsoTransactionApiController extends Controller
     #[NoAdminRequired]
     public function reverse(string $id): JSONResponse
     {
-        if (($auth = $this->requireAuthenticated()) !== null) {
+        $auth = $this->requireAuthenticated();
+        if ($auth !== null) {
             return $auth;
         }
 

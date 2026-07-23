@@ -141,11 +141,6 @@ final class BBVComplianceWidget
             ]);
         }//end foreach
 
-        $utilizationSummary = 0.0;
-        if ($totalBudget > 0) {
-            $utilizationSummary = ((float) $totalYtdSpend / (float) $totalBudget);
-        }
-
         $summaryUtilization = 0.0;
         if ($totalBudget > 0) {
             $summaryUtilization = ((float) $totalYtdSpend / (float) $totalBudget);

@@ -41,6 +41,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use OCA\Shillinq\Service\Booking\TimezoneResolver;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -49,6 +51,10 @@ use Throwable;
  * Pure-function ICS payload composer for confirmation emails.
  *
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-9
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class IcsService
 {
@@ -142,7 +148,7 @@ final class IcsService
             return '';
         }
 
-        $tz       = new \DateTimeZone($tzId);
+        $tz       = new DateTimeZone($tzId);
         $startLoc = $start->setTimezone($tz);
         $endLoc   = $end->setTimezone($tz);
         $uid      = $this->buildUid(appointmentId: (string) ($appointment['appointmentId'] ?? 'unknown'));
@@ -202,16 +208,16 @@ final class IcsService
      *
      * @param string $iso ISO 8601 string from an OR object.
      *
-     * @return \DateTimeImmutable|null The parsed UTC instant, or NULL.
+     * @return DateTimeImmutable|null The parsed UTC instant, or NULL.
      */
-    private function parseUtc(string $iso): ?\DateTimeImmutable
+    private function parseUtc(string $iso): ?DateTimeImmutable
     {
         if ($iso === '') {
             return null;
         }
 
         try {
-            return (new \DateTimeImmutable($iso))->setTimezone(new \DateTimeZone('UTC'));
+            return (new DateTimeImmutable($iso))->setTimezone(new DateTimeZone('UTC'));
         } catch (Throwable $e) {
             return null;
         }
@@ -249,24 +255,24 @@ final class IcsService
      * event; we emit the two most recent transitions in the appointment year
      * to keep the payload small while remaining RFC 5545 compliant.
      *
-     * @param string             $tzId  IANA timezone identifier.
-     * @param \DateTimeImmutable $start Appointment start (UTC).
-     * @param \DateTimeImmutable $end   Appointment end (UTC).
+     * @param string            $tzId  IANA timezone identifier.
+     * @param DateTimeImmutable $start Appointment start (UTC).
+     * @param DateTimeImmutable $end   Appointment end (UTC).
      *
      * @return string The VTIMEZONE block, CRLF-folded.
      */
-    private function buildVTimezone(string $tzId, \DateTimeImmutable $start, \DateTimeImmutable $end): string
+    private function buildVTimezone(string $tzId, DateTimeImmutable $start, DateTimeImmutable $end): string
     {
         $lines   = [];
         $lines[] = 'BEGIN:VTIMEZONE';
         $lines[] = 'TZID:'.$tzId;
 
         try {
-            $tz = new \DateTimeZone($tzId);
+            $tz = new DateTimeZone($tzId);
             // Pull transitions covering the whole appointment year so the client
             // sees both STANDARD and DAYLIGHT rules for the date in question.
-            $yearStart   = (int) (new \DateTimeImmutable($start->format('Y').'-01-01T00:00:00Z'))->getTimestamp();
-            $yearEnd     = (int) (new \DateTimeImmutable(((int) $start->format('Y') + 1).'-01-01T00:00:00Z'))->getTimestamp();
+            $yearStart   = (int) (new DateTimeImmutable($start->format('Y').'-01-01T00:00:00Z'))->getTimestamp();
+            $yearEnd     = (int) (new DateTimeImmutable(((int) $start->format('Y') + 1).'-01-01T00:00:00Z'))->getTimestamp();
             $transitions = $tz->getTransitions($yearStart, $yearEnd);
             if ($transitions === false) {
                 $transitions = [];
@@ -284,7 +290,7 @@ final class IcsService
                     $component = 'STANDARD';
                 }
 
-                $when       = (new \DateTimeImmutable('@'.$transition['ts']))->setTimezone(new \DateTimeZone('UTC'));
+                $when       = (new DateTimeImmutable('@'.$transition['ts']))->setTimezone(new DateTimeZone('UTC'));
                 $offsetTo   = $this->formatOffset(seconds: (int) $transition['offset']);
                 $offsetFrom = $offsetTo;
                 $lines[]    = 'BEGIN:'.$component;
@@ -298,7 +304,7 @@ final class IcsService
 
             if ($emitted === 0) {
                 // Fixed-offset zone (e.g. UTC) — emit one STANDARD block.
-                $offset  = $this->formatOffset(seconds: (new \DateTimeImmutable('now', $tz))->getOffset());
+                $offset  = $this->formatOffset(seconds: (new DateTimeImmutable('now', $tz))->getOffset());
                 $lines[] = 'BEGIN:STANDARD';
                 $lines[] = 'TZNAME:'.$tzId;
                 $lines[] = 'DTSTART:19700101T000000';

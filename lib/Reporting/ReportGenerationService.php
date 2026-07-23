@@ -42,6 +42,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Reporting;
 
 use OCP\Files\File;
+use ReflectionClass;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
@@ -351,7 +352,7 @@ class ReportGenerationService
             }
 
             // Skip the abstract document base (matches the glob + interface but is not instantiable).
-            if ((new \ReflectionClass($class))->isInstantiable() === false) {
+            if ((new ReflectionClass($class))->isInstantiable() === false) {
                 continue;
             }
 

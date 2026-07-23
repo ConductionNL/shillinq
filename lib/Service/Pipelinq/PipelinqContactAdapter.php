@@ -82,6 +82,11 @@ use Psr\Log\LoggerInterface;
  * request loop; concrete read/write methods land in members 03/04/07.
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * Pre-existing debt (issue #506): early-return refactor deferred pending
+ * full behavioral verification of each branch.
  */
 class PipelinqContactAdapter
 {

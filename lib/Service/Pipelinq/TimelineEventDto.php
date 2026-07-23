@@ -51,6 +51,10 @@ use InvalidArgumentException;
  * Immutable description of one timeline event to publish.
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class TimelineEventDto
 {

@@ -43,6 +43,10 @@ use Psr\Container\ContainerInterface;
  * Detects innovatiebox/GL cost duplication (doorsnijdingsverbod, REQ-IBA-004).
  *
  * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-1
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class DoorsnijdingsVerbodValidator
 {

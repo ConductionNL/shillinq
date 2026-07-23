@@ -55,6 +55,10 @@ use Psr\Log\LoggerInterface;
  * gateway outcomes through one shared code path.
  *
  * @spec openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md (REQ-APL-004, REQ-APL-005)
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
+ *     #506): inherent branch complexity in this domain logic; deferred
+ *     pending a dedicated refactor.
  */
 class PaymentReconciliationService
 {

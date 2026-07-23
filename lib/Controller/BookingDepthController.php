@@ -59,6 +59,10 @@ use Throwable;
  * Operator endpoints for no-show-fee capture and recurring-series generation.
  *
  * @spec openspec/specs/bookings-recurring-series/spec.md
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
+ *     #506): inherent branch complexity in this domain logic; deferred
+ *     pending a dedicated refactor.
  */
 class BookingDepthController extends Controller
 {

@@ -43,11 +43,16 @@ namespace OCA\Shillinq\Service;
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeZone;
+use InvalidArgumentException;
 
 /**
  * Side-effect-free cross-subsidy detector for WMO compliance (REQ-WMO-007).
  *
  * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p2-12
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class CrossSubsidyDetector
 {
@@ -422,16 +427,16 @@ class CrossSubsidyDetector
      *
      * @return array<string,mixed> Updated AlertLog with resolution status + notes.
      *
-     * @throws \InvalidArgumentException When the resolution status is invalid.
+     * @throws InvalidArgumentException When the resolution status is invalid.
      */
     public function resolve(array $alert, string $resolution, string $notes): array
     {
         if (in_array($resolution, ['reviewed-no-action', 'remediated'], true) === false) {
-            throw new \InvalidArgumentException('Invalid resolution status: '.$resolution);
+            throw new InvalidArgumentException('Invalid resolution status: '.$resolution);
         }
 
         if (trim($notes) === '') {
-            throw new \InvalidArgumentException('Resolution requires non-empty motivation notes');
+            throw new InvalidArgumentException('Resolution requires non-empty motivation notes');
         }
 
         $alert['status']          = $resolution;

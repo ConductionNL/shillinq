@@ -78,6 +78,14 @@ use RuntimeException;
  * @spec openspec/specs/time-expense-invoice-intake/spec.md
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * Pre-existing debt (issue #506): inherent branch complexity in this
+ * domain logic; deferred pending a dedicated refactor.
  */
 class TimeIntakeService
 {

@@ -38,7 +38,10 @@ namespace OCA\Shillinq\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use InvalidArgumentException;
+use LogicException;
 use OCA\Shillinq\Service\Booking\TransactionalGuard;
+use RuntimeException;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -51,6 +54,10 @@ use Psr\Log\LoggerInterface;
  * the controller wraps the insert in beginTransaction() and the service
  * runs the lockResource() call so the read-then-write window is serialised
  * per-resource (REQ-004 race-condition guard).
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
+ *     #506): inherent branch complexity in this domain logic; deferred
+ *     pending a dedicated refactor.
  */
 class ConflictDetectionService
 {
@@ -99,7 +106,7 @@ class ConflictDetectionService
      *
      * @return array<int,array<string,mixed>> Conflicting booking records (empty if none).
      *
-     * @throws \InvalidArgumentException When times are malformed or end ≤ start.
+     * @throws InvalidArgumentException When times are malformed or end ≤ start.
      */
     public function checkConflicts(
         string $resourceId,
@@ -109,14 +116,14 @@ class ConflictDetectionService
     ): array {
         $resourceId = trim($resourceId);
         if ($resourceId === '') {
-            throw new \InvalidArgumentException('resourceId is required for conflict detection');
+            throw new InvalidArgumentException('resourceId is required for conflict detection');
         }
 
         $start = $this->parseTime(value: $proposedStart, label: 'startTime');
         $end   = $this->parseTime(value: $proposedEnd, label: 'endTime');
 
         if ($end <= $start) {
-            throw new \InvalidArgumentException('endTime must be strictly after startTime');
+            throw new InvalidArgumentException('endTime must be strictly after startTime');
         }
 
         if ($this->settings->isOpenRegisterAvailable() === false) {
@@ -145,7 +152,7 @@ class ConflictDetectionService
             );
             // Fail closed — treat as no-conflict-detected so the caller can
             // surface a 503; we never silently pass an unverifiable check.
-            throw new \RuntimeException('Conflict detection lookup failed', 0, $e);
+            throw new RuntimeException('Conflict detection lookup failed', 0, $e);
         }//end try
 
         $conflicts = [];
@@ -173,7 +180,7 @@ class ConflictDetectionService
             try {
                 $existingStart = $this->parseTime(value: $existingStartRaw, label: 'existing.startTime');
                 $existingEnd   = $this->parseTime(value: $existingEndRaw, label: 'existing.endTime');
-            } catch (\InvalidArgumentException $e) {
+            } catch (InvalidArgumentException $e) {
                 // Don't let one corrupted row poison the whole check.
                 $this->logger->warning(
                     'Shillinq: skipping booking with malformed time during conflict check',
@@ -221,7 +228,7 @@ class ConflictDetectionService
     public function lockResource(string $resourceId): bool
     {
         if ($this->guard->inTransaction() === false) {
-            throw new \LogicException('lockResource must be called inside a transaction');
+            throw new LogicException('lockResource must be called inside a transaction');
         }
 
         return $this->guard->lockResourceRow(resourceId: $resourceId);
@@ -240,19 +247,19 @@ class ConflictDetectionService
      *
      * @return DateTimeImmutable Parsed timestamp in UTC.
      *
-     * @throws \InvalidArgumentException When the value cannot be parsed.
+     * @throws InvalidArgumentException When the value cannot be parsed.
      */
     private function parseTime(string $value, string $label): DateTimeImmutable
     {
         $value = trim($value);
         if ($value === '') {
-            throw new \InvalidArgumentException($label.' is required');
+            throw new InvalidArgumentException($label.' is required');
         }
 
         try {
             $dt = new DateTimeImmutable($value);
         } catch (\Throwable $e) {
-            throw new \InvalidArgumentException($label.' is not a valid ISO 8601 timestamp', 0, $e);
+            throw new InvalidArgumentException($label.' is not a valid ISO 8601 timestamp', 0, $e);
         }
 
         return $dt->setTimezone(new DateTimeZone('UTC'));

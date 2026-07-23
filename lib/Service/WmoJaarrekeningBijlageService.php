@@ -39,6 +39,11 @@ use DateTimeZone;
  * Side-effect-free WMO jaarrekening-bijlage composer (REQ-WMO-004).
  *
  * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-13
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): early-return refactor and variable
+ * renames deferred pending a dedicated pass.
  */
 class WmoJaarrekeningBijlageService
 {

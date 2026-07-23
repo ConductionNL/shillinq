@@ -195,7 +195,8 @@ class PeriodCloseService
                 ['administrationId' => $suspenseScope, 'exception' => $e->getMessage()]
             );
             throw new PeriodCloseException(
-                message: 'Cannot close the period: the bank-reconciliation suspense worklist could not be verified (fail-closed). Retry once the reconciliation data is available.',
+                message: 'Cannot close the period: the bank-reconciliation suspense worklist could not be verified (fail-closed). '
+                    .'Retry once the reconciliation data is available.',
                 status: self::ERR_VALIDATION
             );
         }
@@ -204,7 +205,8 @@ class PeriodCloseService
             $summary = $this->suspenseAgeing->agedUnmatchedItems(administrationId: $suspenseScope);
             throw new PeriodCloseException(
                 message: sprintf(
-                    'Cannot close the period: %d unmatched bank/suspense item(s) remain (oldest %d day(s) outstanding). Match, route or resolve every suspense item before closing.',
+                    'Cannot close the period: %d unmatched bank/suspense item(s) remain (oldest %d day(s) outstanding). '
+                        .'Match, route or resolve every suspense item before closing.',
                     $summary['count'],
                     $summary['oldestDaysOutstanding']
                 ),

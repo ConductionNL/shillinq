@@ -59,6 +59,9 @@ use RuntimeException;
  *    plus a header for CSV rendering.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ElseExpression)         Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  *
  * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
  */

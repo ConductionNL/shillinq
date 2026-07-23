@@ -206,7 +206,7 @@ class SpendAnalyticsService
     private function apExpenseDebitFilter(): array
     {
         return [
-            'side'         => 'debit',
+            'side'          => 'debit',
             'subLedgerType' => 'ap',
         ];
 
@@ -216,11 +216,11 @@ class SpendAnalyticsService
      * Build and dispatch one single-field aggregation through OR's
      * aggregation-api, then shape the envelope for the client.
      *
-     * @param string               $dimension   Stable dimension identifier (supplier/category/costCentre/period).
-     * @param string               $schema      Source schema slug.
-     * @param string               $metricField Numeric field to sum.
-     * @param array<string,mixed>  $filter      OR aggregation filter map (operator-aware).
-     * @param string               $groupField  Single top-level scalar field to GROUP BY.
+     * @param string              $dimension   Stable dimension identifier (supplier/category/costCentre/period).
+     * @param string              $schema      Source schema slug.
+     * @param string              $metricField Numeric field to sum.
+     * @param array<string,mixed> $filter      OR aggregation filter map (operator-aware).
+     * @param string              $groupField  Single top-level scalar field to GROUP BY.
      *
      * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
      *

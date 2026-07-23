@@ -84,6 +84,9 @@ class CrisisModeRefreshJob extends TimedJob
      * @return void
      *
      * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-21
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
+     *     TimedJob::run()'s signature; this job takes no argument.
      */
     protected function run($argument): void
     {

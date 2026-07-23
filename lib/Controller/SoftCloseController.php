@@ -47,6 +47,10 @@ use Psr\Log\LoggerInterface;
  * REST surface for soft-close execution + flux analysis (REQ-CLS-002, REQ-CLS-007).
  *
  * @spec openspec/changes/bookkeeping-soft-close-flux/tasks.md#task-22
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class SoftCloseController extends Controller
 {

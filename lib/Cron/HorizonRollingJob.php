@@ -49,6 +49,10 @@ use Throwable;
  * @psalm-api
  *
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-19
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class HorizonRollingJob extends TimedJob
 {
@@ -95,6 +99,9 @@ class HorizonRollingJob extends TimedJob
      * @return void
      *
      * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-19
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is required by
+     *     TimedJob::run()'s signature; this job takes no argument.
      */
     protected function run($argument): void
     {

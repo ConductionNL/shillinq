@@ -57,6 +57,9 @@ use Psr\Log\LoggerInterface;
  * .transitions.cancel.actions[1].
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ElseExpression)         Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  *
  * @spec openspec/changes/inventory-stock-movement-ledger/tasks.md#task-7
  */

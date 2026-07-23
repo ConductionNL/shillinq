@@ -37,6 +37,15 @@ namespace OCA\Shillinq\Standards;
 
 /**
  * Evaluates objects against applicable machine-checkable rules.
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.TooManyMethods)
+ * Pre-existing debt (issue #506): this engine dispatches to every check
+ * provider in the standards catalogue; its size/complexity scale with
+ * the number of supported reporting frameworks. Deferred to a follow-up.
  */
 final class RuleEngine
 {

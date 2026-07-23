@@ -61,6 +61,11 @@ use RuntimeException;
  * boundary (REQ-VAT-001..REQ-VAT-011, REQ-VAT-008).
  *
  * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): early-return refactor and variable
+ * renames deferred pending a dedicated pass.
  */
 class VATReturnService
 {

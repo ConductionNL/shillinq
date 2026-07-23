@@ -794,6 +794,10 @@ HTML;
      * @return string Absolute path to the ZIP.
      *
      * @throws \RuntimeException When the ZIP cannot be opened or written.
+     *
+     * @SuppressWarnings(PHPMD.ErrorControlOperator) `@rename()` is a
+     *     best-effort extension add; ZipArchive::open() below uses CREATE
+     *     and works regardless of whether the rename succeeded.
      */
     private function writeZip(
         string $packageId,

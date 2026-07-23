@@ -37,6 +37,10 @@ use XMLWriter;
 
 /**
  * Minimal OECD SAF-T XML generator built natively from Account + GLTransaction + GLLine.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class SaftReportGenerator implements ReportGeneratorInterface
 {

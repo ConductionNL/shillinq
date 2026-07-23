@@ -66,6 +66,13 @@ use RuntimeException;
  * (see [[or-objectservice-api]]) — no createFromArray / deleteFromId / etc.
  *
  * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): this service covers the full dunning
+ * ladder/pause/channel-dispatch surface; early-return refactor and
+ * variable renames deferred pending a dedicated pass.
  */
 class DunningRunService
 {
@@ -268,6 +275,13 @@ class DunningRunService
      * @return array{ladderId:string,stages:array<int,array<string,mixed>>,source:string,override:?array<string,mixed>}
      *
      * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-18
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $administrationId is not
+     *     read in this method body — fetchOne()/findAll() resolve by id/slug
+     *     alone without an explicit administration filter here. Flagged
+     *     during issue #506 as worth verifying whether OpenRegister's
+     *     ObjectService already scopes this by tenant by default; not
+     *     changed in this style/quality-only pass.
      */
     public function resolveLadderForKlant(string $administrationId, string $klantId, string $baseLadderId): array
     {
@@ -483,6 +497,11 @@ class DunningRunService
      * @return array<string,mixed> The updated pause record.
      *
      * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-17
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $administrationId is not
+     *     read in this method body. Flagged during issue #506 as worth
+     *     verifying whether OpenRegister's ObjectService already scopes this
+     *     by tenant by default; not changed in this style/quality-only pass.
      */
     public function resumePause(
         string $administrationId,
@@ -986,6 +1005,11 @@ class DunningRunService
      * @return DunningChannelSendResult The dispatch outcome.
      *
      * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $administrationId is not
+     *     read in this method body. Flagged during issue #506 as worth
+     *     verifying whether OpenRegister's ObjectService already scopes this
+     *     by tenant by default; not changed in this style/quality-only pass.
      */
     public function sendRegisteredLetter(
         string $administrationId,

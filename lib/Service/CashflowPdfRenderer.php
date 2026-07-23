@@ -40,6 +40,10 @@ namespace OCA\Shillinq\Service;
  * @psalm-api
  *
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-27
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class CashflowPdfRenderer
 {

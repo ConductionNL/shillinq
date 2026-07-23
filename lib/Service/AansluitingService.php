@@ -71,6 +71,10 @@ use RuntimeException;
  * Computes, explains, resolves, and reopens AansluitingResult records.
  *
  * @spec openspec/specs/bookkeeping-aansluitingen/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class AansluitingService
 {

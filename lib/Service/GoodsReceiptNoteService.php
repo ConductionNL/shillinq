@@ -83,6 +83,11 @@ use RuntimeException;
  * five surfaces named above; each one corresponds 1:1 with a slice-04 task.
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * Pre-existing debt (issue #506): early-return refactor deferred pending
+ * full behavioral verification of each branch.
  */
 class GoodsReceiptNoteService
 {

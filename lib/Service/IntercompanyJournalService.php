@@ -39,6 +39,10 @@ namespace OCA\Shillinq\Service;
  * Computes intercompany mirroring + reconciliation and validates the status flow.
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-18
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class IntercompanyJournalService
 {

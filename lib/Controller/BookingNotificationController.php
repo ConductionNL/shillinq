@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Controller;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
@@ -29,6 +31,7 @@ use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
@@ -39,6 +42,10 @@ use Psr\Log\LoggerInterface;
  * REST endpoints for notification trigger configuration and admin monitoring.
  *
  * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable) Pre-existing debt (issue #506):
+ *     not in the project's curated idiomatic-abbreviation allowlist;
+ *     deferred pending a dedicated rename pass.
  */
 class BookingNotificationController extends Controller
 {
@@ -164,9 +171,9 @@ class BookingNotificationController extends Controller
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $registerSlug  = $this->settingsService->getRegisterSlug();
 
-            $todayStart = (new \DateTimeImmutable('today', new \DateTimeZone('UTC')))->format('c');
-            $weekStart  = (new \DateTimeImmutable('-7 days', new \DateTimeZone('UTC')))->format('c');
-            $monthStart = (new \DateTimeImmutable('-30 days', new \DateTimeZone('UTC')))->format('c');
+            $todayStart = (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('c');
+            $weekStart  = (new DateTimeImmutable('-7 days', new DateTimeZone('UTC')))->format('c');
+            $monthStart = (new DateTimeImmutable('-30 days', new DateTimeZone('UTC')))->format('c');
 
             $todayDeliveries = $objectService
                 ->setRegister($registerSlug)
@@ -257,7 +264,7 @@ class BookingNotificationController extends Controller
      *
      * @return void
      *
-     * @throws \OCP\AppFramework\OCS\OCSForbiddenException When not authorised.
+     * @throws OCSForbiddenException When not authorised.
      *
      * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
      */
@@ -265,7 +272,7 @@ class BookingNotificationController extends Controller
     {
         $user = $this->userSession->getUser();
         if ($user === null) {
-            throw new \OCP\AppFramework\OCS\OCSForbiddenException('Not authenticated.');
+            throw new OCSForbiddenException('Not authenticated.');
         }
 
         $uid = $user->getUID();
@@ -287,21 +294,21 @@ class BookingNotificationController extends Controller
             );
 
             if ($booking === null) {
-                throw new \OCP\AppFramework\OCS\OCSForbiddenException('Booking not found.');
+                throw new OCSForbiddenException('Booking not found.');
             }
 
             $organizerUserId = (string) ($booking['organizerUserId'] ?? '');
             if ($organizerUserId !== $uid) {
-                throw new \OCP\AppFramework\OCS\OCSForbiddenException('Not authorized to access this booking.');
+                throw new OCSForbiddenException('Not authorized to access this booking.');
             }
-        } catch (\OCP\AppFramework\OCS\OCSForbiddenException $e) {
+        } catch (OCSForbiddenException $e) {
             throw $e;
         } catch (\Throwable $e) {
             $this->logger->warning(
                 'Shillinq: booking authorization lookup failed',
                 ['bookingId' => $bookingId, 'exception' => $e->getMessage()]
             );
-            throw new \OCP\AppFramework\OCS\OCSForbiddenException('Authorization failed.');
+            throw new OCSForbiddenException('Authorization failed.');
         }//end try
 
     }//end authorizeBookingAccess()

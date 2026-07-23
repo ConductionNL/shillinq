@@ -53,6 +53,11 @@ namespace OCA\Shillinq\Service;
  * OpenRegister dependency, fully unit-testable.
  *
  * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.LongVariable)
+ * Pre-existing debt (issue #506): early-return refactor and variable
+ * renames deferred pending a dedicated pass.
  */
 class LeaseTransitionWizard
 {

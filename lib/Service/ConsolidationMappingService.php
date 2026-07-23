@@ -53,6 +53,10 @@ use Throwable;
  * (REQ-MA-005).
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-19
+ *
+ * @SuppressWarnings(PHPMD.LongVariable) Pre-existing debt (issue #506):
+ *     not in the project's calibrated length threshold; deferred pending
+ *     a dedicated rename pass.
  */
 class ConsolidationMappingService
 {

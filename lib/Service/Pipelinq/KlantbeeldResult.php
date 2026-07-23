@@ -43,6 +43,10 @@ namespace OCA\Shillinq\Service\Pipelinq;
  * Immutable envelope: page of {@see KlantbeeldTransaction} + meta.
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-04-klantbeeld-read/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Pre-existing debt (issue
+ *     #506): changing this constructor signature would ripple to callers;
+ *     deferred.
  */
 final class KlantbeeldResult implements \JsonSerializable
 {

@@ -53,6 +53,10 @@ use Throwable;
  * queues independent backup runs per administration.
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-15
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class AdministrationBackupSchedulerJob extends TimedJob
 {

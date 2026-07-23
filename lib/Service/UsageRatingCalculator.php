@@ -40,6 +40,10 @@ namespace OCA\Shillinq\Service;
 
 /**
  * Pure meter-quantity -> cost rating (REQ-UMB-002).
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class UsageRatingCalculator
 {

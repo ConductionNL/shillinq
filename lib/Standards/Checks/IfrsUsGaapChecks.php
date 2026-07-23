@@ -55,8 +55,17 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use DateTimeImmutable;
+
 /**
  * Executable IFRS / IAS / US-GAAP presentation-and-structure checks against FinancialStatement.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): this class enumerates every IFRS/IAS/
+ * US-GAAP rule the catalogue defines; inherent complexity. Variable
+ * renames deferred pending a dedicated pass.
  */
 final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects
 {
@@ -175,7 +184,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects
 
                 // ASC 740: deferred tax is classified non-current on a classified balance
                 // sheet, netted per tax-paying jurisdiction.
-                'asc740-dta-dtl-noncurrent'                    => static fn(array $o): bool => self::eq($o, 'deferredTaxClassification', 'noncurrent'),
+                'asc740-dta-dtl-noncurrent'                    => static fn(array $o): bool => self::equalsField($o, 'deferredTaxClassification', 'noncurrent'),
 
                 // ===== IAS 19 — Employee Benefits. =====
                 // 19.11: short-term employee benefits are recognised undiscounted.
@@ -441,12 +450,12 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects
      *
      * @return bool
      */
-    private static function eq(array $o, string $key, string $value): bool
+    private static function equalsField(array $o, string $key, string $value): bool
     {
         return self::present($o, $key) === true
             && strcasecmp(trim((string) $o[$key]), $value) === 0;
 
-    }//end eq()
+    }//end equalsField()
 
     /**
      * The value under $key is one of $allowed (case-insensitive).
@@ -664,7 +673,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects
     private static function fxItemRate(array $o, string $itemKind, string $rate): bool
     {
         $field = ($itemKind === 'monetary') ? 'monetaryItemRateType' : 'nonMonetaryHistoricalRateType';
-        return self::eq($o, $field, $rate);
+        return self::equalsField($o, $field, $rate);
 
     }//end fxItemRate()
 
@@ -1004,7 +1013,7 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects
             return false;
         }
 
-        $sunset = new \DateTimeImmutable('2024-12-31');
+        $sunset = new DateTimeImmutable('2024-12-31');
         return $date <= $sunset;
 
     }//end asc848BeforeSunset()
@@ -1031,16 +1040,16 @@ final class IfrsUsGaapChecks implements CheckProvider, SeedsObjects
      * @param array<string, mixed> $o   The object.
      * @param string               $key The field name.
      *
-     * @return \DateTimeImmutable|null
+     * @return DateTimeImmutable|null
      */
-    private static function date(array $o, string $key): ?\DateTimeImmutable
+    private static function date(array $o, string $key): ?DateTimeImmutable
     {
         if (self::present($o, $key) === false) {
             return null;
         }
 
         try {
-            return new \DateTimeImmutable(substr(trim((string) $o[$key]), 0, 10));
+            return new DateTimeImmutable(substr(trim((string) $o[$key]), 0, 10));
         } catch (\Exception $e) {
             return null;
         }

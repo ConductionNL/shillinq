@@ -62,6 +62,12 @@ use Throwable;
  * Settlement-time realised FX gain/loss posting (ADR-031 exception).
  *
  * @spec openspec/specs/bookkeeping-multi-currency/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+ * Pre-existing debt (issue #506): posting this many required GL fields is
+ * inherent to the domain; early-return refactor deferred pending full
+ * behavioral verification of each branch.
  */
 class RealisedFxSettlementService
 {

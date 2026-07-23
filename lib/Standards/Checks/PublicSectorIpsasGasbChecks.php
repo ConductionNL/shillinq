@@ -54,6 +54,13 @@ namespace OCA\Shillinq\Standards\Checks;
 
 /**
  * Executable IPSAS / GASB public-sector checks against PublicSectorStatement.
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * Pre-existing debt (issue #506): this class enumerates every IPSAS/GASB
+ * public-sector rule the catalogue defines; inherent complexity.
+ * Deferred to a follow-up.
  */
 final class PublicSectorIpsasGasbChecks implements CheckProvider, SeedsObjects
 {
@@ -209,21 +216,21 @@ final class PublicSectorIpsasGasbChecks implements CheckProvider, SeedsObjects
                 // the full accrual basis, reporting governmental and business-type
                 // activities in separate columns.
                 'gasb-34-govwide-economic-resources'        => static fn(array $o): bool => self::frameworkNot($o, 'gasb')
-                    || (self::eq($o, 'govWideMeasurementFocus', 'economicResources')
-                    && self::eq($o, 'govWideBasis', 'accrual')
+                    || (self::equalsField($o, 'govWideMeasurementFocus', 'economicResources')
+                    && self::equalsField($o, 'govWideBasis', 'accrual')
                     && self::contains($o, 'govWideColumns', 'governmental')
                     && self::contains($o, 'govWideColumns', 'businessType')),
 
                 // GASB 34: MD&A is required supplementary information that precedes the
                 // basic financial statements.
                 'gasb-34-mda-required-rsi'                  => static fn(array $o): bool => self::frameworkNot($o, 'gasb')
-                    || (self::isTrue($o, 'mdaPresent') && self::eq($o, 'mdaPlacement', 'precedes')),
+                    || (self::isTrue($o, 'mdaPresent') && self::equalsField($o, 'mdaPlacement', 'precedes')),
 
                 // GASB 34: governmental funds use the current-financial-resources focus
                 // and the modified-accrual basis.
                 'gasb-34-modified-accrual-govfunds'         => static fn(array $o): bool => self::frameworkNot($o, 'gasb')
-                    || (self::eq($o, 'govFundsMeasurementFocus', 'currentFinancialResources')
-                    && self::eq($o, 'govFundsBasis', 'modifiedAccrual')),
+                    || (self::equalsField($o, 'govFundsMeasurementFocus', 'currentFinancialResources')
+                    && self::equalsField($o, 'govFundsBasis', 'modifiedAccrual')),
 
                 // GASB 34: a fund is major when an element is at least 10% of its category
                 // total AND at least 5% of the combined total; the general fund is always
@@ -461,12 +468,12 @@ final class PublicSectorIpsasGasbChecks implements CheckProvider, SeedsObjects
      *
      * @return bool
      */
-    private static function eq(array $o, string $key, string $value): bool
+    private static function equalsField(array $o, string $key, string $value): bool
     {
         return self::present($o, $key) === true
             && strcasecmp(trim((string) $o[$key]), $value) === 0;
 
-    }//end eq()
+    }//end equalsField()
 
     /**
      * The statement's framework is NOT $framework (case-insensitive) — used to scope a

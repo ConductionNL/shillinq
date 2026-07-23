@@ -60,6 +60,11 @@ use Throwable;
  * @implements IEventListener<Event>
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * Pre-existing debt (issue #506): inherent branch complexity in this
+ * domain logic; early-return refactor deferred pending full behavioral
+ * verification of each branch.
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-10
  */

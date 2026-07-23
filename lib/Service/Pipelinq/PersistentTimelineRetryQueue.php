@@ -62,6 +62,10 @@ use Throwable;
  * adds a {@see PipelinqTimelineRetryJob} tick to the job list.
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class PersistentTimelineRetryQueue implements TimelineRetryQueue
 {

@@ -46,6 +46,10 @@ use RuntimeException;
  * Aggregates the yearly Jaaropgave per employee from the period loonstroken.
  *
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable) Pre-existing debt (issue #506):
+ *     not in the project's curated idiomatic-abbreviation allowlist;
+ *     deferred pending a dedicated rename pass.
  */
 class PayrollJaaropgaveService
 {

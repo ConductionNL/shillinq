@@ -173,7 +173,7 @@ class SetupController extends Controller
 
             $this->appConfig->setValueString(Application::APP_ID, 'administration_id', $adminId);
             return new DataResponse(['success' => true, 'message' => 'Default administration created.', 'detail' => $result]);
-        }
+        }//end if
 
         if ($actionId === 'seed') {
             $region   = $this->config(key: 'legal_region');
@@ -195,7 +195,7 @@ class SetupController extends Controller
             $this->settingsService->seedSelectielijst();
             $this->appConfig->setValueString(Application::APP_ID, 'setup_seed_done', '1');
             return new DataResponse(['success' => true, 'message' => 'Chart of accounts and reference data seeded.']);
-        }
+        }//end if
 
         return new DataResponse(
             ['success' => false, 'message' => 'Unknown setup action: '.$actionId],

@@ -49,6 +49,10 @@ use Psr\Log\LoggerInterface;
  * reason; it never throws into the obligation CRUD path (REQ-CLM-003).
  *
  * @spec openspec/changes/contract-lifecycle-management/specs/contract-lifecycle-management/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class ObligationTaskBridge
 {

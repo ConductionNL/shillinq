@@ -39,6 +39,10 @@ namespace OCA\Shillinq\Service\Pipelinq;
  * Immutable value object: one row of klantbeeld history.
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-04-klantbeeld-read/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class KlantbeeldTransaction implements \JsonSerializable
 {

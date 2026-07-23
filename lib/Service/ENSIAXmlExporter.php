@@ -40,6 +40,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTimeImmutable;
 use DOMDocument;
 use DOMElement;
 
@@ -112,7 +113,7 @@ class ENSIAXmlExporter
         $root->appendChild($doc->createElement('vraagSetVersion', (string) ($cyclus['vraagSetVersion'] ?? '')));
         $root->appendChild($doc->createElement('verklaringFile', (string) ($cyclus['verklaringFile'] ?? '')));
         $root->appendChild(
-            $doc->createElement('submittedAt', $submittedAt ?? (new \DateTimeImmutable('now'))->format(DATE_ATOM))
+            $doc->createElement('submittedAt', $submittedAt ?? (new DateTimeImmutable('now'))->format(DATE_ATOM))
         );
 
         // Group questions per domein.

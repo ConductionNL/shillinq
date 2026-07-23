@@ -58,6 +58,10 @@ use Throwable;
  * @implements IEventListener<Event>
  *
  * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md (REQ-SIGN-001/006)
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 final class SigningConcludedListener implements IEventListener
 {

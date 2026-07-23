@@ -219,6 +219,12 @@ class ComplianceValidator
      * @param array<string, mixed> $account  TreasuryAccount object.
      *
      * @return bool
+     *
+     * @SuppressWarnings(PHPMD.ErrorControlOperator) $pattern is externally
+     *     supplied (rule config) and can be malformed; `@` suppresses the
+     *     resulting PHP warning and the `=== 1` check treats any other
+     *     result (including a malformed-pattern `false`) as no-match
+     *     (fail-safe).
      */
     private function evaluateIbanFormat(array $criteria, array $account): bool
     {

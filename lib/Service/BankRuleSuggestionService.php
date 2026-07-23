@@ -3,7 +3,7 @@
 /**
  * Bank Rule Suggestion Service
  *
- * bank-rule-automation-ux — the learning path (REQ-BR-012). It watches how
+ * Bank-rule-automation-ux — the learning path (REQ-BR-012). It watches how
  * an operator repeatedly categorises the same counterparty and, once the
  * same counterparty has been booked to the same GL account K or more times,
  * PROPOSES a MatchingRule so the operator can stop doing it by hand. The
@@ -50,6 +50,10 @@ use Psr\Log\LoggerInterface;
  * @psalm-api
  *
  * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
 class BankRuleSuggestionService
 {
@@ -108,7 +112,11 @@ class BankRuleSuggestionService
             $gl   = trim((string) ($entry['targetGlAccount'] ?? ''));
 
             // A categorisation needs a counterparty signal AND a GL target.
-            $counterpartyKey = ($name !== '' ? $name : $iban);
+            $counterpartyKey = $iban;
+            if ($name !== '') {
+                $counterpartyKey = $name;
+            }
+
             if ($counterpartyKey === '' || $gl === '') {
                 continue;
             }
@@ -139,7 +147,7 @@ class BankRuleSuggestionService
                 continue;
             }
 
-            $proposals[] = $this->toProposal($group);
+            $proposals[] = $this->toProposal(group: $group);
         }
 
         // Deterministic order: occurrences desc, then counterparty asc.
@@ -184,7 +192,10 @@ class BankRuleSuggestionService
                     'iban' => $iban,
                 ],
             ];
-            $label = ($name !== '' ? $name : $iban);
+            $label      = $iban;
+            if ($name !== '') {
+                $label = $name;
+            }
         } else {
             $predicates = [
                 [
@@ -193,8 +204,8 @@ class BankRuleSuggestionService
                     'threshold' => 0.9,
                 ],
             ];
-            $label = $name;
-        }
+            $label      = $name;
+        }//end if
 
         $occurrences = (int) $group['occurrences'];
 

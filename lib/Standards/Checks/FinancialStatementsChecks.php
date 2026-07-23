@@ -43,8 +43,16 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Standards\Checks;
 
+use DateTimeImmutable;
+
 /**
  * Executable national financial-statement reporting checks against FinancialStatement.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * Pre-existing debt (issue #506): this class enumerates every national
+ * reporting rule the catalogue defines; inherent complexity. Variable
+ * renames deferred pending a dedicated pass.
  */
 class FinancialStatementsChecks implements CheckProvider, SeedsObjects
 {
@@ -85,7 +93,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects
                 // currency/language is justified. Applies to NL-jurisdiction
                 // statements only — a foreign entity's accounts are out of its scope.
                 'bw-art362-6-euro-language'      => static fn(array $o): bool => self::jurisdictionNot($o, 'NL')
-                    || (self::eq($o, 'currency', 'EUR') && self::langIs($o, 'nl')),
+                    || (self::equalsField($o, 'currency', 'EUR') && self::langIs($o, 'nl')),
 
                 // art. 363: items are not netted and each carries a prior-year
                 // comparative (gross presentation + comparatives).
@@ -142,7 +150,7 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects
                 // euros. Applies to DE-jurisdiction statements only — a foreign
                 // entity's accounts are out of its scope.
                 'hgb-244-language-currency'      => static fn(array $o): bool => self::jurisdictionNot($o, 'DE')
-                    || (self::eq($o, 'currency', 'EUR') && self::langIs($o, 'de')),
+                    || (self::equalsField($o, 'currency', 'EUR') && self::langIs($o, 'de')),
 
                 // §246: completeness + gross principle — items are not offset
                 // (Saldierungsverbot).
@@ -150,11 +158,11 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects
 
                 // §266: the balance sheet is in account form (Kontoform) with the
                 // prescribed asset / equity-and-liabilities structure.
-                'hgb-266-balance-structure'      => static fn(array $o): bool => self::eq($o, 'balanceForm', 'account')
+                'hgb-266-balance-structure'      => static fn(array $o): bool => self::equalsField($o, 'balanceForm', 'account')
                     && self::balanceLayoutComplete($o),
 
                 // §275: the P&L is presented in vertical/staggered form (Staffelform).
-                'hgb-275-pnl-vertical'           => static fn(array $o): bool => self::eq($o, 'plForm', 'vertical')
+                'hgb-275-pnl-vertical'           => static fn(array $o): bool => self::equalsField($o, 'plForm', 'vertical')
                     && self::pnlLayoutComplete($o),
 
                 // §267: small/medium/large by exceeding at least two of three criteria —
@@ -345,12 +353,12 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects
      *
      * @return bool
      */
-    private static function eq(array $o, string $key, string $value): bool
+    private static function equalsField(array $o, string $key, string $value): bool
     {
         return self::present($o, $key) === true
             && strcasecmp(trim((string) $o[$key]), $value) === 0;
 
-    }//end eq()
+    }//end equalsField()
 
     /**
      * The statement's own jurisdiction is NOT $code (case-insensitive) — used to
@@ -805,16 +813,16 @@ class FinancialStatementsChecks implements CheckProvider, SeedsObjects
      * @param array<string, mixed> $o   The object.
      * @param string               $key The field name.
      *
-     * @return \DateTimeImmutable|null
+     * @return DateTimeImmutable|null
      */
-    private static function date(array $o, string $key): ?\DateTimeImmutable
+    private static function date(array $o, string $key): ?DateTimeImmutable
     {
         if (self::present($o, $key) === false) {
             return null;
         }
 
         try {
-            return new \DateTimeImmutable(substr(trim((string) $o[$key]), 0, 10));
+            return new DateTimeImmutable(substr(trim((string) $o[$key]), 0, 10));
         } catch (\Exception $e) {
             return null;
         }

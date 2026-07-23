@@ -46,6 +46,10 @@ use Psr\Log\LoggerInterface;
  * GET /api/inventory/valuation-report — value-as-of-date (+ optional ageing).
  *
  * @spec openspec/specs/inventory-accounting-correctness/spec.md
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
+ *     #506): inherent branch complexity in this domain logic; deferred
+ *     pending a dedicated refactor.
  */
 class InventoryValuationReportController extends Controller
 {

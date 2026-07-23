@@ -53,6 +53,11 @@ namespace OCA\Shillinq\Standards\Checks;
 
 /**
  * Executable tail national-reporting checks over the FinancialStatement object.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Pre-existing debt
+ *     (issue #506): this class enumerates every tail national-reporting
+ *     rule the catalogue defines; inherent complexity. Deferred to a
+ *     follow-up.
  */
 class NationalReportingTailChecks implements CheckProvider
 {
@@ -150,12 +155,12 @@ class NationalReportingTailChecks implements CheckProvider
                 // asset side and equity, provisions and liabilities on the credit side,
                 // in table form.
                 'pcg-balance-table-form'           => static fn(array $o): bool => self::balanceLayoutComplete($o)
-                    && self::eq($o, 'balancePresentation', 'table'),
+                    && self::equalsField($o, 'balancePresentation', 'table'),
 
                 // PCG: the compte de résultat distinguishes operating, financial and
                 // exceptional result, presented in list form.
                 'pcg-income-statement-list'        => static fn(array $o): bool => self::numericKeys($o, 'pnlResultBreakdown', ['operatingResult', 'financialResult', 'exceptionalResult'])
-                    && self::eq($o, 'pnlPresentation', 'list'),
+                    && self::equalsField($o, 'pnlPresentation', 'list'),
 
                 // PCG: the abridged system (système abrégé) may only be used by an
                 // entity within the small/micro size limits.
@@ -353,12 +358,12 @@ class NationalReportingTailChecks implements CheckProvider
      *
      * @return bool
      */
-    private static function eq(array $o, string $key, string $value): bool
+    private static function equalsField(array $o, string $key, string $value): bool
     {
         return self::present($o, $key) === true
             && strcasecmp(trim((string) $o[$key]), $value) === 0;
 
-    }//end eq()
+    }//end equalsField()
 
     /**
      * The field under $key is a boolean (or boolean-like) value at all.

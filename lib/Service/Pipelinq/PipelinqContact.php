@@ -41,6 +41,10 @@ namespace OCA\Shillinq\Service\Pipelinq;
  * Immutable Contact value carried over the customer-bridge.
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-03-contact-read/tasks.md
+ *
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Pre-existing debt (issue
+ *     #506): changing this constructor signature would ripple to callers;
+ *     deferred.
  */
 final class PipelinqContact
 {

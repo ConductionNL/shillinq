@@ -97,6 +97,16 @@ use Throwable;
  * (REQ-CDC-001).
  *
  * @spec openspec/specs/compliance-deadline-calendar/spec.md
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * Pre-existing debt (issue #506): this service enumerates every compliance
+ * deadline family the app tracks, so its size/complexity scale with the
+ * domain's regulatory surface; splitting is out of scope for a mechanical
+ * phpcs/phpmd cleanup. Deferred to a follow-up.
  */
 class ComplianceDeadlineCalendarService
 {
