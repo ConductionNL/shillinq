@@ -667,4 +667,318 @@ class SettingsServiceTest extends TestCase
         self::assertSame(3, $result['skipped']);
 
     }//end testSeedStatementManifestsSkipsPersisted()
+
+    /**
+     * seedRateCardTemplates elevates to a system operation context when the
+     * OpenRegister ObjectService exposes runAsSystem(), so seeding does not
+     * fail under RBAC when the repair step runs userless (issue #508).
+     *
+     * @return void
+     */
+    public function testSeedRateCardTemplatesRunsUnderSystemContextWhenAvailable(): void
+    {
+        $this->appManager->method('isInstalled')->with('openregister')->willReturn(true);
+        $this->appConfig->method('getValueString')->willReturn('shillinq');
+
+        $objectService = new class {
+            public int $saveCalls    = 0;
+            public bool $ranAsSystem = false;
+
+            public function setRegister(string $register): static
+            {
+                return $this;
+            }
+
+            public function setSchema(string $schema): static
+            {
+                return $this;
+            }
+
+            /**
+             * @param array<string,mixed> $params
+             * @return array<mixed>
+             */
+            public function findAll(array $params=[]): array
+            {
+                return [];
+            }
+
+            /**
+             * @param array<string,mixed> $object
+             */
+            public function saveObject(array $object, string $register, string $schema): void
+            {
+                $this->saveCalls++;
+            }
+
+            /**
+             * Mirrors OpenRegister's ObjectService::runAsSystem() — bypasses RBAC.
+             *
+             * @param callable $operation The operation to run elevated.
+             *
+             * @return mixed
+             */
+            public function runAsSystem(callable $operation): mixed
+            {
+                $this->ranAsSystem = true;
+                return $operation();
+            }
+        };
+
+        $this->container->method('get')->willReturn($objectService);
+
+        $result = $this->service->seedRateCardTemplates(administrationId: 'adm-test');
+
+        self::assertTrue($result['success']);
+        self::assertSame(4, $result['seeded']);
+        self::assertSame(0, $result['skipped']);
+        self::assertSame(4, $objectService->saveCalls);
+        self::assertTrue($objectService->ranAsSystem, 'Seeding must elevate via runAsSystem() so Anonymous RBAC does not deny the create');
+
+    }//end testSeedRateCardTemplatesRunsUnderSystemContextWhenAvailable()
+
+    /**
+     * seedRateCardTemplates still seeds successfully when the OpenRegister
+     * ObjectService does not yet ship runAsSystem() (older OR releases).
+     *
+     * @return void
+     */
+    public function testSeedRateCardTemplatesFallsBackWhenRunAsSystemUnavailable(): void
+    {
+        $this->appManager->method('isInstalled')->with('openregister')->willReturn(true);
+        $this->appConfig->method('getValueString')->willReturn('shillinq');
+
+        $objectService = new class {
+            public int $saveCalls = 0;
+
+            public function setRegister(string $register): static
+            {
+                return $this;
+            }
+
+            public function setSchema(string $schema): static
+            {
+                return $this;
+            }
+
+            /**
+             * @param array<string,mixed> $params
+             * @return array<mixed>
+             */
+            public function findAll(array $params=[]): array
+            {
+                return [];
+            }
+
+            /**
+             * @param array<string,mixed> $object
+             */
+            public function saveObject(array $object, string $register, string $schema): void
+            {
+                $this->saveCalls++;
+            }
+        };
+
+        $this->container->method('get')->willReturn($objectService);
+
+        $result = $this->service->seedRateCardTemplates(administrationId: 'adm-test');
+
+        self::assertTrue($result['success']);
+        self::assertSame(4, $result['seeded']);
+        self::assertSame(4, $objectService->saveCalls);
+
+    }//end testSeedRateCardTemplatesFallsBackWhenRunAsSystemUnavailable()
+
+    /**
+     * seedSelectielijst elevates to a system operation context when the
+     * OpenRegister ObjectService exposes runAsSystem(), so seeding does not
+     * fail under RBAC when the repair step runs userless (issue #508).
+     *
+     * @return void
+     */
+    public function testSeedSelectielijstRunsUnderSystemContextWhenAvailable(): void
+    {
+        $this->appManager->method('isInstalled')->with('openregister')->willReturn(true);
+        $this->appConfig->method('getValueString')->willReturn('shillinq');
+
+        $objectService = new class {
+            public int $saveCalls    = 0;
+            public bool $ranAsSystem = false;
+
+            public function setRegister(string $register): static
+            {
+                return $this;
+            }
+
+            public function setSchema(string $schema): static
+            {
+                return $this;
+            }
+
+            /**
+             * @param array<string,mixed> $params
+             * @return array<mixed>
+             */
+            public function findAll(array $params=[]): array
+            {
+                return [];
+            }
+
+            /**
+             * @param array<string,mixed> $object
+             */
+            public function saveObject(array $object, string $register, string $schema): void
+            {
+                $this->saveCalls++;
+            }
+
+            /**
+             * Mirrors OpenRegister's ObjectService::runAsSystem() — bypasses RBAC.
+             *
+             * @param callable $operation The operation to run elevated.
+             *
+             * @return mixed
+             */
+            public function runAsSystem(callable $operation): mixed
+            {
+                $this->ranAsSystem = true;
+                return $operation();
+            }
+        };
+
+        $this->container->method('get')->willReturn($objectService);
+
+        $result = $this->service->seedSelectielijst();
+
+        self::assertTrue($result['success']);
+        self::assertSame(30, $result['seeded']);
+        self::assertSame(0, $result['skipped']);
+        self::assertSame(30, $objectService->saveCalls);
+        self::assertTrue($objectService->ranAsSystem, 'Seeding must elevate via runAsSystem() so Anonymous RBAC does not deny the create');
+
+    }//end testSeedSelectielijstRunsUnderSystemContextWhenAvailable()
+
+    /**
+     * seedSelectielijst still seeds successfully when the OpenRegister
+     * ObjectService does not yet ship runAsSystem() (older OR releases).
+     *
+     * @return void
+     */
+    public function testSeedSelectielijstFallsBackWhenRunAsSystemUnavailable(): void
+    {
+        $this->appManager->method('isInstalled')->with('openregister')->willReturn(true);
+        $this->appConfig->method('getValueString')->willReturn('shillinq');
+
+        $objectService = new class {
+            public int $saveCalls = 0;
+
+            public function setRegister(string $register): static
+            {
+                return $this;
+            }
+
+            public function setSchema(string $schema): static
+            {
+                return $this;
+            }
+
+            /**
+             * @param array<string,mixed> $params
+             * @return array<mixed>
+             */
+            public function findAll(array $params=[]): array
+            {
+                return [];
+            }
+
+            /**
+             * @param array<string,mixed> $object
+             */
+            public function saveObject(array $object, string $register, string $schema): void
+            {
+                $this->saveCalls++;
+            }
+        };
+
+        $this->container->method('get')->willReturn($objectService);
+
+        $result = $this->service->seedSelectielijst();
+
+        self::assertTrue($result['success']);
+        self::assertSame(30, $result['seeded']);
+        self::assertSame(30, $objectService->saveCalls);
+
+    }//end testSeedSelectielijstFallsBackWhenRunAsSystemUnavailable()
+
+    /**
+     * BTW tariff seed data must carry every property the VatTariff schema
+     * marks required (code, rate, description, category, effectiveFrom),
+     * otherwise OpenRegister rejects the create with a validation error
+     * (issue #508).
+     *
+     * @return void
+     */
+    public function testBtwTariffSeedFileHasSchemaRequiredProperties(): void
+    {
+        $seedPath = __DIR__.'/../../../lib/Settings/seeds/btw-tariffs-2026.json';
+        self::assertFileExists($seedPath);
+
+        $content = file_get_contents($seedPath);
+        self::assertNotFalse($content);
+
+        $data = json_decode($content, associative: true);
+        self::assertSame(JSON_ERROR_NONE, json_last_error());
+        self::assertNotEmpty($data['tariffs']);
+
+        $validCategories = ['standaard', 'verlaagd', 'nul', 'vrijgesteld', 'verleggingsregeling'];
+        foreach ($data['tariffs'] as $tariff) {
+            foreach (['code', 'rate', 'description', 'category', 'effectiveFrom'] as $requiredField) {
+                self::assertArrayHasKey(
+                    $requiredField,
+                    $tariff,
+                    'VatTariff schema requires "'.$requiredField.'" — missing on tariff '.($tariff['code'] ?? '?')
+                );
+            }
+
+            self::assertIsFloat(
+                is_float($tariff['rate']) === true ? $tariff['rate'] : (float) $tariff['rate']
+            );
+            self::assertContains($tariff['category'], $validCategories);
+        }//end foreach
+
+    }//end testBtwTariffSeedFileHasSchemaRequiredProperties()
+
+    /**
+     * BBV taakveld seed data must carry every property the BbvTaakveld schema
+     * marks required (taakveldCode, name, category, legalBasis, effectiveFrom),
+     * otherwise OpenRegister rejects the create with a validation error
+     * (issue #508).
+     *
+     * @return void
+     */
+    public function testBbvTaakveldSeedFileHasSchemaRequiredProperties(): void
+    {
+        $seedPath = __DIR__.'/../../../lib/Settings/seeds/bbv-taakvelden-2024.json';
+        self::assertFileExists($seedPath);
+
+        $content = file_get_contents($seedPath);
+        self::assertNotFalse($content);
+
+        $data = json_decode($content, associative: true);
+        self::assertSame(JSON_ERROR_NONE, json_last_error());
+        self::assertNotEmpty($data['taakvelden']);
+
+        foreach ($data['taakvelden'] as $taakveld) {
+            foreach (['taakveldCode', 'name', 'category', 'legalBasis', 'effectiveFrom'] as $requiredField) {
+                self::assertArrayHasKey(
+                    $requiredField,
+                    $taakveld,
+                    'BbvTaakveld schema requires "'.$requiredField.'" — missing on taakveld '.($taakveld['code'] ?? '?')
+                );
+            }
+
+            self::assertNotSame('', $taakveld['taakveldCode']);
+        }//end foreach
+
+    }//end testBbvTaakveldSeedFileHasSchemaRequiredProperties()
 }//end class

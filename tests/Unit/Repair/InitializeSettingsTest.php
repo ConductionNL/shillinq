@@ -31,6 +31,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use ReflectionMethod;
 
 /**
  * Tests for InitializeSettings repair step.
@@ -338,4 +339,123 @@ class InitializeSettingsTest extends TestCase
         putenv('APP_ENV=');
 
     }//end testDemoSeedSkippedWhenNotDevelopmentEnv()
+
+    /**
+     * seedBbvMappingsForMunicipalAdministrations must normalise OpenRegister
+     * ObjectEntity rows (not just plain arrays) before reading fields off
+     * them. OpenRegister development returns ObjectEntity instances from
+     * findAll(), and array-indexing one directly (`$row['field']`) throws
+     * "Cannot use object of type OCA\OpenRegister\Db\ObjectEntity as array"
+     * (issue #508) — which the outer try/catch in run() previously swallowed
+     * as "Could not auto-configure Shillinq: ...".
+     *
+     * @return void
+     */
+    public function testSeedBbvMappingsForMunicipalAdministrationsHandlesObjectEntityRows(): void
+    {
+        // A fake ObjectEntity: no ArrayAccess, only getObject() — exactly the
+        // shape OpenRegister's real OCA\OpenRegister\Db\ObjectEntity has.
+        $administrationEntity = new class {
+            /**
+             * Mirrors OpenRegister's ObjectEntity::getObject().
+             *
+             * @return array<string,mixed>
+             */
+            public function getObject(): array
+            {
+                return [
+                    'id'                 => 'uuid-1',
+                    'administrationCode' => 'ADM-001',
+                    'administrationType' => 'gemeente',
+                ];
+            }
+        };
+
+        $objectService = new class ($administrationEntity) {
+            /**
+             * @param object $administrationEntity Fake ObjectEntity row to return from findAll().
+             */
+            public function __construct(private object $administrationEntity)
+            {
+            }
+
+            public function setRegister(string $register): static
+            {
+                return $this;
+            }
+
+            public function setSchema(string $schema): static
+            {
+                return $this;
+            }
+
+            /**
+             * @param array<string,mixed> $params
+             * @return array<int,object>
+             */
+            public function findAll(array $params=[]): array
+            {
+                return [$this->administrationEntity];
+            }
+        };
+
+        $this->container->method('get')
+            ->with('OCA\OpenRegister\Service\ObjectService')
+            ->willReturn($objectService);
+
+        $this->settingsService->method('getRegisterSlug')->willReturn('shillinq');
+
+        // Reaching here with the correct id/type proves the ObjectEntity was
+        // normalised — a raw array-access bug would instead throw \TypeError
+        // before this call is ever made.
+        $this->settingsService->expects($this->once())
+            ->method('seedBbvAccountMappings')
+            ->with(administrationId: 'ADM-001', administrationType: 'gemeente')
+            ->willReturn(['success' => true, 'seeded' => 2, 'skipped' => 0]);
+
+        $method = new ReflectionMethod(InitializeSettings::class, 'seedBbvMappingsForMunicipalAdministrations');
+        $method->setAccessible(true);
+
+        // Must not throw "Cannot use object of type ObjectEntity as array".
+        $method->invoke($this->repairStep, $this->output);
+
+    }//end testSeedBbvMappingsForMunicipalAdministrationsHandlesObjectEntityRows()
+
+    /**
+     * asArray() normalises ObjectEntity-shaped rows (getObject()/jsonSerialize())
+     * as well as plain arrays and unusable values, per issue #508.
+     *
+     * @return void
+     */
+    public function testAsArrayNormalisesRowsOfEveryShape(): void
+    {
+        $method = new ReflectionMethod(InitializeSettings::class, 'asArray');
+        $method->setAccessible(true);
+
+        // Plain array passes through unchanged.
+        self::assertSame(['a' => 1], $method->invoke($this->repairStep, ['a' => 1]));
+
+        // jsonSerialize() takes precedence when present.
+        $jsonSerializable = new class implements \JsonSerializable {
+            public function jsonSerialize(): array
+            {
+                return ['b' => 2];
+            }
+        };
+        self::assertSame(['b' => 2], $method->invoke($this->repairStep, $jsonSerializable));
+
+        // getObject() is used when jsonSerialize() is absent (real ObjectEntity shape).
+        $getObjectOnly = new class {
+            public function getObject(): array
+            {
+                return ['c' => 3];
+            }
+        };
+        self::assertSame(['c' => 3], $method->invoke($this->repairStep, $getObjectOnly));
+
+        // Unusable values normalise to an empty array rather than throwing.
+        self::assertSame([], $method->invoke($this->repairStep, new \stdClass()));
+        self::assertSame([], $method->invoke($this->repairStep, null));
+
+    }//end testAsArrayNormalisesRowsOfEveryShape()
 }//end class
