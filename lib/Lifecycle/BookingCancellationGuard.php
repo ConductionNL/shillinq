@@ -15,7 +15,7 @@
  * It also exposes pure helpers to compose the reversing CreditNote and to
  * decide whether the deposit must be auto-refunded on cancellation (REQ-DI-006).
  *
- * Referenced from the Order schema's x-openregister-lifecycle transition
+ * Referenced from the BookingOrder schema's x-openregister-lifecycle transition
  * `cancelAfterInvoice.requires` in
  * lib/Settings/register.d/bookings-deposit-to-invoice.json.
  *
@@ -102,7 +102,14 @@ class BookingCancellationGuard
     public function canCancel(string $orderId, ?array $object=null): bool
     {
         try {
-            $order = ($object ?? $this->findOne(schema: 'Order', filters: ['orderId' => $orderId]));
+            // BUGFIX (issue #503, 2026-07-23): this literal was still 'Order'
+            // after the booking-context order schema was renamed to
+            // 'BookingOrder' in 07709a0f (to free the `Order` slug for
+            // abstract-order-primitive). Untested because every existing
+            // test pre-supplies $object, never exercising this fallback
+            // lookup — the fallback silently resolved 0 rows against a
+            // schema slug that no longer existed.
+            $order = ($object ?? $this->findOne(schema: 'BookingOrder', filters: ['orderId' => $orderId]));
             if ($order === null) {
                 return false;
             }

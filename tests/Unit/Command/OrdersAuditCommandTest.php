@@ -147,10 +147,10 @@ class OrdersAuditCommandTest extends TestCase
     {
         $fakeOs = $this->fakeObjectService(
             [
-                'Subsidie'      => [['id' => 's1'], ['id' => 's2']],
-                'PurchaseOrder' => [['id' => 'p1']],
-                'DBAOpdracht'   => [],
-                'Order'         => [
+                'Subsidie'       => [['id' => 's1'], ['id' => 's2']],
+                'PurchaseOrder'  => [['id' => 'p1']],
+                'DBAOpdracht'    => [],
+                'OrderPrimitive' => [
                     ['migratedFrom' => ['schema' => 'Subsidie', 'key' => 's1']],
                     ['migratedFrom' => ['schema' => 'Subsidie', 'key' => 's2']],
                     ['migratedFrom' => ['schema' => 'PurchaseOrder', 'key' => 'p1']],
@@ -175,10 +175,10 @@ class OrdersAuditCommandTest extends TestCase
     {
         $fakeOs = $this->fakeObjectService(
             [
-                'Subsidie'      => [['id' => 's1'], ['id' => 's2']],
-                'PurchaseOrder' => [],
-                'DBAOpdracht'   => [],
-                'Order'         => [
+                'Subsidie'       => [['id' => 's1'], ['id' => 's2']],
+                'PurchaseOrder'  => [],
+                'DBAOpdracht'    => [],
+                'OrderPrimitive' => [
                     ['migratedFrom' => ['schema' => 'Subsidie', 'key' => 's1']],
                 ],
             ]

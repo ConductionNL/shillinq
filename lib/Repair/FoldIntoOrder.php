@@ -73,8 +73,18 @@ class FoldIntoOrder implements IRepairStep
 {
     /**
      * The target schema every fold writes to.
+     *
+     * SLUG NOTE (issue #503, 2026-07-23): renamed from `Order` to
+     * `OrderPrimitive`. OpenRegister's schema slug lookup is case-insensitive
+     * and (in `ImportHandler::importSchema()`) explicitly bypasses
+     * multitenancy, so a slug is unique INSTANCE-WIDE, not per-app. On 8080 a
+     * `decidesk` schema (id 1585, slug `order`) already occupied that
+     * identifier in the same organisation as shillinq's own schemas —
+     * importing literally `Order` would have matched and OVERWRITTEN it via
+     * `SchemaMapper::updateFromArray()`. See zz-order-primitive.json's _meta
+     * description for the full account.
      */
-    public const TARGET = 'Order';
+    public const TARGET = 'OrderPrimitive';
 
     /**
      * Constructor.

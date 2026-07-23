@@ -18,6 +18,20 @@
 > schema with type-namespaced field groups (`subsidie`/`purchase`/
 > `engagement`), each carrying its source schema's full field set verbatim.
 
+> **Slug note (issue #503, 2026-07-23)**: the requirements and scenarios below
+> use `Order` as the conceptual/business name of the primitive. The SHIPPED
+> schema slug is `OrderPrimitive`, not the bare `Order`. Live-verification on
+> the shared 8080 instance found OpenRegister's schema-import lookup
+> (`ImportHandler::importSchema()` → `SchemaMapper::find()`) is
+> case-insensitive AND explicitly bypasses multitenancy, so a schema slug is
+> unique INSTANCE-WIDE, not per-app or per-organisation. A live, foreign
+> `decidesk` schema (id 1585, slug `order`, a different and much simpler
+> shape) already occupies that identifier in the same organisation as
+> shillinq's own schemas — shipping a schema literally named `Order` would
+> have matched and OVERWRITTEN it on import. Every requirement below still
+> holds against the `OrderPrimitive` slug; only the identifier differs from
+> what was originally planned.
+
 ## ADDED Requirements
 
 ### Requirement: REQ-ORD-001 — Order is a single typed primitive

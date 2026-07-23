@@ -85,6 +85,56 @@
       `occ shillinq:orders:audit` should be run on a live instance before this
       is considered production-safe.
 
+### 2026-07-23 pass (issue #503) — schema-import blocker fixed, migration STILL held
+- [x] **Diagnosed + fixed the schema-import blocker** live-verification found:
+      the `Order` schema slug did not import as its own row — OpenRegister's
+      schema-import lookup (`ImportHandler::importSchema()` →
+      `SchemaMapper::find()`) is case-insensitive AND explicitly bypasses
+      multitenancy (`_multitenancy: false`), so a slug is unique
+      INSTANCE-WIDE, not per-app/per-org. On 8080, id 1585 (slug `order`) is a
+      LIVE, foreign schema owned by a completely different app (`decidesk`,
+      not a stale/leftover artifact), in the SAME organisation as shillinq's
+      own schemas (`286a9152-4b09-4714-9115-fabbbad342d0`) — importing a
+      schema literally named `Order` would have matched it and, since
+      `ImportHandler::importSchema()` proceeds to `updateFromArray()` on any
+      version-newer match, OVERWRITTEN decidesk's live schema with this
+      shape. This is more severe than the earlier Grant deep-merge collision
+      (a full overwrite, not a merge). Fixed by renaming the schema slug to
+      the distinct `OrderPrimitive` (0 collisions found instance-wide, DB
+      read-verified) — `zz-order-primitive.json`, `FoldIntoOrder::TARGET`,
+      `RetireSubsidieSchema::TARGET`, `OrdersAuditCommand`,
+      `add-shillinq-audit-trail.json`, and `order-workspace.json`'s schema
+      refs updated consistently. `SubsidieOrderConsolidationSchemaTest`'s
+      "Order slug claimed exactly once" assertion updated to "stays
+      unclaimed" (0), since the primitive no longer reclaims the slug that
+      07709a0f freed for it.
+- [x] **Found + fixed an adjacent pre-existing bug** while investigating: the
+      07709a0f rename (booking-context `Order` → `BookingOrder`, done to free
+      the slug) never updated `BookingCancellationGuard`/
+      `InvoiceFromBookingGuard`'s `findOne(schema: 'Order', ...)` fallback
+      lookup (used only when the lifecycle engine calls the guard without a
+      pre-loaded `$object`) — untested because every existing test
+      pre-supplies `$object`. Fixed both to `schema: 'BookingOrder'`;
+      regression tests added exercising the fallback path directly.
+- [x] **Field-shape cross-check against live schemas** (read-only DB probe):
+      pulled the actual `properties` of the live PurchaseOrder (id 1115),
+      Subsidie (id 4982) and DBAOpdracht (id 1166) schemas on 8080 and
+      diffed every field name `FoldIntoOrder`'s builders read
+      (`verleendBedrag`, `poNumber`, `totalInclVat`, `klantId`,
+      `opdrachtNaam`, `startDatum`, `intakeStatus`, …) against them — zero
+      drift found between the fixture shapes the unit tests use and the real
+      deployed schemas.
+- [ ] **Migration STILL HELD** (`FoldIntoOrder`/`RetireSubsidieSchema` remain
+      un-registered in `appinfo/info.xml`). Not because the fold logic is in
+      doubt (unit-tested + field-shape cross-checked above), but because (a)
+      8080 currently has ZERO Subsidie/PurchaseOrder/DBAOpdracht objects to
+      fold — there is no real data on this instance to prove the migration
+      safe against, and (b) `RetireSubsidieSchema` deletes objects, which
+      must never run unproven against a shared instance's regulatory data.
+      Re-enable only after an actual `occ maintenance:repair` +
+      `occ shillinq:orders:audit` run against an instance that DOES have real
+      source rows.
+
 ## Phase 3 — UI + nav
 - [x] Fixed `src/manifest.d/order-workspace.json`'s dangling references: the
       `orderType` filter's option list was `["booking","sales","purchase",

@@ -62,6 +62,7 @@ use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
+use OCA\Shillinq\Listener\PosStockDecrementListener;
 use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
 use OCA\Shillinq\Listener\SignoffDecisionConcludedListener;
 use OCA\Shillinq\Listener\SigningConcludedListener;
@@ -69,6 +70,7 @@ use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
 use OCA\Shillinq\Listener\VerplichtingTransitionListener;
 use OCA\Shillinq\Notification\DeadlineReminderNotifier;
+use OCA\Shillinq\Notification\PosStockUnmatchedLineNotifier;
 use OCA\Shillinq\Notification\RoleFallbackResolver;
 use OCA\Shillinq\Service\Dunning\CreditScoreFetchAdapterInterface;
 use OCA\Shillinq\Service\Dunning\DunningChannelAdapterInterface;
@@ -810,6 +812,24 @@ class Application extends App implements IBootstrap
             listener: ExtractionCompletedListener::class
         );
 
+        // Change inventory-pos-decrement (shillinq#504) — consume pipelinq's
+        // cross-app OCA\Pipelinq\Event\PosStockMovedEvent (nl.pipelinq.pos.stock.moved),
+        // the companion producer event pipelinq emits from its POS-sale settle
+        // path. PosStockDecrementListener delegates every stock-tracked line to
+        // the EXISTING, UNMODIFIED SalesDispatchStockIssueService::issueForDelivery()
+        // -> StockMoveTransitionedListener -> valuation -> CogsPosterService
+        // pipeline (the same one DeliveryDispatchListener above already drives
+        // for shillinq's own Delivery-triggered sales) — no decrement/COGS logic
+        // is reimplemented. Registering by the pipelinq event FQCN is safe even
+        // when the class is not autoloadable — NC only needs the string key;
+        // handle() itself is class_exists-guarded so the listener is inert when
+        // pipelinq is not installed (the event never fires). Fail-soft: never
+        // blocks pipelinq's synchronous dispatch.
+        $context->registerEventListener(
+            event: \OCA\Pipelinq\Event\PosStockMovedEvent::class,
+            listener: PosStockDecrementListener::class
+        );
+
         // Change verplichtingen-commitment-accounting Tasks 1/2 (REQ-VPL-010) —
         // CommitmentMaterialisationListener auto-materialises a Verplichting
         // when a PurchaseOrder reaches `approved` or a Contract reaches
@@ -833,6 +853,14 @@ class Application extends App implements IBootstrap
         // notification centre. Without a registered INotifier the raised
         // notifications would be discarded at display time.
         $context->registerNotifierService(DeadlineReminderNotifier::class);
+
+        // Change inventory-pos-decrement (shillinq#504) — render the
+        // `pos_stock_unmatched_line` notifications PosStockDecrementListener
+        // raises for a POS-sale line that could not be matched to a shillinq
+        // inventory item. Without a registered INotifier those notifications
+        // would be discarded at display time — the reconciliation/audit
+        // surface would be silently unreachable.
+        $context->registerNotifierService(PosStockUnmatchedLineNotifier::class);
 
         // Shillinq#425 fix — register every lifecycle guard tag this change
         // adds so it actually resolves via OpenRegister's

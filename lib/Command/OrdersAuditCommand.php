@@ -197,7 +197,7 @@ class OrdersAuditCommand extends Command
         try {
             $rows = $objectService
                 ->setRegister($registerSlug)
-                ->setSchema('Order')
+                ->setSchema('OrderPrimitive')
                 ->findAll(
                     [
                         'filters'       => ['migratedFrom.schema' => $sourceSchema],

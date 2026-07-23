@@ -74,6 +74,15 @@ parameters:
         - '#Class OCA\\DocuDesk\\[a-zA-Z\\]+.*not found#'
         # Cross-app events that extend OCP\EventDispatcher\Event at runtime but PHPStan cannot verify
         - '#expects OCP\\EventDispatcher\\Event, OCA\\DocuDesk\\#'
+        # OCA\Pipelinq (POS) — cross-app dep, present only at runtime.
+        # Change inventory-pos-decrement (shillinq#504): PosStockDecrementListener
+        # consumes pipelinq's PosStockMovedEvent.
+        - '#unknown class OCA\\Pipelinq\\Event\\#'
+        - '#OCA\\Pipelinq\\Event\\[a-zA-Z\\]+.*not found#'
+        - '#on an unknown class OCA\\Pipelinq\\Event\\#'
+        - '#has invalid type OCA\\Pipelinq\\Event\\#'
+        - '#Class OCA\\Pipelinq\\Event\\[a-zA-Z\\]+.*not found#'
+        - '#expects OCP\\EventDispatcher\\Event, OCA\\Pipelinq\\#'
         # PhpOffice\PhpWord — word-processor library available at runtime via NC app deps;
         # not declared in composer.json to avoid version conflicts with NC's own phpword.
         - '#unknown class PhpOffice\\#'
