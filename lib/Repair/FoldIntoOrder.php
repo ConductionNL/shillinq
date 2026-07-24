@@ -769,16 +769,6 @@ class FoldIntoOrder implements IRepairStep
     }//end boolOrNull()
 
     /**
-     * Normalise a date / date-time source value to an ISO date-time string
-     * ('2026-03-01T00:00:00+00:00'), because OR validates the date-time format.
-     * A bare date ('2026-03-01') is widened to midnight UTC. Returns null when
-     * the source is empty or unparseable.
-     *
-     * @param mixed $value The raw date value.
-     *
-     * @return string|null The ISO date-time, or null.
-     */
-    /**
      * Normalise a source value to a bare calendar date (YYYY-MM-DD).
      *
      * Target properties declared `format: date` reject a full ISO-8601 timestamp
@@ -809,6 +799,19 @@ class FoldIntoOrder implements IRepairStep
 
     }//end toDate()
 
+    /**
+     * Normalise a date / date-time source value to an ISO date-time string
+     * ('2026-03-01T00:00:00+00:00'), because OR validates the date-time format.
+     * A bare date ('2026-03-01') is widened to midnight UTC. Returns null when
+     * the source is empty or unparseable.
+     *
+     * Use this ONLY for properties declared `format: date-time`; properties
+     * declared `format: date` must go through toDate().
+     *
+     * @param mixed $value The raw date value.
+     *
+     * @return string|null The ISO date-time, or null.
+     */
     private function toDateTime(mixed $value): ?string
     {
         if ($value === null) {
