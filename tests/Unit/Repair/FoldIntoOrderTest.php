@@ -150,6 +150,12 @@ class FoldIntoOrderTest extends TestCase
             }//end setSchema()
 
             /**
+             * Mirrors OpenRegister's real findAll() paging semantics: `limit` is a
+             * literal SQL LIMIT (so limit=0 returns ZERO rows, NOT "unlimited"),
+             * `offset` skips rows, and both apply AFTER filtering. Modelling this
+             * faithfully is what catches a caller passing limit=0 and silently
+             * reading nothing.
+             *
              * @param array<string,mixed> $params
              *
              * @return array<int,array<string,mixed>>
@@ -159,24 +165,34 @@ class FoldIntoOrderTest extends TestCase
                 $rows = ($this->recordsBySchema[$this->currentSchema] ?? []);
 
                 $filters = ($params['filters'] ?? []);
-                if ($filters === []) {
-                    return $rows;
+                if ($filters !== []) {
+                    $rows = array_values(
+                        array_filter(
+                            $rows,
+                            function (array $row) use ($filters): bool {
+                                foreach ($filters as $path => $expected) {
+                                    if ($this->dotGet($row, (string) $path) !== $expected) {
+                                        return false;
+                                    }
+                                }
+
+                                return true;
+                            }
+                        )
+                    );
                 }
 
-                return array_values(
-                    array_filter(
-                        $rows,
-                        function (array $row) use ($filters): bool {
-                            foreach ($filters as $path => $expected) {
-                                if ($this->dotGet($row, (string) $path) !== $expected) {
-                                    return false;
-                                }
-                            }
+                $offset = (int) ($params['offset'] ?? 0);
+                if ($offset > 0) {
+                    $rows = array_slice($rows, $offset);
+                }
 
-                            return true;
-                        }
-                    )
-                );
+                $limit = ($params['limit'] ?? null);
+                if ($limit !== null) {
+                    $rows = array_slice($rows, 0, (int) $limit);
+                }
+
+                return array_values($rows);
 
             }//end findAll()
 
@@ -461,6 +477,54 @@ class FoldIntoOrderTest extends TestCase
         self::assertCount(0, $fakeOs->saved('OrderPrimitive'));
 
     }//end testSkipsRowWithoutId()
+
+    /**
+     * Every source row is folded, including rows beyond the first read batch.
+     *
+     * Regression guard for the live-verified defect where readRows() passed
+     * `'limit' => 0` meaning "unlimited": OpenRegister forwards it as a literal
+     * SQL LIMIT 0, so the fold read ZERO rows and still reported
+     * "0 migrated, 0 skipped, 0 failed" — a silent, green no-op on every real
+     * instance. Seeding more rows than one batch also proves the offset paging
+     * actually advances instead of re-reading page one forever.
+     */
+    public function testFoldsEverySourceRowAcrossReadBatches(): void
+    {
+        $total     = (FoldIntoOrder::READ_BATCH_SIZE + 5);
+        $subsidies = [];
+        for ($i = 0; $i < $total; $i++) {
+            $subsidies[] = [
+                'id'                => 'sub-'.$i,
+                'administrationId'  => 'adm-1',
+                'direction'         => 'outgoing',
+                'subsidieNumber'    => sprintf('SUB-2026-%04d', $i),
+                'counterpartyName'  => 'Stichting '.$i,
+                'aangevraagdBedrag' => 1000.0,
+                'verleendBedrag'    => 900.0,
+                'state'             => 'verleend',
+                'currency'          => 'EUR',
+            ];
+        }
+
+        $fakeOs = $this->fakeObjectService(['Subsidie' => $subsidies]);
+        $this->container->method('get')->willReturn($fakeOs);
+
+        $step = new FoldIntoOrder(
+            settingsService: $this->settingsService,
+            logger: $this->logger,
+            groupManager: $this->groupManager,
+            container: $this->container,
+        );
+        $step->run($this->output);
+
+        $saved = $fakeOs->saved('OrderPrimitive');
+        self::assertCount($total, $saved, 'every source row must be folded, not just the first batch');
+
+        // The last row must be present — proves paging reached the final page.
+        $numbers = array_column($saved, 'orderNumber');
+        self::assertContains(sprintf('SUB-2026-%04d', ($total - 1)), $numbers);
+
+    }//end testFoldsEverySourceRowAcrossReadBatches()
 
     /**
      * Empty source schemas are handled gracefully (fresh-tenant no-op).
