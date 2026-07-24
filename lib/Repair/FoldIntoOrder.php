@@ -148,10 +148,17 @@ class FoldIntoOrder implements IRepairStep
             return;
         }
 
+        // Read every already-folded marker ONCE, up front. This is the idempotency
+        // index for the whole run: it needs no nested-property filtering (which
+        // OpenRegister does not support) and no assumption that the target's
+        // orderNumber equals the source migration key (it does not for
+        // DBAOpdracht, whose orderNumber is prefixed "DBA-").
+        $seen = $this->loadFoldedMarkers($objectService, $registerSlug, $output);
+
         $summary = [];
-        $summary['Subsidie']      = $this->foldRows($objectService, $registerSlug, $admin, $output, 'Subsidie', $this->buildSubsidieOrder(...));
-        $summary['PurchaseOrder'] = $this->foldRows($objectService, $registerSlug, $admin, $output, 'PurchaseOrder', $this->buildPurchaseOrder(...));
-        $summary['DBAOpdracht']   = $this->foldRows($objectService, $registerSlug, $admin, $output, 'DBAOpdracht', $this->buildEngagementOrder(...));
+        $summary['Subsidie']      = $this->foldRows($objectService, $registerSlug, $admin, $output, 'Subsidie', $this->buildSubsidieOrder(...), $seen);
+        $summary['PurchaseOrder'] = $this->foldRows($objectService, $registerSlug, $admin, $output, 'PurchaseOrder', $this->buildPurchaseOrder(...), $seen);
+        $summary['DBAOpdracht']   = $this->foldRows($objectService, $registerSlug, $admin, $output, 'DBAOpdracht', $this->buildEngagementOrder(...), $seen);
 
         foreach ($summary as $schema => $counts) {
             $output->info(
@@ -258,17 +265,18 @@ class FoldIntoOrder implements IRepairStep
      * @param IOutput  $output        The repair output.
      * @param string   $sourceSchema  The source schema slug to read.
      * @param callable $builder       fn(array $src, string $migrationKey): array|null — builds the Order record, or null to skip an unresolvable row.
+     * @param array    $seen          Set of already-folded markers, updated in place so a run never folds the same source twice.
      *
      * @return array{migrated:int,skipped:int,failed:int} Per-schema counts.
      */
-    private function foldRows(object $objectService, string $registerSlug, IUser $admin, IOutput $output, string $sourceSchema, callable $builder): array
+    private function foldRows(object $objectService, string $registerSlug, IUser $admin, IOutput $output, string $sourceSchema, callable $builder, array &$seen): array
     {
         $migrated = 0;
         $skipped  = 0;
         $failed   = 0;
 
         foreach ($this->readRows($objectService, $registerSlug, $sourceSchema, $output) as $row) {
-            $src          = (array) $row;
+            $src          = $this->normaliseRow($row);
             $migrationKey = $this->migrationKey($src, $sourceSchema);
 
             if ($migrationKey === '') {
@@ -278,7 +286,7 @@ class FoldIntoOrder implements IRepairStep
             }
 
             try {
-                if ($this->orderExists($objectService, $registerSlug, $sourceSchema, $migrationKey) === true) {
+                if (isset($seen[$this->markerKey($sourceSchema, $migrationKey)]) === true) {
                     $skipped++;
                     continue;
                 }
@@ -291,7 +299,7 @@ class FoldIntoOrder implements IRepairStep
                 }
 
                 $objectService->saveObject(
-                    object: $order,
+                    object: $this->pruneNulls($order),
                     register: $registerSlug,
                     schema: self::TARGET,
                     _rbac: false,
@@ -299,6 +307,7 @@ class FoldIntoOrder implements IRepairStep
                     currentUser: $admin,
                 );
 
+                $seen[$this->markerKey($sourceSchema, $migrationKey)] = true;
                 $migrated++;
             } catch (\Throwable $e) {
                 $output->warning('Shillinq: FoldIntoOrder — '.$sourceSchema.' "'.$migrationKey.'" fold failed: '.$e->getMessage());
@@ -313,6 +322,106 @@ class FoldIntoOrder implements IRepairStep
         return ['migrated' => $migrated, 'skipped' => $skipped, 'failed' => $failed];
 
     }//end foldRows()
+
+    /**
+     * Recursively drop null-valued keys from a built Order record.
+     *
+     * The builders emit an explicit null for every optional source field that is
+     * absent, but OpenRegister validates a present null against the property's
+     * declared type and rejects it ("Property 'subsidie.regelingArtikel' should be
+     * type 'string' but is 'null'"), failing the whole row. An ABSENT optional
+     * property is valid, so pruning is lossless — null carries no data.
+     * Live-verified: without this, every real Subsidie row failed to save.
+     *
+     * @param array<string,mixed> $record The built Order record.
+     *
+     * @return array<string,mixed> The record without null-valued keys.
+     */
+    private function pruneNulls(array $record): array
+    {
+        $clean = [];
+
+        foreach ($record as $key => $value) {
+            if ($value === null) {
+                continue;
+            }
+
+            if (is_array($value) === true) {
+                $nested = $this->pruneNulls($value);
+                if ($nested === []) {
+                    continue;
+                }
+
+                $clean[$key] = $nested;
+                continue;
+            }
+
+            $clean[$key] = $value;
+        }
+
+        return $clean;
+
+    }//end pruneNulls()
+
+    /**
+     * Normalise one findAll() result row into its payload array.
+     *
+     * OpenRegister returns ObjectEntity instances, whose schema payload lives in
+     * getObject() — NOT in the object's own properties. A blind `(array) $row`
+     * cast therefore yields mangled "\0*\0prop" keys and loses every payload
+     * field, so the row reads as "no stable id" and gets skipped. Live-verified:
+     * every source row was skipped that way while the step still reported a
+     * clean summary.
+     *
+     * Nextcloud's Entity base implements its getters through __call(), so
+     * method_exists()/get_class_methods() report FALSE for getObject()/getUuid().
+     * Probe by calling, never by reflection.
+     *
+     * @param mixed $row One findAll() result row.
+     *
+     * @return array<string,mixed> The payload array (may be empty when unusable).
+     */
+    private function normaliseRow(mixed $row): array
+    {
+        if (is_array($row) === true) {
+            return $row;
+        }
+
+        if (is_object($row) === false) {
+            return [];
+        }
+
+        $data = [];
+
+        try {
+            $payload = $row->getObject();
+            if (is_array($payload) === true) {
+                $data = $payload;
+            }
+        } catch (\Throwable $e) {
+            $data = [];
+        }
+
+        if ($data === []) {
+            // Not an OR entity — public properties only; never a blind cast.
+            $data = get_object_vars($row);
+        }
+
+        // Guarantee a stable identifier even when the payload omits one.
+        if ((string) ($data['id'] ?? '') === '' && (string) ($data['uuid'] ?? '') === '') {
+            try {
+                $uuid = (string) $row->getUuid();
+                if ($uuid !== '') {
+                    $data['uuid'] = $uuid;
+                }
+            } catch (\Throwable $e) {
+                // No stable id available; the caller reports and skips the row.
+            }
+        }
+
+        return $data;
+
+    }//end normaliseRow()
 
     /**
      * Derive the stable migration key for a source row.
@@ -339,40 +448,63 @@ class FoldIntoOrder implements IRepairStep
     }//end migrationKey()
 
     /**
-     * Whether an Order already exists carrying the given source marker
-     * (idempotency for every fold).
+     * Build the set of already-folded source markers, read once per run.
      *
-     * @param object $objectService The OR ObjectService.
-     * @param string $registerSlug  The shillinq register slug.
-     * @param string $sourceSchema  The source schema slug.
-     * @param string $migrationKey  The stable source marker.
+     * Idempotency cannot be delegated to a query here: OpenRegister's findAll()
+     * does NOT support dot-path filters on nested properties, so the original
+     * `['migratedFrom.key' => ...]` filter matched nothing and the step always
+     * concluded "no existing Order" — re-folding every source row on every run,
+     * so each `occ upgrade` added a duplicate set of financial records
+     * (live-verified: a second run produced 2 Orders for one source key).
+     * Filtering on the top-level `orderNumber` instead is also wrong, because it
+     * only equals the migration key for Subsidie/PurchaseOrder — DBAOpdracht
+     * prefixes it "DBA-" (live-verified: engagement rows duplicated that way).
      *
-     * @return bool True when a matching Order exists.
+     * Reading the markers once is exact, needs no filter support, and costs one
+     * batched scan instead of a query per source row.
+     *
+     * @param object  $objectService The OR ObjectService.
+     * @param string  $registerSlug  The shillinq register slug.
+     * @param IOutput $output        The repair output.
+     *
+     * @return array<string,true> Set keyed by markerKey(schema, key).
      */
-    private function orderExists(object $objectService, string $registerSlug, string $sourceSchema, string $migrationKey): bool
+    private function loadFoldedMarkers(object $objectService, string $registerSlug, IOutput $output): array
     {
-        try {
-            $found = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema(self::TARGET)
-                ->findAll(
-                    [
-                        'filters'       => [
-                            'migratedFrom.schema' => $sourceSchema,
-                            'migratedFrom.key'    => $migrationKey,
-                        ],
-                        'limit'         => 1,
-                        '_rbac'         => false,
-                        '_multitenancy' => false,
-                    ]
-                );
+        $seen = [];
 
-            return is_array($found) === true && $found !== [];
-        } catch (\Throwable) {
-            return false;
+        foreach ($this->readRows($objectService, $registerSlug, self::TARGET, $output) as $row) {
+            $marker = ($this->normaliseRow($row)['migratedFrom'] ?? null);
+            if (is_array($marker) === false) {
+                continue;
+            }
+
+            $schema = (string) ($marker['schema'] ?? '');
+            $key    = (string) ($marker['key'] ?? '');
+            if ($schema === '' || $key === '') {
+                continue;
+            }
+
+            $seen[$this->markerKey($schema, $key)] = true;
         }
 
-    }//end orderExists()
+        return $seen;
+
+    }//end loadFoldedMarkers()
+
+    /**
+     * The set key identifying one folded source row.
+     *
+     * @param string $sourceSchema The source schema slug.
+     * @param string $migrationKey The stable source marker.
+     *
+     * @return string The composite set key.
+     */
+    private function markerKey(string $sourceSchema, string $migrationKey): string
+    {
+        return $sourceSchema."\0".$migrationKey;
+
+    }//end markerKey()
 
     /**
      * Build an Order record (orderType=subsidie) from a legacy Subsidie row.
@@ -404,11 +536,11 @@ class FoldIntoOrder implements IRepairStep
                 'regelingNaam'            => $this->firstNonEmpty([($src['regelingNaam'] ?? null), ($src['grantProgram'] ?? null), ($src['subsidieName'] ?? null)]),
                 'regelingArtikel'         => $this->firstNonEmpty([($src['regelingArtikel'] ?? null), ($src['grantProgram'] ?? null)]),
                 'subsidieRegeling'        => $this->stringOrNull($src['subsidieRegeling'] ?? null),
-                'aanvraagDate'            => $this->toDateTime($src['aanvraagDate'] ?? null),
-                'beschikkingDate'         => $this->toDateTime($src['beschikkingDate'] ?? ($src['awardDate'] ?? null)),
-                'vaststellingDate'        => $this->toDateTime($src['vaststellingDate'] ?? ($src['settlementDate'] ?? null)),
-                'settlementDate'          => $this->toDateTime($src['settlementDate'] ?? null),
-                'disbursementDate'        => $this->toDateTime($src['disbursementDate'] ?? null),
+                'aanvraagDate'            => $this->toDate($src['aanvraagDate'] ?? null),
+                'beschikkingDate'         => $this->toDate($src['beschikkingDate'] ?? ($src['awardDate'] ?? null)),
+                'vaststellingDate'        => $this->toDate($src['vaststellingDate'] ?? ($src['settlementDate'] ?? null)),
+                'settlementDate'          => $this->toDate($src['settlementDate'] ?? null),
+                'disbursementDate'        => $this->toDate($src['disbursementDate'] ?? null),
                 'aangevraagdBedrag'       => $this->floatOrNull($src['aangevraagdBedrag'] ?? null),
                 'verleendBedrag'          => $this->floatOrNull($src['verleendBedrag'] ?? ($src['awardAmount'] ?? null)),
                 'vastgesteldBedrag'       => $this->floatOrNull($src['vastgesteldBedrag'] ?? null),
@@ -471,7 +603,7 @@ class FoldIntoOrder implements IRepairStep
                 'requester'            => $this->stringOrNull($src['requester'] ?? null),
                 'requisitionId'        => $this->stringOrNull($src['requisitionId'] ?? null),
                 'deliveryAddress'      => $this->stringOrNull($src['deliveryAddress'] ?? null),
-                'expectedDeliveryDate' => $this->toDateTime($src['expectedDeliveryDate'] ?? null),
+                'expectedDeliveryDate' => $this->toDate($src['expectedDeliveryDate'] ?? null),
                 'totalExclVat'         => $this->intOrNull($src['totalExclVat'] ?? null),
                 'totalVat'             => $this->intOrNull($src['totalVat'] ?? null),
                 'totalInclVat'         => $totalInclVat,
@@ -518,22 +650,22 @@ class FoldIntoOrder implements IRepairStep
                 'ondernemingId'           => $this->stringOrNull($src['ondernemingId'] ?? null),
                 'klantId'                 => $this->stringOrNull($src['klantId'] ?? null),
                 'opdrachtNaam'            => $this->stringOrNull($src['opdrachtNaam'] ?? null),
-                'verwachteEindDatum'      => $this->toDateTime($src['verwachteEindDatum'] ?? null),
-                'feitelijkeEindDatum'     => $this->toDateTime($src['feitelijkeEindDatum'] ?? null),
+                'verwachteEindDatum'      => $this->toDate($src['verwachteEindDatum'] ?? null),
+                'feitelijkeEindDatum'     => $this->toDate($src['feitelijkeEindDatum'] ?? null),
                 'verwachteOmzet'          => $verwachteOmzet,
                 'gerealiseerdeOmzet'      => $this->intOrNull($src['gerealiseerdeOmzet'] ?? null),
                 'eenmaligLageDrempel'     => $this->boolOrNull($src['eenmaligLageDrempel'] ?? null),
                 'modelOvereenkomstId'     => $this->stringOrNull($src['modelOvereenkomstId'] ?? null),
-                'intakeDatum'             => $this->toDateTime($src['intakeDatum'] ?? null),
+                'intakeDatum'             => $this->toDate($src['intakeDatum'] ?? null),
                 'actueleRisicoscore'      => $this->intOrNull($src['actueleRisicoscore'] ?? null),
                 'risicoNiveau'            => $this->stringOrNull($src['risicoNiveau'] ?? null),
                 'openFlags'               => $this->intOrNull($src['openFlags'] ?? null),
                 'evidenceDossierId'       => $this->stringOrNull($src['evidenceDossierId'] ?? null),
                 'wbaBeoordelingResultaat' => $this->stringOrNull($src['wbaBeoordelingResultaat'] ?? null),
-                'wbaGeldigTot'            => $this->toDateTime($src['wbaGeldigTot'] ?? null),
+                'wbaGeldigTot'            => $this->toDate($src['wbaGeldigTot'] ?? null),
                 'intermediairMode'        => $this->boolOrNull($src['intermediairMode'] ?? null),
                 'perspectief'             => $this->stringOrNull($src['perspectief'] ?? null),
-                'retentieDeadline'        => $this->toDateTime($src['retentieDeadline'] ?? null),
+                'retentieDeadline'        => $this->toDate($src['retentieDeadline'] ?? null),
             ],
             'migratedFrom'     => [
                 'schema' => 'DBAOpdracht',
@@ -646,6 +778,37 @@ class FoldIntoOrder implements IRepairStep
      *
      * @return string|null The ISO date-time, or null.
      */
+    /**
+     * Normalise a source value to a bare calendar date (YYYY-MM-DD).
+     *
+     * Target properties declared `format: date` reject a full ISO-8601 timestamp
+     * ("should match format 'date' but '2026-01-15T00:00:00+00:00' does not"), so
+     * date-typed fields must NOT go through toDateTime(). Live-verified: emitting
+     * ATOM into a date field failed every real Subsidie row.
+     *
+     * @param mixed $value The raw source value.
+     *
+     * @return string|null The YYYY-MM-DD date, or null when unusable.
+     */
+    private function toDate(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $str = trim((string) $value);
+        if ($str === '') {
+            return null;
+        }
+
+        try {
+            return (new DateTimeImmutable($str))->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
+
+    }//end toDate()
+
     private function toDateTime(mixed $value): ?string
     {
         if ($value === null) {
