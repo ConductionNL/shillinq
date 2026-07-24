@@ -150,6 +150,12 @@ class FoldIntoOrderTest extends TestCase
             }//end setSchema()
 
             /**
+             * Mirrors OpenRegister's real findAll() paging semantics: `limit` is a
+             * literal SQL LIMIT (so limit=0 returns ZERO rows, NOT "unlimited"),
+             * `offset` skips rows, and both apply AFTER filtering. Modelling this
+             * faithfully is what catches a caller passing limit=0 and silently
+             * reading nothing.
+             *
              * @param array<string,mixed> $params
              *
              * @return array<int,array<string,mixed>>
@@ -159,24 +165,46 @@ class FoldIntoOrderTest extends TestCase
                 $rows = ($this->recordsBySchema[$this->currentSchema] ?? []);
 
                 $filters = ($params['filters'] ?? []);
-                if ($filters === []) {
-                    return $rows;
-                }
-
-                return array_values(
-                    array_filter(
-                        $rows,
-                        function (array $row) use ($filters): bool {
-                            foreach ($filters as $path => $expected) {
-                                if ($this->dotGet($row, (string) $path) !== $expected) {
+                if ($filters !== []) {
+                    $rows = array_values(
+                        array_filter(
+                            $rows,
+                            function (mixed $row) use ($filters): bool {
+                                if (is_array($row) === false) {
                                     return false;
                                 }
-                            }
 
-                            return true;
-                        }
-                    )
-                );
+                                foreach ($filters as $path => $expected) {
+                                    // OpenRegister does NOT support dot-path filters on
+                                    // nested properties: such a filter matches nothing.
+                                    // Modelled faithfully so a caller relying on one is
+                                    // caught here instead of silently on a live instance.
+                                    if (str_contains((string) $path, '.') === true) {
+                                        return false;
+                                    }
+
+                                    if ($this->dotGet($row, (string) $path) !== $expected) {
+                                        return false;
+                                    }
+                                }
+
+                                return true;
+                            }
+                        )
+                    );
+                }
+
+                $offset = (int) ($params['offset'] ?? 0);
+                if ($offset > 0) {
+                    $rows = array_slice($rows, $offset);
+                }
+
+                $limit = ($params['limit'] ?? null);
+                if ($limit !== null) {
+                    $rows = array_slice($rows, 0, (int) $limit);
+                }
+
+                return array_values($rows);
 
             }//end findAll()
 
@@ -461,6 +489,200 @@ class FoldIntoOrderTest extends TestCase
         self::assertCount(0, $fakeOs->saved('OrderPrimitive'));
 
     }//end testSkipsRowWithoutId()
+
+    /**
+     * Every source row is folded, including rows beyond the first read batch.
+     *
+     * Regression guard for the live-verified defect where readRows() passed
+     * `'limit' => 0` meaning "unlimited": OpenRegister forwards it as a literal
+     * SQL LIMIT 0, so the fold read ZERO rows and still reported
+     * "0 migrated, 0 skipped, 0 failed" — a silent, green no-op on every real
+     * instance. Seeding more rows than one batch also proves the offset paging
+     * actually advances instead of re-reading page one forever.
+     */
+    public function testFoldsEverySourceRowAcrossReadBatches(): void
+    {
+        $total     = (FoldIntoOrder::READ_BATCH_SIZE + 5);
+        $subsidies = [];
+        for ($i = 0; $i < $total; $i++) {
+            $subsidies[] = [
+                'id'                => 'sub-'.$i,
+                'administrationId'  => 'adm-1',
+                'direction'         => 'outgoing',
+                'subsidieNumber'    => sprintf('SUB-2026-%04d', $i),
+                'counterpartyName'  => 'Stichting '.$i,
+                'aangevraagdBedrag' => 1000.0,
+                'verleendBedrag'    => 900.0,
+                'state'             => 'verleend',
+                'currency'          => 'EUR',
+            ];
+        }
+
+        $fakeOs = $this->fakeObjectService(['Subsidie' => $subsidies]);
+        $this->container->method('get')->willReturn($fakeOs);
+
+        $step = new FoldIntoOrder(
+            settingsService: $this->settingsService,
+            logger: $this->logger,
+            groupManager: $this->groupManager,
+            container: $this->container,
+        );
+        $step->run($this->output);
+
+        $saved = $fakeOs->saved('OrderPrimitive');
+        self::assertCount($total, $saved, 'every source row must be folded, not just the first batch');
+
+        // The last row must be present — proves paging reached the final page.
+        $numbers = array_column($saved, 'orderNumber');
+        self::assertContains(sprintf('SUB-2026-%04d', ($total - 1)), $numbers);
+
+    }//end testFoldsEverySourceRowAcrossReadBatches()
+
+    /**
+     * Rows arriving as OpenRegister ObjectEntity instances are folded.
+     *
+     * Regression guard for the live-verified defect where foldRows() did
+     * `(array) $row`. OpenRegister's findAll() returns ObjectEntity objects whose
+     * payload lives in getObject(); casting one to array yields mangled
+     * "\0*\0prop" keys, so every field — including the id — vanished and every
+     * row was rejected as "row without a stable id" while the step still printed
+     * a clean summary.
+     *
+     * The double below mirrors Nextcloud's Entity base by exposing getObject()
+     * and getUuid() through __call(), which is what makes method_exists() return
+     * FALSE for them on the real class.
+     */
+    public function testFoldsRowsDeliveredAsObjectEntities(): void
+    {
+        $payload = [
+            'id'                => 'sub-obj-1',
+            'administrationId'  => 'adm-1',
+            'direction'         => 'outgoing',
+            'subsidieNumber'    => 'SUB-2026-777',
+            'counterpartyName'  => 'Stichting Entity',
+            'aangevraagdBedrag' => 5000.0,
+            'verleendBedrag'    => 4500.0,
+            'state'             => 'verleend',
+            'currency'          => 'EUR',
+        ];
+
+        $entity = new class($payload) {
+
+            /**
+             * @var array<string,mixed>
+             */
+            private array $payload;
+
+            /**
+             * @param array<string,mixed> $payload
+             */
+            public function __construct(array $payload)
+            {
+                $this->payload = $payload;
+
+            }//end __construct()
+
+            /**
+             * Mirrors OCP\AppFramework\Db\Entity: getters resolve via __call, so
+             * method_exists() reports false for them.
+             *
+             * @param array<int,mixed> $arguments
+             */
+            public function __call(string $name, array $arguments): mixed
+            {
+                if ($name === 'getObject') {
+                    return $this->payload;
+                }
+
+                if ($name === 'getUuid') {
+                    return 'uuid-obj-1';
+                }
+
+                throw new \BadMethodCallException($name);
+
+            }//end __call()
+        };
+
+        $fakeOs = $this->fakeObjectService(['Subsidie' => [$entity]]);
+        $this->container->method('get')->willReturn($fakeOs);
+
+        $step = new FoldIntoOrder(
+            settingsService: $this->settingsService,
+            logger: $this->logger,
+            groupManager: $this->groupManager,
+            container: $this->container,
+        );
+        $step->run($this->output);
+
+        $saved = $fakeOs->saved('OrderPrimitive');
+        self::assertCount(1, $saved, 'an ObjectEntity row must fold, not be skipped as id-less');
+        self::assertSame('SUB-2026-777', $saved[0]['orderNumber']);
+        self::assertSame('subsidie', $saved[0]['orderType']);
+        self::assertSame('Stichting Entity', $saved[0]['counterpartyName']);
+
+    }//end testFoldsRowsDeliveredAsObjectEntities()
+
+    /**
+     * Re-running the step folds nothing again — for EVERY source type.
+     *
+     * Regression guard for the live-verified idempotency defect. The original
+     * check filtered on `migratedFrom.key`, which OpenRegister cannot match
+     * (no dot-path filter support), so every run re-folded every row and each
+     * `occ upgrade` added a duplicate set of financial records. Filtering on the
+     * top-level `orderNumber` instead still duplicated DBAOpdracht, whose
+     * orderNumber is prefixed "DBA-" and therefore never equals its migration
+     * key — which is why the marker set is read up front instead.
+     */
+    public function testSecondRunIsIdempotentForEverySourceType(): void
+    {
+        $records = [
+            'Subsidie'    => [
+                [
+                    'id'               => 'sub-idem-1',
+                    'administrationId' => 'adm-1',
+                    'direction'        => 'outgoing',
+                    'subsidieNumber'   => 'SUB-IDEM-1',
+                    'counterpartyName' => 'Stichting Idem',
+                    'verleendBedrag'   => 100.0,
+                    'state'            => 'verleend',
+                    'currency'         => 'EUR',
+                ],
+            ],
+            'DBAOpdracht' => [
+                [
+                    'id'            => 'dba-idem-1',
+                    'ondernemingId' => 'onp-1',
+                    'klantId'       => 'kl-1',
+                    'opdrachtNaam'  => 'Opdracht Idem',
+                    'startDatum'    => '2026-02-01',
+                    'intakeStatus'  => 'ACTIEF',
+                    'risicoNiveau'  => 'LAAG',
+                ],
+            ],
+        ];
+
+        $fakeOs = $this->fakeObjectService($records);
+        $this->container->method('get')->willReturn($fakeOs);
+
+        $step = new FoldIntoOrder(
+            settingsService: $this->settingsService,
+            logger: $this->logger,
+            groupManager: $this->groupManager,
+            container: $this->container,
+        );
+
+        $step->run($this->output);
+        $afterFirst = count($fakeOs->saved('OrderPrimitive'));
+        self::assertSame(2, $afterFirst, 'first run folds one Order per source row');
+
+        $step->run($this->output);
+        self::assertCount(
+            $afterFirst,
+            $fakeOs->saved('OrderPrimitive'),
+            'a second run must fold nothing again — no duplicate financial records'
+        );
+
+    }//end testSecondRunIsIdempotentForEverySourceType()
 
     /**
      * Empty source schemas are handled gracefully (fresh-tenant no-op).
