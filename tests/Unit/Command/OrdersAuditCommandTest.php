@@ -108,6 +108,12 @@ class OrdersAuditCommandTest extends TestCase
             }//end setSchema()
 
             /**
+             * Mirrors OpenRegister's real findAll() semantics: `limit` is a literal
+             * SQL LIMIT (limit=0 => ZERO rows), `offset` skips, and dot-path filters
+             * on nested properties match NOTHING. Modelling this faithfully is what
+             * catches limit=>0 reads and nested-filter idempotency checks — the two
+             * bugs that made this audit report a false PASS.
+             *
              * @param array<string,mixed> $params
              *
              * @return array<int,array<string,mixed>>
@@ -116,24 +122,39 @@ class OrdersAuditCommandTest extends TestCase
             {
                 $rows    = ($this->recordsBySchema[$this->currentSchema] ?? []);
                 $filters = ($params['filters'] ?? []);
-                if ($filters === []) {
-                    return $rows;
+                if ($filters !== []) {
+                    $rows = array_values(
+                        array_filter(
+                            $rows,
+                            static function (array $row) use ($filters): bool {
+                                foreach ($filters as $path => $expected) {
+                                    // OR does not support dot-path filters on nested props.
+                                    if (str_contains((string) $path, '.') === true) {
+                                        return false;
+                                    }
+
+                                    if (($row[$path] ?? null) !== $expected) {
+                                        return false;
+                                    }
+                                }
+
+                                return true;
+                            }
+                        )
+                    );
                 }
 
-                return array_values(
-                    array_filter(
-                        $rows,
-                        static function (array $row) use ($filters): bool {
-                            foreach ($filters as $path => $expected) {
-                                if (($row['migratedFrom']['schema'] ?? null) !== $expected) {
-                                    return false;
-                                }
-                            }
+                $offset = (int) ($params['offset'] ?? 0);
+                if ($offset > 0) {
+                    $rows = array_slice($rows, $offset);
+                }
 
-                            return true;
-                        }
-                    )
-                );
+                $limit = ($params['limit'] ?? null);
+                if ($limit !== null) {
+                    $rows = array_slice($rows, 0, (int) $limit);
+                }
+
+                return array_values($rows);
 
             }//end findAll()
         };
