@@ -149,7 +149,7 @@ class StampJournalTypeOnGlTransactions implements IRepairStep
         string $registerSlug,
         IOutput $output
     ): int {
-        $closingEntries = $this->readAllRows($objectService, $registerSlug, 'ClosingEntry');
+        $closingEntries = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'ClosingEntry');
 
         if ($closingEntries === []) {
             return 0;
@@ -158,7 +158,7 @@ class StampJournalTypeOnGlTransactions implements IRepairStep
         $stamped = 0;
         foreach ($closingEntries as $entry) {
             try {
-                $arr = $this->rowPayload($entry);
+                $arr = $this->rowPayload(row: $entry);
                 $glTransactionId = (string) ($arr['glTransactionId'] ?? '');
                 if ($glTransactionId === '') {
                     continue;
@@ -230,7 +230,7 @@ class StampJournalTypeOnGlTransactions implements IRepairStep
         string $registerSlug,
         IOutput $output
     ): int {
-        $intercompany = $this->readAllRows($objectService, $registerSlug, 'IntercompanyTransaction');
+        $intercompany = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'IntercompanyTransaction');
 
         if ($intercompany === []) {
             return 0;
@@ -239,7 +239,7 @@ class StampJournalTypeOnGlTransactions implements IRepairStep
         $stamped = 0;
         foreach ($intercompany as $ic) {
             try {
-                $arr = $this->rowPayload($ic);
+                $arr = $this->rowPayload(row: $ic);
                 $glTransactionId = (string) ($arr['sourceJournalEntryId'] ?? '');
                 if ($glTransactionId === '') {
                     continue;

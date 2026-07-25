@@ -172,7 +172,7 @@ class RetireSubsidieSchema implements IRepairStep
         $failed  = 0;
 
         foreach ($this->readSubsidies($objectService, $registerSlug, $output) as $row) {
-            $src          = $this->rowPayload($row);
+            $src          = $this->rowPayload(row: $row);
             $subsidieId   = (string) ($src['id'] ?? ($src['uuid'] ?? ''));
             $migrationKey = $this->migrationKey($src);
 
@@ -259,7 +259,7 @@ class RetireSubsidieSchema implements IRepairStep
     private function readSubsidies(object $objectService, string $registerSlug, IOutput $output): array
     {
         try {
-            return $this->readAllRows($objectService, $registerSlug, self::SCHEMA);
+            return $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: self::SCHEMA);
         } catch (\Throwable $e) {
             $output->info('Shillinq: RetireSubsidieSchema — Subsidie schema not available ('.$e->getMessage().'); nothing to retire.');
             return [];
@@ -306,7 +306,7 @@ class RetireSubsidieSchema implements IRepairStep
             // the old filtered query always found "no Order" on a live instance
             // and every Subsidie was kept (the schema never retired). Read every
             // Order once and match the migration marker in PHP instead.
-            $orders = $this->readAllRows($objectService, $registerSlug, self::TARGET);
+            $orders = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: self::TARGET);
         } catch (\Throwable) {
             // On lookup error, conservatively report "no Order" so the Subsidie
             // is KEPT (never delete on an ambiguous read).
@@ -314,7 +314,7 @@ class RetireSubsidieSchema implements IRepairStep
         }
 
         foreach ($orders as $order) {
-            $marker = ($this->rowPayload($order)['migratedFrom'] ?? null);
+            $marker = ($this->rowPayload(row: $order)['migratedFrom'] ?? null);
             if (is_array($marker) === false) {
                 continue;
             }

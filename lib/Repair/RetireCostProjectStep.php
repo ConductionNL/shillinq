@@ -181,7 +181,7 @@ class RetireCostProjectStep implements IRepairStep
         $failed   = 0;
 
         try {
-            $costProjects = $this->readAllRows($objectService, $registerSlug, 'CostProject');
+            $costProjects = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'CostProject');
         } catch (\Throwable $e) {
             $output->info('Shillinq: RetireCostProjectStep — no CostProject schema or no records found ('.$e->getMessage().'); skipping.');
             return ['migrated' => 0, 'skipped' => 0, 'failed' => 0];
@@ -193,7 +193,7 @@ class RetireCostProjectStep implements IRepairStep
         }
 
         foreach ($costProjects as $costProject) {
-            $arr = $this->rowPayload($costProject);
+            $arr = $this->rowPayload(row: $costProject);
             $id  = (string) ($arr['id'] ?? ($arr['uuid'] ?? ''));
 
             if ($id === '') {

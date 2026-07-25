@@ -104,7 +104,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
             // Index every Project by every identifier a source object might
             // reference (id / uuid / projectNumber / code). Values are kept
             // as live mutable arrays so multiple lines fold into one save.
-            $projects = $this->readAllRows($objectService, $registerSlug, 'Project');
+            $projects = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'Project');
 
             if ($projects === []) {
                 $output->info('Shillinq: no Project records — expense/hours fold skipped.');
@@ -248,7 +248,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
         $projectArrays = [];
 
         foreach ($projects as $project) {
-            $arr = $this->rowPayload($project);
+            $arr = $this->rowPayload(row: $project);
             $id  = (string) ($arr['id'] ?? '');
             if ($id === '') {
                 $id = (string) ($arr['uuid'] ?? '');
@@ -298,13 +298,13 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
         $index = [];
 
         try {
-            $claims = $this->readAllRows($objectService, $registerSlug, 'ExpenseClaimEntry');
+            $claims = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'ExpenseClaimEntry');
         } catch (\Throwable $e) {
             return $index;
         }
 
         foreach ($claims as $claim) {
-            $arr       = $this->rowPayload($claim);
+            $arr       = $this->rowPayload(row: $claim);
             $projectId = (string) ($arr['projectId'] ?? '');
             if ($projectId === '') {
                 continue;
@@ -354,7 +354,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
         $newlyTouched = [];
 
         try {
-            $rows = $this->readAllRows($objectService, $registerSlug, $schema);
+            $rows = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: $schema);
         } catch (\Throwable $e) {
             $output->warning('Shillinq: fold — failed to list '.$schema.': '.$e->getMessage());
             return $newlyTouched;
@@ -362,7 +362,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
 
         foreach ($rows as $row) {
             try {
-                $arr      = $this->rowPayload($row);
+                $arr      = $this->rowPayload(row: $row);
                 $sourceId = (string) ($arr['id'] ?? ($arr['uuid'] ?? ''));
                 if ($sourceId === '') {
                     continue;
@@ -418,7 +418,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
         $newlyTouched = [];
 
         try {
-            $rows = $this->readAllRows($objectService, $registerSlug, 'UrenRegistratie');
+            $rows = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'UrenRegistratie');
         } catch (\Throwable $e) {
             $output->warning('Shillinq: fold — failed to list UrenRegistratie: '.$e->getMessage());
             return $newlyTouched;
@@ -426,7 +426,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep
 
         foreach ($rows as $row) {
             try {
-                $arr      = $this->rowPayload($row);
+                $arr      = $this->rowPayload(row: $row);
                 $sourceId = (string) ($arr['id'] ?? ($arr['uuid'] ?? ''));
                 if ($sourceId === '') {
                     continue;

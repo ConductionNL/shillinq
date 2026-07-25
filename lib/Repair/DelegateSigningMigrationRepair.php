@@ -159,7 +159,7 @@ class DelegateSigningMigrationRepair implements IRepairStep
         $updated = 0;
         $skipped = 0;
 
-        $reports = $this->readAllRows($objectService, $registerSlug, 'ACMReport');
+        $reports = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'ACMReport');
 
         if ($reports === []) {
             $output->info('Shillinq: no ACMReport records found — skipping signing-delegation backfill.');
@@ -167,7 +167,7 @@ class DelegateSigningMigrationRepair implements IRepairStep
         }
 
         foreach ($reports as $report) {
-            $arr         = $this->rowPayload($report);
+            $arr         = $this->rowPayload(row: $report);
             $fingerprint = (string) ($arr['signatureFingerprint'] ?? '');
             $signingRef  = (string) ($arr['signingRequestRef'] ?? '');
 

@@ -179,7 +179,7 @@ class UnifyAnalyticalDimensions implements IRepairStep
         $created = 0;
         $skipped = 0;
 
-        $costCenters = $this->readAllRows($objectService, $registerSlug, 'CostCenter');
+        $costCenters = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'CostCenter');
 
         if ($costCenters === []) {
             $output->info('Shillinq: no CostCenter records found — skipping cost-center migration.');
@@ -187,7 +187,7 @@ class UnifyAnalyticalDimensions implements IRepairStep
         }
 
         foreach ($costCenters as $costCenter) {
-            $arr  = $this->rowPayload($costCenter);
+            $arr  = $this->rowPayload(row: $costCenter);
             $code = (string) ($arr['code'] ?? '');
             $administrationId = (string) ($arr['administrationId'] ?? '');
 
@@ -250,7 +250,7 @@ class UnifyAnalyticalDimensions implements IRepairStep
         $created = 0;
         $skipped = 0;
 
-        $kostenDragers = $this->readAllRows($objectService, $registerSlug, 'KostenDrager');
+        $kostenDragers = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'KostenDrager');
 
         if ($kostenDragers === []) {
             $output->info('Shillinq: no KostenDrager records found — skipping cost-object migration.');
@@ -258,7 +258,7 @@ class UnifyAnalyticalDimensions implements IRepairStep
         }
 
         foreach ($kostenDragers as $kostenDrager) {
-            $arr  = $this->rowPayload($kostenDrager);
+            $arr  = $this->rowPayload(row: $kostenDrager);
             $code = (string) ($arr['code'] ?? '');
             $administrationId = (string) ($arr['administrationId'] ?? '');
 

@@ -115,7 +115,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
             // Stream every OninbaarAfschrijving write-off row. RBAC +
             // multi-tenancy are bypassed: the repair runs in the
             // installer/upgrade context with no authenticated session.
-            $writeOffs = $this->readAllRows($objectService, $registerSlug, 'OninbaarAfschrijving');
+            $writeOffs = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'OninbaarAfschrijving');
 
             if ($writeOffs === []) {
                 $output->info('Shillinq: no OninbaarAfschrijving rows — ARInvoice writeOff/dunning fold skipped.');
@@ -126,7 +126,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
             $skipped = 0;
             $missing = 0;
             foreach ($writeOffs as $writeOff) {
-                $row       = $this->rowPayload($writeOff);
+                $row       = $this->rowPayload(row: $writeOff);
                 $factuurId = (string) ($row['factuurId'] ?? '');
                 if ($factuurId === '') {
                     $skipped++;
@@ -275,7 +275,12 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
         string $factuurId
     ): ?array {
         try {
-            $runs = $this->readAllRows($objectService, $registerSlug, 'DunningRun', ['factuurId' => $factuurId]);
+            $runs = $this->readAllRows(
+                objectService: $objectService,
+                registerSlug: $registerSlug,
+                schema: 'DunningRun',
+                filters: ['factuurId' => $factuurId]
+            );
         } catch (\Throwable $e) {
             return null;
         }
@@ -288,7 +293,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
         $latestStage = -1;
         $latestExec  = '';
         foreach ($runs as $run) {
-            $runArr = $this->rowPayload($run);
+            $runArr = $this->rowPayload(row: $run);
             $stage  = (int) ($runArr['stageNr'] ?? 0);
             $exec   = (string) ($runArr['uitgevoerdOp'] ?? '');
 

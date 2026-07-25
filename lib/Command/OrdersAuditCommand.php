@@ -164,7 +164,7 @@ class OrdersAuditCommand extends Command
     private function countRows(object $objectService, string $registerSlug, string $schema): int
     {
         try {
-            return count($this->readAllRows($objectService, $registerSlug, $schema));
+            return count($this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: $schema));
         } catch (\Throwable) {
             return 0;
         }
@@ -188,7 +188,7 @@ class OrdersAuditCommand extends Command
             // returned 0, making the audit report a false PASS). Read every
             // OrderPrimitive row and match the nested marker in PHP instead.
             $count = 0;
-            foreach ($this->readAllRows($objectService, $registerSlug, 'OrderPrimitive') as $row) {
+            foreach ($this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'OrderPrimitive') as $row) {
                 $data = $row;
                 if (is_object($row) === true) {
                     try {

@@ -208,7 +208,7 @@ class FoldIntoOrder implements IRepairStep
     private function readRows(object $objectService, string $registerSlug, string $schema, IOutput $output): array
     {
         try {
-            return $this->readAllRows($objectService, $registerSlug, $schema);
+            return $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: $schema);
         } catch (\Throwable $e) {
             $output->info('Shillinq: FoldIntoOrder — '.$schema.' schema not available ('.$e->getMessage().'); skipping.');
             return [];

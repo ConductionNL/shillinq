@@ -121,7 +121,7 @@ class PeriodCloseBackfill implements IRepairStep
             // List every Administration record. The repair step is
             // best-effort: when no Administration records exist yet,
             // the forward backfill is a no-op.
-            $administrations = $this->readAllRows($objectService, $registerSlug, 'Administration');
+            $administrations = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'Administration');
 
             if ($administrations === []) {
                 $output->info('Shillinq: no Administration records — forward FiscalPeriod backfill skipped.');
@@ -133,7 +133,7 @@ class PeriodCloseBackfill implements IRepairStep
             $created = 0;
             $skipped = 0;
             foreach ($administrations as $administration) {
-                $arr = $this->rowPayload($administration);
+                $arr = $this->rowPayload(row: $administration);
                 $administrationId = (string) ($arr['administrationId'] ?? ($arr['id'] ?? ($arr['code'] ?? '')));
                 if ($administrationId === '') {
                     continue;

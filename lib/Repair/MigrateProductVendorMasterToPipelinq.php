@@ -236,7 +236,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
 
         $vendorMasterData = [];
         foreach ($vendorMasterRaw as $vendor) {
-            $vendorArr = $this->rowPayload($vendor);
+            $vendorArr = $this->rowPayload(row: $vendor);
             $vendorArr['resolvedContactsUid'] = $this->resolveContactUid(vendor: $vendorArr, output: $output);
             $vendorMasterData[] = $vendorArr;
         }
@@ -244,7 +244,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         // ---- 4. Build skuToProductIdMap so shillinq stock FK (productId) resolves ----
         $skuToProductIdMap = [];
         foreach ($products as $product) {
-            $productArr = $this->rowPayload($product);
+            $productArr = $this->rowPayload(row: $product);
             $sku        = (string) ($productArr['sku'] ?? ($productArr['code'] ?? ''));
             $id         = (string) ($productArr['id'] ?? ($productArr['uuid'] ?? ''));
             if ($sku !== '' && $id !== '') {
@@ -253,8 +253,8 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         }
 
         // Cast objects to plain arrays for JSON serialisation.
-        $productsOut          = array_map(fn ($p) => $this->rowPayload($p), $products);
-        $productAttributesOut = array_map(fn ($pa) => $this->rowPayload($pa), $productAttributes);
+        $productsOut          = array_map(fn ($p) => $this->rowPayload(row: $p), $products);
+        $productAttributesOut = array_map(fn ($pa) => $this->rowPayload(row: $pa), $productAttributes);
 
         return [
             'version'           => '1.0',
@@ -288,7 +288,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
     private function readObjects(object $objectService, string $registerSlug, string $schema, IOutput $output, string $label): array
     {
         try {
-            $objects = $this->readAllRows($objectService, $registerSlug, $schema);
+            $objects = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: $schema);
 
             if ($objects === []) {
                 $output->info('MigrateProductVendorMasterToPipelinq: no '.$label.' records found — exporting empty set.');

@@ -195,7 +195,7 @@ class RematerialiseConvertedCalculations implements IRepairStep
         IOutput $output
     ): int {
         try {
-            $objects = $this->readAllRows($objectService, $registerSlug, $schema);
+            $objects = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: $schema);
         } catch (\Throwable $e) {
             $output->warning('Shillinq: could not list '.$schema.' objects for rematerialisation: '.$e->getMessage());
             $this->logger->warning(
@@ -211,7 +211,7 @@ class RematerialiseConvertedCalculations implements IRepairStep
 
         $resaved = 0;
         foreach ($objects as $object) {
-            $arr = $this->rowPayload($object);
+            $arr = $this->rowPayload(row: $object);
             if (isset($arr['id']) === false && isset($arr['uuid']) === false) {
                 // No identifiable persisted id — skip rather than risk
                 // creating a duplicate via an unintended CREATE.
