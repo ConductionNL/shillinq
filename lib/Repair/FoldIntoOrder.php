@@ -55,6 +55,7 @@ namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\IGroupManager;
 use OCP\IUser;
@@ -71,6 +72,8 @@ use Psr\Log\LoggerInterface;
  */
 class FoldIntoOrder implements IRepairStep
 {
+    use ReadsSourceRowsInBatches;
+
     /**
      * The target schema every fold writes to.
      *
@@ -85,14 +88,6 @@ class FoldIntoOrder implements IRepairStep
      * description for the full account.
      */
     public const TARGET = 'OrderPrimitive';
-
-    /**
-     * How many source rows to read per findAll() page.
-     *
-     * Source rows are read in batches so the fold never depends on implicit
-     * "unlimited" semantics and never loads an unbounded result set at once.
-     */
-    public const READ_BATCH_SIZE = 200;
 
     /**
      * Constructor.
@@ -199,11 +194,9 @@ class FoldIntoOrder implements IRepairStep
      * Read all rows of a source schema. Returns [] when the schema is absent
      * or empty (a valid no-op — e.g. a fresh tenant with 0 source rows).
      *
-     * Reads in explicit limit/offset batches. NEVER pass 'limit' => 0 hoping it
-     * means "unlimited": OpenRegister forwards it as a literal SQL LIMIT 0, so
-     * findAll() returns ZERO rows and this migration becomes a silent no-op that
-     * still reports "0 migrated, 0 skipped, 0 failed" — green, and dead.
-     * Live-verified on a real instance: limit=0 => 0 rows, limit=N/omitted => N.
+     * Delegates the batched read to {@see ReadsSourceRowsInBatches::readAllRows()}
+     * (which is why 'limit' => 0 must never be used — see that trait) and keeps
+     * this step's own fail-soft "schema not available" handling.
      *
      * @param object  $objectService The OR ObjectService.
      * @param string  $registerSlug  The shillinq register slug.
@@ -214,44 +207,12 @@ class FoldIntoOrder implements IRepairStep
      */
     private function readRows(object $objectService, string $registerSlug, string $schema, IOutput $output): array
     {
-        $rows   = [];
-        $offset = 0;
-
         try {
-            while (true) {
-                $page = $objectService
-                    ->setRegister($registerSlug)
-                    ->setSchema($schema)
-                    ->findAll(
-                        [
-                            'limit'         => self::READ_BATCH_SIZE,
-                            'offset'        => $offset,
-                            '_rbac'         => false,
-                            '_multitenancy' => false,
-                        ]
-                    );
-
-                if (is_array($page) === false || $page === []) {
-                    break;
-                }
-
-                foreach ($page as $row) {
-                    $rows[] = $row;
-                }
-
-                if (count($page) < self::READ_BATCH_SIZE) {
-                    break;
-                }
-
-                $offset += self::READ_BATCH_SIZE;
-            }//end while
-
-            return $rows;
+            return $this->readAllRows($objectService, $registerSlug, $schema);
         } catch (\Throwable $e) {
             $output->info('Shillinq: FoldIntoOrder — '.$schema.' schema not available ('.$e->getMessage().'); skipping.');
             return [];
-        }//end try
-
+        }
     }//end readRows()
 
     /**
