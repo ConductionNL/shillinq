@@ -157,12 +157,12 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
             <step>OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject</step>
             <!-- OCA\Shillinq\Repair\RetireSubsidieSchema STILL HELD (issue #503): DELETES folded Subsidie objects, so it
-                 stays held even though the fold itself is now live-verified and re-enabled above. Two reasons: (1) deleting
-                 real source rows is irreversible and MUST lag the fold by at least one release, so a folded instance has a
-                 rollback window before its Subsidie source data is removed; (2) this step still carries the limit=>0 dead-read
-                 bug (issue #382, RetireSubsidieSchema.php:265) and would be a silent no-op until that is fixed and live-verified.
-                 Re-enable only after (a) #382 fixes + live-verifies it, and (b) the fold has run on a real instance and been
-                 confirmed for at least one release. -->
+                 stays held even though the fold itself is now live-verified and re-enabled above, and even though its own
+                 read/idempotency bugs are now FIXED (issue #382: the limit=>0 dead-read and the dot-path orderExists()
+                 delete-gate that never matched — both resolved). It remains held for ONE reason now: deleting real source
+                 rows is irreversible and MUST lag the fold by at least one release, so a folded instance keeps a rollback
+                 window before its Subsidie source data is removed. Re-enable only after the fold has run on a real instance
+                 and been confirmed for at least one release, and the delete has itself been live-verified on real data. -->
             <step>OCA\Shillinq\Repair\RematerialiseConvertedCalculations</step>
         </post-migration>
     </repair-steps>
