@@ -78,12 +78,19 @@
       source schema is never mistaken for proof of migration.
 - [x] `occ shillinq:orders:audit` — count-equality check (`OrdersAuditCommand`,
       read-only, exit 0/1). Unit-tested (`OrdersAuditCommandTest`, 3 tests).
-- [ ] **Live-verify the migration against a running instance with real
-      Subsidie/PurchaseOrder/DBAOpdracht rows** (seed data or a live import).
-      Only unit-tested against fixture arrays in this pass — genuinely
-      PENDING, not claimed done. `occ maintenance:repair` +
-      `occ shillinq:orders:audit` should be run on a live instance before this
-      is considered production-safe.
+- [x] **Live-verified the migration against a running instance with real
+      Subsidie/PurchaseOrder/DBAOpdracht rows** (2026-07-25, issue #503). Created
+      one real row per source type on 8080 and ran the actual `FoldIntoOrder::run()`:
+      each folds into a correctly-mapped OrderPrimitive (subsidie/purchase/engagement),
+      purchase cent->EUR confirmed (121000 -> 1210.00); a re-run skips every
+      already-folded row (idempotent — exactly one OrderPrimitive per source, no
+      duplicates); source rows and decidesk's `order` schema (1585) untouched.
+      Live-running it also surfaced + fixed FIVE defects the fixture-mocked suite
+      could not see (limit=>0 read zero rows, (array)$row destroyed ObjectEntity
+      payloads, explicit nulls failed typed validation, date vs date-time format,
+      non-idempotent existence check) — PR #381. The PurchaseOrder path was
+      additionally unblocked by de-polluting a dev-only schema fossil (#383;
+      root fix openregister#2047, merged).
 
 ### 2026-07-23 pass (issue #503) — schema-import blocker fixed, migration STILL held
 - [x] **Diagnosed + fixed the schema-import blocker** live-verification found:
@@ -124,16 +131,16 @@
       `opdrachtNaam`, `startDatum`, `intakeStatus`, …) against them — zero
       drift found between the fixture shapes the unit tests use and the real
       deployed schemas.
-- [ ] **Migration STILL HELD** (`FoldIntoOrder`/`RetireSubsidieSchema` remain
-      un-registered in `appinfo/info.xml`). Not because the fold logic is in
-      doubt (unit-tested + field-shape cross-checked above), but because (a)
-      8080 currently has ZERO Subsidie/PurchaseOrder/DBAOpdracht objects to
-      fold — there is no real data on this instance to prove the migration
-      safe against, and (b) `RetireSubsidieSchema` deletes objects, which
-      must never run unproven against a shared instance's regulatory data.
-      Re-enable only after an actual `occ maintenance:repair` +
-      `occ shillinq:orders:audit` run against an instance that DOES have real
-      source rows.
+- [x] **FoldIntoOrder RE-ENABLED** (2026-07-25, PR #503-unhold): registered in
+      `appinfo/info.xml` after the live end-to-end verification above proved it
+      non-destructive + idempotent across all three source types. It runs after
+      `InitializeSettings` (which imports OrderPrimitive) and before any retire step.
+- [ ] **RetireSubsidieSchema STILL HELD** (deliberately). It DELETES folded Subsidie
+      rows, so it must lag the fold by at least one release to leave a rollback
+      window on a folded instance; and it still carries the limit=>0 dead-read bug
+      (issue #382, RetireSubsidieSchema.php:265) that would make it a silent no-op.
+      Re-enable only after (a) #382 fixes + live-verifies it and (b) the fold has
+      run on a real instance and been confirmed for a release.
 
 ## Phase 3 — UI + nav
 - [x] Fixed `src/manifest.d/order-workspace.json`'s dangling references: the
