@@ -32,6 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Command;
 
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Command\Command;
@@ -50,6 +51,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class OrdersAuditCommand extends Command
 {
+    use ReadsSourceRowsInBatches;
+
     /**
      * Source schema slug => discriminator orderType it folds onto.
      *
@@ -161,22 +164,7 @@ class OrdersAuditCommand extends Command
     private function countRows(object $objectService, string $registerSlug, string $schema): int
     {
         try {
-            $rows = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema($schema)
-                ->findAll(
-                    [
-                        'limit'         => 0,
-                        '_rbac'         => false,
-                        '_multitenancy' => false,
-                    ]
-                );
-
-            if (is_array($rows) === false) {
-                return 0;
-            }
-
-            return count($rows);
+            return count($this->readAllRows($objectService, $registerSlug, $schema));
         } catch (\Throwable) {
             return 0;
         }
@@ -195,23 +183,29 @@ class OrdersAuditCommand extends Command
     private function countMigrated(object $objectService, string $registerSlug, string $sourceSchema): int
     {
         try {
-            $rows = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('OrderPrimitive')
-                ->findAll(
-                    [
-                        'filters'       => ['migratedFrom.schema' => $sourceSchema],
-                        'limit'         => 0,
-                        '_rbac'         => false,
-                        '_multitenancy' => false,
-                    ]
-                );
+            // OpenRegister does NOT support dot-path filters on nested properties,
+            // so `['migratedFrom.schema' => ...]` matches nothing (it silently
+            // returned 0, making the audit report a false PASS). Read every
+            // OrderPrimitive row and match the nested marker in PHP instead.
+            $count = 0;
+            foreach ($this->readAllRows($objectService, $registerSlug, 'OrderPrimitive') as $row) {
+                $data = $row;
+                if (is_object($row) === true) {
+                    try {
+                        $data = $row->getObject();
+                    } catch (\Throwable) {
+                        $data = [];
+                    }
+                }
 
-            if (is_array($rows) === false) {
-                return 0;
+                if (is_array($data) === true
+                    && (string) (($data['migratedFrom']['schema'] ?? '')) === $sourceSchema
+                ) {
+                    $count++;
+                }
             }
 
-            return count($rows);
+            return $count;
         } catch (\Throwable) {
             return 0;
         }//end try
