@@ -50,6 +50,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -65,6 +66,8 @@ use Throwable;
  */
 class PeriodCloseBackfill implements IRepairStep
 {
+    use ReadsSourceRowsInBatches;
+
     /**
      * Number of calendar months ahead of the current month to backfill.
      *
@@ -118,12 +121,9 @@ class PeriodCloseBackfill implements IRepairStep
             // List every Administration record. The repair step is
             // best-effort: when no Administration records exist yet,
             // the forward backfill is a no-op.
-            $administrations = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('Administration')
-                ->findAll(['limit' => 0]);
+            $administrations = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'Administration');
 
-            if (is_array($administrations) === false || $administrations === []) {
+            if ($administrations === []) {
                 $output->info('Shillinq: no Administration records — forward FiscalPeriod backfill skipped.');
                 return;
             }
@@ -133,7 +133,7 @@ class PeriodCloseBackfill implements IRepairStep
             $created = 0;
             $skipped = 0;
             foreach ($administrations as $administration) {
-                $arr = (array) $administration;
+                $arr = $this->rowPayload(row: $administration);
                 $administrationId = (string) ($arr['administrationId'] ?? ($arr['id'] ?? ($arr['code'] ?? '')));
                 if ($administrationId === '') {
                     continue;

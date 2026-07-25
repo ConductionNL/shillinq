@@ -67,6 +67,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -83,6 +84,8 @@ use Psr\Log\LoggerInterface;
  */
 class UnifyAnalyticalDimensions implements IRepairStep
 {
+    use ReadsSourceRowsInBatches;
+
     /**
      * Constructor.
      *
@@ -176,18 +179,15 @@ class UnifyAnalyticalDimensions implements IRepairStep
         $created = 0;
         $skipped = 0;
 
-        $costCenters = $objectService
-            ->setRegister($registerSlug)
-            ->setSchema('CostCenter')
-            ->findAll(['limit' => 0]);
+        $costCenters = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'CostCenter');
 
-        if (is_array($costCenters) === false || $costCenters === []) {
+        if ($costCenters === []) {
             $output->info('Shillinq: no CostCenter records found — skipping cost-center migration.');
             return ['created' => 0, 'skipped' => 0];
         }
 
         foreach ($costCenters as $costCenter) {
-            $arr  = (array) $costCenter;
+            $arr  = $this->rowPayload(row: $costCenter);
             $code = (string) ($arr['code'] ?? '');
             $administrationId = (string) ($arr['administrationId'] ?? '');
 
@@ -250,18 +250,15 @@ class UnifyAnalyticalDimensions implements IRepairStep
         $created = 0;
         $skipped = 0;
 
-        $kostenDragers = $objectService
-            ->setRegister($registerSlug)
-            ->setSchema('KostenDrager')
-            ->findAll(['limit' => 0]);
+        $kostenDragers = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'KostenDrager');
 
-        if (is_array($kostenDragers) === false || $kostenDragers === []) {
+        if ($kostenDragers === []) {
             $output->info('Shillinq: no KostenDrager records found — skipping cost-object migration.');
             return ['created' => 0, 'skipped' => 0];
         }
 
         foreach ($kostenDragers as $kostenDrager) {
-            $arr  = (array) $kostenDrager;
+            $arr  = $this->rowPayload(row: $kostenDrager);
             $code = (string) ($arr['code'] ?? '');
             $administrationId = (string) ($arr['administrationId'] ?? '');
 

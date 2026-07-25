@@ -51,6 +51,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -64,6 +65,8 @@ use Psr\Log\LoggerInterface;
  */
 class StampJournalTypeOnGlTransactions implements IRepairStep
 {
+    use ReadsSourceRowsInBatches;
+
     /**
      * Constructor.
      *
@@ -146,23 +149,16 @@ class StampJournalTypeOnGlTransactions implements IRepairStep
         string $registerSlug,
         IOutput $output
     ): int {
-        $closingEntries = $objectService
-            ->setRegister($registerSlug)
-            ->setSchema('ClosingEntry')
-            ->findAll(
-                config: ['limit' => 0],
-                _rbac: false,
-                _multitenancy: false
-            );
+        $closingEntries = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'ClosingEntry');
 
-        if (is_array($closingEntries) === false || $closingEntries === []) {
+        if ($closingEntries === []) {
             return 0;
         }
 
         $stamped = 0;
         foreach ($closingEntries as $entry) {
             try {
-                $arr = (array) $entry;
+                $arr = $this->rowPayload(row: $entry);
                 $glTransactionId = (string) ($arr['glTransactionId'] ?? '');
                 if ($glTransactionId === '') {
                     continue;
@@ -234,23 +230,16 @@ class StampJournalTypeOnGlTransactions implements IRepairStep
         string $registerSlug,
         IOutput $output
     ): int {
-        $intercompany = $objectService
-            ->setRegister($registerSlug)
-            ->setSchema('IntercompanyTransaction')
-            ->findAll(
-                config: ['limit' => 0],
-                _rbac: false,
-                _multitenancy: false
-            );
+        $intercompany = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'IntercompanyTransaction');
 
-        if (is_array($intercompany) === false || $intercompany === []) {
+        if ($intercompany === []) {
             return 0;
         }
 
         $stamped = 0;
         foreach ($intercompany as $ic) {
             try {
-                $arr = (array) $ic;
+                $arr = $this->rowPayload(row: $ic);
                 $glTransactionId = (string) ($arr['sourceJournalEntryId'] ?? '');
                 if ($glTransactionId === '') {
                     continue;

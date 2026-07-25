@@ -58,6 +58,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -74,6 +75,8 @@ use Psr\Log\LoggerInterface;
  */
 class RematerialiseConvertedCalculations implements IRepairStep
 {
+    use ReadsSourceRowsInBatches;
+
     /**
      * Schema slugs carrying a Bucket-1 or Bucket-2 per-object calc this
      * change converted to JSON-AST + `materialise: true`. See design.md's
@@ -192,10 +195,7 @@ class RematerialiseConvertedCalculations implements IRepairStep
         IOutput $output
     ): int {
         try {
-            $objects = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema($schema)
-                ->findAll(config: ['limit' => 0], _rbac: false, _multitenancy: false);
+            $objects = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: $schema);
         } catch (\Throwable $e) {
             $output->warning('Shillinq: could not list '.$schema.' objects for rematerialisation: '.$e->getMessage());
             $this->logger->warning(
@@ -211,7 +211,7 @@ class RematerialiseConvertedCalculations implements IRepairStep
 
         $resaved = 0;
         foreach ($objects as $object) {
-            $arr = (array) $object;
+            $arr = $this->rowPayload(row: $object);
             if (isset($arr['id']) === false && isset($arr['uuid']) === false) {
                 // No identifiable persisted id — skip rather than risk
                 // creating a duplicate via an unintended CREATE.

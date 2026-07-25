@@ -160,6 +160,13 @@ class RetireSubsidieSchemaTest extends TestCase
             }//end setSchema()
 
             /**
+             * Mirrors OpenRegister's real findAll() paging semantics: `filters`
+             * apply first (a dot-path key matches NOTHING — OR has no nested
+             * filter support), then `offset` skips rows, then `limit` is a
+             * literal SQL LIMIT (limit=0 returns ZERO rows). Modelled faithfully
+             * so a caller passing limit=0 (or an unmatchable dot-path filter) is
+             * caught here instead of silently on a live instance.
+             *
              * @param array<string,mixed> $params
              *
              * @return array<int,array<string,mixed>>
@@ -168,24 +175,40 @@ class RetireSubsidieSchemaTest extends TestCase
             {
                 $rows    = ($this->recordsBySchema[$this->currentSchema] ?? []);
                 $filters = ($params['filters'] ?? []);
-                if ($filters === []) {
-                    return $rows;
+                if ($filters !== []) {
+                    $rows = array_values(
+                        array_filter(
+                            $rows,
+                            static function (array $row) use ($filters): bool {
+                                foreach ($filters as $path => $expected) {
+                                    // OpenRegister does NOT support dot-path filters on
+                                    // nested properties: such a filter matches nothing.
+                                    if (str_contains((string) $path, '.') === true) {
+                                        return false;
+                                    }
+
+                                    if (($row[$path] ?? null) !== $expected) {
+                                        return false;
+                                    }
+                                }
+
+                                return true;
+                            }
+                        )
+                    );
                 }
 
-                return array_values(
-                    array_filter(
-                        $rows,
-                        function (array $row) use ($filters): bool {
-                            foreach ($filters as $path => $expected) {
-                                if ($this->dotGet($row, (string) $path) !== $expected) {
-                                    return false;
-                                }
-                            }
+                $offset = (int) ($params['offset'] ?? 0);
+                if ($offset > 0) {
+                    $rows = array_slice($rows, $offset);
+                }
 
-                            return true;
-                        }
-                    )
-                );
+                $limit = ($params['limit'] ?? null);
+                if ($limit !== null) {
+                    $rows = array_slice($rows, 0, (int) $limit);
+                }
+
+                return array_values($rows);
 
             }//end findAll()
 
@@ -203,25 +226,6 @@ class RetireSubsidieSchemaTest extends TestCase
                 return $this->deleted;
 
             }//end deletedIds()
-
-            /**
-             * @param array<string,mixed> $row
-             */
-            private function dotGet(array $row, string $path): mixed
-            {
-                $segments = explode('.', $path);
-                $cursor   = $row;
-                foreach ($segments as $segment) {
-                    if (is_array($cursor) === false || array_key_exists($segment, $cursor) === false) {
-                        return null;
-                    }
-
-                    $cursor = $cursor[$segment];
-                }
-
-                return $cursor;
-
-            }//end dotGet()
         };
 
     }//end fakeObjectService()

@@ -325,9 +325,13 @@ class BackfillFiscalPeriodsTest extends TestCase
             }
 
             /**
-             * Mimics ObjectService::findAll on the fixture rows.
+             * Mimics OpenRegister's real findAll() paging semantics: `filters`
+             * apply first (a dot-path key matches NOTHING — OR has no nested
+             * filter support), then `offset` skips rows, then `limit` is a
+             * literal SQL LIMIT (so limit=0 returns ZERO rows). Modelling this
+             * faithfully catches a caller passing limit=0 and reading nothing.
              *
-             * @param array<string,mixed> $options The findAll options (filters / limit).
+             * @param array<string,mixed> $options The findAll options (filters / offset / limit).
              *
              * @return list<array<string,mixed>> Matching fixture rows.
              */
@@ -338,6 +342,12 @@ class BackfillFiscalPeriodsTest extends TestCase
                 $matched = [];
                 foreach ($rows as $row) {
                     foreach ($filters as $k => $v) {
+                        // OpenRegister does NOT support dot-path filters on
+                        // nested properties: such a filter matches nothing.
+                        if (str_contains((string) $k, '.') === true) {
+                            continue 2;
+                        }
+
                         if (($row[$k] ?? null) !== $v) {
                             continue 2;
                         }
@@ -346,7 +356,17 @@ class BackfillFiscalPeriodsTest extends TestCase
                     $matched[] = $row;
                 }
 
-                return $matched;
+                $offset = (int) ($options['offset'] ?? 0);
+                if ($offset > 0) {
+                    $matched = array_slice($matched, $offset);
+                }
+
+                $limit = ($options['limit'] ?? null);
+                if ($limit !== null) {
+                    $matched = array_slice($matched, 0, (int) $limit);
+                }
+
+                return array_values($matched);
             }
 
             /**
