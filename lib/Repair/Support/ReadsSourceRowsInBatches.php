@@ -100,4 +100,42 @@ trait ReadsSourceRowsInBatches
         return $rows;
 
     }//end readAllRows()
+
+    /**
+     * Resolve one findAll() result row to its schema-payload array.
+     *
+     * OpenRegister returns ObjectEntity instances whose schema payload lives in
+     * getObject() — NOT in the object's own properties. A blind `(array) $row`
+     * cast yields mangled "\0*\0prop" keys and loses every field, so a step that
+     * casts reads garbage (all fields null) and silently skips/mis-maps every
+     * row. Nextcloud's Entity base serves getters through __call(), so
+     * method_exists()/get_class_methods() report FALSE for getObject() — probe by
+     * calling, never by reflection.
+     *
+     * @param mixed $row One findAll() result row (ObjectEntity or array).
+     *
+     * @return array<string,mixed> The payload array (empty when unusable).
+     */
+    protected function rowPayload(mixed $row): array
+    {
+        if (is_array($row) === true) {
+            return $row;
+        }
+
+        if (is_object($row) === false) {
+            return [];
+        }
+
+        try {
+            $payload = $row->getObject();
+            if (is_array($payload) === true) {
+                return $payload;
+            }
+        } catch (\Throwable $e) {
+            // Not an OR entity — fall through to public properties.
+        }
+
+        return get_object_vars($row);
+
+    }//end rowPayload()
 }//end trait

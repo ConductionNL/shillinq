@@ -65,6 +65,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
@@ -88,6 +89,7 @@ use Psr\Log\LoggerInterface;
  */
 class RetireSubsidieSchema implements IRepairStep
 {
+    use ReadsSourceRowsInBatches;
 
     /**
      * The legacy schema slug being retired.
@@ -170,7 +172,7 @@ class RetireSubsidieSchema implements IRepairStep
         $failed  = 0;
 
         foreach ($this->readSubsidies($objectService, $registerSlug, $output) as $row) {
-            $src          = (array) $row;
+            $src          = $this->rowPayload($row);
             $subsidieId   = (string) ($src['id'] ?? ($src['uuid'] ?? ''));
             $migrationKey = $this->migrationKey($src);
 
@@ -257,22 +259,7 @@ class RetireSubsidieSchema implements IRepairStep
     private function readSubsidies(object $objectService, string $registerSlug, IOutput $output): array
     {
         try {
-            $rows = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema(self::SCHEMA)
-                ->findAll(
-                    [
-                        'limit'         => 0,
-                        '_rbac'         => false,
-                        '_multitenancy' => false,
-                    ]
-                );
-
-            if (is_array($rows) === false) {
-                return [];
-            }
-
-            return $rows;
+            return $this->readAllRows($objectService, $registerSlug, self::SCHEMA);
         } catch (\Throwable $e) {
             $output->info('Shillinq: RetireSubsidieSchema — Subsidie schema not available ('.$e->getMessage().'); nothing to retire.');
             return [];
@@ -313,27 +300,33 @@ class RetireSubsidieSchema implements IRepairStep
     private function orderExists(object $objectService, string $registerSlug, string $migrationKey): bool
     {
         try {
-            $found = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema(self::TARGET)
-                ->findAll(
-                    [
-                        'filters'       => [
-                            'migratedFrom.schema' => self::MARKER_SCHEMA,
-                            'migratedFrom.key'    => $migrationKey,
-                        ],
-                        'limit'         => 1,
-                        '_rbac'         => false,
-                        '_multitenancy' => false,
-                    ]
-                );
-
-            return is_array($found) === true && $found !== [];
+            // TODO(#382): dot-path filter unsupported — filter in PHP.
+            // OpenRegister does NOT support nested (dot-path) filter keys such as
+            // `migratedFrom.schema`/`migratedFrom.key` — they match NOTHING, so
+            // the old filtered query always found "no Order" on a live instance
+            // and every Subsidie was kept (the schema never retired). Read every
+            // Order once and match the migration marker in PHP instead.
+            $orders = $this->readAllRows($objectService, $registerSlug, self::TARGET);
         } catch (\Throwable) {
             // On lookup error, conservatively report "no Order" so the Subsidie
             // is KEPT (never delete on an ambiguous read).
             return false;
-        }//end try
+        }
+
+        foreach ($orders as $order) {
+            $marker = ($this->rowPayload($order)['migratedFrom'] ?? null);
+            if (is_array($marker) === false) {
+                continue;
+            }
+
+            if ((string) ($marker['schema'] ?? '') === self::MARKER_SCHEMA
+                && (string) ($marker['key'] ?? '') === $migrationKey
+            ) {
+                return true;
+            }
+        }
+
+        return false;
 
     }//end orderExists()
 

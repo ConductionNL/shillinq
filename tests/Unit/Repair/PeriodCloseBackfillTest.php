@@ -389,7 +389,12 @@ class PeriodCloseBackfillTest extends TestCase
             }//end setSchema()
 
             /**
-             * Returns the canned fixtures for the selected schema.
+             * Returns the canned fixtures for the selected schema, honouring
+             * OpenRegister's real findAll() paging semantics: `filters` apply
+             * first (a dot-path key matches NOTHING — OR has no nested filter
+             * support), then `offset` skips rows, then `limit` is a literal SQL
+             * LIMIT (limit=0 returns ZERO rows). Modelled faithfully so a caller
+             * passing limit=0 is caught reading nothing.
              *
              * @param array<string,mixed> $options The findAll options.
              *
@@ -398,25 +403,47 @@ class PeriodCloseBackfillTest extends TestCase
             public function findAll(array $options=[]): array
             {
                 if ($this->schema === 'Administration') {
-                    return $this->administrations;
+                    $rows = $this->administrations;
+                } else if ($this->schema === 'FiscalPeriod') {
+                    $rows = $this->existingPeriods;
+                } else {
+                    $rows = [];
                 }
 
-                if ($this->schema === 'FiscalPeriod') {
-                    $filters          = $options['filters'] ?? [];
-                    $periodId         = $filters['periodId'] ?? null;
-                    $administrationId = $filters['administrationId'] ?? null;
-                    foreach ($this->existingPeriods as $tup) {
-                        if ($tup['administrationId'] === $administrationId
-                            && $tup['periodId'] === $periodId
-                        ) {
-                            return [$tup];
-                        }
-                    }
+                $filters = ($options['filters'] ?? []);
+                if ($filters !== []) {
+                    $rows = array_values(
+                        array_filter(
+                            $rows,
+                            static function (array $row) use ($filters): bool {
+                                foreach ($filters as $path => $expected) {
+                                    // OpenRegister does NOT support dot-path filters.
+                                    if (str_contains((string) $path, '.') === true) {
+                                        return false;
+                                    }
 
-                    return [];
+                                    if (($row[$path] ?? null) !== $expected) {
+                                        return false;
+                                    }
+                                }
+
+                                return true;
+                            }
+                        )
+                    );
                 }
 
-                return [];
+                $offset = (int) ($options['offset'] ?? 0);
+                if ($offset > 0) {
+                    $rows = array_slice($rows, $offset);
+                }
+
+                $limit = ($options['limit'] ?? null);
+                if ($limit !== null) {
+                    $rows = array_slice($rows, 0, (int) $limit);
+                }
+
+                return array_values($rows);
             }//end findAll()
 
             /**

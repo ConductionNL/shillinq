@@ -469,36 +469,57 @@ class RetireCostProjectStepTest extends TestCase
             }
 
             /**
+             * Mirrors OpenRegister's real findAll() paging semantics: `filters`
+             * apply first (a dot-path key matches NOTHING — OR has no nested
+             * filter support), then `offset` skips rows, then `limit` is a
+             * literal SQL LIMIT (limit=0 returns ZERO rows). Modelled faithfully
+             * so a caller passing limit=0 is caught reading nothing.
+             *
              * @param array<string,mixed> $params
              * @return array<array<string,mixed>>
              */
             public function findAll(array $params = []): array
             {
                 if ($this->currentSchema === 'CostProject') {
-                    return $this->costProjects;
+                    $rows = $this->costProjects;
+                } else if ($this->currentSchema === 'AnalyticalDimension') {
+                    $rows = $this->existingDimensions;
+                } else {
+                    $rows = [];
                 }
 
-                if ($this->currentSchema === 'AnalyticalDimension') {
-                    $filters = ($params['filters'] ?? []);
+                $filters = ($params['filters'] ?? []);
+                if ($filters !== []) {
+                    $rows = array_values(array_filter(
+                        $rows,
+                        static function (array $row) use ($filters): bool {
+                            foreach ($filters as $path => $expected) {
+                                // OpenRegister does NOT support dot-path filters.
+                                if (str_contains((string) $path, '.') === true) {
+                                    return false;
+                                }
 
-                    // Idempotency check: find by migratedFrom.
-                    if (isset($filters['migratedFrom'])) {
-                        return array_values(array_filter(
-                            $this->existingDimensions,
-                            static fn (array $d): bool => (($d['migratedFrom'] ?? null) === $filters['migratedFrom'])
-                        ));
-                    }
+                                if (($row[$path] ?? null) !== $expected) {
+                                    return false;
+                                }
+                            }
 
-                    // Code-exists check: find by code.
-                    if (isset($filters['code'])) {
-                        return array_values(array_filter(
-                            $this->existingDimensions,
-                            static fn (array $d): bool => (($d['code'] ?? null) === $filters['code'])
-                        ));
-                    }
+                            return true;
+                        }
+                    ));
                 }
 
-                return [];
+                $offset = (int) ($params['offset'] ?? 0);
+                if ($offset > 0) {
+                    $rows = array_slice($rows, $offset);
+                }
+
+                $limit = ($params['limit'] ?? null);
+                if ($limit !== null) {
+                    $rows = array_slice($rows, 0, (int) $limit);
+                }
+
+                return array_values($rows);
             }
 
             /**

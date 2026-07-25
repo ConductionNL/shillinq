@@ -28,6 +28,7 @@ namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Contacts\IManager as IContactsManager;
 use OCP\IConfig;
@@ -68,6 +69,8 @@ use Psr\Log\LoggerInterface;
  */
 class MigrateProductVendorMasterToPipelinq implements IRepairStep
 {
+    use ReadsSourceRowsInBatches;
+
     /**
      * Constructor.
      *
@@ -233,7 +236,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
 
         $vendorMasterData = [];
         foreach ($vendorMasterRaw as $vendor) {
-            $vendorArr = (array) $vendor;
+            $vendorArr = $this->rowPayload($vendor);
             $vendorArr['resolvedContactsUid'] = $this->resolveContactUid(vendor: $vendorArr, output: $output);
             $vendorMasterData[] = $vendorArr;
         }
@@ -241,7 +244,7 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         // ---- 4. Build skuToProductIdMap so shillinq stock FK (productId) resolves ----
         $skuToProductIdMap = [];
         foreach ($products as $product) {
-            $productArr = (array) $product;
+            $productArr = $this->rowPayload($product);
             $sku        = (string) ($productArr['sku'] ?? ($productArr['code'] ?? ''));
             $id         = (string) ($productArr['id'] ?? ($productArr['uuid'] ?? ''));
             if ($sku !== '' && $id !== '') {
@@ -250,8 +253,8 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
         }
 
         // Cast objects to plain arrays for JSON serialisation.
-        $productsOut          = array_map(static fn ($p) => (array) $p, $products);
-        $productAttributesOut = array_map(static fn ($pa) => (array) $pa, $productAttributes);
+        $productsOut          = array_map(fn ($p) => $this->rowPayload($p), $products);
+        $productAttributesOut = array_map(fn ($pa) => $this->rowPayload($pa), $productAttributes);
 
         return [
             'version'           => '1.0',
@@ -285,12 +288,9 @@ class MigrateProductVendorMasterToPipelinq implements IRepairStep
     private function readObjects(object $objectService, string $registerSlug, string $schema, IOutput $output, string $label): array
     {
         try {
-            $objects = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema($schema)
-                ->findAll(['limit' => 0]);
+            $objects = $this->readAllRows($objectService, $registerSlug, $schema);
 
-            if (is_array($objects) === false || $objects === []) {
+            if ($objects === []) {
                 $output->info('MigrateProductVendorMasterToPipelinq: no '.$label.' records found — exporting empty set.');
                 return [];
             }

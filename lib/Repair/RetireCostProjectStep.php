@@ -68,6 +68,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -83,6 +84,7 @@ use Psr\Log\LoggerInterface;
  */
 class RetireCostProjectStep implements IRepairStep
 {
+    use ReadsSourceRowsInBatches;
 
     /**
      * Maximum suffix attempts when a minted code collides.
@@ -179,10 +181,7 @@ class RetireCostProjectStep implements IRepairStep
         $failed   = 0;
 
         try {
-            $costProjects = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('CostProject')
-                ->findAll(['limit' => 0]);
+            $costProjects = $this->readAllRows($objectService, $registerSlug, 'CostProject');
         } catch (\Throwable $e) {
             $output->info('Shillinq: RetireCostProjectStep — no CostProject schema or no records found ('.$e->getMessage().'); skipping.');
             return ['migrated' => 0, 'skipped' => 0, 'failed' => 0];
@@ -194,7 +193,7 @@ class RetireCostProjectStep implements IRepairStep
         }
 
         foreach ($costProjects as $costProject) {
-            $arr = (array) $costProject;
+            $arr = $this->rowPayload($costProject);
             $id  = (string) ($arr['id'] ?? ($arr['uuid'] ?? ''));
 
             if ($id === '') {

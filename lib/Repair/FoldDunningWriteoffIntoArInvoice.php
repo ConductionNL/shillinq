@@ -51,6 +51,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\IGroupManager;
 use OCP\IUser;
@@ -66,6 +67,8 @@ use Psr\Log\LoggerInterface;
  */
 class FoldDunningWriteoffIntoArInvoice implements IRepairStep
 {
+    use ReadsSourceRowsInBatches;
+
     /**
      * Constructor.
      *
@@ -112,12 +115,9 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
             // Stream every OninbaarAfschrijving write-off row. RBAC +
             // multi-tenancy are bypassed: the repair runs in the
             // installer/upgrade context with no authenticated session.
-            $writeOffs = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('OninbaarAfschrijving')
-                ->findAll(['limit' => 0], _rbac: false, _multitenancy: false);
+            $writeOffs = $this->readAllRows($objectService, $registerSlug, 'OninbaarAfschrijving');
 
-            if (is_array($writeOffs) === false || $writeOffs === []) {
+            if ($writeOffs === []) {
                 $output->info('Shillinq: no OninbaarAfschrijving rows — ARInvoice writeOff/dunning fold skipped.');
                 return;
             }
@@ -126,7 +126,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
             $skipped = 0;
             $missing = 0;
             foreach ($writeOffs as $writeOff) {
-                $row       = (array) $writeOff;
+                $row       = $this->rowPayload($writeOff);
                 $factuurId = (string) ($row['factuurId'] ?? '');
                 if ($factuurId === '') {
                     $skipped++;
@@ -275,19 +275,12 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
         string $factuurId
     ): ?array {
         try {
-            $runs = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('DunningRun')
-                ->findAll(
-                    ['filters' => ['factuurId' => $factuurId], 'limit' => 0],
-                    _rbac: false,
-                    _multitenancy: false
-                );
+            $runs = $this->readAllRows($objectService, $registerSlug, 'DunningRun', ['factuurId' => $factuurId]);
         } catch (\Throwable $e) {
             return null;
         }
 
-        if (is_array($runs) === false || $runs === []) {
+        if ($runs === []) {
             return null;
         }
 
@@ -295,7 +288,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
         $latestStage = -1;
         $latestExec  = '';
         foreach ($runs as $run) {
-            $runArr = (array) $run;
+            $runArr = $this->rowPayload($run);
             $stage  = (int) ($runArr['stageNr'] ?? 0);
             $exec   = (string) ($runArr['uitgevoerdOp'] ?? '');
 

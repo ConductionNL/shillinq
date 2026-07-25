@@ -50,6 +50,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -66,6 +67,8 @@ use Psr\Log\LoggerInterface;
  */
 class DelegateSigningMigrationRepair implements IRepairStep
 {
+    use ReadsSourceRowsInBatches;
+
     /**
      * Constructor.
      *
@@ -156,18 +159,15 @@ class DelegateSigningMigrationRepair implements IRepairStep
         $updated = 0;
         $skipped = 0;
 
-        $reports = $objectService
-            ->setRegister($registerSlug)
-            ->setSchema('ACMReport')
-            ->findAll(['limit' => 0]);
+        $reports = $this->readAllRows($objectService, $registerSlug, 'ACMReport');
 
-        if (is_array($reports) === false || $reports === []) {
+        if ($reports === []) {
             $output->info('Shillinq: no ACMReport records found — skipping signing-delegation backfill.');
             return ['updated' => 0, 'skipped' => 0];
         }
 
         foreach ($reports as $report) {
-            $arr         = (array) $report;
+            $arr         = $this->rowPayload($report);
             $fingerprint = (string) ($arr['signatureFingerprint'] ?? '');
             $signingRef  = (string) ($arr['signingRequestRef'] ?? '');
 

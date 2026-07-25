@@ -49,6 +49,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -63,6 +64,8 @@ use Psr\Log\LoggerInterface;
  */
 class BackfillFiscalPeriods implements IRepairStep
 {
+    use ReadsSourceRowsInBatches;
+
     /**
      * Constructor.
      *
@@ -109,12 +112,9 @@ class BackfillFiscalPeriods implements IRepairStep
             // Stream every GLLine carrying a non-empty periodId; collect
             // the (administrationId, periodId) tuples we have not yet
             // materialised as FiscalPeriod records.
-            $lines = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('GLLine')
-                ->findAll(['limit' => 0]);
+            $lines = $this->readAllRows($objectService, $registerSlug, 'GLLine');
 
-            if (is_array($lines) === false || $lines === []) {
+            if ($lines === []) {
                 $output->info('Shillinq: no GLLine records — FiscalPeriod backfill skipped.');
                 return;
             }
@@ -122,7 +122,7 @@ class BackfillFiscalPeriods implements IRepairStep
             // Bucket distinct (administrationId, periodId) tuples.
             $tuples = [];
             foreach ($lines as $line) {
-                $arr      = (array) $line;
+                $arr      = $this->rowPayload($line);
                 $periodId = (string) ($arr['periodId'] ?? '');
                 if ($periodId === '') {
                     continue;

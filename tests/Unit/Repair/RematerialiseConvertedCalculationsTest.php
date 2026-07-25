@@ -377,9 +377,11 @@ class RematerialiseConvertedCalculationsTest extends TestCase
             }//end setSchema()
 
             /**
-             * Mimics ObjectService::findAll on the fixture rows.
+             * Mimics OpenRegister's real findAll() paging semantics: `offset`
+             * skips rows and `limit` is a literal SQL LIMIT (limit=0 returns
+             * ZERO rows), so a caller passing limit=0 is caught reading nothing.
              *
-             * @param array<string,mixed> $config        The findAll options (unused beyond schema selection).
+             * @param array<string,mixed> $config        The findAll options (offset / limit).
              * @param bool                $_rbac         RBAC enforcement flag (unused).
              * @param bool                $_multitenancy Multi-tenancy flag (unused).
              *
@@ -391,7 +393,19 @@ class RematerialiseConvertedCalculationsTest extends TestCase
                     throw new \RuntimeException('findAll failed for '.$this->schema);
                 }
 
-                return ($this->rowsBySchema[$this->schema] ?? []);
+                $rows = ($this->rowsBySchema[$this->schema] ?? []);
+
+                $offset = (int) ($config['offset'] ?? 0);
+                if ($offset > 0) {
+                    $rows = array_slice($rows, $offset);
+                }
+
+                $limit = ($config['limit'] ?? null);
+                if ($limit !== null) {
+                    $rows = array_slice($rows, 0, (int) $limit);
+                }
+
+                return array_values($rows);
             }//end findAll()
 
             /**
