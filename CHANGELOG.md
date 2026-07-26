@@ -132,6 +132,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     upgrade is a no-op for any caller that has not yet wired the
     metrics service.
 
+### Changed
+- Schema-level titles authored in English (`schema-level-titles`) —
+  re-authored 31 Dutch `components.schemas.<name>.title` values in
+  `shillinq_register.json` (the entity display name, distinct from the
+  254 property titles already translated) to English, e.g.
+  `RetentionRule` (`"Bewaartermijn"` → `"Retention period"`),
+  `VatReturn` (`"BTW-aangifte"` → `"VAT return"`), `Voorziening`
+  (`"Voorziening"` → `"Provision"`). Dutch display is carried via new
+  `l10n/nl.json` keys; `l10n/en.json` carries the identity mapping. No
+  schema keys, property titles, enums, or descriptions were touched.
+
 ### Fixed
 - Register-config log noise on every OpenRegister config import
   (`fix-log-noise-schemas`):
