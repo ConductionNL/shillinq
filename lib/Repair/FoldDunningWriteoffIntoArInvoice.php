@@ -170,8 +170,14 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
                 }
 
                 // Map the FULL OninbaarAfschrijving field set onto writeOff.
-                $declaration            = (string) ($row['art29OBVerklaring'] ?? '');
-                $invoiceArr['writeOff'] = [
+                // Optional source fields are absent on many real rows (only
+                // factuurId/hoofdsomAfgeschreven/art29OBVerklaring/administrationId
+                // are required on OninbaarAfschrijving), so a null must NOT be
+                // written for a typed target field (e.g. writeOff.btwBedrag is a
+                // number) — an absent optional property is valid, a null is not.
+                // Prune null-valued keys before saving (#382 live e2e).
+                $declaration = (string) ($row['art29OBVerklaring'] ?? '');
+                $writeOff    = [
                     'isWrittenOff'              => true,
                     'writtenOffReason'          => $this->deriveWriteOffReason(declaration: $declaration),
                     'art29OBVerklaring'         => $declaration,
@@ -182,6 +188,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
                     'btwTeruggaafPeriode'       => $this->strOrNull($row['btwAangiftePeriode'] ?? null),
                     'administrationId'          => $this->strOrNull($row['administrationId'] ?? null),
                 ];
+                $invoiceArr['writeOff'] = array_filter($writeOff, static fn ($v) => $v !== null);
 
                 // Mirror the lifecycle onto the discriminator-adjacent flag
                 // only when the invoice has no explicit invoiceType yet:
