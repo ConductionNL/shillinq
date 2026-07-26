@@ -82,12 +82,14 @@ object into an `Order` (type-tagged, all fields preserved) and an audit command
 SHALL show equal counts between source rows and their migrated Order rows.
 
 #### Scenario: migration is lossless
+@e2e exclude backend occ migration (FoldIntoOrder repair step, not browser-driven): live-verified end-to-end for all three source types (#503/#381) + covered by FoldIntoOrderTest.
 - **WHEN** the migration runs
 - **THEN** every Subsidie/PurchaseOrder/DBAOpdracht field lands on the
   corresponding Order field (base or type group) and no row is dropped or
   mutated at the source.
 
 #### Scenario: money units are normalised without losing precision
+@e2e exclude backend occ migration (FoldIntoOrder cent->EUR projection): live-verified on the PurchaseOrder fold path (121000 -> 1210.00, #503) + covered by FoldIntoOrderTest.
 - **WHEN** a PurchaseOrder (integer EURO CENTS per ADR-022) is folded
 - **THEN** the shared `Order.totalAmount` is the decimal-EUR projection
   (`totalInclVat / 100`) while the original integer-cent fields
@@ -95,6 +97,7 @@ SHALL show equal counts between source rows and their migrated Order rows.
   `purchase` field group.
 
 #### Scenario: the audit command detects unmigrated rows
+@e2e exclude occ command (`shillinq:orders:audit`, not browser-driven): live-verified (source=2 migrated=1 MISMATCH, exit 1, #388) + covered by OrdersAuditCommandTest.
 - **WHEN** `occ shillinq:orders:audit` runs and a source schema has more rows
   than it has matching folded Orders
 - **THEN** the command reports a MISMATCH for that schema and exits non-zero.

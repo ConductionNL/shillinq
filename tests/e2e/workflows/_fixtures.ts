@@ -60,6 +60,7 @@ export interface CreatedRef {
  * request context (which carries the authenticated storage state).
  */
 export class OrFixtures {
+
 	private created: CreatedRef[] = []
 
 	constructor(private readonly api: APIRequestContext) {}
@@ -124,6 +125,8 @@ export class OrFixtures {
 	/**
 	 * Create one object in (register, schema). Tracks it for cleanup and
 	 * returns its OpenRegister id.
+	 * @param schemaSlug
+	 * @param data
 	 */
 	async create(schemaSlug: string, data: Record<string, unknown>): Promise<{ id: string; self: Record<string, unknown> }> {
 		const res = await this.api.post(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}`, {
@@ -140,7 +143,11 @@ export class OrFixtures {
 		return { id, self }
 	}
 
-	/** Read one object by id. */
+	/**
+	 * Read one object by id.
+	 * @param schemaSlug
+	 * @param id
+	 */
 	async get(schemaSlug: string, id: string): Promise<Record<string, unknown>> {
 		const res = await this.api.get(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`, {
 			headers: { 'OCS-APIRequest': 'true' },
@@ -150,7 +157,12 @@ export class OrFixtures {
 		return (body['@self'] ? body : body) as Record<string, unknown>
 	}
 
-	/** Update one object by id (PUT). */
+	/**
+	 * Update one object by id (PUT).
+	 * @param schemaSlug
+	 * @param id
+	 * @param data
+	 */
 	async update(schemaSlug: string, id: string, data: Record<string, unknown>): Promise<Record<string, unknown>> {
 		const res = await this.api.put(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`, {
 			headers: await this.headers(),
@@ -160,7 +172,28 @@ export class OrFixtures {
 		return res.json()
 	}
 
-	/** Delete one object by id and stop tracking it. */
+	/**
+	 * Fire an OpenRegister lifecycle transition on an object.
+	 *
+	 * POSTs to /api/objects/{id}/transition {action}. Returns the raw response
+	 * so callers can assert on both success (200) and refusal (422/4xx) — the
+	 * latter is what proves an orderType-gated transition is rejected.
+	 *
+	 * @param id     The object id (uuid).
+	 * @param action The lifecycle action name (e.g. 'verleen', 'approve').
+	 */
+	async transition(id: string, action: string): Promise<import('@playwright/test').APIResponse> {
+		return this.api.post(`${OR}/objects/${id}/transition`, {
+			headers: await this.headers(),
+			data: { action },
+		})
+	}
+
+	/**
+	 * Delete one object by id and stop tracking it.
+	 * @param schemaSlug
+	 * @param id
+	 */
 	async remove(schemaSlug: string, id: string): Promise<void> {
 		await this.api
 			.delete(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`, { headers: await this.headers() })
@@ -178,10 +211,12 @@ export class OrFixtures {
 		}
 		this.created = []
 	}
+
 }
 
 /**
  * Round a money number to 2 decimals for tolerant float comparison.
+ * @param n
  */
 export function money(n: number): number {
 	return Math.round(n * 100) / 100
