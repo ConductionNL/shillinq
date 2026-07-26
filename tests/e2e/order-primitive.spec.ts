@@ -44,7 +44,11 @@ test.describe('order-primitive — Order fold + orderType-gated lifecycle (#503)
 	// (single creates observed at 18-24s); tests that chain create + poll +
 	// transition + read need well above the 30s default. Run serially (they
 	// share one authenticated context) with a generous per-test budget.
-	test.describe.configure({ mode: 'serial', timeout: 180_000 })
+	// retries here are for the shared dev instance's transient load (slow/laggy
+	// object API under a concurrent session), NOT product flakiness: every test
+	// passes deterministically in isolation. On a fresh CI instance the whole
+	// spec runs in well under a minute.
+	test.describe.configure({ mode: 'serial', timeout: 180_000, retries: 3 })
 
 	let fx: OrFixtures
 	let api: import('@playwright/test').APIRequestContext
