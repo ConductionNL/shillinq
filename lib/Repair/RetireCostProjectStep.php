@@ -320,7 +320,15 @@ class RetireCostProjectStep implements IRepairStep
      */
     private function mintCode(object $objectService, string $registerSlug, string $projectNumber, IOutput $output): ?string
     {
-        $baseCode  = 'CP-'.$projectNumber;
+        // AnalyticalDimension.code must match ^[a-z][a-z0-9-]*$, so the minted code
+        // must be lower-case and hyphen-normalised — a raw "CP-<projectNumber>"
+        // (upper-case prefix / mixed-case number) never validates. The 'cp-' prefix
+        // guarantees a leading letter. Exposed by #382 live e2e once the step
+        // actually read real rows.
+        $slug      = strtolower($projectNumber);
+        $slug      = preg_replace('/[^a-z0-9-]+/', '-', $slug) ?? '';
+        $slug      = trim($slug, '-');
+        $baseCode  = 'cp-'.$slug;
         $candidate = $baseCode;
 
         for ($attempt = 2; $attempt <= self::MAX_COLLISION_ATTEMPTS + 1; $attempt++) {
@@ -390,6 +398,11 @@ class RetireCostProjectStep implements IRepairStep
             'dimensionType'      => 'project',
             'code'               => $code,
             'name'               => (string) ($source['name'] ?? $code),
+            // AnalyticalDimension requires dataType; a migrated project dimension is
+            // a categorical code, so it is a 'string' dimension. Omitting this made
+            // every migration fail validation once the step actually read rows
+            // (the limit=>0 dead-read had hidden it — #382 live e2e).
+            'dataType'           => 'string',
             'administrationId'   => (string) ($source['administrationId'] ?? ''),
             'lifecycleState'     => $this->mapLifecycleState(costProjectState: (string) ($source['lifecycleState'] ?? 'active')),
             'migratedFrom'       => $costProjectId,

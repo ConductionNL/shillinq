@@ -5,7 +5,7 @@
  *
  * Verifies the field mapping, lifecycle mapping, costsIncurredToDate drop,
  * code minting + collision disambiguation, idempotent re-run behaviour, and
- * fail-safe skip for unmappable source records (per REQ-RCP-005).
+ * fail-safe skip for unmappable source records (per REQ-Rcp-005).
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Repair
@@ -17,7 +17,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/retire-cost-project/tasks.md#phase-4
- * @spec openspec/changes/retire-cost-project/specs/retire-cost-project/spec.md (REQ-RCP-005)
+ * @spec openspec/changes/retire-cost-project/specs/retire-cost-project/spec.md (REQ-Rcp-005)
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -133,9 +133,9 @@ class RetireCostProjectStepTest extends TestCase
     /**
      * A typical CostProject is correctly mapped to an AnalyticalDimension.
      *
-     * Verifies the field mapping table from REQ-RCP-005:
+     * Verifies the field mapping table from REQ-Rcp-005:
      *   - projectNumber → projectNumber
-     *   - minted code = CP-<projectNumber>
+     *   - minted code = cp-<projectNumber>
      *   - name, description, startDate, endDate → same
      *   - totalBudget, totalEstimatedCosts → same
      *   - costCenterCode → parentCode
@@ -175,7 +175,8 @@ class RetireCostProjectStepTest extends TestCase
         $obj = $saved['object'];
 
         self::assertSame('project', $obj['dimensionType']);
-        self::assertSame('CP-2026-001', $obj['code']);
+        self::assertSame('cp-2026-001', $obj['code']);
+        self::assertSame('string', $obj['dataType']);
         self::assertSame('2026-001', $obj['projectNumber']);
         self::assertSame('Test Project', $obj['name']);
         self::assertSame('A test cost project', $obj['description']);
@@ -197,7 +198,7 @@ class RetireCostProjectStepTest extends TestCase
 
 
     /**
-     * Lifecycle state mapping table per REQ-RCP-005.
+     * Lifecycle state mapping table per REQ-Rcp-005.
      *
      * draft, active, on-hold → active
      * closed, archived        → archived
@@ -248,7 +249,7 @@ class RetireCostProjectStepTest extends TestCase
 
     /**
      * costsIncurredToDate is never copied to the migrated AnalyticalDimension
-     * (it is re-derived from GL as spentToDate per REQ-RCP-005).
+     * (it is re-derived from GL as spentToDate per REQ-Rcp-005).
      *
      * @return void
      */
@@ -273,7 +274,7 @@ class RetireCostProjectStepTest extends TestCase
 
 
     /**
-     * The minted code is "CP-<projectNumber>".
+     * The minted code is "cp-<projectNumber>".
      *
      * @return void
      */
@@ -291,13 +292,13 @@ class RetireCostProjectStepTest extends TestCase
         $step->run($this->output);
 
         self::assertCount(1, $this->fakeObjectService->saves);
-        self::assertSame('CP-2026-MINT', $this->fakeObjectService->saves[0]['object']['code']);
+        self::assertSame('cp-2026-mint', $this->fakeObjectService->saves[0]['object']['code']);
 
     }//end testCodeIsMintedWithCpPrefix()
 
 
     /**
-     * When the minted code "CP-<projectNumber>" is already taken, the step
+     * When the minted code "cp-<projectNumber>" is already taken, the step
      * appends "-2", "-3", etc. until a free slot is found. The collision is
      * reported but never silently overwritten.
      *
@@ -313,9 +314,9 @@ class RetireCostProjectStepTest extends TestCase
             'lifecycleState'   => 'active',
         ];
 
-        // Simulate "CP-COLL-001" already existing — step must try "CP-COLL-001-2".
+        // Simulate "cp-coll-001" already existing — step must try "cp-coll-001-2".
         $existingDimensions = [
-            ['code' => 'CP-COLL-001', 'administrationId' => 'adm-1', 'migratedFrom' => null],
+            ['code' => 'cp-coll-001', 'administrationId' => 'adm-1', 'migratedFrom' => null],
         ];
 
         $step = $this->makeStep(costProjects: [$source], existingDimensions: $existingDimensions);
@@ -324,7 +325,7 @@ class RetireCostProjectStepTest extends TestCase
         self::assertCount(1, $this->fakeObjectService->saves);
         $saved = $this->fakeObjectService->saves[0];
         // Original code taken; disambiguated to -2.
-        self::assertSame('CP-COLL-001-2', $saved['object']['code']);
+        self::assertSame('cp-coll-001-2', $saved['object']['code']);
         // migratedFrom marker is preserved.
         self::assertSame('cp-coll', $saved['object']['migratedFrom']);
 
@@ -349,7 +350,7 @@ class RetireCostProjectStepTest extends TestCase
 
         // Existing AnalyticalDimension carrying the migratedFrom marker.
         $existingDimensions = [
-            ['code' => 'CP-IDEM-001', 'administrationId' => 'adm-1', 'migratedFrom' => 'cp-idem'],
+            ['code' => 'cp-idem-001', 'administrationId' => 'adm-1', 'migratedFrom' => 'cp-idem'],
         ];
 
         $step = $this->makeStep(costProjects: [$source], existingDimensions: $existingDimensions);
@@ -389,7 +390,7 @@ class RetireCostProjectStepTest extends TestCase
 
         // Only the normal record is saved; the unmappable one is not.
         self::assertCount(1, $this->fakeObjectService->saves);
-        self::assertSame('CP-NORMAL-001', $this->fakeObjectService->saves[0]['object']['code']);
+        self::assertSame('cp-normal-001', $this->fakeObjectService->saves[0]['object']['code']);
 
         // The fake ObjectService records zero deletes (fail-safe guarantee).
         self::assertSame([], $this->fakeObjectService->deletes);
@@ -419,9 +420,9 @@ class RetireCostProjectStepTest extends TestCase
             static fn (array $s): string => $s['object']['code'],
             $this->fakeObjectService->saves
         );
-        self::assertContains('CP-A-001', $codes);
-        self::assertContains('CP-B-001', $codes);
-        self::assertContains('CP-C-001', $codes);
+        self::assertContains('cp-a-001', $codes);
+        self::assertContains('cp-b-001', $codes);
+        self::assertContains('cp-c-001', $codes);
 
     }//end testMultipleRecordsAreMigrated()
 
