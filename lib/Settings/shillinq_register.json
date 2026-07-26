@@ -4632,10 +4632,13 @@
       "TaxRegimeConfiguration": {
         "slug": "TaxRegimeConfiguration",
         "icon": "FileDocumentEditOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Tax Regime Configuration",
         "description": "ZZP tax regime parameters including fiscal year, income tax rate, statutory allowances, filing deadline, and GL account to statutory category mapping rules. Configuration-driven per ADR-031 and REQ-TAX-002; no hardcoded PHP mapping constants.",
         "x-schema-org": "schema:Thing",
+        "configuration": {
+          "x-openregister-shareable": true
+        },
         "type": "object",
         "required": [
           "administrationId",
@@ -18231,10 +18234,13 @@
       "VatTariff": {
         "slug": "VatTariff",
         "icon": "PercentOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "BTW-tarief",
         "description": "BTW rate catalogue per Wet OB 1968. Seeded from btw-tariffs-2026.json; operators may add rates but cannot override the canonical Belastingdienst set. Per REQ-VBTW-003 + ADR-031 (rates NOT as enum — they evolve with statute).",
         "x-schema-org": "schema:PriceSpecification",
+        "configuration": {
+          "x-openregister-shareable": true
+        },
         "type": "object",
         "required": [
           "code",
