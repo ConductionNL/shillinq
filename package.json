@@ -17,6 +17,7 @@
     "watch": "NODE_ENV=development webpack --config webpack.config.js --progress --watch",
     "lint": "eslint src",
     "lint-fix": "npm run lint -- --fix",
+    "test:l10n": "node tests/l10n/check-l10n.js",
     "pretest:unit": "node scripts/generate-manifest-shell.js",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
