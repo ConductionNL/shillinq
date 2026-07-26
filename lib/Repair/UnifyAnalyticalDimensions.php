@@ -329,8 +329,13 @@ class UnifyAnalyticalDimensions implements IRepairStep
             ->setSchema('AnalyticalDimension')
             ->findAll(
                     [
-                        'limit'  => 1,
-                        'filter' => [
+                        'limit'   => 1,
+                        // OpenRegister's key is 'filters' (plural); the old 'filter'
+                        // was IGNORED, so this returned unfiltered rows and every
+                        // source was reported "already exists" and skipped — 0 created
+                        // on any instance that had any AnalyticalDimension row
+                        // (#382 live e2e). All three keys are top-level (filterable).
+                        'filters' => [
                             'code'             => $code,
                             'administrationId' => $administrationId,
                             'dimensionType'    => $dimensionType,
@@ -358,6 +363,10 @@ class UnifyAnalyticalDimensions implements IRepairStep
             'dimensionType'    => 'cost-center',
             'code'             => (string) ($source['code'] ?? ''),
             'name'             => (string) ($source['name'] ?? ''),
+            // AnalyticalDimension requires dataType; a folded cost-center is a
+            // categorical code -> 'string'. Omitting it failed every migration
+            // once the step actually read rows (#382 live e2e).
+            'dataType'         => 'string',
             'administrationId' => (string) ($source['administrationId'] ?? ''),
             'lifecycleState'   => (string) ($source['lifecycleState'] ?? 'active'),
         ];
@@ -396,6 +405,8 @@ class UnifyAnalyticalDimensions implements IRepairStep
             'dimensionType'    => 'cost-object',
             'code'             => (string) ($source['code'] ?? ''),
             'name'             => (string) ($source['name'] ?? ''),
+            // AnalyticalDimension requires dataType (see buildCostCenterRecord).
+            'dataType'         => 'string',
             'administrationId' => (string) ($source['administrationId'] ?? ''),
             'lifecycleState'   => (string) ($source['lifecycleState'] ?? 'active'),
         ];
