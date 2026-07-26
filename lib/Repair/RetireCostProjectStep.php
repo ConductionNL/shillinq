@@ -323,8 +323,8 @@ class RetireCostProjectStep implements IRepairStep
         // AnalyticalDimension.code must match ^[a-z][a-z0-9-]*$, so the minted code
         // must be lower-case and hyphen-normalised — a raw "CP-<projectNumber>"
         // (upper-case prefix / mixed-case number) never validates. The 'cp-' prefix
-        // guarantees a leading letter. (Exposed by #382 live e2e once the step
-        // actually read rows.)
+        // guarantees a leading letter. Exposed by #382 live e2e once the step
+        // actually read real rows.
         $slug      = strtolower($projectNumber);
         $slug      = preg_replace('/[^a-z0-9-]+/', '-', $slug) ?? '';
         $slug      = trim($slug, '-');
