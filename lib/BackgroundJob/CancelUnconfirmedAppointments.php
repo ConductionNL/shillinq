@@ -30,6 +30,7 @@ namespace OCA\Shillinq\BackgroundJob;
 
 use OCA\Shillinq\Service\AppointmentConfirmationService;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
 
@@ -59,6 +60,12 @@ class CancelUnconfirmedAppointments extends TimedJob
     ) {
         parent::__construct(time: $time);
         $this->setInterval(seconds: self::INTERVAL);
+
+        // Auto-cancellation is not millisecond-critical; let the scheduler pick the window.
+        $this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
+
+        // Single instance only — avoid double-cancellation on overlapping cron passes.
+        $this->setAllowParallelRuns(allow: false);
     }//end __construct()
 
     /**

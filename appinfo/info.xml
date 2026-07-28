@@ -48,21 +48,25 @@ Vrij en open source onder de EUPL-1.2-licentie.
     </dependencies>
 
     <background-jobs>
+        <!-- Cashflow 13wk REQ-CF-000: weekly horizon roll (Monday 02:00 UTC).
+             Single registration — the former OCA\Shillinq\Cron\HorizonRollingJob
+             duplicate was removed (double-execution risk); lib/BackgroundJob/
+             is the canonical job directory per ADR-069. -->
         <job>OCA\Shillinq\BackgroundJob\HorizonRollingJob</job>
+        <!-- bookings-confirm-flow REQ-BCF-005: daily sweep that moves
+             pending_confirmation appointments past their confirmationDeadline
+             to cancelled with reason "Confirmation deadline passed". Single
+             registration — the former OCA\Shillinq\Cron\CancelUnconfirmedAppointmentsJob
+             duplicate was removed (double-execution risk). -->
         <job>OCA\Shillinq\BackgroundJob\CancelUnconfirmedAppointments</job>
         <job>OCA\Shillinq\Job\MandateDormancyExpiryJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
-        <!-- Cashflow 13wk: weekly horizon roll (Monday 02:00 UTC), daily bankfeed pull,
-             daily crisis-mode refresh, monthly calibration. REQ-CF-000/010/012/013. -->
-        <job>OCA\Shillinq\Cron\HorizonRollingJob</job>
+        <!-- Cashflow 13wk: daily bankfeed pull, daily crisis-mode refresh,
+             monthly calibration. REQ-CF-010/012/013. -->
         <job>OCA\Shillinq\Cron\BankfeedReconciliationJob</job>
         <job>OCA\Shillinq\Cron\CrisisModeRefreshJob</job>
         <job>OCA\Shillinq\Cron\CalibrationBatchJob</job>
-        <!-- bookings-confirm-flow REQ-BCF-005: daily sweep that moves
-             pending_confirmation appointments past their confirmationDeadline
-             to cancelled with reason "Confirmation deadline passed". -->
-        <job>OCA\Shillinq\Cron\CancelUnconfirmedAppointmentsJob</job>
         <!-- inventory-lot-batch-expiry REQ-LOT-007: daily sweep raising
              approaching-expiry (30/7 day thresholds) and expired alerts
              for InventoryLot records. Idempotent via the ExpiryAlert

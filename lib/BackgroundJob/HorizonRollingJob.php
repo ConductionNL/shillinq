@@ -39,6 +39,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -80,6 +81,12 @@ class HorizonRollingJob extends TimedJob
     ) {
         parent::__construct(time: $time);
         $this->setInterval(seconds: self::INTERVAL_SECONDS);
+
+        // Horizon roll is not millisecond-critical; let the scheduler pick the window.
+        $this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
+
+        // Single instance only — avoid duplicate rolls on overlapping cron passes.
+        $this->setAllowParallelRuns(allow: false);
 
     }//end __construct()
 
