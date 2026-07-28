@@ -14,7 +14,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Latest time the customer can confirm before the appointment is auto-cancelled by CancelUnconfirmedAppointmentsJob per REQ-BCF-005. ISO 8601 UTC. Typically appointment.createdAt + 48h.",
+            "description": "Latest time the customer can confirm before the appointment is auto-cancelled by the CancelUnconfirmedAppointments background job per REQ-BCF-005. ISO 8601 UTC. Typically appointment.createdAt + 48h.",
             "example": "2026-05-21T23:59:59Z",
             "title": "Confirmation Deadline"
           },
@@ -46,7 +46,7 @@
               "from": "pending_confirmation",
               "to": "cancelled",
               "label": "Auto-cancel after deadline",
-              "description": "Confirmation deadline passed and the appointment is still pending; CancelUnconfirmedAppointmentsJob moves it to cancelled with reason 'Confirmation deadline passed' per REQ-BCF-005."
+              "description": "Confirmation deadline passed and the appointment is still pending; the CancelUnconfirmedAppointments background job moves it to cancelled with reason 'Confirmation deadline passed' per REQ-BCF-005."
             }
           }
         }
@@ -147,7 +147,7 @@
             },
             "expired": {
               "label": "Expired",
-              "description": "Token's expiresAt has passed; CancelUnconfirmedAppointmentsJob marks the row expired."
+              "description": "Token's expiresAt has passed; the CancelUnconfirmedAppointments background job marks the row expired."
             }
           },
           "transitions": {
