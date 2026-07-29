@@ -244,13 +244,13 @@ export default {
 		},
 		statusLabel(statusCode) {
 			const labels = {
-				received: this.t('shillinq', 'Ontvangen'),
-				matching: this.t('shillinq', 'In afstemming'),
-				matched: this.t('shillinq', 'Gematched'),
-				exception: this.t('shillinq', 'Uitzondering'),
-				approved: this.t('shillinq', 'Goedgekeurd'),
-				paid: this.t('shillinq', 'Betaald'),
-				rejected: this.t('shillinq', 'Afgewezen'),
+				received: this.t('shillinq', 'Received'),
+				matching: this.t('shillinq', 'Matching'),
+				matched: this.t('shillinq', 'Matched'),
+				exception: this.t('shillinq', 'Exception'),
+				approved: this.t('shillinq', 'Approved'),
+				paid: this.t('shillinq', 'Paid'),
+				rejected: this.t('shillinq', 'Rejected'),
 			}
 			return labels[statusCode] || statusCode || '—'
 		},

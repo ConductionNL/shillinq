@@ -35,7 +35,7 @@
 				&larr; {{ label('Back to bookings') }}
 			</router-link>
 			<h1 class="afspraak-detail__title">
-				{{ label('Afspraak') }}
+				{{ label('Appointment') }}
 				<span v-if="bookingReference" class="afspraak-detail__reference">
 					{{ bookingReference }}
 				</span>

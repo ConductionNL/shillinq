@@ -204,10 +204,10 @@ export default {
 		},
 		rejectionReasonOptions() {
 			return [
-				{ value: 'schade', label: this.t('shillinq', 'Schade (damage)') },
-				{ value: 'verkeerd_product', label: this.t('shillinq', 'Verkeerd product') },
+				{ value: 'schade', label: this.t('shillinq', 'Damage') },
+				{ value: 'verkeerd_product', label: this.t('shillinq', 'Wrong product') },
 				{ value: 'expired', label: this.t('shillinq', 'Expired') },
-				{ value: 'niet_besteld', label: this.t('shillinq', 'Niet besteld') },
+				{ value: 'niet_besteld', label: this.t('shillinq', 'Not ordered') },
 				{ value: 'short_shipped', label: this.t('shillinq', 'Short shipped') },
 				{ value: 'other', label: this.t('shillinq', 'Other') },
 			]

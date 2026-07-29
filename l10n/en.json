@@ -1,5 +1,12 @@
 {
     "translations": {
+        "Matching": "Matching",
+        "Matched": "Matched",
+        "Exception": "Exception",
+        "Damage": "Damage",
+        "Wrong product": "Wrong product",
+        "Not ordered": "Not ordered",
+        "Appointment": "Appointment",
         "GR Participant": "GR Participant",
         "GR Allocation Key": "GR Allocation Key",
         "Retention period": "Retention period",
