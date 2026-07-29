@@ -1,5 +1,12 @@
 {
     "translations": {
+        "Matching": "In afstemming",
+        "Matched": "Gematched",
+        "Exception": "Uitzondering",
+        "Damage": "Schade",
+        "Wrong product": "Verkeerd product",
+        "Not ordered": "Niet besteld",
+        "Appointment": "Afspraak",
         "GR Participant": "GR Deelnemer",
         "GR Allocation Key": "GR Verdeelsleutel",
         "Retention period": "Bewaartermijn",
