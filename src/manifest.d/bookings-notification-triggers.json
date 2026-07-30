@@ -194,7 +194,7 @@
 		{
 			"id": "configure-notifications",
 			"label": "Notifications",
-			"icon": "BellRingOutline",
+			"icon": "BellOutline",
 			"modal": "BookingNotificationConfigModal",
 			"description": "Open per-booking notification configuration. Loads triggers whose triggerType matches one of the booking lifecycle events plus any triggers scoped to this booking; lets the organiser toggle each on/off and pick its channels (REQ-BNT-007)."
 		}
