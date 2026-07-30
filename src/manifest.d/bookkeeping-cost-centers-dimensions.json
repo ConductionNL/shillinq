@@ -9,7 +9,7 @@
 		{
 			"id": "Bookkeeping",
 			"label": "Bookkeeping",
-			"icon": "icon-category-organization",
+			"icon": "NotebookOutline",
 			"order": 20,
 			"children": [
 				{
@@ -18,14 +18,14 @@
 					"i18n": {
 						"nl": "Analytische dimensies"
 					},
-					"icon": "ChartBoxOutline",
+					"icon": "ChartLineVariant",
 					"route": "AnalyticalDimensions",
 					"order": 92
 				},
 				{
 					"id": "SegmentPnLDashboard",
 					"label": "Segment P&L",
-					"icon": "PollOutline",
+					"icon": "Poll",
 					"route": "SegmentPnLDashboard",
 					"order": 93
 				}
@@ -92,7 +92,7 @@
 				"indexRoute": "AnalyticalDimensions",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]

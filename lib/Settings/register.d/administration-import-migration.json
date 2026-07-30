@@ -508,7 +508,7 @@
       },
       "ImportMapping": {
         "slug": "ImportMapping",
-        "icon": "SwapHorizontalBoldOutline",
+        "icon": "SwapHorizontalBold",
         "version": "0.1.0",
         "title": "Import Mapping",
         "description": "One source-account → Shillinq-account mapping row per REQ-AIM-004. Separate rows (not embedded on the batch) because a real chart has hundreds of accounts and the mapping needs its own review grid, per-row status, and reuse as a saved profile across an accountant's client migrations. Resolution order: source RGS code → target with same RGS (rgs-auto, pre-confirmed); saved profile hit (profile-default); code/name similarity (manual review); else unmapped. Unmapped or unconfirmed rows referenced by staged data block the mapping→validated transition (fail-closed).",

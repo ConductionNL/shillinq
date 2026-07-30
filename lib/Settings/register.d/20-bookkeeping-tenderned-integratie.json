@@ -3,7 +3,7 @@
     "schemas": {
       "TenderNedAanbesteding": {
         "slug": "TenderNedAanbesteding",
-        "icon": "GavelOutline",
+        "icon": "Gavel",
         "version": "0.1.0",
         "title": "TenderNed Aanbesteding",
         "description": "A procurement tender imported from TenderNed (Logius central procurement platform). Wraps the public dossier metadata (REQ-001) and links to the materialised Shillinq Verplichting. Both the aanbestedende dienst (public buyer) and the inschrijvende leverancier (winning vendor) consume this schema, with role-based visibility filtering (design D6).",
@@ -230,7 +230,7 @@
       },
       "Verplichting": {
         "slug": "Verplichting",
-        "icon": "FileSignOutline",
+        "icon": "FileSign",
         "version": "0.1.0",
         "title": "Verplichting",
         "description": "A financial obligation (commitment) that reserves budget. The obligation may originate manually, from an inkooporder, or from a won TenderNed tender (bron field, REQ-001). A concept obligation must be enriched (kostenplaats, grootboekrekening) and activated by a contractmanager before it locks budget (design D2).",

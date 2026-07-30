@@ -137,7 +137,7 @@
 				],
 				"indexRoute": "RetainerPools",
 				"sidebarProps": { "tabs": [
-					{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90,
+					{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90,
 						"widgets": [ { "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } } ] }
 				] }
 			}
@@ -221,7 +221,7 @@
 				],
 				"indexRoute": "RetainerDrawdowns",
 				"sidebarProps": { "tabs": [
-					{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90,
+					{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90,
 						"widgets": [ { "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } } ] }
 				] }
 			}
@@ -276,7 +276,7 @@
 				],
 				"indexRoute": "RetainerRollovers",
 				"sidebarProps": { "tabs": [
-					{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90,
+					{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90,
 						"widgets": [ { "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } } ] }
 				] }
 			}
@@ -337,7 +337,7 @@
 				"lifecycleActions": true,
 				"indexRoute": "RetainerTrueUps",
 				"sidebarProps": { "tabs": [
-					{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90,
+					{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90,
 						"widgets": [ { "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } } ] }
 				] }
 			}

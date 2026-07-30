@@ -16,21 +16,21 @@
 				{
 					"id": "AdministrationSwitcher",
 					"label": "Switch administration",
-					"icon": "SwapHorizontal",
+					"icon": "ShieldAccountOutline",
 					"route": "AdministrationSwitcher",
 					"order": 1
 				},
 				{
 					"id": "Administraties",
 					"label": "Administrations",
-					"icon": "OfficeBuilding",
+					"icon": "OfficeBuildingOutline",
 					"route": "Administraties",
 					"order": 5
 				},
 				{
 					"id": "AdministratieLidmaatschappen",
 					"label": "Access & roles",
-					"icon": "AccountMultipleOutline",
+					"icon": "AccountKeyOutline",
 					"route": "AdministratieLidmaatschappen",
 					"order": 6
 				},
@@ -44,14 +44,14 @@
 				{
 					"id": "ConsolidatieMappings",
 					"label": "Consolidation mapping",
-					"icon": "Sitemap",
+					"icon": "SwapHorizontal",
 					"route": "ConsolidatieMappings",
 					"order": 8
 				},
 				{
 					"id": "AdministratieMigraties",
 					"label": "Asset transfer",
-					"icon": "TransferRight",
+					"icon": "DesktopTowerMonitor",
 					"route": "AdministratieMigraties",
 					"order": 9
 				}
@@ -151,7 +151,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -212,7 +212,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -281,7 +281,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -340,7 +340,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -427,7 +427,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

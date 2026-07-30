@@ -10,7 +10,7 @@
     "schemas": {
       "Contract": {
         "slug": "Contract",
-        "icon": "FileSignOutline",
+        "icon": "FileSign",
         "version": "0.1.0",
         "title": "Contract",
         "description": "Generic contract master record covering every contract type (purchase, sales, service, subscription, lease, employment, other) per REQ-CLM-001. CRUD goes through OpenRegister's generic object surface (ADR-022) — no custom PHP model, no parallel table. The counterparty is referenced as a Nextcloud addressbook contact (counterpartyReference); no Party/Customer/Supplier schema is invented. Renewal terms are an embedded object (D3); renewalDecisionDate is a declared calculation. Documents are NC Files references (link, don't store; REQ-CLM-005). Lease contracts become a specialization by link via specializationReference → LeaseContract (REQ-CLM-007); generic records never duplicate lease accounting fields. Lifecycle and notifications are declarative (REQ-CLM-002 / REQ-CLM-004).",

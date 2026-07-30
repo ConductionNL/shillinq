@@ -3,7 +3,7 @@
 		{
 			"id": "Purchasing",
 			"label": "Purchasing & Inventory",
-			"icon": "CartArrowDownOutline",
+			"icon": "CartArrowDown",
 			"order": 35,
 			"children": [
 				{
@@ -16,7 +16,7 @@
 				{
 					"id": "FrameworkAgreements",
 					"label": "Framework Agreements",
-					"icon": "FileSignOutline",
+					"icon": "FileSign",
 					"route": "FrameworkAgreements",
 					"order": 9
 				}

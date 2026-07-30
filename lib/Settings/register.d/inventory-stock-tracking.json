@@ -6,7 +6,7 @@
     "schemas": {
       "InventoryStock": {
         "slug": "InventoryStock",
-        "icon": "WarehouseOutline",
+        "icon": "Warehouse",
         "version": "0.1.0",
         "title": "Inventory Stock",
         "titleNl": "Voorraad",

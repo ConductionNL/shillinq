@@ -3,13 +3,13 @@
 		{
 			"id": "Ifrs15Revenue",
 			"label": "Revenue Recognition (IFRS 15)",
-			"icon": "FinanceOutline",
+			"icon": "CurrencyEur",
 			"order": 85,
 			"children": [
 				{
 					"id": "RevenueContracts",
 					"label": "Contracts",
-					"icon": "FileDocumentOutline",
+					"icon": "FileSign",
 					"route": "RevenueContracts",
 					"order": 10
 				},
@@ -23,28 +23,28 @@
 				{
 					"id": "RevenueWaterfall",
 					"label": "Revenue Waterfall",
-					"icon": "ChartTimelineVariant",
+					"icon": "CurrencyEur",
 					"route": "RevenueWaterfall",
 					"order": 30
 				},
 				{
 					"id": "ContractBalances",
 					"label": "Contract Balances",
-					"icon": "Scale",
+					"icon": "FileSign",
 					"route": "ContractBalances",
 					"order": 40
 				},
 				{
 					"id": "ContractModifications",
 					"label": "Contract Modifications",
-					"icon": "FileDocumentEditOutline",
+					"icon": "FileSign",
 					"route": "ContractModifications",
 					"order": 50
 				},
 				{
 					"id": "ContractCostAssets",
 					"label": "Contract Cost Assets",
-					"icon": "Wallet",
+					"icon": "FileSign",
 					"route": "ContractCostAssets",
 					"order": 60
 				}
@@ -116,7 +116,7 @@
 						{ "id": "documents", "label": "Signed contract", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "Contract", "objectId": ":id" } }
 						] },
-						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
 						] }
 					]

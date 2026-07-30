@@ -16,7 +16,7 @@
 		{
 			"id": "DepreciationExpense",
 			"label": "Depreciation Expense",
-			"icon": "ChartBoxOutline",
+			"icon": "ReceiptOutline",
 			"route": "DepreciationExpense",
 			"order": 40
 		}
@@ -99,7 +99,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

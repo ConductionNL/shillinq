@@ -3,13 +3,13 @@
 		{
 			"id": "Bookkeeping",
 			"label": "Bookkeeping",
-			"icon": "LedgerOutline",
+			"icon": "NotebookOutline",
 			"order": 11,
 			"children": [
 				{
 					"id": "BankAccounts",
 					"label": "Bank Accounts",
-					"icon": "Bank",
+					"icon": "BankOutline",
 					"route": "BankAccounts",
 					"order": 26
 				},
@@ -88,7 +88,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -153,7 +153,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

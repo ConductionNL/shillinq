@@ -3,7 +3,7 @@
 		{
 			"id": "VennootschapsbelastingBalans",
 			"label": "Corporate income tax (Vpb)",
-			"icon": "BankCheck",
+			"icon": "PercentOutline",
 			"order": 36,
 			"featureFlag": "mkb-vpb",
 			"children": [
@@ -110,7 +110,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

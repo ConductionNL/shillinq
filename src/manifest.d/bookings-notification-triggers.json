@@ -3,20 +3,20 @@
 		{
 			"id": "Communicatie",
 			"label": "Communication",
-			"icon": "icon-comment",
+			"icon": "CommentOutline",
 			"order": 36,
 			"children": [
 				{
 					"id": "NotificationTriggers",
 					"label": "Notification Triggers",
-					"icon": "BellRingOutline",
+					"icon": "BellOutline",
 					"route": "NotificationTriggers",
 					"order": 10
 				},
 				{
 					"id": "NotificationMonitor",
 					"label": "Notification Monitor",
-					"icon": "ChartLine",
+					"icon": "BellOutline",
 					"route": "NotificationMonitor",
 					"order": 50
 				}
@@ -97,7 +97,7 @@
 				"indexRoute": "NotificationTriggers",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -182,7 +182,7 @@
 				"indexRoute": "NotificationMonitor",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]

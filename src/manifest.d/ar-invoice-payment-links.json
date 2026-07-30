@@ -93,7 +93,7 @@
 					{
 						"id": "regenerate",
 						"label": "Regenerate payment link",
-						"icon": "RefreshOutline",
+						"icon": "Refresh",
 						"description": "Per REQ-APL-008: creates a NEW pending payment request with the current outstanding amount; the panel shows its link and the expired request remains visible in history. History is preserved (a new record, not a mutation)."
 					}
 				],
@@ -102,7 +102,7 @@
 						{
 							"id": "history",
 							"label": "Request history",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 10,
 							"widgets": [
 								{
@@ -135,7 +135,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

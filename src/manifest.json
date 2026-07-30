@@ -87,7 +87,7 @@
 		{
 			"id": "Dashboard",
 			"label": "Dashboard",
-			"icon": "icon-category-dashboard",
+			"icon": "ViewDashboardOutline",
 			"route": "Dashboard",
 			"order": 10,
 			"children": []
@@ -109,7 +109,7 @@
 		{
 			"id": "Payroll",
 			"label": "People & Projects",
-			"icon": "TableAccountOutline",
+			"icon": "AccountMultipleOutline",
 			"order": 55,
 			"children": []
 		},
@@ -123,20 +123,20 @@
 		{
 			"id": "ExternalConnections",
 			"label": "External Connections",
-			"icon": "SwapHorizontalBoldOutline",
+			"icon": "TransitConnectionVariant",
 			"order": 80,
 			"children": []
 		},
 		{
 			"id": "Bookkeeping",
 			"label": "Bookkeeping",
-			"icon": "icon-category-organization",
+			"icon": "NotebookOutline",
 			"order": 20,
 			"children": [
 				{
 					"id": "ChartOfAccounts",
 					"label": "Chart of Accounts",
-					"icon": "LedgerOutline",
+					"icon": "NotebookOutline",
 					"route": "ChartOfAccounts",
 					"order": 10
 				},
@@ -150,7 +150,7 @@
 				{
 					"id": "EmuRapportage",
 					"label": "EMU reporting",
-					"icon": "ChartBarOutline",
+					"icon": "ChartBoxOutline",
 					"route": "EmuRapportage",
 					"order": 20
 				},
@@ -171,7 +171,7 @@
 				{
 					"id": "BankReconciliation",
 					"label": "Bank Reconciliation",
-					"icon": "BankCheckOutline",
+					"icon": "BankOutline",
 					"route": "BankReconciliation",
 					"order": 26
 				},
@@ -199,14 +199,14 @@
 				{
 					"id": "Aansluitingen",
 					"label": "Aansluitingen",
-					"icon": "FileCompareOutline",
+					"icon": "FileCompare",
 					"route": "Aansluitingen",
 					"order": 29
 				},
 				{
 					"id": "FixedAssets",
 					"label": "Fixed Assets",
-					"icon": "OfficeBuildingOutline",
+					"icon": "DesktopTowerMonitor",
 					"route": "FixedAssets",
 					"order": 30
 				},
@@ -241,7 +241,7 @@
 				{
 					"id": "DunningKlantOverrides",
 					"label": "Customer overrides",
-					"icon": "AccountSwitchOutline",
+					"icon": "AccountStarOutline",
 					"route": "DunningKlantOverrides",
 					"order": 36
 				},
@@ -269,14 +269,14 @@
 				{
 					"id": "Waterschapsbelastingen",
 					"label": "Water authority taxes",
-					"icon": "WaterOutline",
+					"icon": "PercentOutline",
 					"route": "Waterschapsbelastingen",
 					"order": 40
 				},
 				{
 					"id": "Customers",
 					"label": "Customers",
-					"icon": "AccountTieOutline",
+					"icon": "AccountStarOutline",
 					"route": "Customers",
 					"order": 41
 				},
@@ -304,7 +304,7 @@
 				{
 					"id": "VarianceReport",
 					"label": "Variance Report",
-					"icon": "ChartTimelineVariantShimmer",
+					"icon": "ChartBoxOutline",
 					"route": "VarianceReport",
 					"order": 45
 				},
@@ -318,28 +318,28 @@
 				{
 					"id": "GRVerdeelsleutels",
 					"label": "Allocation keys",
-					"icon": "ScaleBalanceOutline",
+					"icon": "MapMarkerOutline",
 					"route": "GRVerdeelsleutels",
 					"order": 60
 				},
 				{
 					"id": "GRConsolidated",
 					"label": "Consolidated view",
-					"icon": "TableMergeCellsOutline",
+					"icon": "TableMergeCells",
 					"route": "GRConsolidated",
 					"order": 70
 				},
 				{
 					"id": "BalanceSheet",
 					"label": "Balance Sheet",
-					"icon": "TableAccountOutline",
+					"icon": "TableAccount",
 					"route": "BalanceSheet",
 					"order": 80
 				},
 				{
 					"id": "TrialBalance",
 					"label": "Trial Balance",
-					"icon": "ScaleBalanceOutline",
+					"icon": "ScaleBalance",
 					"route": "TrialBalance",
 					"order": 81
 				},
@@ -353,7 +353,7 @@
 				{
 					"id": "ConsolidatedReport",
 					"label": "Consolidated Report",
-					"icon": "FileChartOutline",
+					"icon": "ChartBoxOutline",
 					"route": "ConsolidatedReport",
 					"order": 83
 				},
@@ -374,14 +374,14 @@
 				{
 					"id": "XBRLTaxonomies",
 					"label": "XBRL Taxonomies",
-					"icon": "FileTreeOutline",
+					"icon": "PercentOutline",
 					"route": "XBRLTaxonomies",
 					"order": 85
 				},
 				{
 					"id": "SBRDocuments",
 					"label": "SBR Documents",
-					"icon": "FileDocumentEditOutline",
+					"icon": "FileDocumentMultipleOutline",
 					"route": "SBRDocuments",
 					"order": 86
 				},
@@ -395,7 +395,7 @@
 				{
 					"id": "XBRLMappingValidation",
 					"label": "Mapping Validation",
-					"icon": "ArrowDecisionOutline",
+					"icon": "SwapHorizontal",
 					"route": "XBRLMappingValidation",
 					"order": 87
 				},
@@ -416,7 +416,7 @@
 				{
 					"id": "WBSOExport",
 					"label": "WBSO Export Dashboard",
-					"icon": "FileExportOutline",
+					"icon": "ViewDashboardOutline",
 					"route": "WBSOExport",
 					"order": 88
 				},
@@ -458,56 +458,56 @@
 				{
 					"id": "AllocationRules",
 					"label": "Allocation Rules",
-					"icon": "TransferRight",
+					"icon": "MapMarkerOutline",
 					"route": "AllocationRules",
 					"order": 91
 				},
 				{
 					"id": "SbrXbrlFilings",
 					"label": "SBR/XBRL Filings",
-					"icon": "FileXmlBoxOutline",
+					"icon": "FileXmlBox",
 					"route": "SbrXbrlFilings",
 					"order": 92
 				},
 				{
 					"id": "BookkeepingAuditTrail",
 					"label": "Audit Trail",
-					"icon": "HistoryIcon",
+					"icon": "History",
 					"route": "BookkeepingAuditTrail",
 					"order": 95
 				},
 				{
 					"id": "BookkeepingSigningTrail",
 					"label": "Signing audit trail",
-					"icon": "SignatureFreehand",
+					"icon": "History",
 					"route": "BookkeepingSigningTrail",
 					"order": 96
 				},
 				{
 					"id": "BookkeepingDestructionReport",
 					"label": "Destruction report",
-					"icon": "DeleteSweepOutline",
+					"icon": "ChartBoxOutline",
 					"route": "BookkeepingDestructionReport",
 					"order": 97
 				},
 				{
 					"id": "BookkeepingChangeHistory",
 					"label": "Change history",
-					"icon": "HistoryIcon",
+					"icon": "History",
 					"route": "BookkeepingChangeHistory",
 					"order": 98
 				},
 				{
 					"id": "BookkeepingComplianceExport",
 					"label": "Compliance export",
-					"icon": "FileExportOutline",
+					"icon": "DatabaseExportOutline",
 					"route": "BookkeepingComplianceExport",
 					"order": 99
 				},
 				{
 					"id": "BookkeepingActivityFeed",
 					"label": "Activity feed",
-					"icon": "RssBoxOutline",
+					"icon": "RssBox",
 					"route": "BookkeepingActivityFeed",
 					"order": 100
 				},
@@ -523,13 +523,13 @@
 		{
 			"id": "Inventory",
 			"label": "Inventory",
-			"icon": "icon-category-customization",
+			"icon": "Warehouse",
 			"order": 40,
 			"children": [
 				{
 					"id": "ReorderRules",
 					"label": "Reorder Rules",
-					"icon": "CartArrowDownOutline",
+					"icon": "ClipboardListOutline",
 					"route": "ReorderRules",
 					"order": 30
 				},
@@ -543,14 +543,14 @@
 				{
 					"id": "StockLevelsDashboard",
 					"label": "Stock Levels Dashboard",
-					"icon": "ChartBarOutline",
+					"icon": "ViewDashboardOutline",
 					"route": "StockLevelsDashboard",
 					"order": 50
 				},
 				{
 					"id": "StockLevels",
 					"label": "Stock Levels",
-					"icon": "WarehouseOutline",
+					"icon": "Warehouse",
 					"route": "StockLevels",
 					"order": 51
 				},
@@ -571,7 +571,7 @@
 				{
 					"id": "Barcodes",
 					"label": "Barcodes",
-					"icon": "BarcodeOutline",
+					"icon": "Barcode",
 					"route": "Barcodes",
 					"order": 60
 				},
@@ -585,7 +585,7 @@
 				{
 					"id": "InventoryLots",
 					"label": "Lots & Batches",
-					"icon": "BarcodeOutline",
+					"icon": "Barcode",
 					"route": "InventoryLots",
 					"order": 70
 				},
@@ -599,7 +599,7 @@
 				{
 					"id": "InventoryGLConfig",
 					"label": "Posting configuration",
-					"icon": "BankTransferOutline",
+					"icon": "CogOutline",
 					"route": "InventoryGLConfig",
 					"order": 95
 				},
@@ -615,7 +615,7 @@
 		{
 			"id": "Belastingen",
 			"label": "Taxes",
-			"icon": "icon-category-monitoring",
+			"icon": "PercentOutline",
 			"order": 50,
 			"children": [
 				{
@@ -628,14 +628,14 @@
 				{
 					"id": "TaxFilingPrep",
 					"label": "Tax Filing Prep",
-					"icon": "FileDocumentCheckOutline",
+					"icon": "PercentOutline",
 					"route": "TaxFilingPrep",
 					"order": 20
 				},
 				{
 					"id": "TaxEstimates",
 					"label": "Tax Estimates",
-					"icon": "CalculatorOutline",
+					"icon": "PercentOutline",
 					"route": "TaxEstimates",
 					"order": 30
 				},
@@ -649,14 +649,14 @@
 				{
 					"id": "BtwAangiften",
 					"label": "BTW returns",
-					"icon": "FileDocumentOutline",
+					"icon": "PercentOutline",
 					"route": "BtwAangiften",
 					"order": 50
 				},
 				{
 					"id": "VATByPeriod",
 					"label": "VAT by Period",
-					"icon": "ChartTimelineVariantOutline",
+					"icon": "ChartTimelineVariant",
 					"route": "VATByPeriod",
 					"order": 55
 				},
@@ -670,7 +670,7 @@
 				{
 					"id": "BtwCorrecties",
 					"label": "BTW corrections",
-					"icon": "FileDocumentEditOutline",
+					"icon": "PercentOutline",
 					"route": "BtwCorrecties",
 					"order": 70
 				},
@@ -698,7 +698,7 @@
 				{
 					"id": "TaxProvisions",
 					"label": "Deferred tax",
-					"icon": "CurrencyEur",
+					"icon": "PercentOutline",
 					"route": "TaxProvisions",
 					"order": 110
 				},
@@ -712,7 +712,7 @@
 				{
 					"id": "DeferredTaxMovements",
 					"label": "Movement overview",
-					"icon": "ArrowUpDown",
+					"icon": "ViewDashboardOutline",
 					"route": "DeferredTaxMovements",
 					"order": 112
 				},
@@ -735,13 +735,13 @@
 		{
 			"id": "Administratie",
 			"label": "Administration",
-			"icon": "icon-category-organization",
+			"icon": "ShieldAccountOutline",
 			"order": 30,
 			"children": [
 				{
 					"id": "Bewaartermijnen",
 					"label": "Retention periods",
-					"icon": "ShieldCheckOutline",
+					"icon": "CalendarRemoveOutline",
 					"route": "Bewaartermijnen",
 					"order": 10
 				}
@@ -750,7 +750,7 @@
 		{
 			"id": "Overheid",
 			"label": "Government",
-			"icon": "icon-category-organization",
+			"icon": "Domain",
 			"order": 30,
 			"children": [
 				{
@@ -763,14 +763,14 @@
 				{
 					"id": "Iv3Rapportages",
 					"label": "IV3 reports",
-					"icon": "FileChartOutline",
+					"icon": "ChartBoxOutline",
 					"route": "Iv3Rapportages",
 					"order": 10
 				},
 				{
 					"id": "BbvMapping",
 					"label": "BBV-mapping",
-					"icon": "TableArrowRight",
+					"icon": "SwapHorizontal",
 					"route": "BbvMapping",
 					"order": 20
 				},
@@ -799,7 +799,7 @@
 				{
 					"id": "SubsidiesOverzicht",
 					"label": "Overview",
-					"icon": "TableLarge",
+					"icon": "ViewDashboardOutline",
 					"route": "SubsidiesOverzicht",
 					"order": 10
 				},
@@ -822,20 +822,20 @@
 		{
 			"id": "Compliance",
 			"label": "Reporting & Compliance",
-			"icon": "icon-category-monitoring",
+			"icon": "ChartBoxOutline",
 			"order": 70,
 			"children": [
 				{
 					"id": "SisaRapportages",
 					"label": "SiSa reports",
-					"icon": "FileDocumentCheckOutline",
+					"icon": "ChartBoxOutline",
 					"route": "SisaRapportages",
 					"order": 10
 				},
 				{
 					"id": "ComplianceAuditTrails",
 					"label": "Compliance audit trail",
-					"icon": "ClipboardCheckOutline",
+					"icon": "History",
 					"route": "ComplianceAuditTrails",
 					"order": 20
 				},
@@ -849,7 +849,7 @@
 				{
 					"id": "AuditDocuments",
 					"label": "Audit documents",
-					"icon": "FileSignOutline",
+					"icon": "FileDocumentMultipleOutline",
 					"route": "AuditDocuments",
 					"order": 40
 				},
@@ -863,7 +863,7 @@
 				{
 					"id": "ENSIAEvaluations",
 					"label": "ENSIA Evaluations",
-					"icon": "ClipboardQuestionOutline",
+					"icon": "ClipboardCheckOutline",
 					"route": "ENSIAEvaluations",
 					"order": 45
 				},
@@ -877,14 +877,14 @@
 				{
 					"id": "ENSIAAuditTrail",
 					"label": "ENSIA Audit Trail",
-					"icon": "ClipboardCheckOutline",
+					"icon": "History",
 					"route": "ENSIAAuditTrail",
 					"order": 46
 				},
 				{
 					"id": "ENSIACollegeVerklaring",
 					"label": "ENSIA Executive Board Declaration",
-					"icon": "FileSignOutline",
+					"icon": "ReceiptOutline",
 					"route": "ENSIACollegeVerklaring",
 					"order": 46
 				},
@@ -898,7 +898,7 @@
 				{
 					"id": "DBAPortfolioDashboard",
 					"label": "DBA Portfolio Dashboard",
-					"icon": "ChartDonutVariant",
+					"icon": "ViewDashboardOutline",
 					"route": "DBAPortfolioDashboard",
 					"order": 51
 				},
@@ -912,7 +912,7 @@
 				{
 					"id": "DBAModelovereenkomstRegister",
 					"label": "DBA Model Agreement Register",
-					"icon": "FileDocumentMultipleOutline",
+					"icon": "DatabaseOutline",
 					"route": "DBAModelovereenkomstRegister",
 					"order": 53
 				}
@@ -921,7 +921,7 @@
 		{
 			"id": "Documentation",
 			"label": "Documentation",
-			"icon": "icon-info",
+			"icon": "BookOpenVariantOutline",
 			"href": "https://shillinq.conduction.nl",
 			"section": "footer",
 			"order": 90,
@@ -930,7 +930,7 @@
 		{
 			"id": "FeaturesRoadmapMenu",
 			"label": "Features & roadmap",
-			"icon": "icon-toggle",
+			"icon": "MapMarkerPath",
 			"route": "FeaturesRoadmap",
 			"section": "footer",
 			"order": 91,
@@ -939,7 +939,7 @@
 		{
 			"id": "Settings",
 			"label": "Settings",
-			"icon": "icon-settings",
+			"icon": "CogOutline",
 			"route": "Settings",
 			"section": "settings",
 			"order": 99,
@@ -954,7 +954,7 @@
 				{
 					"id": "ProjectenOverzicht",
 					"label": "Overview",
-					"icon": "TableLarge",
+					"icon": "ViewDashboardOutline",
 					"route": "ProjectenOverzicht",
 					"order": 10
 				},
@@ -977,7 +977,7 @@
 		{
 			"id": "Purchasing",
 			"label": "Purchasing & Inventory",
-			"icon": "CartArrowDownOutline",
+			"icon": "CartArrowDown",
 			"order": 35,
 			"children": [
 				{
@@ -1004,7 +1004,7 @@
 				{
 					"id": "SupplierInvoices",
 					"label": "Supplier Invoices",
-					"icon": "FileDocumentMultipleOutline",
+					"icon": "ReceiptTextOutline",
 					"route": "SupplierInvoices",
 					"order": 7
 				},
@@ -1032,7 +1032,7 @@
 				{
 					"id": "ExpenseClaims",
 					"label": "Expense Claims",
-					"icon": "ClipboardTextOutline",
+					"icon": "ReceiptOutline",
 					"route": "ExpenseClaims",
 					"order": 20
 				},
@@ -1054,7 +1054,7 @@
 				{
 					"id": "CashflowDashboard",
 					"label": "Cashflow Dashboard",
-					"icon": "ChartBarStacked",
+					"icon": "ViewDashboardOutline",
 					"route": "CashflowDashboard",
 					"order": 10
 				},
@@ -1068,7 +1068,7 @@
 				{
 					"id": "CashflowBufferPolicy",
 					"label": "Buffer Policy",
-					"icon": "ShieldHalfFull",
+					"icon": "ShieldCheckOutline",
 					"route": "CashflowBufferPolicy",
 					"order": 30
 				},
@@ -1201,7 +1201,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -1382,7 +1382,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -1500,7 +1500,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -1642,7 +1642,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -1832,7 +1832,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -2115,7 +2115,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -2258,7 +2258,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -2450,7 +2450,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -2583,7 +2583,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -2742,7 +2742,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -2935,7 +2935,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -3070,7 +3070,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -3265,7 +3265,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -3560,7 +3560,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -3693,7 +3693,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -3830,7 +3830,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -3991,7 +3991,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -4320,7 +4320,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -4485,7 +4485,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -4622,7 +4622,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -4713,7 +4713,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -4868,7 +4868,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -5107,7 +5107,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -5633,7 +5633,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -5787,7 +5787,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -5987,7 +5987,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -6132,7 +6132,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -6299,7 +6299,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -6415,7 +6415,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -6588,7 +6588,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -6740,7 +6740,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -6883,7 +6883,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -7031,7 +7031,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -7172,7 +7172,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -7553,7 +7553,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -7662,7 +7662,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -8431,7 +8431,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -8669,7 +8669,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -8798,7 +8798,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -9041,7 +9041,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -9144,7 +9144,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -9314,7 +9314,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -9519,7 +9519,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -9659,7 +9659,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -9833,7 +9833,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -9984,7 +9984,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -10181,7 +10181,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -10474,7 +10474,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -10662,7 +10662,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -10794,7 +10794,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -11027,7 +11027,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -11113,7 +11113,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -11178,7 +11178,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -11246,7 +11246,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -11358,7 +11358,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -11515,7 +11515,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -11682,7 +11682,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -11810,7 +11810,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -12184,7 +12184,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -12494,7 +12494,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -12695,7 +12695,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -12823,7 +12823,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -12997,7 +12997,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -13104,7 +13104,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -13238,7 +13238,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -13521,7 +13521,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -13731,7 +13731,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -13905,7 +13905,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -14116,7 +14116,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -14264,7 +14264,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -14793,7 +14793,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -14954,7 +14954,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -15100,7 +15100,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -15241,7 +15241,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -15373,7 +15373,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -15489,7 +15489,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -15773,7 +15773,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -16020,7 +16020,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -16150,7 +16150,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -16263,7 +16263,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -16498,7 +16498,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -16595,7 +16595,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -16745,7 +16745,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -16918,7 +16918,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -17031,7 +17031,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -17273,7 +17273,7 @@
 					{
 						"id": "cancel",
 						"label": "Cancel",
-						"icon": "CancelOutline",
+						"icon": "Cancel",
 						"visibleWhen": {
 							"field": "reconciliationStatus",
 							"in": [
@@ -17396,7 +17396,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -17620,7 +17620,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -17735,7 +17735,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -17887,7 +17887,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -18014,7 +18014,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -18151,7 +18151,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -18425,7 +18425,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -18612,7 +18612,7 @@
 						{
 							"id": "audit",
 							"label": "Change History",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -18684,7 +18684,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -19089,7 +19089,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

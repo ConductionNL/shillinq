@@ -23,7 +23,7 @@
 				{
 					"id": "EuBewijsstukken",
 					"label": "Supporting documents",
-					"icon": "FileCertificateOutline",
+					"icon": "FileDocumentMultipleOutline",
 					"route": "EuBewijsstukken",
 					"order": 30
 				},

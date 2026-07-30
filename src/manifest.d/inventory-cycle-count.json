@@ -3,7 +3,7 @@
 		{
 			"id": "Inventory",
 			"label": "Inventory",
-			"icon": "icon-category-customization",
+			"icon": "Warehouse",
 			"order": 22,
 			"children": [
 				{
@@ -16,14 +16,14 @@
 				{
 					"id": "CountTemplates",
 					"label": "Count Templates",
-					"icon": "FormatListChecks",
+					"icon": "FileReplaceOutline",
 					"route": "CountTemplates",
 					"order": 51
 				},
 				{
 					"id": "VarianceReports",
 					"label": "Variance Reports",
-					"icon": "ChartLineVariantOutline",
+					"icon": "ChartBoxOutline",
 					"route": "VarianceReports",
 					"order": 52
 				}
@@ -79,7 +79,7 @@
 				],
 				"sidebarProps": {
 					"tabs": [
-						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [ { "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } } ] }
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [ { "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } } ] }
 					]
 				},
 				"fields": [

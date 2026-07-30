@@ -6,7 +6,7 @@
     "schemas": {
       "StockMove": {
         "slug": "StockMove",
-        "icon": "SwapHorizontalBoldOutline",
+        "icon": "SwapHorizontalBold",
         "version": "0.1.0",
         "title": "Stock Move",
         "description": "Immutable double-entry stock-movement ledger entry (Odoo / Tryton Stock Move pattern). One StockMove atomically debits source location and credits destination location for a single (item + quantity + unit cost) tuple. Movement type taxonomy: receipt (null source = goods inbound), transfer (both locations populated = lateral move), issue (null destination = goods outbound), manufacture (assembly), repack (consolidation). Lifecycle draft → posted → cancelled; posting flips `locked = true` and triggers GL materialisation (asset / COGS) via x-openregister-lifecycle-action. Cancellation creates an offsetting StockMove (not patch) so the original posted row remains immutable per IAS 2 + Dutch CTR. No PHP StockMoveService — the lifecycle, GL materialisation and audit trail are declarative per ADR-031 (ADR-031 exception path: StockReservationGuard + StockMoveImmutabilityGuard + StockMoveOffsetCreator for the optimistic-lock CAS, the locked-after-post guard, and the offset-row materialisation that the declarative DSL cannot yet express). Reserved quantity is held against InventoryStock.reservedQuantity on draft and released on post or cancel.",

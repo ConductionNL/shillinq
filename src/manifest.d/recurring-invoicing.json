@@ -10,7 +10,7 @@
         {
             "id": "RecurringInvoicing",
             "label": "Recurring Invoices",
-            "icon": "CalendarSync",
+            "icon": "ReceiptTextOutline",
             "route": "RecurringInvoiceProfiles",
             "order": 46
         }

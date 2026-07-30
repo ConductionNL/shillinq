@@ -3,20 +3,20 @@
 		{
 			"id": "Vpb",
 			"label": "Corporate tax (Vpb)",
-			"icon": "BankOutline",
+			"icon": "PercentOutline",
 			"order": 35,
 			"children": [
 				{
 					"id": "VpbDeadlines",
 					"label": "Tax deadlines",
-					"icon": "CalendarClock",
+					"icon": "ClockAlertOutline",
 					"route": "VpbDeadlines",
 					"order": 10
 				},
 				{
 					"id": "VpbPayments",
 					"label": "Tax payments",
-					"icon": "CashMultiple",
+					"icon": "CreditCardOutline",
 					"route": "VpbPayments",
 					"order": 20
 				},
@@ -96,7 +96,7 @@
 				"indexRoute": "VpbDeadlines",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -164,7 +164,7 @@
 						{"id": "documents", "label": "Payment proof", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "TaxPaymentTracking", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]

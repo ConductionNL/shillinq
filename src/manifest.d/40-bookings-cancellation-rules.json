@@ -9,7 +9,7 @@
 				{
 					"id": "Annuleringsbeleid",
 					"label": "Cancellation policy",
-					"icon": "CalendarRemoveOutline",
+					"icon": "ShieldCheckOutline",
 					"route": "Annuleringsbeleid",
 					"order": 20
 				}
@@ -133,7 +133,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

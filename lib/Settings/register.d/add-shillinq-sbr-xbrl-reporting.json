@@ -12,7 +12,7 @@
     "schemas": {
       "XbrlInstance": {
         "slug": "XbrlInstance",
-        "icon": "FileXmlBoxOutline",
+        "icon": "FileXmlBox",
         "version": "0.1.0",
         "title": "XBRL Instance",
         "description": "An NL-taxonomie XBRL instance document derived from a posted T3 FinancialStatement (REQ-SBR-001/002). One record per filing event per administration + reporting period + entry point. Carries the canonicalised XML payload, its SHA-256 tamper-evidence hash, the resolved Mapping FK (REQ-SBR-006), the Digipoort acknowledgement receipt id when submitted (REQ-SBR-004), and the declarative draft → validated → submitted → accepted/rejected lifecycle (REQ-SBR-003 / ADR-031). No re-aggregation of ledger lines; the instance is a pure transformation on top of FinancialStatement (D1 in design.md).",

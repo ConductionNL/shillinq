@@ -133,7 +133,7 @@
 						{ "id": "documents", "label": "Receipts", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "DepositPayment", "objectId": ":id" } }
 						] },
-						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
 						] }
 					]

@@ -39,7 +39,7 @@
       },
       "InventoryLot": {
         "slug": "InventoryLot",
-        "icon": "BarcodeOutline",
+        "icon": "Barcode",
         "version": "0.1.0",
         "title": "Inventory Lot",
         "description": "Lot/batch identifier for a homogeneous quantity of a Product received together (one supplier, one date, one expiry). Sits below InventoryStock — InventoryStock is the aggregate position per (sku, locationId); InventoryLot adds the per-lot granularity required for FEFO (First-Expiry-First-Out) picking, expiry tracking, quality quarantine, and recall traceability per REQ-LOT-001..009. Lifecycle: active → quarantined (release back) | expired (terminal) | exhausted (terminal, qty == 0). FEFO order is declared via x-openregister-sort on expiryDate ASC NULLS LAST so all consumers (pick list, expiry dashboard, batch reports) inherit FEFO ordering. ADR-031 exception path: if the declarative sort directive is advisory rather than enforced at the OR API layer, the single-method FefoSort::sortLots PHP guard in lib/Sort/ applies the order before the response leaves the controller. No bespoke PHP CRUD — spec REQ-LOT-001 prohibits parallel storage. Spec: inventory-lot-batch-expiry. The 'InventoryItem' wording in the spec refers to the shillinq Product schema.",

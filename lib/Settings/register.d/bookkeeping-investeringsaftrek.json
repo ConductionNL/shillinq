@@ -289,7 +289,7 @@
       },
       "MilieulijstCode": {
         "slug": "MilieulijstCode",
-        "icon": "LeafOutline",
+        "icon": "Leaf",
         "version": "0.1.0",
         "title": "MilieulijstCode",
         "description": "Reference data: a single RvO Milieulijst code (MIA/Vamil) for a given jaartal. Carries the MIA percentage (27/36/45) and the vamilToegestaan flag. Versioned per year. Seeded from lib/Settings/seeds/investeringsaftrek-milieulijst-2026.json.",

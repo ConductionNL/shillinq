@@ -220,7 +220,7 @@
       },
       "BookingReminderTemplate": {
         "slug": "BookingReminderTemplate",
-        "icon": "EmailClockOutline",
+        "icon": "EmailOutline",
         "version": "0.1.0",
         "title": "Booking Reminder Template",
         "description": "Branded reminder email dispatched N hours before a booking starts. The hoursBeforeBooking field configures the reminder timing; the booking system queues dispatch at that offset (REQ-BET-005). Subject/body support {{variable}} placeholders including {{hoursUntilBooking}}. Lifecycle draft -> published -> archived controls the active version.",

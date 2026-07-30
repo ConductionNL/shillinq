@@ -30,14 +30,14 @@
 				{
 					"id": "Rechtmatigheidsparagraaf",
 					"label": "Lawfulness paragraph",
-					"icon": "FileDocumentCheckOutline",
+					"icon": "ClipboardCheckOutline",
 					"route": "Rechtmatigheidsparagraaf",
 					"order": 40
 				},
 				{
 					"id": "RechtmatigheidAuditExport",
 					"label": "Audit Export",
-					"icon": "DownloadOutline",
+					"icon": "DatabaseExportOutline",
 					"route": "RechtmatigheidAuditExport",
 					"order": 50
 				}
@@ -95,7 +95,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -164,7 +164,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -227,7 +227,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -291,7 +291,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

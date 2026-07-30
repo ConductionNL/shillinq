@@ -3,7 +3,7 @@
 		{
 			"id": "Sustainability",
 			"label": "Sustainability",
-			"icon": "LeafOutline",
+			"icon": "Leaf",
 			"order": 70,
 			"children": [
 				{
@@ -16,14 +16,14 @@
 				{
 					"id": "EsrsDataPoints",
 					"label": "ESRS Data Points",
-					"icon": "TableLarge",
+					"icon": "DatabaseOutline",
 					"route": "EsrsDataPoints",
 					"order": 20
 				},
 				{
 					"id": "GhgInventories",
 					"label": "GHG Inventory",
-					"icon": "Molecule",
+					"icon": "Warehouse",
 					"route": "GhgInventories",
 					"order": 30
 				},
@@ -109,7 +109,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -194,7 +194,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -256,7 +256,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -320,7 +320,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -401,7 +401,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

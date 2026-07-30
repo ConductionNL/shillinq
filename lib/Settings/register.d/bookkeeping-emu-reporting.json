@@ -524,7 +524,7 @@
       },
       "DebtPosition": {
         "slug": "DebtPosition",
-        "icon": "BankMinusOutline",
+        "icon": "BankMinus",
         "version": "0.1.0",
         "title": "Schuldpositie",
         "description": "Uitstaande schuld per instrument per peildatum (kwartaal- of jaar-ultimo) per REQ-EMU-004. Bruto nominaal bedrag classified per Eurostat ESA2010 (AF.2/AF.3/AF.4 tellen mee; AF.7 derivaten niet). Can be sourced from the schatkistbankieren daily sync (REQ-EMU-011) or entered manually.",

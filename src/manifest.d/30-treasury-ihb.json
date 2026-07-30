@@ -3,7 +3,7 @@
 		{
 			"id": "Treasury",
 			"label": "Treasury",
-			"icon": "BankTransfer",
+			"icon": "BankOutline",
 			"order": 38,
 			"children": [
 				{
@@ -30,14 +30,14 @@
 				{
 					"id": "CashflowForecast",
 					"label": "Cashflow Forecast",
-					"icon": "CalendarMultiselect",
+					"icon": "ChartTimelineVariant",
 					"route": "CashflowForecast",
 					"order": 40
 				},
 				{
 					"id": "GroupLiquidityDashboard",
 					"label": "Group Liquidity Dashboard",
-					"icon": "SpeedometerSlow",
+					"icon": "ViewDashboardOutline",
 					"route": "GroupLiquidityDashboard",
 					"order": 50
 				}
@@ -103,7 +103,7 @@
 				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [
-						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
 						] }
 					]
@@ -175,7 +175,7 @@
 						{ "id": "documents", "label": "Transfer pricing docs", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "IntercompanyLoan", "objectId": ":id" } }
 						] },
-						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
 						] }
 					]
@@ -238,7 +238,7 @@
 						{ "id": "documents", "label": "Confirmations", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "FXContract", "objectId": ":id" } }
 						] },
-						{ "id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
 						] }
 					]

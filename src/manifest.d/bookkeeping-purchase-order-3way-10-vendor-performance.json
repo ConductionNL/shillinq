@@ -10,7 +10,7 @@
 		{
 			"id": "PurchaseOrders",
 			"label": "Purchase Orders",
-			"icon": "FileDocumentMultiple",
+			"icon": "ClipboardListOutline",
 			"order": 90,
 			"children": [
 				{"id": "VendorPerformanceIndex", "label": "Vendor performance", "icon": "ChartTimelineVariant", "route": "VendorPerformanceIndex", "order": 50}

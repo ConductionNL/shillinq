@@ -622,7 +622,7 @@
       },
       "CloseChecklistInstance": {
         "slug": "CloseChecklistInstance",
-        "icon": "FormatListChecksSolid",
+        "icon": "FormatListChecks",
         "version": "0.1.0",
         "title": "Close Checklist Instance",
         "description": "Per-period instantiation of a CloseChecklistTemplate (REQ-CLS-004). Carries per-task status (pending | in-progress | completed | overdue), owner override, completedAt, evidence attachment, and slaBreach flag. Lifecycle: pending → in-progress → completed with SLA escalation on overdue.",

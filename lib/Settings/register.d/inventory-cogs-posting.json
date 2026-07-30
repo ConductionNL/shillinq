@@ -6,7 +6,7 @@
     "schemas": {
       "InventoryGLConfig": {
         "slug": "InventoryGLConfig",
-        "icon": "BankTransferOutline",
+        "icon": "BankTransfer",
         "version": "0.1.0",
         "title": "Inventory GL Posting Configuration",
         "titleNl": "Voorraad GL Boekingsconfiguratie",

@@ -10,7 +10,7 @@
 				{
 					"id": "ExternalAdaptersStatus",
 					"label": "Adapter Status",
-					"icon": "PulseOutline",
+					"icon": "Pulse",
 					"route": "ExternalAdaptersStatus",
 					"order": 5
 				},
@@ -24,7 +24,7 @@
 				{
 					"id": "ExternalAdapterSalarisbureau",
 					"label": "Payroll bureau",
-					"icon": "AccountGroupOutline",
+					"icon": "CashSync",
 					"route": "ExternalAdapterSalarisbureau",
 					"order": 15
 				},
@@ -80,21 +80,21 @@
 				{
 					"id": "ExternalAdapterKvk",
 					"label": "KvK Trade Register",
-					"icon": "OfficeBuildingOutline",
+					"icon": "DatabaseOutline",
 					"route": "ExternalAdapterKvk",
 					"order": 50
 				},
 				{
 					"id": "ExternalAdapterUwv",
 					"label": "UWV payroll filing",
-					"icon": "AccountGroupOutline",
+					"icon": "CashSync",
 					"route": "ExternalAdapterUwv",
 					"order": 55
 				},
 				{
 					"id": "ExternalAdapterTreasuryRates",
 					"label": "Treasury Rates",
-					"icon": "CurrencyUsd",
+					"icon": "BankOutline",
 					"route": "ExternalAdapterTreasuryRates",
 					"order": 60
 				},
@@ -108,7 +108,7 @@
 				{
 					"id": "ExternalAdapterCsrd",
 					"label": "CSRD ESRS XBRL",
-					"icon": "LeafOutline",
+					"icon": "Leaf",
 					"route": "ExternalAdapterCsrd",
 					"order": 70
 				},

@@ -416,7 +416,7 @@
       },
       "GLTransaction": {
         "slug": "GLTransaction",
-        "icon": "LedgerOutline",
+        "icon": "NotebookOutline",
         "version": "0.1.0",
         "title": "GL Transaction",
         "description": "A double-entry general-ledger posting header. Owns the lifecycle and the balance invariant; child GLLine rows carry the debit/credit amounts per REQ-GL-001.",
@@ -782,7 +782,7 @@
       },
       "GLLine": {
         "slug": "GLLine",
-        "icon": "TableRowOutline",
+        "icon": "TableRow",
         "version": "0.1.0",
         "title": "GL Line",
         "description": "A debit-or-credit line within a GLTransaction, encoding the polarity in the side enum per REQ-GL-003. Extended with eliminationFlag to support GR consolidation per REQ-GRC-003.",
@@ -1290,7 +1290,7 @@
       },
       "GRVerdeelsleutel": {
         "slug": "GRVerdeelsleutel",
-        "icon": "ScaleBalanceOutline",
+        "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "GR Allocation Key",
         "description": "An apportionment rule linking a cost-cluster (set of accountNumbers) to a per-deelnemer split method. Multiple verdeelsleutels MAY apply to the same cost cluster, sequenced by lineNumber per REQ-GRC-002.",
@@ -1373,7 +1373,7 @@
       },
       "Account": {
         "slug": "Account",
-        "icon": "LedgerOutline",
+        "icon": "NotebookOutline",
         "version": "0.1.0",
         "title": "Account",
         "description": "A hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboek Schema) standard for Dutch bookkeeping.",
@@ -1934,7 +1934,7 @@
       },
       "BalanceSheet": {
         "slug": "BalanceSheet",
-        "icon": "TableAccountOutline",
+        "icon": "TableAccount",
         "version": "0.1.0",
         "title": "Balance Sheet",
         "description": "Financial statement showing assets, liabilities, and equity at a fiscal-period snapshot. Status lifecycle: draft → final → published. Totals are computed via x-openregister-aggregations from GL entries grouped by Account.accountType per REQ-FS-004.",
@@ -2152,7 +2152,7 @@
       },
       "TrialBalance": {
         "slug": "TrialBalance",
-        "icon": "ScaleBalanceOutline",
+        "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Trial Balance",
         "description": "Listing of all GL accounts with debit/credit balances for period verification. isBalanced flag (totalDebits = totalCredits) computed via aggregation per REQ-FS-005. No TrialBalanceService.",
@@ -2993,7 +2993,7 @@
       },
       "kernGegevensConfig": {
         "slug": "kernGegevensConfig",
-        "icon": "ChartBarOutline",
+        "icon": "ChartBar",
         "version": "0.1.0",
         "title": "Core Data Configuration",
         "description": "Administration-level configuration record holding the denominators required for the CBS Kerngegevens jaarstaten computation per REQ-CBSE-003. Operators set these values yearly; the aggregation surfaces a 'denominator last updated' warning when any value is >12 months old.",
@@ -5049,7 +5049,7 @@
       },
       "TaxEstimate": {
         "slug": "TaxEstimate",
-        "icon": "CalculatorOutline",
+        "icon": "Calculator",
         "version": "0.1.0",
         "title": "Tax Estimate",
         "description": "Real-time annual income tax (IB) liability projection for Dutch ZZP freelancers. Materialized view consuming GL year-to-date snapshot and TaxRegimeConfiguration per REQ-TAX-004 and ADR-031 D3. Computed on read or scheduled refresh; records calculation inputs for audit trail per D5.",
@@ -6811,7 +6811,7 @@
       },
       "RateSchedule": {
         "slug": "RateSchedule",
-        "icon": "TableRowOutline",
+        "icon": "TableRow",
         "version": "0.1.0",
         "title": "Rate Schedule",
         "description": "Tier-specific rate entry for a RateCardVersion. Defines a fixed or volume-bracketed rate for a single tier (user / role / project / client / blended) within an effective-date window. Non-overlapping effective windows per (tier, entityId) are enforced (REQ-RATE-006). REQ-RATE-004.",
@@ -7179,7 +7179,7 @@
       },
       "RateRecord": {
         "slug": "RateRecord",
-        "icon": "HistoryOutline",
+        "icon": "History",
         "version": "0.1.0",
         "title": "Rate Record",
         "description": "Immutable materialized audit-trail entry created for each rate lookup. Stores the resolved tier, rate, effective window, and lookup context so historical rates remain queryable and disputable (REQ-RATE-007, REQ-RATE-010, D4). No updates after creation.",
@@ -10286,7 +10286,7 @@
       },
       "MileageRate": {
         "slug": "MileageRate",
-        "icon": "RoadVariantOutline",
+        "icon": "RoadVariant",
         "version": "0.1.0",
         "title": "Mileage Rate",
         "description": "Master data table of reimbursement rates per kilometre by fiscal year, vehicle type, and tax jurisdiction. Seeded with NL and FI 2026 rates per design.md Seed Data. Operators maintain rates per fiscal year; MileageEntry.ratePerKm is looked up from this table at capture time and locked at claim submission per REQ-EC-003 and Task 16.",
@@ -10367,7 +10367,7 @@
       },
       "PerDiemRate": {
         "slug": "PerDiemRate",
-        "icon": "CurrencyEurOutline",
+        "icon": "CurrencyEur",
         "version": "0.1.0",
         "title": "Per Diem Rate",
         "description": "Master data table of official daily travel allowance rates per country and calendar year. Seeded with NL and FI 2026 rates per design.md Seed Data. Operators maintain rates per calendar year; PerDiem.dailyRate is looked up from this table at capture time and locked at claim submission per REQ-EC-004 and Task 16.",
@@ -10521,7 +10521,7 @@
       },
       "InventoryReorderRule": {
         "slug": "InventoryReorderRule",
-        "icon": "CartArrowDownOutline",
+        "icon": "CartArrowDown",
         "version": "0.1.0",
         "title": "Inventory Reorder Rule",
         "description": "Per-item, per-location reorder policy declaring min/max stock levels, lead-time-aware reorder-point thresholds, low-stock alert policy, and optional auto-purchase-order generation. Reorder decision logic is fully declarative via x-openregister-lifecycle, x-openregister-aggregations, and x-openregister-notifications per ADR-031 and ADR-022. No PHP InventoryReorderService — all reorder triggers and alert dispatch are schema-driven.",
@@ -11628,7 +11628,7 @@
       },
       "CashflowARProjection": {
         "slug": "CashflowARProjection",
-        "icon": "CashFastOutline",
+        "icon": "CashFast",
         "version": "0.1.0",
         "title": "Cashflow AR Projection",
         "description": "Projected expected-receipt date per open AR invoice, derived from customer-specific betalingsgedrag (12-month moving average + confidence). REQ-CF-003, REQ-CF-004.",
@@ -12766,7 +12766,7 @@
       },
       "AuditDocument": {
         "slug": "AuditDocument",
-        "icon": "FileSignOutline",
+        "icon": "FileSign",
         "version": "0.1.0",
         "title": "Audit Document",
         "description": "A financial document participating in SiSa audit (invoice, purchase order, journal entry, payment). Every state transition triggers an immutable audit-trail event via OR's audit service per REQ-SISA-001 and REQ-SISA-003.",
@@ -14867,7 +14867,7 @@
       },
       "XBRLMapping": {
         "slug": "XBRLMapping",
-        "icon": "SwapHorizontalOutline",
+        "icon": "SwapHorizontal",
         "version": "0.1.0",
         "title": "XBRL Mapping",
         "description": "Transformation rule mapping a Shillinq Account (chart-of-accounts entry) to an XBRL GL concept URI. Mappings are taxonomy-version-specific; multiple versions coexist per REQ-SBR-004.",
@@ -16285,7 +16285,7 @@
       },
       "MatchingRule": {
         "slug": "MatchingRule",
-        "icon": "RuleOutline",
+        "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Matching Rule",
         "description": "Operator-authored rule declaring predicates for auto-matching bank statement lines against AP/AR invoices or GL transactions. Predicates are consumed by an x-openregister-aggregations query (REQ-BR-004). No MatchingService.php. x-openregister-audit: true per REQ-BR-001.",
@@ -16860,7 +16860,7 @@
       },
       "IPAssetValuation": {
         "slug": "IPAssetValuation",
-        "icon": "BulbOutline",
+        "icon": "LightbulbOutline",
         "version": "0.1.0",
         "title": "IP Asset Valuation",
         "description": "Immaterieel activum (IP asset) qualifying for the innovatiebox under the afpelmethode (Wet Vpb art. 12b). Applied to afpelmethode elections only — no per-asset entries are required for the forfaitair route. Per REQ-IBA-001. No PHP IP-service per ADR-031.",
@@ -17338,7 +17338,7 @@
       },
       "WinstToerekening": {
         "slug": "WinstToerekening",
-        "icon": "ChartBarOutline",
+        "icon": "ChartBar",
         "version": "0.1.0",
         "title": "Profit Allocation",
         "description": "Per-period profit attribution from operating profit to one or more IP assets via a configurable verdeelsleutel. Used by the afpelmethode route of the innovatiebox aggregation per REQ-IBA-004. MUST NOT be populated when InnovatieboxElection.route is forfaitair. No PHP winsttoerekening service per ADR-031.",
@@ -17530,7 +17530,7 @@
       },
       "IcpStatement": {
         "slug": "IcpStatement",
-        "icon": "EarthOutline",
+        "icon": "Earth",
         "version": "0.1.0",
         "title": "ICP Statement",
         "description": "Quarterly ICP-opgaaf (intracommunautaire prestaties) per Wet OB 1968 art. 37a. Lists intra-EU supply totals per customer for filing with Belastingdienst.",
@@ -18470,7 +18470,7 @@
       },
       "CurrencyBalance": {
         "slug": "CurrencyBalance",
-        "icon": "CurrencyEurOutline",
+        "icon": "CurrencyEur",
         "version": "0.1.0",
         "title": "Currency Balance",
         "description": "Point-in-time balance snapshot for one (account, currency) pair. Enables per-currency cash-position tracking for Dutch SMBs with foreign operations. Snapshot-based; not a transactional ledger. Per REQ-MC-003 (bookkeeping-multi-currency).",
@@ -21359,7 +21359,7 @@
     },
     "AuditDocument": {
       "slug": "AuditDocument",
-      "icon": "FileSignOutline",
+      "icon": "FileSign",
       "version": "0.1.0",
       "title": "Audit Document",
       "description": "A financial document participating in SiSa audit (invoice, purchase order, journal entry, payment). Every state transition triggers an immutable audit-trail event via OR's audit service per REQ-SISA-001 and REQ-SISA-003.",
@@ -23697,7 +23697,7 @@
     },
     "VATGLAccounts": {
       "slug": "VATGLAccounts",
-      "icon": "BankCheckOutline",
+      "icon": "BankCheck",
       "version": "0.1.0",
       "title": "VAT GL Accounts",
       "description": "Per-administration mapping from VAT rate to the GL liability (VATPayable*) account credited by the ARInvoice.issue lifecycle action per REQ-VAT-006. One record per administrationId. Defaults from the RGS (Referentie Grootboekschema) chart (vat21=2020, vat9=2021, vat6=2022, vat0=2023) and seeded on installer first-run.",
@@ -24065,7 +24065,7 @@
     },
     "Location": {
       "slug": "Location",
-      "icon": "WarehouseOutline",
+      "icon": "Warehouse",
       "version": "0.1.0",
       "title": "Location",
       "description": "Physical or virtual storage location in the warehouse hierarchy (warehouse → zone → bin → in-transit). Hierarchical parent-child FK (parentLocationId) enables rollup stock visibility and inter-location transfers per REQ-LOC-001 through REQ-LOC-009 and design.md D1-D6. No parallel warehouse table in PHP per ADR-031 — location hierarchy is pure declarative metadata.",
@@ -24547,7 +24547,7 @@
     },
     "InventoryStock": {
       "slug": "InventoryStock",
-      "icon": "PackageVariantClosedOutline",
+      "icon": "PackageVariantClosed",
       "version": "0.1.0",
       "title": "Inventory Stock",
       "description": "Stock level per SKU at a specific bin Location per REQ-LOC-009 and inventory-stock-tracking spec. Always recorded at bin level (most-granular); warehouse/zone aggregation via Location.stockRollup. locationId FK references bin-type Location only.",
@@ -25361,7 +25361,7 @@
     },
     "VpbBalansLink": {
       "slug": "VpbBalansLink",
-      "icon": "ScaleBalanceOutline",
+      "icon": "ScaleBalance",
       "version": "0.1.0",
       "title": "Vpb-balans Link",
       "description": "Overlay register tying an ondernemingsactiviteit cost-center to its cluster of Vpb-pligtige accounts. Declared per REQ-VPB-002 from bookkeeping-vpb-corporate-tax. No PHP service — pure schema overlay per ADR-031.",

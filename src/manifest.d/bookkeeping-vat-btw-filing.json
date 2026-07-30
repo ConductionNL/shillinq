@@ -10,14 +10,14 @@
 		{
 			"id": "VATReturns",
 			"label": "BTW return",
-			"icon": "FileDocumentCheckOutline",
+			"icon": "PercentOutline",
 			"route": "VATReturns",
 			"order": 70
 		},
 		{
 			"id": "VATReports",
 			"label": "BTW report",
-			"icon": "ChartBoxOutline",
+			"icon": "PercentOutline",
 			"route": "VATReports",
 			"order": 71
 		}
@@ -131,7 +131,7 @@
 						{"id": "documents", "label": "Source documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "VATReturn", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]

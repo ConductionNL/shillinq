@@ -30,7 +30,7 @@
 				{
 					"id": "BudgetBBVMappings",
 					"label": "Budget Mapping",
-					"icon": "TableArrowRight",
+					"icon": "SwapHorizontal",
 					"route": "BudgetBBVMappings",
 					"order": 20
 				}
@@ -107,7 +107,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

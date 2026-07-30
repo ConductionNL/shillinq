@@ -3,27 +3,27 @@
 		{
 			"id": "Purchasing",
 			"label": "Purchasing & Inventory",
-			"icon": "CartArrowDownOutline",
+			"icon": "CartArrowDown",
 			"order": 35,
 			"children": [
 				{
 					"id": "TenderNedAanbestedingen",
 					"label": "TenderNed tenders",
-					"icon": "GavelOutline",
+					"icon": "Gavel",
 					"route": "TenderNedAanbestedingen",
 					"order": 10
 				},
 				{
 					"id": "Verplichtingen",
 					"label": "Commitments",
-					"icon": "FileSignOutline",
+					"icon": "FileSign",
 					"route": "Verplichtingen",
 					"order": 20
 				},
 				{
 					"id": "MijnContracten",
 					"label": "My contracts",
-					"icon": "BriefcaseCheckOutline",
+					"icon": "FileSign",
 					"route": "MijnContracten",
 					"order": 30
 				}

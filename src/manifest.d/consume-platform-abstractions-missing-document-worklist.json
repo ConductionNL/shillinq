@@ -13,7 +13,7 @@
 				{
 					"id": "SupplierInvoicesMissingDocument",
 					"label": "Missing Supplier Documents",
-					"icon": "FileAlertOutline",
+					"icon": "FileDocumentMultipleOutline",
 					"route": "SupplierInvoicesMissingDocument",
 					"order": 29
 				},
