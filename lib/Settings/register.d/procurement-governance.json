@@ -160,7 +160,7 @@
       },
       "FrameworkAgreement": {
         "slug": "FrameworkAgreement",
-        "icon": "FileSignOutline",
+        "icon": "FileSign",
         "version": "0.1.0",
         "title": "Framework Agreement",
         "description": "Generic framework agreement (raamovereenkomst abstracted): a supplier contract with a spend ceiling that PurchaseOrder call-offs draw down against. A call-off exceeding the remaining ceiling is blocked by FrameworkAgreementDrawdownGuard (REQ-PG-004). Distinct from the generic Contract (contract-lifecycle-management), which has no ceiling/drawdown accounting. Money is integer euro cents (ADR-022).",

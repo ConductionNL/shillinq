@@ -9,7 +9,7 @@
 				{
 					"id": "ConsolidationGroups",
 					"label": "Consolidation Groups",
-					"icon": "Sitemap",
+					"icon": "AccountGroupOutline",
 					"route": "ConsolidationGroups",
 					"order": 10
 				},
@@ -23,7 +23,7 @@
 				{
 					"id": "ConsolidatedReports",
 					"label": "Consolidated Reports",
-					"icon": "FileChartOutline",
+					"icon": "ChartBoxOutline",
 					"route": "ConsolidatedReports",
 					"order": 30
 				}
@@ -95,7 +95,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/ConsolidationGroup/:id/audit-trails", "collapsed": true}}
@@ -180,7 +180,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/ConsolidationPeriod/:id/audit-trails", "collapsed": true}}
@@ -234,7 +234,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/ConsolidatedBalance/:id/audit-trails", "collapsed": true}}

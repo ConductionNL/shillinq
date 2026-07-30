@@ -674,7 +674,7 @@
       },
       "FrameworkElection": {
         "slug": "FrameworkElection",
-        "icon": "GavelOutline",
+        "icon": "Gavel",
         "version": "0.1.0",
         "title": "Framework Election",
         "description": "Records a legal entity's primary-framework election with comply-or-explain motivation, RJ variant, measured size criteria and AVA-besluit reference (REQ-DGAAP-007, REQ-DGAAP-010). Lifecycle: draft → active → superseded. Activation requires a motivation, an AVA-besluit reference and a variant consistent with the measured size criteria; the system warns when criteria breach the threshold for two consecutive years.",

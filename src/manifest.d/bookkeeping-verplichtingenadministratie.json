@@ -9,7 +9,7 @@
 				{
 					"id": "Verplichtingenregister",
 					"label": "Commitments register",
-					"icon": "FileSign",
+					"icon": "DatabaseOutline",
 					"route": "Verplichtingenregister",
 					"order": 10
 				},
@@ -23,7 +23,7 @@
 				{
 					"id": "Goedkeuringsstappen",
 					"label": "Approvals",
-					"icon": "ClipboardCheckOutline",
+					"icon": "CheckDecagramOutline",
 					"route": "Goedkeuringsstappen",
 					"order": 30
 				},
@@ -127,7 +127,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -197,7 +197,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -258,7 +258,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

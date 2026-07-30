@@ -44,7 +44,7 @@
 				{
 					"id": "CcmAuditCommitteeReports",
 					"label": "Audit Committee Reports",
-					"icon": "FileChartOutline",
+					"icon": "AccountGroupOutline",
 					"route": "CcmAuditCommitteeReports",
 					"order": 60
 				}
@@ -101,7 +101,7 @@
 						{"id": "documents", "label": "Evidence", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "CcmFinding", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -163,7 +163,7 @@
 				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -206,7 +206,7 @@
 				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -252,7 +252,7 @@
 				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -304,7 +304,7 @@
 				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -364,7 +364,7 @@
 						{"id": "documents", "label": "Report documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "CcmAuditCommitteeReport", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]

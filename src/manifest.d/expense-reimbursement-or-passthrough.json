@@ -10,7 +10,7 @@
 		{
 			"id": "ExpenseSettlement",
 			"label": "Expense Settlement",
-			"icon": "ScaleBalance",
+			"icon": "ReceiptOutline",
 			"order": 80,
 			"children": [
 				{
@@ -183,7 +183,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -279,7 +279,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

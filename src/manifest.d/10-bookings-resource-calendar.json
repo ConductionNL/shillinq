@@ -9,7 +9,7 @@
 				{
 					"id": "Resources",
 					"label": "Resources",
-					"icon": "AccountHardHatOutline",
+					"icon": "SourceBranch",
 					"route": "Resources",
 					"order": 10
 				},

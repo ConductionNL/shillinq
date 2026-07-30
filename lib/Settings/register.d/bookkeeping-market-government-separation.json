@@ -904,7 +904,7 @@
       },
       "AlgemeenBelangBesluit": {
         "slug": "AlgemeenBelangBesluit",
-        "icon": "GavelOutline",
+        "icon": "Gavel",
         "version": "0.1.0",
         "title": "Public Interest Decision",
         "description": "AlgemeenBelangBesluit (ABB) lifecycle record (REQ-WMO-005). Workflow: concept → raadsvoorstel → raadsbesluit → publicatie → acm-notified → bezwaar → geldig → evaluatie-due → herziening/intrekking. State transitions enforce preconditions (raadsbesluit requires kenmerk; geldig requires publicatieDatum + ACM-kenmerk). Automatic tasks are generated on raadsbesluit (publish gemeenteblad +14d), publicatie (notify ACM +7d), acm-notified (review bezwaarschriften +42d), and when volgendeEvaluatie is reached.",

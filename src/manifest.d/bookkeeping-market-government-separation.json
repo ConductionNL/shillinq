@@ -3,7 +3,7 @@
 		{
 			"id": "WmoCompliance",
 			"label": "WMO Compliance",
-			"icon": "StoreOutline",
+			"icon": "ClipboardCheckOutline",
 			"order": 42,
 			"children": [
 				{
@@ -23,35 +23,35 @@
 				{
 					"id": "ActivityCostAllocations",
 					"label": "Activity Cost Allocations",
-					"icon": "CallSplit",
+					"icon": "MapMarkerOutline",
 					"route": "ActivityCostAllocations",
 					"order": 30
 				},
 				{
 					"id": "PublicInterestDecisions",
 					"label": "Public Interest Decisions",
-					"icon": "GavelOutline",
+					"icon": "Gavel",
 					"route": "PublicInterestDecisions",
 					"order": 40
 				},
 				{
 					"id": "AcmReports",
 					"label": "ACM Reports",
-					"icon": "FileDocumentMultipleOutline",
+					"icon": "ChartBoxOutline",
 					"route": "AcmReports",
 					"order": 50
 				},
 				{
 					"id": "CrossSubsidyAlerts",
 					"label": "Cross-Subsidy Alerts",
-					"icon": "AlertOctagonOutline",
+					"icon": "HandHeartOutline",
 					"route": "CrossSubsidyAlerts",
 					"order": 60
 				},
 				{
 					"id": "WmoAuditLog",
 					"label": "WMO Audit Log",
-					"icon": "ClipboardTextClockOutline",
+					"icon": "History",
 					"route": "WmoAuditLog",
 					"order": 70
 				},
@@ -178,7 +178,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
@@ -252,7 +252,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
@@ -311,7 +311,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
@@ -383,7 +383,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
@@ -454,7 +454,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
@@ -511,7 +511,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
@@ -608,7 +608,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }

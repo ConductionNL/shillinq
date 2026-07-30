@@ -23,7 +23,7 @@
 				{
 					"id": "Treasurystatuten",
 					"label": "Treasurystatuut",
-					"icon": "FileDocumentOutline",
+					"icon": "BankOutline",
 					"route": "Treasurystatuten",
 					"order": 20
 				},
@@ -44,7 +44,7 @@
 				{
 					"id": "QuartaalrapportagesFido",
 					"label": "Quarterly Fido Reports",
-					"icon": "FileChartOutline",
+					"icon": "ChartBoxOutline",
 					"route": "QuartaalrapportagesFido",
 					"order": 50
 				}
@@ -167,7 +167,7 @@
 						{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "Treasurystatuut", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -228,7 +228,7 @@
 						{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "Lening", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -286,7 +286,7 @@
 						{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "Derivaat", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -351,7 +351,7 @@
 						{"id": "documents", "label": "Filed report", "icon": "FileChartOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "QuartaalrapportageFido", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]

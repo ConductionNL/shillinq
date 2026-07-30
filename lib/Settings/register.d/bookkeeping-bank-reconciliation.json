@@ -242,7 +242,7 @@
       },
       "BankReconciliationMatch": {
         "slug": "BankReconciliationMatch",
-        "icon": "BankTransferOutline",
+        "icon": "BankTransfer",
         "version": "0.1.0",
         "title": "Bank Reconciliation Match",
         "description": "One paired transaction: a bank-statement line matched to a journal entry (APTransaction, GLLine, or Payment). Auto-matching is deterministic by amount + date ± reference; ambiguous and orphaned items are flagged pending-review for operator resolution. Every decision is timestamped and attributed (REQ-BBR-002/003/004/008). The bank transaction is NOT embedded as a full object — only a reference key + cached amount are stored (design D3).",

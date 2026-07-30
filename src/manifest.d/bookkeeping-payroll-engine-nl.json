@@ -3,15 +3,15 @@
 		{
 			"id": "Loonadministratie",
 			"label": "Payroll",
-			"icon": "AccountTie",
+			"icon": "CashSync",
 			"order": 80,
 			"children": [
 				{"id": "Werkgevers", "label": "Employers", "icon": "OfficeBuilding", "route": "Werkgevers", "order": 10},
-				{"id": "Werknemers", "label": "Employees", "icon": "AccountTie", "route": "Werknemers", "order": 20},
+				{"id": "Werknemers", "label": "Employees", "icon": "AccountTieOutline", "route": "Werknemers", "order": 20},
 				{"id": "Loonperiodes", "label": "Pay periods", "icon": "CalendarRange", "route": "Loonperiodes", "order": 30},
 				{"id": "Loonstroken", "label": "Payslips", "icon": "FileDocumentOutline", "route": "Loonstroken", "order": 40},
 				{"id": "LHAfdrachten", "label": "LH remittances", "icon": "BankTransfer", "route": "LHAfdrachten", "order": 50},
-				{"id": "Loonjournaalposten", "label": "Payroll journal entries", "icon": "BookOpenVariant", "route": "Loonjournaalposten", "order": 60}
+				{"id": "Loonjournaalposten", "label": "Payroll journal entries", "icon": "CashSync", "route": "Loonjournaalposten", "order": 60}
 			]
 		}
 	],
@@ -85,7 +85,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -166,7 +166,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -265,7 +265,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -324,7 +324,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -385,7 +385,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -439,7 +439,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

@@ -321,7 +321,7 @@
       },
       "Evaluatievraag": {
         "slug": "Evaluatievraag",
-        "icon": "ClipboardQuestionOutline",
+        "icon": "ClipboardTextOutline",
         "version": "0.1.0",
         "title": "ENSIA Evaluatievraag",
         "description": "Single evaluation question within an ENSIAJaarcyclus (REQ-ENSIA-001 + REQ-ENSIA-002 + REQ-ENSIA-003). One record per (cyclusId, vraagCode). Carries antwoordType (ja-nee-nvt / volwassenheidsniveau-1-5 / vrije-tekst); antwoord; volwassenheidsScore; toelichting; bewijsstukken; beantwoorder; peerReviewer; peerReviewStatus state machine. Maturity ≥ 3 requires bewijsstukken non-empty AND toelichting ≥ 50 chars per REQ-ENSIA-003 — enforced declaratively at persist preconditions plus the ENSIAValidationGuard fallback. Post-peer-review edits require a `reden` field per REQ-ENSIA-008 (enforced by ENSIAValidationGuard).",

@@ -3,27 +3,27 @@
 		{
 			"id": "Communicatie",
 			"label": "Communication",
-			"icon": "icon-comment",
+			"icon": "CommentOutline",
 			"order": 36,
 			"children": [
 				{
 					"id": "ConfirmationTemplates",
 					"label": "Confirmation Templates",
-					"icon": "EmailCheckOutline",
+					"icon": "FileReplaceOutline",
 					"route": "ConfirmationTemplates",
 					"order": 20
 				},
 				{
 					"id": "ReminderTemplates",
 					"label": "Reminder Templates",
-					"icon": "EmailClockOutline",
+					"icon": "FileReplaceOutline",
 					"route": "ReminderTemplates",
 					"order": 30
 				},
 				{
 					"id": "CancellationTemplates",
 					"label": "Cancellation Templates",
-					"icon": "EmailRemoveOutline",
+					"icon": "FileReplaceOutline",
 					"route": "CancellationTemplates",
 					"order": 40
 				}
@@ -105,7 +105,7 @@
 				"indexRoute": "ConfirmationTemplates",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -177,7 +177,7 @@
 				"indexRoute": "ReminderTemplates",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -249,7 +249,7 @@
 				"indexRoute": "CancellationTemplates",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]

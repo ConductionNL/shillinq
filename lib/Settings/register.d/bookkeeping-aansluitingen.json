@@ -136,7 +136,7 @@
       },
       "AansluitingResult": {
         "slug": "AansluitingResult",
-        "icon": "FileCompareOutline",
+        "icon": "FileCompare",
         "version": "0.1.0",
         "title": "Aansluiting Resultaat",
         "description": "One per-period computed instance of an Aansluiting (REQ-AANS-004): the resolved source A / source B totals, the difference, whether it is within tolerance, a bucket-level drill-down (lineDeltas), and the open -> explained -> resolved lifecycle with an audit-trailed explanation (who explained what, REQ-AANS-006). Computed by AansluitingService::compute(); one result per (aansluitingId, periodId) — recomputing replaces the totals/lineDeltas of an `open` result in place but never a result already `explained` or `resolved` (must reopen first).",

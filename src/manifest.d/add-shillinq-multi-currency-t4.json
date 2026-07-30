@@ -9,7 +9,7 @@
 		{
 			"id": "BookkeepingMultiCurrency",
 			"label": "Multi-currency",
-			"icon": "LedgerOutline",
+			"icon": "CurrencyEur",
 			"order": 11,
 			"children": [
 				{
@@ -82,7 +82,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

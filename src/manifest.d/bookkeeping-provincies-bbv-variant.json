@@ -14,14 +14,14 @@
 				{
 					"id": "BbvComplianceDashboard",
 					"label": "BBV Compliance Dashboard",
-					"icon": "ChartBoxOutline",
+					"icon": "ViewDashboardOutline",
 					"route": "BbvComplianceDashboard",
 					"order": 10
 				},
 				{
 					"id": "BudgetToProgrammeLinker",
 					"label": "Budget Links",
-					"icon": "LinkVariant",
+					"icon": "CalculatorVariantOutline",
 					"route": "BudgetToProgrammeLinker",
 					"order": 20
 				}
@@ -61,7 +61,7 @@
 						{
 							"id": "committed",
 							"label": "Committed",
-							"icon": "FileSignOutline",
+							"icon": "FileSign",
 							"source": "GLLine",
 							"aggregation": "programmeBudgetVsActuals",
 							"field": "netSpent",
@@ -415,7 +415,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

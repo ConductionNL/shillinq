@@ -6,7 +6,7 @@
 				{
 					"id": "InventoryValuations",
 					"label": "Valuations",
-					"icon": "CalculatorOutline",
+					"icon": "Calculator",
 					"route": "InventoryValuations",
 					"order": 30
 				}
@@ -63,7 +63,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

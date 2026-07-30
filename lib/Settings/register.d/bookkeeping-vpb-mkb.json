@@ -1648,7 +1648,7 @@
       },
       "BezwaarBeroep": {
         "slug": "BezwaarBeroep",
-        "icon": "GavelOutline",
+        "icon": "Gavel",
         "version": "0.1.0",
         "title": "Bezwaar / Beroep",
         "description": "Geschilprocedure tegen een aanslag (REQ-VPB-010): bezwaar -> uitspraak inspecteur -> beroep -> hoger beroep -> cassatie, met wettelijke termijnen per Awb (6 weken bezwaar; 6 weken uitspraak inspecteur, verlengbaar tot 12; 6 weken beroep). termijnEinde wordt per type berekend; termijnVerstreken markeert overschrijding. Escalatie-alerts op T-7d/T-3d/op-de-dag worden door de termijn-bewaking gegenereerd.",

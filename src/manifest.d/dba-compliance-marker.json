@@ -3,7 +3,7 @@
 		{
 			"id": "DBACompliance",
 			"label": "DBA Compliance",
-			"icon": "ShieldAccountOutline",
+			"icon": "ClipboardCheckOutline",
 			"order": 55,
 			"children": [
 				{
@@ -23,14 +23,14 @@
 				{
 					"id": "DBAModelovereenkomsten",
 					"label": "Model agreement register",
-					"icon": "FileDocumentCheckOutline",
+					"icon": "DatabaseOutline",
 					"route": "DBAModelovereenkomsten",
 					"order": 30
 				},
 				{
 					"id": "DBAPortfolioRisicos",
 					"label": "DBA Portfolio Dashboard",
-					"icon": "ChartArc",
+					"icon": "ViewDashboardOutline",
 					"route": "DBAPortfolioRisicos",
 					"order": 40
 				},
@@ -44,7 +44,7 @@
 				{
 					"id": "DBARisicoflags",
 					"label": "Risk Flags",
-					"icon": "FlagAlertOutline",
+					"icon": "FlagVariantOutline",
 					"route": "DBARisicoflags",
 					"order": 60
 				}
@@ -129,7 +129,7 @@
 						{"id": "documents", "label": "Documents", "icon": "FolderOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "DBAOpdracht", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -192,7 +192,7 @@
 				"indexRoute": "DBAIntakes",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -245,7 +245,7 @@
 						{"id": "documents", "label": "Document", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "DBAModelovereenkomst", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -303,7 +303,7 @@
 				"indexRoute": "DBAPortfolioRisicos",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -354,7 +354,7 @@
 						{"id": "documents", "label": "Evidence documents", "icon": "FolderZipOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "DBAEvidenceDossier", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -403,7 +403,7 @@
 				"indexRoute": "DBARisicoflags",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]

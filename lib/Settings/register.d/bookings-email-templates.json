@@ -245,7 +245,7 @@
       },
       "BookingReminderTemplate": {
         "slug": "BookingReminderTemplate",
-        "icon": "EmailClockOutline",
+        "icon": "EmailOutline",
         "version": "0.1.0",
         "title": "Boekingsherinneringssjabloon",
         "description": "Branded email template dispatched a configurable number of hours before booking start (REQ-BET-005/010). Carries hoursBeforeBooking timing, subject/body with {{variables}}, plain-text fallback, branding, and the same draft → published → archived lifecycle as the confirmation template. Multiple reminder templates can coexist (e.g. 24h and 2h) — the notification engine schedules one dispatch per published reminder per booking.",

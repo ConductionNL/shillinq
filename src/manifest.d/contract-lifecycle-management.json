@@ -10,13 +10,13 @@
 		{
 			"id": "Contracts",
 			"label": "Contracts",
-			"icon": "FileSignOutline",
+			"icon": "FileSign",
 			"order": 25,
 			"children": [
 				{
 					"id": "Contracts",
 					"label": "Contracts",
-					"icon": "FileSignOutline",
+					"icon": "FileSign",
 					"route": "Contracts",
 					"order": 10
 				},
@@ -30,7 +30,7 @@
 				{
 					"id": "ContractSpend",
 					"label": "Contract Spend",
-					"icon": "ChartLineVariant",
+					"icon": "FileSign",
 					"route": "ContractSpendDashboard",
 					"order": 30
 				}
@@ -180,7 +180,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -270,7 +270,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

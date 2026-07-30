@@ -10,12 +10,12 @@
 		{
 			"id": "Settings",
 			"label": "Settings",
-			"icon": "icon-settings",
+			"icon": "CogOutline",
 			"children": [
 				{
 					"id": "DeadlineCalendarSettings",
 					"label": "Deadline calendar",
-					"icon": "CalendarClock",
+					"icon": "ClockAlertOutline",
 					"route": "DeadlineCalendarSettings",
 					"order": 30
 				}

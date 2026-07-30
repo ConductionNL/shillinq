@@ -11,7 +11,7 @@
     "schemas": {
       "BankReconciliation": {
         "slug": "BankReconciliation",
-        "icon": "BankCheckOutline",
+        "icon": "BankCheck",
         "version": "0.1.0",
         "title": "Bank Reconciliation",
         "description": "A bounded reconciliation session for one bank account + one statement period per REQ-REC-001. Captures opening/closing balances, expected GL balance, computed variance, lifecycle status (draft → in-progress → verified → closed), preparer/verifier signatures, and the closedAt timestamp. NOT a live dashboard — an immutable audit artifact once closed. Per ADR-022/ADR-031 declarative-first: matching is delegated to the T2 bookkeeping-bank-reconciliation engine; T4 records outcomes and closes the audit loop.",

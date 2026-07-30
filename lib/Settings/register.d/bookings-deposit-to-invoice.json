@@ -336,7 +336,7 @@
       },
       "DepositPayment": {
         "slug": "DepositPayment",
-        "icon": "CashLockOutline",
+        "icon": "CashLock",
         "version": "0.1.0",
         "title": "Deposit Payment",
         "description": "An authorised booking deposit (owned by bookings-deposits T1). Declared here as a dimension so deposit-to-invoice can resolve the authorised amount for the credit line (REQ-DI-003) and so cancellation can transition it to refunded (REQ-DI-006). The full collection/state machine lives in bookings-deposits.",

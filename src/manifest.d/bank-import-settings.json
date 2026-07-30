@@ -10,7 +10,7 @@
 		{
 			"id": "BankImportPage",
 			"label": "Import bank statements",
-			"icon": "BankTransferIn",
+			"icon": "DatabaseImportOutline",
 			"route": "BankImportPage",
 			"order": 40
 		}

@@ -44,7 +44,7 @@
 				{
 					"id": "PaymentRuns",
 					"label": "Payment Runs",
-					"icon": "BankTransferOutline",
+					"icon": "CreditCardOutline",
 					"route": "PaymentRuns",
 					"order": 50
 				}
@@ -123,7 +123,7 @@
 						{
 							"id": "openApBalance",
 							"label": "Open AP Balance",
-							"icon": "CashCheckOutline",
+							"icon": "CashCheck",
 							"order": 10,
 							"widgets": [
 								{
@@ -141,7 +141,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -247,7 +247,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -379,7 +379,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -488,7 +488,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

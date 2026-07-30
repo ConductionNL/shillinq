@@ -250,7 +250,7 @@
       },
       "OpdrachtgeversVerklaring": {
         "slug": "OpdrachtgeversVerklaring",
-        "icon": "FileSignOutline",
+        "icon": "FileSign",
         "version": "0.1.0",
         "title": "Opdrachtgevers Verklaring",
         "description": "Wet DBA (Deregulering Beoordeling Arbeidsrelaties) position record per ZZP assignment. Declares the opdrachtgever-opdrachtnemer relationship and risicobeoordeling per REQ-DPA-003. No PHP DBA service — lifecycle and document rendering are declarative per ADR-031.",

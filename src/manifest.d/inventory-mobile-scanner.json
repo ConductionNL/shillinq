@@ -3,7 +3,7 @@
 		{
 			"id": "Inventory",
 			"label": "Inventory",
-			"icon": "icon-category-files",
+			"icon": "Warehouse",
 			"order": 38,
 			"children": [
 				{

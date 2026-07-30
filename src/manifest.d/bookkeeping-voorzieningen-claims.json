@@ -9,7 +9,7 @@
 		{
 			"id": "Bookkeeping",
 			"label": "Bookkeeping",
-			"icon": "icon-category-organization",
+			"icon": "NotebookOutline",
 			"order": 20,
 			"children": [
 				{

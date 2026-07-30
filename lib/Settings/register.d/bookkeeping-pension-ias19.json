@@ -611,7 +611,7 @@
       },
       "PensionMovement": {
         "slug": "PensionMovement",
-        "icon": "SwapVerticalBoldOutline",
+        "icon": "SwapVerticalBold",
         "version": "0.1.0",
         "title": "Pension Movement",
         "description": "Per-period roll-forward of DBO and plan assets, split into the three IAS 19R buckets: service + past service + settlement (P&L), net interest (P&L) and actuarial gain/loss (OCI, non-recycling per IAS 19 §122) (REQ-PEN-003, REQ-PEN-004, REQ-PEN-009). dboClosing, planAssetsClosing, netPensionMovementPL and netPensionMovementOCI are computed roll-forward fields. Past service cost from a plan amendment is posted directly to P&L on the amendment date (REQ-PEN-009).",

@@ -3,7 +3,7 @@
     "schemas": {
       "SepaMandate": {
         "slug": "SepaMandate",
-        "icon": "FileSignOutline",
+        "icon": "FileSign",
         "version": "0.1.0",
         "title": "SEPA Mandate",
         "description": "A SEPA Direct Debit mandate (incassomachtiging) authorising the creditor to collect from a debtor account under the SDD CORE or B2B rulebook (REQ-SDD-001). Source of truth for incasso eligibility; collections may only be scheduled against an `active` mandate (design D1).",
@@ -270,7 +270,7 @@
       },
       "DirectDebitCollection": {
         "slug": "DirectDebitCollection",
-        "icon": "BankTransferInOutline",
+        "icon": "BankTransferIn",
         "version": "0.1.0",
         "title": "Direct Debit Collection",
         "description": "A single SEPA Direct Debit collection against a mandate (REQ-SDD-002). sequenceType is derived from mandate history, never operator-supplied (design D2).",
@@ -693,7 +693,7 @@
       },
       "RTransaction": {
         "slug": "RTransaction",
-        "icon": "BankTransferOutOutline",
+        "icon": "BankTransferOut",
         "version": "0.1.0",
         "title": "R-Transaction",
         "description": "A bank-side R-transaction (reject/return/refund/reversal/revocation) parsed from pain.002 or camt.054 (REQ-SDD-007). Captured separately for audit and reposting decisions (design D7). Non-deletable (REQ-SDD-010).",

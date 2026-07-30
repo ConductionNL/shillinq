@@ -6,7 +6,7 @@
 		"adr": "ADR-037 modular manifest fragment — the unified Order workspace that replaces the scattered Subsidie / Purchase Order / Quote / Sales Order pages. One Order index (filterable by orderType) + an Order detail that auto-renders the schema and its related Payments + OrderLines."
 	},
 	"menu": [
-		{ "id": "Orders", "label": "Orders", "icon": "FileDocumentMultipleOutline", "route": "Orders", "order": 28 }
+		{ "id": "Orders", "label": "Orders", "icon": "ClipboardListOutline", "route": "Orders", "order": 28 }
 	],
 	"pages": [
 		{
@@ -55,7 +55,7 @@
 					{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 						{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "OrderPrimitive", "objectId": ":id"}}
 					]},
-					{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+					{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 						{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 					]}
 				]

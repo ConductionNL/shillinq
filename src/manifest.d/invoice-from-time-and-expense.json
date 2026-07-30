@@ -10,20 +10,20 @@
 		{
 			"id": "BillableInvoices",
 			"label": "Invoices",
-			"icon": "FileDocumentEditOutline",
+			"icon": "ReceiptTextOutline",
 			"order": 36,
 			"children": [
 				{
 					"id": "BillableInvoiceList",
 					"label": "All invoices",
-					"icon": "FileDocumentMultipleOutline",
+					"icon": "ReceiptTextOutline",
 					"route": "BillableInvoiceList",
 					"order": 10
 				},
 				{
 					"id": "BillableInvoiceGenerate",
 					"label": "Generate invoice",
-					"icon": "FileDocumentEditOutline",
+					"icon": "ReceiptTextOutline",
 					"route": "BillableInvoiceGenerate",
 					"order": 20
 				}

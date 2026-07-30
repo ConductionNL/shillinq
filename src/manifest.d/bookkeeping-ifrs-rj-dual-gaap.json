@@ -9,7 +9,7 @@
 				{
 					"id": "AccountingFrameworks",
 					"label": "Framework Configuration",
-					"icon": "Earth",
+					"icon": "CogOutline",
 					"route": "AccountingFrameworks",
 					"order": 10
 				},
@@ -37,7 +37,7 @@
 				{
 					"id": "FrameworkElections",
 					"label": "Framework Election",
-					"icon": "GavelOutline",
+					"icon": "Gavel",
 					"route": "FrameworkElections",
 					"order": 50
 				}
@@ -83,7 +83,7 @@
 				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -136,7 +136,7 @@
 				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -195,7 +195,7 @@
 						{"id": "documents", "label": "Workpapers", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "ReconciliationBridge", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -248,7 +248,7 @@
 				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]
@@ -303,7 +303,7 @@
 						{"id": "documents", "label": "AVA-besluit & evidence", "icon": "FileDocumentOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "FrameworkElection", "objectId": ":id"}}
 						]},
-						{"id": "audit", "label": "Audit Trail", "icon": "HistoryIcon", "order": 90, "widgets": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
 						]}
 					]

@@ -1041,7 +1041,7 @@
       },
       "ClaimsVoorzieningDetail": {
         "slug": "ClaimsVoorzieningDetail",
-        "icon": "GavelOutline",
+        "icon": "Gavel",
         "version": "0.1.0",
         "title": "Claims Voorziening Detail",
         "description": "Type-specific detail register for claims- en geschillen-voorzieningen (IAS 37 §37, REQ-PROV-006). FK back to a Provision with provisionType=claims. legalAdviceMemo is mandatory and stored under restricted access (CFO / audit committee / accountant only) to preserve legal privilege. The activation guard blocks status=active when the memo FK is missing.",

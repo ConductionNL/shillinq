@@ -3,7 +3,7 @@
 		{
 			"id": "Bookkeeping",
 			"label": "Bookkeeping",
-			"icon": "icon-category-organization",
+			"icon": "NotebookOutline",
 			"order": 20,
 			"children": [
 				{
@@ -83,7 +83,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -164,7 +164,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

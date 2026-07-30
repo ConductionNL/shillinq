@@ -956,7 +956,7 @@
       },
       "BankStatementLine": {
         "slug": "BankStatementLine",
-        "icon": "BankTransferOutline",
+        "icon": "BankTransfer",
         "version": "0.1.0",
         "title": "Bank Statement Line",
         "description": "A single transaction line within a BankStatement per REQ-BR-003. Parsed from CAMT.053, MT940, or manual CSV import. Matched against AR/AP via MatchingRule predicates (REQ-BR-004/REQ-BR-005/REQ-BR-006); unmatched lines route to a suspense account (REQ-BR-007).",

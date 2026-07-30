@@ -888,7 +888,7 @@
       },
       "DBARisicoflag": {
         "slug": "DBARisicoflag",
-        "icon": "FlagAlertOutline",
+        "icon": "FlagVariantOutline",
         "version": "0.1.0",
         "title": "DBA risico-flag",
         "description": "Per-opdracht append-only flag, automatisch gegenereerd door de dagelijkse monitoring-engine (REQ-DBA-004/005/006/014/015/016). Bevat type, ernst, detectiemoment, fiscale grondslag en actie-suggestie. Immutabel (audit-trail).",
