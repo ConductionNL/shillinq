@@ -425,7 +425,8 @@ class RematerialiseConvertedCalculationsTest extends TestCase
                 string $register,
                 string $schema,
                 bool $_rbac=true,
-                bool $_multitenancy=true
+                bool $_multitenancy=true,
+                mixed $currentUser=null
             ): void {
                 $id = (string) ($object['id'] ?? '');
                 if (in_array($id, $this->failIds, true) === true) {

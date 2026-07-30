@@ -60,6 +60,8 @@ namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
+use OCP\IGroupManager;
+use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
@@ -150,13 +152,23 @@ class RematerialiseConvertedCalculations implements IRepairStep
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $registerSlug  = $this->settingsService->getRegisterSlug();
 
+            // Re-saving an object that carries a folder association goes through
+            // the Files layer, which checks the ACTING USER's folder access — a
+            // session-less repair/CLI context has none, so the save is denied
+            // ("Access to folder '<n>' is denied for the acting user") and the
+            // object silently fails to rematerialise. Resolve an admin IUser and
+            // pass it as currentUser so the write has folder access (mirrors
+            // FoldIntoOrder). Live-verified: without this, 173 real objects
+            // (Account/RetentionRule/…) failed to re-save on occ maintenance:repair.
+            $admin        = $this->resolveAdminUser();
             $totalResaved = 0;
             foreach (self::SCHEMAS as $schema) {
                 $totalResaved += $this->resaveSchema(
                     objectService: $objectService,
                     registerSlug: $registerSlug,
                     schema: $schema,
-                    output: $output
+                    output: $output,
+                    admin: $admin
                 );
             }
 
@@ -177,14 +189,43 @@ class RematerialiseConvertedCalculations implements IRepairStep
     }//end run()
 
     /**
+     * Resolve the first admin-group member as an IUser (never a string) so OR
+     * writes that touch the Files/folder layer have folder access. Returns null
+     * when no admin exists (best-effort; the save then runs session-less).
+     *
+     * @return IUser|null The first admin-group member, or null.
+     */
+    private function resolveAdminUser(): ?IUser
+    {
+        try {
+            $groupManager = $this->container->get(IGroupManager::class);
+            $adminGroup   = $groupManager->get('admin');
+            if ($adminGroup === null) {
+                return null;
+            }
+
+            $users = $adminGroup->getUsers();
+            if ($users === []) {
+                return null;
+            }
+
+            return reset($users);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+    }//end resolveAdminUser()
+
+    /**
      * Re-save every existing object on one schema. Best-effort per object —
      * a single object failing to save is logged and skipped, not fatal to
      * the rest of the backfill.
      *
-     * @param object  $objectService The OR ObjectService.
-     * @param string  $registerSlug  The register slug.
-     * @param string  $schema        The schema slug being backfilled.
-     * @param IOutput $output        The repair-step output.
+     * @param object     $objectService The OR ObjectService.
+     * @param string     $registerSlug  The register slug.
+     * @param string     $schema        The schema slug being backfilled.
+     * @param IOutput    $output        The repair-step output.
+     * @param IUser|null $admin         The acting admin user (folder access), or null.
      *
      * @return int The number of objects re-saved for this schema.
      */
@@ -192,7 +233,8 @@ class RematerialiseConvertedCalculations implements IRepairStep
         object $objectService,
         string $registerSlug,
         string $schema,
-        IOutput $output
+        IOutput $output,
+        ?IUser $admin
     ): int {
         try {
             $objects = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: $schema);
@@ -225,6 +267,7 @@ class RematerialiseConvertedCalculations implements IRepairStep
                     schema: $schema,
                     _rbac: false,
                     _multitenancy: false,
+                    currentUser: $admin,
                 );
                 $resaved++;
             } catch (\Throwable $e) {
