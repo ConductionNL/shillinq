@@ -320,7 +320,7 @@ export default {
 		},
 		roleLabel(role) {
 			const labels = {
-				teamleider: this.t('shillinq', 'Teamleider'),
+				teamleider: this.t('shillinq', 'Team lead'),
 				facility_manager: this.t('shillinq', 'Facility Manager'),
 				procurement_manager: this.t('shillinq', 'Procurement Manager'),
 			}

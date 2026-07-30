@@ -2512,6 +2512,7 @@
         "Sync failed; retry {sec}s": "Synchronisatie mislukt; opnieuw over {sec}s",
         "Sync now": "Nu synchroniseren",
         "Syncing…": "Synchroniseren…",
+        "Team lead": "Teamleider",
         "Teamleider": "Teamleider",
         "Tolerance override": "Tolerantie-overschrijving",
         "Transferred {qty} units {from} → {to} (pending sync)": "Overgedragen {qty} eenheden {from} → {to} (synchronisatie in behandeling)",
