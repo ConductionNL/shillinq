@@ -2510,6 +2510,7 @@
         "Sync failed; retry {sec}s": "Sync failed; retry {sec}s",
         "Sync now": "Sync now",
         "Syncing…": "Syncing…",
+        "Team lead": "Team lead",
         "Teamleider": "Teamleider",
         "Tolerance override": "Tolerance override",
         "Transferred {qty} units {from} → {to} (pending sync)": "Transferred {qty} units {from} → {to} (pending sync)",
