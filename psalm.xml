@@ -110,6 +110,20 @@
                 <referencedClass name="OCP\IGroup"/>
                 <referencedClass name="OCP\IUser"/>
                 <referencedClass name="OCP\Migration\IRepairStep"/>
+                <referencedClass name="OCP\Notification\INotifier"/>
+                <referencedClass name="OCP\SystemTag\ISystemTagManager"/>
+                <referencedClass name="OCP\Activity\IManager"/>
+                <referencedClass name="OCP\AppFramework\Utility\ITimeFactory"/>
+                <referencedClass name="OCP\EventDispatcher\GenericEvent"/>
+                <referencedClass name="OCP\Http\Client\IResponse"/>
+                <referencedClass name="OCP\ICache"/>
+                <referencedClass name="OCP\Security\ICredentialsManager"/>
+                <referencedClass name="OCP\Server"/>
+                <referencedClass name="OCP\Settings\IDelegatedSettings"/>
+                <referencedClass name="OCP\Settings\IIconSection"/>
+                <referencedClass name="OCP\SystemTag\ISystemTag"/>
+                <referencedClass name="OCP\SystemTag\ISystemTagObjectMapper"/>
+                <referencedClass name="OCP\SystemTag\TagNotFoundException"/>
                 <!-- Nextcloud server internals -->
                 <referencedClass name="OC"/>
                 <!-- GuzzleHttp (loaded via composer at runtime) -->
