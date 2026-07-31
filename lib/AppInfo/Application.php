@@ -144,6 +144,8 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  */
 class Application extends App implements IBootstrap
 {
+    use FilteredObjectListenerTrait;
+
     public const APP_ID = 'shillinq';
 
     /**
@@ -203,9 +205,16 @@ class Application extends App implements IBootstrap
         // created with status `pending_confirmation` (customer self-service).
         // Admin-created bookings start `confirmed` and the listener ignores
         // them. Idempotent: OR fires the event once per saveObject.
-        $context->registerEventListener(
+        //
+        // Interest declared at registration time: `isAppointmentSchema()`
+        // accepts `appointment` or `…/appointment`, i.e. exactly the
+        // `Appointment` schema slug. No register is declared — every register
+        // slug in this app comes from deployment configuration.
+        $this->registerFilteredObjectListener(
+            context: $context,
             event: ObjectCreatedEvent::class,
-            listener: AppointmentCreatedListener::class
+            listener: AppointmentCreatedListener::class,
+            schemas: ['Appointment']
         );
 
         // Inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
@@ -233,13 +242,21 @@ class Application extends App implements IBootstrap
         // lease's list-form transitions block ObjectTransitionedEvent
         // (design D1), so the executing trigger is the create/update event
         // dispatched by MagicMapper on the generic lease CRUD save path.
-        $context->registerEventListener(
+        //
+        // Interest declared at registration time: the handler's own
+        // `isLeaseContractSchema()` accepts `leasecontract` or
+        // `…/leasecontract`, i.e. exactly the `LeaseContract` schema slug.
+        $this->registerFilteredObjectListener(
+            context: $context,
             event: ObjectCreatedEvent::class,
-            listener: LeaseActivationListener::class
+            listener: LeaseActivationListener::class,
+            schemas: ['LeaseContract']
         );
-        $context->registerEventListener(
+        $this->registerFilteredObjectListener(
+            context: $context,
             event: ObjectUpdatedEvent::class,
-            listener: LeaseActivationListener::class
+            listener: LeaseActivationListener::class,
+            schemas: ['LeaseContract']
         );
 
         // Bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004) —
@@ -247,6 +264,11 @@ class Application extends App implements IBootstrap
         // every received Peppol message. This listener filters on the
         // documentType=Invoice slice of those events and dispatches the
         // UBL payload into SupplierInvoiceService::ingestUBLInvoice().
+        //
+        // NOT narrowed (deliberate): the only slug the handler accepts is
+        // `PeppolInboundMessage`, owned by openconnector and resolving to no
+        // schema here. A declaration that resolves to nothing means the
+        // listener never fires — worse than keeping it global.
         $context->registerEventListener(
             event: ObjectCreatedEvent::class,
             listener: PeppolInboundUblInvoiceListener::class
@@ -303,9 +325,16 @@ class Application extends App implements IBootstrap
         // listener reconciles it against the linked OssReturn and drives the
         // record to `reconciled` or `discrepancy` (both declared transitions
         // out of `pending`). Fail-soft.
-        $context->registerEventListener(
+        //
+        // Interest declared at registration time: the handler compares the
+        // normalised schema against `osspayment` / `oss-payment`, so both
+        // spellings are declared (the hyphenated one is unused here; declaring
+        // it is over-inclusive and therefore fail-safe where it is seeded).
+        $this->registerFilteredObjectListener(
+            context: $context,
             event: ObjectCreatedEvent::class,
-            listener: OssPaymentReconciliationListener::class
+            listener: OssPaymentReconciliationListener::class,
+            schemas: ['OssPayment', 'oss-payment']
         );
 
         // Change add-invoice-pdf-export-with-ubl-peppol-support REQ-EINV-005 — consume
@@ -340,9 +369,14 @@ class Application extends App implements IBootstrap
                 return $c->get(PersistentTimelineRetryQueue::class);
             }
         );
-        $context->registerEventListener(
+        // Interest declared at registration time: the handler's own
+        // `isAppointmentSchema()` mirrors AppointmentCreatedListener's and
+        // accepts `appointment` or `…/appointment`.
+        $this->registerFilteredObjectListener(
+            context: $context,
             event: ObjectCreatedEvent::class,
-            listener: BookingCreatedTimelinePublishListener::class
+            listener: BookingCreatedTimelinePublishListener::class,
+            schemas: ['Appointment']
         );
 
         // Bookings-pipelinq-customer-bridge slice 08 — extend the timeline
@@ -376,13 +410,22 @@ class Application extends App implements IBootstrap
         // (REQ-BBVW-006). The listener drops the cache namespace so the
         // next dashboard render repopulates from the engine. Fail-soft:
         // a cache hiccup never blocks a GL write (giant D3).
-        $context->registerEventListener(
+        //
+        // Interest declared at registration time: the declared slugs are the
+        // listener's own WATCHED_SCHEMAS constant verbatim. `GLTransactionLine`
+        // resolves to nothing on the reference instance but is declared anyway
+        // because the guard names it — over-inclusion is fail-safe.
+        $this->registerFilteredObjectListener(
+            context: $context,
             event: ObjectCreatedEvent::class,
-            listener: GLTransactionComplianceCacheListener::class
+            listener: GLTransactionComplianceCacheListener::class,
+            schemas: ['GLTransaction', 'GLLine', 'GLTransactionLine']
         );
-        $context->registerEventListener(
+        $this->registerFilteredObjectListener(
+            context: $context,
             event: ObjectUpdatedEvent::class,
-            listener: GLTransactionComplianceCacheListener::class
+            listener: GLTransactionComplianceCacheListener::class,
+            schemas: ['GLTransaction', 'GLLine', 'GLTransactionLine']
         );
 
         // Bookkeeping-innovatiebox-administratie — append an immutable
@@ -394,13 +437,20 @@ class Application extends App implements IBootstrap
         // arrives on a VSO-locked year (REQ-IBA-008). Tasks 5.1-5.3.
         // Fail-soft: the listener never bubbles an error into OR's write
         // path; a logging failure becomes a Psr warning.
-        $context->registerEventListener(
+        //
+        // Interest declared at registration time: the three slugs are the
+        // listener's own SCHEMA_NEXUS / SCHEMA_PROFIT / SCHEMA_LOSS constants.
+        $this->registerFilteredObjectListener(
+            context: $context,
             event: ObjectCreatedEvent::class,
-            listener: InnovatieboxAuditTrailListener::class
+            listener: InnovatieboxAuditTrailListener::class,
+            schemas: ['NexusCalculation', 'IBProfitAttribution', 'CarryForwardLoss']
         );
-        $context->registerEventListener(
+        $this->registerFilteredObjectListener(
+            context: $context,
             event: ObjectUpdatedEvent::class,
-            listener: InnovatieboxAuditTrailListener::class
+            listener: InnovatieboxAuditTrailListener::class,
+            schemas: ['NexusCalculation', 'IBProfitAttribution', 'CarryForwardLoss']
         );
 
         // Bookkeeping-reconciliation-reports (T4) — REQ-REC-010. T2's
@@ -414,9 +464,15 @@ class Application extends App implements IBootstrap
             event: ObjectTransitionedEvent::class,
             listener: ReconciliationMatchToReportListener::class
         );
-        $context->registerEventListener(
+        // Interest declared on the create path only: the handler requires
+        // `strcasecmp($schema, 'ReconciliationMatch') === 0`. The
+        // ObjectTransitionedEvent registration above stays global — this
+        // change deliberately narrows only the create/update firehose.
+        $this->registerFilteredObjectListener(
+            context: $context,
             event: ObjectCreatedEvent::class,
-            listener: ReconciliationMatchToReportListener::class
+            listener: ReconciliationMatchToReportListener::class,
+            schemas: ['ReconciliationMatch']
         );
 
         // Wire the DoorsnijdingsVerbodValidator with the optional audit
@@ -696,6 +752,11 @@ class Application extends App implements IBootstrap
         // factuur creation. The listener runs the VBAR uurtarief-toets
         // (REQ-DBA-016) when an ARInvoice/APInvoice carries a
         // `dbaOpdrachtId` field; it is silently inert otherwise.
+        //
+        // NOT narrowed (deliberate): the handler carries no schema guard at
+        // all — its interest is the PRESENCE of a `dbaOpdrachtId` field,
+        // whatever schema carries it. Declaring ARInvoice/APInvoice would
+        // narrow behaviour on an assumption the code does not state.
         $context->registerEventListener(
             event: ObjectCreatedEvent::class,
             listener: DBAFactuurMonitorListener::class
@@ -713,9 +774,16 @@ class Application extends App implements IBootstrap
         // winning KvK matches the tenant org (REQ-002 idempotent on
         // bronReferentie + REQ-003 milestone plan generated from the
         // opdrachttype template).
-        $context->registerEventListener(
+        //
+        // Interest declared on the create path: `isAanbestedingSchema()`
+        // resolves to the `TenderNedAanbesteding` schema, the same slug the
+        // handler writes back with `->setSchema('TenderNedAanbesteding')`.
+        // The ObjectTransitionedEvent registration below stays global.
+        $this->registerFilteredObjectListener(
+            context: $context,
             event: ObjectCreatedEvent::class,
-            listener: TenderNedAwardDetectedListener::class
+            listener: TenderNedAwardDetectedListener::class,
+            schemas: ['TenderNedAanbesteding']
         );
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
@@ -726,9 +794,16 @@ class Application extends App implements IBootstrap
         // `obligation.activated` CloudEvent on auto-promoted (created
         // active) AND manually-enriched (transitioned to active)
         // tenderned-sourced obligations (REQ-007 budget-impact pipeline).
-        $context->registerEventListener(
+        //
+        // Interest declared on the create path: `isVerplichtingSchema()`
+        // resolves to the `Verplichting` schema, the same slug
+        // TenderNedAwardDetectedListener writes with `->setSchema(…)`.
+        // The ObjectTransitionedEvent registration below stays global.
+        $this->registerFilteredObjectListener(
+            context: $context,
             event: ObjectCreatedEvent::class,
-            listener: VerplichtingTransitionListener::class
+            listener: VerplichtingTransitionListener::class,
+            schemas: ['Verplichting']
         );
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
@@ -855,6 +930,12 @@ class Application extends App implements IBootstrap
         // is fail-soft (design.md Open Question: no separate signed/executed
         // state exists on the shipped Contract schema, so `active` is
         // treated as the trigger and any denial is only logged).
+        //
+        // NOT narrowed (deliberate): the handler matches on
+        // `str_ends_with($schema, 'contract')`, a suffix wildcard covering six
+        // distinct schemas today (contract, employmentcontract, fxcontract,
+        // leasecontract, suppliercontract, synchronization_contract) plus any
+        // future `*contract` slug — not statically enumerable.
         $context->registerEventListener(
             event: ObjectCreatedEvent::class,
             listener: CommitmentMaterialisationListener::class
