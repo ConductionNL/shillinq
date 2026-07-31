@@ -131,6 +131,7 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\EventDispatcher\IEventDispatcher;
 
 /**
  * Main application class for the Shillinq Nextcloud app.
@@ -200,23 +201,6 @@ class Application extends App implements IBootstrap
             listener: DeepLinkRegistrationListener::class
         );
 
-        // Bookings-confirm-flow REQ-BCF-001/010 — issue a ConfirmationToken
-        // + dispatch the confirmation email when a new Appointment record is
-        // created with status `pending_confirmation` (customer self-service).
-        // Admin-created bookings start `confirmed` and the listener ignores
-        // them. Idempotent: OR fires the event once per saveObject.
-        //
-        // Interest declared at registration time: `isAppointmentSchema()`
-        // accepts `appointment` or `…/appointment`, i.e. exactly the
-        // `Appointment` schema slug. No register is declared — every register
-        // slug in this app comes from deployment configuration.
-        $this->registerFilteredObjectListener(
-            context: $context,
-            event: ObjectCreatedEvent::class,
-            listener: AppointmentCreatedListener::class,
-            schemas: ['Appointment']
-        );
-
         // Inventory-valuation-fifo-avg REQ-INV-003 / REQ-INV-004 / REQ-INV-007
         // — dispatch posted StockMove records into the valuation engine
         // (FIFO or moving-average per the InventoryValuation.valuationMethod)
@@ -233,30 +217,6 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: DeliveryDispatchListener::class
-        );
-
-        // IFRS-16 lease schedule trigger (revive-lease-capabilities,
-        // shillinq#446). When a LeaseContract is created already `active` or is
-        // updated across the `draft → active` edge, materialise its
-        // amortization schedule. OR has no lifecycle action executor and the
-        // lease's list-form transitions block ObjectTransitionedEvent
-        // (design D1), so the executing trigger is the create/update event
-        // dispatched by MagicMapper on the generic lease CRUD save path.
-        //
-        // Interest declared at registration time: the handler's own
-        // `isLeaseContractSchema()` accepts `leasecontract` or
-        // `…/leasecontract`, i.e. exactly the `LeaseContract` schema slug.
-        $this->registerFilteredObjectListener(
-            context: $context,
-            event: ObjectCreatedEvent::class,
-            listener: LeaseActivationListener::class,
-            schemas: ['LeaseContract']
-        );
-        $this->registerFilteredObjectListener(
-            context: $context,
-            event: ObjectUpdatedEvent::class,
-            listener: LeaseActivationListener::class,
-            schemas: ['LeaseContract']
         );
 
         // Bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004) —
@@ -315,28 +275,6 @@ class Application extends App implements IBootstrap
             listener: IntercompanyLinkListener::class
         );
 
-        // Revive-gl-tax-capabilities (shillinq#446) REQ-GLTAX-004 — the
-        // missing OSS-VAT distribution check.
-        // OssPaymentReconciliation::reconcileDistribution() (REQ-OSS-008) is
-        // the only control that catches the Belastingdienst distributing a
-        // consolidated EU-VAT payment differently from what was declared, and
-        // it had zero callers. An OssPayment carries the confirmed
-        // per-country distribution, so its creation is the trigger: the
-        // listener reconciles it against the linked OssReturn and drives the
-        // record to `reconciled` or `discrepancy` (both declared transitions
-        // out of `pending`). Fail-soft.
-        //
-        // Interest declared at registration time: the handler compares the
-        // normalised schema against `osspayment` / `oss-payment`, so both
-        // spellings are declared (the hyphenated one is unused here; declaring
-        // it is over-inclusive and therefore fail-safe where it is seeded).
-        $this->registerFilteredObjectListener(
-            context: $context,
-            event: ObjectCreatedEvent::class,
-            listener: OssPaymentReconciliationListener::class,
-            schemas: ['OssPayment', 'oss-payment']
-        );
-
         // Change add-invoice-pdf-export-with-ubl-peppol-support REQ-EINV-005 — consume
         // the cross-app `nl.conduction.peppol.delivery.status` cloud event
         // openconnector's Peppol access point emits and advance
@@ -363,20 +301,15 @@ class Application extends App implements IBootstrap
         // PipelinqTimelineRetryJob tick to the IJobList. The job retries
         // with exponential backoff (1m/5m/30m) and dead-letters into
         // TimelineDeadLetter on exhaustion (D3 in the giant).
+        //
+        // Only the queue binding lives here: the listener itself
+        // (BookingCreatedTimelinePublishListener) declares a schema interest and
+        // is therefore subscribed from boot().
         $context->registerService(
             TimelineRetryQueue::class,
             static function ($c): TimelineRetryQueue {
                 return $c->get(PersistentTimelineRetryQueue::class);
             }
-        );
-        // Interest declared at registration time: the handler's own
-        // `isAppointmentSchema()` mirrors AppointmentCreatedListener's and
-        // accepts `appointment` or `…/appointment`.
-        $this->registerFilteredObjectListener(
-            context: $context,
-            event: ObjectCreatedEvent::class,
-            listener: BookingCreatedTimelinePublishListener::class,
-            schemas: ['Appointment']
         );
 
         // Bookings-pipelinq-customer-bridge slice 08 — extend the timeline
@@ -401,58 +334,6 @@ class Application extends App implements IBootstrap
             listener: BookingLifecycleTransitionListener::class
         );
 
-        // Bookkeeping-waterschappen-bbv-variant slice 08 — invalidate the
-        // BBV-compliance cache when a GL transaction header or line is
-        // created or updated. The slice-02 x-openregister-aggregations
-        // block on BBVProgramme materialises totalBudget / ytdSpend /
-        // utilization / complianceStatus over those very lines, and
-        // ComplianceService caches the per-programme envelope for 1h
-        // (REQ-BBVW-006). The listener drops the cache namespace so the
-        // next dashboard render repopulates from the engine. Fail-soft:
-        // a cache hiccup never blocks a GL write (giant D3).
-        //
-        // Interest declared at registration time: the declared slugs are the
-        // listener's own WATCHED_SCHEMAS constant verbatim. `GLTransactionLine`
-        // resolves to nothing on the reference instance but is declared anyway
-        // because the guard names it — over-inclusion is fail-safe.
-        $this->registerFilteredObjectListener(
-            context: $context,
-            event: ObjectCreatedEvent::class,
-            listener: GLTransactionComplianceCacheListener::class,
-            schemas: ['GLTransaction', 'GLLine', 'GLTransactionLine']
-        );
-        $this->registerFilteredObjectListener(
-            context: $context,
-            event: ObjectUpdatedEvent::class,
-            listener: GLTransactionComplianceCacheListener::class,
-            schemas: ['GLTransaction', 'GLLine', 'GLTransactionLine']
-        );
-
-        // Bookkeeping-innovatiebox-administratie — append an immutable
-        // InnovatieboxAuditEvent per relevant lifecycle transition on the
-        // three innovatiebox subject schemas (NexusCalculation,
-        // IBProfitAttribution, CarryForwardLoss). Captures *.created,
-        // IBProfitAttribution.finalized (vso_locked: false -> true) and
-        // IBProfitAttribution.amendment_attempt_blocked when an update
-        // arrives on a VSO-locked year (REQ-IBA-008). Tasks 5.1-5.3.
-        // Fail-soft: the listener never bubbles an error into OR's write
-        // path; a logging failure becomes a Psr warning.
-        //
-        // Interest declared at registration time: the three slugs are the
-        // listener's own SCHEMA_NEXUS / SCHEMA_PROFIT / SCHEMA_LOSS constants.
-        $this->registerFilteredObjectListener(
-            context: $context,
-            event: ObjectCreatedEvent::class,
-            listener: InnovatieboxAuditTrailListener::class,
-            schemas: ['NexusCalculation', 'IBProfitAttribution', 'CarryForwardLoss']
-        );
-        $this->registerFilteredObjectListener(
-            context: $context,
-            event: ObjectUpdatedEvent::class,
-            listener: InnovatieboxAuditTrailListener::class,
-            schemas: ['NexusCalculation', 'IBProfitAttribution', 'CarryForwardLoss']
-        );
-
         // Bookkeeping-reconciliation-reports (T4) — REQ-REC-010. T2's
         // bookkeeping-bank-reconciliation engine confirms a
         // ReconciliationMatch by transitioning its status to `confirmed`;
@@ -460,19 +341,12 @@ class Application extends App implements IBootstrap
         // matchedAt, glTransactionId/arInvoiceId/apTransactionId, etc.) on
         // the same record so the open BankReconciliation session sees the
         // outcome within 1s. Fail-soft: never blocks the T2 write.
+        //
+        // This ObjectTransitionedEvent registration stays global; the narrowed
+        // create path is subscribed from boot().
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: ReconciliationMatchToReportListener::class
-        );
-        // Interest declared on the create path only: the handler requires
-        // `strcasecmp($schema, 'ReconciliationMatch') === 0`. The
-        // ObjectTransitionedEvent registration above stays global — this
-        // change deliberately narrows only the create/update firehose.
-        $this->registerFilteredObjectListener(
-            context: $context,
-            event: ObjectCreatedEvent::class,
-            listener: ReconciliationMatchToReportListener::class,
-            schemas: ['ReconciliationMatch']
         );
 
         // Wire the DoorsnijdingsVerbodValidator with the optional audit
@@ -775,16 +649,8 @@ class Application extends App implements IBootstrap
         // bronReferentie + REQ-003 milestone plan generated from the
         // opdrachttype template).
         //
-        // Interest declared on the create path: `isAanbestedingSchema()`
-        // resolves to the `TenderNedAanbesteding` schema, the same slug the
-        // handler writes back with `->setSchema('TenderNedAanbesteding')`.
-        // The ObjectTransitionedEvent registration below stays global.
-        $this->registerFilteredObjectListener(
-            context: $context,
-            event: ObjectCreatedEvent::class,
-            listener: TenderNedAwardDetectedListener::class,
-            schemas: ['TenderNedAanbesteding']
-        );
+        // The create path is narrowed and therefore subscribed from boot(); the
+        // ObjectTransitionedEvent registration below stays global.
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: TenderNedAwardDetectedListener::class
@@ -795,16 +661,8 @@ class Application extends App implements IBootstrap
         // active) AND manually-enriched (transitioned to active)
         // tenderned-sourced obligations (REQ-007 budget-impact pipeline).
         //
-        // Interest declared on the create path: `isVerplichtingSchema()`
-        // resolves to the `Verplichting` schema, the same slug
-        // TenderNedAwardDetectedListener writes with `->setSchema(…)`.
-        // The ObjectTransitionedEvent registration below stays global.
-        $this->registerFilteredObjectListener(
-            context: $context,
-            event: ObjectCreatedEvent::class,
-            listener: VerplichtingTransitionListener::class,
-            schemas: ['Verplichting']
-        );
+        // The create path is narrowed and therefore subscribed from boot(); the
+        // ObjectTransitionedEvent registration below stays global.
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: VerplichtingTransitionListener::class
@@ -1377,13 +1235,184 @@ class Application extends App implements IBootstrap
     /**
      * Boot the application.
      *
+     * Every object-event listener that declares a schema interest is subscribed
+     * here rather than in register(): OpenRegister's `ObjectEventSubscription`
+     * is only guaranteed autoloadable once every app's register() has run. See
+     * {@see FilteredObjectListenerTrait::registerFilteredObjectListener()}.
+     *
      * @param IBootContext $context The boot context
      *
      * @return void
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function boot(IBootContext $context): void
     {
+        $dispatcher = $context->getServerContainer()->get(IEventDispatcher::class);
+
+        // Bookings-confirm-flow REQ-BCF-001/010 — issue a ConfirmationToken
+        // + dispatch the confirmation email when a new Appointment record is
+        // created with status `pending_confirmation` (customer self-service).
+        // Admin-created bookings start `confirmed` and the listener ignores
+        // them. Idempotent: OR fires the event once per saveObject.
+        //
+        // Interest declared up front: `isAppointmentSchema()` accepts
+        // `appointment` or `…/appointment`, i.e. exactly the `Appointment`
+        // schema slug. No register is declared — every register slug in this
+        // app comes from deployment configuration.
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectCreatedEvent::class,
+            listener: AppointmentCreatedListener::class,
+            schemas: ['Appointment']
+        );
+
+        // IFRS-16 lease schedule trigger (revive-lease-capabilities,
+        // shillinq#446). When a LeaseContract is created already `active` or is
+        // updated across the `draft → active` edge, materialise its
+        // amortization schedule. OR has no lifecycle action executor and the
+        // lease's list-form transitions block ObjectTransitionedEvent
+        // (design D1), so the executing trigger is the create/update event
+        // dispatched by MagicMapper on the generic lease CRUD save path.
+        //
+        // Interest declared up front: the handler's own
+        // `isLeaseContractSchema()` accepts `leasecontract` or
+        // `…/leasecontract`, i.e. exactly the `LeaseContract` schema slug.
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectCreatedEvent::class,
+            listener: LeaseActivationListener::class,
+            schemas: ['LeaseContract']
+        );
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectUpdatedEvent::class,
+            listener: LeaseActivationListener::class,
+            schemas: ['LeaseContract']
+        );
+
+        // Revive-gl-tax-capabilities (shillinq#446) REQ-GLTAX-004 — the
+        // missing OSS-VAT distribution check.
+        // OssPaymentReconciliation::reconcileDistribution() (REQ-OSS-008) is
+        // the only control that catches the Belastingdienst distributing a
+        // consolidated EU-VAT payment differently from what was declared, and
+        // it had zero callers. An OssPayment carries the confirmed
+        // per-country distribution, so its creation is the trigger: the
+        // listener reconciles it against the linked OssReturn and drives the
+        // record to `reconciled` or `discrepancy` (both declared transitions
+        // out of `pending`). Fail-soft.
+        //
+        // Interest declared up front: the handler compares the normalised
+        // schema against `osspayment` / `oss-payment`, so both spellings are
+        // declared (the hyphenated one is unused here; declaring it is
+        // over-inclusive and therefore fail-safe where it is seeded).
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectCreatedEvent::class,
+            listener: OssPaymentReconciliationListener::class,
+            schemas: ['OssPayment', 'oss-payment']
+        );
+
+        // Bookings-pipelinq-customer-bridge slice 07 — publish a
+        // `booking.created` event to pipelinq's klantbeeld-360 timeline (the
+        // TimelineRetryQueue / PipelinqAdminNotifier bindings this listener
+        // uses are registered in register()).
+        //
+        // Interest declared up front: the handler's own
+        // `isAppointmentSchema()` mirrors AppointmentCreatedListener's and
+        // accepts `appointment` or `…/appointment`.
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectCreatedEvent::class,
+            listener: BookingCreatedTimelinePublishListener::class,
+            schemas: ['Appointment']
+        );
+
+        // Bookkeeping-waterschappen-bbv-variant slice 08 — invalidate the
+        // BBV-compliance cache when a GL transaction header or line is
+        // created or updated. The slice-02 x-openregister-aggregations
+        // block on BBVProgramme materialises totalBudget / ytdSpend /
+        // utilization / complianceStatus over those very lines, and
+        // ComplianceService caches the per-programme envelope for 1h
+        // (REQ-BBVW-006). The listener drops the cache namespace so the
+        // next dashboard render repopulates from the engine. Fail-soft:
+        // a cache hiccup never blocks a GL write (giant D3).
+        //
+        // Interest declared up front: the declared slugs are the listener's own
+        // WATCHED_SCHEMAS constant verbatim. `GLTransactionLine` resolves to
+        // nothing on the reference instance but is declared anyway because the
+        // guard names it — over-inclusion is fail-safe.
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectCreatedEvent::class,
+            listener: GLTransactionComplianceCacheListener::class,
+            schemas: ['GLTransaction', 'GLLine', 'GLTransactionLine']
+        );
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectUpdatedEvent::class,
+            listener: GLTransactionComplianceCacheListener::class,
+            schemas: ['GLTransaction', 'GLLine', 'GLTransactionLine']
+        );
+
+        // Bookkeeping-innovatiebox-administratie — append an immutable
+        // InnovatieboxAuditEvent per relevant lifecycle transition on the
+        // three innovatiebox subject schemas (NexusCalculation,
+        // IBProfitAttribution, CarryForwardLoss). Captures *.created,
+        // IBProfitAttribution.finalized (vso_locked: false -> true) and
+        // IBProfitAttribution.amendment_attempt_blocked when an update
+        // arrives on a VSO-locked year (REQ-IBA-008). Tasks 5.1-5.3.
+        // Fail-soft: the listener never bubbles an error into OR's write
+        // path; a logging failure becomes a Psr warning.
+        //
+        // Interest declared up front: the three slugs are the listener's own
+        // SCHEMA_NEXUS / SCHEMA_PROFIT / SCHEMA_LOSS constants.
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectCreatedEvent::class,
+            listener: InnovatieboxAuditTrailListener::class,
+            schemas: ['NexusCalculation', 'IBProfitAttribution', 'CarryForwardLoss']
+        );
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectUpdatedEvent::class,
+            listener: InnovatieboxAuditTrailListener::class,
+            schemas: ['NexusCalculation', 'IBProfitAttribution', 'CarryForwardLoss']
+        );
+
+        // Bookkeeping-reconciliation-reports (T4) — REQ-REC-010. Interest
+        // declared on the create path only: the handler requires
+        // `strcasecmp($schema, 'ReconciliationMatch') === 0`. The
+        // ObjectTransitionedEvent registration in register() stays global —
+        // this change deliberately narrows only the create/update firehose.
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectCreatedEvent::class,
+            listener: ReconciliationMatchToReportListener::class,
+            schemas: ['ReconciliationMatch']
+        );
+
+        // Bookkeeping-tenderned-integratie Task 5.1 — interest declared on the
+        // create path: `isAanbestedingSchema()` resolves to the
+        // `TenderNedAanbesteding` schema, the same slug the handler writes back
+        // with `->setSchema('TenderNedAanbesteding')`. The
+        // ObjectTransitionedEvent registration in register() stays global.
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectCreatedEvent::class,
+            listener: TenderNedAwardDetectedListener::class,
+            schemas: ['TenderNedAanbesteding']
+        );
+
+        // Bookkeeping-tenderned-integratie Task 5.2 — interest declared on the
+        // create path: `isVerplichtingSchema()` resolves to the `Verplichting`
+        // schema, the same slug TenderNedAwardDetectedListener writes with
+        // `->setSchema(…)`. The ObjectTransitionedEvent registration in
+        // register() stays global.
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectCreatedEvent::class,
+            listener: VerplichtingTransitionListener::class,
+            schemas: ['Verplichting']
+        );
+
     }//end boot()
 }//end class

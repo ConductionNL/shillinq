@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\AppInfo;
 
-use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\EventDispatcher\IEventDispatcher;
 
 /**
  * Registers object-lifecycle listeners that declare their interest up front.
@@ -54,11 +54,19 @@ trait FilteredObjectListenerTrait
      * The per-handler self-filter guards are deliberately left in place: the
      * declaration narrows *dispatch*, the guard still decides *work*.
      *
-     * @param IRegistrationContext   $context   Registration context.
-     * @param string                 $event     OpenRegister event class name.
-     * @param string                 $listener  Listener class name.
-     * @param array<int,string>|null $registers Register slugs the listener reacts to, or null for all.
-     * @param array<int,string>|null $schemas   Schema slugs the listener reacts to, or null for all.
+     * This MUST be called from boot(), never from register(). Nextcloud enables
+     * each app's autoloader immediately before calling THAT app's own
+     * register(), so from register() the `class_exists()` guard below is
+     * boot-order dependent: OpenRegister's classes are only autoloadable to apps
+     * that happen to register after it, and every earlier app silently took the
+     * unfiltered fallback branch. boot() runs only after every app's register()
+     * has completed, so the guard resolves regardless of this app's position.
+     *
+     * @param IEventDispatcher       $dispatcher The live event dispatcher.
+     * @param string                 $event      OpenRegister event class name.
+     * @param string                 $listener   Listener class name.
+     * @param array<int,string>|null $registers  Register slugs the listener reacts to, or null for all.
+     * @param array<int,string>|null $schemas    Schema slugs the listener reacts to, or null for all.
      *
      * @return void
      *
@@ -67,7 +75,7 @@ trait FilteredObjectListenerTrait
      *       behaviour a spec describes.
      */
     private function registerFilteredObjectListener(
-        IRegistrationContext $context,
+        IEventDispatcher $dispatcher,
         string $event,
         string $listener,
         ?array $registers=null,
@@ -75,8 +83,8 @@ trait FilteredObjectListenerTrait
     ): void {
         $subscription = '\\OCA\\OpenRegister\\Event\\ObjectEventSubscription';
         if (class_exists($subscription) === true) {
-            $subscription::register(
-                context: $context,
+            $subscription::subscribe(
+                dispatcher: $dispatcher,
                 event: $event,
                 listener: $listener,
                 registers: $registers,
@@ -85,7 +93,16 @@ trait FilteredObjectListenerTrait
             return;
         }
 
-        $context->registerEventListener(event: $event, listener: $listener);
+        // Loud on purpose. This fallback is correct but UNFILTERED, and while it
+        // was silent it was indistinguishable from a working narrowing.
+        \OCP\Server::get(\Psr\Log\LoggerInterface::class)->warning(
+            'OpenRegister ObjectEventSubscription unavailable: '.$listener
+            .' fell back to an UNFILTERED registration for '.$event
+            .' and will be invoked on every object write instance-wide.',
+            ['app' => 'shillinq']
+        );
+
+        $dispatcher->addServiceListener($event, $listener);
 
     }//end registerFilteredObjectListener()
 }//end trait
