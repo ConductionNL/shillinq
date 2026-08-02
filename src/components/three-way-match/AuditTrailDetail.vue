@@ -93,11 +93,12 @@
 								class="audit-trail__event-details"
 								data-testid="audit-trail-event-details">
 								<dl>
-									<template v-for="(detailValue, detailKey) in event.details">
-										<dt :key="`${detailKey}-k`">
+									<!-- Vue 3 requires the v-for key on the <template> itself. -->
+									<template v-for="(detailValue, detailKey) in event.details" :key="detailKey">
+										<dt>
 											{{ detailKey }}
 										</dt>
-										<dd :key="`${detailKey}-v`">
+										<dd>
 											{{ formatDetailValue(detailValue) }}
 										</dd>
 									</template>

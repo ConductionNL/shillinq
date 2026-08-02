@@ -63,9 +63,10 @@
 						</tr>
 					</thead>
 					<tbody>
-						<template v-for="row in rows">
-							<tr :key="row.key"
-								class="budget-line-commitments__row"
+						<!-- Vue 3 requires the v-for key on the <template> itself; the
+						     Vue 2 spelling put one on each child and is a compile error. -->
+						<template v-for="row in rows" :key="row.key">
+							<tr class="budget-line-commitments__row"
 								data-testid="budget-line-row"
 								tabindex="0"
 								role="button"
@@ -92,7 +93,7 @@
 									{{ formatAmount(row.vrij) }}
 								</td>
 							</tr>
-							<tr v-if="expandedKey === row.key" :key="row.key + '-drilldown'" class="budget-line-commitments__drilldown-row">
+							<tr v-if="expandedKey === row.key" class="budget-line-commitments__drilldown-row">
 								<td colspan="8">
 									<NcLoadingIcon v-if="drilldownLoading" :size="20" />
 									<p v-else-if="!drilldownItems.length" class="budget-line-commitments__drilldown-empty">

@@ -24,7 +24,7 @@
  * (`widget/`) so all four embed methods share the same surface (REQ-WSW-004).
  */
 
-import Vue from 'vue'
+import { createApp, h } from 'vue'
 import SelfServiceWidget from './SelfServiceWidget.vue'
 import '../../styles/widget.css'
 
@@ -71,33 +71,34 @@ function mountInto(container, config) {
 	const mountPoint = document.createElement('div')
 	container.appendChild(mountPoint)
 
-	const instance = new Vue({
-		render(h) {
+	// Vue 3: props go directly in `h()`'s second argument — the Vue 2
+	// `{ props: {...} }` wrapper would be passed through as a single attr
+	// named "props" and every real prop would arrive undefined.
+	const app = createApp({
+		render() {
 			return h(SelfServiceWidget, {
-				props: {
-					businessId: merged.businessId,
-					apiBase: merged.apiBase,
-					apiKey: merged.apiKey,
-					resourceId: merged.resourceId,
-					lang: merged.lang,
-					primaryColor: merged.primaryColor,
-					darkMode: !!merged.darkMode,
-					translations: merged.translations || {},
-				},
+				businessId: merged.businessId,
+				apiBase: merged.apiBase,
+				apiKey: merged.apiKey,
+				resourceId: merged.resourceId,
+				lang: merged.lang,
+				primaryColor: merged.primaryColor,
+				darkMode: !!merged.darkMode,
+				translations: merged.translations || {},
 			})
 		},
 	})
-	instance.$mount(mountPoint)
-	return instance
+	app.mount(mountPoint)
+	return app
 }
 
 export const BookingWidget = {
 	/**
-	 * Initialise a widget instance. Returns the Vue instance for caller
-	 * lifecycle control (destroy on SPA route change, etc.).
+	 * Initialise a widget instance. Returns the Vue application instance for
+	 * caller lifecycle control (`app.unmount()` on SPA route change, etc.).
 	 *
 	 * @param {object} config Widget configuration.
-	 * @return {object|null} Vue instance handle, or null on validation failure.
+	 * @return {object|null} Vue app handle, or null on validation failure.
 	 */
 	init(config) {
 		const error = validateConfig(config)

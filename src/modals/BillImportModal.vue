@@ -229,7 +229,7 @@
 							{{ t('shillinq', 'Suggested: {code} {label}', { code: glSuggestion.code, label: glSuggestion.label }) }}
 						</span>
 						<NcButton
-							type="tertiary"
+							variant="tertiary"
 							:disabled="busy"
 							data-testid="bim-use-suggestion"
 							@click="onUseSuggestion">
@@ -243,7 +243,7 @@
 
 				<NcButton
 					v-if="isDraftReview && canRerequest"
-					type="secondary"
+					variant="secondary"
 					:disabled="busy"
 					data-testid="bim-rerequest"
 					@click="onRerequest">
@@ -265,7 +265,7 @@
 			</NcButton>
 			<NcButton
 				v-if="step === 'review'"
-				type="primary"
+				variant="primary"
 				:disabled="!canSave || busy"
 				data-testid="bim-save"
 				@click="onSave">
@@ -276,8 +276,7 @@
 </template>
 
 <script>
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import { NcButton, NcDialog } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { translate as t } from '@nextcloud/l10n'

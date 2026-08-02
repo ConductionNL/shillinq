@@ -80,8 +80,10 @@
 					{{ day.dayOfMonth }}
 				</div>
 			</div>
-			<template v-for="h in hoursOfDay">
-				<div :key="`hrow-${h}`" class="bk-calendar__hour-axis">
+			<!-- Vue 3 requires the v-for key on the <template> itself. The inner
+			     `weekCells` v-for keeps its own key — that is a separate list. -->
+			<template v-for="h in hoursOfDay" :key="`hrow-${h}`">
+				<div class="bk-calendar__hour-axis">
 					{{ formatHourLabel(h) }}
 				</div>
 				<div
@@ -386,14 +388,18 @@ export default {
 
 <style scoped>
 .bk-calendar { display: flex; flex-direction: column; gap: 8px; padding: 8px; }
+
 .bk-calendar__header { display: flex; justify-content: space-between; align-items: center; }
+
 .bk-calendar__title { font-weight: 600; font-size: 1.1em; }
+
 .bk-calendar__views button {
 	background: transparent;
 	border: 1px solid var(--color-border, #ccc);
 	padding: 4px 10px;
 	cursor: pointer;
 }
+
 .bk-calendar__views button.is-active {
 	background: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);
@@ -405,17 +411,24 @@ export default {
 	gap: 1px;
 	background: var(--color-border, #ccc);
 }
+
 .bk-calendar__weekday { padding: 4px 8px; font-weight: 600; background: var(--color-background-hover, #f5f5f5); }
+
 .bk-calendar__day {
 	min-height: 80px;
 	background: var(--color-main-background, #fff);
 	padding: 4px;
 	cursor: pointer;
 }
+
 .bk-calendar__day.is-other-month { opacity: 0.4; }
+
 .bk-calendar__day.is-today { box-shadow: inset 0 0 0 2px var(--color-primary-element, #0082c9); }
+
 .bk-calendar__day-number { font-weight: 600; font-size: 0.9em; }
+
 .bk-calendar__bookings { list-style: none; padding: 0; margin: 4px 0 0; }
+
 .bk-calendar__booking {
 	display: flex;
 	gap: 4px;
@@ -427,10 +440,12 @@ export default {
 	margin-bottom: 2px;
 	cursor: pointer;
 }
+
 .bk-calendar__booking.is-conflict {
 	background: var(--color-error, #c62828);
 	color: var(--color-main-background, #fff);
 }
+
 .bk-calendar__booking-time { font-weight: 600; }
 
 .bk-calendar__grid--week {
@@ -439,9 +454,13 @@ export default {
 	gap: 1px;
 	background: var(--color-border, #ccc);
 }
+
 .bk-calendar__hour-axis-cell { background: var(--color-background-hover, #f5f5f5); }
+
 .bk-calendar__week-header { display: flex; flex-direction: column; align-items: center; padding: 4px; background: var(--color-background-hover, #f5f5f5); }
+
 .bk-calendar__hour-axis { padding: 4px 8px; background: var(--color-background-hover, #f5f5f5); font-size: 0.85em; }
+
 .bk-calendar__slot {
 	min-height: 36px;
 	background: var(--color-main-background, #fff);
@@ -450,6 +469,7 @@ export default {
 }
 
 .bk-calendar__grid--day { display: flex; flex-direction: column; }
+
 .bk-calendar__day-row {
 	display: grid;
 	grid-template-columns: 80px 1fr;

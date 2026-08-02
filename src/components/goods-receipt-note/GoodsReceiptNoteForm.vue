@@ -148,7 +148,7 @@
 
 			<div class="grn-form__actions">
 				<NcButton
-					type="primary"
+					variant="primary"
 					native-type="submit"
 					:disabled="submitting || !canSubmit"
 					data-testid="grn-form-submit">
@@ -160,10 +160,7 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
-import NcInputField from '@nextcloud/vue/dist/Components/NcInputField.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
+import { NcButton, NcInputField, NcSelect, NcTextField } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 

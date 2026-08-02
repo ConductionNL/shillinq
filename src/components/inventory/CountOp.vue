@@ -186,11 +186,18 @@ export default {
 
 <style scoped>
 .count-op { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
+
 .count-op__form label { display: flex; flex-direction: column; margin-bottom: var(--default-grid-baseline, 4px); }
+
 .count-op__sku-row { display: flex; gap: var(--default-grid-baseline, 4px); }
+
 .count-op__sku-row input { flex: 1; }
+
 .count-op__variance { color: var(--color-text-maxcontrast); }
+
 .count-op__error { color: var(--color-error); }
+
 .count-op__success { color: var(--color-success); }
+
 .count-op__actions { display: flex; justify-content: flex-end; }
 </style>

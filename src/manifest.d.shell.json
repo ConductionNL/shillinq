@@ -46,7 +46,7 @@
 						{
 							"id": "Resources",
 							"label": "Resources",
-							"icon": "AccountHardHatOutline",
+							"icon": "SourceBranch",
 							"route": "Resources",
 							"order": 10
 						},
@@ -131,27 +131,27 @@
 				{
 					"id": "Purchasing",
 					"label": "Purchasing & Inventory",
-					"icon": "CartArrowDownOutline",
+					"icon": "CartArrowDown",
 					"order": 35,
 					"children": [
 						{
 							"id": "TenderNedAanbestedingen",
 							"label": "TenderNed tenders",
-							"icon": "GavelOutline",
+							"icon": "Gavel",
 							"route": "TenderNedAanbestedingen",
 							"order": 10
 						},
 						{
 							"id": "Verplichtingen",
 							"label": "Commitments",
-							"icon": "FileSignOutline",
+							"icon": "FileSign",
 							"route": "Verplichtingen",
 							"order": 20
 						},
 						{
 							"id": "MijnContracten",
 							"label": "My contracts",
-							"icon": "BriefcaseCheckOutline",
+							"icon": "FileSign",
 							"route": "MijnContracten",
 							"order": 30
 						}
@@ -248,7 +248,7 @@
 						{
 							"id": "IbBox3Vermogen",
 							"label": "Box 3 assets",
-							"icon": "BankOutline",
+							"icon": "DesktopTowerMonitor",
 							"route": "IbBox3Vermogen",
 							"order": 40
 						}
@@ -334,13 +334,6 @@
 							"order": 12
 						},
 						{
-							"id": "KorDrempelMonitor",
-							"label": "Threshold monitor",
-							"icon": "GaugeFull",
-							"route": "KorDrempelMonitor",
-							"order": 13
-						},
-						{
 							"id": "KorOpzegging",
 							"label": "KOR cancellation",
 							"icon": "ShieldRemoveOutline",
@@ -386,7 +379,7 @@
 				{
 					"id": "Treasury",
 					"label": "Treasury",
-					"icon": "BankTransfer",
+					"icon": "BankOutline",
 					"order": 38,
 					"children": [
 						{
@@ -413,14 +406,14 @@
 						{
 							"id": "CashflowForecast",
 							"label": "Cashflow Forecast",
-							"icon": "CalendarMultiselect",
+							"icon": "ChartTimelineVariant",
 							"route": "CashflowForecast",
 							"order": 40
 						},
 						{
 							"id": "GroupLiquidityDashboard",
 							"label": "Group Liquidity Dashboard",
-							"icon": "SpeedometerSlow",
+							"icon": "ViewDashboardOutline",
 							"route": "GroupLiquidityDashboard",
 							"order": 50
 						}
@@ -491,7 +484,7 @@
 				{
 					"id": "Purchasing",
 					"label": "Purchasing & Inventory",
-					"icon": "CartArrowDownOutline",
+					"icon": "CartArrowDown",
 					"order": 35,
 					"children": [
 						{
@@ -504,7 +497,7 @@
 						{
 							"id": "FrameworkAgreements",
 							"label": "Framework Agreements",
-							"icon": "FileSignOutline",
+							"icon": "FileSign",
 							"route": "FrameworkAgreements",
 							"order": 9
 						}
@@ -553,7 +546,7 @@
 						{
 							"id": "Annuleringsbeleid",
 							"label": "Cancellation policy",
-							"icon": "CalendarRemoveOutline",
+							"icon": "ShieldCheckOutline",
 							"route": "Annuleringsbeleid",
 							"order": 20
 						}
@@ -602,7 +595,7 @@
 						{
 							"id": "EuBewijsstukken",
 							"label": "Supporting documents",
-							"icon": "FileCertificateOutline",
+							"icon": "FileDocumentMultipleOutline",
 							"route": "EuBewijsstukken",
 							"order": 30
 						},
@@ -747,7 +740,7 @@
 						{
 							"id": "DetacheringPayroll",
 							"label": "Secondment & payroll",
-							"icon": "AccountCashOutline",
+							"icon": "CashSync",
 							"order": 45,
 							"featureFlag": "mkb-detachering",
 							"children": [
@@ -761,7 +754,7 @@
 								{
 									"id": "OpdrachtgeversVerklaringen",
 									"label": "Client statements",
-									"icon": "FileSignOutline",
+									"icon": "AccountStarOutline",
 									"route": "OpdrachtgeversVerklaringen",
 									"order": 20
 								},
@@ -839,7 +832,7 @@
 				{
 					"id": "BookkeepingMultiCurrency",
 					"label": "Multi-currency",
-					"icon": "LedgerOutline",
+					"icon": "CurrencyEur",
 					"order": 11,
 					"children": [
 						{
@@ -894,7 +887,7 @@
 						{
 							"id": "ImportWizard",
 							"label": "Import wizard",
-							"icon": "ImportOutline",
+							"icon": "DatabaseImportOutline",
 							"route": "ImportWizard",
 							"order": 10
 						},
@@ -908,7 +901,7 @@
 						{
 							"id": "ImportMappings",
 							"label": "Mapping",
-							"icon": "SwapHorizontalBoldOutline",
+							"icon": "SwapHorizontal",
 							"route": "ImportMappings",
 							"order": 30
 						}
@@ -985,7 +978,7 @@
 				{
 					"id": "BankImportPage",
 					"label": "Import bank statements",
-					"icon": "BankTransferIn",
+					"icon": "DatabaseImportOutline",
 					"route": "BankImportPage",
 					"order": 40
 				}
@@ -1075,27 +1068,27 @@
 				{
 					"id": "Communicatie",
 					"label": "Communication",
-					"icon": "icon-comment",
+					"icon": "CommentOutline",
 					"order": 36,
 					"children": [
 						{
 							"id": "ConfirmationTemplates",
 							"label": "Confirmation Templates",
-							"icon": "EmailCheckOutline",
+							"icon": "FileReplaceOutline",
 							"route": "ConfirmationTemplates",
 							"order": 20
 						},
 						{
 							"id": "ReminderTemplates",
 							"label": "Reminder Templates",
-							"icon": "EmailClockOutline",
+							"icon": "FileReplaceOutline",
 							"route": "ReminderTemplates",
 							"order": 30
 						},
 						{
 							"id": "CancellationTemplates",
 							"label": "Cancellation Templates",
-							"icon": "EmailRemoveOutline",
+							"icon": "FileReplaceOutline",
 							"route": "CancellationTemplates",
 							"order": 40
 						}
@@ -1152,20 +1145,20 @@
 				{
 					"id": "Communicatie",
 					"label": "Communication",
-					"icon": "icon-comment",
+					"icon": "CommentOutline",
 					"order": 36,
 					"children": [
 						{
 							"id": "NotificationTriggers",
 							"label": "Notification Triggers",
-							"icon": "BellRingOutline",
+							"icon": "BellOutline",
 							"route": "NotificationTriggers",
 							"order": 10
 						},
 						{
 							"id": "NotificationMonitor",
 							"label": "Notification Monitor",
-							"icon": "ChartLine",
+							"icon": "BellOutline",
 							"route": "NotificationMonitor",
 							"order": 50
 						}
@@ -1243,7 +1236,7 @@
 				{
 					"id": "Communicatie",
 					"label": "Communication",
-					"icon": "icon-comment",
+					"icon": "CommentOutline",
 					"order": 36,
 					"children": [
 						{
@@ -1312,7 +1305,7 @@
 						{
 							"id": "PaymentRuns",
 							"label": "Payment Runs",
-							"icon": "BankTransferOutline",
+							"icon": "CreditCardOutline",
 							"route": "PaymentRuns",
 							"order": 50
 						}
@@ -1488,7 +1481,7 @@
 				{
 					"id": "Bookkeeping",
 					"label": "Bookkeeping",
-					"icon": "icon-category-organization",
+					"icon": "NotebookOutline",
 					"order": 20,
 					"children": [
 						{
@@ -1617,7 +1610,7 @@
 						{
 							"id": "CcmAuditCommitteeReports",
 							"label": "Audit Committee Reports",
-							"icon": "FileChartOutline",
+							"icon": "AccountGroupOutline",
 							"route": "CcmAuditCommitteeReports",
 							"order": 60
 						}
@@ -1722,7 +1715,7 @@
 						{
 							"id": "ConsolidationGroups",
 							"label": "Consolidation Groups",
-							"icon": "Sitemap",
+							"icon": "AccountGroupOutline",
 							"route": "ConsolidationGroups",
 							"order": 10
 						},
@@ -1736,7 +1729,7 @@
 						{
 							"id": "ConsolidatedReports",
 							"label": "Consolidated Reports",
-							"icon": "FileChartOutline",
+							"icon": "ChartBoxOutline",
 							"route": "ConsolidatedReports",
 							"order": 30
 						}
@@ -1793,7 +1786,7 @@
 				{
 					"id": "Bookkeeping",
 					"label": "Bookkeeping",
-					"icon": "icon-category-organization",
+					"icon": "NotebookOutline",
 					"order": 20,
 					"children": [
 						{
@@ -1802,14 +1795,14 @@
 							"i18n": {
 								"nl": "Analytische dimensies"
 							},
-							"icon": "ChartBoxOutline",
+							"icon": "ChartLineVariant",
 							"route": "AnalyticalDimensions",
 							"order": 92
 						},
 						{
 							"id": "SegmentPnLDashboard",
 							"label": "Segment P&L",
-							"icon": "PollOutline",
+							"icon": "Poll",
 							"route": "SegmentPnLDashboard",
 							"order": 93
 						}
@@ -1845,7 +1838,7 @@
 				{
 					"id": "Sustainability",
 					"label": "Sustainability",
-					"icon": "LeafOutline",
+					"icon": "Leaf",
 					"order": 70,
 					"children": [
 						{
@@ -1858,14 +1851,14 @@
 						{
 							"id": "EsrsDataPoints",
 							"label": "ESRS Data Points",
-							"icon": "TableLarge",
+							"icon": "DatabaseOutline",
 							"route": "EsrsDataPoints",
 							"order": 20
 						},
 						{
 							"id": "GhgInventories",
 							"label": "GHG Inventory",
-							"icon": "Molecule",
+							"icon": "Warehouse",
 							"route": "GhgInventories",
 							"order": 30
 						},
@@ -1971,7 +1964,7 @@
 				{
 					"id": "DepreciationExpense",
 					"label": "Depreciation Expense",
-					"icon": "ChartBoxOutline",
+					"icon": "ReceiptOutline",
 					"route": "DepreciationExpense",
 					"order": 40
 				}
@@ -2011,7 +2004,7 @@
 						{
 							"id": "LeaseRegister",
 							"label": "Lease Register",
-							"icon": "FileSign",
+							"icon": "DatabaseOutline",
 							"route": "LeaseRegister",
 							"order": 10
 						},
@@ -2088,7 +2081,7 @@
 						{
 							"id": "AccountingFrameworks",
 							"label": "Framework Configuration",
-							"icon": "Earth",
+							"icon": "CogOutline",
 							"route": "AccountingFrameworks",
 							"order": 10
 						},
@@ -2116,7 +2109,7 @@
 						{
 							"id": "FrameworkElections",
 							"label": "Framework Election",
-							"icon": "GavelOutline",
+							"icon": "Gavel",
 							"route": "FrameworkElections",
 							"order": 50
 						}
@@ -2201,13 +2194,13 @@
 				{
 					"id": "Ifrs15Revenue",
 					"label": "Revenue Recognition (IFRS 15)",
-					"icon": "FinanceOutline",
+					"icon": "CurrencyEur",
 					"order": 85,
 					"children": [
 						{
 							"id": "RevenueContracts",
 							"label": "Contracts",
-							"icon": "FileDocumentOutline",
+							"icon": "FileSign",
 							"route": "RevenueContracts",
 							"order": 10
 						},
@@ -2221,28 +2214,28 @@
 						{
 							"id": "RevenueWaterfall",
 							"label": "Revenue Waterfall",
-							"icon": "ChartTimelineVariant",
+							"icon": "CurrencyEur",
 							"route": "RevenueWaterfall",
 							"order": 30
 						},
 						{
 							"id": "ContractBalances",
 							"label": "Contract Balances",
-							"icon": "Scale",
+							"icon": "FileSign",
 							"route": "ContractBalances",
 							"order": 40
 						},
 						{
 							"id": "ContractModifications",
 							"label": "Contract Modifications",
-							"icon": "FileDocumentEditOutline",
+							"icon": "FileSign",
 							"route": "ContractModifications",
 							"order": 50
 						},
 						{
 							"id": "ContractCostAssets",
 							"label": "Contract Cost Assets",
-							"icon": "Wallet",
+							"icon": "FileSign",
 							"route": "ContractCostAssets",
 							"order": 60
 						}
@@ -2306,7 +2299,7 @@
 				{
 					"id": "WmoCompliance",
 					"label": "WMO Compliance",
-					"icon": "StoreOutline",
+					"icon": "ClipboardCheckOutline",
 					"order": 42,
 					"children": [
 						{
@@ -2326,35 +2319,35 @@
 						{
 							"id": "ActivityCostAllocations",
 							"label": "Activity Cost Allocations",
-							"icon": "CallSplit",
+							"icon": "MapMarkerOutline",
 							"route": "ActivityCostAllocations",
 							"order": 30
 						},
 						{
 							"id": "PublicInterestDecisions",
 							"label": "Public Interest Decisions",
-							"icon": "GavelOutline",
+							"icon": "Gavel",
 							"route": "PublicInterestDecisions",
 							"order": 40
 						},
 						{
 							"id": "AcmReports",
 							"label": "ACM Reports",
-							"icon": "FileDocumentMultipleOutline",
+							"icon": "ChartBoxOutline",
 							"route": "AcmReports",
 							"order": 50
 						},
 						{
 							"id": "CrossSubsidyAlerts",
 							"label": "Cross-Subsidy Alerts",
-							"icon": "AlertOctagonOutline",
+							"icon": "HandHeartOutline",
 							"route": "CrossSubsidyAlerts",
 							"order": 60
 						},
 						{
 							"id": "WmoAuditLog",
 							"label": "WMO Audit Log",
-							"icon": "ClipboardTextClockOutline",
+							"icon": "History",
 							"route": "WmoAuditLog",
 							"order": 70
 						},
@@ -2494,21 +2487,21 @@
 						{
 							"id": "AdministrationSwitcher",
 							"label": "Switch administration",
-							"icon": "SwapHorizontal",
+							"icon": "ShieldAccountOutline",
 							"route": "AdministrationSwitcher",
 							"order": 1
 						},
 						{
 							"id": "Administraties",
 							"label": "Administrations",
-							"icon": "OfficeBuilding",
+							"icon": "OfficeBuildingOutline",
 							"route": "Administraties",
 							"order": 5
 						},
 						{
 							"id": "AdministratieLidmaatschappen",
 							"label": "Access & roles",
-							"icon": "AccountMultipleOutline",
+							"icon": "AccountKeyOutline",
 							"route": "AdministratieLidmaatschappen",
 							"order": 6
 						},
@@ -2522,14 +2515,14 @@
 						{
 							"id": "ConsolidatieMappings",
 							"label": "Consolidation mapping",
-							"icon": "Sitemap",
+							"icon": "SwapHorizontal",
 							"route": "ConsolidatieMappings",
 							"order": 8
 						},
 						{
 							"id": "AdministratieMigraties",
 							"label": "Asset transfer",
-							"icon": "TransferRight",
+							"icon": "DesktopTowerMonitor",
 							"route": "AdministratieMigraties",
 							"order": 9
 						}
@@ -2621,13 +2614,13 @@
 				{
 					"id": "Bookkeeping",
 					"label": "Bookkeeping",
-					"icon": "LedgerOutline",
+					"icon": "NotebookOutline",
 					"order": 11,
 					"children": [
 						{
 							"id": "BankAccounts",
 							"label": "Bank Accounts",
-							"icon": "Bank",
+							"icon": "BankOutline",
 							"route": "BankAccounts",
 							"order": 26
 						},
@@ -2677,7 +2670,7 @@
 				{
 					"id": "Loonadministratie",
 					"label": "Payroll",
-					"icon": "AccountTie",
+					"icon": "CashSync",
 					"order": 80,
 					"children": [
 						{
@@ -2690,7 +2683,7 @@
 						{
 							"id": "Werknemers",
 							"label": "Employees",
-							"icon": "AccountTie",
+							"icon": "AccountTieOutline",
 							"route": "Werknemers",
 							"order": 20
 						},
@@ -2718,7 +2711,7 @@
 						{
 							"id": "Loonjournaalposten",
 							"label": "Payroll journal entries",
-							"icon": "BookOpenVariant",
+							"icon": "CashSync",
 							"route": "Loonjournaalposten",
 							"order": 60
 						}
@@ -2817,7 +2810,7 @@
 				{
 					"id": "Bookkeeping",
 					"label": "Bookkeeping",
-					"icon": "icon-category-organization",
+					"icon": "NotebookOutline",
 					"order": 20,
 					"children": [
 						{
@@ -2863,14 +2856,14 @@
 						{
 							"id": "BbvComplianceDashboard",
 							"label": "BBV Compliance Dashboard",
-							"icon": "ChartBoxOutline",
+							"icon": "ViewDashboardOutline",
 							"route": "BbvComplianceDashboard",
 							"order": 10
 						},
 						{
 							"id": "BudgetToProgrammeLinker",
 							"label": "Budget Links",
-							"icon": "LinkVariant",
+							"icon": "CalculatorVariantOutline",
 							"route": "BudgetToProgrammeLinker",
 							"order": 20
 						}
@@ -2962,7 +2955,7 @@
 				{
 					"id": "PurchaseOrders",
 					"label": "Purchase Orders",
-					"icon": "FileDocumentMultiple",
+					"icon": "ClipboardListOutline",
 					"order": 90,
 					"children": [
 						{
@@ -3002,7 +2995,7 @@
 				{
 					"id": "PurchaseOrders",
 					"label": "Purchase Orders",
-					"icon": "FileDocumentMultiple",
+					"icon": "ClipboardListOutline",
 					"order": 90,
 					"children": [
 						{
@@ -3064,14 +3057,14 @@
 						{
 							"id": "Rechtmatigheidsparagraaf",
 							"label": "Lawfulness paragraph",
-							"icon": "FileDocumentCheckOutline",
+							"icon": "ClipboardCheckOutline",
 							"route": "Rechtmatigheidsparagraaf",
 							"order": 40
 						},
 						{
 							"id": "RechtmatigheidAuditExport",
 							"label": "Audit Export",
-							"icon": "DownloadOutline",
+							"icon": "DatabaseExportOutline",
 							"route": "RechtmatigheidAuditExport",
 							"order": 50
 						}
@@ -3162,14 +3155,14 @@
 						{
 							"id": "BankingRules",
 							"label": "Banking Rules",
-							"icon": "ShieldCheckOutline",
+							"icon": "BankOutline",
 							"route": "BankingRules",
 							"order": 20
 						},
 						{
 							"id": "ComplianceReports",
 							"label": "Compliance Reports",
-							"icon": "FileChartOutline",
+							"icon": "ChartBoxOutline",
 							"route": "ComplianceReports",
 							"order": 30
 						}
@@ -3226,7 +3219,7 @@
 				{
 					"id": "Bookkeeping",
 					"label": "Bookkeeping",
-					"icon": "icon-category-organization",
+					"icon": "NotebookOutline",
 					"order": 20,
 					"children": [
 						{
@@ -3303,7 +3296,7 @@
 				{
 					"id": "Bookkeeping",
 					"label": "Bookkeeping",
-					"icon": "icon-category-organization",
+					"icon": "NotebookOutline",
 					"order": 20,
 					"children": [
 						{
@@ -3345,14 +3338,14 @@
 				{
 					"id": "VATReturns",
 					"label": "BTW return",
-					"icon": "FileDocumentCheckOutline",
+					"icon": "PercentOutline",
 					"route": "VATReturns",
 					"order": 70
 				},
 				{
 					"id": "VATReports",
 					"label": "BTW report",
-					"icon": "ChartBoxOutline",
+					"icon": "PercentOutline",
 					"route": "VATReports",
 					"order": 71
 				}
@@ -3399,7 +3392,7 @@
 						{
 							"id": "Verplichtingenregister",
 							"label": "Commitments register",
-							"icon": "FileSign",
+							"icon": "DatabaseOutline",
 							"route": "Verplichtingenregister",
 							"order": 10
 						},
@@ -3413,7 +3406,7 @@
 						{
 							"id": "Goedkeuringsstappen",
 							"label": "Approvals",
-							"icon": "ClipboardCheckOutline",
+							"icon": "CheckDecagramOutline",
 							"route": "Goedkeuringsstappen",
 							"order": 30
 						},
@@ -3487,7 +3480,7 @@
 				{
 					"id": "Bookkeeping",
 					"label": "Bookkeeping",
-					"icon": "icon-category-organization",
+					"icon": "NotebookOutline",
 					"order": 20,
 					"children": [
 						{
@@ -3543,7 +3536,7 @@
 				{
 					"id": "VennootschapsbelastingBalans",
 					"label": "Corporate income tax (Vpb)",
-					"icon": "BankCheck",
+					"icon": "PercentOutline",
 					"order": 36,
 					"featureFlag": "mkb-vpb",
 					"children": [
@@ -3610,20 +3603,20 @@
 				{
 					"id": "Vpb",
 					"label": "Corporate tax (Vpb)",
-					"icon": "BankOutline",
+					"icon": "PercentOutline",
 					"order": 35,
 					"children": [
 						{
 							"id": "VpbDeadlines",
 							"label": "Tax deadlines",
-							"icon": "CalendarClock",
+							"icon": "ClockAlertOutline",
 							"route": "VpbDeadlines",
 							"order": 10
 						},
 						{
 							"id": "VpbPayments",
 							"label": "Tax payments",
-							"icon": "CashMultiple",
+							"icon": "CreditCardOutline",
 							"route": "VpbPayments",
 							"order": 20
 						},
@@ -3713,7 +3706,7 @@
 						{
 							"id": "BudgetBBVMappings",
 							"label": "Budget Mapping",
-							"icon": "TableArrowRight",
+							"icon": "SwapHorizontal",
 							"route": "BudgetBBVMappings",
 							"order": 20
 						}
@@ -3768,14 +3761,14 @@
 				{
 					"id": "Bookkeeping",
 					"label": "Bookkeeping",
-					"icon": "BookOpenPageVariantOutline",
+					"icon": "NotebookOutline",
 					"order": 20,
 					"featureFlag": "bookkeeping",
 					"children": [
 						{
 							"id": "WbsoChartOfAccounts",
 							"label": "Chart of Accounts",
-							"icon": "FileTreeOutline",
+							"icon": "NotebookOutline",
 							"route": "WbsoChartOfAccounts",
 							"order": 10
 						},
@@ -3789,7 +3782,7 @@
 						{
 							"id": "WbsoDocuments",
 							"label": "Documents",
-							"icon": "FileDocumentOutline",
+							"icon": "FileDocumentMultipleOutline",
 							"route": "WbsoDocuments",
 							"order": 30
 						}
@@ -3838,7 +3831,7 @@
 						{
 							"id": "Treasurystatuten",
 							"label": "Treasurystatuut",
-							"icon": "FileDocumentOutline",
+							"icon": "BankOutline",
 							"route": "Treasurystatuten",
 							"order": 20
 						},
@@ -3859,7 +3852,7 @@
 						{
 							"id": "QuartaalrapportagesFido",
 							"label": "Quarterly Fido Reports",
-							"icon": "FileChartOutline",
+							"icon": "ChartBoxOutline",
 							"route": "QuartaalrapportagesFido",
 							"order": 50
 						}
@@ -3937,12 +3930,12 @@
 				{
 					"id": "Settings",
 					"label": "Settings",
-					"icon": "icon-settings",
+					"icon": "CogOutline",
 					"children": [
 						{
 							"id": "DeadlineCalendarSettings",
 							"label": "Deadline calendar",
-							"icon": "CalendarClock",
+							"icon": "ClockAlertOutline",
 							"route": "DeadlineCalendarSettings",
 							"order": 30
 						}
@@ -3967,7 +3960,7 @@
 						{
 							"id": "SupplierInvoicesMissingDocument",
 							"label": "Missing Supplier Documents",
-							"icon": "FileAlertOutline",
+							"icon": "FileDocumentMultipleOutline",
 							"route": "SupplierInvoicesMissingDocument",
 							"order": 29
 						},
@@ -4003,13 +3996,13 @@
 				{
 					"id": "Contracts",
 					"label": "Contracts",
-					"icon": "FileSignOutline",
+					"icon": "FileSign",
 					"order": 25,
 					"children": [
 						{
 							"id": "Contracts",
 							"label": "Contracts",
-							"icon": "FileSignOutline",
+							"icon": "FileSign",
 							"route": "Contracts",
 							"order": 10
 						},
@@ -4023,7 +4016,7 @@
 						{
 							"id": "ContractSpend",
 							"label": "Contract Spend",
-							"icon": "ChartLineVariant",
+							"icon": "FileSign",
 							"route": "ContractSpendDashboard",
 							"order": 30
 						}
@@ -4073,7 +4066,7 @@
 				{
 					"id": "DBACompliance",
 					"label": "DBA Compliance",
-					"icon": "ShieldAccountOutline",
+					"icon": "ClipboardCheckOutline",
 					"order": 55,
 					"children": [
 						{
@@ -4093,14 +4086,14 @@
 						{
 							"id": "DBAModelovereenkomsten",
 							"label": "Model agreement register",
-							"icon": "FileDocumentCheckOutline",
+							"icon": "DatabaseOutline",
 							"route": "DBAModelovereenkomsten",
 							"order": 30
 						},
 						{
 							"id": "DBAPortfolioRisicos",
 							"label": "DBA Portfolio Dashboard",
-							"icon": "ChartArc",
+							"icon": "ViewDashboardOutline",
 							"route": "DBAPortfolioRisicos",
 							"order": 40
 						},
@@ -4114,7 +4107,7 @@
 						{
 							"id": "DBARisicoflags",
 							"label": "Risk Flags",
-							"icon": "FlagAlertOutline",
+							"icon": "FlagVariantOutline",
 							"route": "DBARisicoflags",
 							"order": 60
 						}
@@ -4213,7 +4206,7 @@
 				{
 					"id": "ExpenseSettlement",
 					"label": "Expense Settlement",
-					"icon": "ScaleBalance",
+					"icon": "ReceiptOutline",
 					"order": 80,
 					"children": [
 						{
@@ -4303,7 +4296,7 @@
 						{
 							"id": "ExternalAdaptersStatus",
 							"label": "Adapter Status",
-							"icon": "PulseOutline",
+							"icon": "Pulse",
 							"route": "ExternalAdaptersStatus",
 							"order": 5
 						},
@@ -4317,7 +4310,7 @@
 						{
 							"id": "ExternalAdapterSalarisbureau",
 							"label": "Payroll bureau",
-							"icon": "AccountGroupOutline",
+							"icon": "CashSync",
 							"route": "ExternalAdapterSalarisbureau",
 							"order": 15
 						},
@@ -4373,21 +4366,21 @@
 						{
 							"id": "ExternalAdapterKvk",
 							"label": "KvK Trade Register",
-							"icon": "OfficeBuildingOutline",
+							"icon": "DatabaseOutline",
 							"route": "ExternalAdapterKvk",
 							"order": 50
 						},
 						{
 							"id": "ExternalAdapterUwv",
 							"label": "UWV payroll filing",
-							"icon": "AccountGroupOutline",
+							"icon": "CashSync",
 							"route": "ExternalAdapterUwv",
 							"order": 55
 						},
 						{
 							"id": "ExternalAdapterTreasuryRates",
 							"label": "Treasury Rates",
-							"icon": "CurrencyUsd",
+							"icon": "BankOutline",
 							"route": "ExternalAdapterTreasuryRates",
 							"order": 60
 						},
@@ -4401,7 +4394,7 @@
 						{
 							"id": "ExternalAdapterCsrd",
 							"label": "CSRD ESRS XBRL",
-							"icon": "LeafOutline",
+							"icon": "Leaf",
 							"route": "ExternalAdapterCsrd",
 							"order": 70
 						},
@@ -4535,7 +4528,7 @@
 				{
 					"id": "Inventory",
 					"label": "Inventory",
-					"icon": "icon-category-customization",
+					"icon": "Warehouse",
 					"order": 22,
 					"children": [
 						{
@@ -4548,14 +4541,14 @@
 						{
 							"id": "CountTemplates",
 							"label": "Count Templates",
-							"icon": "FormatListChecks",
+							"icon": "FileReplaceOutline",
 							"route": "CountTemplates",
 							"order": 51
 						},
 						{
 							"id": "VarianceReports",
 							"label": "Variance Reports",
-							"icon": "ChartLineVariantOutline",
+							"icon": "ChartBoxOutline",
 							"route": "VarianceReports",
 							"order": 52
 						}
@@ -4598,7 +4591,7 @@
 				{
 					"id": "Inventory",
 					"label": "Inventory",
-					"icon": "icon-category-files",
+					"icon": "Warehouse",
 					"order": 38,
 					"children": [
 						{
@@ -4654,13 +4647,13 @@
 				{
 					"id": "Inventory",
 					"label": "Inventory",
-					"icon": "icon-category-customization",
+					"icon": "Warehouse",
 					"order": 22,
 					"children": [
 						{
 							"id": "StockMovements",
 							"label": "Stock Movements",
-							"icon": "SwapHorizontalBoldOutline",
+							"icon": "SwapHorizontalBold",
 							"route": "StockMovements",
 							"order": 45
 						},
@@ -4727,7 +4720,7 @@
 						{
 							"id": "InventoryValuations",
 							"label": "Valuations",
-							"icon": "CalculatorOutline",
+							"icon": "Calculator",
 							"route": "InventoryValuations",
 							"order": 30
 						}
@@ -4756,20 +4749,20 @@
 				{
 					"id": "BillableInvoices",
 					"label": "Invoices",
-					"icon": "FileDocumentEditOutline",
+					"icon": "ReceiptTextOutline",
 					"order": 36,
 					"children": [
 						{
 							"id": "BillableInvoiceList",
 							"label": "All invoices",
-							"icon": "FileDocumentMultipleOutline",
+							"icon": "ReceiptTextOutline",
 							"route": "BillableInvoiceList",
 							"order": 10
 						},
 						{
 							"id": "BillableInvoiceGenerate",
 							"label": "Generate invoice",
-							"icon": "FileDocumentEditOutline",
+							"icon": "ReceiptTextOutline",
 							"route": "BillableInvoiceGenerate",
 							"order": 20
 						}
@@ -4805,7 +4798,7 @@
 				{
 					"id": "Orders",
 					"label": "Orders",
-					"icon": "FileDocumentMultipleOutline",
+					"icon": "ClipboardListOutline",
 					"route": "Orders",
 					"order": 28
 				}
@@ -4844,7 +4837,7 @@
 				{
 					"id": "RecurringInvoicing",
 					"label": "Recurring Invoices",
-					"icon": "CalendarSync",
+					"icon": "ReceiptTextOutline",
 					"route": "RecurringInvoiceProfiles",
 					"order": 46
 				}
@@ -5010,7 +5003,7 @@
 						{
 							"id": "CashflowDashboard",
 							"label": "Cashflow Dashboard",
-							"icon": "ChartTimelineVariant",
+							"icon": "ViewDashboardOutline",
 							"route": "CashflowDashboard",
 							"order": 10
 						},
@@ -5038,7 +5031,7 @@
 						{
 							"id": "CashflowCalibration",
 							"label": "Calibration Report",
-							"icon": "ChartBellCurveCumulative",
+							"icon": "ChartBoxOutline",
 							"route": "CashflowCalibration",
 							"order": 50
 						}

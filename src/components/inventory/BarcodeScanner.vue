@@ -112,7 +112,7 @@ export default {
 			this.cameraError = this.t('shillinq', 'Camera unavailable; use manual entry.')
 		}
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.loop && typeof this.loop.stop === 'function') {
 			this.loop.stop()
 		}
@@ -138,34 +138,41 @@ export default {
 	gap: var(--default-grid-baseline, 4px);
 	padding: var(--default-grid-baseline, 4px);
 }
+
 .barcode-scanner__viewport {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 }
+
 .barcode-scanner__viewport video {
 	max-width: 100%;
 	border-radius: var(--border-radius, 4px);
 	background: var(--color-background-dark, #000);
 }
+
 .barcode-scanner__hint {
 	color: var(--color-text-maxcontrast);
 	font-size: 0.9em;
 }
+
 .barcode-scanner__manual {
 	display: flex;
 	gap: var(--default-grid-baseline, 4px);
 	align-items: flex-end;
 	flex-wrap: wrap;
 }
+
 .barcode-scanner__manual label {
 	display: flex;
 	flex-direction: column;
 	flex: 1 1 200px;
 }
+
 .barcode-scanner__error {
 	color: var(--color-error);
 }
+
 .barcode-scanner__actions {
 	display: flex;
 	gap: var(--default-grid-baseline, 4px);

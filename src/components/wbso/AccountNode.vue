@@ -102,33 +102,40 @@ export default {
 .wbso-account-node {
 	list-style: none;
 }
+
 .wbso-account-node__row {
 	display: flex;
 	gap: 0.5rem;
 	padding: 0.25rem 0;
 	align-items: center;
 }
+
 .wbso-account-node__toggle,
 .wbso-account-node__leaf-bullet {
 	width: 1.25rem;
 	text-align: center;
 }
+
 .wbso-account-node__toggle {
 	background: none;
 	border: 0;
 	cursor: pointer;
 }
+
 .wbso-account-node__number {
 	font-weight: bold;
 	min-width: 4rem;
 }
+
 .wbso-account-node__type {
 	color: var(--color-text-maxcontrast);
 }
-.wbso-account-node__status[data-status="blocked"],
-.wbso-account-node__status[data-status="archived"] {
+
+.wbso-account-node__status[data-status='blocked'],
+.wbso-account-node__status[data-status='archived'] {
 	color: var(--color-error);
 }
+
 .wbso-account-node__children {
 	padding-left: 0;
 }

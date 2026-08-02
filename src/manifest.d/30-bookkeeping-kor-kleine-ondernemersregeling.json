@@ -25,13 +25,6 @@
 					"order": 12
 				},
 				{
-					"id": "KorDrempelMonitor",
-					"label": "Threshold monitor",
-					"icon": "GaugeFull",
-					"route": "KorDrempelMonitor",
-					"order": 13
-				},
-				{
 					"id": "KorOpzegging",
 					"label": "KOR cancellation",
 					"icon": "ShieldRemoveOutline",

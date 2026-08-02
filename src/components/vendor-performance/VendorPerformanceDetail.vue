@@ -257,13 +257,16 @@ export default {
 .vp-detail {
 	padding: 1rem;
 }
+
 .vp-detail__header h2 {
 	margin: 0 0 0.25rem 0;
 }
+
 .vp-detail__hint {
 	color: var(--color-text-maxcontrast);
 	margin: 0 0 1rem 0;
 }
+
 .vp-detail__loading,
 .vp-detail__error,
 .vp-detail__empty {
@@ -271,9 +274,11 @@ export default {
 	border-radius: var(--border-radius-large);
 	background: var(--color-background-hover);
 }
+
 .vp-detail__error {
 	color: var(--color-error);
 }
+
 .vp-detail__summary {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -283,35 +288,43 @@ export default {
 	border-radius: var(--border-radius-large);
 	margin-bottom: 1rem;
 }
+
 .vp-detail__field {
 	display: flex;
 	flex-direction: column;
 }
+
 .vp-detail__label {
 	font-size: 0.875rem;
 	color: var(--color-text-lighter);
 }
+
 .vp-detail__value {
 	font-weight: 600;
 }
+
 .vp-detail__score {
 	display: inline-block;
 	padding: 0.125rem 0.5rem;
 	border-radius: var(--border-radius);
 	font-weight: 700;
 }
+
 .vp-detail__score--high {
 	background: var(--color-success);
 	color: var(--color-primary-text);
 }
+
 .vp-detail__score--mid {
 	background: var(--color-warning);
 	color: var(--color-primary-text);
 }
+
 .vp-detail__score--low {
 	background: var(--color-error);
 	color: var(--color-primary-text);
 }
+
 .vp-detail__pill {
 	display: inline-block;
 	padding: 0.125rem 0.5rem;
@@ -319,40 +332,49 @@ export default {
 	font-size: 0.875rem;
 	background: var(--color-background-hover);
 }
+
 .vp-detail__pill--improving,
 .vp-detail__pill--eligible {
 	background: var(--color-success);
 	color: var(--color-primary-text);
 }
+
 .vp-detail__pill--stable {
 	background: var(--color-background-darker);
 }
+
 .vp-detail__pill--declining {
 	background: var(--color-error);
 	color: var(--color-primary-text);
 }
+
 .vp-detail__pill--ineligible {
 	background: var(--color-background-darker);
 }
+
 .vp-detail__table {
 	width: 100%;
 	border-collapse: collapse;
 	margin-bottom: 1rem;
 }
+
 .vp-detail__table th,
 .vp-detail__table td {
 	padding: 0.5rem 0.75rem;
 	border-bottom: 1px solid var(--color-border);
 	text-align: left;
 }
+
 .vp-detail__dl {
 	display: grid;
 	grid-template-columns: max-content max-content;
 	gap: 0.25rem 1.5rem;
 }
+
 .vp-detail__dl dt {
 	font-weight: 600;
 }
+
 .vp-detail__related ul {
 	list-style: disc;
 	margin-left: 1.5rem;

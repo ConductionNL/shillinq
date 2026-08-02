@@ -68,12 +68,12 @@
 			class="afspraak-detail__body">
 			<section class="afspraak-detail__summary" data-testid="afspraak-detail-summary">
 				<dl class="afspraak-detail__summary-fields">
-					<template v-for="field in summaryFields">
-						<dt :key="`l-${field.key}`">
+					<!-- Vue 3 requires the v-for key on the <template> itself. -->
+					<template v-for="field in summaryFields" :key="field.key">
+						<dt>
 							{{ label(field.label) }}
 						</dt>
 						<dd
-							:key="`v-${field.key}`"
 							:data-testid="`afspraak-detail-${field.key}`">
 							{{ field.value || emptyMarker }}
 						</dd>

@@ -339,7 +339,7 @@ export default {
 		await this.loadMappings()
 		this.syncLiveSubscription()
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.searchDebounce) {
 			clearTimeout(this.searchDebounce)
 		}

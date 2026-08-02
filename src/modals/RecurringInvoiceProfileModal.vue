@@ -173,7 +173,10 @@
 						×
 					</button>
 				</div>
-				<button type="button" class="rip__add-line" data-testid="rip-add-line" @click="addLine">
+				<button type="button"
+					class="rip__add-line"
+					data-testid="rip-add-line"
+					@click="addLine">
 					+ {{ t('shillinq', 'Add line') }}
 				</button>
 			</div>
@@ -199,7 +202,7 @@
 				{{ t('shillinq', 'Cancel') }}
 			</NcButton>
 			<NcButton
-				type="primary"
+				variant="primary"
 				:disabled="saving"
 				data-testid="rip-save"
 				@click="onSave">
@@ -210,9 +213,7 @@
 </template>
 
 <script>
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
+import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { translate as t } from '@nextcloud/l10n'
@@ -458,8 +459,11 @@ export default {
 }
 
 .rip__input--desc { flex: 3; }
+
 .rip__input--qty { flex: 1; max-width: 70px; }
+
 .rip__input--price { flex: 1; max-width: 110px; }
+
 .rip__input--vat { flex: 1; min-width: 90px; }
 
 .rip__line-remove {

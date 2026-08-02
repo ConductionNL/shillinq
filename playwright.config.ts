@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
+import { resolveBaseURL } from './tests/e2e/base-url'
 
 /**
  * Playwright config for Shillinq.
@@ -29,7 +30,8 @@ export default defineConfig({
 	globalSetup: require.resolve('./tests/e2e/global-setup'),
 
 	use: {
-		baseURL: process.env.NEXTCLOUD_URL || 'http://localhost:8080',
+		// No localhost:8080 fallback — see tests/e2e/base-url.ts.
+		baseURL: resolveBaseURL(),
 		trace: 'on-first-retry',
 		screenshot: 'only-on-failure',
 	},

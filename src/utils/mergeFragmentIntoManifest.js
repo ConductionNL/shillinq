@@ -14,32 +14,30 @@
 //
 // CnPageRenderer (`@conduction/nextcloud-vue`) resolves the current page via
 // `pageById.get(routeName)` — a Map built from `manifest.pages` — and its
-// `resolvedProps` computed reads `page.config` reactively. Vue 2's
-// reactivity tracks property GETS on an already-observed object but does
-// NOT auto-detect a brand-new property being added to an object that is
-// already observed (the classic Vue 2 "reactivity caveat" — see
-// https://v2.vuejs.org/v2/guide/reactivity.html#Change-Detection-Caveats).
-// The slim shell page objects do NOT pre-declare `config` (or any other
-// fragment-specific key), so this merge uses `Vue.set()` for every key —
-// it degrades to a plain assignment when the target is not (yet, or ever,
-// e.g. in these unit tests) an observed object, so this stays correct both
-// at runtime (Vue.observable-wrapped manifest) and under plain-object tests.
-
-import Vue from 'vue'
+// `resolvedProps` computed reads `page.config` reactively.
+//
+// Under Vue 2 this needed `Vue.set()`: adding a brand-new key to an
+// already-observed object was not detected (the "reactivity caveat"), and the
+// slim shell page objects do NOT pre-declare `config`. Vue 3's `reactive()` is
+// a Proxy, so a plain assignment on a reactive object triggers the `set` trap
+// and is tracked whether or not the key existed — `Vue.set` is gone from Vue 3
+// precisely because it has nothing left to do. Plain assignment is therefore
+// the correct Vue 3 spelling AND keeps this function pure enough to run
+// against plain objects in the unit tests.
 
 /**
  * Merge one fully-loaded fragment's pages into the live, reactive manifest.
  * Every page already present as a slim shell entry (by `id`) is updated IN
- * PLACE — every own-enumerable key on the full page object is copied onto
- * the existing slim object via `Vue.set` (so a brand-new key like `config`
- * is picked up by Vue 2's reactivity, not just a pre-existing one),
+ * PLACE — every own-enumerable key on the full page object is assigned onto
+ * the existing slim object (Vue 3's reactive Proxy picks up a brand-new key
+ * like `config` as well as a pre-existing one),
  * preserving that object's identity so `CnPageRenderer`'s `pageById` Map and
  * the router's route table (both built from the SAME object references)
  * stay valid. A full page with no matching slim entry (should not happen if
  * the shell generator and this fragment agree, but kept defensive — e.g. a
  * fragment edited without regenerating the shell) is appended as a new page.
  *
- * @param {object}        manifest         The live (`Vue.observable`-wrapped) merged manifest; `manifest.pages` is mutated.
+ * @param {object}        manifest         The live (`reactive()`-wrapped) merged manifest; `manifest.pages` is mutated.
  * @param {object}        fullFragment     The dynamically-imported fragment JSON (`{pages, menu, ...}`).
  * @param {Array<object>} fullFragment.pages Full page objects (with `config` etc.) from the fragment.
  * @return {{updated: number, appended: number}} How many pages were updated in place vs. newly appended.
@@ -59,7 +57,7 @@ export function mergeFullFragmentIntoManifest(manifest, fullFragment) {
 		const existing = pages.find((p) => p && p.id === fullPage.id)
 		if (existing) {
 			for (const key of Object.keys(fullPage)) {
-				Vue.set(existing, key, fullPage[key])
+				existing[key] = fullPage[key]
 			}
 			updated++
 		} else {

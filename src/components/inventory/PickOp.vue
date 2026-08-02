@@ -172,11 +172,18 @@ export default {
 
 <style scoped>
 .pick-op { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
+
 .pick-op__form label { display: flex; flex-direction: column; margin-bottom: var(--default-grid-baseline, 4px); }
+
 .pick-op__sku-row { display: flex; gap: var(--default-grid-baseline, 4px); }
+
 .pick-op__sku-row input { flex: 1; }
+
 .pick-op__error { color: var(--color-error); }
+
 .pick-op__warning { color: var(--color-warning); }
+
 .pick-op__success { color: var(--color-success); }
+
 .pick-op__actions { display: flex; justify-content: flex-end; }
 </style>

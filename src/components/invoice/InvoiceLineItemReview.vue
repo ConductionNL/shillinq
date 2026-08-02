@@ -116,15 +116,18 @@ export default {
 	border-collapse: collapse;
 	margin: 12px 0;
 }
+
 .invoice-line-review__table th,
 .invoice-line-review__table td {
 	padding: 6px 8px;
 	border-bottom: 1px solid var(--color-border, #ddd);
 	text-align: left;
 }
+
 .num {
 	text-align: right;
 }
+
 .invoice-line-review__totals {
 	margin-top: 12px;
 	text-align: right;

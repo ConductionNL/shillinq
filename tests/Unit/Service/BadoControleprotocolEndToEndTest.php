@@ -68,6 +68,16 @@ require_once __DIR__.'/InMemoryObjectService.php';
  *
  * @covers \OCA\Shillinq\Service\BadoControleprotocolService
  * @covers \OCA\Shillinq\Service\AccountantsdossierExportService
+ *
+ * The materialiteit/tolerantie arithmetic is deliberately exercised through the
+ * REAL calculator (see the walkthrough above) rather than a stub, so it is a
+ * collaborator this test uses but does not itself claim coverage of. Without
+ * the declaration below the run is reported RISKY under
+ * beStrictAboutCoverageMetadata. (Do not name the annotation with its leading
+ * sigil in prose — PHPUnit parses docblock text as metadata and reports the
+ * bare mention as "is invalid".)
+ *
+ * @uses \OCA\Shillinq\Service\BadoControleprotocolCalculator
  */
 final class BadoControleprotocolEndToEndTest extends TestCase
 {
