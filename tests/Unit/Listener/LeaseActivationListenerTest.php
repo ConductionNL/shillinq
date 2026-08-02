@@ -28,6 +28,7 @@ use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Service\LeaseAmortizationCalculator;
 use OCA\Shillinq\Service\LeasePaymentScheduleService;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -66,11 +67,12 @@ final class LeaseActivationListenerTest extends TestCase
      * Build the listener over a schedule service backed by an ObjectService
      * stub seeded with the given leases.
      *
-     * @param array<int,array<string,mixed>> $leases LeaseContract records.
+     * @param array<int,array<string,mixed>> $leases     LeaseContract records.
+     * @param string                         $schemaSlug Slug the schema resolver reports for the event entity.
      *
      * @return LeaseActivationListener
      */
-    private function buildListener(array $leases): LeaseActivationListener
+    private function buildListener(array $leases, string $schemaSlug='LeaseContract'): LeaseActivationListener
     {
         $saved = &$this->saved;
         $stub  = new class($leases, $saved) {
@@ -176,25 +178,33 @@ final class LeaseActivationListenerTest extends TestCase
             logger: $this->createMock(LoggerInterface::class),
         );
 
+        $schemaResolver = $this->createMock(ListenerSchemaResolver::class);
+        $schemaResolver->method('schemaSlug')->willReturn($schemaSlug);
+
         return new LeaseActivationListener(
             scheduleService: $scheduleService,
+            schemaResolver: $schemaResolver,
             logger: $this->createMock(LoggerInterface::class),
         );
 
     }//end buildListener()
 
     /**
-     * Build an ObjectEntity mock over a schema + object body.
+     * Build an ObjectEntity mock carrying a numeric schema **id**, exactly as
+     * OpenRegister stamps it (`setSchema((string) $schema->getId())`).
      *
-     * @param string              $schema The schema slug.
-     * @param array<string,mixed> $object The object body.
+     * A hand-built entity carrying the slug is a shape production never
+     * produces; the slug arrives through {@see ListenerSchemaResolver}.
+     *
+     * @param string              $schemaId Numeric schema id as OR stamps it.
+     * @param array<string,mixed> $object   The object body.
      *
      * @return ObjectEntity
      */
-    private function entity(string $schema, array $object): ObjectEntity
+    private function entity(string $schemaId, array $object): ObjectEntity
     {
         $entity = $this->createMock(ObjectEntity::class);
-        $entity->method('getSchema')->willReturn($schema);
+        $entity->method('getSchema')->willReturn($schemaId);
         $entity->method('getObject')->willReturn($object);
         return $entity;
 
@@ -238,8 +248,8 @@ final class LeaseActivationListenerTest extends TestCase
         $event = $this->createConfiguredMock(
             ObjectUpdatedEvent::class,
             [
-                'getObject'    => $this->entity('LeaseContract', $this->lease('active')),
-                'getOldObject' => $this->entity('LeaseContract', $this->lease('draft')),
+                'getObject'    => $this->entity('5011', $this->lease('active')),
+                'getOldObject' => $this->entity('5011', $this->lease('draft')),
             ]
         );
 
@@ -277,7 +287,7 @@ final class LeaseActivationListenerTest extends TestCase
 
         $event = $this->createConfiguredMock(
             ObjectCreatedEvent::class,
-            ['getObject' => $this->entity('LeaseContract', $this->lease('active'))]
+            ['getObject' => $this->entity('5011', $this->lease('active'))]
         );
 
         $listener->handle($event);
@@ -298,8 +308,8 @@ final class LeaseActivationListenerTest extends TestCase
         $event = $this->createConfiguredMock(
             ObjectUpdatedEvent::class,
             [
-                'getObject'    => $this->entity('LeaseContract', $this->lease('active')),
-                'getOldObject' => $this->entity('LeaseContract', $this->lease('active')),
+                'getObject'    => $this->entity('5011', $this->lease('active')),
+                'getOldObject' => $this->entity('5011', $this->lease('active')),
             ]
         );
 
@@ -316,13 +326,13 @@ final class LeaseActivationListenerTest extends TestCase
      */
     public function testNonLeaseSchemaWritesNothing(): void
     {
-        $listener = $this->buildListener([$this->lease('active')]);
+        $listener = $this->buildListener([$this->lease('active')], 'StockMove');
 
         $event = $this->createConfiguredMock(
             ObjectUpdatedEvent::class,
             [
-                'getObject'    => $this->entity('StockMove', $this->lease('active')),
-                'getOldObject' => $this->entity('StockMove', $this->lease('draft')),
+                'getObject'    => $this->entity('5099', $this->lease('active')),
+                'getOldObject' => $this->entity('5099', $this->lease('draft')),
             ]
         );
 
@@ -349,8 +359,8 @@ final class LeaseActivationListenerTest extends TestCase
         $event = $this->createConfiguredMock(
             ObjectUpdatedEvent::class,
             [
-                'getObject'    => $this->entity('LeaseContract', $exemptActive),
-                'getOldObject' => $this->entity('LeaseContract', $exemptDraft),
+                'getObject'    => $this->entity('5011', $exemptActive),
+                'getOldObject' => $this->entity('5011', $exemptDraft),
             ]
         );
 

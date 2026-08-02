@@ -57,6 +57,7 @@ namespace OCA\Shillinq\Tests\Unit\Integration;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Pipelinq\CircuitBreaker;
 use OCA\Shillinq\Service\Pipelinq\KlantbeeldResult;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContact;
@@ -469,8 +470,12 @@ final class CustomerBridgeIntegrationTest extends TestCase
     }//end appointmentPayload()
 
     /**
-     * Wrap an Appointment payload in an ObjectEntity carrying the
-     * Appointment schema marker the listener checks for.
+     * Wrap an Appointment payload in an ObjectEntity carrying the numeric
+     * schema **id**, exactly as OpenRegister stamps it
+     * (`setSchema((string) $schema->getId())`).
+     *
+     * A hand-built entity carrying the slug is a shape production never
+     * produces; the `appointment` slug arrives through the resolver.
      *
      * @param array<string, mixed> $appointment Payload.
      *
@@ -479,11 +484,26 @@ final class CustomerBridgeIntegrationTest extends TestCase
     private function appointmentEntity(array $appointment): ObjectEntity
     {
         $entity = new ObjectEntity();
-        $entity->setSchema('appointment');
+        $entity->setSchema('7001');
         $entity->setObject($appointment);
         return $entity;
 
     }//end appointmentEntity()
+
+    /**
+     * Build a ListenerSchemaResolver stub that reports a given schema slug.
+     *
+     * @param string $slug Slug the resolver resolves the entity's id to.
+     *
+     * @return ListenerSchemaResolver
+     */
+    private function schemaResolver(string $slug='appointment'): ListenerSchemaResolver
+    {
+        $resolver = $this->createMock(ListenerSchemaResolver::class);
+        $resolver->method('schemaSlug')->willReturn($slug);
+        return $resolver;
+
+    }//end schemaResolver()
 
     /**
      * Integration scenario 1 — create booking publishes a timeline event.
@@ -514,6 +534,7 @@ final class CustomerBridgeIntegrationTest extends TestCase
         $listener = new BookingCreatedTimelinePublishListener(
             pipelinq: $adapter,
             retryQueue: $queue,
+            schemaResolver: $this->schemaResolver(),
             logger: $logger
         );
 
@@ -670,6 +691,7 @@ final class CustomerBridgeIntegrationTest extends TestCase
         $listener = new BookingCreatedTimelinePublishListener(
             pipelinq: $adapter,
             retryQueue: $queue,
+            schemaResolver: $this->schemaResolver(),
             logger: $logger
         );
 
