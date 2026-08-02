@@ -16,7 +16,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  */
 
-import Vue from 'vue'
+import { createApp, h } from 'vue'
 import SelfServiceWidget from './SelfServiceWidget.vue'
 import './widget.css'
 
@@ -44,7 +44,7 @@ function applyTheme(el, config) {
  *
  * @param {HTMLElement} el The container element.
  * @param {object} config The embed config (businessId, apiKey, apiBase, lang, dark, primaryColor).
- * @return {object|null} The mounted Vue app instance, or null on bad config.
+ * @return {object|null} A `{ app, unmount }` handle, or null on bad config.
  */
 export function mount(el, config) {
 	if (!el || !config || !config.businessId || !config.apiKey) {
@@ -55,29 +55,28 @@ export function mount(el, config) {
 
 	applyTheme(el, config)
 
-	// Vue 2 has no createApp; mount an isolated root instance per
-	// container and expose a Vue-3-shaped { unmount } handle so the
-	// web-component teardown keeps working unchanged.
+	// One isolated Vue 3 application per container so several widgets can
+	// coexist on the same host page. Props go directly in `h()`'s second
+	// argument — Vue 2's `{ props: {...} }` wrapper would arrive as a single
+	// attribute named "props" and every real prop would be undefined.
 	const mountPoint = document.createElement('div')
 	el.appendChild(mountPoint)
-	const vm = new Vue({
-		render: (h) => h(SelfServiceWidget, {
-			props: {
-				businessId: String(config.businessId),
-				apiKey: String(config.apiKey),
-				apiBase: String(config.apiBase || ''),
-				lang: String(config.lang || 'en'),
-				dark: Boolean(config.dark || false),
-			},
+	const app = createApp({
+		render: () => h(SelfServiceWidget, {
+			businessId: String(config.businessId),
+			apiKey: String(config.apiKey),
+			apiBase: String(config.apiBase || ''),
+			lang: String(config.lang || 'en'),
+			dark: Boolean(config.dark || false),
 		}),
 	})
-	vm.$mount(mountPoint)
+	app.mount(mountPoint)
 	return {
-		vm,
+		app,
 		unmount() {
-			vm.$destroy()
-			if (vm.$el && vm.$el.parentNode) {
-				vm.$el.parentNode.removeChild(vm.$el)
+			app.unmount()
+			if (mountPoint.parentNode) {
+				mountPoint.parentNode.removeChild(mountPoint)
 			}
 		},
 	}

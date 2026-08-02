@@ -13,10 +13,10 @@
 		</div>
 
 		<div class="shillinq-widget-keys__actions">
-			<NcButton type="primary" :disabled="!businessId || busy" @click="rotate">
+			<NcButton variant="primary" :disabled="!businessId || busy" @click="rotate">
 				{{ t('shillinq', 'Generate key') }} / {{ t('shillinq', 'Rotate key') }}
 			</NcButton>
-			<NcButton type="error" :disabled="!businessId || busy" @click="revoke">
+			<NcButton variant="error" :disabled="!businessId || busy" @click="revoke">
 				{{ t('shillinq', 'Revoke key') }}
 			</NcButton>
 		</div>

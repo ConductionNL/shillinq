@@ -253,24 +253,29 @@ export default {
 	flex-wrap: wrap;
 	margin-bottom: 12px;
 }
+
 .invoice-generator__row label {
 	display: flex;
 	flex-direction: column;
 	min-width: 200px;
 }
+
 .invoice-generator__row--wide {
 	flex: 1 1 100%;
 }
+
 .invoice-generator__totals {
 	background: var(--color-background-hover, #f4f4f4);
 	padding: 12px;
 	margin: 12px 0;
 }
+
 .invoice-generator__actions {
 	display: flex;
 	gap: 8px;
 	margin-top: 12px;
 }
+
 .invoice-generator__error {
 	color: var(--color-error, #d40000);
 	margin-top: 8px;

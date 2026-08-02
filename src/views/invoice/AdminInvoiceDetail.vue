@@ -112,9 +112,11 @@ export default {
 	gap: 4px 12px;
 	margin: 12px 0;
 }
+
 .admin-invoice-detail__meta dt {
 	font-weight: 600;
 }
+
 .admin-invoice-detail__actions {
 	display: flex;
 	gap: 8px;

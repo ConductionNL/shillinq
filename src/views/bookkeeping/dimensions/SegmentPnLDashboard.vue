@@ -35,12 +35,12 @@
 				<div class="segment-pnl-dashboard__chips">
 					<NcButton v-for="segment in availableSegments"
 						:key="segment.id"
-						:type="segment.id === activeSegment ? 'primary' : 'secondary'"
+						:variant="segment.id === activeSegment ? 'primary' : 'secondary'"
 						@click="selectSegment(segment.id)">
 						{{ segment.label }}
 					</NcButton>
 				</div>
-				<NcButton type="tertiary"
+				<NcButton variant="tertiary"
 					:disabled="!rows.length"
 					@click="exportCsv">
 					{{ t('shillinq', 'Export CSV') }}

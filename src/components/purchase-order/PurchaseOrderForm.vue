@@ -115,7 +115,7 @@
 							<td>{{ formatMoney(lineTotal(line)) }}</td>
 							<td>
 								<NcButton
-									type="tertiary"
+									variant="tertiary"
 									:aria-label="t('shillinq', 'Remove line')"
 									@click="removeLine(idx)">
 									{{ t('shillinq', 'Remove') }}
@@ -124,7 +124,7 @@
 						</tr>
 					</tbody>
 				</table>
-				<NcButton type="secondary" data-testid="po-form-add-line" @click="addLine">
+				<NcButton variant="secondary" data-testid="po-form-add-line" @click="addLine">
 					{{ t('shillinq', 'Add line') }}
 				</NcButton>
 			</fieldset>
@@ -156,7 +156,7 @@
 
 			<div class="po-form__actions">
 				<NcButton
-					type="primary"
+					variant="primary"
 					native-type="submit"
 					:disabled="submitting"
 					data-testid="po-form-submit">
@@ -168,11 +168,7 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
-import NcTextArea from '@nextcloud/vue/dist/Components/NcTextArea.js'
-import NcInputField from '@nextcloud/vue/dist/Components/NcInputField.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
+import { NcButton, NcInputField, NcSelect, NcTextArea, NcTextField } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 

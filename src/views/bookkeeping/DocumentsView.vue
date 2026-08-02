@@ -18,7 +18,7 @@
 		<div class="wbso-documents">
 			<header class="wbso-documents__header">
 				<h2>{{ t('shillinq', 'Documents') }}</h2>
-				<NcButton v-if="canCreate" type="primary" @click="onUpload">
+				<NcButton v-if="canCreate" variant="primary" @click="onUpload">
 					{{ t('shillinq', 'Upload Document') }}
 				</NcButton>
 			</header>

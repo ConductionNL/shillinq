@@ -526,8 +526,13 @@ export default {
 	color: var(--color-main-text);
 }
 
+/* Merged with the second `.receipt-capture__error` block that used to sit
+   further down this stylesheet: two rules for the same selector meant the
+   later `margin: 0` silently won and the first block was dead weight
+   (stylelint no-duplicate-selectors). */
 .receipt-capture__error {
 	color: var(--color-error);
+	margin: 0;
 }
 
 .receipt-capture__retry {
@@ -620,11 +625,6 @@ export default {
 .receipt-capture__secondary {
 	background: var(--color-main-background);
 	color: var(--color-main-text);
-}
-
-.receipt-capture__error {
-	color: var(--color-error);
-	margin: 0;
 }
 
 .receipt-capture__suggestion {

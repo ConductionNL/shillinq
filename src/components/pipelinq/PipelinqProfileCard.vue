@@ -39,12 +39,12 @@
 			class="pipelinq-profile-card__body"
 			data-testid="pipelinq-profile-body">
 			<dl class="pipelinq-profile-card__fields">
-				<template v-for="field in fields">
-					<dt :key="`l-${field.key}`" class="pipelinq-profile-card__label">
+				<!-- Vue 3 requires the v-for key on the <template> itself. -->
+				<template v-for="field in fields" :key="field.key">
+					<dt class="pipelinq-profile-card__label">
 						{{ label(field.label) }}
 					</dt>
 					<dd
-						:key="`v-${field.key}`"
 						class="pipelinq-profile-card__value"
 						:class="{ 'pipelinq-profile-card__value--emphasis': field.emphasis === true }"
 						:data-testid="`pipelinq-profile-${field.key}`">

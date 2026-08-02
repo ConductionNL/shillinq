@@ -112,7 +112,7 @@
 				</section>
 
 				<section class="adapter-detail__back">
-					<NcButton type="secondary" @click="backToIndex">
+					<NcButton variant="secondary" @click="backToIndex">
 						{{ t('shillinq', 'Back to External Connections') }}
 					</NcButton>
 				</section>
@@ -217,35 +217,43 @@ export default {
 	padding: var(--default-grid-baseline, 8px);
 	max-width: 900px;
 }
+
 .adapter-detail__header {
 	margin-bottom: calc(var(--default-grid-baseline, 8px) * 2);
 }
+
 .adapter-detail__header-row {
 	display: flex;
 	gap: var(--default-grid-baseline, 8px);
 	align-items: center;
 }
+
 .adapter-detail__title {
 	margin: 0;
 }
+
 .adapter-detail__badge {
 	padding: 4px 10px;
 	border-radius: var(--border-radius-pill, 100px);
 	font-weight: 600;
 	font-size: 0.85em;
 }
+
 .adapter-detail__badge--dormant {
 	background: var(--color-warning-rgba, rgba(255, 169, 0, 0.2));
 	color: var(--color-warning, #b06c00);
 }
+
 .adapter-detail__badge--live {
 	background: var(--color-success-rgba, rgba(46, 160, 67, 0.2));
 	color: var(--color-success, #2ea043);
 }
+
 .adapter-detail__description {
 	margin: var(--default-grid-baseline, 8px) 0 0 0;
 	color: var(--color-text-maxcontrast);
 }
+
 .adapter-detail__facts {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
@@ -255,53 +263,65 @@ export default {
 	background: var(--color-background-hover);
 	border-radius: var(--border-radius, 6px);
 }
+
 .adapter-detail__fact {
 	display: flex;
 	gap: 16px;
 	align-items: flex-start;
 }
+
 .adapter-detail__fact-label {
 	flex: 0 0 220px;
 	font-weight: 600;
 	color: var(--color-text-maxcontrast);
 }
+
 .adapter-detail__fact-value {
 	flex: 1 1 auto;
 	min-width: 0;
 	word-break: break-all;
 }
+
 .adapter-detail__keys {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 }
+
 .adapter-detail__activation {
 	margin-bottom: calc(var(--default-grid-baseline, 8px) * 3);
 }
+
 .adapter-detail__section-title {
 	margin: 0 0 var(--default-grid-baseline, 8px) 0;
 }
+
 .adapter-detail__steps {
 	padding-left: 20px;
 	margin: 0 0 calc(var(--default-grid-baseline, 8px) * 2) 0;
 }
+
 .adapter-detail__step {
 	margin-bottom: 6px;
 }
+
 .adapter-detail__hint {
 	margin: var(--default-grid-baseline, 8px) 0 0 0;
 	padding: var(--default-grid-baseline, 8px);
 	border-left: 3px solid var(--color-warning, #b06c00);
 	background: var(--color-warning-rgba, rgba(255, 169, 0, 0.1));
 }
+
 .adapter-detail__hint--live {
 	border-left-color: var(--color-success, #2ea043);
 	background: var(--color-success-rgba, rgba(46, 160, 67, 0.1));
 }
+
 .adapter-detail__error {
 	color: var(--color-error);
 	padding: calc(var(--default-grid-baseline, 8px) * 2);
 }
+
 .adapter-detail__back {
 	margin-top: calc(var(--default-grid-baseline, 8px) * 2);
 }

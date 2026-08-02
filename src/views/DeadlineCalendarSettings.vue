@@ -33,7 +33,7 @@
 						:key="row.id"
 						class="deadline-calendar-settings__category"
 						:data-testid="'deadline-category-' + row.id">
-						<NcCheckboxRadioSwitch :checked.sync="row.enabled"
+						<NcCheckboxRadioSwitch v-model="row.enabled"
 							type="switch"
 							:data-testid="'deadline-toggle-' + row.id">
 							{{ t('shillinq', row.label) }}
@@ -53,7 +53,7 @@
 					</fieldset>
 
 					<div class="deadline-calendar-settings__actions">
-						<NcButton type="primary"
+						<NcButton variant="primary"
 							native-type="submit"
 							:disabled="saving"
 							data-testid="deadline-settings-save">

@@ -15,7 +15,7 @@
 		<div class="wbso-chart-of-accounts">
 			<header class="wbso-chart-of-accounts__header">
 				<h2>{{ t('shillinq', 'Chart of Accounts') }}</h2>
-				<NcButton v-if="canCreate" type="primary" @click="onAddAccount">
+				<NcButton v-if="canCreate" variant="primary" @click="onAddAccount">
 					{{ t('shillinq', 'Add Account') }}
 				</NcButton>
 			</header>
@@ -111,20 +111,24 @@ export default {
 .wbso-chart-of-accounts {
 	padding: 1rem;
 }
+
 .wbso-chart-of-accounts__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 1rem;
 }
+
 .wbso-chart-of-accounts__tree {
 	list-style: none;
 	padding-left: 0;
 }
+
 .wbso-chart-of-accounts__loading,
 .wbso-chart-of-accounts__error {
 	padding: 0.5rem 0;
 }
+
 .wbso-chart-of-accounts__error {
 	color: var(--color-error);
 }

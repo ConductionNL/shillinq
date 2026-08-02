@@ -31,9 +31,9 @@
 					:data-testid="`standards-policy-row-${row.key}`">
 					<span class="standards-policy__rank">{{ index + 1 }}</span>
 					<NcCheckboxRadioSwitch
-						:checked="row.enabled"
+						:model-value="row.enabled"
 						type="switch"
-						@update:checked="setEnabled(index, $event)">
+						@update:modelValue="setEnabled(index, $event)">
 						<span class="standards-policy__label">{{ row.label }}</span>
 					</NcCheckboxRadioSwitch>
 					<a
@@ -46,7 +46,7 @@
 					</a>
 					<span class="standards-policy__spacer" />
 					<NcButton
-						type="tertiary"
+						variant="tertiary"
 						:aria-label="t('shillinq', 'Move up')"
 						:disabled="index === 0"
 						@click="moveUp(index)">
@@ -55,7 +55,7 @@
 						</template>
 					</NcButton>
 					<NcButton
-						type="tertiary"
+						variant="tertiary"
 						:aria-label="t('shillinq', 'Move down')"
 						:disabled="index === rows.length - 1"
 						@click="moveDown(index)">
@@ -72,7 +72,7 @@
 			</div>
 
 			<div class="standards-policy__actions">
-				<NcButton type="primary" :disabled="saving" @click="save">
+				<NcButton variant="primary" :disabled="saving" @click="save">
 					<template #icon>
 						<NcLoadingIcon v-if="saving" :size="20" />
 						<ContentSave v-else :size="20" />
@@ -192,7 +192,10 @@ export default {
 		},
 
 		setEnabled(index, value) {
-			this.$set(this.rows[index], 'enabled', value)
+			// Vue 3's reactivity is a Proxy — a plain assignment on an existing
+			// reactive object is tracked, so `this.$set` (removed in Vue 3) has
+			// nothing left to do.
+			this.rows[index].enabled = value
 		},
 
 		moveUp(index) {

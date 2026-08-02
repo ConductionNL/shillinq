@@ -125,7 +125,7 @@
 			<footer class="grn-detail__actions">
 				<NcButton
 					v-if="canQualityCheck"
-					type="secondary"
+					variant="secondary"
 					:disabled="transitioning"
 					data-testid="grn-detail-quality-check"
 					@click="onQualityCheck">
@@ -133,7 +133,7 @@
 				</NcButton>
 				<NcButton
 					v-if="canAccept"
-					type="primary"
+					variant="primary"
 					:disabled="transitioning"
 					data-testid="grn-detail-accept"
 					@click="onAccept">
@@ -148,7 +148,7 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import { NcButton } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 

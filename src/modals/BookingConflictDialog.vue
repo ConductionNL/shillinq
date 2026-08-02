@@ -122,6 +122,7 @@ export default {
 	justify-content: center;
 	z-index: 1000;
 }
+
 .bk-conflict-dialog__panel {
 	background: var(--color-main-background, #fff);
 	max-width: 480px;
@@ -131,22 +132,30 @@ export default {
 	display: flex;
 	flex-direction: column;
 }
+
 .bk-conflict-dialog__header,
 .bk-conflict-dialog__body,
 .bk-conflict-dialog__footer {
 	padding: 12px 16px;
 }
+
 .bk-conflict-dialog__header { border-bottom: 1px solid var(--color-border, #ddd); }
+
 .bk-conflict-dialog__footer { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--color-border, #ddd); }
+
 .bk-conflict-dialog__list { list-style: disc; padding-left: 20px; }
+
 .bk-conflict-dialog__item { display: flex; flex-direction: column; padding: 4px 0; }
+
 .bk-conflict-dialog__warn { color: var(--color-error, #c62828); }
+
 .bk-conflict-dialog__btn {
 	padding: 6px 14px;
 	border: 1px solid var(--color-border, #ccc);
 	background: transparent;
 	cursor: pointer;
 }
+
 .bk-conflict-dialog__btn--primary {
 	background: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);
