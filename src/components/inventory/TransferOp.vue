@@ -179,10 +179,16 @@ export default {
 
 <style scoped>
 .transfer-op { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
+
 .transfer-op__form label { display: flex; flex-direction: column; margin-bottom: var(--default-grid-baseline, 4px); }
+
 .transfer-op__sku-row { display: flex; gap: var(--default-grid-baseline, 4px); }
+
 .transfer-op__sku-row input { flex: 1; }
+
 .transfer-op__error { color: var(--color-error); }
+
 .transfer-op__success { color: var(--color-success); }
+
 .transfer-op__actions { display: flex; justify-content: flex-end; }
 </style>

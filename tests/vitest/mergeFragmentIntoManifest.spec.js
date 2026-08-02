@@ -4,7 +4,7 @@
  *
  * Unit tests for the lazy-fragment merge logic backing
  * shillinq-manifest-boot-payload-reduction REQ-MBP-001's router guard
- * (src/main.js). Covers the in-place merge contract CnPageRenderer's Vue 2
+ * (src/main.js). Covers the in-place merge contract CnPageRenderer's
  * reactivity depends on (same object reference, own-key copy) and the
  * pageId → fragment index the router guard uses to decide what to lazy-load.
  *
@@ -12,54 +12,56 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import Vue from 'vue'
+import { computed, reactive, toRaw } from 'vue'
 import {
 	mergeFullFragmentIntoManifest,
 	buildPageFragmentIndex,
 } from '../../src/utils/mergeFragmentIntoManifest.js'
 
-describe('mergeFullFragmentIntoManifest — Vue 2 reactivity (the load-bearing contract)', () => {
-	it('a computed reading page.config on a Vue.observable() manifest re-evaluates after the lazy merge adds it', () => {
+describe('mergeFullFragmentIntoManifest — reactivity (the load-bearing contract)', () => {
+	it('a computed reading page.config on a reactive() manifest re-evaluates after the lazy merge adds it', () => {
 		// This reproduces CnPageRenderer's actual dependency shape:
 		// `resolvedProps` is a computed that reads `this.currentPage.config`,
 		// where `currentPage` comes from a `pageById` Map built over
-		// `manifest.pages` (see node_modules/@conduction/nextcloud-vue/src/
-		// components/CnPageRenderer/CnPageRenderer.vue). If merging the lazy
-		// fragment did not correctly notify Vue's reactivity system, this
-		// computed would keep returning `undefined` forever.
-		const manifest = Vue.observable({
+		// `manifest.pages`. `config` does NOT exist on the slim shell page, so
+		// this asserts the merge ADDS a brand-new key in a way the reactivity
+		// system tracks. Under Vue 2 that required `Vue.set`; under Vue 3 the
+		// `reactive()` Proxy traps the plain assignment — but only if the merge
+		// writes THROUGH the proxy rather than to a raw reference. If it did
+		// not, this computed would keep returning `undefined` forever.
+		const manifest = reactive({
 			pages: [{ id: 'Resources', route: '/bookings/resources', type: 'index', title: 'Resources', _fragment: '10-bookings-resource-calendar' }],
 		})
 
-		const vm = new Vue({
-			computed: {
-				configColumns() {
-					const page = manifest.pages.find((p) => p.id === 'Resources')
-					return page && page.config && page.config.columns
-				},
-			},
+		const configColumns = computed(() => {
+			const page = manifest.pages.find((p) => p.id === 'Resources')
+			return page && page.config && page.config.columns
 		})
 
-		expect(vm.configColumns).toBeUndefined()
+		expect(configColumns.value).toBeUndefined()
 
 		mergeFullFragmentIntoManifest(manifest, {
 			pages: [{ id: 'Resources', route: '/bookings/resources', type: 'index', title: 'Resources', config: { columns: [{ key: 'name' }] } }],
 		})
 
-		// Vue 2 computed getters re-run lazily on next access once their
-		// reactive dependency was notified — no need for nextTick here since
-		// we are reading the computed's current value directly, not asserting
-		// on a DOM re-render.
-		expect(vm.configColumns).toEqual([{ key: 'name' }])
+		// A Vue 3 computed re-runs lazily on next access once its reactive
+		// dependency was invalidated — no nextTick needed, we read the value
+		// directly rather than asserting on a DOM re-render.
+		expect(configColumns.value).toEqual([{ key: 'name' }])
 	})
 
 	it('object identity is preserved across the merge (router/pageById Map references stay valid)', () => {
 		const slimPage = { id: 'Resources', _fragment: 'frag' }
-		const manifest = Vue.observable({ pages: [slimPage] })
+		const manifest = reactive({ pages: [slimPage] })
 
 		mergeFullFragmentIntoManifest(manifest, { pages: [{ id: 'Resources', config: { x: 1 } }] })
 
-		expect(manifest.pages[0]).toBe(slimPage)
+		// `manifest.pages[0]` reads back as the reactive PROXY of slimPage, not
+		// slimPage itself — `toBe(slimPage)` would fail for a reason that has
+		// nothing to do with the merge. `toRaw` unwraps it, which is what the
+		// contract actually means: the merge must not REPLACE the object.
+		expect(toRaw(manifest.pages[0])).toBe(slimPage)
+		expect(slimPage.config).toEqual({ x: 1 })
 	})
 })
 

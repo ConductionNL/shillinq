@@ -78,7 +78,7 @@
 			<section class="period-close-detail__actions" data-testid="period-close-detail-actions">
 				<NcButton
 					v-if="canStartClose"
-					type="primary"
+					variant="primary"
 					:disabled="transitioning"
 					data-testid="period-close-detail-start-close"
 					@click="onStartClose">
@@ -86,7 +86,7 @@
 				</NcButton>
 				<NcButton
 					v-if="canClose"
-					type="primary"
+					variant="primary"
 					:disabled="transitioning"
 					data-testid="period-close-detail-close"
 					@click="onClose">
@@ -94,7 +94,7 @@
 				</NcButton>
 				<NcButton
 					v-if="canReopen"
-					type="secondary"
+					variant="secondary"
 					:disabled="transitioning"
 					data-testid="period-close-detail-reopen"
 					@click="openReopenDialog">
@@ -102,7 +102,7 @@
 				</NcButton>
 				<NcButton
 					v-if="canLockAudit"
-					type="warning"
+					variant="warning"
 					:disabled="transitioning"
 					data-testid="period-close-detail-lock-audit"
 					@click="onLockAudit">
@@ -219,7 +219,7 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import { NcButton } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 

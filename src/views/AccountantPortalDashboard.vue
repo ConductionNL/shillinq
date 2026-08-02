@@ -81,7 +81,7 @@
 						</li>
 					</ul>
 
-					<NcButton type="secondary"
+					<NcButton variant="secondary"
 						data-testid="accountant-handover-pack-button"
 						@click="downloadPack(client.administrationId)">
 						{{ t('shillinq', 'Download handover pack') }}

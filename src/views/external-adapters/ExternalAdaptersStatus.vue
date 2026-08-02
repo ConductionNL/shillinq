@@ -75,7 +75,7 @@
 									:data-state="entry.dormant ? 'dormant' : 'live'">
 									{{ entry.dormant ? t('shillinq', 'Dormant') : t('shillinq', 'Live') }}
 								</span>
-								<NcButton type="secondary" @click="openDetail(entry.id)">
+								<NcButton variant="secondary" @click="openDetail(entry.id)">
 									{{ t('shillinq', 'View activation') }}
 								</NcButton>
 							</div>
@@ -169,34 +169,42 @@ export default {
 	padding: var(--default-grid-baseline, 8px);
 	max-width: 1100px;
 }
+
 .external-adapters__header {
 	margin-bottom: calc(var(--default-grid-baseline, 8px) * 2);
 }
+
 .external-adapters__title {
 	margin: 0 0 var(--default-grid-baseline, 8px) 0;
 }
+
 .external-adapters__description {
 	color: var(--color-text-maxcontrast);
 }
+
 .external-adapters__summary {
 	display: flex;
 	gap: var(--default-grid-baseline, 8px);
 	margin-bottom: calc(var(--default-grid-baseline, 8px) * 2);
 }
+
 .external-adapters__pill {
 	padding: 4px 12px;
 	border-radius: var(--border-radius-pill, 100px);
 	font-weight: 600;
 	background: var(--color-background-hover);
 }
+
 .external-adapters__pill--dormant {
 	background: var(--color-warning-rgba, rgba(255, 169, 0, 0.2));
 	color: var(--color-warning, #b06c00);
 }
+
 .external-adapters__pill--live {
 	background: var(--color-success-rgba, rgba(46, 160, 67, 0.2));
 	color: var(--color-success, #2ea043);
 }
+
 .external-adapters__list {
 	list-style: none;
 	margin: 0;
@@ -205,25 +213,30 @@ export default {
 	flex-direction: column;
 	gap: var(--default-grid-baseline, 8px);
 }
+
 .external-adapters__item {
 	border: 1px solid var(--color-border);
 	border-radius: var(--border-radius, 6px);
 	padding: calc(var(--default-grid-baseline, 8px) * 2);
 	background: var(--color-main-background);
 }
+
 .external-adapters__item-row {
 	display: flex;
 	justify-content: space-between;
 	gap: calc(var(--default-grid-baseline, 8px) * 2);
 	align-items: flex-start;
 }
+
 .external-adapters__item-text {
 	flex: 1 1 auto;
 	min-width: 0;
 }
+
 .external-adapters__item-title {
 	margin: 0 0 4px 0;
 }
+
 .external-adapters__item-meta {
 	margin: 0 0 6px 0;
 	color: var(--color-text-maxcontrast);
@@ -231,34 +244,41 @@ export default {
 	display: flex;
 	gap: 12px;
 }
+
 .external-adapters__item-desc {
 	margin: 0;
 	color: var(--color-main-text);
 }
+
 .external-adapters__item-actions {
 	display: flex;
 	gap: var(--default-grid-baseline, 8px);
 	align-items: center;
 	flex-shrink: 0;
 }
+
 .external-adapters__badge {
 	padding: 4px 10px;
 	border-radius: var(--border-radius-pill, 100px);
 	font-weight: 600;
 	font-size: 0.85em;
 }
+
 .external-adapters__badge--dormant {
 	background: var(--color-warning-rgba, rgba(255, 169, 0, 0.2));
 	color: var(--color-warning, #b06c00);
 }
+
 .external-adapters__badge--live {
 	background: var(--color-success-rgba, rgba(46, 160, 67, 0.2));
 	color: var(--color-success, #2ea043);
 }
+
 .external-adapters__loading,
 .external-adapters__error {
 	padding: calc(var(--default-grid-baseline, 8px) * 2);
 }
+
 .external-adapters__error {
 	color: var(--color-error);
 }

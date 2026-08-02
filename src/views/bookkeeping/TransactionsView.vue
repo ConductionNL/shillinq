@@ -19,7 +19,7 @@
 		<div class="wbso-transactions">
 			<header class="wbso-transactions__header">
 				<h2>{{ t('shillinq', 'Transactions') }}</h2>
-				<NcButton v-if="canCreate" type="primary" @click="onCreate">
+				<NcButton v-if="canCreate" variant="primary" @click="onCreate">
 					{{ t('shillinq', 'Create Transaction') }}
 				</NcButton>
 			</header>

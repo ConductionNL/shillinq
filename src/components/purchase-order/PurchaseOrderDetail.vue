@@ -153,14 +153,14 @@
 
 			<footer class="po-detail__actions">
 				<NcButton
-					type="primary"
+					variant="primary"
 					:disabled="!canSend || sending"
 					data-testid="po-detail-send-peppol"
 					@click="onSendPeppol">
 					{{ sending && sendingChannel === 'peppol' ? t('shillinq', 'Sending Peppol...') : t('shillinq', 'Send via Peppol') }}
 				</NcButton>
 				<NcButton
-					type="secondary"
+					variant="secondary"
 					:disabled="!canSend || sending"
 					data-testid="po-detail-send-email"
 					@click="onSendEmail">
@@ -181,7 +181,7 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import { NcButton } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 

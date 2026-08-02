@@ -63,9 +63,13 @@ export default {
 
 <style scoped>
 .mobile-scanner-home { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
+
 .mobile-scanner-home__header { display: flex; justify-content: space-between; align-items: center; }
+
 .mobile-scanner-home__intro { color: var(--color-text-maxcontrast); }
+
 .mobile-scanner-home__grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--default-grid-baseline, 4px); }
+
 .mobile-scanner-home__tile {
 	display: flex; flex-direction: column;
 	padding: 16px;
@@ -74,5 +78,6 @@ export default {
 	text-decoration: none;
 	color: inherit;
 }
+
 .mobile-scanner-home__tile strong { font-size: 1.2em; }
 </style>

@@ -34,13 +34,13 @@
 
 			<div class="actions">
 				<NcButton
-					type="primary"
+					variant="primary"
 					native-type="submit"
 					:disabled="saving">
 					{{ saving ? t('shillinq', 'Saving…') : t('shillinq', 'Save') }}
 				</NcButton>
 				<NcButton
-					type="secondary"
+					variant="secondary"
 					:disabled="testing || !form.endpoint"
 					@click="test">
 					{{ testing ? t('shillinq', 'Testing…') : t('shillinq', 'Test connection') }}

@@ -70,7 +70,7 @@
 				<p class="fx-rates-admin__index-help">
 					{{ t('shillinq', 'The grid below is the declarative FxRate index. Use the filters to narrow by currency pair or source.') }}
 				</p>
-				<NcButton type="secondary" @click="navigateToIndex">
+				<NcButton variant="secondary" @click="navigateToIndex">
 					{{ t('shillinq', 'Open FX Rates index') }}
 				</NcButton>
 			</section>

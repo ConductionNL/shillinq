@@ -144,10 +144,16 @@ export default {
 
 <style scoped>
 .receive-op { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
+
 .receive-op__form label { display: flex; flex-direction: column; margin-bottom: var(--default-grid-baseline, 4px); }
+
 .receive-op__sku-row { display: flex; gap: var(--default-grid-baseline, 4px); }
+
 .receive-op__sku-row input { flex: 1; }
+
 .receive-op__error { color: var(--color-error); }
+
 .receive-op__success { color: var(--color-success); }
+
 .receive-op__actions { display: flex; justify-content: flex-end; }
 </style>

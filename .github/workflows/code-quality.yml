@@ -22,6 +22,13 @@ jobs:
       enable-eslint: true
       enable-phpunit: true
       enable-newman: true
-      # additional-apps: '[]'  # Add app dependencies here if needed, e.g.:
-      # additional-apps: '[{"repo":"Conduction/openregister","app":"openregister","ref":"main"}]'
+      # Shillinq delegates ALL object CRUD to OpenRegister (@conduction/nextcloud-vue
+      # store factories hit /apps/openregister/api/objects), so a Nextcloud without
+      # OpenRegister answers every integration request with a 404. That is why the
+      # Newman leg failed 48 of its 51 assertions the first time this workflow was
+      # able to resolve at all. NOTE: the example this replaced named the org
+      # `Conduction`, which does not exist — the same wrong-org bug that kept the
+      # whole workflow from resolving, hiding in a comment where a `uses:` grep
+      # could not see it.
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"main"}]'
       enable-sbom: true

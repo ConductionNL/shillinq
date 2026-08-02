@@ -17,7 +17,7 @@
 			</p>
 		</header>
 
-		<NcButton type="primary" data-testid="bank-import-launch" @click="showBankStatementWizard = true">
+		<NcButton variant="primary" data-testid="bank-import-launch" @click="showBankStatementWizard = true">
 			<template #icon>
 				<BankTransferIn :size="20" />
 			</template>

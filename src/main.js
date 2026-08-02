@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import { PiniaVuePlugin } from 'pinia'
+// Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
+// other module evaluates — see src/setPublicPath.js.
+import './setPublicPath.js'
+
+import { createApp, h, reactive } from 'vue'
+import { createRouter, createWebHistory } from 'vue-router'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
@@ -11,6 +14,7 @@ import {
 	CnPageRenderer,
 	defaultPageTypes,
 	installIntegrationRegistry,
+	registerBuiltinDashboardWidgets,
 	registerBuiltinIntegrations,
 	registerIcons,
 	registerLeafIntegrations,
@@ -28,12 +32,14 @@ import { mergeFullFragmentIntoManifest, buildPageFragmentIndex } from './utils/m
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
 
+// gridstack v12 is a required peerDependency of @conduction/nextcloud-vue and
+// backs every `type: "dashboard"` page (12 of them here). Its CSS sizes items
+// with `width: var(--gs-column-width)`; without the stylesheet every widget
+// renders 0 px wide with NO console error.
+import 'gridstack/dist/gridstack.min.css'
+
 // Global (unscoped) app styles
 import './assets/app.css'
-
-Vue.mixin({ methods: { t, n } })
-Vue.use(PiniaVuePlugin)
-Vue.use(VueRouter)
 
 // Populate the shared `window.OCA.OpenRegister.integrations` registry from
 // shillinq's OWN bundle. OpenRegister's main.js calls the same three
@@ -54,6 +60,15 @@ registerLeafIntegrations()
 // calling it without arguments registers nothing, which left every
 // MDI-named menu icon rendering blank.
 registerIcons(appIcons)
+
+// Register the library's built-in dashboard widgets. nc-vue declares
+// `sideEffects: ["**/*.css"]`, so webpack is free to drop the bare
+// registration imports for the `stat` and `object-table` widgets — they then
+// render "Widget not available" at runtime while the build stays clean.
+// `chart` survives because it registers inline; that asymmetry is the tell.
+// Shillinq's 12 dashboard pages use stat (6), object-table (2) and chart (4).
+registerBuiltinDashboardWidgets()
+
 try {
 	registerTranslations()
 } catch (e) {
@@ -82,11 +97,10 @@ function tryLoadTranslations() {
 }
 
 // Shallow-clone CnPageRenderer because the lib's barrel exports are
-// non-extensible (webpack ESM module records). Vue 2's `Vue.extend()`
-// adds an internal `_Ctor` cache to the component definition; mutating a
-// non-extensible export throws "Cannot add property _Ctor, object is not
-// extensible". Cloning gives Vue Router an extensible component-options
-// object without altering the lib's internals.
+// non-extensible (webpack ESM module records) and Vue caches resolved
+// component metadata on the definition object it is handed. Cloning gives
+// vue-router an extensible component-options object without altering the
+// lib's internals.
 const RoutePageRenderer = { ...CnPageRenderer }
 
 // shillinq-manifest-boot-payload-reduction REQ-MBP-001: `manifest.d.shell.json`
@@ -98,12 +112,12 @@ const RoutePageRenderer = { ...CnPageRenderer }
 // actions — ~85% of a fragment's bytes) into the `main` webpack chunk. A
 // fragment's full page data is fetched lazily, once, the first time the
 // router navigates into one of its pages — see the `router.beforeEach` guard
-// below. `mergedManifest` is wrapped in `Vue.observable()` so that later
+// below. `mergedManifest` is wrapped in `reactive()` so that the later
 // in-place merge (mergeFullFragmentIntoManifest) is picked up by
 // CnPageRenderer's reactive `resolvedProps` computed (it reads
-// `currentPage.config`, and Vue 2 tracks property GETS on an already-observed
-// object — see src/utils/mergeFragmentIntoManifest.js for the full contract).
-const mergedManifest = Vue.observable(buildManifest(bundledManifest, manifestShell.fragments, menuLayout))
+// `currentPage.config`; Vue 3's Proxy tracks the brand-new key too — see
+// src/utils/mergeFragmentIntoManifest.js for the full contract).
+const mergedManifest = reactive(buildManifest(bundledManifest, manifestShell.fragments, menuLayout))
 
 // pageId → fragment filename stem, built once from the shell-derived slim
 // pages (each carries `_fragment`; base-manifest pages carry none and are
@@ -160,7 +174,7 @@ async function loadFragment(fragmentStem) {
  * deferred, never its reachability.
  *
  * @param {object} manifest The bundled manifest (with `pages[]`).
- * @return {Array<object>} vue-router 3 routes config.
+ * @return {Array<object>} vue-router 4 routes config.
  */
 function routesFromManifest(manifest) {
 	const routes = manifest.pages.map((page) => ({
@@ -170,13 +184,16 @@ function routesFromManifest(manifest) {
 		props: page.route.includes(':'),
 	}))
 	// Catch-all redirect to the dashboard, preserving prior router behaviour.
-	routes.push({ path: '*', redirect: '/' })
+	// vue-router 4 REMOVED the bare `*` wildcard — it no longer matches
+	// anything and no longer warns, so an unknown path would render the shell
+	// with an empty <main> and no error. The named param-matcher below is the
+	// v4 spelling of the same catch-all.
+	routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })
 	return routes
 }
 
-const router = new VueRouter({
-	mode: 'history',
-	base: generateUrl('/apps/shillinq'),
+const router = createRouter({
+	history: createWebHistory(generateUrl('/apps/shillinq')),
 	routes: routesFromManifest(mergedManifest),
 })
 
@@ -200,10 +217,9 @@ tryLoadTranslations()
 
 // Pass shallow copies of the registry maps to CnAppRoot. The lib exports
 // `defaultPageTypes` and `registry` as frozen module objects in some bundle
-// shapes — Vue 2's `Vue.extend()` mutates component definitions to attach an
-// internal `_Ctor` cache, which throws "Cannot add property _Ctor, object is
-// not extensible" against a frozen source map. Cloning yields extensible
-// objects without changing the resolved values.
+// shapes, and Vue caches resolved component metadata on the object it is
+// handed — which throws against a frozen source map. Cloning yields
+// extensible objects without changing the resolved values.
 const pageTypesProp = { ...defaultPageTypes }
 const registryProp = { ...registry }
 
@@ -223,15 +239,23 @@ const customComponentsProp = Object.fromEntries(
 		.map(([name, entry]) => [name, entry.component]),
 )
 
-new Vue({
-	pinia,
-	router,
-	render: (h) => h(App, {
-		props: {
-			manifest: mergedManifest,
-			pageTypes: pageTypesProp,
-			registry: registryProp,
-			customComponents: customComponentsProp,
-		},
+// Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`
+// REPLACED it. The old host was `#content`, which is ALSO the id of
+// Nextcloud's own `layout.user.php` wrapper — under Vue 2 the app replaced
+// core's outer div so the duplication never showed. The host element is
+// renamed to `#shillinq-app` (templates/index.php) rather than reasoning
+// about which of the two divs wins.
+const app = createApp({
+	render: () => h(App, {
+		manifest: mergedManifest,
+		pageTypes: pageTypesProp,
+		registry: registryProp,
+		customComponents: customComponentsProp,
 	}),
-}).$mount('#content')
+})
+
+// Vue 3 has no global `Vue.mixin` / `Vue.use` — everything is per-app.
+app.mixin({ methods: { t, n } })
+app.use(pinia)
+app.use(router)
+app.mount('#shillinq-app')

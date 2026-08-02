@@ -103,7 +103,7 @@ export default {
 			this.now = Date.now()
 		}, 30_000)
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.ticker !== null) {
 			clearInterval(this.ticker)
 			this.ticker = null
@@ -130,6 +130,7 @@ export default {
 
 <style scoped>
 .sync-status-badge { position: relative; }
+
 .sync-status-badge__button {
 	display: inline-flex;
 	align-items: center;
@@ -138,14 +139,20 @@ export default {
 	padding: 2px 8px;
 	background: var(--color-background-dark);
 }
+
 .sync-status-badge__dot {
 	width: 8px; height: 8px; border-radius: 50%;
 	background: var(--color-success);
 }
+
 .sync-status-badge__button--green .sync-status-badge__dot { background: var(--color-success); }
+
 .sync-status-badge__button--yellow .sync-status-badge__dot { background: var(--color-warning); }
+
 .sync-status-badge__button--red .sync-status-badge__dot { background: var(--color-error); }
+
 .sync-status-badge__conflicts { list-style: none; padding: 0; margin-top: var(--default-grid-baseline, 4px); }
+
 .sync-status-badge__conflicts li {
 	display: flex; gap: var(--default-grid-baseline, 4px);
 	background: var(--color-background-hover);

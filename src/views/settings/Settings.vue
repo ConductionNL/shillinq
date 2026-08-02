@@ -17,7 +17,7 @@
 			</div>
 
 			<NcButton
-				type="primary"
+				variant="primary"
 				native-type="submit"
 				:disabled="saving">
 				{{ saving ? t('shillinq', 'Saving...') : t('shillinq', 'Save') }}

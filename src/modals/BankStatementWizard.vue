@@ -64,7 +64,10 @@
 
 				<p class="bsw__psd2">
 					{{ t('shillinq', 'Or connect your bank directly and skip manual uploads:') }}
-					<a href="#" class="bsw__link" data-testid="bsw-psd2" @click.prevent="goToBankConnections">
+					<a href="#"
+						class="bsw__link"
+						data-testid="bsw-psd2"
+						@click.prevent="goToBankConnections">
 						{{ t('shillinq', 'Connect via PSD2') }}
 					</a>
 				</p>
@@ -112,7 +115,7 @@
 			</NcButton>
 			<NcButton
 				v-if="step === 1"
-				type="primary"
+				variant="primary"
 				:disabled="!canLeaveStep1"
 				data-testid="bsw-next-1"
 				@click="advanceFromStep1">
@@ -120,7 +123,7 @@
 			</NcButton>
 			<NcButton
 				v-else-if="step === 2"
-				type="primary"
+				variant="primary"
 				:disabled="!form.glAccountId"
 				data-testid="bsw-next-2"
 				@click="advanceFromStep2">
@@ -128,7 +131,7 @@
 			</NcButton>
 			<NcButton
 				v-else-if="step === 3 && result"
-				type="primary"
+				variant="primary"
 				:disabled="importing"
 				data-testid="bsw-review"
 				@click="reviewMatches">
@@ -139,9 +142,7 @@
 </template>
 
 <script>
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
+import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { translate as t } from '@nextcloud/l10n'

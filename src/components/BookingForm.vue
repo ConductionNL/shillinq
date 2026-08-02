@@ -297,29 +297,40 @@ export default {
 
 <style scoped>
 .bk-form { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+
 .bk-form__field { display: flex; flex-direction: column; gap: 4px; }
+
 .bk-form__field label { font-weight: 600; }
+
 .bk-form__field input,
-.bk-form__field input[type="datetime-local"] {
+.bk-form__field input[type='datetime-local'] {
 	padding: 6px;
 	border: 1px solid var(--color-border, #ccc);
 	border-radius: 4px;
 }
+
 .bk-form__status { display: flex; gap: 12px; align-items: center; border: none; padding: 0; }
+
 .bk-form__status legend { font-weight: 600; padding-right: 8px; }
+
 .bk-form__status label { font-weight: normal; display: inline-flex; align-items: center; gap: 4px; }
+
 .bk-form__error { color: var(--color-error, #c62828); }
+
 .bk-form__actions { display: flex; gap: 8px; justify-content: flex-end; }
+
 .bk-form__btn {
 	padding: 6px 14px;
 	border: 1px solid var(--color-border, #ccc);
 	background: transparent;
 	cursor: pointer;
 }
+
 .bk-form__btn--primary {
 	background: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);
 	border-color: var(--color-primary-element, #0082c9);
 }
+
 .bk-form__btn[disabled] { opacity: 0.6; cursor: progress; }
 </style>

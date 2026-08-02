@@ -22,7 +22,7 @@
 	<div class="ar-einvoice-actions" data-testid="ar-einvoice-actions">
 		<DeliveryStatusChip :status="deliveryStatus" />
 		<NcButton
-			type="primary"
+			variant="primary"
 			:disabled="!canSend || sending"
 			data-testid="ar-einvoice-send"
 			@click="onSend">
@@ -38,7 +38,7 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import { NcButton } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 import { showSuccess } from '@nextcloud/dialogs'
