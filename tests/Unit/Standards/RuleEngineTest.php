@@ -15,10 +15,14 @@ use PHPUnit\Framework\TestCase;
  * RuleCatalogue, runs every registered Checks provider against the payload and
  * returns Violation objects. Those collaborators are therefore executed by
  * every test here but are NOT what these tests claim to cover — each Checks
- * class has (or wants) its own dedicated test. Declaring them with @uses is
- * what beStrictAboutCoverageMetadata asks for; without it PHPUnit reports all
- * four tests RISKY and, with failOnRisky, exits non-zero on a suite that
- * otherwise passes.
+ * class has (or wants) its own dedicated test. Declaring them below is what
+ * beStrictAboutCoverageMetadata asks for; without those declarations PHPUnit
+ * reports every test in this class RISKY and, with failOnRisky, exits non-zero
+ * on a suite that otherwise passes.
+ *
+ * Do not write the annotation name with its leading sigil in this prose:
+ * PHPUnit parses docblock text as metadata, so a bare mention becomes a
+ * malformed annotation and is reported as "is invalid".
  *
  * @covers \OCA\Shillinq\Standards\RuleEngine
  *

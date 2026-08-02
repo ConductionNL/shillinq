@@ -60,8 +60,10 @@ require_once __DIR__.'/InMemoryObjectService.php';
  *
  * Seeding the Materialiteit + ToleranceMatrix (step 1) runs the REAL calculator
  * rather than a stub, so it is a collaborator this test uses but does not itself
- * claim coverage of. Without this @uses the run is reported RISKY under
- * beStrictAboutCoverageMetadata.
+ * claim coverage of. Without the declaration below the run is reported RISKY
+ * under beStrictAboutCoverageMetadata. (Do not name the annotation with its
+ * leading sigil in prose — PHPUnit parses docblock text as metadata and reports
+ * the bare mention as "is invalid".)
  *
  * @uses \OCA\Shillinq\Service\BadoControleprotocolCalculator
  */
