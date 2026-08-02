@@ -47,6 +47,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Service\Commitment\CommitmentMaterialisationService;
 use OCA\Shillinq\Service\Commitment\InsufficientCommitmentBudgetException;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -65,11 +66,13 @@ class CommitmentMaterialisationListener implements IEventListener
     /**
      * Construct the listener.
      *
-     * @param CommitmentMaterialisationService $materialiser Thin materialisation service.
-     * @param LoggerInterface                  $logger       Logger for diagnostics.
+     * @param CommitmentMaterialisationService $materialiser   Thin materialisation service.
+     * @param ListenerSchemaResolver           $schemaResolver Resolves the entity's schema id to its slug.
+     * @param LoggerInterface                  $logger         Logger for diagnostics.
      */
     public function __construct(
         private readonly CommitmentMaterialisationService $materialiser,
+        private readonly ListenerSchemaResolver $schemaResolver,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -93,7 +96,7 @@ class CommitmentMaterialisationListener implements IEventListener
             return;
         }
 
-        $schema  = strtolower(trim((string) ($entity->getSchema() ?? '')));
+        $schema  = strtolower(trim($this->schemaResolver->schemaSlug(entity: $entity)));
         $payload = $entity->getObject();
         if (is_array($payload) === false) {
             return;

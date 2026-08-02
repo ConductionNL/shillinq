@@ -38,6 +38,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
@@ -157,21 +158,41 @@ final class BookingCreatedTimelinePublishListenerTest extends TestCase
     }//end deps()
 
     /**
-     * Build an Appointment ObjectEntity carrying the supplied payload.
+     * Build an Appointment ObjectEntity carrying the numeric schema **id**,
+     * exactly as OpenRegister stamps it
+     * (`setSchema((string) $schema->getId())`).
+     *
+     * A hand-built entity carrying the slug is a shape production never
+     * produces; the slug arrives through {@see ListenerSchemaResolver}.
      *
      * @param array<string, mixed> $appointment Object payload.
-     * @param string               $schema      Schema name (default 'appointment').
+     * @param string               $schemaId    Numeric schema id as OR stamps it.
      *
      * @return ObjectEntity
      */
-    private function appointmentEntity(array $appointment, string $schema='appointment'): ObjectEntity
+    private function appointmentEntity(array $appointment, string $schemaId='7001'): ObjectEntity
     {
         $entity = new ObjectEntity();
-        $entity->setSchema($schema);
+        $entity->setSchema($schemaId);
         $entity->setObject($appointment);
         return $entity;
 
     }//end appointmentEntity()
+
+    /**
+     * Build a ListenerSchemaResolver stub that reports a given schema slug.
+     *
+     * @param string $slug Slug the resolver resolves the entity's id to.
+     *
+     * @return ListenerSchemaResolver
+     */
+    private function resolver(string $slug): ListenerSchemaResolver
+    {
+        $resolver = $this->createMock(ListenerSchemaResolver::class);
+        $resolver->method('schemaSlug')->willReturn($slug);
+        return $resolver;
+
+    }//end resolver()
 
     /**
      * Happy path — pipelinqContactId set, publish succeeds, no retry
@@ -188,6 +209,7 @@ final class BookingCreatedTimelinePublishListenerTest extends TestCase
         $listener = new BookingCreatedTimelinePublishListener(
             pipelinq: $adapter,
             retryQueue: $queue,
+            schemaResolver: $this->resolver('appointment'),
             logger: $this->recordingLogger()
         );
 
@@ -246,6 +268,7 @@ final class BookingCreatedTimelinePublishListenerTest extends TestCase
         $listener = new BookingCreatedTimelinePublishListener(
             pipelinq: $adapter,
             retryQueue: $queue,
+            schemaResolver: $this->resolver('appointment'),
             logger: $this->recordingLogger()
         );
 
@@ -281,6 +304,7 @@ final class BookingCreatedTimelinePublishListenerTest extends TestCase
         $listener = new BookingCreatedTimelinePublishListener(
             pipelinq: $adapter,
             retryQueue: $queue,
+            schemaResolver: $this->resolver('appointment'),
             logger: $this->recordingLogger()
         );
 
@@ -316,6 +340,7 @@ final class BookingCreatedTimelinePublishListenerTest extends TestCase
         $listener = new BookingCreatedTimelinePublishListener(
             pipelinq: $adapter,
             retryQueue: $queue,
+            schemaResolver: $this->resolver('invoice'),
             logger: $this->recordingLogger()
         );
 
@@ -326,7 +351,7 @@ final class BookingCreatedTimelinePublishListenerTest extends TestCase
                         'appointmentId'     => 'whatever',
                         'pipelinqContactId' => 'pl-contact-42',
                     ],
-                    schema: 'invoice'
+                    schemaId: '7050'
                 )
             )
         );

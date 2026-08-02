@@ -37,6 +37,7 @@ use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Integration\TenderNedStatusSync;
 use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -170,21 +171,40 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
     }//end emptyAppConfig()
 
     /**
-     * Build an ObjectEntity with schema + payload.
+     * Build an ObjectEntity carrying a numeric schema **id**, exactly as
+     * OpenRegister stamps it (`setSchema((string) $schema->getId())`).
      *
-     * @param string              $schema  Schema slug.
-     * @param array<string,mixed> $payload Payload.
+     * A hand-built entity carrying the slug is a shape production never
+     * produces; the slug arrives through {@see ListenerSchemaResolver}.
+     *
+     * @param string              $schemaId Numeric schema id as OR stamps it.
+     * @param array<string,mixed> $payload  Payload.
      *
      * @return ObjectEntity
      */
-    private function entity(string $schema, array $payload): ObjectEntity
+    private function entity(string $schemaId, array $payload): ObjectEntity
     {
         $entity = new ObjectEntity();
-        $entity->setSchema($schema);
+        $entity->setSchema($schemaId);
         $entity->setObject($payload);
         return $entity;
 
     }//end entity()
+
+    /**
+     * Build a ListenerSchemaResolver stub that reports a given schema slug.
+     *
+     * @param string $slug Slug the resolver resolves the entity's id to.
+     *
+     * @return ListenerSchemaResolver
+     */
+    private function resolver(string $slug): ListenerSchemaResolver
+    {
+        $resolver = $this->createMock(ListenerSchemaResolver::class);
+        $resolver->method('schemaSlug')->willReturn($slug);
+        return $resolver;
+
+    }//end resolver()
 
     /**
      * A completed regular milestone emits but does NOT sync.
@@ -196,10 +216,15 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener($emitter, $sync, new NullLogger());
+        $listener   = new OpdrachtUitvoeringTransitionListener(
+            $emitter,
+            $sync,
+            $this->resolver('OpdrachtUitvoering'),
+            new NullLogger()
+        );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('OpdrachtUitvoering', [
+            $this->entity('1201', [
                 'verplichtingId'  => 'TN-2026-0001',
                 'mijlpaalId'      => 'M-Q1',
                 'opleveringsType' => 'tussenoplevering',
@@ -232,10 +257,15 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener($emitter, $sync, new NullLogger());
+        $listener   = new OpdrachtUitvoeringTransitionListener(
+            $emitter,
+            $sync,
+            $this->resolver('OpdrachtUitvoering'),
+            new NullLogger()
+        );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('OpdrachtUitvoering', [
+            $this->entity('1201', [
                 'verplichtingId'  => 'TN-2026-0001',
                 'mijlpaalId'      => 'M-EIND',
                 'opleveringsType' => 'eindoplevering',
@@ -267,10 +297,15 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener($emitter, $sync, new NullLogger());
+        $listener   = new OpdrachtUitvoeringTransitionListener(
+            $emitter,
+            $sync,
+            $this->resolver('OpdrachtUitvoering'),
+            new NullLogger()
+        );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('OpdrachtUitvoering', [
+            $this->entity('1201', [
                 'verplichtingId'  => 'TN-2026-0001',
                 'mijlpaalId'      => 'M-EIND',
                 'opleveringsType' => 'eindoplevering',
@@ -301,10 +336,15 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener($emitter, $sync, new NullLogger());
+        $listener   = new OpdrachtUitvoeringTransitionListener(
+            $emitter,
+            $sync,
+            $this->resolver('OpdrachtUitvoering'),
+            new NullLogger()
+        );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('OpdrachtUitvoering', [
+            $this->entity('1201', [
                 'verplichtingId'  => 'TN-2026-0001',
                 'mijlpaalId'      => 'M-EIND',
                 'opleveringsType' => 'eindoplevering',
@@ -335,10 +375,15 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener($emitter, $sync, new NullLogger());
+        $listener   = new OpdrachtUitvoeringTransitionListener(
+            $emitter,
+            $sync,
+            $this->resolver('Verplichting'),
+            new NullLogger()
+        );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('Verplichting', ['status' => 'active']),
+            $this->entity('1089', ['status' => 'active']),
             'activeren',
             'concept',
             'completed',

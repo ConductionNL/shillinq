@@ -48,6 +48,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Integration\TenderNedStatusSync;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -66,13 +67,15 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener
     /**
      * Construct the listener.
      *
-     * @param BudgetImpactEmitter $emitter Shared cross-app CloudEvent emitter.
-     * @param TenderNedStatusSync $sync    Outbound status-sync integration (REQ-006).
-     * @param LoggerInterface     $logger  Logger for fail-soft diagnostics.
+     * @param BudgetImpactEmitter    $emitter        Shared cross-app CloudEvent emitter.
+     * @param TenderNedStatusSync    $sync           Outbound status-sync integration (REQ-006).
+     * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+     * @param LoggerInterface        $logger         Logger for fail-soft diagnostics.
      */
     public function __construct(
         private readonly BudgetImpactEmitter $emitter,
         private readonly TenderNedStatusSync $sync,
+        private readonly ListenerSchemaResolver $schemaResolver,
         private readonly LoggerInterface $logger,
     ) {
 
@@ -103,7 +106,7 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener
                 return;
             }
 
-            $schema = (string) ($entity->getSchema() ?? '');
+            $schema = $this->schemaResolver->schemaSlug(entity: $entity);
             if ($this->isOpdrachtUitvoeringSchema(schema: $schema) === false) {
                 return;
             }

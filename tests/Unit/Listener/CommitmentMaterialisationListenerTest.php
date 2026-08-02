@@ -28,6 +28,7 @@ use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
 use OCA\Shillinq\Service\Commitment\CommitmentMaterialisationService;
 use OCA\Shillinq\Service\Commitment\InsufficientCommitmentBudgetException;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -47,6 +48,13 @@ class CommitmentMaterialisationListenerTest extends TestCase
      * @var CommitmentMaterialisationService&MockObject
      */
     private CommitmentMaterialisationService&MockObject $materialiser;
+
+    /**
+     * Mock schema resolver — turns the entity's numeric schema id into a slug.
+     *
+     * @var ListenerSchemaResolver&MockObject
+     */
+    private ListenerSchemaResolver&MockObject $schemaResolver;
 
     /**
      * Mock logger.
@@ -71,28 +79,50 @@ class CommitmentMaterialisationListenerTest extends TestCase
     {
         parent::setUp();
 
-        $this->materialiser = $this->createMock(CommitmentMaterialisationService::class);
-        $this->logger       = $this->createMock(LoggerInterface::class);
-        $this->listener     = new CommitmentMaterialisationListener(materialiser: $this->materialiser, logger: $this->logger);
+        $this->materialiser   = $this->createMock(CommitmentMaterialisationService::class);
+        $this->schemaResolver = $this->createMock(ListenerSchemaResolver::class);
+        $this->logger         = $this->createMock(LoggerInterface::class);
+        $this->listener       = new CommitmentMaterialisationListener(
+            materialiser: $this->materialiser,
+            schemaResolver: $this->schemaResolver,
+            logger: $this->logger
+        );
 
     }//end setUp()
 
     /**
-     * Build an ObjectEntity stub for the given schema + payload.
+     * Build an ObjectEntity stub carrying a numeric schema **id**, exactly as
+     * OpenRegister stamps it (`setSchema((string) $schema->getId())`).
      *
-     * @param string               $schema  Schema slug.
-     * @param array<string, mixed> $payload Object payload.
+     * A hand-built entity carrying the slug is a shape production never
+     * produces; the slug arrives through {@see ListenerSchemaResolver}.
+     *
+     * @param string               $schemaId Numeric schema id as OR stamps it.
+     * @param array<string, mixed> $payload  Object payload.
      *
      * @return ObjectEntity
      */
-    private function entity(string $schema, array $payload): ObjectEntity
+    private function entity(string $schemaId, array $payload): ObjectEntity
     {
         $entity = $this->createMock(ObjectEntity::class);
-        $entity->method('getSchema')->willReturn($schema);
+        $entity->method('getSchema')->willReturn($schemaId);
         $entity->method('getObject')->willReturn($payload);
         return $entity;
 
     }//end entity()
+
+    /**
+     * Stub the schema resolver so it resolves the entity's id to a slug.
+     *
+     * @param string $slug Slug the resolver reports.
+     *
+     * @return void
+     */
+    private function resolvesTo(string $slug): void
+    {
+        $this->schemaResolver->method('schemaSlug')->willReturn($slug);
+
+    }//end resolvesTo()
 
     /**
      * A PurchaseOrder reaching `approved` forwards to
@@ -103,8 +133,9 @@ class CommitmentMaterialisationListenerTest extends TestCase
      */
     public function testPurchaseOrderApprovedForwardsAndPropagatesDenial(): void
     {
+        $this->resolvesTo('PurchaseOrder');
         $payload = ['poNumber' => 'PO-2026-0207', 'statusCode' => 'approved'];
-        $entity  = $this->entity('PurchaseOrder', $payload);
+        $entity  = $this->entity('2011', $payload);
         $event   = $this->createConfiguredMock(
             ObjectTransitionedEvent::class,
             ['getObject' => $entity, 'getTo' => 'approved']
@@ -127,8 +158,9 @@ class CommitmentMaterialisationListenerTest extends TestCase
      */
     public function testPurchaseOrderOtherTransitionIgnored(): void
     {
+        $this->resolvesTo('PurchaseOrder');
         $payload = ['poNumber' => 'PO-2026-0207', 'statusCode' => 'sent'];
-        $entity  = $this->entity('PurchaseOrder', $payload);
+        $entity  = $this->entity('2011', $payload);
         $event   = $this->createConfiguredMock(
             ObjectTransitionedEvent::class,
             ['getObject' => $entity, 'getTo' => 'sent']
@@ -149,8 +181,9 @@ class CommitmentMaterialisationListenerTest extends TestCase
      */
     public function testContractActiveForwardsAndSwallowsException(): void
     {
+        $this->resolvesTo('Contract');
         $payload = ['contractNumber' => 'C-2026-007', 'status' => 'active'];
-        $entity  = $this->entity('Contract', $payload);
+        $entity  = $this->entity('2012', $payload);
         $event   = $this->createConfiguredMock(
             ObjectTransitionedEvent::class,
             ['getObject' => $entity, 'getTo' => 'active']
@@ -176,8 +209,9 @@ class CommitmentMaterialisationListenerTest extends TestCase
      */
     public function testPurchaseOrderCreatedDirectlyApprovedForwards(): void
     {
+        $this->resolvesTo('PurchaseOrder');
         $payload = ['poNumber' => 'PO-2026-0300', 'statusCode' => 'approved'];
-        $entity  = $this->entity('PurchaseOrder', $payload);
+        $entity  = $this->entity('2011', $payload);
         $event   = $this->createConfiguredMock(ObjectCreatedEvent::class, ['getObject' => $entity]);
 
         $this->materialiser->expects(self::once())
@@ -197,7 +231,8 @@ class CommitmentMaterialisationListenerTest extends TestCase
      */
     public function testUnrelatedSchemaIgnored(): void
     {
-        $entity = $this->entity('SupplierInvoice', ['statusCode' => 'approved']);
+        $this->resolvesTo('SupplierInvoice');
+        $entity = $this->entity('2013', ['statusCode' => 'approved']);
         $event  = $this->createConfiguredMock(
             ObjectTransitionedEvent::class,
             ['getObject' => $entity, 'getTo' => 'approved']
@@ -219,7 +254,8 @@ class CommitmentMaterialisationListenerTest extends TestCase
      */
     public function testPurchaseOrderLineNotMistakenForPurchaseOrder(): void
     {
-        $entity = $this->entity('PurchaseOrderLine', ['statusCode' => 'approved']);
+        $this->resolvesTo('PurchaseOrderLine');
+        $entity = $this->entity('2014', ['statusCode' => 'approved']);
         $event  = $this->createConfiguredMock(
             ObjectTransitionedEvent::class,
             ['getObject' => $entity, 'getTo' => 'approved']

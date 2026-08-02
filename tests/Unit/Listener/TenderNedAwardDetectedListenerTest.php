@@ -42,6 +42,7 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\MilestoneTemplateService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -212,13 +213,17 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
     /**
      * Build a listener with the supplied container + tenant KvK.
      *
-     * @param ContainerInterface $container Container.
-     * @param string             $tenantKvk Tenant KvK (default empty).
+     * @param ContainerInterface $container  Container.
+     * @param string             $tenantKvk  Tenant KvK (default empty).
+     * @param string             $schemaSlug Slug the schema resolver reports for the event entity.
      *
      * @return array{0: TenderNedAwardDetectedListener, 1: IEventDispatcher} Listener + dispatcher to inspect.
      */
-    private function listener(ContainerInterface $container, string $tenantKvk=''): array
-    {
+    private function listener(
+        ContainerInterface $container,
+        string $tenantKvk='',
+        string $schemaSlug='TenderNedAanbesteding'
+    ): array {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $templates  = new MilestoneTemplateService();
@@ -227,6 +232,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
             $emitter,
             $container,
             $this->appConfigWithTenantKvk($tenantKvk),
+            $this->resolver($schemaSlug),
             new NullLogger()
         );
         return [$listener, $dispatcher];
@@ -234,17 +240,36 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
     }//end listener()
 
     /**
-     * Build an ObjectEntity with schema + payload.
+     * Build a ListenerSchemaResolver stub that reports a given schema slug.
      *
-     * @param string              $schema  Schema slug.
-     * @param array<string,mixed> $payload Payload.
+     * @param string $slug Slug the resolver resolves the entity's id to.
+     *
+     * @return ListenerSchemaResolver
+     */
+    private function resolver(string $slug): ListenerSchemaResolver
+    {
+        $resolver = $this->createMock(ListenerSchemaResolver::class);
+        $resolver->method('schemaSlug')->willReturn($slug);
+        return $resolver;
+
+    }//end resolver()
+
+    /**
+     * Build an ObjectEntity carrying a numeric schema **id**, exactly as
+     * OpenRegister stamps it (`setSchema((string) $schema->getId())`).
+     *
+     * A hand-built entity carrying the slug is a shape production never
+     * produces; the slug arrives through {@see ListenerSchemaResolver}.
+     *
+     * @param string              $schemaId Numeric schema id as OR stamps it.
+     * @param array<string,mixed> $payload  Payload.
      *
      * @return ObjectEntity
      */
-    private function entity(string $schema, array $payload): ObjectEntity
+    private function entity(string $schemaId, array $payload): ObjectEntity
     {
         $entity = new ObjectEntity();
-        $entity->setSchema($schema);
+        $entity->setSchema($schemaId);
         $entity->setObject($payload);
         return $entity;
 
@@ -258,10 +283,10 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
     public function testNonAanbestedingSchemaIsIgnored(): void
     {
         [$container, $recorder] = $this->containerAndRecorder([]);
-        [$listener, $dispatcher] = $this->listener($container, '30280353');
+        [$listener, $dispatcher] = $this->listener($container, '30280353', 'Verplichting');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('Verplichting', ['status' => 'gegund', 'contractWaarde' => 100.0])
+            $this->entity('1089', ['status' => 'gegund', 'contractWaarde' => 100.0])
         );
 
         $listener->handle($event);
@@ -282,7 +307,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
         [$listener, $dispatcher] = $this->listener($container, '30280353');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('TenderNedAanbesteding', [
+            $this->entity('1090', [
                 'status'             => 'open',
                 'contractWaarde'     => 50000.0,
                 'gegundeLeverancier' => '30280353 Test BV',
@@ -307,7 +332,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
         [$listener, $dispatcher] = $this->listener($container, '30280353');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('TenderNedAanbesteding', [
+            $this->entity('1090', [
                 'status'             => 'gegund',
                 'contractWaarde'     => 0.0,
                 'gegundeLeverancier' => '30280353 Test BV',
@@ -332,7 +357,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
         [$listener, $dispatcher] = $this->listener($container, '');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('TenderNedAanbesteding', [
+            $this->entity('1090', [
                 'status'             => 'gegund',
                 'contractWaarde'     => 50000.0,
                 'gegundeLeverancier' => '30280353 Test BV',
@@ -357,7 +382,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
         [$listener, $dispatcher] = $this->listener($container, '99999999');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('TenderNedAanbesteding', [
+            $this->entity('1090', [
                 'status'             => 'gegund',
                 'contractWaarde'     => 50000.0,
                 'gegundeLeverancier' => '30280353 Test BV',
@@ -382,7 +407,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
         [$listener, $dispatcher] = $this->listener($container, '30280353');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('TenderNedAanbesteding', [
+            $this->entity('1090', [
                 'status'             => 'gegund',
                 'contractWaarde'     => 50000.0,
                 'gegundeLeverancier' => '30280353 Conduction B.V.',
@@ -438,7 +463,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
         [$listener, $dispatcher] = $this->listener($container, '30280353');
 
         $event = new ObjectCreatedEvent(
-            $this->entity('TenderNedAanbesteding', [
+            $this->entity('1090', [
                 'status'             => 'gegund',
                 'contractWaarde'     => 50000.0,
                 'gegundeLeverancier' => '30280353 Conduction B.V.',

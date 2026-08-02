@@ -36,6 +36,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\VerplichtingTransitionListener;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\TestCase;
@@ -103,21 +104,40 @@ final class VerplichtingTransitionListenerTest extends TestCase
     }//end recordingDispatcher()
 
     /**
-     * Build an ObjectEntity with schema + payload.
+     * Build an ObjectEntity carrying a numeric schema **id**, exactly as
+     * OpenRegister stamps it (`setSchema((string) $schema->getId())`).
      *
-     * @param string              $schema  Schema slug.
-     * @param array<string,mixed> $payload Payload.
+     * A hand-built entity carrying the slug is a shape production never
+     * produces; the slug arrives through {@see ListenerSchemaResolver}.
+     *
+     * @param string              $schemaId Numeric schema id as OR stamps it.
+     * @param array<string,mixed> $payload  Payload.
      *
      * @return ObjectEntity
      */
-    private function entity(string $schema, array $payload): ObjectEntity
+    private function entity(string $schemaId, array $payload): ObjectEntity
     {
         $entity = new ObjectEntity();
-        $entity->setSchema($schema);
+        $entity->setSchema($schemaId);
         $entity->setObject($payload);
         return $entity;
 
     }//end entity()
+
+    /**
+     * Build a ListenerSchemaResolver stub that reports a given schema slug.
+     *
+     * @param string $slug Slug the resolver resolves the entity's id to.
+     *
+     * @return ListenerSchemaResolver
+     */
+    private function resolver(string $slug): ListenerSchemaResolver
+    {
+        $resolver = $this->createMock(ListenerSchemaResolver::class);
+        $resolver->method('schemaSlug')->willReturn($slug);
+        return $resolver;
+
+    }//end resolver()
 
     /**
      * A created Verplichting with bron=tenderned + status=active emits.
@@ -128,10 +148,10 @@ final class VerplichtingTransitionListenerTest extends TestCase
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, new NullLogger());
+        $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
         $event = new ObjectCreatedEvent(
-            $this->entity('Verplichting', [
+            $this->entity('1089', [
                 'bron'           => 'tenderned',
                 'bronReferentie' => 'TN-2026-0001',
                 'status'         => 'active',
@@ -155,10 +175,10 @@ final class VerplichtingTransitionListenerTest extends TestCase
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, new NullLogger());
+        $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
         $event = new ObjectCreatedEvent(
-            $this->entity('Verplichting', [
+            $this->entity('1089', [
                 'bron'   => 'manual',
                 'status' => 'active',
                 'bedrag' => 5000.0,
@@ -181,10 +201,10 @@ final class VerplichtingTransitionListenerTest extends TestCase
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, new NullLogger());
+        $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
         $event = new ObjectCreatedEvent(
-            $this->entity('Verplichting', [
+            $this->entity('1089', [
                 'bron'   => 'tenderned',
                 'status' => 'concept',
                 'bedrag' => 5000.0,
@@ -206,10 +226,10 @@ final class VerplichtingTransitionListenerTest extends TestCase
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, new NullLogger());
+        $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('Verplichting', [
+            $this->entity('1089', [
                 'bron'   => 'tenderned',
                 'status' => 'active',
                 'bedrag' => 5000.0,
@@ -237,10 +257,10 @@ final class VerplichtingTransitionListenerTest extends TestCase
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, new NullLogger());
+        $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('Verplichting', [
+            $this->entity('1089', [
                 'bron'   => 'tenderned',
                 'status' => 'concept',
                 'bedrag' => 5000.0,
@@ -268,10 +288,14 @@ final class VerplichtingTransitionListenerTest extends TestCase
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, new NullLogger());
+        $listener   = new VerplichtingTransitionListener(
+            $emitter,
+            $this->resolver('TenderNedAanbesteding'),
+            new NullLogger()
+        );
 
         $event = new ObjectCreatedEvent(
-            $this->entity('TenderNedAanbesteding', [
+            $this->entity('1090', [
                 'bron'   => 'tenderned',
                 'status' => 'active',
             ])
@@ -298,10 +322,10 @@ final class VerplichtingTransitionListenerTest extends TestCase
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new VerplichtingTransitionListener($emitter, new NullLogger());
+        $listener   = new VerplichtingTransitionListener($emitter, $this->resolver('SalesOrder'), new NullLogger());
 
         $entity = new ObjectEntity();
-        $entity->setSchema('not-a-verplichting');
+        $entity->setSchema('4242');
         $event  = new ObjectCreatedEvent($entity);
         $listener->handle($event);
 

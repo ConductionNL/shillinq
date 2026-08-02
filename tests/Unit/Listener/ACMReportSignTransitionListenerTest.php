@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Listener\ACMReportSignTransitionListener;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\EventDispatcher\GenericEvent;
@@ -74,11 +75,15 @@ final class ACMReportSignTransitionListenerTest extends TestCase
      *                                                 returns, or null to make it throw
      *                                                 (simulating docudesk absent —
      *                                                 fail-closed).
+     * @param string                   $schemaSlug    Slug the schema resolver reports for
+     *                                                 the event entity.
      *
      * @return ACMReportSignTransitionListener
      */
-    private function makeListener(?array $requestResult): ACMReportSignTransitionListener
-    {
+    private function makeListener(
+        ?array $requestResult,
+        string $schemaSlug='ACMReport'
+    ): ACMReportSignTransitionListener {
         $this->signingCalls = [];
 
         $this->objectService = new class {
@@ -149,10 +154,14 @@ final class ACMReportSignTransitionListenerTest extends TestCase
         $settings = $this->createMock(SettingsService::class);
         $settings->method('getRegisterSlug')->willReturn('shillinq');
 
+        $schemaResolver = $this->createMock(ListenerSchemaResolver::class);
+        $schemaResolver->method('schemaSlug')->willReturn($schemaSlug);
+
         return new ACMReportSignTransitionListener(
             $container,
             $settings,
             $signingService,
+            $schemaResolver,
             new NullLogger(),
         );
 
@@ -161,21 +170,27 @@ final class ACMReportSignTransitionListenerTest extends TestCase
     /**
      * Build an ObjectTransitionedEvent carrying the given payload/action/schema.
      *
-     * @param array<string,mixed> $payload The object payload.
-     * @param string              $action  Transition action id.
-     * @param string              $schema  Schema slug.
-     * @param string              $id      Object id.
+     * The entity carries the numeric schema **id**, exactly as OpenRegister
+     * stamps it (`setSchema((string) $schema->getId())`) — the slug only ever
+     * reaches the listener through {@see ListenerSchemaResolver}.
+     *
+     * @param array<string,mixed> $payload    The object payload.
+     * @param string              $action     Transition action id.
+     * @param string              $schemaId   Numeric schema id as OR stamps it.
+     * @param string              $schemaSlug Schema slug carried by the event envelope.
+     * @param string              $id         Object id.
      *
      * @return ObjectTransitionedEvent
      */
     private function makeEvent(
         array $payload,
         string $action='sign',
-        string $schema='ACMReport',
+        string $schemaId='3001',
+        string $schemaSlug='ACMReport',
         string $id='acm-42'
     ): ObjectTransitionedEvent {
         $entity = (new ObjectEntity())
-            ->setSchema($schema)
+            ->setSchema($schemaId)
             ->setId($id)
             ->setObject($payload);
 
@@ -186,7 +201,7 @@ final class ACMReportSignTransitionListenerTest extends TestCase
             'ready-for-submission',
             'concerncontroller1',
             'shillinq',
-            $schema,
+            $schemaSlug,
         );
 
     }//end makeEvent()
@@ -241,9 +256,11 @@ final class ACMReportSignTransitionListenerTest extends TestCase
      */
     public function testNonAcmReportSchemaIsIgnored(): void
     {
-        $listener = $this->makeListener(['id' => 'other-1', 'signingStatus' => 'requested']);
+        $listener = $this->makeListener(['id' => 'other-1', 'signingStatus' => 'requested'], 'AnnualReport');
 
-        $listener->handle($this->makeEvent(['id' => 'other-1'], schema: 'AnnualReport'));
+        $listener->handle(
+            $this->makeEvent(['id' => 'other-1'], schemaId: '3002', schemaSlug: 'AnnualReport')
+        );
 
         self::assertCount(0, $this->signingCalls);
         self::assertCount(0, $this->objectService->updates);

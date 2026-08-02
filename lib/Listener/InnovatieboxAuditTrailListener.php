@@ -51,6 +51,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Service\InnovatieboxAuditEventLogger;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\VsoLockingValidator;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -91,13 +92,15 @@ final class InnovatieboxAuditTrailListener implements IEventListener
     /**
      * Construct the listener.
      *
-     * @param InnovatieboxAuditEventLogger $logger       Append-only audit event writer.
-     * @param VsoLockingValidator          $vsoValidator VSO year-lock checker (task 4.3).
-     * @param LoggerInterface              $psrLogger    Psr logger for fail-soft.
+     * @param InnovatieboxAuditEventLogger $logger         Append-only audit event writer.
+     * @param VsoLockingValidator          $vsoValidator   VSO year-lock checker (task 4.3).
+     * @param ListenerSchemaResolver       $schemaResolver Resolves the entity's schema id to its slug.
+     * @param LoggerInterface              $psrLogger      Psr logger for fail-soft.
      */
     public function __construct(
         private readonly InnovatieboxAuditEventLogger $logger,
         private readonly VsoLockingValidator $vsoValidator,
+        private readonly ListenerSchemaResolver $schemaResolver,
         private readonly LoggerInterface $psrLogger,
     ) {
     }//end __construct()
@@ -147,7 +150,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
             return;
         }
 
-        $schema = $this->normaliseSchema(schema: (string) $entity->getSchema());
+        $schema = $this->normaliseSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity));
         $data   = $this->extractObjectArray(entity: $entity);
 
         if ($schema === self::SCHEMA_NEXUS) {
@@ -263,7 +266,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
             return;
         }
 
-        $schema = $this->normaliseSchema(schema: (string) $entity->getSchema());
+        $schema = $this->normaliseSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity));
         $next   = $this->extractObjectArray(entity: $entity);
         $prior  = $this->extractPriorState(event: $event);
 
