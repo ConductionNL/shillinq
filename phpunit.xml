@@ -53,5 +53,14 @@
 
     <php>
         <env name="PHPUNIT_RUN" value="1"/>
+        <!--
+            The suite is ~3960 tests and exhausts PHP's stock 128M CLI limit at
+            roughly 89% through, dying with a fatal "Allowed memory size
+            exhausted". A fatal mid-run is another silent-abort mode: the
+            summary line is never printed, so nothing reports how many tests
+            actually ran. Raise the limit here so a bare `vendor/bin/phpunit`
+            completes without the caller having to pass `-d memory_limit=...`.
+        -->
+        <ini name="memory_limit" value="1G"/>
     </php>
 </phpunit>
