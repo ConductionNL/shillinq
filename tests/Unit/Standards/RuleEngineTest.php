@@ -11,7 +11,37 @@ use PHPUnit\Framework\TestCase;
 /**
  * Unit tests for the RuleEngine — the executable layer over the RuleCatalogue.
  *
+ * RuleEngine::evaluate() is a dispatcher: it pulls the rule set from the
+ * RuleCatalogue, runs every registered Checks provider against the payload and
+ * returns Violation objects. Those collaborators are therefore executed by
+ * every test here but are NOT what these tests claim to cover — each Checks
+ * class has (or wants) its own dedicated test. Declaring them with @uses is
+ * what beStrictAboutCoverageMetadata asks for; without it PHPUnit reports all
+ * four tests RISKY and, with failOnRisky, exits non-zero on a suite that
+ * otherwise passes.
+ *
  * @covers \OCA\Shillinq\Standards\RuleEngine
+ *
+ * @uses \OCA\Shillinq\Standards\RuleCatalogue
+ * @uses \OCA\Shillinq\Standards\Violation
+ * @uses \OCA\Shillinq\Standards\Checks\AmlBankingChecks
+ * @uses \OCA\Shillinq\Standards\Checks\ChartOfAccountsChecks
+ * @uses \OCA\Shillinq\Standards\Checks\ComplianceTailChecks
+ * @uses \OCA\Shillinq\Standards\Checks\FinalTailChecks
+ * @uses \OCA\Shillinq\Standards\Checks\FinancialStatementsChecks
+ * @uses \OCA\Shillinq\Standards\Checks\IfrsUsGaapChecks
+ * @uses \OCA\Shillinq\Standards\Checks\InvoiceMentionsTailChecks
+ * @uses \OCA\Shillinq\Standards\Checks\InvoicingExtraChecks
+ * @uses \OCA\Shillinq\Standards\Checks\InvoicingTailChecks
+ * @uses \OCA\Shillinq\Standards\Checks\LedgerIntegrityChecks
+ * @uses \OCA\Shillinq\Standards\Checks\NationalExtraTailChecks
+ * @uses \OCA\Shillinq\Standards\Checks\NationalReportingTailChecks
+ * @uses \OCA\Shillinq\Standards\Checks\OssIossChecks
+ * @uses \OCA\Shillinq\Standards\Checks\PublicSectorIpsasGasbChecks
+ * @uses \OCA\Shillinq\Standards\Checks\RemainingVatChecks
+ * @uses \OCA\Shillinq\Standards\Checks\SustainabilityChecks
+ * @uses \OCA\Shillinq\Standards\Checks\VatBbvLedgerTailChecks
+ * @uses \OCA\Shillinq\Standards\Checks\VatChecks
  */
 class RuleEngineTest extends TestCase
 {

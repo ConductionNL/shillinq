@@ -57,6 +57,13 @@ require_once __DIR__.'/InMemoryObjectService.php';
  *
  * @covers \OCA\Shillinq\Service\BadoControleprotocolService
  * @covers \OCA\Shillinq\Service\AccountantsdossierExportService
+ *
+ * Seeding the Materialiteit + ToleranceMatrix (step 1) runs the REAL calculator
+ * rather than a stub, so it is a collaborator this test uses but does not itself
+ * claim coverage of. Without this @uses the run is reported RISKY under
+ * beStrictAboutCoverageMetadata.
+ *
+ * @uses \OCA\Shillinq\Service\BadoControleprotocolCalculator
  */
 final class BadoSisaBijlageIIATest extends TestCase
 {
