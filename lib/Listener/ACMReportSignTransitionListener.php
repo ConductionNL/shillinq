@@ -53,6 +53,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\Signing\SigningDelegationService;
 use OCP\EventDispatcher\Event;
@@ -100,6 +101,7 @@ class ACMReportSignTransitionListener implements IEventListener
      *                                                  lazily (avoids a circular DI edge).
      * @param SettingsService          $settingsService Shillinq settings (register slug).
      * @param SigningDelegationService $signingService  The document-signing request service.
+     * @param ListenerSchemaResolver   $schemaResolver  Resolves the entity's schema id to its slug.
      * @param LoggerInterface          $logger          Logger.
      *
      * @return void
@@ -108,6 +110,7 @@ class ACMReportSignTransitionListener implements IEventListener
         private readonly ContainerInterface $container,
         private readonly SettingsService $settingsService,
         private readonly SigningDelegationService $signingService,
+        private readonly ListenerSchemaResolver $schemaResolver,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -137,7 +140,7 @@ class ACMReportSignTransitionListener implements IEventListener
                 return;
             }
 
-            $schema = (string) ($entity->getSchema() ?? '');
+            $schema = $this->schemaResolver->schemaSlug(entity: $entity);
             if ($this->isAcmReportSchema(schema: $schema) === false) {
                 return;
             }

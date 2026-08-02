@@ -43,6 +43,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
@@ -64,14 +65,16 @@ final class BookingCreatedTimelinePublishListener implements IEventListener
     /**
      * Construct the listener with its DI deps.
      *
-     * @param PipelinqContactAdapter            $pipelinq   Slice-02 adapter (publishTimelineEvent).
-     * @param TimelineRetryQueue                $retryQueue Async-retry queue (slice 09 binding).
-     * @param LoggerInterface                   $logger     PSR logger for fail-soft observability.
-     * @param CustomerBridgeMetricsService|null $metrics    Optional metrics aggregator (slice 11); NULL-safe for existing tests.
+     * @param PipelinqContactAdapter            $pipelinq       Slice-02 adapter (publishTimelineEvent).
+     * @param TimelineRetryQueue                $retryQueue     Async-retry queue (slice 09 binding).
+     * @param ListenerSchemaResolver            $schemaResolver Resolves the entity's schema id to its slug.
+     * @param LoggerInterface                   $logger         PSR logger for fail-soft observability.
+     * @param CustomerBridgeMetricsService|null $metrics        Optional metrics aggregator (slice 11); NULL-safe for existing tests.
      */
     public function __construct(
         private readonly PipelinqContactAdapter $pipelinq,
         private readonly TimelineRetryQueue $retryQueue,
+        private readonly ListenerSchemaResolver $schemaResolver,
         private readonly LoggerInterface $logger,
         private readonly ?CustomerBridgeMetricsService $metrics=null
     ) {
@@ -100,7 +103,7 @@ final class BookingCreatedTimelinePublishListener implements IEventListener
                 return;
             }
 
-            if ($this->isAppointmentSchema(schema: (string) $entity->getSchema()) === false) {
+            if ($this->isAppointmentSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false) {
                 return;
             }
 

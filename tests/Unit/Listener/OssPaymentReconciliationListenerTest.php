@@ -32,6 +32,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\OssPaymentReconciliation;
 use OCA\Shillinq\Service\OssRecordResolver;
 use OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService;
@@ -65,6 +66,14 @@ class OssPaymentReconciliationListenerTest extends TestCase
     private OssPaymentReconciliationListener $listener;
 
     /**
+     * Mock schema resolver — turns the entity's numeric schema id into a slug,
+     * exactly as it does in production.
+     *
+     * @var ListenerSchemaResolver&\PHPUnit\Framework\MockObject\MockObject
+     */
+    private ListenerSchemaResolver $schemaResolver;
+
+    /**
      * Set up the real chain over an in-memory ObjectService.
      *
      * @return void
@@ -87,13 +96,29 @@ class OssPaymentReconciliationListenerTest extends TestCase
             logger: $this->createMock(LoggerInterface::class),
         );
 
+        $this->schemaResolver = $this->createMock(ListenerSchemaResolver::class);
+
         $this->listener = new OssPaymentReconciliationListener(
             resolver: $resolver,
             reconciliation: new OssPaymentReconciliation(),
+            schemaResolver: $this->schemaResolver,
             logger: $this->createMock(LoggerInterface::class),
         );
 
     }//end setUp()
+
+    /**
+     * Stub the schema resolver so it resolves the entity's id to a slug.
+     *
+     * @param string $slug Slug the resolver reports.
+     *
+     * @return void
+     */
+    private function resolvesTo(string $slug): void
+    {
+        $this->schemaResolver->method('schemaSlug')->willReturn($slug);
+
+    }//end resolvesTo()
 
     /**
      * Seed the declared OssReturn (DE 1802.00 + FR 1440.00).
@@ -143,8 +168,12 @@ class OssPaymentReconciliationListenerTest extends TestCase
 
         $this->objects->seed('OssPayment', [$payment]);
 
+        $this->resolvesTo('OssPayment');
+
+        // OpenRegister stamps the numeric schema **id** on the entity — the
+        // slug only ever arrives via the resolver.
         $entity = $this->createMock(ObjectEntity::class);
-        $entity->method('getSchema')->willReturn('OssPayment');
+        $entity->method('getSchema')->willReturn('3311');
         $entity->method('getObject')->willReturn($payment);
 
         $event = $this->createConfiguredMock(ObjectCreatedEvent::class, ['getObject' => $entity]);
@@ -240,8 +269,10 @@ class OssPaymentReconciliationListenerTest extends TestCase
      */
     public function testOtherSchemaIsIgnored(): void
     {
+        $this->resolvesTo('OssReturn');
+
         $entity = $this->createMock(ObjectEntity::class);
-        $entity->method('getSchema')->willReturn('OssReturn');
+        $entity->method('getSchema')->willReturn('3310');
         $entity->method('getObject')->willReturn(['id' => 'ossret-1']);
 
         $event = $this->createConfiguredMock(ObjectCreatedEvent::class, ['getObject' => $entity]);

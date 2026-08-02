@@ -43,6 +43,7 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
 use OCA\Shillinq\Service\AdministrationContextService;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\SupplierInvoiceService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -219,8 +220,15 @@ final class SupplierInvoicePeppolIngestionIntegrationTest extends TestCase
             logger: $logger,
         );
 
+        // OpenRegister stamps the numeric schema id on the entity; the slug
+        // only ever reaches the listener through the resolver.
+        $schemaResolver = $this->createMock(ListenerSchemaResolver::class);
+        $schemaResolver->method('schemaSlug')
+            ->willReturn(PeppolInboundUblInvoiceListener::PEPPOL_INBOUND_SCHEMA);
+
         return new PeppolInboundUblInvoiceListener(
             supplierInvoices: $service,
+            schemaResolver: $schemaResolver,
             logger: $logger,
         );
 
@@ -293,7 +301,9 @@ XML;
     private function peppolInboundEntity(array $message): ObjectEntity
     {
         $entity = new ObjectEntity();
-        $entity->setSchema(PeppolInboundUblInvoiceListener::PEPPOL_INBOUND_SCHEMA);
+        // The numeric schema **id**, exactly as OpenRegister stamps it
+        // (`setSchema((string) $schema->getId())`) — never the slug.
+        $entity->setSchema('6104');
         $entity->setObject($message);
 
         return $entity;

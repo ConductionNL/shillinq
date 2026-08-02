@@ -42,6 +42,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Service\InnovatieboxAuditEventLogger;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\VsoLockingValidator;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
@@ -146,23 +147,42 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase
     }//end fakeVsoValidator()
 
     /**
-     * Build an ObjectEntity stub with a payload, schema slug and uuid.
+     * Build an ObjectEntity stub carrying a numeric schema **id**, exactly as
+     * OpenRegister stamps it (`setSchema((string) $schema->getId())`).
      *
-     * @param string              $schema  Schema slug.
-     * @param array<string,mixed> $payload Object payload.
-     * @param string|null         $uuid    Optional uuid.
+     * A hand-built entity carrying the slug is a shape production never
+     * produces; the slug arrives through {@see ListenerSchemaResolver}.
+     *
+     * @param string              $schemaId Numeric schema id as OR stamps it.
+     * @param array<string,mixed> $payload  Object payload.
+     * @param string|null         $uuid     Optional uuid.
      *
      * @return ObjectEntity
      */
-    private function entity(string $schema, array $payload, ?string $uuid='uuid-1'): ObjectEntity
+    private function entity(string $schemaId, array $payload, ?string $uuid='uuid-1'): ObjectEntity
     {
         $entity = new ObjectEntity();
-        $entity->setSchema($schema);
+        $entity->setSchema($schemaId);
         $entity->setObject($payload);
         $entity->setUuid($uuid);
         return $entity;
 
     }//end entity()
+
+    /**
+     * Build a ListenerSchemaResolver stub that reports a given schema slug.
+     *
+     * @param string $slug Slug the resolver resolves the entity's id to.
+     *
+     * @return ListenerSchemaResolver
+     */
+    private function resolver(string $slug): ListenerSchemaResolver
+    {
+        $resolver = $this->createMock(ListenerSchemaResolver::class);
+        $resolver->method('schemaSlug')->willReturn($slug);
+        return $resolver;
+
+    }//end resolver()
 
     /**
      * A NexusCalculation create emits NexusCalculation.calculated with the
@@ -174,9 +194,14 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase
     {
         $logger   = $this->fakeLogger();
         $vso      = $this->fakeVsoValidator(false);
-        $listener = new InnovatieboxAuditTrailListener($logger, $vso, $this->recordingLogger());
+        $listener = new InnovatieboxAuditTrailListener(
+            $logger,
+            $vso,
+            $this->resolver('NexusCalculation'),
+            $this->recordingLogger()
+        );
 
-        $entity = $this->entity('NexusCalculation', [
+        $entity = $this->entity('4101', [
             'qualifying_asset_id'             => 'asset-1',
             'administrationId'                => 'adm-x',
             'boekjaar'                        => 2026,
@@ -212,9 +237,14 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase
     public function testForfaitairCreateEmitsCapAppliedTwinEvent(): void
     {
         $logger   = $this->fakeLogger();
-        $listener = new InnovatieboxAuditTrailListener($logger, $this->fakeVsoValidator(false), $this->recordingLogger());
+        $listener = new InnovatieboxAuditTrailListener(
+            $logger,
+            $this->fakeVsoValidator(false),
+            $this->resolver('IBProfitAttribution'),
+            $this->recordingLogger()
+        );
 
-        $entity = $this->entity('IBProfitAttribution', [
+        $entity = $this->entity('4102', [
             'qualifying_asset_id'             => 'asset-1',
             'administrationId'                => 'adm-x',
             'boekjaar'                        => 2026,
@@ -242,15 +272,20 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase
     public function testProfitFinalizedFiresWhenVsoFlagFlips(): void
     {
         $logger   = $this->fakeLogger();
-        $listener = new InnovatieboxAuditTrailListener($logger, $this->fakeVsoValidator(false), $this->recordingLogger());
+        $listener = new InnovatieboxAuditTrailListener(
+            $logger,
+            $this->fakeVsoValidator(false),
+            $this->resolver('IBProfitAttribution'),
+            $this->recordingLogger()
+        );
 
-        $prior = $this->entity('IBProfitAttribution', [
+        $prior = $this->entity('4102', [
             'qualifying_asset_id' => 'asset-1',
             'administrationId'    => 'adm-x',
             'boekjaar'            => 2026,
             'vso_locked'          => false,
         ]);
-        $next  = $this->entity('IBProfitAttribution', [
+        $next  = $this->entity('4102', [
             'qualifying_asset_id' => 'asset-1',
             'administrationId'    => 'adm-x',
             'boekjaar'            => 2026,
@@ -278,16 +313,21 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase
     public function testProfitAmendmentBlockedWhenPriorWasLocked(): void
     {
         $logger   = $this->fakeLogger();
-        $listener = new InnovatieboxAuditTrailListener($logger, $this->fakeVsoValidator(true), $this->recordingLogger());
+        $listener = new InnovatieboxAuditTrailListener(
+            $logger,
+            $this->fakeVsoValidator(true),
+            $this->resolver('IBProfitAttribution'),
+            $this->recordingLogger()
+        );
 
-        $prior = $this->entity('IBProfitAttribution', [
+        $prior = $this->entity('4102', [
             'qualifying_asset_id' => 'asset-1',
             'administrationId'    => 'adm-x',
             'boekjaar'            => 2026,
             'vso_locked'          => true,
             'voordeel_innovatiebox' => 72000,
         ]);
-        $next  = $this->entity('IBProfitAttribution', [
+        $next  = $this->entity('4102', [
             'qualifying_asset_id' => 'asset-1',
             'administrationId'    => 'adm-x',
             'boekjaar'            => 2026,
@@ -317,9 +357,14 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase
     public function testLossOffsetAppliedFiresOnVerrekendGrowth(): void
     {
         $logger   = $this->fakeLogger();
-        $listener = new InnovatieboxAuditTrailListener($logger, $this->fakeVsoValidator(false), $this->recordingLogger());
+        $listener = new InnovatieboxAuditTrailListener(
+            $logger,
+            $this->fakeVsoValidator(false),
+            $this->resolver('CarryForwardLoss'),
+            $this->recordingLogger()
+        );
 
-        $prior = $this->entity('CarryForwardLoss', [
+        $prior = $this->entity('4103', [
             'qualifying_asset_id'    => 'asset-1',
             'administrationId'       => 'adm-x',
             'origin_boekjaar'        => 2024,
@@ -327,7 +372,7 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase
             'saldo_na'               => 215000,
             'status'                 => 'open',
         ]);
-        $next = $this->entity('CarryForwardLoss', [
+        $next = $this->entity('4103', [
             'qualifying_asset_id' => 'asset-1',
             'administrationId'    => 'adm-x',
             'origin_boekjaar'     => 2024,
@@ -359,9 +404,14 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase
     public function testNonInnovatieboxSchemaIsIgnored(): void
     {
         $logger   = $this->fakeLogger();
-        $listener = new InnovatieboxAuditTrailListener($logger, $this->fakeVsoValidator(false), $this->recordingLogger());
+        $listener = new InnovatieboxAuditTrailListener(
+            $logger,
+            $this->fakeVsoValidator(false),
+            $this->resolver('GLLine'),
+            $this->recordingLogger()
+        );
 
-        $entity = $this->entity('GLLine', ['administrationId' => 'adm-x']);
+        $entity = $this->entity('4207', ['administrationId' => 'adm-x']);
         $event  = new ObjectCreatedEvent($entity);
 
         $listener->handle($event);

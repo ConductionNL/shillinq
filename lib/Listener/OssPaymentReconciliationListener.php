@@ -42,6 +42,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\OssPaymentReconciliation;
 use OCA\Shillinq\Service\OssRecordResolver;
 use OCP\EventDispatcher\Event;
@@ -78,11 +79,13 @@ class OssPaymentReconciliationListener implements IEventListener
      *
      * @param OssRecordResolver        $resolver       Reads/persists the OSS records.
      * @param OssPaymentReconciliation $reconciliation The pure-logic REQ-OSS-008 kernel.
+     * @param ListenerSchemaResolver   $schemaResolver Resolves the entity's schema id to its slug.
      * @param LoggerInterface          $logger         Logger for fail-soft diagnostics.
      */
     public function __construct(
         private readonly OssRecordResolver $resolver,
         private readonly OssPaymentReconciliation $reconciliation,
+        private readonly ListenerSchemaResolver $schemaResolver,
         private readonly LoggerInterface $logger,
     ) {
 
@@ -109,7 +112,7 @@ class OssPaymentReconciliationListener implements IEventListener
                 return;
             }
 
-            $schema = strtolower(trim((string) $entity->getSchema()));
+            $schema = strtolower(trim($this->schemaResolver->schemaSlug(entity: $entity)));
             if ($schema !== 'osspayment' && $schema !== 'oss-payment') {
                 return;
             }
