@@ -65,6 +65,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\MilestoneTemplateService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -88,17 +89,19 @@ class TenderNedAwardDetectedListener implements IEventListener
     /**
      * Construct the listener with DI dependencies.
      *
-     * @param MilestoneTemplateService $templates Pure-logic milestone planner (REQ-003).
-     * @param BudgetImpactEmitter      $budget    Emits the launchpad budget-impact CloudEvent (REQ-007).
-     * @param ContainerInterface       $container DI container for lazy OR ObjectService resolution.
-     * @param IAppConfig               $appConfig App config for register slug + tenant KvK.
-     * @param LoggerInterface          $logger    Logger for fail-soft diagnostics.
+     * @param MilestoneTemplateService $templates      Pure-logic milestone planner (REQ-003).
+     * @param BudgetImpactEmitter      $budget         Emits the launchpad budget-impact CloudEvent (REQ-007).
+     * @param ContainerInterface       $container      DI container for lazy OR ObjectService resolution.
+     * @param IAppConfig               $appConfig      App config for register slug + tenant KvK.
+     * @param ListenerSchemaResolver   $schemaResolver Resolves the entity's schema id to its slug.
+     * @param LoggerInterface          $logger         Logger for fail-soft diagnostics.
      */
     public function __construct(
         private readonly MilestoneTemplateService $templates,
         private readonly BudgetImpactEmitter $budget,
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
+        private readonly ListenerSchemaResolver $schemaResolver,
         private readonly LoggerInterface $logger,
     ) {
 
@@ -172,7 +175,7 @@ class TenderNedAwardDetectedListener implements IEventListener
             return null;
         }
 
-        $schema = (string) ($entity->getSchema() ?? '');
+        $schema = $this->schemaResolver->schemaSlug(entity: $entity);
         if ($this->isAanbestedingSchema(schema: $schema) === false) {
             return null;
         }

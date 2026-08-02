@@ -49,6 +49,7 @@ namespace OCA\Shillinq\Listener;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Service\LeasePaymentScheduleService;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -75,10 +76,12 @@ class LeaseActivationListener implements IEventListener
      * Construct the listener with DI dependencies.
      *
      * @param LeasePaymentScheduleService $scheduleService The amortization schedule generator.
+     * @param ListenerSchemaResolver      $schemaResolver  Resolves the entity's schema id to its slug.
      * @param LoggerInterface             $logger          Logger for fail-soft diagnostics.
      */
     public function __construct(
         private readonly LeasePaymentScheduleService $scheduleService,
+        private readonly ListenerSchemaResolver $schemaResolver,
         private readonly LoggerInterface $logger,
     ) {
 
@@ -107,7 +110,7 @@ class LeaseActivationListener implements IEventListener
                 return;
             }
 
-            if ($this->isLeaseContractSchema(schema: (string) $entity->getSchema()) === false) {
+            if ($this->isLeaseContractSchema(schema: $this->schemaResolver->schemaSlug(entity: $entity)) === false) {
                 return;
             }
 
