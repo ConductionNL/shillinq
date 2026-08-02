@@ -55,5 +55,13 @@
     <php>
         <env name="PHPUNIT_RUN" value="1"/>
         <env name="NEXTCLOUD_CONFIG_DIR" value="/srv/nextcloud/config"/>
+        <!--
+            ~3970 tests exhaust PHP's stock 128M CLI limit around 89% through,
+            dying with a fatal "Allowed memory size exhausted". A fatal mid-run
+            never prints the summary line, so nothing reports how many tests
+            actually ran — the same silent-abort class this harness work exists
+            to eliminate. Keep this in sync with phpunit.xml.
+        -->
+        <ini name="memory_limit" value="1G"/>
     </php>
 </phpunit>
