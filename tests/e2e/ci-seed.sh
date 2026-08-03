@@ -120,7 +120,18 @@ echo "[ci-seed] app dir: ${APP_DIR}"
 if [ -f "./occ" ]; then
 	echo "[ci-seed] enabling pretty URLs (htaccess.IgnoreFrontController=true)"
 	php ./occ config:system:set htaccess.IgnoreFrontController --value=true --type=boolean || true
-	IFC="$(php ./occ config:system:get htaccess.IgnoreFrontController 2>/dev/null || echo '')"
+	# `tail -1` is load-bearing. On this instance `occ` prints an app-bootstrap
+	# notice to STDOUT before the command's own output — run 30862592617
+	# captured
+	#
+	#     Interface "OCP\ContextChat\IContentProvider" not found
+	#     true
+	#
+	# as the value of this variable, and the gate below (correctly) rejected it
+	# even though the preceding `config:system:set` had reported success. Take
+	# the command's LAST line, which is the value; `2>/dev/null` does not help
+	# because the notice is on stdout, not stderr.
+	IFC="$(php ./occ config:system:get htaccess.IgnoreFrontController 2>/dev/null | tail -1 || echo '')"
 	echo "[ci-seed] htaccess.IgnoreFrontController -> '${IFC}'"
 
 	# GATE on the read-back. `config:system:set` can fail (read-only config,
