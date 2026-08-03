@@ -262,6 +262,86 @@ fi
 
 echo "[ci-seed] Shillinq register + schemas provisioned."
 
+# ── 2b. Complete the first-time setup wizard (ADR-042) ───────────────────────
+# THE REGISTER EXISTING IS NOT ENOUGH. `src/manifest.json` declares
+# `setup.enabled: true`, so until the wizard's four REQUIRED steps are done the
+# SPA renders a modal `<dialog>Set up this app</dialog>` OVER the whole app and
+# no page content mounts at all.
+#
+# This is not a hypothesis. It is what the first run of this job recorded
+# (30858234537): 83 failures whose message was
+#
+#     expect(locator('main, [role="main"]')).toBeVisible() — element(s) not found
+#
+# and whose captured accessibility snapshot showed Nextcloud's own header,
+# then `dialog "Set up this app"` with the tablist `Welkom bij Shillinq /
+# Juridische regio (land) / Organisatietype …`. Nothing was broken — the app
+# was simply un-set-up, and the specs' `dismissWizard()` helper only closes
+# Nextcloud's `#firstrunwizard`, not shillinq's own setup dialog.
+#
+# So complete the wizard the same way an administrator would, over its own
+# admin API (`appinfo/routes.php`: setup#saveConfig, setup#runAction,
+# setup#status). Per `SetupController::status()` the four required keys are
+# `legal_country`, `legal_region`, `rgs_template` and `administration_id`;
+# the fifth step (`seed`) is `required: false` but is run anyway because it is
+# what puts a chart of accounts, BTW tariffs and BBV taakvelden in the
+# administration — without them the ledger/tax pages render empty shells.
+#
+# `nl` + `gemeente` + `bbv` is chosen deliberately, not arbitrarily:
+# tests/e2e/bbv-compliance.spec.ts states in its header that "the specs assume
+# a `gemeente`-type administration is the active one", and `manifest.setup`'s
+# own `suggestMap` maps gemeente → bbv. No manifest page or navigation entry
+# declares a `visibility` rule at all (checked: zero occurrences), so this
+# choice cannot hide a page from the non-government specs.
+setup_post() {
+	local url="$1" payload="$2" body code
+	body="$(mktemp)"
+	code="$(
+		curl -sS -o "$body" -w '%{http_code}' --max-time 900 \
+			-u "${USER_NAME}:${USER_PASS}" \
+			-X POST -H 'Content-Type: application/json' -H 'OCS-APIRequest: true' \
+			--data "$payload" "${BASE}${url}" || echo 000
+	)"
+	echo "[ci-seed] POST ${url} -> HTTP ${code}"
+	head -c 800 "$body"; echo
+	if [ "$code" != "200" ]; then
+		echo "::error::Setup step ${url} returned HTTP ${code}; the first-time wizard cannot complete."
+		echo "::error::Every UI spec would then fail on 'main not found' while a 'Set up this app' dialog covers the SPA."
+		exit 1
+	fi
+}
+
+setup_post '/index.php/apps/shillinq/api/setup/config' \
+	'{"legal_country":"nl","legal_region":"gemeente","rgs_template":"bbv"}'
+setup_post '/index.php/apps/shillinq/api/setup/action/init-administration' '{}'
+setup_post '/index.php/apps/shillinq/api/setup/action/seed' '{}'
+
+# VERIFY, do not assume. `status()` is also what persists
+# `setup_completed_version`, which is the manifest's `completionConfigKey` —
+# so this call is both the assertion and the last write the wizard needs.
+STATUS_BODY="$(mktemp)"
+STATUS_CODE="$(curl -sS -o "$STATUS_BODY" -w '%{http_code}' --max-time 300 \
+	-u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+	"${BASE}/index.php/apps/shillinq/api/setup/status" || echo 000)"
+echo "[ci-seed] setup/status HTTP ${STATUS_CODE}"
+cat "$STATUS_BODY"; echo
+python3 - "$STATUS_BODY" "$STATUS_CODE" <<'PY'
+import json, sys
+path, code = sys.argv[1], sys.argv[2]
+raw = open(path).read()
+if code != '200':
+    print(f'::error::setup/status returned HTTP {code}; cannot confirm the wizard is complete.')
+    print(raw[:500])
+    sys.exit(1)
+body = json.loads(raw)
+if body.get('completed') is not True:
+    undone = [k for k, v in (body.get('steps') or {}).items() if not v.get('done')]
+    print(f'::error::Shillinq first-time setup is NOT complete. Unfinished steps: {undone}')
+    print('::error::The SPA will render a "Set up this app" dialog over every page and no spec can reach `main`.')
+    sys.exit(1)
+print('[ci-seed] first-time setup complete:', json.dumps(body.get('steps')))
+PY
+
 # ── 3. Warm the SPA so the first spec doesn't pay the cold start ─────────────
 # The shared workflow serves Nextcloud with `php -S 0.0.0.0:8080`. It sets
 # PHP_CLI_SERVER_WORKERS=8, but the first hit still pays a cold opcache and the
