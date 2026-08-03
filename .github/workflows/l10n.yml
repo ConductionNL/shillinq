@@ -13,6 +13,8 @@ jobs:
   l10n:
     name: l10n coverage (en.json)
     runs-on: ubuntu-latest
+    # Observed over 193 runs: max 1.1 min.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
