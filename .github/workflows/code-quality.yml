@@ -46,5 +46,39 @@ jobs:
       # `Conduction`, which does not exist — the same wrong-org bug that kept the
       # whole workflow from resolving, hiding in a comment where a `uses:` grep
       # could not see it.
-      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"main"}]'
+      #
+      # `ref` moved from `main` to `development`. Shillinq's own
+      # `appinfo/routes.php` returns `\OCA\OpenRegister\AppHost\Routes::standard()`,
+      # so the CI instance needs the AppHost plumbing — including the
+      # `settings#load` route the E2E seed uses for its forced register import —
+      # and `development` is where that lands first. Pinning the foundation to
+      # `main` while this app tracks `development` is what makes a CI instance
+      # behave unlike any environment the app is actually developed against.
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
       enable-sbom: true
+
+      # ── E2E browser tests ────────────────────────────────────────────────
+      # Previously ABSENT entirely, which is worse than `false`: the shared
+      # workflow gates the job on `if: inputs.enable-playwright && …`, so an
+      # omitted input made `quality / E2E Tests (Playwright)` report **skipped**
+      # on every run — a conclusion that is not red, appears in the job list,
+      # and is therefore indistinguishable at a glance from a job that passed.
+      # Shillinq has carried 55 spec files behind that skip.
+      enable-playwright: true
+      # Double duty in the shared workflow: it is both the directory the
+      # "Validate Playwright tests exist" step counts *.spec.ts / *.spec.js in,
+      # AND the FIRST place the run step looks for a config
+      # (`${playwright-test-path}/playwright.config.ts`), falling back to the
+      # repo root only if that file is absent. We ship
+      # tests/e2e/playwright.config.ts precisely so that lookup hits it: the run
+      # step passes no `--project`, so the ROOT config would also run
+      # `docs-capture` (re-shooting every documentation screenshot on every PR)
+      # and `visual` (pixel baselines that tests/e2e/visual/README.md documents
+      # as impossible to byte-match on a Linux runner).
+      playwright-test-path: tests/e2e
+      # cwd for this step is the Nextcloud server root. Forces the OpenRegister
+      # import over the admin HTTP API and then VERIFIES the register + schema
+      # slugs, because the IRepairStep path runs with no user session and is
+      # denied by OpenRegister's RBAC — an error `InitializeSettings::run()`
+      # swallows, leaving `occ app:enable shillinq` exiting 0 with no register.
+      playwright-seed-command: 'bash apps/shillinq/tests/e2e/ci-seed.sh'
