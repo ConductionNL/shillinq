@@ -17,9 +17,23 @@
 # tears it down. Collection variables are parameterised (base_url / admin_user /
 # admin_password) so the suite is portable across environments.
 #
+# Target instance:
+#   There is deliberately NO default base URL. This runner PERFORMS WRITES —
+#   every collection seeds objects, posts filings and tears them down again.
+#   The previous default was `http://localhost:8080`, which on a developer box
+#   is the *shared* Nextcloud dev container, so an invocation with no
+#   environment set silently created and deleted fixtures in an instance other
+#   sessions were using. Failing loudly on an unset variable is strictly better
+#   than writing into someone else's environment.
+#
+#   The URL is resolved from the first of these that is set and non-empty:
+#     PLAYWRIGHT_BASE_URL, BASE_URL, NEXTCLOUD_URL, NC_BASE_URL
+#   `BASE_URL` is the name the shared ConductionNL/.github quality workflow
+#   exports, so it MUST stay accepted: a resolver that honours only
+#   PLAYWRIGHT_BASE_URL hard-fails every CI run.
+#
 # Usage:
-#   ./run-newman.sh                                  # defaults to localhost:8080, admin:admin
-#   BASE_URL=http://localhost:8080 ./run-newman.sh
+#   BASE_URL=http://localhost:8097 ./run-newman.sh   # your own isolated instance
 #   ADMIN_USER=admin ADMIN_PASS=admin ./run-newman.sh
 #
 # Uses a globally-installed `newman` if present, otherwise falls back to
@@ -40,7 +54,37 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-BASE_URL="${BASE_URL:-http://localhost:8080}"
+# Resolve the instance under test. No default: see the "Target instance" note
+# above. Order matters only in that the most specific name wins; every one of
+# them is honoured because different callers export different names (CI exports
+# BASE_URL, the Playwright suites export PLAYWRIGHT_BASE_URL, the docker-compose
+# helpers export NEXTCLOUD_URL / NC_BASE_URL).
+BASE_URL="${PLAYWRIGHT_BASE_URL:-${BASE_URL:-${NEXTCLOUD_URL:-${NC_BASE_URL:-}}}}"
+
+if [ -z "${BASE_URL}" ]; then
+  cat >&2 <<'EOF'
+ERROR: no target instance configured.
+
+None of PLAYWRIGHT_BASE_URL, BASE_URL, NEXTCLOUD_URL or NC_BASE_URL is set.
+
+This runner deliberately has no default: it used to fall back to
+http://localhost:8080, which is the SHARED dev container, and the collections
+it runs create and delete objects. Pointing them at the shared instance
+corrupts an environment other sessions are using.
+
+Point it at your own isolated instance, e.g.
+  BASE_URL=http://localhost:8097 ./run-newman.sh
+
+In CI the shared quality workflow exports BASE_URL, which is also accepted;
+if you are seeing this in CI, that export is missing.
+EOF
+  exit 2
+fi
+
+# Normalise away any trailing slashes so `${base_url}/index.php/...` in the
+# collections never produces a double slash.
+BASE_URL="${BASE_URL%"${BASE_URL##*[!/]}"}"
+
 ADMIN_USER="${ADMIN_USER:-admin}"
 ADMIN_PASS="${ADMIN_PASS:-admin}"
 
