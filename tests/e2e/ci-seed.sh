@@ -79,6 +79,82 @@ USER_PASS="${ADMIN_PASSWORD:-${NC_ADMIN_PASS:-admin}}"
 echo "[ci-seed] target:  ${BASE}"
 echo "[ci-seed] app dir: ${APP_DIR}"
 
+# ── 0. Make the CI instance emit PRETTY URLs ─────────────────────────────────
+# The SPA builds its vue-router history base as
+#
+#     createWebHistory(generateUrl('/apps/shillinq'))        (src/main.js)
+#
+# and `generateUrl` from `@nextcloud/router` prefixes `/index.php` unless
+# `OC.config.modRewriteWorking` is true. Nextcloud sets that flag from
+# `htaccess.IgnoreFrontController` (lib/private/Template/JSConfigHelper.php —
+# a STRICT `=== true`, so it must be stored as a real boolean).
+#
+# A default CI install leaves it false, so on the runner the router base is
+# `/index.php/apps/shillinq` while every spec navigates to `/apps/shillinq/…`.
+# The page still SERVES — the workflow's `php -S` front-controller router maps
+# it — so nothing 404s and nothing errors. But vue-router sees a location that
+# does not start with its base, falls through to main.js's
+# `{ path: '/:pathMatch(.*)*', redirect: '/' }` catch-all, and lands on
+# `/index.php/apps/shillinq/`. Every deep-linked spec then asserts against the
+# DASHBOARD instead of its own page.
+#
+# That is not a hypothesis either. Run 30860327035 recorded it verbatim:
+#
+#     Expected substring: "/cashflow/dashboard"
+#     Received string:    "http://localhost:8080/index.php/apps/shillinq/"
+#
+# — note the `/index.php` in a URL the spec never asked for. The truncated-
+# bundle control run (30858387599) is the other half of the proof: with a
+# 0-byte bundle the same assertion PASSES, because with no router there is no
+# redirect. The redirect is the SPA's, and its base is the only thing that
+# produces it.
+#
+# The docker dev containers this suite was authored against have mod_rewrite
+# working, so the specs' `/apps/shillinq` literals are correct there. Aligning
+# the CI instance is the same class of fix as pinning `additional-apps` to
+# `development`: stop the CI instance behaving unlike every environment the app
+# is actually developed against.
+#
+# Only attempted when `occ` is reachable, i.e. cwd is the Nextcloud server root
+# (which is exactly how the workflow invokes this script).
+if [ -f "./occ" ]; then
+	echo "[ci-seed] enabling pretty URLs (htaccess.IgnoreFrontController=true)"
+	php ./occ config:system:set htaccess.IgnoreFrontController --value=true --type=boolean || true
+	IFC="$(php ./occ config:system:get htaccess.IgnoreFrontController 2>/dev/null || echo '')"
+	echo "[ci-seed] htaccess.IgnoreFrontController -> '${IFC}'"
+
+	# GATE on the read-back. `config:system:set` can fail (read-only config,
+	# wrong type coercion) and still exit 0 under `|| true`, and Nextcloud's
+	# check is a STRICT `=== true` — a value stored as the STRING "true" reads
+	# back identically here but leaves modRewriteWorking false. So require the
+	# literal `true`, and say what breaks if it is not.
+	if [ "$IFC" != "true" ]; then
+		echo "::error::htaccess.IgnoreFrontController is '${IFC}', not 'true'."
+		echo "::error::The SPA's vue-router base stays /index.php/apps/shillinq while the specs"
+		echo "::error::navigate to /apps/shillinq/… — every deep link then falls through main.js's"
+		echo "::error::'/:pathMatch(.*)*' catch-all and silently redirects to the dashboard, so the"
+		echo "::error::specs assert against the wrong page while nothing 404s or errors."
+		exit 1
+	fi
+
+	# Corroborate against a RENDERED page, because that is the value the SPA
+	# actually consumes — `occ` only proves config.php was written. Non-fatal:
+	# Nextcloud serves OC.config INLINE only when the client advertises CSP v3
+	# support, and falls back to a separate `core.OCJS.getConfig` script for
+	# everyone else. curl is in the "everyone else" bucket, so a miss here is
+	# expected and must not abort the job; the gate above is the one that binds.
+	CFG_HTML="$(mktemp)"
+	curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' --max-time 120 \
+		"${BASE}/index.php/apps/files/" -o "$CFG_HTML" || true
+	if grep -q 'modRewriteWorking":true' "$CFG_HTML"; then
+		echo "[ci-seed] modRewriteWorking is TRUE in the served page config."
+	else
+		echo "[ci-seed] (inline OC.config not present in the curl-rendered page; relying on the occ read-back)"
+	fi
+else
+	echo "[ci-seed] no ./occ in $(pwd) — skipping the pretty-URL config step."
+fi
+
 # ── 1. Import the Shillinq configuration ─────────────────────────────────────
 # Shillinq's `appinfo/routes.php` returns
 # `\OCA\OpenRegister\AppHost\Routes::standard()`, whose canonical table ships
