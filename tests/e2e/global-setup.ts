@@ -112,11 +112,25 @@ function readAppVersion(): string {
  * the specs) and the ADR-042 setup wizard (completed by `ci-seed.sh` over its
  * admin API). The walkthrough had no equivalent, so it is handled here.
  *
- * `CnAppRoot.walkthroughSeenVersion()` reads `localStorage` — NOT a server-side
- * per-user config, despite what `manifest.walkthrough.completionConfigKey`
- * suggests; the shipped getter's own docblock says apps wanting cross-device
- * persistence must override the `#walkthrough` slot. `useWalkthrough`'s
- * `autoStartTour` then gates on it:
+ * WHERE THE SEEN-VERSION LIVES (verified against @conduction/nextcloud-vue
+ * 3.0.0-vue3.4, the version this branch pins — the mechanism CHANGED in v3 and
+ * the old reading of it would have been wrong):
+ *
+ *   - `localStorage['cn-walkthrough-seen:' + appId]`
+ *     (`WALKTHROUGH_SEEN_STORAGE_PREFIX`) is the synchronous per-browser mirror
+ *     and is what `CnAppRoot` seeds `walkthroughSeenVersionValue` from, so no
+ *     tour can flash before the network settles.
+ *   - `GET /apps/{appId}/api/preferences/{completionConfigKey}` is the
+ *     authoritative per-user server preference, loaded asynchronously after.
+ *
+ * Seeding the mirror alone is sufficient, and that is a property of
+ * `loadWalkthroughSeenVersion`, not an accident: it reads `local` first and
+ * returns it on EVERY non-winning path — endpoint missing (`catch`), an HTML
+ * SPA-fallback body (`!isPlainObject(data) || !('value' in data)`), and an
+ * empty/never-set server value. The server value wins only when it is itself
+ * non-empty, which suppresses the tour just as well.
+ *
+ * `useWalkthrough`'s `autoStartTour` (identical in 1.x and 3.x) then gates on:
  *
  *     if (tour.trigger === 'first-visit' && !seenVersion) return tour
  *
