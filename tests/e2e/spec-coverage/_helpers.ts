@@ -126,8 +126,33 @@ export async function assertIndexSurface(page: Page, title: string, opts: { titl
 	//    already proved a surface exists, so a visible title is asserted as a
 	//    soft signal: if the matcher is found it must be visible; if the page
 	//    genuinely renders a different header we still have surface proof.
+	//
+	//    ⚠️ SCOPE THIS TO THE CONTENT REGION, NOT `#content-vue`.
+	//    `#content-vue` is NcContent — it wraps BOTH `#app-navigation-vue`
+	//    (the sidebar) and `#app-content-vue` (the page). Every shillinq page
+	//    title is also a navigation label, so `host.getByText(title)` matched
+	//    the SIDEBAR entry first, and a nav entry inside a collapsed group is
+	//    `hidden` — so `toBeVisible()` failed on every page, on every run,
+	//    without ever having looked at the page. Run 30862869279 recorded it
+	//    literally:
+	//
+	//        18 × locator resolved to
+	//        <span class="app-navigation-entry__name">KOR registration</span>
+	//
+	//    …while the same page's `<main>` had rendered fine ("Add KOR Regime",
+	//    "Actions", "No items found"). Because every spec-coverage describe is
+	//    `mode: 'serial'`, that one false failure aborted the rest of its file:
+	//    it is where the bulk of the suite's "did not run" count came from.
+	//
+	//    `#app-content-vue` is NcAppContent's own id (it is the `<main>`); the
+	//    `main` alternative keeps this working if a page mounts the content
+	//    region without that id. When neither exists the locator simply finds
+	//    nothing and the soft check is skipped — the same degradation the
+	//    "matcher not found" path already had, and the mandatory surface
+	//    assertion above is untouched and still gates.
 	const matcher = opts.titleRe ?? new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
-	const titleNode = host.getByText(matcher).first()
+	const content = host.locator('#app-content-vue, main').first()
+	const titleNode = content.getByText(matcher).first()
 	if (await titleNode.count().catch(() => 0)) {
 		await expect(titleNode, `title "${title}" should be visible when present`).toBeVisible({ timeout: 8_000 })
 	}
