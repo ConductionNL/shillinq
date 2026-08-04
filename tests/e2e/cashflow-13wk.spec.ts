@@ -81,15 +81,28 @@ test.describe('cashflow 13wk — manifest pages render', () => {
 	test('dashboard exposes 13-week chart widget slot', async ({ page }) => {
 		await page.goto(APP + '/cashflow/dashboard')
 		await page.waitForLoadState('domcontentloaded')
-		// Either a chart canvas, a manifest-rendered widget container, or the
-		// CashflowDashboard skeleton's chart slot must be present.
-		const chartCandidates = page.locator('[data-widget="cashflow-13week-chart"], canvas, [data-widget-id="cashflow-13week-chart"]')
-		await expect(chartCandidates.first()).toBeVisible({ timeout: 10_000 })
+		// The CashflowDashboard page is manifest-driven (type: "dashboard"), so
+		// CnDashboardGrid renders one `role="group"` per widget whose accessible
+		// name is the manifest `widgets[].id`. `exact: true` because Playwright's
+		// `name` is a substring match by default. The chart itself is ApexCharts,
+		// which mounts an `<svg class="apexcharts-svg">` — never a `<canvas>`,
+		// which is why the previous `canvas` candidate could not match.
+		const chart = page.getByRole('group', { name: 'cashflow-13week-chart', exact: true })
+		await expect(chart).toBeVisible({ timeout: 10_000 })
+		await expect(chart.locator('svg.apexcharts-svg')).toBeVisible({ timeout: 10_000 })
 	})
 
 	/**
 	 * @e2e bookkeeping-cashflow-13wk/REQ-CF-016/dashboard-has-export-pdf-affordance
 	 */
+	// KNOWN RED — REQ-CF-016 is not wired end to end. The only "Export PDF"
+	// affordance in the tree is `src/components/cashflow/CashflowDashboard.vue`,
+	// which is NOT registered in `src/registry.js` (positive control:
+	// `CashflowChartWidget` IS, at registry.js:279/418) and is referenced by no
+	// manifest page, so it never mounts. `pages[CashflowDashboard].config`
+	// declares no `headerActions`, and `lib/Service/CashflowPdfRenderer.php`
+	// has no controller and no route in appinfo/routes.php. Left failing on
+	// purpose: the assertion is the open defect, not the bug.
 	test('dashboard exposes an Export PDF affordance', async ({ page }) => {
 		await page.goto(APP + '/cashflow/dashboard')
 		await page.waitForLoadState('domcontentloaded')

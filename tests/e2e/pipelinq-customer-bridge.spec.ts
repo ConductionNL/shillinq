@@ -31,9 +31,37 @@
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-10-integration-e2e-tests/tasks.md
  */
 
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page, type Response } from '@playwright/test'
 
 const SHILLINQ_ADMIN_SETTINGS = '/settings/admin/shillinq'
+
+/** The panel's own save endpoint (PipelinqSettingsController#create). */
+const SETTINGS_ENDPOINT = '/apps/shillinq/api/pipelinq/settings'
+
+/**
+ * Click THIS panel's Save and wait for its POST to land.
+ *
+ * Two defects made the persistence assertion unprovable before:
+ *   1. `AdminRoot.vue` renders `Settings.vue` — which ships its own "Save"
+ *      button — ABOVE `PipelinqIntegration.vue`, so
+ *      `getByRole('button', { name: /Save/i }).first()` clicked the wrong
+ *      form and the pipelinq endpoint was never POSTed at all.
+ *   2. `save()` is a `fetch`; `waitForLoadState('domcontentloaded')` returns
+ *      immediately on an already-loaded SPA page, so the following
+ *      `page.reload()` could abort the request in flight.
+ * Scoping to `pipelinq-save` and awaiting the response fixes both, and
+ * asserting the status turns a silently-rejected save into a red test.
+ */
+async function savePipelinqPanel(page: Page): Promise<Response> {
+	const posted = page.waitForResponse(
+		(res) => res.url().includes(SETTINGS_ENDPOINT) && res.request().method() === 'POST',
+		{ timeout: 15_000 },
+	)
+	await page.getByTestId('pipelinq-save').click()
+	const response = await posted
+	expect(response.status(), 'pipelinq settings POST must succeed').toBe(200)
+	return response
+}
 
 test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 
@@ -103,17 +131,9 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 			await token.fill('test-token-shilling-12345')
 		}
 
-		// The Save action lives next to "Test connection" — match by
-		// accessible name. We do NOT block on the network here; this
-		// task only verifies the UI surface so a follow-up reload can
-		// validate persistence.
-		const save = page.getByRole('button', { name: /Save/i }).first()
-		if (await save.isVisible().catch(() => false)) {
-			await save.click()
-			// Wait for the spinner to settle. The "Saving…" label
-			// disappears once the request completes.
-			await page.waitForLoadState('domcontentloaded')
-		}
+		// Save THIS panel (see savePipelinqPanel: the admin page carries a
+		// second, unrelated "Save" above it) and wait for its POST to land.
+		await savePipelinqPanel(page)
 
 		// Endpoint persists in the form after Save.
 		await expect(endpoint).toHaveValue('https://pipelinq.example.test/api', { timeout: 5_000 })
@@ -179,11 +199,10 @@ test.describe('pipelinq customer-bridge — admin configuration panel', () => {
 		const persistedValue = 'https://pipelinq.persistence.test/api'
 		await endpoint.fill(persistedValue)
 
-		const save = page.getByRole('button', { name: /Save/i }).first()
-		if (await save.isVisible().catch(() => false)) {
-			await save.click()
-			await page.waitForLoadState('domcontentloaded')
-		}
+		// The POST must have completed before the reload, otherwise the
+		// navigation aborts it and the "did it persist?" question is never
+		// actually asked.
+		await savePipelinqPanel(page)
 
 		await page.reload()
 		await page.waitForLoadState('domcontentloaded')

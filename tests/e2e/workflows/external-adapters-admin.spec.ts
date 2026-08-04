@@ -23,10 +23,15 @@
  *   4. No app-origin console error and no 5xx from the adapter endpoints
  *      during the journey.
  *
- * The pages are declarative manifest routes (ADR-037) served by the SPA shell,
- * so the spec reaches them by deep-linking the manifest route and, if the SPA
- * resets a deep-link to the dashboard, by clicking the "External Connections"
- * nav node — the reliable in-app path documented for the Conduction SPAs.
+ * The pages are declarative manifest routes (ADR-037) served by the SPA shell.
+ * The DEEP LINK is the only way in: `src/menu-layout.json#removals` retires
+ * every `ExternalAdapter*` menu leaf ("their PAGES stay routable for deep links
+ * and e2e specs"), so the nav node this spec used to fall back to does not
+ * exist. That fallback was the flake: `/external-adapters` is a lazily-loaded
+ * manifest fragment plus an admin API round-trip, and whenever it needed more
+ * than 8s the fallback navigated AWAY to the dashboard and could never
+ * recover — which is exactly what the CI page snapshot shows (a "Financial
+ * overview" heading under a `.external-adapters__list` timeout).
  *
  * @spec openspec/changes/bookkeeping-bank-connectors/specs/bookkeeping-bank-connectors/spec.md
  */
@@ -68,26 +73,23 @@ function collectAppErrors(page: Page): string[] {
 }
 
 /**
- * Reach the External Adapters status index. Deep-link first; if the SPA resets
- * to the dashboard, fall back to clicking the "External Connections" nav node.
+ * Reach the External Adapters status index by deep link, then wait for the
+ * page's own two-phase mount: `ExternalAdaptersStatus.vue` renders its heading
+ * immediately and swaps `.external-adapters__loading` for
+ * `.external-adapters__list` only once `/api/admin/external-adapters`
+ * resolves. Waiting on those two signals in order is deterministic; there is
+ * no in-app nav fallback because the menu leaves are retired by
+ * `menu-layout.json#removals`, so the old fallback could only ever land on the
+ * dashboard and make the failure unrecoverable.
  */
 async function gotoAdapterStatus(page: Page): Promise<void> {
 	await page.goto(STATUS_ROUTE, { waitUntil: 'domcontentloaded' })
-	const list = page.locator('.external-adapters__list')
-	if (await list.first().isVisible({ timeout: 8_000 }).catch(() => false)) {
-		return
-	}
-	// Fallback: open the app root and navigate via the nav tree.
-	await page.goto(`${APP}/`, { waitUntil: 'domcontentloaded' })
-	const nav = page.locator('[id^="app-navigation"], .app-navigation, nav').first()
-	const parent = nav.getByText('External Connections', { exact: false }).first()
-	if (await parent.isVisible().catch(() => false)) {
-		await parent.click().catch(() => {})
-	}
-	const statusLink = nav.getByText('Adapter Status', { exact: false }).first()
-	if (await statusLink.isVisible().catch(() => false)) {
-		await statusLink.click().catch(() => {})
-	}
+	// Phase 1 — the custom page component mounted (renders during loading too).
+	await expect(page.getByRole('heading', { name: 'External Connections' })).toBeVisible({ timeout: 15_000 })
+	// Phase 2 — the admin fetch resolved and the list replaced the spinner.
+	// An `.external-adapters__error` here means the endpoint refused; surface
+	// it rather than time out on an opaque selector miss.
+	await expect(page.locator('.external-adapters__error')).toHaveCount(0)
 	await expect(page.locator('.external-adapters__list').first()).toBeVisible({ timeout: 15_000 })
 }
 

@@ -32,7 +32,8 @@
 		{
 			"id": "BbvComplianceDashboard",
 			"route": "/bbv-provincie/compliance-dashboard",
-			"type": "report",
+			"type": "custom",
+			"component": "BbvProvincieComplianceDashboard",
 			"title": "BBV Compliance Dashboard",
 			"visibility": {
 				"field": "administrationType",
@@ -221,7 +222,8 @@
 		{
 			"id": "BudgetToProgrammeLinker",
 			"route": "/bbv-provincie/budget-to-programme",
-			"type": "index",
+			"type": "custom",
+			"component": "BudgetToProgrammeLinker",
 			"title": "Budget Links",
 			"visibility": {
 				"field": "administrationType",
@@ -351,7 +353,8 @@
 		{
 			"id": "BudgetToProgrammeLinkerDetail",
 			"route": "/bbv-provincie/budget-to-programme/:id",
-			"type": "detail",
+			"type": "custom",
+			"component": "BudgetToProgrammeLinkerDetail",
 			"title": "GL line",
 			"visibility": {
 				"field": "administrationType",

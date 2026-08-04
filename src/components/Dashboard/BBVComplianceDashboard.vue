@@ -209,7 +209,7 @@ export default {
 					params.administrationId = this.administrationId
 				}
 				const response = await axios.get(
-					generateUrl('/apps/shillinq/bbv-dashboard'),
+					generateUrl('/apps/shillinq/api/bbv-dashboard'),
 					{ params },
 				)
 				const data = response.data || {}

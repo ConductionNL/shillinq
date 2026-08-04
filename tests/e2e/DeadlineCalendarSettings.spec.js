@@ -76,7 +76,24 @@ test.describe('compliance-deadline-calendar — per-user category toggles (REQ-C
 		const deployed = await toggle.isVisible().catch(() => false)
 		test.skip(!deployed, 'deadline-calendar settings page not deployed on this build')
 
-		await toggle.click()
+		// `data-testid` falls through NcCheckboxRadioSwitch onto the bare
+		// <input type="checkbox">, which the component stacks *behind* its own
+		// <span class="checkbox-radio-switch__content"> — the element that
+		// actually carries the `onClick: onToggle` handler
+		// (@nextcloud/vue NcCheckboxRadioSwitch render fn). Clicking the input
+		// is therefore intercepted by its own label; clicking the label is both
+		// what a real operator does and the only thing that toggles the model.
+		const toggleLabel = page.getByTestId('deadline-category-payment-run')
+			.locator('.checkbox-radio-switch__content')
+
+		// Bind the assertion to the input's checked state so the click has to
+		// have actually flipped the model, not merely landed somewhere. Read
+		// the current value rather than assuming the default-on state: a run
+		// that died before its restore step would otherwise poison the next.
+		const wasEnabled = await toggle.isChecked()
+		await toggleLabel.click()
+		await expect(toggle).toBeChecked({ checked: !wasEnabled })
+
 		const saveResponse = page.waitForResponse(
 			(response) => response.url().includes('/api/deadline-calendar/settings')
 				&& response.request().method() === 'POST',
@@ -85,8 +102,9 @@ test.describe('compliance-deadline-calendar — per-user category toggles (REQ-C
 		const response = await saveResponse
 		expect(response.ok()).toBeTruthy()
 
-		// Restore the default so the test stays idempotent.
-		await toggle.click()
+		// Restore the entry state so the test stays idempotent.
+		await toggleLabel.click()
+		await expect(toggle).toBeChecked({ checked: wasEnabled })
 		await page.getByTestId('deadline-settings-save').click()
 	})
 })

@@ -430,7 +430,7 @@ export default {
 				// from axios via the same generateUrl helper.
 				const axios = (await import('@nextcloud/axios')).default
 				const { generateUrl } = await import('@nextcloud/router')
-				const response = await axios.get(generateUrl('/apps/shillinq/budget-mappings'))
+				const response = await axios.get(generateUrl('/apps/shillinq/api/budget-mappings'))
 				const data = response?.data?.scope || {}
 				this.scope = {
 					administrationId: data.administrationId || null,

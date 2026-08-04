@@ -23,9 +23,19 @@ const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
 	{ route: '/bookkeeping/bank-reconciliation', title: 'Bank Reconciliation' },
 	{ route: '/bookkeeping/matching-rules', title: 'Matching Rules' },
 	{ route: '/fixed-assets', title: 'Fixed Assets' },
-	{ route: '/bookkeeping/vendors', title: 'Vendors' },
-	{ route: '/bookkeeping/accounts-payable', title: 'Accounts Payable' },
-	{ route: '/bookkeeping/ap-aging', title: 'AP Aging' },
+	// `/bookkeeping/vendors` used to be listed here. Commit 4a1d3275
+	// ("consume pipelinq product master + demote vendor to financial
+	// profile") removed the VendorMaster page: the vendor master now lives
+	// in pipelinq and shillinq keeps only a VendorFinancialProfile schema
+	// with no page of its own. `"title": "Vendors"` appears nowhere in
+	// src/manifest*.json — the one remaining hit for the word is a COLUMN
+	// label in the AP-aging timeline. The entry therefore covered a page
+	// that has not existed since June, and vue-router's
+	// `/:pathMatch(.*)*` catch-all quietly served the Dashboard in its
+	// place. AP vendor behaviour is covered by the AP Transactions and
+	// AP Aging pages below.
+	{ route: '/bookkeeping/ap-transactions', title: 'Accounts Payable' },
+	{ route: '/bookkeeping/ap-aging-t2', title: 'AP Aging' },
 	{ route: '/bookkeeping/payment-runs', title: 'Payment Runs' },
 	{ route: '/bookkeeping/customers', title: 'Customers' },
 	{ route: '/bookkeeping/accounts-receivable', title: 'Accounts Receivable' },
@@ -45,7 +55,9 @@ const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
 	{ route: '/financial-statements/trial-balance-lines', title: 'Trial Balance', titleRe: /Trial Balance/i },
 	{ route: '/financial-statements/consolidations', title: 'Consolidations' },
 	{ route: '/financial-statements/consolidated-report', title: 'Consolidated Report' },
-	{ route: '/iv3-reports', title: 'IV3 Reports' },
+	// The declared route is `/iv3-rapportages` (page title "IV3 reports");
+	// `/iv3-reports` is declared nowhere and resolved to the Dashboard.
+	{ route: '/iv3-rapportages', title: 'IV3 reports' },
 	{ route: '/emu-rapportage', title: 'EMU-rapportage' },
 	{ route: '/bookkeeping/r-d-subsidies', title: 'R&D Subsidies', titleRe: /R&D|R\s*&\s*D|Subsid/i },
 	{ route: '/wbso/tags', title: 'WBSO Tags' },

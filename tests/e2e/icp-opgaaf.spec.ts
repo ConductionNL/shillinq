@@ -5,10 +5,38 @@
  * Gate-19 Playwright UI coverage — shillinq ICP-opgaaf SPA smoke (REQ-ICP-003,
  * REQ-ICP-010).
  *
- * The ICP-opgaaf pipeline ships three manifest navigation entries (ICP-opgaaf
- * index, ICP-opgaaf detail, ICP audit trail filter) rendered by the
- * nextcloud-vue manifest shell. This smoke confirms the SPA mounts, the ICP
- * route is reachable, and the user lands inside the shillinq app namespace.
+ * `src/manifest.json` declares the ICP-opgaaf index at `/belastingen/icp-opgaaf`
+ * (title "ICP-opgaaf") and its detail at `/belastingen/icp-opgaaf/:id`, rendered
+ * by the nextcloud-vue manifest shell. This smoke confirms the index page
+ * actually mounts.
+ *
+ * ⚠️ WHY THE OLD ASSERTIONS WERE CONSTANTS
+ * ----------------------------------------
+ * The test ended at `expect(page.url()).toContain('/apps/shillinq')` — twice.
+ * `appinfo/routes.php` delegates to `\OCA\OpenRegister\AppHost\Routes::standard()`,
+ * whose catch-all (`'/{path}'`, `requirements: ['path' => '.+']`) answers EVERY
+ * path under `/apps/shillinq/` with the same `TemplateResponse`, so a navigation
+ * to a `/apps/shillinq/...` URL cannot leave that prefix no matter what happens.
+ * On CI 30881746678 the control truncated `js/shillinq-main.js` to 0 bytes so
+ * the SPA could not boot at all, and this test still passed.
+ *
+ * ⚠️ THE TITLE OF THIS TEST CHANGED, DELIBERATELY.
+ * It used to claim "ICP-opgaaf navigation entry is reachable in the manifest
+ * shell" while never looking at the navigation. It cannot look at it either:
+ * `IcpOpgaaf` is listed in `src/menu-layout.json` `removals` (index 55), so the
+ * lib's `applyMenuRemovals()` strips that leaf from the rendered menu on
+ * purpose — its PAGE stays routable for deep links, which is exactly what is
+ * asserted below. Asserting a nav entry here would assert a retired one.
+ *
+ * The replacement proves the SPA booted and that THIS page rendered:
+ * `gotoPage()` waits for `#content-vue` (which exists only after
+ * `app.mount('#shillinq-app')`) and asserts the settled path equals the
+ * requested one — the check that catches `src/main.js`'s
+ * `routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })` silently rewriting
+ * an undeclared route to the Dashboard. The title assertion then reads
+ * CnPageHeader's `cn-page-title` `<h1>` inside `#app-content-vue`
+ * (NcAppContent's `<main>`), never `#content-vue`, which also wraps the
+ * sidebar that is identical on all ~107 pages.
  *
  * The full ICP end-to-end flows — invoice ICP-context tagging
  * (REQ-ICP-001 / REQ-ICP-007), VIES validation round-trip
@@ -28,28 +56,19 @@
  */
 
 import { test, expect } from '@playwright/test'
-
-const APP = '/apps/shillinq'
+import { gotoPage } from './spec-coverage/_helpers'
 
 test.describe('shillinq — ICP-opgaaf SPA smoke', () => {
-	test('ICP-opgaaf navigation entry is reachable in the manifest shell', async ({ page }) => {
-		await page.goto(APP + '/')
-		await page.waitForLoadState('domcontentloaded')
+	test('ICP-opgaaf index page mounts on /belastingen/icp-opgaaf', async ({ page }) => {
+		await gotoPage(page, '/belastingen/icp-opgaaf')
 
-		// Dismiss any first-run wizard overlays.
-		const wizard = page.locator('#firstrunwizard')
-		if (await wizard.isVisible().catch(() => false)) {
-			await page.keyboard.press('Escape').catch(() => {})
-			await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
-		}
-
-		// Stay within shillinq.
-		expect(page.url()).toContain('/apps/shillinq')
-
-		// The ICP-opgaaf index page is registered by the manifest; navigation
-		// must resolve without redirecting away from shillinq.
-		await page.goto(APP + '/belastingen/icp-opgaaf')
-		await page.waitForLoadState('domcontentloaded')
-		expect(page.url()).toContain('/apps/shillinq')
+		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
+		// CnIndexPage always renders CnPageHeader, whose `<h1>` carries
+		// `data-testid="cn-page-title"` unconditionally — present on an empty
+		// (unseeded) index too, so this is data-independent.
+		await expect(
+			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
+			'the ICP-opgaaf page must render its own manifest title',
+		).toHaveText(/ICP-opgaaf/i, { timeout: 15_000 })
 	})
 })

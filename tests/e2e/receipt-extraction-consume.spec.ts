@@ -118,6 +118,16 @@ test.describe('receipt-extraction-consume — BillImportModal extraction review 
 	})
 })
 
+/*
+ * The Receipts index reaches ReceiptCapture by ROW CLICK. That path was dead:
+ * CnPageRenderer resolves an index row's target from `config.rowRoute` or,
+ * failing that, the `type:"detail"` page matching (register, schema) — and this
+ * change's own fragment overlays ReceiptDetail to `type:"custom"`, removing it
+ * from that index. `config.detailRoute` is read by nothing in the renderer
+ * (positive control: `rowRoute` is consumed in CnPageRenderer.vue:1139), so a
+ * row click only toggled the selection checkbox. Fixed by naming
+ * `"rowRoute": "ReceiptDetail"` on the Receipts page in src/manifest.json.
+ */
 test.describe('receipt-extraction-consume — ReceiptCapture prefill + correction (REQ-RXC-003 / REQ-RXC-004)', () => {
 	test.beforeEach(async ({ page }) => {
 		page.setViewportSize({ width: 1600, height: 1200 })
@@ -129,7 +139,10 @@ test.describe('receipt-extraction-consume — ReceiptCapture prefill + correctio
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
-		const row = page.locator('table tbody tr').first()
+		// `cn-object-row` is CnDataTable's DATA row. `table tbody tr` also
+		// matches its empty-state row (`cn-object-list-empty`), which would
+		// turn "nothing seeded" into a click that opens nothing.
+		const row = page.getByTestId('cn-object-row').first()
 		const hasRow = await row.isVisible().catch(() => false)
 		test.skip(!hasRow, 'no Receipt rows seeded in this administration')
 
@@ -151,7 +164,7 @@ test.describe('receipt-extraction-consume — ReceiptCapture prefill + correctio
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
-		const row = page.locator('table tbody tr').first()
+		const row = page.getByTestId('cn-object-row').first()
 		const hasRow = await row.isVisible().catch(() => false)
 		test.skip(!hasRow, 'no Receipt rows seeded in this administration')
 		await row.click()

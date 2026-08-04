@@ -29,8 +29,37 @@ test.describe('shillinq — SPA smoke (v0.1.0 shell)', () => {
 		// 1. URL must stay within shillinq (no redirect to NC login or another app).
 		expect(page.url()).toContain('/apps/shillinq')
 
-		// 2. The Shillinq page title must be set (renders after Vue mounts + l10n).
-		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
+		// 2. THE SPA MUST HAVE BOOTED.
+		//
+		// ⚠️ The two assertions this replaces were constants:
+		//    - `expect(page.url()).toContain('/apps/shillinq')` cannot fail —
+		//      `appinfo/routes.php` delegates to
+		//      `\OCA\OpenRegister\AppHost\Routes::standard()`, whose catch-all
+		//      (`'/{path}'`, `requirements: ['path' => '.+']`) answers EVERY
+		//      path under `/apps/shillinq/` with the same `TemplateResponse`;
+		//    - `expect(page).toHaveTitle(/shillinq/i)` cannot fail either — the
+		//      `<title>` is server-rendered by Nextcloud's
+		//      `core/templates/layout.user.php` from the app id BEFORE any
+		//      JavaScript runs. It is NOT, as the old comment claimed, set
+		//      "after Vue mounts + l10n".
+		// On CI 30881746678 a control truncated `js/shillinq-main.js` to 0
+		// bytes so the SPA could not boot, and both still held.
+		//
+		// `#app-content-vue` is NcAppContent's `<main>` — it exists only after
+		// `app.mount('#shillinq-app')` in `src/main.js`. Nextcloud renders no
+		// `<main>` and no `[role="main"]` for app pages, so the server-rendered
+		// shell alone cannot satisfy it. `cn-dashboard-page` is
+		// CnDashboardPage's own unconditional root, proving the v0.1.0 shell's
+		// Dashboard page (manifest route `/`, title "Financial overview")
+		// actually rendered rather than an empty content region.
+		await expect(
+			page.locator('#app-content-vue'),
+			'the shillinq SPA must mount NcAppContent',
+		).toBeVisible({ timeout: 15_000 })
+		await expect(
+			page.locator('#app-content-vue [data-testid="cn-dashboard-page"]'),
+			'the manifest Dashboard page must render inside the content region',
+		).toBeVisible({ timeout: 15_000 })
 
 		// 3. The sidebar must contain a link pointing at the shillinq Settings
 		// page. The lib renders it inside the collapsed `cn-app-nav__settings-list`

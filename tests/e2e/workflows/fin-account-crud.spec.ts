@@ -42,10 +42,33 @@ test.describe('shillinq finance — ledger Account full CRUD with persistence', 
 		await api?.dispose()
 	})
 
+	/**
+	 * ⚠️ THIS TEST USED TO OBSERVE NOTHING ABOUT MOUNTING.
+	 *
+	 * Its only assertion was `expect(page.url()).toContain('/apps/shillinq')`,
+	 * which cannot fail: `appinfo/routes.php` delegates to
+	 * `\OCA\OpenRegister\AppHost\Routes::standard()`, whose catch-all
+	 * (`'/{path}'`, `requirements: ['path' => '.+']`) answers EVERY path under
+	 * `/apps/shillinq/` with the same `TemplateResponse`, so a navigation to a
+	 * `/apps/shillinq/...` URL can never leave that prefix. On CI 30881746678 a
+	 * control truncated `js/shillinq-main.js` to 0 bytes — the SPA never
+	 * booted — and this test still passed.
+	 *
+	 * `#app-content-vue` is NcAppContent's `<main>`; it exists only after
+	 * `app.mount('#shillinq-app')` in `src/main.js` has run, so it is the
+	 * proof that "the SPA mounts" that the test name promises. Nextcloud's
+	 * `core/templates/layout.user.php` renders no `<main>` and no
+	 * `[role="main"]` for app pages, so nothing else on the server-rendered
+	 * shell can satisfy it.
+	 */
 	test('the shillinq SPA mounts in an authenticated session', async ({ page }) => {
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
 		expect(page.url()).toContain('/apps/shillinq')
+		await expect(
+			page.locator('#app-content-vue'),
+			'the shillinq SPA must mount NcAppContent in this authenticated session',
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	test('create -> read -> update -> delete an Account, asserting persistence at each step', async () => {

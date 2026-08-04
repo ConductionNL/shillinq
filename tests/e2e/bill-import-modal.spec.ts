@@ -39,6 +39,34 @@ async function dismissWizard(page: Page): Promise<void> {
 }
 
 /**
+ * Close the first-open support note if it is up.
+ *
+ * `CnAppRoot` (@conduction/nextcloud-vue) always mounts `CnSupportDialog`
+ * behind `useSupportDialog(appId, { persistence: 'server' })`. Its "seen" flag
+ * lives in a per-user preference with a localStorage fallback, and a fresh
+ * Playwright context has neither — so the note opens on every run and its
+ * `modal-mask` swallows pointer events for the whole viewport (CI run
+ * 30881746678: the click on `cn-action-import-bill` was intercepted by
+ * `<div data-testid-modal="cn-support-dialog" class="… modal-mask">` for the
+ * full 60s). Dismissing it is what a real operator does before using the
+ * dashboard; it replaces no assertion below.
+ */
+async function dismissSupportDialog(page: Page): Promise<void> {
+	const support = page.locator('[data-testid-modal="cn-support-dialog"]')
+	await support.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {})
+	if (!(await support.isVisible().catch(() => false))) {
+		return
+	}
+	const close = support.locator('button.modal-container__close, button[aria-label*="lose" i], button[aria-label*="luiten" i]').first()
+	if (await close.isVisible().catch(() => false)) {
+		await close.click({ timeout: 2_000 }).catch(() => {})
+	} else {
+		await page.keyboard.press('Escape').catch(() => {})
+	}
+	await support.waitFor({ state: 'hidden', timeout: 5_000 })
+}
+
+/**
  * Navigate to the Financial overview dashboard and open the bill import modal.
  * Returns false when the dashboard / action is unavailable so the caller can
  * skip rather than fail.
@@ -53,6 +81,10 @@ async function openModal(page: Page): Promise<boolean> {
 	if (!(await importBill.isVisible().catch(() => false))) {
 		return false
 	}
+	// The support note mounts after the dashboard settles, so dismiss it only
+	// once the launcher itself has rendered — otherwise the note can appear
+	// between the check and the click.
+	await dismissSupportDialog(page)
 	await importBill.click()
 	await page.locator('[data-testid="bill-import-modal"]').waitFor({ state: 'visible', timeout: 8_000 })
 	return true

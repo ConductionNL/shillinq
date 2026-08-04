@@ -121,7 +121,23 @@ export default defineConfig({
 	// `test.describe.configure({ mode: 'serial' })`.
 	fullyParallel: false,
 	workers: 5,
-	retries: process.env.CI ? 1 : 0,
+	// NO RETRIES, DELIBERATELY.
+	//
+	// Two reasons, both measured on run 30881746678:
+	//
+	// 1. COST. A failing test here almost always fails by exhausting the 60s
+	//    timeout waiting for a selector, not by asserting quickly. `retries: 1`
+	//    therefore pays that 60s TWICE per failure. That run had 55 failures,
+	//    i.e. ~55 minutes of pure retry wall-clock across 5 workers — most of
+	//    its 23.7m runtime, against a 45-minute job cap where exhaustion is
+	//    reported as `cancelled`, a conclusion that is no verdict at all.
+	// 2. HONESTY. A retry turns a genuine flake into a `flaky` result, and
+	//    Playwright still exits 0 on flaky. That run carried 3 of them, so the
+	//    job's own conclusion could not distinguish "this suite is stable" from
+	//    "this suite is unstable and we retried until it wasn't". A flake is a
+	//    defect in the test or the product; it should be fixed at the cause,
+	//    which is what happened to all three.
+	retries: 0,
 	reporter: [
 		['html', { open: 'never', outputFolder: path.resolve(__dirname, 'playwright-report') }],
 		['list'],

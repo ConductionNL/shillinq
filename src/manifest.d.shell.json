@@ -63,6 +63,13 @@
 							"icon": "CalendarClockOutline",
 							"route": "BookingList",
 							"order": 30
+						},
+						{
+							"id": "BookingsCalendarView",
+							"label": "Calendar view",
+							"icon": "CalendarRange",
+							"route": "BookingsCalendarView",
+							"order": 40
 						}
 					]
 				}
@@ -113,7 +120,7 @@
 				{
 					"_fragment": "10-bookings-resource-calendar",
 					"id": "BookingsCalendarView",
-					"route": "/bookings/calendar/:calendarId",
+					"route": "/bookings/calendar/:calendarId?",
 					"type": "custom",
 					"title": "Calendar View"
 				},
@@ -2875,21 +2882,21 @@
 					"_fragment": "bookkeeping-provincies-bbv-variant",
 					"id": "BbvComplianceDashboard",
 					"route": "/bbv-provincie/compliance-dashboard",
-					"type": "report",
+					"type": "custom",
 					"title": "BBV Compliance Dashboard"
 				},
 				{
 					"_fragment": "bookkeeping-provincies-bbv-variant",
 					"id": "BudgetToProgrammeLinker",
 					"route": "/bbv-provincie/budget-to-programme",
-					"type": "index",
+					"type": "custom",
 					"title": "Budget Links"
 				},
 				{
 					"_fragment": "bookkeeping-provincies-bbv-variant",
 					"id": "BudgetToProgrammeLinkerDetail",
 					"route": "/bbv-provincie/budget-to-programme/:id",
-					"type": "detail",
+					"type": "custom",
 					"title": "GL line"
 				}
 			]

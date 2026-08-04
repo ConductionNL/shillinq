@@ -429,6 +429,311 @@ if body.get('completed') is not True:
 print('[ci-seed] first-time setup complete:', json.dumps(body.get('steps')))
 PY
 
+# ── 2c. Seed the bookings-calendar fixtures ──────────────────────────────────
+# `tests/e2e/bookings-resource-calendar.spec.ts` asserts against a calendar that
+# has bookings on it — a rendered month grid, a highlighted conflicting pair, and
+# a 409 from the create endpoint. Nothing above provisions any of that. Step 2
+# only verifies that the `Booking` SCHEMA exists, and a schema with no objects
+# renders an empty grid, which is exactly what a broken calendar renders too. So
+# every one of those assertions had no fixture to assert on and that spec has
+# never been able to pass.
+#
+# WHY THE DATES ARE COMPUTED, NOT LITERAL
+# ---------------------------------------
+# Two independent windows have to agree, and both are anchored on "today":
+#
+#   1. `CalendarController::listBookings()` defaults its range to
+#      `today .. today + 30 days` when the caller sends no start/end — and
+#      CalendarView.vue sends none. A booking dated in the past is simply not
+#      in the response.
+#   2. `CalendarView.vue` anchors its grid on `startDate` (the host page passes
+#      today) and has NO month-navigation controls. Only bookings whose local
+#      start date falls in the CURRENT month can be rendered at all.
+#
+# Hardcoded May-2026 fixtures would satisfy neither on any other day, so the
+# windows below are generated relative to today at seed time.
+#
+# WHY THE COVERAGE IS CONTIGUOUS AND OVERSHOOTS THE DAY
+# ----------------------------------------------------
+# The spec drives a `datetime-local` input, which is LOCAL wall-clock time, and
+# `playwright.config.ts` sets no `timezoneId` — so the browser uses the runner's
+# zone and "today at 12:00" can land anywhere in `today-1 22:00Z … today+1 00:00Z`
+# once every real UTC offset (-12 … +14) is allowed for. The ten bookings below
+# tile `today-1 20:00Z → today+2 00:00Z` without a gap, so the conflict test gets
+# its 409 in ANY zone the runner happens to be in, rather than only in UTC.
+#
+# bk-002 and bk-003 deliberately OVERLAP each other and are both `pending`,
+# which is what `CalendarView.isConflict()` renders with the conflict class —
+# that is the "seed conflict pair" the spec's highlight assertion needs. They are
+# written through OpenRegister's generic object API rather than shillinq's
+# `POST /api/v2/calendars/{id}/bookings`, because that endpoint's whole job is to
+# REFUSE an overlapping pair; the fixture has to be able to create the very state
+# the product prevents.
+#
+# NOTE also that no booking starts in local hour 0. The day-view slot button
+# renders its bookings INSIDE the button, so a slot that contains a booking
+# swallows the click on the span (`@click.stop`) instead of emitting
+# `slot:clicked`. The spec clicks the FIRST slot (hour 0); keeping that hour free
+# of booking starts keeps that click unambiguous.
+CAL_ID="e2e-cal-001"
+RES_ID="e2e-res-001"
+
+# The administration id to stamp on the fixtures. `CalendarController::index()`
+# filters the calendar LIST by the caller's `activeAdministrationId`, so a
+# fixture carrying the wrong one is created successfully, is readable by id, and
+# is invisible in the picker — a write that "succeeds" into a scope nobody reads.
+# Ask the instance which id that actually is instead of guessing.
+CTX_BODY="$(mktemp)"
+CTX_CODE="$(curl -sS -o "$CTX_BODY" -w '%{http_code}' --max-time 300 \
+	-u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+	"${BASE}/index.php/apps/shillinq/api/administrations/context" || echo 000)"
+echo "[ci-seed] administrations/context -> HTTP ${CTX_CODE}"
+
+ADM_ID="$(python3 - "$CTX_BODY" "$CTX_CODE" <<'PY'
+import json, sys
+path, code = sys.argv[1], sys.argv[2]
+if code != '200':
+    print('')
+    sys.exit(0)
+try:
+    body = json.load(open(path))
+except Exception:
+    print('')
+    sys.exit(0)
+print((body.get('activeAdministrationId') or ''))
+PY
+)"
+
+if [ -z "$ADM_ID" ]; then
+	# No active administration resolved. buildContext() derives it from an
+	# AdministrationMembership, and the setup wizard's `init-administration`
+	# seeds the Administration record without one, so this is the expected
+	# state on a fresh CI instance rather than a fault introduced here.
+	# Fall back to the code the wizard persisted as `administration_id`, which is
+	# `administrations[0].administrationCode` of
+	# lib/Settings/seeds/administraties/default.json — read from the repo, not
+	# invented here.
+	ADM_ID="ADM-001"
+	echo "[ci-seed] no activeAdministrationId in the context response; stamping fixtures with '${ADM_ID}' (the bundled default administration code)."
+fi
+echo "[ci-seed] bookings fixtures administrationId: ${ADM_ID}"
+
+# Idempotency probe. `GET /api/v2/calendars/{id}` resolves through the same
+# `loadCalendar()` the rest of the API uses, so a 200 here means the fixture is
+# genuinely reachable by the code under test — not merely present in some table.
+CAL_PROBE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 300 \
+	-u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+	"${BASE}/index.php/apps/shillinq/api/v2/calendars/${CAL_ID}" || echo 000)"
+echo "[ci-seed] calendars/${CAL_ID} probe -> ${CAL_PROBE}"
+
+FIXDIR="$(mktemp -d)"
+python3 - "$FIXDIR" "$CAL_ID" "$RES_ID" "$ADM_ID" <<'PY'
+import json, os, sys
+from datetime import datetime, timedelta, timezone
+
+fixdir, cal_id, res_id, adm_id = sys.argv[1:5]
+
+# Anchor on today's UTC midnight so every window is expressible as an offset.
+day = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def at(offset_hours):
+    """UTC wire timestamp `offset_hours` from today's UTC midnight."""
+    return (day + timedelta(hours=offset_hours)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
+with open(os.path.join(fixdir, 'calendar.json'), 'w') as fh:
+    json.dump({
+        'administrationId': adm_id,
+        'calendarId': cal_id,
+        'resource': res_id,
+        'timeZone': 'Europe/Amsterdam',
+        'status': 'active',
+    }, fh)
+
+# (id, start hour offset, end hour offset, status, title)
+# Contiguous cover of today-1 20:00Z … today+2 00:00Z; bk-002 and bk-003 overlap
+# between +06 and +08 and are both pending.
+rows = [
+    ('bk-001', -4, 1, 'confirmed', 'E2E overnight handover'),
+    ('bk-002', 1, 8, 'pending', 'E2E conflicting morning block A'),
+    ('bk-003', 6, 12, 'pending', 'E2E conflicting morning block B'),
+    ('bk-004', 12, 16, 'confirmed', 'E2E afternoon session'),
+    ('bk-005', 16, 20, 'confirmed', 'E2E evening session'),
+    ('bk-006', 20, 24, 'confirmed', 'E2E late shift'),
+    ('bk-007', 24, 30, 'confirmed', 'E2E next-day night shift'),
+    ('bk-008', 30, 36, 'confirmed', 'E2E next-day morning'),
+    ('bk-009', 36, 42, 'confirmed', 'E2E next-day afternoon'),
+    ('bk-010', 42, 48, 'confirmed', 'E2E next-day evening'),
+]
+
+names = []
+for booking_id, start_h, end_h, status, title in rows:
+    payload = {
+        'administrationId': adm_id,
+        'bookingId': booking_id,
+        'calendar': cal_id,
+        'resource': res_id,
+        'title': title,
+        'startTime': at(start_h),
+        'endTime': at(end_h),
+        'attendee': 'E2E Fixture',
+        'status': status,
+    }
+    name = f'booking-{booking_id}.json'
+    with open(os.path.join(fixdir, name), 'w') as fh:
+        json.dump(payload, fh)
+    names.append(name)
+
+with open(os.path.join(fixdir, 'index.txt'), 'w') as fh:
+    fh.write('\n'.join(names) + '\n')
+
+print(f'[ci-seed] fixture window: {at(-4)} .. {at(48)} (contiguous)')
+PY
+
+# POST one object into the shillinq register through OpenRegister's generic
+# object API. Admin Basic auth + OCS-APIRequest for the same CSRF reason as the
+# import above.
+or_create() {
+	local schema="$1" payload="$2" body code
+	body="$(mktemp)"
+	code="$(
+		curl -sS -o "$body" -w '%{http_code}' --max-time 300 \
+			-u "${USER_NAME}:${USER_PASS}" \
+			-X POST -H 'Content-Type: application/json' -H 'OCS-APIRequest: true' \
+			--data "@${payload}" \
+			"${BASE}/index.php/apps/openregister/api/objects/shillinq/${schema}" || echo 000
+	)"
+	if [ "$code" != "200" ] && [ "$code" != "201" ]; then
+		echo "::error::Creating a ${schema} fixture returned HTTP ${code}."
+		echo "::error::Payload: $(cat "$payload")"
+		echo "::error::Response: $(head -c 800 "$body")"
+		echo "::error::bookings-resource-calendar.spec.ts asserts against these objects; without them"
+		echo "::error::the calendar grid renders empty and every one of its assertions fails on a"
+		echo "::error::selector timeout that blames the UI rather than the missing fixture."
+		exit 1
+	fi
+}
+
+if [ "$CAL_PROBE" = "200" ]; then
+	echo "[ci-seed] calendar ${CAL_ID} already present — not recreating it."
+else
+	echo "[ci-seed] creating calendar ${CAL_ID}."
+	or_create Calendar "${FIXDIR}/calendar.json"
+fi
+
+# Per-BOOKING idempotency, not per-calendar. A run that created the calendar and
+# then failed part-way through the bookings would otherwise be skipped forever
+# by a calendar-only check, and every later run would fail the count gate below
+# without ever repairing the gap. Ask which bookingIds are already there and
+# create exactly the missing ones.
+EXISTING_BODY="$(mktemp)"
+EXISTING_CODE="$(curl -sS -o "$EXISTING_BODY" -w '%{http_code}' --max-time 300 \
+	-u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+	"${BASE}/index.php/apps/shillinq/api/v2/calendars/${CAL_ID}/bookings" || echo 000)"
+EXISTING_IDS="$(mktemp)"
+python3 - "$EXISTING_BODY" "$EXISTING_CODE" > "$EXISTING_IDS" <<'PY'
+import json, sys
+path, code = sys.argv[1], sys.argv[2]
+if code != '200':
+    sys.exit(0)
+try:
+    body = json.load(open(path))
+except Exception:
+    sys.exit(0)
+for booking in (body.get('bookings') or []):
+    bid = booking.get('bookingId') or booking.get('id')
+    if bid:
+        print(bid)
+PY
+echo "[ci-seed] bookings already present on ${CAL_ID}: $(wc -l < "$EXISTING_IDS")"
+
+while read -r fixture; do
+	[ -n "$fixture" ] || continue
+	# booking-bk-004.json -> bk-004
+	fixture_id="${fixture#booking-}"
+	fixture_id="${fixture_id%.json}"
+	if grep -qxF "$fixture_id" "$EXISTING_IDS"; then
+		continue
+	fi
+	echo "[ci-seed] creating booking ${fixture_id}."
+	or_create Booking "${FIXDIR}/${fixture}"
+done < "${FIXDIR}/index.txt"
+
+# VERIFY through the endpoint the UI actually calls. Creating ten objects and
+# reading ten back are different claims: the read applies the calendar filter and
+# the 30-day range window, either of which can drop every row while all ten
+# writes reported success.
+BK_BODY="$(mktemp)"
+BK_CODE="$(curl -sS -o "$BK_BODY" -w '%{http_code}' --max-time 300 \
+	-u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+	"${BASE}/index.php/apps/shillinq/api/v2/calendars/${CAL_ID}/bookings" || echo 000)"
+echo "[ci-seed] calendars/${CAL_ID}/bookings -> HTTP ${BK_CODE}"
+python3 - "$BK_BODY" "$BK_CODE" <<'PY'
+import json, sys
+path, code = sys.argv[1], sys.argv[2]
+raw = open(path).read()
+if code != '200':
+    print(f'::error::Reading back the seeded bookings returned HTTP {code}, so the count below '
+          f'would prove nothing. First 500 bytes:')
+    print(raw[:500])
+    sys.exit(1)
+try:
+    body = json.loads(raw)
+except json.JSONDecodeError:
+    print('::error::The bookings endpoint did not return JSON (HTTP 200). First 500 bytes:')
+    print(raw[:500])
+    sys.exit(1)
+bookings = body.get('bookings')
+if not isinstance(bookings, list):
+    print("::error::The bookings response has no 'bookings' array — the envelope changed and "
+          "CalendarView.vue reads that exact key.")
+    print(raw[:500])
+    sys.exit(1)
+pending = [b for b in bookings if b.get('status') == 'pending']
+print(f'[ci-seed] seeded bookings readable: {len(bookings)} (pending: {len(pending)})')
+if len(bookings) < 10:
+    print(f'::error::Expected 10 seeded bookings on the calendar, got {len(bookings)}.')
+    print('::error::The month/week/day render assertions have nothing to render.')
+    sys.exit(1)
+if len(pending) < 2:
+    print(f'::error::Expected at least 2 pending (conflicting) bookings, got {len(pending)}.')
+    print("::error::The conflict-highlight assertion looks for the conflict class, which "
+          "CalendarView.isConflict() derives from status == 'pending'.")
+    sys.exit(1)
+print('[ci-seed] bookings-calendar fixtures OK.')
+PY
+
+# Report — but do NOT gate on — whether the fixture is visible in the ORG-SCOPED
+# calendar list. The spec deep-links to /bookings/calendar/e2e-cal-001, which
+# resolves by id and does not consult this list, so an invisible calendar cannot
+# fail the spec. It would, however, leave the param-less menu entry showing an
+# empty picker, and that is worth naming rather than discovering later.
+IDX_BODY="$(mktemp)"
+IDX_CODE="$(curl -sS -o "$IDX_BODY" -w '%{http_code}' --max-time 300 \
+	-u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+	"${BASE}/index.php/apps/shillinq/api/v2/calendars" || echo 000)"
+python3 - "$IDX_BODY" "$IDX_CODE" "$CAL_ID" <<'PY'
+import json, sys
+path, code, cal_id = sys.argv[1], sys.argv[2], sys.argv[3]
+if code != '200':
+    print(f'[ci-seed] calendar index probe -> HTTP {code} (picker visibility unknown).')
+    sys.exit(0)
+try:
+    body = json.load(open(path))
+except Exception:
+    print('[ci-seed] calendar index probe returned non-JSON (picker visibility unknown).')
+    sys.exit(0)
+ids = [c.get('id') for c in (body.get('calendars') or [])]
+if cal_id in ids:
+    print(f'[ci-seed] {cal_id} IS visible in the org-scoped calendar index.')
+else:
+    print(f'[ci-seed] NOTE: {cal_id} is NOT in the org-scoped calendar index (saw: {ids}).')
+    print('[ci-seed] The spec deep-links by calendar id and is unaffected; the param-less')
+    print("[ci-seed] menu entry's picker will look empty until the admin user has an")
+    print('[ci-seed] AdministrationMembership, which the setup wizard does not create.')
+PY
+
 # ── 3. Warm the SPA so the first spec doesn't pay the cold start ─────────────
 # The shared workflow serves Nextcloud with `php -S 0.0.0.0:8080`. It sets
 # PHP_CLI_SERVER_WORKERS=8, but the first hit still pays a cold opcache and the
