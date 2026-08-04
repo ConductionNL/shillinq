@@ -20,7 +20,7 @@
  * adopter).
  */
 
-import { chromium, request, type FullConfig } from '@playwright/test'
+import { chromium, request, type FullConfig, type Page } from '@playwright/test'
 import { resolveBaseURL } from './base-url'
 import { execSync } from 'child_process'
 import * as path from 'path'
@@ -30,6 +30,14 @@ const AUTH_DIR = path.resolve(__dirname, '.auth')
 const STORAGE_STATE = path.join(AUTH_DIR, 'admin.json')
 const APP_ROOT = path.resolve(__dirname, '..', '..')
 const BUNDLE_PATH = path.join(APP_ROOT, 'js', 'shillinq-main.js')
+const INFO_XML = path.join(APP_ROOT, 'appinfo', 'info.xml')
+
+/**
+ * localStorage key `CnAppRoot` reads the walkthrough's last-seen version from.
+ * Namespaced by app id — see `walkthroughSeenVersion()` in
+ * `@conduction/nextcloud-vue/…/CnAppRoot`.
+ */
+const WALKTHROUGH_SEEN_KEY = 'cn-walkthrough-seen:shillinq'
 
 /**
  * Ensure the webpack bundle exists before specs hit `/apps/shillinq/`.
@@ -55,6 +63,92 @@ function ensureBundleBuilt(): void {
 	// eslint-disable-next-line no-console
 	console.log(`[playwright globalSetup] bundle missing at ${BUNDLE_PATH}; running 'npm run build' once…`)
 	execSync('npm run build', { cwd: APP_ROOT, stdio: 'inherit' })
+}
+
+/** Read `<version>` out of `appinfo/info.xml` — the app version the SPA reports. */
+function readAppVersion(): string {
+	const xml = fs.readFileSync(INFO_XML, 'utf8')
+	const m = xml.match(/<version>\s*([^<\s]+)\s*<\/version>/)
+	if (!m) {
+		throw new Error(`Could not read <version> from ${INFO_XML}`)
+	}
+	return m[1]
+}
+
+/**
+ * Mark the ADR-043 product walkthrough as already seen for this browser profile.
+ *
+ * WHY THIS IS SEEDING, NOT SUPPRESSION
+ * ------------------------------------
+ * `src/manifest.json` declares `walkthrough.enabled: true` with a single tour,
+ * `shillinq:getting-started`, whose `trigger` is `first-visit`. `CnAppRoot`
+ * mounts `CnWalkthrough` for it, and the tour renders
+ *
+ *     <div role="dialog" aria-modal="true" class="cn-walkthrough"
+ *          aria-label="Welcome to Shillinq">
+ *       <div class="cn-walkthrough__dim cn-walkthrough__dim--full"></div>
+ *
+ * — a FULL-VIEWPORT dim that legitimately swallows pointer events until the
+ * user finishes or skips the tour. That is the intended product behaviour for
+ * a genuinely first-time visitor, and it is exactly what every CI run gets,
+ * because a fresh runner profile has never seen it.
+ *
+ * The symptom is deliberately confusing and worth recording: the target button
+ * RESOLVES and reports "visible, enabled and stable", then the click retries
+ * until the test times out. Run 30879466171 logged it verbatim:
+ *
+ *     - locator resolved to <button data-testid="cn-action-import-bill" …>
+ *     - attempting click action
+ *       - element is visible, enabled and stable
+ *       - <div class="cn-walkthrough__dim cn-walkthrough__dim--full"></div>
+ *         from <div role="dialog" … aria-label="Welcome to Shillinq">…</div>
+ *         subtree intercepts pointer events
+ *
+ * So it presents as a TIMEOUT ON A PRESENT ELEMENT, never as "overlay open" —
+ * which is why it reads like a dozen unrelated flaky-click defects.
+ *
+ * This is the THIRD onboarding surface in the stack, and the other two are
+ * already handled elsewhere: Nextcloud's own `#firstrunwizard` (dismissed by
+ * the specs) and the ADR-042 setup wizard (completed by `ci-seed.sh` over its
+ * admin API). The walkthrough had no equivalent, so it is handled here.
+ *
+ * `CnAppRoot.walkthroughSeenVersion()` reads `localStorage` — NOT a server-side
+ * per-user config, despite what `manifest.walkthrough.completionConfigKey`
+ * suggests; the shipped getter's own docblock says apps wanting cross-device
+ * persistence must override the `#walkthrough` slot. `useWalkthrough`'s
+ * `autoStartTour` then gates on it:
+ *
+ *     if (tour.trigger === 'first-visit' && !seenVersion) return tour
+ *
+ * so ANY non-empty value stops a `first-visit` tour from auto-starting. We
+ * write the real app version rather than a sentinel, so that if a future
+ * `version-bump` tour is added it will still fire for a version ABOVE this one
+ * — seeding the profile as a returning user, not disabling the feature.
+ *
+ * ⚠️ Nothing here touches an assertion, a timeout or a skip. The walkthrough
+ * itself stays enabled in the product and is still reachable in-app via
+ * "replay walkthrough"; it simply is not re-offered to an already-onboarded
+ * profile. Specs that want to test the tour can clear the key themselves.
+ *
+ * Gated on a read-back so a silently-failing write cannot look like success.
+ *
+ * @param page A page already authenticated on the Nextcloud origin.
+ */
+async function markWalkthroughSeen(page: Page): Promise<void> {
+	const version = readAppVersion()
+	await page.evaluate(
+		([key, value]) => window.localStorage.setItem(key, value),
+		[WALKTHROUGH_SEEN_KEY, version],
+	)
+	const readBack = await page.evaluate((key) => window.localStorage.getItem(key), WALKTHROUGH_SEEN_KEY)
+	if (readBack !== version) {
+		throw new Error(
+			`Failed to seed ${WALKTHROUGH_SEEN_KEY}: wrote "${version}", read back ${JSON.stringify(readBack)}. `
+			+ 'The walkthrough overlay would intercept pointer events for the whole run.',
+		)
+	}
+	// eslint-disable-next-line no-console
+	console.log(`[playwright globalSetup] ${WALKTHROUGH_SEEN_KEY} = ${version} (walkthrough will not auto-start)`)
 }
 
 async function ensureNextcloudReachable(baseURL: string): Promise<void> {
@@ -121,6 +215,10 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 			`Check NC_ADMIN_USER / NC_ADMIN_PASS (defaults admin/admin).`,
 		)
 	}
+
+	// Seed the walkthrough as already-seen BEFORE the state is captured, so the
+	// key travels with the storage state into every spec's context.
+	await markWalkthroughSeen(page)
 
 	// Persist the storage state so individual specs reuse the session.
 	await context.storageState({ path: STORAGE_STATE })
