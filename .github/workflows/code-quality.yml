@@ -60,3 +60,47 @@ jobs:
       # openconnector, procest, softwarecatalog, scholiq, pipelinq).
       additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
       enable-sbom: true
+
+      # ── Frontend Check legs ──────────────────────────────────────────────
+      # `frontend-checks` defaults to `[]`, and an empty list means the shared
+      # workflow emits NO "Frontend Check" job at all — so this repo's five
+      # validators ran nowhere while the run still looked complete. All are
+      # self-contained `node` scripts, which is what a leg has to be (each leg
+      # is a fresh job with its own checkout + `npm ci`).
+      # Measured on this tree before enabling:
+      #   check:manifest-budget  PASSES (1090951B against a 1100000B budget —
+      #                          9049 bytes of headroom, which is itself worth
+      #                          having a gate on)
+      #   test:l10n              PASSES
+      #   check:markers          FAILS — a bare/malformed x-schema-org marker in
+      #                          lib/Settings/register.d/60-bookings-depth.json
+      #                          (AppointmentSeries: "https://schema.org/Schedule")
+      #   check:registers        FAILS — a schema fragment missing its
+      #                          x-openregister-audit-trail declaration
+      #   check:manifest         passed locally only through its no-Ajv
+      #                          structural fallback ("Ajv not installed in
+      #                          node_modules"); CI runs `npm ci` first, so CI is
+      #                          the first place the real schema validation
+      #                          happens. Its verdict there may differ.
+      # `test:unit` is NOT listed: "Frontend Tests (unit)" already runs it.
+      frontend-checks: '["check:manifest", "check:manifest-budget", "check:markers", "check:registers", "test:l10n"]'
+
+      # ── Coverage ratchet ─────────────────────────────────────────────────
+      # `enable-coverage-guard` defaults to FALSE, which is why both
+      # "Coverage Baseline Protection" and "Coverage Baseline Check" have only
+      # ever reported `skipped`. It needs two inputs this repo did not have,
+      # both added in this commit: `scripts/coverage-guard.php` (byte-identical
+      # to openregister's) and `.coverage-baseline` = 57.71, this repo's own
+      # measured coverage (38189 of 66179 statements) read from clover.xml in
+      # the `coverage-report` artifact of run 30912740193.
+      enable-coverage-guard: true
+
+      # ── Hydra mechanical gates ───────────────────────────────────────────
+      # `enable-hydra-gates` defaults to FALSE, so this tier has never executed
+      # here — the job reported `skipped`, which the Quality Report renders
+      # identically to a pass. Pinned to v1.0.1 so a change to the gate package
+      # cannot move this repo's verdict without a commit here.
+      # `enable-axe` deliberately NOT set: a vanilla Nextcloud 34 already carries
+      # serious/critical violations from core's own UI.
+      enable-hydra-gates: true
+      hydra-gates-ref: v1.0.1
