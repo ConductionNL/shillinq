@@ -35,9 +35,30 @@
 			</div>
 
 			<div class="actions">
+				<!--
+				 `type` — NOT `native-type`. @nextcloud/vue 9 renamed the native
+				 button-type prop. NcButton 9.9.0 declares alignment / ariaLabel
+				 / disabled / download / href / pressed / size / target / text /
+				 to / type / variant / wide, and renders `<button :type="props.type">`
+				 with `type` defaulting to "button" (verified in
+				 node_modules/@nextcloud/vue/dist/chunks/NcButton-*.mjs; the
+				 string `nativeType` appears ZERO times in that build, while
+				 `variant` appears 3 times). `native-type` was the v8 name, so in
+				 v9 it fell through `$attrs` onto the DOM as an inert
+				 `native-type="submit"` attribute while the button stayed
+				 `type="button"` — and a `type="button"` inside a <form> raises no
+				 submit event.
+
+				 That is why saving here did nothing: the click landed on the
+				 right button, but `@submit.prevent="save"` never ran, so no
+				 POST to /api/pipelinq/settings was ever issued and the endpoint
+				 an admin typed was silently discarded on reload. "Test
+				 connection" was unaffected only because it is wired to an
+				 explicit `@click`.
+				-->
 				<NcButton
 					variant="primary"
-					native-type="submit"
+					type="submit"
 					data-testid="pipelinq-save"
 					:disabled="saving">
 					{{ saving ? t('shillinq', 'Saving…') : t('shillinq', 'Save') }}

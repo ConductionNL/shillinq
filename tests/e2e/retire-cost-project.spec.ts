@@ -203,13 +203,23 @@ test.describe('retire-cost-project — navigation contract', () => {
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
 
-		// CnIndexPage renders CnPageHeader unconditionally, so this holds on an
-		// unseeded instance — it is data-independent, and it cannot be satisfied
-		// by the Dashboard.
+		// `cn-index-page` is CnIndexPage's own root div (CnIndexPage.vue:2) —
+		// no `v-if`, so this holds on an unseeded instance, and the Dashboard
+		// (which renders `cn-dashboard-page`) cannot satisfy it.
+		//
+		// ⚠️ NOT the page title: an earlier revision asserted
+		// `#app-content-vue [data-testid="cn-page-title"]`. `CnPageHeader` does
+		// emit that `<h1>`, but `CnIndexPage.vue:12` renders CnPageHeader behind
+		// `v-if="showTitle"`, which defaults to FALSE — the title is shown in
+		// the SIDEBAR header instead. `CnPageRenderer.vue` never passes
+		// `show-title` and all six `showTitle` occurrences in
+		// `src/manifest.json` set it to false, so `cn-page-title` renders on NO
+		// shillinq index page. Run 30894384122 turned that into 69 false
+		// failures.
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the Analytical dimensions index must render its own manifest title',
-		).toHaveText(/Analytical dimensions/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the Analytical dimensions route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 
 		// No `.catch(() => '')`: an exception reading the page must FAIL.
 		const body = await page.locator('#app-content-vue').innerText()

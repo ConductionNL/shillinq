@@ -72,16 +72,32 @@
 		</p>
 
 		<div class="booking-form__actions">
+			<!--
+			 `type` — NOT `native-type`. @nextcloud/vue 9 renamed the native
+			 button-type prop: NcButton's props are alignment / ariaLabel /
+			 disabled / download / href / pressed / size / target / text / to /
+			 type / variant / wide, and it renders `<button :type="props.type">`
+			 with `type` defaulting to "button". `native-type` was the v8 name;
+			 in v9 it is not a prop at all, so it fell through to the DOM as an
+			 inert `native-type="submit"` attribute while the button stayed
+			 `type="button"`.
+
+			 That is why this form's submit did nothing: the click landed, but no
+			 native submit event was ever raised, so `@submit.prevent="submit"`
+			 never ran — no validation error, no POST, and therefore no 409
+			 dialog and no 201 close. Cancel was unaffected only because it is
+			 wired to an explicit `@click`.
+			-->
 			<NcButton
 				variant="tertiary"
-				native-type="button"
+				type="button"
 				data-testid="bk-form-cancel"
 				@click="cancel">
 				{{ t('shillinq', 'Cancel') }}
 			</NcButton>
 			<NcButton
 				variant="primary"
-				native-type="submit"
+				type="submit"
 				data-testid="bk-form-submit"
 				:disabled="submitting">
 				{{ submitting ? t('shillinq', 'Saving…') : t('shillinq', 'Create Booking') }}

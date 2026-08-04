@@ -35,29 +35,49 @@ import { test, expect, type Page, type Response } from '@playwright/test'
 
 const SHILLINQ_ADMIN_SETTINGS = '/settings/admin/shillinq'
 
-/** The panel's own save endpoint (PipelinqSettingsController#create). */
-const SETTINGS_ENDPOINT = '/apps/shillinq/api/pipelinq/settings'
+/**
+ * The panel's own save endpoint (PipelinqSettingsController#create, routed at
+ * `/api/pipelinq/settings` POST). Matched on the PATH SUFFIX, not the full
+ * URL: `generateUrl()` emits `/apps/shillinq/…` under pretty URLs and
+ * `/index.php/apps/shillinq/…` without them, and a sub-folder install adds a
+ * further prefix — all three end the same way.
+ */
+const SETTINGS_PATH_SUFFIX = '/apps/shillinq/api/pipelinq/settings'
 
 /**
  * Click THIS panel's Save and wait for its POST to land.
  *
- * Two defects made the persistence assertion unprovable before:
- *   1. `AdminRoot.vue` renders `Settings.vue` — which ships its own "Save"
+ * Three defects made the persistence assertion unprovable before:
+ *   1. PRODUCT: the Save button carried `native-type="submit"`, which is not
+ *      an NcButton prop in @nextcloud/vue 9 — it rendered `type="button"`, so
+ *      the click raised no submit event and `save()` never ran. Fixed in
+ *      PipelinqIntegration.vue; see the comment there for the evidence.
+ *   2. `AdminRoot.vue` renders `Settings.vue` — which ships its own "Save"
  *      button — ABOVE `PipelinqIntegration.vue`, so
  *      `getByRole('button', { name: /Save/i }).first()` clicked the wrong
  *      form and the pipelinq endpoint was never POSTed at all.
- *   2. `save()` is a `fetch`; `waitForLoadState('domcontentloaded')` returns
+ *   3. `save()` is a `fetch`; `waitForLoadState('domcontentloaded')` returns
  *      immediately on an already-loaded SPA page, so the following
  *      `page.reload()` could abort the request in flight.
- * Scoping to `pipelinq-save` and awaiting the response fixes both, and
- * asserting the status turns a silently-rejected save into a red test.
+ *
+ * The button state is asserted BEFORE the click so the three failure modes
+ * stay distinguishable: "the affordance is missing" fails on `toBeVisible`,
+ * "the affordance is stuck disabled" fails on `toBeEnabled`, and "the
+ * affordance did nothing" fails on the response wait.
  */
 async function savePipelinqPanel(page: Page): Promise<Response> {
+	const save = page.getByTestId('pipelinq-save')
+	await expect(save, 'the pipelinq panel must render its own Save button').toBeVisible()
+	await expect(save, 'Save must be enabled before the click').toBeEnabled()
+
 	const posted = page.waitForResponse(
-		(res) => res.url().includes(SETTINGS_ENDPOINT) && res.request().method() === 'POST',
+		(res) => {
+			const path = new URL(res.url()).pathname
+			return path.endsWith(SETTINGS_PATH_SUFFIX) && res.request().method() === 'POST'
+		},
 		{ timeout: 15_000 },
 	)
-	await page.getByTestId('pipelinq-save').click()
+	await save.click()
 	const response = await posted
 	expect(response.status(), 'pipelinq settings POST must succeed').toBe(200)
 	return response

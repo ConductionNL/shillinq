@@ -26,13 +26,24 @@
  * The replacement asserts the two claims the docblock actually makes:
  *  - the OSS nav entries exist in the rendered menu (`cn-nav-entry-<page id>`,
  *    the lib's own stable testid), and
- *  - `/bookkeeping/oss/returns` resolves to ITS page — proven by
- *    `CnPageHeader`'s `cn-page-title` `<h1>` inside `#app-content-vue`
- *    (NcAppContent's `<main>`) reading the manifest title "OSS Returns".
- *    `gotoPage()` additionally asserts the settled path equals the requested
- *    one, which is what catches `src/main.js`'s
+ *  - `/bookkeeping/oss/returns` resolves to ITS page — proven by the pairing
+ *    of `gotoPage()`'s settled-path assertion (the requested path must still
+ *    be the current one, which is what catches `src/main.js`'s
  *    `routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })` silently
- *    rewriting an undeclared route to the Dashboard.
+ *    rewriting an undeclared route to the Dashboard) with CnIndexPage's own
+ *    root inside `#app-content-vue` (NcAppContent's `<main>`).
+ *
+ * ⚠️ DO NOT ASSERT THE PAGE TITLE INSIDE `#app-content-vue` — IT IS NOT THERE.
+ * An earlier revision of this file asserted
+ * `#app-content-vue [data-testid="cn-page-title"]`. `CnPageHeader` does emit
+ * that `<h1>`, but `CnIndexPage.vue:12` renders CnPageHeader behind
+ * `v-if="showTitle"` and `showTitle` defaults to FALSE ("When false (default),
+ * the title is shown in the sidebar header instead"). `CnPageRenderer.vue`
+ * never passes `show-title`, and all six `showTitle` occurrences in
+ * `src/manifest.json` set it to false — so `cn-page-title` renders on NO
+ * shillinq index page. That is also why `spec-coverage/_helpers.ts` keeps its
+ * title check soft and matching the SIDEBAR. Run 30894384122 turned that
+ * mistake into 69 false failures.
  *
  * The full OSS end-to-end flows (REQ-OSS-001 invoice rate resolution, REQ-OSS-004
  * quarterly return generation + XSD download, REQ-OSS-008 payment reconciliation,
@@ -70,12 +81,13 @@ test.describe('shillinq — OSS SPA smoke', () => {
 		await gotoPage(page, '/bookkeeping/oss/returns')
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
-		// CnIndexPage always renders CnPageHeader, whose `<h1>` carries
-		// `data-testid="cn-page-title"` unconditionally — it is present on an
-		// empty (unseeded) index too, so this is data-independent.
+		// `cn-index-page` is CnIndexPage's own root div (CnIndexPage.vue:2) —
+		// no `v-if`, so it is present on an empty (unseeded) index too and this
+		// stays data-independent. The Dashboard renders `cn-dashboard-page`
+		// instead, so a catch-all fallback cannot satisfy this either.
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the OSS Returns page must render its own manifest title',
-		).toHaveText(/OSS Returns/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the OSS Returns route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 })

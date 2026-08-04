@@ -28,12 +28,24 @@
  * exists only after `app.mount('#shillinq-app')`) and asserts the SETTLED path
  * equals the requested one — the check that catches `src/main.js`'s
  * `routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })` silently
- * rewriting an undeclared route to the Dashboard. Then CnPageHeader's
- * `cn-page-title` `<h1>` inside `#app-content-vue` (NcAppContent's `<main>`;
- * never `#content-vue`, which also wraps the sidebar that is identical on all
- * ~107 pages) must read that page's own manifest title. CnIndexPage renders
- * that header unconditionally, so the assertion holds on an unseeded
- * instance — it is data-independent, not data-dependent.
+ * rewriting an undeclared route to the Dashboard. Then CnIndexPage's own root
+ * div (`data-testid="cn-index-page"`, `CnIndexPage.vue:2`, no `v-if`) must
+ * have rendered inside `#app-content-vue` (NcAppContent's `<main>`; never
+ * `#content-vue`, which also wraps the sidebar that is identical on all ~107
+ * pages). It renders on an empty (unseeded) index too, so the assertion is
+ * data-independent; and the Dashboard renders `cn-dashboard-page` rather than
+ * `cn-index-page`, so a catch-all fallback cannot satisfy it either.
+ *
+ * ⚠️ DO NOT ASSERT THE PAGE TITLE INSIDE `#app-content-vue` — IT IS NOT THERE.
+ * An earlier revision asserted `#app-content-vue [data-testid="cn-page-title"]`.
+ * `CnPageHeader` does emit that `<h1>`, but `CnIndexPage.vue:12` renders
+ * CnPageHeader behind `v-if="showTitle"` and `showTitle` defaults to FALSE
+ * ("When false (default), the title is shown in the sidebar header instead").
+ * `CnPageRenderer.vue` never passes `show-title`, and all six `showTitle`
+ * occurrences in `src/manifest.json` set it to false — so `cn-page-title`
+ * renders on NO shillinq index page. That is also why
+ * `spec-coverage/_helpers.ts` keeps its title check soft and matching the
+ * SIDEBAR. Run 30894384122 turned that mistake into 69 false failures.
  *
  * The five Browser-Test items in tasks.md (contract entry form validation +
  * SSP auto-allocate, 60-month waterfall chart + segment filter, contract-
@@ -52,17 +64,20 @@ import { test, expect } from '@playwright/test'
 import { gotoPage } from './spec-coverage/_helpers'
 
 /**
- * Route → manifest title, read from
- * `src/manifest.d/bookkeeping-ifrs15-revenue.json`. `req` names the
- * requirement whose Browser-Test item this page-mount check stands in for.
+ * Every `type: index` page declared by
+ * `src/manifest.d/bookkeeping-ifrs15-revenue.json`. `label` is the manifest
+ * title (used only to name the test); `req` names the requirement whose
+ * Browser-Test item this page-mount check stands in for. Each route is pinned
+ * by `gotoPage()`'s settled-path assertion, so the six stay distinct from one
+ * another and from the Dashboard without needing a title matcher.
  */
 const PAGES = [
-	{ route: '/ifrs-15/contracts', title: /^\s*Contracts\s*$/i, req: 'REQ-IFRS15-001', label: 'Contract entry' },
-	{ route: '/ifrs-15/revenue-waterfall', title: /Revenue Waterfall/i, req: 'REQ-IFRS15-008', label: 'Revenue Waterfall' },
-	{ route: '/ifrs-15/contract-balances', title: /Contract Balances/i, req: 'REQ-IFRS15-007', label: 'Contract Balances' },
-	{ route: '/ifrs-15/contract-modifications', title: /Contract Modifications/i, req: 'REQ-IFRS15-006', label: 'Contract Modifications' },
-	{ route: '/ifrs-15/contract-cost-assets', title: /Contract Cost Assets/i, req: 'REQ-IFRS15-009', label: 'Contract Cost Assets' },
-	{ route: '/ifrs-15/performance-obligations', title: /Performance Obligations/i, req: 'REQ-IFRS15-009', label: 'Performance Obligations' },
+	{ route: '/ifrs-15/contracts', req: 'REQ-IFRS15-001', label: 'Contract entry' },
+	{ route: '/ifrs-15/revenue-waterfall', req: 'REQ-IFRS15-008', label: 'Revenue Waterfall' },
+	{ route: '/ifrs-15/contract-balances', req: 'REQ-IFRS15-007', label: 'Contract Balances' },
+	{ route: '/ifrs-15/contract-modifications', req: 'REQ-IFRS15-006', label: 'Contract Modifications' },
+	{ route: '/ifrs-15/contract-cost-assets', req: 'REQ-IFRS15-009', label: 'Contract Cost Assets' },
+	{ route: '/ifrs-15/performance-obligations', req: 'REQ-IFRS15-009', label: 'Performance Obligations' },
 ] as const
 
 test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
@@ -72,9 +87,9 @@ test.describe('shillinq — IFRS 15 Revenue Recognition SPA smoke', () => {
 
 			await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
 			await expect(
-				page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-				`${p.route} must render its own manifest title`,
-			).toHaveText(p.title, { timeout: 15_000 })
+				page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+				`${p.route} must mount CnIndexPage in the content region`,
+			).toBeVisible({ timeout: 15_000 })
 		})
 	}
 })

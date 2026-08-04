@@ -39,8 +39,20 @@
  * surface must have rendered inside `#app-content-vue` (NcAppContent's
  * `<main>`; never `#content-vue`, which also wraps the sidebar that is
  * identical on all ~107 pages):
- *  - index pages assert CnPageHeader's `cn-page-title` `<h1>` — rendered
- *    unconditionally by CnIndexPage, so the check is data-independent;
+ *  - index pages assert CnIndexPage's own root div
+ *    (`data-testid="cn-index-page"`, `CnIndexPage.vue:2`, no `v-if`), which
+ *    renders on an empty index too, so the check is data-independent;
+ *
+ *    ⚠️ NOT the page title: an earlier revision asserted
+ *    `#app-content-vue [data-testid="cn-page-title"]`. `CnPageHeader` does
+ *    emit that `<h1>`, but `CnIndexPage.vue:12` renders CnPageHeader behind
+ *    `v-if="showTitle"` and `showTitle` defaults to FALSE ("When false
+ *    (default), the title is shown in the sidebar header instead").
+ *    `CnPageRenderer.vue` never passes `show-title`, and all six `showTitle`
+ *    occurrences in `src/manifest.json` set it to false — so `cn-page-title`
+ *    renders on NO shillinq index page. That is also why
+ *    `spec-coverage/_helpers.ts` keeps its title check soft and matching the
+ *    SIDEBAR. Run 30894384122 turned that mistake into 69 false failures;
  *  - detail routes are requested with the synthetic id `none`, so no object
  *    resolves and CnDetailPage's title falls back to the object display name;
  *    the stable proof that the DETAIL renderer mounted is its unconditional
@@ -76,9 +88,9 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the Tax deadlines index must render its own manifest title',
-		).toHaveText(/Tax deadlines/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the Tax deadlines route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	test('Tax deadline detail — mounts CnDetailPage on /bookkeeping/vpb/deadlines/:id (REQ-VPB-006)', async ({ page }) => {
@@ -96,9 +108,9 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the Tax payments index must render its own manifest title',
-		).toHaveText(/Tax payments/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the Tax payments route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	test('Tax payment detail — mounts CnDetailPage on /bookkeeping/vpb/payments/:id (REQ-VPB-008)', async ({ page }) => {

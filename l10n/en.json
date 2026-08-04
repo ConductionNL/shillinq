@@ -2550,7 +2550,8 @@
         "Select all": "Select all",
         "This GL line could not be found.": "This GL line could not be found.",
         "Unmapped": "Unmapped",
-        "Unmapped GL lines": "Unmapped GL lines"
+        "Unmapped GL lines": "Unmapped GL lines",
+        "Allocation must be between 0 and 100 %.": "Allocation must be between 0 and 100 %."
     },
     "plurals": ""
 }

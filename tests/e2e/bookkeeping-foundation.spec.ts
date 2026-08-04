@@ -37,14 +37,27 @@
  * exists only after `app.mount('#shillinq-app')`) and asserts the SETTLED path
  * equals the requested one — the check that catches `src/main.js`'s
  * `routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })` silently
- * rewriting an undeclared route to the Dashboard. Then CnPageHeader's
- * `cn-page-title` `<h1>` inside `#app-content-vue` (NcAppContent's `<main>`;
- * never `#content-vue`, which also wraps the sidebar that is identical on all
- * ~107 pages) must read that page's own manifest title.
+ * rewriting an undeclared route to the Dashboard. Then CnIndexPage's own root
+ * div (`data-testid="cn-index-page"`, `CnIndexPage.vue:2`, no `v-if`) must
+ * have rendered inside `#app-content-vue` (NcAppContent's `<main>`; never
+ * `#content-vue`, which also wraps the sidebar that is identical on all ~107
+ * pages).
  *
- * This stays a UI-only smoke and stays data-independent: CnIndexPage renders
- * CnPageHeader unconditionally, so an index that mounts EMPTY (dev-container
- * topologies where the RGS template has not been seeded) still satisfies it.
+ * ⚠️ DO NOT ASSERT THE PAGE TITLE INSIDE `#app-content-vue` — IT IS NOT THERE.
+ * An earlier revision asserted `#app-content-vue [data-testid="cn-page-title"]`.
+ * `CnPageHeader` does emit that `<h1>`, but `CnIndexPage.vue:12` renders
+ * CnPageHeader behind `v-if="showTitle"` and `showTitle` defaults to FALSE
+ * ("When false (default), the title is shown in the sidebar header instead").
+ * `CnPageRenderer.vue` never passes `show-title`, and all six `showTitle`
+ * occurrences in `src/manifest.json` set it to false — so `cn-page-title`
+ * renders on NO shillinq index page. That is also why
+ * `spec-coverage/_helpers.ts` keeps its title check soft and matching the
+ * SIDEBAR. Run 30894384122 turned that mistake into 69 false failures.
+ *
+ * This stays a UI-only smoke and stays data-independent: `cn-index-page` has
+ * no `v-if`, so an index that mounts EMPTY (dev-container topologies where the
+ * RGS template has not been seeded) still satisfies it, while the Dashboard —
+ * which renders `cn-dashboard-page` instead — does not.
  * The assertion is "this page's own surface rendered", not "the list has N
  * rows". The declarative requirements (schema field types, lifecycle
  * transitions, cadence object shape, approval-gate behaviour) are covered by
@@ -65,9 +78,9 @@ test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the Chart of Accounts index must render its own manifest title',
-		).toHaveText(/Chart of Accounts/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the Chart of Accounts route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	test('General Ledger (Grootboek) — index page mounts on /general-ledger', async ({ page }) => {
@@ -75,9 +88,9 @@ test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the General Ledger index must render its own manifest title',
-		).toHaveText(/General Ledger/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the General Ledger route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	test('Journals (Journaalposten) — index page mounts on /journals', async ({ page }) => {
@@ -85,9 +98,9 @@ test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the Manual Journals index must render its own manifest title',
-		).toHaveText(/Manual Journals/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the Manual Journals route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	test('Journals navigation entry is reachable from the Shillinq shell (REQ-JE-009)', async ({ page }) => {

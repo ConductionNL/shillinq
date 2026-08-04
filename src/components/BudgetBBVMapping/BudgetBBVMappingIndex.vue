@@ -55,7 +55,16 @@
 			@refresh="loadMappings"
 			@row-click="onRowClick"
 			@page-changed="onPageChange">
-			<template #header-actions>
+			<!-- `below-header` — NOT `header-actions`: CnIndexPage has no
+			     `header-actions` slot (its named slots are action-items,
+			     actions, below-header, card, empty, form-fields,
+			     import-fields, list-item, mass-actions, row-actions,
+			     row-badges, row-icon). A slot the child never renders is a
+			     SILENT no-op in Vue 3 — no warning — so the whole filter bar
+			     simply disappeared. `below-header` is the slot documented for
+			     "optional content below header, above actions bar", which is
+			     exactly where a filter bar belongs. -->
+			<template #below-header>
 				<div class="bbv-mapping-index__filters" data-testid="bbv-mapping-index-filters">
 					<span
 						v-if="scope.fiscalYear"

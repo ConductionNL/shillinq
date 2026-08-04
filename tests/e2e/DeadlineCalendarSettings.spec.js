@@ -94,17 +94,29 @@ test.describe('compliance-deadline-calendar — per-user category toggles (REQ-C
 		await toggleLabel.click()
 		await expect(toggle).toBeChecked({ checked: !wasEnabled })
 
-		const saveResponse = page.waitForResponse(
-			(response) => response.url().includes('/api/deadline-calendar/settings')
-				&& response.request().method() === 'POST',
-		)
+		// Substring match on purpose: `generateUrl()` emits either
+		// `/apps/shillinq/api/…` or `/index.php/apps/shillinq/api/…` depending
+		// on whether the instance has pretty URLs, and both contain this suffix.
+		const isSettingsPost = (response) => response.url().includes('/api/deadline-calendar/settings')
+			&& response.request().method() === 'POST'
+
+		const saveResponse = page.waitForResponse(isSettingsPost)
 		await page.getByTestId('deadline-settings-save').click()
 		const response = await saveResponse
 		expect(response.ok()).toBeTruthy()
 
-		// Restore the entry state so the test stays idempotent.
+		// The success note only renders once save() has swallowed the response
+		// and rewritten the form model from it — so this proves the round-trip
+		// reached the UI, not just the wire, and it sequences the restore click
+		// below after the model has settled.
+		await expect(page.locator('.deadline-calendar-settings__saved')).toBeVisible()
+
+		// Restore the entry state so the test stays idempotent — and wait for
+		// that POST too, so the restore is a fact rather than a hope.
+		const restoreResponse = page.waitForResponse(isSettingsPost)
 		await toggleLabel.click()
 		await expect(toggle).toBeChecked({ checked: wasEnabled })
 		await page.getByTestId('deadline-settings-save').click()
+		expect((await restoreResponse).ok()).toBeTruthy()
 	})
 })

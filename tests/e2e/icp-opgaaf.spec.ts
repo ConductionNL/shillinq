@@ -33,10 +33,21 @@
  * `app.mount('#shillinq-app')`) and asserts the settled path equals the
  * requested one — the check that catches `src/main.js`'s
  * `routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })` silently rewriting
- * an undeclared route to the Dashboard. The title assertion then reads
- * CnPageHeader's `cn-page-title` `<h1>` inside `#app-content-vue`
- * (NcAppContent's `<main>`), never `#content-vue`, which also wraps the
- * sidebar that is identical on all ~107 pages.
+ * an undeclared route to the Dashboard. The page assertion then reads
+ * CnIndexPage's own root inside `#app-content-vue` (NcAppContent's `<main>`),
+ * never `#content-vue`, which also wraps the sidebar that is identical on all
+ * ~107 pages.
+ *
+ * ⚠️ DO NOT ASSERT THE PAGE TITLE INSIDE `#app-content-vue` — IT IS NOT THERE.
+ * An earlier revision asserted `#app-content-vue [data-testid="cn-page-title"]`.
+ * `CnPageHeader` does emit that `<h1>`, but `CnIndexPage.vue:12` renders
+ * CnPageHeader behind `v-if="showTitle"` and `showTitle` defaults to FALSE
+ * ("When false (default), the title is shown in the sidebar header instead").
+ * `CnPageRenderer.vue` never passes `show-title`, and all six `showTitle`
+ * occurrences in `src/manifest.json` set it to false — so `cn-page-title`
+ * renders on NO shillinq index page. That is also why
+ * `spec-coverage/_helpers.ts` keeps its title check soft and matching the
+ * SIDEBAR. Run 30894384122 turned that mistake into 69 false failures.
  *
  * The full ICP end-to-end flows — invoice ICP-context tagging
  * (REQ-ICP-001 / REQ-ICP-007), VIES validation round-trip
@@ -63,12 +74,13 @@ test.describe('shillinq — ICP-opgaaf SPA smoke', () => {
 		await gotoPage(page, '/belastingen/icp-opgaaf')
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
-		// CnIndexPage always renders CnPageHeader, whose `<h1>` carries
-		// `data-testid="cn-page-title"` unconditionally — present on an empty
-		// (unseeded) index too, so this is data-independent.
+		// `cn-index-page` is CnIndexPage's own root div (CnIndexPage.vue:2) —
+		// no `v-if`, so it is present on an empty (unseeded) index too and this
+		// stays data-independent. The Dashboard renders `cn-dashboard-page`
+		// instead, so a catch-all fallback cannot satisfy this either.
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the ICP-opgaaf page must render its own manifest title',
-		).toHaveText(/ICP-opgaaf/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the ICP-opgaaf route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 })

@@ -16,9 +16,18 @@
 				{{ successMessage }}
 			</div>
 
+			<!--
+			 `type` — NOT `native-type`. Same @nextcloud/vue 9 prop rename that
+			 killed the sibling panel's Save (see PipelinqIntegration.vue for
+			 the full evidence): NcButton has no `nativeType` prop in v9, so
+			 `native-type="submit"` fell through to the DOM as an inert
+			 attribute while the button stayed `type="button"` and raised no
+			 submit event — this form's `@submit.prevent="save"` never ran.
+			-->
 			<NcButton
 				variant="primary"
-				native-type="submit"
+				type="submit"
+				data-testid="shillinq-settings-save"
 				:disabled="saving">
 				{{ saving ? t('shillinq', 'Saving...') : t('shillinq', 'Save') }}
 			</NcButton>

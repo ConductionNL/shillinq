@@ -52,6 +52,27 @@
 					data-testid="bbv-dashboard-fy-label">
 					{{ fyLabel }}
 				</span>
+				<!-- REQ-BBVW-006 fiscal-year scoping. The read-only FY label
+				     above reports the year the server derived; this is the
+				     control that CHANGES it. Always rendered (never gated on
+				     the envelope having loaded), because the year the user
+				     wants to look at is exactly what they need when the
+				     current scope came back empty. Bound to its own
+				     `selectedFiscalYear`, not to `scope.fiscalYear`, so a
+				     server response cannot yank the user's choice back. -->
+				<select
+					v-model="selectedFiscalYear"
+					data-testid="bbv-dashboard-year"
+					class="bbv-dashboard__year"
+					:aria-label="t('shillinq', 'Fiscal year')"
+					@change="onFiscalYearChange">
+					<option
+						v-for="year in fiscalYearOptions"
+						:key="year"
+						:value="String(year)">
+						{{ year }}
+					</option>
+				</select>
 				<select
 					v-if="administrationOptions.length > 1"
 					v-model="administrationId"
@@ -130,6 +151,12 @@ export default {
 			error: '',
 			administrationId: '',
 			administrationOptions: [],
+			// Fiscal year the user is looking at (string, so it compares
+			// directly with the <option> values). Seeded from the server's
+			// derived scope until the user picks one — `fiscalYearTouched`
+			// is what stops a later envelope from overwriting their choice.
+			selectedFiscalYear: String(new Date().getFullYear()),
+			fiscalYearTouched: false,
 			scope: {
 				administrationId: null,
 				fiscalYear: null,
@@ -154,6 +181,27 @@ export default {
 				{ id: 'layout-trend', widgetId: 'bbv-trend', gridX: 6, gridY: 2, gridWidth: 6, gridHeight: 4 },
 				{ id: 'layout-table', widgetId: 'bbv-table', gridX: 0, gridY: 6, gridWidth: 12, gridHeight: 5 },
 			]
+		},
+		/**
+		 * Selectable fiscal years — a bounded window around "now", widened to
+		 * include the server-derived scope year if it falls outside. Bounded
+		 * rather than discovered so the control needs no extra round trip.
+		 *
+		 * @return {Array<number>} Years, most recent first.
+		 */
+		fiscalYearOptions() {
+			const now = new Date().getFullYear()
+			const years = new Set()
+			for (let y = now + 1; y >= now - 5; y -= 1) {
+				years.add(y)
+			}
+			if (this.scope.fiscalYear) {
+				years.add(Number(this.scope.fiscalYear))
+			}
+			if (this.selectedFiscalYear) {
+				years.add(Number(this.selectedFiscalYear))
+			}
+			return [...years].filter((y) => Number.isFinite(y)).sort((a, b) => b - a)
 		},
 		fyLabel() {
 			if (!this.scope.fiscalYear) {
@@ -194,6 +242,18 @@ export default {
 				this.error = this.t('shillinq', 'Failed to load administration context')
 			}
 		},
+		/**
+		 * Re-query the dashboard envelope for the newly selected fiscal year
+		 * (REQ-BBVW-006). Marks the selection as user-owned so the response
+		 * cannot reset the control underneath them.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+		 */
+		async onFiscalYearChange() {
+			this.fiscalYearTouched = true
+			await this.loadProgrammes()
+		},
 		async onAdministrationChange() {
 			// Server-side scope is derived from the session, but explicitly
 			// passing administrationId lets a multi-admin user pivot the
@@ -208,6 +268,9 @@ export default {
 				if (this.administrationId) {
 					params.administrationId = this.administrationId
 				}
+				if (this.selectedFiscalYear) {
+					params.fiscalYear = this.selectedFiscalYear
+				}
 				const response = await axios.get(
 					generateUrl('/apps/shillinq/api/bbv-dashboard'),
 					{ params },
@@ -221,6 +284,11 @@ export default {
 					fiscalYear: null,
 					startDate: null,
 					endDate: null,
+				}
+				// Adopt the server-derived year only until the user has picked
+				// one themselves — after that their selection is authoritative.
+				if (!this.fiscalYearTouched && this.scope.fiscalYear) {
+					this.selectedFiscalYear = String(this.scope.fiscalYear)
 				}
 			} catch (e) {
 				this.programmes = []
@@ -274,6 +342,15 @@ export default {
 .bbv-dashboard__administration {
 	margin-right: 0.5rem;
 	max-width: 16rem;
+}
+
+.bbv-dashboard__year {
+	margin-right: 0.5rem;
+	border: 1px solid var(--color-border);
+	background: var(--color-main-background);
+	color: var(--color-main-text);
+	border-radius: var(--border-radius);
+	padding: 0.25rem 0.5rem;
 }
 
 .bbv-dashboard__refresh:hover {

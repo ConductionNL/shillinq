@@ -33,13 +33,24 @@
  * have rendered inside `#app-content-vue` (NcAppContent's `<main>`; never
  * `#content-vue`, which also wraps the sidebar that is identical on all ~107
  * pages):
- *  - the index page must show CnPageHeader's `cn-page-title` `<h1>` reading
- *    "Innovation box";
+ *  - the index page must mount CnIndexPage — `data-testid="cn-index-page"` is
+ *    its root div (`CnIndexPage.vue:2`), with no `v-if`;
  *  - the detail route is deliberately requested with the synthetic id `none`,
  *    so the object cannot resolve and CnDetailPage's title falls back to the
  *    object's display name. The stable, data-independent proof that the DETAIL
  *    renderer (rather than the Dashboard) mounted is its unconditional
  *    `data-testid="cn-detail-page-header"` root.
+ *
+ * ⚠️ DO NOT ASSERT THE PAGE TITLE INSIDE `#app-content-vue` — IT IS NOT THERE.
+ * An earlier revision asserted `#app-content-vue [data-testid="cn-page-title"]`.
+ * `CnPageHeader` does emit that `<h1>`, but `CnIndexPage.vue:12` renders
+ * CnPageHeader behind `v-if="showTitle"` and `showTitle` defaults to FALSE
+ * ("When false (default), the title is shown in the sidebar header instead").
+ * `CnPageRenderer.vue` never passes `show-title`, and all six `showTitle`
+ * occurrences in `src/manifest.json` set it to false — so `cn-page-title`
+ * renders on NO shillinq index page. That is also why
+ * `spec-coverage/_helpers.ts` keeps its title check soft and matching the
+ * SIDEBAR. Run 30894384122 turned that mistake into 69 false failures.
  *
  * The deeper end-to-end flows (REQ-IBA-006 per-asset Vpb roll-up,
  * REQ-IBA-009 scenario calculator, REQ-IBA-004 doorsnijdingsverbod close-block,
@@ -57,15 +68,15 @@ import { gotoPage } from './spec-coverage/_helpers'
 test.describe('shillinq — Innovatiebox Administratie SPA smoke', () => {
 	test('Innovation box index mounts on /bookkeeping/innovatiebox', async ({ page }) => {
 		// The page must mount whether the mkb-innovatiebox flag is on or off:
-		// when off the index renders empty, but CnPageHeader still prints the
-		// manifest title, so this assertion stays data- and flag-independent.
+		// when off the index renders empty, but CnIndexPage's root div still
+		// renders, so this assertion stays data- and flag-independent.
 		await gotoPage(page, '/bookkeeping/innovatiebox')
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the Innovation box index must render its own manifest title',
-		).toHaveText(/Innovation box/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the Innovation box route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	test('IP-activum detail route mounts the detail renderer on /bookkeeping/innovatiebox/ip-activa/:id', async ({ page }) => {

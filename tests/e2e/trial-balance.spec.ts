@@ -31,12 +31,23 @@
  * exists after `app.mount('#shillinq-app')`) and asserts the SETTLED path
  * equals the requested one — the check that catches `src/main.js`'s
  * `routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })` silently rewriting
- * an undeclared route to the Dashboard. Then CnPageHeader's `cn-page-title`
- * `<h1>` inside `#app-content-vue` (NcAppContent's `<main>` — never
+ * an undeclared route to the Dashboard. Then CnIndexPage's own root must have
+ * rendered inside `#app-content-vue` (NcAppContent's `<main>` — never
  * `#content-vue`, which also wraps the sidebar that is identical on all ~107
- * pages) must read that page's own manifest title. The `-lines` page asserts
- * the full "Trial Balance (by account)" so it cannot be satisfied by the
- * period-snapshot page and vice versa.
+ * pages). The two routes stay distinguishable because `gotoPage()` pins each
+ * one to its own path; the Dashboard renders `cn-dashboard-page`, not
+ * `cn-index-page`, so a catch-all fallback fails both checks.
+ *
+ * ⚠️ DO NOT ASSERT THE PAGE TITLE INSIDE `#app-content-vue` — IT IS NOT THERE.
+ * An earlier revision asserted `#app-content-vue [data-testid="cn-page-title"]`.
+ * `CnPageHeader` does emit that `<h1>`, but `CnIndexPage.vue:12` renders
+ * CnPageHeader behind `v-if="showTitle"` and `showTitle` defaults to FALSE
+ * ("When false (default), the title is shown in the sidebar header instead").
+ * `CnPageRenderer.vue` never passes `show-title`, and all six `showTitle`
+ * occurrences in `src/manifest.json` set it to false — so `cn-page-title`
+ * renders on NO shillinq index page. That is also why
+ * `spec-coverage/_helpers.ts` keeps its title check soft and matching the
+ * SIDEBAR. Run 30894384122 turned that mistake into 69 false failures.
  *
  * The full Trial Balance end-to-end flows (REQ-TB-009 GET /api/trial-balance
  * against a seeded GL, REQ-TB-002 prior-period opening carry, REQ-TB-011 KPI
@@ -55,13 +66,13 @@ test.describe('shillinq — Trial Balance SPA smoke', () => {
 		await gotoPage(page, '/financial-statements/trial-balance')
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
-		// `toHaveText` with an anchored-enough matcher: the sibling page's title
-		// is "Trial Balance (by account)", so `/^Trial Balance$/i` keeps the two
-		// distinguishable rather than letting either satisfy the other.
+		// `cn-index-page` is CnIndexPage's own root div (CnIndexPage.vue:2) —
+		// no `v-if`, so it holds on an unseeded instance. The sibling
+		// `-lines` route is kept distinct by `gotoPage()`'s path assertion.
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the Trial Balance page must render its own manifest title',
-		).toHaveText(/^\s*Trial Balance\s*$/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the Trial Balance route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	test('Trial Balance (by account) index mounts on /financial-statements/trial-balance-lines', async ({ page }) => {
@@ -69,8 +80,8 @@ test.describe('shillinq — Trial Balance SPA smoke', () => {
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the Trial Balance (by account) page must render its own manifest title',
-		).toHaveText(/Trial Balance \(by account\)/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the Trial Balance (by account) route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 })

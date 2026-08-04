@@ -40,6 +40,17 @@
  * scoped to `#app-content-vue` (NcAppContent's `<main>`), never `#content-vue`,
  * which also wraps the sidebar that is identical on all ~107 pages.
  *
+ * ⚠️ DO NOT ASSERT THE PAGE TITLE INSIDE `#app-content-vue` — IT IS NOT THERE.
+ * An earlier revision asserted `#app-content-vue [data-testid="cn-page-title"]`
+ * on the index. `CnPageHeader` does emit that `<h1>`, but `CnIndexPage.vue:12`
+ * renders CnPageHeader behind `v-if="showTitle"` and `showTitle` defaults to
+ * FALSE ("When false (default), the title is shown in the sidebar header
+ * instead"). `CnPageRenderer.vue` never passes `show-title`, and all six
+ * `showTitle` occurrences in `src/manifest.json` set it to false — so
+ * `cn-page-title` renders on NO shillinq index page. That is also why
+ * `spec-coverage/_helpers.ts` keeps its title check soft and matching the
+ * SIDEBAR. Run 30894384122 turned that mistake into 69 false failures.
+ *
  * This stays a UI-only smoke and stays data-independent: the detail id below
  * need not exist — `PeriodCloseDetail` renders its error marker on the
  * "Period not found" path, which is a mount just as much as the loaded path
@@ -68,9 +79,9 @@ test.describe('bookkeeping-period-close — Tier-2 manifest pages', () => {
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the Period Close index must render its own manifest title',
-		).toHaveText(/Period Close/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the Period Close route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	test('Period Close detail — custom component mounts on /bookkeeping/period-close/:id', async ({ page }) => {

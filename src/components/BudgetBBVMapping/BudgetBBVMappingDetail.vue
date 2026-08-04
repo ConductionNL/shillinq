@@ -42,8 +42,6 @@
 			:title="pageTitle"
 			:description="pageDescription"
 			:loading="loading"
-			:error="!!loadError"
-			:error-message="loadError"
 			icon="LinkVariant"
 			:object="record"
 			:max-width="'1100px'"
@@ -84,11 +82,31 @@
 					class="bbv-mapping-detail__form"
 					data-testid="bbv-mapping-detail-form"
 					@submit.prevent="onSave">
+					<!-- A failed record load is reported IN the body rather than
+					     through CnDetailPage's `error` prop, which replaces the
+					     whole default slot. An :id that resolves to nothing must
+					     still land on the empty-form path (the record fields are
+					     schema-declared, not row-declared) — and Save stays
+					     disabled anyway, because `canSave` requires a GL account
+					     and a programme that an empty form does not have. -->
+					<p
+						v-if="loadError"
+						class="bbv-mapping-detail__error"
+						data-testid="bbv-mapping-detail-load-error"
+						role="alert">
+						{{ loadError }}
+					</p>
+
 					<div class="bbv-mapping-detail__row">
+						<!-- No `data-testid` here: GlAccountPicker's own root
+						     already carries `bbv-gl-account-picker`, and a
+						     fallthrough attribute WINS over the child's own
+						     attribute of the same name — so a testid passed
+						     from here silently overwrites the picker's
+						     identity instead of adding to it. -->
 						<GlAccountPicker
 							v-model="form.glAccountNumber"
 							:administration-id="form.administrationId"
-							data-testid="bbv-mapping-detail-gl"
 							@selected="onGlAccountSelected" />
 						<p v-if="selectedAccount" class="bbv-mapping-detail__hint" data-testid="bbv-mapping-detail-gl-hint">
 							{{ glAccountSummary }}
@@ -96,11 +114,12 @@
 					</div>
 
 					<div class="bbv-mapping-detail__row">
+						<!-- See the GlAccountPicker note above — the picker owns
+						     `bbv-programme-picker` on its own root. -->
 						<BBVProgrammePicker
 							v-model="form.programmeCode"
 							:administration-id="form.administrationId"
 							:fiscal-year="fiscalYearOfMapping"
-							data-testid="bbv-mapping-detail-programme"
 							@selected="onProgrammeSelected" />
 						<p v-if="selectedProgramme" class="bbv-mapping-detail__hint" data-testid="bbv-mapping-detail-programme-hint">
 							{{ programmeSummary }}
@@ -244,12 +263,49 @@ export default {
 			},
 			selectedAccount: null,
 			selectedProgramme: null,
-			allocationFeedback: { message: '', severity: 'info' },
+			// Async per-GL-account projection result (debounced network read).
+			// Surfaced through the `allocationFeedback` computed, which layers
+			// the synchronous 0..100 range check on top.
+			projectionFeedback: { message: '', severity: 'info' },
 			allocationCheckTimer: null,
 			existingAllocationTotal: 0,
 		}
 	},
 	computed: {
+		/**
+		 * Inline allocation feedback.
+		 *
+		 * Two layers, range first:
+		 *
+		 *   1. A SYNCHRONOUS 0..100 range check. `min`/`max` on
+		 *      `<input type="number">` bound the spinner and the native form
+		 *      validity flag, but they do not stop a typed or pasted value —
+		 *      so an out-of-range allocation previously sat in the field with
+		 *      nothing on screen explaining why Save was dead. Computed (not
+		 *      debounced) so the message appears on the same render as the
+		 *      keystroke; it needs no network read.
+		 *   2. The debounced per-GL-account projection (`projectionFeedback`),
+		 *      which needs the GL account and a round trip.
+		 *
+		 * `canSave` reads `.severity`, so an out-of-range value keeps Save
+		 * disabled through the same path the projection uses.
+		 *
+		 * @return {{message: string, severity: string}} The active feedback.
+		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+		 */
+		allocationFeedback() {
+			const raw = this.form.allocationPercentage
+			if (raw !== '' && raw !== null && raw !== undefined) {
+				const value = Number(raw)
+				if (!Number.isFinite(value) || value < 0 || value > 100) {
+					return {
+						severity: 'error',
+						message: this.t('shillinq', 'Allocation must be between 0 and 100 %.'),
+					}
+				}
+			}
+			return this.projectionFeedback
+		},
 		isCreate() {
 			return !this.id || this.id === 'new'
 		},
@@ -417,7 +473,7 @@ export default {
 			const fiscalYear = this.fiscalYearOfMapping
 			const adminId = this.form.administrationId
 			if (!gl || !fiscalYear) {
-				this.allocationFeedback = { message: '', severity: 'info' }
+				this.projectionFeedback = { message: '', severity: 'info' }
 				this.existingAllocationTotal = 0
 				return
 			}
@@ -453,7 +509,7 @@ export default {
 				const projected = sumOthers + (Number.isFinite(current) ? current : 0)
 				if (projected > ALLOCATION_OVER_THRESHOLD) {
 					const over = (projected - 100).toFixed(2)
-					this.allocationFeedback = {
+					this.projectionFeedback = {
 						severity: 'error',
 						message: this.t('shillinq', 'GL {gl} total would be {pct} % — {over} % over 100 %. Reduce the allocation before saving.', {
 							gl,
@@ -463,7 +519,7 @@ export default {
 					}
 				} else {
 					const remaining = Math.max(0, 100 - sumOthers)
-					this.allocationFeedback = {
+					this.projectionFeedback = {
 						severity: 'info',
 						message: this.t('shillinq', 'GL {gl} total: {sum} % — you can add up to {remaining} %.', {
 							gl,
@@ -474,7 +530,7 @@ export default {
 				}
 			} catch (e) {
 				// Non-blocking — server-side schema still enforces (ADR-022).
-				this.allocationFeedback = { message: '', severity: 'info' }
+				this.projectionFeedback = { message: '', severity: 'info' }
 			}
 		},
 		overlapsFiscalYear(row, fiscalYear) {

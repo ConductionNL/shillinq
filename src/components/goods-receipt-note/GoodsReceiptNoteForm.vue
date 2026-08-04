@@ -147,9 +147,22 @@
 			</div>
 
 			<div class="grn-form__actions">
+				<!-- ⚠️ The native button type prop on @nextcloud/vue 9 is `type` —
+				     NOT `native-type`. v9 renamed it: NcButton declares
+				     `type?: ButtonType` ('submit' | 'reset' | 'button') with
+				     `@default 'button'` and binds `type: props.type` onto the
+				     <button>; the string `nativeType` appears ZERO times in the
+				     shipped build (positive control: `variant` appears 6 times
+				     in the same chunk). `native-type` was the v8 name, so it
+				     fell through to the DOM as an inert `native-type="submit"`
+				     attribute while the button stayed `type="button"`. A
+				     type="button" inside a <form> submits nothing, so
+				     `@submit.prevent` never fired — no request, no console
+				     error, which is indistinguishable from a backend that was
+				     never called. -->
 				<NcButton
 					variant="primary"
-					native-type="submit"
+					type="submit"
 					:disabled="submitting || !canSubmit"
 					data-testid="grn-form-submit">
 					{{ submitting ? t('shillinq', 'Saving...') : t('shillinq', 'Save goods receipt') }}

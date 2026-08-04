@@ -53,8 +53,19 @@
 					</fieldset>
 
 					<div class="deadline-calendar-settings__actions">
+						<!--
+						 `type` — NOT `native-type`. @nextcloud/vue 9 renamed the
+						 native button-type prop: NcButton declares
+						 `type: { default: 'button' }` and renders
+						 `<button :type="props.type">`, with no `nativeType` prop
+						 at all. A `native-type="submit"` therefore fell through to
+						 the DOM as an inert attribute while the button stayed
+						 `type="button"` — which does not submit its form, so
+						 `@submit.prevent="save"` never ran and no POST to
+						 /api/deadline-calendar/settings was ever issued.
+						-->
 						<NcButton variant="primary"
-							native-type="submit"
+							type="submit"
 							:disabled="saving"
 							data-testid="deadline-settings-save">
 							{{ saving ? t('shillinq', 'Saving…') : t('shillinq', 'Save') }}

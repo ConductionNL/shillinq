@@ -27,12 +27,26 @@
  * after `app.mount('#shillinq-app')`) and asserts the SETTLED path equals the
  * requested one — the check that catches `src/main.js`'s
  * `routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })` silently
- * rewriting an undeclared route to the Dashboard. Then CnPageHeader's
- * `cn-page-title` `<h1>` inside `#app-content-vue` (NcAppContent's `<main>`;
+ * rewriting an undeclared route to the Dashboard. Then the page type's own
+ * root must have rendered inside `#app-content-vue` (NcAppContent's `<main>`;
  * never `#content-vue`, which also wraps the sidebar that is identical on all
- * ~107 pages) must read the page's own manifest title. CnIndexPage and
- * CnSettingsPage both render that header unconditionally, so the check holds
- * on an unseeded instance.
+ * ~107 pages): `cn-index-page` (`CnIndexPage.vue:2`), `cn-settings-page`
+ * (`CnSettingsPage.vue:34`) or `cn-detail-page-header` (`CnDetailPage.vue:26`).
+ * None of the three carries a `v-if`, so the checks hold on an unseeded
+ * instance; and the Dashboard renders `cn-dashboard-page`, so a catch-all
+ * fallback satisfies none of them.
+ *
+ * ⚠️ DO NOT ASSERT THE PAGE TITLE INSIDE `#app-content-vue` — IT IS NOT THERE.
+ * An earlier revision asserted `#app-content-vue [data-testid="cn-page-title"]`.
+ * `CnPageHeader` does emit that `<h1>`, but `CnIndexPage.vue:12` renders it
+ * behind `v-if="showTitle"` (and `CnSettingsPage.vue:42` behind
+ * `v-if="showTitle && title"`), with `showTitle` defaulting to FALSE ("When
+ * false (default), the title is shown in the sidebar header instead").
+ * `CnPageRenderer.vue` never passes `show-title`, and all six `showTitle`
+ * occurrences in `src/manifest.json` set it to false — so `cn-page-title`
+ * renders on NO shillinq page. That is also why `spec-coverage/_helpers.ts`
+ * keeps its title check soft and matching the SIDEBAR. Run 30894384122 turned
+ * that mistake into 69 false failures.
  *
  * The behavioural acceptance — REQ-VPB-009 quarterly aggregation correctness,
  * REQ-VPB-010 untagged-posting warning surfacing on tax-relevant accounts,
@@ -61,9 +75,9 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax quarterly statement SP
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the Quarterly statement index must render its own manifest title',
-		).toHaveText(/Quarterly statement/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-index-page"]'),
+			'the Quarterly statement route must mount CnIndexPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 
 	/**
@@ -106,14 +120,16 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax quarterly statement SP
 	test('Vpb settings — mounts on /bookkeeping/vpb/settings (REQ-VPB-014, REQ-VPB-015)', async ({ page }) => {
 		// Hosts deadline-template configuration plus the tax-treatment tag
 		// configuration that drives the untagged-posting warning on the
-		// quarterly report. `type: "settings"` resolves to CnSettingsPage,
-		// which — like CnIndexPage — renders CnPageHeader unconditionally.
+		// quarterly report. `type: "settings"` resolves to CnSettingsPage, whose
+		// root div carries `data-testid="cn-settings-page"` with no `v-if`
+		// (CnSettingsPage.vue:34) — a page-type-specific marker no index page
+		// and no dashboard renders.
 		await gotoPage(page, '/bookkeeping/vpb/settings')
 
 		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
 		await expect(
-			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
-			'the Vpb settings page must render its own manifest title',
-		).toHaveText(/Vpb settings/i, { timeout: 15_000 })
+			page.locator('#app-content-vue [data-testid="cn-settings-page"]'),
+			'the Vpb settings route must mount CnSettingsPage in the content region',
+		).toBeVisible({ timeout: 15_000 })
 	})
 })
