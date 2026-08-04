@@ -46,5 +46,17 @@ jobs:
       # `Conduction`, which does not exist — the same wrong-org bug that kept the
       # whole workflow from resolving, hiding in a comment where a `uses:` grep
       # could not see it.
-      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"main"}]'
+      #
+      # `ref` MUST be `development`, not `main`. shillinq's appinfo/routes.php
+      # is `return \OCA\OpenRegister\AppHost\Routes::standard(...)` — an
+      # unguarded static call to a class that lives ONLY on OpenRegister
+      # `development`. OpenRegister `main` is 0.2.19 and ships no `lib/AppHost`
+      # at all, so Nextcloud's router fataled while *including* routes.php and
+      # answered EVERY shillinq endpoint with 500 — "Class
+      # \"OCA\\OpenRegister\\AppHost\\Routes\" not found", thrown from
+      # appinfo/routes.php:39. That is the whole of the 45-of-51 Newman failure
+      # in run 30896861325: not one of those endpoints was ever reached.
+      # `development` is also what the rest of the fleet pins (opencatalogi,
+      # openconnector, procest, softwarecatalog, scholiq, pipelinq).
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
       enable-sbom: true
