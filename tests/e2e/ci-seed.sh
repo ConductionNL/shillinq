@@ -518,3 +518,20 @@ if [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${CI:-}" = "true" ]; then
 fi
 
 echo "[ci-seed] done."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⚠️ THROWAWAY NEGATIVE CONTROL — this block exists ONLY on the
+# `feature/e2e-truncation-control-4` branch and MUST NEVER be merged.
+#
+# A passing suite is evidence about the suite only once the same suite has been
+# shown to FAIL for a known-bad reason. So: after the bundle gate above has
+# already proved the SPA served real JavaScript, truncate the bundle.
+#
+# TRUNCATE, not delete. `tests/e2e/global-setup.ts::ensureBundleBuilt()` does
+# `fs.existsSync(BUNDLE_PATH)` and runs `npm run build` when the file is gone —
+# a delete-based control silently rebuilds and comes back GREEN, which is the
+# exact false pass this control exists to rule out. A 0-byte file still exists,
+# so nothing rebuilds it and the Vue app cannot mount.
+echo "[ci-seed] ⚠️ NEGATIVE CONTROL: truncating ${APP_DIR}/js/shillinq-main.js"
+: > "${APP_DIR}/js/shillinq-main.js"
+ls -l "${APP_DIR}/js/shillinq-main.js"
