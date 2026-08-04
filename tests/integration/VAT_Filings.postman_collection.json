@@ -46,10 +46,15 @@
 								"type": "text/javascript",
 								"exec": [
 									"pm.test('status 201', () => pm.response.to.have.status(201));",
-									"const data = pm.response.json().data;",
-									"pm.test('return id present', () => pm.expect(data.id || data['@self']?.id).to.be.a('string'));",
-									"pm.test('statusCode is draft', () => pm.expect(data.statusCode).to.eql('draft'));",
-									"pm.collectionVariables.set('return_id', data.id || data['@self'].id);"
+									"// `data` is a RESERVED global in the Postman/Newman sandbox (the data-file variables).",
+										"// Declaring `const data` at script top level throws SyntaxError: Identifier 'data'",
+										"// has already been declared BEFORE the first pm.test() runs, so none of the three",
+										"// assertions below executed and `return_id` was never set — which is why every",
+										"// later request ran against an unresolved `/api/vat-returns/{{return_id}}`.",
+										"const created = pm.response.json().data;",
+									"pm.test('return id present', () => pm.expect(created.id || created['@self']?.id).to.be.a('string'));",
+									"pm.test('statusCode is draft', () => pm.expect(created.statusCode).to.eql('draft'));",
+									"pm.collectionVariables.set('return_id', created.id || created['@self'].id);"
 								]
 							}
 						}

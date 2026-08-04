@@ -169,6 +169,28 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  and been confirmed for at least one release, and the delete has itself been live-verified on real data. -->
             <step>OCA\Shillinq\Repair\RematerialiseConvertedCalculations</step>
         </post-migration>
+
+        <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first
+             install: `Installer::installAppLastSteps()` guards both the
+             pre-migration and post-migration blocks with
+             `if ($previousVersion !== '')`, and only `repair-steps/install`
+             runs unconditionally afterwards. Until this block existed, a
+             brand-new shillinq install ran NONE of the steps above, so
+             InitializeSettings never fired and the `shillinq` REGISTER was
+             never imported. Every controller that resolves the register then
+             threw `Did expect one result but found none ... FROM
+             oc_openregister_registers`, which surfaces as HTTP 500 on
+             /api/vat-returns and /api/period-close/* and HTTP 503 on
+             /api/v2/calendars — on a clean install, for the admin, on every
+             request. Measured in run 30903201789 (job 91972751340).
+
+             Only InitializeSettings belongs here. Every other step above is a
+             migration or backfill over data that a fresh install does not yet
+             have; they stay upgrade-only so a first install does not pay for
+             folds and rematerialisations that can have nothing to fold. -->
+        <install>
+            <step>OCA\Shillinq\Repair\InitializeSettings</step>
+        </install>
     </repair-steps>
 
     <commands>
