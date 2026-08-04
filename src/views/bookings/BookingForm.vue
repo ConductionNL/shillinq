@@ -60,7 +60,7 @@
 		</p>
 
 		<div class="booking-form__actions">
-			<NcButton variant="primary" native-type="submit" :disabled="submitting">
+			<NcButton variant="primary" type="submit" :disabled="submitting">
 				{{ submitting ? t('shillinq', 'Saving…') : t('shillinq', 'Create Booking') }}
 			</NcButton>
 		</div>

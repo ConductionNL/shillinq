@@ -35,7 +35,7 @@
 			<div class="actions">
 				<NcButton
 					variant="primary"
-					native-type="submit"
+					type="submit"
 					:disabled="saving">
 					{{ saving ? t('shillinq', 'Saving…') : t('shillinq', 'Save') }}
 				</NcButton>
