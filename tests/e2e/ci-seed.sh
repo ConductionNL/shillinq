@@ -548,6 +548,18 @@ with open(os.path.join(fixdir, 'calendar.json'), 'w') as fh:
         'calendarId': cal_id,
         'resource': res_id,
         'timeZone': 'Europe/Amsterdam',
+        # REQUIRED. The Calendar schema is assembled from TWO register
+        # fragments and OpenRegister validates against the MERGED result, so
+        # the effective required set is the union of both:
+        #   lib/Settings/register.d/bookings-resource-calendar.json
+        #     -> administrationId, calendarId, resource, timeZone, status
+        #   lib/Settings/register.d/10-bookings-resource-calendar.json
+        #     -> resource, timeZone, organization, status
+        # Reading only the first fragment loses `organization`, and the create
+        # then fails with HTTP 400 "The required property (organization) is
+        # missing" (run 30893116659). `organization` is a plain string FK, and
+        # `org-001` is the value that fragment's own bundled seed objects use.
+        'organization': 'org-001',
         'status': 'active',
     }, fh)
 
