@@ -1026,6 +1026,7 @@
           "slug": "prog-veiligheid"
         },
         "begrotingId": "pb-gem-2027",
+        "boekjaar": 2027,
         "nummer": "1",
         "naam": "Veiligheid & Handhaving",
         "portefeuillehouder": "Wethouder Veiligheid",
@@ -1044,6 +1045,7 @@
           "slug": "prog-sociaal"
         },
         "begrotingId": "pb-gem-2027",
+        "boekjaar": 2027,
         "nummer": "2",
         "naam": "Sociaal Domein",
         "portefeuillehouder": "Wethouder Zorg",
@@ -1188,6 +1190,7 @@
           "slug": "par-2027-lokaleHeffingen"
         },
         "begrotingId": "pb-gem-2027",
+        "boekjaar": 2027,
         "type": "lokaleHeffingen",
         "narrative": "De lokale heffingen bestaan uit de OZB, afvalstoffenheffing en rioolheffing. De tarieven stijgen met de nominale ontwikkeling van 2%.",
         "kerncijfers": {
@@ -1203,6 +1206,7 @@
           "slug": "par-2027-weerstandsvermogen"
         },
         "begrotingId": "pb-gem-2027",
+        "boekjaar": 2027,
         "type": "weerstandsvermogenRisicobeheersing",
         "narrative": "Het weerstandsvermogen is toereikend: de weerstandsverhouding bedraagt 1,4 (ruim voldoende per IPO-kader).",
         "kerncijfers": {
