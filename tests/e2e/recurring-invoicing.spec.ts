@@ -21,6 +21,12 @@
  * has no profiles the index renders its empty state but the action that
  * opens the modal must still be present.
  *
+ * ROUTING. The SPA router is `createWebHistory(generateUrl('/apps/shillinq'))`
+ * (src/main.js) — HTML5 history, NOT hash. `/apps/shillinq/#/…` therefore
+ * resolves to path `/`, which is the Financial overview dashboard; every
+ * assertion below then ran against the wrong page. The in-app nav links prove
+ * the live form: `/apps/shillinq/bookkeeping/recurring-invoices`.
+ *
  * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
  *
  * @e2e recurring-invoicing::operator-creates-a-monthly-hosting-profile
@@ -32,10 +38,34 @@ import { test, expect } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 
+/*
+ * KNOWN RED below the route fix — the "New recurring profile" launcher does
+ * not reach the user, for two stacked reasons:
+ *
+ *  1. `src/manifest.d/recurring-invoicing.json` declares it under the index
+ *     page's `config.actions[]`, which CnIndexPage consumes as ROW actions
+ *     ("Row action definitions", CnIndexPage.vue:1091) — so on an empty
+ *     register it renders nowhere. A page-scoped "New X" belongs in
+ *     `config.headerActions[]`.
+ *  2. Its `"type": "modal"` / `"modal": "…"` shape is not in the dispatcher's
+ *     vocabulary (handler | open-modal | open-page | navigate | export |
+ *     open-form | refresh | api-call | agent | toggle | object-op — see
+ *     node_modules/@conduction/nextcloud-vue/src/utils/actionsDispatcher.js).
+ *     The canonical shape is `"type": "open-modal"` + `"target"`, and it is
+ *     the ONLY `"type": "modal"` in the whole manifest tree.
+ *
+ * Correcting the shape alone would not make these pass: nc-vue 3.0.0-vue3.4
+ * has NO typed-action surface on `type:"index"` pages. CnActionButtons (the
+ * `cn-action-<id>` open-modal dispatcher) is wired only into CnDashboardPage
+ * and CnDetailPage, and CnIndexPage/manifestActionDispatch.js explicitly warns
+ * `type:"open-modal" is not supported for index-page actions`. The modal
+ * itself is fine (src/modals/RecurringInvoiceProfileModal.vue, registered
+ * kind:"modal" at registry.js:339) — it is simply unreachable.
+ */
 test.describe('recurring-invoicing — profile create modal', () => {
 	test.beforeEach(async ({ page }) => {
 		page.setViewportSize({ width: 1600, height: 1200 })
-		await page.goto(APP + '/#/bookkeeping/recurring-invoices')
+		await page.goto(APP + '/bookkeeping/recurring-invoices')
 		await page.waitForLoadState('domcontentloaded')
 
 		const wizard = page.locator('#firstrunwizard')

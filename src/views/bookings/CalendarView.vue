@@ -8,6 +8,13 @@
  Times are displayed in the calendar's configured time zone; storage is UTC.
 -->
 <template>
+	<!--
+	 The root keeps `data-testid="calendar-view"`. It is NOT dead naming:
+	 tests/e2e/bookings-calendar.spec.ts asserts on this exact id to prove the
+	 `BookingsCalendar` manifest page id resolves to this component. The
+	 `bk-*` ids the bookings-resource-calendar spec uses live on the elements
+	 below and on the host page's wrapper.
+	-->
 	<div class="calendar-view" data-testid="calendar-view">
 		<header class="calendar-view__toolbar">
 			<h2 class="calendar-view__title">
@@ -20,7 +27,7 @@
 					type="button"
 					class="calendar-view__view-button"
 					:class="{ 'calendar-view__view-button--active': currentView === v }"
-					:data-testid="`calendar-view-${v}`"
+					:data-testid="`bk-calendar-view-${v}`"
 					@click="currentView = v">
 					{{ viewLabel(v) }}
 				</button>
@@ -28,7 +35,7 @@
 		</header>
 
 		<!-- MONTH VIEW -->
-		<div v-if="currentView === 'month'" class="calendar-view__month" data-testid="calendar-month-grid">
+		<div v-if="currentView === 'month'" class="calendar-view__month" data-testid="bk-calendar-month">
 			<div v-for="day in monthDays"
 				:key="day.iso"
 				class="calendar-view__cell"
@@ -41,8 +48,8 @@
 					:key="bookingId(booking)"
 					type="button"
 					class="calendar-view__booking"
-					:class="{ 'calendar-view__booking--conflict': isConflict(booking) }"
-					:data-testid="`booking-${bookingId(booking)}`"
+					:class="{ 'calendar-view__booking--conflict': isConflict(booking), 'is-conflict': isConflict(booking) }"
+					:data-testid="`bk-booking-${bookingId(booking)}`"
 					@click="$emit('booking:selected', bookingId(booking))">
 					{{ booking.title }}
 				</button>
@@ -50,7 +57,7 @@
 		</div>
 
 		<!-- WEEK VIEW -->
-		<div v-else-if="currentView === 'week'" class="calendar-view__week" data-testid="calendar-week-grid">
+		<div v-else-if="currentView === 'week'" class="calendar-view__week" data-testid="bk-calendar-week">
 			<div v-for="day in weekDays" :key="day.iso" class="calendar-view__week-column">
 				<div class="calendar-view__cell-date">
 					{{ day.label }}
@@ -60,14 +67,15 @@
 					:key="`${day.iso}-${hour}`"
 					type="button"
 					class="calendar-view__slot"
+					:data-testid="`bk-slot-${day.iso}-${hour}`"
 					@click="emitSlot(day.iso, hour)">
 					<span class="calendar-view__slot-hour">{{ formatHour(hour) }}</span>
 					<span
 						v-for="booking in bookingsForHour(day.iso, hour)"
 						:key="bookingId(booking)"
 						class="calendar-view__booking"
-						:class="{ 'calendar-view__booking--conflict': isConflict(booking) }"
-						:data-testid="`booking-${bookingId(booking)}`"
+						:class="{ 'calendar-view__booking--conflict': isConflict(booking), 'is-conflict': isConflict(booking) }"
+						:data-testid="`bk-booking-${bookingId(booking)}`"
 						@click.stop="$emit('booking:selected', bookingId(booking))">
 						{{ booking.title }}
 					</span>
@@ -76,20 +84,21 @@
 		</div>
 
 		<!-- DAY VIEW -->
-		<div v-else class="calendar-view__day" data-testid="calendar-day-grid">
+		<div v-else class="calendar-view__day" data-testid="bk-calendar-day">
 			<button
 				v-for="hour in hours"
 				:key="hour"
 				type="button"
 				class="calendar-view__slot"
+				:data-testid="`bk-slot-${dayIso}-${hour}`"
 				@click="emitSlot(dayIso, hour)">
 				<span class="calendar-view__slot-hour">{{ formatHour(hour) }}</span>
 				<span
 					v-for="booking in bookingsForHour(dayIso, hour)"
 					:key="bookingId(booking)"
 					class="calendar-view__booking"
-					:class="{ 'calendar-view__booking--conflict': isConflict(booking) }"
-					:data-testid="`booking-${bookingId(booking)}`"
+					:class="{ 'calendar-view__booking--conflict': isConflict(booking), 'is-conflict': isConflict(booking) }"
+					:data-testid="`bk-booking-${bookingId(booking)}`"
 					@click.stop="$emit('booking:selected', bookingId(booking))">
 					{{ booking.title }}
 				</span>
@@ -230,6 +239,13 @@ export default {
 		/**
 		 * Fetch this calendar's bookings from the API.
 		 *
+		 * `CalendarController::listBookings()` answers with `{"bookings": [...]}`
+		 * — that is the envelope key this MUST read. It previously read
+		 * `data.results`, a key the endpoint never emits, so every successful
+		 * response parsed to `[]` and the grid rendered empty while the request
+		 * itself was a clean 200. The `results` / bare-array shapes are kept as
+		 * fallbacks for the generic OpenRegister collection envelope.
+		 *
 		 * @return {Promise<void>}
 		 */
 		async fetchBookings() {
@@ -241,11 +257,26 @@ export default {
 				const response = await fetch(url, { headers: { requesttoken: OC.requestToken } })
 				if (response.ok) {
 					const data = await response.json()
-					this.bookings = Array.isArray(data) ? data : (data.results || [])
+					if (Array.isArray(data)) {
+						this.bookings = data
+					} else {
+						this.bookings = data.bookings || data.results || []
+					}
 				}
 			} catch (error) {
 				this.bookings = []
 			}
+		},
+
+		/**
+		 * Re-read this calendar's bookings from the API. Called by the host
+		 * page after a booking is created so a freshly-added slot shows up
+		 * without a full page reload.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async refresh() {
+			await this.fetchBookings()
 		},
 
 		/**

@@ -2,7 +2,7 @@
 	<CnSettingsSection
 		:name="t('shillinq', 'Pipelinq integration')"
 		:description="t('shillinq', 'Configure the pipelinq customer-management connection used to enrich bookings with customer context.')">
-		<form @submit.prevent="save">
+		<form data-testid="pipelinq-settings-form" @submit.prevent="save">
 			<div class="form-group">
 				<label for="pipelinq-endpoint">{{ t('shillinq', 'API endpoint') }}</label>
 				<input
@@ -10,6 +10,7 @@
 					v-model="form.endpoint"
 					type="url"
 					autocomplete="off"
+					data-testid="pipelinq-endpoint"
 					:placeholder="t('shillinq', 'https://pipelinq.example.com/api')">
 			</div>
 
@@ -20,6 +21,7 @@
 					v-model="form.token"
 					type="password"
 					autocomplete="off"
+					data-testid="pipelinq-token"
 					:placeholder="hasToken ? maskedPlaceholder : t('shillinq', 'Paste your pipelinq API token')">
 				<p class="form-hint">
 					{{ hasToken
@@ -28,7 +30,7 @@
 				</p>
 			</div>
 
-			<div v-if="feedback" :class="['feedback', feedback.kind]">
+			<div v-if="feedback" :class="['feedback', feedback.kind]" data-testid="pipelinq-feedback">
 				{{ feedback.message }}
 			</div>
 
@@ -36,11 +38,13 @@
 				<NcButton
 					variant="primary"
 					native-type="submit"
+					data-testid="pipelinq-save"
 					:disabled="saving">
 					{{ saving ? t('shillinq', 'Saving…') : t('shillinq', 'Save') }}
 				</NcButton>
 				<NcButton
 					variant="secondary"
+					data-testid="pipelinq-test-connection"
 					:disabled="testing || !form.endpoint"
 					@click="test">
 					{{ testing ? t('shillinq', 'Testing…') : t('shillinq', 'Test connection') }}
@@ -63,6 +67,11 @@ import { CnSettingsSection } from '@conduction/nextcloud-vue'
  * is never returned by the backend, so the token input is rendered
  * masked on reload. Saving without a token preserves the stored
  * one; entering a new token rotates it.
+ *
+ * The `pipelinq-*` data-testids are load-bearing: AdminRoot.vue mounts
+ * `Settings.vue` (which has its OWN "Save") above this panel, so a
+ * by-accessible-name `Save` lookup on the admin page resolves to the
+ * wrong form and this panel's endpoint is never POSTed.
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-01-config-contact-link/tasks.md
  */

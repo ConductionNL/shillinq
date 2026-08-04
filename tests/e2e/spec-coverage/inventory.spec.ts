@@ -12,8 +12,15 @@ import { test } from '@playwright/test'
 import { gotoPage, assertIndexSurface, assertNoShillinqFailures, recordShillinqErrors } from './_helpers'
 
 const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
-	{ route: '/inventory/products', title: 'Products' },
-	{ route: '/inventory/product-attributes', title: 'Product Attributes' },
+	// `/inventory/products` and `/inventory/product-attributes` used to be
+	// listed here. Commit 4a1d3275 ("consume pipelinq product master …")
+	// deliberately removed the Product + ProductAttribute schemas and their
+	// "Products/ProductAttributes nav + page definitions from
+	// manifest.json" — the product master is owned by pipelinq now and
+	// shillinq's inventory schemas reference it by `productId`. Neither
+	// route has been declared since June, so both tests were really
+	// asserting on the Dashboard that vue-router's `/:pathMatch(.*)*`
+	// catch-all redirected them to.
 	{ route: '/inventory/reorder-rules', title: 'Reorder Rules' },
 	{ route: '/inventory/low-stock-alerts', title: 'Low Stock Alerts' },
 	{ route: '/inventory/stock-levels', title: 'Stock Levels' },

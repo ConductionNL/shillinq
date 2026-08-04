@@ -73,16 +73,54 @@ export async function dismissOverlays(page: Page): Promise<void> {
 	}
 }
 
+/** Strip `/index.php`, the query/hash and any trailing slash from a path. */
+function normalisePath(urlOrPath: string): string {
+	const path = urlOrPath.startsWith('http') ? new URL(urlOrPath).pathname : urlOrPath.split(/[?#]/)[0]
+	return path.replace('/index.php', '').replace(/\/+$/, '') || '/'
+}
+
 /**
- * Deep-link to a manifest route and settle the SPA. Asserts we stayed on
- * the shillinq surface. Returns once `#content-vue` is mounted.
+ * Deep-link to a manifest route and settle the SPA. Returns once
+ * `#content-vue` is mounted AND the SPA has actually RESOLVED the
+ * requested route.
+ *
+ * ⚠️ THE ROUTE-RESOLUTION ASSERTION IS THE POINT OF THIS HELPER.
+ * `src/main.js` ends its route table with
+ *
+ *     routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })
+ *
+ * so **any** URL the manifest does not declare is redirected to the
+ * Dashboard. The previous assertion here was
+ * `expect(page.url()).toContain('/apps/shillinq')`, which the redirect
+ * target satisfies trivially — so a deep link to a page that does not
+ * exist landed on "Financial overview" and every downstream check in
+ * `assertIndexSurface()` (a table? a button? an empty-state?) was
+ * satisfied by the DASHBOARD's own chrome. Run 30881746678 proved it:
+ * `/inventory/products` and `/bookkeeping/vendors` are declared nowhere in
+ * `src/manifest*.json`, and their page snapshots show
+ * `main > heading "Financial overview"`. They only failed at all because
+ * the dashboard's charts happened to raise an uncaught error; the other
+ * five undeclared routes in this suite passed green on the same
+ * fallback.
+ *
+ * Comparing the settled path to the requested one turns "the SPA silently
+ * sent me somewhere else" back into a failure. It is deliberately a path
+ * comparison, not a title match: a title matcher is fragile when a page
+ * re-cases or truncates its header, whereas the redirect is unambiguous.
  */
 export async function gotoPage(page: Page, route: string): Promise<void> {
-	await page.goto(APP + route, { waitUntil: 'domcontentloaded', timeout: 25_000 })
+	const target = APP + route
+	await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 25_000 })
 	await page.waitForSelector('#content-vue', { timeout: 15_000 })
 	await dismissOverlays(page)
 	await page.waitForTimeout(900)
 	expect(page.url(), `route ${route} should stay on the shillinq surface`).toContain('/apps/shillinq')
+	expect(
+		normalisePath(page.url()),
+		`route ${route} must be declared by the manifest and resolve to itself — `
+		+ 'a path other than the requested one means vue-router hit the '
+		+ "'/:pathMatch(.*)*' catch-all in src/main.js and redirected to the Dashboard",
+	).toBe(normalisePath(target))
 }
 
 /**
@@ -95,14 +133,26 @@ export async function gotoPage(page: Page, route: string): Promise<void> {
  * truncates or re-cases.
  */
 export async function assertIndexSurface(page: Page, title: string, opts: { titleRe?: RegExp } = {}): Promise<void> {
-	const host = page.locator('#content-vue')
+	// ⚠️ SCOPE EVERY SURFACE LOCATOR TO `#app-content-vue`, NOT `#content-vue`.
+	// `#content-vue` is NcContent — it wraps BOTH `#app-navigation-vue` (the
+	// sidebar) and `#app-content-vue` (the page), and the sidebar is IDENTICAL
+	// on all ~107 pages. A single `[role="row"]` or a nav button whose label
+	// contains "Add"/"Filter"/"Export" therefore satisfied `surfaces > 0` for
+	// every page in this suite, including one whose `<main>` was empty — which
+	// made the count a constant rather than an observation. The title check
+	// below was already moved to `#app-content-vue` for exactly this reason
+	// (see its comment); the surface count was left behind.
+	const host = page.locator('#app-content-vue, main').first()
 
 	// 1) A recognised CnIndexPage index surface rendered. This is the core
 	//    behavioural proof the page mounted (vs a blank shell or an error
 	//    page): a data table, an empty-content block, a list, or the
 	//    primary-action toolbar (Add / Actions / Export / Reconcile …).
 	const tables = await host.locator('table:visible').count().catch(() => 0)
-	const empty = await page.locator('.empty-content, .emptycontent, [class*="empty-content" i]').count().catch(() => 0)
+	// Scoped to the page too: a `.empty-content` block belonging to a
+	// Nextcloud dialog, a toast, or CnAppRoot's "OpenRegister required"
+	// dependency state is not evidence that THIS page's index rendered.
+	const empty = await host.locator('.empty-content, .emptycontent, [class*="empty-content" i]').count().catch(() => 0)
 	const lists = await host.locator('ul[class*="list" i] li, [class*="app-content-list" i] [class*="item" i], [role="row"]').count().catch(() => 0)
 	// Page-specific action affordances. The global "Settings" button is
 	// deliberately excluded — it renders on every shillinq page and is not
@@ -150,9 +200,13 @@ export async function assertIndexSurface(page: Page, title: string, opts: { titl
 	//    nothing and the soft check is skipped — the same degradation the
 	//    "matcher not found" path already had, and the mandatory surface
 	//    assertion above is untouched and still gates.
+	//    `host` is now already `#app-content-vue` (see the scoping note at the
+	//    top of this function), so the title is searched inside it directly —
+	//    re-nesting `host.locator('#app-content-vue, main')` would look for a
+	//    content region INSIDE the content region and always find nothing,
+	//    silently disabling this check.
 	const matcher = opts.titleRe ?? new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
-	const content = host.locator('#app-content-vue, main').first()
-	const titleNode = content.getByText(matcher).first()
+	const titleNode = host.getByText(matcher).first()
 	if (await titleNode.count().catch(() => 0)) {
 		await expect(titleNode, `title "${title}" should be visible when present`).toBeVisible({ timeout: 8_000 })
 	}

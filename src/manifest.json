@@ -10074,6 +10074,8 @@
 					}
 				],
 				"detailRoute": "ReceiptDetail",
+				"_note": "`rowRoute` is load-bearing, not a duplicate of `detailRoute` (which the renderer reads nowhere). CnPageRenderer opens a row via `config.rowRoute` or the `type:\"detail\"` page matching (register, schema); the receipt-extraction-consume fragment overlays ReceiptDetail to `type:\"custom\"`, so without this every row click only selected the row.",
+				"rowRoute": "ReceiptDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},

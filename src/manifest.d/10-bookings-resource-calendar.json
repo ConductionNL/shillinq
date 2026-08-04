@@ -26,6 +26,13 @@
 					"icon": "CalendarClockOutline",
 					"route": "BookingList",
 					"order": 30
+				},
+				{
+					"id": "BookingsCalendarView",
+					"label": "Calendar view",
+					"icon": "CalendarRange",
+					"route": "BookingsCalendarView",
+					"order": 40
 				}
 			]
 		}
@@ -292,11 +299,11 @@
 		},
 		{
 			"id": "BookingsCalendarView",
-			"route": "/bookings/calendar/:calendarId",
+			"route": "/bookings/calendar/:calendarId?",
 			"type": "custom",
 			"title": "Calendar View",
 			"component": "BookingsCalendar",
-			"_note": "Per-resource month/week/day calendar grid with conflict highlighting (REQ-006). Custom because the time-grid layout and slot:clicked / booking:selected interaction model do not fit the declarative index/detail page types. Resolved against registry.js kind:page. Page id renamed from BookingsCalendar — that id belongs to the param-less Verkoop calendar page (bookings-resource-calendar.json fragment); the two collided and shadowed each other."
+			"_note": "Per-resource month/week/day grid with conflict highlighting (REQ-006) plus the booking form it opens on slot:clicked (REQ-007). Custom because the time grid and its slot:clicked / booking:selected model do not fit the declarative page types. registry.js maps `BookingsCalendar` to views/bookings/CalendarPage.vue — the HOST that wires grid to form; mounting the grid bare left slot:clicked with no listener. `:calendarId` is OPTIONAL: with one the page opens that calendar directly (deep links, e2e fixtures); without one it shows a picker, which is what lets the menu carry ONE param-less entry (REQ-MBP-002) where the feature previously had none — no menu leaf, rowRoute or viewAllRoute pointed here, so it was reachable only by guessing a URL containing a calendar id. The earlier note here cited a 'param-less Verkoop calendar page (bookings-resource-calendar.json fragment)'; no such fragment exists in src/manifest.d/ and no /verkoop/ calendar route exists in the app."
 		},
 		{
 			"id": "BookingsForm",

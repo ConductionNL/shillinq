@@ -28,12 +28,54 @@
  * are seeded the customer picker is empty and save stays disabled — the
  * modal shell must still render and the gating must hold.
  *
+ * LOCATOR CONTRACT (ADR-049 Phase-4). The launcher is no longer the bespoke
+ * `FinancialDashboardActions.vue` (`fda-create-invoice`, deleted). It is a
+ * declarative `pages[Dashboard].config.headerActions[]` open-modal entry with
+ * `id: "create-invoice"` in `src/manifest.json`, rendered by CnActionButtons
+ * as `data-testid="cn-action-<id>"` — the same live convention
+ * `bill-import-modal.spec.ts` already drives with `cn-action-import-bill`.
+ * The modal's own `iqd-*` testids are unchanged (src/modals/InvoiceQuickDraftModal.vue).
+ *
  * @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md
  */
 
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 const APP = '/apps/shillinq'
+
+/**
+ * Close the first-open support note if it is up.
+ *
+ * `CnAppRoot` mounts `CnSupportDialog` behind `useSupportDialog(appId)`; on a
+ * profile that has never seen it the note opens over the dashboard and its
+ * `modal-mask` swallows pointer events for the whole viewport, so the click on
+ * the launcher never lands. Dismissing it is what a real operator does before
+ * using the dashboard; it replaces no assertion below. Mirrors the identical
+ * helper in `bill-import-modal.spec.ts`.
+ */
+async function dismissSupportDialog(page: Page): Promise<void> {
+	const support = page.locator('[data-testid-modal="cn-support-dialog"]')
+	await support.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {})
+	if (!(await support.isVisible().catch(() => false))) {
+		return
+	}
+	const close = support.locator('button.modal-container__close, button[aria-label*="lose" i], button[aria-label*="luiten" i]').first()
+	if (await close.isVisible().catch(() => false)) {
+		await close.click({ timeout: 2_000 }).catch(() => {})
+	} else {
+		await page.keyboard.press('Escape').catch(() => {})
+	}
+	await support.waitFor({ state: 'hidden', timeout: 5_000 })
+}
+
+/** Open the quick-draft modal from the dashboard's declarative header action. */
+async function openQuickDraft(page: Page): Promise<void> {
+	const launcher = page.getByTestId('cn-action-create-invoice')
+	await expect(launcher).toBeVisible({ timeout: 15_000 })
+	await dismissSupportDialog(page)
+	await launcher.click()
+	await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
+}
 
 test.describe('shillinq-invoice-quick-draft — quick draft modal', () => {
 	test.beforeEach(async ({ page }) => {
@@ -49,8 +91,11 @@ test.describe('shillinq-invoice-quick-draft — quick draft modal', () => {
 	})
 
 	test('Create invoice opens the quick-draft modal in place', async ({ page }) => {
+		const launcher = page.getByTestId('cn-action-create-invoice')
+		await expect(launcher).toBeVisible({ timeout: 15_000 })
+		await dismissSupportDialog(page)
 		const before = page.url()
-		await page.getByTestId('fda-create-invoice').click()
+		await launcher.click()
 		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
 		// REQ: opens without leaving the dashboard.
 		expect(page.url()).toBe(before)
@@ -60,8 +105,7 @@ test.describe('shillinq-invoice-quick-draft — quick draft modal', () => {
 	})
 
 	test('line items recompute the live totals', async ({ page }) => {
-		await page.getByTestId('fda-create-invoice').click()
-		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
+		await openQuickDraft(page)
 
 		await page.getByTestId('iqd-line-description').first().fill('Consulting')
 		await page.getByTestId('iqd-line-quantity').first().fill('2')
@@ -73,16 +117,14 @@ test.describe('shillinq-invoice-quick-draft — quick draft modal', () => {
 	})
 
 	test('add line button adds another row', async ({ page }) => {
-		await page.getByTestId('fda-create-invoice').click()
-		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
+		await openQuickDraft(page)
 		await expect(page.getByTestId('iqd-line')).toHaveCount(1)
 		await page.getByTestId('iqd-add-line').click()
 		await expect(page.getByTestId('iqd-line')).toHaveCount(2)
 	})
 
 	test('save is disabled until a customer and a priced line are present', async ({ page }) => {
-		await page.getByTestId('fda-create-invoice').click()
-		await expect(page.getByTestId('invoice-quick-draft-modal')).toBeVisible({ timeout: 10_000 })
+		await openQuickDraft(page)
 		// No customer yet → save disabled.
 		await expect(page.getByTestId('iqd-save')).toBeDisabled()
 	})

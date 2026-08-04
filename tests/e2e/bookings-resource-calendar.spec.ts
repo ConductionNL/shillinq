@@ -19,7 +19,38 @@
 import { test, expect } from '@playwright/test'
 
 const APP = '/apps/shillinq'
-const CALENDAR_ROUTE = '/verkoop/boekingen-kalender'
+
+/**
+ * The canonical bookings-calendar route, declared by the `BookingsCalendarView`
+ * page in `src/manifest.d/10-bookings-resource-calendar.json`.
+ *
+ * This spec used to navigate to `/verkoop/boekingen-kalender`, a path declared
+ * in no manifest fragment and in no route table. `src/main.js` ends its routes
+ * with `{ path: '/:pathMatch(.*)*', redirect: '/' }`, so that URL never 404'd —
+ * it silently redirected to the Financial dashboard and every selector below
+ * timed out against the wrong page.
+ *
+ * The `:calendarId` parameter is deep-linked on purpose rather than reaching the
+ * page param-less and picking from the dropdown: resolving by id goes through
+ * `CalendarController::loadCalendar()`, which filters on `calendarId` alone,
+ * whereas the picker's index is scoped to the caller's active administration.
+ * Deep-linking keeps these assertions about the CALENDAR rather than about
+ * administration membership.
+ */
+const CALENDAR_ID = 'e2e-cal-001'
+const CALENDAR_ROUTE = `/bookings/calendar/${CALENDAR_ID}`
+
+/**
+ * Format a Date as the `YYYY-MM-DDTHH:mm` local wall-clock value a
+ * `datetime-local` input accepts.
+ *
+ * @param date The date to format.
+ */
+function toLocalInput(date: Date): string {
+	const pad = (n: number) => String(n).padStart(2, '0')
+	return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+		+ `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
 
 test.describe('bookings calendar — month/week/day views render', () => {
 
@@ -42,9 +73,11 @@ test.describe('bookings calendar — month/week/day views render', () => {
 	test('month view renders with seed bookings', async ({ page }) => {
 		await page.locator('[data-testid="bk-calendar-view-month"]').click()
 		await expect(page.locator('[data-testid="bk-calendar-month"]')).toBeVisible()
-		// Seed bookings bk-001..bk-010 should all be rendered somewhere on the
-		// grid in May 2026 — we settle for asserting at least one is visible
-		// so the test is robust to month-navigation drift.
+		// `ci-seed.sh` seeds bk-001..bk-010 across today and tomorrow (the grid
+		// anchors on today and has no month navigation, so the fixtures are
+		// generated relative to today rather than hardcoded). Asserting that at
+		// least one is visible keeps the test robust to a month boundary falling
+		// between the seeded days.
 		const bookings = page.locator('[data-testid^="bk-booking-bk-"]')
 		await expect(bookings.first()).toBeVisible({ timeout: 5_000 })
 	})
@@ -77,13 +110,24 @@ test.describe('bookings calendar — month/week/day views render', () => {
 	/**
 	 * @e2e bookings-resource-calendar/REQ-006/booking-selected-event
 	 */
-	test('clicking a booking emits booking:selected (host page handles silently)', async ({ page }) => {
+	test('clicking a booking emits booking:selected (host page handles it)', async ({ page }) => {
+		// The host page acknowledges the event by logging it. Capturing that log
+		// is what makes this a real assertion: this spec's whole subject is that
+		// the grid's events reach a HOST, and for `slot:clicked` they did not —
+		// the manifest mounted the grid bare with nothing listening. A test that
+		// ended in `expect(true).toBe(true)` could not tell the wired case from
+		// the unwired one.
+		const logged: string[] = []
+		page.on('console', (message) => logged.push(message.text()))
+
 		await page.locator('[data-testid="bk-calendar-view-month"]').click()
 		const first = page.locator('[data-testid^="bk-booking-bk-"]').first()
 		await first.click()
-		// Host page handles by logging — no DOM expectation here besides the
-		// click not throwing. Test passes if the click does not error.
-		expect(true).toBe(true)
+
+		await expect.poll(
+			() => logged.some((line) => line.includes('shillinq: booking selected')),
+			{ timeout: 5_000 },
+		).toBe(true)
 	})
 
 	/**
@@ -152,14 +196,24 @@ test.describe('booking form — REQ-007 validation + happy/conflict paths', () =
 
 	/**
 	 * @e2e bookings-resource-calendar/REQ-007/conflict-modal-opens-on-409
-	 * Submits the same window as the seed conflict (bk-002 / bk-003) to force
-	 * the API into a 409 response — the BookingConflictDialog modal must mount.
+	 * Submits a window the seed fixtures already occupy, to force the API into
+	 * a 409 response — the BookingConflictDialog modal must mount.
+	 *
+	 * `ci-seed.sh` tiles the resource with bookings from `today-1 20:00Z` to
+	 * `today+2 00:00Z` without a gap, so midday TODAY is booked in every UTC
+	 * offset. That matters because these inputs are LOCAL wall-clock time and
+	 * `playwright.config.ts` pins no `timezoneId`: a hardcoded UTC instant would
+	 * make the 409 depend on the runner's zone.
 	 */
 	test('conflict modal opens when API returns 409', async ({ page }) => {
+		const conflictStart = new Date()
+		conflictStart.setHours(12, 0, 0, 0)
+		const conflictEnd = new Date(conflictStart.getTime() + 30 * 60 * 1000)
+
 		await page.locator('[data-testid="bk-form-title"]').fill('UI test: known conflict')
 		await page.locator('[data-testid="bk-form-attendee"]').fill('UI Conflict')
-		await page.locator('[data-testid="bk-form-start"]').fill('2026-05-21T11:15')
-		await page.locator('[data-testid="bk-form-end"]').fill('2026-05-21T11:45')
+		await page.locator('[data-testid="bk-form-start"]').fill(toLocalInput(conflictStart))
+		await page.locator('[data-testid="bk-form-end"]').fill(toLocalInput(conflictEnd))
 		await page.locator('[data-testid="bk-form-status-confirmed"]').check()
 		await page.locator('[data-testid="bk-form-submit"]').click()
 		await expect(page.locator('[data-testid="bk-conflict-dialog"]')).toBeVisible({ timeout: 5_000 })
@@ -172,12 +226,25 @@ test.describe('booking form — REQ-007 validation + happy/conflict paths', () =
 	 * @e2e bookings-resource-calendar/REQ-007/successful-create-closes-form
 	 * Submits a clean, non-conflicting window in the far future so the API
 	 * returns 201 — the form must close on success.
+	 *
+	 * The window is ~400 days out (far beyond the seeded 2-day fixture block)
+	 * and its minute-of-day is salted from the run's clock. A fixed literal
+	 * would be occupied by the booking THIS test created last time, so on any
+	 * instance that is not thrown away between runs the second run would get a
+	 * 409 and this test would fail for a reason that has nothing to do with the
+	 * behaviour it covers.
 	 */
 	test('successful create closes the form', async ({ page }) => {
+		const salt = Date.now() % (23 * 60)
+		const cleanStart = new Date()
+		cleanStart.setDate(cleanStart.getDate() + 400)
+		cleanStart.setHours(Math.floor(salt / 60), salt % 60, 0, 0)
+		const cleanEnd = new Date(cleanStart.getTime() + 30 * 60 * 1000)
+
 		await page.locator('[data-testid="bk-form-title"]').fill('UI test: clean slot')
 		await page.locator('[data-testid="bk-form-attendee"]').fill('UI Happy')
-		await page.locator('[data-testid="bk-form-start"]').fill('2028-09-15T09:00')
-		await page.locator('[data-testid="bk-form-end"]').fill('2028-09-15T09:30')
+		await page.locator('[data-testid="bk-form-start"]').fill(toLocalInput(cleanStart))
+		await page.locator('[data-testid="bk-form-end"]').fill(toLocalInput(cleanEnd))
 		await page.locator('[data-testid="bk-form-status-pending"]').check()
 		await page.locator('[data-testid="bk-form-submit"]').click()
 		// On 201, the host view closes the form panel.

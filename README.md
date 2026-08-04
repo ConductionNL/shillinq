@@ -79,8 +79,11 @@ Scope:
 - `BBVProgramme` + `BudgetBBVMapping` schemas with declarative
   validation (allocation sum ≤ 100% per GL account per fiscal year, ±0.1%
   rounding tolerance) and the OpenRegister audit-trail plugin.
-- Dashboard at `/apps/shillinq/bbv-dashboard` and budget-mapping CRUD at
-  `/apps/shillinq/budget-mappings`.
+- Dashboard page at `/apps/shillinq/bbv-dashboard` and budget-mapping CRUD at
+  `/apps/shillinq/budget-mappings` (both SPA routes declared by the manifest).
+  Their JSON envelopes are served from `/apps/shillinq/api/bbv-dashboard` and
+  `/apps/shillinq/api/budget-mappings` — an app route registered on the page
+  path itself would shadow the SPA catch-all and make the page unreachable.
 - Per-programme compliance envelope cached for 1 h, invalidated on any
   GL transaction create/update so the dashboard always reflects current
   spend.

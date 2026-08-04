@@ -5,109 +5,105 @@
  * Gate-19 Playwright UI coverage — bookkeeping foundation (T1).
  *
  * Covers the three navigation surfaces declared by
- * `add-shillinq-bookkeeping-foundation`:
- *   - Bookkeeping > Grootboekschema  (Chart of Accounts) — REQ-CoA-008
- *   - Bookkeeping > Grootboek         (General Ledger)    — REQ-GL-007
- *   - Bookkeeping > Journaalposten    (Journal Entries)   — REQ-JE-009
+ * `add-shillinq-bookkeeping-foundation` (routes + manifest titles read from
+ * `src/manifest.json`):
+ *   - /chart-of-accounts  "Chart of Accounts"  (Grootboekschema)  — REQ-CoA-008
+ *   - /general-ledger     "General Ledger"     (Grootboek)        — REQ-GL-007
+ *   - /journals           "Manual Journals"    (Journaalposten)   — REQ-JE-009
  *
- * The change is `kind: config` (declarative — register schemas +
- * manifest entries + RGS seeds); there are no bespoke Vue components.
- * Rendering is done by `@conduction/nextcloud-vue`'s generic
- * `CnIndexPage` / `CnDetailPage` per ADR-024 Tier-4. This spec drives
- * the manifest-rendered pages to confirm the routes resolve, the index
- * pages mount, and the Shillinq SPA stays on its own URL surface.
+ * The change is `kind: config` (declarative — register schemas + manifest
+ * entries + RGS seeds); there are no bespoke Vue components. Rendering is done
+ * by `@conduction/nextcloud-vue`'s generic `CnIndexPage` per ADR-024 Tier-4.
  *
- * Per the fleet's gate-19 honest-coverage policy, this is a UI-only
- * smoke (the manifest renderer is the surface under test). The
- * declarative requirements (schema field types, lifecycle transitions,
- * cadence object shape, approval-gate behaviour) are covered by the
- * PHPUnit `JournalEntrySchemaTest` / `JournalEntryGuardTest` already
- * shipped with the change.
+ * ⚠️ WHY THE OLD ASSERTIONS WERE CONSTANTS
+ * ----------------------------------------
+ * Every test ended at `expect(page.url()).toContain('/apps/shillinq')`, three
+ * of them adding `expect(page).toHaveTitle(/shillinq/i)`. Neither can fail:
+ *  - `appinfo/routes.php` delegates to
+ *    `\OCA\OpenRegister\AppHost\Routes::standard()`, whose catch-all
+ *    (`'/{path}'`, `requirements: ['path' => '.+']`) answers EVERY path under
+ *    `/apps/shillinq/` with the same `TemplateResponse` — a navigation to a
+ *    `/apps/shillinq/...` URL can never leave that prefix.
+ *  - the `<title>` is server-rendered by Nextcloud's
+ *    `core/templates/layout.user.php` from the app id BEFORE any JavaScript
+ *    runs. On CI 30881746678 the control truncated `js/shillinq-main.js` to
+ *    0 bytes; the SPA never booted and all four tests still passed.
+ * The REQ-JE-009 navigation test additionally did
+ * `await journalsLink.waitFor({ state: 'attached' }).catch(() => {})` and then
+ * asserted only the URL — the lookup result was swallowed and discarded, so
+ * the nav entry it claimed to check was never checked.
  *
- * Author the spec defensively: in dev-container topologies where the
- * register seed has not yet imported the RGS template, the index pages
- * mount empty — that is still a passing UI smoke; the assertion is
- * "page mounted on the correct route", not "list has N rows".
+ * The replacement, per route: `gotoPage()` waits for `#content-vue` (which
+ * exists only after `app.mount('#shillinq-app')`) and asserts the SETTLED path
+ * equals the requested one — the check that catches `src/main.js`'s
+ * `routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })` silently
+ * rewriting an undeclared route to the Dashboard. Then CnPageHeader's
+ * `cn-page-title` `<h1>` inside `#app-content-vue` (NcAppContent's `<main>`;
+ * never `#content-vue`, which also wraps the sidebar that is identical on all
+ * ~107 pages) must read that page's own manifest title.
+ *
+ * This stays a UI-only smoke and stays data-independent: CnIndexPage renders
+ * CnPageHeader unconditionally, so an index that mounts EMPTY (dev-container
+ * topologies where the RGS template has not been seeded) still satisfies it.
+ * The assertion is "this page's own surface rendered", not "the list has N
+ * rows". The declarative requirements (schema field types, lifecycle
+ * transitions, cadence object shape, approval-gate behaviour) are covered by
+ * the PHPUnit `JournalEntrySchemaTest` / `JournalEntryGuardTest` suites
+ * already shipped with the change.
  */
 
 import { test, expect } from '@playwright/test'
-
-const APP = '/apps/shillinq'
+import { gotoPage } from './spec-coverage/_helpers'
 
 test.describe('bookkeeping-foundation — Tier-1 manifest pages', () => {
 	test.beforeEach(async ({ page }) => {
-		page.setViewportSize({ width: 1280, height: 800 })
+		await page.setViewportSize({ width: 1280, height: 800 })
 	})
 
 	test('Chart of Accounts (Grootboekschema) — index page mounts on /chart-of-accounts', async ({ page }) => {
-		await page.goto(APP + '/chart-of-accounts')
-		await page.waitForLoadState('domcontentloaded')
+		await gotoPage(page, '/chart-of-accounts')
 
-		// Dismiss any first-run wizard overlay.
-		const wizard = page.locator('#firstrunwizard')
-		if (await wizard.isVisible().catch(() => false)) {
-			await page.keyboard.press('Escape').catch(() => {})
-			await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
-		}
-
-		// URL must stay on the shillinq surface.
-		expect(page.url()).toContain('/apps/shillinq')
-
-		// Shillinq page title set by the SPA after manifest load.
-		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
+		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
+		await expect(
+			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
+			'the Chart of Accounts index must render its own manifest title',
+		).toHaveText(/Chart of Accounts/i, { timeout: 15_000 })
 	})
 
 	test('General Ledger (Grootboek) — index page mounts on /general-ledger', async ({ page }) => {
-		await page.goto(APP + '/general-ledger')
-		await page.waitForLoadState('domcontentloaded')
+		await gotoPage(page, '/general-ledger')
 
-		const wizard = page.locator('#firstrunwizard')
-		if (await wizard.isVisible().catch(() => false)) {
-			await page.keyboard.press('Escape').catch(() => {})
-			await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
-		}
-
-		expect(page.url()).toContain('/apps/shillinq')
-		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
+		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
+		await expect(
+			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
+			'the General Ledger index must render its own manifest title',
+		).toHaveText(/General Ledger/i, { timeout: 15_000 })
 	})
 
 	test('Journals (Journaalposten) — index page mounts on /journals', async ({ page }) => {
-		await page.goto(APP + '/journals')
-		await page.waitForLoadState('domcontentloaded')
+		await gotoPage(page, '/journals')
 
-		const wizard = page.locator('#firstrunwizard')
-		if (await wizard.isVisible().catch(() => false)) {
-			await page.keyboard.press('Escape').catch(() => {})
-			await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
-		}
-
-		expect(page.url()).toContain('/apps/shillinq')
-		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
+		await page.waitForSelector('#app-content-vue', { timeout: 15_000 })
+		await expect(
+			page.locator('#app-content-vue [data-testid="cn-page-title"]'),
+			'the Manual Journals index must render its own manifest title',
+		).toHaveText(/Manual Journals/i, { timeout: 15_000 })
 	})
 
-	test('Journals navigation entry is reachable from the Shillinq shell', async ({ page }) => {
-		// Start at the app root.
-		await page.goto(APP + '/')
-		await page.waitForLoadState('domcontentloaded')
+	test('Journals navigation entry is reachable from the Shillinq shell (REQ-JE-009)', async ({ page }) => {
+		await gotoPage(page, '/')
 
-		const wizard = page.locator('#firstrunwizard')
-		if (await wizard.isVisible().catch(() => false)) {
-			await page.keyboard.press('Escape').catch(() => {})
-			await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
-		}
-
-		// The manifest declares a Journals navigation entry (REQ-JE-009).
-		// The shell may render it under different markup depending on the
-		// renderer version, so accept anchor href OR navigation label.
-		const journalsLink = page
-			.locator('a[href*="/journals"], [data-testid*="journals" i], a:has-text("Journals"), a:has-text("Journaalposten")')
-			.first()
-
-		// Mounted means: either the link exists in the DOM (mounted by
-		// CnAppRoot) OR a navigation/sidebar element rendered at all (the
-		// dev container may not have the bookkeeping nav cluster expanded
-		// before the seed runs). Either way the SPA must stay on its URL.
-		await journalsLink.waitFor({ state: 'attached', timeout: 5_000 }).catch(() => {})
-		expect(page.url()).toContain('/apps/shillinq')
+		// The lib renders each menu item as `data-testid="cn-nav-entry-${id}"`
+		// (see `chart-of-accounts.spec.ts` for the same pattern). `Journals` is
+		// declared once in `src/manifest.json`'s menu and is NOT in
+		// `src/menu-layout.json` `removals`, so it must be present in the
+		// rendered menu. `toBeAttached` rather than `toBeVisible`: the entry
+		// lives inside the "People & Projects" group, and an entry in a
+		// collapsed group is present-but-hidden — the claim under test is
+		// "declared and rendered", not "expanded".
+		await expect(
+			page.locator('[data-testid="cn-nav-entry-Journals"]'),
+			'the Journals nav entry must be rendered by the manifest shell',
+		).toBeAttached({ timeout: 10_000 })
 	})
 })

@@ -160,6 +160,30 @@ import BudgetBBVMappingIndex from './components/BudgetBBVMapping/BudgetBBVMappin
 // resolve.
 import BudgetBBVMappingDetail from './components/BudgetBBVMapping/BudgetBBVMappingDetail.vue'
 
+// bookkeeping-provincies-bbv-variant (REQ-BBC-001..004 / REQ-BBL-001..005):
+// the provincies BBV pages. Three kind:"page" components, each justified
+// against a built-in page type:
+//
+//   * BbvComplianceDashboard — a fixed statutory layout (four named KPI
+//     cards → two charts → an overspend exceptions block) whose Remaining
+//     figure spans two sources and whose exceptions block is a domain rule
+//     (Remaining < 0), not a widget. `type: "dashboard"` renders a
+//     GridStack canvas of library-owned widgets, which is a different
+//     surface. Same call the waterschappen variant made.
+//   * BudgetToProgrammeLinker — the built-in `index` page has no vocabulary
+//     for the three affordances the spec requires: the mapping-status badge
+//     (REQ-BBL-004), the declared filter facets, and the bulk "Link to
+//     Programme" action with its dialog (REQ-BBL-001). It still wraps
+//     CnIndexPage for the table itself.
+//   * BudgetToProgrammeLinkerDetail — the ledger fields are read-only and
+//     only the two assignment fields are editable, which the schema-driven
+//     `detail` form cannot express.
+//
+// ADR-024 / ADR-036.
+import BbvProvincieComplianceDashboard from './components/BbvProvincie/BbvProvincieComplianceDashboard.vue'
+import BudgetToProgrammeLinker from './components/BbvProvincie/BudgetToProgrammeLinker.vue'
+import BudgetToProgrammeLinkerDetail from './components/BbvProvincie/BudgetToProgrammeLinkerDetail.vue'
+
 // bookkeeping-multi-administratie (Task 13): the in-session administration
 // switcher is a custom page hosting the AdministratieSwitcher dropdown. It is
 // genuinely custom (NOT a declarative index/detail over a register) because it
@@ -173,12 +197,28 @@ import AdministrationSwitcherPage from './views/AdministrationSwitcherPage.vue'
 // CalendarView + BookingForm pages live under src/views/bookings/. They target
 // the /api/v2/calendars REST surface (Resource / Calendar / Booking schemas in
 // the shillinq register). Justified per ADR-024 (imperative time grid +
-// inline conflict dialog). The older single-dropdown "Verkoop → Bookings
-// calendar" shortcut page (CalendarPage.vue, manifest.d/
-// bookings-resource-calendar.json) that wrapped this same CalendarView was
-// removed as dead-weight duplicate navigation — see
-// shillinq-manifest-boot-payload-reduction (REQ-MBP-002).
-import CalendarView from './views/bookings/CalendarView.vue'
+// inline conflict dialog).
+//
+// ⚠️ CORRECTION. This comment used to say that the old "Verkoop → Bookings
+// calendar" host page (CalendarPage.vue) "wrapped this same CalendarView" and
+// was therefore removed as duplicate navigation under
+// shillinq-manifest-boot-payload-reduction (REQ-MBP-002). That is not what it
+// wrapped. `git show 0c23c1e4^:src/views/bookings/CalendarPage.vue` imports
+// `../../components/CalendarView.vue`, whereas the line below imports
+// `./views/bookings/CalendarView.vue` — two different components with two
+// different sets of test ids. Removing the host did not delete a duplicate; it
+// deleted the ONLY listener for the grid's `slot:clicked` event, leaving the
+// manifest to mount the grid bare and REQ-007's "click a slot to create a
+// booking" with nothing on the other end.
+//
+// CalendarPage below restores that host on the canonical component pair. It is
+// the page component for the single `BookingsCalendarView` manifest entry, so
+// REQ-MBP-002 ("one navigation entry per feature") still holds — the feature
+// went from zero navigation entries to exactly one.
+// CalendarView itself is no longer imported here — CalendarPage imports it, so
+// it is still bundled, but the registry now resolves the manifest page to the
+// host rather than to the bare grid.
+import CalendarPage from './views/bookings/CalendarPage.vue'
 import BookingForm from './views/bookings/BookingForm.vue'
 
 // bookkeeping-wbso-sno-administratie (REQ-WBSO-006/002/003): the three
@@ -379,10 +419,18 @@ export default {
 
 	BudgetBBVMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
 	BudgetMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
+
+	// bookkeeping-provincies-bbv-variant. Note the ids differ from the
+	// waterschappen trio above — the two BBV variants have separate
+	// programme taxonomies, separate routes and separate dashboards.
+	BbvProvincieComplianceDashboard: { kind: 'page', component: BbvProvincieComplianceDashboard },
+	BudgetToProgrammeLinker: { kind: 'page', component: BudgetToProgrammeLinker },
+	BudgetToProgrammeLinkerDetail: { kind: 'page', component: BudgetToProgrammeLinkerDetail },
+
 	AdministrationSwitcherPage: { kind: 'page', component: AdministrationSwitcherPage },
 
 	// bookings-resource-calendar custom pages (REQ-006/REQ-007).
-	BookingsCalendar: { kind: 'page', component: CalendarView },
+	BookingsCalendar: { kind: 'page', component: CalendarPage },
 	BookingsForm: { kind: 'page', component: BookingForm },
 
 	// bookkeeping-wbso-sno-administratie foundation views.
