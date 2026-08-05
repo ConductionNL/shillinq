@@ -512,7 +512,7 @@ class InventoryValuationReportService
     }//end movesFor()
 
     /**
-     * Grouped posted moves keyed by "sku warehouse" for the whole
+     * Grouped posted moves keyed by "sku\x00warehouse" for the whole
      * administration up to a cut-off, honouring optional filters.
      *
      * @param string      $administrationId Tenant scope.
