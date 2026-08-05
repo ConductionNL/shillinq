@@ -107,13 +107,22 @@
 							75-100 %
 						</option>
 					</select>
+					<!-- The wrapping <label> is a valid IMPLICIT association, but
+					     it is the only control pair on this page that relies on
+					     it, and hydra gate-40 (form-label-association) requires
+					     an explicit one. The `aria-label` text is deliberately
+					     IDENTICAL to the visible label text: an accessible name
+					     that differs from the visible text overrides it for
+					     screen-reader and voice-control users and breaks WCAG
+					     2.5.3 Label in Name. Keep the two strings in step. -->
 					<label class="bbv-mapping-index__date-label">
 						{{ t('shillinq', 'Effective on or after') }}
 						<input
 							v-model="effectiveFromAfter"
 							type="date"
 							class="bbv-mapping-index__date"
-							data-testid="bbv-mapping-effective-from-after">
+							data-testid="bbv-mapping-effective-from-after"
+							:aria-label="t('shillinq', 'Effective on or after')">
 					</label>
 					<label class="bbv-mapping-index__date-label">
 						{{ t('shillinq', 'Effective on or before') }}
@@ -121,7 +130,8 @@
 							v-model="effectiveFromBefore"
 							type="date"
 							class="bbv-mapping-index__date"
-							data-testid="bbv-mapping-effective-from-before">
+							data-testid="bbv-mapping-effective-from-before"
+							:aria-label="t('shillinq', 'Effective on or before')">
 					</label>
 				</div>
 			</template>
@@ -422,6 +432,8 @@ export default {
 		 * server-derived defaults; the user can manually pick a year.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 		 */
 		async loadScope() {
 			try {

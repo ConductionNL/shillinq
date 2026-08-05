@@ -150,13 +150,27 @@ export default defineConfig({
 	// manufacturing green. So the budget was recovered from `retries` and
 	// `workers` instead, where the evidence says the waste actually is.
 	//
-	// ⚠️ PENDING RE-MEASUREMENT AT `workers: 4`. Those 26.8s/35.6s figures are
-	// contaminated by the very contention this config used to create (see the
-	// note on `workers` below): the slowest pass read 18.7s at ONE worker.
-	// Once a run has landed at 4 workers, re-read the slowest passing test
-	// from its `list` output and cut this to a small multiple of THAT. If it
-	// comes back near 20s, 45s is the right number and this should drop.
-	// Cutting it is the goal; it is never raised.
+	// RE-MEASURED AT `workers: 4` (run 31047984852) — and the answer was NOT
+	// the one that would have let this number come down:
+	//
+	//   workers 1 (run 31018434870): slowest pass 18.7s
+	//   workers 5 (run 31045795069): slowest pass 31.3s, mean 9.6s
+	//   workers 4 (run 31047984852): slowest pass 31.3s, mean 8.6s
+	//
+	// Dropping to 4 workers improved the MEAN (9.6s -> 8.6s over a larger
+	// passing set) but left the TAIL where it was. 45s would therefore be
+	// 1.44x the slowest pass, with 13.7s of headroom — and the slowest pass on
+	// this same tree has already been observed to swing 22.9s -> 31.3s between
+	// runs, an 8.4s spread. One more swing of that size against a 45s cap
+	// manufactures red.
+	//
+	// So 60s stays: 1.9x the measured tail. That is the honest read of the
+	// evidence, not a preference — cutting it here to look diligent would be
+	// manufacturing failures, which is the same sin as manufacturing passes.
+	// Re-open this if the tail moves: the specs at the top of that list are
+	// multi-`gotoPage()` tests (each deep link reboots the whole SPA), so the
+	// real fix is fewer full-page navigations per test, after which the
+	// timeout can drop on evidence. It is never raised.
 	timeout: 60_000,
 	expect: { timeout: 15_000 },
 

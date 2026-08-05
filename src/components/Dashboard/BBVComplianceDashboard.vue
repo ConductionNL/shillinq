@@ -200,6 +200,18 @@ export default {
 			// view without a session-switch round-trip (REQ-BBVW-006).
 			await this.loadProgrammes()
 		},
+		/**
+		 * Load the BBV compliance envelope (widgets, programmes, mappings,
+		 * counts, summary) for the active administration and render the
+		 * dashboard from it.
+		 *
+		 * Errors surface inline via `this.error`; the dashboard still renders
+		 * an empty envelope rather than a blank page.
+		 *
+		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+		 */
 		async loadProgrammes() {
 			this.loading = true
 			this.error = ''
