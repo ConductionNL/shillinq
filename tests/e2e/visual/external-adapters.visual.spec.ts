@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2026 Conduction B.V.
- * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-License-Identifier: EUPL-1.2
  *
  * Visual-regression baselines for the Shillinq W8 External Adapters admin UI
  * (GAP-5) — the surfaces shipped with no visual coverage:
