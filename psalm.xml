@@ -94,6 +94,7 @@
                 <referencedClass name="OCA\DocuDesk\Event\SigningConcludedEvent"/>
                 <referencedClass name="OCA\DocuDesk\Event\FinancialExtractionCompletedEvent"/>
                 <referencedClass name="OCA\DocuDesk\Event\DocumentSigningRequestedEvent"/>
+                <referencedClass name="OCA\DocuDesk\Event\SigningProvenance"/>
                 <!-- Pipelinq cross-app dep (POS) — inventory-pos-decrement, shillinq#504 -->
                 <referencedClass name="OCA\Pipelinq\Event\PosStockMovedEvent"/>
                 <!-- PhpOffice\PhpWord — available at runtime via NC app deps -->
