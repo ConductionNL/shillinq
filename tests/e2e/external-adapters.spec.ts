@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2026 Conduction B.V.
- * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-License-Identifier: EUPL-1.2
  *
  * e2e for the W8 EXTERNAL-ADAPTER ADMIN UIs (this week's new surface).
  *
