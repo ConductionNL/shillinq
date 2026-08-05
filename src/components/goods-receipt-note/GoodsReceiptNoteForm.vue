@@ -149,7 +149,7 @@
 			<div class="grn-form__actions">
 				<NcButton
 					variant="primary"
-					native-type="submit"
+					type="submit"
 					:disabled="submitting || !canSubmit"
 					data-testid="grn-form-submit">
 					{{ submitting ? t('shillinq', 'Saving...') : t('shillinq', 'Save goods receipt') }}

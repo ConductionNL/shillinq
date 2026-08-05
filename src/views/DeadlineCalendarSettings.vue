@@ -54,7 +54,7 @@
 
 					<div class="deadline-calendar-settings__actions">
 						<NcButton variant="primary"
-							native-type="submit"
+							type="submit"
 							:disabled="saving"
 							data-testid="deadline-settings-save">
 							{{ saving ? t('shillinq', 'Saving…') : t('shillinq', 'Save') }}

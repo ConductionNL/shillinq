@@ -157,7 +157,7 @@
 			<div class="po-form__actions">
 				<NcButton
 					variant="primary"
-					native-type="submit"
+					type="submit"
 					:disabled="submitting"
 					data-testid="po-form-submit">
 					{{ submitting ? t('shillinq', 'Creating...') : t('shillinq', 'Create purchase order') }}
