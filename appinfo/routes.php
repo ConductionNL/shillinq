@@ -357,19 +357,41 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'complianceExport#export', 'url' => '/api/audit/export', 'verb' => 'GET'],
             ['name' => 'purchaseOrderApproval#decide', 'url' => '/api/purchase-orders/{id}/approval-decision', 'verb' => 'POST'],
 
-        // Bookkeeping-waterschappen-bbv-variant slice 04 — manifest + routes
-        // skeleton for the waterschappen BBV chain. Registers three GET page
-        // routes (the BBV compliance dashboard envelope + Budget Mapping
-        // index/detail) that members 05 (dashboard widgets) and 06/07
-        // (mapping UI) bind to. Every endpoint is #[NoAdminRequired] in the
-        // controller; mutating writes go through OpenRegister's object
-        // endpoints (admin-write per slice 01 permissions) so no per-object
-        // IDOR surface is introduced here. Routes are registered only in
-        // appinfo/routes.php (ADR-016) and declared before the SPA catch-all
-        // so Symfony matches them first.
-            ['name' => 'bBVDashboard#index', 'url' => '/bbv-dashboard', 'verb' => 'GET'],
-            ['name' => 'budgetBBVMapping#index', 'url' => '/budget-mappings', 'verb' => 'GET'],
-            ['name' => 'budgetBBVMapping#show', 'url' => '/budget-mappings/{id}', 'verb' => 'GET'],
+        // Bookkeeping-waterschappen-bbv-variant slice 04 — JSON envelopes for
+        // the waterschappen BBV chain: the compliance dashboard envelope that
+        // member 05 (dashboard widgets) reads and the Budget Mapping
+        // index/detail envelopes that members 06/07 (mapping UI) read. Every
+        // endpoint is #[NoAdminRequired] in the controller; mutating writes go
+        // through OpenRegister's object endpoints (admin-write per slice 01
+        // permissions) so no per-object IDOR surface is introduced here.
+        //
+        // ⚠️ THESE MUST STAY UNDER `/api/`. Slice 04 originally registered them
+        // at `/bbv-dashboard`, `/budget-mappings` and `/budget-mappings/{id}` —
+        // the very paths its OWN manifest fragment
+        // (src/manifest.d/bookkeeping-waterschappen-bbv-variant-04-manifest-routes.json)
+        // declares as SPA *page* routes. An app route always wins over the SPA
+        // catch-all, so all three pages were served by a JSONResponse
+        // controller instead of the app shell; and because a page controller
+        // returning JSON carries no `#[NoCSRFRequired]`, a browser NAVIGATION
+        // (which sends no requesttoken header, unlike axios) was rejected by
+        // SecurityMiddleware. Users clicking "BBV dashboard" or "Budget
+        // mappings" in the navigation got Nextcloud's "Access forbidden — CSRF
+        // check failed" page. The whole waterschappen BBV feature was
+        // unreachable in a browser while the JSON API it fetches answered 200,
+        // so nothing server-side looked broken.
+        //
+        // It stayed invisible because `tests/e2e/waterschappen-bbv-routes-smoke.spec.ts`
+        // asserted `expect([200, 302, 401, 412].includes(status))` and hid every
+        // envelope check behind `if (status === 200)` — an assertion that
+        // accepts the failure it exists to catch. That spec now asserts 200
+        // unconditionally AND navigates the three page routes.
+        //
+        // Keeping the data endpoints under `/api/` (as every other route in
+        // this file already is) leaves the three manifest page routes free for
+        // the SPA. Routes are registered only in appinfo/routes.php (ADR-016).
+            ['name' => 'bBVDashboard#index', 'url' => '/api/bbv-dashboard', 'verb' => 'GET'],
+            ['name' => 'budgetBBVMapping#index', 'url' => '/api/budget-mappings', 'verb' => 'GET'],
+            ['name' => 'budgetBBVMapping#show', 'url' => '/api/budget-mappings/{id}', 'verb' => 'GET'],
 
         // Deposit payment webhook (bookings-deposits, REQ-DP-006). Public route
         // (gateways are unauthenticated callers) but signature-gated inside the

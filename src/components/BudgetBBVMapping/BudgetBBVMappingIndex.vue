@@ -430,7 +430,11 @@ export default {
 				// from axios via the same generateUrl helper.
 				const axios = (await import('@nextcloud/axios')).default
 				const { generateUrl } = await import('@nextcloud/router')
-				const response = await axios.get(generateUrl('/apps/shillinq/budget-mappings'))
+				// `/api/` prefix is load-bearing — see appinfo/routes.php: the
+				// un-prefixed path is this component's OWN SPA page route, and
+				// registering the JSON endpoint there made the page unreachable
+				// in a browser (Access forbidden — CSRF check failed).
+				const response = await axios.get(generateUrl('/apps/shillinq/api/budget-mappings'))
 				const data = response?.data?.scope || {}
 				this.scope = {
 					administrationId: data.administrationId || null,

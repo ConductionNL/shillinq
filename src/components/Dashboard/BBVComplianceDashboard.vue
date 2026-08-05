@@ -209,7 +209,11 @@ export default {
 					params.administrationId = this.administrationId
 				}
 				const response = await axios.get(
-					generateUrl('/apps/shillinq/bbv-dashboard'),
+					// `/api/` prefix is load-bearing — see appinfo/routes.php:
+					// the un-prefixed path is the SPA PAGE route for this very
+					// dashboard, and registering the JSON endpoint there made
+					// the page itself unreachable in a browser.
+					generateUrl('/apps/shillinq/api/bbv-dashboard'),
 					{ params },
 				)
 				const data = response.data || {}
