@@ -820,10 +820,29 @@ fi
 # This gate reads the SERVED response, not the file on disk, and it sits at the
 # very end so that a run which reaches the specs has provably been able to fetch
 # real JavaScript for the SPA.
+#
+# ⚠️ THE CONTENT-TYPE CHECK ALONE CANNOT CATCH THE CASE THIS GATE NAMES.
+# The comment directly above says the way to prove the gate can fail is to
+# TRUNCATE the bundle. Follow that instruction against a content-type-only
+# check and the gate PASSES: a 0-byte `shillinq-main.js` is still served as
+# `200 application/javascript`. The gate would have gone green over exactly
+# the failure it was written to catch — the same shape of defect as the job
+# being `skipped` in the first place.
+#
+# So the SIZE is gated too. `%{size_download}` is already the third field of
+# BUNDLE_INFO; it just was not being read. Measured on a healthy build the
+# bundle is ~12.2 MB (run 30881358951 logged 12242717 bytes before its
+# deliberate truncation). The floor is set at 1 MB — two orders of magnitude
+# below a real build, and above anything a stub, an empty file or a
+# misrouted ~40 KB Nextcloud error page could produce. It is a floor on
+# "something real was served", not an assertion about bundle size, so a
+# legitimate build shrinking by half still passes.
+BUNDLE_MIN_BYTES=1000000
+
 if [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${CI:-}" = "true" ]; then
 	case "$BUNDLE_INFO" in
 		*javascript*)
-			echo "[ci-seed] bundle verified as JavaScript."
+			echo "[ci-seed] bundle content-type verified as JavaScript."
 			;;
 		*)
 			echo "::error::The Shillinq frontend bundle did not serve as JavaScript (got: ${BUNDLE_INFO:-<not found>})."
@@ -832,6 +851,23 @@ if [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${CI:-}" = "true" ]; then
 			exit 1
 			;;
 	esac
+
+	# Third field of "<http_code> <content_type> <size_download>".
+	BUNDLE_BYTES="$(printf '%s\n' "$BUNDLE_INFO" | awk '{print $3}')"
+	case "$BUNDLE_BYTES" in
+		''|*[!0-9]*)
+			echo "::error::Could not read a byte count from the bundle probe (BUNDLE_INFO='${BUNDLE_INFO}')."
+			echo "::error::Refusing to treat an unreadable size as a pass — that is how a truncated bundle gets through."
+			exit 1
+			;;
+	esac
+	if [ "$BUNDLE_BYTES" -lt "$BUNDLE_MIN_BYTES" ]; then
+		echo "::error::The Shillinq frontend bundle served only ${BUNDLE_BYTES} bytes (floor ${BUNDLE_MIN_BYTES})."
+		echo "::error::It is being served as JavaScript, so a content-type check passes — but there is no application in it."
+		echo "::error::Every UI spec would then fail on a selector timeout, and the API-only specs would still pass, which reads like a partial outage rather than a broken build."
+		exit 1
+	fi
+	echo "[ci-seed] bundle verified: ${BUNDLE_BYTES} bytes of JavaScript (floor ${BUNDLE_MIN_BYTES})."
 fi
 
 echo "[ci-seed] done."

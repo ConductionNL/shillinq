@@ -143,13 +143,20 @@ export default defineConfig({
 	//       Performance Obligations routes resolve" — four sequential
 	//       `gotoPage()` deep links, each of which reloads the whole SPA.
 	//
-	// 60s is therefore already only 1.7× the slowest observed pass under the
-	// 5-worker contention this config runs at. Cutting to 45s would be 1.26×,
-	// which is inside the run-to-run spread already visible between the two
-	// 5-worker runs (26.8s → 35.6s on the same tree) — it would manufacture
-	// red, which is as dishonest as manufacturing green. So the timeout is
-	// LEFT at 60s and the budget is recovered from `retries` and `workers`
-	// below, where the evidence says the waste actually is. It is never raised.
+	// 60s was only 1.7× the slowest pass observed under 5-worker contention.
+	// Cutting to 45s would have been 1.26×, inside the run-to-run spread
+	// already visible between two 5-worker runs of the same tree (26.8s →
+	// 35.6s) — it would manufacture red, which is as dishonest as
+	// manufacturing green. So the budget was recovered from `retries` and
+	// `workers` instead, where the evidence says the waste actually is.
+	//
+	// ⚠️ PENDING RE-MEASUREMENT AT `workers: 4`. Those 26.8s/35.6s figures are
+	// contaminated by the very contention this config used to create (see the
+	// note on `workers` below): the slowest pass read 18.7s at ONE worker.
+	// Once a run has landed at 4 workers, re-read the slowest passing test
+	// from its `list` output and cut this to a small multiple of THAT. If it
+	// comes back near 20s, 45s is the right number and this should drop.
+	// Cutting it is the goal; it is never raised.
 	timeout: 60_000,
 	expect: { timeout: 15_000 },
 
@@ -175,7 +182,27 @@ export default defineConfig({
 	// serial. Files that need more than that already say so themselves with
 	// `test.describe.configure({ mode: 'serial' })`.
 	fullyParallel: false,
-	workers: 5,
+
+	// WORKERS — 4, deliberately BELOW the 5 that first fitted the cap.
+	//
+	// More workers is not monotonically better here, and the reason matters:
+	// the GitHub runner has 4 cores and is ALSO hosting the `php -S` instance
+	// under test (8 PHP workers). Past four, Playwright is competing with the
+	// server it is driving, so each test gets slower even though more run at
+	// once. Measured on a sibling repo's suite on the same runner class:
+	// 6 workers -> 29.2m wall, mean 25.0s/test; 4 workers -> 24.2m wall, mean
+	// 13.8s/test. Fewer workers was faster in BOTH wall-clock and per-test.
+	//
+	// ⚠️ AND CONTENTION CORRUPTS THE TIMEOUT EVIDENCE, WHICH IS THE REAL TRAP.
+	// The "slowest passing test" is the number a per-test timeout is supposed
+	// to be derived from — but it INFLATES with worker count. On this suite it
+	// read 18.7s at 1 worker and 35.6s at 5. So a timeout justified by a
+	// measurement taken under too many workers is justifying itself: the
+	// contention you added is what makes the long timeout look necessary. Set
+	// the worker count first, re-measure, and only then touch the timeout.
+	// That ordering is why `timeout` above is still 60_000 and flagged as
+	// pending re-measurement rather than cut on the 5-worker number.
+	workers: 4,
 	// NO RETRIES, DELIBERATELY.
 	//
 	// Two reasons, both measured on run 30881746678:
