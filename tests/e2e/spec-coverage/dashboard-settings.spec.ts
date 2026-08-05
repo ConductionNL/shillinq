@@ -12,7 +12,10 @@ import { test, expect } from '@playwright/test'
 import { APP, gotoPage, dismissOverlays, assertNoShillinqFailures, recordShillinqErrors } from './_helpers'
 
 test.describe('shillinq spec-coverage — Dashboard & Settings', () => {
-	test.describe.configure({ mode: 'serial' })
+	// No `mode: 'serial'` — see the header of ./_helpers.ts. The Dashboard
+	// test's uncaught "Element not found" page error was silently costing
+	// the Settings tests below it their verdict.
+
 
 	test('Dashboard — root SPA mounts with the Dashboard surface', async ({ page }) => {
 		const rec = recordShillinqErrors(page)

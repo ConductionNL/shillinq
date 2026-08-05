@@ -57,12 +57,16 @@ const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
 ]
 
 test.describe('shillinq spec-coverage — Bookkeeping', () => {
-	test.describe.configure({ mode: 'serial' })
-	let rec: ReturnType<typeof recordShillinqErrors>
+	// No `mode: 'serial'` — see the header of ./_helpers.ts. This block paid
+	// the largest price for it: ONE failing route entry
+	// (`/bookkeeping/vendors`) left the other 30 pages here unmeasured.
 
 	for (const p of PAGES) {
 		test(`Bookkeeping › ${p.title} (${p.route})`, async ({ page }) => {
-			rec = recordShillinqErrors(page)
+			// Scoped to this test. It was hoisted to describe scope, which
+			// read like cross-test state but never was — every test assigned
+			// it before reading it.
+			const rec = recordShillinqErrors(page)
 			await gotoPage(page, p.route)
 			await assertIndexSurface(page, p.title, { titleRe: p.titleRe })
 			assertNoShillinqFailures(rec, p.route)

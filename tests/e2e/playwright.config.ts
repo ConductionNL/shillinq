@@ -60,16 +60,21 @@
  * conservative half of the lever, and it is deliberate — the suite is not
  * "safe by construction":
  *
- *   - RE-VERIFIED against this tree, not inherited: all 9 `spec-coverage/*.spec.ts`
- *     files (the 10th entry in that directory is `_helpers.ts`, which is not a
- *     spec) declare `test.describe.configure({ mode: 'serial' })`, and
- *     `order-primitive.spec.ts` declares `mode: 'serial'` plus its own
- *     timeout/retries. `grep -rln 'describe.configure' tests/e2e` returns
- *     exactly those 10 plus the two screenshot specs this config excludes.
- *     Those authors
- *     recorded an intra-file ordering dependency; `fullyParallel: true` would
- *     not break them (an explicit `mode` wins) but it WOULD flip every other
- *     file's intra-file ordering, which nothing here has ever exercised.
+ *   - `fullyParallel: false` is what keeps a file's tests in declaration
+ *     order on ONE worker, and that — not any per-file declaration — is the
+ *     property being relied on. `fullyParallel: true` would flip every file's
+ *     intra-file ordering, which nothing here has ever exercised.
+ *
+ *     ⚠️ Do not re-read the `spec-coverage/*.spec.ts` files as evidence for
+ *     this. They USED to open with `test.describe.configure({ mode: 'serial' })`
+ *     and that was cited here as proof the suite was order-safe. It proved no
+ *     such thing: `serial` does not order anything `fullyParallel: false` had
+ *     not already ordered — it only ABORTS the rest of a block on the first
+ *     failure. Measured on run 31040595126, that abort was the sole cause of
+ *     all 45 "did not run" results, from just three failing tests. The
+ *     declarations are gone; see the header of `spec-coverage/_helpers.ts`.
+ *     `order-primitive.spec.ts` keeps its own `mode: 'serial'` because it
+ *     genuinely is order-dependent.
  *   - The write-performing specs are cross-file safe: `workflows/_fixtures.ts`
  *     stamps every seeded object with a per-run `UNIQUE_PREFIX`
  *     (`e2efin-<base36 time>-<random>`) and deletes what it created in

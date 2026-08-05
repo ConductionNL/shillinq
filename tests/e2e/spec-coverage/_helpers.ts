@@ -24,6 +24,39 @@
  * (table | empty-state | list | a primary action button). This holds on a
  * bare environment with no seeded data — an empty CnIndexPage still renders
  * its empty-content block and toolbar.
+ *
+ * ⚠️ WHY NO SPEC IN THIS DIRECTORY DECLARES `mode: 'serial'` ANY MORE
+ * -------------------------------------------------------------------
+ * All nine specs here used to open with
+ *
+ *     test.describe.configure({ mode: 'serial' })
+ *
+ * and it was measuring nothing while costing a great deal. In `serial` mode
+ * the FIRST failure in a describe block marks every remaining test in that
+ * block as "did not run" — not skipped-with-a-reason, not failed: simply
+ * never executed, and therefore never a verdict about anything.
+ *
+ * Measured on run 31040595126 (271 collected): **45 of the 271 tests "did
+ * not run", and every single one of them was a serial-cascade victim in
+ * this directory** — 30 in `bookkeeping.spec.ts`, 13 in `inventory.spec.ts`,
+ * 2 in `dashboard-settings.spec.ts`. Each cascade was triggered by exactly
+ * ONE failing test. Two hand-written route entries (`/bookkeeping/vendors`,
+ * `/inventory/products`) that the manifest does not declare were costing 43
+ * unrelated pages their measurement.
+ *
+ * `serial` bought nothing in exchange, because these specs have no ordering
+ * dependency to protect: every test takes its own `page` fixture, calls
+ * `recordShillinqErrors()` on it, deep-links, asserts about that page only,
+ * and shares no mutable state with its neighbours. (`bookkeeping.spec.ts`
+ * hoisted a `let rec`, but assigned it at the top of every test before
+ * reading it — a leftover, not a dependency.)
+ *
+ * Removing the declaration does NOT introduce concurrency inside a file:
+ * `tests/e2e/playwright.config.ts` sets `fullyParallel: false`, so a file's
+ * tests still run one at a time, in declaration order, on a single worker.
+ * The only behaviour dropped is "abort the rest of the block on the first
+ * failure". Strictly more of the suite reports a verdict; no assertion is
+ * relaxed and no failing test can become passing.
  */
 
 import { expect, type Page } from '@playwright/test'
