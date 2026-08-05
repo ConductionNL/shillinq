@@ -7,7 +7,7 @@
                 "version": "1.0.0",
                 "title": "Appointment Series",
                 "description": "A recurring appointment series (bookings-depth, recurring-appointment-series). Holds the RRULE-style recurrence definition and the base occurrence template (service, resource, first start, duration). The RecurringSeriesService expands the rule into individual Appointment records, each carrying seriesId + recurrenceIndex, skipping occurrences that violate the existing availability/conflict rules (SlotService). Per bookings/spec.md this realises the Tier-2 recurring-bookings enhancement deferred by the foundation change.",
-                "x-schema-org": "https://schema.org/Schedule",
+                "x-schema-org": "schema:Schedule",
                 "type": "object",
                 "required": [
                     "administrationId",
