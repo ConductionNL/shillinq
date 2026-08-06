@@ -32,7 +32,7 @@
 		{
 			"id": "BbvComplianceDashboard",
 			"route": "/bbv-provincie/compliance-dashboard",
-			"type": "report",
+			"type": "dashboard",
 			"title": "BBV Compliance Dashboard",
 			"visibility": {
 				"field": "administrationType",

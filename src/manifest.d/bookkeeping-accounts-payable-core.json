@@ -267,7 +267,7 @@
 		{
 			"id": "APAgingT2",
 			"route": "/bookkeeping/ap-aging-t2",
-			"type": "aggregate",
+			"type": "index",
 			"title": "AP Aging",
 			"config": {
 				"register": "shillinq",
