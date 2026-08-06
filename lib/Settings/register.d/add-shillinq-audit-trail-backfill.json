@@ -1,0 +1,1375 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "add-shillinq-audit-trail-backfill",
+		"adr": "ADR-022 — opt every shillinq bookkeeping schema into OR's audit-trail-immutable abstraction; no app-local audit tables. ADR-037 — shipped as its own fragment rather than editing add-shillinq-audit-trail.json, whose _meta documents a different (earlier, narrower) change scope.",
+		"description": "Audit-trail backfill fragment. add-shillinq-audit-trail.json opted 138 schemas into OR's audit-trail-immutable abstraction; every register wave since then added bookkeeping, procurement, tax, treasury, payroll and audit schemas WITHOUT the flag, leaving 233 of them uncovered by REQ-AT-001 / REQ-RAP-001 — which is what tests/validate-registers.js reports. This fragment adds x-openregister-audit-trail: { enabled: true } to 227 of them, so OR's audit-trail-immutable captures actor + before/after + timestamp + hash chain on every create / update / lifecycle transition / delete. The remaining 6 (the Ccm* schemas) are fixed in place in bookkeeping-ccm-rule-engine.json, which had declared the flag in a malformed dialect — a bare boolean `\"x-openregister-audit-trail\": true` instead of the object form. A patch entry here could not have repaired those: that fragment sorts AFTER this one, so its scalar overwrote the object during the merge and the flag would have been file-level green but runtime-dead. Per ADR-022 D2 no app-local audit table is authored. Deep-merged by key union (SettingsService::deepMergeConfig), so each entry composes with the full schema definition declared in its own domain fragment regardless of merge order. No schema was added to NON_BOOKKEEPING: every one of the 233 carries ledger, financial, tax, procurement or audit character. The two bookings-domain entries (BookingCancellation, CancellationPolicy) are included deliberately — both hold monetary terms (calculated refund amounts, late-cancellation and no-show fee brackets), so they are financial records rather than pure scheduling data."
+	},
+	"components": {
+		"schemas": {
+			"ACMReport": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ACMReport with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ActivityCostAllocation": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ActivityCostAllocation with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ActuarialValuation": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ActuarialValuation with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"AdministrationBackupRun": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on AdministrationBackupRun with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"AlertLog": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on AlertLog with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"AlgemeenBelangBesluit": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on AlgemeenBelangBesluit with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"AmlReport": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on AmlReport with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"AuditFinding": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on AuditFinding with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"AuditFindingTemplate": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on AuditFindingTemplate with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"AuditSample": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on AuditSample with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"AuditTrail": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on AuditTrail with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"AuditorStatement": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on AuditorStatement with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"BankReconciliationGroup": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on BankReconciliationGroup with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"BankReconciliationMatch": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on BankReconciliationMatch with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"BbvStatement": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on BbvStatement with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Begrotingswijziging": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Begrotingswijziging with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Belastingplichtige": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Belastingplichtige with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"BeleidsIndicator": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on BeleidsIndicator with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"BezwaarBeroep": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on BezwaarBeroep with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"BlanketOrder": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on BlanketOrder with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"BookingCancellation": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on BookingCancellation with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. In bookings scope but deliberately NOT exempted: the record carries the calculated refund amount and its refund lifecycle, so it is a financial record. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Budget": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Budget with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CancellationPolicy": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CancellationPolicy with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. In bookings scope but deliberately NOT exempted: the policy sets late-cancellation fee brackets, no-show fees and refund terms, and a BookingCancellation snapshots it as the basis of a monetary outcome. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CarryForwardLoss": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CarryForwardLoss with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CashCount": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CashCount with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CashFlowItem": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CashFlowItem with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CashForecast": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CashForecast with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CashPool": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CashPool with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CashPoolMembership": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CashPoolMembership with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CashTransaction": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CashTransaction with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CddRecord": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CddRecord with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ClaimsVoorzieningDetail": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ClaimsVoorzieningDetail with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ClosingAccount": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ClosingAccount with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ClosingEntry": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ClosingEntry with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ClosingEntryTemplate": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ClosingEntryTemplate with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CommercialActivity": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CommercialActivity with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ComplianceAuditTrail": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ComplianceAuditTrail with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ConsolidatedBalance": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ConsolidatedBalance with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ConsolidatedIncomeStatement": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ConsolidatedIncomeStatement with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ConsolidationPeriod": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ConsolidationPeriod with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ContingentLiability": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ContingentLiability with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Controleprotocol": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Controleprotocol with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CounterpartyBalance": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CounterpartyBalance with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CreditHold": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CreditHold with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"CustomerMaster": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CustomerMaster with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DBAEvidenceDossier": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DBAEvidenceDossier with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DBAIntake": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DBAIntake with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DBAModelovereenkomst": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DBAModelovereenkomst with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DBAOpdracht": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DBAOpdracht with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DBAPortfolioRisico": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DBAPortfolioRisico with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DBARisicoflag": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DBARisicoflag with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DebtPosition": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DebtPosition with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Deduction": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Deduction with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Deelneming": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Deelneming with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DefinitieveAanslag": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DefinitieveAanslag with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Delivery": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Delivery with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DepreciationSchedule": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DepreciationSchedule with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Derivaat": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Derivaat with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DeterminationLetter": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DeterminationLetter with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DirectDebitBatch": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DirectDebitBatch with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DirectDebitCollection": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DirectDebitCollection with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"DunningRecord": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on DunningRecord with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"EInvoiceMandate": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on EInvoiceMandate with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"EMUAdjustment": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on EMUAdjustment with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"EMUReport": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on EMUReport with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"EconomischeCategorie": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on EconomischeCategorie with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"EligibilityRule": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on EligibilityRule with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"EliminationEntry": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on EliminationEntry with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"EliminationJournal": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on EliminationJournal with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Employee": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Employee with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"EnergielijstCode": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on EnergielijstCode with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"EsrsStatement": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on EsrsStatement with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"EuExpenditure": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on EuExpenditure with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"EuProject": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on EuProject with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"FXContract": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on FXContract with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"FXPosition": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on FXPosition with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"FinancialStatement": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on FinancialStatement with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"FiscaleCorrectie": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on FiscaleCorrectie with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"FiscaleEenheid": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on FiscaleEenheid with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"FundsTransfer": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on FundsTransfer with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"GarantievoorzieningDetail": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on GarantievoorzieningDetail with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"GeneratedReport": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on GeneratedReport with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Goedkeuringsstap": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Goedkeuringsstap with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Goodwill": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Goodwill with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Grant": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Grant with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"GroupEntity": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on GroupEntity with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"HerstructureringsvoorzieningDetail": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on HerstructureringsvoorzieningDetail with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IB47Record": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IB47Record with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IBAangifte": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IBAangifte with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IBAuditTrail": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IBAuditTrail with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IBBijtellingAuto": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IBBijtellingAuto with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IBBox3Vermogen": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IBBox3Vermogen with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IBExpenseAllocation": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IBExpenseAllocation with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IBHeffingskortingenAlgemeen": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IBHeffingskortingenAlgemeen with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IBLijfrenteAOV": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IBLijfrenteAOV with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IBOndernemersaftrek": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IBOndernemersaftrek with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IBProfitAttribution": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IBProfitAttribution with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IBTaxParameterYear": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IBTaxParameterYear with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IBWinstOpgave": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IBWinstOpgave with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IPAssetValuation": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IPAssetValuation with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IcpOpgaaf": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IcpOpgaaf with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IcpSupply": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IcpSupply with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Indicator": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Indicator with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Innovatiebox": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Innovatiebox with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"InnovatieboxAuditEvent": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on InnovatieboxAuditEvent with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"InnovatieboxElection": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on InnovatieboxElection with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"InnovatieboxTariff": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on InnovatieboxTariff with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IntegralCostPrice": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IntegralCostPrice with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IntercompanyLoan": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IntercompanyLoan with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IntercompanyMatch": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IntercompanyMatch with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IntercompanyMismatch": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IntercompanyMismatch with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IntercompanyRelation": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IntercompanyRelation with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Investering": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Investering with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"InvesteringsAftrek": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on InvesteringsAftrek with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"InvesteringsaftrekClaim": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on InvesteringsaftrekClaim with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"InvestmentAsset": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on InvestmentAsset with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IossImport": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IossImport with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"IrregularityReport": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on IrregularityReport with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"JubileumvoorzieningDetail": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on JubileumvoorzieningDetail with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"KIATier": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on KIATier with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"KasgeldLimiet": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on KasgeldLimiet with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"LeaseContract": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on LeaseContract with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"LeaseDisclosureTable": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on LeaseDisclosureTable with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"LeasePaymentSchedule": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on LeasePaymentSchedule with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"LeasePortfolioExemption": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on LeasePortfolioExemption with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"LeaseReassessmentEvent": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on LeaseReassessmentEvent with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Lening": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Lening with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"LiquidityKPI": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on LiquidityKPI with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ManagementLetter": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ManagementLetter with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Mandaat": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Mandaat with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"MarketBenchmark": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on MarketBenchmark with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Materialiteit": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Materialiteit with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"MaterieleVasteActiva": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on MaterieleVasteActiva with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"MeerjarenBudget": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on MeerjarenBudget with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Meerjarenraming": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Meerjarenraming with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"MeterReading": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on MeterReading with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"MilieulijstCode": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on MilieulijstCode with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"MilieuvoorzieningDetail": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on MilieuvoorzieningDetail with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"MinorityInterest": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on MinorityInterest with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"NexusCalculation": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on NexusCalculation with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"OpdrachtUitvoering": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on OpdrachtUitvoering with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"OpdrachtgeversVerklaring": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on OpdrachtgeversVerklaring with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"OrderLine": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on OrderLine with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Paragraaf": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Paragraaf with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Payment": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Payment with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Payroll": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Payroll with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"PensioenvoorzieningDetail": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on PensioenvoorzieningDetail with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"PensionAssetDetail": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on PensionAssetDetail with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"PensionAssumptionSensitivity": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on PensionAssumptionSensitivity with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"PensionDisclosureTabel": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on PensionDisclosureTabel with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"PensionMovement": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on PensionMovement with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"PensionPlan": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on PensionPlan with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"PeriodicitySwitch": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on PeriodicitySwitch with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"PreNotification": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on PreNotification with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"PricingTier": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on PricingTier with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Programma": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Programma with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Programmabegroting": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Programmabegroting with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ProjectBudget": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ProjectBudget with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ProvincialeFondsPosting": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ProvincialeFondsPosting with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Provision": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Provision with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ProvisionDisclosureTabel": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ProvisionDisclosureTabel with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ProvisionMovement": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ProvisionMovement with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"PublicSectorStatement": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on PublicSectorStatement with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"QualifyingAsset": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on QualifyingAsset with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"QuartaalrapportageFido": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on QuartaalrapportageFido with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"QuarterlyTaxStatement": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on QuarterlyTaxStatement with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Quote": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Quote with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"QuoteLine": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on QuoteLine with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"RJ270Stage": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on RJ270Stage with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"RTransaction": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on RTransaction with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Rechtmatigheidsbevinding": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Rechtmatigheidsbevinding with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Rechtmatigheidsparagraaf": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Rechtmatigheidsparagraaf with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Rechtmatigheidstoets": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Rechtmatigheidstoets with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"RenteRisicoNorm": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on RenteRisicoNorm with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Reserve": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Reserve with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"RetainedEarnings": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on RetainedEarnings with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"SaftExportProfile": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on SaftExportProfile with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"SaftFile": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on SaftFile with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"SalarisFeed": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on SalarisFeed with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"SanctionsScreening": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on SanctionsScreening with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"SchatkistbankierenSaldo": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on SchatkistbankierenSaldo with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"SegregatedLedger": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on SegregatedLedger with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"SepaMandate": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on SepaMandate with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"SiSaAssurance": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on SiSaAssurance with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"SisaReport": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on SisaReport with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"StandardsPolicy": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on StandardsPolicy with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"SubsidieVerantwoording": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on SubsidieVerantwoording with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"SupportingDocument": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on SupportingDocument with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Taakveld": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Taakveld with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"TaxDeadline": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on TaxDeadline with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"TaxPaymentTracking": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on TaxPaymentTracking with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"TenderNedAanbesteding": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on TenderNedAanbesteding with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Procurement schemas are bookkeeping-by-default per REQ-RAP-001. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"TimeIntakeBatch": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on TimeIntakeBatch with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ToleranceMatrix": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ToleranceMatrix with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ToleranceRule": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ToleranceRule with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Tolerantiegrens": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Tolerantiegrens with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"TranslationAdjustment": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on TranslationAdjustment with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"TravelAgentMargin": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on TravelAgentMargin with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"TreasuryParagraaf": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on TreasuryParagraaf with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Treasurystatuut": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Treasurystatuut with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"TrustLedger": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on TrustLedger with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"UrenAlert": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on UrenAlert with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"UrenCategorie": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on UrenCategorie with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"UrenDagregistratie": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on UrenDagregistratie with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"UrenEvidence": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on UrenEvidence with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"UrenPrognose": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on UrenPrognose with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"UrencriteriumYear": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on UrencriteriumYear with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"UsageRatePlan": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on UsageRatePlan with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"VamilDepreciation": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on VamilDepreciation with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"VatReturnFiling": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on VatReturnFiling with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"VerklaringDraft": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on VerklaringDraft with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Verplichting": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Verplichting with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Procurement schemas are bookkeeping-by-default per REQ-RAP-001. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Verplichtingsmutatie": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Verplichtingsmutatie with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Verplichtingsregel": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Verplichtingsregel with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ViesValidation": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ViesValidation with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"VolumeDiscount": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on VolumeDiscount with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"VoorlopigeAanslag": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on VoorlopigeAanslag with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Voorvoegingsverlies": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Voorvoegingsverlies with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"Voorziening": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Voorziening with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"VpbAangifte": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on VpbAangifte with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"VpbBalansLink": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on VpbBalansLink with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"VpbTariefcatalogus": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on VpbTariefcatalogus with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"WMOAuditLog": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on WMOAuditLog with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"WinstToerekening": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on WinstToerekening with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"XbrlInstance": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on XbrlInstance with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"ZzpDeductionAmounts": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on ZzpDeductionAmounts with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			},
+			"kernGegevensConfig": {
+				"x-openregister-audit-trail": {
+					"enabled": true,
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on kernGegevensConfig with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+				}
+			}
+		}
+	}
+}

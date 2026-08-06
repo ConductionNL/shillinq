@@ -16,7 +16,10 @@
         "description": "A Continuous Controls Monitoring rule definition (REQ-CCM-001). Carries the control family, objective, COSO assertion, severity, evaluation mode, trigger events, and the constrained JSON DSL logic (ruleLogic) evaluated by CcmRuleEngine (REQ-CCM-002). Parameters are tenant-configurable thresholds; ruleLogic is never arbitrary code. rule owner/reviewer are Nextcloud user ids (FK to the NC user directory). Immutable audit trail per REQ-CCM-009.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
-        "x-openregister-audit-trail": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CcmRule with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002 + REQ-CCM-009. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+        },
         "x-openregister-rbac": {
           "roles": {
             "internal-audit": {
@@ -251,7 +254,10 @@
         "description": "A single rule firing (REQ-CCM-004). Captures an immutable evidence snapshot at fire time (before/after, actor, approver chain, GL context) and transitions through a four-state triage workflow via x-openregister-lifecycle. Investigation notes and status history are append-only. Resolution requires a mandatory rationale (CcmFindingGuard). The assignee is a Nextcloud user id. Immutable audit trail per REQ-CCM-009.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
-        "x-openregister-audit-trail": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CcmFinding with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002 + REQ-CCM-009. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+        },
         "x-openregister-rbac": {
           "roles": {
             "internal-audit": {
@@ -626,7 +632,10 @@
         "description": "Segregation-of-duties reference data (REQ-CCM-005). One row per function code, listing the conflicting function codes a single user may not also hold, with conflict severity, rationale (Dutch), and the compensating controls allowed. Pre-loaded with the standard SAP/Oracle function library, tenant-configurable.",
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
-        "x-openregister-audit-trail": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CcmSegregationMatrix with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002 + REQ-CCM-009. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+        },
         "x-openregister-unique": [
           "functionCode"
         ],
@@ -712,7 +721,10 @@
         "description": "Materialised mapping of a Nextcloud user to a SoD function code (REQ-CCM-005), recomputed nightly from roles + direct grants + temporary elevations by the ccm-sod-materialisation scheduled workflow. The user is a Nextcloud entity (FK to the NC user directory). conflictWith records the SoD conflicts the user currently holds.",
         "x-schema-org": "schema:Role",
         "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
-        "x-openregister-audit-trail": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CcmUserFunctionAssignment with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002 + REQ-CCM-009. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+        },
         "x-openregister-rbac": {
           "roles": {
             "internal-audit": {
@@ -829,7 +841,10 @@
         "description": "A statistical baseline that anomalous-amount and Benford's-Law rules compare against (REQ-CCM-002). Materialised nightly (not computed per evaluation, REQ-CCM-003) by the ccm-baseline-materialisation scheduled workflow over a rolling window per scope. stable=false when the sample size or variance is too small to flag.",
         "x-schema-org": "schema:QuantitativeValue",
         "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
-        "x-openregister-audit-trail": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CcmBaseline with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002 + REQ-CCM-009. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+        },
         "x-openregister-rbac": {
           "roles": {
             "internal-audit": {
@@ -970,7 +985,10 @@
         "description": "The period-end audit-committee deliverable (REQ-CCM-006). Assembles rule-firings by family/severity, findings by status, top findings, trend analysis, SoD compliance scorecard, manual-JE summary, approver-bypass summary, and (when SOX mode is enabled) the SOX 404 deficiency log. The executive summary is LLM-drafted then human-edited; no report is published without approver sign-off (CcmFindingGuard::canApproveReport). Immutable audit trail per REQ-CCM-009.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
-        "x-openregister-audit-trail": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on CcmAuditCommitteeReport with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002 + REQ-CCM-009. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+        },
         "x-openregister-rbac": {
           "roles": {
             "internal-audit": {
