@@ -181,6 +181,10 @@
             "description": "True when a Form 8300 was filed for this (or the related-transaction aggregate) cash receipt over USD 10 000.",
             "title": "Form8300Required"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Cash Transaction (AML) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "AmlReport": {
@@ -281,6 +285,10 @@
             "description": "Reporting period the report covers.",
             "title": "Period"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a AML Report (CTR / SAR / 8300 / CMIR / FBAR / unusual) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "SanctionsScreening": {
@@ -356,6 +364,10 @@
             "description": "Date a match was reported to the supervisor/OFAC (required when matched).",
             "title": "Reported Date"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Sanctions Screening (OFAC / EU / national) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "CddRecord": {
@@ -432,6 +444,10 @@
             "description": "Date until which the CDD record is retained (at least five years after recordedDate).",
             "title": "Retention Until"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Customer Due Diligence Record is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "FundsTransfer": {
@@ -490,6 +506,10 @@
             "description": "Account/identifier of the payee/beneficiary (travel rule).",
             "title": "Beneficiary Account"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Funds Transfer (travel rule) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "TrustLedger": {
@@ -551,6 +571,10 @@
             },
             "title": "Client Balances"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Trust / Escrow Ledger is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "CashCount": {
@@ -609,6 +633,10 @@
             "description": "ISO 4217 currency code.",
             "title": "Currency"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Cash Count (kasadministratie / Z-report) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     }

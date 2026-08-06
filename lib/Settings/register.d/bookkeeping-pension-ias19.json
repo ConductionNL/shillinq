@@ -277,6 +277,10 @@
           },
           "lockGuard": "OCA\\Shillinq\\Lifecycle\\PensionIas19Guard::canLockValuation",
           "x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-010"
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Pension Plan is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ActuarialValuation": {
@@ -607,6 +611,10 @@
             },
             "metadataOnly": true
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Actuarial Valuation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "PensionMovement": {
@@ -893,6 +901,10 @@
           "ociComponentSource": "netPensionMovementOCI",
           "reversalPattern": "long-term",
           "x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-003"
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Pension Movement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "PensionAssumptionSensitivity": {
@@ -978,6 +990,10 @@
               "PensionAssumptionSensitivity.direction"
             ]
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Pension Assumption Sensitivity is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "PensionAssetDetail": {
@@ -1047,6 +1063,10 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Pension Asset Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "PensionDisclosureTabel": {
@@ -1156,6 +1176,10 @@
             "html"
           ],
           "x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-007"
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Pension Disclosure Table is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     },

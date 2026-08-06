@@ -201,6 +201,10 @@
             "example": "adm-mkb-1",
             "title": "Administration ID"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Qualifying Asset is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "NexusCalculation": {
@@ -339,6 +343,10 @@
               }
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Nexus Calculation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IBProfitAttribution": {
@@ -537,6 +545,10 @@
               }
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB Profit Attribution is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IBExpenseAllocation": {
@@ -681,6 +693,10 @@
             "title": "Administration ID",
             "description": "The date and time for administration id."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB Expense Allocation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "CarryForwardLoss": {
@@ -779,6 +795,10 @@
             "title": "Administration ID",
             "description": "The date and time for administration id."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Carry Forward Loss is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "InnovatieboxAuditEvent": {
@@ -870,6 +890,10 @@
             "additionalProperties": true,
             "title": "Details"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Innovatiebox Audit Event is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     },

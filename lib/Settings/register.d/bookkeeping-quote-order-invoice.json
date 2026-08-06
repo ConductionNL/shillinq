@@ -209,6 +209,10 @@
               "description": "Return to draft to issue a new version; the sent version is retained as an immutable snapshot (design D1)."
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Quote is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "QuoteLine": {
@@ -301,6 +305,10 @@
             "description": "lineNet = quantity * unitPrice * (1 - discount/100). Declarative per ADR-031 — no PHP pricing service.",
             "expr": "@self.quantity * @self.unitPrice * (1 - (@self.discount / 100))"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Quote Line is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "SalesOrder": {
@@ -749,6 +757,10 @@
               "description": "Record carrier hand-off."
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Delivery is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Invoice": {
@@ -1300,6 +1312,10 @@
             "default": 4,
             "title": "Priority"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Pricing Tier is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "VolumeDiscount": {
@@ -1393,6 +1409,10 @@
             "default": true,
             "title": "Automatic Application"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Volume Discount is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "BlanketOrder": {
@@ -1487,6 +1507,10 @@
             "description": "remainingQuantity = max(committedQuantity - calledOffQuantity, 0). Declarative per ADR-031 (design D8).",
             "expr": "max(@self.committedQuantity - @self.calledOffQuantity, 0)"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Blanket Order is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "CreditHold": {
@@ -1606,6 +1630,10 @@
               "requires": "OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard::canReleaseCreditHold"
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Credit Hold is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     },

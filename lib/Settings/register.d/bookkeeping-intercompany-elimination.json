@@ -397,6 +397,10 @@
               "requires": "OCA\\Shillinq\\Lifecycle\\IntercompanyToleranceGuard::isWithinTolerance"
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Intercompany Match is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IntercompanyMismatch": {
@@ -547,6 +551,10 @@
               "label": "Accept as difference"
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Intercompany Mismatch is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ToleranceRule": {
@@ -634,6 +642,10 @@
             "description": "FK to Administration (tenant scope).",
             "title": "Administration ID"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Tolerance Rule is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "CounterpartyBalance": {
@@ -771,6 +783,10 @@
               }
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Counterparty Balance is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "EliminationJournal": {
@@ -919,6 +935,10 @@
               "requires": "OCA\\Shillinq\\Lifecycle\\EliminationBalanceGuard::isBalanced"
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Elimination Journal is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     },

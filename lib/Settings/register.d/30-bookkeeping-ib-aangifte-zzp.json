@@ -315,6 +315,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB-aangifte is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IBWinstOpgave": {
@@ -503,6 +507,10 @@
             "grondslag": "art. 3.15 Wet IB 2001",
             "guard": "OCA\\Shillinq\\Guard\\IbFiscalAdjustmentGuard::representatieDrempel"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB-winstopgave is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IBOndernemersaftrek": {
@@ -703,6 +711,10 @@
             "grondslag": "art. 3.79a Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.mkbExemptionRate"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB-ondernemersaftrek is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IBHeffingskortingenAlgemeen": {
@@ -800,6 +812,10 @@
             "grondslag": "art. 8.10 Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.ahkMax,ahkPhaseoutRate,ahkPhaseoutThreshold"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB-heffingskortingen is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IBLijfrenteAOV": {
@@ -907,6 +923,10 @@
             "grondslag": "art. 3.127 Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.lijfrenteRate,lijfrenteFranchise,lijfrenteReserveringsruimteCap"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB-lijfrente & AOV is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IBBijtellingAuto": {
@@ -1031,6 +1051,10 @@
             "guard": "OCA\\Shillinq\\Guard\\IbBijtellingGuard::computeBijtelling",
             "parameterSource": "IBTaxParameterYear.evBijtellingStaffel1Pct,evBijtellingStaffel1Cap,evBijtellingStaffel2Pct"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB-bijtelling auto is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IBBox3Vermogen": {
@@ -1136,6 +1160,10 @@
             "grondslag": "Overbruggingswet box 3 / hoofdstuk 5 Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.box3HeffingvrijVermogen"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB-box 3 vermogen is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IBAuditTrail": {
@@ -1244,6 +1272,10 @@
             "period": "P7Y",
             "description": "Audit trail retained 7 years per AWR art. 52."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB-audittrail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IBTaxParameterYear": {
@@ -1356,6 +1388,10 @@
             "description": "Source / scheduled-change notes per Belastingplan.",
             "title": "Notes"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB-tariefparameters per jaar is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     }

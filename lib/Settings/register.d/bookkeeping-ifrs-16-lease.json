@@ -333,6 +333,10 @@
             "example": "adm-smb-1",
             "title": "Administration ID"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Lease Contract is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "LeasePaymentSchedule": {
@@ -482,6 +486,10 @@
             "title": "Administration ID",
             "description": "The date and time for administration id."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Lease Payment Schedule is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "LeaseReassessmentEvent": {
@@ -650,6 +658,10 @@
             "title": "Administration ID",
             "description": "The date and time for administration id."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Lease Reassessment Event is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "LeaseDisclosureTable": {
@@ -809,6 +821,10 @@
             "title": "Administration ID",
             "description": "The date and time for administration id."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IFRS 16 Disclosure Table is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "LeasePortfolioExemption": {
@@ -876,6 +892,10 @@
             "title": "Administration ID",
             "description": "The date and time for administration id."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Lease Portfolio Exemption Policy is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     },

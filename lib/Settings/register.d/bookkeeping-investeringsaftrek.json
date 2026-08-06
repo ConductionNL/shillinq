@@ -207,6 +207,10 @@
             "example": "RVO-2026-EIA-00123",
             "title": "Rvo Referentie"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a InvestmentAsset is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "EnergielijstCode": {
@@ -285,6 +289,10 @@
             "title": "Vervaldatum",
             "description": "The date and time for vervaldatum."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a EnergielijstCode is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "MilieulijstCode": {
@@ -367,6 +375,10 @@
             "title": "Ingangsdatum",
             "description": "The date and time for ingangsdatum."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a MilieulijstCode is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "InvesteringsaftrekClaim": {
@@ -493,6 +505,10 @@
             "example": null,
             "title": "Verlagin Rationale"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a InvesteringsaftrekClaim is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "VamilDepreciation": {
@@ -578,6 +594,10 @@
             },
             "title": "Regulier Afschrijfschema"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a VamilDepreciation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "KIATier": {
@@ -640,6 +660,10 @@
             "example": "28% over investering",
             "title": "Regel"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a KIATier is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     }
