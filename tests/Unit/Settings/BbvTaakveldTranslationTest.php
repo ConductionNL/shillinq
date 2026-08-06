@@ -54,7 +54,14 @@ use PHPUnit\Framework\TestCase;
  *     file exists to make loud, and it is why the schema assertion is here
  *     rather than left to a reviewer's eye.
  *
- * @covers ::nothing This is a data-integrity test over the shipped seeds.
+ * This is a data-integrity test over the shipped seed files and the register
+ * declaration, so it covers no class. `@coversNothing` is the valid way to say
+ * that — `@covers ::nothing` is NOT a target PHPUnit recognises, and with
+ * `beStrictAboutCoverageMetadata="true"` it raised one warning per test method
+ * (9 in total) and took the whole PHPUnit job to exit 1 in CI while the local
+ * run reported OK.
+ *
+ * @coversNothing
  */
 class BbvTaakveldTranslationTest extends TestCase
 {
