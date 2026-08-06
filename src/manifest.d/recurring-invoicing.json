@@ -58,13 +58,15 @@
                 ],
                 "defaultSort": "nextRunDate",
                 "detailRoute": "RecurringInvoiceProfileDetail",
-                "actions": [
+                "_note_headerActions": "`headerActions`, NOT `actions`. CnPageRenderer forwards config.actions[] to CnIndexPage's `actions` prop, which its own docblock defines as ROW action definitions — they end up in CnRowActions, one per row. On an empty profile list there are zero rows, so the only way to CREATE the first recurring profile did not exist. `headerActions` is what CnIndexPage renders as page-level buttons (CnActionsBar -> CnActionButtons). The type/target/props shape matches the Dashboard's own working `create-invoice` action; `type: \"modal\"` + `modal:` is not a dispatcher CnActionButtons knows (open-form | toggle | api-call | navigate | open-modal | open-page | refresh).",
+                "headerActions": [
                     {
                         "id": "new-recurring-profile",
                         "label": "New recurring profile",
                         "icon": "CalendarSync",
-                        "type": "modal",
-                        "modal": "RecurringInvoiceProfileModal",
+                        "type": "open-modal",
+                        "target": "RecurringInvoiceProfileModal",
+                        "props": { "open": true },
                         "description": "Define a new recurring billing profile: customer, lines with period tokens, frequency, invoice day, issue mode and payment terms."
                     }
                 ],

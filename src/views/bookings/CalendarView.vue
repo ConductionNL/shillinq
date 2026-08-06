@@ -60,6 +60,7 @@
 					:key="`${day.iso}-${hour}`"
 					type="button"
 					class="calendar-view__slot"
+					:data-testid="`calendar-slot-${day.iso}-${hour}`"
 					@click="emitSlot(day.iso, hour)">
 					<span class="calendar-view__slot-hour">{{ formatHour(hour) }}</span>
 					<span
@@ -82,6 +83,7 @@
 				:key="hour"
 				type="button"
 				class="calendar-view__slot"
+				:data-testid="`calendar-slot-${dayIso}-${hour}`"
 				@click="emitSlot(dayIso, hour)">
 				<span class="calendar-view__slot-hour">{{ formatHour(hour) }}</span>
 				<span

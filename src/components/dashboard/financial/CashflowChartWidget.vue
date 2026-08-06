@@ -6,10 +6,23 @@
   @spec openspec/specs/financial-dashboard-graphs/spec.md
 -->
 <template>
+	<!--
+		`v-show`, NOT `v-if`, on the chart. `loading` is the module-singleton ref
+		from useFinancialData(), so EVERY financial widget on the Dashboard flips
+		together on each refetch (mount, then again when the persisted dateRange
+		is restored). With `v-if` that unmounted the ApexCharts host mid-flight:
+		vue3-apexcharts@1.8.0's init() captures `$el` in onMounted, `await`s a
+		nextTick and only then constructs the chart — if the host is detached
+		inside that awaited tick, onBeforeUnmount no-ops (its chart ref is still
+		null), the orphaned init() resumes against a detached node and
+		`render()` rejects with `Error: Element not found`, unhandled, onto
+		`pageerror`. That is the uncaught error the root-page spec-coverage test
+		reports on `/`. Keeping the host mounted closes the window.
+	-->
 	<div class="cashflow-chart" data-testid="cashflow-chart">
 		<NcLoadingIcon v-if="loading" :size="32" class="cashflow-chart__loading" />
 		<CnChartWidget
-			v-else
+			v-show="!loading"
 			type="line"
 			:series="series"
 			:categories="categories"

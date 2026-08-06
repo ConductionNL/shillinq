@@ -24,8 +24,16 @@ const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
 	{ route: '/bookkeeping/matching-rules', title: 'Matching Rules' },
 	{ route: '/fixed-assets', title: 'Fixed Assets' },
 	{ route: '/bookkeeping/vendors', title: 'Vendors' },
-	{ route: '/bookkeeping/accounts-payable', title: 'Accounts Payable' },
-	{ route: '/bookkeeping/ap-aging', title: 'AP Aging' },
+	// The declared route is `/bookkeeping/ap-transactions` (page id
+	// `APTransactions`, title "Accounts Payable") in
+	// manifest.d/bookkeeping-accounts-payable-core.json. `/bookkeeping/accounts-payable`
+	// was never declared by any manifest source — it was taken from the spec
+	// prose rather than from the manifest, so it fell through the catch-all.
+	{ route: '/bookkeeping/ap-transactions', title: 'Accounts Payable' },
+	// Declared as `/bookkeeping/ap-aging-t2` (page id `APAgingT2`); the bare
+	// `/bookkeeping/ap-aging` id `APAging` is listed in menu-layout.json
+	// `removals` but has no page entry at all.
+	{ route: '/bookkeeping/ap-aging-t2', title: 'AP Aging' },
 	{ route: '/bookkeeping/payment-runs', title: 'Payment Runs' },
 	{ route: '/bookkeeping/customers', title: 'Customers' },
 	{ route: '/bookkeeping/accounts-receivable', title: 'Accounts Receivable' },
@@ -45,7 +53,10 @@ const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
 	{ route: '/financial-statements/trial-balance-lines', title: 'Trial Balance', titleRe: /Trial Balance/i },
 	{ route: '/financial-statements/consolidations', title: 'Consolidations' },
 	{ route: '/financial-statements/consolidated-report', title: 'Consolidated Report' },
-	{ route: '/iv3-reports', title: 'IV3 Reports' },
+	// Shipped in Dutch as `/iv3-rapportages` (page id `Iv3Rapportages`,
+	// title "IV3 reports"). `/iv3-reports` is the path named in the ARCHIVED
+	// change's tasks.md, not the path that was built.
+	{ route: '/iv3-rapportages', title: 'IV3 reports', titleRe: /IV3/i },
 	{ route: '/emu-rapportage', title: 'EMU-rapportage' },
 	{ route: '/bookkeeping/r-d-subsidies', title: 'R&D Subsidies', titleRe: /R&D|R\s*&\s*D|Subsid/i },
 	{ route: '/wbso/tags', title: 'WBSO Tags' },

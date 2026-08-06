@@ -55,7 +55,19 @@
 			@refresh="loadMappings"
 			@row-click="onRowClick"
 			@page-changed="onPageChange">
-			<template #header-actions>
+			<!--
+				`below-header`, NOT `header-actions`. CnIndexPage 2.2.0-vue3.2
+				declares below-header / mass-actions / action-items / actions /
+				import-fields / form-fields / empty / column-* / row-actions /
+				list-item / row-icon / row-badges / card — there is no
+				`header-actions` slot on it. Vue drops unmatched slot content
+				SILENTLY, so this whole filter block (search, fiscal year,
+				allocation, effective-from range) rendered nowhere while the
+				surrounding page looked healthy. The spelling was borrowed from
+				CnDashboardPage, which DOES have `header-actions` — see
+				BBVComplianceDashboard.vue, where the same template name works.
+			-->
+			<template #below-header>
 				<div class="bbv-mapping-index__filters" data-testid="bbv-mapping-index-filters">
 					<span
 						v-if="scope.fiscalYear"

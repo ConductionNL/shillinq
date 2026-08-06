@@ -84,23 +84,32 @@
 					class="bbv-mapping-detail__form"
 					data-testid="bbv-mapping-detail-form"
 					@submit.prevent="onSave">
-					<div class="bbv-mapping-detail__row">
+					<!--
+						The row, not the picker, carries `bbv-mapping-detail-gl`.
+						Vue 3 attribute fallthrough merges parent attrs onto the
+						child's ROOT vnode and the LATER value wins for plain
+						attributes, so a `data-testid` set here OVERWROTE the
+						picker's own `bbv-gl-account-picker` on the rendered
+						element — the picker mounted correctly but wearing the
+						parent's name, and nothing in the DOM answered to
+						`bbv-gl-account-picker` at all.
+					-->
+					<div class="bbv-mapping-detail__row" data-testid="bbv-mapping-detail-gl">
 						<GlAccountPicker
 							v-model="form.glAccountNumber"
 							:administration-id="form.administrationId"
-							data-testid="bbv-mapping-detail-gl"
 							@selected="onGlAccountSelected" />
 						<p v-if="selectedAccount" class="bbv-mapping-detail__hint" data-testid="bbv-mapping-detail-gl-hint">
 							{{ glAccountSummary }}
 						</p>
 					</div>
 
-					<div class="bbv-mapping-detail__row">
+					<!-- Same fallthrough hazard as the GL picker above. -->
+					<div class="bbv-mapping-detail__row" data-testid="bbv-mapping-detail-programme">
 						<BBVProgrammePicker
 							v-model="form.programmeCode"
 							:administration-id="form.administrationId"
 							:fiscal-year="fiscalYearOfMapping"
-							data-testid="bbv-mapping-detail-programme"
 							@selected="onProgrammeSelected" />
 						<p v-if="selectedProgramme" class="bbv-mapping-detail__hint" data-testid="bbv-mapping-detail-programme-hint">
 							{{ programmeSummary }}
@@ -416,6 +425,26 @@ export default {
 			const gl = this.form.glAccountNumber
 			const fiscalYear = this.fiscalYearOfMapping
 			const adminId = this.form.administrationId
+
+			// RANGE CHECK FIRST, and independent of the GL/fiscal-year lookup.
+			// `min="0" max="100"` on a number input is CONSTRAINT VALIDATION
+			// only: the browser neither clamps nor rejects a typed value, so a
+			// negative allocation sat in the field with no feedback whatsoever —
+			// the projection below early-returned with an EMPTY message because
+			// no GL account is selected yet on the create route, and its only
+			// error branch is `projected > 100.1`, which a negative number can
+			// never reach. REQ-BBVW-002 bounds the allocation at 0..100, so the
+			// bound has to be enforced on its own.
+			const entered = Number(this.form.allocationPercentage ?? 0)
+			if (this.form.allocationPercentage !== '' && this.form.allocationPercentage !== null
+				&& (!Number.isFinite(entered) || entered < 0 || entered > 100)) {
+				this.allocationFeedback = {
+					severity: 'error',
+					message: this.t('shillinq', 'Allocation must be between 0 % and 100 %.'),
+				}
+				return
+			}
+
 			if (!gl || !fiscalYear) {
 				this.allocationFeedback = { message: '', severity: 'info' }
 				this.existingAllocationTotal = 0

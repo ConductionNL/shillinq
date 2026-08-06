@@ -8,13 +8,14 @@
  and surfaces a conflict dialog on a 409 response with an override option.
 -->
 <template>
-	<form class="booking-form" @submit.prevent="submit">
+	<form class="booking-form" data-testid="booking-form" @submit.prevent="submit">
 		<div class="booking-form__field">
 			<label for="booking-title">{{ t('shillinq', 'Title') }}</label>
 			<input
 				id="booking-title"
 				v-model="form.title"
 				type="text"
+				data-testid="booking-form-title"
 				:placeholder="t('shillinq', 'Booking title')">
 		</div>
 
@@ -23,7 +24,8 @@
 			<input
 				id="booking-start"
 				v-model="form.startTime"
-				type="datetime-local">
+				type="datetime-local"
+				data-testid="booking-form-start">
 		</div>
 
 		<div class="booking-form__field">
@@ -31,7 +33,8 @@
 			<input
 				id="booking-end"
 				v-model="form.endTime"
-				type="datetime-local">
+				type="datetime-local"
+				data-testid="booking-form-end">
 		</div>
 
 		<div class="booking-form__field">
@@ -40,17 +43,26 @@
 				id="booking-attendee"
 				v-model="form.attendee"
 				type="text"
+				data-testid="booking-form-attendee"
 				:placeholder="t('shillinq', 'Attendee name')">
 		</div>
 
 		<div class="booking-form__field">
 			<span class="booking-form__legend">{{ t('shillinq', 'Status') }}</span>
 			<label class="booking-form__radio">
-				<input v-model="form.status" type="radio" value="pending">
+				<input
+					v-model="form.status"
+					type="radio"
+					value="pending"
+					data-testid="booking-form-status-pending">
 				{{ t('shillinq', 'Pending') }}
 			</label>
 			<label class="booking-form__radio">
-				<input v-model="form.status" type="radio" value="confirmed">
+				<input
+					v-model="form.status"
+					type="radio"
+					value="confirmed"
+					data-testid="booking-form-status-confirmed">
 				{{ t('shillinq', 'Confirmed') }}
 			</label>
 		</div>
@@ -60,7 +72,16 @@
 		</p>
 
 		<div class="booking-form__actions">
-			<NcButton variant="primary" type="submit" :disabled="submitting">
+			<NcButton
+				data-testid="booking-form-cancel"
+				@click="$emit('cancel')">
+				{{ t('shillinq', 'Cancel') }}
+			</NcButton>
+			<NcButton
+				variant="primary"
+				type="submit"
+				data-testid="booking-form-submit"
+				:disabled="submitting">
 				{{ submitting ? t('shillinq', 'Saving…') : t('shillinq', 'Create Booking') }}
 			</NcButton>
 		</div>
@@ -96,16 +117,31 @@ export default {
 			type: String,
 			required: true,
 		},
+		/**
+		 * `datetime-local` value to pre-fill the start field with — the host
+		 * passes the clicked slot's window so the operator does not retype it.
+		 */
+		initialStart: {
+			type: String,
+			default: '',
+		},
+		/**
+		 * `datetime-local` value to pre-fill the end field with.
+		 */
+		initialEnd: {
+			type: String,
+			default: '',
+		},
 	},
 
-	emits: ['booking:created'],
+	emits: ['booking:created', 'cancel'],
 
 	data() {
 		return {
 			form: {
 				title: '',
-				startTime: '',
-				endTime: '',
+				startTime: this.initialStart,
+				endTime: this.initialEnd,
 				attendee: '',
 				status: 'pending',
 			},
@@ -240,7 +276,13 @@ export default {
 		 * @return {void}
 		 */
 		reset() {
-			this.form = { title: '', startTime: '', endTime: '', attendee: '', status: 'pending' }
+			this.form = {
+				title: '',
+				startTime: this.initialStart,
+				endTime: this.initialEnd,
+				attendee: '',
+				status: 'pending',
+			}
 			this.validationError = ''
 			this.conflicts = []
 		},

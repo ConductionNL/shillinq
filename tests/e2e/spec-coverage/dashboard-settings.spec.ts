@@ -51,13 +51,16 @@ test.describe('shillinq spec-coverage — Dashboard & Settings', () => {
 
 	test('Features & roadmap — page mounts', async ({ page }) => {
 		const rec = recordShillinqErrors(page)
-		await gotoPage(page, '/FeaturesRoadmap')
+		// `/features-roadmap` is the ROUTE; `FeaturesRoadmap` is the page ID.
+		// The id was used as a path here, so the deep link fell through
+		// main.js's '/:pathMatch(.*)*' catch-all onto the Dashboard.
+		await gotoPage(page, '/features-roadmap')
 		// Renders a roadmap surface (content text / cards / list).
 		const surfaces = await page.locator(
 			'#content-vue .empty-content, #content-vue [class*="card" i], #content-vue [class*="feature" i], #content-vue li, #content-vue table',
 		).count().catch(() => 0)
 		const hasText = (await page.locator('#content-vue').innerText().catch(() => '')).trim().length > 20
 		expect(surfaces > 0 || hasText, 'features & roadmap should render content').toBeTruthy()
-		assertNoShillinqFailures(rec, '/FeaturesRoadmap')
+		assertNoShillinqFailures(rec, '/features-roadmap')
 	})
 })

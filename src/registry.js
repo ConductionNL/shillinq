@@ -178,7 +178,13 @@ import AdministrationSwitcherPage from './views/AdministrationSwitcherPage.vue'
 // bookings-resource-calendar.json) that wrapped this same CalendarView was
 // removed as dead-weight duplicate navigation — see
 // shillinq-manifest-boot-payload-reduction (REQ-MBP-002).
-import CalendarView from './views/bookings/CalendarView.vue'
+// `CalendarPage` is the HOST: CalendarView is a presentation grid that only
+// EMITS slot:clicked / booking:selected, so pointing the BookingsCalendar page
+// straight at it (as REQ-MBP-002 left it when it deleted the old host) made
+// REQ-007 — click a free slot, fill the form, resolve a 409 conflict —
+// unreachable in the shipped app. The host restores that wiring without
+// restoring the removed `/verkoop/boekingen-kalender` nav entry.
+import CalendarPage from './views/bookings/CalendarPage.vue'
 import BookingForm from './views/bookings/BookingForm.vue'
 
 // bookkeeping-wbso-sno-administratie (REQ-WBSO-006/002/003): the three
@@ -382,7 +388,7 @@ export default {
 	AdministrationSwitcherPage: { kind: 'page', component: AdministrationSwitcherPage },
 
 	// bookings-resource-calendar custom pages (REQ-006/REQ-007).
-	BookingsCalendar: { kind: 'page', component: CalendarView },
+	BookingsCalendar: { kind: 'page', component: CalendarPage },
 	BookingsForm: { kind: 'page', component: BookingForm },
 
 	// bookkeeping-wbso-sno-administratie foundation views.
