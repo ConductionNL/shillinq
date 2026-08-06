@@ -196,7 +196,7 @@
 		{
 			"id": "VATReturnCreateDialog",
 			"route": "/vat-returns/new",
-			"type": "dialog",
+			"type": "form",
 			"title": "New BTW return",
 			"config": {
 				"register": "shillinq",

@@ -145,7 +145,7 @@
 		{
 			"id": "RetainerPoolCreateDialog",
 			"route": "/retainer-pools/new",
-			"type": "dialog",
+			"type": "form",
 			"title": "New retainer pool",
 			"config": {
 				"register": "shillinq",
