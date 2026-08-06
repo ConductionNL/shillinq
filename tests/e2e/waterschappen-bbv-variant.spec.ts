@@ -160,17 +160,22 @@ test.describe('BBV mapping index — search + add + row click', () => {
 	 * @e2e bookkeeping-waterschappen-bbv-variant-11-testing/REQ-BBVW-002/mapping-add-opens-new-detail
 	 */
 	test('Add CTA navigates to the new-mapping detail page', async ({ page }) => {
-		// CnIndexPage exposes its primary CTA via a button labelled with
-		// the t('shillinq', 'Add …') localisation. Either the explicit
-		// data-testid OR the role/name lookup works.
-		const addCta = page
-			.getByRole('button', { name: /add|new|toevoegen|nieuw/i })
-			.first()
-		if (await addCta.isVisible().catch(() => false)) {
-			await addCta.click()
-			await page.waitForLoadState('domcontentloaded')
-			expect(page.url()).toMatch(/budget-mappings\/new|budget-mappings\/[^/]+$/)
-		}
+		// `cn-cta-primary` is CnActionsBar's own id for the page's primary CTA.
+		// This used to be `getByRole('button', {name:/add|new|toevoegen|nieuw/i})
+		// .first()` — PAGE-WIDE and order-dependent. It only ever matched the
+		// right button because the `below-header` filter block above it was
+		// rendering nothing (it was declared on a slot CnIndexPage does not
+		// have); once that block appeared, `.first()` picked a control inside it
+		// and the assertion read "still on the index".
+		//
+		// The `if (isVisible)` wrapper is gone too: it made the whole test a
+		// no-op whenever the CTA was missing, which is precisely the case worth
+		// failing on.
+		const addCta = page.getByTestId('cn-cta-primary').first()
+		await expect(addCta).toBeVisible({ timeout: 15_000 })
+		await addCta.click()
+		await page.waitForLoadState('domcontentloaded')
+		expect(page.url()).toMatch(/budget-mappings\/new|budget-mappings\/[^/]+$/)
 	})
 
 })

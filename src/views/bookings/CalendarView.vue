@@ -291,7 +291,19 @@ export default {
 		 * @return {string}
 		 */
 		bookingId(booking) {
-			return booking.id || (booking['@self'] && (booking['@self'].id || booking['@self'].uuid)) || ''
+			// `booking.bookingId` FIRST. This read `booking.id` — the
+			// OpenRegister row UUID — so every chip rendered
+			// `data-testid="booking-<uuid>"` and emitted a UUID on
+			// `booking:selected`. `bookingId` is the domain identifier the rest
+			// of this feature already speaks: ci-seed.sh writes `bk-001`…`bk-010`
+			// into it, ConflictDetectionService returns it in the `conflicts[]`
+			// entries, and BookingConflictDialog keys its rows off `c.bookingId`.
+			// CalendarView was the single outlier, which made its chips
+			// unaddressable by anything that knew a booking by name.
+			return booking.bookingId
+				|| booking.id
+				|| (booking['@self'] && (booking['@self'].id || booking['@self'].uuid))
+				|| ''
 		},
 
 		/**

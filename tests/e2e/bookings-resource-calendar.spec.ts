@@ -229,7 +229,23 @@ test.describe('booking form — REQ-007 validation + happy/conflict paths', () =
 		await page.locator('[data-testid="booking-form-start"]').fill(slotValue(6))
 		await page.locator('[data-testid="booking-form-end"]').fill(slotValue(7))
 		await page.locator('[data-testid="booking-form-status-confirmed"]').check()
+
+		// Assert the STATUS CODE, not just the dialog. "dialog not found" is the
+		// same observation whether conflict detection failed to fire (201) or
+		// fired and the modal failed to mount (409) — and those are different
+		// defects in different layers. Naming the response makes the failure say
+		// which one.
+		const createPost = page.waitForResponse(
+			(response) => /\/api\/v2\/calendars\/[^/]+\/bookings/.test(response.url())
+				&& response.request().method() === 'POST',
+		)
 		await page.locator('[data-testid="booking-form-submit"]').click()
+		const createResponse = await createPost
+		expect(
+			createResponse.status(),
+			`a booking inside the seeded bk-002/bk-003 overlap must be refused 409, got ${createResponse.status()}`,
+		).toBe(409)
+
 		await expect(page.locator('[data-testid="bk-conflict-dialog"]'))
 			.toBeVisible({ timeout: 10_000 })
 		await page.locator('[data-testid="bk-conflict-cancel"]').click()

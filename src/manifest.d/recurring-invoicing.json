@@ -58,15 +58,13 @@
                 ],
                 "defaultSort": "nextRunDate",
                 "detailRoute": "RecurringInvoiceProfileDetail",
-                "_note_headerActions": "`headerActions`, NOT `actions`. CnPageRenderer forwards config.actions[] to CnIndexPage's `actions` prop, which its own docblock defines as ROW action definitions — they end up in CnRowActions, one per row. On an empty profile list there are zero rows, so the only way to CREATE the first recurring profile did not exist. `headerActions` is what CnIndexPage renders as page-level buttons (CnActionsBar -> CnActionButtons). The type/target/props shape matches the Dashboard's own working `create-invoice` action; `type: \"modal\"` + `modal:` is not a dispatcher CnActionButtons knows (open-form | toggle | api-call | navigate | open-modal | open-page | refresh).",
+                "_note_headerActions": "`headerActions`, NOT `actions`. CnPageRenderer forwards config.actions[] to CnIndexPage's `actions` prop, which its own docblock defines as ROW action definitions — they render in CnRowActions, one per row. On an empty profile list there are zero rows, so the ONLY affordance for creating the first recurring profile did not exist at all. `headerActions[]` at least surfaces it, in the actions overflow (CnActionsBar renders each entry as an NcActionButton in the ⋯ menu).",
+                "_note_open_modal_gap": "KNOWN GAP, deliberately not papered over. The `type: \"open-modal\" / target / props` dispatcher vocabulary works on CnDashboardPage and CnDetailPage (which render actions through CnActionButtons — see the Dashboard page's `create-invoice` and PaymentRunDetail) but NOT on CnIndexPage: its `headerActions[]` contract is `{id, label, icon?, handler?, route?, disabled?}` and clicking an entry only EMITS `header-action`, which CnPageRenderer does not listen for. @conduction/nextcloud-vue 2.2.0-vue3.2 also ships no `actions` widget type for the page-level `header-actions` widget slot (builtInWidgets.js: banner|data|divider|header|integration|metadata|related|text). So there is currently NO declarative way to launch a registry modal from a visible page-level button on an index page, and RecurringInvoiceProfileModal is therefore unreachable through the UI. tests/e2e/recurring-invoicing.spec.ts stays RED on this on purpose — the assertion is correct and the product is not. Fixing it needs either an `open-modal` handler keyword on CnIndexPage upstream, or turning this page into a kind:page host that renders CnIndexPage plus the modal itself (the pattern src/views/bookings/CalendarPage.vue uses).",
                 "headerActions": [
                     {
                         "id": "new-recurring-profile",
                         "label": "New recurring profile",
                         "icon": "CalendarSync",
-                        "type": "open-modal",
-                        "target": "RecurringInvoiceProfileModal",
-                        "props": { "open": true },
                         "description": "Define a new recurring billing profile: customer, lines with period tokens, frequency, invoice day, issue mode and payment terms."
                     }
                 ],

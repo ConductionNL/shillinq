@@ -414,6 +414,15 @@ export default {
 			}
 		},
 		scheduleAllocationCheck() {
+			// The 0..100 RANGE check runs IMMEDIATELY; only the cross-mapping
+			// projection (which costs a network round-trip) is debounced. They
+			// were both behind the 250 ms timer, so an operator typing an
+			// out-of-range value saw nothing at all for a quarter second — long
+			// enough that the field reads as accepting it, and long enough that
+			// an assertion taken right after the keystroke sees no feedback.
+			if (this.checkAllocationRange()) {
+				return
+			}
 			if (this.allocationCheckTimer) {
 				clearTimeout(this.allocationCheckTimer)
 			}
@@ -421,27 +430,45 @@ export default {
 				this.refreshAllocationProjection()
 			}, 250)
 		},
+
+		/**
+		 * Enforce the REQ-BBVW-002 bound on the allocation field, synchronously.
+		 *
+		 * `min="0" max="100"` on a number input is CONSTRAINT VALIDATION only:
+		 * the browser neither clamps the value nor blocks the keystroke, so
+		 * without this an out-of-range allocation simply sat in the field. The
+		 * projection below cannot cover it either — its only error branch is
+		 * `projected > 100.1`, which a negative number can never reach, and on
+		 * the create route it early-returns before that because no GL account is
+		 * selected yet.
+		 *
+		 * @return {boolean} True when the value is out of range (feedback set).
+		 */
+		checkAllocationRange() {
+			const raw = this.form.allocationPercentage
+			if (raw === '' || raw === null || raw === undefined) {
+				return false
+			}
+			const entered = Number(raw)
+			if (Number.isFinite(entered) && entered >= 0 && entered <= 100) {
+				return false
+			}
+			this.allocationFeedback = {
+				severity: 'error',
+				message: this.t('shillinq', 'Allocation must be between 0 % and 100 %.'),
+			}
+			return true
+		},
 		async refreshAllocationProjection() {
 			const gl = this.form.glAccountNumber
 			const fiscalYear = this.fiscalYearOfMapping
 			const adminId = this.form.administrationId
 
-			// RANGE CHECK FIRST, and independent of the GL/fiscal-year lookup.
-			// `min="0" max="100"` on a number input is CONSTRAINT VALIDATION
-			// only: the browser neither clamps nor rejects a typed value, so a
-			// negative allocation sat in the field with no feedback whatsoever —
-			// the projection below early-returned with an EMPTY message because
-			// no GL account is selected yet on the create route, and its only
-			// error branch is `projected > 100.1`, which a negative number can
-			// never reach. REQ-BBVW-002 bounds the allocation at 0..100, so the
-			// bound has to be enforced on its own.
-			const entered = Number(this.form.allocationPercentage ?? 0)
-			if (this.form.allocationPercentage !== '' && this.form.allocationPercentage !== null
-				&& (!Number.isFinite(entered) || entered < 0 || entered > 100)) {
-				this.allocationFeedback = {
-					severity: 'error',
-					message: this.t('shillinq', 'Allocation must be between 0 % and 100 %.'),
-				}
+			// The 0..100 bound is enforced synchronously by
+			// checkAllocationRange() before this debounced projection is ever
+			// scheduled; re-check here so a direct call (watcher, mount) is
+			// covered too.
+			if (this.checkAllocationRange()) {
 				return
 			}
 
