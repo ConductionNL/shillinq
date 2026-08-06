@@ -275,6 +275,10 @@
               "description": "Mark the entity as sold; recycle cumulative CTA (REQ-CONS-005)."
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Group Entity is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IntercompanyRelation": {
@@ -356,6 +360,10 @@
             "description": "Free-text remarks.",
             "title": "Notes"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Intercompany Relation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ConsolidationPeriod": {
@@ -571,6 +579,10 @@
               "description": "Return to elimination phase to correct rejected entries."
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Consolidation Period is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "EliminationEntry": {
@@ -736,6 +748,10 @@
               "requires": "OCA\\Shillinq\\Lifecycle\\ConsolidationGuard::canRejectElimination"
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Elimination Entry is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "TranslationAdjustment": {
@@ -803,6 +819,10 @@
             "description": "Free-text remarks, e.g. rates applied.",
             "title": "Notes"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Translation Adjustment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "MinorityInterest": {
@@ -865,6 +885,10 @@
             "description": "closingBalance = openingBalance + periodResultShare − dividendToMinority (REQ-CONS-006, design D6). Declarative per ADR-031 — no MinorityInterestCalculator.php.",
             "expr": "@self.openingBalance + @self.periodResultShare - @self.dividendToMinority"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Minority Interest is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Goodwill": {
@@ -974,6 +998,10 @@
             "description": "goodwillAmount = purchasePrice − fairValueNetAssetsAcquired (positive = goodwill, negative = badwill) per RJ 216 / IFRS 3 (REQ-CONS-007, design D5). Declarative per ADR-031 — no GoodwillCalculator.php.",
             "expr": "@self.purchasePrice - @self.fairValueNetAssetsAcquired"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Goodwill is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ConsolidatedBalance": {
@@ -1119,6 +1147,10 @@
               "label": "Publish balance"
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Consolidated Balance is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ConsolidatedIncomeStatement": {
@@ -1274,6 +1306,10 @@
               "label": "Publish income statement"
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Consolidated Income Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     },

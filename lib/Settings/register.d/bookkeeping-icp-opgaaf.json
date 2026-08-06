@@ -88,6 +88,10 @@
             "example": "adm-smb-1",
             "title": "Administration ID"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a VIES Validation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IcpSupply": {
@@ -211,6 +215,10 @@
               }
             ]
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a ICP Supply is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IcpOpgaaf": {
@@ -434,6 +442,10 @@
             "engine": "sbr-xbrl",
             "target": "xmlPayload"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a ICP-opgaaf (Recapitulative Statement) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "PeriodicitySwitch": {
@@ -534,6 +546,10 @@
             "title": "Reversal Reason",
             "description": "The reversal reason."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Periodicity Switch is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ARInvoice": {

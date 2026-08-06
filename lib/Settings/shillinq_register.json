@@ -3266,6 +3266,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Core Data Configuration is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "BBVProgramma": {
@@ -5977,6 +5981,10 @@
               "description": "Full budget-allocation management per REQ-CPA-103."
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Project Budget is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "AllocationRule": {
@@ -8779,6 +8787,10 @@
             "field": "administrationId",
             "enforce": true
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Closing Entry is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "RetainedEarnings": {
@@ -8932,6 +8944,10 @@
             "field": "administrationId",
             "enforce": true
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Retained Earnings is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ClosingAccount": {
@@ -9019,6 +9035,10 @@
             "field": "administrationId",
             "enforce": true
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Closing Account is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ClosingEntryTemplate": {
@@ -9213,6 +9233,10 @@
             "field": "administrationId",
             "enforce": true
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Closing Entry Template is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Receipt": {
@@ -10517,6 +10541,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a ZZP Deduction Amounts is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "InventoryReorderRule": {
@@ -13115,6 +13143,10 @@
               "description": "Management acknowledges finding or remediation is complete."
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Compliance Audit Trail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "DepreciationSchedule": {
@@ -13383,6 +13415,10 @@
             "cardinality": "many-to-one",
             "description": "The fixed asset this depreciation schedule belongs to."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Depreciation Schedule is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Grant": {
@@ -13454,6 +13490,10 @@
             "example": true,
             "title": "Is Sisa Eligible"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Grant is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ManagementLetter": {
@@ -13588,6 +13628,10 @@
               "description": "Archive letter after remediation cycle is complete."
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Management Letter is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "SisaReport": {
@@ -13970,6 +14014,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a SiSa Report is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "BankingRule": {
@@ -16856,6 +16904,10 @@
               }
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Provincial Fund Posting is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IPAssetValuation": {
@@ -16953,6 +17005,7 @@
           }
         },
         "x-openregister-audit-trail": {
+          "enabled": true,
           "events": {
             "tariff-application": {
               "trigger": "onUpdate",
@@ -16966,7 +17019,8 @@
                 "valuationDate"
               ]
             }
-          }
+          },
+          "description": "Every create, update and delete of a IP Asset Valuation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         },
         "x-openregister-rbac": {
           "roles": {
@@ -17200,6 +17254,7 @@
           }
         },
         "x-openregister-audit-trail": {
+          "enabled": true,
           "events": {
             "route-election": {
               "trigger": "onCreate",
@@ -17224,7 +17279,8 @@
                 "applicableTariff"
               ]
             }
-          }
+          },
+          "description": "Every create, update and delete of a Innovation Box Election is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         },
         "x-openregister-rbac": {
           "roles": {
@@ -17334,6 +17390,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Innovation Box Rate is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "WinstToerekening": {
@@ -17526,6 +17586,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Profit Allocation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IcpStatement": {
@@ -19478,6 +19542,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Budget Amendment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "BeleidsIndicator": {
@@ -19552,6 +19620,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Policy Indicator is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "EconomischeCategorie": {
@@ -19638,6 +19710,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Economic Category is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "MaterieleVasteActiva": {
@@ -19784,6 +19860,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Tangible fixed assets is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "MeerjarenBudget": {
@@ -19935,6 +20015,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Multi-Year Budget is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Paragraaf": {
@@ -20012,6 +20096,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Paragraph is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Programma": {
@@ -20204,6 +20292,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Programme is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Reserve": {
@@ -20313,6 +20405,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Reserve is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Taakveld": {
@@ -20417,6 +20513,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Task Field is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Voorziening": {
@@ -20524,6 +20624,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Provision is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "SalesOrder": {

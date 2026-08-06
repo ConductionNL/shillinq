@@ -578,6 +578,10 @@
               "gefactureerd_bedrag"
             ]
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Verplichtingsregel is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Verplichtingsmutatie": {
@@ -697,6 +701,10 @@
             "cardinality": "many-to-one",
             "description": "Parent commitment."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Verplichtingsmutatie is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Mandaat": {
@@ -844,6 +852,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Mandaat is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Goedkeuringsstap": {
@@ -951,6 +963,10 @@
             "cardinality": "many-to-one",
             "description": "The commitment awaiting approval."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Goedkeuringsstap is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Budget": {

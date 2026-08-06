@@ -331,6 +331,10 @@
               "description": "Provision fully utilised or released; no further movements expected."
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Provision is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ProvisionMovement": {
@@ -514,6 +518,10 @@
               }
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Provision Movement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ContingentLiability": {
@@ -639,6 +647,10 @@
               "description": "Publish the contingent liability into the jaarrekening notes (REQ-PROV-015)."
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Contingent Liability is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "PensioenvoorzieningDetail": {
@@ -724,6 +736,10 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Pensioenvoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "JubileumvoorzieningDetail": {
@@ -790,6 +806,10 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Jubileumvoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "HerstructureringsvoorzieningDetail": {
@@ -883,6 +903,10 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Herstructureringsvoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "GarantievoorzieningDetail": {
@@ -954,6 +978,10 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Garantievoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "MilieuvoorzieningDetail": {
@@ -1037,6 +1065,10 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Milieuvoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ClaimsVoorzieningDetail": {
@@ -1129,6 +1161,10 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Claims Voorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ProvisionDisclosureTabel": {
@@ -1296,6 +1332,10 @@
               }
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Provision Disclosure Table is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     },
