@@ -226,8 +226,29 @@ jobs:
       #    a reason that had nothing to do with this repo — and it is what is
       #    currently blocking #441.
       #
-      # v1.3.0 is `f7eaf2a` = .github@main, tagged so the ref stays
-      # reproducible and a later gate change cannot move this repo's verdict
-      # without a commit here.
+      # ⚠️ v1.3.0 EXPIRED THE SAME WAY v1.0.1 DID, AND FASTER THAN ANYONE
+      # EXPECTED. Run 31073204125 (2026-08-06 05:34) — 11 seconds, ZERO gates:
+      #
+      #   ::error::hydra-gates-ref 'v1.3.0' does not contain:
+      #     scripts/axe-run.cjs scripts/lib/check_spec_anchors.py
+      #     scripts/lib/check_form_labels.py scripts/lib/check_license_triangle.py
+      #   ::error::This workflow floats on @main and executes those paths by
+      #     name inside the PINNED package, so a pin older than them cannot run
+      #     the gates they implement. […] This is NOT a code-quality finding
+      #     about your repository.
+      #
+      # The same commit had run 58 gates successfully seven hours earlier
+      # (run 31052498432, 22:44). Nothing here changed in between — the SHARED
+      # workflow moved. That is the structural hazard: the caller floats on
+      # `quality.yml@main` while the gate PACKAGE is pinned, so every upstream
+      # addition is a silent expiry date on this line. A pin is not a
+      # stability guarantee; it is a promise to keep sweeping.
+      #
+      # ⚠️ AND THE FAILURE SHAPE IS THE DANGEROUS ONE: the job reports
+      # `failure` having gated NOTHING. An 11-second red is not a verdict about
+      # this repository, and reading it as one would mean "fixing" code that
+      # was never inspected. Duration + a zero gate count is the tell.
+      #
+      # v1.5.0 is the current tag and contains all four named paths.
       enable-hydra-gates: true
-      hydra-gates-ref: v1.3.0
+      hydra-gates-ref: v1.5.0
