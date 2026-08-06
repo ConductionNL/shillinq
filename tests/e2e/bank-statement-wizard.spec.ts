@@ -29,7 +29,7 @@
 import { test, expect, type Page } from '@playwright/test'
 
 const APP = '/apps/shillinq'
-const ROUTE_FINANCIAL = '/financial'
+const ROUTE_BANK_IMPORT = '/configuratie/bank-import'
 
 /**
  * Dismiss the first-run wizard if it intercepts the route.
@@ -48,9 +48,18 @@ async function dismissWizard(page: Page): Promise<void> {
  * administration) so the caller can skip rather than fail.
  */
 async function openWizard(page: Page): Promise<boolean> {
-	await page.goto(`${APP}${ROUTE_FINANCIAL}`)
+	// The launcher is NOT on the Financial overview any more. This helper used
+	// to look for `fda-import-bank` there — an id that died with
+	// FinancialDashboardActions.vue in 9e329080 (ADR-049 Phase-4) — and its
+	// `isVisible()` miss made every caller `test.skip(...)`. All ELEVEN tests
+	// in this file therefore reported "skipped … Import bank action not
+	// available for this administration", blaming the instance for a selector
+	// that no longer exists anywhere in the app. The wizard now lives on the
+	// Configuratie page that hosts it (src/registry.js: BankImportPage,
+	// src/manifest.d/bank-import-settings.json).
+	await page.goto(`${APP}${ROUTE_BANK_IMPORT}`)
 	await dismissWizard(page)
-	const importBank = page.locator('[data-testid="fda-import-bank"]')
+	const importBank = page.locator('[data-testid="bank-import-launch"]')
 	if (!(await importBank.isVisible().catch(() => false))) {
 		return false
 	}

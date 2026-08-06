@@ -2521,7 +2521,8 @@
         "Verkeerd product": "Verkeerd product",
         "Within tolerance": "Binnen tolerantie",
         "download the file": "download het bestand",
-        "due": "verschuldigd"
+        "due": "verschuldigd",
+        "Allocation must be between 0 % and 100 %.": "Toewijzing moet tussen 0 % en 100 % liggen."
     },
     "plurals": ""
 }
