@@ -243,7 +243,17 @@ export default {
 				const response = await fetch(url, { headers: { requesttoken: OC.requestToken } })
 				if (response.ok) {
 					const data = await response.json()
-					this.bookings = Array.isArray(data) ? data : (data.results || [])
+					// ENVELOPE KEY. CalendarController::bookings() answers
+					// `{"bookings": [...]}` — this read `data.results`, which is
+					// never present, so the grid rendered ZERO bookings on every
+					// load while the request itself returned a healthy 200. The
+					// calendar looked empty for a real user, not just for a test;
+					// ci-seed.sh reads the same endpoint and gets its 10 rows
+					// (`body.get('bookings')`), which is what proves the data was
+					// always there.
+					this.bookings = Array.isArray(data)
+						? data
+						: (data.bookings || data.results || [])
 				}
 			} catch (error) {
 				this.bookings = []

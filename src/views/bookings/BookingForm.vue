@@ -86,8 +86,18 @@
 			</NcButton>
 		</div>
 
+		<!--
+			`:open` is REQUIRED, not decorative. BookingConflictDialog gates its
+			entire template on `v-if="open"` with `default: false`, so mounting it
+			behind only the parent's `v-if` created a component that rendered
+			NOTHING. The 409 override flow was therefore unreachable: the API
+			correctly answers 409 (asserted directly in
+			tests/e2e/bookings-resource-calendar.spec.ts) and the operator saw no
+			dialog, no error, and no created booking.
+		-->
 		<BookingConflictDialog
 			v-if="showConflictDialog"
+			:open="showConflictDialog"
 			:conflicts="conflicts"
 			@confirm="confirmDespiteConflict"
 			@cancel="showConflictDialog = false" />
