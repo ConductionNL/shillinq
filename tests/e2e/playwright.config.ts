@@ -245,7 +245,27 @@ export default defineConfig({
 		baseURL: resolveBaseURL(),
 		// Written by global-setup.ts after the admin login.
 		storageState: path.resolve(__dirname, '.auth', 'admin.json'),
-		trace: 'on-first-retry',
+		// ⚠️ MUST NOT BE `on-first-retry` — THIS CONFIG SETS `retries: 0`.
+		//
+		// `on-first-retry` writes a trace only when a test is RETRIED. With
+		// `retries: 0` there is never a first retry, so the two settings
+		// together mean NO TRACE IS EVER WRITTEN. That is not a theory:
+		// measured on run 31052498432, which had 53 failures and attached
+		// **0** traces, while attaching 53 screenshots (the screenshots are
+		// the positive control — artifact attachment itself works fine).
+		//
+		// The pairing is quietly self-defeating: `retries: 0` is the right
+		// call for honesty (a retry only ever converts red to green), and
+		// `on-first-retry` is Playwright's sensible DEFAULT-ish idiom — but
+		// each silently disables the other's value. Every failure was being
+		// diagnosed blind from a single screenshot.
+		//
+		// `retain-on-failure` writes a full trace for each failing test and
+		// discards it for passing ones. It costs artifact size only on red
+		// runs, which is exactly when it is worth paying: a sibling repo's
+		// traces artifact went 15.5 MB -> 195 MB on this switch, and that is
+		// what made its failures diagnosable at all.
+		trace: 'retain-on-failure',
 		screenshot: 'only-on-failure',
 	},
 
