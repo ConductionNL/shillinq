@@ -57,8 +57,23 @@ const WALKTHROUGH_SEEN_KEY = 'cn-walkthrough-seen:shillinq'
  * checkout that serves its own `js/`.
  */
 function ensureBundleBuilt(): void {
-	if (fs.existsSync(BUNDLE_PATH)) {
+	// SIZE FLOOR, not `existsSync`. A truncated or half-written bundle is still
+	// a file, so a bare existence check returns early and the suite runs against
+	// a page whose script tag serves 0 bytes — the exact control condition run
+	// 30858387599 used to manufacture false PASSES (with no router there is no
+	// redirect, so URL assertions "succeed"). A healthy build measures ~12.2 MB
+	// (run 30881358951 logged 12242717 bytes); 1 MB is a floor no real build can
+	// fall under and no broken one can reach.
+	const MIN_BUNDLE_BYTES = 1_000_000
+	if (fs.existsSync(BUNDLE_PATH) && fs.statSync(BUNDLE_PATH).size >= MIN_BUNDLE_BYTES) {
 		return
+	}
+	if (fs.existsSync(BUNDLE_PATH)) {
+		// eslint-disable-next-line no-console
+		console.log(
+			`[playwright globalSetup] bundle at ${BUNDLE_PATH} is only `
+			+ `${fs.statSync(BUNDLE_PATH).size} bytes (floor ${MIN_BUNDLE_BYTES}); rebuilding.`,
+		)
 	}
 	// eslint-disable-next-line no-console
 	console.log(`[playwright globalSetup] bundle missing at ${BUNDLE_PATH}; running 'npm run build' once…`)

@@ -106,10 +106,16 @@ test.describe('financial-dashboard-graphs — Financial overview', () => {
 		// The manifest declares content.views[] = [{key:'value'},{key:'pct'}];
 		// CnChartWidget renders one button per view.
 		await chart.getByTestId('cn-chart-widget-view-pct').click()
+		await expect(chart.getByTestId('cn-chart-widget-view-pct'))
+			.toHaveAttribute('aria-pressed', 'true')
 		await expect(chart.locator('svg.apexcharts-svg')).toBeVisible({ timeout: 15_000 })
-		await expect(chart.getByText('Revenue', { exact: false })).toHaveCount(0)
+		// The `pct` view declares a single series (Margin %), so the €-view
+		// series names must be gone from the rendered chart.
+		await expect(chart.getByText('Costs', { exact: false })).toHaveCount(0)
 
 		await chart.getByTestId('cn-chart-widget-view-value').click()
+		await expect(chart.getByTestId('cn-chart-widget-view-value'))
+			.toHaveAttribute('aria-pressed', 'true')
 		await expect(chart.locator('svg.apexcharts-svg')).toBeVisible({ timeout: 15_000 })
 		await expect(chart.getByText('Revenue', { exact: false }).first()).toBeVisible()
 	})
@@ -131,10 +137,14 @@ test.describe('financial-dashboard-graphs — Financial overview', () => {
 		await expect(chart.getByText('Non-billable', { exact: false }).first()).toBeVisible()
 
 		await chart.getByTestId('cn-chart-widget-view-pct').click()
+		await expect(chart.getByTestId('cn-chart-widget-view-pct'))
+			.toHaveAttribute('aria-pressed', 'true')
 		await expect(chart.locator('svg.apexcharts-svg')).toBeVisible({ timeout: 15_000 })
 		await expect(chart.getByText('Non-billable', { exact: false })).toHaveCount(0)
 
 		await chart.getByTestId('cn-chart-widget-view-total').click()
+		await expect(chart.getByTestId('cn-chart-widget-view-total'))
+			.toHaveAttribute('aria-pressed', 'true')
 		await expect(chart.locator('svg.apexcharts-svg')).toBeVisible({ timeout: 15_000 })
 		await expect(chart.getByText('Non-billable', { exact: false }).first()).toBeVisible()
 	})
