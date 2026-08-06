@@ -34,6 +34,7 @@ namespace OCA\Shillinq\Service\Signing;
 
 use InvalidArgumentException;
 use OCA\DocuDesk\Event\DocumentSigningRequestedEvent;
+use OCA\DocuDesk\Event\SigningProvenance;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -137,18 +138,25 @@ class SigningDelegationService
             $docReference = (string) ($financeObject['documentReference'] ?? $financeObject['pdfRef'] ?? '');
         }
 
+        // DocuDesk groups the six provenance fields into SigningProvenance —
+        // the same value object its SigningConcludedEvent already took, so both
+        // ends of the exchange now carry provenance the same way
+        // (ConductionNL/docudesk). The read surface is unchanged; only
+        // construction moved.
         $event = new DocumentSigningRequestedEvent(
-            sourceApp: 'shillinq',
-            subjectRegister: $this->settingsService->getRegisterSlug(),
-            subjectSchema: $subjectSchema,
-            subjectId: $subjectId,
+            provenance: new SigningProvenance(
+                sourceApp: 'shillinq',
+                subjectRegister: $this->settingsService->getRegisterSlug(),
+                subjectSchema: $subjectSchema,
+                subjectId: $subjectId,
+                externalReference: $subjectId,
+                correlationId: '',
+            ),
             subjectLabel: $subjectLabel,
             documentReference: $docReference,
             signers: $signers,
             signatureLevel: $signatureLevel,
             signingMode: $signingMode,
-            externalReference: $subjectId,
-            correlationId: '',
         );
 
         $this->eventDispatcher->dispatchTyped($event);

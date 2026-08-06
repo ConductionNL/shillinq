@@ -3,7 +3,7 @@
     "adr": "ADR-037",
     "change": "bookkeeping-cost-centers-dimensions + unify-analytical-dimensions",
     "description": "ONE canonical AnalyticalDimension register (discriminated by dimensionType: cost-center / cost-object / custom) replacing the prior CostCenter + KostenDrager + AnalyticalDimension triple. REQ-ADIM-001..008: dimensionType discriminator, cost-center-specific props (budget/spentToDate/allocatedBudget/organizationId/responsibleUser/ondernemingsActiviteit), shared hierarchy (parentCode) + lifecycle for all types, re-homed aggregations (segmentPnl/spentToDate/allocatedBudget scoped to cost-center; byCostCenter/byCostCenterHierarchy/byCostObject/byAnalyticalDimension on GLLine), idempotent migration via UnifyAnalyticalDimensions. Seeds carry dimensionType so greenfield installs land the unified shape. GLLine FK relations re-targeted (REQ-ADIM-101). Nav filtered views + label unification (REQ-ADIM-103).",
-    "license": "AGPL-3.0-or-later",
+    "license": "EUPL-1.2",
     "copyright": "Conduction B.V."
   },
   "components": {

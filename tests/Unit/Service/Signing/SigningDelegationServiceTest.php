@@ -32,6 +32,23 @@ namespace OCA\DocuDesk\Event;
 // dispatch, and read back isHandled()/getSigningRequestId() without the docudesk
 // app present. The real class lives in docudesk; shillinq only consumes this
 // shape.
+if (class_exists(\OCA\DocuDesk\Event\SigningProvenance::class, false) === false) {
+    class SigningProvenance
+    {
+
+
+        public function __construct(
+            public readonly string $sourceApp='',
+            public readonly ?string $subjectRegister=null,
+            public readonly ?string $subjectSchema=null,
+            public readonly ?string $subjectId=null,
+            public readonly string $externalReference='',
+            public readonly string $correlationId=''
+        ) {
+        }//end __construct()
+    }//end class
+}//end if
+
 if (class_exists(\OCA\DocuDesk\Event\DocumentSigningRequestedEvent::class, false) === false) {
     class DocumentSigningRequestedEvent extends \OCP\EventDispatcher\Event
     {
@@ -44,17 +61,12 @@ if (class_exists(\OCA\DocuDesk\Event\DocumentSigningRequestedEvent::class, false
          * @param array<int,mixed> $signers
          */
         public function __construct(
-            public readonly string $sourceApp='',
-            public readonly string $subjectRegister='',
-            public readonly string $subjectSchema='',
-            public readonly string $subjectId='',
+            public readonly SigningProvenance $provenance=new SigningProvenance(),
             public readonly string $subjectLabel='',
             public readonly string $documentReference='',
             public readonly array $signers=[],
             public readonly string $signatureLevel='advanced',
             public readonly string $signingMode='sequential',
-            public readonly string $externalReference='',
-            public readonly string $correlationId='',
         ) {
             parent::__construct();
         }//end __construct()

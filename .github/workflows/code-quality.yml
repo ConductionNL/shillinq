@@ -7,8 +7,39 @@ on:
     branches: [main, master, development, beta]
   workflow_dispatch:
 
+# Deduplicating a `push` run against the `pull_request` run for the SAME head
+# ref is the point of this block, and for a feature branch it is exactly right:
+# two runs of identical jobs, one of them wasted.
+#
+# It is wrong for `main` and `development`, because the push run there is NOT a
+# duplicate — it is the only carrier of the push-only jobs: "Coverage Baseline
+# Check" (`github.event_name == 'push'`), "SBOM" and "Features Extract". And
+# those two branches always have an open PR whose `head_ref` IS the branch
+# name: the standing "Release: merge development into beta" (#63 here).
+# `github.head_ref` on that PR run and `github.ref_name` on the push run both
+# render `development`, so both landed in the identical group
+# `quality-development`, and `cancel-in-progress` killed whichever started
+# first — always the push run, by a few seconds.
+#
+# Measured on this repo: 3 of the last 20 `development` push runs were
+# cancelled within ~80s of starting — 31045614488 (79s), 30880585906 (37s),
+# 30822103065 (51s). That duration is the discriminator: the shared workflow's
+# `timeout-minutes: 45` cancellation lands at 45m16s–45m28s, so these are
+# concurrency kills.
+#
+# On the surviving PR run "Coverage Baseline Check" reports `skipped`, which is
+# CORRECT for a pull_request event and renders exactly like a pass. So the gate
+# appears on both runs and executes on neither — a dead gate of the
+# permanently-pending shape.
+#
+# Suffixing only the default-branch push keeps feature-branch dedup untouched
+# (`quality-feature/x` for both events, exactly as before) and gives the two
+# default branches' push runs a lane of their own.
+#
+# Proven in openconnector#1158: its first-ever completed `development` push run
+# (31048998594) executed Coverage Baseline Check, SBOM and Features Extract.
 concurrency:
-  group: quality-${{ github.head_ref || github.ref_name }}
+  group: quality-${{ github.head_ref || github.ref_name }}${{ (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'development')) && '-push' || '' }}
   cancel-in-progress: true
 
 # Permission CEILING for the called quality pipeline. GitHub statically
@@ -170,5 +201,33 @@ jobs:
       # cannot move this repo's verdict without a commit here.
       # `enable-axe` deliberately NOT set: a vanilla Nextcloud 34 already carries
       # serious/critical violations from core's own UI.
+      #
+      # v1.0.1 -> v1.3.0 (ConductionNL/.github#159). Two defects, one bump.
+      #
+      # 1. STALE. v1.0.1 is `f4d9756` (2026-08-03) and predates three gate
+      #    fixes, so every Hydra Gates run this repo has ever made executed a
+      #    script in which 16 gates reported PASS when their helper never ran
+      #    (#147), gate-33 had no axe report to read and never said so (#148),
+      #    and gates 6 and 7 reported PASS on an EMPTY scope (#149). A gate
+      #    that reports PASS without running emits a tick identical to a real
+      #    one, which is why nothing in this repo's history shows it.
+      #
+      # 2. RED. quality.yml is referenced `@main` while this package is
+      #    PINNED, so the two can desync — and on 2026-08-05 they did. #164
+      #    flipped `hydra-gates-require-full-coverage` to default TRUE, but
+      #    the accounting that makes that flag survivable (NOT APPLICABLE, as
+      #    distinct from a structural or a wiring gap) ships in the PACKAGE.
+      #    So every pin older than `f7eaf2a` now fails the coverage assertion
+      #    for gates it has no subject matter for. Measured diff-scoped,
+      #    exactly as CI scopes it:
+      #      v1.0.1  exit 98  FAIL — "GATES THAT DID NOT RUN: 24 33"
+      #      v1.3.0  exit 0   PASS — those gates named NOT APPLICABLE
+      #    The old pin was not merely stale, it was failing this repo's CI for
+      #    a reason that had nothing to do with this repo — and it is what is
+      #    currently blocking #441.
+      #
+      # v1.3.0 is `f7eaf2a` = .github@main, tagged so the ref stays
+      # reproducible and a later gate change cannot move this repo's verdict
+      # without a commit here.
       enable-hydra-gates: true
-      hydra-gates-ref: v1.0.1
+      hydra-gates-ref: v1.3.0
