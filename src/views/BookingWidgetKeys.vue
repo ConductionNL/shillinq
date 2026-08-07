@@ -93,6 +93,9 @@ export default {
 		 * button labelled "Generate key" could never generate one. It also sent
 		 * `administrationId: this.businessId`, a field `rotate` never reads;
 		 * `create` genuinely needs the tenant boundary, so it is its own input.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
 		 */
 		async generate() {
 			this.plaintextKey = ''
@@ -105,7 +108,12 @@ export default {
 			}
 			this.message = result.message || ''
 		},
-		/** Replace an existing key; the predecessor keeps working for 7 days. */
+		/**
+		 * Replace an existing key; the predecessor keeps working for 7 days.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
 		async rotate() {
 			this.plaintextKey = ''
 			const result = await this.post('widget/admin/keys/rotate', {
