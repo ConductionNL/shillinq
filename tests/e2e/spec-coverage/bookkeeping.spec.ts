@@ -23,9 +23,12 @@ const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
 	{ route: '/bookkeeping/bank-reconciliation', title: 'Bank Reconciliation' },
 	{ route: '/bookkeeping/matching-rules', title: 'Matching Rules' },
 	{ route: '/fixed-assets', title: 'Fixed Assets' },
-	{ route: '/bookkeeping/vendors', title: 'Vendors' },
-	{ route: '/bookkeeping/accounts-payable', title: 'Accounts Payable' },
-	{ route: '/bookkeeping/ap-aging', title: 'AP Aging' },
+	// Renamed in the manifest; the routes below are what it actually declares.
+	// 'Vendors' became 'Payees', Accounts Payable moved to /ap-transactions,
+	// and AP Aging to /ap-aging-t2.
+	{ route: '/bookkeeping/payees', title: 'Payees' },
+	{ route: '/bookkeeping/ap-transactions', title: 'Accounts Payable' },
+	{ route: '/bookkeeping/ap-aging-t2', title: 'AP Aging' },
 	{ route: '/bookkeeping/payment-runs', title: 'Payment Runs' },
 	{ route: '/bookkeeping/customers', title: 'Customers' },
 	{ route: '/bookkeeping/accounts-receivable', title: 'Accounts Receivable' },
@@ -45,7 +48,11 @@ const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
 	{ route: '/financial-statements/trial-balance-lines', title: 'Trial Balance', titleRe: /Trial Balance/i },
 	{ route: '/financial-statements/consolidations', title: 'Consolidations' },
 	{ route: '/financial-statements/consolidated-report', title: 'Consolidated Report' },
-	{ route: '/iv3-reports', title: 'IV3 Reports' },
+	// The manifest route is Dutch (`/iv3-rapportages`) while its title is
+	// already English ("IV3 reports"). Matching the route as declared rather
+	// than renaming it here: a route slug is a bookmarkable URL, so changing
+	// it is a product decision, not a test fix.
+	{ route: '/iv3-rapportages', title: 'IV3 reports' },
 	{ route: '/emu-rapportage', title: 'EMU-rapportage' },
 	{ route: '/bookkeeping/r-d-subsidies', title: 'R&D Subsidies', titleRe: /R&D|R\s*&\s*D|Subsid/i },
 	{ route: '/wbso/tags', title: 'WBSO Tags' },
