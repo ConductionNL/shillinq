@@ -1,0 +1,339 @@
+<?php
+
+/**
+ * Regression guard: VATReturnService must accept ObjectEntity returns.
+ *
+ * @category Test
+ * @package  OCA\Shillinq\Tests\Unit\Service
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Tests\Unit\Service;
+
+use OCA\Shillinq\Service\VATReturnService;
+use OCP\IAppConfig;
+use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use Psr\Log\NullLogger;
+
+/**
+ * OpenRegister's ObjectService declares
+ *
+ *   public function saveObject(...): ObjectEntity
+ *   public function find(...): ?ObjectEntity
+ *
+ * Neither ever returns an array. VATReturnService tested `is_array()` on both
+ * and threw when it was false, so on a real instance EVERY VAT write threw:
+ *
+ *   RuntimeException: ObjectService::saveObject(...) did not return an array
+ *
+ * which VATReturnController converted to HTTP 500 on POST /api/vat-returns.
+ *
+ * The existing VATReturnServiceTest did not catch this because its fake
+ * ObjectService returns plain arrays — it is MORE PERMISSIVE than the thing it
+ * stands in for, so the suite was green against a contract the real collaborator
+ * does not honour. This guard uses a fake whose return types match the real
+ * signatures: an entity object exposing jsonSerialize(), and nothing else.
+ *
+ * The bug was also invisible end-to-end for as long as the VATReturn/VatReturn
+ * slug collision existed, because OpenRegister rejected the payload against the
+ * WRONG schema's required list before either return value was inspected. The
+ * two defects were stacked; fixing the slug alone just moved the 500 one line
+ * down (measured in run 31172863210).
+ */
+final class VATReturnServiceEntityReturnTest extends TestCase
+{
+    /**
+     * createReturn() succeeds when ObjectService returns entities, not arrays.
+     *
+     * @return void
+     */
+    public function testCreateReturnAcceptsObjectEntityReturns(): void
+    {
+        $objectService = $this->entityReturningObjectService();
+        $service       = new VATReturnService(
+            container: $this->containerFor(objectService: $objectService),
+            appConfig: $this->createMock(IAppConfig::class),
+            logger: new NullLogger()
+        );
+
+        $created = $service->createReturn(
+            administrationId: 'adm-smb-1',
+            period: 'quarter',
+            periodYear: 2024,
+            periodNumber: 1,
+            regime: 'standard'
+        );
+
+        self::assertIsArray($created, 'createReturn() must return the persisted row as an array.');
+        self::assertNotSame('', (string) ($created['id'] ?? ''), 'The persisted row must carry an id.');
+        self::assertSame('draft', $created['statusCode'] ?? null);
+        self::assertSame('adm-smb-1', $created['administrationId'] ?? null);
+    }//end testCreateReturnAcceptsObjectEntityReturns()
+
+    /**
+     * A row the fake cannot serialise still fails loudly rather than silently.
+     *
+     * Positive control: proves the guard above is asserting something. If
+     * normaliseRow() ever "helpfully" returned [] for an unusable row, a
+     * created return would come back empty instead of raising — and the
+     * assertions above would have to be read very carefully to notice.
+     *
+     * @return void
+     */
+    public function testUnconvertibleRowRaisesRatherThanReturningEmpty(): void
+    {
+        $objectService = $this->entityReturningObjectService(serialisable: false);
+        $service       = new VATReturnService(
+            container: $this->containerFor(objectService: $objectService),
+            appConfig: $this->createMock(IAppConfig::class),
+            logger: new NullLogger()
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $service->createReturn(
+            administrationId: 'adm-smb-1',
+            period: 'quarter',
+            periodYear: 2024,
+            periodNumber: 1,
+            regime: 'standard'
+        );
+    }//end testUnconvertibleRowRaisesRatherThanReturningEmpty()
+
+    /**
+     * Build a PSR-11 container that yields the given fake ObjectService.
+     *
+     * @param object $objectService The fake.
+     *
+     * @return ContainerInterface
+     */
+    private function containerFor(object $objectService): ContainerInterface
+    {
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('get')->willReturnCallback(
+            static function (string $id) use ($objectService): object {
+                if ($id === 'OCA\OpenRegister\Service\ObjectService') {
+                    return $objectService;
+                }
+
+                throw new \RuntimeException('Unexpected container id '.$id);
+            }
+        );
+
+        return $container;
+    }//end containerFor()
+
+    /**
+     * A fake ObjectService whose return types match OpenRegister's real ones.
+     *
+     * `saveObject()` returns an entity object (never an array) and `find()`
+     * returns an entity object or null — exactly as declared on
+     * OCA\OpenRegister\Service\ObjectService.
+     *
+     * @param bool $serialisable When false, the entity exposes neither
+     *                           jsonSerialize() nor getObject(), standing in for
+     *                           a row this app cannot normalise.
+     *
+     * @return object The fake ObjectService.
+     */
+    private function entityReturningObjectService(bool $serialisable=true): object
+    {
+        return new class($serialisable)
+        {
+
+            /**
+             * Rows keyed by schema slug.
+             *
+             * @var array<string,array<int,array<string,mixed>>>
+             */
+            private array $data = [];
+
+            /**
+             * Active schema slug.
+             *
+             * @var string
+             */
+            private string $schema = '';
+
+            /**
+             * Auto-increment id counter.
+             *
+             * @var integer
+             */
+            private int $counter = 0;
+
+            /**
+             * Whether returned entities can be converted back to an array.
+             *
+             * @var boolean
+             */
+            private bool $serialisable;
+
+            /**
+             * Constructor.
+             *
+             * @param bool $serialisable Whether entities expose jsonSerialize().
+             */
+            public function __construct(bool $serialisable)
+            {
+                $this->serialisable = $serialisable;
+            }//end __construct()
+
+            /**
+             * Fluent register setter (no-op).
+             *
+             * @param string $register Register slug.
+             *
+             * @return static
+             */
+            public function setRegister(string $register): static
+            {
+                return $this;
+            }//end setRegister()
+
+            /**
+             * Fluent schema setter.
+             *
+             * @param string $schema Schema slug.
+             *
+             * @return static
+             */
+            public function setSchema(string $schema): static
+            {
+                $this->schema = $schema;
+                return $this;
+            }//end setSchema()
+
+            /**
+             * Return rows for the active schema (arrays, as OR's findAll does).
+             *
+             * @param array<string,mixed> $params Query parameters.
+             *
+             * @return array<int,array<string,mixed>>
+             */
+            public function findAll(array $params=[]): array
+            {
+                return ($this->data[$this->schema] ?? []);
+            }//end findAll()
+
+            /**
+             * Find one row, returned as an ENTITY (never an array), or null.
+             *
+             * @param string $id Row id.
+             *
+             * @return object|null
+             */
+            public function find(string $id): ?object
+            {
+                foreach (($this->data[$this->schema] ?? []) as $row) {
+                    if (((string) ($row['id'] ?? '')) === $id) {
+                        return $this->wrap(row: $row);
+                    }
+                }
+
+                return null;
+            }//end find()
+
+            /**
+             * Persist a row and return it as an ENTITY (never an array).
+             *
+             * @param array<string,mixed> $data Row body.
+             *
+             * @return object
+             */
+            public function saveObject(array $data): object
+            {
+                if (isset($data['id']) === false || $data['id'] === '') {
+                    $this->counter++;
+                    $data['id'] = $this->schema.'-'.$this->counter;
+                }
+
+                foreach (($this->data[$this->schema] ?? []) as $idx => $row) {
+                    if (((string) ($row['id'] ?? '')) === ((string) $data['id'])) {
+                        $this->data[$this->schema][$idx] = $data;
+                        return $this->wrap(row: $data);
+                    }
+                }
+
+                $this->data[$this->schema][] = $data;
+                return $this->wrap(row: $data);
+            }//end saveObject()
+
+            /**
+             * Delete a row by id.
+             *
+             * @param string $id Row id.
+             *
+             * @return void
+             */
+            public function deleteObject(string $id): void
+            {
+                $this->data[$this->schema] = array_values(
+                    array_filter(
+                        ($this->data[$this->schema] ?? []),
+                        static fn(array $row): bool => ((string) ($row['id'] ?? '')) !== $id
+                    )
+                );
+            }//end deleteObject()
+
+            /**
+             * Wrap a row in an ObjectEntity-shaped object.
+             *
+             * @param array<string,mixed> $row The row.
+             *
+             * @return object
+             */
+            private function wrap(array $row): object
+            {
+                if ($this->serialisable === false) {
+                    // Neither jsonSerialize() nor getObject() — unusable.
+                    return new class {
+                    };
+                }
+
+                return new class($row) implements \JsonSerializable
+                {
+
+                    /**
+                     * The wrapped row.
+                     *
+                     * @var array<string,mixed>
+                     */
+                    private array $row;
+
+                    /**
+                     * Constructor.
+                     *
+                     * @param array<string,mixed> $row The row.
+                     */
+                    public function __construct(array $row)
+                    {
+                        $this->row = $row;
+                    }//end __construct()
+
+                    /**
+                     * Serialise to the plain row.
+                     *
+                     * @return array<string,mixed>
+                     */
+                    public function jsonSerialize(): array
+                    {
+                        return $this->row;
+                    }//end jsonSerialize()
+                };
+            }//end wrap()
+        };
+    }//end entityReturningObjectService()
+}//end class

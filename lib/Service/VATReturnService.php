@@ -713,21 +713,21 @@ class VATReturnService
     private function fetchReturn(string $returnId): array
     {
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $vatReturn     = $objectService
+        $found = $objectService
             ->setRegister($this->register())
             ->setSchema('BtwAangifte')
             ->find($returnId);
 
-        if (is_array($vatReturn) === false) {
-            throw new RuntimeException(sprintf('VATReturn %s not found', $returnId));
+        // OpenRegister's find() is declared `: ?ObjectEntity` — null when the
+        // row genuinely does not exist, an ObjectEntity when it does, and NEVER
+        // an array. Testing `is_array()` therefore reported "not found" for
+        // every row that WAS found, which is the same bug as in saveObject()
+        // above: a real record, discarded because of its type.
+        if ($found === null) {
+            throw new RuntimeException(sprintf('BtwAangifte %s not found', $returnId));
         }
 
-        // Some OR variants nest the record under a key — normalise.
-        if (isset($vatReturn['returnNumber']) === false && isset($vatReturn['@self']) === true) {
-            return $vatReturn;
-        }
-
-        return $vatReturn;
+        return $this->normaliseRow(row: $found, context: 'find('.$returnId.')');
 
     }//end fetchReturn()
 
@@ -848,10 +848,29 @@ class VATReturnService
     /**
      * Persist a record via the real OR ObjectService API.
      *
+     * OpenRegister's `ObjectService::saveObject()` is declared `: ObjectEntity`
+     * — it NEVER returns an array. This method used to demand one and throw
+     * otherwise, so every VAT write threw unconditionally:
+     *
+     *   RuntimeException: ObjectService::saveObject(...) did not return an array
+     *
+     * which VATReturnController turned into HTTP 500 on POST /api/vat-returns.
+     * The bug was invisible for as long as the VATReturn/VatReturn slug
+     * collision existed, because OR rejected the payload on the WRONG schema's
+     * required list before the return value was ever inspected. Fixing the
+     * collision simply moved the 500 one line down.
+     *
+     * Normalisation follows the same house idiom as CogsPosterService,
+     * FifoValuationService, AccountantDashboardService and
+     * AdministrationContextService: jsonSerialize(), then getObject(), then
+     * give up loudly rather than silently returning an empty row.
+     *
      * @param string              $schema Schema slug.
      * @param array<string,mixed> $data   Record body.
      *
      * @return array<string,mixed> The saved record (with id).
+     *
+     * @throws RuntimeException When the row cannot be normalised to an array.
      */
     private function saveObject(string $schema, array $data): array
     {
@@ -861,13 +880,46 @@ class VATReturnService
             ->setSchema($schema)
             ->saveObject($data);
 
-        if (is_array($saved) === false) {
-            throw new RuntimeException(sprintf('ObjectService::saveObject(%s) did not return an array', $schema));
-        }
-
-        return $saved;
+        return $this->normaliseRow(row: $saved, context: 'saveObject('.$schema.')');
 
     }//end saveObject()
+
+    /**
+     * Normalise an OpenRegister row (ObjectEntity or array) to a plain array.
+     *
+     * @param mixed  $row     The value returned by ObjectService.
+     * @param string $context Caller description, used in the failure message.
+     *
+     * @return array<string,mixed> The row as a plain array.
+     *
+     * @throws RuntimeException When the value is neither an array nor a
+     *                          convertible object.
+     */
+    private function normaliseRow(mixed $row, string $context): array
+    {
+        if (is_array($row) === true) {
+            return $row;
+        }
+
+        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+            $out = $row->jsonSerialize();
+            if (is_array($out) === true) {
+                return $out;
+            }
+        }
+
+        if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+            $out = $row->getObject();
+            if (is_array($out) === true) {
+                return $out;
+            }
+        }
+
+        throw new RuntimeException(
+            sprintf('VATReturnService: unsupported row type from ObjectService::%s', $context)
+        );
+
+    }//end normaliseRow()
 
     /**
      * Convert a money amount to integer cents.
