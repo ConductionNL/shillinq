@@ -1269,10 +1269,46 @@ class ComplianceDeadlineCalendarService
                 return [];
             }
 
+            // ObjectService::findAll() yields ObjectEntity objects, NOT arrays.
+            // Everything downstream — objectId(), the deadline builders — reads
+            // rows with array syntax, so passing them through verbatim threw
+            // "Cannot use object of type OCA\OpenRegister\Db\ObjectEntity as
+            // array" on every publish. The catch below then swallowed it as
+            // "publication failed — degrading fail-soft", so the calendar
+            // silently published NOTHING while reporting a handled degradation.
+            //
+            // Same defect and same normalisation as the VAT fix in this branch;
+            // house idiom is jsonSerialize() then getObject().
             $rows = [];
             foreach (array_values($result) as $row) {
-                $rows[] = $row;
-            }
+                if (is_array($row) === true) {
+                    $rows[] = $row;
+                    continue;
+                }
+
+                if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+                    $out = $row->jsonSerialize();
+                    if (is_array($out) === true) {
+                        $rows[] = $out;
+                        continue;
+                    }
+                }
+
+                if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+                    $out = $row->getObject();
+                    if (is_array($out) === true) {
+                        $rows[] = $out;
+                        continue;
+                    }
+                }
+
+                // Skip loudly rather than appending something the callers will
+                // fatal on — a dropped row is recoverable, a fatal is not.
+                $this->logger->warning(
+                    'ComplianceDeadlineCalendarService: unsupported row type from ObjectService::findAll',
+                    ['schema' => $schema, 'type' => get_debug_type($row)]
+                );
+            }//end foreach
 
             return $rows;
         } catch (Throwable $e) {
