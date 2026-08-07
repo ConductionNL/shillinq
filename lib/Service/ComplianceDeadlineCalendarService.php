@@ -377,7 +377,7 @@ class ComplianceDeadlineCalendarService
         $deadlines = [];
 
         // REQ-CDC-002 — BTW filing deadlines from VATReturn period data.
-        foreach ($this->fetchRows(schema: 'VATReturn') as $row) {
+        foreach ($this->fetchRows(schema: 'BtwAangifte') as $row) {
             $status = (string) ($row['statusCode'] ?? 'draft');
             if ($status !== 'draft') {
                 // Submitted / verified / filed → deadline no longer open.

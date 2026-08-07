@@ -112,11 +112,15 @@ use OCA\Shillinq\Service\External\Salarisbureau\LogSalarisbureauAdapter;
 use OCA\Shillinq\Service\External\Salarisbureau\SalarisbureauAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
+use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
+use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
 use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
+use OCA\Shillinq\Service\Sms\LogSmsProviderAdapter;
+use OCA\Shillinq\Service\Sms\SmsProviderAdapterInterface;
 use OCA\Shillinq\Service\DoorsnijdingsVerbodValidator;
 use OCA\Shillinq\Service\InnovatieboxAuditEventLogger;
 use OCP\IAppConfig;
@@ -393,6 +397,44 @@ class Application extends App implements IBootstrap
             PostNLAdapterInterface::class,
             static function ($c): PostNLAdapterInterface {
                 return $c->get(LogPostNLAdapter::class);
+            }
+        );
+
+        // Bookkeeping-einvoicing-ubl-peppol (REQ-EINV-003/005) — the Peppol
+        // transmission port had NO binding, which is not a dormant-feature
+        // no-op: EInvoiceValidationService type-hints it NON-nullably with no
+        // default, so NC's SimpleContainer could never build the service. The
+        // failure propagated up the whole graph — EInvoiceValidationService ->
+        // EInvoiceService -> ARInvoiceEInvoiceController — so every request to
+        // POST /api/ar-invoices/{invoiceNumber}/send-einvoice died with
+        // QueryException "Could not resolve PeppolTransmissionPortInterface!
+        // Class can not be instantiated" BEFORE a single line of controller
+        // code ran. Measured in run 31110513361: both Newman e-invoicing
+        // assertions saw HTTP 500 where 400 (missing administrationId) and an
+        // IDOR-safe 404 (unknown invoice) are specified. A 500 carrying an
+        // unhandled exception is also the information leak ADR-005 forbids,
+        // so the endpoint was failing open on its error contract.
+        // LogPeppolTransmissionAdapter is the log-only default, matching the
+        // dormant-by-default port bindings above; the openconnector-backed
+        // access point swaps it in via this same registerService call.
+        $context->registerService(
+            PeppolTransmissionPortInterface::class,
+            static function ($c): PeppolTransmissionPortInterface {
+                return $c->get(LogPeppolTransmissionAdapter::class);
+            }
+        );
+
+        // Bookings-sms-reminder-channel — same unbound-port bug as the Peppol
+        // port above, found by the same guard: SmsReminderDispatcher type-hints
+        // SmsProviderAdapterInterface non-nullably with no default, so anything
+        // that resolves the dispatcher (the reminder background job and the
+        // notification-trigger listener) would have thrown QueryException. The
+        // log-only adapter is the dormant default; MessageBird / Twilio bindings
+        // replace it here.
+        $context->registerService(
+            SmsProviderAdapterInterface::class,
+            static function ($c): SmsProviderAdapterInterface {
+                return $c->get(LogSmsProviderAdapter::class);
             }
         );
 

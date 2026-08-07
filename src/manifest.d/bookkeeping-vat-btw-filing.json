@@ -30,7 +30,7 @@
 			"title": "BTW returns",
 			"config": {
 				"register": "shillinq",
-				"schema": "VATReturn",
+				"schema": "BtwAangifte",
 				"columns": [
 					{"key": "returnNumber", "label": "Return number", "sortable": true},
 					{"key": "period", "label": "Period", "sortable": true},
@@ -60,7 +60,7 @@
 			"config": {
 				"_note": "A BTW return (VATReturn) is a tax-filing TRANSACTION: a period's declarations and VAT lines rolled up into collected BTW, input tax and the balance owed/refundable, driven through a draft → submitted → verified → filed lifecycle. Body leads with the return header data plus three currency KPIs (BTW collected, input tax, balance); the Declarations (rubrieken) and Lines child tables sit below as the auditable breakdown, and the Submit/Verify/File lifecycle buttons are gated on statusCode. Source documents and the immutable audit trail live in the sidebar. No comms — a tax filing, not a conversation.",
 				"register": "shillinq",
-				"schema": "VATReturn",
+				"schema": "BtwAangifte",
 				"aggregations": [
 					{"id": "vatCollected", "title": "BTW collected", "field": "totalVATCollected", "metric": "value", "format": "currency"},
 					{"id": "vatPaid", "title": "Input tax", "field": "totalVATPaid", "metric": "value", "format": "currency"},
@@ -129,7 +129,7 @@
 				"sidebarProps": {
 					"tabs": [
 						{"id": "documents", "label": "Source documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
-							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "VATReturn", "objectId": ":id"}}
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "BtwAangifte", "objectId": ":id"}}
 						]},
 						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
 							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
@@ -145,7 +145,7 @@
 			"title": "BTW report",
 			"config": {
 				"register": "shillinq",
-				"schema": "VATReturn",
+				"schema": "BtwAangifte",
 				"widgets": [
 					{
 						"id": "summary",
@@ -200,7 +200,7 @@
 			"title": "New BTW return",
 			"config": {
 				"register": "shillinq",
-				"schema": "VATReturn",
+				"schema": "BtwAangifte",
 				"action": {"verb": "POST", "url": "/api/vat-returns"},
 				"fields": [
 					{"key": "administrationId", "label": "Administration", "type": "string", "required": true},

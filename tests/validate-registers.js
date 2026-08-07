@@ -130,8 +130,17 @@ function collectSchemas() {
 		}
 		const schemas = (parsed && parsed.components && parsed.components.schemas) || {}
 		for (const [slug, def] of Object.entries(schemas)) {
-			if (!registry[slug]) registry[slug] = { files: [], auditDeclaredIn: [] }
+			if (!registry[slug]) registry[slug] = { files: [], auditDeclaredIn: [], slug }
 			registry[slug].files.push(fp)
+			// The DB slug is the explicit `slug` when present, else the
+			// components.schemas key. OpenRegister resolves the slug, not the
+			// key. `files` is walked in the same sorted order that
+			// SettingsService::deepMergeConfig() merges fragments in, and a
+			// scalar in a later fragment overwrites the base — so the LAST
+			// explicit `slug` is the one that reaches the database.
+			if (def && typeof def.slug === 'string' && def.slug !== '') {
+				registry[slug].slug = def.slug
+			}
 			const flag = def && def['x-openregister-audit-trail']
 			if (flag && typeof flag === 'object' && flag.enabled === true) {
 				registry[slug].auditDeclaredIn.push(fp)
@@ -139,6 +148,72 @@ function collectSchemas() {
 		}
 	}
 	return registry
+}
+
+// ── Case-insensitive slug collision check ────────────────────────────────
+//
+// OpenRegister resolves a schema slug CASE-INSENSITIVELY and non-
+// deterministically. `SchemaMapper::findBySlugInIds()` runs
+//
+//   WHERE LOWER(slug) = :slug AND id IN (:registerSchemaIds)  LIMIT 1
+//
+// with NO ORDER BY, and `ObjectService::setSchema()` calls it for every
+// string slug. So two schemas in the same register whose slugs differ only
+// by case are ONE addressable schema as far as the app is concerned, and
+// which of the two answers is whatever the database happens to return first.
+//
+// Measured on `development` (run 31110513361): this register shipped both
+// `VatReturn` (Dutch BTW model — rubrieken / verschuldigdeOmzetbelasting /
+// teBetalenOfTeruggave) and `VATReturn` (English filing model — returnNumber
+// / periodYear / regime / statusCode). `VATReturnService::createReturn()`
+// asked for `VATReturn`, OpenRegister handed back `VatReturn`, and the write
+// was validated against the OTHER model's required list:
+//
+//   "The required properties (periodType, periodStart, periodEnd, rubrieken,
+//    verschuldigdeOmzetbelasting, voorbelasting, teBetalenOfTeruggave) are
+//    missing."
+//
+// POST /api/vat-returns answered 500, and because the Newman collection
+// captures the new return's id from that response, EVERY downstream request
+// in the collection ran against the literal string `{{return_id}}` — 14 of
+// the 35 integration-test failures from ONE unresolvable name.
+//
+// This is not a style rule: no amount of correct application code can
+// address a schema whose slug is ambiguous.
+function checkSlugCaseCollisions(registry) {
+	const byLower = new Map()
+	for (const [key, entry] of Object.entries(registry)) {
+		const lower = entry.slug.toLowerCase()
+		if (!byLower.has(lower)) byLower.set(lower, [])
+		byLower.get(lower).push({ key, slug: entry.slug, files: entry.files })
+	}
+
+	const collisions = []
+	for (const [lower, entries] of byLower) {
+		const distinct = new Set(entries.map((e) => e.slug))
+		if (distinct.size > 1) collisions.push({ lower, entries })
+	}
+
+	console.log(`[validate-registers] distinct lower-cased slugs: ${byLower.size}`)
+	if (collisions.length === 0) {
+		console.log('[validate-registers] PASS — no two schemas share a slug that differs only by case')
+		return true
+	}
+
+	console.error('[validate-registers] FAIL — schemas whose slugs collide case-insensitively:')
+	for (const { lower, entries } of collisions) {
+		console.error(`  - "${lower}" is claimed by ${entries.length} schemas:`)
+		for (const e of entries) {
+			const files = e.files.map((f) => path.relative(REPO_ROOT, f)).join(', ')
+			console.error(`      slug "${e.slug}" (components key "${e.key}") declared in ${files}`)
+		}
+	}
+	console.error('')
+	console.error('[validate-registers] OpenRegister matches LOWER(slug) with LIMIT 1 and no ORDER BY,')
+	console.error('[validate-registers] so only ONE of these is ever reachable and which one is undefined.')
+	console.error('[validate-registers] Fix: give one of them a genuinely distinct slug (and update every')
+	console.error('[validate-registers] setSchema()/find() call site), or merge them into a single schema.')
+	return false
 }
 
 function main() {
@@ -152,7 +227,10 @@ function main() {
 	console.log(`[validate-registers] bookkeeping (audit-trail required): ${bookkeeping.length}`)
 	console.log(`[validate-registers] schemas with x-openregister-audit-trail.enabled=true: ${bookkeeping.length - offenders.length}`)
 
+	const slugsOk = checkSlugCaseCollisions(registry)
+
 	if (offenders.length === 0) {
+		if (slugsOk === false) process.exit(1)
 		console.log('[validate-registers] PASS — every bookkeeping + procurement schema declares x-openregister-audit-trail.enabled=true (REQ-AT-001 / REQ-RAP-001)')
 		process.exit(0)
 	}

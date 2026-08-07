@@ -76,11 +76,63 @@ class WidgetSettingsController extends Controller
     }//end actor()
 
     /**
-     * Generate or rotate the API key for a business (REQ-WSW-009).
+     * Mint the FIRST API key for a business (REQ-WSW-009 §1, "Generate API keys").
+     *
+     * This is the missing half of the key lifecycle. {@see rotate()} REPLACES an
+     * existing key and returns `No active key found for businessId.` when there
+     * is none, so before this endpoint existed a business could never be issued
+     * its first key through the app — the admin view's "Generate key" button hit
+     * `rotate` and always failed on a fresh businessId, leaving the public widget
+     * unbootstrappable.
+     *
+     * Unlike rotate(), this needs `administrationId`: the tenant boundary is read
+     * off the predecessor record when rotating, and there is no predecessor here.
+     *
+     * Returns the plaintext key once; only its bcrypt hash is persisted.
+     *
+     * @return JSONResponse HTTP 200 with the one-time plaintext key, or 400.
+     *
+     * @spec openspec/specs/bookings-self-service-widget/spec.md
+     */
+    #[AuthorizedAdminSetting(Application::APP_ID)]
+    public function create(): JSONResponse
+    {
+        $businessId       = trim((string) $this->request->getParam('businessId', ''));
+        $administrationId = trim((string) $this->request->getParam('administrationId', ''));
+
+        if ($businessId === '' || $administrationId === '') {
+            return new JSONResponse(
+                ['success' => false, 'message' => 'businessId and administrationId are required.'],
+                Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        $result = $this->authService->createApiKey(
+            administrationId: $administrationId,
+            businessId: $businessId,
+            actor: $this->actor()
+        );
+        $status = Http::STATUS_BAD_REQUEST;
+        if ($result['success'] === true) {
+            $status = Http::STATUS_OK;
+        }
+
+        return new JSONResponse($result, $status);
+
+    }//end create()
+
+    /**
+     * Rotate the API key for a business (REQ-WSW-009 §3).
+     *
+     * Replaces the active key and puts the predecessor into the 7-day grace
+     * window. Refuses when the business has no active key — minting the first
+     * one is {@see create()}, not this.
      *
      * Returns the plaintext key once; only its hash is persisted.
      *
      * @return JSONResponse HTTP 200 with the one-time plaintext key, or 400.
+     *
+     * @spec openspec/specs/bookings-self-service-widget/spec.md
      */
     #[AuthorizedAdminSetting(Application::APP_ID)]
     public function rotate(): JSONResponse
@@ -105,9 +157,11 @@ class WidgetSettingsController extends Controller
     }//end rotate()
 
     /**
-     * Revoke the API key for a business immediately (REQ-WSW-009).
+     * Revoke the API key for a business immediately (REQ-WSW-009 §5).
      *
      * @return JSONResponse HTTP 200 on success, or 400.
+     *
+     * @spec openspec/specs/bookings-self-service-widget/spec.md
      */
     #[AuthorizedAdminSetting(Application::APP_ID)]
     public function revoke(): JSONResponse

@@ -758,10 +758,10 @@
 					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on VATLine with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
 				}
 			},
-			"VATReturn": {
+			"BtwAangifte": {
 				"x-openregister-audit-trail": {
 					"enabled": true,
-					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on VATReturn with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
+					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on BtwAangifte with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
 				}
 			},
 			"ValueChainActor": {

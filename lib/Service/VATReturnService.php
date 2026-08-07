@@ -126,7 +126,7 @@ class VATReturnService
             'notes'              => null,
         ];
 
-        $persisted = $this->saveObject(schema: 'VATReturn', data: $vatReturn);
+        $persisted = $this->saveObject(schema: 'BtwAangifte', data: $vatReturn);
         $returnId  = (string) ($persisted['id'] ?? ($persisted['@self']['id'] ?? ''));
 
         if ($returnId === '') {
@@ -461,7 +461,7 @@ class VATReturnService
         $vatReturn['statusCode']     = 'submitted';
         $vatReturn['submissionDate'] = gmdate(format: 'Y-m-d\TH:i:s\Z');
 
-        $persisted = $this->saveObject(schema: 'VATReturn', data: $vatReturn);
+        $persisted = $this->saveObject(schema: 'BtwAangifte', data: $vatReturn);
         $this->logger->info(
             'VATReturnService: submitted return',
             [
@@ -499,7 +499,7 @@ class VATReturnService
         $vatReturn['verificationDate'] = null;
         $vatReturn['filingReference']  = null;
 
-        $this->saveObject(schema: 'VATReturn', data: $vatReturn);
+        $this->saveObject(schema: 'BtwAangifte', data: $vatReturn);
 
         // Drop existing VATLines + VATDeclarations for the return then re-derive.
         $this->purgeChildren(returnId: $returnId);
@@ -663,7 +663,7 @@ class VATReturnService
         $vatReturn['vatBalance']         = $vatBalance;
         $vatReturn['totalTaxableAmount'] = $totalTaxableAmount;
 
-        $this->saveObject(schema: 'VATReturn', data: $vatReturn);
+        $this->saveObject(schema: 'BtwAangifte', data: $vatReturn);
 
     }//end updateReturnTotals()
 
@@ -715,7 +715,7 @@ class VATReturnService
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
         $vatReturn     = $objectService
             ->setRegister($this->register())
-            ->setSchema('VATReturn')
+            ->setSchema('BtwAangifte')
             ->find($returnId);
 
         if (is_array($vatReturn) === false) {
