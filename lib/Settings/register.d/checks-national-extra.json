@@ -142,6 +142,10 @@
             "example": "2024-01-01",
             "title": "Live From"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a E-Invoicing Mandate Profile is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "SaftExportProfile": {
@@ -188,6 +192,10 @@
             },
             "title": "Covered Areas"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a SAF-T Export Profile is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     }

@@ -97,6 +97,10 @@
             "description": "Member State of consumption (ISO 3166-1 alpha-2).",
             "title": "Destination Country"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IOSS Import Consignment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "TravelAgentMargin": {
@@ -142,6 +146,10 @@
             "description": "ISO 4217 currency.",
             "title": "Currency"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Travel-Agent Margin (art. 306) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     }

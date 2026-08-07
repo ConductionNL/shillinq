@@ -181,6 +181,10 @@
             "description": "Aantal onderneming-jaren per drempel-status.",
             "groupBy": "drempelStatus"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Urencriterium jaar is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "UrenDagregistratie": {
@@ -320,6 +324,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Uren dagregistratie is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "UrenCategorie": {
@@ -434,6 +442,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Uren categorie is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "UrenPrognose": {
@@ -539,6 +551,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Uren prognose is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "UrenAlert": {
@@ -674,6 +690,10 @@
             "description": "Aantal alerts per urgentie-niveau.",
             "groupBy": "urgentie"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Uren alert is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "UrenEvidence": {
@@ -793,6 +813,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Uren bewijsdossier is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     }

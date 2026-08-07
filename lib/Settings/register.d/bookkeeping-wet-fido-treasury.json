@@ -239,6 +239,10 @@
               "description": "Mark this version superseded when a newer version is adopted."
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Treasurystatuut is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "KasgeldLimiet": {
@@ -353,6 +357,10 @@
               }
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Kasgeldlimiet is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "RenteRisicoNorm": {
@@ -490,6 +498,10 @@
               }
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Rente-risiconorm is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "SchatkistbankierenSaldo": {
@@ -583,6 +595,10 @@
             "example": null,
             "title": "Notes"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Schatkistbankieren-saldo is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Lening": {
@@ -801,6 +817,10 @@
               "description": "Lock an overridden lening once it is included in a submitted rapportage."
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Lening is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Derivaat": {
@@ -949,6 +969,10 @@
               "description": "Mark the derivaat matured at the end of its hedge term."
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Derivaat is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "QuartaalrapportageFido": {
@@ -1173,6 +1197,10 @@
               }
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Kwartaalrapportage Fido is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "TreasuryParagraaf": {
@@ -1269,6 +1297,10 @@
             "example": "draft",
             "title": "Status"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Treasury-paragraaf is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     },

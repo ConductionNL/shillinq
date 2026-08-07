@@ -212,6 +212,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Employee is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Payroll": {
@@ -545,6 +549,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Payroll is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Deduction": {
@@ -655,6 +663,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Deduction is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "DeterminationLetter": {
@@ -801,6 +813,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Determination Letter is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     }

@@ -246,6 +246,10 @@
             "cardinality": "many-to-one",
             "description": "The JournalEntry materialised from this salaris-feed record after successful mapping."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Salaris Feed is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "OpdrachtgeversVerklaring": {
@@ -408,6 +412,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Opdrachtgevers Verklaring is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IB47Record": {
@@ -645,6 +653,10 @@
             "template": "ib47-batch-submitted",
             "description": "Notify the payroll-officer when the IB47 yearly batch has been transmitted to the Belastingdienst via openconnector. Declarative fan-out per ADR-031. KNOWN GAP (migrate-legacy-notification-dialect): trigger is still the bare-string legacy shape — IB47Record has no status/lifecycle field for a canonical `transition` trigger to hook into; the batch-submitted event is fired by the openconnector transmission step, not an object state change. Needs a schema decision (add a submission-status field, or a new non-transition trigger type) before this rule can dispatch through the declarative engine; tracked as follow-up, not fixed by this change."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB47 Record is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     }

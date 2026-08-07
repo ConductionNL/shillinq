@@ -438,6 +438,10 @@
             "groupBy": "matchType",
             "description": "Number of matches per matchType, for the detail-page match summary."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Bank Reconciliation Match is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     }

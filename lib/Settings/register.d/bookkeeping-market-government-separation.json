@@ -412,6 +412,10 @@
             },
             "handler": "OCA\\Shillinq\\Service\\CrossSubsidyDetector::composeAlert"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Commercial Activity is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "IntegralCostPrice": {
@@ -643,6 +647,10 @@
             "enabled": true,
             "handler": "OCA\\Shillinq\\Service\\IntegralCostPriceLockService::lock"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Integral Cost Price is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ActivityCostAllocation": {
@@ -900,6 +908,10 @@
             "toState": "posted",
             "handler": "OCA\\Shillinq\\Service\\ActivityCostAllocationSplitter::compose"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Activity Cost Allocation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "AlgemeenBelangBesluit": {
@@ -1285,6 +1297,10 @@
             "description": "When an ABB enters intrekking or herziening, flag dependent CommercialActivity records (those whose exemptionBesluitId points at this ABB) for operator review (REQ-WMO-005 §dependents).",
             "handler": "OCA\\Shillinq\\Service\\AbbLifecycleService::flagDependentActivities"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Public Interest Decision is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "ACMReport": {
@@ -1742,6 +1758,10 @@
             },
             "metadataOnly": true
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a ACM Report is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "AlertLog": {
@@ -1941,6 +1961,10 @@
             "description": "Validate resolution notes are non-empty and write the operator's motivation onto resolutionNotes (REQ-WMO-007 §resolution).",
             "handler": "OCA\\Shillinq\\Service\\CrossSubsidyDetector::resolve"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Cross-Subsidy Alert is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "WMOAuditLog": {
@@ -2107,6 +2131,10 @@
             },
             "handler": "OCA\\Shillinq\\Service\\WmoAuditLogService::retentionExpiredState"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a WMO Audit Log is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "MarketBenchmark": {
@@ -2217,6 +2245,10 @@
             "description": "Phase 3 (REQ-WMO-012): when a MarketBenchmark is created, recompute the bevoordeling-risk for the linked CommercialActivity's most recent IKP. If gehanteerdTarief < benchmark median × 0.85 while gehanteerdTarief >= kostprijsPerEenheid, emit a HIGH-severity bevoordeling-risk AlertLog (Art. 25j Mededingingswet).",
             "handler": "OCA\\Shillinq\\Service\\CrossSubsidyDetector::detectBevoordelingRisk"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Market Benchmark is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     }
