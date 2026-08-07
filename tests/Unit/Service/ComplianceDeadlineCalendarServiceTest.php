@@ -530,7 +530,7 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase
     public function testDeadlineIsPublishedAsIdempotentVevent(): void
     {
         $service = $this->buildService(
-            recordsBySchema: ['VATReturn' => [$this->vatReturn()]],
+            recordsBySchema: ['BtwAangifte' => [$this->vatReturn()]],
         );
 
         $first  = $service->publishForUser(userId: 'alice');
@@ -561,7 +561,7 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase
     public function testNoCalendarBackendNeverBlocksTheSource(): void
     {
         $service = $this->buildService(
-            recordsBySchema: ['VATReturn' => [$this->vatReturn()]],
+            recordsBySchema: ['BtwAangifte' => [$this->vatReturn()]],
             withCalendar: false,
         );
 
@@ -583,7 +583,7 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase
     public function testSubmittedFilingRemovesItsVevent(): void
     {
         $service = $this->buildService(
-            recordsBySchema: ['VATReturn' => [$this->vatReturn(['statusCode' => 'submitted'])]],
+            recordsBySchema: ['BtwAangifte' => [$this->vatReturn(['statusCode' => 'submitted'])]],
             existingUids: ['btw-filing:vatreturn-2026-Q1'],
         );
 
@@ -864,7 +864,7 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase
     {
         $today   = new DateTimeImmutable('2026-04-23');
         $service = $this->buildService(
-            recordsBySchema: ['VATReturn' => [$this->vatReturn()]],
+            recordsBySchema: ['BtwAangifte' => [$this->vatReturn()]],
         );
         // BTW due 2026-04-30 = 7 days from 2026-04-23; filing lead = 10.
 
@@ -917,7 +917,7 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase
     {
         $today   = new DateTimeImmutable('2026-04-01');
         $service = $this->buildService(
-            recordsBySchema: ['VATReturn' => [$this->vatReturn()]],
+            recordsBySchema: ['BtwAangifte' => [$this->vatReturn()]],
         );
         // Due 2026-04-30 = 29 days out > 10-day filing lead.
 

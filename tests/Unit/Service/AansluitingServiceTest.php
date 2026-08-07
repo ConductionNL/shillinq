@@ -162,7 +162,7 @@ final class AansluitingServiceTest extends TestCase
                     'Account'           => [],
                     'GLTransaction'     => [],
                     'GLLine'            => [],
-                    'VATReturn'         => [],
+                    'BtwAangifte'         => [],
                     'VATDeclaration'    => [],
                     'ARInvoice'         => [],
                     'APTransaction'     => [],
@@ -320,7 +320,7 @@ final class AansluitingServiceTest extends TestCase
                         ],
                     ],
                 ],
-                'VATReturn'      => [
+                'BtwAangifte'      => [
                     [
                         'id'               => 'vatret-1',
                         'administrationId' => 'adm-1',
@@ -401,7 +401,7 @@ final class AansluitingServiceTest extends TestCase
                         ],
                     ],
                 ],
-                'VATReturn'      => [
+                'BtwAangifte'      => [
                     [
                         'id'               => 'vatret-1',
                         'administrationId' => 'adm-1',

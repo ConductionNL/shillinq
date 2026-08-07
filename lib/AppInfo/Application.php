@@ -400,37 +400,20 @@ class Application extends App implements IBootstrap
             }
         );
 
-        // Bookkeeping-einvoicing-ubl-peppol (REQ-EINV-003/005) — the Peppol
-        // transmission port had NO binding, which is not a dormant-feature
-        // no-op: EInvoiceValidationService type-hints it NON-nullably with no
-        // default, so NC's SimpleContainer could never build the service. The
-        // failure propagated up the whole graph — EInvoiceValidationService ->
-        // EInvoiceService -> ARInvoiceEInvoiceController — so every request to
-        // POST /api/ar-invoices/{invoiceNumber}/send-einvoice died with
-        // QueryException "Could not resolve PeppolTransmissionPortInterface!
-        // Class can not be instantiated" BEFORE a single line of controller
-        // code ran. Measured in run 31110513361: both Newman e-invoicing
-        // assertions saw HTTP 500 where 400 (missing administrationId) and an
-        // IDOR-safe 404 (unknown invoice) are specified. A 500 carrying an
-        // unhandled exception is also the information leak ADR-005 forbids,
-        // so the endpoint was failing open on its error contract.
-        // LogPeppolTransmissionAdapter is the log-only default, matching the
-        // dormant-by-default port bindings above; the openconnector-backed
-        // access point swaps it in via this same registerService call.
+        // REQ-EINV-003/005 + bookings-sms-reminder-channel. Both ports below
+        // were UNBOUND, and both are type-hinted non-nullably with no default
+        // (EInvoiceValidationService, SmsReminderDispatcher), so NC's
+        // SimpleContainer could not build them or anything downstream —
+        // POST /api/ar-invoices/{invoiceNumber}/send-einvoice answered 500
+        // before any controller code ran. See
+        // tests/Unit/AppInfo/ContainerResolvableConstructorsTest.php, which
+        // fails when a required in-app interface dependency has no binding.
         $context->registerService(
             PeppolTransmissionPortInterface::class,
             static function ($c): PeppolTransmissionPortInterface {
                 return $c->get(LogPeppolTransmissionAdapter::class);
             }
         );
-
-        // Bookings-sms-reminder-channel — same unbound-port bug as the Peppol
-        // port above, found by the same guard: SmsReminderDispatcher type-hints
-        // SmsProviderAdapterInterface non-nullably with no default, so anything
-        // that resolves the dispatcher (the reminder background job and the
-        // notification-trigger listener) would have thrown QueryException. The
-        // log-only adapter is the dormant default; MessageBird / Twilio bindings
-        // replace it here.
         $context->registerService(
             SmsProviderAdapterInterface::class,
             static function ($c): SmsProviderAdapterInterface {

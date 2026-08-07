@@ -326,7 +326,7 @@ final class VATReturnControllerTest extends TestCase
         $this->withObjectService(
             $this->fakeObjectService(
                 [
-                    'VATReturn' => [
+                    'BtwAangifte' => [
                         ['id' => 'r-1', 'period' => 'quarter', 'regime' => 'standard', 'statusCode' => 'draft'],
                         ['id' => 'r-2', 'period' => 'quarter', 'regime' => 'kor', 'statusCode' => 'submitted'],
                     ],
@@ -354,7 +354,7 @@ final class VATReturnControllerTest extends TestCase
         $this->withObjectService(
             $this->fakeObjectService(
                 [
-                    'VATReturn' => [
+                    'BtwAangifte' => [
                         ['id' => 'r-1', 'period' => 'quarter', 'regime' => 'standard', 'statusCode' => 'draft'],
                         ['id' => 'r-2', 'period' => 'quarter', 'regime' => 'kor', 'statusCode' => 'submitted'],
                     ],
@@ -380,7 +380,7 @@ final class VATReturnControllerTest extends TestCase
         $this->withObjectService(
             $this->fakeObjectService(
                 [
-                    'VATReturn'      => [['id' => 'ret-1', 'statusCode' => 'draft']],
+                    'BtwAangifte'      => [['id' => 'ret-1', 'statusCode' => 'draft']],
                     'VATDeclaration' => [['id' => 'd-1', 'returnId' => 'ret-1', 'type' => 'collected', 'taxRate' => 21.0]],
                     'VATLine'        => [['id' => 'l-1', 'returnId' => 'ret-1', 'type' => 'collected', 'taxRate' => 21.0]],
                 ]
@@ -404,7 +404,7 @@ final class VATReturnControllerTest extends TestCase
      */
     public function testShowReturns404WhenMissing(): void
     {
-        $this->withObjectService($this->fakeObjectService(['VATReturn' => []]));
+        $this->withObjectService($this->fakeObjectService(['BtwAangifte' => []]));
         $response = $this->controller->show(returnId: 'ret-missing');
         self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
@@ -549,7 +549,7 @@ final class VATReturnControllerTest extends TestCase
         $this->withObjectService(
             $this->fakeObjectService(
                 [
-                    'VATReturn' => [['id' => 'ret-del', 'statusCode' => 'draft']],
+                    'BtwAangifte' => [['id' => 'ret-del', 'statusCode' => 'draft']],
                 ]
             )
         );
@@ -569,7 +569,7 @@ final class VATReturnControllerTest extends TestCase
         $this->withObjectService(
             $this->fakeObjectService(
                 [
-                    'VATReturn' => [['id' => 'ret-submitted', 'statusCode' => 'submitted']],
+                    'BtwAangifte' => [['id' => 'ret-submitted', 'statusCode' => 'submitted']],
                 ]
             )
         );
