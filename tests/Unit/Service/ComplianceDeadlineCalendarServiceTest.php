@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\Shillinq\Service\ComplianceDeadlineCalendarService;
 use OCA\Shillinq\Service\ObligationTaskBridge;
 use OCP\IAppConfig;
@@ -551,6 +552,232 @@ class ComplianceDeadlineCalendarServiceTest extends TestCase
         self::assertStringContainsString('STATUS:CONFIRMED', $writes[0][1]);
 
     }//end testDeadlineIsPublishedAsIdempotentVevent()
+
+    /**
+     * REQ-CDC-001 — ObjectService::findAll() yields ObjectEntity objects,
+     * never arrays. Before normalisation the calendar read them with array
+     * syntax, threw "Cannot use object of type ... as array", and the
+     * surrounding catch reported a handled fail-soft degradation while
+     * publishing NOTHING. A real ObjectEntity must publish exactly what the
+     * equivalent array row publishes.
+     *
+     * Positive control: the assertions below are the same ones
+     * testDeadlineIsPublishedAsIdempotentVevent() makes on an array row, so
+     * a regression to pass-through would produce zero writes, not a
+     * differently-shaped one.
+     *
+     * @return void
+     */
+    public function testObjectEntityRowsAreNormalisedBeforePublication(): void
+    {
+        $entity = new ObjectEntity();
+        $entity->setObject($this->vatReturn());
+
+        $service = $this->buildService(
+            recordsBySchema: ['BtwAangifte' => [$entity]],
+        );
+
+        $result = $service->publishForUser(userId: 'alice');
+
+        self::assertSame('ok', $result['status']);
+        self::assertSame(1, $result['published']);
+
+        $writes = $this->calendarStub->writes;
+        self::assertCount(1, $writes, 'the ObjectEntity row must reach the calendar');
+        self::assertStringContainsString('UID:btw-filing:vatreturn-2026-Q1', $writes[0][1]);
+        self::assertStringContainsString('DTSTART;VALUE=DATE:20260430', $writes[0][1]);
+        self::assertStringContainsString('STATUS:CONFIRMED', $writes[0][1]);
+
+    }//end testObjectEntityRowsAreNormalisedBeforePublication()
+
+    /**
+     * REQ-CDC-001 — a row exposing jsonSerialize() is normalised through it
+     * (the house idiom's first branch), without needing getObject().
+     *
+     * @return void
+     */
+    public function testRowsExposingJsonSerializeAreNormalised(): void
+    {
+        $row = $this->vatReturn();
+
+        $service = $this->buildService(
+            recordsBySchema: [
+                'BtwAangifte' => [
+                    new class ($row) {
+
+                        /**
+                         * The payload returned by jsonSerialize().
+                         *
+                         * @var array<string,mixed>
+                         */
+                        private array $payload;
+
+                        /**
+                         * Constructor.
+                         *
+                         * @param array<string,mixed> $payload The payload.
+                         */
+                        public function __construct(array $payload)
+                        {
+                            $this->payload = $payload;
+
+                        }//end __construct()
+
+                        /**
+                         * Serialise to the array shape the callers expect.
+                         *
+                         * @return array<string,mixed>
+                         */
+                        public function jsonSerialize(): array
+                        {
+                            return $this->payload;
+
+                        }//end jsonSerialize()
+                    },
+                ],
+            ],
+        );
+
+        $result = $service->publishForUser(userId: 'alice');
+
+        self::assertSame('ok', $result['status']);
+        self::assertSame(1, $result['published']);
+        self::assertCount(1, $this->calendarStub->writes);
+        self::assertStringContainsString(
+            'UID:btw-filing:vatreturn-2026-Q1',
+            $this->calendarStub->writes[0][1]
+        );
+
+    }//end testRowsExposingJsonSerializeAreNormalised()
+
+    /**
+     * REQ-CDC-001 — jsonSerialize() is not required to return an array
+     * (OpenRegister's own entity has returned scalars for partial reads).
+     * When it does not, normalisation must fall through to getObject()
+     * rather than appending the non-array and fataling downstream.
+     *
+     * @return void
+     */
+    public function testNonArrayJsonSerializeFallsBackToGetObject(): void
+    {
+        $row = $this->vatReturn();
+
+        $service = $this->buildService(
+            recordsBySchema: [
+                'BtwAangifte' => [
+                    new class ($row) {
+
+                        /**
+                         * The payload returned by getObject().
+                         *
+                         * @var array<string,mixed>
+                         */
+                        private array $payload;
+
+                        /**
+                         * Constructor.
+                         *
+                         * @param array<string,mixed> $payload The payload.
+                         */
+                        public function __construct(array $payload)
+                        {
+                            $this->payload = $payload;
+
+                        }//end __construct()
+
+                        /**
+                         * Deliberately NOT an array — the fall-through trigger.
+                         *
+                         * @return string
+                         */
+                        public function jsonSerialize(): string
+                        {
+                            return 'not-an-array';
+
+                        }//end jsonSerialize()
+
+                        /**
+                         * The array shape the callers expect.
+                         *
+                         * @return array<string,mixed>
+                         */
+                        public function getObject(): array
+                        {
+                            return $this->payload;
+
+                        }//end getObject()
+                    },
+                ],
+            ],
+        );
+
+        $result = $service->publishForUser(userId: 'alice');
+
+        self::assertSame('ok', $result['status']);
+        self::assertSame(1, $result['published']);
+        self::assertStringContainsString(
+            'UID:btw-filing:vatreturn-2026-Q1',
+            $this->calendarStub->writes[0][1]
+        );
+
+    }//end testNonArrayJsonSerializeFallsBackToGetObject()
+
+    /**
+     * REQ-CDC-001 — a row matching NEITHER normalisation shape is skipped
+     * with a warning rather than appended. A dropped row is recoverable; a
+     * fatal in a CRUD path is not. The warning is what makes the drop
+     * visible, so its absence is the failure this asserts against.
+     *
+     * @return void
+     */
+    public function testUnsupportedRowShapeIsSkippedWithAWarning(): void
+    {
+        $warnings = [];
+        $this->logger->method('warning')->willReturnCallback(
+            static function ($message, $context=[]) use (&$warnings): void {
+                $warnings[] = [(string) $message, $context];
+            }
+        );
+
+        $service = $this->buildService(
+            recordsBySchema: [
+                'BtwAangifte' => [
+                    new class {
+
+                        /**
+                         * Neither jsonSerialize() nor getObject() — this shape
+                         * cannot be normalised and must not be appended.
+                         *
+                         * @return string
+                         */
+                        public function describe(): string
+                        {
+                            return 'unsupported';
+
+                        }//end describe()
+                    },
+                ],
+            ],
+        );
+
+        $result = $service->publishForUser(userId: 'alice');
+
+        // Fail-soft: the run completes, it just publishes nothing.
+        self::assertSame('ok', $result['status']);
+        self::assertSame(0, $result['published']);
+        self::assertSame([], $this->calendarStub->writes);
+
+        $skipped = array_filter(
+            $warnings,
+            static function (array $entry): bool {
+                return str_contains($entry[0], 'unsupported row type from ObjectService::findAll');
+            }
+        );
+        self::assertCount(1, $skipped, 'the dropped row must be logged, not swallowed');
+        $context = array_values($skipped)[0][1];
+        self::assertSame('BtwAangifte', $context['schema']);
+
+    }//end testUnsupportedRowShapeIsSkippedWithAWarning()
 
     /**
      * REQ-CDC-001 scenario 2 — no calendar backend: publication logs,
