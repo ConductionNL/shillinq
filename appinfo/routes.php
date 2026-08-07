@@ -537,6 +537,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
 
             // Widget API-key admin (bookings-self-service-widget, REQ-WSW-009).
             // #[AuthorizedAdminSetting]-gated lifecycle of per-business widget keys.
+            // `create` mints the FIRST key for a businessId; `rotate` replaces an
+            // existing one and refuses when there is none, so without `create` no
+            // business could ever be issued a key at all.
+            ['name' => 'widgetSettings#create', 'url' => '/api/widget/admin/keys/create', 'verb' => 'POST'],
             ['name' => 'widgetSettings#rotate', 'url' => '/api/widget/admin/keys/rotate', 'verb' => 'POST'],
             ['name' => 'widgetSettings#revoke', 'url' => '/api/widget/admin/keys/revoke', 'verb' => 'POST'],
 
