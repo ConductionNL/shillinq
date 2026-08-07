@@ -57,7 +57,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
         cannot function there. Declaring 31 advertised a range this app cannot
         deliver. Same defect as openconnector#1173.
         -->
-        <nextcloud min-version="32" max-version="34"/>
+        <nextcloud min-version="31" max-version="34"/>
     </dependencies>
 
     <background-jobs>
