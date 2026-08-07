@@ -713,7 +713,7 @@ class VATReturnService
     private function fetchReturn(string $returnId): array
     {
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $found = $objectService
+        $found         = $objectService
             ->setRegister($this->register())
             ->setSchema('BtwAangifte')
             ->find($returnId);
