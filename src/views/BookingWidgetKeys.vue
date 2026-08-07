@@ -12,21 +12,9 @@
 				class="shillinq-widget-keys__input">
 		</div>
 
-		<div class="shillinq-widget-keys__field">
-			<label for="wsw-administration-id">{{ t('shillinq', 'Administration ID') }}</label>
-			<input
-				id="wsw-administration-id"
-				v-model.trim="administrationId"
-				type="text"
-				class="shillinq-widget-keys__input">
-		</div>
-
 		<div class="shillinq-widget-keys__actions">
-			<NcButton variant="primary" :disabled="!businessId || !administrationId || busy" @click="generate">
-				{{ t('shillinq', 'Generate key') }}
-			</NcButton>
-			<NcButton variant="secondary" :disabled="!businessId || busy" @click="rotate">
-				{{ t('shillinq', 'Rotate key') }}
+			<NcButton variant="primary" :disabled="!businessId || busy" @click="rotate">
+				{{ t('shillinq', 'Generate key') }} / {{ t('shillinq', 'Rotate key') }}
 			</NcButton>
 			<NcButton variant="error" :disabled="!businessId || busy" @click="revoke">
 				{{ t('shillinq', 'Revoke key') }}
@@ -58,7 +46,6 @@ export default {
 	data() {
 		return {
 			businessId: '',
-			administrationId: '',
 			plaintextKey: '',
 			message: '',
 			busy: false,
