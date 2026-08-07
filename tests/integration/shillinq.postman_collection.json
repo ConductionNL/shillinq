@@ -440,8 +440,11 @@
 									"    pm.expect([200, 503]).to.include(pm.response.code);",
 									"    if (pm.response.code !== 200) { return; }",
 									"    const body = pm.response.json();",
-									"    const list = body.data ?? body;",
-									"    pm.expect(list).to.be.an('array');",
+									"    // CalendarController::index() returns the envelope {calendars: [...]}",
+									"    // (documented on the method, and what bookings.postman_collection.json",
+									"    // already asserts). This test used to read `body.data ?? body` and so",
+									"    // asserted the RESPONSE ITSELF was an array — it could never pass.",
+									"    pm.expect(body.calendars).to.be.an('array');",
 									"});"
 								]
 							}
@@ -471,8 +474,11 @@
 									"    pm.expect([200, 503]).to.include(pm.response.code);",
 									"    if (pm.response.code !== 200) { return; }",
 									"    const body = pm.response.json();",
-									"    const list = body.data ?? body;",
-									"    pm.expect(list).to.be.an('array');",
+									"    // CalendarController::index() returns the envelope {calendars: [...]}",
+									"    // (documented on the method, and what bookings.postman_collection.json",
+									"    // already asserts). This test used to read `body.data ?? body` and so",
+									"    // asserted the RESPONSE ITSELF was an array — it could never pass.",
+									"    pm.expect(body.calendars).to.be.an('array');",
 									"});"
 								]
 							}
@@ -529,8 +535,10 @@
 									"    pm.expect([200, 404, 503]).to.include(pm.response.code);",
 									"    if (pm.response.code === 200) {",
 									"        const body = pm.response.json();",
-									"        const list = body.data ?? body;",
-									"        pm.expect(list).to.be.an('array');",
+									"        // CalendarController::listBookings() returns {bookings: [...]}.",
+									"        // Reachable now that the cal-001 seed imports; while the seed was",
+									"        // broken this branch never ran, so the wrong shape went unnoticed.",
+									"        pm.expect(body.bookings).to.be.an('array');",
 									"    }",
 									"});"
 								]
@@ -582,7 +590,7 @@
 					"name": "GET webhook returns 501",
 					"request": {
 						"method": "GET",
-						"url": "{{base_url}}/index.php/apps/shillinq/api/payroll/webhook",
+						"url": "{{base_url}}/index.php/apps/shillinq/api/webhooks/payroll",
 						"description": "REQ-PAY-009: the webhook endpoint accepts POST only; GET returns 501 Not Implemented."
 					},
 					"event": [
@@ -613,7 +621,7 @@
 							"mode": "raw",
 							"raw": "{\"specversion\":\"1.0\",\"type\":\"nl.conduction.payroll.calculated\",\"id\":\"ext-1\",\"data\":{\"payrollId\":\"payroll-2026-05-emp-001\",\"deductions\":[]}}"
 						},
-						"url": "{{base_url}}/index.php/apps/shillinq/api/payroll/webhook",
+						"url": "{{base_url}}/index.php/apps/shillinq/api/webhooks/payroll",
 						"description": "ADR-005: a POST without a valid X-Shillinq-Signature HMAC is rejected fail-closed before any object is touched."
 					},
 					"event": [
@@ -622,7 +630,18 @@
 							"script": {
 								"exec": [
 									"pm.test('Unsigned webhook POST is rejected', function () {",
-									"    pm.expect([401, 412]).to.include(pm.response.code);",
+									"    // ADR-005: the signature is part of the PAYLOAD, not caller auth, and",
+									"    // this is a #[PublicPage] route, so PayrollWebhookController::receive()",
+									"    // surfaces a missing/mismatching HMAC as 400 (untrusted payload) rather",
+									"    // than 401 (which would contradict the route's public posture and trip",
+									"    // hydra gate-9 semantic-auth). Assert the exact code AND the rejection",
+									"    // message: a bare status check would also be satisfied by the guard",
+									"    // 400ing on its own malformed body, which proves nothing about the",
+									"    // signature check. Before this was fixed the request went to an",
+									"    // UNROUTED url (/api/payroll/webhook) and got 405 — the rejection this",
+									"    // test claims to prove was not happening at all.",
+									"    pm.response.to.have.status(400);",
+									"    pm.expect(pm.response.json().message).to.match(/signature/i);",
 									"});"
 								],
 								"type": "text/javascript"
