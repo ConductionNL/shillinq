@@ -1545,6 +1545,26 @@ class SettingsService
                 $errors   = ($result['errors'] ?? []);
                 $warnings = ($result['warnings'] ?? []);
 
+                // A seed object that fails its schema's `required` list is skipped
+                // ONE BY ONE by OpenRegister's ImportHandler (per-entity resilience):
+                // it increments $result['skipped'] and logs a WARNING, then keeps
+                // going. It does NOT raise an error, so every branch below used to
+                // report `success: true` over a partially-imported register — and
+                // `occ app:enable` exits 0. That is why a broken seed stayed
+                // invisible until an endpoint merely LOOKED empty:
+                // GET /api/v2/calendars returned 200 {"calendars":[]} and the whole
+                // bookings collection failed against calendar code that was never
+                // wrong. Surface the count and the names instead of discarding them.
+                //
+                // Deliberately NOT fatal: flipping success to false here would make
+                // `occ app:enable` / `occ upgrade` fail on EXISTING installs that
+                // already carry these seeds, which would brick an upgrade for a
+                // data defect that is not new. The count is reported, logged at
+                // error level and returned to the admin UI; the ratchet in
+                // tests/validate-seeds.js is what actually stops new ones landing.
+                $skipped      = ($result['skipped'] ?? []);
+                $skippedSeeds = (int) ($skipped['objects'] ?? 0) + (int) ($skipped['seedObjects'] ?? 0);
+
                 if (empty($errors) === false) {
                     $this->logger->error(
                         'Shillinq: register configuration imported with errors',
@@ -1566,12 +1586,32 @@ class SettingsService
                     );
                 }
 
+                if ($skippedSeeds > 0) {
+                    $this->logger->error(
+                        'Shillinq: register configuration imported, but '.$skippedSeeds.' seed object(s) could NOT be imported '
+                        .'— they do not satisfy their own schema\'s required list. Affected endpoints will return empty '
+                        .'collections that look like a working-but-empty install. Run `node tests/validate-seeds.js` for the '
+                        .'per-schema breakdown of which objects failed and which fields they are missing.',
+                        ['skippedSeedObjects' => $skippedSeeds, 'skipped' => $skipped]
+                    );
+
+                    return [
+                        'success'            => true,
+                        'message'            => 'Configuration imported, but '.$skippedSeeds.' seed object(s) could not be imported.',
+                        'skippedSeedObjects' => $skippedSeeds,
+                        'skipped'            => $skipped,
+                        'warnings'           => $warnings,
+                        'version'            => ($result['version'] ?? 'unknown'),
+                    ];
+                }
+
                 $this->logger->info('Shillinq: register configuration imported successfully');
                 return [
-                    'success'  => true,
-                    'message'  => 'Configuration imported successfully.',
-                    'warnings' => $warnings,
-                    'version'  => ($result['version'] ?? 'unknown'),
+                    'success'            => true,
+                    'message'            => 'Configuration imported successfully.',
+                    'skippedSeedObjects' => 0,
+                    'warnings'           => $warnings,
+                    'version'            => ($result['version'] ?? 'unknown'),
                 ];
             }//end if
 

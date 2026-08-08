@@ -1052,7 +1052,8 @@
         "saldoVoorMutaties": -570000.0,
         "mutatiesReserves": 0.0,
         "saldoNaMutaties": -570000.0,
-        "administrationId": "adm-gov-1"
+        "administrationId": "adm-gov-1",
+        "lifecycleState": "published"
       },
       {
         "@self": {
@@ -1071,7 +1072,8 @@
         "saldoVoorMutaties": -1180000.0,
         "mutatiesReserves": 0.0,
         "saldoNaMutaties": -1180000.0,
-        "administrationId": "adm-gov-1"
+        "administrationId": "adm-gov-1",
+        "lifecycleState": "published"
       },
       {
         "@self": {

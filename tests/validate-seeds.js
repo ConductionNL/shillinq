@@ -58,7 +58,7 @@ const FRAGMENT_DIR = path.join(REPO_ROOT, 'lib', 'Settings', 'register.d')
 // Number of shipped seed objects that fail their own schema's `required`
 // list. Measured on the commit that added this gate. NEVER raise this to make
 // a build pass — that is the whole point of the ratchet.
-const BASELINE = 81
+const BASELINE = 74
 
 const asArray = (value) => (Array.isArray(value) ? value : [])
 
