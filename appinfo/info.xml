@@ -48,7 +48,15 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <screenshot>https://raw.githubusercontent.com/ConductionNL/shillinq/main/img/app-store.svg</screenshot>
 
     <dependencies>
-        <nextcloud min-version="28" max-version="34"/>
+        <!--
+            Nextcloud floor is 32 fleet-wide so this app can require PHP 8.3.
+            A min-version is enforced at install time: on an older Nextcloud the
+            app cannot be enabled at all, so advertising a lower floor promises
+            a range the app cannot actually serve. The openregister development
+            line already declares a Nextcloud floor of 32.
+            max-version is deliberately left at its existing value.
+        -->
+        <nextcloud min-version="32" max-version="34"/>
         <php min-version="8.3"/>
     </dependencies>
 
