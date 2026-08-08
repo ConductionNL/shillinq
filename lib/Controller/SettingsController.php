@@ -30,6 +30,16 @@ use OCP\IRequest;
 
 /**
  * Controller for managing Shillinq application settings.
+ *
+ * Shillinq KEEPS this bespoke controller rather than adopting OpenRegister's
+ * `GenericSettingsController` (fragment-merge `shillinq_register.json` +
+ * `register.d/*.json` config loading — see
+ * `openspec/specs/apphost-adoption/spec.md`). The AppHost only aliases its
+ * generic in when the leaf ships NO class of that name, so this class owes
+ * every method the canonical route table routes to `settings#`:
+ * `index` (GET), `create` (POST, legacy), `update` (PUT) and `load`.
+ *
+ * @spec openspec/specs/app-administration/spec.md
  */
 class SettingsController extends Controller
 {
