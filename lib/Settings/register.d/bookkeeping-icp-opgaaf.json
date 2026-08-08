@@ -657,7 +657,8 @@
         "description": "Zero-rated intra-community goods supplies (supplyType L). RGS pattern. Routed from IcpSupply supplyType L.",
         "vatRate": 0,
         "currency": "EUR",
-        "administrationId": "adm-smb-1"
+        "administrationId": "adm-smb-1",
+        "lifecycleState": "active"
       },
       {
         "@self": {
@@ -671,7 +672,8 @@
         "description": "Zero-rated intra-community services supplies (supplyType S). RGS pattern. Routed from IcpSupply supplyType S.",
         "vatRate": 0,
         "currency": "EUR",
-        "administrationId": "adm-smb-1"
+        "administrationId": "adm-smb-1",
+        "lifecycleState": "active"
       },
       {
         "@self": {
@@ -685,7 +687,8 @@
         "description": "Zero-rated triangulation supplies (supplyType T, ABC-levering). RGS pattern. Routed from IcpSupply supplyType T.",
         "vatRate": 0,
         "currency": "EUR",
-        "administrationId": "adm-smb-1"
+        "administrationId": "adm-smb-1",
+        "lifecycleState": "active"
       },
       {
         "@self": {
