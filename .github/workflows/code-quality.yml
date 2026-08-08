@@ -14,7 +14,16 @@ jobs:
       app-name: shillinq
       php-version: "8.3"
       php-test-versions: '["8.3", "8.4"]'
-      nextcloud-test-refs: '["stable31", "stable32", "stable33"]'
+      # stable31 removed: it tests an IMPOSSIBLE configuration, not a coverage trim.
+      # This app's floor is Nextcloud 32, enforced at INSTALL time, so `occ app:enable`
+      # refuses on NC31. The shared workflow runs app-enable as `|| echo "::warning::..."`,
+      # so that refusal is only a WARNING: the job continues without its data layer and
+      # then dies ~70s later on MISSING SCHEMAS, which reads like an app/migration fault
+      # and sends you to the wrong file entirely.
+      # ORDER matters too: the newman/playwright/journeydoc jobs check out the server at
+      # fromJSON(inputs.nextcloud-test-refs)[0], so a stable31 sitting FIRST put all of them
+      # on the one version this app cannot be enabled on.
+      nextcloud-test-refs: '["stable32", "stable33"]'
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
