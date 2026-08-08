@@ -23,13 +23,23 @@
  *
  * Bridges a pre-existing dual-schema situation: the only engine that
  * computes real per-rubriek totals from GL data is `VATReturnService`
- * against the all-caps `VATReturn`/`VATDeclaration`/`VATLine` schemas (the
+ * against the `BtwAangifte`/`VATDeclaration`/`VATLine` schemas (the
  * mixed-case `VatReturn`'s declared rubrieken aggregation sources GLLine
  * fields — `vatRate`/`reverseCharge` — that do not exist on `GLLine`, so it
- * cannot run). This service therefore takes an all-caps `VATReturn.id` as
+ * cannot run). This service therefore takes a `BtwAangifte.id` as
  * input and persists the result as a `VatCorrection` (the spec-mandated,
  * already-landed register), documented explicitly rather than silently
  * assumed — see design.md.
+ *
+ * `BtwAangifte` was called `VATReturn` until the slug collision with the
+ * mixed-case `VatReturn` was fixed. The two were never actually distinct at
+ * runtime: OpenRegister matches `LOWER(slug)` with `LIMIT 1` and no
+ * ORDER BY, so `setSchema('VATReturn')` resolved to whichever row the
+ * database returned first, and every write to the working model was
+ * validated against the broken one's `required` list and 500'd. The
+ * dual-schema situation this docblock describes was therefore not merely
+ * untidy — it made the capability unusable. The two models are still
+ * duplicates and should be consolidated; that is a product decision.
  *
  * @category Service
  * @package  OCA\Shillinq\Service

@@ -220,7 +220,7 @@ class AccountantDashboardService
      */
     private function latestVatFilingStatus(string $administrationId): ?array
     {
-        $rows = $this->findAll(schema: 'VATReturn', administrationId: $administrationId);
+        $rows = $this->findAll(schema: 'BtwAangifte', administrationId: $administrationId);
         if ($rows === []) {
             return null;
         }

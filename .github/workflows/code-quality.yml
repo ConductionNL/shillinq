@@ -125,7 +125,17 @@ jobs:
       #                          the first place the real schema validation
       #                          happens. Its verdict there may differ.
       # `test:unit` is NOT listed: "Frontend Tests (unit)" already runs it.
-      frontend-checks: '["check:manifest", "check:manifest-budget", "check:markers", "check:registers", "test:l10n"]'
+      #   check:seeds            NEW. Ratchet on seed/schema integrity: every
+      #                          object shipped as register seed data must
+      #                          satisfy the `required` list of the schema it
+      #                          names. OpenRegister's ImportHandler only WARNS
+      #                          on a violation and `occ app:enable` still exits
+      #                          0, so a broken seed is invisible until an
+      #                          endpoint returns an empty list or a 404 and
+      #                          looks like an application bug. Measured at 89
+      #                          before this commit, 81 after; the baseline is
+      #                          a hard ceiling that may only be lowered.
+      frontend-checks: '["check:manifest", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "test:l10n"]'
 
       # ── Coverage ratchet ─────────────────────────────────────────────────
       # `enable-coverage-guard` defaults to FALSE, which is why both

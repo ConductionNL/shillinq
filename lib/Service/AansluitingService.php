@@ -576,7 +576,7 @@ class AansluitingService
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
         $returns       = $objectService
             ->setRegister($this->register())
-            ->setSchema('VATReturn')
+            ->setSchema('BtwAangifte')
             ->findAll(['filters' => ['administrationId' => $administrationId]]);
 
         foreach ($returns as $return) {

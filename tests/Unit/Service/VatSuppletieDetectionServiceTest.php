@@ -156,7 +156,7 @@ final class VatSuppletieDetectionServiceTest extends TestCase
                     'Account'        => [],
                     'GLTransaction'  => [],
                     'GLLine'         => [],
-                    'VATReturn'      => [],
+                    'BtwAangifte'      => [],
                     'VATDeclaration' => [],
                     'VATLine'        => [],
                     'VatCorrection'  => [],
@@ -343,7 +343,7 @@ final class VatSuppletieDetectionServiceTest extends TestCase
         // Nothing was written — VATLine/VATDeclaration/VATReturn all remain empty.
         self::assertSame([], $stub->dump('VATLine'));
         self::assertSame([], $stub->dump('VATDeclaration'));
-        self::assertSame([], $stub->dump('VATReturn'));
+        self::assertSame([], $stub->dump('BtwAangifte'));
 
     }//end testComputeCurrentDeclarationsDoesNotPersist()
 
@@ -419,7 +419,7 @@ final class VatSuppletieDetectionServiceTest extends TestCase
             [
                 'Account'        => $this->accounts(),
                 'GLTransaction'  => $transactions,
-                'VATReturn'      => [$vatReturn],
+                'BtwAangifte'      => [$vatReturn],
                 'VATDeclaration' => $declarations,
                 'VATLine'        => $lines,
             ]
@@ -482,7 +482,7 @@ final class VatSuppletieDetectionServiceTest extends TestCase
             [
                 'Account'        => $this->accounts(),
                 'GLTransaction'  => $transactions,
-                'VATReturn'      => [$vatReturn],
+                'BtwAangifte'      => [$vatReturn],
                 'VATDeclaration' => $declarations,
             ]
         );
@@ -510,7 +510,7 @@ final class VatSuppletieDetectionServiceTest extends TestCase
             'statusCode'       => 'draft',
         ];
 
-        $stub = $this->fakeObjectService(['VATReturn' => [$vatReturn]]);
+        $stub = $this->fakeObjectService(['BtwAangifte' => [$vatReturn]]);
         [, $detectionService] = $this->buildServices($stub);
 
         $this->expectException(RuntimeException::class);

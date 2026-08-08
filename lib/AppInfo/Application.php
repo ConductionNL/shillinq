@@ -112,11 +112,15 @@ use OCA\Shillinq\Service\External\Salarisbureau\LogSalarisbureauAdapter;
 use OCA\Shillinq\Service\External\Salarisbureau\SalarisbureauAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\LogTreasuryRateAdapter;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
+use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
+use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
 use OCA\Shillinq\Service\Pipelinq\CustomerBridgeMetricsService;
 use OCA\Shillinq\Service\Pipelinq\LoggingPipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
+use OCA\Shillinq\Service\Sms\LogSmsProviderAdapter;
+use OCA\Shillinq\Service\Sms\SmsProviderAdapterInterface;
 use OCA\Shillinq\Service\DoorsnijdingsVerbodValidator;
 use OCA\Shillinq\Service\InnovatieboxAuditEventLogger;
 use OCP\IAppConfig;
@@ -393,6 +397,27 @@ class Application extends App implements IBootstrap
             PostNLAdapterInterface::class,
             static function ($c): PostNLAdapterInterface {
                 return $c->get(LogPostNLAdapter::class);
+            }
+        );
+
+        // REQ-EINV-003/005 + bookings-sms-reminder-channel. Both ports below
+        // were UNBOUND, and both are type-hinted non-nullably with no default
+        // (EInvoiceValidationService, SmsReminderDispatcher), so NC's
+        // SimpleContainer could not build them or anything downstream —
+        // POST /api/ar-invoices/{invoiceNumber}/send-einvoice answered 500
+        // before any controller code ran. See
+        // tests/Unit/AppInfo/ContainerResolvableConstructorsTest.php, which
+        // fails when a required in-app interface dependency has no binding.
+        $context->registerService(
+            PeppolTransmissionPortInterface::class,
+            static function ($c): PeppolTransmissionPortInterface {
+                return $c->get(LogPeppolTransmissionAdapter::class);
+            }
+        );
+        $context->registerService(
+            SmsProviderAdapterInterface::class,
+            static function ($c): SmsProviderAdapterInterface {
+                return $c->get(LogSmsProviderAdapter::class);
             }
         );
 
