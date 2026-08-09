@@ -65,13 +65,15 @@
 				<table class="po-form__lines-table">
 					<thead>
 						<tr>
-							<th>{{ t('shillinq', 'Product code') }}</th>
-							<th>{{ t('shillinq', 'Quantity') }}</th>
-							<th>{{ t('shillinq', 'Unit price') }}</th>
-							<th>{{ t('shillinq', 'VAT rate') }}</th>
-							<th>{{ t('shillinq', 'GL account') }}</th>
-							<th>{{ t('shillinq', 'Line total') }}</th>
-							<th />
+							<th scope="col">{{ t('shillinq', 'Product code') }}</th>
+							<th scope="col">{{ t('shillinq', 'Quantity') }}</th>
+							<th scope="col">{{ t('shillinq', 'Unit price') }}</th>
+							<th scope="col">{{ t('shillinq', 'VAT rate') }}</th>
+							<th scope="col">{{ t('shillinq', 'GL account') }}</th>
+							<th scope="col">{{ t('shillinq', 'Line total') }}</th>
+							<th scope="col">
+								<span class="po-form__sr-only">{{ t('shillinq', 'Actions') }}</span>
+							</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -342,6 +344,24 @@ export default {
 <style scoped>
 .po-form {
 	padding: 16px;
+}
+
+/*
+ * Accessible name for the line-actions column. The header is not shown, but
+ * a screen reader still announces a column header for every cell, so an
+ * empty <th> leaves the remove button's column unnamed. Defined locally
+ * rather than relying on a server-global utility class.
+ */
+.po-form__sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
 }
 
 .po-form fieldset {

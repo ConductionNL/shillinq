@@ -128,6 +128,7 @@
 				v-model="email"
 				class="wsw-widget__input"
 				type="email"
+				autocomplete="email"
 				required>
 			<p class="wsw-widget__error" role="alert">
 				{{ errors.email }}
@@ -137,7 +138,8 @@
 			<input :id="ids.phone"
 				v-model="phone"
 				class="wsw-widget__input"
-				type="tel">
+				type="tel"
+				autocomplete="tel">
 			<p class="wsw-widget__error" role="alert">
 				{{ errors.phone }}
 			</p>

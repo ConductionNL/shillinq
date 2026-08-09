@@ -25,6 +25,7 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -52,12 +53,13 @@ class BookingNotificationController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest           $request         The request object.
-     * @param SettingsService    $settingsService The settings service.
-     * @param ContainerInterface $container       The DI container.
-     * @param IGroupManager      $groupManager    The group manager.
-     * @param IUserSession       $userSession     The user session.
-     * @param LoggerInterface    $logger          The logger.
+     * @param IRequest                     $request               The request object.
+     * @param SettingsService              $settingsService       The settings service.
+     * @param ContainerInterface           $container             The DI container.
+     * @param IGroupManager                $groupManager          The group manager.
+     * @param IUserSession                 $userSession           The user session.
+     * @param LoggerInterface              $logger                The logger.
+     * @param AdministrationContextService $administrationContext The administration membership seam.
      *
      * @return void
      */
@@ -68,6 +70,7 @@ class BookingNotificationController extends Controller
         private IGroupManager $groupManager,
         private IUserSession $userSession,
         private LoggerInterface $logger,
+        private AdministrationContextService $administrationContext,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -257,8 +260,16 @@ class BookingNotificationController extends Controller
     /**
      * Authorise a user to access notification triggers for a booking.
      *
-     * Throws OCSForbiddenException when the current user is neither the booking
-     * organizer nor an admin per Rule 3 (per-object authorization / OWASP A01).
+     * Throws OCSForbiddenException when the current user is neither a member of
+     * the booking's administration nor an admin, per Rule 3 (per-object
+     * authorization / OWASP A01).
+     *
+     * The Booking schema carries NO user-id field — its properties are
+     * calendar / resource / title / startTime / endTime / attendee / status /
+     * externalId / administrationId / bookingId, and `attendee` is a display
+     * name, not a uid. The per-object authority for a Booking is therefore its
+     * `administrationId`, checked through AdministrationContextService, which
+     * is this app's canonical membership seam.
      *
      * @param string $bookingId UUID of the booking.
      *
@@ -287,18 +298,27 @@ class BookingNotificationController extends Controller
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $registerSlug  = $this->settingsService->getRegisterSlug();
 
-            $booking = $objectService->findObject(
+            // ADR-022: the real ObjectService API is find()/findAll().
+            // findObject() does not exist — calling it raised an Error that the
+            // \Throwable arm below turned into a blanket 403, so this guard
+            // denied EVERY non-admin instead of checking anything.
+            $booking = $objectService->find(
+                id: $bookingId,
                 register: $registerSlug,
-                schema: 'Booking',
-                id: $bookingId
+                schema: 'Booking'
             );
 
             if ($booking === null) {
                 throw new OCSForbiddenException('Booking not found.');
             }
 
-            $organizerUserId = (string) ($booking['organizerUserId'] ?? '');
-            if ($organizerUserId !== $uid) {
+            $row = $booking->jsonSerialize();
+
+            // An absent or empty administrationId must DENY, never skip the
+            // check — that is the defect fixed in #474, where `?? ''` plus a
+            // `!== ''` guard meant canAccess() was never reached.
+            $administrationId = (string) ($row['administrationId'] ?? '');
+            if ($this->administrationContext->canAccess($administrationId) === false) {
                 throw new OCSForbiddenException('Not authorized to access this booking.');
             }
         } catch (OCSForbiddenException $e) {

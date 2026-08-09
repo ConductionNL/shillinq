@@ -125,7 +125,7 @@ class ConsolidationGuardTest extends TestCase
      */
     public function testRequireFiscalPeriodClosedPermitsWhenFiscalYearAbsent(): void
     {
-        $objectService = $this->buildObjectServiceStub(findObjectReturn: null, findAllReturn: []);
+        $objectService = $this->buildObjectServiceStub(findReturn: null, findAllReturn: []);
         $this->container->method('get')->willReturn($objectService);
 
         $result = $this->guard->requireFiscalPeriodClosed(
@@ -147,7 +147,7 @@ class ConsolidationGuardTest extends TestCase
     public function testRequireFiscalPeriodClosedPermitsWhenClosed(): void
     {
         $fiscalYear    = ['id' => 'fy-2026', 'isClosed' => true];
-        $objectService = $this->buildObjectServiceStub(findObjectReturn: $fiscalYear, findAllReturn: []);
+        $objectService = $this->buildObjectServiceStub(findReturn: $fiscalYear, findAllReturn: []);
         $this->container->method('get')->willReturn($objectService);
 
         $result = $this->guard->requireFiscalPeriodClosed(
@@ -169,7 +169,7 @@ class ConsolidationGuardTest extends TestCase
     public function testRequireFiscalPeriodClosedDenieswhenOpen(): void
     {
         $fiscalYear    = ['id' => 'fy-2026', 'isClosed' => false];
-        $objectService = $this->buildObjectServiceStub(findObjectReturn: $fiscalYear, findAllReturn: []);
+        $objectService = $this->buildObjectServiceStub(findReturn: $fiscalYear, findAllReturn: []);
         $this->container->method('get')->willReturn($objectService);
 
         $result = $this->guard->requireFiscalPeriodClosed(
@@ -223,7 +223,7 @@ class ConsolidationGuardTest extends TestCase
      */
     public function testRequireAllMembersFinalisedPermitsWhenGroupAbsent(): void
     {
-        $objectService = $this->buildObjectServiceStub(findObjectReturn: null, findAllReturn: []);
+        $objectService = $this->buildObjectServiceStub(findReturn: null, findAllReturn: []);
         $this->container->method('get')->willReturn($objectService);
 
         $result = $this->guard->requireAllMembersFinalised(
@@ -250,7 +250,7 @@ class ConsolidationGuardTest extends TestCase
         ];
         // Both administrations have a final BalanceSheet.
         $balanceSheet  = [['id' => 'bs-001', 'status' => 'final']];
-        $objectService = $this->buildObjectServiceStub(findObjectReturn: $group, findAllReturn: $balanceSheet);
+        $objectService = $this->buildObjectServiceStub(findReturn: $group, findAllReturn: $balanceSheet);
         $this->container->method('get')->willReturn($objectService);
 
         $result = $this->guard->requireAllMembersFinalised(
@@ -276,7 +276,7 @@ class ConsolidationGuardTest extends TestCase
             'administrationIds' => ['adm-1'],
         ];
         // No final BalanceSheet for adm-1.
-        $objectService = $this->buildObjectServiceStub(findObjectReturn: $group, findAllReturn: []);
+        $objectService = $this->buildObjectServiceStub(findReturn: $group, findAllReturn: []);
         $this->container->method('get')->willReturn($objectService);
 
         $result = $this->guard->requireAllMembersFinalised(
@@ -306,21 +306,31 @@ class ConsolidationGuardTest extends TestCase
     /**
      * Build an anonymous ObjectService stub implementing the fluent setRegister/setSchema interface.
      *
-     * @param mixed        $findObjectReturn Value to return from findObject().
-     * @param array<mixed> $findAllReturn    Value to return from findAll().
+     * The method under test resolves a single object with find(), which is the
+     * REAL OpenRegister ObjectService API and returns a ?ObjectEntity — an
+     * object exposing jsonSerialize(), not a bare array.
+     *
+     * This stub used to expose `findObject()` instead, a method OpenRegister
+     * has never had. That is why the production defect survived: the double
+     * invented the interface it was asserting against, so the guard passed its
+     * unit test while raising an Error against the real service (gate-20,
+     * .github#277). A stub must only offer methods the real collaborator has.
+     *
+     * @param array<string,mixed>|null $findReturn    Row to wrap and return from find(), or null.
+     * @param array<mixed>             $findAllReturn Value to return from findAll().
      *
      * @return object
      */
-    private function buildObjectServiceStub(mixed $findObjectReturn, array $findAllReturn): object
+    private function buildObjectServiceStub(?array $findReturn, array $findAllReturn): object
     {
-        return new class($findObjectReturn, $findAllReturn) {
+        return new class($findReturn, $findAllReturn) {
 
             /**
-             * Return value for findObject().
+             * Row to wrap and return from find().
              *
-             * @var mixed
+             * @var array<string,mixed>|null
              */
-            private mixed $findObjectReturn;
+            private ?array $findReturn;
 
             /**
              * Return value for findAll().
@@ -332,13 +342,13 @@ class ConsolidationGuardTest extends TestCase
             /**
              * Construct the stub with fixed return values.
              *
-             * @param mixed        $findObjectReturn Value to return from findObject().
-             * @param array<mixed> $findAllReturn    Value to return from findAll().
+             * @param array<string,mixed>|null $findReturn    Row to wrap and return from find().
+             * @param array<mixed>             $findAllReturn Value to return from findAll().
              */
-            public function __construct(mixed $findObjectReturn, array $findAllReturn)
+            public function __construct(?array $findReturn, array $findAllReturn)
             {
-                $this->findObjectReturn = $findObjectReturn;
-                $this->findAllReturn    = $findAllReturn;
+                $this->findReturn    = $findReturn;
+                $this->findAllReturn = $findAllReturn;
             }//end __construct()
 
             /**
@@ -366,16 +376,58 @@ class ConsolidationGuardTest extends TestCase
             }//end setSchema()
 
             /**
-             * Return the configured findObject return value.
+             * Resolve one object by id — mirrors ObjectService::find(), which
+             * returns a ?ObjectEntity (an object with jsonSerialize()).
              *
-             * @param string $id Object ID.
+             * @param string|int $id       Object ID.
+             * @param array|null $_extend  Unused, present to match the real signature.
+             * @param bool       $files    Unused, present to match the real signature.
+             * @param mixed      $register Register slug or entity.
+             * @param mixed      $schema   Schema slug or entity.
              *
-             * @return mixed
+             * @return object|null
              */
-            public function findObject(string $id): mixed
-            {
-                return $this->findObjectReturn;
-            }//end findObject()
+            public function find(
+                string | int $id,
+                ?array $_extend=[],
+                bool $files=false,
+                mixed $register=null,
+                mixed $schema=null
+            ): ?object {
+                if ($this->findReturn === null) {
+                    return null;
+                }
+
+                return new class($this->findReturn) {
+
+                    /**
+                     * The wrapped row.
+                     *
+                     * @var array<string,mixed>
+                     */
+                    private array $row;
+
+                    /**
+                     * Wrap a row.
+                     *
+                     * @param array<string,mixed> $row The row.
+                     */
+                    public function __construct(array $row)
+                    {
+                        $this->row = $row;
+                    }//end __construct()
+
+                    /**
+                     * Serialise the wrapped row.
+                     *
+                     * @return array<string,mixed>
+                     */
+                    public function jsonSerialize(): array
+                    {
+                        return $this->row;
+                    }//end jsonSerialize()
+                };
+            }//end find()
 
             /**
              * Return the configured findAll return value.

@@ -105,11 +105,16 @@ class ConsolidationGuard
         }
 
         try {
+            // ADR-022: the real ObjectService API is find()/findAll().
+            // findObject() does not exist — it raised an Error that the
+            // \Throwable arm below swallowed into `return false`, so this
+            // guard denied EVERY finalise without ever reading a FiscalYear.
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $fiscalYear    = $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('FiscalYear')
-                ->findObject(id: $fiscalYearId);
+            $fiscalYear    = $objectService->find(
+                id: $fiscalYearId,
+                register: $this->getRegisterSlug(),
+                schema: 'FiscalYear'
+            );
 
             if ($fiscalYear === null) {
                 $this->logger->debug(
@@ -119,7 +124,7 @@ class ConsolidationGuard
                 return true;
             }
 
-            return ($fiscalYear['isClosed'] ?? false) === true;
+            return (($fiscalYear->jsonSerialize()['isClosed'] ?? false) === true);
         } catch (\Throwable $e) {
             $this->logger->error(
                 'ConsolidationGuard: fiscal period check failed — denying finalise (fail-closed)',
@@ -160,11 +165,13 @@ class ConsolidationGuard
         }
 
         try {
+            // ADR-022: find(), not findObject() — see requireFiscalPeriodClosed().
             $objectService      = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $consolidationGroup = $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('ConsolidationGroup')
-                ->findObject(id: $consolidationGroupId);
+            $consolidationGroup = $objectService->find(
+                id: $consolidationGroupId,
+                register: $this->getRegisterSlug(),
+                schema: 'ConsolidationGroup'
+            );
 
             if ($consolidationGroup === null) {
                 $this->logger->debug(
@@ -174,7 +181,7 @@ class ConsolidationGuard
                 return true;
             }
 
-            $administrationIds = ($consolidationGroup['administrationIds'] ?? []);
+            $administrationIds = ($consolidationGroup->jsonSerialize()['administrationIds'] ?? []);
             if (count($administrationIds) === 0) {
                 return true;
             }
