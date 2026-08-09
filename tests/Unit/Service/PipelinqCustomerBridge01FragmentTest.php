@@ -161,10 +161,19 @@ final class PipelinqCustomerBridge01FragmentTest extends TestCase
 
         // Existing relations preserved (member 03 may add a contact relation;
         // member 01 must not perturb the create-appointment relations).
-        $relations = ($appt['x-openregister-relations'] ?? []);
-        foreach (['service', 'resource'] as $rel) {
-            self::assertArrayHasKey($rel, $relations, "Relation $rel was dropped");
-        }
+        // ADR-062 rule 7: relations are property-level `$ref`s — the bespoke
+        // `x-openregister-relations` block was retired 2026-07-08, so this
+        // asserts the same two relations in the dialect that now carries them.
+        self::assertSame(
+            'Service',
+            ($appt['properties']['serviceId']['$ref'] ?? null),
+            'Relation serviceId -> Service was dropped'
+        );
+        self::assertSame(
+            'Resource',
+            ($appt['properties']['resourceId']['$ref'] ?? null),
+            'Relation resourceId -> Resource was dropped'
+        );
 
     }//end testAppointmentIsExtendedAdditively()
 
