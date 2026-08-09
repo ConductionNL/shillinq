@@ -53,12 +53,12 @@ class BookingNotificationController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest                     $request              The request object.
-     * @param SettingsService              $settingsService      The settings service.
-     * @param ContainerInterface           $container            The DI container.
-     * @param IGroupManager                $groupManager         The group manager.
-     * @param IUserSession                 $userSession          The user session.
-     * @param LoggerInterface              $logger               The logger.
+     * @param IRequest                     $request               The request object.
+     * @param SettingsService              $settingsService       The settings service.
+     * @param ContainerInterface           $container             The DI container.
+     * @param IGroupManager                $groupManager          The group manager.
+     * @param IUserSession                 $userSession           The user session.
+     * @param LoggerInterface              $logger                The logger.
      * @param AdministrationContextService $administrationContext The administration membership seam.
      *
      * @return void
