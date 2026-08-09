@@ -19,19 +19,19 @@
 		<table class="invoice-line-review__table">
 			<thead>
 				<tr>
-					<th>#</th>
-					<th>{{ t('shillinq', 'Source') }}</th>
-					<th>{{ t('shillinq', 'Description') }}</th>
-					<th class="num">
+					<th scope="col">#</th>
+					<th scope="col">{{ t('shillinq', 'Source') }}</th>
+					<th scope="col">{{ t('shillinq', 'Description') }}</th>
+					<th scope="col" class="num">
 						{{ t('shillinq', 'Units') }}
 					</th>
-					<th class="num">
+					<th scope="col" class="num">
 						{{ t('shillinq', 'Rate') }}
 					</th>
-					<th class="num">
+					<th scope="col" class="num">
 						{{ t('shillinq', 'Cost') }}
 					</th>
-					<th class="num">
+					<th scope="col" class="num">
 						{{ t('shillinq', 'VAT') }}
 					</th>
 				</tr>

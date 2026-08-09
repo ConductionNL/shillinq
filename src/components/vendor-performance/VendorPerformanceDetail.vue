@@ -87,9 +87,9 @@
 				<table class="vp-detail__table" data-testid="vp-rates-table">
 					<thead>
 						<tr>
-							<th>{{ t('shillinq', 'Rate') }}</th>
-							<th>{{ t('shillinq', 'Weight') }}</th>
-							<th>{{ t('shillinq', 'Value') }}</th>
+							<th scope="col">{{ t('shillinq', 'Rate') }}</th>
+							<th scope="col">{{ t('shillinq', 'Weight') }}</th>
+							<th scope="col">{{ t('shillinq', 'Value') }}</th>
 						</tr>
 					</thead>
 					<tbody>

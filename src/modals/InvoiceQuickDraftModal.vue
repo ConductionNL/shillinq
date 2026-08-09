@@ -101,6 +101,7 @@
 						v-model="line.description"
 						type="text"
 						class="iqd__input iqd__input--desc"
+						:aria-label="t('shillinq', 'Line description')"
 						:placeholder="t('shillinq', 'Description')"
 						data-testid="iqd-line-description">
 					<input
@@ -109,6 +110,7 @@
 						min="0"
 						step="0.01"
 						class="iqd__input iqd__input--qty"
+						:aria-label="t('shillinq', 'Line quantity')"
 						:placeholder="t('shillinq', 'Qty')"
 						data-testid="iqd-line-quantity">
 					<input
@@ -117,6 +119,7 @@
 						min="0"
 						step="0.01"
 						class="iqd__input iqd__input--price"
+						:aria-label="t('shillinq', 'Line unit price')"
 						:placeholder="t('shillinq', 'Unit price')"
 						data-testid="iqd-line-unit-price">
 					<NcSelect

@@ -130,6 +130,7 @@
 					type="file"
 					accept="image/*"
 					multiple
+					:aria-label="t('shillinq', 'Choose delivery photos to attach')"
 					data-testid="grn-form-photo-input"
 					@change="onPhotoSelected">
 				<ul v-if="photos.length > 0" class="grn-form__photo-list" data-testid="grn-form-photo-list">

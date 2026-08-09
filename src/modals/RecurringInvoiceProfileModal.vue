@@ -135,6 +135,7 @@
 						v-model="line.description"
 						type="text"
 						class="rip__input rip__input--desc"
+						:aria-label="t('shillinq', 'Line description')"
 						:placeholder="t('shillinq', 'Description (e.g. Hosting {month} {year})')"
 						data-testid="rip-line-description">
 					<input
@@ -143,6 +144,7 @@
 						min="0"
 						step="0.01"
 						class="rip__input rip__input--qty"
+						:aria-label="t('shillinq', 'Line quantity')"
 						:placeholder="t('shillinq', 'Qty')"
 						data-testid="rip-line-quantity">
 					<input
@@ -151,6 +153,7 @@
 						min="0"
 						step="0.01"
 						class="rip__input rip__input--price"
+						:aria-label="t('shillinq', 'Line unit price')"
 						:placeholder="t('shillinq', 'Unit price')"
 						data-testid="rip-line-unit-price">
 					<NcSelect
