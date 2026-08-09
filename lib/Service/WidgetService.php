@@ -134,6 +134,8 @@ class WidgetService
      * @param string $administrationId The owning administration (tenant scope).
      *
      * @return array<int,array<string,mixed>> The public service list.
+     *
+     * @spec openspec/specs/bookings-self-service-widget/spec.md
      */
     public function listPublicServices(string $administrationId): array
     {
