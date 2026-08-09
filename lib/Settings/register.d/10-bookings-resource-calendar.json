@@ -201,10 +201,9 @@
           "schema": "Resource",
           "slug": "res-001"
         },
-        "administrationId": "adm-1",
-        "resourceId": "res-001",
         "type": "staff",
         "name": "Jan Peeters",
+        "organization": "org-001",
         "status": "active"
       },
       {
@@ -213,10 +212,9 @@
           "schema": "Resource",
           "slug": "res-002"
         },
-        "administrationId": "adm-1",
-        "resourceId": "res-002",
         "type": "staff",
         "name": "Marie Dubois",
+        "organization": "org-001",
         "status": "active"
       },
       {
@@ -225,10 +223,9 @@
           "schema": "Resource",
           "slug": "res-003"
         },
-        "administrationId": "adm-1",
-        "resourceId": "res-003",
         "type": "room",
         "name": "Vergaderruimte A",
+        "organization": "org-001",
         "status": "active"
       },
       {
@@ -237,10 +234,9 @@
           "schema": "Resource",
           "slug": "res-004"
         },
-        "administrationId": "adm-1",
-        "resourceId": "res-004",
         "type": "equipment",
         "name": "Behandelstoel 1",
+        "organization": "org-001",
         "status": "active"
       },
       {
@@ -249,10 +245,9 @@
           "schema": "Resource",
           "slug": "res-005"
         },
-        "administrationId": "adm-1",
-        "resourceId": "res-005",
         "type": "furniture",
         "name": "Tafel 4 (hoek)",
+        "organization": "org-001",
         "status": "active"
       },
       {
@@ -261,8 +256,6 @@
           "schema": "Calendar",
           "slug": "cal-001"
         },
-        "administrationId": "adm-1",
-        "calendarId": "cal-001",
         "resource": "res-001",
         "timeZone": "Europe/Amsterdam",
         "workingHours": {
@@ -274,6 +267,7 @@
           "saturday": null,
           "sunday": null
         },
+        "organization": "org-001",
         "status": "active"
       },
       {
@@ -282,8 +276,6 @@
           "schema": "Calendar",
           "slug": "cal-002"
         },
-        "administrationId": "adm-1",
-        "calendarId": "cal-002",
         "resource": "res-003",
         "timeZone": "Europe/Amsterdam",
         "workingHours": {
@@ -295,6 +287,7 @@
           "saturday": "09:00-13:00",
           "sunday": null
         },
+        "organization": "org-001",
         "status": "active"
       },
       {
@@ -303,8 +296,6 @@
           "schema": "Calendar",
           "slug": "cal-003"
         },
-        "administrationId": "adm-1",
-        "calendarId": "cal-003",
         "resource": "res-004",
         "timeZone": "Europe/Amsterdam",
         "workingHours": {
@@ -316,6 +307,7 @@
           "saturday": "10:00-16:00",
           "sunday": null
         },
+        "organization": "org-001",
         "status": "active"
       },
       {
@@ -324,8 +316,6 @@
           "schema": "Booking",
           "slug": "bk-001"
         },
-        "administrationId": "adm-1",
-        "bookingId": "bk-001",
         "calendar": "cal-001",
         "resource": "res-001",
         "title": "Klant: Anna de Wit",
@@ -340,8 +330,6 @@
           "schema": "Booking",
           "slug": "bk-002"
         },
-        "administrationId": "adm-1",
-        "bookingId": "bk-002",
         "calendar": "cal-001",
         "resource": "res-001",
         "title": "Klant: Kees Bakker",
@@ -356,8 +344,6 @@
           "schema": "Booking",
           "slug": "bk-003"
         },
-        "administrationId": "adm-1",
-        "bookingId": "bk-003",
         "calendar": "cal-001",
         "resource": "res-001",
         "title": "Klant: Sophia Vermeulen (CONFLICT: overlaps with bk-002)",
@@ -372,8 +358,6 @@
           "schema": "Booking",
           "slug": "bk-004"
         },
-        "administrationId": "adm-1",
-        "bookingId": "bk-004",
         "calendar": "cal-002",
         "resource": "res-003",
         "title": "Team Meeting: Q2 Planning",
@@ -388,8 +372,6 @@
           "schema": "Booking",
           "slug": "bk-005"
         },
-        "administrationId": "adm-1",
-        "bookingId": "bk-005",
         "calendar": "cal-002",
         "resource": "res-003",
         "title": "Client Presentation (CONFLICT: overlaps with bk-004)",
@@ -404,8 +386,6 @@
           "schema": "Booking",
           "slug": "bk-006"
         },
-        "administrationId": "adm-1",
-        "bookingId": "bk-006",
         "calendar": "cal-003",
         "resource": "res-004",
         "title": "Afspraak: Manicure",
@@ -420,8 +400,6 @@
           "schema": "Booking",
           "slug": "bk-007"
         },
-        "administrationId": "adm-1",
-        "bookingId": "bk-007",
         "calendar": "cal-003",
         "resource": "res-004",
         "title": "Afspraak: Pedicure",
@@ -436,8 +414,6 @@
           "schema": "Booking",
           "slug": "bk-008"
         },
-        "administrationId": "adm-1",
-        "bookingId": "bk-008",
         "calendar": "cal-003",
         "resource": "res-004",
         "title": "Afspraak: Styling",
@@ -452,8 +428,6 @@
           "schema": "Booking",
           "slug": "bk-009"
         },
-        "administrationId": "adm-1",
-        "bookingId": "bk-009",
         "calendar": "cal-001",
         "resource": "res-001",
         "title": "Klant: Dirk Peeters",
@@ -468,8 +442,6 @@
           "schema": "Booking",
           "slug": "bk-010"
         },
-        "administrationId": "adm-1",
-        "bookingId": "bk-010",
         "calendar": "cal-001",
         "resource": "res-001",
         "title": "Klant: Nina Jansen",
