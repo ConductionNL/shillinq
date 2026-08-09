@@ -195,13 +195,15 @@
           },
           "serviceId": {
             "type": "string",
-            "description": "FK to Service.serviceId (bookings-service-catalog).",
+            "$ref": "Service",
+            "description": "FK to Service.serviceId (bookings-service-catalog) — the Service this appointment books.",
             "example": "svc-001",
             "title": "Service ID"
           },
           "resourceId": {
             "type": "string",
-            "description": "FK to Resource.resourceId (bookings-resource-calendar).",
+            "$ref": "Resource",
+            "description": "FK to Resource.resourceId (bookings-resource-calendar) — the Resource this appointment reserves.",
             "example": "res-001",
             "title": "Resource ID"
           },
@@ -294,22 +296,6 @@
               "label": "Cancel pending appointment",
               "description": "Cancel an appointment that was never confirmed."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "service": {
-            "localField": "serviceId",
-            "relatedSchema": "Service",
-            "relatedField": "serviceId",
-            "cardinality": "many-to-one",
-            "description": "The Service this appointment books."
-          },
-          "resource": {
-            "localField": "resourceId",
-            "relatedSchema": "Resource",
-            "relatedField": "resourceId",
-            "cardinality": "many-to-one",
-            "description": "The Resource this appointment reserves."
           }
         },
         "x-openregister-rbac": {
