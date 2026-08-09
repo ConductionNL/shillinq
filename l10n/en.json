@@ -2520,7 +2520,14 @@
         "Verkeerd product": "Verkeerd product",
         "Within tolerance": "Within tolerance",
         "download the file": "download the file",
-        "due": "due"
+        "due": "due",
+        "Choose a CAMT.053 bank statement file": "Choose a CAMT.053 bank statement file",
+        "Choose a UBL XML, CSV or PDF bill to import": "Choose a UBL XML, CSV or PDF bill to import",
+        "Choose delivery photos to attach": "Choose delivery photos to attach",
+        "Line description": "Line description",
+        "Line quantity": "Line quantity",
+        "Line unit price": "Line unit price",
+        "Read about {standard} (opens in a new tab)": "Read about {standard} (opens in a new tab)"
     },
     "plurals": ""
 }

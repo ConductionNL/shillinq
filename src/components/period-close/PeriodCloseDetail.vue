@@ -121,11 +121,11 @@
 				<table v-if="checklistItems.length > 0" class="period-close-detail__checklist-table">
 					<thead>
 						<tr>
-							<th>{{ t('shillinq', 'Category') }}</th>
-							<th>{{ t('shillinq', 'Description') }}</th>
-							<th>{{ t('shillinq', 'Status') }}</th>
-							<th>{{ t('shillinq', 'Resolved at') }}</th>
-							<th>{{ t('shillinq', 'Resolved by') }}</th>
+							<th scope="col">{{ t('shillinq', 'Category') }}</th>
+							<th scope="col">{{ t('shillinq', 'Description') }}</th>
+							<th scope="col">{{ t('shillinq', 'Status') }}</th>
+							<th scope="col">{{ t('shillinq', 'Resolved at') }}</th>
+							<th scope="col">{{ t('shillinq', 'Resolved by') }}</th>
 						</tr>
 					</thead>
 					<tbody>

@@ -92,13 +92,13 @@
 				<table v-if="(invoice.lines || []).length > 0">
 					<thead>
 						<tr>
-							<th>#</th>
-							<th>{{ t('shillinq', 'Product code') }}</th>
-							<th>{{ t('shillinq', 'Description') }}</th>
-							<th>{{ t('shillinq', 'Quantity') }}</th>
-							<th>{{ t('shillinq', 'Unit price') }}</th>
-							<th>{{ t('shillinq', 'VAT rate') }}</th>
-							<th>{{ t('shillinq', 'Line total') }}</th>
+							<th scope="col">#</th>
+							<th scope="col">{{ t('shillinq', 'Product code') }}</th>
+							<th scope="col">{{ t('shillinq', 'Description') }}</th>
+							<th scope="col">{{ t('shillinq', 'Quantity') }}</th>
+							<th scope="col">{{ t('shillinq', 'Unit price') }}</th>
+							<th scope="col">{{ t('shillinq', 'VAT rate') }}</th>
+							<th scope="col">{{ t('shillinq', 'Line total') }}</th>
 						</tr>
 					</thead>
 					<tbody>

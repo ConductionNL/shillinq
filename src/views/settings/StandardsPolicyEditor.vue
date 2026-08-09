@@ -41,6 +41,7 @@
 						target="_blank"
 						rel="noopener noreferrer"
 						class="standards-policy__docs"
+						:aria-label="t('shillinq', 'Read about {standard} (opens in a new tab)', { standard: row.label })"
 						:title="t('shillinq', 'Read about this standard')">
 						<OpenInNew :size="16" />
 					</a>

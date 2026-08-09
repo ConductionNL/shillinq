@@ -71,6 +71,7 @@
 						type="file"
 						accept=".xml,.ubl,.csv,.pdf,application/xml,text/csv,application/pdf"
 						class="bim__file"
+						:aria-label="t('shillinq', 'Choose a UBL XML, CSV or PDF bill to import')"
 						data-testid="bim-file-input"
 						@change="onFileSelected">
 				</div>

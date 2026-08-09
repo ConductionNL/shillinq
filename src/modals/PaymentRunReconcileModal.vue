@@ -37,6 +37,7 @@
 				ref="fileInput"
 				type="file"
 				accept=".xml,application/xml,text/xml"
+				:aria-label="t('shillinq', 'Choose a CAMT.053 bank statement file')"
 				data-testid="payment-run-reconcile-file"
 				@change="onFileSelected">
 

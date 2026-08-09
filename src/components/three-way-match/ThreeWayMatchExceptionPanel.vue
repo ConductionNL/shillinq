@@ -62,10 +62,10 @@
 				<table class="twm-exception__compare">
 					<thead>
 						<tr>
-							<th>{{ t('shillinq', 'Field') }}</th>
-							<th>{{ t('shillinq', 'Purchase Order') }}</th>
-							<th>{{ t('shillinq', 'Goods Receipt') }}</th>
-							<th>{{ t('shillinq', 'Invoice') }}</th>
+							<th scope="col">{{ t('shillinq', 'Field') }}</th>
+							<th scope="col">{{ t('shillinq', 'Purchase Order') }}</th>
+							<th scope="col">{{ t('shillinq', 'Goods Receipt') }}</th>
+							<th scope="col">{{ t('shillinq', 'Invoice') }}</th>
 						</tr>
 					</thead>
 					<tbody>
