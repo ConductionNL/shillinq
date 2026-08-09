@@ -138,7 +138,7 @@ class WidgetApiController extends Controller
                 'serviceId'   => (string) ($row['serviceId'] ?? ''),
                 'name'        => (string) ($row['name'] ?? ''),
                 'duration'    => (int) ($row['duration'] ?? 0),
-                'price'       => ($row['price'] ?? null),
+                'price'       => ($row['basePrice'] ?? $row['price'] ?? null),
                 'currency'    => (string) ($row['currency'] ?? 'EUR'),
                 'description' => (string) ($row['description'] ?? ''),
             ];

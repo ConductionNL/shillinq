@@ -178,7 +178,11 @@ class WidgetService
             ];
 
             if ((bool) ($service['priceVisible'] ?? false) === true) {
-                $public['price']    = (float) ($service['price'] ?? 0);
+                // `basePrice` is the Service schema's required price field.
+                // `price` is a legacy spelling that older stored objects may
+                // still carry; read it only as a fallback. Reading `price`
+                // first published 0.00 for every catalogue-seeded service.
+                $public['price']    = (float) ($service['basePrice'] ?? $service['price'] ?? 0);
                 $public['currency'] = (string) ($service['currency'] ?? 'EUR');
             }
 
