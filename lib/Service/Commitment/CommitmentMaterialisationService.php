@@ -93,7 +93,7 @@ class CommitmentMaterialisationService
      *
      * @param ContainerInterface $container  DI container for lazy ObjectService resolution.
      * @param IAppConfig         $appConfig  App config for register slug resolution.
-     * @param MandaatEnforcer    $mandaat    Reused mandate-sufficiency guard (REQ-VPL-002).
+     * @param MandaatEnforcer    $mandate    Reused mandate-sufficiency guard (REQ-VPL-002).
      * @param BudgetBlocker      $budget     Reused budget-room guard (REQ-VPL-001).
      * @param IEventDispatcher   $dispatcher NC event dispatcher (rechtmatigheid trigger transport).
      * @param LoggerInterface    $logger     Logger for fail-soft/fail-closed diagnostics.
@@ -101,7 +101,7 @@ class CommitmentMaterialisationService
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
-        private readonly MandaatEnforcer $mandaat,
+        private readonly MandaatEnforcer $mandate,
         private readonly BudgetBlocker $budget,
         private readonly IEventDispatcher $dispatcher,
         private readonly LoggerInterface $logger,
@@ -126,27 +126,27 @@ class CommitmentMaterialisationService
      */
     public function materialiseFromPurchaseOrder(array $purchaseOrder): ?array
     {
-        $bronReferentie = trim((string) ($purchaseOrder['poNumber'] ?? ''));
-        if ($bronReferentie === '') {
+        $sourceReference = trim((string) ($purchaseOrder['poNumber'] ?? ''));
+        if ($sourceReference === '') {
             return null;
         }
 
         $administrationId = (string) ($purchaseOrder['administrationId'] ?? '');
         $poId        = (string) ($purchaseOrder['id'] ?? ($purchaseOrder['@self']['id'] ?? ''));
         $lines       = $this->findMany(schema: 'PurchaseOrderLine', filters: ['poId' => $poId]);
-        $regelInputs = $this->buildRegelsFromPurchaseOrderLines(purchaseOrder: $purchaseOrder, lines: $lines);
+        $lineInputs = $this->buildLinesFromPurchaseOrderLines(purchaseOrder: $purchaseOrder, lines: $lines);
 
-        $tegenpartij = [
-            'soort'     => 'leverancier',
-            'contactId' => (string) ($purchaseOrder['supplierId'] ?? ''),
+        $counterparty = [
+            'counterpartyType' => 'supplier',
+            'contactId'        => (string) ($purchaseOrder['supplierId'] ?? ''),
         ];
 
         return $this->materialise(
-            bronReferentie: $bronReferentie,
-            soort: 'inkooporder',
+            sourceReference: $sourceReference,
+            commitmentType: 'purchaseOrder',
             administrationId: $administrationId,
-            regelInputs: $regelInputs,
-            tegenpartij: $tegenpartij,
+            lineInputs: $lineInputs,
+            counterparty: $counterparty,
             failClosed: true
         );
 
@@ -166,31 +166,31 @@ class CommitmentMaterialisationService
      */
     public function materialiseFromContract(array $contract): ?array
     {
-        $bronReferentie = trim((string) ($contract['contractNumber'] ?? ''));
-        if ($bronReferentie === '') {
+        $sourceReference = trim((string) ($contract['contractNumber'] ?? ''));
+        if ($sourceReference === '') {
             return null;
         }
 
         $administrationId = (string) ($contract['administrationId'] ?? '');
-        $regelInputs      = $this->buildRegelsFromContract(contract: $contract);
+        $lineInputs      = $this->buildLinesFromContract(contract: $contract);
 
-        $tegenpartijSoort = 'overig';
+        $counterpartyType = 'other';
         if ((string) ($contract['direction'] ?? '') === 'inbound') {
-            $tegenpartijSoort = 'leverancier';
+            $counterpartyType = 'supplier';
         }
 
-        $tegenpartij = [
-            'soort'     => $tegenpartijSoort,
-            'contactId' => (string) ($contract['counterpartyReference'] ?? ''),
+        $counterparty = [
+            'counterpartyType' => $counterpartyType,
+            'contactId'        => (string) ($contract['counterpartyReference'] ?? ''),
         ];
 
         try {
             return $this->materialise(
-                bronReferentie: $bronReferentie,
-                soort: $this->mapContractSoort(contractType: (string) ($contract['contractType'] ?? '')),
+                sourceReference: $sourceReference,
+                commitmentType: $this->mapContractType(contractType: (string) ($contract['contractType'] ?? '')),
                 administrationId: $administrationId,
-                regelInputs: $regelInputs,
-                tegenpartij: $tegenpartij,
+                lineInputs: $lineInputs,
+                counterparty: $counterparty,
                 failClosed: false
             );
         } catch (Throwable $e) {
@@ -199,7 +199,7 @@ class CommitmentMaterialisationService
             // make the Contract path block contract activation.
             $this->logger->warning(
                 'CommitmentMaterialisationService: contract materialisation failed — fail-soft',
-                ['bronReferentie' => $bronReferentie, 'exception' => $e->getMessage()]
+                ['sourceReference' => $sourceReference, 'exception' => $e->getMessage()]
             );
             return null;
         }//end try
@@ -210,11 +210,11 @@ class CommitmentMaterialisationService
      * Core materialisation: idempotency check, guard delegation, persistence,
      * and rechtmatigheid linkage. Shared by both source paths (REQ-VPL-010).
      *
-     * @param string                          $bronReferentie   Source PO/contract business key (idempotency key).
-     * @param string                          $soort            Verplichting.soort enum value.
+     * @param string                          $sourceReference   Source PO/contract business key (idempotency key).
+     * @param string                          $commitmentType   Commitment.commitmentType enum value.
      * @param string                          $administrationId Owning administration.
-     * @param array<int, array<string,mixed>> $regelInputs      Regel inputs built by the source-specific builder.
-     * @param array<string, mixed>            $tegenpartij      Embedded counterparty reference.
+     * @param array<int, array<string,mixed>> $lineInputs      Regel inputs built by the source-specific builder.
+     * @param array<string, mixed>            $counterparty      Embedded counterparty reference.
      * @param bool                            $failClosed       Whether a budget denial should throw (PO) or log (Contract).
      *
      * @return array<string, mixed>|null The materialised (or pre-existing) Verplichting, or null when nothing to do.
@@ -222,64 +222,64 @@ class CommitmentMaterialisationService
      * @throws InsufficientCommitmentBudgetException When $failClosed and budget denies with no override.
      */
     private function materialise(
-        string $bronReferentie,
-        string $soort,
+        string $sourceReference,
+        string $commitmentType,
         string $administrationId,
-        array $regelInputs,
-        array $tegenpartij,
+        array $lineInputs,
+        array $counterparty,
         bool $failClosed
     ): ?array {
-        $existing = $this->findExistingByBronReferentie(bronReferentie: $bronReferentie);
+        $existing = $this->findExistingBySourceReference(sourceReference: $sourceReference);
         if ($existing !== null) {
             // REQ-VPL-010 idempotency: a repeated transition is a no-op.
             return $existing;
         }
 
-        if ($regelInputs === []) {
+        if ($lineInputs === []) {
             $this->logger->info(
                 'CommitmentMaterialisationService: no budget-coded lines — skipping materialisation',
-                ['bronReferentie' => $bronReferentie]
+                ['sourceReference' => $sourceReference]
             );
             return null;
         }
 
-        $totaal = 0;
-        foreach ($regelInputs as $regel) {
-            $totaal += (int) ($regel['bedrag_excl_btw'] ?? 0);
+        $total = 0;
+        foreach ($lineInputs as $line) {
+            $total += (int) ($line['amountExclVat'] ?? 0);
         }
 
         $draft = [
             'administrationId'      => $administrationId,
-            'verplichtingsnummer'   => $bronReferentie,
-            'bronReferentie'        => $bronReferentie,
-            'soort'                 => $soort,
-            'status'                => 'concept',
-            'totaalbedrag_excl_btw' => $totaal,
-            'tegenpartij'           => $tegenpartij,
-            'regels'                => $regelInputs,
-            'aangaandatum'          => (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y-m-d'),
+            'commitmentNumber'   => $sourceReference,
+            'sourceReference'        => $sourceReference,
+            'commitmentType'        => $commitmentType,
+            'status'                => 'draft',
+            'totalAmountExclVat' => $total,
+            'counterparty'           => $counterparty,
+            'lines'                 => $lineInputs,
+            'commitmentDate'          => (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y-m-d'),
         ];
 
         // REQ-VPL-002 parity: no sufficient mandate routes to in_goedkeuring
         // (the existing `indienen` semantics) without a budget check — the
         // fail-closed budget guarantee only applies to the direct-commit path.
-        if ($this->mandaat->hasSufficientMandate(verplichtingsnummer: $bronReferentie, object: $draft) === false) {
+        if ($this->mandaat->hasSufficientMandate(verplichtingsnummer: $sourceReference, object: $draft) === false) {
             $draft['status'] = 'in_goedkeuring';
-            $saved           = $this->persist(draft: $draft, regelInputs: $regelInputs);
-            $this->dispatchRechtmatigheidTrigger(verplichting: $saved);
+            $saved           = $this->persist(draft: $draft, lineInputs: $lineInputs);
+            $this->dispatchLawfulnessTrigger(commitment: $saved);
             return $saved;
         }
 
-        if ($this->budget->canCommit(verplichtingsnummer: $bronReferentie, object: $draft) === false) {
+        if ($this->budget->canCommit(verplichtingsnummer: $sourceReference, object: $draft) === false) {
             if ($failClosed === true) {
                 throw new InsufficientCommitmentBudgetException(
-                    sprintf('Insufficient budget to materialise commitment for %s', $bronReferentie)
+                    sprintf('Insufficient budget to materialise commitment for %s', $sourceReference)
                 );
             }
 
             $this->logger->warning(
                 'CommitmentMaterialisationService: budget denied — skipping fail-soft materialisation',
-                ['bronReferentie' => $bronReferentie]
+                ['sourceReference' => $sourceReference]
             );
             return null;
         }
@@ -288,25 +288,25 @@ class CommitmentMaterialisationService
 
         $applied = $this->mandaat->resolveApplicableMandate(verplichting: $draft);
         if ($applied !== null) {
-            $draft['mandaat_toegepast'] = (string) ($applied['mandaatcode'] ?? '');
+            $draft['mandateApplied'] = (string) ($applied['mandateCode'] ?? '');
         }
 
         $isOverride = $applied !== null && (bool) ($applied['is_override'] ?? false) === true;
         if ($isOverride === true) {
             $draft['override_reden'] = sprintf(
                 'Automatisch aangegaan onder override-mandaat %s bij materialisatie van %s (budget ontoereikend).',
-                (string) ($applied['mandaatcode'] ?? ''),
-                $bronReferentie
+                (string) ($applied['mandateCode'] ?? ''),
+                $sourceReference
             );
         }
 
-        $saved = $this->persist(draft: $draft, regelInputs: $regelInputs);
+        $saved = $this->persist(draft: $draft, lineInputs: $lineInputs);
 
         if ($isOverride === true) {
-            $this->recordOverrideAfwijking(verplichting: $saved, regelInputs: $regelInputs);
+            $this->recordOverrideDeviation(commitment: $saved, lineInputs: $lineInputs);
         }
 
-        $this->dispatchRechtmatigheidTrigger(verplichting: $saved);
+        $this->dispatchLawfulnessTrigger(commitment: $saved);
 
         return $saved;
 
@@ -328,7 +328,7 @@ class CommitmentMaterialisationService
      *
      * @return array<int, array<string,mixed>> Regel inputs (kostenplaats/grootboekrekening/boekjaar/bedrag_excl_btw/programma).
      */
-    private function buildRegelsFromPurchaseOrderLines(array $purchaseOrder, array $lines): array
+    private function buildLinesFromPurchaseOrderLines(array $purchaseOrder, array $lines): array
     {
         $administrationId = (string) ($purchaseOrder['administrationId'] ?? '');
         $orderCostCenter  = (string) ($purchaseOrder['costCenter'] ?? '');
@@ -336,36 +336,36 @@ class CommitmentMaterialisationService
 
         $grouped = [];
         foreach ($lines as $line) {
-            $kostenplaats = trim((string) ($line['costCenter'] ?? $orderCostCenter));
-            $grootboek    = trim((string) ($line['glAccount'] ?? ''));
+            $costCentre = trim((string) ($line['costCenter'] ?? $orderCostCenter));
+            $glAccount    = trim((string) ($line['glAccount'] ?? ''));
             $lineDate     = (string) ($line['expectedDeliveryDate'] ?? $orderDate);
-            $boekjaar     = $this->resolveBoekjaar(dateString: $lineDate);
-            $bedrag       = (int) ($line['lineTotal'] ?? 0);
+            $fiscalYear     = $this->resolveFiscalYear(dateString: $lineDate);
+            $amount       = (int) ($line['lineTotal'] ?? 0);
 
-            $key = $kostenplaats.'|'.$grootboek.'|'.$boekjaar;
+            $key = $costCentre.'|'.$glAccount.'|'.$fiscalYear;
             if (isset($grouped[$key]) === false) {
                 $grouped[$key] = [
-                    'kostenplaats'      => $kostenplaats,
-                    'grootboekrekening' => $grootboek,
-                    'boekjaar'          => $boekjaar,
-                    'bedrag_excl_btw'   => 0,
+                    'costCentre'      => $costCentre,
+                    'glAccount' => $glAccount,
+                    'fiscalYear'          => $fiscalYear,
+                    'amountExclVat'   => 0,
                 ];
             }
 
-            $grouped[$key]['bedrag_excl_btw'] += $bedrag;
+            $grouped[$key]['amountExclVat'] += $amount;
         }//end foreach
 
-        foreach ($grouped as $key => $regel) {
-            $grouped[$key]['programma'] = $this->resolveProgramma(
+        foreach ($grouped as $key => $line) {
+            $grouped[$key]['programme'] = $this->resolveProgramme(
                 administrationId: $administrationId,
-                kostenplaats: $regel['kostenplaats'],
-                boekjaar: $regel['boekjaar']
+                costCentre: $line['costCentre'],
+                fiscalYear: $line['fiscalYear']
             );
         }
 
         return array_values($grouped);
 
-    }//end buildRegelsFromPurchaseOrderLines()
+    }//end buildLinesFromPurchaseOrderLines()
 
     /**
      * Build regel inputs for a Contract (Task 2). A Contract carries a
@@ -379,13 +379,13 @@ class CommitmentMaterialisationService
      *
      * @return array<int, array<string,mixed>> Regel inputs.
      */
-    private function buildRegelsFromContract(array $contract): array
+    private function buildLinesFromContract(array $contract): array
     {
         $administrationId = (string) ($contract['administrationId'] ?? '');
-        $kostenplaats     = trim((string) ($contract['costCenter'] ?? ''));
-        $totaalCents      = (int) round(((float) ($contract['totalContractValue'] ?? 0)) * 100);
+        $costCentre     = trim((string) ($contract['costCenter'] ?? ''));
+        $totalCents      = (int) round(((float) ($contract['totalContractValue'] ?? 0)) * 100);
 
-        $years = $this->resolveBoekjaarSpan(
+        $years = $this->resolveFiscalYearSpan(
             startDate: (string) ($contract['startDate'] ?? ''),
             endDate: (string) ($contract['endDate'] ?? '')
         );
@@ -395,32 +395,32 @@ class CommitmentMaterialisationService
             return [];
         }
 
-        $perYear   = intdiv($totaalCents, $yearCount);
-        $remainder = $totaalCents - ($perYear * $yearCount);
+        $perYear   = intdiv($totalCents, $yearCount);
+        $remainder = $totalCents - ($perYear * $yearCount);
 
-        $regels = [];
-        foreach ($years as $index => $boekjaar) {
-            $bedrag = $perYear;
+        $lines = [];
+        foreach ($years as $index => $fiscalYear) {
+            $amount = $perYear;
             if ($index === 0) {
-                $bedrag += $remainder;
+                $amount += $remainder;
             }
 
-            $regels[] = [
-                'kostenplaats'      => $kostenplaats,
-                'grootboekrekening' => '',
-                'boekjaar'          => $boekjaar,
-                'bedrag_excl_btw'   => $bedrag,
-                'programma'         => $this->resolveProgramma(
+            $lines[] = [
+                'costCentre'      => $costCentre,
+                'glAccount' => '',
+                'fiscalYear'          => $fiscalYear,
+                'amountExclVat'   => $amount,
+                'programme'         => $this->resolveProgramme(
                     administrationId: $administrationId,
-                    kostenplaats: $kostenplaats,
-                    boekjaar: $boekjaar
+                    costCentre: $costCentre,
+                    fiscalYear: $fiscalYear
                 ),
             ];
         }
 
-        return $regels;
+        return $lines;
 
-    }//end buildRegelsFromContract()
+    }//end buildLinesFromContract()
 
     /**
      * Map a Contract.contractType to the closest Verplichting.soort enum
@@ -433,15 +433,15 @@ class CommitmentMaterialisationService
      *
      * @return string Verplichting.soort enum value.
      */
-    private function mapContractSoort(string $contractType): string
+    private function mapContractType(string $contractType): string
     {
         return match ($contractType) {
-            'lease' => 'leasing',
-            'employment' => 'arbeidscontract',
-            default => 'overig',
+            'lease' => 'lease',
+            'employment' => 'employmentContract',
+            default => 'other',
         };
 
-    }//end mapContractSoort()
+    }//end mapContractType()
 
     /**
      * Resolve the boekjaar for a single date string, falling back to the
@@ -451,7 +451,7 @@ class CommitmentMaterialisationService
      *
      * @return int Fiscal year.
      */
-    private function resolveBoekjaar(string $dateString): int
+    private function resolveFiscalYear(string $dateString): int
     {
         if ($dateString !== '') {
             try {
@@ -463,7 +463,7 @@ class CommitmentMaterialisationService
 
         return (int) (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y');
 
-    }//end resolveBoekjaar()
+    }//end resolveFiscalYear()
 
     /**
      * Resolve the inclusive boekjaar span [startYear..endYear] for a
@@ -475,7 +475,7 @@ class CommitmentMaterialisationService
      *
      * @return array<int, int> Ordered list of boekjaren.
      */
-    private function resolveBoekjaarSpan(string $startDate, string $endDate): array
+    private function resolveFiscalYearSpan(string $startDate, string $endDate): array
     {
         $currentYear = (int) (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y');
         if ($startDate === '') {
@@ -503,7 +503,7 @@ class CommitmentMaterialisationService
 
         return range($startYear, $endYear);
 
-    }//end resolveBoekjaarSpan()
+    }//end resolveFiscalYearSpan()
 
     /**
      * Resolve the BBV programma code for a kostenplaats + boekjaar by
@@ -514,14 +514,14 @@ class CommitmentMaterialisationService
      * silent success.
      *
      * @param string $administrationId Owning administration.
-     * @param string $kostenplaats     Cost-centre code.
-     * @param int    $boekjaar         Fiscal year.
+     * @param string $costCentre     Cost-centre code.
+     * @param int    $fiscalYear         Fiscal year.
      *
      * @return string Resolved programma code, or '' when unresolved.
      */
-    private function resolveProgramma(string $administrationId, string $kostenplaats, int $boekjaar): string
+    private function resolveProgramme(string $administrationId, string $costCentre, int $fiscalYear): string
     {
-        if ($kostenplaats === '') {
+        if ($costCentre === '') {
             return '';
         }
 
@@ -529,51 +529,51 @@ class CommitmentMaterialisationService
             schema: 'Budget',
             filters: [
                 'administrationId' => $administrationId,
-                'kostenplaats'     => $kostenplaats,
-                'boekjaar'         => $boekjaar,
+                'costCentre'     => $costCentre,
+                'fiscalYear'         => $fiscalYear,
             ]
         );
 
-        return (string) ($budget['programmaCode'] ?? '');
+        return (string) ($budget['programmeCode'] ?? '');
 
-    }//end resolveProgramma()
+    }//end resolveProgramme()
 
     /**
      * Persist the Verplichting and its Verplichtingsregel rows.
      *
      * @param array<string, mixed>            $draft       Assembled Verplichting.
-     * @param array<int, array<string,mixed>> $regelInputs Regel inputs to persist as Verplichtingsregel rows.
+     * @param array<int, array<string,mixed>> $lineInputs Regel inputs to persist as Verplichtingsregel rows.
      *
      * @return array<string, mixed> The persisted Verplichting.
      */
-    private function persist(array $draft, array $regelInputs): array
+    private function persist(array $draft, array $lineInputs): array
     {
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
         $saved = $objectService
             ->setRegister(register: $this->getRegisterSlug())
-            ->setSchema(schema: 'Verplichting')
+            ->setSchema(schema: 'Commitment')
             ->saveObject(object: $draft);
 
-        $regelnummer = 1;
-        foreach ($regelInputs as $regel) {
+        $lineNumber = 1;
+        foreach ($lineInputs as $line) {
             $objectService
                 ->setRegister(register: $this->getRegisterSlug())
-                ->setSchema(schema: 'Verplichtingsregel')
+                ->setSchema(schema: 'CommitmentLine')
                 ->saveObject(
                     object: [
                         'administrationId'  => (string) ($draft['administrationId'] ?? ''),
-                        'verplichting'      => (string) ($draft['verplichtingsnummer'] ?? ''),
-                        'regelnummer'       => $regelnummer,
-                        'boekjaar'          => (int) ($regel['boekjaar'] ?? 0),
-                        'bedrag_excl_btw'   => (int) ($regel['bedrag_excl_btw'] ?? 0),
-                        'grootboekrekening' => (string) ($regel['grootboekrekening'] ?? ''),
-                        'kostenplaats'      => (string) ($regel['kostenplaats'] ?? ''),
-                        'programma'         => (string) ($regel['programma'] ?? ''),
-                        'restant_verplicht' => (int) ($regel['bedrag_excl_btw'] ?? 0),
+                        'commitment'        => (string) ($draft['commitmentNumber'] ?? ''),
+                        'lineNumber'       => $lineNumber,
+                        'fiscalYear'          => (int) ($line['fiscalYear'] ?? 0),
+                        'amountExclVat'   => (int) ($line['amountExclVat'] ?? 0),
+                        'glAccount' => (string) ($line['glAccount'] ?? ''),
+                        'costCentre'      => (string) ($line['costCentre'] ?? ''),
+                        'programme'         => (string) ($line['programme'] ?? ''),
+                        'remainingCommitted' => (int) ($line['amountExclVat'] ?? 0),
                     ]
                 );
-            $regelnummer++;
+            $lineNumber++;
         }
 
         if (is_array($saved) === true) {
@@ -591,17 +591,17 @@ class CommitmentMaterialisationService
      * target for an afwijking raised before any journaalpost exists —
      * fail-soft: a write failure here never blocks the commitment itself.
      *
-     * @param array<string, mixed>            $verplichting Persisted Verplichting.
-     * @param array<int, array<string,mixed>> $regelInputs  Regel inputs (for boekjaar/programma).
+     * @param array<string, mixed>            $commitment Persisted Verplichting.
+     * @param array<int, array<string,mixed>> $lineInputs  Regel inputs (for boekjaar/programma).
      *
      * @return void
      */
-    private function recordOverrideAfwijking(array $verplichting, array $regelInputs): void
+    private function recordOverrideDeviation(array $commitment, array $lineInputs): void
     {
         try {
-            $first    = reset($regelInputs);
-            $boekjaar = (int) ($first['boekjaar'] ?? (int) (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y'));
-            $bedrag   = ((float) ($verplichting['totaalbedrag_excl_btw'] ?? 0)) / 100;
+            $first    = reset($lineInputs);
+            $fiscalYear = (int) ($first['fiscalYear'] ?? (int) (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y'));
+            $amount   = ((float) ($commitment['totalAmountExclVat'] ?? 0)) / 100;
 
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $objectService
@@ -609,17 +609,17 @@ class CommitmentMaterialisationService
                 ->setSchema(schema: 'Rechtmatigheidsbevinding')
                 ->saveObject(
                     object: [
-                        'administrationId' => (string) ($verplichting['administrationId'] ?? ''),
-                        'bevindingsnummer' => 'RV-'.($verplichting['verplichtingsnummer'] ?? '').'-OVERRIDE',
+                        'administrationId' => (string) ($commitment['administrationId'] ?? ''),
+                        'bevindingsnummer' => 'RV-'.($commitment['commitmentNumber'] ?? '').'-OVERRIDE',
                         'soort'            => 'fout',
                         'criterium'        => 'begroting',
-                        'boekjaar'         => $boekjaar,
-                        'programma'        => (string) ($first['programma'] ?? ''),
-                        'bedrag_fout'      => $bedrag,
-                        'omschrijving'     => (string) ($verplichting['override_reden'] ?? ''),
+                        'fiscalYear'         => $fiscalYear,
+                        'programme'        => (string) ($first['programme'] ?? ''),
+                        'bedrag_fout'      => $amount,
+                        'description'     => (string) ($commitment['override_reden'] ?? ''),
                         'oorzaak'          => sprintf(
                             'Verplichting %s automatisch aangegaan onder override-mandaat wegens ontoereikende vrije_ruimte.',
-                            (string) ($verplichting['verplichtingsnummer'] ?? '')
+                            (string) ($commitment['commitmentNumber'] ?? '')
                         ),
                         'status'           => 'open',
                     ]
@@ -627,34 +627,34 @@ class CommitmentMaterialisationService
         } catch (Throwable $e) {
             $this->logger->warning(
                 'CommitmentMaterialisationService: recording override afwijking failed — fail-soft',
-                ['verplichtingsnummer' => ($verplichting['verplichtingsnummer'] ?? 'unknown'), 'exception' => $e->getMessage()]
+                ['commitmentNumber' => ($commitment['commitmentNumber'] ?? 'unknown'), 'exception' => $e->getMessage()]
             );
         }//end try
 
-    }//end recordOverrideAfwijking()
+    }//end recordOverrideDeviation()
 
     /**
      * Dispatch the rechtmatigheid commitment-stage trigger event
      * (REQ-VPL-012). Fail-soft, mirroring
      * {@see \OCA\Shillinq\Service\BudgetImpactEmitter::dispatch()}.
      *
-     * @param array<string, mixed>|null $verplichting Persisted Verplichting, or null (no-op).
+     * @param array<string, mixed>|null $commitment Persisted Verplichting, or null (no-op).
      *
      * @return void
      */
-    private function dispatchRechtmatigheidTrigger(?array $verplichting): void
+    private function dispatchLawfulnessTrigger(?array $commitment): void
     {
-        if ($verplichting === null) {
+        if ($commitment === null) {
             return;
         }
 
         try {
             $payload = [
                 'eventName'           => self::EVENT_COMMITMENT_CREATED,
-                'verplichtingsnummer' => (string) ($verplichting['verplichtingsnummer'] ?? ''),
-                'bronReferentie'      => (string) ($verplichting['bronReferentie'] ?? ''),
-                'soort'               => (string) ($verplichting['soort'] ?? ''),
-                'administrationId'    => (string) ($verplichting['administrationId'] ?? ''),
+                'commitmentNumber' => (string) ($commitment['commitmentNumber'] ?? ''),
+                'sourceReference'      => (string) ($commitment['sourceReference'] ?? ''),
+                'soort'               => (string) ($commitment['soort'] ?? ''),
+                'administrationId'    => (string) ($commitment['administrationId'] ?? ''),
                 'emittedAt'           => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
             ];
 
@@ -667,20 +667,20 @@ class CommitmentMaterialisationService
             );
         }//end try
 
-    }//end dispatchRechtmatigheidTrigger()
+    }//end dispatchLawfulnessTrigger()
 
     /**
      * Look up an existing Verplichting by bronReferentie (idempotency, REQ-VPL-010).
      *
-     * @param string $bronReferentie Source PO/contract business key.
+     * @param string $sourceReference Source PO/contract business key.
      *
      * @return array<string, mixed>|null
      */
-    private function findExistingByBronReferentie(string $bronReferentie): ?array
+    private function findExistingBySourceReference(string $sourceReference): ?array
     {
-        return $this->findOne(schema: 'Verplichting', filters: ['bronReferentie' => $bronReferentie]);
+        return $this->findOne(schema: 'Commitment', filters: ['sourceReference' => $sourceReference]);
 
-    }//end findExistingByBronReferentie()
+    }//end findExistingBySourceReference()
 
     /**
      * Return the configured register slug, falling back to 'shillinq'.
