@@ -87,7 +87,7 @@ class VerplichtingGuard
             ) {
                 $this->logger->info(
                     'VerplichtingGuard: missing kostenplaats or grootboekrekening — denying activation (design D2)',
-                    ['verplichtingNummer' => ($verplichting['verplichtingNummer'] ?? 'unknown')]
+                    ['verplichtingsnummer' => ($verplichting['verplichtingsnummer'] ?? 'unknown')]
                 );
                 return false;
             }
@@ -101,7 +101,7 @@ class VerplichtingGuard
             $this->logger->error(
                 'VerplichtingGuard: canActiveren failed — denying activation (fail-closed)',
                 [
-                    'verplichtingNummer' => ($verplichting['verplichtingNummer'] ?? 'unknown'),
+                    'verplichtingsnummer' => ($verplichting['verplichtingsnummer'] ?? 'unknown'),
                     'exception'          => $e->getMessage(),
                 ]
             );
@@ -145,7 +145,7 @@ class VerplichtingGuard
                 $this->logger->info(
                     'VerplichtingGuard: milestone date out of contract term — denying activation',
                     [
-                        'verplichtingNummer' => ($verplichting['verplichtingNummer'] ?? 'unknown'),
+                        'verplichtingsnummer' => ($verplichting['verplichtingsnummer'] ?? 'unknown'),
                         'mijlpaalId'         => ($mijlpaal['mijlpaalId'] ?? 'unknown'),
                         'datum'              => ($mijlpaal['datum'] ?? 'unknown'),
                     ]

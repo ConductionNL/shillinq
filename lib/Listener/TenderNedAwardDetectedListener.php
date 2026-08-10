@@ -269,17 +269,24 @@ class TenderNedAwardDetectedListener implements IEventListener
             looptijdEind: (string) ($payload['looptijdEind'] ?? '')
         );
 
+        // `verplichtingsnummer` and `soort` are REQUIRED by the schema's owning
+        // fragment (bookkeeping-verplichtingenadministratie.json). This write
+        // previously used the spelling `verplichtingNummer` and omitted `soort`
+        // entirely, so every award produced a rejected object — and because the
+        // catch below is fail-soft, TenderNed award detection silently created
+        // nothing at all rather than reporting a fault (shillinq#485).
         $verplichting = [
-            'verplichtingNummer' => 'TN-'.$aanbestedingId,
-            'omschrijving'       => (string) ($payload['titel'] ?? $aanbestedingId),
-            'bron'               => 'tenderned',
-            'bronReferentie'     => $aanbestedingId,
-            'bedrag'             => (float) ($payload['contractWaarde'] ?? 0),
-            'looptijdStart'      => (string) ($payload['looptijdStart'] ?? ''),
-            'looptijdEind'       => (string) ($payload['looptijdEind'] ?? ''),
-            'mijlpalen'          => $plan,
-            'status'             => 'active',
-            'administrationId'   => (string) ($payload['administrationId'] ?? ''),
+            'verplichtingsnummer' => 'TN-'.$aanbestedingId,
+            'soort'               => 'inkooporder',
+            'omschrijving'        => (string) ($payload['titel'] ?? $aanbestedingId),
+            'bron'                => 'tenderned',
+            'bronReferentie'      => $aanbestedingId,
+            'bedrag'              => (float) ($payload['contractWaarde'] ?? 0),
+            'looptijdStart'       => (string) ($payload['looptijdStart'] ?? ''),
+            'looptijdEind'        => (string) ($payload['looptijdEind'] ?? ''),
+            'mijlpalen'           => $plan,
+            'status'              => 'active',
+            'administrationId'    => (string) ($payload['administrationId'] ?? ''),
         ];
 
         try {

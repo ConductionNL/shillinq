@@ -241,20 +241,14 @@
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
-        "required": [
-          "verplichtingNummer",
-          "omschrijving",
-          "bron",
-          "bedrag",
-          "administrationId",
-          "status"
-        ],
+        "x-fragment-role": "additive — `Verplichting` is OWNED by bookkeeping-verplichtingenadministratie.json, which declares its `required`. ADR-037 merges fragments by schema key and CONCATENATES list values, so a second `required` list here would be UNIONED with the owner's and the schema would demand both vocabularies at once — unsatisfiable by any payload of either model (shillinq#485). This fragment therefore only ADDS optional TenderNed provenance properties.",
+        "required": [],
         "properties": {
-          "verplichtingNummer": {
+          "verplichtingsnummer": {
             "type": "string",
             "description": "Sequential obligation number unique per administration.",
             "example": "VPL-2026-0001",
-            "title": "Verplichting Nummer"
+            "title": "Verplichtingsnummer"
           },
           "omschrijving": {
             "type": "string",
@@ -706,7 +700,8 @@
         "schema": "Verplichting",
         "slug": "vpl-sample-utrecht-schoonmaak"
       },
-      "verplichtingNummer": "VPL-2026-0001",
+      "verplichtingsnummer": "VPL-2026-0001",
+      "soort": "inkooporder",
       "omschrijving": "Schoonmaakcontract gemeentehuis Utrecht 2026",
       "bron": "tenderned",
       "bronReferentie": "TN-2026-0001",
