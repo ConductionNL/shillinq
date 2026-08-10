@@ -1,9 +1,9 @@
 <?php
 
 /**
- * TenderNedAanbesteding Guard
+ * TenderNedProcurement Guard
  *
- * ADR-031 exception-path lifecycle guard for the TenderNedAanbesteding award
+ * ADR-031 exception-path lifecycle guard for the TenderNedProcurement award
  * (gunnen) and completion (afronden) transitions.
  *
  * canGunnen (open → awarded) enforces REQ-002: the award is only recorded when
@@ -11,16 +11,16 @@
  * awardedSupplier and a non-zero contractValue.
  *
  * canAfronden (in-uitvoering → afgerond) enforces REQ-006: a tender can only be
- * completed once an finalDelivery OpdrachtUitvoering for the linked obligation
+ * completed once an finalDelivery OrderFulfilment for the linked obligation
  * has been approved, so the public dossier is never marked afgerond before the
  * final delivery is accepted.
  *
- * Referenced from the TenderNedAanbesteding schema's
+ * Referenced from the TenderNedProcurement schema's
  * x-openregister-lifecycle.transitions.{gunnen,afronden}.requires in
  * lib/Settings/register.d/20-bookkeeping-tenderned-integratie.json.
  *
- * ADR-031 exception reason: canAfronden spans the OpdrachtUitvoering set for the
- * linked Verplichting (a cross-schema existence + approval check) which the
+ * ADR-031 exception reason: canAfronden spans the OrderFulfilment set for the
+ * linked Commitment (a cross-schema existence + approval check) which the
  * declarative lifecycle DSL cannot yet express. Replace with declarative
  * conditions when the engine supports cross-schema existence predicates.
  *
@@ -49,7 +49,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Award and completion precondition guard for the TenderNedAanbesteding schema
+ * Award and completion precondition guard for the TenderNedProcurement schema
  * per REQ-002 and REQ-006.
  *
  * Fail-closed: any unexpected exception denies the transition (CWE-863).
@@ -97,7 +97,7 @@ class TenderNedProcurementGuard
      *
      * Fail-closed: returns false on any exception (denies the award) per CWE-863.
      *
-     * @param array<string, mixed> $procurement TenderNedAanbesteding object array.
+     * @param array<string, mixed> $procurement TenderNedProcurement object array.
      *
      * @return bool True when the award may be recorded.
      *
@@ -140,17 +140,17 @@ class TenderNedProcurementGuard
      * Precondition for the afronden (in-uitvoering → afgerond) transition.
      *
      * REQ-006: a tender can only be completed once an finalDelivery
-     * OpdrachtUitvoering for the linked Verplichting has been approved
+     * OrderFulfilment for the linked Commitment has been approved
      * (status completed, approved true). This prevents the public dossier from
      * being marked afgerond before the final delivery is accepted.
      *
-     * When the linked Verplichting cannot be resolved (no commitmentId yet, or
+     * When the linked Commitment cannot be resolved (no commitmentId yet, or
      * the schema is not available in a T1 state) the completion is permitted with
      * a warning so manually-managed tenders are not blocked.
      *
      * Fail-closed: returns false on any exception (denies completion) per CWE-863.
      *
-     * @param array<string, mixed> $procurement TenderNedAanbesteding object array.
+     * @param array<string, mixed> $procurement TenderNedProcurement object array.
      *
      * @return bool True when the tender may be completed.
      *
@@ -162,7 +162,7 @@ class TenderNedProcurementGuard
             $commitmentId = trim((string) ($procurement['commitmentId'] ?? ''));
             if ($commitmentId === '') {
                 $this->logger->warning(
-                    'TenderNedProcurementGuard: no linked Verplichting — permitting completion without delivery check',
+                    'TenderNedProcurementGuard: no linked Commitment — permitting completion without delivery check',
                     ['procurementId' => ($procurement['procurementId'] ?? 'unknown')]
                 );
                 return true;
@@ -186,9 +186,9 @@ class TenderNedProcurementGuard
      * Verify an approved finalDelivery exists for the linked obligation.
      *
      * @param string               $commitmentId The linked obligation id.
-     * @param array<string, mixed> $procurement   TenderNedAanbesteding for log context.
+     * @param array<string, mixed> $procurement   TenderNedProcurement for log context.
      *
-     * @return bool True when an approved finalDelivery OpdrachtUitvoering exists.
+     * @return bool True when an approved finalDelivery OrderFulfilment exists.
      */
     private function hasApprovedFinalDelivery(string $commitmentId, array $procurement): bool
     {
@@ -206,9 +206,9 @@ class TenderNedProcurementGuard
                     ]
                 );
         } catch (\Throwable $e) {
-            // OpdrachtUitvoering schema not available (T1 state) — permit completion.
+            // OrderFulfilment schema not available (T1 state) — permit completion.
             $this->logger->debug(
-                'TenderNedProcurementGuard: OpdrachtUitvoering lookup unavailable (T1 state) — permitting completion',
+                'TenderNedProcurementGuard: OrderFulfilment lookup unavailable (T1 state) — permitting completion',
                 ['procurementId' => ($procurement['procurementId'] ?? 'unknown'), 'exception' => $e->getMessage()]
             );
             return true;

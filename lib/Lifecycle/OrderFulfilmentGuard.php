@@ -1,15 +1,15 @@
 <?php
 
 /**
- * OpdrachtUitvoering Guard
+ * OrderFulfilment Guard
  *
- * ADR-031 exception-path lifecycle guard for the OpdrachtUitvoering completion
+ * ADR-031 exception-path lifecycle guard for the OrderFulfilment completion
  * transition (in-progress → completed). Enforces the evidenceItem gate of REQ-004:
  * a delivery milestone may only be marked completed when at least one proof-of-
  * delivery (evidenceItem) is attached. The evidence live as docudesk file
- * references on the OpdrachtUitvoering record (ADR-022 / design D4).
+ * references on the OrderFulfilment record (ADR-022 / design D4).
  *
- * Referenced from the OpdrachtUitvoering schema's
+ * Referenced from the OrderFulfilment schema's
  * x-openregister-lifecycle.transitions.voltooien.requires in
  * lib/Settings/register.d/20-bookkeeping-tenderned-integratie.json.
  *
@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Lifecycle;
 use Psr\Log\LoggerInterface;
 
 /**
- * Completion precondition guard for the OpdrachtUitvoering schema per REQ-004.
+ * Completion precondition guard for the OrderFulfilment schema per REQ-004.
  *
  * Fail-closed: any unexpected exception denies the completion (CWE-863).
  *
@@ -68,7 +68,7 @@ class OrderFulfilmentGuard
      *
      * Fail-closed: returns false on any exception (denies completion) per CWE-863.
      *
-     * @param array<string, mixed> $fulfilment OpdrachtUitvoering object array supplied by OR.
+     * @param array<string, mixed> $fulfilment OrderFulfilment object array supplied by OR.
      *
      * @return bool True when the delivery may be marked completed.
      *
@@ -108,7 +108,7 @@ class OrderFulfilmentGuard
      * A evidenceItem is valid when it is an array carrying a non-empty documentId.
      * Scalar entries or entries without a documentId do not satisfy REQ-004.
      *
-     * @param array<string, mixed> $fulfilment OpdrachtUitvoering object array.
+     * @param array<string, mixed> $fulfilment OrderFulfilment object array.
      *
      * @return bool True when at least one valid evidenceItem exists.
      */

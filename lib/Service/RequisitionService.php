@@ -13,7 +13,7 @@
  * against the Requisition object itself: BudgetBlocker is schema-agnostic (it
  * reads array fields off whatever object it is given), and Requisition
  * deliberately carries the same programma/boekjaar/totaalbedrag_excl_btw/soort
- * field contract the Verplichting schema already uses, so the guard's budget
+ * field contract the Commitment schema already uses, so the guard's budget
  * lookup and override-mandate check work verbatim (ADR-031, ADR-022 —
  * consume, don't reimplement).
  *
@@ -110,13 +110,13 @@ class RequisitionService
             throw new RuntimeException('Authenticated requester is required');
         }
 
-        $programma = trim((string) ($payload['programma'] ?? ''));
-        if ($programma === '') {
+        $programme = trim((string) ($payload['programme'] ?? ''));
+        if ($programme === '') {
             throw new RuntimeException('programma is required');
         }
 
-        $boekjaar = (int) ($payload['boekjaar'] ?? 0);
-        if ($boekjaar <= 0) {
+        $fiscalYear = (int) ($payload['fiscalYear'] ?? 0);
+        if ($fiscalYear <= 0) {
             throw new RuntimeException('boekjaar is required');
         }
 
@@ -130,8 +130,8 @@ class RequisitionService
             throw new RuntimeException('justification is required');
         }
 
-        $soort = trim((string) ($payload['soort'] ?? ''));
-        if ($soort === '') {
+        $commitmentType = trim((string) ($payload['commitmentType'] ?? ''));
+        if ($commitmentType === '') {
             throw new RuntimeException('soort is required');
         }
 
@@ -147,13 +147,13 @@ class RequisitionService
             'requisitionNumber'     => $requisitionNumber,
             'administrationId'      => $administrationId,
             'requester'             => $requester,
-            'programma'             => $programma,
-            'boekjaar'              => $boekjaar,
+            'programme'             => $programme,
+            'fiscalYear'              => $fiscalYear,
             'neededByDate'          => $neededByDate,
             'justification'         => $justification,
-            'soort'                 => $soort,
+            'commitmentType'                 => $commitmentType,
             'preferredSupplierId'   => trim((string) ($payload['preferredSupplierId'] ?? '')),
-            'totaalbedrag_excl_btw' => $totalCent,
+            'totalAmountExclVat' => $totalCent,
             'statusCode'            => 'draft',
         ];
 
@@ -174,7 +174,7 @@ class RequisitionService
      * Submit a draft requisition for approval (REQ-REQ-002).
      *
      * Always routes through human approval regardless of mandate sufficiency
-     * — unlike Verplichting's `indienen` transition, a Requisition never
+     * — unlike Commitment's `indienen` transition, a Requisition never
      * skips straight to approved.
      *
      * @param string $administrationId Administration scope (server-resolved).
@@ -195,7 +195,7 @@ class RequisitionService
             throw new RuntimeException('Requisition can only be submitted from draft');
         }
 
-        if ((int) ($requisition['totaalbedrag_excl_btw'] ?? 0) <= 0) {
+        if ((int) ($requisition['totalAmountExclVat'] ?? 0) <= 0) {
             throw new RuntimeException('Requisition has no positive total; add lines before submitting');
         }
 
@@ -212,7 +212,7 @@ class RequisitionService
      * bookkeeping-verplichtingenadministratie. BudgetBlocker resolves the
      * matching Budget for (programma, boekjaar) and checks that
      * totaalbedrag_excl_btw fits the free room, or that the approver's
-     * mandate carries an override, exactly as it does for a Verplichting.
+     * mandate carries an override, exactly as it does for a Commitment.
      * Fail-closed: when the budget check fails or errors, the requisition is
      * NOT approved (CWE-863).
      *
@@ -237,8 +237,8 @@ class RequisitionService
 
         // Reuse BudgetBlocker unmodified: it reads programma/boekjaar/
         // totaalbedrag_excl_btw/administrationId/soort straight off $requisition
-        // because $object is supplied directly (no Verplichting lookup happens).
-        if ($this->budgetBlocker->canCommit(verplichtingsnummer: $requisitionId, object: $requisition) === false) {
+        // because $object is supplied directly (no Commitment lookup happens).
+        if ($this->budgetBlocker->canCommit(commitmentNumber: $requisitionId, object: $requisition) === false) {
             throw new RuntimeException('Requisition exceeds available budget');
         }
 

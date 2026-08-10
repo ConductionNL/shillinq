@@ -6,7 +6,7 @@
         "icon": "Gavel",
         "version": "0.1.0",
         "title": "TenderNed Procurement",
-        "description": "A procurement tender imported from TenderNed (Logius central procurement platform). Wraps the public dossier metadata (REQ-001) and links to the materialised Shillinq Verplichting. Both the aanbestedende dienst (public buyer) and the inschrijvende leverancier (winning vendor) consume this schema, with role-based visibility filtering (design D6).",
+        "description": "A procurement tender imported from TenderNed (Logius central procurement platform). Wraps the public dossier metadata (REQ-001) and links to the materialised Shillinq Commitment. Both the aanbestedende dienst (public buyer) and the inschrijvende leverancier (winning vendor) consume this schema, with role-based visibility filtering (design D6).",
         "x-schema-org": "schema:Order",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
@@ -108,7 +108,7 @@
           },
           "commitmentId": {
             "type": "string",
-            "description": "FK to the materialised Shillinq Verplichting (obligation). Null until import promotes the dossier to a concept obligation (REQ-001).",
+            "description": "FK to the materialised Shillinq Commitment (obligation). Null until import promotes the dossier to a concept obligation (REQ-001).",
             "nullable": true,
             "title": "Commitment ID"
           },
@@ -147,11 +147,11 @@
             },
             "awarded": {
               "label": "Gegund",
-              "description": "Awarded. The winning supplier is recorded; if it matches the tenant organisation a concept Verplichting is created (REQ-002)."
+              "description": "Awarded. The winning supplier is recorded; if it matches the tenant organisation a concept Commitment is created (REQ-002)."
             },
             "inProgress": {
               "label": "In uitvoering",
-              "description": "Contract under execution; milestones (OpdrachtUitvoering) are tracked (REQ-004)."
+              "description": "Contract under execution; milestones (OrderFulfilment) are tracked (REQ-004)."
             },
             "completed": {
               "label": "Afgerond",
@@ -167,14 +167,14 @@
               "from": "open",
               "to": "awarded",
               "label": "Gunning registreren",
-              "description": "Record the award. Auto-promotion to an active Verplichting fires when the winning KvK matches the tenant organisation (REQ-002).",
+              "description": "Record the award. Auto-promotion to an active Commitment fires when the winning KvK matches the tenant organisation (REQ-002).",
               "requires": "OCA\\Shillinq\\Lifecycle\\TenderNedProcurementGuard::canGunnen"
             },
             "startExecution": {
               "from": "awarded",
               "to": "inProgress",
               "label": "Uitvoering starten",
-              "description": "Move the awarded tender into execution once the contractmanager activates the Verplichting (REQ-002 / REQ-003)."
+              "description": "Move the awarded tender into execution once the contractmanager activates the Commitment (REQ-002 / REQ-003)."
             },
             "afronden": {
               "from": "inProgress",
@@ -197,7 +197,7 @@
             "relatedSchema": "Commitment",
             "relatedField": "id",
             "cardinality": "one-to-one",
-            "description": "The Shillinq Verplichting materialised from this tender on import (REQ-001)."
+            "description": "The Shillinq Commitment materialised from this tender on import (REQ-001)."
           }
         },
         "x-openregister-rbac": {
@@ -241,7 +241,7 @@
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
-        "x-fragment-role": "additive — `Verplichting` is OWNED by bookkeeping-verplichtingenadministratie.json, which declares its `required`. ADR-037 merges fragments by schema key and CONCATENATES list values, so a second `required` list here would be UNIONED with the owner's and the schema would demand both vocabularies at once — unsatisfiable by any payload of either model (shillinq#485). This fragment therefore only ADDS optional TenderNed provenance properties.",
+        "x-fragment-role": "additive — `Commitment` is OWNED by bookkeeping-verplichtingenadministratie.json, which declares its `required`. ADR-037 merges fragments by schema key and CONCATENATES list values, so a second `required` list here would be UNIONED with the owner's and the schema would demand both vocabularies at once — unsatisfiable by any payload of either model (shillinq#485). This fragment therefore only ADDS optional TenderNed provenance properties.",
         "required": [],
         "properties": {
           "commitmentNumber": {
@@ -315,7 +315,7 @@
           },
           "milestones": {
             "type": "array",
-            "description": "Milestone plan generated on activation from the contract template (REQ-003). Value objects embedded on the obligation header; each milestone's proof and approval live on the related OpdrachtUitvoering (design D5).",
+            "description": "Milestone plan generated on activation from the contract template (REQ-003). Value objects embedded on the obligation header; each milestone's proof and approval live on the related OrderFulfilment (design D5).",
             "items": {
               "type": "object",
               "required": [
@@ -328,7 +328,7 @@
               "properties": {
                 "milestoneId": {
                   "type": "string",
-                  "description": "Stable milestone identifier, referenced by OpdrachtUitvoering.mijlpaalId.",
+                  "description": "Stable milestone identifier, referenced by OrderFulfilment.mijlpaalId.",
                   "example": "MS-Q1",
                   "title": "Milestone ID"
                 },
@@ -462,7 +462,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Verplichting is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Commitment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "OrderFulfilment": {
@@ -470,7 +470,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Order Fulfilment",
-        "description": "Execution ledger for a single contract milestone (design D5). Distinct from the Verplichting it belongs to: this is the operational delivery log carrying proof-of-delivery (bewijsstukken) and approval metadata. A milestone cannot be approved (goedgekeurd false→true) until at least one bewijsstuk is attached (REQ-004).",
+        "description": "Execution ledger for a single contract milestone (design D5). Distinct from the Commitment it belongs to: this is the operational delivery log carrying proof-of-delivery (bewijsstukken) and approval metadata. A milestone cannot be approved (goedgekeurd false→true) until at least one bewijsstuk is attached (REQ-004).",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
@@ -484,12 +484,12 @@
         "properties": {
           "commitmentId": {
             "type": "string",
-            "description": "FK to the parent Verplichting (design D5).",
+            "description": "FK to the parent Commitment (design D5).",
             "title": "Commitment ID"
           },
           "milestoneId": {
             "type": "string",
-            "description": "Identifier of the milestone within the parent Verplichting.mijlpalen array (Task 2.2).",
+            "description": "Identifier of the milestone within the parent Commitment.mijlpalen array (Task 2.2).",
             "title": "Milestone ID"
           },
           "deliveryDate": {

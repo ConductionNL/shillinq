@@ -10,7 +10,7 @@
  * CloudEvent contract documented in design.md D4. Openconnector polls
  * the TenderNed source on its own schedule (live-instance concern, see
  * Task 0.2) and writes / updates the corresponding
- * `TenderNedAanbesteding` OR record. OR fires
+ * `TenderNedProcurement` OR record. OR fires
  * `ObjectCreatedEvent` / `ObjectTransitionedEvent` on every write, and
  * THIS listener turns "status == gegund + matching tenant KvK" into an
  * idempotent Commitment promotion + audit-trail entry.
@@ -24,7 +24,7 @@
  *
  * Both paths converge in `promoteIfEligible()`, which checks:
  *
- *  1. The dossier is on the `TenderNedAanbesteding` schema.
+ *  1. The dossier is on the `TenderNedProcurement` schema.
  *  2. The new status is `gegund` with `contractWaarde >= 1`.
  *  3. The `gegundeLeverancier` KvK prefix matches the configured tenant
  *     KvK (`shillinq` app config key `tenant_kvk`).
@@ -146,7 +146,7 @@ class TenderNedAwardDetectedListener implements IEventListener
     }//end handle()
 
     /**
-     * Pull the `TenderNedAanbesteding` payload from the OR event.
+     * Pull the `TenderNedProcurement` payload from the OR event.
      *
      * Returns null when the event refers to a different schema or carries
      * no usable object array (defensive).
@@ -440,7 +440,7 @@ class TenderNedAwardDetectedListener implements IEventListener
     }//end getRegisterSlug()
 
     /**
-     * Check whether the schema slug is the TenderNedAanbesteding schema.
+     * Check whether the schema slug is the TenderNedProcurement schema.
      *
      * @param string $schema Schema slug from the event.
      *

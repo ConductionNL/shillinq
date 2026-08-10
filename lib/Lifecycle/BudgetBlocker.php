@@ -3,14 +3,14 @@
 /**
  * Budget Blocker
  *
- * ADR-031 exception-path lifecycle guard for the Verplichting `aangaan` /
+ * ADR-031 exception-path lifecycle guard for the Commitment `aangaan` /
  * `goedkeuren` transitions. Budget-blocking is the core commitment-
  * administratie rule: a commitment reduces available budget the moment it is
  * signed, not when an invoice arrives (REQ-VPL-001). The check resolves the
- * matching per-programma / per-boekjaar Budget for each Verplichtingsregel and
+ * matching per-programma / per-boekjaar Budget for each CommitmentLine and
  * verifies sufficient vrije_ruimte, unless the signer holds an override-mandate.
  *
- * Referenced from the Verplichting schema's x-openregister-lifecycle transitions
+ * Referenced from the Commitment schema's x-openregister-lifecycle transitions
  * in lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json.
  *
  * ADR-031 exception reason: the check joins each regel to its matching Budget by
@@ -43,7 +43,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Budget-room precondition + pure budget-math helpers for the Verplichting schema
+ * Budget-room precondition + pure budget-math helpers for the Commitment schema
  * (REQ-VPL-001).
  *
  * Fail-closed: any unexpected exception denies the commitment (CWE-863).
@@ -81,7 +81,7 @@ class BudgetBlocker
      * Fail-closed: returns false on any exception (CWE-863).
      *
      * @param string                   $commitmentNumber The commitment identifier (lifecycle-engine call parity).
-     * @param array<string,mixed>|null $object              The Verplichting object being transitioned.
+     * @param array<string,mixed>|null $object              The Commitment object being transitioned.
      *
      * @return bool True when the commitment may be signed.
      *
@@ -219,7 +219,7 @@ class BudgetBlocker
 
     /**
      * Resolve the regels for a commitment. Prefers regels embedded on the object;
-     * otherwise queries the Verplichtingsregel register. When neither yields rows,
+     * otherwise queries the CommitmentLine register. When neither yields rows,
      * falls back to a single synthetic regel from the commitment totals so a
      * single-line commitment is still budget-checked.
      *

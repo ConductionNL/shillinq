@@ -7,17 +7,17 @@
 			"order": 35,
 			"children": [
 				{
-					"id": "TenderNedAanbestedingen",
+					"id": "TenderNedProcurementen",
 					"label": "TenderNed tenders",
 					"icon": "Gavel",
-					"route": "TenderNedAanbestedingen",
+					"route": "TenderNedProcurementen",
 					"order": 10
 				},
 				{
-					"id": "Verplichtingen",
+					"id": "Commitments",
 					"label": "Commitments",
 					"icon": "FileSign",
-					"route": "Verplichtingen",
+					"route": "Commitments",
 					"order": 20
 				},
 				{
@@ -32,34 +32,34 @@
 	],
 	"pages": [
 		{
-			"id": "TenderNedAanbestedingen",
+			"id": "TenderNedProcurementen",
 			"route": "/inkoop/tenderned",
 			"type": "index",
 			"title": "TenderNed tenders",
 			"config": {
 				"register": "shillinq",
-				"schema": "TenderNedAanbesteding",
+				"schema": "TenderNedProcurement",
 				"columns": [
-					{ "key": "aanbestedingId", "label": "Tender", "sortable": true },
-					{ "key": "titel", "label": "Title", "sortable": true },
-					{ "key": "gunningsDatum", "label": "Award date", "sortable": true },
-					{ "key": "contractWaarde", "label": "Contract value", "sortable": true },
-					{ "key": "gegundeLeverancier", "label": "Awarded supplier", "sortable": true },
+					{ "key": "procurementId", "label": "Tender", "sortable": true },
+					{ "key": "tenderTitle", "label": "Title", "sortable": true },
+					{ "key": "awardDate", "label": "Award date", "sortable": true },
+					{ "key": "contractValue", "label": "Contract value", "sortable": true },
+					{ "key": "awardedSupplier", "label": "Awarded supplier", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
-				"defaultSort": "gunningsDatum",
-				"detailRoute": "TenderNedAanbestedingDetail"
+				"defaultSort": "awardDate",
+				"detailRoute": "TenderNedProcurementDetail"
 			}
 		},
 		{
-			"id": "TenderNedAanbestedingDetail",
+			"id": "TenderNedProcurementDetail",
 			"route": "/inkoop/tenderned/:id",
 			"type": "detail",
 			"title": "TenderNed file",
 			"config": {
 				"register": "shillinq",
-				"schema": "TenderNedAanbesteding",
-				"_note": "INTEGRATION archetype — a tender award imported from the TenderNed portal (title, CPV codes, contracting authority, award date, contract value, supplier, term, source URL). Body leads with a contract-value KPI, then a schema-driven Data widget beside a Related panel that surfaces the single outbound `verplichtingId` FK (the materialised commitment this tender feeds, null until import promotes the dossier) — a Related panel is correct here rather than an object-list because the relation is a scalar FK to ONE Verplichting, not a filtered collection. Tender documents move from the sidebar into a full-width Files leaf (a real content type for an imported dossier). No comms — an imported reference record, not a conversation. Audit trail moves to the sidebar per policy.",
+				"schema": "TenderNedProcurement",
+				"_note": "INTEGRATION archetype — a tender award imported from the TenderNed portal (title, CPV codes, contracting authority, award date, contract value, supplier, term, source URL). Body leads with a contract-value KPI, then a schema-driven Data widget beside a Related panel that surfaces the single outbound `commitmentId` FK (the materialised commitment this tender feeds, null until import promotes the dossier) — a Related panel is correct here rather than an object-list because the relation is a scalar FK to ONE Commitment, not a filtered collection. Tender documents move from the sidebar into a full-width Files leaf (a real content type for an imported dossier). No comms — an imported reference record, not a conversation. Audit trail moves to the sidebar per policy.",
 				"widgets": [
 					{
 						"id": "tender-data",
@@ -75,7 +75,7 @@
 						"icon": "CurrencyEur",
 						"content": {
 							"entries": [
-								{ "title": "Contract value", "register": "shillinq", "schema": "TenderNedAanbesteding", "metric": "sum", "field": "contractWaarde", "filter": { "id": "@objectId" }, "format": "currency" }
+								{ "title": "Contract value", "register": "shillinq", "schema": "TenderNedProcurement", "metric": "sum", "field": "contractValue", "filter": { "id": "@objectId" }, "format": "currency" }
 							]
 						}
 					},
@@ -110,34 +110,34 @@
 			}
 		},
 		{
-			"id": "Verplichtingen",
+			"id": "Commitments",
 			"route": "/inkoop/verplichtingen",
 			"type": "index",
 			"title": "Commitments",
 			"config": {
 				"register": "shillinq",
-				"schema": "Verplichting",
+				"schema": "Commitment",
 				"columns": [
 					{ "key": "verplichtingNummer", "label": "Number", "sortable": true },
-					{ "key": "omschrijving", "label": "Description", "sortable": true },
-					{ "key": "bron", "label": "Source", "sortable": true },
-					{ "key": "bedrag", "label": "Amount", "sortable": true },
-					{ "key": "kostenplaats", "label": "Cost center", "sortable": true },
+					{ "key": "description", "label": "Description", "sortable": true },
+					{ "key": "source", "label": "Source", "sortable": true },
+					{ "key": "amount", "label": "Amount", "sortable": true },
+					{ "key": "costCentre", "label": "Cost center", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "verplichtingNummer",
-				"detailRoute": "VerplichtingDetail"
+				"detailRoute": "CommitmentDetail"
 			}
 		},
 		{
-			"id": "VerplichtingDetail",
+			"id": "CommitmentDetail",
 			"route": "/inkoop/verplichtingen/:id",
 			"type": "detail",
 			"title": "Commitment",
 			"config": {
 				"register": "shillinq",
-				"schema": "Verplichting",
-				"_note": "LEDGER archetype — a financial obligation (verplichting) booked against a cost centre and GL account, sourced from a tender or a manual contract, carrying a term and a milestone schedule (mijlpalen). Body leads with a committed-amount KPI, then a schema-driven Data widget beside a Related panel surfacing the outbound `kostenplaats` (FK to CostCenter.costCentreCode) and `grootboekrekening` (FK to Account.accountNumber) references. The tender(s) that generated it are the genuine inbound collection — TenderNedAanbesteding filtered verplichtingId=@objectId — so that stays an object-list, unlike the sibling page's outbound single-FK case. Contract documents move from the sidebar into a full-width Files leaf. No comms — an obligation ledger record. Audit trail moves to the sidebar per policy.",
+				"schema": "Commitment",
+				"_note": "LEDGER archetype — a financial obligation (verplichting) booked against a cost centre and GL account, sourced from a tender or a manual contract, carrying a term and a milestone schedule (mijlpalen). Body leads with a committed-amount KPI, then a schema-driven Data widget beside a Related panel surfacing the outbound `costCentre` (FK to CostCenter.costCentreCode) and `grootboekrekening` (FK to Account.accountNumber) references. The tender(s) that generated it are the genuine inbound collection — TenderNedProcurement filtered commitmentId=@objectId — so that stays an object-list, unlike the sibling page's outbound single-FK case. Contract documents move from the sidebar into a full-width Files leaf. No comms — an obligation ledger record. Audit trail moves to the sidebar per policy.",
 				"widgets": [
 					{
 						"id": "verplichting-data",
@@ -153,7 +153,7 @@
 						"icon": "CurrencyEur",
 						"content": {
 							"entries": [
-								{ "title": "Committed amount", "register": "shillinq", "schema": "Verplichting", "metric": "sum", "field": "bedrag", "filter": { "id": "@objectId" }, "format": "currency" }
+								{ "title": "Committed amount", "register": "shillinq", "schema": "Commitment", "metric": "sum", "field": "amount", "filter": { "id": "@objectId" }, "format": "currency" }
 							]
 						}
 					},
@@ -170,17 +170,17 @@
 						"icon": "FileSign",
 						"content": {
 							"register": "shillinq",
-							"schema": "TenderNedAanbesteding",
-							"filter": { "verplichtingId": "@objectId" },
+							"schema": "TenderNedProcurement",
+							"filter": { "commitmentId": "@objectId" },
 							"columns": [
-								{ "key": "titel", "label": "Tender" },
-								{ "key": "gegundeLeverancier", "label": "Supplier" },
-								{ "key": "contractWaarde", "label": "Contract value" }
+								{ "key": "tenderTitle", "label": "Tender" },
+								{ "key": "awardedSupplier", "label": "Supplier" },
+								{ "key": "contractValue", "label": "Contract value" }
 							],
 							"limit": 20,
-							"rowRoute": "TenderNedAanbestedingDetail",
-							"viewAllRoute": "TenderNedAanbestedingen",
-							"viewAllQuery": { "verplichtingId": "@objectId" },
+							"rowRoute": "TenderNedProcurementDetail",
+							"viewAllRoute": "TenderNedProcurementen",
+							"viewAllQuery": { "commitmentId": "@objectId" },
 							"emptyText": "No tenders have generated this commitment yet.",
 							"allowCreate": false
 						}
@@ -217,20 +217,20 @@
 			"title": "My contracts",
 			"config": {
 				"register": "shillinq",
-				"schema": "Verplichting",
+				"schema": "Commitment",
 				"filters": {
-					"bron": "tenderned"
+					"source": "tenderned"
 				},
 				"columns": [
 					{ "key": "verplichtingNummer", "label": "Number", "sortable": true },
-					{ "key": "omschrijving", "label": "Description", "sortable": true },
-					{ "key": "bedrag", "label": "Contract value", "sortable": true },
-					{ "key": "looptijdStart", "label": "Term start", "sortable": true },
-					{ "key": "looptijdEind", "label": "Term end", "sortable": true },
+					{ "key": "description", "label": "Description", "sortable": true },
+					{ "key": "amount", "label": "Contract value", "sortable": true },
+					{ "key": "termStart", "label": "Term start", "sortable": true },
+					{ "key": "termEnd", "label": "Term end", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
-				"defaultSort": "looptijdStart",
-				"detailRoute": "VerplichtingDetail"
+				"defaultSort": "termStart",
+				"detailRoute": "CommitmentDetail"
 			}
 		}
 	]

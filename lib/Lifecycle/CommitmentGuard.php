@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Verplichting Guard
+ * Commitment Guard
  *
- * ADR-031 exception-path lifecycle guard for the Verplichting activation
+ * ADR-031 exception-path lifecycle guard for the Commitment activation
  * transition (concept → active). Enforces the contractmanager-enrichment gate
  * of design D2: a concept obligation may only be activated once it carries a
  * costCentre (cost centre) and a glAccount (GL account). It also
@@ -11,7 +11,7 @@
  * (design validation rules), so an activation cannot lock budget against an
  * out-of-range milestone plan.
  *
- * Referenced from the Verplichting schema's
+ * Referenced from the Commitment schema's
  * x-openregister-lifecycle.transitions.activeren.requires in
  * lib/Settings/register.d/20-bookkeeping-tenderned-integratie.json.
  *
@@ -43,7 +43,7 @@ namespace OCA\Shillinq\Lifecycle;
 use Psr\Log\LoggerInterface;
 
 /**
- * Activation precondition guard for the Verplichting schema per design D2 and
+ * Activation precondition guard for the Commitment schema per design D2 and
  * the milestone date-range validation rule.
  *
  * Fail-closed: any unexpected exception denies the activation (CWE-863).
@@ -73,7 +73,7 @@ class CommitmentGuard
      *
      * Fail-closed: returns false on any exception (denies activation) per CWE-863.
      *
-     * @param array<string, mixed> $commitment Verplichting object array supplied by OR.
+     * @param array<string, mixed> $commitment Commitment object array supplied by OR.
      *
      * @return bool True when the obligation may be activated.
      *
@@ -117,7 +117,7 @@ class CommitmentGuard
      * skipped (no bound to enforce). Milestones whose dates are unparseable are
      * rejected so a malformed plan cannot slip through.
      *
-     * @param array<string, mixed> $commitment Verplichting object array.
+     * @param array<string, mixed> $commitment Commitment object array.
      *
      * @return bool True when all milestone dates are in range (or no term/plan).
      */

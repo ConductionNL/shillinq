@@ -10,7 +10,7 @@
  * lifecycle's "in force" state — no separate `signed`/`executed` state
  * exists on the shipped Contract schema; `active` is treated as the
  * legally-binding trigger, per design.md's Open Question resolution),
- * this service assembles the matching `Verplichting` + `Verplichtingsregel`
+ * this service assembles the matching `Commitment` + `CommitmentLine`
  * rows from the source object and delegates to the ALREADY-SHIPPED
  * `MandateEnforcer` and `BudgetBlocker` guards. It computes no budget or
  * mandate logic of its own (ADR-031 thin-glue exception).
@@ -73,7 +73,7 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Assembles a Verplichting + Verplichtingsregels from an approved
+ * Assembles a Commitment + CommitmentLines from an approved
  * PurchaseOrder or an activated Contract and drives it through the
  * existing MandateEnforcer / BudgetBlocker guards (REQ-VPL-010).
  *
@@ -109,7 +109,7 @@ class CommitmentMaterialisationService
     }//end __construct()
 
     /**
-     * Materialise a Verplichting from an approved PurchaseOrder (REQ-VPL-010).
+     * Materialise a Commitment from an approved PurchaseOrder (REQ-VPL-010).
      *
      * Fail-closed: throws {@see InsufficientCommitmentBudgetException} when
      * budget is insufficient and no override-mandate applies, so the caller
@@ -118,7 +118,7 @@ class CommitmentMaterialisationService
      *
      * @param array<string, mixed> $purchaseOrder Approved PurchaseOrder payload.
      *
-     * @return array<string, mixed>|null The materialised (or pre-existing) Verplichting, or null when there is nothing to materialise.
+     * @return array<string, mixed>|null The materialised (or pre-existing) Commitment, or null when there is nothing to materialise.
      *
      * @throws InsufficientCommitmentBudgetException When budget denies and no override applies.
      *
@@ -153,14 +153,14 @@ class CommitmentMaterialisationService
     }//end materialiseFromPurchaseOrder()
 
     /**
-     * Materialise a Verplichting from an activated Contract (REQ-VPL-010,
+     * Materialise a Commitment from an activated Contract (REQ-VPL-010,
      * Task 2). Fail-soft: any denial is logged, never thrown — the
      * Contract's own `activate` transition is a different capability
      * (contract-lifecycle-management) not modified by this change.
      *
      * @param array<string, mixed> $contract Activated Contract payload.
      *
-     * @return array<string, mixed>|null The materialised (or pre-existing) Verplichting, or null.
+     * @return array<string, mixed>|null The materialised (or pre-existing) Commitment, or null.
      *
      * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
@@ -217,7 +217,7 @@ class CommitmentMaterialisationService
      * @param array<string, mixed>            $counterparty      Embedded counterparty reference.
      * @param bool                            $failClosed       Whether a budget denial should throw (PO) or log (Contract).
      *
-     * @return array<string, mixed>|null The materialised (or pre-existing) Verplichting, or null when nothing to do.
+     * @return array<string, mixed>|null The materialised (or pre-existing) Commitment, or null when nothing to do.
      *
      * @throws InsufficientCommitmentBudgetException When $failClosed and budget denies with no override.
      */
@@ -321,7 +321,7 @@ class CommitmentMaterialisationService
      * a multi-year framework order naturally splits into one regel per
      * boekjaar when its lines are dated across years — no new PurchaseOrder
      * schema field is introduced for this (design.md scoped schema changes
-     * to Verplichting only).
+     * to Commitment only).
      *
      * @param array<string, mixed>            $purchaseOrder Parent PurchaseOrder payload.
      * @param array<int, array<string,mixed>> $lines         PurchaseOrderLine rows for this order.
@@ -423,15 +423,15 @@ class CommitmentMaterialisationService
     }//end buildLinesFromContract()
 
     /**
-     * Map a Contract.contractType to the closest Verplichting.soort enum
+     * Map a Contract.contractType to the closest Commitment.soort enum
      * value. lease -> leasing; employment -> arbeidscontract; everything
      * else (purchase/sales/service/subscription/other) -> overig, since
-     * Verplichting.soort has no generic "contract" bucket and inferring a
+     * Commitment.soort has no generic "contract" bucket and inferring a
      * more specific value from contractType alone would be unreliable.
      *
      * @param string $contractType Contract.contractType.
      *
-     * @return string Verplichting.soort enum value.
+     * @return string Commitment.soort enum value.
      */
     private function mapContractType(string $contractType): string
     {
@@ -539,12 +539,12 @@ class CommitmentMaterialisationService
     }//end resolveProgramme()
 
     /**
-     * Persist the Verplichting and its Verplichtingsregel rows.
+     * Persist the Commitment and its CommitmentLine rows.
      *
-     * @param array<string, mixed>            $draft       Assembled Verplichting.
-     * @param array<int, array<string,mixed>> $lineInputs Regel inputs to persist as Verplichtingsregel rows.
+     * @param array<string, mixed>            $draft       Assembled Commitment.
+     * @param array<int, array<string,mixed>> $lineInputs Regel inputs to persist as CommitmentLine rows.
      *
-     * @return array<string, mixed> The persisted Verplichting.
+     * @return array<string, mixed> The persisted Commitment.
      */
     private function persist(array $draft, array $lineInputs): array
     {
@@ -591,7 +591,7 @@ class CommitmentMaterialisationService
      * target for an afwijking raised before any journaalpost exists —
      * fail-soft: a write failure here never blocks the commitment itself.
      *
-     * @param array<string, mixed>            $commitment Persisted Verplichting.
+     * @param array<string, mixed>            $commitment Persisted Commitment.
      * @param array<int, array<string,mixed>> $lineInputs  Regel inputs (for boekjaar/programma).
      *
      * @return void
@@ -638,7 +638,7 @@ class CommitmentMaterialisationService
      * (REQ-VPL-012). Fail-soft, mirroring
      * {@see \OCA\Shillinq\Service\BudgetImpactEmitter::dispatch()}.
      *
-     * @param array<string, mixed>|null $commitment Persisted Verplichting, or null (no-op).
+     * @param array<string, mixed>|null $commitment Persisted Commitment, or null (no-op).
      *
      * @return void
      */
@@ -670,7 +670,7 @@ class CommitmentMaterialisationService
     }//end dispatchLawfulnessTrigger()
 
     /**
-     * Look up an existing Verplichting by bronReferentie (idempotency, REQ-VPL-010).
+     * Look up an existing Commitment by bronReferentie (idempotency, REQ-VPL-010).
      *
      * @param string $sourceReference Source PO/contract business key.
      *

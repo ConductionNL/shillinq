@@ -204,7 +204,7 @@ class InitializeSettings implements IRepairStep
             $this->seedInventoryGLConfig(output: $output);
             $this->seedBbvWaterschappenDemo(output: $output);
             $this->importStatementManifests(output: $output);
-            $this->seedMandaatTemplates(output: $output);
+            $this->seedMandateTemplates(output: $output);
             $this->seedRetentionPolicies(output: $output);
             $this->seedStatementManifests(output: $output);
             $this->seedWmoCommercialActivities(output: $output);
@@ -1677,9 +1677,9 @@ class InitializeSettings implements IRepairStep
     /**
      * Seed mandaat (signing-authority) templates for verplichtingenadministratie, idempotently.
      *
-     * Calls SettingsService::seedMandaatTemplates() with the configured
+     * Calls SettingsService::seedMandateTemplates() with the configured
      * administrationId. Requires a non-empty administrationId (C2); skips with a
-     * warning when unset. Idempotent: mandates matched by mandaatcode +
+     * warning when unset. Idempotent: mandates matched by mandateCode +
      * administrationId are skipped, preserving operator edits per REQ-VPL-002.
      *
      * @param IOutput $output The output interface for progress reporting.
@@ -1688,7 +1688,7 @@ class InitializeSettings implements IRepairStep
      *
      * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
-    private function seedMandaatTemplates(IOutput $output): void
+    private function seedMandateTemplates(IOutput $output): void
     {
         $settings         = $this->settingsService->getSettings();
         $administrationId = ($settings['administration_id'] ?? '');
@@ -1701,7 +1701,7 @@ class InitializeSettings implements IRepairStep
         }
 
         $output->info('Seeding mandaat templates...');
-        $result = $this->settingsService->seedMandaatTemplates(administrationId: $administrationId);
+        $result = $this->settingsService->seedMandateTemplates(administrationId: $administrationId);
 
         if (($result['success'] ?? false) === true) {
             $output->info(
@@ -1713,7 +1713,7 @@ class InitializeSettings implements IRepairStep
             $output->warning('Mandaat templates seeding issue: '.($result['message'] ?? 'unknown error'));
         }
 
-    }//end seedMandaatTemplates()
+    }//end seedMandateTemplates()
 
     /**
      * Seed the default Archiefwet retention policies, idempotently.

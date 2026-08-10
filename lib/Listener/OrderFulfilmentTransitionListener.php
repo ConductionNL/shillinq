@@ -1,11 +1,11 @@
 <?php
 
 /**
- * OpdrachtUitvoering Transition Listener.
+ * OrderFulfilment Transition Listener.
  *
  * Task 5.3 / REQ-005 / REQ-006 — emit the cross-app `milestone.completed`
  * CloudEvent and trigger the outbound status-sync to TenderNed when an
- * OpdrachtUitvoering transitions to `completed` AND the finalDelivery of
+ * OrderFulfilment transitions to `completed` AND the finalDelivery of
  * a TenderNed-sourced obligation is approved.
  *
  * Two responsibilities, both fail-soft:
@@ -21,7 +21,7 @@
  *     0.2 / 6.1).
  *
  * The listener layers on top of the declarative
- * `OpdrachtUitvoering.voltooien` transition, which `OrderFulfilmentGuard`
+ * `OrderFulfilment.voltooien` transition, which `OrderFulfilmentGuard`
  * has already gated on at least one evidence being attached (REQ-004).
  * By the time the event fires the precondition has held; the listener's
  * job is purely cross-cutting notification + outbound sync.
@@ -56,7 +56,7 @@ use Throwable;
 
 /**
  * Cross-app emitter + outbound status-sync dispatcher for completed
- * OpdrachtUitvoering records (Task 5.3 / REQ-006).
+ * OrderFulfilment records (Task 5.3 / REQ-006).
  *
  * @implements IEventListener<Event>
  *
@@ -82,7 +82,7 @@ class OrderFulfilmentTransitionListener implements IEventListener
     }//end __construct()
 
     /**
-     * Handle an ObjectTransitionedEvent on the OpdrachtUitvoering schema.
+     * Handle an ObjectTransitionedEvent on the OrderFulfilment schema.
      *
      * @param Event $event OR transition event.
      *
@@ -107,7 +107,7 @@ class OrderFulfilmentTransitionListener implements IEventListener
             }
 
             $schema = $this->schemaResolver->schemaSlug(entity: $entity);
-            if ($this->isOpdrachtUitvoeringSchema(schema: $schema) === false) {
+            if ($this->isOrderFulfilmentSchema(schema: $schema) === false) {
                 return;
             }
 
@@ -141,17 +141,17 @@ class OrderFulfilmentTransitionListener implements IEventListener
     }//end handle()
 
     /**
-     * Check whether the schema slug is OpdrachtUitvoering.
+     * Check whether the schema slug is OrderFulfilment.
      *
      * @param string $schema Schema slug.
      *
      * @return bool
      */
-    private function isOpdrachtUitvoeringSchema(string $schema): bool
+    private function isOrderFulfilmentSchema(string $schema): bool
     {
         $normalised = strtolower(trim($schema));
         return ($normalised === 'orderFulfilment'
             || str_ends_with(haystack: $normalised, needle: 'orderFulfilment'));
 
-    }//end isOpdrachtUitvoeringSchema()
+    }//end isOrderFulfilmentSchema()
 }//end class

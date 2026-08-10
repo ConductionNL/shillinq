@@ -97,7 +97,7 @@ class BudgetImpactEmitter
      * the committed expense.
      *
      * @param array<string, mixed> $commitment Activated Commitment payload.
-     * @param array<string, mixed> $source       Source TenderNedAanbesteding payload (dossier URL).
+     * @param array<string, mixed> $source       Source TenderNedProcurement payload (dossier URL).
      *
      * @return void
      *

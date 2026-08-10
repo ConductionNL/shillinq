@@ -669,7 +669,7 @@ class Application extends App implements IBootstrap
         // the originating OR write path.
         //
         // Task 5.1 — TenderNedAwardDetectedListener auto-promotes an
-        // awarded TenderNed dossier into an active Verplichting when the
+        // awarded TenderNed dossier into an active Commitment when the
         // winning KvK matches the tenant org (REQ-002 idempotent on
         // bronReferentie + REQ-003 milestone plan generated from the
         // opdrachttype template).
@@ -694,7 +694,7 @@ class Application extends App implements IBootstrap
         );
 
         // Task 5.3 — OrderFulfilmentTransitionListener emits
-        // `milestone.completed` on every completed OpdrachtUitvoering and
+        // `milestone.completed` on every completed OrderFulfilment and
         // (for the approved eindoplevering of a tenderned-sourced
         // obligation) triggers the outbound status-sync to TenderNed
         // (REQ-006). The buyer-side gate is enforced both server-side
@@ -806,7 +806,7 @@ class Application extends App implements IBootstrap
         );
 
         // Change verplichtingen-commitment-accounting Tasks 1/2 (REQ-VPL-010) —
-        // CommitmentMaterialisationListener auto-materialises a Verplichting
+        // CommitmentMaterialisationListener auto-materialises a Commitment
         // when a PurchaseOrder reaches `approved` or a Contract reaches
         // `active`, reusing the existing BudgetBlocker/MandateEnforcer
         // guards. PO path is fail-closed (denial propagates); Contract path
@@ -1417,7 +1417,7 @@ class Application extends App implements IBootstrap
 
         // Bookkeeping-tenderned-integratie Task 5.1 — interest declared on the
         // create path: `isAanbestedingSchema()` resolves to the
-        // `TenderNedAanbesteding` schema, the same slug the handler writes back
+        // `TenderNedProcurement` schema, the same slug the handler writes back
         // with `->setSchema('TenderNedProcurement')`. The
         // ObjectTransitionedEvent registration in register() stays global.
         $this->registerFilteredObjectListener(
@@ -1428,7 +1428,7 @@ class Application extends App implements IBootstrap
         );
 
         // Bookkeeping-tenderned-integratie Task 5.2 — interest declared on the
-        // create path: `isVerplichtingSchema()` resolves to the `Verplichting`
+        // create path: `isCommitmentSchema()` resolves to the `Commitment`
         // schema, the same slug TenderNedAwardDetectedListener writes with
         // `->setSchema(…)`. The ObjectTransitionedEvent registration in
         // register() stays global.

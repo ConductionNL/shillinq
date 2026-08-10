@@ -2987,11 +2987,11 @@ class SettingsService
     }//end seedRetentionPolicies()
 
     /**
-     * Seed mandaat (signing-authority) templates from mandaat-templates.json, idempotently.
+     * Seed mandaat (signing-authority) templates from mandate-templates.json, idempotently.
      *
-     * Reads lib/Settings/seeds/mandaat-templates.json and imports Mandaat records
+     * Reads lib/Settings/seeds/mandate-templates.json and imports Mandaat records
      * via OpenRegister's ObjectService, stamping the tenant administrationId.
-     * Already-existing records (matched by mandaatcode + administrationId) are
+     * Already-existing records (matched by mandateCode + administrationId) are
      * skipped, preserving operator edits. Per REQ-VPL-002. Requires a non-empty
      * administrationId (C2).
      *
@@ -3001,7 +3001,7 @@ class SettingsService
      *
      * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
-    public function seedMandaatTemplates(string $administrationId): array
+    public function seedMandateTemplates(string $administrationId): array
     {
         if ($this->isOpenRegisterAvailable() === false) {
             return [
@@ -3017,24 +3017,24 @@ class SettingsService
             ];
         }
 
-        $seedPath = __DIR__.'/../Settings/seeds/mandaat-templates.json';
+        $seedPath = __DIR__.'/../Settings/seeds/mandate-templates.json';
         if (file_exists($seedPath) === false) {
-            return ['success' => false, 'message' => 'Seed file not found: mandaat-templates.json'];
+            return ['success' => false, 'message' => 'Seed file not found: mandate-templates.json'];
         }
 
         $content = file_get_contents($seedPath);
         if ($content === false) {
-            return ['success' => false, 'message' => 'Failed to read mandaat-templates.json'];
+            return ['success' => false, 'message' => 'Failed to read mandate-templates.json'];
         }
 
         $data = json_decode($content, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return ['success' => false, 'message' => 'Failed to parse mandaat-templates.json: '.json_last_error_msg()];
+            return ['success' => false, 'message' => 'Failed to parse mandate-templates.json: '.json_last_error_msg()];
         }
 
-        $templates = ($data['mandaatTemplates'] ?? []);
+        $templates = ($data['mandateTemplates'] ?? []);
         if (empty($templates) === true) {
-            return ['success' => false, 'message' => 'Seed file contains no mandaatTemplates.'];
+            return ['success' => false, 'message' => 'Seed file contains no mandateTemplates.'];
         }
 
         try {
@@ -3050,11 +3050,11 @@ class SettingsService
 
                 $existing = $objectService
                     ->setRegister($registerSlug)
-                    ->setSchema('Mandaat')
+                    ->setSchema('Mandate')
                     ->findAll(
                         [
                             'filters' => [
-                                'mandaatcode'      => $template['mandaatcode'],
+                                'mandateCode'      => $template['mandateCode'],
                                 'administrationId' => $administrationId,
                             ],
                             'limit'   => 1,
@@ -3069,7 +3069,7 @@ class SettingsService
                 $objectService->saveObject(
                     object: $template,
                     register: $registerSlug,
-                    schema: 'Mandaat',
+                    schema: 'Mandate',
                 );
                 $seeded++;
             }//end foreach
@@ -3099,7 +3099,7 @@ class SettingsService
             ];
         }//end try
 
-    }//end seedMandaatTemplates()
+    }//end seedMandateTemplates()
 
     /**
      * Import the three RJ 270 statement presentation manifests, idempotently.

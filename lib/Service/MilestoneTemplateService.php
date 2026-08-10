@@ -9,7 +9,7 @@
  * generatePlan() selects a milestone template by assignmentType from
  * lib/Settings/seeds/milestone-templates.json and distributes the milestone
  * dates across the contract term (termStart..termEnd). The resulting
- * milestones array is written onto the Verplichting on activation; the
+ * milestones array is written onto the Commitment on activation; the
  * contractmanager may edit it afterwards (design D3 — templates, not inference).
  *
  * buildCashflowForecast() distributes a contract value across the milestone
@@ -120,7 +120,7 @@ class MilestoneTemplateService
      * @param string $termStart Contract start date (ISO 8601, e.g. "2026-02-01").
      * @param string $termEnd  Contract end date (ISO 8601).
      *
-     * @return array<int, array<string, mixed>> Ordered milestones ready for the Verplichting.
+     * @return array<int, array<string, mixed>> Ordered milestones ready for the Commitment.
      *
      * @throws \InvalidArgumentException When the dates are unparseable or end is not after start.
      * @throws \RuntimeException         When the templates file is missing or malformed.
