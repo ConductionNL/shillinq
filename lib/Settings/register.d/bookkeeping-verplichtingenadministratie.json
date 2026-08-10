@@ -30,14 +30,14 @@
             "type": "string",
             "description": "Operator-assigned unique commitment number within the administration.",
             "example": "PO-2026-00874",
-            "title": "Verplichtingsnummer"
+            "title": "Commitment Number"
           },
           "sourceReference": {
             "type": "string",
             "nullable": true,
             "description": "Provenance reference for auto-materialised commitments (REQ-VPL-010): the poNumber of the approved PurchaseOrder or the contractNumber of the signed Contract this Verplichting was raised from. Used as the idempotency key so a repeated approval/signature transition never creates a duplicate commitment. Null for manually-created commitments.",
             "example": "PO-2026-0207",
-            "title": "Bron Referentie"
+            "title": "Source Reference"
           },
           "commitmentType": {
             "type": "string",
@@ -60,7 +60,7 @@
             "nullable": true,
             "description": "Date the commitment became legally binding (set when moved to aangegaan).",
             "example": "2026-04-15",
-            "title": "Aangaandatum"
+            "title": "Commitment Date"
           },
           "termStart": {
             "type": "string",
@@ -68,7 +68,7 @@
             "nullable": true,
             "description": "Start of the commitment term. Used to derive per-boekjaar regels for multi-year raamovereenkomsten (REQ-VPL-004).",
             "example": "2026-05-01",
-            "title": "Looptijd Van"
+            "title": "Term Start"
           },
           "termEnd": {
             "type": "string",
@@ -76,7 +76,7 @@
             "nullable": true,
             "description": "End of the commitment term. Snapped to boekjaar boundaries for regel creation (D10).",
             "example": "2030-04-30",
-            "title": "Looptijd Tot"
+            "title": "Term End"
           },
           "counterparty": {
             "type": "object",
@@ -101,14 +101,14 @@
                 "nullable": true,
                 "description": "Chamber of Commerce number (user-entered; external validation is out of scope).",
                 "example": "12345678",
-                "title": "KvK"
+                "title": "CoC Number"
               },
               "name": {
                 "type": "string",
                 "nullable": true,
                 "description": "Counterparty name.",
                 "example": "ICT Leverancier B.V.",
-                "title": "Naam"
+                "title": "Name"
               },
               "iban": {
                 "type": "string",
@@ -117,12 +117,12 @@
                 "example": "NL00BANK0123456789",
                 "title": "IBAN"
               },
-              "btw_nummer": {
+              "vatNumber": {
                 "type": "string",
                 "nullable": true,
                 "description": "Counterparty VAT identification number.",
                 "example": "NL860784241B01",
-                "title": "BTW Nummer"
+                "title": "VAT Number"
               },
               "contactId": {
                 "type": "string",
@@ -132,27 +132,27 @@
                 "title": "Contact ID"
               }
             },
-            "title": "Tegenpartij"
+            "title": "Counterparty"
           },
           "totalAmountExclVat": {
             "type": "integer",
             "description": "Total commitment amount excluding VAT, in minor units (EUR cents).",
             "example": 5000000,
-            "title": "Totaalbedrag Excl BTW"
+            "title": "Total Amount Excl VAT"
           },
           "totalAmountInclVat": {
             "type": "integer",
             "nullable": true,
             "description": "Total commitment amount including VAT, in minor units (EUR cents).",
             "example": 6050000,
-            "title": "Totaalbedrag Incl BTW"
+            "title": "Total Amount Incl VAT"
           },
           "currency": {
             "type": "string",
             "description": "ISO 4217 currency code. EUR-only in this tier.",
             "default": "EUR",
             "example": "EUR",
-            "title": "Valuta"
+            "title": "Currency"
           },
           "vatRegime": {
             "type": "string",
@@ -164,7 +164,7 @@
             ],
             "default": "standard",
             "example": "standard",
-            "title": "BTW Regime"
+            "title": "VAT Regime"
           },
           "status": {
             "type": "string",
@@ -293,7 +293,7 @@
                 }
               ]
             },
-            "goedkeuren": {
+            "approve": {
               "from": "pendingApproval",
               "to": "committed",
               "label": "Goedkeuren",
@@ -333,9 +333,9 @@
           }
         },
         "x-openregister-approval-chains": {
-          "verplichting-goedkeuring": {
+          "commitment-approval": {
             "description": "Approval chain that gates the Verplichting in_goedkeuring -> aangegaan `goedkeuren` transition (REQ-VPL-013). A commitment reaches in_goedkeuring only when MandaatEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient (REQ-VPL-002); this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
-            "transition": "goedkeuren",
+            "transition": "approve",
             "amountField": "totalAmountExclVat",
             "separationOfDuties": true,
             "approvers": [
@@ -448,40 +448,40 @@
             "nullable": true,
             "description": "Human-readable line description.",
             "example": "Licentie 2026",
-            "title": "Omschrijving"
+            "title": "Description"
           },
           "fiscalYear": {
             "type": "integer",
             "description": "Fiscal year this line's budget is consumed from (REQ-VPL-004).",
             "example": 2026,
-            "title": "Boekjaar"
+            "title": "Fiscal Year"
           },
           "amountExclVat": {
             "type": "integer",
             "description": "Committed amount excluding VAT, in minor units (EUR cents).",
             "example": 6200000,
-            "title": "Bedrag Excl BTW"
+            "title": "Amount Excl VAT"
           },
           "amountInclVat": {
             "type": "integer",
             "nullable": true,
             "description": "Committed amount including VAT, in minor units.",
             "example": 7502000,
-            "title": "Bedrag Incl BTW"
+            "title": "Amount Incl VAT"
           },
           "glAccount": {
             "type": "string",
             "nullable": true,
             "description": "FK to the Account (grootboekrekening) charged.",
             "example": "4310",
-            "title": "Grootboekrekening"
+            "title": "GL Account"
           },
           "costCentre": {
             "type": "string",
             "nullable": true,
             "description": "Cost centre code.",
             "example": "KP-1042",
-            "title": "Kostenplaats"
+            "title": "Cost Centre"
           },
           "programme": {
             "type": "string",
@@ -510,21 +510,21 @@
             "description": "Aggregated received amount, in minor units (informational; no budget impact).",
             "default": 0,
             "example": 1500000,
-            "title": "Geleverd Bedrag"
+            "title": "Delivered Amount"
           },
           "invoicedAmount": {
             "type": "integer",
             "description": "Aggregated invoiced amount, in minor units.",
             "default": 0,
             "example": 1500000,
-            "title": "Gefactureerd Bedrag"
+            "title": "Invoiced Amount"
           },
           "paidAmount": {
             "type": "integer",
             "description": "Aggregated paid amount, in minor units.",
             "default": 0,
             "example": 0,
-            "title": "Betaald Bedrag"
+            "title": "Paid Amount"
           },
           "remainingCommitted": {
             "type": "integer",
@@ -538,7 +538,7 @@
             "description": "Whether this line is closed (REQ-VPL-006).",
             "default": false,
             "example": false,
-            "title": "Afgesloten"
+            "title": "Closed"
           }
         },
         "x-openregister-relations": {
@@ -569,8 +569,8 @@
               "on": "Budget.programmaCode",
               "filter": {},
               "select": [
-                "Budget.geautoriseerd_bedrag",
-                "Budget.gerealiseerd_bedrag"
+                "Budget.authorisedAmount",
+                "Budget.realisedAmount"
               ]
             },
             "sum": [
@@ -625,7 +625,7 @@
             "format": "date",
             "description": "Date the mutation occurred.",
             "example": "2026-04-15",
-            "title": "Datum"
+            "title": "Date"
           },
           "movementType": {
             "type": "string",
@@ -648,21 +648,21 @@
             "type": "integer",
             "description": "Movement amount in minor units (EUR cents); may be negative for decreased/cancelled/reclaimed.",
             "example": 5000000,
-            "title": "Bedrag"
+            "title": "Amount"
           },
           "currency": {
             "type": "string",
             "description": "ISO 4217 currency code.",
             "default": "EUR",
             "example": "EUR",
-            "title": "Valuta"
+            "title": "Currency"
           },
           "notes": {
             "type": "string",
             "nullable": true,
             "description": "Free-text explanation for the audit trail.",
             "example": "PO getekend door inkoper",
-            "title": "Toelichting"
+            "title": "Notes"
           },
           "relatedInvoice": {
             "type": "string",
@@ -683,14 +683,14 @@
             "nullable": true,
             "description": "Optional FK to the GLTransaction journal entry.",
             "example": "glt-3001",
-            "title": "Journaalpost"
+            "title": "Journal Entry"
           },
           "user": {
             "type": "string",
             "nullable": true,
             "description": "FK to the Nextcloud user who triggered the mutation.",
             "example": "user-5",
-            "title": "Gebruiker"
+            "title": "User"
           }
         },
         "x-openregister-relations": {
@@ -732,13 +732,13 @@
             "type": "string",
             "description": "Unique mandate code within the administration.",
             "example": "M-INKOOP-50K",
-            "title": "Mandaatcode"
+            "title": "Mandate Code"
           },
           "name": {
             "type": "string",
             "description": "Human-readable mandate name.",
             "example": "Inkoopmandaat tot 50.000 EUR",
-            "title": "Naam"
+            "title": "Name"
           },
           "houder": {
             "type": "string",
@@ -763,7 +763,7 @@
             "type": "integer",
             "description": "Ceiling amount this mandate may sign, in minor units (EUR cents). Use a very large value for unlimited.",
             "example": 5000000,
-            "title": "Maximumbedrag"
+            "title": "Maximum Amount"
           },
           "commitmentType": {
             "type": "array",
@@ -784,7 +784,7 @@
               "purchaseOrder",
               "frameworkAgreement"
             ],
-            "title": "Soort Verplichting"
+            "title": "Commitment Type"
           },
           "is_override": {
             "type": "boolean",
@@ -890,7 +890,7 @@
             "type": "integer",
             "description": "Sequential step number in the approval chain.",
             "example": 1,
-            "title": "Stapnummer"
+            "title": "Step Number"
           },
           "rol_vereist": {
             "type": "string",
@@ -974,7 +974,7 @@
         "icon": "Wallet",
         "version": "0.1.0",
         "title": "Budget",
-        "description": "Per-programma / per-boekjaar budget bucket. Verplichtingenadministratie introduces this register (no prior Budget schema exists in shillinq) so budget can be blocked at commitment-time. vrije_ruimte = geautoriseerd_bedrag - gerealiseerd_bedrag - openstaande_verplichtingen, evaluated on-demand (D4/D9, REQ-VPL-001).",
+        "description": "Per-programma / per-boekjaar budget bucket. Verplichtingenadministratie introduces this register (no prior Budget schema exists in shillinq) so budget can be blocked at commitment-time. vrije_ruimte = authorisedAmount - realisedAmount - outstandingCommitments, evaluated on-demand (D4/D9, REQ-VPL-001).",
         "x-openregister-purpose": "dimension",
         "type": "object",
         "required": [
@@ -1001,44 +1001,44 @@
             "nullable": true,
             "description": "Optional cost-centre scope for the budget.",
             "example": "KP-1042",
-            "title": "Kostenplaats"
+            "title": "Cost Centre"
           },
           "fiscalYear": {
             "type": "integer",
             "description": "Fiscal year of the budget.",
             "example": 2026,
-            "title": "Boekjaar"
+            "title": "Fiscal Year"
           },
           "description": {
             "type": "string",
             "nullable": true,
             "description": "Human-readable budget label.",
             "example": "Programma 5.1 Cultuur 2026",
-            "title": "Omschrijving"
+            "title": "Description"
           },
           "authorisedAmount": {
             "type": "integer",
             "description": "Authorised budget, in minor units (EUR cents).",
             "example": 50000000,
-            "title": "Geautoriseerd Bedrag"
+            "title": "Authorised Amount"
           },
           "realisedAmount": {
             "type": "integer",
             "description": "Realised (invoiced) spend, in minor units.",
             "default": 0,
             "example": 20000000,
-            "title": "Gerealiseerd Bedrag"
+            "title": "Realised Amount"
           },
           "outstandingCommitments": {
             "type": "integer",
             "description": "Outstanding commitments aggregated from Verplichtingsregels, in minor units (D9, REQ-VPL-001).",
             "default": 0,
             "example": 0,
-            "title": "Openstaande Verplichtingen"
+            "title": "Outstanding Commitments"
           },
           "vrije_ruimte": {
             "type": "integer",
-            "description": "Calculated free budget = geautoriseerd_bedrag - gerealiseerd_bedrag - openstaande_verplichtingen (D9).",
+            "description": "Calculated free budget = authorisedAmount - realisedAmount - outstandingCommitments (D9).",
             "default": 0,
             "example": 30000000,
             "title": "Vrije Ruimte"
@@ -1075,7 +1075,7 @@
           },
           "vrije_ruimte": {
             "type": "calculation",
-            "formula": "geautoriseerd_bedrag - gerealiseerd_bedrag - openstaande_verplichtingen",
+            "formula": "authorisedAmount - realisedAmount - outstandingCommitments",
             "description": "Free budget snapshot (D9)."
           }
         },
@@ -1111,7 +1111,7 @@
       "@self": {
         "register": "shillinq",
         "schema": "Mandate",
-        "slug": "vpl-mandaat-inkoop-50k"
+        "slug": "vpl-mandate-inkoop-50k"
       },
       "administrationId": "adm-demo",
       "mandateCode": "M-INKOOP-50K",
@@ -1132,7 +1132,7 @@
       "@self": {
         "register": "shillinq",
         "schema": "Mandate",
-        "slug": "vpl-mandaat-directeur-250k"
+        "slug": "vpl-mandate-directeur-250k"
       },
       "administrationId": "adm-demo",
       "mandateCode": "M-DIRECTEUR-250K",
@@ -1155,7 +1155,7 @@
       "@self": {
         "register": "shillinq",
         "schema": "Mandate",
-        "slug": "vpl-mandaat-cfo-override"
+        "slug": "vpl-mandate-cfo-override"
       },
       "administrationId": "adm-demo",
       "mandateCode": "M-CFO-OVERRIDE",
@@ -1208,7 +1208,7 @@
       "@self": {
         "register": "shillinq",
         "schema": "Commitment",
-        "slug": "verplichting-2026-0001"
+        "slug": "commitment-2026-0001"
       },
       "administrationId": "adm-demo",
       "commitmentNumber": "VPL-2026-0001",
@@ -1246,7 +1246,7 @@
       "@self": {
         "register": "shillinq",
         "schema": "Commitment",
-        "slug": "verplichting-2026-0002"
+        "slug": "commitment-2026-0002"
       },
       "administrationId": "adm-demo",
       "commitmentNumber": "VPL-2026-0002",
@@ -1302,7 +1302,7 @@
       "@self": {
         "register": "shillinq",
         "schema": "Commitment",
-        "slug": "verplichting-2026-0003"
+        "slug": "commitment-2026-0003"
       },
       "administrationId": "adm-demo",
       "commitmentNumber": "VPL-2026-0003",
