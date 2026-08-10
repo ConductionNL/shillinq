@@ -120,6 +120,17 @@ class TenderNedAwardDetectedListener implements IEventListener
      * @return void
      *
      * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-5
+     *
+     * @listener-placement inline cheap-bounded — the work per event is constant
+     * and does not grow with the data: one existence lookup capped at
+     * `limit: 1`, then at most two writes (the Commitment, and stamping
+     * commitmentId back on the procurement). There is no iteration over a
+     * collection and no unbounded findAll, so this is not the
+     * OpenRegisterFlowResolver failure mode ADR-078 guards against. Deferral is
+     * additionally not available here — shillinq ships no
+     * ListenerDeferralService — so async would mean introducing that machinery,
+     * which is a separate change. If this handler ever grows a loop over
+     * records, this justification stops being true and must be revisited.
      */
     public function handle(Event $event): void
     {
@@ -385,9 +396,14 @@ class TenderNedAwardDetectedListener implements IEventListener
                 ->findAll(
                     [
                         'filters' => [
-                            'bron'            => 'tenderned',
+                            'source'          => 'tenderned',
                             'sourceReference' => $sourceReference,
                         ],
+                        // This is an existence check, not a listing. Without a
+                        // limit it is an unbounded findAll on a write path
+                        // (ADR-078 / gate-61) — and the caller only ever reads
+                        // the first row.
+                        'limit'   => 1,
                     ]
                 );
         } catch (Throwable $e) {
