@@ -4,9 +4,9 @@
  * OpdrachtUitvoering Guard
  *
  * ADR-031 exception-path lifecycle guard for the OpdrachtUitvoering completion
- * transition (in-progress → completed). Enforces the bewijsstuk gate of REQ-004:
+ * transition (in-progress → completed). Enforces the evidenceItem gate of REQ-004:
  * a delivery milestone may only be marked completed when at least one proof-of-
- * delivery (bewijsstuk) is attached. The bewijsstukken live as docudesk file
+ * delivery (evidenceItem) is attached. The evidence live as docudesk file
  * references on the OpdrachtUitvoering record (ADR-022 / design D4).
  *
  * Referenced from the OpdrachtUitvoering schema's
@@ -61,28 +61,28 @@ class OrderFulfilmentGuard
     /**
      * Precondition for the voltooien (in-progress → completed) transition.
      *
-     * REQ-004: the delivery can only be completed when at least one bewijsstuk
-     * (proof of delivery) is attached. A bewijsstuk is considered valid when it
+     * REQ-004: the delivery can only be completed when at least one evidenceItem
+     * (proof of delivery) is attached. A evidenceItem is considered valid when it
      * carries a non-empty documentId, so an empty placeholder object cannot
      * satisfy the gate.
      *
      * Fail-closed: returns false on any exception (denies completion) per CWE-863.
      *
-     * @param array<string, mixed> $opdracht OpdrachtUitvoering object array supplied by OR.
+     * @param array<string, mixed> $fulfilment OpdrachtUitvoering object array supplied by OR.
      *
      * @return bool True when the delivery may be marked completed.
      *
      * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
      */
-    public function canVoltooien(array $opdracht): bool
+    public function canVoltooien(array $fulfilment): bool
     {
         try {
-            if ($this->hasValidBewijsstuk(opdracht: $opdracht) === false) {
+            if ($this->hasValidBewijsstuk(fulfilment: $fulfilment) === false) {
                 $this->logger->info(
-                    'OrderFulfilmentGuard: no bewijsstuk attached — denying completion (REQ-004)',
+                    'OrderFulfilmentGuard: no evidenceItem attached — denying completion (REQ-004)',
                     [
-                        'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
-                        'mijlpaalId'     => ($opdracht['mijlpaalId'] ?? 'unknown'),
+                        'commitmentId' => ($fulfilment['commitmentId'] ?? 'unknown'),
+                        'milestoneId'     => ($fulfilment['milestoneId'] ?? 'unknown'),
                     ]
                 );
                 return false;
@@ -93,7 +93,7 @@ class OrderFulfilmentGuard
             $this->logger->error(
                 'OrderFulfilmentGuard: canVoltooien failed — denying completion (fail-closed)',
                 [
-                    'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
+                    'commitmentId' => ($fulfilment['commitmentId'] ?? 'unknown'),
                     'exception'      => $e->getMessage(),
                 ]
             );
@@ -103,28 +103,28 @@ class OrderFulfilmentGuard
     }//end canVoltooien()
 
     /**
-     * Determine whether the delivery carries at least one valid bewijsstuk.
+     * Determine whether the delivery carries at least one valid evidenceItem.
      *
-     * A bewijsstuk is valid when it is an array carrying a non-empty documentId.
+     * A evidenceItem is valid when it is an array carrying a non-empty documentId.
      * Scalar entries or entries without a documentId do not satisfy REQ-004.
      *
-     * @param array<string, mixed> $opdracht OpdrachtUitvoering object array.
+     * @param array<string, mixed> $fulfilment OpdrachtUitvoering object array.
      *
-     * @return bool True when at least one valid bewijsstuk exists.
+     * @return bool True when at least one valid evidenceItem exists.
      */
-    private function hasValidBewijsstuk(array $opdracht): bool
+    private function hasValidBewijsstuk(array $fulfilment): bool
     {
-        $bewijsstukken = ($opdracht['bewijsstukken'] ?? []);
-        if (is_array($bewijsstukken) === false) {
+        $evidence = ($fulfilment['evidence'] ?? []);
+        if (is_array($evidence) === false) {
             return false;
         }
 
-        foreach ($bewijsstukken as $bewijsstuk) {
-            if (is_array($bewijsstuk) === false) {
+        foreach ($evidence as $evidenceItem) {
+            if (is_array($evidenceItem) === false) {
                 continue;
             }
 
-            if (trim((string) ($bewijsstuk['documentId'] ?? '')) !== '') {
+            if (trim((string) ($evidenceItem['documentId'] ?? '')) !== '') {
                 return true;
             }
         }

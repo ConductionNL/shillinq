@@ -1,21 +1,21 @@
 <?php
 
 /**
- * Verplichting Transition Listener.
+ * Commitment Transition Listener.
  *
  * Task 5.2 / REQ-007 — emit the cross-app `obligation.activated` CloudEvent
- * when a `bron: tenderned` Verplichting transitions to `active`, so the
+ * when a `source: tenderned` Commitment transitions to `active`, so the
  * launchpad budget-utilisation widget reflects the newly committed expense
  * within 60 seconds (REQ-007 scenario).
  *
  * Two activation paths converge here:
  *
  *  - The auto-promotion path (REQ-002), where
- *    `TenderNedAwardDetectedListener` writes a fresh Verplichting with
+ *    `TenderNedAwardDetectedListener` writes a fresh Commitment with
  *    `status: active` directly. OR fires `ObjectCreatedEvent` for that
  *    write, and this listener picks it up to emit the budget event.
  *  - The manual-import-and-enrich path (REQ-001 -> activeren), where an
- *    operator hand-enriches a concept Verplichting and transitions it
+ *    operator hand-enriches a concept Commitment and transitions it
  *    through `activeren`. OR fires `ObjectTransitionedEvent` for that
  *    change, again handled here.
  *
@@ -58,7 +58,7 @@ use Throwable;
 
 /**
  * Cross-app `obligation.activated` emitter for TenderNed-sourced
- * Verplichting records (Task 5.2 / REQ-007).
+ * Commitment records (Task 5.2 / REQ-007).
  *
  * @implements IEventListener<Event>
  *
@@ -83,7 +83,7 @@ class CommitmentTransitionListener implements IEventListener
 
     /**
      * Handle an OR ObjectCreatedEvent or ObjectTransitionedEvent on the
-     * Verplichting schema.
+     * Commitment schema.
      *
      * @param Event $event OR object lifecycle event.
      *
@@ -94,12 +94,12 @@ class CommitmentTransitionListener implements IEventListener
     public function handle(Event $event): void
     {
         try {
-            $payload = $this->extractActivatedVerplichting(event: $event);
+            $payload = $this->extractActivatedCommitment(event: $event);
             if ($payload === null) {
                 return;
             }
 
-            $this->emitIfTenderNed(verplichting: $payload);
+            $this->emitIfTenderNed(commitment: $payload);
         } catch (Throwable $e) {
             $this->logger->warning(
                 'CommitmentTransitionListener: emission failed — fail-soft',
@@ -110,14 +110,14 @@ class CommitmentTransitionListener implements IEventListener
     }//end handle()
 
     /**
-     * Pull the activated Verplichting payload from an OR event, or null
+     * Pull the activated Commitment payload from an OR event, or null
      * when the event is irrelevant.
      *
      * @param Event $event OR event.
      *
      * @return array<string, mixed>|null
      */
-    private function extractActivatedVerplichting(Event $event): ?array
+    private function extractActivatedCommitment(Event $event): ?array
     {
         $entity = $this->resolveTargetEntity(event: $event);
         if ($entity === null) {
@@ -125,7 +125,7 @@ class CommitmentTransitionListener implements IEventListener
         }
 
         $schema = $this->schemaResolver->schemaSlug(entity: $entity);
-        if ($this->isVerplichtingSchema(schema: $schema) === false) {
+        if ($this->isCommitmentSchema(schema: $schema) === false) {
             return null;
         }
 
@@ -134,7 +134,7 @@ class CommitmentTransitionListener implements IEventListener
             return null;
         }
 
-        // ObjectCreatedEvent fires for every fresh Verplichting; only emit
+        // ObjectCreatedEvent fires for every fresh Commitment; only emit
         // for those that are already in the active state (the REQ-002
         // auto-promotion path, design D4).
         if ($event instanceof ObjectCreatedEvent === true
@@ -145,7 +145,7 @@ class CommitmentTransitionListener implements IEventListener
 
         return $payload;
 
-    }//end extractActivatedVerplichting()
+    }//end extractActivatedCommitment()
 
     /**
      * Resolve the carrying entity for ObjectCreatedEvent or
@@ -175,32 +175,32 @@ class CommitmentTransitionListener implements IEventListener
     /**
      * Emit the budget-impact event only for TenderNed-sourced obligations.
      *
-     * @param array<string, mixed> $verplichting Verplichting payload.
+     * @param array<string, mixed> $commitment Commitment payload.
      *
      * @return void
      */
-    private function emitIfTenderNed(array $verplichting): void
+    private function emitIfTenderNed(array $commitment): void
     {
-        if ((string) ($verplichting['bron'] ?? '') !== 'tenderned') {
+        if ((string) ($commitment['source'] ?? '') !== 'tenderned') {
             return;
         }
 
-        $this->emitter->emitActivated(verplichting: $verplichting);
+        $this->emitter->emitActivated(commitment: $commitment);
 
     }//end emitIfTenderNed()
 
     /**
-     * Check whether the schema slug is Verplichting.
+     * Check whether the schema slug is Commitment.
      *
      * @param string $schema Schema slug from the event.
      *
      * @return bool
      */
-    private function isVerplichtingSchema(string $schema): bool
+    private function isCommitmentSchema(string $schema): bool
     {
         $normalised = strtolower(trim($schema));
-        return ($normalised === 'verplichting'
-            || str_ends_with(haystack: $normalised, needle: 'verplichting'));
+        return ($normalised === 'commitment'
+            || str_ends_with(haystack: $normalised, needle: 'commitment'));
 
-    }//end isVerplichtingSchema()
+    }//end isCommitmentSchema()
 }//end class

@@ -6,7 +6,7 @@
  * ADR-031 exception-path lifecycle guard for the Verplichting activation
  * transition (concept → active). Enforces the contractmanager-enrichment gate
  * of design D2: a concept obligation may only be activated once it carries a
- * kostenplaats (cost centre) and a grootboekrekening (GL account). It also
+ * costCentre (cost centre) and a glAccount (GL account). It also
  * validates that any planned milestone date falls within the obligation term
  * (design validation rules), so an activation cannot lock budget against an
  * out-of-range milestone plan.
@@ -66,33 +66,33 @@ class CommitmentGuard
      * Precondition for the activeren (concept → active) transition.
      *
      * Validates:
-     * 1. kostenplaats (cost centre) is set (design D2).
-     * 2. grootboekrekening (GL account) is set (design D2).
-     * 3. Every planned milestone date falls within looptijdStart..looptijdEind
+     * 1. costCentre (cost centre) is set (design D2).
+     * 2. glAccount (GL account) is set (design D2).
+     * 3. Every planned milestone date falls within termStart..termEnd
      *    when the obligation declares a term (design validation rules).
      *
      * Fail-closed: returns false on any exception (denies activation) per CWE-863.
      *
-     * @param array<string, mixed> $verplichting Verplichting object array supplied by OR.
+     * @param array<string, mixed> $commitment Verplichting object array supplied by OR.
      *
      * @return bool True when the obligation may be activated.
      *
      * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
      */
-    public function canActiveren(array $verplichting): bool
+    public function canActiveren(array $commitment): bool
     {
         try {
-            if (trim((string) ($verplichting['kostenplaats'] ?? '')) === ''
-                || trim((string) ($verplichting['grootboekrekening'] ?? '')) === ''
+            if (trim((string) ($commitment['costCentre'] ?? '')) === ''
+                || trim((string) ($commitment['glAccount'] ?? '')) === ''
             ) {
                 $this->logger->info(
-                    'CommitmentGuard: missing kostenplaats or grootboekrekening — denying activation (design D2)',
-                    ['verplichtingsnummer' => ($verplichting['verplichtingsnummer'] ?? 'unknown')]
+                    'CommitmentGuard: missing costCentre or glAccount — denying activation (design D2)',
+                    ['commitmentNumber' => ($commitment['commitmentNumber'] ?? 'unknown')]
                 );
                 return false;
             }
 
-            if ($this->milestonesWithinTerm(verplichting: $verplichting) === false) {
+            if ($this->milestonesWithinTerm(commitment: $commitment) === false) {
                 return false;
             }
 
@@ -101,7 +101,7 @@ class CommitmentGuard
             $this->logger->error(
                 'CommitmentGuard: canActiveren failed — denying activation (fail-closed)',
                 [
-                    'verplichtingsnummer' => ($verplichting['verplichtingsnummer'] ?? 'unknown'),
+                    'commitmentNumber' => ($commitment['commitmentNumber'] ?? 'unknown'),
                     'exception'          => $e->getMessage(),
                 ]
             );
@@ -113,41 +113,41 @@ class CommitmentGuard
     /**
      * Verify every planned milestone date falls within the obligation term.
      *
-     * When the obligation declares no looptijdStart/looptijdEind the check is
+     * When the obligation declares no termStart/termEnd the check is
      * skipped (no bound to enforce). Milestones whose dates are unparseable are
      * rejected so a malformed plan cannot slip through.
      *
-     * @param array<string, mixed> $verplichting Verplichting object array.
+     * @param array<string, mixed> $commitment Verplichting object array.
      *
      * @return bool True when all milestone dates are in range (or no term/plan).
      */
-    private function milestonesWithinTerm(array $verplichting): bool
+    private function milestonesWithinTerm(array $commitment): bool
     {
-        $start = $this->parseDate(value: (string) ($verplichting['looptijdStart'] ?? ''));
-        $end   = $this->parseDate(value: (string) ($verplichting['looptijdEind'] ?? ''));
+        $start = $this->parseDate(value: (string) ($commitment['termStart'] ?? ''));
+        $end   = $this->parseDate(value: (string) ($commitment['termEnd'] ?? ''));
         if ($start === null || $end === null) {
             // No declared term — nothing to bound.
             return true;
         }
 
-        $mijlpalen = ($verplichting['mijlpalen'] ?? []);
-        if (is_array($mijlpalen) === false) {
+        $milestones = ($commitment['milestones'] ?? []);
+        if (is_array($milestones) === false) {
             return true;
         }
 
-        foreach ($mijlpalen as $mijlpaal) {
-            if (is_array($mijlpaal) === false) {
+        foreach ($milestones as $milestone) {
+            if (is_array($milestone) === false) {
                 continue;
             }
 
-            $datum = $this->parseDate(value: (string) ($mijlpaal['datum'] ?? ''));
-            if ($datum === null || $datum < $start || $datum > $end) {
+            $date = $this->parseDate(value: (string) ($milestone['date'] ?? ''));
+            if ($date === null || $date < $start || $date > $end) {
                 $this->logger->info(
                     'CommitmentGuard: milestone date out of contract term — denying activation',
                     [
-                        'verplichtingsnummer' => ($verplichting['verplichtingsnummer'] ?? 'unknown'),
-                        'mijlpaalId'         => ($mijlpaal['mijlpaalId'] ?? 'unknown'),
-                        'datum'              => ($mijlpaal['datum'] ?? 'unknown'),
+                        'commitmentNumber' => ($commitment['commitmentNumber'] ?? 'unknown'),
+                        'milestoneId'         => ($milestone['milestoneId'] ?? 'unknown'),
+                        'date'              => ($milestone['date'] ?? 'unknown'),
                     ]
                 );
                 return false;

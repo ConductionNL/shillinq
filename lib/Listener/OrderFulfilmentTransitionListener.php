@@ -5,7 +5,7 @@
  *
  * Task 5.3 / REQ-005 / REQ-006 — emit the cross-app `milestone.completed`
  * CloudEvent and trigger the outbound status-sync to TenderNed when an
- * OpdrachtUitvoering transitions to `completed` AND the eindoplevering of
+ * OpdrachtUitvoering transitions to `completed` AND the finalDelivery of
  * a TenderNed-sourced obligation is approved.
  *
  * Two responsibilities, both fail-soft:
@@ -14,7 +14,7 @@
  *     `shillinq.milestone.completed` event so the audit-trail subscriber
  *     (REQ-005) and any budget-utilisation consumer pick up the change
  *     within seconds.
- *  2. When the completed oplevering is `eindoplevering` + `goedgekeurd`
+ *  2. When the completed delivery is `finalDelivery` + `approved`
  *     true, {@see TenderNedStatusSync::syncCompletion()} is invoked so
  *     the public TenderNed dossier reflects completion (REQ-006). The
  *     sync itself is best-effort (live openconnector transport, Task
@@ -22,7 +22,7 @@
  *
  * The listener layers on top of the declarative
  * `OpdrachtUitvoering.voltooien` transition, which `OrderFulfilmentGuard`
- * has already gated on at least one bewijsstuk being attached (REQ-004).
+ * has already gated on at least one evidence being attached (REQ-004).
  * By the time the event fires the precondition has held; the listener's
  * job is purely cross-cutting notification + outbound sync.
  *
@@ -111,26 +111,26 @@ class OrderFulfilmentTransitionListener implements IEventListener
                 return;
             }
 
-            $oplevering = $entity->getObject();
-            if (is_array($oplevering) === false) {
+            $delivery = $entity->getObject();
+            if (is_array($delivery) === false) {
                 return;
             }
 
             // REQ-005 / Task 5.3 — always emit the milestone-completed event.
-            $this->emitter->emitMilestoneCompleted(oplevering: $oplevering);
+            $this->emitter->emitMilestoneCompleted(delivery: $delivery);
 
             // REQ-006 — outbound sync only when this is the approved
-            // eindoplevering (the buyer-side gate; vendor-completed
+            // finalDelivery (the buyer-side gate; vendor-completed
             // openrules are denied earlier by RBAC).
-            if ((string) ($oplevering['opleveringsType'] ?? '') !== 'eindoplevering') {
+            if ((string) ($delivery['deliveryType'] ?? '') !== 'finalDelivery') {
                 return;
             }
 
-            if (((bool) ($oplevering['goedgekeurd'] ?? false)) !== true) {
+            if (((bool) ($delivery['approved'] ?? false)) !== true) {
                 return;
             }
 
-            $this->sync->syncCompletion(oplevering: $oplevering);
+            $this->sync->syncCompletion(delivery: $delivery);
         } catch (Throwable $e) {
             $this->logger->warning(
                 'OrderFulfilmentTransitionListener: fail-soft on completion',
@@ -150,8 +150,8 @@ class OrderFulfilmentTransitionListener implements IEventListener
     private function isOpdrachtUitvoeringSchema(string $schema): bool
     {
         $normalised = strtolower(trim($schema));
-        return ($normalised === 'opdrachtuitvoering'
-            || str_ends_with(haystack: $normalised, needle: 'opdrachtuitvoering'));
+        return ($normalised === 'orderFulfilment'
+            || str_ends_with(haystack: $normalised, needle: 'orderFulfilment'));
 
     }//end isOpdrachtUitvoeringSchema()
 }//end class

@@ -1418,13 +1418,13 @@ class Application extends App implements IBootstrap
         // Bookkeeping-tenderned-integratie Task 5.1 — interest declared on the
         // create path: `isAanbestedingSchema()` resolves to the
         // `TenderNedAanbesteding` schema, the same slug the handler writes back
-        // with `->setSchema('TenderNedAanbesteding')`. The
+        // with `->setSchema('TenderNedProcurement')`. The
         // ObjectTransitionedEvent registration in register() stays global.
         $this->registerFilteredObjectListener(
             dispatcher: $dispatcher,
             event: ObjectCreatedEvent::class,
             listener: TenderNedAwardDetectedListener::class,
-            schemas: ['TenderNedAanbesteding']
+            schemas: ['TenderNedProcurement']
         );
 
         // Bookkeeping-tenderned-integratie Task 5.2 — interest declared on the
@@ -1436,7 +1436,7 @@ class Application extends App implements IBootstrap
             dispatcher: $dispatcher,
             event: ObjectCreatedEvent::class,
             listener: CommitmentTransitionListener::class,
-            schemas: ['Verplichting']
+            schemas: ['Commitment']
         );
 
     }//end boot()

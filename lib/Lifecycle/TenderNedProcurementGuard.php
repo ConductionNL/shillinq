@@ -6,12 +6,12 @@
  * ADR-031 exception-path lifecycle guard for the TenderNedAanbesteding award
  * (gunnen) and completion (afronden) transitions.
  *
- * canGunnen (open → gegund) enforces REQ-002: the award is only recorded when
+ * canGunnen (open → awarded) enforces REQ-002: the award is only recorded when
  * the dossier carries the data needed to materialise an obligation — a
- * gegundeLeverancier and a non-zero contractWaarde.
+ * awardedSupplier and a non-zero contractValue.
  *
  * canAfronden (in-uitvoering → afgerond) enforces REQ-006: a tender can only be
- * completed once an eindoplevering OpdrachtUitvoering for the linked obligation
+ * completed once an finalDelivery OpdrachtUitvoering for the linked obligation
  * has been approved, so the public dossier is never marked afgerond before the
  * final delivery is accepted.
  *
@@ -89,35 +89,35 @@ class TenderNedProcurementGuard
     }//end getRegisterSlug()
 
     /**
-     * Precondition for the gunnen (open → gegund) transition.
+     * Precondition for the gunnen (open → awarded) transition.
      *
      * REQ-002: the award is only recorded when the dossier carries the data
-     * needed to materialise a concept obligation — a gegundeLeverancier and a
-     * positive contractWaarde.
+     * needed to materialise a concept obligation — a awardedSupplier and a
+     * positive contractValue.
      *
      * Fail-closed: returns false on any exception (denies the award) per CWE-863.
      *
-     * @param array<string, mixed> $aanbesteding TenderNedAanbesteding object array.
+     * @param array<string, mixed> $procurement TenderNedAanbesteding object array.
      *
      * @return bool True when the award may be recorded.
      *
      * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
      */
-    public function canGunnen(array $aanbesteding): bool
+    public function canGunnen(array $procurement): bool
     {
         try {
-            if (trim((string) ($aanbesteding['gegundeLeverancier'] ?? '')) === '') {
+            if (trim((string) ($procurement['awardedSupplier'] ?? '')) === '') {
                 $this->logger->info(
-                    'TenderNedProcurementGuard: no gegundeLeverancier — denying award (REQ-002)',
-                    ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+                    'TenderNedProcurementGuard: no awardedSupplier — denying award (REQ-002)',
+                    ['procurementId' => ($procurement['procurementId'] ?? 'unknown')]
                 );
                 return false;
             }
 
-            if ((float) ($aanbesteding['contractWaarde'] ?? 0) <= 0.0) {
+            if ((float) ($procurement['contractValue'] ?? 0) <= 0.0) {
                 $this->logger->info(
-                    'TenderNedProcurementGuard: contractWaarde must be positive — denying award (REQ-002)',
-                    ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+                    'TenderNedProcurementGuard: contractValue must be positive — denying award (REQ-002)',
+                    ['procurementId' => ($procurement['procurementId'] ?? 'unknown')]
                 );
                 return false;
             }
@@ -127,7 +127,7 @@ class TenderNedProcurementGuard
             $this->logger->error(
                 'TenderNedProcurementGuard: canGunnen failed — denying award (fail-closed)',
                 [
-                    'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
+                    'procurementId' => ($procurement['procurementId'] ?? 'unknown'),
                     'exception'      => $e->getMessage(),
                 ]
             );
@@ -139,41 +139,41 @@ class TenderNedProcurementGuard
     /**
      * Precondition for the afronden (in-uitvoering → afgerond) transition.
      *
-     * REQ-006: a tender can only be completed once an eindoplevering
+     * REQ-006: a tender can only be completed once an finalDelivery
      * OpdrachtUitvoering for the linked Verplichting has been approved
-     * (status completed, goedgekeurd true). This prevents the public dossier from
+     * (status completed, approved true). This prevents the public dossier from
      * being marked afgerond before the final delivery is accepted.
      *
-     * When the linked Verplichting cannot be resolved (no verplichtingId yet, or
+     * When the linked Verplichting cannot be resolved (no commitmentId yet, or
      * the schema is not available in a T1 state) the completion is permitted with
      * a warning so manually-managed tenders are not blocked.
      *
      * Fail-closed: returns false on any exception (denies completion) per CWE-863.
      *
-     * @param array<string, mixed> $aanbesteding TenderNedAanbesteding object array.
+     * @param array<string, mixed> $procurement TenderNedAanbesteding object array.
      *
      * @return bool True when the tender may be completed.
      *
      * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
      */
-    public function canAfronden(array $aanbesteding): bool
+    public function canAfronden(array $procurement): bool
     {
         try {
-            $verplichtingId = trim((string) ($aanbesteding['verplichtingId'] ?? ''));
-            if ($verplichtingId === '') {
+            $commitmentId = trim((string) ($procurement['commitmentId'] ?? ''));
+            if ($commitmentId === '') {
                 $this->logger->warning(
                     'TenderNedProcurementGuard: no linked Verplichting — permitting completion without delivery check',
-                    ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+                    ['procurementId' => ($procurement['procurementId'] ?? 'unknown')]
                 );
                 return true;
             }
 
-            return $this->hasApprovedEindoplevering(verplichtingId: $verplichtingId, aanbesteding: $aanbesteding);
+            return $this->hasApprovedFinalDelivery(commitmentId: $commitmentId, procurement: $procurement);
         } catch (\Throwable $e) {
             $this->logger->error(
                 'TenderNedProcurementGuard: canAfronden failed — denying completion (fail-closed)',
                 [
-                    'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
+                    'procurementId' => ($procurement['procurementId'] ?? 'unknown'),
                     'exception'      => $e->getMessage(),
                 ]
             );
@@ -183,25 +183,25 @@ class TenderNedProcurementGuard
     }//end canAfronden()
 
     /**
-     * Verify an approved eindoplevering exists for the linked obligation.
+     * Verify an approved finalDelivery exists for the linked obligation.
      *
-     * @param string               $verplichtingId The linked obligation id.
-     * @param array<string, mixed> $aanbesteding   TenderNedAanbesteding for log context.
+     * @param string               $commitmentId The linked obligation id.
+     * @param array<string, mixed> $procurement   TenderNedAanbesteding for log context.
      *
-     * @return bool True when an approved eindoplevering OpdrachtUitvoering exists.
+     * @return bool True when an approved finalDelivery OpdrachtUitvoering exists.
      */
-    private function hasApprovedEindoplevering(string $verplichtingId, array $aanbesteding): bool
+    private function hasApprovedFinalDelivery(string $commitmentId, array $procurement): bool
     {
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $records       = $objectService
                 ->setRegister(register: $this->getRegisterSlug())
-                ->setSchema(schema: 'OpdrachtUitvoering')
+                ->setSchema(schema: 'OrderFulfilment')
                 ->findAll(
                     [
                         'filters' => [
-                            'verplichtingId'  => $verplichtingId,
-                            'opleveringsType' => 'eindoplevering',
+                            'commitmentId'  => $commitmentId,
+                            'deliveryType' => 'finalDelivery',
                         ],
                     ]
                 );
@@ -209,7 +209,7 @@ class TenderNedProcurementGuard
             // OpdrachtUitvoering schema not available (T1 state) — permit completion.
             $this->logger->debug(
                 'TenderNedProcurementGuard: OpdrachtUitvoering lookup unavailable (T1 state) — permitting completion',
-                ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'), 'exception' => $e->getMessage()]
+                ['procurementId' => ($procurement['procurementId'] ?? 'unknown'), 'exception' => $e->getMessage()]
             );
             return true;
         }//end try
@@ -224,20 +224,20 @@ class TenderNedProcurementGuard
             }
 
             if (($record['status'] ?? '') === 'completed'
-                && ((bool) ($record['goedgekeurd'] ?? false)) === true
+                && ((bool) ($record['approved'] ?? false)) === true
             ) {
                 return true;
             }
         }
 
         $this->logger->info(
-            'TenderNedProcurementGuard: no approved eindoplevering — denying completion (REQ-006)',
+            'TenderNedProcurementGuard: no approved finalDelivery — denying completion (REQ-006)',
             [
-                'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
-                'verplichtingId' => $verplichtingId,
+                'procurementId' => ($procurement['procurementId'] ?? 'unknown'),
+                'commitmentId' => $commitmentId,
             ]
         );
         return false;
 
-    }//end hasApprovedEindoplevering()
+    }//end hasApprovedFinalDelivery()
 }//end class
