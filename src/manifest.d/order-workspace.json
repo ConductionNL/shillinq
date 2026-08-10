@@ -33,12 +33,25 @@
 			"route": "/orders/:id",
 			"type": "detail",
 			"_note": "OrderPrimitive is the unified transactional WORKSPACE primitive that replaces the scattered Subsidie / Purchase Order / Quote / Sales Order records — one record whose orderType/direction re-skins it. Body leads with the order header (counterparty, type, terms, total) plus a total-amount KPI; the Order lines are the primary child table (the auditable breakdown) with Payments beside them so the operator sees what was ordered and what has been paid. Documents (quote/PO/contract) and the audit trail sit in the sidebar. No email/calendar leaf on the record itself — a transaction workspace, not a comms surface.",
+			"widgets": [
+				{
+					"id": "order-total",
+					"widgetKey": "stats-block",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 12,
+					"gridHeight": 1,
+					"props": {
+						"entries": [
+							{ "title": "Order total", "register": "shillinq", "schema": "OrderLine", "metric": "sum", "field": "lineAmount", "filter": { "orderId": "@objectId" } }
+						]
+					}
+				}
+			],
 			"config": {
 				"register": "shillinq",
 				"schema": "OrderPrimitive",
-				"summaryAggregates": [
-					{ "label": "Order total", "register": "shillinq", "schema": "OrderLine", "metric": "sum", "field": "lineAmount", "filter": { "orderId": "@objectId" }, "format": "currency" }
-				],
 				"relatedCollections": [
 					{ "title": "Order lines", "register": "shillinq", "schema": "OrderLine", "filter": { "orderId": "@objectId" }, "columns": [
 						{"key": "lineNumber", "label": "#"},
