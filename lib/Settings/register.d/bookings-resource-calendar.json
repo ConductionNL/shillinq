@@ -133,15 +133,6 @@
             "example": "active",
             "title": "Status"
           }
-        },
-        "x-openregister-relations": {
-          "resource": {
-            "localField": "resource",
-            "relatedSchema": "Resource",
-            "relatedField": "resourceId",
-            "cardinality": "many-to-one",
-            "description": "The Resource this calendar represents."
-          }
         }
       },
       "Booking": {
@@ -273,22 +264,6 @@
               "label": "Cancel pending",
               "description": "Cancel a pending booking that was never confirmed."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "calendar": {
-            "localField": "calendar",
-            "relatedSchema": "Calendar",
-            "relatedField": "calendarId",
-            "cardinality": "many-to-one",
-            "description": "The Calendar this booking belongs to."
-          },
-          "resource": {
-            "localField": "resource",
-            "relatedSchema": "Resource",
-            "relatedField": "resourceId",
-            "cardinality": "many-to-one",
-            "description": "The Resource this booking reserves (denormalised from calendar.resource)."
           }
         },
         "x-openregister-aggregations": {
