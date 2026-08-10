@@ -35,7 +35,7 @@ use OCP\IUserSession;
 /**
  * Per-user preferences controller.
  *
- * @spec openspec/changes/retrofit-2026-05-26-preferences-api/tasks.md
+ * @spec openspec/specs/apphost-adoption/spec.md#requirement-mechanical-boilerplate-served-by-apphost-generics
  */
 class PreferencesController extends Controller
 {
@@ -62,7 +62,7 @@ class PreferencesController extends Controller
      *
      * @return JSONResponse `{value: string|null}`.
      *
-     * @spec openspec/changes/retrofit-2026-05-26-preferences-api/tasks.md#task-1
+     * @spec openspec/specs/apphost-adoption/spec.md#requirement-mechanical-boilerplate-served-by-apphost-generics
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -105,7 +105,7 @@ class PreferencesController extends Controller
      *
      * @return JSONResponse `{value: string|null}`.
      *
-     * @spec openspec/changes/retrofit-2026-05-26-preferences-api/tasks.md#task-2
+     * @spec openspec/specs/apphost-adoption/spec.md#requirement-mechanical-boilerplate-served-by-apphost-generics
      *
      * @NoAdminRequired
      */

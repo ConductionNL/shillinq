@@ -39,7 +39,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/abstract-arinvoice-types/tasks.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md#req-ccd-010
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -63,7 +63,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Repair step that folds DunningRun + OninbaarAfschrijving onto ARInvoice.
  *
- * @spec openspec/changes/abstract-arinvoice-types/tasks.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md#req-ccd-010
  */
 class FoldDunningWriteoffIntoArInvoice implements IRepairStep
 {
@@ -103,7 +103,7 @@ class FoldDunningWriteoffIntoArInvoice implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/abstract-arinvoice-types/tasks.md
+     * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md#req-ccd-010
      */
     public function run(IOutput $output): void
     {

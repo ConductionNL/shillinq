@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-cancellation-rules/specs/spec.md
+ * @spec openspec/specs/bookings-cancellation-rules/spec.md#requirement-cancellation-service-layer
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for the cancellation fee/refund engine and cancellation mutation.
  *
- * @spec openspec/changes/bookings-cancellation-rules/specs/spec.md
+ * @spec openspec/specs/bookings-cancellation-rules/spec.md#requirement-cancellation-service-layer
  */
 final class CancellationServiceTest extends TestCase
 {
