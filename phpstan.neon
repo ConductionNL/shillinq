@@ -36,6 +36,10 @@ parameters:
         # OCA\OpenRegister\Service\Notification\RecipientResolverInterface — same
         # non-ignorable "implements unknown interface" class as the guards above.
         - lib/Notification/RoleFallbackResolver.php
+        # AppendReopenHistoryAction implements the cross-app
+        # OCA\OpenRegister\Lifecycle\LifecycleActionInterface — same non-ignorable
+        # "implements unknown interface" class as the guards above.
+        - lib/Lifecycle/Action/AppendReopenHistoryAction.php
     scanDirectories:
         - vendor/nextcloud/ocp
     reportUnmatchedIgnoredErrors: false
@@ -127,3 +131,9 @@ parameters:
         - '#Call to an undefined method OCP\\IRequest::setParameter\(\)#'
         - '#Call to an undefined method OCP\\Mail\\IMessage::attachFile\(\)#'
         - '#Call to an undefined method OCP\\AppFramework\\Db\\Entity::jsonSerialize#'
+        # OpenRegister's stoppable pre-save events (ObjectCreatingEvent /
+        # ObjectUpdatingEvent) declare setErrors(); they are cross-app classes
+        # absent at analysis time, so PHPStan only sees the OCP base Event and
+        # cannot narrow the instanceof. The call is valid at runtime — it is the
+        # documented veto contract MagicMapper turns into a HookStoppedException.
+        - '#Call to an undefined method OCP\\EventDispatcher\\Event::setErrors\(\)#'
