@@ -144,17 +144,17 @@ class RequisitionService
         $requisitionNumber = $this->generateRequisitionNumber(administrationId: $administrationId);
 
         $requisition = [
-            'requisitionNumber'     => $requisitionNumber,
-            'administrationId'      => $administrationId,
-            'requester'             => $requester,
-            'programme'             => $programme,
-            'fiscalYear'              => $fiscalYear,
-            'neededByDate'          => $neededByDate,
-            'justification'         => $justification,
-            'commitmentType'                 => $commitmentType,
-            'preferredSupplierId'   => trim((string) ($payload['preferredSupplierId'] ?? '')),
-            'totalAmountExclVat' => $totalCent,
-            'statusCode'            => 'draft',
+            'requisitionNumber'   => $requisitionNumber,
+            'administrationId'    => $administrationId,
+            'requester'           => $requester,
+            'programme'           => $programme,
+            'fiscalYear'          => $fiscalYear,
+            'neededByDate'        => $neededByDate,
+            'justification'       => $justification,
+            'commitmentType'      => $commitmentType,
+            'preferredSupplierId' => trim((string) ($payload['preferredSupplierId'] ?? '')),
+            'totalAmountExclVat'  => $totalCent,
+            'statusCode'          => 'draft',
         ];
 
         $persisted     = $this->saveObject(schema: 'Requisition', object: $requisition);

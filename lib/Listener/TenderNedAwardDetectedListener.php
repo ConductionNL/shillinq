@@ -318,7 +318,7 @@ class TenderNedAwardDetectedListener implements IEventListener
         // execution view. Fail-soft if the update fails — the obligation
         // has been created and the next polling tick will re-attempt.
         try {
-            $payload['status']         = 'in-uitvoering';
+            $payload['status']       = 'in-uitvoering';
             $payload['commitmentId'] = 'TN-'.$procurementId;
             $objectService
                 ->setRegister(register: $this->getRegisterSlug())
@@ -337,12 +337,12 @@ class TenderNedAwardDetectedListener implements IEventListener
 
     /**
      * Generate the milestone plan, catching invalid-date exceptions so a
-     * missing looptijd does not block the promotion (the operator can
+     * missing term does not block the promotion (the operator can
      * enrich the term in the Commitment detail view later).
      *
-     * @param string $opdrachttype  Contract type.
-     * @param string $looptijdStart Term start.
-     * @param string $looptijdEind  Term end.
+     * @param string $assignmentType Contract type.
+     * @param string $termStart      Term start.
+     * @param string $termEnd        Term end.
      *
      * @return array<int, array<string, mixed>> Milestone plan, possibly empty.
      */
@@ -371,7 +371,7 @@ class TenderNedAwardDetectedListener implements IEventListener
     /**
      * Look up an existing Commitment by sourceReference.
      *
-     * @param object $objectService  OR ObjectService.
+     * @param object $objectService   OR ObjectService.
      * @param string $sourceReference TenderNed procurementId.
      *
      * @return array<string, mixed>|null
@@ -385,7 +385,7 @@ class TenderNedAwardDetectedListener implements IEventListener
                 ->findAll(
                     [
                         'filters' => [
-                            'bron'           => 'tenderned',
+                            'bron'            => 'tenderned',
                             'sourceReference' => $sourceReference,
                         ],
                     ]
@@ -406,7 +406,7 @@ class TenderNedAwardDetectedListener implements IEventListener
 
         return null;
 
-    }//end findExistingByBronReferentie()
+    }//end findExistingBySourceReference()
 
     /**
      * Resolve the OR ObjectService from the container (lazy).

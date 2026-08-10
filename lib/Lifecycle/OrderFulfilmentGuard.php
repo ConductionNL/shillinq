@@ -82,7 +82,7 @@ class OrderFulfilmentGuard
                     'OrderFulfilmentGuard: no evidenceItem attached — denying completion (REQ-004)',
                     [
                         'commitmentId' => ($fulfilment['commitmentId'] ?? 'unknown'),
-                        'milestoneId'     => ($fulfilment['milestoneId'] ?? 'unknown'),
+                        'milestoneId'  => ($fulfilment['milestoneId'] ?? 'unknown'),
                     ]
                 );
                 return false;
@@ -94,7 +94,7 @@ class OrderFulfilmentGuard
                 'OrderFulfilmentGuard: canVoltooien failed — denying completion (fail-closed)',
                 [
                     'commitmentId' => ($fulfilment['commitmentId'] ?? 'unknown'),
-                    'exception'      => $e->getMessage(),
+                    'exception'    => $e->getMessage(),
                 ]
             );
             return false;

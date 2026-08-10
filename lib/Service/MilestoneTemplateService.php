@@ -116,9 +116,9 @@ class MilestoneTemplateService
      * clamped to the contract end, and assigned a stable milestoneId. Every
      * generated milestone starts in the 'planned' status with no invoice number.
      *
-     * @param string $assignmentType  Contract type used to select the template.
-     * @param string $termStart Contract start date (ISO 8601, e.g. "2026-02-01").
-     * @param string $termEnd  Contract end date (ISO 8601).
+     * @param string $assignmentType Contract type used to select the template.
+     * @param string $termStart      Contract start date (ISO 8601, e.g. "2026-02-01").
+     * @param string $termEnd        Contract end date (ISO 8601).
      *
      * @return array<int, array<string, mixed>> Ordered milestones ready for the Commitment.
      *
@@ -141,25 +141,25 @@ class MilestoneTemplateService
 
         $template    = $this->getTemplate(assignmentType: $assignmentType);
         $termSeconds = ($end - $start);
-        $milestones   = [];
+        $milestones  = [];
         $index       = 0;
         foreach (($template['milestones'] ?? []) as $row) {
             $index++;
             $fraction = (float) ($row['fractionOfTerm'] ?? 0.0);
             $fraction = max(0.0, min(1.0, $fraction));
-            $date    = ($start + (int) round($termSeconds * $fraction));
+            $date     = ($start + (int) round($termSeconds * $fraction));
             if ($date > $end) {
                 $date = $end;
             }
 
             $milestones[] = [
-                'milestoneId'      => 'MS-'.str_pad((string) $index, 3, '0', STR_PAD_LEFT),
-                'date'           => gmdate('Y-m-d', $date),
-                'description'    => (string) ($row['label'] ?? ('Mijlpaal '.$index)),
-                'percentage'      => (float) ($row['percentage'] ?? 0.0),
-                'deliveryType' => (string) ($row['deliveryType'] ?? 'partialDelivery'),
-                'status'          => 'planned',
-                'factuurnummer'   => null,
+                'milestoneId'   => 'MS-'.str_pad((string) $index, 3, '0', STR_PAD_LEFT),
+                'date'          => gmdate('Y-m-d', $date),
+                'description'   => (string) ($row['label'] ?? ('Mijlpaal '.$index)),
+                'percentage'    => (float) ($row['percentage'] ?? 0.0),
+                'deliveryType'  => (string) ($row['deliveryType'] ?? 'partialDelivery'),
+                'status'        => 'planned',
+                'factuurnummer' => null,
             ];
         }//end foreach
 
@@ -200,7 +200,7 @@ class MilestoneTemplateService
      * equals contractValue (no cent drift across deelfacturen).
      *
      * @param float                            $contractValue Contract value (excl. BTW).
-     * @param array<int, array<string, mixed>> $milestones      Milestone plan with date + percentage.
+     * @param array<int, array<string, mixed>> $milestones    Milestone plan with date + percentage.
      *
      * @return array<int, array<string, mixed>> Forecast entries: date, description, amount.
      *
@@ -227,8 +227,8 @@ class MilestoneTemplateService
             $forecast[] = [
                 'date'        => (string) ($milestone['date'] ?? ''),
                 'description' => (string) ($milestone['description'] ?? ''),
-                'percentage'   => $percentage,
-                'amount'       => $amount,
+                'percentage'  => $percentage,
+                'amount'      => $amount,
             ];
         }//end foreach
 

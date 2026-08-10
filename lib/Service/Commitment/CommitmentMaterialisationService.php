@@ -132,8 +132,8 @@ class CommitmentMaterialisationService
         }
 
         $administrationId = (string) ($purchaseOrder['administrationId'] ?? '');
-        $poId        = (string) ($purchaseOrder['id'] ?? ($purchaseOrder['@self']['id'] ?? ''));
-        $lines       = $this->findMany(schema: 'PurchaseOrderLine', filters: ['poId' => $poId]);
+        $poId       = (string) ($purchaseOrder['id'] ?? ($purchaseOrder['@self']['id'] ?? ''));
+        $lines      = $this->findMany(schema: 'PurchaseOrderLine', filters: ['poId' => $poId]);
         $lineInputs = $this->buildLinesFromPurchaseOrderLines(purchaseOrder: $purchaseOrder, lines: $lines);
 
         $counterparty = [
@@ -172,7 +172,7 @@ class CommitmentMaterialisationService
         }
 
         $administrationId = (string) ($contract['administrationId'] ?? '');
-        $lineInputs      = $this->buildLinesFromContract(contract: $contract);
+        $lineInputs       = $this->buildLinesFromContract(contract: $contract);
 
         $counterpartyType = 'other';
         if ((string) ($contract['direction'] ?? '') === 'inbound') {
@@ -210,11 +210,11 @@ class CommitmentMaterialisationService
      * Core materialisation: idempotency check, guard delegation, persistence,
      * and rechtmatigheid linkage. Shared by both source paths (REQ-VPL-010).
      *
-     * @param string                          $sourceReference   Source PO/contract business key (idempotency key).
+     * @param string                          $sourceReference  Source PO/contract business key (idempotency key).
      * @param string                          $commitmentType   Commitment.commitmentType enum value.
      * @param string                          $administrationId Owning administration.
-     * @param array<int, array<string,mixed>> $lineInputs      Regel inputs built by the source-specific builder.
-     * @param array<string, mixed>            $counterparty      Embedded counterparty reference.
+     * @param array<int, array<string,mixed>> $lineInputs       Regel inputs built by the source-specific builder.
+     * @param array<string, mixed>            $counterparty     Embedded counterparty reference.
      * @param bool                            $failClosed       Whether a budget denial should throw (PO) or log (Contract).
      *
      * @return array<string, mixed>|null The materialised (or pre-existing) Commitment, or null when nothing to do.
@@ -249,15 +249,15 @@ class CommitmentMaterialisationService
         }
 
         $draft = [
-            'administrationId'      => $administrationId,
+            'administrationId'   => $administrationId,
             'commitmentNumber'   => $sourceReference,
-            'sourceReference'        => $sourceReference,
-            'commitmentType'        => $commitmentType,
-            'status'                => 'draft',
+            'sourceReference'    => $sourceReference,
+            'commitmentType'     => $commitmentType,
+            'status'             => 'draft',
             'totalAmountExclVat' => $total,
-            'counterparty'           => $counterparty,
-            'lines'                 => $lineInputs,
-            'commitmentDate'          => (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y-m-d'),
+            'counterparty'       => $counterparty,
+            'lines'              => $lineInputs,
+            'commitmentDate'     => (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y-m-d'),
         ];
 
         // REQ-VPL-002 parity: no sufficient mandate routes to in_goedkeuring
@@ -337,18 +337,18 @@ class CommitmentMaterialisationService
         $grouped = [];
         foreach ($lines as $line) {
             $costCentre = trim((string) ($line['costCenter'] ?? $orderCostCenter));
-            $glAccount    = trim((string) ($line['glAccount'] ?? ''));
-            $lineDate     = (string) ($line['expectedDeliveryDate'] ?? $orderDate);
-            $fiscalYear     = $this->resolveFiscalYear(dateString: $lineDate);
-            $amount       = (int) ($line['lineTotal'] ?? 0);
+            $glAccount  = trim((string) ($line['glAccount'] ?? ''));
+            $lineDate   = (string) ($line['expectedDeliveryDate'] ?? $orderDate);
+            $fiscalYear = $this->resolveFiscalYear(dateString: $lineDate);
+            $amount     = (int) ($line['lineTotal'] ?? 0);
 
             $key = $costCentre.'|'.$glAccount.'|'.$fiscalYear;
             if (isset($grouped[$key]) === false) {
                 $grouped[$key] = [
-                    'costCentre'      => $costCentre,
-                    'glAccount' => $glAccount,
-                    'fiscalYear'          => $fiscalYear,
-                    'amountExclVat'   => 0,
+                    'costCentre'    => $costCentre,
+                    'glAccount'     => $glAccount,
+                    'fiscalYear'    => $fiscalYear,
+                    'amountExclVat' => 0,
                 ];
             }
 
@@ -382,8 +382,8 @@ class CommitmentMaterialisationService
     private function buildLinesFromContract(array $contract): array
     {
         $administrationId = (string) ($contract['administrationId'] ?? '');
-        $costCentre     = trim((string) ($contract['costCenter'] ?? ''));
-        $totalCents      = (int) round(((float) ($contract['totalContractValue'] ?? 0)) * 100);
+        $costCentre       = trim((string) ($contract['costCenter'] ?? ''));
+        $totalCents       = (int) round(((float) ($contract['totalContractValue'] ?? 0)) * 100);
 
         $years = $this->resolveFiscalYearSpan(
             startDate: (string) ($contract['startDate'] ?? ''),
@@ -406,11 +406,11 @@ class CommitmentMaterialisationService
             }
 
             $lines[] = [
-                'costCentre'      => $costCentre,
-                'glAccount' => '',
-                'fiscalYear'          => $fiscalYear,
-                'amountExclVat'   => $amount,
-                'programme'         => $this->resolveProgramme(
+                'costCentre'    => $costCentre,
+                'glAccount'     => '',
+                'fiscalYear'    => $fiscalYear,
+                'amountExclVat' => $amount,
+                'programme'     => $this->resolveProgramme(
                     administrationId: $administrationId,
                     costCentre: $costCentre,
                     fiscalYear: $fiscalYear
@@ -514,8 +514,8 @@ class CommitmentMaterialisationService
      * silent success.
      *
      * @param string $administrationId Owning administration.
-     * @param string $costCentre     Cost-centre code.
-     * @param int    $fiscalYear         Fiscal year.
+     * @param string $costCentre       Cost-centre code.
+     * @param int    $fiscalYear       Fiscal year.
      *
      * @return string Resolved programma code, or '' when unresolved.
      */
@@ -529,8 +529,8 @@ class CommitmentMaterialisationService
             schema: 'Budget',
             filters: [
                 'administrationId' => $administrationId,
-                'costCentre'     => $costCentre,
-                'fiscalYear'         => $fiscalYear,
+                'costCentre'       => $costCentre,
+                'fiscalYear'       => $fiscalYear,
             ]
         );
 
@@ -541,7 +541,7 @@ class CommitmentMaterialisationService
     /**
      * Persist the Commitment and its CommitmentLine rows.
      *
-     * @param array<string, mixed>            $draft       Assembled Commitment.
+     * @param array<string, mixed>            $draft      Assembled Commitment.
      * @param array<int, array<string,mixed>> $lineInputs Regel inputs to persist as CommitmentLine rows.
      *
      * @return array<string, mixed> The persisted Commitment.
@@ -562,14 +562,14 @@ class CommitmentMaterialisationService
                 ->setSchema(schema: 'CommitmentLine')
                 ->saveObject(
                     object: [
-                        'administrationId'  => (string) ($draft['administrationId'] ?? ''),
-                        'commitment'        => (string) ($draft['commitmentNumber'] ?? ''),
-                        'lineNumber'       => $lineNumber,
-                        'fiscalYear'          => (int) ($line['fiscalYear'] ?? 0),
-                        'amountExclVat'   => (int) ($line['amountExclVat'] ?? 0),
-                        'glAccount' => (string) ($line['glAccount'] ?? ''),
-                        'costCentre'      => (string) ($line['costCentre'] ?? ''),
-                        'programme'         => (string) ($line['programme'] ?? ''),
+                        'administrationId'   => (string) ($draft['administrationId'] ?? ''),
+                        'commitment'         => (string) ($draft['commitmentNumber'] ?? ''),
+                        'lineNumber'         => $lineNumber,
+                        'fiscalYear'         => (int) ($line['fiscalYear'] ?? 0),
+                        'amountExclVat'      => (int) ($line['amountExclVat'] ?? 0),
+                        'glAccount'          => (string) ($line['glAccount'] ?? ''),
+                        'costCentre'         => (string) ($line['costCentre'] ?? ''),
+                        'programme'          => (string) ($line['programme'] ?? ''),
                         'remainingCommitted' => (int) ($line['amountExclVat'] ?? 0),
                     ]
                 );
@@ -592,16 +592,16 @@ class CommitmentMaterialisationService
      * fail-soft: a write failure here never blocks the commitment itself.
      *
      * @param array<string, mixed>            $commitment Persisted Commitment.
-     * @param array<int, array<string,mixed>> $lineInputs  Regel inputs (for boekjaar/programma).
+     * @param array<int, array<string,mixed>> $lineInputs Regel inputs (for boekjaar/programma).
      *
      * @return void
      */
     private function recordOverrideDeviation(array $commitment, array $lineInputs): void
     {
         try {
-            $first    = reset($lineInputs);
+            $first      = reset($lineInputs);
             $fiscalYear = (int) ($first['fiscalYear'] ?? (int) (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y'));
-            $amount   = ((float) ($commitment['totalAmountExclVat'] ?? 0)) / 100;
+            $amount     = ((float) ($commitment['totalAmountExclVat'] ?? 0)) / 100;
 
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $objectService
@@ -613,10 +613,10 @@ class CommitmentMaterialisationService
                         'bevindingsnummer' => 'RV-'.($commitment['commitmentNumber'] ?? '').'-OVERRIDE',
                         'soort'            => 'fout',
                         'criterium'        => 'begroting',
-                        'fiscalYear'         => $fiscalYear,
+                        'fiscalYear'       => $fiscalYear,
                         'programme'        => (string) ($first['programme'] ?? ''),
                         'bedrag_fout'      => $amount,
-                        'description'     => (string) ($commitment['overrideReason'] ?? ''),
+                        'description'      => (string) ($commitment['overrideReason'] ?? ''),
                         'oorzaak'          => sprintf(
                             'Commitment %s automatically committed under an override mandate due to insufficient free budget.',
                             (string) ($commitment['commitmentNumber'] ?? '')
@@ -650,12 +650,12 @@ class CommitmentMaterialisationService
 
         try {
             $payload = [
-                'eventName'           => self::EVENT_COMMITMENT_CREATED,
+                'eventName'        => self::EVENT_COMMITMENT_CREATED,
                 'commitmentNumber' => (string) ($commitment['commitmentNumber'] ?? ''),
-                'sourceReference'      => (string) ($commitment['sourceReference'] ?? ''),
-                'soort'               => (string) ($commitment['soort'] ?? ''),
-                'administrationId'    => (string) ($commitment['administrationId'] ?? ''),
-                'emittedAt'           => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
+                'sourceReference'  => (string) ($commitment['sourceReference'] ?? ''),
+                'soort'            => (string) ($commitment['soort'] ?? ''),
+                'administrationId' => (string) ($commitment['administrationId'] ?? ''),
+                'emittedAt'        => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
             ];
 
             $event = new GenericEvent(null, $payload);

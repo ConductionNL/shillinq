@@ -77,7 +77,7 @@ class MandateEnforcer
      * Fail-closed: returns false on any exception or when no mandate applies.
      *
      * @param string                   $commitmentNumber The commitment identifier (lifecycle-engine call parity).
-     * @param array<string,mixed>|null $object              The Commitment object being transitioned.
+     * @param array<string,mixed>|null $object           The Commitment object being transitioned.
      *
      * @return bool True when a valid mandate covers the commitment amount and commitment type.
      *
@@ -111,7 +111,7 @@ class MandateEnforcer
      * authorization.
      *
      * @param string                   $commitmentNumber The commitment identifier.
-     * @param array<string,mixed>|null $object              The Commitment object being transitioned.
+     * @param array<string,mixed>|null $object           The Commitment object being transitioned.
      *
      * @return bool True when approval is required (mandate insufficient or absent).
      *
@@ -143,9 +143,9 @@ class MandateEnforcer
      */
     public function resolveApplicableMandate(array $commitment): ?array
     {
-        $commitmentType  = (string) ($commitment['commitmentType'] ?? '');
-        $amount = (int) ($commitment['totalAmountExclVat'] ?? 0);
-        $admin  = (string) ($commitment['administrationId'] ?? '');
+        $commitmentType = (string) ($commitment['commitmentType'] ?? '');
+        $amount         = (int) ($commitment['totalAmountExclVat'] ?? 0);
+        $admin          = (string) ($commitment['administrationId'] ?? '');
 
         $mandates = $this->findMany(schema: 'Mandate', filters: ['administrationId' => $admin]);
 
@@ -212,9 +212,9 @@ class MandateEnforcer
     /**
      * Evaluate whether a single mandate covers a commitment of the given commitment type and amount.
      *
-     * @param array<string,mixed> $mandate The mandate record.
-     * @param string              $commitmentType   The commitment commitment type.
-     * @param int                 $amount  The commitment amount in minor units.
+     * @param array<string,mixed> $mandate        The mandate record.
+     * @param string              $commitmentType The commitment commitment type.
+     * @param int                 $amount         The commitment amount in minor units.
      *
      * @return bool True when the mandate is valid, covers the commitment type, and the ceiling suffices.
      */

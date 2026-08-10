@@ -102,7 +102,7 @@ class CommitmentGuard
                 'CommitmentGuard: canActiveren failed — denying activation (fail-closed)',
                 [
                     'commitmentNumber' => ($commitment['commitmentNumber'] ?? 'unknown'),
-                    'exception'          => $e->getMessage(),
+                    'exception'        => $e->getMessage(),
                 ]
             );
             return false;
@@ -146,8 +146,8 @@ class CommitmentGuard
                     'CommitmentGuard: milestone date out of contract term — denying activation',
                     [
                         'commitmentNumber' => ($commitment['commitmentNumber'] ?? 'unknown'),
-                        'milestoneId'         => ($milestone['milestoneId'] ?? 'unknown'),
-                        'date'              => ($milestone['date'] ?? 'unknown'),
+                        'milestoneId'      => ($milestone['milestoneId'] ?? 'unknown'),
+                        'date'             => ($milestone['date'] ?? 'unknown'),
                     ]
                 );
                 return false;

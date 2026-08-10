@@ -128,7 +128,7 @@ class TenderNedProcurementGuard
                 'TenderNedProcurementGuard: canGunnen failed — denying award (fail-closed)',
                 [
                     'procurementId' => ($procurement['procurementId'] ?? 'unknown'),
-                    'exception'      => $e->getMessage(),
+                    'exception'     => $e->getMessage(),
                 ]
             );
             return false;
@@ -174,7 +174,7 @@ class TenderNedProcurementGuard
                 'TenderNedProcurementGuard: canAfronden failed — denying completion (fail-closed)',
                 [
                     'procurementId' => ($procurement['procurementId'] ?? 'unknown'),
-                    'exception'      => $e->getMessage(),
+                    'exception'     => $e->getMessage(),
                 ]
             );
             return false;
@@ -186,7 +186,7 @@ class TenderNedProcurementGuard
      * Verify an approved finalDelivery exists for the linked obligation.
      *
      * @param string               $commitmentId The linked obligation id.
-     * @param array<string, mixed> $procurement   TenderNedProcurement for log context.
+     * @param array<string, mixed> $procurement  TenderNedProcurement for log context.
      *
      * @return bool True when an approved finalDelivery OrderFulfilment exists.
      */
@@ -200,7 +200,7 @@ class TenderNedProcurementGuard
                 ->findAll(
                     [
                         'filters' => [
-                            'commitmentId'  => $commitmentId,
+                            'commitmentId' => $commitmentId,
                             'deliveryType' => 'finalDelivery',
                         ],
                     ]
@@ -234,7 +234,7 @@ class TenderNedProcurementGuard
             'TenderNedProcurementGuard: no approved finalDelivery — denying completion (REQ-006)',
             [
                 'procurementId' => ($procurement['procurementId'] ?? 'unknown'),
-                'commitmentId' => $commitmentId,
+                'commitmentId'  => $commitmentId,
             ]
         );
         return false;

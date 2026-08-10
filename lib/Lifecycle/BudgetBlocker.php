@@ -81,7 +81,7 @@ class BudgetBlocker
      * Fail-closed: returns false on any exception (CWE-863).
      *
      * @param string                   $commitmentNumber The commitment identifier (lifecycle-engine call parity).
-     * @param array<string,mixed>|null $object              The Commitment object being transitioned.
+     * @param array<string,mixed>|null $object           The Commitment object being transitioned.
      *
      * @return bool True when the commitment may be signed.
      *
@@ -114,8 +114,8 @@ class BudgetBlocker
                         'BudgetBlocker: insufficient budget — denying commitment',
                         [
                             'commitment' => $commitmentNumber,
-                            'programme'    => ($regel['programme'] ?? null),
-                            'fiscalYear'     => ($regel['fiscalYear'] ?? null),
+                            'programme'  => ($regel['programme'] ?? null),
+                            'fiscalYear' => ($regel['fiscalYear'] ?? null),
                         ]
                     );
                     return false;
@@ -205,7 +205,7 @@ class BudgetBlocker
             filters: [
                 'administrationId' => $administrationId,
                 'programmeCode'    => (string) ($regel['programme'] ?? ''),
-                'fiscalYear'         => (int) ($regel['fiscalYear'] ?? 0),
+                'fiscalYear'       => (int) ($regel['fiscalYear'] ?? 0),
             ]
         );
 
@@ -248,8 +248,8 @@ class BudgetBlocker
         // commitment without explicit regels is still validated.
         return [
             [
-                'programme'       => (string) ($commitment['programme'] ?? ''),
-                'fiscalYear'        => (int) ($commitment['fiscalYear'] ?? 0),
+                'programme'     => (string) ($commitment['programme'] ?? ''),
+                'fiscalYear'    => (int) ($commitment['fiscalYear'] ?? 0),
                 'amountExclVat' => (int) ($commitment['totalAmountExclVat'] ?? 0),
             ],
         ];

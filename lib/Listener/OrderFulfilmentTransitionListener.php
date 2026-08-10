@@ -149,9 +149,14 @@ class OrderFulfilmentTransitionListener implements IEventListener
      */
     private function isOrderFulfilmentSchema(string $schema): bool
     {
+        // Compared against a strtolower()'d value, so the needles MUST be
+        // all-lowercase. The rename briefly made these camelCase, which
+        // PHPStan caught as "will always evaluate to false" — the listener
+        // would have silently stopped recognising every OrderFulfilment
+        // transition, with no error anywhere.
         $normalised = strtolower(trim($schema));
-        return ($normalised === 'orderFulfilment'
-            || str_ends_with(haystack: $normalised, needle: 'orderFulfilment'));
+        return ($normalised === 'orderfulfilment'
+            || str_ends_with(haystack: $normalised, needle: 'orderfulfilment'));
 
     }//end isOrderFulfilmentSchema()
 }//end class

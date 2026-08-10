@@ -224,7 +224,7 @@ class TenderNedStatusSync
      * Shape the TenderNed completion payload.
      *
      * @param array<string, mixed> $procurement TenderNed dossier.
-     * @param array<string, mixed> $delivery   Approved finalDelivery.
+     * @param array<string, mixed> $delivery    Approved finalDelivery.
      *
      * @return array<string, mixed>
      */
@@ -236,12 +236,12 @@ class TenderNedStatusSync
         }
 
         return [
-            'procurementId'   => (string) ($procurement['procurementId'] ?? ''),
+            'procurementId'    => (string) ($procurement['procurementId'] ?? ''),
             'status'           => self::TENDERNED_STATUS_AFGEROND,
-            'deliveryDate' => (string) ($delivery['deliveryDate'] ?? ''),
-            'finalDeliveryId' => (string) ($delivery['milestoneId'] ?? ''),
-            'evidenceCount'  => count($evidence),
-            'commitmentId'   => (string) ($delivery['commitmentId'] ?? ''),
+            'deliveryDate'     => (string) ($delivery['deliveryDate'] ?? ''),
+            'finalDeliveryId'  => (string) ($delivery['milestoneId'] ?? ''),
+            'evidenceCount'    => count($evidence),
+            'commitmentId'     => (string) ($delivery['commitmentId'] ?? ''),
             'administrationId' => (string) ($delivery['administrationId'] ?? ''),
         ];
 
@@ -252,7 +252,7 @@ class TenderNedStatusSync
      * otherwise log a structured entry so the sync is observable.
      *
      * @param array<string, mixed> $procurement Dossier (for log context).
-     * @param array<string, mixed> $payload      Completion payload.
+     * @param array<string, mixed> $payload     Completion payload.
      *
      * @return void
      */
@@ -287,7 +287,7 @@ class TenderNedStatusSync
                 'TenderNedStatusSync: openconnector outbound send failed — logging only',
                 [
                     'procurementId' => ($procurement['procurementId'] ?? 'unknown'),
-                    'exception'      => $e->getMessage(),
+                    'exception'     => $e->getMessage(),
                 ]
             );
         }//end try

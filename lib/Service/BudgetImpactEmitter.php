@@ -97,7 +97,7 @@ class BudgetImpactEmitter
      * the committed expense.
      *
      * @param array<string, mixed> $commitment Activated Commitment payload.
-     * @param array<string, mixed> $source       Source TenderNedProcurement payload (dossier URL).
+     * @param array<string, mixed> $source     Source TenderNedProcurement payload (dossier URL).
      *
      * @return void
      *
@@ -107,11 +107,11 @@ class BudgetImpactEmitter
     {
         $payload = [
             'eventName'        => self::EVENT_OBLIGATION_ACTIVATED,
-            'sourceReference'   => (string) ($commitment['sourceReference'] ?? ''),
-            'contractValue'   => (float) ($commitment['amount'] ?? 0),
-            'costCentre'     => (string) ($commitment['costCentre'] ?? ''),
-            'termStart'    => (string) ($commitment['termStart'] ?? ''),
-            'termEnd'     => (string) ($commitment['termEnd'] ?? ''),
+            'sourceReference'  => (string) ($commitment['sourceReference'] ?? ''),
+            'contractValue'    => (float) ($commitment['amount'] ?? 0),
+            'costCentre'       => (string) ($commitment['costCentre'] ?? ''),
+            'termStart'        => (string) ($commitment['termStart'] ?? ''),
+            'termEnd'          => (string) ($commitment['termEnd'] ?? ''),
             'tenderNedUrl'     => (string) ($source['tenderNedUrl'] ?? ''),
             'administrationId' => (string) ($commitment['administrationId'] ?? ''),
             'emittedAt'        => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
@@ -144,12 +144,12 @@ class BudgetImpactEmitter
 
         $payload = [
             'eventName'        => self::EVENT_MILESTONE_COMPLETED,
-            'commitmentId'   => (string) ($delivery['commitmentId'] ?? ''),
-            'milestoneId'       => (string) ($delivery['milestoneId'] ?? ''),
-            'deliveryType'  => (string) ($delivery['deliveryType'] ?? ''),
-            'deliveryDate' => (string) ($delivery['deliveryDate'] ?? ''),
-            'approved'      => (bool) ($delivery['approved'] ?? false),
-            'evidenceCount'  => count($evidence),
+            'commitmentId'     => (string) ($delivery['commitmentId'] ?? ''),
+            'milestoneId'      => (string) ($delivery['milestoneId'] ?? ''),
+            'deliveryType'     => (string) ($delivery['deliveryType'] ?? ''),
+            'deliveryDate'     => (string) ($delivery['deliveryDate'] ?? ''),
+            'approved'         => (bool) ($delivery['approved'] ?? false),
+            'evidenceCount'    => count($evidence),
             'administrationId' => (string) ($delivery['administrationId'] ?? ''),
             'emittedAt'        => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
         ];
