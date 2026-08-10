@@ -177,6 +177,10 @@ class PurchaseOrderService
      * @param FrameworkAgreementDrawdownGuard|null    $frameworkAgreementDrawdownGuard Optional framework-agreement
      *                                                                                 ceiling gate (procurement-governance);
      *                                                                                 defaults to a self-constructed instance.
+     * @param ApprovalActivityEmitter|null            $activityEmitter                 Optional Activity emitter for the
+     *                                                                                 REQ-RAP-006 `approval_requested`
+     *                                                                                 event; nullable so unit tests need
+     *                                                                                 not wire IActivityManager.
      *
      * @return void
      */
@@ -191,6 +195,7 @@ class PurchaseOrderService
         ?PeppolBisOrderMapper $peppolMapper=null,
         ?SupplierQualificationGuard $supplierQualificationGuard=null,
         ?FrameworkAgreementDrawdownGuard $frameworkAgreementDrawdownGuard=null,
+        private readonly ?ApprovalActivityEmitter $activityEmitter=null,
     ) {
         $this->peppolAdapter       = ($peppolAdapter ?? new LogPeppolTransmissionAdapter(
             container: $container,
@@ -688,6 +693,8 @@ class PurchaseOrderService
         string $poNumber,
         array $chain
     ): void {
+        $tasksAssigned = false;
+
         foreach ($chain as $entry) {
             $role  = $entry['role'];
             $order = $entry['order'];
@@ -712,7 +719,27 @@ class PurchaseOrderService
                 poNumber: $poNumber,
                 role: $role
             );
+
+            $tasksAssigned = true;
         }//end foreach
+
+        // REQ-RAP-006 row 1 (`approval_requested`): the ApprovalTask records
+        // that put this PO in front of an approver have just been created, so
+        // this is the "ApprovalRequest created" trigger the event table names.
+        // Emitted ONCE per purchase order (not once per role) so the Activity
+        // feed carries a single entry per approval round, matching the
+        // already-live `approval_approved` / `approval_rejected` rows in
+        // PurchaseOrderApprovalService::recordApprovalDecision(). The emitter
+        // is nullable for the same reason it is there: unit tests need not
+        // wire IActivityManager, and publishing is best-effort (the OR audit
+        // trail remains the authoritative record).
+        if ($tasksAssigned === true && $this->activityEmitter !== null) {
+            $this->activityEmitter->emitApprovalRequested(
+                objectType:  'PurchaseOrder',
+                objectId:    $purchaseOrderId,
+                summaryHint: sprintf('Purchase order %s', $poNumber)
+            );
+        }
 
     }//end assignApprovalTasks()
 

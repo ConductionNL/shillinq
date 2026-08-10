@@ -35,6 +35,7 @@ namespace OCA\Shillinq\Service\Signing;
 use InvalidArgumentException;
 use OCA\DocuDesk\Event\DocumentSigningRequestedEvent;
 use OCA\DocuDesk\Event\SigningProvenance;
+use OCA\Shillinq\Service\ApprovalActivityEmitter;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -66,14 +67,19 @@ class SigningDelegationService
     /**
      * Constructor.
      *
-     * @param SettingsService  $settingsService Shillinq settings (register slug).
-     * @param IEventDispatcher $eventDispatcher Event dispatcher for the docudesk contract.
-     * @param LoggerInterface  $logger          Logger.
+     * @param SettingsService              $settingsService Shillinq settings (register slug).
+     * @param IEventDispatcher             $eventDispatcher Event dispatcher for the docudesk contract.
+     * @param LoggerInterface              $logger          Logger.
+     * @param ApprovalActivityEmitter|null $activityEmitter Optional Activity emitter for the
+     *                                                      REQ-RAP-006 `document_signed` event;
+     *                                                      nullable so unit tests need not wire
+     *                                                      IActivityManager.
      */
     public function __construct(
         private readonly SettingsService $settingsService,
         private readonly IEventDispatcher $eventDispatcher,
         private readonly LoggerInterface $logger,
+        private readonly ?ApprovalActivityEmitter $activityEmitter=null,
     ) {
     }//end __construct()
 
@@ -207,6 +213,9 @@ class SigningDelegationService
      * @param string|null         $signingLevel        eIDAS level (nullable).
      * @param string|null         $signedDocumentRef   NC Files ref to the signed artifact.
      * @param callable|null       $consequenceCallback Called on 'signed' outcome to fire the GL consequence.
+     * @param string              $subjectSchema       Finance schema slug of $financeObject, used as the
+     *                                                 Activity object type for the REQ-RAP-006
+     *                                                 `document_signed` event. Empty string skips the emit.
      *
      * @return array<string,mixed> Updated finance object.
      *
@@ -219,7 +228,8 @@ class SigningDelegationService
         ?string $signingProvider=null,
         ?string $signingLevel=null,
         ?string $signedDocumentRef=null,
-        ?callable $consequenceCallback=null
+        ?callable $consequenceCallback=null,
+        string $subjectSchema=''
     ): array {
         if (in_array($outcome, self::TERMINAL_STATUSES, true) === false) {
             throw new InvalidArgumentException('Unknown signing outcome: '.$outcome);
@@ -251,6 +261,22 @@ class SigningDelegationService
         if ($outcome === 'signed' && $consequenceCallback !== null) {
             // Fire the accounting consequence exactly once (REQ-SIGN-006).
             $consequenceCallback($financeObject);
+        }
+
+        // REQ-RAP-006 row 4 (`document_signed`): "SigningAuthority signature
+        // recorded". This is the point at which shillinq records the signature
+        // — and it sits AFTER the idempotency guard above, so a repeated
+        // docudesk conclusion cannot publish a duplicate Activity entry. The
+        // actor is left to the emitter's session/'system' fallback: the signer
+        // is a docudesk identity, not a Nextcloud session user, so attributing
+        // it to the current session would be wrong.
+        if ($outcome === 'signed' && $subjectSchema !== '' && $this->activityEmitter !== null) {
+            $this->activityEmitter->emitDocumentSigned(
+                objectType:  $subjectSchema,
+                objectId:    (string) ($financeObject['id'] ?? ''),
+                actorUid:    '',
+                summaryHint: sprintf('%s %s', $subjectSchema, (string) ($financeObject['id'] ?? ''))
+            );
         }
 
         $this->logger->info(
