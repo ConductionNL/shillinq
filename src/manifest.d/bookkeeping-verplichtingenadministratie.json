@@ -48,16 +48,16 @@
 			"title": "Commitments register",
 			"config": {
 				"register": "shillinq",
-				"schema": "Verplichting",
+				"schema": "Commitment",
 				"columns": [
-					{"key": "verplichtingsnummer", "label": "Number", "sortable": true},
-					{"key": "soort", "label": "Kind", "sortable": true},
+					{"key": "commitmentNumber", "label": "Number", "sortable": true},
+					{"key": "commitmentType", "label": "Kind", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true},
-					{"key": "totaalbedrag_excl_btw", "label": "Amount (excl. BTW)", "sortable": true},
-					{"key": "aangaandatum", "label": "Start date", "sortable": true},
-					{"key": "mandaat_toegepast", "label": "Mandate", "sortable": true}
+					{"key": "totalAmountExclVat", "label": "Amount (excl. BTW)", "sortable": true},
+					{"key": "commitmentDate", "label": "Start date", "sortable": true},
+					{"key": "mandateApplied", "label": "Mandate", "sortable": true}
 				],
-				"defaultSort": "verplichtingsnummer",
+				"defaultSort": "commitmentNumber",
 				"detailRoute": "VerplichtingDetail"
 			}
 		},
@@ -68,23 +68,23 @@
 			"title": "Commitment",
 			"config": {
 				"register": "shillinq",
-				"schema": "Verplichting",
-				"_note": "COMMITMENT (the parent obligation an organisation enters into — a purchase order/contract encumbrance). The body pairs the commitment header (amounts, term, BTW, applied mandate) with its three child registers, all filtered on `verplichting`: the budget lines (Verplichtingsregel) that break it down per GL/programme with delivered/invoiced/paid running balances, the movements (Verplichtingsmutatie) that draw it down over time, and the approval steps (Goedkeuringsstap) that authorise it. This is the encumbrance-tracking view. No comms leaves; audit trail sidebar records mandate overrides and amount changes.",
+				"schema": "Commitment",
+				"_note": "COMMITMENT (the parent obligation an organisation enters into — a purchase order/contract encumbrance). The body pairs the commitment header (amounts, term, BTW, applied mandate) with its three child registers, all filtered on `commitment`: the budget lines (CommitmentLine) that break it down per GL/programme with delivered/invoiced/paid running balances, the movements (CommitmentMovement) that draw it down over time, and the approval steps (ApprovalStep) that authorise it. This is the encumbrance-tracking view. No comms leaves; audit trail sidebar records mandate overrides and amount changes.",
 				"fields": [
-					{"key": "verplichtingsnummer", "label": "Number", "type": "string"},
-					{"key": "soort", "label": "Kind", "type": "string"},
+					{"key": "commitmentNumber", "label": "Number", "type": "string"},
+					{"key": "commitmentType", "label": "Kind", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"},
-					{"key": "aangaandatum", "label": "Start date", "type": "string"},
-					{"key": "looptijd_van", "label": "Term from", "type": "string"},
-					{"key": "looptijd_tot", "label": "Term until", "type": "string"},
-					{"key": "totaalbedrag_excl_btw", "label": "Total amount (excl. BTW)", "type": "number"},
-					{"key": "totaalbedrag_incl_btw", "label": "Total amount (incl. BTW)", "type": "number"},
-					{"key": "valuta", "label": "Currency", "type": "string"},
-					{"key": "btw_regime", "label": "BTW regime", "type": "string"},
-					{"key": "mandaat_toegepast", "label": "Mandate", "type": "string"},
-					{"key": "override_reden", "label": "Override reason", "type": "string"},
-					{"key": "interne_kenmerk", "label": "Internal reference", "type": "string"},
-					{"key": "bronReferentie", "label": "Source reference", "type": "string"}
+					{"key": "commitmentDate", "label": "Start date", "type": "string"},
+					{"key": "termStart", "label": "Term from", "type": "string"},
+					{"key": "termEnd", "label": "Term until", "type": "string"},
+					{"key": "totalAmountExclVat", "label": "Total amount (excl. BTW)", "type": "number"},
+					{"key": "totalAmountInclVat", "label": "Total amount (incl. BTW)", "type": "number"},
+					{"key": "currency", "label": "Currency", "type": "string"},
+					{"key": "vatRegime", "label": "BTW regime", "type": "string"},
+					{"key": "mandateApplied", "label": "Mandate", "type": "string"},
+					{"key": "overrideReason", "label": "Override reason", "type": "string"},
+					{"key": "internalReference", "label": "Internal reference", "type": "string"},
+					{"key": "sourceReference", "label": "Source reference", "type": "string"}
 				],
 				"relatedObjects": [
 					{
@@ -93,9 +93,9 @@
 						"componentName": "openregister-related-list",
 						"componentProps": {
 							"register": "shillinq",
-							"schema": "Verplichtingsregel",
-							"filterField": "verplichting",
-							"columns": ["regelnummer", "omschrijving", "bedrag_excl_btw", "geleverd_bedrag", "gefactureerd_bedrag", "restant_verplicht"]
+							"schema": "CommitmentLine",
+							"filterField": "commitment",
+							"columns": ["lineNumber", "description", "amountExclVat", "deliveredAmount", "invoicedAmount", "remainingCommitted"]
 						}
 					},
 					{
@@ -104,9 +104,9 @@
 						"componentName": "openregister-related-list",
 						"componentProps": {
 							"register": "shillinq",
-							"schema": "Verplichtingsmutatie",
-							"filterField": "verplichting",
-							"columns": ["datum", "soort", "bedrag", "gerelateerde_factuur", "journaalpost"]
+							"schema": "CommitmentMovement",
+							"filterField": "commitment",
+							"columns": ["date", "movementType", "amount", "relatedInvoice", "journalEntry"]
 						}
 					},
 					{
@@ -115,9 +115,9 @@
 						"componentName": "openregister-related-list",
 						"componentProps": {
 							"register": "shillinq",
-							"schema": "Goedkeuringsstap",
-							"filterField": "verplichting",
-							"columns": ["stapnummer", "rol_vereist", "toegewezen_aan", "status", "behandeld_op"]
+							"schema": "ApprovalStep",
+							"filterField": "commitment",
+							"columns": ["stepNumber", "rol_vereist", "toegewezen_aan", "status", "behandeld_op"]
 						}
 					}
 				],
@@ -158,15 +158,15 @@
 			"title": "Mandates",
 			"config": {
 				"register": "shillinq",
-				"schema": "Mandaat",
+				"schema": "Mandate",
 				"columns": [
-					{"key": "mandaatcode", "label": "Code", "sortable": true},
-					{"key": "naam", "label": "Name", "sortable": true},
-					{"key": "maximumbedrag", "label": "Maximum amount", "sortable": true},
-					{"key": "is_override", "label": "Override", "sortable": true},
+					{"key": "mandateCode", "label": "Code", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "maximumAmount", "label": "Maximum amount", "sortable": true},
+					{"key": "isOverride", "label": "Override", "sortable": true},
 					{"key": "geldig_tot", "label": "Valid until", "sortable": true}
 				],
-				"defaultSort": "mandaatcode",
+				"defaultSort": "mandateCode",
 				"detailRoute": "MandaatDetail"
 			}
 		},
@@ -177,16 +177,16 @@
 			"title": "Mandate",
 			"config": {
 				"register": "shillinq",
-				"schema": "Mandaat",
+				"schema": "Mandate",
 				"_note": "MANDATE (the authority definition that governs who may enter commitments and up to what amount). The body is the rule: holder + holder type, maximum amount, whether it is an override mandate, the second-signature threshold, validity window and the decision that adopted it. A config record with no children of its own; no comms. The audit trail sidebar is critical — a mandate is a delegated-authority control, so every change to its limits or holder must be traceable.",
 				"fields": [
-					{"key": "mandaatcode", "label": "Code", "type": "string"},
-					{"key": "naam", "label": "Name", "type": "string"},
+					{"key": "mandateCode", "label": "Code", "type": "string"},
+					{"key": "name", "label": "Name", "type": "string"},
 					{"key": "houder", "label": "Holder", "type": "string"},
 					{"key": "houder_type", "label": "Holder type", "type": "string"},
-					{"key": "maximumbedrag", "label": "Maximum amount", "type": "number"},
-					{"key": "is_override", "label": "Override mandate", "type": "boolean"},
-					{"key": "vereist_tweede_handtekening_boven", "label": "Second signature above", "type": "number"},
+					{"key": "maximumAmount", "label": "Maximum amount", "type": "number"},
+					{"key": "isOverride", "label": "Override mandate", "type": "boolean"},
+					{"key": "secondSignatureRequiredAbove", "label": "Second signature above", "type": "number"},
 					{"key": "geldig_van", "label": "Valid from", "type": "string"},
 					{"key": "geldig_tot", "label": "Valid until", "type": "string"},
 					{"key": "vastgesteld_bij", "label": "Adopted by", "type": "string"}
@@ -221,15 +221,15 @@
 			"title": "Approvals",
 			"config": {
 				"register": "shillinq",
-				"schema": "Goedkeuringsstap",
+				"schema": "ApprovalStep",
 				"columns": [
-					{"key": "verplichting", "label": "Commitment", "sortable": true},
-					{"key": "stapnummer", "label": "Step", "sortable": true},
+					{"key": "commitment", "label": "Commitment", "sortable": true},
+					{"key": "stepNumber", "label": "Step", "sortable": true},
 					{"key": "rol_vereist", "label": "Role", "sortable": true},
 					{"key": "toegewezen_aan", "label": "Assigned to", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true}
 				],
-				"defaultSort": "verplichting",
+				"defaultSort": "commitment",
 				"detailRoute": "GoedkeuringsstapDetail"
 			}
 		},
@@ -240,11 +240,11 @@
 			"title": "Approval step",
 			"config": {
 				"register": "shillinq",
-				"schema": "Goedkeuringsstap",
+				"schema": "ApprovalStep",
 				"_note": "APPROVAL STEP (one node in a commitment's authorisation chain). The body is the step: which commitment, step number, required role, assignee, current status, when it was handled, the remark, and whether a signature is required. A single workflow item with no children; no comms. The audit trail sidebar is the sign-off evidence — approvals must be individually traceable for segregation-of-duties.",
 				"fields": [
-					{"key": "verplichting", "label": "Commitment", "type": "string"},
-					{"key": "stapnummer", "label": "Step", "type": "number"},
+					{"key": "commitment", "label": "Commitment", "type": "string"},
+					{"key": "stepNumber", "label": "Step", "type": "number"},
 					{"key": "rol_vereist", "label": "Role required", "type": "string"},
 					{"key": "toegewezen_aan", "label": "Assigned to", "type": "string"},
 					{"key": "status", "label": "Status", "type": "string"},

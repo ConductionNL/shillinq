@@ -13277,12 +13277,12 @@
 						"sortable": true
 					},
 					{
-						"key": "programma",
+						"key": "programme",
 						"label": "Cost Centre",
 						"sortable": true
 					},
 					{
-						"key": "boekjaar",
+						"key": "fiscalYear",
 						"label": "Fiscal Year",
 						"sortable": true
 					},
@@ -13292,7 +13292,7 @@
 						"sortable": true
 					},
 					{
-						"key": "totaalbedrag_excl_btw",
+						"key": "totalAmountExclVat",
 						"label": "Amount (excl. VAT)",
 						"sortable": true
 					},
@@ -13330,12 +13330,12 @@
 						"type": "string"
 					},
 					{
-						"key": "programma",
+						"key": "programme",
 						"label": "Cost Centre / Budget Programme",
 						"type": "string"
 					},
 					{
-						"key": "boekjaar",
+						"key": "fiscalYear",
 						"label": "Fiscal Year",
 						"type": "number"
 					},
@@ -13350,7 +13350,7 @@
 						"type": "string"
 					},
 					{
-						"key": "soort",
+						"key": "commitmentType",
 						"label": "Commitment Type",
 						"type": "string"
 					},
@@ -13360,7 +13360,7 @@
 						"type": "string"
 					},
 					{
-						"key": "totaalbedrag_excl_btw",
+						"key": "totalAmountExclVat",
 						"label": "Estimated Amount (excl. VAT)",
 						"type": "number"
 					},

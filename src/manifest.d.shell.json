@@ -135,17 +135,17 @@
 					"order": 35,
 					"children": [
 						{
-							"id": "TenderNedAanbestedingen",
+							"id": "TenderNedProcurementen",
 							"label": "TenderNed tenders",
 							"icon": "Gavel",
-							"route": "TenderNedAanbestedingen",
+							"route": "TenderNedProcurementen",
 							"order": 10
 						},
 						{
-							"id": "Verplichtingen",
+							"id": "Commitments",
 							"label": "Commitments",
 							"icon": "FileSign",
-							"route": "Verplichtingen",
+							"route": "Commitments",
 							"order": 20
 						},
 						{
@@ -161,28 +161,28 @@
 			"pages": [
 				{
 					"_fragment": "20-tenderned-integratie",
-					"id": "TenderNedAanbestedingen",
+					"id": "TenderNedProcurementen",
 					"route": "/inkoop/tenderned",
 					"type": "index",
 					"title": "TenderNed tenders"
 				},
 				{
 					"_fragment": "20-tenderned-integratie",
-					"id": "TenderNedAanbestedingDetail",
+					"id": "TenderNedProcurementDetail",
 					"route": "/inkoop/tenderned/:id",
 					"type": "detail",
 					"title": "TenderNed file"
 				},
 				{
 					"_fragment": "20-tenderned-integratie",
-					"id": "Verplichtingen",
+					"id": "Commitments",
 					"route": "/inkoop/verplichtingen",
 					"type": "index",
 					"title": "Commitments"
 				},
 				{
 					"_fragment": "20-tenderned-integratie",
-					"id": "VerplichtingDetail",
+					"id": "CommitmentDetail",
 					"route": "/inkoop/verplichtingen/:id",
 					"type": "detail",
 					"title": "Commitment"
@@ -1345,7 +1345,7 @@
 					"_fragment": "bookkeeping-accounts-payable-core",
 					"id": "APAgingT2",
 					"route": "/bookkeeping/ap-aging-t2",
-					"type": "aggregate",
+					"type": "index",
 					"title": "AP Aging"
 				},
 				{
@@ -2875,7 +2875,7 @@
 					"_fragment": "bookkeeping-provincies-bbv-variant",
 					"id": "BbvComplianceDashboard",
 					"route": "/bbv-provincie/compliance-dashboard",
-					"type": "report",
+					"type": "dashboard",
 					"title": "BBV Compliance Dashboard"
 				},
 				{
@@ -3376,7 +3376,7 @@
 					"_fragment": "bookkeeping-vat-btw-filing",
 					"id": "VATReturnCreateDialog",
 					"route": "/vat-returns/new",
-					"type": "dialog",
+					"type": "form",
 					"title": "New BTW return"
 				}
 			]
@@ -4259,7 +4259,7 @@
 					"_fragment": "expense-reimbursement-or-passthrough",
 					"id": "ReimbursementPolicyCreateDialog",
 					"route": "/reimbursement-policies/new",
-					"type": "dialog",
+					"type": "form",
 					"title": "New Reimbursement Policy"
 				},
 				{
@@ -4280,7 +4280,7 @@
 					"_fragment": "expense-reimbursement-or-passthrough",
 					"id": "PassThroughMarkupRuleCreateDialog",
 					"route": "/passthrough-markup-rules/new",
-					"type": "dialog",
+					"type": "form",
 					"title": "New Pass-through Markup Rule"
 				}
 			]
@@ -4933,7 +4933,7 @@
 					"_fragment": "retainer-billing-engine",
 					"id": "RetainerPoolCreateDialog",
 					"route": "/retainer-pools/new",
-					"type": "dialog",
+					"type": "form",
 					"title": "New retainer pool"
 				},
 				{
