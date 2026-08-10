@@ -133,20 +133,95 @@ class WidgetApiController extends Controller
 
         $services = [];
         foreach ($records as $record) {
-            $row        = $this->toArray(object: $record);
-            $services[] = [
+            $row = $this->toArray(object: $record);
+
+            // This endpoint is reachable by any visitor loading an embedded
+            // widget, so only services explicitly flagged isPublic may be
+            // listed. Filtered here rather than in the findAll() query so an
+            // absent or non-boolean value DENIES: a query filter that silently
+            // matched nothing would look identical to "no private services".
+            if ((bool) ($row['isPublic'] ?? false) !== true) {
+                continue;
+            }
+
+            $service = [
                 'serviceId'   => (string) ($row['serviceId'] ?? ''),
                 'name'        => (string) ($row['name'] ?? ''),
                 'duration'    => (int) ($row['duration'] ?? 0),
-                'price'       => ($row['price'] ?? null),
                 'currency'    => (string) ($row['currency'] ?? 'EUR'),
                 'description' => (string) ($row['description'] ?? ''),
             ];
-        }
+
+            // The priceVisible flag is a per-service choice; publishing the
+            // price regardless of it made the setting inert.
+            if ((bool) ($row['priceVisible'] ?? false) === true) {
+                $service['price'] = ($row['basePrice'] ?? $row['price'] ?? null);
+            }
+
+            $services[] = $service;
+        }//end foreach
 
         return new JSONResponse(data: ['services' => $services]);
 
     }//end services()
+
+    /**
+     * Resolve a Service that an anonymous widget visitor is allowed to book.
+     *
+     * Returns null unless the service exists, is active AND is flagged
+     * isPublic. `isPublic` is the boundary between the services a business
+     * offers publicly and its internal catalogue; nothing on the routed widget
+     * path enforced it, so any caller who knew a serviceId could book a
+     * private service through the public endpoint.
+     *
+     * @param string $serviceId Logical service identifier.
+     *
+     * @return array<string,mixed>|null The service row, or null when it may not be booked.
+     *
+     * @spec openspec/specs/bookings-self-service-widget/spec.md
+     */
+    private function resolvePublicService(string $serviceId): ?array
+    {
+        if ($serviceId === '') {
+            return null;
+        }
+
+        try {
+            $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+            $records       = $objectService
+                ->setRegister($this->settings->getRegisterSlug())
+                ->setSchema('Service')
+                ->findAll(
+                    [
+                        'filters' => ['serviceId' => $serviceId],
+                        'limit'   => 1,
+                    ]
+                );
+        } catch (\Throwable $e) {
+            // Fail closed: an unavailable catalogue must not permit a booking.
+            $this->logger->error(
+                'Shillinq widget: public-service resolution failed',
+                ['exception' => $e->getMessage(), 'serviceId' => $serviceId]
+            );
+            return null;
+        }
+
+        foreach ($records as $record) {
+            $row = $this->toArray(object: $record);
+            if ((bool) ($row['isPublic'] ?? false) !== true) {
+                return null;
+            }
+
+            if ((string) ($row['status'] ?? '') !== 'active') {
+                return null;
+            }
+
+            return $row;
+        }
+
+        return null;
+
+    }//end resolvePublicService()
 
     /**
      * GET /api/widget/slots — available slots for a service + resource + date.
@@ -265,6 +340,23 @@ class WidgetApiController extends Controller
 
         if ($this->settings->isOpenRegisterAvailable() === false) {
             return $this->serverError(message: 'Booking unavailable.');
+        }
+
+        // Nothing on this path checked isPublic — not guard() (which only
+        // validates the per-business widget key that ships in the embedding
+        // page), not validateAppointmentPayload(), and not
+        // SlotService::getAvailableSlots(). A caller who knew any serviceId
+        // could therefore book a service the business never published.
+        // WidgetService::createAppointment() has always enforced this; it is
+        // simply not the implementation that is routed.
+        if ($this->resolvePublicService(serviceId: $serviceId) === null) {
+            return new JSONResponse(
+                data: [
+                    'error'   => 'service-not-found',
+                    'message' => 'This service is not available for online booking.',
+                ],
+                statusCode: Http::STATUS_NOT_FOUND,
+            );
         }
 
         $date  = substr($startTime, 0, 10);

@@ -264,4 +264,195 @@ class WidgetApiControllerTest extends TestCase
 
     }//end testAppointmentsRejectsInvalidTimestamp()
 
+    /**
+     * Authenticate a widget caller so the isPublic tests reach the catalogue.
+     *
+     * @return void
+     */
+    private function authoriseWidgetCaller(): void
+    {
+        $this->request->method('getParam')->willReturnMap([['businessId', '', 'salon-001']]);
+        $this->request->method('getHeader')->willReturnMap(
+            [
+                ['Authorization', 'Bearer bk_live_valid'],
+                ['If-None-Match', ''],
+            ]
+        );
+        $this->auth->method('validateApiKey')->willReturn(
+            [
+                'valid' => true,
+                'key'   => ['rateLimit' => 100],
+            ]
+        );
+        $this->auth->method('consumeRateLimit')->willReturn(
+            [
+                'allowed'   => true,
+                'remaining' => 99,
+            ]
+        );
+        $this->settings->method('isOpenRegisterAvailable')->willReturn(true);
+        $this->settings->method('getRegisterSlug')->willReturn('shillinq');
+
+    }//end authoriseWidgetCaller()
+
+    /**
+     * Build an ObjectService stub returning a fixed Service catalogue.
+     *
+     * @param array<int,array<string,mixed>> $rows Service rows to return from findAll().
+     *
+     * @return object
+     */
+    private function catalogueStub(array $rows): object
+    {
+        // phpcs:disable
+        return new class($rows) {
+            private array $rows;
+            public function __construct(array $rows) { $this->rows = $rows; }
+            public function setRegister(string $r): static { return $this; }
+            public function setSchema(string $s): static { return $this; }
+            public function findAll(array $c=[]): array
+            {
+                $sid = (string) ($c['filters']['serviceId'] ?? '');
+                if ($sid === '') {
+                    return $this->rows;
+                }
+                return array_values(array_filter(
+                    $this->rows,
+                    static fn (array $r): bool => ((string) ($r['serviceId'] ?? '')) === $sid
+                ));
+            }
+        };
+        // phpcs:enable
+    }//end catalogueStub()
+
+    /**
+     * A service that is active but NOT flagged isPublic must never be listed
+     * by the public widget catalogue.
+     *
+     * @return void
+     */
+    public function testServicesOmitsServicesThatAreNotPublic(): void
+    {
+        $this->authoriseWidgetCaller();
+        $this->container->method('get')->willReturn(
+            $this->catalogueStub(
+                [
+                    [
+                        'serviceId' => 'svc-public',
+                        'name'      => 'Haircut',
+                        'status'    => 'active',
+                        'isPublic'  => true,
+                    ],
+                    [
+                        'serviceId' => 'svc-internal',
+                        'name'      => 'Internal staff slot',
+                        'status'    => 'active',
+                        'isPublic'  => false,
+                    ],
+                    [
+                        'serviceId' => 'svc-unflagged',
+                        'name'      => 'Legacy service with no isPublic key',
+                        'status'    => 'active',
+                    ],
+                ]
+            )
+        );
+
+        $ids = array_column($this->makeController()->services()->getData()['services'], 'serviceId');
+
+        self::assertSame(['svc-public'], $ids, 'only isPublic services may be listed');
+
+    }//end testServicesOmitsServicesThatAreNotPublic()
+
+    /**
+     * priceVisible is a per-service choice; a service that hides its price
+     * must not have one published.
+     *
+     * @return void
+     */
+    public function testServicesOmitsPriceWhenPriceVisibleIsFalse(): void
+    {
+        $this->authoriseWidgetCaller();
+        $this->container->method('get')->willReturn(
+            $this->catalogueStub(
+                [
+                    [
+                        'serviceId'    => 'svc-hidden-price',
+                        'name'         => 'Consult',
+                        'status'       => 'active',
+                        'isPublic'     => true,
+                        'basePrice'    => 150,
+                        'priceVisible' => false,
+                    ],
+                ]
+            )
+        );
+
+        $service = $this->makeController()->services()->getData()['services'][0];
+
+        self::assertArrayNotHasKey('price', $service);
+
+    }//end testServicesOmitsPriceWhenPriceVisibleIsFalse()
+
+    /**
+     * The booking endpoint must refuse a serviceId that is not public, even
+     * though the caller holds a valid widget API key. Without this the widget
+     * key — which ships in the embedding page — was enough to book any
+     * service whose id could be guessed or read from another surface.
+     *
+     * @return void
+     */
+    public function testAppointmentsRefusesAServiceThatIsNotPublic(): void
+    {
+        $this->authoriseWidgetCaller();
+        $this->container->method('get')->willReturn(
+            $this->catalogueStub(
+                [
+                    [
+                        'serviceId' => 'svc-internal',
+                        'name'      => 'Internal staff slot',
+                        'status'    => 'active',
+                        'isPublic'  => false,
+                    ],
+                ]
+            )
+        );
+
+        $response = $this->makeController()->appointments(
+            serviceId: 'svc-internal',
+            resourceId: 'res-001',
+            startTime: '2026-05-21T10:00:00Z',
+            endTime: '2026-05-21T10:30:00Z',
+            customerName: 'Anna de Wit',
+            email: 'anna@example.com',
+        );
+
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+        self::assertSame('service-not-found', $response->getData()['error']);
+
+    }//end testAppointmentsRefusesAServiceThatIsNotPublic()
+
+    /**
+     * An unknown serviceId is refused for the same reason — resolvePublicService()
+     * must fail closed rather than fall through to the slot check.
+     *
+     * @return void
+     */
+    public function testAppointmentsRefusesAnUnknownService(): void
+    {
+        $this->authoriseWidgetCaller();
+        $this->container->method('get')->willReturn($this->catalogueStub([]));
+
+        $response = $this->makeController()->appointments(
+            serviceId: 'svc-does-not-exist',
+            resourceId: 'res-001',
+            startTime: '2026-05-21T10:00:00Z',
+            endTime: '2026-05-21T10:30:00Z',
+            customerName: 'Anna de Wit',
+            email: 'anna@example.com',
+        );
+
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+    }//end testAppointmentsRefusesAnUnknownService()
 }//end class
