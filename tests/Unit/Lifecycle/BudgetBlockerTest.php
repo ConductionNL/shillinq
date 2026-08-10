@@ -284,6 +284,63 @@ class BudgetBlockerTest extends TestCase
     }//end testCommitmentWithinBudgetAllowed()
 
     /**
+     * A regel whose amount cannot be read is DENIED, not treated as zero.
+     *
+     * Before the fix `regelFitsBudget()` did `(int) ($regel['bedrag_excl_btw']
+     * ?? 0)`, and `fits()` is `$bedrag <= freeRoom()`, so a missing amount
+     * became 0 and 0 fits every budget that is not already overcommitted — the
+     * commitment was APPROVED against a figure that was never read. Both
+     * directions of that are pinned here: this test FAILS (returns true) on the
+     * pre-fix code and passes on the fixed code.
+     *
+     * @return void
+     */
+    public function testRegelWithUnreadableAmountIsDenied(): void
+    {
+        $this->withObjectService(
+            $this->buildObjectServiceStub(['Budget' => [$this->budget()], 'Mandaat' => []])
+        );
+
+        // Same commitment, but the line carries its amount under a key the
+        // guard does not read — exactly what a vocabulary mismatch produces.
+        $commitment           = $this->commitment(25000000);
+        $commitment['regels'] = [
+            [
+                'programma' => '5.1',
+                'boekjaar'  => 2026,
+                'bedrag'    => 25000000,
+            ],
+        ];
+
+        $this->assertFalse($this->guard->canCommit('PO-1', $commitment));
+
+    }//end testRegelWithUnreadableAmountIsDenied()
+
+    /**
+     * A regel whose amount is present but not numeric is DENIED.
+     *
+     * @return void
+     */
+    public function testRegelWithNonNumericAmountIsDenied(): void
+    {
+        $this->withObjectService(
+            $this->buildObjectServiceStub(['Budget' => [$this->budget()], 'Mandaat' => []])
+        );
+
+        $commitment           = $this->commitment(25000000);
+        $commitment['regels'] = [
+            [
+                'programma'       => '5.1',
+                'boekjaar'        => 2026,
+                'bedrag_excl_btw' => 'onbekend',
+            ],
+        ];
+
+        $this->assertFalse($this->guard->canCommit('PO-1', $commitment));
+
+    }//end testRegelWithNonNumericAmountIsDenied()
+
+    /**
      * REQ-VPL-001: a commitment exceeding free room is rejected without an override.
      *
      * @return void
