@@ -2999,7 +2999,7 @@ class SettingsService
      *
      * @return array<string,mixed> Result with success flag, seeded count, skipped count.
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.7
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function seedMandaatTemplates(string $administrationId): array
     {

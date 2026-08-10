@@ -4,7 +4,7 @@
  * Budget Blocker
  *
  * ADR-031 exception-path lifecycle guard for the Verplichting `aangaan` /
- * `goedkeuren` transitions. Budget-blocking is the core verplichtingen-
+ * `goedkeuren` transitions. Budget-blocking is the core commitment-
  * administratie rule: a commitment reduces available budget the moment it is
  * signed, not when an invoice arrives (REQ-VPL-001). The check resolves the
  * matching per-programma / per-boekjaar Budget for each Verplichtingsregel and
@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the commitment (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
 class BudgetBlocker
 {
@@ -75,47 +75,47 @@ class BudgetBlocker
      * A commitment is allowed when, for each regel, the regel amount fits within
      * the matching Budget's vrije_ruimte — OR the signer holds a valid override-
      * mandate (in which case the commitment proceeds and the override reason is
-     * expected to be recorded on the verplichting). Each regel is validated against
+     * expected to be recorded on the commitment). Each regel is validated against
      * its own programma + boekjaar budget independently (multi-year isolation).
      *
      * Fail-closed: returns false on any exception (CWE-863).
      *
-     * @param string                   $verplichtingsnummer The verplichting identifier (lifecycle-engine call parity).
+     * @param string                   $commitmentNumber The commitment identifier (lifecycle-engine call parity).
      * @param array<string,mixed>|null $object              The Verplichting object being transitioned.
      *
      * @return bool True when the commitment may be signed.
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
-    public function canCommit(string $verplichtingsnummer, ?array $object=null): bool
+    public function canCommit(string $commitmentNumber, ?array $object=null): bool
     {
         try {
-            $verplichting = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['verplichtingsnummer' => $verplichtingsnummer]));
-            if ($verplichting === null) {
+            $commitment = ($object ?? $this->findOne(schema: 'Commitment', filters: ['commitmentNumber' => $commitmentNumber]));
+            if ($commitment === null) {
                 $this->logger->info(
-                    'BudgetBlocker: verplichting not found — denying commitment',
-                    ['verplichting' => $verplichtingsnummer]
+                    'BudgetBlocker: commitment not found — denying commitment',
+                    ['commitment' => $commitmentNumber]
                 );
                 return false;
             }
 
             // Override-mandate holders (e.g. CFO) may force-accept a budget-exceeding
-            // commitment; the override reason is recorded on the verplichting (REQ-VPL-001).
-            if ($this->hasOverrideMandate(verplichting: $verplichting) === true) {
+            // commitment; the override reason is recorded on the commitment (REQ-VPL-001).
+            if ($this->hasOverrideMandate(commitment: $commitment) === true) {
                 return true;
             }
 
-            $admin  = (string) ($verplichting['administrationId'] ?? '');
-            $regels = $this->resolveRegels(verplichting: $verplichting);
+            $admin  = (string) ($commitment['administrationId'] ?? '');
+            $regels = $this->resolveRegels(commitment: $commitment);
 
             foreach ($regels as $regel) {
                 if ($this->regelFitsBudget(regel: $regel, administrationId: $admin) === false) {
                     $this->logger->info(
                         'BudgetBlocker: insufficient budget — denying commitment',
                         [
-                            'verplichting' => $verplichtingsnummer,
-                            'programma'    => ($regel['programma'] ?? null),
-                            'boekjaar'     => ($regel['boekjaar'] ?? null),
+                            'commitment' => $commitmentNumber,
+                            'programme'    => ($regel['programme'] ?? null),
+                            'fiscalYear'     => ($regel['fiscalYear'] ?? null),
                         ]
                     );
                     return false;
@@ -126,7 +126,7 @@ class BudgetBlocker
         } catch (\Throwable $e) {
             $this->logger->error(
                 'BudgetBlocker: canCommit failed — denying commitment (fail-closed)',
-                ['verplichting' => $verplichtingsnummer, 'exception' => $e->getMessage()]
+                ['commitment' => $commitmentNumber, 'exception' => $e->getMessage()]
             );
             return false;
         }//end try
@@ -136,20 +136,20 @@ class BudgetBlocker
     /**
      * Compute free budget room for a budget record (REQ-VPL-001). Pure function.
      *
-     * Free room equals geautoriseerd_bedrag minus gerealiseerd_bedrag minus
-     * openstaande_verplichtingen (D9).
+     * Free room equals authorisedAmount minus realisedAmount minus
+     * outstandingCommitments (D9).
      *
      * @param array<string,mixed> $budget The budget record.
      *
      * @return int Free room in minor units (may be negative when overcommitted).
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function freeRoom(array $budget): int
     {
-        $authorised = (int) ($budget['geautoriseerd_bedrag'] ?? 0);
-        $realised   = (int) ($budget['gerealiseerd_bedrag'] ?? 0);
-        $committed  = (int) ($budget['openstaande_verplichtingen'] ?? 0);
+        $authorised = (int) ($budget['authorisedAmount'] ?? 0);
+        $realised   = (int) ($budget['realisedAmount'] ?? 0);
+        $committed  = (int) ($budget['outstandingCommitments'] ?? 0);
 
         return ($authorised - $realised - $committed);
 
@@ -164,7 +164,7 @@ class BudgetBlocker
      *
      * @return bool True when bedrag <= free room.
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     public function fits(array $budget, int $bedrag): bool
     {
@@ -175,13 +175,13 @@ class BudgetBlocker
     /**
      * Whether the commitment carries a valid override-mandate (REQ-VPL-001).
      *
-     * @param array<string,mixed> $verplichting The commitment.
+     * @param array<string,mixed> $commitment The commitment.
      *
      * @return bool True when an applicable override-mandate exists.
      */
-    private function hasOverrideMandate(array $verplichting): bool
+    private function hasOverrideMandate(array $commitment): bool
     {
-        $applicable = $this->mandaat->resolveApplicableMandate(verplichting: $verplichting);
+        $applicable = $this->mandaat->resolveApplicableMandate(commitment: $commitment);
 
         return $applicable !== null && (bool) ($applicable['is_override'] ?? false) === true;
 
@@ -193,7 +193,7 @@ class BudgetBlocker
      * When no matching budget exists the regel cannot be validated against a known
      * ceiling; fail-closed by rejecting (a missing budget is not free budget).
      *
-     * @param array<string,mixed> $regel            The verplichtingsregel.
+     * @param array<string,mixed> $regel            The commitment line.
      * @param string              $administrationId The owning administration.
      *
      * @return bool True when the regel amount fits the matching budget's free room.
@@ -204,8 +204,8 @@ class BudgetBlocker
             schema: 'Budget',
             filters: [
                 'administrationId' => $administrationId,
-                'programmaCode'    => (string) ($regel['programma'] ?? ''),
-                'boekjaar'         => (int) ($regel['boekjaar'] ?? 0),
+                'programmeCode'    => (string) ($regel['programme'] ?? ''),
+                'fiscalYear'         => (int) ($regel['fiscalYear'] ?? 0),
             ]
         );
 
@@ -213,31 +213,31 @@ class BudgetBlocker
             return false;
         }
 
-        return $this->fits(budget: $budget, bedrag: (int) ($regel['bedrag_excl_btw'] ?? 0));
+        return $this->fits(budget: $budget, bedrag: (int) ($regel['amountExclVat'] ?? 0));
 
     }//end regelFitsBudget()
 
     /**
      * Resolve the regels for a commitment. Prefers regels embedded on the object;
      * otherwise queries the Verplichtingsregel register. When neither yields rows,
-     * falls back to a single synthetic regel from the verplichting totals so a
+     * falls back to a single synthetic regel from the commitment totals so a
      * single-line commitment is still budget-checked.
      *
-     * @param array<string,mixed> $verplichting The commitment.
+     * @param array<string,mixed> $commitment The commitment.
      *
      * @return array<int, array<string,mixed>> The regels to validate.
      */
-    private function resolveRegels(array $verplichting): array
+    private function resolveRegels(array $commitment): array
     {
-        $embedded = ($verplichting['regels'] ?? null);
+        $embedded = ($commitment['lines'] ?? null);
         if (is_array($embedded) === true && count($embedded) > 0) {
             return array_values($embedded);
         }
 
-        $nummer  = (string) ($verplichting['verplichtingsnummer'] ?? '');
+        $nummer  = (string) ($commitment['commitmentNumber'] ?? '');
         $queried = [];
         if ($nummer !== '') {
-            $queried = $this->findMany(schema: 'Verplichtingsregel', filters: ['verplichting' => $nummer]);
+            $queried = $this->findMany(schema: 'CommitmentLine', filters: ['commitment' => $nummer]);
         }
 
         if (count($queried) > 0) {
@@ -248,9 +248,9 @@ class BudgetBlocker
         // commitment without explicit regels is still validated.
         return [
             [
-                'programma'       => (string) ($verplichting['programma'] ?? ''),
-                'boekjaar'        => (int) ($verplichting['boekjaar'] ?? 0),
-                'bedrag_excl_btw' => (int) ($verplichting['totaalbedrag_excl_btw'] ?? 0),
+                'programme'       => (string) ($commitment['programme'] ?? ''),
+                'fiscalYear'        => (int) ($commitment['fiscalYear'] ?? 0),
+                'amountExclVat' => (int) ($commitment['totalAmountExclVat'] ?? 0),
             ],
         ];
 

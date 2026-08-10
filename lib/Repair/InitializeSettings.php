@@ -1686,7 +1686,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-2.2
+     * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
      */
     private function seedMandaatTemplates(IOutput $output): void
     {
