@@ -269,17 +269,23 @@ class TenderNedAwardDetectedListener implements IEventListener
             looptijdEind: (string) ($payload['looptijdEind'] ?? '')
         );
 
+        // `verplichtingsnummer` and `soort` are both in the merged schema's
+        // required list (bookkeeping-verplichtingenadministratie.json owns it).
+        // Omitting either makes OR's ImportHandler reject the object, and the
+        // catch below is fail-soft — so a missing key here means every award
+        // silently creates nothing.
         $verplichting = [
-            'verplichtingNummer' => 'TN-'.$aanbestedingId,
-            'omschrijving'       => (string) ($payload['titel'] ?? $aanbestedingId),
-            'bron'               => 'tenderned',
-            'bronReferentie'     => $aanbestedingId,
-            'bedrag'             => (float) ($payload['contractWaarde'] ?? 0),
-            'looptijdStart'      => (string) ($payload['looptijdStart'] ?? ''),
-            'looptijdEind'       => (string) ($payload['looptijdEind'] ?? ''),
-            'mijlpalen'          => $plan,
-            'status'             => 'active',
-            'administrationId'   => (string) ($payload['administrationId'] ?? ''),
+            'verplichtingsnummer' => 'TN-'.$aanbestedingId,
+            'soort'               => 'inkooporder',
+            'omschrijving'        => (string) ($payload['titel'] ?? $aanbestedingId),
+            'bron'                => 'tenderned',
+            'bronReferentie'      => $aanbestedingId,
+            'bedrag'              => (float) ($payload['contractWaarde'] ?? 0),
+            'looptijdStart'       => (string) ($payload['looptijdStart'] ?? ''),
+            'looptijdEind'        => (string) ($payload['looptijdEind'] ?? ''),
+            'mijlpalen'           => $plan,
+            'status'              => 'active',
+            'administrationId'    => (string) ($payload['administrationId'] ?? ''),
         ];
 
         try {

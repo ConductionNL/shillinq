@@ -118,14 +118,14 @@
 				"register": "shillinq",
 				"schema": "Verplichting",
 				"columns": [
-					{ "key": "verplichtingNummer", "label": "Number", "sortable": true },
+					{ "key": "verplichtingsnummer", "label": "Number", "sortable": true },
 					{ "key": "omschrijving", "label": "Description", "sortable": true },
 					{ "key": "bron", "label": "Source", "sortable": true },
 					{ "key": "bedrag", "label": "Amount", "sortable": true },
 					{ "key": "kostenplaats", "label": "Cost center", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
-				"defaultSort": "verplichtingNummer",
+				"defaultSort": "verplichtingsnummer",
 				"detailRoute": "VerplichtingDetail"
 			}
 		},
@@ -222,7 +222,7 @@
 					"bron": "tenderned"
 				},
 				"columns": [
-					{ "key": "verplichtingNummer", "label": "Number", "sortable": true },
+					{ "key": "verplichtingsnummer", "label": "Number", "sortable": true },
 					{ "key": "omschrijving", "label": "Description", "sortable": true },
 					{ "key": "bedrag", "label": "Contract value", "sortable": true },
 					{ "key": "looptijdStart", "label": "Term start", "sortable": true },

@@ -80,12 +80,12 @@ class VerplichtingGuardTest extends TestCase
     {
         return array_merge(
             [
-                'verplichtingNummer' => 'VPL-2026-0001',
-                'kostenplaats'       => 'FAC-001',
-                'grootboekrekening'  => '4500',
-                'looptijdStart'      => '2026-02-01',
-                'looptijdEind'       => '2027-01-31',
-                'mijlpalen'          => [],
+                'verplichtingsnummer' => 'VPL-2026-0001',
+                'kostenplaats'        => 'FAC-001',
+                'grootboekrekening'   => '4500',
+                'looptijdStart'       => '2026-02-01',
+                'looptijdEind'        => '2027-01-31',
+                'mijlpalen'           => [],
             ],
             $overrides
         );

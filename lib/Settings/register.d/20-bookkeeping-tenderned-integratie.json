@@ -237,24 +237,16 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Verplichting",
-        "description": "A financial obligation (commitment) that reserves budget. The obligation may originate manually, from an inkooporder, or from a won TenderNed tender (bron field, REQ-001). A concept obligation must be enriched (kostenplaats, grootboekrekening) and activated by a contractmanager before it locks budget (design D2).",
+        "description": "A financial obligation (commitment) that reserves budget. The obligation may originate manually, from an inkooporder, or from a won TenderNed tender (bron field, REQ-001). A concept obligation must be enriched (kostenplaats, grootboekrekening) and activated by a contractmanager before it locks budget (design D2). This fragment is the TenderNed OVERLAY on the Verplichting schema: bookkeeping-verplichtingenadministratie.json owns the schema and is the single place its `required` list is declared, because ADR-037's deepMergeConfig() CONCATENATES list values — two `required` declarations become an unsatisfiable union. Everything below is additive: TenderNed provenance (bron, bronReferentie, gegundeLeverancierKvk), the milestone plan, and the concept -> active enrichment lifecycle.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
-        "required": [
-          "verplichtingNummer",
-          "omschrijving",
-          "bron",
-          "bedrag",
-          "administrationId",
-          "status"
-        ],
         "properties": {
-          "verplichtingNummer": {
+          "verplichtingsnummer": {
             "type": "string",
             "description": "Sequential obligation number unique per administration.",
             "example": "VPL-2026-0001",
-            "title": "Verplichting Nummer"
+            "title": "Verplichtingsnummer"
           },
           "omschrijving": {
             "type": "string",
@@ -706,7 +698,8 @@
         "schema": "Verplichting",
         "slug": "vpl-sample-utrecht-schoonmaak"
       },
-      "verplichtingNummer": "VPL-2026-0001",
+      "verplichtingsnummer": "VPL-2026-0001",
+      "soort": "inkooporder",
       "omschrijving": "Schoonmaakcontract gemeentehuis Utrecht 2026",
       "bron": "tenderned",
       "bronReferentie": "TN-2026-0001",

@@ -7094,16 +7094,17 @@ _A procurement tender imported from TenderNed (Logius central platform). Wraps t
 
 ### Verplichting
 **Schema.org:** `schema:Order`
-_A financial commitment (obligation) tracked in Shillinq with optional TenderNed provenance, mijlpaalplanning, and cross-app budget-impact emission. Declared in this register fragment with bron/bronReferentie/mijlpalen built in (see implementation note in tasks.md); reconciles with the future bookkeeping-obligation-financial-administration T2 entity when that lands._
+_A financial commitment (obligation) tracked in Shillinq with optional TenderNed provenance, mijlpaalplanning, and cross-app budget-impact emission. The schema is OWNED by the `bookkeeping-verplichtingenadministratie` fragment, which is the single place its `required` list is declared; `20-bookkeeping-tenderned-integratie.json` is an additive overlay contributing bron/bronReferentie/mijlpalen and the concept → active enrichment lifecycle. Only one fragment may declare `required`, because ADR-037 CONCATENATES list values on merge._
 **Primary spec:** bookkeeping-tenderned-integratie
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| verplichtingNummer | string | Yes | Unique obligation reference. |
-| omschrijving | string | Yes | Short description (e.g. tender title). |
-| bron | enum | Yes | manual / tenderned / inkooporder (default: manual). |
+| verplichtingsnummer | string | Yes | Unique obligation reference. |
+| soort | enum | Yes | inkooporder / raamovereenkomst / arbeidscontract / subsidiebeschikking / huurovereenkomst / leasing / overig. |
+| omschrijving | string | No | Short description (e.g. tender title). |
+| bron | enum | No | manual / tenderned / inkooporder (default: manual). |
 | bronReferentie | string | Cond. | Required when bron=tenderned (aanbestedingId FK). |
-| bedrag | number | Yes | Committed amount in the administration's base currency. |
+| bedrag | number | No | Committed amount in the administration's base currency. |
 | kostenplaats | string | No | Cost centre (required for activation). |
 | grootboekrekening | string | No | GL account (required for activation). |
 | looptijdStart | date | No | Contract term start. |
