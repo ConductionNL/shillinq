@@ -479,7 +479,7 @@ class PeriodCloseService
             ->findAll(['filters' => $filters, 'limit' => 1]);
 
         if (is_array($found) === true && $found !== []) {
-            return (array) $found[0];
+            return $this->normaliseRow(row: $found[0]);
         }
 
         // Fall back to the record-id lookup, still scoped to the administration.
@@ -489,7 +489,7 @@ class PeriodCloseService
             ->findAll(['filters' => ['id' => $periodId], 'limit' => 1]);
 
         if (is_array($byId) === true && $byId !== []) {
-            $record      = (array) $byId[0];
+            $record      = $this->normaliseRow(row: $byId[0]);
             $recordAdmin = (string) ($record['administrationId'] ?? '');
             if ($administrationId === '' || $recordAdmin === '' || $recordAdmin === $administrationId) {
                 return $record;
@@ -499,6 +499,53 @@ class PeriodCloseService
         return null;
 
     }//end find()
+
+    /**
+     * Normalise one OpenRegister result row into its data array.
+     *
+     * `ObjectService::findAll()` yields `ObjectEntity` instances, not arrays.
+     * A bare `(array) $entity` cast does NOT produce the record — PHP's
+     * object-to-array cast returns the entity's own (NUL-byte-prefixed) private
+     * properties, so `$record['periodId']`, `$record['state']` and
+     * `$record['administrationId']` all came back missing. The visible symptoms
+     * were `GET /api/period-close/{id}` answering 200 with `data.id = null` and
+     * no `periodId`, and `POST .../start-close` answering 409 "Period is not in
+     * the required state (open)" against a period whose stored state IS `open`.
+     *
+     * `jsonSerialize()` is the entity's rendered form (object data + `@self`),
+     * which is also what `persist()` needs in order to UPDATE the existing row
+     * rather than insert a new one. Arrays are passed through so a stub or
+     * already-rendered backend keeps working.
+     *
+     * @param mixed $row One row as returned by ObjectService::findAll().
+     *
+     * @return array<string,mixed> The record's data array.
+     *
+     * @spec openspec/specs/bookkeeping-period-close/spec.md
+     */
+    private function normaliseRow(mixed $row): array
+    {
+        if (is_array($row) === true) {
+            return $row;
+        }
+
+        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+            $rendered = $row->jsonSerialize();
+            if (is_array($rendered) === true) {
+                return $rendered;
+            }
+        }
+
+        if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+            $data = $row->getObject();
+            if (is_array($data) === true) {
+                return $data;
+            }
+        }
+
+        return [];
+
+    }//end normaliseRow()
 
     /**
      * Persist the record via the OpenRegister ObjectService (REQ-PC-002).
