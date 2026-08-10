@@ -29,7 +29,18 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/specs/reporting/spec.md#req-rpt-002
+ * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ *
+ * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
+ * The change directory it names was never committed, and the `reporting`
+ * capability has NO canonical spec. One was drafted during gate remediation
+ * and withdrawn: a spec written to fit the code, by the process whose job is
+ * to check the code against a spec, is not a specification anyone agreed to.
+ * Authoring it is the capability owner's decision, not a gate fix. No existing
+ * target is honest either — bookkeeping-iv3-reporting REQ-IV3-004 and
+ * bookkeeping-vat-btw-filing REQ-VBTW-004 forbid the PHP renderers in this
+ * directory, so pointing there would report conformance to a rule this code
+ * breaks.
  */
 
 declare(strict_types=1);

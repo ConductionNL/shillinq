@@ -21,7 +21,18 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/specs/reporting/spec.md#req-rpt-003
+ * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ *
+ * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
+ * The change directory it names was never committed, and the `reporting`
+ * capability has NO canonical spec. One was drafted during gate remediation
+ * and withdrawn: a spec written to fit the code, by the process whose job is
+ * to check the code against a spec, is not a specification anyone agreed to.
+ * Authoring it is the capability owner's decision, not a gate fix. Note in
+ * particular that bookkeeping-vat-btw-filing REQ-VBTW-004 forbids a PHP
+ * service deriving the rubrieken by walking the GL, calling it the ADR-031
+ * aggregation anti-pattern — pointing there would report conformance to a
+ * rule this code breaks.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */

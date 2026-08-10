@@ -21,6 +21,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+ * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
+ * name; the archived REQ-TB-008 that mandates it was never canonical.
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,6 +40,8 @@ namespace OCA\Shillinq\Service;
  * wires this helper to live GL + Account data.
  *
  * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+ * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
+ * name; the archived REQ-TB-008 that mandates it was never canonical.
  */
 class TrialBalanceCalculator
 {
@@ -49,6 +53,8 @@ class TrialBalanceCalculator
      * @return int Amount in whole cents.
      *
      * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+ * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
+ * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
     public function toCents(mixed $amount): int
     {
@@ -64,6 +70,8 @@ class TrialBalanceCalculator
      * @return float Money amount.
      *
      * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+ * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
+ * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
     public function fromCents(int $cents): float
     {
@@ -83,6 +91,8 @@ class TrialBalanceCalculator
      * @return int Closing balance in cents.
      *
      * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+ * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
+ * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
     public function closingCents(int $openingCents, int $debitCents, int $creditCents): int
     {
@@ -104,6 +114,8 @@ class TrialBalanceCalculator
      * @return int Opening balance in cents (zero when no prior row exists).
      *
      * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+ * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
+ * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
     public function openingFromPrior(string $accountNumber, array $priorPeriodRows): int
     {
@@ -131,6 +143,8 @@ class TrialBalanceCalculator
      * @return array<string,int> accountNumber => rolled-up closing balance in cents.
      *
      * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+ * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
+ * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
     public function rollUpParents(array $rows): array
     {
@@ -176,6 +190,8 @@ class TrialBalanceCalculator
      * @return bool True when summed debits equal summed credits.
      *
      * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+ * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
+ * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
     public function isBalanced(array $rows): bool
     {
@@ -202,6 +218,8 @@ class TrialBalanceCalculator
      *                             totalRevenue, totalExpenses, totalDebit, totalCredit.
      *
      * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-2
+ * KNOWINGLY DANGLING until shillinq#500 — REQ-TB-001 forbids this class by
+ * name; the archived REQ-TB-008 that mandates it was never canonical.
      */
     public function totals(array $rows): array
     {
