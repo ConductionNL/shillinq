@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Service\BbvSeedService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\StatementManifestService;
 use OCP\Migration\IOutput;
@@ -53,6 +54,7 @@ class InitializeSettings implements IRepairStep
      * @param StatementManifestService $manifestService The statement-manifest importer
      * @param LoggerInterface          $logger          The logger interface
      * @param ContainerInterface       $container       The DI container
+     * @param BbvSeedService           $bbvSeedService  The BBV stam-data seed service
      *
      * @return void
      */
@@ -61,6 +63,7 @@ class InitializeSettings implements IRepairStep
         private StatementManifestService $manifestService,
         private LoggerInterface $logger,
         private ContainerInterface $container,
+        private BbvSeedService $bbvSeedService,
     ) {
     }//end __construct()
 
@@ -895,7 +898,63 @@ class InitializeSettings implements IRepairStep
 
         $this->seedBbvMappingsForMunicipalAdministrations(output: $output);
 
+        $this->seedBbvStamData(output: $output);
+
     }//end seedComplianceReferenceData()
+
+    /**
+     * Seed the statutory BBV stam-data catalogues via BbvSeedService.
+     *
+     * The `bookkeeping-bbv-compliance` spec (§Seed Data) requires the 53
+     * gemeente / 14 waterschap taakvelden, the economische categorieën, the 39
+     * beleidsindicatoren and the RGS-decentraal mapping to be loaded for every
+     * BBV tenant. `BbvSeedService` implements exactly that and is idempotent,
+     * but its injection into this repair step was dropped as an "unused
+     * constructor injection" (commit 8c773b6a) after the call site had already
+     * been removed (f4c8101e) — so nothing replaced it and the catalogues have
+     * not been seeded since. `ProgrammabegrotingService` and `BudgetOverrunGuard`
+     * both query the `Taakveld` schema, so the tables were being read empty.
+     *
+     * Distinct from `SettingsService::seedBbvTaakvelden()` above, which seeds a
+     * DIFFERENT schema (`BbvTaakveld`, from bbv-taakvelden-2024.json) — the two
+     * are not substitutes for one another.
+     *
+     * Failure is reported but never aborts the repair run: a missing catalogue
+     * must not block an upgrade.
+     *
+     * @param IOutput $output The output interface for progress reporting.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
+     */
+    private function seedBbvStamData(IOutput $output): void
+    {
+        $output->info('Seeding BBV stam-data catalogues...');
+
+        try {
+            $result = $this->bbvSeedService->seedAll();
+        } catch (\Throwable $e) {
+            $output->warning('BBV stam-data seeding failed: '.$e->getMessage());
+            $this->logger->warning(
+                'Shillinq: BBV stam-data seeding failed',
+                ['exception' => $e->getMessage()]
+            );
+            return;
+        }
+
+        if (($result['success'] ?? false) !== true) {
+            $output->warning('BBV stam-data seeding issue: '.($result['message'] ?? 'unknown error'));
+            return;
+        }
+
+        foreach (($result['counts'] ?? []) as $schema => $counts) {
+            $output->info(
+                'BBV '.$schema.' seeded: '.($counts['seeded'] ?? 0).' created, '.($counts['skipped'] ?? 0).' skipped.'
+            );
+        }
+
+    }//end seedBbvStamData()
 
     /**
      * Seed the default RGS → BBV account mapping for every existing municipal

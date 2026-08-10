@@ -47,14 +47,14 @@ class InitializeSettingsTest extends TestCase
     private SettingsService&MockObject $settingsService;
 
     /**
-     * Mock BbvSeedService (constructor arg #2).
+     * Mock BbvSeedService (constructor arg #5).
      *
      * @var BbvSeedService&MockObject
      */
     private BbvSeedService&MockObject $bbvSeedService;
 
     /**
-     * Mock StatementManifestService (constructor arg #3).
+     * Mock StatementManifestService (constructor arg #2).
      *
      * @var StatementManifestService&MockObject
      */
@@ -109,6 +109,7 @@ class InitializeSettingsTest extends TestCase
             manifestService: $this->manifestService,
             logger: $this->logger,
             container: $this->container,
+            bbvSeedService: $this->bbvSeedService,
         );
 
     }//end setUp()
@@ -150,11 +151,12 @@ class InitializeSettingsTest extends TestCase
     }//end testRunSkipsWhenOpenRegisterUnavailable()
 
     /**
-     * Test that run() calls loadConfiguration, seedRgsTemplate, seedAllocationRules, and seedProductAttributes on success.
+     * Test that run() calls loadConfiguration, seedRgsTemplate, seedAllocationRules
+     * and the BBV stam-data seeder on success.
      *
      * @return void
      *
-     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
      */
     public function testRunCallsLoadConfigurationAndSeedTemplate(): void
     {
@@ -204,12 +206,19 @@ class InitializeSettingsTest extends TestCase
         $this->settingsService->method('seedSelectielijst')
             ->willReturn(['success' => true, 'seeded' => 100, 'skipped' => 0]);
 
-        // seedProductAttributes is no longer called from run() — the ProductAttribute
-        // data was migrated to pipelinq (MigrateProductVendorMasterToPipelinq change).
-        // The expectation is intentionally absent; the mock allows the call to return
-        // a sensible default if ever triggered by a stale call path.
-        $this->settingsService->method('seedProductAttributes')
-            ->willReturn(['success' => true, 'seeded' => 0, 'skipped' => 0]);
+        // The BBV stam-data catalogues (Taakveld / EconomischeCategorie /
+        // BeleidsIndicator / BbvAccountMapping) MUST be seeded on every run —
+        // bookkeeping-bbv-compliance §Seed Data. This expectation is what stops
+        // the injection being dropped again as "unused" (it was, in 8c773b6a,
+        // and the catalogues silently stopped loading).
+        $this->bbvSeedService->expects($this->once())
+            ->method('seedAll')
+            ->willReturn(
+                    [
+                        'success' => true,
+                        'counts'  => ['Taakveld' => ['seeded' => 53, 'skipped' => 0]],
+                    ]
+                    );
 
         $this->settingsService->method('getRegisterSlug')
             ->willReturn('shillinq');
