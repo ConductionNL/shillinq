@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-009
+ * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-1
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
 /**
  * GET /api/trial-balance — period-scoped per-account trial balance.
  *
- * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-009
+ * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-1
  */
 class TrialBalanceController extends Controller
 {
@@ -81,7 +81,7 @@ class TrialBalanceController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-009
+     * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-1
      */
     #[NoAdminRequired]
     public function index(): JSONResponse
