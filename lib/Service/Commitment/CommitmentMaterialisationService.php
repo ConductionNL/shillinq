@@ -264,7 +264,7 @@ class CommitmentMaterialisationService
         // (the existing `indienen` semantics) without a budget check — the
         // fail-closed budget guarantee only applies to the direct-commit path.
         if ($this->mandate->hasSufficientMandate(commitmentNumber: $sourceReference, object: $draft) === false) {
-            $draft['status'] = 'in_goedkeuring';
+            $draft['status'] = 'pendingApproval';
             $saved           = $this->persist(draft: $draft, lineInputs: $lineInputs);
             $this->dispatchLawfulnessTrigger(commitment: $saved);
             return $saved;
@@ -284,7 +284,7 @@ class CommitmentMaterialisationService
             return null;
         }
 
-        $draft['status'] = 'aangegaan';
+        $draft['status'] = 'committed';
 
         $applied = $this->mandate->resolveApplicableMandate(commitment: $draft);
         if ($applied !== null) {

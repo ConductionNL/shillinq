@@ -250,7 +250,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
         return array_merge(
             [
                 'administrationId'       => 'adm-1',
-                'programmaCode'          => '5.1',
+                'programmeCode'          => '5.1',
                 'costCentre'             => 'FAC-2026',
                 'fiscalYear'             => 2026,
                 'authorisedAmount'       => 50000000,
@@ -470,12 +470,15 @@ class CommitmentMaterialisationServiceTest extends TestCase
 
         self::assertNotNull($result);
         self::assertSame('committed', $result['status']);
-        self::assertNotEmpty($result['override_reden']);
+        self::assertNotEmpty($result['overrideReason']);
         self::assertSame('M-CFO-OVERRIDE', $result['mandateApplied']);
 
         $bevindingSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Rechtmatigheidsbevinding'));
         self::assertCount(1, $bevindingSaves);
-        self::assertSame('fout', $bevindingSaves[0][1]['commitmentType']);
+        // `soort` here belongs to Rechtmatigheidsbevinding, NOT Commitment —
+        // that schema is a different (still-Dutch) domain and is deliberately
+        // out of scope for this rename, so its key stays as the service writes it.
+        self::assertSame('fout', $bevindingSaves[0][1]['soort']);
         self::assertSame('begroting', $bevindingSaves[0][1]['criterium']);
 
     }//end testOverrideMandateMaterialisesAndRecordsAfwijking()

@@ -265,11 +265,11 @@ final class RequisitionServiceTest extends TestCase
         $requisition = $service->createRequisition(
             administrationId: 'adm-1',
             payload: [
-                'programma'     => '5.1',
-                'boekjaar'      => 2026,
+                'programme'     => '5.1',
+                'fiscalYear'      => 2026,
                 'neededByDate'  => '2026-08-15',
                 'justification' => 'Onboarding laptops',
-                'soort'         => 'inkoop',
+                'commitmentType'         => 'inkoop',
                 'lines'         => [
                     ['description' => 'Laptop', 'quantity' => 2, 'unitPrice' => 1000.00, 'glAccountSuggestion' => '4400'],
                     ['description' => 'Docking station', 'quantity' => 2, 'unitPrice' => 150.00, 'glAccountSuggestion' => '4400'],
@@ -277,7 +277,7 @@ final class RequisitionServiceTest extends TestCase
             ]
         );
 
-        self::assertSame(230000, $requisition['totaalbedrag_excl_btw']);
+        self::assertSame(230000, $requisition['totalAmountExclVat']);
         self::assertSame('draft', $requisition['statusCode']);
         self::assertSame('employee-1', $requisition['requester']);
 
@@ -303,11 +303,11 @@ final class RequisitionServiceTest extends TestCase
         $service->createRequisition(
             administrationId: 'adm-1',
             payload: [
-                'programma'     => '5.1',
-                'boekjaar'      => 2026,
+                'programme'     => '5.1',
+                'fiscalYear'      => 2026,
                 'neededByDate'  => '2026-08-15',
                 'justification' => 'x',
-                'soort'         => 'inkoop',
+                'commitmentType'         => 'inkoop',
                 'lines'         => [
                     ['description' => 'x', 'quantity' => 1, 'unitPrice' => 1, 'glAccountSuggestion' => '4400'],
                 ],
@@ -331,10 +331,10 @@ final class RequisitionServiceTest extends TestCase
                     'id'                    => 'req-1',
                     'administrationId'      => 'adm-1',
                     'statusCode'            => 'draft',
-                    'totaalbedrag_excl_btw' => 50000,
-                    'programma'             => '5.1',
-                    'boekjaar'              => 2026,
-                    'soort'                 => 'inkoop',
+                    'totalAmountExclVat' => 50000,
+                    'programme'             => '5.1',
+                    'fiscalYear'              => 2026,
+                    'commitmentType'                 => 'inkoop',
                 ],
             ],
         ];
@@ -357,7 +357,7 @@ final class RequisitionServiceTest extends TestCase
         $saved   = [];
         $data    = [
             'Requisition' => [
-                ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'totaalbedrag_excl_btw' => 50000],
+                ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'totalAmountExclVat' => 50000],
             ],
         ];
         $service = $this->buildService(data: $data, saved: $saved, userId: 'employee-1', accessibleAdministrations: ['adm-1']);
@@ -385,20 +385,20 @@ final class RequisitionServiceTest extends TestCase
                     'id'                    => 'req-1',
                     'administrationId'      => 'adm-1',
                     'statusCode'            => 'submitted',
-                    'programma'             => '5.1',
-                    'boekjaar'              => 2026,
-                    'soort'                 => 'inkoop',
-                    'totaalbedrag_excl_btw' => 500000,
+                    'programme'             => '5.1',
+                    'fiscalYear'              => 2026,
+                    'commitmentType'                 => 'inkoop',
+                    'totalAmountExclVat' => 500000,
                 ],
             ],
             'Budget'      => [
                 [
                     'administrationId'           => 'adm-1',
-                    'programmaCode'              => '5.1',
-                    'boekjaar'                   => 2026,
-                    'geautoriseerd_bedrag'       => 1000000,
-                    'gerealiseerd_bedrag'        => 0,
-                    'openstaande_verplichtingen' => 0,
+                    'programmeCode'              => '5.1',
+                    'fiscalYear'                   => 2026,
+                    'authorisedAmount'       => 1000000,
+                    'realisedAmount'        => 0,
+                    'outstandingCommitments' => 0,
                 ],
             ],
         ];
@@ -429,21 +429,21 @@ final class RequisitionServiceTest extends TestCase
                     'id'                    => 'req-1',
                     'administrationId'      => 'adm-1',
                     'statusCode'            => 'submitted',
-                    'programma'             => '5.1',
-                    'boekjaar'              => 2026,
-                    'soort'                 => 'inkoop',
+                    'programme'             => '5.1',
+                    'fiscalYear'              => 2026,
+                    'commitmentType'                 => 'inkoop',
                     // 20,000.00 EUR requested against a 10,000.00 EUR free room.
-                    'totaalbedrag_excl_btw' => 2000000,
+                    'totalAmountExclVat' => 2000000,
                 ],
             ],
             'Budget'      => [
                 [
                     'administrationId'           => 'adm-1',
-                    'programmaCode'              => '5.1',
-                    'boekjaar'                   => 2026,
-                    'geautoriseerd_bedrag'       => 1000000,
-                    'gerealiseerd_bedrag'        => 0,
-                    'openstaande_verplichtingen' => 0,
+                    'programmeCode'              => '5.1',
+                    'fiscalYear'                   => 2026,
+                    'authorisedAmount'       => 1000000,
+                    'realisedAmount'        => 0,
+                    'outstandingCommitments' => 0,
                 ],
             ],
         ];
@@ -480,7 +480,7 @@ final class RequisitionServiceTest extends TestCase
         $saved   = [];
         $data    = [
             'Requisition' => [
-                ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'draft', 'totaalbedrag_excl_btw' => 50000],
+                ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'draft', 'totalAmountExclVat' => 50000],
             ],
         ];
         $service = $this->buildService(data: $data, saved: $saved, userId: 'controller-1', accessibleAdministrations: ['adm-1']);
@@ -502,7 +502,7 @@ final class RequisitionServiceTest extends TestCase
         $saved   = [];
         $data    = [
             'Requisition' => [
-                ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'totaalbedrag_excl_btw' => 50000],
+                ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'totalAmountExclVat' => 50000],
             ],
         ];
         $service = $this->buildService(data: $data, saved: $saved, userId: 'controller-1', accessibleAdministrations: ['adm-1']);
@@ -525,7 +525,7 @@ final class RequisitionServiceTest extends TestCase
         $saved   = [];
         $data    = [
             'Requisition' => [
-                ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'totaalbedrag_excl_btw' => 50000],
+                ['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted', 'totalAmountExclVat' => 50000],
             ],
         ];
         $service = $this->buildService(data: $data, saved: $saved, userId: 'controller-1', accessibleAdministrations: ['adm-1']);

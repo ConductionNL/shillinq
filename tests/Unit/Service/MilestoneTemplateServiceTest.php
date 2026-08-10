@@ -65,8 +65,8 @@ class MilestoneTemplateServiceTest extends TestCase
      */
     public function testGetTemplateSelectsByTypeWithFallback(): void
     {
-        $this->assertSame('levering-in-fases', $this->service->getTemplate('levering-in-fases')['opdrachttype']);
-        $this->assertSame('other', $this->service->getTemplate('does-not-exist')['opdrachttype']);
+        $this->assertSame('phasedDelivery', $this->service->getTemplate('phasedDelivery')['assignmentType']);
+        $this->assertSame('other', $this->service->getTemplate('does-not-exist')['assignmentType']);
 
     }//end testGetTemplateSelectsByTypeWithFallback()
 
@@ -77,16 +77,16 @@ class MilestoneTemplateServiceTest extends TestCase
      */
     public function testGeneratePhasedPlan(): void
     {
-        $plan = $this->service->generatePlan('levering-in-fases', '2026-02-01', '2027-01-31');
+        $plan = $this->service->generatePlan('phasedDelivery', '2026-02-01', '2027-01-31');
 
         $this->assertCount(4, $plan);
-        $this->assertSame('eindoplevering', $plan[3]['opleveringsType']);
+        $this->assertSame('finalDelivery', $plan[3]['deliveryType']);
         $this->assertSame('planned', $plan[0]['status']);
 
         foreach ($plan as $mijlpaal) {
-            $this->assertGreaterThanOrEqual('2026-02-01', $mijlpaal['datum']);
-            $this->assertLessThanOrEqual('2027-01-31', $mijlpaal['datum']);
-            $this->assertNotEmpty($mijlpaal['mijlpaalId']);
+            $this->assertGreaterThanOrEqual('2026-02-01', $mijlpaal['date']);
+            $this->assertLessThanOrEqual('2027-01-31', $mijlpaal['date']);
+            $this->assertNotEmpty($mijlpaal['milestoneId']);
         }
 
         $this->assertSame(100.0, $this->service->sumPercentage($plan));
@@ -100,7 +100,7 @@ class MilestoneTemplateServiceTest extends TestCase
      */
     public function testGenerateRecurringPlan(): void
     {
-        $plan = $this->service->generatePlan('dienstverlening-doorlopend', '2026-01-01', '2026-12-31');
+        $plan = $this->service->generatePlan('ongoingService', '2026-01-01', '2026-12-31');
 
         $this->assertCount(12, $plan);
         $this->assertSame(100.0, $this->service->sumPercentage($plan));
@@ -152,14 +152,14 @@ class MilestoneTemplateServiceTest extends TestCase
      */
     public function testCashflowForecastTotalsExactly(): void
     {
-        $plan     = $this->service->generatePlan('dienstverlening-doorlopend', '2026-01-01', '2026-12-31');
+        $plan     = $this->service->generatePlan('ongoingService', '2026-01-01', '2026-12-31');
         $forecast = $this->service->buildCashflowForecast(10000.0, $plan);
 
         $this->assertCount(12, $forecast);
 
         $total = 0.0;
         foreach ($forecast as $entry) {
-            $total += (float) $entry['bedrag'];
+            $total += (float) $entry['amount'];
         }
 
         $this->assertEqualsWithDelta(10000.0, $total, 0.001);
@@ -173,12 +173,12 @@ class MilestoneTemplateServiceTest extends TestCase
      */
     public function testCashflowForecastPhasedSplit(): void
     {
-        $plan     = $this->service->generatePlan('levering-in-fases', '2026-02-01', '2027-01-31');
+        $plan     = $this->service->generatePlan('phasedDelivery', '2026-02-01', '2027-01-31');
         $forecast = $this->service->buildCashflowForecast(50000.0, $plan);
 
         $this->assertCount(4, $forecast);
         foreach ($forecast as $entry) {
-            $this->assertEqualsWithDelta(12500.0, (float) $entry['bedrag'], 0.001);
+            $this->assertEqualsWithDelta(12500.0, (float) $entry['amount'], 0.001);
         }
 
     }//end testCashflowForecastPhasedSplit()

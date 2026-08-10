@@ -81,8 +81,8 @@ final class CommitmentApprovalChainFragmentTest extends TestCase
         $schema = $this->verplichting();
         self::assertArrayHasKey('x-openregister-approval-chains', $schema, 'Commitment must declare x-openregister-approval-chains');
         $chains = $schema['x-openregister-approval-chains'];
-        self::assertArrayHasKey('verplichting-goedkeuring', $chains);
-        return $chains['verplichting-goedkeuring'];
+        self::assertArrayHasKey('commitment-approval', $chains);
+        return $chains['commitment-approval'];
 
     }//end chain()
 
@@ -108,13 +108,13 @@ final class CommitmentApprovalChainFragmentTest extends TestCase
     public function testChainTargetsGoedkeurenTransition(): void
     {
         $chain = $this->chain();
-        self::assertSame('goedkeuren', $chain['transition']);
+        self::assertSame('approve', $chain['transition']);
 
         $lifecycle   = $this->verplichting()['x-openregister-lifecycle'];
         $transitions = ($lifecycle['transitions'] ?? []);
-        self::assertArrayHasKey('goedkeuren', $transitions, 'goedkeuren transition must exist for the gate to bind to');
-        self::assertSame('pendingApproval', $transitions['goedkeuren']['from']);
-        self::assertSame('committed', $transitions['goedkeuren']['to']);
+        self::assertArrayHasKey('approve', $transitions, 'goedkeuren transition must exist for the gate to bind to');
+        self::assertSame('pendingApproval', $transitions['approve']['from']);
+        self::assertSame('committed', $transitions['approve']['to']);
 
     }//end testChainTargetsGoedkeurenTransition()
 

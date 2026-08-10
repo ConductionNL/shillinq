@@ -317,8 +317,8 @@ final class TenderNedStatusSyncTest extends TestCase
         $this->assertSame('tenderned.completion', $gateway->sends[0]['source']);
         $this->assertSame('TN-2026-0001', $gateway->sends[0]['payload']['procurementId']);
         $this->assertSame(TenderNedStatusSync::TENDERNED_STATUS_AFGEROND, $gateway->sends[0]['payload']['status']);
-        $this->assertSame('M-EIND', $gateway->sends[0]['payload']['eindopleveringId']);
-        $this->assertSame(1, $gateway->sends[0]['payload']['bewijsstukCount']);
+        $this->assertSame('M-EIND', $gateway->sends[0]['payload']['finalDeliveryId']);
+        $this->assertSame(1, $gateway->sends[0]['payload']['evidenceCount']);
 
     }//end testGatewayPresentSendsCompletionPayload()
 

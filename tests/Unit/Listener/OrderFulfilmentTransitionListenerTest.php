@@ -119,9 +119,9 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
              */
             public array $syncCalls = [];
 
-            public function syncCompletion(array $oplevering): bool
+            public function syncCompletion(array $delivery): bool
             {
-                $this->syncCalls[] = $oplevering;
+                $this->syncCalls[] = $delivery;
                 return true;
 
             }//end syncCompletion()

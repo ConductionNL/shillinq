@@ -566,7 +566,7 @@
             },
             "join": {
               "through": "Budget",
-              "on": "Budget.programmaCode",
+              "on": "Budget.programmeCode",
               "filter": {},
               "select": [
                 "Budget.authorisedAmount",

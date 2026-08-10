@@ -193,14 +193,14 @@ final class CommitmentAccountingFragmentTest extends TestCase
         }
 
         foreach ($verplichtingen as $v) {
-            self::assertNotEmpty($v['sourceReference'] ?? '', "Seeded Commitment {$v['commitmentNumber']} must carry a bronReferentie");
-            $ownRegels = array_filter($regels, static fn ($r) => $r['verplichting'] === $v['commitmentNumber']);
+            self::assertNotEmpty($v['sourceReference'] ?? '', "Seeded Commitment {$v['commitmentNumber']} must carry a sourceReference");
+            $ownRegels = array_filter($regels, static fn ($r) => $r['commitment'] === $v['commitmentNumber']);
             self::assertNotEmpty($ownRegels, "Seeded Commitment {$v['commitmentNumber']} must have at least one CommitmentLine");
 
             foreach ($ownRegels as $regel) {
                 $matchingBudget = array_filter(
                     $budgets,
-                    static fn ($b) => $b['programmaCode'] === $regel['programme']
+                    static fn ($b) => $b['programmeCode'] === $regel['programme']
                         && $b['fiscalYear'] === $regel['fiscalYear']
                         && $b['costCentre'] === $regel['costCentre']
                 );
