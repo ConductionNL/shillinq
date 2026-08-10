@@ -149,6 +149,7 @@
 			"type": "custom",
 			"title": "Stock Ledger Trace",
 			"component": "StockLedgerTrace",
+			"_note": "Rows are the server-computed trace from stockLedger#trace (/api/stock-ledger/trace), not objects of a schema: each row carries a RUNNING TOTAL accumulated over the chronological run of posted, non-cancelled StockMoves so an operator can trace a balance discrepancy back to one movement (REQ-SM-005). A running total is a property of the row's position in the sequence, which `type: index` — rows fetched from a register/schema, each rendered independently — cannot compute. ⚠️ The StockLedgerTrace component is NOT registered in src/registry.js or src/customComponents.js, so this page (the detailRoute of StockLedger) currently renders nothing; the backend half exists (StockLedgerController + StockLedgerService).",
 			"config": {
 				"endpoint": "/index.php/apps/shillinq/api/stock-ledger/trace",
 				"description": "Server-side computed drill-down per REQ-SM-005. Renders the on-hand / reserved / available header and a chronological table (movementNumber, postedAt, type, +/- quantity, runningTotal). Operator can trace any quantity discrepancy back to a specific posted StockMove."
