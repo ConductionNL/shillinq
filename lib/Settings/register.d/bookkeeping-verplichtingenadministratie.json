@@ -15,6 +15,7 @@
         "type": "object",
         "required": [
           "administrationId",
+          "verplichtingsnummer",
           "soort",
           "status"
         ],
@@ -27,7 +28,7 @@
           },
           "verplichtingsnummer": {
             "type": "string",
-            "description": "Operator-assigned unique commitment number within the administration. TWO SPELLINGS OF THIS FIELD ARE LIVE IN PRODUCTION and both are declared until the naming decision lands: this one is written and read by CommitmentMaterialisationService, BudgetBlocker::canCommit, MandaatEnforcer::hasSufficientMandate and RequisitionService; the camelCase `verplichtingNummer` declared by 20-bookkeeping-tenderned-integratie.json is written by TenderNedAwardDetectedListener and read by VerplichtingGuard. Neither is in `required`, because requiring one silently rejects every write from the other path. Collapsing to one spelling is a DATA migration (OpenRegister's MagicMapper discards undeclared properties) and needs a repair step, so it is deliberately not done here.",
+            "description": "Operator-assigned unique commitment number within the administration. NOTE — a second spelling of this same field, camelCase `verplichtingNummer`, is also live in production: it is written by TenderNedAwardDetectedListener and read by VerplichtingGuard, while this one is written by CommitmentMaterialisationService and read by BudgetBlocker::canCommit, MandaatEnforcer::hasSufficientMandate and RequisitionService. The split is resolved by the English domain rename (Verplichting -> Commitment), which owns collapsing the two and the repair step that migrates stored values; it is deliberately NOT done in this fragment.",
             "example": "PO-2026-00874",
             "title": "Verplichtingsnummer"
           },

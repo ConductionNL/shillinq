@@ -244,7 +244,7 @@
         "properties": {
           "verplichtingNummer": {
             "type": "string",
-            "description": "Sequential obligation number unique per administration, as written by TenderNedAwardDetectedListener and read by VerplichtingGuard. This is the camelCase half of a LIVE TWO-SPELLING SPLIT — bookkeeping-verplichtingenadministratie.json declares `verplichtingsnummer` for the commitment-accounting path. Both are declared and NEITHER is required until the naming decision lands, because requiring one silently rejects every write from the other path. Collapsing to one spelling is a DATA migration (MagicMapper discards undeclared properties) and needs a repair step.",
+            "description": "Sequential obligation number unique per administration, as written by TenderNedAwardDetectedListener and read by VerplichtingGuard. This is the camelCase half of a LIVE TWO-SPELLING SPLIT — bookkeeping-verplichtingenadministratie.json owns this schema and declares `verplichtingsnummer` for the commitment-accounting path, which is the spelling in the merged `required` list. Until the two collapse, a record written through the TenderNed path does not satisfy that requirement. Resolving the split belongs to the English domain rename (Verplichting -> Commitment), which owns the repair step that migrates stored values; renaming here without one would make every stored value invisible, because OpenRegister's MagicMapper discards undeclared properties.",
             "example": "VPL-2026-0001",
             "title": "Verplichting Nummer"
           },

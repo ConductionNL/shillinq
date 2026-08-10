@@ -276,9 +276,10 @@ class TenderNedAwardDetectedListener implements IEventListener
         // silently creates nothing at all.
         //
         // `verplichtingNummer` is the camelCase half of a live two-spelling
-        // split; see the property description in the register fragment. It is
-        // deliberately NOT required on either side until the naming decision
-        // lands, so this write succeeds whichever way that goes.
+        // split; see the property description in the register fragment. The
+        // merged schema requires the other spelling, so this write still does
+        // not satisfy it — resolving that belongs to the English domain rename
+        // (Verplichting -> Commitment), which owns the repair step.
         $verplichting = [
             'verplichtingNummer' => 'TN-'.$aanbestedingId,
             'soort'              => 'inkooporder',
