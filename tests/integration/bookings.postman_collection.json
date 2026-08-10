@@ -55,6 +55,15 @@
 						"pm.test('contains calendars array', function () {",
 						"    const body = pm.response.json();",
 						"    pm.expect(body.calendars).to.be.an('array');",
+						"});",
+						"// This app SHIPS cal-001..cal-003 as seed data, so an empty list is a",
+						"// defect, not an empty install. The assertion above passes for [] — which",
+						"// is why this request read green while GET /calendars/cal-001 answered 404",
+						"// three requests later. Asserting the count is what makes those two",
+						"// results agree with each other.",
+						"pm.test('seeded calendars are actually present (not an empty list)', function () {",
+						"    const body = pm.response.json();",
+						"    pm.expect(body.calendars.length, JSON.stringify(body).slice(0, 400)).to.be.at.least(1);",
 						"});"
 					],
 					"type": "text/javascript"
