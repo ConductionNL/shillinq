@@ -52,7 +52,6 @@ use Psr\Log\NullLogger;
  */
 final class OrderFulfilmentTransitionListenerTest extends TestCase
 {
-
     /**
      * Build a recording IEventDispatcher.
      *
@@ -76,19 +75,16 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
             public function dispatchTyped(Event $event): void
             {
                 // No-op.
-
             }//end dispatchTyped()
 
             public function addListener(string $eventName, callable $listener, int $priority=0): void
             {
                 // No-op.
-
             }//end addListener()
 
             public function addServiceListener(string $eventName, string $className, int $priority=0): void
             {
                 // No-op.
-
             }//end addServiceListener()
 
             public function hasListeners(string $eventName): bool
@@ -100,7 +96,6 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
             public function removeListener(string $eventName, callable $listener): void
             {
                 // No-op.
-
             }//end removeListener()
         };
 
@@ -142,7 +137,6 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
     private function emptyContainer(): ContainerInterface
     {
         return new class implements ContainerInterface {
-
             public function get(string $id): mixed
             {
                 throw new class('not bound') extends \Exception implements \Psr\Container\NotFoundExceptionInterface {
@@ -224,13 +218,16 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('1201', [
-                'commitmentId'  => 'TN-2026-0001',
-                'milestoneId'      => 'M-Q1',
-                'deliveryType' => 'partialDelivery',
-                'approved'     => true,
-                'evidence'   => [['documentId' => 'doc-1']],
-            ]),
+            $this->entity(
+                    '1201',
+                    [
+                        'commitmentId' => 'TN-2026-0001',
+                        'milestoneId'  => 'M-Q1',
+                        'deliveryType' => 'partialDelivery',
+                        'approved'     => true,
+                        'evidence'     => [['documentId' => 'doc-1']],
+                    ]
+                    ),
             'voltooien',
             'in-progress',
             'completed',
@@ -265,13 +262,16 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('1201', [
-                'commitmentId'  => 'TN-2026-0001',
-                'milestoneId'      => 'M-EIND',
-                'deliveryType' => 'finalDelivery',
-                'approved'     => true,
-                'evidence'   => [['documentId' => 'doc-1']],
-            ]),
+            $this->entity(
+                    '1201',
+                    [
+                        'commitmentId' => 'TN-2026-0001',
+                        'milestoneId'  => 'M-EIND',
+                        'deliveryType' => 'finalDelivery',
+                        'approved'     => true,
+                        'evidence'     => [['documentId' => 'doc-1']],
+                    ]
+                    ),
             'voltooien',
             'in-progress',
             'completed',
@@ -305,13 +305,16 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('1201', [
-                'commitmentId'  => 'TN-2026-0001',
-                'milestoneId'      => 'M-EIND',
-                'deliveryType' => 'finalDelivery',
-                'approved'     => false,
-                'evidence'   => [['documentId' => 'doc-1']],
-            ]),
+            $this->entity(
+                    '1201',
+                    [
+                        'commitmentId' => 'TN-2026-0001',
+                        'milestoneId'  => 'M-EIND',
+                        'deliveryType' => 'finalDelivery',
+                        'approved'     => false,
+                        'evidence'     => [['documentId' => 'doc-1']],
+                    ]
+                    ),
             'voltooien',
             'in-progress',
             'completed',
@@ -344,12 +347,15 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         );
 
         $event = new ObjectTransitionedEvent(
-            $this->entity('1201', [
-                'commitmentId'  => 'TN-2026-0001',
-                'milestoneId'      => 'M-EIND',
-                'deliveryType' => 'finalDelivery',
-                'approved'     => true,
-            ]),
+            $this->entity(
+                    '1201',
+                    [
+                        'commitmentId' => 'TN-2026-0001',
+                        'milestoneId'  => 'M-EIND',
+                        'deliveryType' => 'finalDelivery',
+                        'approved'     => true,
+                    ]
+                    ),
             'starten',
             'planned',
             'in-progress',

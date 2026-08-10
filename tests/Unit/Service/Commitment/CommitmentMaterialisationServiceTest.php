@@ -249,12 +249,12 @@ class CommitmentMaterialisationServiceTest extends TestCase
     {
         return array_merge(
             [
-                'administrationId'           => 'adm-1',
-                'programmaCode'              => '5.1',
-                'costCentre'               => 'FAC-2026',
-                'fiscalYear'                   => 2026,
+                'administrationId'       => 'adm-1',
+                'programmaCode'          => '5.1',
+                'costCentre'             => 'FAC-2026',
+                'fiscalYear'             => 2026,
                 'authorisedAmount'       => 50000000,
-                'realisedAmount'        => 20000000,
+                'realisedAmount'         => 20000000,
                 'outstandingCommitments' => 0,
             ],
             $overrides
@@ -320,21 +320,21 @@ class CommitmentMaterialisationServiceTest extends TestCase
     {
         $service = $this->buildService(
             [
-                'Commitment'       => [],
-                'CommitmentLine' => [],
-                'Budget'             => [$this->budget()],
-                'Mandate'            => [
+                'Commitment'        => [],
+                'CommitmentLine'    => [],
+                'Budget'            => [$this->budget()],
+                'Mandate'           => [
                     [
-                        'administrationId'   => 'adm-1',
-                        'mandateCode'        => 'M-INKOOP-50K',
-                        'maximumAmount'      => 10000000,
-                        'commitmentType' => ['purchaseOrder'],
-                        'isOverride'        => false,
-                        'validFrom'         => '2020-01-01',
-                        'validUntil'         => '2999-12-31',
+                        'administrationId' => 'adm-1',
+                        'mandateCode'      => 'M-INKOOP-50K',
+                        'maximumAmount'    => 10000000,
+                        'commitmentType'   => ['purchaseOrder'],
+                        'isOverride'       => false,
+                        'validFrom'        => '2020-01-01',
+                        'validUntil'       => '2999-12-31',
                     ],
                 ],
-                'PurchaseOrderLine'  => [$this->purchaseOrderLine()],
+                'PurchaseOrderLine' => [$this->purchaseOrderLine()],
             ]
         );
 
@@ -364,15 +364,15 @@ class CommitmentMaterialisationServiceTest extends TestCase
     public function testMaterialisationIsIdempotent(): void
     {
         $existing = [
-            'administrationId'    => 'adm-1',
+            'administrationId' => 'adm-1',
             'commitmentNumber' => 'PO-2026-0207',
-            'sourceReference'      => 'PO-2026-0207',
-            'status'              => 'committed',
+            'sourceReference'  => 'PO-2026-0207',
+            'status'           => 'committed',
         ];
 
         $service = $this->buildService(
             [
-                'Commitment'      => [$existing],
+                'Commitment'        => [$existing],
                 'Budget'            => [$this->budget()],
                 'Mandate'           => [],
                 'PurchaseOrderLine' => [$this->purchaseOrderLine()],
@@ -401,21 +401,21 @@ class CommitmentMaterialisationServiceTest extends TestCase
 
         $service = $this->buildService(
             [
-                'Commitment'      => [],
+                'Commitment'        => [],
                 'Budget'            => [$tightBudget],
                 'Mandate'           => [
                     [
-                        'administrationId'   => 'adm-1',
-                        'mandateCode'        => 'M-DIRECTEUR-250K',
+                        'administrationId' => 'adm-1',
+                        'mandateCode'      => 'M-DIRECTEUR-250K',
                         // Ceiling comfortably covers the EUR 300.000 commitment amount
                         // so the mandate-sufficiency check passes and the flow reaches
                         // the budget check (this test is specifically about budget
                         // denial, not mandate denial).
-                        'maximumAmount'      => 100000000,
-                        'commitmentType' => ['purchaseOrder'],
-                        'isOverride'        => false,
-                        'validFrom'         => '2020-01-01',
-                        'validUntil'         => '2999-12-31',
+                        'maximumAmount'    => 100000000,
+                        'commitmentType'   => ['purchaseOrder'],
+                        'isOverride'       => false,
+                        'validFrom'        => '2020-01-01',
+                        'validUntil'       => '2999-12-31',
                     ],
                 ],
                 // EUR 300.000 line, free room only EUR 10.000.
@@ -447,19 +447,19 @@ class CommitmentMaterialisationServiceTest extends TestCase
 
         $service = $this->buildService(
             [
-                'Commitment'             => [],
-                'CommitmentLine'       => [],
+                'Commitment'               => [],
+                'CommitmentLine'           => [],
                 'Rechtmatigheidsbevinding' => [],
                 'Budget'                   => [$tightBudget],
                 'Mandate'                  => [
                     [
-                        'administrationId'   => 'adm-1',
-                        'mandateCode'        => 'M-CFO-OVERRIDE',
-                        'maximumAmount'      => 1000000000,
-                        'commitmentType' => ['purchaseOrder'],
-                        'isOverride'        => true,
-                        'validFrom'         => '2020-01-01',
-                        'validUntil'         => '2999-12-31',
+                        'administrationId' => 'adm-1',
+                        'mandateCode'      => 'M-CFO-OVERRIDE',
+                        'maximumAmount'    => 1000000000,
+                        'commitmentType'   => ['purchaseOrder'],
+                        'isOverride'       => true,
+                        'validFrom'        => '2020-01-01',
+                        'validUntil'       => '2999-12-31',
                     ],
                 ],
                 'PurchaseOrderLine'        => [$this->purchaseOrderLine(['lineTotal' => 30000000])],
@@ -491,11 +491,11 @@ class CommitmentMaterialisationServiceTest extends TestCase
     {
         $service = $this->buildService(
             [
-                'Commitment'       => [],
-                'CommitmentLine' => [],
-                'Budget'             => [],
-                'Mandate'            => [],
-                'PurchaseOrderLine'  => [$this->purchaseOrderLine()],
+                'Commitment'        => [],
+                'CommitmentLine'    => [],
+                'Budget'            => [],
+                'Mandate'           => [],
+                'PurchaseOrderLine' => [$this->purchaseOrderLine()],
             ]
         );
 
@@ -518,22 +518,22 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $budget2027 = $this->budget(['fiscalYear' => 2027, 'authorisedAmount' => 20000000, 'realisedAmount' => 0]);
 
         $mandate = [
-            'administrationId'   => 'adm-1',
-            'mandateCode'        => 'M-DIRECTEUR-250K',
-            'maximumAmount'      => 25000000,
-            'commitmentType' => ['purchaseOrder'],
-            'isOverride'        => false,
-            'validFrom'         => '2020-01-01',
-            'validUntil'         => '2999-12-31',
+            'administrationId' => 'adm-1',
+            'mandateCode'      => 'M-DIRECTEUR-250K',
+            'maximumAmount'    => 25000000,
+            'commitmentType'   => ['purchaseOrder'],
+            'isOverride'       => false,
+            'validFrom'        => '2020-01-01',
+            'validUntil'       => '2999-12-31',
         ];
 
         $service = $this->buildService(
             [
-                'Commitment'       => [],
-                'CommitmentLine' => [],
-                'Budget'             => [$budget2026, $budget2027],
-                'Mandate'            => [$mandate],
-                'PurchaseOrderLine'  => [
+                'Commitment'        => [],
+                'CommitmentLine'    => [],
+                'Budget'            => [$budget2026, $budget2027],
+                'Mandate'           => [$mandate],
+                'PurchaseOrderLine' => [
                     $this->purchaseOrderLine(['lineNumber' => 1, 'expectedDeliveryDate' => '2026-03-01', 'lineTotal' => 10000000]),
                     $this->purchaseOrderLine(['lineNumber' => 2, 'expectedDeliveryDate' => '2027-03-01', 'lineTotal' => 10000000]),
                 ],
@@ -566,16 +566,16 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $service = $this->buildService(
             [
                 'Commitment' => [],
-                'Budget'       => [$tightBudget],
-                'Mandate'      => [
+                'Budget'     => [$tightBudget],
+                'Mandate'    => [
                     [
-                        'administrationId'   => 'adm-1',
-                        'mandateCode'        => 'M-DIRECTEUR-250K',
-                        'maximumAmount'      => 25000000,
-                        'commitmentType' => ['leasing', 'other', 'rentalAgreement'],
-                        'isOverride'        => false,
-                        'validFrom'         => '2020-01-01',
-                        'validUntil'         => '2999-12-31',
+                        'administrationId' => 'adm-1',
+                        'mandateCode'      => 'M-DIRECTEUR-250K',
+                        'maximumAmount'    => 25000000,
+                        'commitmentType'   => ['leasing', 'other', 'rentalAgreement'],
+                        'isOverride'       => false,
+                        'validFrom'        => '2020-01-01',
+                        'validUntil'       => '2999-12-31',
                     ],
                 ],
             ]
@@ -613,21 +613,21 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $budget2027 = $this->budget(['fiscalYear' => 2027, 'authorisedAmount' => 5000000, 'realisedAmount' => 0]);
 
         $mandate = [
-            'administrationId'   => 'adm-1',
-            'mandateCode'        => 'M-DIRECTEUR-250K',
-            'maximumAmount'      => 25000000,
-            'commitmentType' => ['other'],
-            'isOverride'        => false,
-            'validFrom'         => '2020-01-01',
-            'validUntil'         => '2999-12-31',
+            'administrationId' => 'adm-1',
+            'mandateCode'      => 'M-DIRECTEUR-250K',
+            'maximumAmount'    => 25000000,
+            'commitmentType'   => ['other'],
+            'isOverride'       => false,
+            'validFrom'        => '2020-01-01',
+            'validUntil'       => '2999-12-31',
         ];
 
         $service = $this->buildService(
             [
-                'Commitment'       => [],
+                'Commitment'     => [],
                 'CommitmentLine' => [],
-                'Budget'             => [$budget2026, $budget2027],
-                'Mandate'            => [$mandate],
+                'Budget'         => [$budget2026, $budget2027],
+                'Mandate'        => [$mandate],
             ]
         );
 

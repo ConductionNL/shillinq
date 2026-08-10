@@ -48,7 +48,6 @@ use Psr\Log\NullLogger;
  */
 final class TenderNedStatusSyncTest extends TestCase
 {
-
     /**
      * Build an IAppConfig returning a fixed tenant KvK.
      *
@@ -64,6 +63,7 @@ final class TenderNedStatusSyncTest extends TestCase
                 if ($key === 'tenant_kvk') {
                     return $tenantKvk;
                 }
+
                 return $default;
             }
         );
@@ -76,8 +76,8 @@ final class TenderNedStatusSyncTest extends TestCase
      * returning a fixed aanbesteding, and resolves the openconnector gateway
      * either to a recorder or to a not-bound exception.
      *
-     * @param array<string,mixed>|null $aanbesteding   Aanbesteding row or null.
-     * @param object|null              $gateway        Spy gateway or null.
+     * @param array<string,mixed>|null $aanbesteding Aanbesteding row or null.
+     * @param object|null              $gateway      Spy gateway or null.
      *
      * @return ContainerInterface
      */
@@ -96,17 +96,17 @@ final class TenderNedStatusSyncTest extends TestCase
             public function __construct(?array $aanbesteding)
             {
                 $this->aanbesteding = $aanbesteding;
-            }
+            }//end __construct()
 
             public function setRegister(string $register): self
             {
                 return $this;
-            }
+            }//end setRegister()
 
             public function setSchema(string $schema): self
             {
                 return $this;
-            }
+            }//end setSchema()
 
             public function findAll(array $opts=[]): array
             {
@@ -115,16 +115,15 @@ final class TenderNedStatusSyncTest extends TestCase
                 }
 
                 return [$this->aanbesteding];
-            }
+            }//end findAll()
         };
 
         return new class($objectService, $gateway) implements ContainerInterface {
-
             public function __construct(
                 private readonly object $objectService,
                 private readonly ?object $gateway,
             ) {
-            }
+            }//end __construct()
 
             public function get(string $id): mixed
             {
@@ -137,18 +136,19 @@ final class TenderNedStatusSyncTest extends TestCase
                         throw new class('not bound') extends \Exception implements \Psr\Container\NotFoundExceptionInterface {
                         };
                     }
+
                     return $this->gateway;
                 }
 
                 throw new class('not bound') extends \Exception implements \Psr\Container\NotFoundExceptionInterface {
                 };
-            }
+            }//end get()
 
             public function has(string $id): bool
             {
                 return $id === 'OCA\\OpenRegister\\Service\\ObjectService'
                     || ($id === 'OCA\\OpenConnector\\Service\\OutboundIntegrationGateway' && $this->gateway !== null);
-            }
+            }//end has()
         };
 
     }//end container()
@@ -226,7 +226,7 @@ final class TenderNedStatusSyncTest extends TestCase
                 [
                     'aanbestedingId'      => 'TN-2026-0001',
                     'aanbestedendeDienst' => '99999999 Gemeente Anders',
-                    'commitmentId'      => 'TN-X',
+                    'commitmentId'        => 'TN-X',
                 ],
                 $this->spyGateway()
             ),
@@ -236,10 +236,10 @@ final class TenderNedStatusSyncTest extends TestCase
 
         $result = $sync->syncCompletion(
             [
-                'commitmentId'  => 'TN-X',
-                'milestoneId'      => 'M-EIND',
+                'commitmentId' => 'TN-X',
+                'milestoneId'  => 'M-EIND',
                 'deliveryDate' => '2026-12-15',
-                'evidence'   => [['documentId' => 'doc-1']],
+                'evidence'     => [['documentId' => 'doc-1']],
             ]
         );
 
@@ -259,7 +259,7 @@ final class TenderNedStatusSyncTest extends TestCase
                 [
                     'aanbestedingId'      => 'TN-2026-0001',
                     'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
-                    'commitmentId'      => 'TN-X',
+                    'commitmentId'        => 'TN-X',
                 ],
                 null
             ),
@@ -269,10 +269,10 @@ final class TenderNedStatusSyncTest extends TestCase
 
         $result = $sync->syncCompletion(
             [
-                'commitmentId'   => 'TN-X',
-                'milestoneId'       => 'M-EIND',
+                'commitmentId' => 'TN-X',
+                'milestoneId'  => 'M-EIND',
                 'deliveryDate' => '2026-12-15',
-                'evidence'    => [['documentId' => 'doc-1']],
+                'evidence'     => [['documentId' => 'doc-1']],
             ]
         );
 
@@ -294,7 +294,7 @@ final class TenderNedStatusSyncTest extends TestCase
                 [
                     'aanbestedingId'      => 'TN-2026-0001',
                     'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
-                    'commitmentId'      => 'TN-X',
+                    'commitmentId'        => 'TN-X',
                 ],
                 $gateway
             ),
@@ -304,10 +304,10 @@ final class TenderNedStatusSyncTest extends TestCase
 
         $result = $sync->syncCompletion(
             [
-                'commitmentId'   => 'TN-X',
-                'milestoneId'       => 'M-EIND',
-                'deliveryDate' => '2026-12-15',
-                'evidence'    => [['documentId' => 'doc-1']],
+                'commitmentId'     => 'TN-X',
+                'milestoneId'      => 'M-EIND',
+                'deliveryDate'     => '2026-12-15',
+                'evidence'         => [['documentId' => 'doc-1']],
                 'administrationId' => 'adm-utrecht',
             ]
         );
@@ -330,11 +330,10 @@ final class TenderNedStatusSyncTest extends TestCase
     public function testGatewayExceptionIsSwallowed(): void
     {
         $gateway = new class {
-
             public function send(string $source, array $payload): void
             {
                 throw new \RuntimeException('upstream down');
-            }
+            }//end send()
         };
 
         $sync = new TenderNedStatusSync(
@@ -342,7 +341,7 @@ final class TenderNedStatusSyncTest extends TestCase
                 [
                     'aanbestedingId'      => 'TN-2026-0001',
                     'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
-                    'commitmentId'      => 'TN-X',
+                    'commitmentId'        => 'TN-X',
                 ],
                 $gateway
             ),
@@ -352,10 +351,10 @@ final class TenderNedStatusSyncTest extends TestCase
 
         $result = $sync->syncCompletion(
             [
-                'commitmentId'   => 'TN-X',
-                'milestoneId'       => 'M-EIND',
+                'commitmentId' => 'TN-X',
+                'milestoneId'  => 'M-EIND',
                 'deliveryDate' => '2026-12-15',
-                'evidence'    => [],
+                'evidence'     => [],
             ]
         );
 

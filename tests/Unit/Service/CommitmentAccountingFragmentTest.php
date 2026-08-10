@@ -161,7 +161,7 @@ final class CommitmentAccountingFragmentTest extends TestCase
     public function testFragmentSchemasStillPresent(): void
     {
         $schemas = $this->fragment()['components']['schemas'];
-        foreach (['Commitment', 'CommitmentLine', 'CommitmentMovement', 'Mandaat', 'ApprovalStep', 'Budget'] as $name) {
+        foreach (['Commitment', 'CommitmentLine', 'CommitmentMovement', 'Mandate', 'ApprovalStep', 'Budget'] as $name) {
             self::assertArrayHasKey($name, $schemas, "Fragment must still declare $name");
         }
 

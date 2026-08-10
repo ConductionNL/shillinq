@@ -75,8 +75,8 @@ class OrderFulfilmentGuardTest extends TestCase
     {
         $opdracht = [
             'commitmentId' => 'vpl-1',
-            'milestoneId'     => 'MS-001',
-            'status'         => 'in-progress',
+            'milestoneId'  => 'MS-001',
+            'status'       => 'in-progress',
         ];
         $this->assertFalse($this->guard->canVoltooien($opdracht));
 

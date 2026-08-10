@@ -334,11 +334,11 @@ class CommitmentWorkflowTest extends TestCase
         );
 
         $overcommit = [
-            'administrationId'      => 'adm-1',
+            'administrationId'   => 'adm-1',
             'commitmentNumber'   => 'RO-1',
-            'commitmentType'                 => 'frameworkAgreement',
+            'commitmentType'     => 'frameworkAgreement',
             'totalAmountExclVat' => 20000000,
-            'regels'                => [
+            'regels'             => [
                 ['programme' => '5.1', 'fiscalYear' => 2026, 'amountExclVat' => 10000000],
                 ['programme' => '5.1', 'fiscalYear' => 2027, 'amountExclVat' => 10000000],
             ],
@@ -349,7 +349,7 @@ class CommitmentWorkflowTest extends TestCase
 
         $within = $overcommit;
         $within['regels'][1]['amountExclVat'] = 5000000;
-        $within['totalAmountExclVat']        = 15000000;
+        $within['totalAmountExclVat']         = 15000000;
 
         // 2027 right-sized to EUR 50k → both regels fit and the raamovereenkomst signs.
         $this->assertTrue($this->budget->canCommit('RO-1', $within));
@@ -370,7 +370,7 @@ class CommitmentWorkflowTest extends TestCase
             [
                 'mandateCode'   => 'M-CFO-OVERRIDE',
                 'maximumAmount' => 1000000000,
-                'isOverride'   => true,
+                'isOverride'    => true,
             ]
         );
         $verplicht = $this->makeCommitment(35000000);
@@ -400,8 +400,8 @@ class CommitmentWorkflowTest extends TestCase
     {
         $mandate   = $this->makeMandate(
             [
-                'mandateCode'                       => 'M-INKOOP-50K-2SIG',
-                'maximumAmount'                     => 5000000,
+                'mandateCode'                  => 'M-INKOOP-50K-2SIG',
+                'maximumAmount'                => 5000000,
                 'secondSignatureRequiredAbove' => 2500000,
             ]
         );
@@ -436,11 +436,11 @@ class CommitmentWorkflowTest extends TestCase
     {
         return array_merge(
             [
-                'administrationId'           => 'adm-1',
-                'programmaCode'              => '5.1',
-                'fiscalYear'                   => 2026,
+                'administrationId'       => 'adm-1',
+                'programmaCode'          => '5.1',
+                'fiscalYear'             => 2026,
                 'authorisedAmount'       => 50000000,
-                'realisedAmount'        => 0,
+                'realisedAmount'         => 0,
                 'outstandingCommitments' => 0,
             ],
             $overrides
@@ -459,13 +459,13 @@ class CommitmentWorkflowTest extends TestCase
     {
         return array_merge(
             [
-                'administrationId'   => 'adm-1',
-                'mandateCode'        => 'M-INKOOP-100K',
-                'maximumAmount'      => 10000000,
-                'commitmentType' => ['purchaseOrder', 'frameworkAgreement'],
-                'isOverride'        => false,
-                'validFrom'         => '2020-01-01',
-                'validUntil'         => '2999-12-31',
+                'administrationId' => 'adm-1',
+                'mandateCode'      => 'M-INKOOP-100K',
+                'maximumAmount'    => 10000000,
+                'commitmentType'   => ['purchaseOrder', 'frameworkAgreement'],
+                'isOverride'       => false,
+                'validFrom'        => '2020-01-01',
+                'validUntil'       => '2999-12-31',
             ],
             $overrides
         );
@@ -482,14 +482,14 @@ class CommitmentWorkflowTest extends TestCase
     private function makeCommitment(int $bedrag): array
     {
         return [
-            'administrationId'      => 'adm-1',
+            'administrationId'   => 'adm-1',
             'commitmentNumber'   => 'PO-1',
-            'commitmentType'                 => 'purchaseOrder',
+            'commitmentType'     => 'purchaseOrder',
             'totalAmountExclVat' => $bedrag,
-            'regels'                => [
+            'regels'             => [
                 [
-                    'programme'       => '5.1',
-                    'fiscalYear'        => 2026,
+                    'programme'     => '5.1',
+                    'fiscalYear'    => 2026,
                     'amountExclVat' => $bedrag,
                 ],
             ],

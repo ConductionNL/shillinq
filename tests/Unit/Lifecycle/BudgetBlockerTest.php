@@ -215,11 +215,11 @@ class BudgetBlockerTest extends TestCase
     {
         return array_merge(
             [
-                'administrationId'           => 'adm-1',
-                'programmeCode'              => '5.1',
-                'fiscalYear'                   => 2026,
+                'administrationId'       => 'adm-1',
+                'programmeCode'          => '5.1',
+                'fiscalYear'             => 2026,
                 'authorisedAmount'       => 50000000,
-                'realisedAmount'        => 20000000,
+                'realisedAmount'         => 20000000,
                 'outstandingCommitments' => 0,
             ],
             $overrides
@@ -237,14 +237,14 @@ class BudgetBlockerTest extends TestCase
     private function commitment(int $bedrag): array
     {
         return [
-            'administrationId'      => 'adm-1',
+            'administrationId'   => 'adm-1',
             'commitmentNumber'   => 'PO-1',
-            'commitmentType'                 => 'purchaseOrder',
+            'commitmentType'     => 'purchaseOrder',
             'totalAmountExclVat' => $bedrag,
-            'lines'                => [
+            'lines'              => [
                 [
-                    'programme'       => '5.1',
-                    'fiscalYear'        => 2026,
+                    'programme'     => '5.1',
+                    'fiscalYear'    => 2026,
                     'amountExclVat' => $bedrag,
                 ],
             ],
@@ -308,13 +308,13 @@ class BudgetBlockerTest extends TestCase
     public function testOverrideMandateForcesAcceptance(): void
     {
         $override = [
-            'administrationId'   => 'adm-1',
-            'mandateCode'        => 'M-CFO-OVERRIDE',
-            'maximumAmount'      => 1000000000,
-            'commitmentType' => ['purchaseOrder'],
-            'isOverride'        => true,
-            'validFrom'         => '2020-01-01',
-            'validUntil'         => '2999-12-31',
+            'administrationId' => 'adm-1',
+            'mandateCode'      => 'M-CFO-OVERRIDE',
+            'maximumAmount'    => 1000000000,
+            'commitmentType'   => ['purchaseOrder'],
+            'isOverride'       => true,
+            'validFrom'        => '2020-01-01',
+            'validUntil'       => '2999-12-31',
         ];
 
         $this->withObjectService(
@@ -344,11 +344,11 @@ class BudgetBlockerTest extends TestCase
         );
 
         $commitment = [
-            'administrationId'      => 'adm-1',
+            'administrationId'   => 'adm-1',
             'commitmentNumber'   => 'RO-1',
-            'commitmentType'                 => 'frameworkAgreement',
+            'commitmentType'     => 'frameworkAgreement',
             'totalAmountExclVat' => 20000000,
-            'lines'                => [
+            'lines'              => [
                 ['programme' => '5.1', 'fiscalYear' => 2026, 'amountExclVat' => 10000000],
                 ['programme' => '5.1', 'fiscalYear' => 2027, 'amountExclVat' => 10000000],
             ],

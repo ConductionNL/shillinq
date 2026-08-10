@@ -81,11 +81,11 @@ class CommitmentGuardTest extends TestCase
         return array_merge(
             [
                 'commitmentNumber' => 'VPL-2026-0001',
-                'costCentre'        => 'FAC-001',
-                'glAccount'   => '4500',
-                'termStart'       => '2026-02-01',
-                'termEnd'        => '2027-01-31',
-                'milestones'           => [],
+                'costCentre'       => 'FAC-001',
+                'glAccount'        => '4500',
+                'termStart'        => '2026-02-01',
+                'termEnd'          => '2027-01-31',
+                'milestones'       => [],
             ],
             $overrides
         );
@@ -195,9 +195,9 @@ class CommitmentGuardTest extends TestCase
     {
         $v = $this->verplichting(
             [
-                'termStart' => '',
-                'termEnd'  => '',
-                'milestones'     => [['milestoneId' => 'MS-001', 'date' => '2099-01-01']],
+                'termStart'  => '',
+                'termEnd'    => '',
+                'milestones' => [['milestoneId' => 'MS-001', 'date' => '2099-01-01']],
             ]
         );
         $this->assertTrue($this->guard->canActiveren($v));
