@@ -107,13 +107,13 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $this->objectServiceStub = $this->buildObjectServiceStub(recordsBySchema: $recordsBySchema);
         $this->container->method('get')->willReturn($this->objectServiceStub);
 
-        $mandaat = new MandateEnforcer(container: $this->container, appConfig: $this->appConfig, logger: $this->logger);
-        $budget  = new BudgetBlocker(container: $this->container, appConfig: $this->appConfig, logger: $this->logger, mandaat: $mandaat);
+        $mandate = new MandateEnforcer(container: $this->container, appConfig: $this->appConfig, logger: $this->logger);
+        $budget  = new BudgetBlocker(container: $this->container, appConfig: $this->appConfig, logger: $this->logger, mandate: $mandate);
 
         return new CommitmentMaterialisationService(
             container: $this->container,
             appConfig: $this->appConfig,
-            mandaat: $mandaat,
+            mandate: $mandate,
             budget: $budget,
             dispatcher: $this->dispatcher,
             logger: $this->logger,
@@ -323,7 +323,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
                 'Commitment'       => [],
                 'CommitmentLine' => [],
                 'Budget'             => [$this->budget()],
-                'Mandaat'            => [
+                'Mandate'            => [
                     [
                         'administrationId'   => 'adm-1',
                         'mandateCode'        => 'M-INKOOP-50K',
@@ -374,7 +374,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
             [
                 'Commitment'      => [$existing],
                 'Budget'            => [$this->budget()],
-                'Mandaat'           => [],
+                'Mandate'           => [],
                 'PurchaseOrderLine' => [$this->purchaseOrderLine()],
             ]
         );
@@ -403,7 +403,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
             [
                 'Commitment'      => [],
                 'Budget'            => [$tightBudget],
-                'Mandaat'           => [
+                'Mandate'           => [
                     [
                         'administrationId'   => 'adm-1',
                         'mandateCode'        => 'M-DIRECTEUR-250K',
@@ -451,7 +451,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
                 'CommitmentLine'       => [],
                 'Rechtmatigheidsbevinding' => [],
                 'Budget'                   => [$tightBudget],
-                'Mandaat'                  => [
+                'Mandate'                  => [
                     [
                         'administrationId'   => 'adm-1',
                         'mandateCode'        => 'M-CFO-OVERRIDE',
@@ -471,7 +471,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
         self::assertNotNull($result);
         self::assertSame('committed', $result['status']);
         self::assertNotEmpty($result['override_reden']);
-        self::assertSame('M-CFO-OVERRIDE', $result['mandaat_toegepast']);
+        self::assertSame('M-CFO-OVERRIDE', $result['mandateApplied']);
 
         $bevindingSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Rechtmatigheidsbevinding'));
         self::assertCount(1, $bevindingSaves);
@@ -494,7 +494,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
                 'Commitment'       => [],
                 'CommitmentLine' => [],
                 'Budget'             => [],
-                'Mandaat'            => [],
+                'Mandate'            => [],
                 'PurchaseOrderLine'  => [$this->purchaseOrderLine()],
             ]
         );
@@ -517,7 +517,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $budget2026 = $this->budget(['fiscalYear' => 2026, 'authorisedAmount' => 20000000, 'realisedAmount' => 0]);
         $budget2027 = $this->budget(['fiscalYear' => 2027, 'authorisedAmount' => 20000000, 'realisedAmount' => 0]);
 
-        $mandaat = [
+        $mandate = [
             'administrationId'   => 'adm-1',
             'mandateCode'        => 'M-DIRECTEUR-250K',
             'maximumAmount'      => 25000000,
@@ -532,7 +532,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
                 'Commitment'       => [],
                 'CommitmentLine' => [],
                 'Budget'             => [$budget2026, $budget2027],
-                'Mandaat'            => [$mandaat],
+                'Mandate'            => [$mandate],
                 'PurchaseOrderLine'  => [
                     $this->purchaseOrderLine(['lineNumber' => 1, 'expectedDeliveryDate' => '2026-03-01', 'lineTotal' => 10000000]),
                     $this->purchaseOrderLine(['lineNumber' => 2, 'expectedDeliveryDate' => '2027-03-01', 'lineTotal' => 10000000]),
@@ -567,7 +567,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
             [
                 'Commitment' => [],
                 'Budget'       => [$tightBudget],
-                'Mandaat'      => [
+                'Mandate'      => [
                     [
                         'administrationId'   => 'adm-1',
                         'mandateCode'        => 'M-DIRECTEUR-250K',
@@ -612,7 +612,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $budget2026 = $this->budget(['fiscalYear' => 2026, 'authorisedAmount' => 5000000, 'realisedAmount' => 0]);
         $budget2027 = $this->budget(['fiscalYear' => 2027, 'authorisedAmount' => 5000000, 'realisedAmount' => 0]);
 
-        $mandaat = [
+        $mandate = [
             'administrationId'   => 'adm-1',
             'mandateCode'        => 'M-DIRECTEUR-250K',
             'maximumAmount'      => 25000000,
@@ -627,7 +627,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
                 'Commitment'       => [],
                 'CommitmentLine' => [],
                 'Budget'             => [$budget2026, $budget2027],
-                'Mandaat'            => [$mandaat],
+                'Mandate'            => [$mandate],
             ]
         );
 

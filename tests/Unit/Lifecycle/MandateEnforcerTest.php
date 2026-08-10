@@ -215,7 +215,7 @@ class MandateEnforcerTest extends TestCase
                 'isOverride'                       => false,
                 'validFrom'                        => '2020-01-01',
                 'validUntil'                        => '2999-12-31',
-                'vereist_tweede_handtekening_boven' => null,
+                'secondSignatureRequiredAbove' => null,
             ],
             $overrides
         );
@@ -332,7 +332,7 @@ class MandateEnforcerTest extends TestCase
      */
     public function testSecondSignatureRequiredAboveThreshold(): void
     {
-        $mandate = $this->mandate(['vereist_tweede_handtekening_boven' => 2500000]);
+        $mandate = $this->mandate(['secondSignatureRequiredAbove' => 2500000]);
         $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$mandate]]));
 
         $this->assertTrue(

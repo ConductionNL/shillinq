@@ -78,7 +78,7 @@ class CommitmentWorkflowTest extends TestCase
      *
      * @var MandateEnforcer
      */
-    private MandateEnforcer $mandaat;
+    private MandateEnforcer $mandate;
 
     /**
      * Budget-room guard under test.
@@ -102,7 +102,7 @@ class CommitmentWorkflowTest extends TestCase
 
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->mandaat = new MandateEnforcer(
+        $this->mandate = new MandateEnforcer(
             container: $this->container,
             appConfig: $this->appConfig,
             logger: $this->logger,
@@ -112,7 +112,7 @@ class CommitmentWorkflowTest extends TestCase
             container: $this->container,
             appConfig: $this->appConfig,
             logger: $this->logger,
-            mandaat: $this->mandaat,
+            mandate: $this->mandate,
         );
 
     }//end setUp()
@@ -241,21 +241,21 @@ class CommitmentWorkflowTest extends TestCase
     public function testInkooporderWithinBudgetAndMandateSignsCleanly(): void
     {
         $budget    = $this->makeBudget(['authorisedAmount' => 50000000, 'realisedAmount' => 0]);
-        $mandaat   = $this->makeMandate(['mandateCode' => 'M-INKOOP-100K', 'maximumAmount' => 10000000]);
+        $mandate   = $this->makeMandate(['mandateCode' => 'M-INKOOP-100K', 'maximumAmount' => 10000000]);
         $verplicht = $this->makeCommitment(75 * 100000);
 
         $this->withObjectService(
             $this->buildObjectServiceStub(
                 [
                     'Budget'  => [$budget],
-                    'Mandaat' => [$mandaat],
+                    'Mandate' => [$mandate],
                 ]
             )
         );
 
         // Mandate check passes — user can sign EUR 75k under M-INKOOP-100K.
-        $this->assertTrue($this->mandaat->hasSufficientMandate('PO-1', $verplicht));
-        $this->assertFalse($this->mandaat->requiresApproval('PO-1', $verplicht));
+        $this->assertTrue($this->mandate->hasSufficientMandate('PO-1', $verplicht));
+        $this->assertFalse($this->mandate->requiresApproval('PO-1', $verplicht));
 
         // Budget check passes — vrije_ruimte EUR 500k > EUR 75k.
         $this->assertTrue($this->budget->canCommit('PO-1', $verplicht));
@@ -282,21 +282,21 @@ class CommitmentWorkflowTest extends TestCase
     public function testMandateExceededRoutesToApprovalWorkflow(): void
     {
         $budget    = $this->makeBudget();
-        $mandaat   = $this->makeMandate(['mandateCode' => 'M-INKOOP-50K', 'maximumAmount' => 5000000]);
+        $mandate   = $this->makeMandate(['mandateCode' => 'M-INKOOP-50K', 'maximumAmount' => 5000000]);
         $verplicht = $this->makeCommitment(75 * 100000);
 
         $this->withObjectService(
             $this->buildObjectServiceStub(
                 [
                     'Budget'  => [$budget],
-                    'Mandaat' => [$mandaat],
+                    'Mandate' => [$mandate],
                 ]
             )
         );
 
         // Mandate check fails → must route to in_goedkeuring (ApprovalStep created).
-        $this->assertFalse($this->mandaat->hasSufficientMandate('PO-1', $verplicht));
-        $this->assertTrue($this->mandaat->requiresApproval('PO-1', $verplicht));
+        $this->assertFalse($this->mandate->hasSufficientMandate('PO-1', $verplicht));
+        $this->assertTrue($this->mandate->requiresApproval('PO-1', $verplicht));
 
         // Budget still fits — the rejection here is mandate-based, not budget-based.
         $this->assertTrue($this->budget->canCommit('PO-1', $verplicht));
@@ -328,7 +328,7 @@ class CommitmentWorkflowTest extends TestCase
             $this->buildObjectServiceStub(
                 [
                     'Budget'  => [$budget2026, $budget2027],
-                    'Mandaat' => [],
+                    'Mandate' => [],
                 ]
             )
         );
@@ -379,7 +379,7 @@ class CommitmentWorkflowTest extends TestCase
             $this->buildObjectServiceStub(
                 [
                     'Budget'  => [$budget],
-                    'Mandaat' => [$override],
+                    'Mandate' => [$override],
                 ]
             )
         );
@@ -390,19 +390,19 @@ class CommitmentWorkflowTest extends TestCase
     }//end testOverrideMandateForcesAcceptanceOfOverBudgetCommitment()
 
     /**
-     * REQ-VPL-002 second-signature scenario: a mandaat with
-     * vereist_tweede_handtekening_boven flags commitments above the threshold as
+     * REQ-VPL-002 second-signature scenario: a mandate with
+     * secondSignatureRequiredAbove flags commitments above the threshold as
      * requiring a second signature.
      *
      * @return void
      */
     public function testSecondSignatureRequiredAboveThreshold(): void
     {
-        $mandaat   = $this->makeMandate(
+        $mandate   = $this->makeMandate(
             [
                 'mandateCode'                       => 'M-INKOOP-50K-2SIG',
                 'maximumAmount'                     => 5000000,
-                'vereist_tweede_handtekening_boven' => 2500000,
+                'secondSignatureRequiredAbove' => 2500000,
             ]
         );
         $verplicht = $this->makeCommitment(3000000);
@@ -411,16 +411,16 @@ class CommitmentWorkflowTest extends TestCase
             $this->buildObjectServiceStub(
                 [
                     'Budget'  => [$this->makeBudget()],
-                    'Mandaat' => [$mandaat],
+                    'Mandate' => [$mandate],
                 ]
             )
         );
 
-        $this->assertTrue($this->mandaat->hasSufficientMandate('PO-1', $verplicht));
-        $this->assertTrue($this->mandaat->requiresSecondSignature($verplicht));
+        $this->assertTrue($this->mandate->hasSufficientMandate('PO-1', $verplicht));
+        $this->assertTrue($this->mandate->requiresSecondSignature($verplicht));
 
         $small = $this->makeCommitment(2000000);
-        $this->assertFalse($this->mandaat->requiresSecondSignature($small));
+        $this->assertFalse($this->mandate->requiresSecondSignature($small));
 
     }//end testSecondSignatureRequiredAboveThreshold()
 
@@ -449,7 +449,7 @@ class CommitmentWorkflowTest extends TestCase
     }//end makeBudget()
 
     /**
-     * Helper: build a mandaat record for the demo administration.
+     * Helper: build a mandate record for the demo administration.
      *
      * @param array<string,mixed> $overrides Field overrides.
      *

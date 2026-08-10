@@ -15,7 +15,7 @@
       "maximumAmount": 1000000,
       "commitmentType": ["inkooporder"],
       "isOverride": false,
-      "vereist_tweede_handtekening_boven": null,
+      "secondSignatureRequiredAbove": null,
       "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v.",
       "doelgroep": "gemeente"
     },
@@ -26,7 +26,7 @@
       "maximumAmount": 5000000,
       "commitmentType": ["inkooporder", "raamovereenkomst"],
       "isOverride": false,
-      "vereist_tweede_handtekening_boven": 2500000,
+      "secondSignatureRequiredAbove": 2500000,
       "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v.",
       "doelgroep": "gemeente"
     },
@@ -37,7 +37,7 @@
       "maximumAmount": 10000000,
       "commitmentType": ["inkooporder", "raamovereenkomst", "huurovereenkomst", "leasing"],
       "isOverride": false,
-      "vereist_tweede_handtekening_boven": 5000000,
+      "secondSignatureRequiredAbove": 5000000,
       "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v.",
       "doelgroep": "gemeente"
     },
@@ -48,7 +48,7 @@
       "maximumAmount": 25000000,
       "commitmentType": ["inkooporder", "raamovereenkomst", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing"],
       "isOverride": false,
-      "vereist_tweede_handtekening_boven": null,
+      "secondSignatureRequiredAbove": null,
       "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v.",
       "doelgroep": "gemeente"
     },
@@ -59,7 +59,7 @@
       "maximumAmount": 1000000000,
       "commitmentType": ["inkooporder", "raamovereenkomst", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing", "overig"],
       "isOverride": true,
-      "vereist_tweede_handtekening_boven": null,
+      "secondSignatureRequiredAbove": null,
       "vastgesteld_bij": "Mandaatregeling 2026 (override budgetoverschrijding)",
       "doelgroep": "gemeente"
     },
@@ -70,7 +70,7 @@
       "maximumAmount": 50000000,
       "commitmentType": ["inkooporder", "raamovereenkomst", "subsidiebeschikking"],
       "isOverride": false,
-      "vereist_tweede_handtekening_boven": 25000000,
+      "secondSignatureRequiredAbove": 25000000,
       "vastgesteld_bij": "Mandaatregeling Provinciewet",
       "doelgroep": "provincie"
     },
@@ -81,7 +81,7 @@
       "maximumAmount": 20000000,
       "commitmentType": ["inkooporder", "raamovereenkomst", "leasing"],
       "isOverride": false,
-      "vereist_tweede_handtekening_boven": 10000000,
+      "secondSignatureRequiredAbove": 10000000,
       "vastgesteld_bij": "Mandaatregeling Waterschapswet",
       "doelgroep": "waterschap"
     },
@@ -92,7 +92,7 @@
       "maximumAmount": 2500000,
       "commitmentType": ["inkooporder"],
       "isOverride": false,
-      "vereist_tweede_handtekening_boven": null,
+      "secondSignatureRequiredAbove": null,
       "vastgesteld_bij": "Interne procuratieregeling",
       "doelgroep": "mkb"
     },
@@ -103,7 +103,7 @@
       "maximumAmount": 10000000,
       "commitmentType": ["inkooporder", "raamovereenkomst", "huurovereenkomst", "leasing", "arbeidscontract"],
       "isOverride": false,
-      "vereist_tweede_handtekening_boven": 5000000,
+      "secondSignatureRequiredAbove": 5000000,
       "vastgesteld_bij": "Interne procuratieregeling",
       "doelgroep": "mkb"
     },
@@ -114,7 +114,7 @@
       "maximumAmount": 25000000,
       "commitmentType": ["inkooporder", "raamovereenkomst", "arbeidscontract", "huurovereenkomst", "leasing", "overig"],
       "isOverride": false,
-      "vereist_tweede_handtekening_boven": null,
+      "secondSignatureRequiredAbove": null,
       "vastgesteld_bij": "Interne procuratieregeling",
       "doelgroep": "mkb"
     },
@@ -125,7 +125,7 @@
       "maximumAmount": 1000000000,
       "commitmentType": ["inkooporder", "raamovereenkomst", "arbeidscontract", "subsidiebeschikking", "huurovereenkomst", "leasing", "overig"],
       "isOverride": true,
-      "vereist_tweede_handtekening_boven": null,
+      "secondSignatureRequiredAbove": null,
       "vastgesteld_bij": "Interne procuratieregeling (override)",
       "doelgroep": "mkb"
     },
@@ -136,7 +136,7 @@
       "maximumAmount": 1000000000,
       "commitmentType": ["inkooporder", "raamovereenkomst", "huurovereenkomst", "leasing", "overig"],
       "isOverride": true,
-      "vereist_tweede_handtekening_boven": null,
+      "secondSignatureRequiredAbove": null,
       "vastgesteld_bij": "Eenmanszaak — volledige tekenbevoegdheid",
       "doelgroep": "zzp"
     }

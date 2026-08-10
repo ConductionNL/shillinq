@@ -58,13 +58,13 @@ class BudgetBlocker
      * @param ContainerInterface $container DI container for lazy ObjectService resolution.
      * @param IAppConfig         $appConfig App config for register slug resolution.
      * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     * @param MandateEnforcer    $mandaat   Mandate resolver for override-mandate detection.
+     * @param MandateEnforcer    $mandate   Mandate resolver for override-mandate detection.
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
-        private readonly MandateEnforcer $mandaat,
+        private readonly MandateEnforcer $mandate,
     ) {
     }//end __construct()
 
@@ -181,9 +181,9 @@ class BudgetBlocker
      */
     private function hasOverrideMandate(array $commitment): bool
     {
-        $applicable = $this->mandaat->resolveApplicableMandate(commitment: $commitment);
+        $applicable = $this->mandate->resolveApplicableMandate(commitment: $commitment);
 
-        return $applicable !== null && (bool) ($applicable['is_override'] ?? false) === true;
+        return $applicable !== null && (bool) ($applicable['isOverride'] ?? false) === true;
 
     }//end hasOverrideMandate()
 

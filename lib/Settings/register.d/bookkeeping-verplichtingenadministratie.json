@@ -826,7 +826,7 @@
             "example": "Mandaatregeling 2025, art. 4",
             "title": "Vastgesteld Bij"
           },
-          "vereist_tweede_handtekening_boven": {
+          "secondSignatureRequiredAbove": {
             "type": "integer",
             "nullable": true,
             "description": "Amount above which a second signature is required, in minor units (REQ-VPL-002).",
@@ -1126,7 +1126,7 @@
       "geldig_van": "2026-01-01",
       "geldig_tot": "2026-12-31",
       "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v.",
-      "vereist_tweede_handtekening_boven": 2500000
+      "secondSignatureRequiredAbove": 2500000
     },
     {
       "@self": {

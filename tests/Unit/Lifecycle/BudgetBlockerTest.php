@@ -81,7 +81,7 @@ class BudgetBlockerTest extends TestCase
 
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $mandaat = new MandateEnforcer(
+        $mandate = new MandateEnforcer(
             container: $this->container,
             appConfig: $this->appConfig,
             logger: $this->logger,
@@ -91,7 +91,7 @@ class BudgetBlockerTest extends TestCase
             container: $this->container,
             appConfig: $this->appConfig,
             logger: $this->logger,
-            mandaat: $mandaat,
+            mandate: $mandate,
         );
 
     }//end setUp()
@@ -216,7 +216,7 @@ class BudgetBlockerTest extends TestCase
         return array_merge(
             [
                 'administrationId'           => 'adm-1',
-                'programmaCode'              => '5.1',
+                'programmeCode'              => '5.1',
                 'fiscalYear'                   => 2026,
                 'authorisedAmount'       => 50000000,
                 'realisedAmount'        => 20000000,
@@ -241,7 +241,7 @@ class BudgetBlockerTest extends TestCase
             'commitmentNumber'   => 'PO-1',
             'commitmentType'                 => 'purchaseOrder',
             'totalAmountExclVat' => $bedrag,
-            'regels'                => [
+            'lines'                => [
                 [
                     'programme'       => '5.1',
                     'fiscalYear'        => 2026,
@@ -275,7 +275,7 @@ class BudgetBlockerTest extends TestCase
     public function testCommitmentWithinBudgetAllowed(): void
     {
         $this->withObjectService(
-            $this->buildObjectServiceStub(['Budget' => [$this->budget()], 'Mandaat' => []])
+            $this->buildObjectServiceStub(['Budget' => [$this->budget()], 'Mandate' => []])
         );
 
         // Free room is EUR 300.000; a EUR 250.000 commitment fits.
@@ -291,7 +291,7 @@ class BudgetBlockerTest extends TestCase
     public function testCommitmentExceedingBudgetRejected(): void
     {
         $this->withObjectService(
-            $this->buildObjectServiceStub(['Budget' => [$this->budget()], 'Mandaat' => []])
+            $this->buildObjectServiceStub(['Budget' => [$this->budget()], 'Mandate' => []])
         );
 
         // Free room is EUR 300.000; a EUR 350.000 commitment exceeds it.
@@ -318,7 +318,7 @@ class BudgetBlockerTest extends TestCase
         ];
 
         $this->withObjectService(
-            $this->buildObjectServiceStub(['Budget' => [$this->budget()], 'Mandaat' => [$override]])
+            $this->buildObjectServiceStub(['Budget' => [$this->budget()], 'Mandate' => [$override]])
         );
 
         // EUR 350.000 exceeds free room but the override-mandate forces acceptance.
@@ -339,7 +339,7 @@ class BudgetBlockerTest extends TestCase
 
         $this->withObjectService(
             $this->buildObjectServiceStub(
-                ['Budget' => [$budget2026, $budget2027], 'Mandaat' => []]
+                ['Budget' => [$budget2026, $budget2027], 'Mandate' => []]
             )
         );
 
@@ -348,7 +348,7 @@ class BudgetBlockerTest extends TestCase
             'commitmentNumber'   => 'RO-1',
             'commitmentType'                 => 'frameworkAgreement',
             'totalAmountExclVat' => 20000000,
-            'regels'                => [
+            'lines'                => [
                 ['programme' => '5.1', 'fiscalYear' => 2026, 'amountExclVat' => 10000000],
                 ['programme' => '5.1', 'fiscalYear' => 2027, 'amountExclVat' => 10000000],
             ],
@@ -368,7 +368,7 @@ class BudgetBlockerTest extends TestCase
     public function testMissingBudgetRejected(): void
     {
         $this->withObjectService(
-            $this->buildObjectServiceStub(['Budget' => [], 'Mandaat' => []])
+            $this->buildObjectServiceStub(['Budget' => [], 'Mandate' => []])
         );
 
         $this->assertFalse($this->guard->canCommit('PO-1', $this->commitment(1000000)));

@@ -184,7 +184,7 @@ class MandateEnforcer
      * Whether a commitment requires a second signature under the applicable mandate
      * (REQ-VPL-002).
      *
-     * True when the applicable mandate declares vereist_tweede_handtekening_boven and
+     * True when the applicable mandate declares secondSignatureRequiredAbove and
      * the commitment amount meets or exceeds it.
      *
      * @param array<string,mixed> $commitment The commitment being signed.
@@ -200,7 +200,7 @@ class MandateEnforcer
             return false;
         }
 
-        $threshold = ($mandate['vereist_tweede_handtekening_boven'] ?? null);
+        $threshold = ($mandate['secondSignatureRequiredAbove'] ?? null);
         if ($threshold === null) {
             return false;
         }

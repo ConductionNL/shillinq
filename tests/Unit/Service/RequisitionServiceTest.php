@@ -238,8 +238,8 @@ final class RequisitionServiceTest extends TestCase
             }
         );
 
-        $mandaat = new MandateEnforcer(container: $container, appConfig: $this->appConfig, logger: $this->logger);
-        $budget  = new BudgetBlocker(container: $container, appConfig: $this->appConfig, logger: $this->logger, mandaat: $mandaat);
+        $mandate = new MandateEnforcer(container: $container, appConfig: $this->appConfig, logger: $this->logger);
+        $budget  = new BudgetBlocker(container: $container, appConfig: $this->appConfig, logger: $this->logger, mandate: $mandate);
 
         return new RequisitionService(
             container: $container,

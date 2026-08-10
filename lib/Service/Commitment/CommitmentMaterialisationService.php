@@ -653,7 +653,7 @@ class CommitmentMaterialisationService
                 'eventName'        => self::EVENT_COMMITMENT_CREATED,
                 'commitmentNumber' => (string) ($commitment['commitmentNumber'] ?? ''),
                 'sourceReference'  => (string) ($commitment['sourceReference'] ?? ''),
-                'soort'            => (string) ($commitment['soort'] ?? ''),
+                'commitmentType'   => (string) ($commitment['commitmentType'] ?? ''),
                 'administrationId' => (string) ($commitment['administrationId'] ?? ''),
                 'emittedAt'        => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
             ];
