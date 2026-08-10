@@ -458,20 +458,102 @@
             "compute": "missing_fields([fiscalYearStart, fiscalYearEnd, taxonomyVersion]) + (applicableEntityTypes is empty ? ['applicableEntityTypes'] : [])"
           }
         },
+        "x-openregister-calculations": {
+          "daysUntilFilingDeadline": {
+            "expression": {
+              "diffDays": [
+                {
+                  "prop": "filingDeadline"
+                },
+                {
+                  "now": []
+                }
+              ]
+            },
+            "type": "integer",
+            "materialise": true,
+            "description": "Whole days remaining until the regulatory filing deadline. Negative once the deadline has passed, and null when filingDeadline is not set — which flows through to deadlineApproaching resolving false rather than guessing a reference date."
+          },
+          "deadlineApproaching": {
+            "expression": {
+              "and": [
+                {
+                  "ne": [
+                    {
+                      "prop": "status"
+                    },
+                    {
+                      "lit": "submitted"
+                    }
+                  ]
+                },
+                {
+                  "ne": [
+                    {
+                      "prop": "status"
+                    },
+                    {
+                      "lit": "approved"
+                    }
+                  ]
+                },
+                {
+                  "ge": [
+                    {
+                      "prop": "daysUntilFilingDeadline"
+                    },
+                    {
+                      "lit": 0
+                    }
+                  ]
+                },
+                {
+                  "le": [
+                    {
+                      "prop": "daysUntilFilingDeadline"
+                    },
+                    {
+                      "lit": 30
+                    }
+                  ]
+                }
+              ]
+            },
+            "type": "boolean",
+            "materialise": true,
+            "description": "True when the filing is still open (not submitted, not approved) and its deadline falls within the next 30 days (REQ-SBR-008). Materialised so the filingDeadlineApproaching scheduled notification can filter on it, and re-evaluated daily without an object write by OpenRegister's temporal calculation sweep (daysUntilFilingDeadline references `now`, which flags this schema as temporal). This is the declarative replacement for the legacy rule's `schedule.fireAt = filingDeadline - P30D` / `skipIf status in [submitted, approved]` pair."
+          }
+        },
         "x-openregister-notifications": {
           "filingDeadlineApproaching": {
-            "trigger": "scheduled",
-            "description": "Notify operators 30 days before the regulatory filing deadline per REQ-SBR-008. Fires once per (administrationId, code) until the filing transitions to submitted or the deadline passes.",
-            "schedule": {
-              "fireAt": "@self.filingDeadline - P30D",
-              "skipIf": "@self.status in ['submitted', 'approved']"
+            "trigger": {
+              "type": "scheduled",
+              "intervalSec": 86400,
+              "filter": {
+                "deadlineApproaching": true
+              }
             },
-            "recipients": {
-              "role": "finance-manager",
-              "scope": "@self.administrationId"
-            },
-            "title": "SBR filing deadline in 30 days",
-            "message": "Filing @self.name (@self.code) for administration @self.administrationId is due on @self.filingDeadline. Open the SBR Documents page to complete the draft."
+            "description": "Notify operators 30 days before the regulatory filing deadline per REQ-SBR-008. The scheduled trigger re-checks daily; the filter is the 30-day window plus the skip condition — a filing already submitted or approved has left the draft status and is therefore no longer matched.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "finance-manager"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "SBR-deadline over 30 dagen: {{name}} ({{code}}) moet vóór {{filingDeadline}} zijn ingediend",
+              "en": "SBR filing deadline in 30 days: {{name}} ({{code}}) is due on {{filingDeadline}}"
+            }
           },
           "onRejected": {
             "trigger": {
@@ -479,12 +561,26 @@
               "action": "reject"
             },
             "description": "Notify finance-manager when Belastingdienst rejects a submitted filing (REQ-SBR-005).",
-            "recipients": {
-              "role": "finance-manager",
-              "scope": "@self.administrationId"
-            },
-            "title": "SBR filing rejected by Belastingdienst",
-            "message": "Filing @self.name (@self.code) was rejected: @self.rejectionReason. Remediation required."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "finance-manager"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "SBR-aangifte afgewezen door de Belastingdienst: {{name}} ({{code}}) — {{rejectionReason}}",
+              "en": "SBR filing rejected by the Dutch Tax Administration: {{name}} ({{code}}) — {{rejectionReason}}"
+            }
           }
         },
         "x-openregister-rbac": {

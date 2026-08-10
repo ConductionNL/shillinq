@@ -136,7 +136,7 @@
                 "minimum": 1,
                 "nullable": true,
                 "title": "Occurrence Count",
-                "description": "The count or quantity of occurrenc."
+                "description": "Total number of invoices this profile generates before it ends. Counted from the first generated period; when it is reached the profile transitions to ended (REQ-RIN-005)."
               }
             },
             "title": "End Condition"
@@ -379,6 +379,16 @@
               "status",
               "nextRunDate"
             ]
+          },
+          "isEndingSoon": {
+            "description": "True when an active profile is within 30 days of its endCondition.endDate, or has 1 occurrence left of an endCondition.occurrenceCount run (REQ-RIN-005). An open-ended profile (no endCondition) and an already-ended profile both resolve false. Materialised so the onProfileEndingSoon scheduled notification can filter on it.",
+            "expression": "(status == 'active') && (((endCondition.endDate != null) && (endCondition.endDate <= addDays(today(), 30))) || ((endCondition.occurrenceCount != null) && (remainingOccurrences != null) && (remainingOccurrences <= 1)))",
+            "materialise": true,
+            "dependsOn": [
+              "status",
+              "endCondition",
+              "remainingOccurrences"
+            ]
           }
         },
         "x-openregister-scheduled-workflows": {
@@ -399,44 +409,111 @@
           "onDraftGenerated": {
             "trigger": "generation.draft",
             "description": "A recurring draft invoice was generated and is awaiting review.",
-            "recipients": {
-              "role": "bookkeeper",
-              "scope": "@self.administrationId"
-            },
-            "title": "Recurring draft invoice ready for review",
-            "message": "A draft invoice for recurring profile @self.name (@self.lastBillingPeriod) is ready for review."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Conceptfactuur voor terugkerend profiel {{name}} ({{lastBillingPeriod}}) staat klaar voor beoordeling",
+              "en": "Draft invoice for recurring profile {{name}} ({{lastBillingPeriod}}) is ready for review"
+            }
           },
           "onGenerationFailed": {
-            "trigger": "field-change",
-            "field": "lastRunStatus",
-            "condition": "lastRunStatus == 'failed'",
-            "description": "A recurring generation run failed and needs operator attention.",
-            "recipients": {
-              "role": "bookkeeper",
-              "scope": "@self.administrationId"
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "lastRunStatus",
+                "operator": "equals",
+                "value": "failed"
+              }
             },
-            "title": "Recurring invoice generation failed",
-            "message": "Generation for recurring profile @self.name failed: @self.lastRunError."
+            "description": "A recurring generation run failed and needs operator attention.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Generatie van terugkerend profiel {{name}} is mislukt: {{lastRunError}}",
+              "en": "Generation for recurring profile {{name}} failed: {{lastRunError}}"
+            }
           },
           "onProfileEndingSoon": {
-            "trigger": "scheduled",
-            "description": "A recurring profile is approaching its end condition.",
-            "recipients": {
-              "role": "bookkeeper",
-              "scope": "@self.administrationId"
+            "trigger": {
+              "type": "scheduled",
+              "intervalSec": 86400,
+              "filter": {
+                "isEndingSoon": true
+              }
             },
-            "title": "Recurring profile ending soon",
-            "message": "Recurring profile @self.name is approaching its end condition."
+            "description": "A recurring profile is approaching its end condition. The scheduled trigger re-checks daily and matches on the materialised isEndingSoon calculation, so an open-ended or already-ended profile never fires.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Terugkerend profiel {{name}} nadert zijn einddatum of laatste termijn",
+              "en": "Recurring profile {{name}} is approaching its end condition"
+            }
           },
           "onIndexationApplied": {
             "trigger": "generation.indexation",
             "description": "Annual price indexation was applied to a recurring profile.",
-            "recipients": {
-              "role": "bookkeeper",
-              "scope": "@self.administrationId"
-            },
-            "title": "Recurring profile indexation applied",
-            "message": "Indexation of @self.indexationPercent% was applied to recurring profile @self.name."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Indexering van {{indexationPercent}}% toegepast op terugkerend profiel {{name}}",
+              "en": "Indexation of {{indexationPercent}}% was applied to recurring profile {{name}}"
+            }
           }
         },
         "x-openregister-relations": {

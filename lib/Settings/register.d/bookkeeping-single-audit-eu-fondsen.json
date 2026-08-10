@@ -924,12 +924,26 @@
               "action": "submit"
             },
             "description": "Notify the eu-projectleider when an expenditure is submitted to the MA.",
-            "recipients": {
-              "role": "eu-projectleider",
-              "scope": "@self.administrationId"
-            },
-            "title": "EU-uitgave ingediend bij MA",
-            "message": "EU-uitgave voor @self.declarationPeriod is ingediend bij de managementautoriteit."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "eu-projectleider"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "EU-uitgave voor {{declarationPeriod}} is ingediend bij de managementautoriteit",
+              "en": "EU expenditure for {{declarationPeriod}} was submitted to the managing authority"
+            }
           }
         },
         "x-openregister-rbac": {
@@ -1338,12 +1352,26 @@
               "type": "created"
             },
             "description": "Notify the controller when an irregularity is reported.",
-            "recipients": {
-              "role": "controller",
-              "scope": "@self.administrationId"
-            },
-            "title": "Onregelmatigheid gemeld",
-            "message": "Onregelmatigheid (@self.nature) van @self.amountConcerned EUR gemeld op project @self.euProjectId."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "controller"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Onregelmatigheid gemeld ({{nature}}) van {{amountConcerned}} EUR op project {{euProjectId}}",
+              "en": "Irregularity reported ({{nature}}) of {{amountConcerned}} EUR on project {{euProjectId}}"
+            }
           }
         },
         "x-openregister-rbac": {

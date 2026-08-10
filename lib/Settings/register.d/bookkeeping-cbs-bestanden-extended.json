@@ -211,12 +211,26 @@
               "action": "validate"
             },
             "description": "Notify the finance manager when a CBS submission passes validation (REQ-CBS-009).",
-            "recipients": {
-              "role": "finance-manager",
-              "scope": "@self.administrationId"
-            },
-            "title": "CBS submission validated",
-            "message": "CBS submission @self.submissionNumber has been validated and is ready for delivery to CBS."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "finance-manager"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "CBS-levering {{submissionNumber}} is gevalideerd en gereed voor verzending naar het CBS",
+              "en": "CBS submission {{submissionNumber}} has been validated and is ready for delivery to CBS"
+            }
           },
           "onRejected": {
             "trigger": {
@@ -224,12 +238,26 @@
               "action": "reject"
             },
             "description": "Notify the finance manager when CBS rejects a submission (REQ-CBS-003).",
-            "recipients": {
-              "role": "finance-manager",
-              "scope": "@self.administrationId"
-            },
-            "title": "CBS submission rejected",
-            "message": "CBS submission @self.submissionNumber was rejected by CBS; a correction submission is required."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "finance-manager"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "CBS-levering {{submissionNumber}} is afgewezen door het CBS; een correctielevering is vereist",
+              "en": "CBS submission {{submissionNumber}} was rejected by CBS; a correction submission is required"
+            }
           }
         },
         "x-openregister-rbac": {

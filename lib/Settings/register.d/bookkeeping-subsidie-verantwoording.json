@@ -284,8 +284,10 @@
               "nc-notification",
               "email"
             ],
-            "subject": "Report Ready for Approval",
-            "message": "Subsidie verantwoording @self.verantwoordingId is submitted for approval."
+            "subject": {
+              "nl": "Subsidieverantwoording {{verantwoordingId}} is ingediend en wacht op goedkeuring",
+              "en": "Grant accountability report {{verantwoordingId}} is submitted and awaiting approval"
+            }
           },
           "onApproved": {
             "trigger": {
@@ -302,8 +304,10 @@
             "channels": [
               "nc-notification"
             ],
-            "subject": "Accountability Report Approved",
-            "message": "Subsidie verantwoording @self.verantwoordingId is approved."
+            "subject": {
+              "nl": "Subsidieverantwoording {{verantwoordingId}} is goedgekeurd",
+              "en": "Grant accountability report {{verantwoordingId}} is approved"
+            }
           },
           "onFinal": {
             "trigger": {
@@ -320,8 +324,10 @@
             "channels": [
               "nc-notification"
             ],
-            "subject": "Accountability Report Finalised",
-            "message": "Subsidie verantwoording @self.verantwoordingId is finalised."
+            "subject": {
+              "nl": "Subsidieverantwoording {{verantwoordingId}} is definitief vastgesteld",
+              "en": "Grant accountability report {{verantwoordingId}} is finalised"
+            }
           },
           "onOverdue": {
             "trigger": {
@@ -341,8 +347,10 @@
             "channels": [
               "nc-notification"
             ],
-            "subject": "Accountability Report Overdue",
-            "message": "Subsidie verantwoording @self.verantwoordingId is overdue for approval (grant @self.grantId)."
+            "subject": {
+              "nl": "Subsidieverantwoording {{verantwoordingId}} is te laat voor goedkeuring (subsidie {{grantId}})",
+              "en": "Grant accountability report {{verantwoordingId}} is overdue for approval (grant {{grantId}})"
+            }
           }
         },
         "x-openregister-relations": {
@@ -592,8 +600,10 @@
             "channels": [
               "nc-notification"
             ],
-            "subject": "Auditor Statement — Under Review",
-            "message": "Auditor statement @self.statementId is now under review."
+            "subject": {
+              "nl": "Accountantsverklaring {{statementId}} is in behandeling genomen door de accountant",
+              "en": "Auditor statement {{statementId}} has been accepted and is now under review"
+            }
           },
           "onApproved": {
             "trigger": {
@@ -611,8 +621,10 @@
               "nc-notification",
               "email"
             ],
-            "subject": "Auditor Statement — Approved",
-            "message": "Auditor statement @self.statementId is approved."
+            "subject": {
+              "nl": "Accountantsverklaring {{statementId}} is goedgekeurd",
+              "en": "Auditor statement {{statementId}} is approved"
+            }
           },
           "onRejected": {
             "trigger": {
@@ -630,8 +642,10 @@
               "nc-notification",
               "email"
             ],
-            "subject": "Auditor Statement — Rejected",
-            "message": "Auditor statement @self.statementId is rejected; grant settlement is blocked."
+            "subject": {
+              "nl": "Accountantsverklaring {{statementId}} is afgekeurd; de subsidievaststelling is geblokkeerd",
+              "en": "Auditor statement {{statementId}} is rejected; grant settlement is blocked"
+            }
           },
           "onConditional": {
             "trigger": {
@@ -649,8 +663,10 @@
               "nc-notification",
               "email"
             ],
-            "subject": "Auditor Statement — Conditional Approval",
-            "message": "Auditor statement @self.statementId is conditionally approved with caveats."
+            "subject": {
+              "nl": "Accountantsverklaring {{statementId}} is met voorbehoud goedgekeurd",
+              "en": "Auditor statement {{statementId}} is conditionally approved, with caveats"
+            }
           }
         },
         "x-openregister-relations": {
