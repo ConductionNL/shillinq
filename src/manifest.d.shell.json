@@ -4666,13 +4666,6 @@
 				},
 				{
 					"_fragment": "inventory-stock-movement-ledger",
-					"id": "StockLedgerTrace",
-					"route": "/inventory/stock-ledger/:id",
-					"type": "custom",
-					"title": "Stock Ledger Trace"
-				},
-				{
-					"_fragment": "inventory-stock-movement-ledger",
 					"id": "ReservedStock",
 					"route": "/inventory/reserved-stock",
 					"type": "index",
