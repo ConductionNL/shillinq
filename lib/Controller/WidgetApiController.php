@@ -35,13 +35,13 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\SlotService;
 use OCA\Shillinq\Service\WidgetAuthService;
+use OCA\Shillinq\Service\WidgetService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IRequest;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -67,21 +67,21 @@ class WidgetApiController extends Controller
     /**
      * Construct the controller with DI dependencies.
      *
-     * @param IRequest           $request   The HTTP request.
-     * @param WidgetAuthService  $auth      API key + rate-limit gateway.
-     * @param SlotService        $slots     Slot availability computation.
-     * @param SettingsService    $settings  Shillinq settings (register slug, OR availability).
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param ITimeFactory       $time      Time provider for createdAt stamping.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
+     * @param IRequest           $request       The HTTP request.
+     * @param WidgetAuthService  $auth          API key + rate-limit gateway.
+     * @param WidgetService      $widgetService The single widget booking write path.
+     * @param SlotService        $slots         Slot availability computation.
+     * @param SettingsService    $settings      Shillinq settings (register slug, OR availability).
+     * @param ContainerInterface $container     DI container for lazy ObjectService resolution.
+     * @param LoggerInterface    $logger        Logger for fail-closed diagnostics.
      */
     public function __construct(
         IRequest $request,
         private readonly WidgetAuthService $auth,
+        private readonly WidgetService $widgetService,
         private readonly SlotService $slots,
         private readonly SettingsService $settings,
         private readonly ContainerInterface $container,
-        private readonly ITimeFactory $time,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -164,64 +164,6 @@ class WidgetApiController extends Controller
         return new JSONResponse(data: ['services' => $services]);
 
     }//end services()
-
-    /**
-     * Resolve a Service that an anonymous widget visitor is allowed to book.
-     *
-     * Returns null unless the service exists, is active AND is flagged
-     * isPublic. `isPublic` is the boundary between the services a business
-     * offers publicly and its internal catalogue; nothing on the routed widget
-     * path enforced it, so any caller who knew a serviceId could book a
-     * private service through the public endpoint.
-     *
-     * @param string $serviceId Logical service identifier.
-     *
-     * @return array<string,mixed>|null The service row, or null when it may not be booked.
-     *
-     * @spec openspec/specs/bookings-self-service-widget/spec.md
-     */
-    private function resolvePublicService(string $serviceId): ?array
-    {
-        if ($serviceId === '') {
-            return null;
-        }
-
-        try {
-            $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $records       = $objectService
-                ->setRegister($this->settings->getRegisterSlug())
-                ->setSchema('Service')
-                ->findAll(
-                    [
-                        'filters' => ['serviceId' => $serviceId],
-                        'limit'   => 1,
-                    ]
-                );
-        } catch (\Throwable $e) {
-            // Fail closed: an unavailable catalogue must not permit a booking.
-            $this->logger->error(
-                'Shillinq widget: public-service resolution failed',
-                ['exception' => $e->getMessage(), 'serviceId' => $serviceId]
-            );
-            return null;
-        }
-
-        foreach ($records as $record) {
-            $row = $this->toArray(object: $record);
-            if ((bool) ($row['isPublic'] ?? false) !== true) {
-                return null;
-            }
-
-            if ((string) ($row['status'] ?? '') !== 'active') {
-                return null;
-            }
-
-            return $row;
-        }
-
-        return null;
-
-    }//end resolvePublicService()
 
     /**
      * GET /api/widget/slots — available slots for a service + resource + date.
@@ -342,16 +284,36 @@ class WidgetApiController extends Controller
             return $this->serverError(message: 'Booking unavailable.');
         }
 
-        // Nothing on this path checked isPublic — not guard() (which only
-        // validates the per-business widget key that ships in the embedding
-        // page), not validateAppointmentPayload(), and not
-        // SlotService::getAvailableSlots(). A caller who knew any serviceId
-        // could therefore book a service the business never published (#491).
-        // This is now the only implementation of the widget booking path: the
-        // unrouted WidgetService twin that also carried this check was deleted
-        // rather than adopted, because it created appointments as `confirmed`
-        // and would have bypassed bookings-confirm-flow entirely.
-        if ($this->resolvePublicService(serviceId: $serviceId) === null) {
+        // ONE write path. This endpoint used to re-implement the booking inline
+        // alongside WidgetService::createAppointment(), and the two copies had
+        // already drifted twice: PR #491 had to patch an `isPublic` gate in here
+        // that the service always had, and this copy persisted only an
+        // anonymised customerId — silently dropping customerName /
+        // customerEmail / customerPhone, which the Appointment schema declares
+        // (register.d/30-bookings-self-service-widget.json) and which REQ-WSW-006
+        // and the REQ-BCF-003 confirmation email both need. Delegating removes
+        // the duplicate rather than keeping the two in step by hand.
+        //
+        // The controller keeps what belongs at the API boundary: the widget-key
+        // + rate-limit guard, payload validation with its user-facing REQ-WSW-008
+        // messages, and the mapping from the service's result code to HTTP.
+        $result = $this->widgetService->createAppointment(
+            administrationId: (string) ($this->settings->getSettings()['administration_id'] ?? 'adm-1'),
+            payload: [
+                'serviceId'     => $serviceId,
+                'resourceId'    => $resourceId,
+                'startTime'     => $startTime,
+                'endTime'       => $endTime,
+                'customerName'  => $customerName,
+                'customerEmail' => $email,
+                'customerPhone' => ($phone ?? ''),
+                'notes'         => ($notes ?? ''),
+            ],
+        );
+
+        $code = (int) ($result['code'] ?? Http::STATUS_INTERNAL_SERVER_ERROR);
+
+        if ($code === Http::STATUS_NOT_FOUND) {
             return new JSONResponse(
                 data: [
                     'error'   => 'service-not-found',
@@ -361,24 +323,7 @@ class WidgetApiController extends Controller
             );
         }
 
-        $date  = substr($startTime, 0, 10);
-        $check = $this->slots->getAvailableSlots(
-            serviceId: $serviceId,
-            resourceId: $resourceId,
-            date: $date,
-        );
-
-        $isAvailable = false;
-        foreach ($check['slots'] as $slot) {
-            if ((string) ($slot['startTime'] ?? '') === $startTime
-                && (string) ($slot['endTime'] ?? '') === $endTime
-            ) {
-                $isAvailable = true;
-                break;
-            }
-        }
-
-        if ($isAvailable === false) {
+        if ($code === Http::STATUS_CONFLICT) {
             return new JSONResponse(
                 data: [
                     'error'   => 'slot-unavailable',
@@ -388,48 +333,22 @@ class WidgetApiController extends Controller
             );
         }
 
-        try {
-            $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $registerSlug  = $this->settings->getRegisterSlug();
-
-            $appointment = [
-                'administrationId' => $this->settings->getSettings()['administration_id'] ?? 'adm-1',
-                'appointmentId'    => $this->generateAppointmentId(),
-                'startTime'        => $startTime,
-                'endTime'          => $endTime,
-                'serviceId'        => $serviceId,
-                'resourceId'       => $resourceId,
-                'customerId'       => $this->makeAnonymousCustomerId(email: $email),
-                'status'           => 'pending_confirmation',
-                'notes'            => ($notes ?? null),
-            ];
-
-            $saved = $objectService->saveObject(
-                object: $appointment,
-                register: $registerSlug,
-                schema: 'Appointment',
-            );
-
-            $row = $this->toArray(object: $saved);
-
-            // Invalidate cache so subsequent /slots requests recompute.
-            $this->slots->invalidate(serviceId: $serviceId, resourceId: $resourceId, date: $date);
-
-            return new JSONResponse(
-                data: [
-                    'appointmentId'       => (string) ($row['appointmentId'] ?? $appointment['appointmentId']),
-                    'status'              => (string) ($row['status'] ?? 'pending_confirmation'),
-                    'confirmationMessage' => 'Your appointment was created. You will receive a confirmation email shortly.',
-                ],
-                statusCode: Http::STATUS_CREATED,
-            );
-        } catch (\Throwable $e) {
+        if ($code !== Http::STATUS_CREATED) {
             $this->logger->error(
                 'Shillinq widget: appointment create failed',
-                ['exception' => $e->getMessage()]
+                ['error' => (string) ($result['error'] ?? 'unknown')]
             );
             return $this->serverError(message: 'Booking failed. Please try again later.');
-        }//end try
+        }
+
+        return new JSONResponse(
+            data: [
+                'appointmentId'       => (string) ($result['appointmentId'] ?? ''),
+                'status'              => (string) ($result['status'] ?? 'pending_confirmation'),
+                'confirmationMessage' => (string) ($result['confirmationMessage'] ?? ''),
+            ],
+            statusCode: Http::STATUS_CREATED,
+        );
 
     }//end appointments()
 
@@ -599,41 +518,6 @@ class WidgetApiController extends Controller
         );
 
     }//end serverError()
-
-    /**
-     * Mint a unique appointment id.
-     *
-     * @return string
-     */
-    private function generateAppointmentId(): string
-    {
-        try {
-            $token = bin2hex(random_bytes(8));
-        } catch (\Throwable $e) {
-            $token = (string) $this->time->getTime();
-        }
-
-        return 'apt-'.$token;
-
-    }//end generateAppointmentId()
-
-    /**
-     * Build a stable, opaque customer id from the email.
-     *
-     * The widget API never stores customer PII in the Appointment payload —
-     * just an anonymous SHA-256 token of the email so admins can deduplicate
-     * subsequent self-service bookings from the same person without exposing
-     * the raw address via public reads.
-     *
-     * @param string $email Customer email.
-     *
-     * @return string
-     */
-    private function makeAnonymousCustomerId(string $email): string
-    {
-        return 'cust-anon-'.substr(hash('sha256', strtolower($email)), 0, 16);
-
-    }//end makeAnonymousCustomerId()
 
     /**
      * Normalise an OR object handle to a plain array.
