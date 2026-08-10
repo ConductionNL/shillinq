@@ -254,6 +254,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
+            "description": "ISO 8601 timestamp at which the explanation was recorded (REQ-AANS-006). Null while the difference is unexplained. An explanation documents why a tie-out difference exists; it does not clear it — resolvedAt does that.",
             "example": null,
             "title": "Explained At"
           },
@@ -280,6 +281,7 @@
           "resolvedBy": {
             "type": "string",
             "nullable": true,
+            "description": "Nextcloud user id of the actor who closed this tie-out difference — i.e. who confirmed the two sources now reconcile, or that the remaining difference has been corrected in the ledger. Null while the difference is still open. Distinct from explainedBy, which only documents the cause.",
             "example": null,
             "title": "Resolved By"
           },
@@ -287,6 +289,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
+            "description": "ISO 8601 timestamp at which the tie-out difference was closed. Null while the difference is still open; a non-null value is what takes this result out of the operator's open-differences worklist.",
             "example": null,
             "title": "Resolved At"
           },

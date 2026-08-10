@@ -834,25 +834,30 @@
                     "van": {
                       "type": "string",
                       "format": "date",
+                      "description": "First day of this accrual sub-period (inclusive). Equals the parent ingangsdatum for the first sub-period, and the statutory rate-change date for every later one.",
                       "title": "Van"
                     },
                     "tot": {
                       "type": "string",
                       "format": "date",
+                      "description": "Last day of this accrual sub-period (inclusive). Equals the day before the next statutory rate change, or the parent berekendOp for the final sub-period.",
                       "title": "Tot"
                     },
                     "dagen": {
                       "type": "integer",
                       "minimum": 0,
+                      "description": "Whole days accrued in this sub-period (van..tot inclusive). The sub-period dagen sum to the parent dagen.",
                       "title": "Dagen"
                     },
                     "tarief": {
                       "type": "number",
+                      "description": "Annual statutory rate in force during this sub-period, as a decimal (0.1015 = 10,15%). Per art. 6:119a BW for B2B handelsrente or art. 6:119 BW for B2C wettelijke rente.",
                       "title": "Tarief"
                     },
                     "bedrag": {
                       "type": "number",
                       "multipleOf": 0.01,
+                      "description": "Interest accrued in this sub-period in EUR: hoofdsom x tarief x dagen / 365, rounded to cents. The sub-period bedragen sum to the parent bedrag.",
                       "title": "Bedrag"
                     }
                   }

@@ -153,6 +153,7 @@
           "subsidie": {
             "type": "object",
             "nullable": true,
+            "title": "Subsidie Details",
             "description": "Populated only when orderType=subsidie. The full field set of the retired Subsidie schema (per Awb afdeling 4.2 + VNG ASV-model 2022) — no regulatory field dropped (REQ-ORD-002/003).",
             "properties": {
               "subsidieNumber": {
@@ -334,6 +335,7 @@
           "purchase": {
             "type": "object",
             "nullable": true,
+            "title": "Purchase Order Details",
             "description": "Populated only when orderType=purchase. The full field set of PurchaseOrder — amounts stay in integer EURO CENTS per ADR-022 (REQ-ORD-002/003).",
             "properties": {
               "poNumber": {
@@ -461,6 +463,7 @@
           "engagement": {
             "type": "object",
             "nullable": true,
+            "title": "Engagement Details",
             "description": "Populated only when orderType=engagement. The full field set of DBAOpdracht — Wet DBA compliance engagement (modelovereenkomst + risicoklasse), per REQ-ORD-002/003.",
             "properties": {
               "ondernemingId": {
@@ -609,6 +612,7 @@
           "migratedFrom": {
             "type": "object",
             "nullable": true,
+            "title": "Migrated From",
             "description": "Idempotency + provenance marker stamped by the FoldIntoOrder repair step. Never set by users.",
             "properties": {
               "schema": {
