@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+ * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ namespace OCA\Shillinq\Service;
  * arrays/scalars so the logic is unit-testable in isolation. BcfClaimService
  * wires this helper to live GLLine + BbvAccountMapping data.
  *
- * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+ * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  */
 class BcfCompensationCalculator
 {
@@ -49,7 +49,7 @@ class BcfCompensationCalculator
      *
      * @return int Amount in whole cents.
      *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
      */
     public function toCents(mixed $amount): int
     {
@@ -64,7 +64,7 @@ class BcfCompensationCalculator
      *
      * @return float Money amount.
      *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
      */
     public function fromCents(int $cents): float
     {
@@ -84,7 +84,7 @@ class BcfCompensationCalculator
      *
      * @return int Percentage clamped to 0..100.
      *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-005
      */
     public function clampPercentage(mixed $percentage): int
     {
@@ -117,7 +117,7 @@ class BcfCompensationCalculator
      *
      * @return int Compensable amount in cents.
      *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
      */
     public function weightedCents(int $amountCents, int $percentage): int
     {
@@ -136,7 +136,7 @@ class BcfCompensationCalculator
      *
      * @return bool True when the account's VAT is eligible for BCF compensation.
      *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-003
      */
     public function isCompensable(?array $mapping): bool
     {
@@ -171,7 +171,7 @@ class BcfCompensationCalculator
      *
      * @return array{totalCompensableAmount: float, breakdown: array<int,array<string,mixed>>}
      *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
      */
     public function computeCompensation(array $amountsByAccount, array $mappingsByAccount): array
     {
@@ -226,7 +226,7 @@ class BcfCompensationCalculator
      *
      * @return bool True when both submit preconditions hold.
      *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-2
+     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-006
      */
     public function canSubmit(mixed $compensableTotal, bool $quarterClosed): bool
     {

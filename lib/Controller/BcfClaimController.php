@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-3-3
+ * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,7 +46,7 @@ use Psr\Log\LoggerInterface;
 /**
  * GET /api/bcf-claims/compensation — quarter-scoped compensable-VAT breakdown.
  *
- * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-3-3
+ * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  */
 class BcfClaimController extends Controller
 {
@@ -83,7 +83,7 @@ class BcfClaimController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-3-3
+     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
      */
     #[NoAdminRequired]
     public function compensation(): JSONResponse
