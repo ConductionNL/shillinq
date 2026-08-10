@@ -6,9 +6,9 @@
  Task 4 / REQ-VPL-011).
 
  Renders the declarative `committedVsRealisedPerBudgetLine` aggregation
- declared on Verplichtingsregel (geautoriseerd / verplicht / gerealiseerd /
- vrij per budget coderingscombinatie) and lets a controller drill from a
- budget line into its underlying Verplichting commitments. Reads through
+ declared on CommitmentLine (authorised / committed / realised / free per
+ budget coding combination) and lets a controller drill from a
+ budget line into its underlying Commitment records. Reads through
  OpenRegister's existing aggregation + list API — no bespoke shillinq
  controller/endpoint (REQ-VPL-011: "no parallel PHP reporting service").
 
@@ -22,7 +22,7 @@
 					{{ t('shillinq', 'Committed vs. realised per budget line') }}
 				</h2>
 				<p class="budget-line-commitments__description">
-					{{ t('shillinq', 'Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments (Verplichtingen).') }}
+					{{ t('shillinq', 'Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments.') }}
 				</p>
 			</header>
 
@@ -32,7 +32,7 @@
 					:name="t('shillinq', 'Loading budget lines')" />
 				<NcEmptyContent v-else-if="!rows.length"
 					:name="t('shillinq', 'No budget lines')"
-					:description="t('shillinq', 'No Verplichtingsregel records exist yet. Approve a purchase order or sign a contract to materialise a commitment.')" />
+					:description="t('shillinq', 'No CommitmentLine records exist yet. Approve a purchase order or sign a contract to materialise a commitment.')" />
 				<table v-else class="budget-line-commitments__table">
 					<thead>
 						<tr>
@@ -74,23 +74,23 @@
 								@click="toggleDrilldown(row)"
 								@keyup.enter="toggleDrilldown(row)">
 								<th scope="row">
-									{{ row.programma || '—' }}
+									{{ row.programme || '—' }}
 								</th>
-								<td>{{ row.kostenplaats || '—' }}</td>
-								<td>{{ row.boekjaar ?? '—' }}</td>
-								<td>{{ row.grootboekrekening || '—' }}</td>
+								<td>{{ row.costCentre || '—' }}</td>
+								<td>{{ row.fiscalYear ?? '—' }}</td>
+								<td>{{ row.glAccount || '—' }}</td>
 								<td class="budget-line-commitments__amount-cell">
-									{{ formatAmount(row.geautoriseerd) }}
+									{{ formatAmount(row.authorised) }}
 								</td>
 								<td class="budget-line-commitments__amount-cell">
-									{{ formatAmount(row.verplicht) }}
+									{{ formatAmount(row.committed) }}
 								</td>
 								<td class="budget-line-commitments__amount-cell">
-									{{ formatAmount(row.gerealiseerd) }}
+									{{ formatAmount(row.realised) }}
 								</td>
 								<td class="budget-line-commitments__amount-cell"
-									:class="{ 'budget-line-commitments__amount-cell--negative': row.vrij < 0 }">
-									{{ formatAmount(row.vrij) }}
+									:class="{ 'budget-line-commitments__amount-cell--negative': row.free < 0 }">
+									{{ formatAmount(row.free) }}
 								</td>
 							</tr>
 							<tr v-if="expandedKey === row.key" class="budget-line-commitments__drilldown-row">
@@ -100,8 +100,8 @@
 										{{ t('shillinq', 'No underlying commitments found for this line.') }}
 									</p>
 									<ul v-else class="budget-line-commitments__drilldown-list" data-testid="budget-line-drilldown">
-										<li v-for="item in drilldownItems" :key="item.id || item.verplichting">
-											<span class="budget-line-commitments__drilldown-verplichting">{{ item.verplichting }}</span>
+										<li v-for="item in drilldownItems" :key="item.id || item.commitment">
+											<span class="budget-line-commitments__drilldown-commitment">{{ item.commitment }}</span>
 											<span class="budget-line-commitments__drilldown-amount">{{ formatAmount(item.bedrag_excl_btw) }}</span>
 										</li>
 									</ul>
@@ -158,7 +158,7 @@ export default {
 
 			try {
 				const url = generateUrl(
-					'/apps/shillinq/api/openregister/objects/Verplichtingsregel/aggregations/committedVsRealisedPerBudgetLine',
+					'/apps/shillinq/api/openregister/objects/CommitmentLine/aggregations/committedVsRealisedPerBudgetLine',
 				)
 				const { data } = await axios.get(url)
 				this.rows = normaliseBudgetLineRows(data)
@@ -198,7 +198,7 @@ export default {
 				Object.keys(filters).forEach((key) => {
 					params[`filters[${key}]`] = filters[key]
 				})
-				const url = generateUrl('/apps/shillinq/api/openregister/objects/Verplichtingsregel')
+				const url = generateUrl('/apps/shillinq/api/openregister/objects/CommitmentLine')
 				const { data } = await axios.get(url, { params })
 				const items = Array.isArray(data?.results) ? data.results : (Array.isArray(data) ? data : [])
 				this.drilldownItems = items

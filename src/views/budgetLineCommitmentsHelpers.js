@@ -5,12 +5,12 @@
  * Pure helpers for BudgetLineCommitments.vue (REQ-VPL-011).
  *
  * Normalises the `committedVsRealisedPerBudgetLine` aggregation response
- * (Verplichtingsregel buckets grouped by programma/kostenplaats/boekjaar/
- * grootboekrekening, joined to Budget.geautoriseerd_bedrag /
- * Budget.gerealiseerd_bedrag) into display rows with the four BBV columns
- * (geautoriseerd / verplicht / gerealiseerd / vrij). `vrij` is computed
- * client-side from the three declared figures — display arithmetic, not a
- * parallel PHP reporting service (ADR-031 / REQ-VPL-011).
+ * (CommitmentLine buckets grouped by programme/costCentre/fiscalYear/
+ * glAccount, joined to Budget.authorisedAmount / Budget.realisedAmount) into
+ * display rows with the four BBV columns (authorised / committed / realised /
+ * free). `free` is computed client-side from the three declared figures —
+ * display arithmetic, not a parallel PHP reporting service
+ * (ADR-031 / REQ-VPL-011).
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
@@ -19,7 +19,7 @@
  * Normalise the raw aggregation payload into budget-line rows.
  *
  * @param {object} payload Raw response from the aggregation endpoint.
- * @return {Array<object>} Rows with programma/kostenplaats/boekjaar/grootboekrekening + the four amount columns (minor units).
+ * @return {Array<object>} Rows with programme/costCentre/fiscalYear/glAccount + the four amount columns (minor units).
  */
 export function normaliseBudgetLineRows(payload) {
 	const buckets = Array.isArray(payload?.buckets)
@@ -27,21 +27,21 @@ export function normaliseBudgetLineRows(payload) {
 		: (Array.isArray(payload) ? payload : [])
 
 	return buckets.map((bucket) => {
-		const geautoriseerd = Number(bucket?.['Budget.geautoriseerd_bedrag'] ?? bucket?.geautoriseerd ?? 0)
-		const verplicht = Number(bucket?.restant_verplicht ?? bucket?.verplicht ?? 0)
-		const gerealiseerd = Number(bucket?.gefactureerd_bedrag ?? bucket?.gerealiseerd ?? 0)
-		const vrij = geautoriseerd - verplicht - gerealiseerd
+		const authorised = Number(bucket?.['Budget.authorisedAmount'] ?? bucket?.authorised ?? 0)
+		const committed = Number(bucket?.remainingCommitted ?? bucket?.committed ?? 0)
+		const realised = Number(bucket?.invoicedAmount ?? bucket?.realised ?? 0)
+		const free = authorised - committed - realised
 
 		return {
-			key: [bucket?.programma, bucket?.kostenplaats, bucket?.boekjaar, bucket?.grootboekrekening].join('|'),
-			programma: String(bucket?.programma ?? ''),
-			kostenplaats: String(bucket?.kostenplaats ?? ''),
-			boekjaar: bucket?.boekjaar ?? null,
-			grootboekrekening: String(bucket?.grootboekrekening ?? ''),
-			geautoriseerd,
-			verplicht,
-			gerealiseerd,
-			vrij,
+			key: [bucket?.programme, bucket?.costCentre, bucket?.fiscalYear, bucket?.glAccount].join('|'),
+			programme: String(bucket?.programme ?? ''),
+			costCentre: String(bucket?.costCentre ?? ''),
+			fiscalYear: bucket?.fiscalYear ?? null,
+			glAccount: String(bucket?.glAccount ?? ''),
+			authorised,
+			committed,
+			realised,
+			free,
 		}
 	})
 }
@@ -68,24 +68,24 @@ export function formatAmount(cents) {
 
 /**
  * Build the exact-match filter set to drill down from a budget-line row to
- * its underlying Verplichtingsregel records.
+ * its underlying CommitmentLine records.
  *
  * @param {object} row Normalised budget-line row.
- * @return {object} Filters keyed by Verplichtingsregel field name.
+ * @return {object} Filters keyed by CommitmentLine field name.
  */
 export function drilldownFilters(row) {
 	const filters = {}
-	if (row.programma) {
-		filters.programma = row.programma
+	if (row.programme) {
+		filters.programme = row.programme
 	}
-	if (row.kostenplaats) {
-		filters.kostenplaats = row.kostenplaats
+	if (row.costCentre) {
+		filters.costCentre = row.costCentre
 	}
-	if (row.boekjaar !== null && row.boekjaar !== undefined) {
-		filters.boekjaar = row.boekjaar
+	if (row.fiscalYear !== null && row.fiscalYear !== undefined) {
+		filters.fiscalYear = row.fiscalYear
 	}
-	if (row.grootboekrekening) {
-		filters.grootboekrekening = row.grootboekrekening
+	if (row.glAccount) {
+		filters.glAccount = row.glAccount
 	}
 	return filters
 }

@@ -4,8 +4,8 @@
  *
  * Unit tests for the BudgetLineCommitments pure-logic helper layer
  * (src/views/budgetLineCommitmentsHelpers.js, REQ-VPL-011): aggregation
- * response normalisation (geautoriseerd/verplicht/gerealiseerd/vrij),
- * currency formatting, and the drilldown filter builder.
+ * response normalisation (authorised/committed/realised/free), currency
+ * formatting, and the drilldown filter builder.
  *
  * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-011
  */
@@ -18,8 +18,75 @@ import {
 } from '../../src/views/budgetLineCommitmentsHelpers.js'
 
 describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {
-	it('computes vrij = geautoriseerd - verplicht - gerealiseerd from the joined bucket', () => {
+	it('computes free = authorised - committed - realised from the joined bucket', () => {
 		const payload = {
+			buckets: [
+				{
+					programme: '5.1',
+					costCentre: 'FAC-2026',
+					fiscalYear: 2026,
+					glAccount: '4400',
+					'Budget.authorisedAmount': 50000000,
+					remainingCommitted: 7500000,
+					invoicedAmount: 2500000,
+				},
+			],
+		}
+
+		const rows = normaliseBudgetLineRows(payload)
+
+		expect(rows).toHaveLength(1)
+		expect(rows[0].authorised).toBe(50000000)
+		expect(rows[0].committed).toBe(7500000)
+		expect(rows[0].realised).toBe(2500000)
+		expect(rows[0].free).toBe(40000000)
+	})
+
+	it('accepts a bare array payload (no buckets wrapper)', () => {
+		const rows = normaliseBudgetLineRows([
+			{ programme: '5.1', costCentre: 'FAC-2026', fiscalYear: 2026, glAccount: '4400', remainingCommitted: 100, invoicedAmount: 0 },
+		])
+		expect(rows).toHaveLength(1)
+	})
+
+	it('returns an empty array for a malformed payload', () => {
+		expect(normaliseBudgetLineRows(null)).toEqual([])
+		expect(normaliseBudgetLineRows({})).toEqual([])
+		expect(normaliseBudgetLineRows(undefined)).toEqual([])
+	})
+
+	it('builds a stable composite key per budget coding combination', () => {
+		const rows = normaliseBudgetLineRows({
+			buckets: [
+				{ programme: '5.1', costCentre: 'FAC-2026', fiscalYear: 2026, glAccount: '4400' },
+			],
+		})
+		expect(rows[0].key).toBe('5.1|FAC-2026|2026|4400')
+	})
+
+	it('may report a negative free amount when committed+realised exceed authorised (over-commitment)', () => {
+		const rows = normaliseBudgetLineRows({
+			buckets: [
+				{
+					programme: '5.1',
+					costCentre: 'FAC-2026',
+					fiscalYear: 2026,
+					glAccount: '4400',
+					'Budget.authorisedAmount': 1000,
+					remainingCommitted: 800,
+					invoicedAmount: 500,
+				},
+			],
+		})
+		expect(rows[0].free).toBe(-300)
+	})
+
+	it('does not read the pre-rename Dutch keys', () => {
+		// The rename (shillinq#485 follow-up) moved every field to English. A
+		// bucket still carrying the OLD keys must NOT be silently understood —
+		// otherwise a stale producer would keep working and the rename would
+		// look complete while half the system spoke the old vocabulary.
+		const rows = normaliseBudgetLineRows({
 			buckets: [
 				{
 					programma: '5.1',
@@ -31,54 +98,12 @@ describe('budgetLineCommitmentsHelpers — normaliseBudgetLineRows', () => {
 					gefactureerd_bedrag: 2500000,
 				},
 			],
-		}
-
-		const rows = normaliseBudgetLineRows(payload)
-
-		expect(rows).toHaveLength(1)
-		expect(rows[0].geautoriseerd).toBe(50000000)
-		expect(rows[0].verplicht).toBe(7500000)
-		expect(rows[0].gerealiseerd).toBe(2500000)
-		expect(rows[0].vrij).toBe(40000000)
-	})
-
-	it('accepts a bare array payload (no buckets wrapper)', () => {
-		const rows = normaliseBudgetLineRows([
-			{ programma: '5.1', kostenplaats: 'FAC-2026', boekjaar: 2026, grootboekrekening: '4400', restant_verplicht: 100, gefactureerd_bedrag: 0 },
-		])
-		expect(rows).toHaveLength(1)
-	})
-
-	it('returns an empty array for a malformed payload', () => {
-		expect(normaliseBudgetLineRows(null)).toEqual([])
-		expect(normaliseBudgetLineRows({})).toEqual([])
-		expect(normaliseBudgetLineRows(undefined)).toEqual([])
-	})
-
-	it('builds a stable composite key per coderingscombinatie', () => {
-		const rows = normaliseBudgetLineRows({
-			buckets: [
-				{ programma: '5.1', kostenplaats: 'FAC-2026', boekjaar: 2026, grootboekrekening: '4400' },
-			],
 		})
-		expect(rows[0].key).toBe('5.1|FAC-2026|2026|4400')
-	})
 
-	it('may report a negative vrij when committed+realised exceed authorized (over-commitment)', () => {
-		const rows = normaliseBudgetLineRows({
-			buckets: [
-				{
-					programma: '5.1',
-					kostenplaats: 'FAC-2026',
-					boekjaar: 2026,
-					grootboekrekening: '4400',
-					'Budget.geautoriseerd_bedrag': 1000,
-					restant_verplicht: 800,
-					gefactureerd_bedrag: 500,
-				},
-			],
-		})
-		expect(rows[0].vrij).toBe(-300)
+		expect(rows[0].authorised).toBe(0)
+		expect(rows[0].committed).toBe(0)
+		expect(rows[0].realised).toBe(0)
+		expect(rows[0].programme).toBe('')
 	})
 })
 
@@ -106,30 +131,30 @@ describe('budgetLineCommitmentsHelpers — formatAmount', () => {
 describe('budgetLineCommitmentsHelpers — drilldownFilters', () => {
 	it('builds exact-match filters for a complete row', () => {
 		const filters = drilldownFilters({
-			programma: '5.1',
-			kostenplaats: 'FAC-2026',
-			boekjaar: 2026,
-			grootboekrekening: '4400',
+			programme: '5.1',
+			costCentre: 'FAC-2026',
+			fiscalYear: 2026,
+			glAccount: '4400',
 		})
 		expect(filters).toEqual({
-			programma: '5.1',
-			kostenplaats: 'FAC-2026',
-			boekjaar: 2026,
-			grootboekrekening: '4400',
+			programme: '5.1',
+			costCentre: 'FAC-2026',
+			fiscalYear: 2026,
+			glAccount: '4400',
 		})
 	})
 
-	it('omits empty/blank dimensions (e.g. a Contract-sourced regel with no grootboekrekening)', () => {
+	it('omits empty/blank dimensions (e.g. a Contract-sourced line with no glAccount)', () => {
 		const filters = drilldownFilters({
-			programma: '5.1',
-			kostenplaats: 'FAC-2026',
-			boekjaar: 2026,
-			grootboekrekening: '',
+			programme: '5.1',
+			costCentre: 'FAC-2026',
+			fiscalYear: 2026,
+			glAccount: '',
 		})
 		expect(filters).toEqual({
-			programma: '5.1',
-			kostenplaats: 'FAC-2026',
-			boekjaar: 2026,
+			programme: '5.1',
+			costCentre: 'FAC-2026',
+			fiscalYear: 2026,
 		})
 	})
 })
