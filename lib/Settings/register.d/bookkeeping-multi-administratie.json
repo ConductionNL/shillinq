@@ -1068,6 +1068,10 @@
             "cardinality": "many-to-one",
             "description": "Administration covered by this backup run."
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Administration Backup Run is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     },

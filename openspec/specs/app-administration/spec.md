@@ -28,9 +28,18 @@ Shillinq MUST provide an authenticated settings surface backed by
 managed config keys (`register`, `rgs_template`, `administration_id`)
 plus the derived metadata fields `openregisters` (whether OpenRegister
 is installed) and `isAdmin` (whether the current user is a Nextcloud
-admin). `POST /apps/shillinq/api/settings` persists any supplied managed
-key via `IAppConfig` and returns the refreshed settings. Keys not in the
-managed set are ignored.
+admin). `PUT /apps/shillinq/api/settings` (route `settings#update`, the
+canonical AppHost write) persists any supplied managed key via
+`IAppConfig` and returns the refreshed settings; `POST
+/apps/shillinq/api/settings` (route `settings#create`) is the legacy
+alias for the same write and MUST remain byte-identical in behaviour.
+Keys not in the managed set are ignored.
+
+Because shillinq KEEPS its own `SettingsController` rather than adopting
+the AppHost generic, no generic controller is aliased in to cover the
+canonical route names — every method the canonical table routes to
+`settings#` MUST exist on shillinq's own class, otherwise the request
+fails with a 500 (`ReflectionException`) rather than a 404.
 
 #### Scenario: Operator reads current settings
 
@@ -50,6 +59,19 @@ managed set are ignored.
 - **WHEN** the request is processed
 - **THEN** the `register` app-config value MUST be stored as a string and
   the response MUST report `success: true` with the refreshed `config`.
+
+#### Scenario: Canonical PUT write reaches the kept controller
+
+@e2e exclude REST API contract: covered by PHPUnit SettingsControllerWriteTest — not browser-observable
+
+- **GIVEN** the canonical AppHost route table routes
+  `PUT /apps/shillinq/api/settings` to `settings#update` and shillinq ships
+  its own `SettingsController`, so no generic is aliased in
+- **WHEN** an admin sends `PUT /apps/shillinq/api/settings` with
+  `{ "register": "shillinq" }`
+- **THEN** `SettingsController::update()` MUST exist and be dispatchable, the
+  value MUST be persisted, and the response MUST report `success: true` with
+  the refreshed `config` — identical to the `POST` alias.
 
 ### Requirement: REQ-Admin-002 The system SHALL support forced re-import of the register configuration
 

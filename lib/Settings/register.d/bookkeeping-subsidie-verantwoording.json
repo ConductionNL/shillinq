@@ -9,6 +9,10 @@
   "components": {
     "schemas": {
       "AuditFindingTemplate": {
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of an Audit Finding Template is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        },
         "slug": "AuditFindingTemplate",
         "icon": "FormatListChecks",
         "version": "0.1.0",
@@ -75,6 +79,10 @@
         }
       },
       "SubsidieVerantwoording": {
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Subsidie Verantwoording is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        },
         "slug": "SubsidieVerantwoording",
         "icon": "FileDocumentCheckOutline",
         "version": "0.1.0",
@@ -370,6 +378,10 @@
         }
       },
       "AuditorStatement": {
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of an Auditor Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        },
         "slug": "AuditorStatement",
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",

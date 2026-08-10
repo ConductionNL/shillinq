@@ -55,47 +55,55 @@
 				<div class="calendar-view__cell-date">
 					{{ day.label }}
 				</div>
-				<button
+				<div
 					v-for="hour in hours"
 					:key="`${day.iso}-${hour}`"
-					type="button"
-					class="calendar-view__slot"
-					:data-testid="`calendar-slot-${day.iso}-${hour}`"
-					@click="emitSlot(day.iso, hour)">
-					<span class="calendar-view__slot-hour">{{ formatHour(hour) }}</span>
-					<span
+					class="calendar-view__slot">
+					<button
+						type="button"
+						class="calendar-view__slot-button"
+						:data-testid="`calendar-slot-${day.iso}-${hour}`"
+						@click="emitSlot(day.iso, hour)">
+						<span class="calendar-view__slot-hour">{{ formatHour(hour) }}</span>
+					</button>
+					<button
 						v-for="booking in bookingsForHour(day.iso, hour)"
 						:key="bookingId(booking)"
+						type="button"
 						class="calendar-view__booking"
 						:class="{ 'calendar-view__booking--conflict': isConflict(booking) }"
 						:data-testid="`booking-${bookingId(booking)}`"
-						@click.stop="$emit('booking:selected', bookingId(booking))">
+						@click="$emit('booking:selected', bookingId(booking))">
 						{{ booking.title }}
-					</span>
-				</button>
+					</button>
+				</div>
 			</div>
 		</div>
 
 		<!-- DAY VIEW -->
 		<div v-else class="calendar-view__day" data-testid="calendar-day-grid">
-			<button
+			<div
 				v-for="hour in hours"
 				:key="hour"
-				type="button"
-				class="calendar-view__slot"
-				:data-testid="`calendar-slot-${dayIso}-${hour}`"
-				@click="emitSlot(dayIso, hour)">
-				<span class="calendar-view__slot-hour">{{ formatHour(hour) }}</span>
-				<span
+				class="calendar-view__slot">
+				<button
+					type="button"
+					class="calendar-view__slot-button"
+					:data-testid="`calendar-slot-${dayIso}-${hour}`"
+					@click="emitSlot(dayIso, hour)">
+					<span class="calendar-view__slot-hour">{{ formatHour(hour) }}</span>
+				</button>
+				<button
 					v-for="booking in bookingsForHour(dayIso, hour)"
 					:key="bookingId(booking)"
+					type="button"
 					class="calendar-view__booking"
 					:class="{ 'calendar-view__booking--conflict': isConflict(booking) }"
 					:data-testid="`booking-${bookingId(booking)}`"
-					@click.stop="$emit('booking:selected', bookingId(booking))">
+					@click="$emit('booking:selected', bookingId(booking))">
 					{{ booking.title }}
-				</span>
-			</button>
+				</button>
+			</div>
 		</div>
 	</div>
 </template>
@@ -424,14 +432,25 @@ export default {
 	font-size: 0.85em;
 }
 
+/*
+ * The slot is a plain container, not a button: it holds the empty-slot
+ * affordance AND the bookings inside that hour. Bookings are their own
+ * <button>s, and a <button> may not be nested inside another one — the
+ * markup that did was both invalid and unreachable by keyboard.
+ */
 .calendar-view__slot {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
 	min-height: 32px;
 	padding: 2px 4px;
-	border: none;
 	border-bottom: 1px solid var(--color-border);
+}
+
+.calendar-view__slot-button {
+	width: 100%;
+	padding: 0;
+	border: none;
 	background: transparent;
 	text-align: left;
 }

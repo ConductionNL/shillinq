@@ -145,8 +145,22 @@ class BookingDetailController extends Controller
         // administration; the context service rejects callers without
         // membership. Masked as 404 so the controller does not leak
         // existence to out-of-tenant users.
+        // The `$administrationId !== ''` short-circuit that used to guard this
+        // call DISABLED THE CHECK for exactly the records that need it most.
+        // `?? ''` catches an absent or null administrationId and turns it into
+        // '', and '' then made the whole condition false — so an Appointment
+        // with no owning administration was readable by ANY authenticated user,
+        // cross-tenant, in a bookkeeping app. Records in that state are not
+        // hypothetical here: seed objects that fail their schema's `required`
+        // list are skipped on import, which leaves schemas unpopulated and
+        // partially-formed rows in play (see tests/validate-seeds.js).
+        //
+        // canAccess() already fails closed — AdministrationContextService::
+        // canAccess() returns false for '' on its own line. The service was
+        // right; the caller opted out of it. Calling it unconditionally makes
+        // an unknown administration a 404 instead of a free read.
         $administrationId = (string) ($appointment['administrationId'] ?? '');
-        if ($administrationId !== '' && $this->context->canAccess($administrationId) === false) {
+        if ($this->context->canAccess($administrationId) === false) {
             return new JSONResponse(['error' => 'Booking not found'], Http::STATUS_NOT_FOUND);
         }
 

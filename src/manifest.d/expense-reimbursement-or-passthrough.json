@@ -203,7 +203,7 @@
 		{
 			"id": "ReimbursementPolicyCreateDialog",
 			"route": "/reimbursement-policies/new",
-			"type": "dialog",
+			"type": "form",
 			"title": "New Reimbursement Policy",
 			"config": {
 				"register": "shillinq",
@@ -299,7 +299,7 @@
 		{
 			"id": "PassThroughMarkupRuleCreateDialog",
 			"route": "/passthrough-markup-rules/new",
-			"type": "dialog",
+			"type": "form",
 			"title": "New Pass-through Markup Rule",
 			"config": {
 				"register": "shillinq",

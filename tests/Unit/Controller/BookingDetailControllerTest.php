@@ -187,6 +187,23 @@ final class BookingDetailControllerTest extends TestCase
                         'pipelinqContactId' => 'org-kvk-12345678',
                     ],
                     [
+                        // An Appointment with NO owning administration. This is
+                        // the record shape that used to bypass the IDOR guard
+                        // entirely: `?? ''` turned absent/null into '', and the
+                        // caller's `!== ''` short-circuit then skipped canAccess()
+                        // altogether, making the row readable cross-tenant.
+                        'appointmentId'     => 'apt-orphan',
+                        'administrationId'  => '',
+                        'serviceId'         => 'svc-1',
+                        'resourceId'        => 'res-1',
+                        'customerId'        => 'cus-9',
+                        'customerName'      => 'Orphan Record',
+                        'startTime'         => '2026-06-01T12:00:00Z',
+                        'endTime'           => '2026-06-01T12:30:00Z',
+                        'status'            => 'confirmed',
+                        'pipelinqContactId' => null,
+                    ],
+                    [
                         'appointmentId'     => 'apt-unlinked',
                         'administrationId'  => 'adm-1',
                         'serviceId'         => 'svc-1',
@@ -483,6 +500,51 @@ final class BookingDetailControllerTest extends TestCase
         self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 
     }//end testOutOfTenantCallerIsMaskedAsNotFound()
+
+
+    /**
+     * An Appointment with an EMPTY administrationId must still be guarded.
+     *
+     * This is the regression this test exists for. The guard used to read
+     * `if ($administrationId !== '' && $this->context->canAccess(...) === false)`.
+     * Because `?? ''` normalises an absent or null administrationId to '',
+     * the `!== ''` term made the whole condition false and canAccess() was
+     * NEVER CALLED — so a record with no owning administration was readable
+     * by any authenticated user, across tenants, in a bookkeeping app.
+     *
+     * The assertion that matters is `expects($this->once())` on canAccess:
+     * asserting only on the 404 status would also pass if the controller
+     * happened to 404 for some unrelated reason. What is being pinned is
+     * that the guard RUNS, with the empty value, and is allowed to refuse.
+     *
+     * @return void
+     */
+    public function testAppointmentWithEmptyAdministrationIdIsMaskedAsNotFound(): void
+    {
+        $context = $this->createMock(AdministrationContextService::class);
+        $context->method('currentUserId')->willReturn('alice');
+
+        // The real AdministrationContextService::canAccess() returns false for
+        // '' on its own first line — it already fails closed. The bug was that
+        // the caller never invoked it. Pin the invocation, with the empty value.
+        $context->expects($this->once())
+            ->method('canAccess')
+            ->with('')
+            ->willReturn(false);
+
+        $controller = new BookingDetailController(
+            $this->request,
+            $this->container,
+            $this->settings,
+            $context,
+            $this->pipelinq,
+            $this->createMock(LoggerInterface::class),
+        );
+
+        $response = $controller->show(id: 'apt-orphan');
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+    }//end testAppointmentWithEmptyAdministrationIdIsMaskedAsNotFound()
 
 
     /**

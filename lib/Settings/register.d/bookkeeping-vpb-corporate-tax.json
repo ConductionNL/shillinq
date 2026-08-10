@@ -126,6 +126,10 @@
             ],
             "archived": []
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Tax Deadline is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "TaxPaymentTracking": {
@@ -216,6 +220,10 @@
             "example": "adm-1",
             "title": "Administration ID"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Tax Payment Tracking is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "QuarterlyTaxStatement": {
@@ -327,6 +335,10 @@
               "GLLine.taxTreatment"
             ]
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Quarterly Tax Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     },

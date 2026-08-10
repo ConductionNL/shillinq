@@ -2110,6 +2110,7 @@
         "Add adjustment": "Add adjustment",
         "Adjustment direction": "Adjustment direction",
         "Adjustment type": "Adjustment type",
+        "Administration ID": "Administration ID",
         "Administration id": "Administration id",
         "Against": "Against",
         "All administrations": "All administrations",
@@ -2520,7 +2521,14 @@
         "Within tolerance": "Within tolerance",
         "download the file": "download the file",
         "due": "due",
-        "Allocation must be between 0 % and 100 %.": "Allocation must be between 0 % and 100 %."
+        "Allocation must be between 0 % and 100 %.": "Allocation must be between 0 % and 100 %.",
+        "Choose a CAMT.053 bank statement file": "Choose a CAMT.053 bank statement file",
+        "Choose a UBL XML, CSV or PDF bill to import": "Choose a UBL XML, CSV or PDF bill to import",
+        "Choose delivery photos to attach": "Choose delivery photos to attach",
+        "Line description": "Line description",
+        "Line quantity": "Line quantity",
+        "Line unit price": "Line unit price",
+        "Read about {standard} (opens in a new tab)": "Read about {standard} (opens in a new tab)"
     },
     "plurals": ""
 }

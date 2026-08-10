@@ -105,7 +105,7 @@ class VATReturnController extends Controller
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $all           = $objectService
                 ->setRegister(register: 'shillinq')
-                ->setSchema(schema: 'VATReturn')
+                ->setSchema(schema: 'BtwAangifte')
                 ->findAll(['filters' => $filters]);
         } catch (\Throwable $e) {
             $this->logger->error(
@@ -156,7 +156,7 @@ class VATReturnController extends Controller
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $vatReturn     = $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'VATReturn')->find($returnId);
+            $vatReturn     = $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->find($returnId);
             if (is_array($vatReturn) === false) {
                 return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
             }
@@ -282,7 +282,7 @@ class VATReturnController extends Controller
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $vatReturn     = $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'VATReturn')->find($returnId);
+            $vatReturn     = $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->find($returnId);
             if (is_array($vatReturn) === false) {
                 return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
             }
@@ -294,7 +294,7 @@ class VATReturnController extends Controller
             $vatReturn['notes'] = $notes;
             $saved = $objectService
                 ->setRegister(register: 'shillinq')
-                ->setSchema(schema: 'VATReturn')
+                ->setSchema(schema: 'BtwAangifte')
                 ->saveObject($vatReturn);
         } catch (\Throwable $e) {
             $this->logger->error(
@@ -409,7 +409,7 @@ class VATReturnController extends Controller
 
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $vatReturn     = $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'VATReturn')->find($returnId);
+            $vatReturn     = $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->find($returnId);
             if (is_array($vatReturn) === false) {
                 return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
             }
@@ -418,7 +418,7 @@ class VATReturnController extends Controller
                 return new JSONResponse(['error' => 'Only draft returns can be deleted'], Http::STATUS_CONFLICT);
             }
 
-            $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'VATReturn')->deleteObject($returnId);
+            $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject($returnId);
         } catch (\Throwable $e) {
             $this->logger->error(
                 'VATReturnController: failed to delete VAT return',

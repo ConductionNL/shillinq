@@ -177,7 +177,7 @@ final class AccountantDashboardServiceTest extends TestCase
             'FiscalPeriod' => [
                 ['periodId' => '2026-Q1', 'administrationId' => 'adm-werk-001', 'state' => 'closing', 'endDate' => '2026-03-31'],
             ],
-            'VATReturn'    => [
+            'BtwAangifte'    => [
                 [
                     'administrationId' => 'adm-werk-001',
                     'statusCode'       => 'draft',

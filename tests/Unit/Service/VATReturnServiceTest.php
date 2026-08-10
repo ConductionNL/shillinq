@@ -142,7 +142,7 @@ final class VATReturnServiceTest extends TestCase
                 $this->data = [
                     'Account'        => $accounts,
                     'GLTransaction'  => $transactions,
-                    'VATReturn'      => [],
+                    'BtwAangifte'      => [],
                     'VATDeclaration' => [],
                     'VATLine'        => [],
                 ];
@@ -374,7 +374,7 @@ final class VATReturnServiceTest extends TestCase
         $service = $this->buildService($stub);
 
         // Seed a return manually so deriveVATLines has a parent.
-        $stub->setSchema('VATReturn')->saveObject(
+        $stub->setSchema('BtwAangifte')->saveObject(
             [
                 'id'               => 'ret-1',
                 'returnNumber'     => 'NL-2026-Q2',
@@ -435,7 +435,7 @@ final class VATReturnServiceTest extends TestCase
 
         $stub    = $this->fakeObjectService($accounts, $transactions);
         $service = $this->buildService($stub);
-        $stub->setSchema('VATReturn')->saveObject(
+        $stub->setSchema('BtwAangifte')->saveObject(
             [
                 'id'               => 'ret-rc',
                 'administrationId' => 'adm-1',
@@ -473,7 +473,7 @@ final class VATReturnServiceTest extends TestCase
     {
         $stub    = $this->fakeObjectService([], []);
         $service = $this->buildService($stub);
-        $stub->setSchema('VATReturn')->saveObject(['id' => 'ret-kor', 'statusCode' => 'draft']);
+        $stub->setSchema('BtwAangifte')->saveObject(['id' => 'ret-kor', 'statusCode' => 'draft']);
 
         $totals = $service->deriveVATLines(
             returnId: 'ret-kor',
@@ -499,7 +499,7 @@ final class VATReturnServiceTest extends TestCase
     {
         $stub    = $this->fakeObjectService([], []);
         $service = $this->buildService($stub);
-        $stub->setSchema('VATReturn')->saveObject(['id' => 'ret-empty', 'statusCode' => 'draft']);
+        $stub->setSchema('BtwAangifte')->saveObject(['id' => 'ret-empty', 'statusCode' => 'draft']);
 
         $totals = $service->deriveVATLines(
             returnId: 'ret-empty',
@@ -524,7 +524,7 @@ final class VATReturnServiceTest extends TestCase
     {
         $stub    = $this->fakeObjectService([], []);
         $service = $this->buildService($stub);
-        $stub->setSchema('VATReturn')->saveObject(
+        $stub->setSchema('BtwAangifte')->saveObject(
             [
                 'id'                => 'ret-sub',
                 'statusCode'        => 'draft',
@@ -549,7 +549,7 @@ final class VATReturnServiceTest extends TestCase
     {
         $stub    = $this->fakeObjectService([], []);
         $service = $this->buildService($stub);
-        $stub->setSchema('VATReturn')->saveObject(['id' => 'ret-sub-2', 'statusCode' => 'submitted']);
+        $stub->setSchema('BtwAangifte')->saveObject(['id' => 'ret-sub-2', 'statusCode' => 'submitted']);
 
         $this->expectException(\RuntimeException::class);
         $service->submitReturn(returnId: 'ret-sub-2', userId: 'alice');
@@ -565,7 +565,7 @@ final class VATReturnServiceTest extends TestCase
     {
         $stub    = $this->fakeObjectService([], []);
         $service = $this->buildService($stub);
-        $stub->setSchema('VATReturn')->saveObject(
+        $stub->setSchema('BtwAangifte')->saveObject(
             [
                 'id'                => 'ret-reb',
                 'administrationId'  => 'adm-1',

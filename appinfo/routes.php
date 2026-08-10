@@ -559,6 +559,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
 
             // Widget API-key admin (bookings-self-service-widget, REQ-WSW-009).
             // #[AuthorizedAdminSetting]-gated lifecycle of per-business widget keys.
+            // `create` mints the FIRST key for a businessId; `rotate` replaces an
+            // existing one and refuses when there is none, so without `create` no
+            // business could ever be issued a key at all.
+            ['name' => 'widgetSettings#create', 'url' => '/api/widget/admin/keys/create', 'verb' => 'POST'],
             ['name' => 'widgetSettings#rotate', 'url' => '/api/widget/admin/keys/rotate', 'verb' => 'POST'],
             ['name' => 'widgetSettings#revoke', 'url' => '/api/widget/admin/keys/revoke', 'verb' => 'POST'],
 
@@ -726,5 +730,24 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // URLs declared before the SPA catch-all per ADR-016.
             ['name' => 'deadlineCalendarSettings#index', 'url' => '/api/deadline-calendar/settings', 'verb' => 'GET'],
             ['name' => 'deadlineCalendarSettings#update', 'url' => '/api/deadline-calendar/settings', 'verb' => 'POST'],
+
+            // Accountant portal (accountant-portal, REQ-ACP-001/002/004).
+            // These two were MISSING from this table entirely while every other
+            // piece of the feature shipped: the page is registered by
+            // src/manifest.d/accountant-portal.json, rendered by
+            // src/views/AccountantPortalDashboard.vue, and called by
+            // src/api/accountantApi.js — which requested
+            // `/apps/shillinq/api/accountant/dashboard` and
+            // `/apps/shillinq/api/accountant/administrations/{id}/handover-pack`
+            // against a router that had no entry for either, so the portal
+            // 404'd on open for every user. AccountantPortalController::dashboard()
+            // and ::handoverPack() existed and were correct; only the wiring was
+            // absent. Both are #[NoAdminRequired] and scoped server-side to the
+            // caller's AdministrationMembership records (a non-granted
+            // administration is masked as 404, never 403). The static
+            // /dashboard URL and the static /handover-pack suffix are declared
+            // before the SPA catch-all per ADR-016.
+            ['name' => 'accountantPortal#dashboard', 'url' => '/api/accountant/dashboard', 'verb' => 'GET'],
+            ['name' => 'accountantPortal#handoverPack', 'url' => '/api/accountant/administrations/{id}/handover-pack', 'verb' => 'GET'],
         ]
         );

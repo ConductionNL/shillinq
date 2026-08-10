@@ -107,7 +107,7 @@ final class VatBtwFilingFragmentTest extends TestCase
     public function testFragmentDeclaresVatRegisters(): void
     {
         $schemas = $this->fragment()['components']['schemas'];
-        foreach (['VATReturn', 'VATDeclaration', 'VATLine'] as $name) {
+        foreach (['BtwAangifte', 'VATDeclaration', 'VATLine'] as $name) {
             self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
         }
     }//end testFragmentDeclaresVatRegisters()
@@ -120,7 +120,7 @@ final class VatBtwFilingFragmentTest extends TestCase
      */
     public function testVatReturnDeclaresLifecycle(): void
     {
-        $vatReturn = $this->fragment()['components']['schemas']['VATReturn'];
+        $vatReturn = $this->fragment()['components']['schemas']['BtwAangifte'];
         self::assertArrayHasKey('x-openregister-lifecycle', $vatReturn);
 
         $lifecycle = $vatReturn['x-openregister-lifecycle'];
@@ -155,7 +155,7 @@ final class VatBtwFilingFragmentTest extends TestCase
      */
     public function testVatReturnDeclaresReconciliationAggregations(): void
     {
-        $vatReturn = $this->fragment()['components']['schemas']['VATReturn'];
+        $vatReturn = $this->fragment()['components']['schemas']['BtwAangifte'];
         self::assertArrayHasKey('x-openregister-aggregations', $vatReturn);
 
         $aggregations = $vatReturn['x-openregister-aggregations'];
@@ -267,7 +267,7 @@ final class VatBtwFilingFragmentTest extends TestCase
         $merged  = $this->merge($base, $frag);
         $schemas = $merged['components']['schemas'];
 
-        self::assertArrayHasKey('VATReturn', $schemas);
+        self::assertArrayHasKey('BtwAangifte', $schemas);
         self::assertArrayHasKey('VATDeclaration', $schemas);
         self::assertArrayHasKey('VATLine', $schemas);
 

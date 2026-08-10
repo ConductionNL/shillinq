@@ -23,16 +23,16 @@ const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
 	{ route: '/bookkeeping/bank-reconciliation', title: 'Bank Reconciliation' },
 	{ route: '/bookkeeping/matching-rules', title: 'Matching Rules' },
 	{ route: '/fixed-assets', title: 'Fixed Assets' },
-	{ route: '/bookkeeping/vendors', title: 'Vendors' },
-	// The declared route is `/bookkeeping/ap-transactions` (page id
-	// `APTransactions`, title "Accounts Payable") in
-	// manifest.d/bookkeeping-accounts-payable-core.json. `/bookkeeping/accounts-payable`
-	// was never declared by any manifest source — it was taken from the spec
-	// prose rather than from the manifest, so it fell through the catch-all.
+	// Renamed in the manifest; the routes below are what it actually declares.
+	// 'Vendors' became 'Payees' (`/bookkeeping/vendors` is declared by no
+	// manifest source and fell through main.js's '/:pathMatch(.*)*' catch-all
+	// onto the Dashboard), Accounts Payable moved to /ap-transactions, and AP
+	// Aging to /ap-aging-t2. `/bookkeeping/accounts-payable` and the bare
+	// `/bookkeeping/ap-aging` were taken from spec prose rather than from the
+	// manifest; the latter's page id `APAging` is listed in menu-layout.json
+	// `removals` and has no page entry at all.
+	{ route: '/bookkeeping/payees', title: 'Payees' },
 	{ route: '/bookkeeping/ap-transactions', title: 'Accounts Payable' },
-	// Declared as `/bookkeeping/ap-aging-t2` (page id `APAgingT2`); the bare
-	// `/bookkeeping/ap-aging` id `APAging` is listed in menu-layout.json
-	// `removals` but has no page entry at all.
 	{ route: '/bookkeeping/ap-aging-t2', title: 'AP Aging' },
 	{ route: '/bookkeeping/payment-runs', title: 'Payment Runs' },
 	{ route: '/bookkeeping/customers', title: 'Customers' },
@@ -53,9 +53,11 @@ const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
 	{ route: '/financial-statements/trial-balance-lines', title: 'Trial Balance', titleRe: /Trial Balance/i },
 	{ route: '/financial-statements/consolidations', title: 'Consolidations' },
 	{ route: '/financial-statements/consolidated-report', title: 'Consolidated Report' },
-	// Shipped in Dutch as `/iv3-rapportages` (page id `Iv3Rapportages`,
-	// title "IV3 reports"). `/iv3-reports` is the path named in the ARCHIVED
-	// change's tasks.md, not the path that was built.
+	// The manifest route is Dutch (`/iv3-rapportages`, page id `Iv3Rapportages`)
+	// while its title is already English ("IV3 reports"). `/iv3-reports` is the
+	// path named in the ARCHIVED change's tasks.md, not the path that was built.
+	// Matching the route as declared rather than renaming it here: a route slug
+	// is a bookmarkable URL, so changing it is a product decision, not a test fix.
 	{ route: '/iv3-rapportages', title: 'IV3 reports', titleRe: /IV3/i },
 	{ route: '/emu-rapportage', title: 'EMU-rapportage' },
 	{ route: '/bookkeeping/r-d-subsidies', title: 'R&D Subsidies', titleRe: /R&D|R\s*&\s*D|Subsid/i },

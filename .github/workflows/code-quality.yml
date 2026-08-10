@@ -61,7 +61,18 @@ jobs:
       app-name: shillinq
       php-version: "8.3"
       php-test-versions: '["8.3", "8.4"]'
-      nextcloud-test-refs: '["stable31", "stable32", "stable33"]'
+      # stable31 is REMOVED, not "dropped for coverage". `additional-apps` below
+      # installs openregister, which declares min-version="32" and therefore
+      # cannot install on NC31 — `occ app:enable openregister` fails with only a
+      # ::warning::, so the run continued WITHOUT its data layer and every
+      # /apps/openregister/... call returned Nextcloud's HTML 404 page. A stable31
+      # leg was testing an impossible configuration, so its red said nothing.
+      #
+      # Order mattered as much as membership: newman, playwright and
+      # journeydoc-capture all pin `fromJSON(inputs.nextcloud-test-refs)[0]`, so
+      # stable31 sitting FIRST meant all three ran entirely on the version
+      # openregister cannot load.
+      nextcloud-test-refs: '["stable32", "stable33"]'
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
@@ -182,7 +193,17 @@ jobs:
       #                          the first place the real schema validation
       #                          happens. Its verdict there may differ.
       # `test:unit` is NOT listed: "Frontend Tests (unit)" already runs it.
-      frontend-checks: '["check:manifest", "check:manifest-budget", "check:markers", "check:registers", "test:l10n"]'
+      #   check:seeds            NEW. Ratchet on seed/schema integrity: every
+      #                          object shipped as register seed data must
+      #                          satisfy the `required` list of the schema it
+      #                          names. OpenRegister's ImportHandler only WARNS
+      #                          on a violation and `occ app:enable` still exits
+      #                          0, so a broken seed is invisible until an
+      #                          endpoint returns an empty list or a 404 and
+      #                          looks like an application bug. Measured at 89
+      #                          before this commit, 81 after; the baseline is
+      #                          a hard ceiling that may only be lowered.
+      frontend-checks: '["check:manifest", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "test:l10n"]'
 
       # ── Coverage ratchet ─────────────────────────────────────────────────
       # `enable-coverage-guard` defaults to FALSE, which is why both
@@ -195,60 +216,20 @@ jobs:
       enable-coverage-guard: true
 
       # ── Hydra mechanical gates ───────────────────────────────────────────
-      # `enable-hydra-gates` defaults to FALSE, so this tier has never executed
+      # `enable-hydra-gates` defaults to FALSE, so this tier had never executed
       # here — the job reported `skipped`, which the Quality Report renders
-      # identically to a pass. Pinned to v1.0.1 so a change to the gate package
-      # cannot move this repo's verdict without a commit here.
+      # identically to a pass.
       # `enable-axe` deliberately NOT set: a vanilla Nextcloud 34 already carries
       # serious/critical violations from core's own UI.
-      #
-      # v1.0.1 -> v1.3.0 (ConductionNL/.github#159). Two defects, one bump.
-      #
-      # 1. STALE. v1.0.1 is `f4d9756` (2026-08-03) and predates three gate
-      #    fixes, so every Hydra Gates run this repo has ever made executed a
-      #    script in which 16 gates reported PASS when their helper never ran
-      #    (#147), gate-33 had no axe report to read and never said so (#148),
-      #    and gates 6 and 7 reported PASS on an EMPTY scope (#149). A gate
-      #    that reports PASS without running emits a tick identical to a real
-      #    one, which is why nothing in this repo's history shows it.
-      #
-      # 2. RED. quality.yml is referenced `@main` while this package is
-      #    PINNED, so the two can desync — and on 2026-08-05 they did. #164
-      #    flipped `hydra-gates-require-full-coverage` to default TRUE, but
-      #    the accounting that makes that flag survivable (NOT APPLICABLE, as
-      #    distinct from a structural or a wiring gap) ships in the PACKAGE.
-      #    So every pin older than `f7eaf2a` now fails the coverage assertion
-      #    for gates it has no subject matter for. Measured diff-scoped,
-      #    exactly as CI scopes it:
-      #      v1.0.1  exit 98  FAIL — "GATES THAT DID NOT RUN: 24 33"
-      #      v1.3.0  exit 0   PASS — those gates named NOT APPLICABLE
-      #    The old pin was not merely stale, it was failing this repo's CI for
-      #    a reason that had nothing to do with this repo — and it is what is
-      #    currently blocking #441.
-      #
-      # ⚠️ v1.3.0 EXPIRED THE SAME WAY v1.0.1 DID, AND FASTER THAN ANYONE
-      # EXPECTED. Run 31073204125 (2026-08-06 05:34) — 11 seconds, ZERO gates:
-      #
-      #   ::error::hydra-gates-ref 'v1.3.0' does not contain:
-      #     scripts/axe-run.cjs scripts/lib/check_spec_anchors.py
-      #     scripts/lib/check_form_labels.py scripts/lib/check_license_triangle.py
-      #   ::error::This workflow floats on @main and executes those paths by
-      #     name inside the PINNED package, so a pin older than them cannot run
-      #     the gates they implement. […] This is NOT a code-quality finding
-      #     about your repository.
-      #
-      # The same commit had run 58 gates successfully seven hours earlier
-      # (run 31052498432, 22:44). Nothing here changed in between — the SHARED
-      # workflow moved. That is the structural hazard: the caller floats on
-      # `quality.yml@main` while the gate PACKAGE is pinned, so every upstream
-      # addition is a silent expiry date on this line. A pin is not a
-      # stability guarantee; it is a promise to keep sweeping.
-      #
-      # ⚠️ AND THE FAILURE SHAPE IS THE DANGEROUS ONE: the job reports
-      # `failure` having gated NOTHING. An 11-second red is not a verdict about
-      # this repository, and reading it as one would mean "fixing" code that
-      # was never inspected. Duration + a zero gate count is the tell.
-      #
-      # v1.5.0 is the current tag and contains all four named paths.
       enable-hydra-gates: true
-      hydra-gates-ref: v1.5.0
+      # No `hydra-gates-ref` here on purpose. The shared workflow defaults it
+      # to @main, and this workflow is itself consumed at @main, so the two
+      # sides move together and a gate fix reaches this repo without a commit
+      # in this repo. A pin is a silent expiry date: 22 repos sat on v1.0.1 and
+      # 16 gates were dead fleet-wide while every one reported PASS (.github#159),
+      # and a default flipped at @main later reached those old runners and made
+      # them red on gates they had no subject matter for (.github#173) — this
+      # repo felt both, the second one blocking #441.
+      # To hold this repo still for a specific reason, set the input explicitly
+      # and say why — it is still honoured. To roll back for everyone, revert on
+      # ConductionNL/.github main.

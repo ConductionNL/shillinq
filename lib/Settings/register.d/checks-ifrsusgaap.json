@@ -392,6 +392,10 @@
             "description": "Date a contract modification or hedging relationship relies on ASC 848 reference-rate-reform relief. The relief sunsets after 31 December 2024.",
             "title": "Asc848Modification Date"
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Financial Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     }

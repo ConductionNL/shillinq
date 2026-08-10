@@ -8,8 +8,8 @@
   },
   "components": {
     "schemas": {
-      "VATReturn": {
-        "slug": "VATReturn",
+      "BtwAangifte": {
+        "slug": "BtwAangifte",
         "icon": "FileDocumentCheckOutline",
         "version": "0.1.0",
         "title": "BTW-aangifte",
@@ -564,7 +564,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "VATReturn",
+          "schema": "BtwAangifte",
           "slug": "vat-ret-q1-2026-std"
         },
         "returnNumber": "NL-2026-Q1",
@@ -588,7 +588,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "VATReturn",
+          "schema": "BtwAangifte",
           "slug": "vat-ret-q1-2026-kor"
         },
         "returnNumber": "NL-2026-Q1-KOR",
@@ -612,7 +612,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "VATReturn",
+          "schema": "BtwAangifte",
           "slug": "vat-ret-q2-2026-rc"
         },
         "returnNumber": "NL-2026-Q2-RC",

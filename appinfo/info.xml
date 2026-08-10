@@ -44,7 +44,37 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
     <dependencies>
         <php min-version="8.3"/>
-        <nextcloud min-version="31" max-version="34"/>
+        <!--
+        App dependency (not expressible in app-info.xsd): OpenRegister — every
+        Shillinq entity is an OpenRegister object, and src/manifest.json lists
+        "openregister" as a required dependency.
+
+        min-version is therefore 32, NOT 31. Two independent reasons, both measured:
+
+        1. PHP 8.3. This app declares <php min-version="8.3"/> above. Nextcloud 31
+           still supports PHP 8.1/8.2, so a 31 install can present a PHP this app
+           has already declared it does not support. 32 is the first server line
+           that matches the PHP floor already declared here.
+
+        2. The CI matrix does not test 31. .github/workflows/code-quality.yml sets
+           nextcloud-test-refs: '["stable32", "stable33"]'. Declaring 31 advertised
+           an App Store range that NO job in this repo has ever exercised.
+
+        Note the hard dependency on OpenRegister is REAL but UNDECLARED: appinfo/
+        routes.php line 39 returns \OCA\OpenRegister\AppHost\Routes::standard(...)
+        at file scope, so with openregister absent this app's entire route table
+        fatals — not one endpoint degrades, all of them die. It cannot be declared
+        as <app>openregister</app> here without also pinning that app's own floor;
+        tracked separately. The rule from openconnector#1172/#1173 is that
+        min-version must be >= the max of every <app> dependency's floor, so this
+        value must be revisited if that dependency is ever declared: openregister
+        itself currently declares min-version="28" (measured on its
+        origin/development today), and is moving to 32 concurrently.
+
+        max-version stays 34, which is the fleet-wide value everywhere except
+        openconnector, which declares 35.
+        -->
+        <nextcloud min-version="32" max-version="34"/>
     </dependencies>
 
     <background-jobs>

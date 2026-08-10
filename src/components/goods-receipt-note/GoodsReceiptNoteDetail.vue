@@ -65,12 +65,12 @@
 				<table>
 					<thead>
 						<tr>
-							<th>{{ t('shillinq', 'PO line') }}</th>
-							<th>{{ t('shillinq', 'Received') }}</th>
-							<th>{{ t('shillinq', 'Accepted') }}</th>
-							<th>{{ t('shillinq', 'Rejected') }}</th>
-							<th>{{ t('shillinq', 'Reason') }}</th>
-							<th>{{ t('shillinq', 'Batch') }}</th>
+							<th scope="col">{{ t('shillinq', 'PO line') }}</th>
+							<th scope="col">{{ t('shillinq', 'Received') }}</th>
+							<th scope="col">{{ t('shillinq', 'Accepted') }}</th>
+							<th scope="col">{{ t('shillinq', 'Rejected') }}</th>
+							<th scope="col">{{ t('shillinq', 'Reason') }}</th>
+							<th scope="col">{{ t('shillinq', 'Batch') }}</th>
 						</tr>
 					</thead>
 					<tbody>

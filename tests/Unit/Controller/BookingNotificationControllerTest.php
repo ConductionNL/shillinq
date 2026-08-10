@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\BookingNotificationController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BookingNotificationService;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Http\JSONResponse;
@@ -90,6 +91,13 @@ class BookingNotificationControllerTest extends TestCase
     private LoggerInterface&MockObject $logger;
 
     /**
+     * Mock AdministrationContextService — the per-object authorisation seam.
+     *
+     * @var AdministrationContextService&MockObject
+     */
+    private AdministrationContextService&MockObject $administrationContext;
+
+    /**
      * The controller under test.
      *
      * @var BookingNotificationController
@@ -112,6 +120,9 @@ class BookingNotificationControllerTest extends TestCase
         $this->groupManager        = $this->createMock(originalClassName: IGroupManager::class);
         $this->userSession         = $this->createMock(originalClassName: IUserSession::class);
         $this->logger = $this->createMock(originalClassName: LoggerInterface::class);
+        $this->administrationContext = $this->createMock(
+            originalClassName: AdministrationContextService::class
+        );
 
         $this->settingsService->method('getRegisterSlug')->willReturn('shillinq');
 
@@ -122,6 +133,7 @@ class BookingNotificationControllerTest extends TestCase
             groupManager: $this->groupManager,
             userSession: $this->userSession,
             logger: $this->logger,
+            administrationContext: $this->administrationContext,
         );
     }//end setUp()
 
@@ -176,6 +188,141 @@ class BookingNotificationControllerTest extends TestCase
         static::assertArrayHasKey(key: 'triggers', array: $data);
         static::assertCount(expectedCount: 1, haystack: $data['triggers']);
     }//end testGetBookingTriggersReturnsTriggersForAdmin()
+
+    /**
+     * A NON-ADMIN who is a member of the booking's administration is allowed
+     * through — the #[NoAdminRequired] contract is real.
+     *
+     * This is the case that could never happen before: the guard called
+     * ObjectService::findObject(), which does not exist, so the Error was
+     * turned into a blanket 403 for every non-admin. It then compared
+     * `organizerUserId`, which is not a property of the Booking schema, so
+     * fixing only the method name would still have denied everyone.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     */
+    public function testGetBookingTriggersAllowsNonAdminMemberOfTheAdministration(): void
+    {
+        $user = $this->createMock(originalClassName: IUser::class);
+        $user->method('getUID')->willReturn('alice');
+        $this->userSession->method('getUser')->willReturn($user);
+        $this->groupManager->method('isAdmin')->willReturn(false);
+
+        // phpcs:disable
+        $objectService = new class {
+            public function find(string | int $id, ?array $_extend=[], bool $files=false, mixed $register=null, mixed $schema=null): object
+            {
+                return new class {
+                    public function jsonSerialize(): array
+                    {
+                        return ['bookingId' => 'booking-123', 'administrationId' => 'adm-1'];
+                    }
+                };
+            }
+            public function setRegister(string $register): static { return $this; }
+            public function setSchema(string $schema): static { return $this; }
+            public function findAll(array $config=[]): array
+            {
+                return [['id' => 'trig-1', 'eventType' => 'created', 'active' => true]];
+            }
+        };
+        // phpcs:enable
+        // phpcs:disable CustomSn.Functions.NamedParameters
+        $this->container->method('get')->willReturn($objectService);
+        $this->administrationContext->method('canAccess')->willReturn(true);
+        // phpcs:enable CustomSn.Functions.NamedParameters
+
+        $response = $this->controller->getBookingTriggers(id: 'booking-123');
+
+        static::assertInstanceOf(expected: JSONResponse::class, actual: $response);
+        static::assertArrayHasKey(key: 'triggers', array: $response->getData());
+    }//end testGetBookingTriggersAllowsNonAdminMemberOfTheAdministration()
+
+    /**
+     * The same non-admin is DENIED when they are not a member of the booking's
+     * administration. Without this the test above would pass over a guard that
+     * simply lets everyone through.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     */
+    public function testGetBookingTriggersDeniesNonAdminOutsideTheAdministration(): void
+    {
+        $user = $this->createMock(originalClassName: IUser::class);
+        $user->method('getUID')->willReturn('mallory');
+        $this->userSession->method('getUser')->willReturn($user);
+        $this->groupManager->method('isAdmin')->willReturn(false);
+
+        // phpcs:disable
+        $objectService = new class {
+            public function find(string | int $id, ?array $_extend=[], bool $files=false, mixed $register=null, mixed $schema=null): object
+            {
+                return new class {
+                    public function jsonSerialize(): array
+                    {
+                        return ['bookingId' => 'booking-123', 'administrationId' => 'adm-other'];
+                    }
+                };
+            }
+        };
+        // phpcs:enable
+        // phpcs:disable CustomSn.Functions.NamedParameters
+        $this->container->method('get')->willReturn($objectService);
+        $this->administrationContext->method('canAccess')->willReturn(false);
+        // phpcs:enable CustomSn.Functions.NamedParameters
+
+        $this->expectException(exception: \OCP\AppFramework\OCS\OCSForbiddenException::class);
+
+        $this->controller->getBookingTriggers(id: 'booking-123');
+    }//end testGetBookingTriggersDeniesNonAdminOutsideTheAdministration()
+
+    /**
+     * A booking whose administrationId is absent or empty must DENY, not skip
+     * the check — the defect fixed in #474, where `?? ''` plus a `!== ''`
+     * guard meant canAccess() was never called at all.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+     */
+    public function testGetBookingTriggersDeniesWhenAdministrationIdIsEmpty(): void
+    {
+        $user = $this->createMock(originalClassName: IUser::class);
+        $user->method('getUID')->willReturn('alice');
+        $this->userSession->method('getUser')->willReturn($user);
+        $this->groupManager->method('isAdmin')->willReturn(false);
+
+        // phpcs:disable
+        $objectService = new class {
+            public function find(string | int $id, ?array $_extend=[], bool $files=false, mixed $register=null, mixed $schema=null): object
+            {
+                return new class {
+                    public function jsonSerialize(): array
+                    {
+                        return ['bookingId' => 'booking-123'];
+                    }
+                };
+            }
+        };
+        // phpcs:enable
+        // phpcs:disable CustomSn.Functions.NamedParameters
+        $this->container->method('get')->willReturn($objectService);
+        // An empty administrationId must still reach canAccess(), which
+        // returns false for it — assert the guard consults the seam rather
+        // than short-circuiting past it (the #474 defect).
+        $this->administrationContext->expects(static::once())
+            ->method('canAccess')
+            ->with('')
+            ->willReturn(false);
+        // phpcs:enable CustomSn.Functions.NamedParameters
+
+        $this->expectException(exception: \OCP\AppFramework\OCS\OCSForbiddenException::class);
+
+        $this->controller->getBookingTriggers(id: 'booking-123');
+    }//end testGetBookingTriggersDeniesWhenAdministrationIdIsEmpty()
 
     /**
      * UpdateBookingTriggers returns 400 when triggers key is missing.

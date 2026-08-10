@@ -12,9 +12,21 @@
 				class="shillinq-widget-keys__input">
 		</div>
 
+		<div class="shillinq-widget-keys__field">
+			<label for="wsw-administration-id">{{ t('shillinq', 'Administration ID') }}</label>
+			<input
+				id="wsw-administration-id"
+				v-model.trim="administrationId"
+				type="text"
+				class="shillinq-widget-keys__input">
+		</div>
+
 		<div class="shillinq-widget-keys__actions">
-			<NcButton variant="primary" :disabled="!businessId || busy" @click="rotate">
-				{{ t('shillinq', 'Generate key') }} / {{ t('shillinq', 'Rotate key') }}
+			<NcButton variant="primary" :disabled="!businessId || !administrationId || busy" @click="generate">
+				{{ t('shillinq', 'Generate key') }}
+			</NcButton>
+			<NcButton variant="secondary" :disabled="!businessId || busy" @click="rotate">
+				{{ t('shillinq', 'Rotate key') }}
 			</NcButton>
 			<NcButton variant="error" :disabled="!businessId || busy" @click="revoke">
 				{{ t('shillinq', 'Revoke key') }}
@@ -46,6 +58,7 @@ export default {
 	data() {
 		return {
 			businessId: '',
+			administrationId: '',
 			plaintextKey: '',
 			message: '',
 			busy: false,
@@ -72,11 +85,39 @@ export default {
 				this.busy = false
 			}
 		},
+		/**
+		 * Mint the FIRST key for a businessId (REQ-WSW-009 §1).
+		 *
+		 * This used to post to `keys/rotate`, which refuses with "No active key
+		 * found for businessId." whenever the business has no key yet — so the
+		 * button labelled "Generate key" could never generate one. It also sent
+		 * `administrationId: this.businessId`, a field `rotate` never reads;
+		 * `create` genuinely needs the tenant boundary, so it is its own input.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
+		async generate() {
+			this.plaintextKey = ''
+			const result = await this.post('widget/admin/keys/create', {
+				businessId: this.businessId,
+				administrationId: this.administrationId,
+			})
+			if (result.success && result.apiKey) {
+				this.plaintextKey = result.apiKey
+			}
+			this.message = result.message || ''
+		},
+		/**
+		 * Replace an existing key; the predecessor keeps working for 7 days.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/bookings-self-service-widget/spec.md
+		 */
 		async rotate() {
 			this.plaintextKey = ''
 			const result = await this.post('widget/admin/keys/rotate', {
 				businessId: this.businessId,
-				administrationId: this.businessId,
 			})
 			if (result.success && result.apiKey) {
 				this.plaintextKey = result.apiKey
