@@ -5,7 +5,6 @@
 			"label": "Bookkeeping",
 			"icon": "NotebookOutline",
 			"order": 20,
-			"featureFlag": "bookkeeping",
 			"children": [
 				{
 					"id": "WbsoChartOfAccounts",
