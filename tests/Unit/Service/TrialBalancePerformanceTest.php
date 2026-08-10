@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-13-2
+ * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-014
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

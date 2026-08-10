@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-1
+ * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-008
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use Psr\Container\ContainerInterface;
  * the opening balance is carried from the prior period's net GL position
  * (REQ-TB-002); the closing balance is opening + (debit - credit) (REQ-TB-003).
  *
- * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-1
+ * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-008
  */
 class TrialBalanceService
 {
@@ -80,7 +80,7 @@ class TrialBalanceService
      *
      * @return array{data: array<int,array<string,mixed>>, total: int, totals: array<string,float>, isBalanced: bool}
      *
-     * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-1
+     * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-008
      */
     public function compute(string $administrationId, string $periodId, array $filters=[]): array
     {

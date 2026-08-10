@@ -26,7 +26,7 @@
  * trial balance means the books do not foot. The membership/period/account
  * scaffolding is seeded so the IDOR-guarded endpoint resolves real data.
  *
- * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-1
+ * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-003
  */
 
 import { test, expect, request as pwRequest } from '@playwright/test'
