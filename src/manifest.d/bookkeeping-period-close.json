@@ -76,6 +76,7 @@
 			"route": "/bookkeeping/period-close/:id",
 			"type": "custom",
 			"component": "PeriodCloseDetail",
+			"_note": "Period-close cockpit, not a record view. Beyond the FiscalPeriod fields it drives a four-step close workflow through /api/period-close/:id/{start-close,close,reopen,lock-audit} with per-transition role gates (period-closer, auditor) and a reopen reason prompt, and renders the close checklist and assistant flags. `type: detail` renders declared fields plus lifecycle transitions on the OBJECT; it cannot host the endpoint-driven checklist and audit-lock cockpit this page is. Its config is retained so the field/lifecycle/link declarations stay manifest-owned.",
 			"title": "Period Close",
 			"config": {
 				"register": "shillinq",
