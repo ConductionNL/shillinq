@@ -50,6 +50,7 @@ use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
 use OCA\Shillinq\Listener\DBAFactuurMonitorListener;
+use OCA\Shillinq\Listener\ContractObligationTaskListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
@@ -1289,6 +1290,34 @@ class Application extends App implements IBootstrap
             listener: AppointmentCreatedListener::class,
             schemas: ['Appointment']
         );
+
+        // --- gate-57 orphaned-write-capability: ContractObligation tasks ---
+        // REQ-CDC-005 requires ObligationTaskBridge's VTODO + deadline VEVENT
+        // to be raised "when the obligation is created/updated". The bridge
+        // shipped; the trigger never did, so `taskUri` / `taskLinkStatus` were
+        // permanently null and no contract deadline ever reached NC Tasks.
+        // ContractObligation carries no x-openregister-lifecycle block, so —
+        // exactly as for LeaseContract below — the executing trigger is the
+        // create/update event MagicMapper dispatches on the generic CRUD save
+        // path. The listener is idempotent on `taskLinkStatus = linked`, which
+        // is what keeps its own write-back from re-entering.
+        //
+        // Interest declared up front: the handler's `isObligationSchema()`
+        // accepts `contractobligation` or `…/contractobligation`, i.e. exactly
+        // the `ContractObligation` schema slug.
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectCreatedEvent::class,
+            listener: ContractObligationTaskListener::class,
+            schemas: ['ContractObligation']
+        );
+        $this->registerFilteredObjectListener(
+            dispatcher: $dispatcher,
+            event: ObjectUpdatedEvent::class,
+            listener: ContractObligationTaskListener::class,
+            schemas: ['ContractObligation']
+        );
+        // --- end gate-57 region ---
 
         // IFRS-16 lease schedule trigger (revive-lease-capabilities,
         // shillinq#446). When a LeaseContract is created already `active` or is
