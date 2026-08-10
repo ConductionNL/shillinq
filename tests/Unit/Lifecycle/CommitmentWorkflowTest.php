@@ -338,7 +338,7 @@ class CommitmentWorkflowTest extends TestCase
             'commitmentNumber'   => 'RO-1',
             'commitmentType'     => 'frameworkAgreement',
             'totalAmountExclVat' => 20000000,
-            'regels'             => [
+            'lines'             => [
                 ['programme' => '5.1', 'fiscalYear' => 2026, 'amountExclVat' => 10000000],
                 ['programme' => '5.1', 'fiscalYear' => 2027, 'amountExclVat' => 10000000],
             ],
@@ -348,7 +348,7 @@ class CommitmentWorkflowTest extends TestCase
         $this->assertFalse($this->budget->canCommit('RO-1', $overcommit));
 
         $within = $overcommit;
-        $within['regels'][1]['amountExclVat'] = 5000000;
+        $within['lines'][1]['amountExclVat'] = 5000000;
         $within['totalAmountExclVat']         = 15000000;
 
         // 2027 right-sized to EUR 50k → both regels fit and the raamovereenkomst signs.
@@ -437,7 +437,7 @@ class CommitmentWorkflowTest extends TestCase
         return array_merge(
             [
                 'administrationId'       => 'adm-1',
-                'programmaCode'          => '5.1',
+                'programmeCode'          => '5.1',
                 'fiscalYear'             => 2026,
                 'authorisedAmount'       => 50000000,
                 'realisedAmount'         => 0,
@@ -486,7 +486,7 @@ class CommitmentWorkflowTest extends TestCase
             'commitmentNumber'   => 'PO-1',
             'commitmentType'     => 'purchaseOrder',
             'totalAmountExclVat' => $bedrag,
-            'regels'             => [
+            'lines'             => [
                 [
                     'programme'     => '5.1',
                     'fiscalYear'    => 2026,

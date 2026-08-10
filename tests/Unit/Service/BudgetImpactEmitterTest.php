@@ -240,7 +240,7 @@ final class BudgetImpactEmitterTest extends TestCase
         $this->assertSame('M-Q1', $args['milestoneId']);
         $this->assertSame('finalDelivery', $args['deliveryType']);
         $this->assertTrue((bool) $args['approved']);
-        $this->assertSame(2, $args['bewijsstukCount']);
+        $this->assertSame(2, $args['evidenceCount']);
 
     }//end testEmitMilestoneCompletedShapesAndDispatchesPayload()
 

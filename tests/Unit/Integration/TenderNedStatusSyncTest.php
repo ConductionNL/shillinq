@@ -224,8 +224,8 @@ final class TenderNedStatusSyncTest extends TestCase
         $sync = new TenderNedStatusSync(
             $this->container(
                 [
-                    'aanbestedingId'      => 'TN-2026-0001',
-                    'aanbestedendeDienst' => '99999999 Gemeente Anders',
+                    'procurementId'      => 'TN-2026-0001',
+                    'contractingAuthority' => '99999999 Gemeente Anders',
                     'commitmentId'        => 'TN-X',
                 ],
                 $this->spyGateway()
@@ -257,8 +257,8 @@ final class TenderNedStatusSyncTest extends TestCase
         $sync = new TenderNedStatusSync(
             $this->container(
                 [
-                    'aanbestedingId'      => 'TN-2026-0001',
-                    'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
+                    'procurementId'      => 'TN-2026-0001',
+                    'contractingAuthority' => '30280353 Gemeente Utrecht',
                     'commitmentId'        => 'TN-X',
                 ],
                 null
@@ -292,8 +292,8 @@ final class TenderNedStatusSyncTest extends TestCase
         $sync    = new TenderNedStatusSync(
             $this->container(
                 [
-                    'aanbestedingId'      => 'TN-2026-0001',
-                    'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
+                    'procurementId'      => 'TN-2026-0001',
+                    'contractingAuthority' => '30280353 Gemeente Utrecht',
                     'commitmentId'        => 'TN-X',
                 ],
                 $gateway
@@ -315,7 +315,7 @@ final class TenderNedStatusSyncTest extends TestCase
         $this->assertTrue($result);
         $this->assertCount(1, $gateway->sends);
         $this->assertSame('tenderned.completion', $gateway->sends[0]['source']);
-        $this->assertSame('TN-2026-0001', $gateway->sends[0]['payload']['aanbestedingId']);
+        $this->assertSame('TN-2026-0001', $gateway->sends[0]['payload']['procurementId']);
         $this->assertSame(TenderNedStatusSync::TENDERNED_STATUS_AFGEROND, $gateway->sends[0]['payload']['status']);
         $this->assertSame('M-EIND', $gateway->sends[0]['payload']['eindopleveringId']);
         $this->assertSame(1, $gateway->sends[0]['payload']['bewijsstukCount']);
@@ -339,8 +339,8 @@ final class TenderNedStatusSyncTest extends TestCase
         $sync = new TenderNedStatusSync(
             $this->container(
                 [
-                    'aanbestedingId'      => 'TN-2026-0001',
-                    'aanbestedendeDienst' => '30280353 Gemeente Utrecht',
+                    'procurementId'      => 'TN-2026-0001',
+                    'contractingAuthority' => '30280353 Gemeente Utrecht',
                     'commitmentId'        => 'TN-X',
                 ],
                 $gateway

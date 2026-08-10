@@ -211,7 +211,7 @@ class TenderNedStatusSync
             return false;
         }
 
-        $dienst = trim((string) ($procurement['aanbestedendeDienst'] ?? ''));
+        $dienst = trim((string) ($procurement['contractingAuthority'] ?? ''));
         if ($dienst === '') {
             return false;
         }
