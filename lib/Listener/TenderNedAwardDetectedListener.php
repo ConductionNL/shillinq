@@ -269,23 +269,28 @@ class TenderNedAwardDetectedListener implements IEventListener
             looptijdEind: (string) ($payload['looptijdEind'] ?? '')
         );
 
-        // `verplichtingsnummer` and `soort` are both in the merged schema's
-        // required list (bookkeeping-verplichtingenadministratie.json owns it).
-        // Omitting either makes OR's ImportHandler reject the object, and the
-        // catch below is fail-soft — so a missing key here means every award
-        // silently creates nothing.
+        // `soort` is in the merged schema's required list
+        // (bookkeeping-verplichtingenadministratie.json owns that list).
+        // Omitting it makes OR reject the object, and the catch below is
+        // fail-soft — so a missing required key here means every detected award
+        // silently creates nothing at all.
+        //
+        // `verplichtingNummer` is the camelCase half of a live two-spelling
+        // split; see the property description in the register fragment. It is
+        // deliberately NOT required on either side until the naming decision
+        // lands, so this write succeeds whichever way that goes.
         $verplichting = [
-            'verplichtingsnummer' => 'TN-'.$aanbestedingId,
-            'soort'               => 'inkooporder',
-            'omschrijving'        => (string) ($payload['titel'] ?? $aanbestedingId),
-            'bron'                => 'tenderned',
-            'bronReferentie'      => $aanbestedingId,
-            'bedrag'              => (float) ($payload['contractWaarde'] ?? 0),
-            'looptijdStart'       => (string) ($payload['looptijdStart'] ?? ''),
-            'looptijdEind'        => (string) ($payload['looptijdEind'] ?? ''),
-            'mijlpalen'           => $plan,
-            'status'              => 'active',
-            'administrationId'    => (string) ($payload['administrationId'] ?? ''),
+            'verplichtingNummer' => 'TN-'.$aanbestedingId,
+            'soort'              => 'inkooporder',
+            'omschrijving'       => (string) ($payload['titel'] ?? $aanbestedingId),
+            'bron'               => 'tenderned',
+            'bronReferentie'     => $aanbestedingId,
+            'bedrag'             => (float) ($payload['contractWaarde'] ?? 0),
+            'looptijdStart'      => (string) ($payload['looptijdStart'] ?? ''),
+            'looptijdEind'       => (string) ($payload['looptijdEind'] ?? ''),
+            'mijlpalen'          => $plan,
+            'status'             => 'active',
+            'administrationId'   => (string) ($payload['administrationId'] ?? ''),
         ];
 
         try {

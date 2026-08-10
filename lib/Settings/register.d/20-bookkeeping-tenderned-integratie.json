@@ -242,11 +242,11 @@
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
         "properties": {
-          "verplichtingsnummer": {
+          "verplichtingNummer": {
             "type": "string",
-            "description": "Sequential obligation number unique per administration.",
+            "description": "Sequential obligation number unique per administration, as written by TenderNedAwardDetectedListener and read by VerplichtingGuard. This is the camelCase half of a LIVE TWO-SPELLING SPLIT — bookkeeping-verplichtingenadministratie.json declares `verplichtingsnummer` for the commitment-accounting path. Both are declared and NEITHER is required until the naming decision lands, because requiring one silently rejects every write from the other path. Collapsing to one spelling is a DATA migration (MagicMapper discards undeclared properties) and needs a repair step.",
             "example": "VPL-2026-0001",
-            "title": "Verplichtingsnummer"
+            "title": "Verplichting Nummer"
           },
           "omschrijving": {
             "type": "string",
@@ -698,7 +698,7 @@
         "schema": "Verplichting",
         "slug": "vpl-sample-utrecht-schoonmaak"
       },
-      "verplichtingsnummer": "VPL-2026-0001",
+      "verplichtingNummer": "VPL-2026-0001",
       "soort": "inkooporder",
       "omschrijving": "Schoonmaakcontract gemeentehuis Utrecht 2026",
       "bron": "tenderned",

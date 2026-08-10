@@ -452,13 +452,12 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
     public function testIdempotentOnExistingBronReferentie(): void
     {
         $existing = [
-            'verplichtingsnummer' => 'TN-TN-2026-0001',
-            'soort'               => 'inkooporder',
-            'bron'                => 'tenderned',
-            'bronReferentie'      => 'TN-2026-0001',
-            'status'              => 'active',
-            'bedrag'              => 50000.0,
-            'administrationId'    => 'adm-x',
+            'verplichtingNummer' => 'TN-TN-2026-0001',
+            'bron'               => 'tenderned',
+            'bronReferentie'     => 'TN-2026-0001',
+            'status'             => 'active',
+            'bedrag'             => 50000.0,
+            'administrationId'   => 'adm-x',
         ];
         [$container, $recorder] = $this->containerAndRecorder([$existing]);
         [$listener, $dispatcher] = $this->listener($container, '30280353');

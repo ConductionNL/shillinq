@@ -7099,7 +7099,7 @@ _A financial commitment (obligation) tracked in Shillinq with optional TenderNed
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| verplichtingsnummer | string | Yes | Unique obligation reference. |
+| verplichtingNummer / verplichtingsnummer | string | No (see note) | Unique obligation reference. **Two spellings are live in production** — `verplichtingNummer` is written by `TenderNedAwardDetectedListener` and read by `VerplichtingGuard`; `verplichtingsnummer` is written by `CommitmentMaterialisationService` and read by `BudgetBlocker::canCommit`, `MandaatEnforcer` and `RequisitionService`. Both are declared and neither is required until the naming decision lands; requiring one silently rejects every write from the other path. Collapsing to one is a DATA migration (MagicMapper discards undeclared properties) and needs a repair step. |
 | soort | enum | Yes | inkooporder / raamovereenkomst / arbeidscontract / subsidiebeschikking / huurovereenkomst / leasing / overig. |
 | omschrijving | string | No | Short description (e.g. tender title). |
 | bron | enum | No | manual / tenderned / inkooporder (default: manual). |
