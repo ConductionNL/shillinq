@@ -1291,34 +1291,16 @@ class Application extends App implements IBootstrap
             schemas: ['Appointment']
         );
 
-        // --- gate-57 orphaned-write-capability: ContractObligation tasks ---
-        // REQ-CDC-005 requires ObligationTaskBridge's VTODO + deadline VEVENT
-        // to be raised "when the obligation is created/updated". The bridge
-        // shipped; the trigger never did, so `taskUri` / `taskLinkStatus` were
-        // permanently null and no contract deadline ever reached NC Tasks.
-        // ContractObligation carries no x-openregister-lifecycle block, so —
-        // exactly as for LeaseContract below — the executing trigger is the
-        // create/update event MagicMapper dispatches on the generic CRUD save
-        // path. The listener is idempotent on `taskLinkStatus = linked`, which
-        // is what keeps its own write-back from re-entering.
-        //
-        // Interest declared up front: the handler's `isObligationSchema()`
-        // accepts `contractobligation` or `…/contractobligation`, i.e. exactly
-        // the `ContractObligation` schema slug.
-        $this->registerFilteredObjectListener(
+        // --- gate-57 region: ContractObligation task trigger (REQ-CDC-005).
+        // The bridge shipped, its trigger never did — see
+        // ContractObligationTaskListener's docblock for the rationale and the
+        // re-entry guard its own write-back depends on.
+        $this->registerFilteredObjectWriteListener(
             dispatcher: $dispatcher,
-            event: ObjectCreatedEvent::class,
-            listener: ContractObligationTaskListener::class,
-            schemas: ['ContractObligation']
-        );
-        $this->registerFilteredObjectListener(
-            dispatcher: $dispatcher,
-            event: ObjectUpdatedEvent::class,
             listener: ContractObligationTaskListener::class,
             schemas: ['ContractObligation']
         );
         // --- end gate-57 region ---
-
         // IFRS-16 lease schedule trigger (revive-lease-capabilities,
         // shillinq#446). When a LeaseContract is created already `active` or is
         // updated across the `draft → active` edge, materialise its
@@ -1419,15 +1401,8 @@ class Application extends App implements IBootstrap
         //
         // Interest declared up front: the three slugs are the listener's own
         // SCHEMA_NEXUS / SCHEMA_PROFIT / SCHEMA_LOSS constants.
-        $this->registerFilteredObjectListener(
+        $this->registerFilteredObjectWriteListener(
             dispatcher: $dispatcher,
-            event: ObjectCreatedEvent::class,
-            listener: InnovatieboxAuditTrailListener::class,
-            schemas: ['NexusCalculation', 'IBProfitAttribution', 'CarryForwardLoss']
-        );
-        $this->registerFilteredObjectListener(
-            dispatcher: $dispatcher,
-            event: ObjectUpdatedEvent::class,
             listener: InnovatieboxAuditTrailListener::class,
             schemas: ['NexusCalculation', 'IBProfitAttribution', 'CarryForwardLoss']
         );

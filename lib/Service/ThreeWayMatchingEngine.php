@@ -212,18 +212,28 @@ class ThreeWayMatchingEngine
     /**
      * Constructor.
      *
-     * @param ContainerInterface      $container        DI container —
-     *                                                  OR's ObjectService
-     *                                                  is fetched lazily
-     *                                                  so unit tests can
-     *                                                  swap an in-memory
-     *                                                  stub.
-     * @param IAppConfig              $appConfig        App config for the OR register slug.
-     * @param ToleranceProfileService $toleranceService Tolerance resolution + evaluation.
-     * @param SupplierInvoiceService  $invoiceService   For lifecycle transitions on the
-     *                                                  matched invoice (received →
-     *                                                  matching → matched/exception).
-     * @param LoggerInterface         $logger           Logger (no sensitive payloads).
+     * @param ContainerInterface              $container           DI container
+     *                                                             — OR's
+     *                                                             ObjectService
+     *                                                             is fetched
+     *                                                             lazily so
+     *                                                             unit tests
+     *                                                             can swap an
+     *                                                             in-memory
+     *                                                             stub.
+     * @param IAppConfig                      $appConfig           App config for the OR register slug.
+     * @param ToleranceProfileService         $toleranceService    Tolerance resolution + evaluation.
+     * @param SupplierInvoiceService          $invoiceService      For lifecycle transitions on the
+     *                                                             matched invoice (received →
+     *                                                             matching → matched/exception).
+     * @param LoggerInterface                 $logger              Logger (no sensitive payloads).
+     * @param ExceptionResolutionService|null $exceptionResolution Raises the
+     *                                                             crediteuren-administrateur
+     *                                                             alert when a match is routed
+     *                                                             to an exception status
+     *                                                             (REQ-PO3W-004); nullable so
+     *                                                             unit tests need not wire the
+     *                                                             notification manager.
      *
      * @return void
      */
