@@ -705,6 +705,9 @@ class Application extends App implements IBootstrap
             listener: OpdrachtUitvoeringTransitionListener::class
         );
 
+        // REQ-004 bewijsstuk-required completion gate, both halves.
+        (new OpdrachtUitvoeringGateRegistration())->register(context: $context);
+
         // Change shillinq-delegation-via-events (REQ-SIGN-005) — the REAL
         // production trigger for SignoffDecisionService::requestSignoff().
         // AnnualReportSignoffRequestListener raises the decidesk adoption
