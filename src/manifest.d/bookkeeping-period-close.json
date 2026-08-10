@@ -75,7 +75,7 @@
 			"id": "PeriodCloseDetail",
 			"route": "/bookkeeping/period-close/:id",
 			"type": "custom",
-			"customComponent": "PeriodCloseDetail",
+			"component": "PeriodCloseDetail",
 			"title": "Period Close",
 			"config": {
 				"register": "shillinq",

@@ -36,21 +36,21 @@
 			"id": "WbsoChartOfAccounts",
 			"route": "/bookkeeping/chart-of-accounts",
 			"type": "custom",
-			"customComponent": "WbsoChartOfAccountsView",
+			"component": "WbsoChartOfAccountsView",
 			"title": "Chart of Accounts"
 		},
 		{
 			"id": "WbsoTransactions",
 			"route": "/bookkeeping/transactions",
 			"type": "custom",
-			"customComponent": "WbsoTransactionsView",
+			"component": "WbsoTransactionsView",
 			"title": "Transactions"
 		},
 		{
 			"id": "WbsoDocuments",
 			"route": "/bookkeeping/documents",
 			"type": "custom",
-			"customComponent": "WbsoDocumentsView",
+			"component": "WbsoDocumentsView",
 			"title": "Documents"
 		}
 	]

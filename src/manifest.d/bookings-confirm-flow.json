@@ -4,7 +4,7 @@
 			"id": "BookingsConfirmationPortal",
 			"route": "/confirm/:appointmentId",
 			"type": "custom",
-			"customComponent": "BookingsConfirmationPortal",
+			"component": "BookingsConfirmationPortal",
 			"title": "Confirm your appointment",
 			"public": true
 		},
@@ -12,7 +12,7 @@
 			"id": "BookingsPendingConfirmations",
 			"route": "/verkoop/openstaande-bevestigingen",
 			"type": "custom",
-			"customComponent": "BookingsConfirmationPortal",
+			"component": "BookingsConfirmationPortal",
 			"title": "Pending confirmations"
 		}
 	],
