@@ -101,7 +101,7 @@ class BudgetImpactEmitter
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5-2
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-007
      */
     public function emitActivated(array $verplichting, array $source=[]): void
     {
@@ -133,7 +133,7 @@ class BudgetImpactEmitter
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5-3
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-005
      */
     public function emitMilestoneCompleted(array $oplevering): void
     {
