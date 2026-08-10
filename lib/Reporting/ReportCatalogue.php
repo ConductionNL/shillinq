@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec openspec/specs/reporting/spec.md#req-rpt-001
  *
  * phpcs:disable Generic.Files.LineLength
  */

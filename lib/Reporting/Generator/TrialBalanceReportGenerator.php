@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec openspec/specs/reporting/spec.md#req-rpt-003
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.Commenting.InlineComment
  */

@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec openspec/specs/reporting/spec.md#req-rpt-006
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use OCP\IUserSession;
 /**
  * HTTP surface for Reporting & Compliance: catalogue, generation, listing, download.
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec openspec/specs/reporting/spec.md#req-rpt-006
  */
 class ReportingController extends Controller
 {

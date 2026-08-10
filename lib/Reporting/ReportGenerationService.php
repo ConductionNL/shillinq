@@ -32,7 +32,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec openspec/specs/reporting/spec.md#req-rpt-005
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.Commenting.BlockComment, Squiz.Operators.ComparisonOperatorUsage, Squiz.PHP.DisallowInlineIf
  */

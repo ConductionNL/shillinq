@@ -26,7 +26,7 @@
  `index` page type (ADR-024 / ADR-036). The manifest fragment
  src/manifest.d/reporting-compliance.json declares the route.
 
- @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ @spec openspec/specs/reporting/spec.md#req-rpt-007
 -->
 <template>
 	<div class="generated-reports" data-testid="generated-reports">

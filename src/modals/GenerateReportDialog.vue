@@ -20,7 +20,7 @@
  fileName) so the parent can toast a download link; on failure it surfaces
  the error inline and stays open.
 
- @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ @spec openspec/specs/reporting/spec.md#req-rpt-007
 -->
 
 <template>
