@@ -786,7 +786,7 @@
             ],
             "title": "Commitment Type"
           },
-          "is_override": {
+          "isOverride": {
             "type": "boolean",
             "description": "Whether this mandate may force-accept a budget-exceeding commitment with an audit-trail reason (REQ-VPL-001).",
             "default": false,
@@ -1122,7 +1122,7 @@
         "purchaseOrder",
         "frameworkAgreement"
       ],
-      "is_override": false,
+      "isOverride": false,
       "geldig_van": "2026-01-01",
       "geldig_tot": "2026-12-31",
       "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v.",
@@ -1146,7 +1146,7 @@
         "rentalAgreement",
         "leasing"
       ],
-      "is_override": false,
+      "isOverride": false,
       "geldig_van": "2026-01-01",
       "geldig_tot": "2026-12-31",
       "vastgesteld_bij": "Mandaatregeling Gemeentewet 168 e.v."
@@ -1171,7 +1171,7 @@
         "leasing",
         "other"
       ],
-      "is_override": true,
+      "isOverride": true,
       "geldig_van": "2026-01-01",
       "geldig_tot": "2026-12-31",
       "vastgesteld_bij": "Mandaatregeling 2026, art. 12 (override)"

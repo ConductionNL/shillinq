@@ -263,14 +263,14 @@ class CommitmentMaterialisationService
         // REQ-VPL-002 parity: no sufficient mandate routes to in_goedkeuring
         // (the existing `indienen` semantics) without a budget check — the
         // fail-closed budget guarantee only applies to the direct-commit path.
-        if ($this->mandaat->hasSufficientMandate(verplichtingsnummer: $sourceReference, object: $draft) === false) {
+        if ($this->mandate->hasSufficientMandate(commitmentNumber: $sourceReference, object: $draft) === false) {
             $draft['status'] = 'in_goedkeuring';
             $saved           = $this->persist(draft: $draft, lineInputs: $lineInputs);
             $this->dispatchLawfulnessTrigger(commitment: $saved);
             return $saved;
         }
 
-        if ($this->budget->canCommit(verplichtingsnummer: $sourceReference, object: $draft) === false) {
+        if ($this->budget->canCommit(commitmentNumber: $sourceReference, object: $draft) === false) {
             if ($failClosed === true) {
                 throw new InsufficientCommitmentBudgetException(
                     sprintf('Insufficient budget to materialise commitment for %s', $sourceReference)
@@ -286,15 +286,15 @@ class CommitmentMaterialisationService
 
         $draft['status'] = 'aangegaan';
 
-        $applied = $this->mandaat->resolveApplicableMandate(verplichting: $draft);
+        $applied = $this->mandate->resolveApplicableMandate(commitment: $draft);
         if ($applied !== null) {
             $draft['mandateApplied'] = (string) ($applied['mandateCode'] ?? '');
         }
 
-        $isOverride = $applied !== null && (bool) ($applied['is_override'] ?? false) === true;
+        $isOverride = $applied !== null && (bool) ($applied['isOverride'] ?? false) === true;
         if ($isOverride === true) {
-            $draft['override_reden'] = sprintf(
-                'Automatisch aangegaan onder override-mandaat %s bij materialisatie van %s (budget ontoereikend).',
+            $draft['overrideReason'] = sprintf(
+                'Automatically committed under override mandate %s while materialising %s (insufficient budget).',
                 (string) ($applied['mandateCode'] ?? ''),
                 $sourceReference
             );
@@ -616,9 +616,9 @@ class CommitmentMaterialisationService
                         'fiscalYear'         => $fiscalYear,
                         'programme'        => (string) ($first['programme'] ?? ''),
                         'bedrag_fout'      => $amount,
-                        'description'     => (string) ($commitment['override_reden'] ?? ''),
+                        'description'     => (string) ($commitment['overrideReason'] ?? ''),
                         'oorzaak'          => sprintf(
-                            'Verplichting %s automatisch aangegaan onder override-mandaat wegens ontoereikende vrije_ruimte.',
+                            'Commitment %s automatically committed under an override mandate due to insufficient free budget.',
                             (string) ($commitment['commitmentNumber'] ?? '')
                         ),
                         'status'           => 'open',
