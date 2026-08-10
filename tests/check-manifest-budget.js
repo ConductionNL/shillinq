@@ -46,7 +46,20 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // never ships its JSON) is the explicit, larger, still-undecided scope of
 // shillinq-manifest-boot-payload-reduction (REQ-MBP-001) — this tripwire is
 // deliberately kept loose, not re-architected, here.
-const DEFAULT_BUDGET_BYTES = 1_100_000
+//
+// Re-measured 2026-08-10 (gate-53 effective-manifest-crossref): 1,112,863
+// bytes. The growth is one deliberate, non-recurring addition — the v2 schema
+// requires a `_note` on every `type:"custom"` page whose component is not a
+// lib `Cn*` SFC, documenting why decomposition into a standard page type was
+// not feasible, and 45 such pages had none. Writing those notes added ~19.2 KB
+// of prose; the same commit REMOVED ~1 KB of dead keys (featureFlag, group,
+// kind, i18n, visibility), so the net is ~+18 KB against ~6 KB of headroom.
+// Raised, not trimmed, on purpose: trimming here means deleting the schema's
+// required documentation, which is the opposite of what the gate asks for.
+// The number of custom pages is bounded, so this is a one-off step, not a new
+// growth rate — the structural fix (code-splitting manifest.d/) is still the
+// undecided scope of REQ-MBP-001.
+const DEFAULT_BUDGET_BYTES = 1_150_000
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

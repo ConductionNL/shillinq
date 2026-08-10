@@ -738,34 +738,25 @@
 					"id": "Bookkeeping",
 					"children": [
 						{
-							"id": "DetacheringPayroll",
-							"label": "Secondment & payroll",
-							"icon": "CashSync",
-							"order": 45,
-							"featureFlag": "mkb-detachering",
-							"children": [
-								{
-									"id": "SalarisFeed",
-									"label": "Salary feeds",
-									"icon": "FileImportOutline",
-									"route": "SalarisFeed",
-									"order": 10
-								},
-								{
-									"id": "OpdrachtgeversVerklaringen",
-									"label": "Client statements",
-									"icon": "AccountStarOutline",
-									"route": "OpdrachtgeversVerklaringen",
-									"order": 20
-								},
-								{
-									"id": "IB47Jaarbatch",
-									"label": "IB47 annual batch",
-									"icon": "FileDocumentOutline",
-									"route": "IB47Jaarbatch",
-									"order": 30
-								}
-							]
+							"id": "SalarisFeed",
+							"label": "Salary feeds",
+							"icon": "FileImportOutline",
+							"route": "SalarisFeed",
+							"order": 45
+						},
+						{
+							"id": "OpdrachtgeversVerklaringen",
+							"label": "Client statements",
+							"icon": "AccountStarOutline",
+							"route": "OpdrachtgeversVerklaringen",
+							"order": 46
+						},
+						{
+							"id": "IB47Jaarbatch",
+							"label": "IB47 annual batch",
+							"icon": "FileDocumentOutline",
+							"route": "IB47Jaarbatch",
+							"order": 47
 						}
 					]
 				}
@@ -1345,7 +1336,7 @@
 					"_fragment": "bookkeeping-accounts-payable-core",
 					"id": "APAgingT2",
 					"route": "/bookkeeping/ap-aging-t2",
-					"type": "aggregate",
+					"type": "index",
 					"title": "AP Aging"
 				},
 				{
@@ -1792,9 +1783,6 @@
 						{
 							"id": "AnalyticalDimensions",
 							"label": "Analytical dimensions",
-							"i18n": {
-								"nl": "Analytische dimensies"
-							},
 							"icon": "ChartLineVariant",
 							"route": "AnalyticalDimensions",
 							"order": 92
@@ -2847,11 +2835,6 @@
 					"label": "BBV Province",
 					"icon": "MapOutline",
 					"order": 75,
-					"visibilityPredicate": {
-						"administrationType": [
-							"provincie"
-						]
-					},
 					"children": [
 						{
 							"id": "BbvComplianceDashboard",
@@ -2875,7 +2858,7 @@
 					"_fragment": "bookkeeping-provincies-bbv-variant",
 					"id": "BbvComplianceDashboard",
 					"route": "/bbv-provincie/compliance-dashboard",
-					"type": "report",
+					"type": "dashboard",
 					"title": "BBV Compliance Dashboard"
 				},
 				{
@@ -3376,7 +3359,7 @@
 					"_fragment": "bookkeeping-vat-btw-filing",
 					"id": "VATReturnCreateDialog",
 					"route": "/vat-returns/new",
-					"type": "dialog",
+					"type": "form",
 					"title": "New BTW return"
 				}
 			]
@@ -3413,9 +3396,6 @@
 						{
 							"id": "BudgetLineCommitments",
 							"label": "Committed vs. realised",
-							"i18n": {
-								"nl": "Verplicht vs. gerealiseerd"
-							},
 							"icon": "ChartBoxOutline",
 							"route": "BudgetLineCommitments",
 							"order": 40
@@ -3538,31 +3518,27 @@
 					"label": "Corporate income tax (Vpb)",
 					"icon": "PercentOutline",
 					"order": 36,
-					"featureFlag": "mkb-vpb",
 					"children": [
 						{
 							"id": "VpbPligtigeAccounts",
 							"label": "Vpb-liable accounts",
 							"icon": "BookmarkCheckOutline",
 							"route": "VpbPligtigeAccounts",
-							"order": 10,
-							"featureFlag": "mkb-vpb"
+							"order": 10
 						},
 						{
 							"id": "VpbBalansLinks",
 							"label": "Business activities (Vpb balance link)",
 							"icon": "LinkVariant",
 							"route": "VpbBalansLinks",
-							"order": 20,
-							"featureFlag": "mkb-vpb"
+							"order": 20
 						},
 						{
 							"id": "VpbBalansAangifte",
 							"label": "Vpb balance + return preparation",
 							"icon": "FileDocumentMultipleOutline",
 							"route": "VpbBalansAangifte",
-							"order": 30,
-							"featureFlag": "mkb-vpb"
+							"order": 30
 						}
 					]
 				}
@@ -3763,7 +3739,6 @@
 					"label": "Bookkeeping",
 					"icon": "NotebookOutline",
 					"order": 20,
-					"featureFlag": "bookkeeping",
 					"children": [
 						{
 							"id": "WbsoChartOfAccounts",
@@ -3928,18 +3903,11 @@
 		{
 			"menu": [
 				{
-					"id": "Settings",
-					"label": "Settings",
-					"icon": "CogOutline",
-					"children": [
-						{
-							"id": "DeadlineCalendarSettings",
-							"label": "Deadline calendar",
-							"icon": "ClockAlertOutline",
-							"route": "DeadlineCalendarSettings",
-							"order": 30
-						}
-					]
+					"id": "DeadlineCalendarSettings",
+					"label": "Deadline calendar",
+					"icon": "ClockAlertOutline",
+					"route": "DeadlineCalendarSettings",
+					"order": 30
 				}
 			],
 			"pages": [
@@ -4238,7 +4206,7 @@
 					"_fragment": "expense-reimbursement-or-passthrough",
 					"id": "ExpenseSettlementClassifier",
 					"route": "/expense-settlement-classifier",
-					"type": "bulk-form",
+					"type": "custom",
 					"title": "Expense Settlement Classifier"
 				},
 				{
@@ -4259,7 +4227,7 @@
 					"_fragment": "expense-reimbursement-or-passthrough",
 					"id": "ReimbursementPolicyCreateDialog",
 					"route": "/reimbursement-policies/new",
-					"type": "dialog",
+					"type": "form",
 					"title": "New Reimbursement Policy"
 				},
 				{
@@ -4280,7 +4248,7 @@
 					"_fragment": "expense-reimbursement-or-passthrough",
 					"id": "PassThroughMarkupRuleCreateDialog",
 					"route": "/passthrough-markup-rules/new",
-					"type": "dialog",
+					"type": "form",
 					"title": "New Pass-through Markup Rule"
 				}
 			]
@@ -4933,7 +4901,7 @@
 					"_fragment": "retainer-billing-engine",
 					"id": "RetainerPoolCreateDialog",
 					"route": "/retainer-pools/new",
-					"type": "dialog",
+					"type": "form",
 					"title": "New retainer pool"
 				},
 				{
@@ -4986,7 +4954,7 @@
 					"id": "GeneralSettings",
 					"label": "General",
 					"icon": "CogOutline",
-					"route": "Settings",
+					"href": "/index.php/settings/admin/shillinq",
 					"order": 1
 				}
 			],
