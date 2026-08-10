@@ -346,9 +346,11 @@ class WidgetApiController extends Controller
         // validates the per-business widget key that ships in the embedding
         // page), not validateAppointmentPayload(), and not
         // SlotService::getAvailableSlots(). A caller who knew any serviceId
-        // could therefore book a service the business never published.
-        // WidgetService::createAppointment() has always enforced this; it is
-        // simply not the implementation that is routed.
+        // could therefore book a service the business never published (#491).
+        // This is now the only implementation of the widget booking path: the
+        // unrouted WidgetService twin that also carried this check was deleted
+        // rather than adopted, because it created appointments as `confirmed`
+        // and would have bypassed bookings-confirm-flow entirely.
         if ($this->resolvePublicService(serviceId: $serviceId) === null) {
             return new JSONResponse(
                 data: [
