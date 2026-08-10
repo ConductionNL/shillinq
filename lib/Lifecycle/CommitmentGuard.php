@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-8
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the activation (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-8
  */
 class CommitmentGuard
 {
@@ -77,7 +77,7 @@ class CommitmentGuard
      *
      * @return bool True when the obligation may be activated.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-8
      */
     public function canActiveren(array $commitment): bool
     {

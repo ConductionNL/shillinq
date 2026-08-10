@@ -35,7 +35,7 @@ use RuntimeException;
  * Fail-closed denial for an auto-materialised commitment with insufficient
  * budget room and no override-mandate (REQ-VPL-010).
  *
- * @spec openspec/changes/verplichtingen-commitment-accounting/tasks.md#task-1
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
 class InsufficientCommitmentBudgetException extends RuntimeException
 {

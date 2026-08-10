@@ -36,7 +36,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-5
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -56,7 +56,7 @@ use Throwable;
 /**
  * CloudEvent emitter for the budget-impact + milestone-completed cross-app surface.
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-5
  */
 class BudgetImpactEmitter
 {
@@ -101,7 +101,7 @@ class BudgetImpactEmitter
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5-2
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-5-2
      */
     public function emitActivated(array $commitment, array $source=[]): void
     {
@@ -133,7 +133,7 @@ class BudgetImpactEmitter
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5-3
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-5-3
      */
     public function emitMilestoneCompleted(array $delivery): void
     {

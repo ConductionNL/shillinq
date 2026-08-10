@@ -37,7 +37,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-5
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -62,7 +62,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-5
  */
 class CommitmentTransitionListener implements IEventListener
 {
@@ -89,7 +89,7 @@ class CommitmentTransitionListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-5
      */
     public function handle(Event $event): void
     {

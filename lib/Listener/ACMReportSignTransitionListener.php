@@ -42,7 +42,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
+ * @spec openspec/specs/shillinq-delegate-signing/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -68,7 +68,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
+ * @spec openspec/specs/shillinq-delegate-signing/spec.md
  */
 class ACMReportSignTransitionListener implements IEventListener
 {
@@ -122,7 +122,7 @@ class ACMReportSignTransitionListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
+     * @spec openspec/specs/shillinq-delegate-signing/spec.md
      */
     public function handle(Event $event): void
     {

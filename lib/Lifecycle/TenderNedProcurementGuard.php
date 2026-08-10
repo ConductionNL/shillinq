@@ -33,7 +33,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-8
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -54,7 +54,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the transition (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-8
  */
 class TenderNedProcurementGuard
 {
@@ -101,7 +101,7 @@ class TenderNedProcurementGuard
      *
      * @return bool True when the award may be recorded.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-8
      */
     public function canGunnen(array $procurement): bool
     {
@@ -154,7 +154,7 @@ class TenderNedProcurementGuard
      *
      * @return bool True when the tender may be completed.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-8
      */
     public function canAfronden(array $procurement): bool
     {

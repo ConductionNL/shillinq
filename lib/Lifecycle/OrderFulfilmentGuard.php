@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-8
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
  *
  * Fail-closed: any unexpected exception denies the completion (CWE-863).
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-8
  */
 class OrderFulfilmentGuard
 {
@@ -72,7 +72,7 @@ class OrderFulfilmentGuard
      *
      * @return bool True when the delivery may be marked completed.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-8
      */
     public function canVoltooien(array $fulfilment): bool
     {

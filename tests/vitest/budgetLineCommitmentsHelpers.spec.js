@@ -7,7 +7,7 @@
  * response normalisation (authorised/committed/realised/free), currency
  * formatting, and the drilldown filter builder.
  *
- * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-011
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
 
 import { describe, it, expect } from 'vitest'

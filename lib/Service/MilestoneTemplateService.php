@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use RuntimeException;
  * and performs date/percentage arithmetic only, so it is fully unit-testable
  * without a Nextcloud runtime.
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-3
  */
 class MilestoneTemplateService
 {
@@ -84,7 +84,7 @@ class MilestoneTemplateService
      *
      * @throws \RuntimeException When the templates file is missing or malformed.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-3
      */
     public function getTemplate(string $assignmentType): array
     {
@@ -125,7 +125,7 @@ class MilestoneTemplateService
      * @throws \InvalidArgumentException When the dates are unparseable or end is not after start.
      * @throws \RuntimeException         When the templates file is missing or malformed.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-3
      */
     public function generatePlan(string $assignmentType, string $termStart, string $termEnd): array
     {
@@ -178,7 +178,7 @@ class MilestoneTemplateService
      *
      * @return float The summed percentage.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-8
      */
     public function sumPercentage(array $milestones): float
     {
@@ -204,7 +204,7 @@ class MilestoneTemplateService
      *
      * @return array<int, array<string, mixed>> Forecast entries: date, description, amount.
      *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-3
+     * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#task-3
      */
     public function buildCashflowForecast(float $contractValue, array $milestones): array
     {
