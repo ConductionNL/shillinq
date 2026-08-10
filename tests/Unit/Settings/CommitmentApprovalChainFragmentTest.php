@@ -113,8 +113,8 @@ final class CommitmentApprovalChainFragmentTest extends TestCase
         $lifecycle   = $this->verplichting()['x-openregister-lifecycle'];
         $transitions = ($lifecycle['transitions'] ?? []);
         self::assertArrayHasKey('goedkeuren', $transitions, 'goedkeuren transition must exist for the gate to bind to');
-        self::assertSame('in_goedkeuring', $transitions['goedkeuren']['from']);
-        self::assertSame('aangegaan', $transitions['goedkeuren']['to']);
+        self::assertSame('pendingApproval', $transitions['goedkeuren']['from']);
+        self::assertSame('committed', $transitions['goedkeuren']['to']);
 
     }//end testChainTargetsGoedkeurenTransition()
 

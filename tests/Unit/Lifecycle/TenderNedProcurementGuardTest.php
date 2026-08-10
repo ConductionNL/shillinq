@@ -221,7 +221,7 @@ class TenderNedProcurementGuardTest extends TestCase
     public function testCanAfrondenPermitsWithApprovedEindoplevering(): void
     {
         $stub = $this->buildObjectServiceStub(
-            [['deliveryType' => 'eindoplevering', 'status' => 'completed', 'approved' => true]]
+            [['deliveryType' => 'finalDelivery', 'status' => 'completed', 'approved' => true]]
         );
         $this->container->method('get')->willReturn($stub);
 
@@ -255,7 +255,7 @@ class TenderNedProcurementGuardTest extends TestCase
     public function testCanAfrondenDeniesWhenEindopleveringNotApproved(): void
     {
         $stub = $this->buildObjectServiceStub(
-            [['deliveryType' => 'eindoplevering', 'status' => 'in-progress', 'approved' => false]]
+            [['deliveryType' => 'finalDelivery', 'status' => 'in-progress', 'approved' => false]]
         );
         $this->container->method('get')->willReturn($stub);
 

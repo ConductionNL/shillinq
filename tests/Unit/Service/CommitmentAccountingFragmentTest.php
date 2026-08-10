@@ -188,7 +188,7 @@ final class CommitmentAccountingFragmentTest extends TestCase
         self::assertGreaterThanOrEqual(1, count($budgets));
 
         $soorten = array_map(static fn ($v) => $v['commitmentType'], $verplichtingen);
-        foreach (['inkooporder', 'raamovereenkomst', 'subsidiebeschikking'] as $expected) {
+        foreach (['purchaseOrder', 'frameworkAgreement', 'grantDecision'] as $expected) {
             self::assertContains($expected, $soorten, "Seed must include a $expected Commitment");
         }
 

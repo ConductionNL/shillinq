@@ -227,7 +227,7 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
             $this->entity('1201', [
                 'commitmentId'  => 'TN-2026-0001',
                 'milestoneId'      => 'M-Q1',
-                'deliveryType' => 'tussenoplevering',
+                'deliveryType' => 'partialDelivery',
                 'approved'     => true,
                 'evidence'   => [['documentId' => 'doc-1']],
             ]),
@@ -268,7 +268,7 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
             $this->entity('1201', [
                 'commitmentId'  => 'TN-2026-0001',
                 'milestoneId'      => 'M-EIND',
-                'deliveryType' => 'eindoplevering',
+                'deliveryType' => 'finalDelivery',
                 'approved'     => true,
                 'evidence'   => [['documentId' => 'doc-1']],
             ]),
@@ -308,7 +308,7 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
             $this->entity('1201', [
                 'commitmentId'  => 'TN-2026-0001',
                 'milestoneId'      => 'M-EIND',
-                'deliveryType' => 'eindoplevering',
+                'deliveryType' => 'finalDelivery',
                 'approved'     => false,
                 'evidence'   => [['documentId' => 'doc-1']],
             ]),
@@ -347,7 +347,7 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
             $this->entity('1201', [
                 'commitmentId'  => 'TN-2026-0001',
                 'milestoneId'      => 'M-EIND',
-                'deliveryType' => 'eindoplevering',
+                'deliveryType' => 'finalDelivery',
                 'approved'     => true,
             ]),
             'starten',
@@ -385,7 +385,7 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         $event = new ObjectTransitionedEvent(
             $this->entity('1089', ['status' => 'active']),
             'activeren',
-            'concept',
+            'draft',
             'completed',
             'admin',
             'shillinq',

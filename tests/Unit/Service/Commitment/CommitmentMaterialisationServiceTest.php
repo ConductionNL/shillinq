@@ -328,7 +328,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
                         'administrationId'   => 'adm-1',
                         'mandateCode'        => 'M-INKOOP-50K',
                         'maximumAmount'      => 10000000,
-                        'commitmentType' => ['inkooporder'],
+                        'commitmentType' => ['purchaseOrder'],
                         'isOverride'        => false,
                         'validFrom'         => '2020-01-01',
                         'validUntil'         => '2999-12-31',
@@ -344,7 +344,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
 
         self::assertNotNull($result);
         self::assertSame('PO-2026-0207', $result['sourceReference']);
-        self::assertSame('aangegaan', $result['status']);
+        self::assertSame('committed', $result['status']);
         self::assertSame(7500000, $result['totalAmountExclVat']);
 
         $regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'CommitmentLine'));
@@ -367,7 +367,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
             'administrationId'    => 'adm-1',
             'commitmentNumber' => 'PO-2026-0207',
             'sourceReference'      => 'PO-2026-0207',
-            'status'              => 'aangegaan',
+            'status'              => 'committed',
         ];
 
         $service = $this->buildService(
@@ -412,7 +412,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
                         // the budget check (this test is specifically about budget
                         // denial, not mandate denial).
                         'maximumAmount'      => 100000000,
-                        'commitmentType' => ['inkooporder'],
+                        'commitmentType' => ['purchaseOrder'],
                         'isOverride'        => false,
                         'validFrom'         => '2020-01-01',
                         'validUntil'         => '2999-12-31',
@@ -456,7 +456,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
                         'administrationId'   => 'adm-1',
                         'mandateCode'        => 'M-CFO-OVERRIDE',
                         'maximumAmount'      => 1000000000,
-                        'commitmentType' => ['inkooporder'],
+                        'commitmentType' => ['purchaseOrder'],
                         'isOverride'        => true,
                         'validFrom'         => '2020-01-01',
                         'validUntil'         => '2999-12-31',
@@ -469,7 +469,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $result = $service->materialiseFromPurchaseOrder(purchaseOrder: $this->purchaseOrder());
 
         self::assertNotNull($result);
-        self::assertSame('aangegaan', $result['status']);
+        self::assertSame('committed', $result['status']);
         self::assertNotEmpty($result['override_reden']);
         self::assertSame('M-CFO-OVERRIDE', $result['mandaat_toegepast']);
 
@@ -502,7 +502,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $result = $service->materialiseFromPurchaseOrder(purchaseOrder: $this->purchaseOrder());
 
         self::assertNotNull($result);
-        self::assertSame('in_goedkeuring', $result['status']);
+        self::assertSame('pendingApproval', $result['status']);
 
     }//end testNoSufficientMandateRoutesToInGoedkeuring()
 
@@ -521,7 +521,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
             'administrationId'   => 'adm-1',
             'mandateCode'        => 'M-DIRECTEUR-250K',
             'maximumAmount'      => 25000000,
-            'commitmentType' => ['inkooporder'],
+            'commitmentType' => ['purchaseOrder'],
             'isOverride'        => false,
             'validFrom'         => '2020-01-01',
             'validUntil'         => '2999-12-31',
@@ -543,7 +543,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $result = $service->materialiseFromPurchaseOrder(purchaseOrder: $this->purchaseOrder(['poNumber' => 'PO-2026-0231']));
 
         self::assertNotNull($result);
-        self::assertSame('aangegaan', $result['status']);
+        self::assertSame('committed', $result['status']);
 
         $regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'CommitmentLine'));
         self::assertCount(2, $regelSaves);
@@ -572,7 +572,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
                         'administrationId'   => 'adm-1',
                         'mandateCode'        => 'M-DIRECTEUR-250K',
                         'maximumAmount'      => 25000000,
-                        'commitmentType' => ['leasing', 'overig', 'huurovereenkomst'],
+                        'commitmentType' => ['leasing', 'other', 'rentalAgreement'],
                         'isOverride'        => false,
                         'validFrom'         => '2020-01-01',
                         'validUntil'         => '2999-12-31',
@@ -616,7 +616,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
             'administrationId'   => 'adm-1',
             'mandateCode'        => 'M-DIRECTEUR-250K',
             'maximumAmount'      => 25000000,
-            'commitmentType' => ['overig'],
+            'commitmentType' => ['other'],
             'isOverride'        => false,
             'validFrom'         => '2020-01-01',
             'validUntil'         => '2999-12-31',
@@ -646,7 +646,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $result = $service->materialiseFromContract(contract: $contract);
 
         self::assertNotNull($result);
-        self::assertSame('overig', $result['commitmentType']);
+        self::assertSame('other', $result['commitmentType']);
         $regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'CommitmentLine'));
         self::assertCount(2, $regelSaves);
         // EUR 20.000,00 = 2.000.000 cents, split evenly across 2026 + 2027.
