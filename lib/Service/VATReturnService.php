@@ -704,6 +704,42 @@ class VATReturnService
     }//end purgeChildren()
 
     /**
+     * Look a VATReturn up by id, returning null when it genuinely does not exist.
+     *
+     * This is the ONLY correct way to resolve a BtwAangifte by id. OpenRegister's
+     * `ObjectService::find()` is declared `: ?ObjectEntity` — null when the row
+     * genuinely does not exist, an ObjectEntity when it does, and NEVER an array.
+     * Every caller therefore has to normalise the entity before reading fields
+     * off it; callers that tested `is_array()` on the return value reported "not
+     * found" for every row that WAS found (see VATReturnController::show()).
+     *
+     * Exposed so HTTP callers can distinguish "absent" (404) from "present"
+     * without catching an exception, while `fetchReturn()` keeps the
+     * throw-on-missing contract the internal pipeline relies on.
+     *
+     * @param string $returnId VATReturn id.
+     *
+     * @return array<string,mixed>|null The VATReturn record, or null when absent.
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function findReturn(string $returnId): ?array
+    {
+        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+        $found         = $objectService
+            ->setRegister($this->register())
+            ->setSchema('BtwAangifte')
+            ->find($returnId);
+
+        if ($found === null) {
+            return null;
+        }
+
+        return $this->normaliseRow(row: $found, context: 'find('.$returnId.')');
+
+    }//end findReturn()
+
+    /**
      * Fetch a VATReturn by id.
      *
      * @param string $returnId VATReturn id.
@@ -712,22 +748,12 @@ class VATReturnService
      */
     private function fetchReturn(string $returnId): array
     {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $found         = $objectService
-            ->setRegister($this->register())
-            ->setSchema('BtwAangifte')
-            ->find($returnId);
-
-        // OpenRegister's find() is declared `: ?ObjectEntity` — null when the
-        // row genuinely does not exist, an ObjectEntity when it does, and NEVER
-        // an array. Testing `is_array()` therefore reported "not found" for
-        // every row that WAS found, which is the same bug as in saveObject()
-        // above: a real record, discarded because of its type.
-        if ($found === null) {
+        $record = $this->findReturn(returnId: $returnId);
+        if ($record === null) {
             throw new RuntimeException(sprintf('BtwAangifte %s not found', $returnId));
         }
 
-        return $this->normaliseRow(row: $found, context: 'find('.$returnId.')');
+        return $record;
 
     }//end fetchReturn()
 

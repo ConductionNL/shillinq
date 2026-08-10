@@ -377,10 +377,17 @@ final class VATReturnControllerTest extends TestCase
      */
     public function testShowReturnsReturnWithChildren(): void
     {
+        // The record itself is resolved through VATReturnService::findReturn(),
+        // which owns the ObjectEntity → array normalisation. This stub used to
+        // reach straight into a fake ObjectService whose find() handed back an
+        // ARRAY — a shape the real OpenRegister never produces (find() is
+        // `: ?ObjectEntity`), so the test agreed with the controller's broken
+        // `is_array()` check and both were wrong together.
+        $this->service->method('findReturn')
+            ->willReturn(['id' => 'ret-1', 'statusCode' => 'draft']);
         $this->withObjectService(
             $this->fakeObjectService(
                 [
-                    'BtwAangifte'      => [['id' => 'ret-1', 'statusCode' => 'draft']],
                     'VATDeclaration' => [['id' => 'd-1', 'returnId' => 'ret-1', 'type' => 'collected', 'taxRate' => 21.0]],
                     'VATLine'        => [['id' => 'l-1', 'returnId' => 'ret-1', 'type' => 'collected', 'taxRate' => 21.0]],
                 ]
@@ -546,13 +553,9 @@ final class VATReturnControllerTest extends TestCase
      */
     public function testDestroyDeletesDraft(): void
     {
-        $this->withObjectService(
-            $this->fakeObjectService(
-                [
-                    'BtwAangifte' => [['id' => 'ret-del', 'statusCode' => 'draft']],
-                ]
-            )
-        );
+        $this->service->method('findReturn')
+            ->willReturn(['id' => 'ret-del', 'statusCode' => 'draft']);
+        $this->withObjectService($this->fakeObjectService([]));
 
         $response = $this->controller->destroy(returnId: 'ret-del');
         self::assertSame(Http::STATUS_OK, $response->getStatus());
@@ -566,13 +569,9 @@ final class VATReturnControllerTest extends TestCase
      */
     public function testDestroyRejectsNonDraft(): void
     {
-        $this->withObjectService(
-            $this->fakeObjectService(
-                [
-                    'BtwAangifte' => [['id' => 'ret-submitted', 'statusCode' => 'submitted']],
-                ]
-            )
-        );
+        $this->service->method('findReturn')
+            ->willReturn(['id' => 'ret-submitted', 'statusCode' => 'submitted']);
+        $this->withObjectService($this->fakeObjectService([]));
 
         $response = $this->controller->destroy(returnId: 'ret-submitted');
         self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
