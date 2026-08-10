@@ -134,8 +134,6 @@ class WidgetService
      * @param string $administrationId The owning administration (tenant scope).
      *
      * @return array<int,array<string,mixed>> The public service list.
-     *
-     * @spec openspec/specs/bookings-self-service-widget/spec.md
      */
     public function listPublicServices(string $administrationId): array
     {
@@ -180,11 +178,7 @@ class WidgetService
             ];
 
             if ((bool) ($service['priceVisible'] ?? false) === true) {
-                // `basePrice` is the Service schema's required price field.
-                // `price` is a legacy spelling that older stored objects may
-                // still carry; read it only as a fallback. Reading `price`
-                // first published 0.00 for every catalogue-seeded service.
-                $public['price']    = (float) ($service['basePrice'] ?? $service['price'] ?? 0);
+                $public['price']    = (float) ($service['price'] ?? 0);
                 $public['currency'] = (string) ($service['currency'] ?? 'EUR');
             }
 
