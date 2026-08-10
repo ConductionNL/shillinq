@@ -27,7 +27,7 @@
         "icon": "CalendarOutline",
         "version": "0.1.0",
         "title": "Calendar",
-        "description": "Per-resource calendar carrying time-zone and weekly working-hours configuration. Introduced by bookings-resource-calendar (REQ-002). Each Calendar is bound to exactly one Resource via the resource FK. timeZone is an IANA identifier (default Europe/Amsterdam for Dutch context); workingHours is an optional JSON template keyed by weekday — null entries mean the resource is closed that day. Multi-tenant isolation via administrationId per ADR-005. Status follows the standard active → inactive → archived OR lifecycle.",
+        "description": "Per-resource calendar carrying time-zone and weekly working-hours configuration. Introduced by bookings-resource-calendar (REQ-002). Each Calendar is bound to exactly one Resource via the resource FK. timeZone is an IANA identifier (default Europe/Amsterdam for Dutch context); workingHours is an optional JSON template keyed by weekday — an OMITTED weekday means the resource is closed that day. Omit it, do not send null: OpenRegister's object validator reads JSON-Schema types and rejects null against type \"string\" regardless of the OpenAPI `nullable` keyword, and typing the weekday [\"string\",\"null\"] instead makes OpenRegister drop this schema entirely. Sending null is what dropped all three seeded Calendars (\"Property 'workingHours.saturday' should be type 'string' but is 'null'\") while their Bookings imported, leaving GET /api/v2/calendars empty and every GET /api/v2/calendars/{id} a 404. Multi-tenant isolation via administrationId per ADR-005. Status follows the standard active → inactive → archived OR lifecycle.",
         "x-schema-org": "schema:Schedule",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -393,9 +393,7 @@
         "tuesday": "09:00-17:00",
         "wednesday": "09:00-17:00",
         "thursday": "09:00-17:00",
-        "friday": "09:00-17:00",
-        "saturday": null,
-        "sunday": null
+        "friday": "09:00-17:00"
       },
       "status": "active"
     },
@@ -415,8 +413,7 @@
         "wednesday": "08:00-18:00",
         "thursday": "08:00-18:00",
         "friday": "08:00-18:00",
-        "saturday": "09:00-13:00",
-        "sunday": null
+        "saturday": "09:00-13:00"
       },
       "status": "active"
     },
@@ -436,8 +433,7 @@
         "wednesday": "10:00-18:00",
         "thursday": "10:00-18:00",
         "friday": "10:00-20:00",
-        "saturday": "10:00-16:00",
-        "sunday": null
+        "saturday": "10:00-16:00"
       },
       "status": "active"
     },
