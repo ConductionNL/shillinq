@@ -15,9 +15,6 @@ This specification defines the requirements for bookkeeping trial balance in the
 
 ## Requirements
 
-@e2e exclude unbuilt UI: trial balance drill-through page not yet implemented
-
-
 ### REQ-TB-001: The system SHALL produce a trial balance as a declarative aggregation over `GLLine`, not a PHP report builder
 
 The trial balance MUST be expressed as one (or composed three)

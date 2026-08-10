@@ -27,6 +27,9 @@
  * scaffolding is seeded so the IDOR-guarded endpoint resolves real data.
  *
  * @spec openspec/specs/bookkeeping-trial-balance/spec.md#req-tb-003
+ *
+ * @e2e openspec/specs/bookkeeping-trial-balance/spec.md#balanced-trial-balance-returns-no-invariant-error
+ * @e2e openspec/specs/bookkeeping-trial-balance/spec.md#a-valid-request-returns-rows-and-totals
  */
 
 import { test, expect, request as pwRequest } from '@playwright/test'

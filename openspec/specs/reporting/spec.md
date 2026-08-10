@@ -34,8 +34,6 @@ recorded in **Notes** below so it is decided rather than hidden.
 
 ## Requirements
 
-@e2e exclude covered by the existing shillinq Playwright suite for the reporting pages
-
 ### Requirement: REQ-RPT-001 — A single static catalogue SHALL be the source of truth for every report shillinq can produce
 
 `ReportCatalogue` MUST be the only registry of report types. Each entry MUST
