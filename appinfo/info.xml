@@ -26,7 +26,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.9.23</version>
+    <!-- 0.9.24: the commitment-domain Dutch -> English rename. The version bump is LOAD-BEARING, not
+         bookkeeping: Nextcloud only runs `repair-steps/post-migration` when the installed version differs
+         from the shipped one (Installer::installAppLastSteps guards the block with `$previousVersion !== ''`
+         and the upgrade only fires on a version change). Shipping MigrateCommitmentDomainToEnglish under an
+         unchanged 0.9.23 would register a data migration that never runs on any instance already at 0.9.23 —
+         a repair step that exists, is registered, and is dead. -->
+    <version>0.9.24</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -167,6 +173,18 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <repair-steps>
         <post-migration>
             <step>OCA\Shillinq\Repair\InitializeSettings</step>
+            <!-- MUST run immediately after InitializeSettings, which is what imports the register and therefore
+                 what CREATES the new English schemas (Commitment, CommitmentLine, ...). OpenRegister's importer
+                 resolves schemas by SLUG (ImportHandler::findByApplicationAndSlug), so the renamed slugs do not
+                 rename the existing schemas — they create new, empty ones and strand every stored Verplichting /
+                 Verplichtingsregel / Mandaat / ... object under a slug the app no longer asks for. The property
+                 renames do the same one field at a time: OpenRegister reads and writes only what the schema
+                 declares, so an undeclared `verplichtingsnummer` is invisible from the moment the rename ships —
+                 silently, on every existing install, with CI green. This step is the data migration that rename
+                 needs; without it the rename is data loss that passes CI. Idempotent, non-destructive (nothing is
+                 deleted and no legacy column is cleared), fail-soft per object. Ahead of every fold/backfill below
+                 so those steps see the English vocabulary. -->
+            <step>OCA\Shillinq\Repair\MigrateCommitmentDomainToEnglish</step>
             <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
             <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>
             <step>OCA\Shillinq\Repair\RetireCostProjectStep</step>
