@@ -152,10 +152,10 @@ final class CommitmentTransitionListenerTest extends TestCase
 
         $event = new ObjectCreatedEvent(
             $this->entity('1089', [
-                'bron'           => 'tenderned',
-                'bronReferentie' => 'TN-2026-0001',
+                'source'           => 'tenderned',
+                'sourceReference' => 'TN-2026-0001',
                 'status'         => 'active',
-                'bedrag'         => 50000.0,
+                'amount'         => 50000.0,
             ])
         );
 
@@ -179,9 +179,9 @@ final class CommitmentTransitionListenerTest extends TestCase
 
         $event = new ObjectCreatedEvent(
             $this->entity('1089', [
-                'bron'   => 'manual',
+                'source'   => 'manual',
                 'status' => 'active',
-                'bedrag' => 5000.0,
+                'amount' => 5000.0,
             ])
         );
 
@@ -205,9 +205,9 @@ final class CommitmentTransitionListenerTest extends TestCase
 
         $event = new ObjectCreatedEvent(
             $this->entity('1089', [
-                'bron'   => 'tenderned',
+                'source'   => 'tenderned',
                 'status' => 'concept',
-                'bedrag' => 5000.0,
+                'amount' => 5000.0,
             ])
         );
 
@@ -230,9 +230,9 @@ final class CommitmentTransitionListenerTest extends TestCase
 
         $event = new ObjectTransitionedEvent(
             $this->entity('1089', [
-                'bron'   => 'tenderned',
+                'source'   => 'tenderned',
                 'status' => 'active',
-                'bedrag' => 5000.0,
+                'amount' => 5000.0,
             ]),
             'activeren',
             'concept',
@@ -261,9 +261,9 @@ final class CommitmentTransitionListenerTest extends TestCase
 
         $event = new ObjectTransitionedEvent(
             $this->entity('1089', [
-                'bron'   => 'tenderned',
+                'source'   => 'tenderned',
                 'status' => 'concept',
-                'bedrag' => 5000.0,
+                'amount' => 5000.0,
             ]),
             'reactiveren',
             'active',
@@ -296,7 +296,7 @@ final class CommitmentTransitionListenerTest extends TestCase
 
         $event = new ObjectCreatedEvent(
             $this->entity('1090', [
-                'bron'   => 'tenderned',
+                'source'   => 'tenderned',
                 'status' => 'active',
             ])
         );

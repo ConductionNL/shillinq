@@ -226,10 +226,10 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         $event = new ObjectTransitionedEvent(
             $this->entity('1201', [
                 'commitmentId'  => 'TN-2026-0001',
-                'mijlpaalId'      => 'M-Q1',
-                'opleveringsType' => 'tussenoplevering',
-                'goedgekeurd'     => true,
-                'bewijsstukken'   => [['documentId' => 'doc-1']],
+                'milestoneId'      => 'M-Q1',
+                'deliveryType' => 'tussenoplevering',
+                'approved'     => true,
+                'evidence'   => [['documentId' => 'doc-1']],
             ]),
             'voltooien',
             'in-progress',
@@ -267,10 +267,10 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         $event = new ObjectTransitionedEvent(
             $this->entity('1201', [
                 'commitmentId'  => 'TN-2026-0001',
-                'mijlpaalId'      => 'M-EIND',
-                'opleveringsType' => 'eindoplevering',
-                'goedgekeurd'     => true,
-                'bewijsstukken'   => [['documentId' => 'doc-1']],
+                'milestoneId'      => 'M-EIND',
+                'deliveryType' => 'eindoplevering',
+                'approved'     => true,
+                'evidence'   => [['documentId' => 'doc-1']],
             ]),
             'voltooien',
             'in-progress',
@@ -283,7 +283,7 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         $listener->handle($event);
 
         $this->assertCount(1, $sync->syncCalls);
-        $this->assertSame('M-EIND', $sync->syncCalls[0]['mijlpaalId']);
+        $this->assertSame('M-EIND', $sync->syncCalls[0]['milestoneId']);
 
     }//end testApprovedEindopleveringTriggersSync()
 
@@ -307,10 +307,10 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         $event = new ObjectTransitionedEvent(
             $this->entity('1201', [
                 'commitmentId'  => 'TN-2026-0001',
-                'mijlpaalId'      => 'M-EIND',
-                'opleveringsType' => 'eindoplevering',
-                'goedgekeurd'     => false,
-                'bewijsstukken'   => [['documentId' => 'doc-1']],
+                'milestoneId'      => 'M-EIND',
+                'deliveryType' => 'eindoplevering',
+                'approved'     => false,
+                'evidence'   => [['documentId' => 'doc-1']],
             ]),
             'voltooien',
             'in-progress',
@@ -346,9 +346,9 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         $event = new ObjectTransitionedEvent(
             $this->entity('1201', [
                 'commitmentId'  => 'TN-2026-0001',
-                'mijlpaalId'      => 'M-EIND',
-                'opleveringsType' => 'eindoplevering',
-                'goedgekeurd'     => true,
+                'milestoneId'      => 'M-EIND',
+                'deliveryType' => 'eindoplevering',
+                'approved'     => true,
             ]),
             'starten',
             'planned',

@@ -424,18 +424,23 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
 
         // 1 Commitment + 1 update of the aanbesteding to in-uitvoering = 2 saves.
         $this->assertGreaterThanOrEqual(1, count($recorder->saves));
-        $verplichtingSave = null;
+        $commitmentSave = null;
         foreach ($recorder->saves as $save) {
             if ($save['schema'] === 'Commitment') {
-                $verplichtingSave = $save['object'];
+                $commitmentSave = $save['object'];
                 break;
             }
         }
-        $this->assertNotNull($verplichtingSave);
-        $this->assertSame('tenderned', $verplichtingSave['bron']);
-        $this->assertSame('TN-2026-0001', $verplichtingSave['bronReferentie']);
-        $this->assertSame('active', $verplichtingSave['status']);
-        $this->assertNotEmpty($verplichtingSave['mijlpalen']);
+        $this->assertNotNull($commitmentSave);
+        // Asserting the SAVED object, so these are our English Commitment
+        // property names. The $payload fixtures above deliberately keep
+        // TenderNed's own Dutch field names — that is the wire format the
+        // listener has to read, and an English payload here would test a
+        // shape TenderNed never sends.
+        $this->assertSame('tenderned', $commitmentSave['source']);
+        $this->assertSame('TN-2026-0001', $commitmentSave['sourceReference']);
+        $this->assertSame('active', $commitmentSave['status']);
+        $this->assertNotEmpty($commitmentSave['milestones']);
 
         // Budget impact event emitted.
         $this->assertCount(1, $dispatcher->events);
@@ -453,12 +458,12 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
     {
         $existing = [
             'commitmentNumber' => 'TN-TN-2026-0001',
-            'soort'               => 'inkooporder',
-            'bron'                => 'tenderned',
-            'bronReferentie'      => 'TN-2026-0001',
-            'status'              => 'active',
-            'bedrag'              => 50000.0,
-            'administrationId'    => 'adm-x',
+            'commitmentType'   => 'purchaseOrder',
+            'source'           => 'tenderned',
+            'sourceReference'  => 'TN-2026-0001',
+            'status'           => 'active',
+            'amount'           => 50000.0,
+            'administrationId' => 'adm-x',
         ];
         [$container, $recorder] = $this->containerAndRecorder([$existing]);
         [$listener, $dispatcher] = $this->listener($container, '30280353');

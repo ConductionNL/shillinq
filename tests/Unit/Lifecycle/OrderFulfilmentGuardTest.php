@@ -75,7 +75,7 @@ class OrderFulfilmentGuardTest extends TestCase
     {
         $opdracht = [
             'commitmentId' => 'vpl-1',
-            'mijlpaalId'     => 'MS-001',
+            'milestoneId'     => 'MS-001',
             'status'         => 'in-progress',
         ];
         $this->assertFalse($this->guard->canVoltooien($opdracht));
@@ -89,7 +89,7 @@ class OrderFulfilmentGuardTest extends TestCase
      */
     public function testEmptyBewijsstukkenDeniesCompletion(): void
     {
-        $opdracht = ['bewijsstukken' => []];
+        $opdracht = ['evidence' => []];
         $this->assertFalse($this->guard->canVoltooien($opdracht));
 
     }//end testEmptyBewijsstukkenDeniesCompletion()
@@ -101,7 +101,7 @@ class OrderFulfilmentGuardTest extends TestCase
      */
     public function testBewijsstukWithoutDocumentIdDeniesCompletion(): void
     {
-        $opdracht = ['bewijsstukken' => [['app' => 'docudesk', 'documentId' => '']]];
+        $opdracht = ['evidence' => [['app' => 'docudesk', 'documentId' => '']]];
         $this->assertFalse($this->guard->canVoltooien($opdracht));
 
     }//end testBewijsstukWithoutDocumentIdDeniesCompletion()
@@ -114,8 +114,8 @@ class OrderFulfilmentGuardTest extends TestCase
     public function testValidBewijsstukPermitsCompletion(): void
     {
         $opdracht = [
-            'bewijsstukken' => [
-                ['app' => 'docudesk', 'documentId' => 'doc-123', 'omschrijving' => 'Acceptatie-protocol'],
+            'evidence' => [
+                ['app' => 'docudesk', 'documentId' => 'doc-123', 'description' => 'Acceptatie-protocol'],
             ],
         ];
         $this->assertTrue($this->guard->canVoltooien($opdracht));
@@ -129,7 +129,7 @@ class OrderFulfilmentGuardTest extends TestCase
      */
     public function testScalarBewijsstukkenDeniesCompletion(): void
     {
-        $opdracht = ['bewijsstukken' => 'doc-123'];
+        $opdracht = ['evidence' => 'doc-123'];
         $this->assertFalse($this->guard->canVoltooien($opdracht));
 
     }//end testScalarBewijsstukkenDeniesCompletion()

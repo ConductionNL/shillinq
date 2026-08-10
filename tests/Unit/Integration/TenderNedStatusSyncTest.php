@@ -189,7 +189,7 @@ final class TenderNedStatusSyncTest extends TestCase
             new NullLogger()
         );
 
-        $result = $sync->syncCompletion(['mijlpaalId' => 'M-EIND']);
+        $result = $sync->syncCompletion(['milestoneId' => 'M-EIND']);
 
         $this->assertFalse($result);
 
@@ -208,7 +208,7 @@ final class TenderNedStatusSyncTest extends TestCase
             new NullLogger()
         );
 
-        $result = $sync->syncCompletion(['commitmentId' => 'TN-X', 'mijlpaalId' => 'M-EIND']);
+        $result = $sync->syncCompletion(['commitmentId' => 'TN-X', 'milestoneId' => 'M-EIND']);
 
         $this->assertFalse($result);
 
@@ -237,9 +237,9 @@ final class TenderNedStatusSyncTest extends TestCase
         $result = $sync->syncCompletion(
             [
                 'commitmentId'  => 'TN-X',
-                'mijlpaalId'      => 'M-EIND',
-                'opleveringsDatum' => '2026-12-15',
-                'bewijsstukken'   => [['documentId' => 'doc-1']],
+                'milestoneId'      => 'M-EIND',
+                'deliveryDate' => '2026-12-15',
+                'evidence'   => [['documentId' => 'doc-1']],
             ]
         );
 
@@ -270,9 +270,9 @@ final class TenderNedStatusSyncTest extends TestCase
         $result = $sync->syncCompletion(
             [
                 'commitmentId'   => 'TN-X',
-                'mijlpaalId'       => 'M-EIND',
-                'opleveringsDatum' => '2026-12-15',
-                'bewijsstukken'    => [['documentId' => 'doc-1']],
+                'milestoneId'       => 'M-EIND',
+                'deliveryDate' => '2026-12-15',
+                'evidence'    => [['documentId' => 'doc-1']],
             ]
         );
 
@@ -305,9 +305,9 @@ final class TenderNedStatusSyncTest extends TestCase
         $result = $sync->syncCompletion(
             [
                 'commitmentId'   => 'TN-X',
-                'mijlpaalId'       => 'M-EIND',
-                'opleveringsDatum' => '2026-12-15',
-                'bewijsstukken'    => [['documentId' => 'doc-1']],
+                'milestoneId'       => 'M-EIND',
+                'deliveryDate' => '2026-12-15',
+                'evidence'    => [['documentId' => 'doc-1']],
                 'administrationId' => 'adm-utrecht',
             ]
         );
@@ -353,9 +353,9 @@ final class TenderNedStatusSyncTest extends TestCase
         $result = $sync->syncCompletion(
             [
                 'commitmentId'   => 'TN-X',
-                'mijlpaalId'       => 'M-EIND',
-                'opleveringsDatum' => '2026-12-15',
-                'bewijsstukken'    => [],
+                'milestoneId'       => 'M-EIND',
+                'deliveryDate' => '2026-12-15',
+                'evidence'    => [],
             ]
         );
 

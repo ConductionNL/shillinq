@@ -91,11 +91,11 @@ final class PurchaseRequisitionFragmentTest extends TestCase
         $requisition = $this->fragment()['components']['schemas']['Requisition'];
         $properties  = $requisition['properties'];
 
-        foreach (['programma', 'boekjaar', 'totaalbedrag_excl_btw', 'soort', 'administrationId'] as $field) {
+        foreach (['programme', 'fiscalYear', 'totalAmountExclVat', 'commitmentType', 'administrationId'] as $field) {
             self::assertArrayHasKey($field, $properties, "Requisition must declare $field for BudgetBlocker reuse");
         }
 
-        foreach (['programma', 'boekjaar', 'soort'] as $required) {
+        foreach (['programme', 'fiscalYear', 'commitmentType'] as $required) {
             self::assertContains($required, $requisition['required']);
         }
 
@@ -182,7 +182,7 @@ final class PurchaseRequisitionFragmentTest extends TestCase
             }
 
             $contents = (string) file_get_contents($file->getPathname());
-            if (str_contains($contents, 'geautoriseerd_bedrag') === true
+            if (str_contains($contents, 'authorisedAmount') === true
                 || str_contains($contents, 'vrije_ruimte') === true
             ) {
                 $suspects[] = $file->getPathname();
@@ -247,7 +247,7 @@ final class PurchaseRequisitionFragmentTest extends TestCase
             );
 
             $sum = array_sum(array_map(static fn ($l) => $l['lineTotal'], $ownLines));
-            self::assertSame($requisition['totaalbedrag_excl_btw'], $sum, "Seeded totaalbedrag_excl_btw must equal the sum of its lines' lineTotal");
+            self::assertSame($requisition['totalAmountExclVat'], $sum, "Seeded totaalbedrag_excl_btw must equal the sum of its lines' lineTotal");
 
             if ($requisition['statusCode'] === 'approved') {
                 self::assertNotEmpty(
@@ -256,11 +256,11 @@ final class PurchaseRequisitionFragmentTest extends TestCase
                 );
             }
 
-            self::assertSame('5.1', $requisition['programma']);
-            self::assertSame(2026, $requisition['boekjaar']);
+            self::assertSame('5.1', $requisition['programme']);
+            self::assertSame(2026, $requisition['fiscalYear']);
             // Free room on the seeded Budget (5.1/2026) is 500,000.00 - 25,000.00 =
             // 475,000.00 EUR (47500000 cents); every seed Requisition must fit.
-            self::assertLessThanOrEqual(47500000, $requisition['totaalbedrag_excl_btw']);
+            self::assertLessThanOrEqual(47500000, $requisition['totalAmountExclVat']);
         }//end foreach
 
     }//end testSeedDataCoversLifecycleStates()

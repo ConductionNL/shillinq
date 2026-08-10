@@ -81,11 +81,11 @@ class CommitmentGuardTest extends TestCase
         return array_merge(
             [
                 'commitmentNumber' => 'VPL-2026-0001',
-                'kostenplaats'        => 'FAC-001',
-                'grootboekrekening'   => '4500',
-                'looptijdStart'       => '2026-02-01',
-                'looptijdEind'        => '2027-01-31',
-                'mijlpalen'           => [],
+                'costCentre'        => 'FAC-001',
+                'glAccount'   => '4500',
+                'termStart'       => '2026-02-01',
+                'termEnd'        => '2027-01-31',
+                'milestones'           => [],
             ],
             $overrides
         );
@@ -99,7 +99,7 @@ class CommitmentGuardTest extends TestCase
      */
     public function testMissingKostenplaatsDeniesActivation(): void
     {
-        $this->assertFalse($this->guard->canActiveren($this->verplichting(['kostenplaats' => ''])));
+        $this->assertFalse($this->guard->canActiveren($this->verplichting(['costCentre' => ''])));
 
     }//end testMissingKostenplaatsDeniesActivation()
 
@@ -110,7 +110,7 @@ class CommitmentGuardTest extends TestCase
      */
     public function testMissingGrootboekrekeningDeniesActivation(): void
     {
-        $this->assertFalse($this->guard->canActiveren($this->verplichting(['grootboekrekening' => ''])));
+        $this->assertFalse($this->guard->canActiveren($this->verplichting(['glAccount' => ''])));
 
     }//end testMissingGrootboekrekeningDeniesActivation()
 
@@ -133,7 +133,7 @@ class CommitmentGuardTest extends TestCase
     public function testMilestoneWithinTermPermitted(): void
     {
         $v = $this->verplichting(
-            ['mijlpalen' => [['mijlpaalId' => 'MS-001', 'datum' => '2026-08-01']]]
+            ['milestones' => [['milestoneId' => 'MS-001', 'date' => '2026-08-01']]]
         );
         $this->assertTrue($this->guard->canActiveren($v));
 
@@ -147,7 +147,7 @@ class CommitmentGuardTest extends TestCase
     public function testMilestoneBeforeStartDenied(): void
     {
         $v = $this->verplichting(
-            ['mijlpalen' => [['mijlpaalId' => 'MS-001', 'datum' => '2026-01-01']]]
+            ['milestones' => [['milestoneId' => 'MS-001', 'date' => '2026-01-01']]]
         );
         $this->assertFalse($this->guard->canActiveren($v));
 
@@ -161,7 +161,7 @@ class CommitmentGuardTest extends TestCase
     public function testMilestoneAfterEndDenied(): void
     {
         $v = $this->verplichting(
-            ['mijlpalen' => [['mijlpaalId' => 'MS-001', 'datum' => '2027-03-01']]]
+            ['milestones' => [['milestoneId' => 'MS-001', 'date' => '2027-03-01']]]
         );
         $this->assertFalse($this->guard->canActiveren($v));
 
@@ -176,9 +176,9 @@ class CommitmentGuardTest extends TestCase
     {
         $v = $this->verplichting(
             [
-                'mijlpalen' => [
-                    ['mijlpaalId' => 'MS-001', 'datum' => '2026-02-01'],
-                    ['mijlpaalId' => 'MS-002', 'datum' => '2027-01-31'],
+                'milestones' => [
+                    ['milestoneId' => 'MS-001', 'date' => '2026-02-01'],
+                    ['milestoneId' => 'MS-002', 'date' => '2027-01-31'],
                 ],
             ]
         );
@@ -195,9 +195,9 @@ class CommitmentGuardTest extends TestCase
     {
         $v = $this->verplichting(
             [
-                'looptijdStart' => '',
-                'looptijdEind'  => '',
-                'mijlpalen'     => [['mijlpaalId' => 'MS-001', 'datum' => '2099-01-01']],
+                'termStart' => '',
+                'termEnd'  => '',
+                'milestones'     => [['milestoneId' => 'MS-001', 'date' => '2099-01-01']],
             ]
         );
         $this->assertTrue($this->guard->canActiveren($v));

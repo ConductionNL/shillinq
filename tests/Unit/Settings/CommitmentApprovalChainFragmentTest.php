@@ -126,11 +126,11 @@ final class CommitmentApprovalChainFragmentTest extends TestCase
     public function testChainRoutesByRealAmountField(): void
     {
         $chain = $this->chain();
-        self::assertSame('totaalbedrag_excl_btw', $chain['amountField']);
+        self::assertSame('totalAmountExclVat', $chain['amountField']);
 
         $properties = ($this->verplichting()['properties'] ?? []);
-        self::assertArrayHasKey('totaalbedrag_excl_btw', $properties, 'amountField must name a real property');
-        self::assertSame('integer', $properties['totaalbedrag_excl_btw']['type']);
+        self::assertArrayHasKey('totalAmountExclVat', $properties, 'amountField must name a real property');
+        self::assertSame('integer', $properties['totalAmountExclVat']['type']);
 
     }//end testChainRoutesByRealAmountField()
 

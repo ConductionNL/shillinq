@@ -74,9 +74,9 @@ final class CommitmentAccountingFragmentTest extends TestCase
     public function testCommitmentDeclaresBronReferentie(): void
     {
         $verplichting = $this->fragment()['components']['schemas']['Commitment'];
-        self::assertArrayHasKey('bronReferentie', $verplichting['properties']);
-        self::assertTrue($verplichting['properties']['bronReferentie']['nullable'] ?? false);
-        self::assertArrayNotContains('bronReferentie', ($verplichting['required'] ?? []));
+        self::assertArrayHasKey('sourceReference', $verplichting['properties']);
+        self::assertTrue($verplichting['properties']['sourceReference']['nullable'] ?? false);
+        self::assertArrayNotContains('sourceReference', ($verplichting['required'] ?? []));
 
     }//end testCommitmentDeclaresBronReferentie()
 
@@ -110,11 +110,11 @@ final class CommitmentAccountingFragmentTest extends TestCase
         $agg = $regel['x-openregister-aggregations']['committedVsRealisedPerBudgetLine'];
         self::assertSame('CommitmentLine', $agg['source']);
         self::assertSame(
-            ['programma', 'kostenplaats', 'boekjaar', 'grootboekrekening'],
+            ['programme', 'costCentre', 'fiscalYear', 'glAccount'],
             $agg['groupBy']
         );
-        self::assertContains('restant_verplicht', $agg['sum']);
-        self::assertContains('gefactureerd_bedrag', $agg['sum']);
+        self::assertContains('remainingCommitted', $agg['sum']);
+        self::assertContains('invoicedAmount', $agg['sum']);
         self::assertSame('Budget', $agg['join']['through']);
 
     }//end testCommitmentLineDeclaresCommittedVsRealisedAggregation()
@@ -187,22 +187,22 @@ final class CommitmentAccountingFragmentTest extends TestCase
         self::assertGreaterThanOrEqual(3, count($verplichtingen));
         self::assertGreaterThanOrEqual(1, count($budgets));
 
-        $soorten = array_map(static fn ($v) => $v['soort'], $verplichtingen);
+        $soorten = array_map(static fn ($v) => $v['commitmentType'], $verplichtingen);
         foreach (['inkooporder', 'raamovereenkomst', 'subsidiebeschikking'] as $expected) {
             self::assertContains($expected, $soorten, "Seed must include a $expected Commitment");
         }
 
         foreach ($verplichtingen as $v) {
-            self::assertNotEmpty($v['bronReferentie'] ?? '', "Seeded Commitment {$v['commitmentNumber']} must carry a bronReferentie");
+            self::assertNotEmpty($v['sourceReference'] ?? '', "Seeded Commitment {$v['commitmentNumber']} must carry a bronReferentie");
             $ownRegels = array_filter($regels, static fn ($r) => $r['verplichting'] === $v['commitmentNumber']);
             self::assertNotEmpty($ownRegels, "Seeded Commitment {$v['commitmentNumber']} must have at least one CommitmentLine");
 
             foreach ($ownRegels as $regel) {
                 $matchingBudget = array_filter(
                     $budgets,
-                    static fn ($b) => $b['programmaCode'] === $regel['programma']
-                        && $b['boekjaar'] === $regel['boekjaar']
-                        && $b['kostenplaats'] === $regel['kostenplaats']
+                    static fn ($b) => $b['programmaCode'] === $regel['programme']
+                        && $b['fiscalYear'] === $regel['fiscalYear']
+                        && $b['costCentre'] === $regel['costCentre']
                 );
                 $slug           = $regel['@self']['slug'];
                 self::assertNotEmpty($matchingBudget, "Regel $slug must have a matching seeded Budget");

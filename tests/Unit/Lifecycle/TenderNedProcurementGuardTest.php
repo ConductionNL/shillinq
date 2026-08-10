@@ -167,7 +167,7 @@ class TenderNedProcurementGuardTest extends TestCase
     public function testCanGunnenDeniesWithoutSupplier(): void
     {
         $this->assertFalse(
-            $this->guard->canGunnen(['aanbestedingId' => 'TN-1', 'contractWaarde' => 1000.0])
+            $this->guard->canGunnen(['aanbestedingId' => 'TN-1', 'contractValue' => 1000.0])
         );
 
     }//end testCanGunnenDeniesWithoutSupplier()
@@ -181,7 +181,7 @@ class TenderNedProcurementGuardTest extends TestCase
     {
         $this->assertFalse(
             $this->guard->canGunnen(
-                ['aanbestedingId' => 'TN-1', 'gegundeLeverancier' => '76741850 Conduction B.V.', 'contractWaarde' => 0]
+                ['aanbestedingId' => 'TN-1', 'awardedSupplier' => '76741850 Conduction B.V.', 'contractValue' => 0]
             )
         );
 
@@ -196,7 +196,7 @@ class TenderNedProcurementGuardTest extends TestCase
     {
         $this->assertTrue(
             $this->guard->canGunnen(
-                ['aanbestedingId' => 'TN-1', 'gegundeLeverancier' => '76741850 Conduction B.V.', 'contractWaarde' => 50000.0]
+                ['aanbestedingId' => 'TN-1', 'awardedSupplier' => '76741850 Conduction B.V.', 'contractValue' => 50000.0]
             )
         );
 
@@ -221,7 +221,7 @@ class TenderNedProcurementGuardTest extends TestCase
     public function testCanAfrondenPermitsWithApprovedEindoplevering(): void
     {
         $stub = $this->buildObjectServiceStub(
-            [['opleveringsType' => 'eindoplevering', 'status' => 'completed', 'goedgekeurd' => true]]
+            [['deliveryType' => 'eindoplevering', 'status' => 'completed', 'approved' => true]]
         );
         $this->container->method('get')->willReturn($stub);
 
@@ -255,7 +255,7 @@ class TenderNedProcurementGuardTest extends TestCase
     public function testCanAfrondenDeniesWhenEindopleveringNotApproved(): void
     {
         $stub = $this->buildObjectServiceStub(
-            [['opleveringsType' => 'eindoplevering', 'status' => 'in-progress', 'goedgekeurd' => false]]
+            [['deliveryType' => 'eindoplevering', 'status' => 'in-progress', 'approved' => false]]
         );
         $this->container->method('get')->willReturn($stub);
 
