@@ -3,7 +3,7 @@
 /**
  * Budget Impact Emitter Service.
  *
- * REQ-007 — on activation of a `bron: tenderned` Verplichting, publish an
+ * REQ-007 — on activation of a `source: tenderned` Commitment, publish an
  * `obligation.activated` CloudEvent so launchpad's budget-utilisation widget
  * can reflect the new committed expense within 60 seconds.
  *
@@ -12,8 +12,8 @@
  * launchpad listener, which lives in its own app and is NOT a shillinq
  * concern). The emitter only:
  *
- *  1. Shapes a deterministic CloudEvent payload (contractWaarde, period,
- *     kostenplaats, dossier URL, idempotency key on bronReferentie).
+ *  1. Shapes a deterministic CloudEvent payload (contractValue, period,
+ *     costCentre, dossier URL, idempotency key on sourceReference).
  *  2. Dispatches a generic `GenericEvent` carrying the payload so the
  *     cross-app subscriber (or test harness) can pick it up without a
  *     shillinq-owned event class. Wrapping in a typed class is reserved
@@ -91,29 +91,29 @@ class BudgetImpactEmitter
     /**
      * Emit the `obligation.activated` CloudEvent (REQ-007).
      *
-     * Idempotency: subscribers MUST treat `bronReferentie` + `eventName`
+     * Idempotency: subscribers MUST treat `sourceReference` + `eventName`
      * as the dedup key so retries from the listener (after a network
      * failure on the openconnector outbound source) do not double-count
      * the committed expense.
      *
-     * @param array<string, mixed> $verplichting Activated Verplichting payload.
+     * @param array<string, mixed> $commitment Activated Commitment payload.
      * @param array<string, mixed> $source       Source TenderNedAanbesteding payload (dossier URL).
      *
      * @return void
      *
      * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5-2
      */
-    public function emitActivated(array $verplichting, array $source=[]): void
+    public function emitActivated(array $commitment, array $source=[]): void
     {
         $payload = [
             'eventName'        => self::EVENT_OBLIGATION_ACTIVATED,
-            'bronReferentie'   => (string) ($verplichting['bronReferentie'] ?? ''),
-            'contractWaarde'   => (float) ($verplichting['bedrag'] ?? 0),
-            'kostenplaats'     => (string) ($verplichting['kostenplaats'] ?? ''),
-            'looptijdStart'    => (string) ($verplichting['looptijdStart'] ?? ''),
-            'looptijdEind'     => (string) ($verplichting['looptijdEind'] ?? ''),
+            'sourceReference'   => (string) ($commitment['sourceReference'] ?? ''),
+            'contractValue'   => (float) ($commitment['amount'] ?? 0),
+            'costCentre'     => (string) ($commitment['costCentre'] ?? ''),
+            'termStart'    => (string) ($commitment['termStart'] ?? ''),
+            'termEnd'     => (string) ($commitment['termEnd'] ?? ''),
             'tenderNedUrl'     => (string) ($source['tenderNedUrl'] ?? ''),
-            'administrationId' => (string) ($verplichting['administrationId'] ?? ''),
+            'administrationId' => (string) ($commitment['administrationId'] ?? ''),
             'emittedAt'        => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
         ];
 
@@ -124,33 +124,33 @@ class BudgetImpactEmitter
     /**
      * Emit the `milestone.completed` CloudEvent (Task 5.3 / REQ-005).
      *
-     * Carries the OpdrachtUitvoering identifier, the linked obligation,
-     * the approval marker, and the bewijsstuk count so downstream
+     * Carries the OrderFulfilment identifier, the linked obligation,
+     * the approval marker, and the evidenceItem count so downstream
      * subscribers (audit-trail consumer + budget-utilisation widget) can
      * reconcile without re-fetching the OR record.
      *
-     * @param array<string, mixed> $oplevering Completed OpdrachtUitvoering payload.
+     * @param array<string, mixed> $delivery Completed OrderFulfilment payload.
      *
      * @return void
      *
      * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5-3
      */
-    public function emitMilestoneCompleted(array $oplevering): void
+    public function emitMilestoneCompleted(array $delivery): void
     {
-        $bewijsstukken = ($oplevering['bewijsstukken'] ?? []);
-        if (is_array($bewijsstukken) === false) {
-            $bewijsstukken = [];
+        $evidence = ($delivery['evidence'] ?? []);
+        if (is_array($evidence) === false) {
+            $evidence = [];
         }
 
         $payload = [
             'eventName'        => self::EVENT_MILESTONE_COMPLETED,
-            'verplichtingId'   => (string) ($oplevering['verplichtingId'] ?? ''),
-            'mijlpaalId'       => (string) ($oplevering['mijlpaalId'] ?? ''),
-            'opleveringsType'  => (string) ($oplevering['opleveringsType'] ?? ''),
-            'opleveringsDatum' => (string) ($oplevering['opleveringsDatum'] ?? ''),
-            'goedgekeurd'      => (bool) ($oplevering['goedgekeurd'] ?? false),
-            'bewijsstukCount'  => count($bewijsstukken),
-            'administrationId' => (string) ($oplevering['administrationId'] ?? ''),
+            'commitmentId'   => (string) ($delivery['commitmentId'] ?? ''),
+            'milestoneId'       => (string) ($delivery['milestoneId'] ?? ''),
+            'deliveryType'  => (string) ($delivery['deliveryType'] ?? ''),
+            'deliveryDate' => (string) ($delivery['deliveryDate'] ?? ''),
+            'approved'      => (bool) ($delivery['approved'] ?? false),
+            'evidenceCount'  => count($evidence),
+            'administrationId' => (string) ($delivery['administrationId'] ?? ''),
             'emittedAt'        => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('c'),
         ];
 

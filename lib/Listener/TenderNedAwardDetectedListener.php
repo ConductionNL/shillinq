@@ -4,7 +4,7 @@
  * TenderNed Award Detected Listener.
  *
  * REQ-002 — auto-promote an awarded TenderNed dossier into an active
- * Verplichting when the winning KvK matches the tenant organisation.
+ * Commitment when the winning KvK matches the tenant organisation.
  *
  * The listener is the in-app side of the `tenderned.award.detected`
  * CloudEvent contract documented in design.md D4. Openconnector polls
@@ -13,7 +13,7 @@
  * `TenderNedAanbesteding` OR record. OR fires
  * `ObjectCreatedEvent` / `ObjectTransitionedEvent` on every write, and
  * THIS listener turns "status == gegund + matching tenant KvK" into an
- * idempotent Verplichting promotion + audit-trail entry.
+ * idempotent Commitment promotion + audit-trail entry.
  *
  * Two surfaces:
  *
@@ -28,12 +28,12 @@
  *  2. The new status is `gegund` with `contractWaarde >= 1`.
  *  3. The `gegundeLeverancier` KvK prefix matches the configured tenant
  *     KvK (`shillinq` app config key `tenant_kvk`).
- *  4. No Verplichting with the same `bronReferentie` exists yet
+ *  4. No Commitment with the same `sourceReference` exists yet
  *     (idempotency contract from the spec scenario).
  *
- * On match the listener creates a new Verplichting with `bron=tenderned`,
+ * On match the listener creates a new Commitment with `source=tenderned`,
  * `status=active`, and a milestone plan generated via
- * `MilestoneTemplateService` (REQ-003), then sets the aanbesteding to
+ * `MilestoneTemplateService` (REQ-003), then sets the procurement to
  * `in-uitvoering`. The cross-app budget-impact CloudEvent (REQ-007) is
  * emitted by `BudgetImpactEmitter` from the same handler.
  *
@@ -228,7 +228,7 @@ class TenderNedAwardDetectedListener implements IEventListener
     }//end isAwardEligible()
 
     /**
-     * Promote the aanbesteding to a Verplichting (REQ-002 + REQ-003 + REQ-007).
+     * Promote the procurement to a Commitment (REQ-002 + REQ-003 + REQ-007).
      *
      * @param array<string, mixed> $payload Aanbesteding payload.
      *
@@ -236,8 +236,11 @@ class TenderNedAwardDetectedListener implements IEventListener
      */
     private function promote(array $payload): void
     {
-        $aanbestedingId = (string) ($payload['aanbestedingId'] ?? '');
-        if ($aanbestedingId === '') {
+        // `aanbestedingId` is TenderNed's OWN field name on the inbound event.
+        // It stays Dutch deliberately — this is an external wire format we do
+        // not control, and renaming the lookup key would simply never match.
+        $procurementId = (string) ($payload['aanbestedingId'] ?? '');
+        if ($procurementId === '') {
             return;
         }
 
@@ -245,88 +248,97 @@ class TenderNedAwardDetectedListener implements IEventListener
         if ($objectService === null) {
             $this->logger->info(
                 'TenderNedAwardDetectedListener: OR ObjectService unavailable — skipping promotion',
-                ['aanbestedingId' => $aanbestedingId]
+                ['procurementId' => $procurementId]
             );
             return;
         }
 
-        $existing = $this->findExistingByBronReferentie(
+        $existing = $this->findExistingBySourceReference(
             objectService: $objectService,
-            bronReferentie: $aanbestedingId
+            sourceReference: $procurementId
         );
 
         if ($existing !== null) {
             // REQ-002 idempotency: an obligation already exists for this
-            // aanbestedingId. Nothing to do beyond re-emitting the budget
+            // procurementId. Nothing to do beyond re-emitting the budget
             // impact CloudEvent (in case launchpad missed the original).
-            $this->budget->emitActivated(verplichting: $existing, source: $payload);
+            $this->budget->emitActivated(commitment: $existing, source: $payload);
             return;
         }
 
         $plan = $this->safeGeneratePlan(
-            opdrachttype: (string) ($payload['opdrachttype'] ?? 'other'),
-            looptijdStart: (string) ($payload['looptijdStart'] ?? ''),
-            looptijdEind: (string) ($payload['looptijdEind'] ?? '')
+            assignmentType: (string) ($payload['opdrachttype'] ?? 'other'),
+            termStart: (string) ($payload['looptijdStart'] ?? ''),
+            termEnd: (string) ($payload['looptijdEind'] ?? '')
         );
 
-        // `verplichtingsnummer` and `soort` are REQUIRED by the schema's owning
-        // fragment (bookkeeping-verplichtingenadministratie.json). This write
-        // previously used the spelling `verplichtingNummer` and omitted `soort`
-        // entirely, so every award produced a rejected object — and because the
-        // catch below is fail-soft, TenderNed award detection silently created
-        // nothing at all rather than reporting a fault (shillinq#485).
-        $verplichting = [
-            'verplichtingsnummer' => 'TN-'.$aanbestedingId,
-            'soort'               => 'inkooporder',
-            'omschrijving'        => (string) ($payload['titel'] ?? $aanbestedingId),
-            'bron'                => 'tenderned',
-            'bronReferentie'      => $aanbestedingId,
-            'bedrag'              => (float) ($payload['contractWaarde'] ?? 0),
-            'looptijdStart'       => (string) ($payload['looptijdStart'] ?? ''),
-            'looptijdEind'        => (string) ($payload['looptijdEind'] ?? ''),
-            'mijlpalen'           => $plan,
-            'status'              => 'active',
-            'administrationId'    => (string) ($payload['administrationId'] ?? ''),
+        // WHY THE TWO SIDES OF THIS ARRAY SPEAK DIFFERENT LANGUAGES.
+        //
+        // The KEYS are our Commitment schema and are English. The `$payload`
+        // lookups on the right are TenderNed's own event payload — `titel`,
+        // `contractWaarde`, `looptijdStart` are the field names that external
+        // system actually sends. Those stay Dutch on purpose: they are a wire
+        // format we do not own, and anglicising them here would simply stop
+        // matching, yielding an empty commitment rather than an error.
+        //
+        // `commitmentNumber` and `commitmentType` are REQUIRED by the schema's
+        // owning fragment. This write previously used `verplichtingNummer` and
+        // omitted the type entirely, so every award produced a rejected object
+        // — and because the catch below is fail-soft, TenderNed award detection
+        // silently created nothing at all rather than reporting a fault
+        // (shillinq#485).
+        $commitment = [
+            'commitmentNumber' => 'TN-'.$procurementId,
+            'commitmentType'   => 'purchaseOrder',
+            'description'      => (string) ($payload['titel'] ?? $procurementId),
+            'source'           => 'tenderned',
+            'sourceReference'  => $procurementId,
+            'amount'           => (float) ($payload['contractWaarde'] ?? 0),
+            'termStart'        => (string) ($payload['looptijdStart'] ?? ''),
+            'termEnd'          => (string) ($payload['looptijdEind'] ?? ''),
+            'milestones'       => $plan,
+            'status'           => 'active',
+            'administrationId' => (string) ($payload['administrationId'] ?? ''),
         ];
 
         try {
             $objectService
                 ->setRegister(register: $this->getRegisterSlug())
-                ->setSchema(schema: 'Verplichting')
-                ->saveObject(object: $verplichting);
+                ->setSchema(schema: 'Commitment')
+                ->saveObject(object: $commitment);
         } catch (Throwable $e) {
             $this->logger->warning(
                 'TenderNedAwardDetectedListener: saveObject failed — fail-soft',
-                ['aanbestedingId' => $aanbestedingId, 'exception' => $e->getMessage()]
+                ['procurementId' => $procurementId, 'exception' => $e->getMessage()]
             );
             return;
         }
 
-        // Move the aanbesteding to in-uitvoering so it surfaces in the
+        // Move the procurement to in-uitvoering so it surfaces in the
         // execution view. Fail-soft if the update fails — the obligation
         // has been created and the next polling tick will re-attempt.
         try {
             $payload['status']         = 'in-uitvoering';
-            $payload['verplichtingId'] = 'TN-'.$aanbestedingId;
+            $payload['commitmentId'] = 'TN-'.$procurementId;
             $objectService
                 ->setRegister(register: $this->getRegisterSlug())
-                ->setSchema(schema: 'TenderNedAanbesteding')
+                ->setSchema(schema: 'TenderNedProcurement')
                 ->saveObject(object: $payload);
         } catch (Throwable $e) {
             $this->logger->info(
-                'TenderNedAwardDetectedListener: failed to bump aanbesteding to in-uitvoering',
-                ['aanbestedingId' => $aanbestedingId, 'exception' => $e->getMessage()]
+                'TenderNedAwardDetectedListener: failed to bump procurement to in-uitvoering',
+                ['procurementId' => $procurementId, 'exception' => $e->getMessage()]
             );
         }//end try
 
-        $this->budget->emitActivated(verplichting: $verplichting, source: $payload);
+        $this->budget->emitActivated(commitment: $commitment, source: $payload);
 
     }//end promote()
 
     /**
      * Generate the milestone plan, catching invalid-date exceptions so a
      * missing looptijd does not block the promotion (the operator can
-     * enrich the term in the Verplichting detail view later).
+     * enrich the term in the Commitment detail view later).
      *
      * @param string $opdrachttype  Contract type.
      * @param string $looptijdStart Term start.
@@ -334,17 +346,17 @@ class TenderNedAwardDetectedListener implements IEventListener
      *
      * @return array<int, array<string, mixed>> Milestone plan, possibly empty.
      */
-    private function safeGeneratePlan(string $opdrachttype, string $looptijdStart, string $looptijdEind): array
+    private function safeGeneratePlan(string $assignmentType, string $termStart, string $termEnd): array
     {
-        if ($looptijdStart === '' || $looptijdEind === '') {
+        if ($termStart === '' || $termEnd === '') {
             return [];
         }
 
         try {
             return $this->templates->generatePlan(
-                opdrachttype: $opdrachttype,
-                looptijdStart: $looptijdStart,
-                looptijdEind: $looptijdEind
+                assignmentType: $assignmentType,
+                termStart: $termStart,
+                termEnd: $termEnd
             );
         } catch (Throwable $e) {
             $this->logger->info(
@@ -357,24 +369,24 @@ class TenderNedAwardDetectedListener implements IEventListener
     }//end safeGeneratePlan()
 
     /**
-     * Look up an existing Verplichting by bronReferentie.
+     * Look up an existing Commitment by sourceReference.
      *
      * @param object $objectService  OR ObjectService.
-     * @param string $bronReferentie TenderNed aanbestedingId.
+     * @param string $sourceReference TenderNed procurementId.
      *
      * @return array<string, mixed>|null
      */
-    private function findExistingByBronReferentie(object $objectService, string $bronReferentie): ?array
+    private function findExistingBySourceReference(object $objectService, string $sourceReference): ?array
     {
         try {
             $rows = $objectService
                 ->setRegister(register: $this->getRegisterSlug())
-                ->setSchema(schema: 'Verplichting')
+                ->setSchema(schema: 'Commitment')
                 ->findAll(
                     [
                         'filters' => [
                             'bron'           => 'tenderned',
-                            'bronReferentie' => $bronReferentie,
+                            'sourceReference' => $sourceReference,
                         ],
                     ]
                 );
@@ -437,9 +449,9 @@ class TenderNedAwardDetectedListener implements IEventListener
     private function isAanbestedingSchema(string $schema): bool
     {
         $normalised = strtolower(trim($schema));
-        return ($normalised === 'tenderedaanbesteding'
-            || $normalised === 'tendernedaanbesteding'
-            || str_ends_with(haystack: $normalised, needle: 'tendernedaanbesteding'));
+        return ($normalised === 'tenderedprocurement'
+            || $normalised === 'tendernedprocurement'
+            || str_ends_with(haystack: $normalised, needle: 'tendernedprocurement'));
 
     }//end isAanbestedingSchema()
 }//end class

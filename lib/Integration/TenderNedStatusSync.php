@@ -3,7 +3,7 @@
 /**
  * TenderNed Status Sync Integration.
  *
- * REQ-006 — when an aanbestedende dienst approves the eindoplevering of a
+ * REQ-006 — when an aanbestedende dienst approves the finalDelivery of a
  * `bron: tenderned` obligation, send a status update to TenderNed via
  * openconnector so the public dossier reflects completion
  * (Aanbestedingswet 2012 artikel 2.135). Vendors (inschrijvers) cannot
@@ -26,7 +26,7 @@
  *
  * Authorisation is checked here defensively in addition to the
  * declarative RBAC + TenderNedProcurementGuard upstream: the
- * `gegundeLeverancier` of the linked aanbesteding must match the tenant
+ * `awardedSupplier` of the linked procurement must match the tenant
  * KvK before the call is allowed (vendors cannot sync; only the
  * aanbestedende dienst can — see design D6).
  *
@@ -97,48 +97,48 @@ class TenderNedStatusSync
     }//end __construct()
 
     /**
-     * Sync the completion of an eindoplevering back to TenderNed (REQ-006).
+     * Sync the completion of an finalDelivery back to TenderNed (REQ-006).
      *
      * Called by `OrderFulfilmentTransitionListener` when the approved
-     * eindoplevering for a `bron: tenderned` obligation transitions to
+     * finalDelivery for a `bron: tenderned` obligation transitions to
      * `completed`. Returns true when the outbound call was attempted (the
      * live transport may still fail downstream — the contract guarantees
      * a "best-effort" send + structured log only).
      *
-     * @param array<string, mixed> $oplevering Completed OpdrachtUitvoering payload.
+     * @param array<string, mixed> $delivery Completed OrderFulfilment payload.
      *
      * @return bool True when a sync attempt was made; false when ineligible.
      *
      * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-6
      */
-    public function syncCompletion(array $oplevering): bool
+    public function syncCompletion(array $delivery): bool
     {
         try {
-            $verplichtingId = trim((string) ($oplevering['verplichtingId'] ?? ''));
-            if ($verplichtingId === '') {
+            $commitmentId = trim((string) ($delivery['commitmentId'] ?? ''));
+            if ($commitmentId === '') {
                 return false;
             }
 
-            $aanbesteding = $this->resolveAanbestedingFor(verplichtingId: $verplichtingId);
-            if ($aanbesteding === null) {
+            $procurement = $this->resolveAanbestedingFor(commitmentId: $commitmentId);
+            if ($procurement === null) {
                 $this->logger->info(
                     'TenderNedStatusSync: no TenderNed dossier linked — skipping sync',
-                    ['verplichtingId' => $verplichtingId]
+                    ['commitmentId' => $commitmentId]
                 );
                 return false;
             }
 
-            if ($this->isAanbestedendeDienst(aanbesteding: $aanbesteding) === false) {
+            if ($this->isAanbestedendeDienst(procurement: $procurement) === false) {
                 // Vendor side cannot push completion to the public dossier (REQ-006).
                 $this->logger->info(
                     'TenderNedStatusSync: tenant is not the aanbestedende dienst — sync denied (REQ-006)',
-                    ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+                    ['procurementId' => ($procurement['procurementId'] ?? 'unknown')]
                 );
                 return false;
             }
 
-            $payload = $this->buildPayload(aanbesteding: $aanbesteding, oplevering: $oplevering);
-            $this->send(aanbesteding: $aanbesteding, payload: $payload);
+            $payload = $this->buildPayload(procurement: $procurement, delivery: $delivery);
+            $this->send(procurement: $procurement, payload: $payload);
             return true;
         } catch (Throwable $e) {
             // REQ-006 fail-soft contract: a sync failure must not fail the
@@ -153,13 +153,13 @@ class TenderNedStatusSync
     }//end syncCompletion()
 
     /**
-     * Resolve the TenderNedAanbesteding linked to a Verplichting.
+     * Resolve the TenderNedProcurement linked to a Commitment.
      *
-     * @param string $verplichtingId The linked obligation identifier.
+     * @param string $commitmentId The linked obligation identifier.
      *
      * @return array<string, mixed>|null
      */
-    private function resolveAanbestedingFor(string $verplichtingId): ?array
+    private function resolveAanbestedingFor(string $commitmentId): ?array
     {
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
@@ -171,10 +171,10 @@ class TenderNedStatusSync
         try {
             $rows = $objectService
                 ->setRegister(register: $this->getRegisterSlug())
-                ->setSchema(schema: 'TenderNedAanbesteding')
+                ->setSchema(schema: 'TenderNedProcurement')
                 ->findAll(
                     [
-                        'filters' => ['verplichtingId' => $verplichtingId],
+                        'filters' => ['commitmentId' => $commitmentId],
                     ]
                 );
         } catch (Throwable $e) {
@@ -198,11 +198,11 @@ class TenderNedStatusSync
     /**
      * Check whether the tenant is the aanbestedende dienst on the dossier.
      *
-     * @param array<string, mixed> $aanbesteding TenderNedAanbesteding payload.
+     * @param array<string, mixed> $procurement TenderNedProcurement payload.
      *
      * @return bool
      */
-    private function isAanbestedendeDienst(array $aanbesteding): bool
+    private function isAanbestedendeDienst(array $procurement): bool
     {
         $tenantKvk = trim(
             $this->appConfig->getValueString(Application::APP_ID, 'tenant_kvk', '')
@@ -211,7 +211,7 @@ class TenderNedStatusSync
             return false;
         }
 
-        $dienst = trim((string) ($aanbesteding['aanbestedendeDienst'] ?? ''));
+        $dienst = trim((string) ($procurement['aanbestedendeDienst'] ?? ''));
         if ($dienst === '') {
             return false;
         }
@@ -223,26 +223,26 @@ class TenderNedStatusSync
     /**
      * Shape the TenderNed completion payload.
      *
-     * @param array<string, mixed> $aanbesteding TenderNed dossier.
-     * @param array<string, mixed> $oplevering   Approved eindoplevering.
+     * @param array<string, mixed> $procurement TenderNed dossier.
+     * @param array<string, mixed> $delivery   Approved finalDelivery.
      *
      * @return array<string, mixed>
      */
-    private function buildPayload(array $aanbesteding, array $oplevering): array
+    private function buildPayload(array $procurement, array $delivery): array
     {
-        $bewijsstukken = ($oplevering['bewijsstukken'] ?? []);
-        if (is_array($bewijsstukken) === false) {
-            $bewijsstukken = [];
+        $evidence = ($delivery['evidence'] ?? []);
+        if (is_array($evidence) === false) {
+            $evidence = [];
         }
 
         return [
-            'aanbestedingId'   => (string) ($aanbesteding['aanbestedingId'] ?? ''),
+            'procurementId'   => (string) ($procurement['procurementId'] ?? ''),
             'status'           => self::TENDERNED_STATUS_AFGEROND,
-            'opleveringsDatum' => (string) ($oplevering['opleveringsDatum'] ?? ''),
-            'eindopleveringId' => (string) ($oplevering['mijlpaalId'] ?? ''),
-            'bewijsstukCount'  => count($bewijsstukken),
-            'verplichtingId'   => (string) ($oplevering['verplichtingId'] ?? ''),
-            'administrationId' => (string) ($oplevering['administrationId'] ?? ''),
+            'deliveryDate' => (string) ($delivery['deliveryDate'] ?? ''),
+            'finalDeliveryId' => (string) ($delivery['milestoneId'] ?? ''),
+            'evidenceCount'  => count($evidence),
+            'commitmentId'   => (string) ($delivery['commitmentId'] ?? ''),
+            'administrationId' => (string) ($delivery['administrationId'] ?? ''),
         ];
 
     }//end buildPayload()
@@ -251,12 +251,12 @@ class TenderNedStatusSync
      * Send the payload to TenderNed via openconnector if available,
      * otherwise log a structured entry so the sync is observable.
      *
-     * @param array<string, mixed> $aanbesteding Dossier (for log context).
+     * @param array<string, mixed> $procurement Dossier (for log context).
      * @param array<string, mixed> $payload      Completion payload.
      *
      * @return void
      */
-    private function send(array $aanbesteding, array $payload): void
+    private function send(array $procurement, array $payload): void
     {
         $gateway = $this->resolveGateway();
         if ($gateway === null) {
@@ -266,7 +266,7 @@ class TenderNedStatusSync
             // when the openconnector source comes online.
             $this->logger->info(
                 'TenderNedStatusSync: openconnector gateway not bound — payload logged for replay',
-                ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'), 'payload' => $payload]
+                ['procurementId' => ($procurement['procurementId'] ?? 'unknown'), 'payload' => $payload]
             );
             return;
         }
@@ -280,13 +280,13 @@ class TenderNedStatusSync
             $gateway->send('tenderned.completion', $payload);
             $this->logger->info(
                 'TenderNedStatusSync: completion synced to TenderNed',
-                ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+                ['procurementId' => ($procurement['procurementId'] ?? 'unknown')]
             );
         } catch (Throwable $e) {
             $this->logger->warning(
                 'TenderNedStatusSync: openconnector outbound send failed — logging only',
                 [
-                    'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
+                    'procurementId' => ($procurement['procurementId'] ?? 'unknown'),
                     'exception'      => $e->getMessage(),
                 ]
             );
