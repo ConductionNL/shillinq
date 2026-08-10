@@ -327,7 +327,9 @@
         "properties": {
           "bankConnectionId": {
             "type": "string",
-            "description": "FK to the BankConnection that sourced this statement.",
+            "format": "uuid",
+            "$ref": "BankConnection",
+            "description": "Reference to the PSD2 BankConnection that generated this statement.",
             "example": "bank-conn-uuid-1",
             "title": "Bank Connection ID"
           },
@@ -383,15 +385,6 @@
             ],
             "template": "bank-statement-available",
             "description": "Notify the configured bank-connection operator when a new statement is available. Declarative fan-out per ADR-031; no BankNotificationService."
-          }
-        },
-        "x-openregister-relations": {
-          "bankConnection": {
-            "localField": "bankConnectionId",
-            "relatedSchema": "BankConnection",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The PSD2 bank connection that generated this statement."
           }
         },
         "x-openregister-rbac": {
@@ -563,15 +556,6 @@
               "label": "Reverse transaction",
               "description": "Mark this transaction as reversed. A compensating GLTransaction referencing this one via reversesTransactionId must exist."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "lines": {
-            "localField": "id",
-            "relatedSchema": "GLLine",
-            "relatedField": "transactionId",
-            "cardinality": "one-to-many",
-            "description": "All GLLine rows belonging to this transaction."
           }
         },
         "x-openregister-rbac": {
@@ -815,7 +799,7 @@
           },
           "accountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber.",
+            "description": "FK to Account.accountNumber (bookkeeping-chart-of-accounts). A business key, not an object identifier — the referenced Account must be in lifecycleState active for the post transition to succeed.",
             "example": "4100",
             "title": "Account Number"
           },
@@ -897,17 +881,17 @@
           },
           "costCenterCode": {
             "type": "string",
-            "description": "FK to CostCenter.code for analytical cost-center reporting. Backwards-compatible with the existing costCenter field per REQ-CC-003.",
+            "description": "FK to AnalyticalDimension.code (dimensionType=cost-center) for dimension-tagged analytical reporting per REQ-CC-003 + REQ-ADIM-101. A business key, not an object identifier. Field name and stored values are unchanged; only the target was re-pointed from the retired CostCenter schema to the unified AnalyticalDimension, so this stays backwards-compatible with the existing costCenter field.",
             "nullable": true,
             "example": "KC-100",
             "title": "Cost Center Code"
           },
           "kostenDragerCode": {
             "type": "string",
-            "description": "FK to KostenDrager.code for cost-unit analytical reporting per REQ-CC-003.",
+            "description": "FK to AnalyticalDimension.code (dimensionType=cost-object) for cost-unit analytical reporting per REQ-CC-003 + REQ-ADIM-101. A business key, not an object identifier. Field name and stored values are unchanged; only the target was re-pointed from the retired KostenDrager schema to the unified AnalyticalDimension.",
             "nullable": true,
             "example": "KD-001",
-            "title": "Cost Center Code"
+            "title": "Kosten Drager Code"
           },
           "projectCode": {
             "type": "string",
@@ -946,43 +930,6 @@
               "eigenaars-woning"
             ],
             "title": "OZB Category"
-          }
-        },
-        "x-openregister-relations": {
-          "parentTransaction": {
-            "localField": "transactionId",
-            "relatedSchema": "GLTransaction",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The parent GLTransaction that owns this line."
-          },
-          "account": {
-            "localField": "accountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to Account.accountNumber (bookkeeping-chart-of-accounts). Requires Account.lifecycleState = active on the post transition."
-          },
-          "costCenterRelation": {
-            "localField": "costCenterCode",
-            "relatedSchema": "AnalyticalDimension",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "FK to AnalyticalDimension.code (dimensionType=cost-center) for dimension-tagged analytical reporting per REQ-CC-003 + REQ-ADIM-101. Field name and stored values unchanged; register re-targeted from the retired CostCenter to the unified AnalyticalDimension."
-          },
-          "kostenDragerRelation": {
-            "localField": "kostenDragerCode",
-            "relatedSchema": "AnalyticalDimension",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "FK to AnalyticalDimension.code (dimensionType=cost-object) for cost-unit analytical reporting per REQ-CC-003 + REQ-ADIM-101. Field name and stored values unchanged; register re-targeted from the retired KostenDrager to the unified AnalyticalDimension."
-          },
-          "projectRelation": {
-            "localField": "projectCode",
-            "relatedSchema": "Project",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "FK to Project.code for project accounting and WBSO time-per-project per REQ-CC-003 + REQ-CC-007."
           }
         },
         "x-openregister-aggregations": {
@@ -1571,15 +1518,6 @@
               "description": "Move to historical archive from blocked state. Requires zero open balance.",
               "requires": "OCA\\Shillinq\\Guard\\AccountBalanceGuard::requireZeroBalance"
             }
-          }
-        },
-        "x-openregister-relations": {
-          "parentAccount": {
-            "localField": "parentAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "Self-relation enabling hierarchical chart-of-accounts navigation."
           }
         },
         "x-openregister-rbac": {
@@ -3368,15 +3306,6 @@
               }
             }
           }
-        },
-        "x-openregister-relations": {
-          "parentProgramma": {
-            "localField": "parentCode",
-            "relatedSchema": "BBVProgramma",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "Self-relation for hierarchical programma navigation (hoofdprogramma → sub-programma)."
-          }
         }
       },
       "WaterschapHeffingPosting": {
@@ -3770,7 +3699,9 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the Administration owning this asset. Scopes uniqueness of assetNumber.",
+            "format": "uuid",
+            "$ref": "Administration",
+            "description": "Reference to the Administration owning this asset. Scopes uniqueness of assetNumber.",
             "example": "adm-1",
             "title": "Administration ID"
           }
@@ -4146,36 +4077,6 @@
               "label": "Reject proposal",
               "description": "Reject the asset proposal without capitalising it."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "administration": {
-            "localField": "administrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Administration that owns this asset."
-          },
-          "assetAccount": {
-            "localField": "assetAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "Balance-sheet account carrying the asset's gross value."
-          },
-          "accumulatedDepAccount": {
-            "localField": "accumulatedDepAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "Contra account for accumulated depreciation."
-          },
-          "depreciationExpenseAccount": {
-            "localField": "depreciationExpenseAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "P&L account for the periodic depreciation expense charge."
           }
         },
         "x-openregister-rbac": {
@@ -5599,15 +5500,6 @@
             "description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
           }
         },
-        "x-openregister-relations": {
-          "parentProject": {
-            "localField": "parentCode",
-            "relatedSchema": "Project",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "Self-relation enabling hierarchical project navigation per REQ-CC-002."
-          }
-        },
         "x-openregister-aggregations": {
           "segmentPnl": {
             "description": "Segment P&L for this project: sum of GLLine amounts whose projectCode equals this record's code per REQ-CC-005. Shape is sufficient for WBSO time-per-project join per REQ-CC-007.",
@@ -5876,7 +5768,12 @@
           },
           "projectId": {
             "type": "string",
-            "description": "FK to the analytical dimension (AnalyticalDimension with dimensionType=project) for this budget allocation per REQ-CPA-103. Formerly CostProject.id — retargeted to AnalyticalDimension by retire-cost-project.",
+            "format": "uuid",
+            "$ref": "AnalyticalDimension",
+            "x-relation-filter": {
+              "dimensionType": "project"
+            },
+            "description": "Reference to the parent analytical dimension (an AnalyticalDimension with dimensionType=project) for this budget allocation per REQ-CPA-103. Formerly CostProject.id — retargeted to AnalyticalDimension by retire-cost-project.",
             "example": "cp-1",
             "title": "Project ID"
           },
@@ -5946,15 +5843,6 @@
             "rule": "selectielijst:5.1.2",
             "years": 7,
             "description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-115)."
-          }
-        },
-        "x-openregister-relations": {
-          "analyticalDimension": {
-            "localField": "projectId",
-            "relatedSchema": "AnalyticalDimension",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Parent AnalyticalDimension (dimensionType=project) for this allocation per REQ-CPA-103. Formerly CostProject; retargeted to AnalyticalDimension by retire-cost-project."
           }
         },
         "x-openregister-rbac": {
@@ -8545,7 +8433,9 @@
           },
           "fiscalYearId": {
             "type": "string",
-            "description": "FK to the FiscalYear this closing entry belongs to. Per REQ-YEC-001.",
+            "format": "uuid",
+            "$ref": "FiscalYear",
+            "description": "Reference to the FiscalYear this closing entry belongs to. Per REQ-YEC-001.",
             "example": "fy-2026-nl",
             "title": "Fiscal Year ID"
           },
@@ -8603,8 +8493,10 @@
           },
           "glTransactionId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "GLTransaction",
             "nullable": true,
-            "description": "FK to the GLTransaction that materialised this closing entry when posted. Set by the lifecycle action on transition:post per REQ-YEC-009.",
+            "description": "Reference to the GLTransaction that materialised this closing entry when posted. Set by the lifecycle action on transition:post per REQ-YEC-009.",
             "example": "gl-txn-2026-close-revenue",
             "title": "GL Transaction ID"
           },
@@ -8720,27 +8612,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "fiscalYear": {
-            "localField": "fiscalYearId",
-            "relatedSchema": "FiscalYear",
-            "cardinality": "many-to-one",
-            "description": "The fiscal year this closing entry belongs to."
-          },
-          "template": {
-            "localField": "automationTemplate",
-            "relatedSchema": "ClosingEntryTemplate",
-            "relatedField": "templateId",
-            "cardinality": "many-to-one",
-            "description": "The closing-entry template that generated this entry (when generated automatically)."
-          },
-          "glTransaction": {
-            "localField": "glTransactionId",
-            "relatedSchema": "GLTransaction",
-            "cardinality": "one-to-one",
-            "description": "The materialised GL transaction (set when the entry is posted)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
@@ -8825,7 +8696,9 @@
           },
           "fiscalYearId": {
             "type": "string",
-            "description": "FK to the FiscalYear this record covers. One RetainedEarnings record per (fiscalYearId, administrationId). Per REQ-YEC-002.",
+            "format": "uuid",
+            "$ref": "FiscalYear",
+            "description": "Reference to the FiscalYear this record covers. One RetainedEarnings record per (fiscalYearId, administrationId). Per REQ-YEC-002.",
             "example": "fy-2026-nl",
             "title": "Fiscal Year ID"
           },
@@ -8866,8 +8739,10 @@
           },
           "closingEntryId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "ClosingEntry",
             "nullable": true,
-            "description": "FK to the ClosingEntry that materialised the retained-earnings transfer for this FY. Set when the FY close lifecycle posts the entry per REQ-YEC-002 / REQ-YEC-009.",
+            "description": "Reference to the ClosingEntry that materialised the retained-earnings transfer for this FY. Set when the FY close lifecycle posts the entry per REQ-YEC-002 / REQ-YEC-009.",
             "example": "ce-2026-retained-earnings",
             "title": "Closing Entry ID"
           },
@@ -8876,20 +8751,6 @@
             "description": "FK to the Administration that owns this retained-earnings record. Composite uniqueness with fiscalYearId per D5.",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
-          }
-        },
-        "x-openregister-relations": {
-          "fiscalYear": {
-            "localField": "fiscalYearId",
-            "relatedSchema": "FiscalYear",
-            "cardinality": "many-to-one",
-            "description": "The fiscal year this retained-earnings record covers."
-          },
-          "closingEntry": {
-            "localField": "closingEntryId",
-            "relatedSchema": "ClosingEntry",
-            "cardinality": "one-to-one",
-            "description": "The closing entry that materialised the retained-earnings rollforward."
           }
         },
         "x-openregister-aggregations": {
@@ -8994,15 +8855,6 @@
             "description": "Optional start date if the administration rotates closing accounts across fiscal years (e.g. switching from 9900 to 9990). When null, this ClosingAccount applies indefinitely. Per REQ-YEC-003.",
             "example": "2026-01-01",
             "title": "Effective From"
-          }
-        },
-        "x-openregister-relations": {
-          "account": {
-            "localField": "accountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "The GL account designated as the closing / income-summary account."
           }
         },
         "x-openregister-rbac": {
@@ -9184,15 +9036,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "closingAccount": {
-            "localField": "closingAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "The GL account these closing entries flow through."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
@@ -9329,7 +9172,9 @@
           },
           "claimId": {
             "type": "string",
-            "description": "FK to parent ExpenseClaimEntry.id; null until the receipt is added to a claim.",
+            "format": "uuid",
+            "$ref": "ExpenseClaimEntry",
+            "description": "Reference to the parent ExpenseClaimEntry; null until the receipt is added to a claim.",
             "nullable": true,
             "example": "exp-claim-2026-0001",
             "title": "Claim ID"
@@ -9417,15 +9262,6 @@
               "value": "@self.receiptDate"
             },
             "nullable": true
-          }
-        },
-        "x-openregister-relations": {
-          "claim": {
-            "localField": "claimId",
-            "relatedSchema": "ExpenseClaimEntry",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Parent expense claim this receipt belongs to."
           }
         },
         "x-openregister-rbac": {
@@ -9543,7 +9379,9 @@
           },
           "claimId": {
             "type": "string",
-            "description": "FK to parent ExpenseClaimEntry.id; null until added to a claim.",
+            "format": "uuid",
+            "$ref": "ExpenseClaimEntry",
+            "description": "Reference to the parent ExpenseClaimEntry; null until added to a claim.",
             "nullable": true,
             "example": "exp-claim-2026-0001",
             "title": "Claim ID"
@@ -9612,15 +9450,6 @@
               "prop": "@ref.rate.ratePerKm"
             },
             "targetField": "ratePerKm"
-          }
-        },
-        "x-openregister-relations": {
-          "claim": {
-            "localField": "claimId",
-            "relatedSchema": "ExpenseClaimEntry",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Parent expense claim this mileage entry belongs to."
           }
         },
         "x-openregister-rbac": {
@@ -9727,7 +9556,9 @@
           },
           "claimId": {
             "type": "string",
-            "description": "FK to parent ExpenseClaimEntry.id; null until added to a claim.",
+            "format": "uuid",
+            "$ref": "ExpenseClaimEntry",
+            "description": "Reference to the parent ExpenseClaimEntry; null until added to a claim.",
             "nullable": true,
             "example": "exp-claim-2026-0001",
             "title": "Claim ID"
@@ -9831,15 +9662,6 @@
               "value": "@self.travelStartDate"
             },
             "nullable": true
-          }
-        },
-        "x-openregister-relations": {
-          "claim": {
-            "localField": "claimId",
-            "relatedSchema": "ExpenseClaimEntry",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Parent expense claim this per-diem record belongs to."
           }
         },
         "x-openregister-rbac": {
@@ -9949,9 +9771,11 @@
           "receiptIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid",
+              "$ref": "Receipt"
             },
-            "description": "FKs to linked Receipt records.",
+            "description": "References to the Receipt records linked to this claim.",
             "nullable": true,
             "example": [
               "REC-2026-0001",
@@ -9962,9 +9786,11 @@
           "mileageIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid",
+              "$ref": "MileageEntry"
             },
-            "description": "FKs to linked MileageEntry records.",
+            "description": "References to the MileageEntry records linked to this claim.",
             "nullable": true,
             "example": [
               "MLG-2026-0001"
@@ -9974,9 +9800,11 @@
           "perDiemIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid",
+              "$ref": "PerDiem"
             },
-            "description": "FKs to linked PerDiem records.",
+            "description": "References to the PerDiem records linked to this claim.",
             "nullable": true,
             "example": [
               "PDM-2026-0001"
@@ -10249,29 +10077,6 @@
             ],
             "operation": "sum",
             "targetField": "totalAmount"
-          }
-        },
-        "x-openregister-relations": {
-          "receipts": {
-            "localField": "receiptIds",
-            "relatedSchema": "Receipt",
-            "relatedField": "id",
-            "cardinality": "one-to-many",
-            "description": "All Receipt records linked to this claim."
-          },
-          "mileageEntries": {
-            "localField": "mileageIds",
-            "relatedSchema": "MileageEntry",
-            "relatedField": "id",
-            "cardinality": "one-to-many",
-            "description": "All MileageEntry records linked to this claim."
-          },
-          "perDiemEntries": {
-            "localField": "perDiemIds",
-            "relatedSchema": "PerDiem",
-            "relatedField": "id",
-            "cardinality": "one-to-many",
-            "description": "All PerDiem records linked to this claim."
           }
         },
         "x-openregister-rbac": {
@@ -13181,7 +12986,9 @@
           },
           "assetRef": {
             "type": "string",
-            "description": "FK to FixedAsset UUID (OpenRegister relation).",
+            "format": "uuid",
+            "$ref": "FixedAsset",
+            "description": "Reference to the FixedAsset this depreciation schedule belongs to.",
             "example": "fa-uuid-0001",
             "title": "Asset Ref"
           },
@@ -13405,15 +13212,6 @@
                 "operation": "sum"
               }
             }
-          }
-        },
-        "x-openregister-relations": {
-          "fixedAsset": {
-            "localField": "assetRef",
-            "relatedSchema": "FixedAsset",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The fixed asset this depreciation schedule belongs to."
           }
         },
         "x-openregister-audit-trail": {
@@ -14593,15 +14391,6 @@
               }
             }
           }
-        },
-        "x-openregister-relations": {
-          "linkedAccount": {
-            "localField": "linkedAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to Chart-of-Accounts entry for GL classification per T1 bookkeeping-chart-of-accounts."
-          }
         }
       },
       "SBRDocumentType": {
@@ -14931,7 +14720,9 @@
         "properties": {
           "sourceAccountId": {
             "type": "string",
-            "description": "FK to Account.id — the Shillinq chart-of-accounts entry being mapped.",
+            "format": "uuid",
+            "$ref": "Account",
+            "description": "Reference to the Shillinq chart-of-accounts Account being mapped to an XBRL GL concept.",
             "example": "account-uuid-1000",
             "title": "Source Account ID"
           },
@@ -14971,22 +14762,6 @@
             "nullable": true,
             "example": "Direct mapping per RGS 3.5 MKB classification.",
             "title": "Notes"
-          }
-        },
-        "x-openregister-relations": {
-          "account": {
-            "localField": "sourceAccountId",
-            "relatedSchema": "Account",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The Shillinq Account being mapped to an XBRL GL concept."
-          },
-          "taxonomy": {
-            "localField": "taxonomyVersion",
-            "relatedSchema": "XBRLTaxonomy",
-            "relatedField": "taxonomyVersion",
-            "cardinality": "many-to-one",
-            "description": "The XBRLTaxonomy version this mapping applies to."
           }
         },
         "x-openregister-rbac": {
@@ -15591,15 +15366,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "repaymentInstallments": {
-            "localField": "id",
-            "relatedSchema": "RepaymentInstallment",
-            "relatedField": "subsidieId",
-            "cardinality": "one-to-many",
-            "description": "Child RepaymentInstallment records for the terugvordering afbetalingsregeling per REQ-SUB-007. NOT a parallel state machine per ADR-022."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "subsidie-coordinator": {
@@ -15650,7 +15416,9 @@
         "properties": {
           "subsidieId": {
             "type": "string",
-            "description": "FK to the Subsidie.id that this instalment belongs to.",
+            "format": "uuid",
+            "$ref": "Subsidie",
+            "description": "Reference to the Subsidie this instalment belongs to, as part of its terugvordering afbetalingsregeling per REQ-SUB-007.",
             "example": "sub-terugvordering-uuid",
             "title": "Subsidy ID"
           },
@@ -15837,15 +15605,6 @@
             "description": "Notify subsidie-coordinator when a repayment instalment becomes overdue per REQ-SUB-007 + REQ-SUB-010."
           }
         },
-        "x-openregister-relations": {
-          "subsidie": {
-            "localField": "subsidieId",
-            "relatedSchema": "Subsidie",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The Subsidie record for which this instalment is part of the afbetalingsregeling per REQ-SUB-007."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "subsidie-coordinator": {
@@ -15990,22 +15749,6 @@
             "administrationId",
             "accountNumber"
           ]
-        },
-        "x-openregister-relations": {
-          "account": {
-            "localField": "accountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to the T1 Account schema (chart of accounts)."
-          },
-          "bbvTaakveld": {
-            "localField": "taakveld",
-            "relatedSchema": "BbvTaakveld",
-            "relatedField": "taakveldCode",
-            "cardinality": "many-to-one",
-            "description": "FK to the BbvTaakveld catalogue entry."
-          }
         },
         "x-openregister-rbac": {
           "roles": {
@@ -16177,7 +15920,9 @@
         "properties": {
           "statementId": {
             "type": "string",
-            "description": "FK to the parent BankStatement.",
+            "format": "uuid",
+            "$ref": "BankStatement",
+            "description": "Reference to the parent BankStatement this line was imported from.",
             "example": "bs-uuid-1",
             "title": "Statement ID"
           },
@@ -16299,15 +16044,6 @@
               "trigger": "operator-action",
               "description": "Operator marks line as \"unmatched final\". Lifecycle materialises a GLTransaction to the designated suspense account per REQ-BR-007. Declarative per ADR-031."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "statement": {
-            "localField": "statementId",
-            "relatedSchema": "BankStatement",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The parent bank statement."
           }
         },
         "x-openregister-rbac": {
@@ -16632,7 +16368,9 @@
           },
           "matchingRuleId": {
             "type": "string",
-            "description": "FK to the MatchingRule that produced this candidate.",
+            "format": "uuid",
+            "$ref": "MatchingRule",
+            "description": "Reference to the MatchingRule that produced this candidate match.",
             "nullable": true,
             "example": "rule-uuid-1",
             "title": "Matching Rule ID"
@@ -16713,15 +16451,6 @@
             "confidenceField": "confidenceScore",
             "emitSchema": "ReconciliationMatch",
             "deduplication": "first-match-wins"
-          }
-        },
-        "x-openregister-relations": {
-          "matchingRule": {
-            "localField": "matchingRuleId",
-            "relatedSchema": "MatchingRule",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The matching rule that produced this candidate."
           }
         },
         "x-openregister-rbac": {
@@ -16993,15 +16722,6 @@
             "description": "FK to the Administration that owns this IP asset.",
             "example": "adm-1",
             "title": "Administration ID"
-          }
-        },
-        "x-openregister-relations": {
-          "winstToerekeningen": {
-            "localField": "id",
-            "relatedSchema": "WinstToerekening",
-            "relatedField": "ipAssetId",
-            "cardinality": "one-to-many",
-            "description": "All WinstToerekening records attributed to this IP asset."
           }
         },
         "x-openregister-audit-trail": {
@@ -17414,9 +17134,11 @@
         "properties": {
           "ipAssetId": {
             "type": "string",
-            "description": "FK to IPAssetValuation.id this toerekening applies to.",
+            "format": "uuid",
+            "$ref": "IPAssetValuation",
+            "description": "Reference to the IPAssetValuation this profit attribution applies to.",
             "example": "ip-asset-uuid-1",
-            "title": "Ip Asset ID"
+            "title": "IP Asset ID"
           },
           "periodId": {
             "type": "string",
@@ -17552,15 +17274,6 @@
             "type": "number",
             "description": "Computed verdeelsleutel ratio for omzet-aandeel and r-en-d-uren methods. Null for custom-formula. JSON-AST nested if over verdeelsleutel with division.",
             "example": 0.3
-          }
-        },
-        "x-openregister-relations": {
-          "ipAsset": {
-            "localField": "ipAssetId",
-            "relatedSchema": "IPAssetValuation",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The IP asset this profit attribution belongs to."
           }
         },
         "x-openregister-rbac": {
@@ -18507,15 +18220,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "currencyBalances": {
-            "localField": "id",
-            "relatedSchema": "CurrencyBalance",
-            "relatedField": "accountId",
-            "cardinality": "one-to-many",
-            "description": "All CurrencyBalance snapshot records for this bank account across currencies."
-          }
-        },
         "x-openregister-aggregations": {
           "balanceByCurrency": {
             "description": "Latest balance per currency for this bank account. Aggregates CurrencyBalance records grouped by currency. Used for T3 cash-position dashboards per REQ-MC-004.",
@@ -18556,7 +18260,9 @@
           },
           "accountId": {
             "type": "string",
-            "description": "FK to BankAccount.id. Identifies which bank account this balance belongs to.",
+            "format": "uuid",
+            "$ref": "BankAccount",
+            "description": "Reference to the BankAccount this balance snapshot belongs to. Enables account metadata lookup on the detail page.",
             "example": "bank-eur-op",
             "title": "Account ID"
           },
@@ -18588,15 +18294,6 @@
             "description": "Timestamp of the most recent balance update. Used to determine snapshot freshness for reconciliation and cash-position reports.",
             "example": "2026-05-21T09:00:00Z",
             "title": "Last Updated"
-          }
-        },
-        "x-openregister-relations": {
-          "bankAccount": {
-            "localField": "accountId",
-            "relatedSchema": "BankAccount",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The bank account this balance snapshot belongs to. FK enabling account metadata lookup on the detail page."
           }
         },
         "x-openregister-filters": {
@@ -19684,15 +19381,6 @@
             "default": false,
             "description": "Whether this categorie is mandatory in the Iv3-aanlevering per informatievoorschrift.",
             "title": "Iv3 Mandatory"
-          }
-        },
-        "x-openregister-relations": {
-          "parent": {
-            "localField": "parentCode",
-            "relatedSchema": "EconomischeCategorie",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "Self-relation for the economische-categorie hierarchy."
           }
         },
         "x-openregister-rbac": {
@@ -21084,15 +20772,6 @@
           "adminScope": {
             "field": "administrationId",
             "enforce": true
-          }
-        },
-        "x-openregister-relations": {
-          "order": {
-            "localField": "orderId",
-            "relatedSchema": "SalesOrder",
-            "relatedField": "orderId",
-            "cardinality": "many-to-one",
-            "description": "The parent SalesOrder this line belongs to."
           }
         }
       }
@@ -22799,7 +22478,9 @@
         },
         "writeOffGlTransactionId": {
           "type": "string",
-          "description": "Back-reference to the compensating GLTransaction emitted on write-off (debit bad-debt expense, credit AR control) per REQ-AR-007.",
+          "format": "uuid",
+          "$ref": "GLTransaction",
+          "description": "Reference to the compensating GLTransaction emitted on write-off (debit bad-debt expense, credit AR control) per REQ-AR-007.",
           "nullable": true,
           "example": "gl-txn-2026-wo-0001"
         },
@@ -23205,36 +22886,6 @@
           ]
         }
       },
-      "x-openregister-relations": {
-        "customer": {
-          "localField": "customerId",
-          "relatedSchema": "CustomerMaster",
-          "relatedField": "id",
-          "cardinality": "many-to-one",
-          "description": "FK to the CustomerMaster record this invoice bills."
-        },
-        "glTransaction": {
-          "localField": "glTransactionId",
-          "relatedSchema": "GLTransaction",
-          "relatedField": "id",
-          "cardinality": "many-to-one",
-          "description": "Back-reference to the materialised issue GLTransaction."
-        },
-        "writeOffGlTransaction": {
-          "localField": "writeOffGlTransactionId",
-          "relatedSchema": "GLTransaction",
-          "relatedField": "id",
-          "cardinality": "many-to-one",
-          "description": "Back-reference to the compensating write-off GLTransaction per REQ-AR-007."
-        },
-        "dunningRecords": {
-          "localField": "id",
-          "relatedSchema": "DunningRecord",
-          "relatedField": "invoiceRef",
-          "cardinality": "one-to-many",
-          "description": "Dunning timeline rows for this invoice per REQ-AR-005."
-        }
-      },
       "x-openregister-rbac": {
         "roles": {
           "bookkeeper": {
@@ -23399,7 +23050,9 @@
       "properties": {
         "invoiceRef": {
           "type": "string",
-          "description": "FK to ARInvoice UUID.",
+          "format": "uuid",
+          "$ref": "ARInvoice",
+          "description": "Reference to the parent ARInvoice this dunning record belongs to.",
           "example": "arinv-2026-0001"
         },
         "reminderLevel": {
@@ -23475,15 +23128,6 @@
           "type": "string",
           "description": "FK to the administration owning this dunning record.",
           "example": "adm-1"
-        }
-      },
-      "x-openregister-relations": {
-        "invoice": {
-          "localField": "invoiceRef",
-          "relatedSchema": "ARInvoice",
-          "relatedField": "id",
-          "cardinality": "many-to-one",
-          "description": "FK to the parent ARInvoice this dunning record belongs to."
         }
       },
       "x-openregister-rbac": {
@@ -23621,7 +23265,9 @@
         },
         "overrideId": {
           "type": "string",
-          "description": "Optional FK to ServiceCategoryOverride if this line's vatRate / serviceCategory combination was authorised under an exception per REQ-VAT-002bis.",
+          "format": "uuid",
+          "$ref": "ServiceCategoryOverride",
+          "description": "Optional reference to the ServiceCategoryOverride consulted at issue time, when this line's vatRate / serviceCategory combination was authorised under an exception per REQ-VAT-002bis.",
           "nullable": true,
           "example": "sco-2026-0001"
         },
@@ -23629,29 +23275,6 @@
           "type": "string",
           "description": "FK to the administration owning this audit record.",
           "example": "adm-1"
-        }
-      },
-      "x-openregister-relations": {
-        "invoice": {
-          "localField": "invoiceNumber",
-          "relatedSchema": "ARInvoice",
-          "relatedField": "invoiceNumber",
-          "cardinality": "many-to-one",
-          "description": "FK to the ARInvoice the audit record belongs to. The number is a stable business key; immutable once issued."
-        },
-        "fiscalPeriod": {
-          "localField": "settlementPeriod",
-          "relatedSchema": "FiscalPeriod",
-          "relatedField": "periodId",
-          "cardinality": "many-to-one",
-          "description": "FK to the FiscalPeriod bound at issue time per REQ-VAT-005."
-        },
-        "override": {
-          "localField": "overrideId",
-          "relatedSchema": "ServiceCategoryOverride",
-          "relatedField": "id",
-          "cardinality": "many-to-one",
-          "description": "Optional link to the ServiceCategoryOverride consulted at issue time per REQ-VAT-002bis."
         }
       },
       "x-openregister-aggregations": {
@@ -25302,7 +24925,9 @@
       "properties": {
         "subsidieId": {
           "type": "string",
-          "description": "FK to the parent Subsidie record of subtype specifieke-uitkering. Per ADR-022, no parallel SiSa subsidie register — indicator attaches to the existing T3 subsidie register.",
+          "format": "uuid",
+          "$ref": "Subsidie",
+          "description": "Reference to the parent Subsidie record of subtype specifieke-uitkering. Per ADR-022, no parallel SiSa subsidie register — the indicator attaches to the existing T3 subsidie register.",
           "example": "subsidie-uuid-d8-2026"
         },
         "regelingCode": {
@@ -25426,15 +25051,6 @@
           ],
           "template": "sisa-submission-confirmation",
           "description": "Notify the financial officer when a SiSa bijlage is submitted to BZK. Declarative; no SisaSubmissionService per ADR-031."
-        }
-      },
-      "x-openregister-relations": {
-        "subsidie": {
-          "localField": "subsidieId",
-          "relatedSchema": "Subsidie",
-          "relatedField": "id",
-          "cardinality": "many-to-one",
-          "description": "FK to the parent Subsidie record of subtype specifieke-uitkering. Declared per ADR-022 child-register pattern; no parallel SiSa subsidie register."
         }
       },
       "x-openregister-audit": {
@@ -25579,15 +25195,6 @@
               "VpbAangifte.Resultaat": "totalResultaat"
             }
           }
-        }
-      },
-      "x-openregister-relations": {
-        "costCenter": {
-          "localField": "costCenterId",
-          "relatedSchema": "AnalyticalDimension",
-          "relatedField": "code",
-          "cardinality": "many-to-one",
-          "description": "FK to the ondernemingsactiviteit cost-center dimension. AnalyticalDimension.dimensionType MUST be cost-center AND AnalyticalDimension.ondernemingsActiviteit MUST be true per REQ-VPB-002 + REQ-ADIM-102. Re-targeted from the retired CostCenter to the unified AnalyticalDimension; stored costCenterId values unchanged."
         }
       },
       "x-openregister-rbac": {
