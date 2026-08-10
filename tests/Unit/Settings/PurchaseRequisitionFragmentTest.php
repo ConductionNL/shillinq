@@ -80,7 +80,7 @@ final class PurchaseRequisitionFragmentTest extends TestCase
 
     /**
      * REQ-REQ-001: Requisition carries the field contract BudgetBlocker and
-     * MandaatEnforcer already read off a Verplichting — programma, boekjaar,
+     * MandateEnforcer already read off a Verplichting — programma, boekjaar,
      * totaalbedrag_excl_btw, soort, administrationId — so the guards run
      * unmodified against a Requisition object.
      *

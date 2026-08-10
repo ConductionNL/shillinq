@@ -19,7 +19,7 @@
  *     shillinq-owned event class. Wrapping in a typed class is reserved
  *     for the cross-app contract reconciliation (deferred — design D4).
  *
- * The same emitter is reused by the OpdrachtUitvoeringTransitionListener
+ * The same emitter is reused by the OrderFulfilmentTransitionListener
  * for the `milestone.completed` event (Task 5.3), so the spec's three
  * REQ-007/REQ-002/REQ-005 emission points share one tested kernel.
  *

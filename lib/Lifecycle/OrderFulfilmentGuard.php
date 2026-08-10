@@ -46,7 +46,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
  */
-class OpdrachtUitvoeringGuard
+class OrderFulfilmentGuard
 {
     /**
      * Construct the guard with DI dependencies.
@@ -79,7 +79,7 @@ class OpdrachtUitvoeringGuard
         try {
             if ($this->hasValidBewijsstuk(opdracht: $opdracht) === false) {
                 $this->logger->info(
-                    'OpdrachtUitvoeringGuard: no bewijsstuk attached — denying completion (REQ-004)',
+                    'OrderFulfilmentGuard: no bewijsstuk attached — denying completion (REQ-004)',
                     [
                         'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
                         'mijlpaalId'     => ($opdracht['mijlpaalId'] ?? 'unknown'),
@@ -91,7 +91,7 @@ class OpdrachtUitvoeringGuard
             return true;
         } catch (\Throwable $e) {
             $this->logger->error(
-                'OpdrachtUitvoeringGuard: canVoltooien failed — denying completion (fail-closed)',
+                'OrderFulfilmentGuard: canVoltooien failed — denying completion (fail-closed)',
                 [
                     'verplichtingId' => ($opdracht['verplichtingId'] ?? 'unknown'),
                     'exception'      => $e->getMessage(),

@@ -54,7 +54,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
  */
-class MandaatEnforcer
+class MandateEnforcer
 {
     /**
      * Construct the guard with DI dependencies.
@@ -94,7 +94,7 @@ class MandaatEnforcer
             return $this->resolveApplicableMandate(verplichting: $verplichting) !== null;
         } catch (\Throwable $e) {
             $this->logger->error(
-                'MandaatEnforcer: hasSufficientMandate failed — treating as not mandated (fail-closed)',
+                'MandateEnforcer: hasSufficientMandate failed — treating as not mandated (fail-closed)',
                 ['verplichting' => $verplichtingsnummer, 'exception' => $e->getMessage()]
             );
             return false;
@@ -329,7 +329,7 @@ class MandaatEnforcer
             return array_values($result);
         } catch (\Throwable $e) {
             $this->logger->debug(
-                'MandaatEnforcer: schema lookup unavailable — treating as absent',
+                'MandateEnforcer: schema lookup unavailable — treating as absent',
                 ['schema' => $schema, 'exception' => $e->getMessage()]
             );
             return [];

@@ -4,7 +4,7 @@
  * End-to-end workflow scenarios for verplichtingenadministratie.
  *
  * Composes the three Verplichting lifecycle guards (BudgetBlocker +
- * MandaatEnforcer + VerplichtingGuard) and walks through the REQ-VPL-001 ..
+ * MandateEnforcer + CommitmentGuard) and walks through the REQ-VPL-001 ..
  * REQ-VPL-010 GIVEN/WHEN/THEN scenarios at the unit level. The lifecycle
  * engine and a live OpenRegister instance are simulated by an in-memory
  * filter-aware ObjectService stub. This is the closest assertion we can make
@@ -37,7 +37,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
-use OCA\Shillinq\Lifecycle\MandaatEnforcer;
+use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -49,7 +49,7 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class VerplichtingWorkflowTest extends TestCase
+class CommitmentWorkflowTest extends TestCase
 {
 
     /**
@@ -76,9 +76,9 @@ class VerplichtingWorkflowTest extends TestCase
     /**
      * Mandate-check guard under test.
      *
-     * @var MandaatEnforcer
+     * @var MandateEnforcer
      */
-    private MandaatEnforcer $mandaat;
+    private MandateEnforcer $mandaat;
 
     /**
      * Budget-room guard under test.
@@ -102,7 +102,7 @@ class VerplichtingWorkflowTest extends TestCase
 
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->mandaat = new MandaatEnforcer(
+        $this->mandaat = new MandateEnforcer(
             container: $this->container,
             appConfig: $this->appConfig,
             logger: $this->logger,
@@ -232,7 +232,7 @@ class VerplichtingWorkflowTest extends TestCase
      * GIVEN a gemeente administration with a EUR 500k budget on programma 5.1 /
      * boekjaar 2026 and a user mandate covering EUR 100k inkooporders
      * WHEN a EUR 75k inkooporder is moved to `aangegaan`
-     * THEN MandaatEnforcer.hasSufficientMandate returns true AND
+     * THEN MandateEnforcer.hasSufficientMandate returns true AND
      *      BudgetBlocker.canCommit returns true AND
      *      BudgetBlocker.freeRoom decreases by EUR 75k after the commitment is recorded.
      *
@@ -272,7 +272,7 @@ class VerplichtingWorkflowTest extends TestCase
      *
      * GIVEN a user mandate covering only EUR 50k inkooporders
      * WHEN a EUR 75k inkooporder is moved to `aangegaan`
-     * THEN MandaatEnforcer.requiresApproval returns true,
+     * THEN MandateEnforcer.requiresApproval returns true,
      *      hasSufficientMandate returns false,
      *      and BudgetBlocker.canCommit still returns true (budget room exists, just
      *      requires approval first).

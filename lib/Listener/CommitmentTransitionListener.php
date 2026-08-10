@@ -64,7 +64,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
  */
-class VerplichtingTransitionListener implements IEventListener
+class CommitmentTransitionListener implements IEventListener
 {
     /**
      * Construct the listener.
@@ -102,7 +102,7 @@ class VerplichtingTransitionListener implements IEventListener
             $this->emitIfTenderNed(verplichting: $payload);
         } catch (Throwable $e) {
             $this->logger->warning(
-                'VerplichtingTransitionListener: emission failed — fail-soft',
+                'CommitmentTransitionListener: emission failed — fail-soft',
                 ['exception' => $e->getMessage()]
             );
         }//end try

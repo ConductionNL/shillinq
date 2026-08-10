@@ -58,13 +58,13 @@ class BudgetBlocker
      * @param ContainerInterface $container DI container for lazy ObjectService resolution.
      * @param IAppConfig         $appConfig App config for register slug resolution.
      * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     * @param MandaatEnforcer    $mandaat   Mandate resolver for override-mandate detection.
+     * @param MandateEnforcer    $mandaat   Mandate resolver for override-mandate detection.
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
-        private readonly MandaatEnforcer $mandaat,
+        private readonly MandateEnforcer $mandaat,
     ) {
     }//end __construct()
 

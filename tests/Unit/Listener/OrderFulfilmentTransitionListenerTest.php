@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for OpdrachtUitvoeringTransitionListener.
+ * Unit tests for OrderFulfilmentTransitionListener.
  *
  * Verifies the listener's contract (Task 5.3 / REQ-005 / REQ-006):
  *
@@ -35,7 +35,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Integration\TenderNedStatusSync;
-use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
+use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
@@ -46,11 +46,11 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 
 /**
- * Tests for OpdrachtUitvoeringTransitionListener.
+ * Tests for OrderFulfilmentTransitionListener.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
+final class OrderFulfilmentTransitionListenerTest extends TestCase
 {
 
     /**
@@ -216,7 +216,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener(
+        $listener   = new OrderFulfilmentTransitionListener(
             $emitter,
             $sync,
             $this->resolver('OpdrachtUitvoering'),
@@ -257,7 +257,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener(
+        $listener   = new OrderFulfilmentTransitionListener(
             $emitter,
             $sync,
             $this->resolver('OpdrachtUitvoering'),
@@ -297,7 +297,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener(
+        $listener   = new OrderFulfilmentTransitionListener(
             $emitter,
             $sync,
             $this->resolver('OpdrachtUitvoering'),
@@ -336,7 +336,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener(
+        $listener   = new OrderFulfilmentTransitionListener(
             $emitter,
             $sync,
             $this->resolver('OpdrachtUitvoering'),
@@ -375,7 +375,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener(
+        $listener   = new OrderFulfilmentTransitionListener(
             $emitter,
             $sync,
             $this->resolver('Verplichting'),

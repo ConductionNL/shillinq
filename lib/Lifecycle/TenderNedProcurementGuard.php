@@ -56,7 +56,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
  */
-class TenderNedAanbestedingGuard
+class TenderNedProcurementGuard
 {
     /**
      * Construct the guard with DI dependencies.
@@ -108,7 +108,7 @@ class TenderNedAanbestedingGuard
         try {
             if (trim((string) ($aanbesteding['gegundeLeverancier'] ?? '')) === '') {
                 $this->logger->info(
-                    'TenderNedAanbestedingGuard: no gegundeLeverancier — denying award (REQ-002)',
+                    'TenderNedProcurementGuard: no gegundeLeverancier — denying award (REQ-002)',
                     ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
                 );
                 return false;
@@ -116,7 +116,7 @@ class TenderNedAanbestedingGuard
 
             if ((float) ($aanbesteding['contractWaarde'] ?? 0) <= 0.0) {
                 $this->logger->info(
-                    'TenderNedAanbestedingGuard: contractWaarde must be positive — denying award (REQ-002)',
+                    'TenderNedProcurementGuard: contractWaarde must be positive — denying award (REQ-002)',
                     ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
                 );
                 return false;
@@ -125,7 +125,7 @@ class TenderNedAanbestedingGuard
             return true;
         } catch (\Throwable $e) {
             $this->logger->error(
-                'TenderNedAanbestedingGuard: canGunnen failed — denying award (fail-closed)',
+                'TenderNedProcurementGuard: canGunnen failed — denying award (fail-closed)',
                 [
                     'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
                     'exception'      => $e->getMessage(),
@@ -162,7 +162,7 @@ class TenderNedAanbestedingGuard
             $verplichtingId = trim((string) ($aanbesteding['verplichtingId'] ?? ''));
             if ($verplichtingId === '') {
                 $this->logger->warning(
-                    'TenderNedAanbestedingGuard: no linked Verplichting — permitting completion without delivery check',
+                    'TenderNedProcurementGuard: no linked Verplichting — permitting completion without delivery check',
                     ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
                 );
                 return true;
@@ -171,7 +171,7 @@ class TenderNedAanbestedingGuard
             return $this->hasApprovedEindoplevering(verplichtingId: $verplichtingId, aanbesteding: $aanbesteding);
         } catch (\Throwable $e) {
             $this->logger->error(
-                'TenderNedAanbestedingGuard: canAfronden failed — denying completion (fail-closed)',
+                'TenderNedProcurementGuard: canAfronden failed — denying completion (fail-closed)',
                 [
                     'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
                     'exception'      => $e->getMessage(),
@@ -208,7 +208,7 @@ class TenderNedAanbestedingGuard
         } catch (\Throwable $e) {
             // OpdrachtUitvoering schema not available (T1 state) — permit completion.
             $this->logger->debug(
-                'TenderNedAanbestedingGuard: OpdrachtUitvoering lookup unavailable (T1 state) — permitting completion',
+                'TenderNedProcurementGuard: OpdrachtUitvoering lookup unavailable (T1 state) — permitting completion',
                 ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'), 'exception' => $e->getMessage()]
             );
             return true;
@@ -231,7 +231,7 @@ class TenderNedAanbestedingGuard
         }
 
         $this->logger->info(
-            'TenderNedAanbestedingGuard: no approved eindoplevering — denying completion (REQ-006)',
+            'TenderNedProcurementGuard: no approved eindoplevering — denying completion (REQ-006)',
             [
                 'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
                 'verplichtingId' => $verplichtingId,

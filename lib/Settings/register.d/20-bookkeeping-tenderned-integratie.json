@@ -168,7 +168,7 @@
               "to": "gegund",
               "label": "Gunning registreren",
               "description": "Record the award. Auto-promotion to an active Verplichting fires when the winning KvK matches the tenant organisation (REQ-002).",
-              "requires": "OCA\\Shillinq\\Lifecycle\\TenderNedAanbestedingGuard::canGunnen"
+              "requires": "OCA\\Shillinq\\Lifecycle\\TenderNedProcurementGuard::canGunnen"
             },
             "start-uitvoering": {
               "from": "gegund",
@@ -181,7 +181,7 @@
               "to": "afgerond",
               "label": "Afronden",
               "description": "Complete the contract once the eindoplevering milestone is approved (REQ-006). Status-sync back to TenderNed is offered to the aanbestedende dienst role.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\TenderNedAanbestedingGuard::canAfronden"
+              "requires": "OCA\\Shillinq\\Lifecycle\\TenderNedProcurementGuard::canAfronden"
             },
             "beeindigen": {
               "from": "in-uitvoering",
@@ -414,7 +414,7 @@
               "to": "active",
               "label": "Activeren",
               "description": "Activate the obligation after enrichment. Requires kostenplaats and grootboekrekening to be set (design D2); generates the milestone plan when an opdrachttype is supplied (REQ-003).",
-              "requires": "OCA\\Shillinq\\Lifecycle\\VerplichtingGuard::canActiveren"
+              "requires": "OCA\\Shillinq\\Lifecycle\\CommitmentGuard::canActiveren"
             },
             "archiveren": {
               "from": "active",
@@ -593,7 +593,7 @@
               "to": "completed",
               "label": "Markeer als voltooid",
               "description": "Complete the delivery. Blocked until at least one bewijsstuk is attached (REQ-004); on completion the final-milestone status-sync to TenderNed is offered to the aanbestedende dienst (REQ-006).",
-              "requires": "OCA\\Shillinq\\Lifecycle\\OpdrachtUitvoeringGuard::canVoltooien"
+              "requires": "OCA\\Shillinq\\Lifecycle\\OrderFulfilmentGuard::canVoltooien"
             },
             "annuleren": {
               "from": "in-progress",

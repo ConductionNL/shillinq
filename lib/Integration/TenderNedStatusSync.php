@@ -25,7 +25,7 @@
  *    fully unit-testable without a live HTTP socket.
  *
  * Authorisation is checked here defensively in addition to the
- * declarative RBAC + TenderNedAanbestedingGuard upstream: the
+ * declarative RBAC + TenderNedProcurementGuard upstream: the
  * `gegundeLeverancier` of the linked aanbesteding must match the tenant
  * KvK before the call is allowed (vendors cannot sync; only the
  * aanbestedende dienst can — see design D6).
@@ -99,7 +99,7 @@ class TenderNedStatusSync
     /**
      * Sync the completion of an eindoplevering back to TenderNed (REQ-006).
      *
-     * Called by `OpdrachtUitvoeringTransitionListener` when the approved
+     * Called by `OrderFulfilmentTransitionListener` when the approved
      * eindoplevering for a `bron: tenderned` obligation transitions to
      * `completed`. Returns true when the outbound call was attempted (the
      * live transport may still fail downstream — the contract guarantees

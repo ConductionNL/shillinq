@@ -271,14 +271,14 @@
               "from": "draft",
               "to": "pendingApproval",
               "label": "Ter goedkeuring aanbieden",
-              "description": "Offer for approval when the signer's mandaat is insufficient. Gated by MandaatEnforcer (REQ-VPL-002).",
-              "requires": "OCA\\Shillinq\\Lifecycle\\MandaatEnforcer::requiresApproval"
+              "description": "Offer for approval when the signer's mandaat is insufficient. Gated by MandateEnforcer (REQ-VPL-002).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\MandateEnforcer::requiresApproval"
             },
             "aangaan": {
               "from": "draft",
               "to": "committed",
               "label": "Verplichting aangaan",
-              "description": "Sign the commitment within mandaat and budget. Gated by MandaatEnforcer (mandaat sufficient) and BudgetBlocker (vrije_ruimte sufficient or override). An aangegaan Verplichtingsmutatie is recorded (REQ-VPL-001/002).",
+              "description": "Sign the commitment within mandaat and budget. Gated by MandateEnforcer (mandaat sufficient) and BudgetBlocker (vrije_ruimte sufficient or override). An aangegaan Verplichtingsmutatie is recorded (REQ-VPL-001/002).",
               "requires": "OCA\\Shillinq\\Lifecycle\\BudgetBlocker::canCommit",
               "actions": [
                 {
@@ -334,7 +334,7 @@
         },
         "x-openregister-approval-chains": {
           "commitment-approval": {
-            "description": "Approval chain that gates the Verplichting in_goedkeuring -> aangegaan `goedkeuren` transition (REQ-VPL-013). A commitment reaches in_goedkeuring only when MandaatEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient (REQ-VPL-002); this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
+            "description": "Approval chain that gates the Verplichting in_goedkeuring -> aangegaan `goedkeuren` transition (REQ-VPL-013). A commitment reaches in_goedkeuring only when MandateEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient (REQ-VPL-002); this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
             "transition": "approve",
             "amountField": "totalAmountExclVat",
             "separationOfDuties": true,
@@ -712,7 +712,7 @@
         "icon": "AccountKey",
         "version": "0.1.0",
         "title": "Mandate",
-        "description": "Authorization record defining who may sign commitments up to what amount, for which soort_verplichting, with optional second-signature thresholds (D6, REQ-VPL-002). Enforced by MandaatEnforcer on the verplichting aangaan transition. A register (not an enum) so operators can manage mandates over time.",
+        "description": "Authorization record defining who may sign commitments up to what amount, for which soort_verplichting, with optional second-signature thresholds (D6, REQ-VPL-002). Enforced by MandateEnforcer on the verplichting aangaan transition. A register (not an enum) so operators can manage mandates over time.",
         "x-openregister-purpose": "dimension",
         "type": "object",
         "required": [
@@ -863,7 +863,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "ApprovalStep",
-        "description": "A workflow step in a commitment's approval chain when the signer's mandaat is exceeded (D7, REQ-VPL-002). Created by MandaatEnforcer when a verplichting moves to in_goedkeuring; gives finance a clear view of pending approvals.",
+        "description": "A workflow step in a commitment's approval chain when the signer's mandaat is exceeded (D7, REQ-VPL-002). Created by MandateEnforcer when a verplichting moves to in_goedkeuring; gives finance a clear view of pending approvals.",
         "x-openregister-purpose": "fact",
         "type": "object",
         "required": [

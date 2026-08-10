@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
-use OCA\Shillinq\Lifecycle\MandaatEnforcer;
+use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -81,7 +81,7 @@ class BudgetBlockerTest extends TestCase
 
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $mandaat = new MandaatEnforcer(
+        $mandaat = new MandateEnforcer(
             container: $this->container,
             appConfig: $this->appConfig,
             logger: $this->logger,

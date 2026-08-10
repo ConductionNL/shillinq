@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service\Commitment;
 
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
-use OCA\Shillinq\Lifecycle\MandaatEnforcer;
+use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCA\Shillinq\Service\Commitment\CommitmentMaterialisationService;
 use OCA\Shillinq\Service\Commitment\InsufficientCommitmentBudgetException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -107,7 +107,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $this->objectServiceStub = $this->buildObjectServiceStub(recordsBySchema: $recordsBySchema);
         $this->container->method('get')->willReturn($this->objectServiceStub);
 
-        $mandaat = new MandaatEnforcer(container: $this->container, appConfig: $this->appConfig, logger: $this->logger);
+        $mandaat = new MandateEnforcer(container: $this->container, appConfig: $this->appConfig, logger: $this->logger);
         $budget  = new BudgetBlocker(container: $this->container, appConfig: $this->appConfig, logger: $this->logger, mandaat: $mandaat);
 
         return new CommitmentMaterialisationService(

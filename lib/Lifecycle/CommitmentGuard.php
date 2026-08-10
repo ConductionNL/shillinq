@@ -50,7 +50,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
  */
-class VerplichtingGuard
+class CommitmentGuard
 {
     /**
      * Construct the guard with DI dependencies.
@@ -86,7 +86,7 @@ class VerplichtingGuard
                 || trim((string) ($verplichting['grootboekrekening'] ?? '')) === ''
             ) {
                 $this->logger->info(
-                    'VerplichtingGuard: missing kostenplaats or grootboekrekening — denying activation (design D2)',
+                    'CommitmentGuard: missing kostenplaats or grootboekrekening — denying activation (design D2)',
                     ['verplichtingsnummer' => ($verplichting['verplichtingsnummer'] ?? 'unknown')]
                 );
                 return false;
@@ -99,7 +99,7 @@ class VerplichtingGuard
             return true;
         } catch (\Throwable $e) {
             $this->logger->error(
-                'VerplichtingGuard: canActiveren failed — denying activation (fail-closed)',
+                'CommitmentGuard: canActiveren failed — denying activation (fail-closed)',
                 [
                     'verplichtingsnummer' => ($verplichting['verplichtingsnummer'] ?? 'unknown'),
                     'exception'          => $e->getMessage(),
@@ -143,7 +143,7 @@ class VerplichtingGuard
             $datum = $this->parseDate(value: (string) ($mijlpaal['datum'] ?? ''));
             if ($datum === null || $datum < $start || $datum > $end) {
                 $this->logger->info(
-                    'VerplichtingGuard: milestone date out of contract term — denying activation',
+                    'CommitmentGuard: milestone date out of contract term — denying activation',
                     [
                         'verplichtingsnummer' => ($verplichting['verplichtingsnummer'] ?? 'unknown'),
                         'mijlpaalId'         => ($mijlpaal['mijlpaalId'] ?? 'unknown'),

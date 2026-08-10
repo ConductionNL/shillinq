@@ -38,7 +38,7 @@
  * emitted by `BudgetImpactEmitter` from the same handler.
  *
  * Fail-soft: any unexpected exception is logged but never bubbles up to
- * the OR write path. The TenderNedAanbestedingGuard still defends the
+ * the OR write path. The TenderNedProcurementGuard still defends the
  * declarative `gunnen` transition; this listener is the cross-schema
  * materialisation step layered on top.
  *

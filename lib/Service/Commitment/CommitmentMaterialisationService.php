@@ -12,7 +12,7 @@
  * legally-binding trigger, per design.md's Open Question resolution),
  * this service assembles the matching `Verplichting` + `Verplichtingsregel`
  * rows from the source object and delegates to the ALREADY-SHIPPED
- * `MandaatEnforcer` and `BudgetBlocker` guards. It computes no budget or
+ * `MandateEnforcer` and `BudgetBlocker` guards. It computes no budget or
  * mandate logic of its own (ADR-031 thin-glue exception).
  *
  * Fail-closed vs fail-soft: the PO-approval path is fail-closed (an
@@ -64,7 +64,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
-use OCA\Shillinq\Lifecycle\MandaatEnforcer;
+use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -75,7 +75,7 @@ use Throwable;
 /**
  * Assembles a Verplichting + Verplichtingsregels from an approved
  * PurchaseOrder or an activated Contract and drives it through the
- * existing MandaatEnforcer / BudgetBlocker guards (REQ-VPL-010).
+ * existing MandateEnforcer / BudgetBlocker guards (REQ-VPL-010).
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
@@ -93,7 +93,7 @@ class CommitmentMaterialisationService
      *
      * @param ContainerInterface $container  DI container for lazy ObjectService resolution.
      * @param IAppConfig         $appConfig  App config for register slug resolution.
-     * @param MandaatEnforcer    $mandate    Reused mandate-sufficiency guard (REQ-VPL-002).
+     * @param MandateEnforcer    $mandate    Reused mandate-sufficiency guard (REQ-VPL-002).
      * @param BudgetBlocker      $budget     Reused budget-room guard (REQ-VPL-001).
      * @param IEventDispatcher   $dispatcher NC event dispatcher (rechtmatigheid trigger transport).
      * @param LoggerInterface    $logger     Logger for fail-soft/fail-closed diagnostics.
@@ -101,7 +101,7 @@ class CommitmentMaterialisationService
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
-        private readonly MandaatEnforcer $mandate,
+        private readonly MandateEnforcer $mandate,
         private readonly BudgetBlocker $budget,
         private readonly IEventDispatcher $dispatcher,
         private readonly LoggerInterface $logger,

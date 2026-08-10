@@ -58,7 +58,7 @@ use OCA\Shillinq\Listener\GLTransactionComplianceCacheListener;
 use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
-use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
+use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
@@ -68,7 +68,7 @@ use OCA\Shillinq\Listener\SignoffDecisionConcludedListener;
 use OCA\Shillinq\Listener\SigningConcludedListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
-use OCA\Shillinq\Listener\VerplichtingTransitionListener;
+use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Notification\DeadlineReminderNotifier;
 use OCA\Shillinq\Notification\PosStockUnmatchedLineNotifier;
 use OCA\Shillinq\Notification\RoleFallbackResolver;
@@ -681,7 +681,7 @@ class Application extends App implements IBootstrap
             listener: TenderNedAwardDetectedListener::class
         );
 
-        // Task 5.2 — VerplichtingTransitionListener emits the cross-app
+        // Task 5.2 — CommitmentTransitionListener emits the cross-app
         // `obligation.activated` CloudEvent on auto-promoted (created
         // active) AND manually-enriched (transitioned to active)
         // tenderned-sourced obligations (REQ-007 budget-impact pipeline).
@@ -690,19 +690,19 @@ class Application extends App implements IBootstrap
         // ObjectTransitionedEvent registration below stays global.
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
-            listener: VerplichtingTransitionListener::class
+            listener: CommitmentTransitionListener::class
         );
 
-        // Task 5.3 — OpdrachtUitvoeringTransitionListener emits
+        // Task 5.3 — OrderFulfilmentTransitionListener emits
         // `milestone.completed` on every completed OpdrachtUitvoering and
         // (for the approved eindoplevering of a tenderned-sourced
         // obligation) triggers the outbound status-sync to TenderNed
         // (REQ-006). The buyer-side gate is enforced both server-side
-        // (RBAC + TenderNedAanbestedingGuard::canAfronden) and inside
+        // (RBAC + TenderNedProcurementGuard::canAfronden) and inside
         // TenderNedStatusSync as a defence-in-depth tenant KvK check.
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
-            listener: OpdrachtUitvoeringTransitionListener::class
+            listener: OrderFulfilmentTransitionListener::class
         );
 
         // Change shillinq-delegation-via-events (REQ-SIGN-005) — the REAL
@@ -808,7 +808,7 @@ class Application extends App implements IBootstrap
         // Change verplichtingen-commitment-accounting Tasks 1/2 (REQ-VPL-010) —
         // CommitmentMaterialisationListener auto-materialises a Verplichting
         // when a PurchaseOrder reaches `approved` or a Contract reaches
-        // `active`, reusing the existing BudgetBlocker/MandaatEnforcer
+        // `active`, reusing the existing BudgetBlocker/MandateEnforcer
         // guards. PO path is fail-closed (denial propagates); Contract path
         // is fail-soft (design.md Open Question: no separate signed/executed
         // state exists on the shipped Contract schema, so `active` is
@@ -862,7 +862,7 @@ class Application extends App implements IBootstrap
         //
         // This is deliberately scoped to the 17 guards + PeriodCloseGuard
         // method shillinq#425 covers. Dozens of pre-existing guards
-        // (MandaatEnforcer, BudgetBlocker, PeriodCloseGuard's other three
+        // (MandateEnforcer, BudgetBlocker, PeriodCloseGuard's other three
         // methods, InventoryPostingGuard, KorThresholdGuard, ...) reference
         // tags shaped the same way and are NOT registered — every one of
         // those transitions also hard-fails today. That fleet-wide gap is
@@ -1435,7 +1435,7 @@ class Application extends App implements IBootstrap
         $this->registerFilteredObjectListener(
             dispatcher: $dispatcher,
             event: ObjectCreatedEvent::class,
-            listener: VerplichtingTransitionListener::class,
+            listener: CommitmentTransitionListener::class,
             schemas: ['Verplichting']
         );
 

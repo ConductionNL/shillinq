@@ -21,7 +21,7 @@
  *     0.2 / 6.1).
  *
  * The listener layers on top of the declarative
- * `OpdrachtUitvoering.voltooien` transition, which `OpdrachtUitvoeringGuard`
+ * `OpdrachtUitvoering.voltooien` transition, which `OrderFulfilmentGuard`
  * has already gated on at least one bewijsstuk being attached (REQ-004).
  * By the time the event fires the precondition has held; the listener's
  * job is purely cross-cutting notification + outbound sync.
@@ -62,7 +62,7 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
  */
-class OpdrachtUitvoeringTransitionListener implements IEventListener
+class OrderFulfilmentTransitionListener implements IEventListener
 {
     /**
      * Construct the listener.
@@ -133,7 +133,7 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener
             $this->sync->syncCompletion(oplevering: $oplevering);
         } catch (Throwable $e) {
             $this->logger->warning(
-                'OpdrachtUitvoeringTransitionListener: fail-soft on completion',
+                'OrderFulfilmentTransitionListener: fail-soft on completion',
                 ['exception' => $e->getMessage()]
             );
         }//end try

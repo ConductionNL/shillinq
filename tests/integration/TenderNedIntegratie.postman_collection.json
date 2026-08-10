@@ -178,7 +178,7 @@
 						"    }",
 						"    // OR may also accept the write but reject the lifecycle transition, in which",
 						"    // case the persisted status MUST NOT be 'completed' (the bewijsstuk-required",
-						"    // OpdrachtUitvoeringGuard denies it).",
+						"    // OrderFulfilmentGuard denies it).",
 						"    const body = pm.response.json();",
 						"    const status = body.status || body.object?.status;",
 						"    pm.expect(status).to.not.equal('completed');",

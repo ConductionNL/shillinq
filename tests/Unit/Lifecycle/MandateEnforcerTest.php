@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for MandaatEnforcer.
+ * Unit tests for MandateEnforcer.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Lifecycle
@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\Shillinq\Lifecycle\MandaatEnforcer;
+use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -30,11 +30,11 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Tests for MandaatEnforcer per REQ-VPL-002.
+ * Tests for MandateEnforcer per REQ-VPL-002.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class MandaatEnforcerTest extends TestCase
+class MandateEnforcerTest extends TestCase
 {
 
     /**
@@ -61,9 +61,9 @@ class MandaatEnforcerTest extends TestCase
     /**
      * The guard under test.
      *
-     * @var MandaatEnforcer
+     * @var MandateEnforcer
      */
-    private MandaatEnforcer $guard;
+    private MandateEnforcer $guard;
 
     /**
      * Set up test fixtures.
@@ -80,7 +80,7 @@ class MandaatEnforcerTest extends TestCase
 
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->guard = new MandaatEnforcer(
+        $this->guard = new MandateEnforcer(
             container: $this->container,
             appConfig: $this->appConfig,
             logger: $this->logger,

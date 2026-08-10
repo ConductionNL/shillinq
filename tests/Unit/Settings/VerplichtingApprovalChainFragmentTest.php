@@ -196,7 +196,7 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
     }//end testChainEnforcesSodAndAutoAdvances()
 
     /**
-     * No dead control: the imperative mandate-record routing (MandaatEnforcer)
+     * No dead control: the imperative mandate-record routing (MandateEnforcer)
      * is retained and still wired to the indienen transition. This change is
      * strictly additive; it removes no imperative enforcement.
      *
@@ -204,12 +204,12 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
      */
     public function testMandateEnforcerIsRetained(): void
     {
-        self::assertFileExists(__DIR__.'/../../../lib/Lifecycle/MandaatEnforcer.php');
+        self::assertFileExists(__DIR__.'/../../../lib/Lifecycle/MandateEnforcer.php');
 
         $transitions = ($this->verplichting()['x-openregister-lifecycle']['transitions'] ?? []);
         self::assertArrayHasKey('indienen', $transitions);
         self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\MandaatEnforcer::requiresApproval',
+            'OCA\\Shillinq\\Lifecycle\\MandateEnforcer::requiresApproval',
             $transitions['indienen']['requires']
         );
 
