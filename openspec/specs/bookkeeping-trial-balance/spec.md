@@ -336,6 +336,9 @@ summing them in PHP, returning the same row shape as the aggregation path.
 ## Notes
 
 **UNRESOLVED CONTRADICTION — REQ-TB-001 vs REQ-TB-008/REQ-TB-018.**
+*Tracked as ConductionNL/shillinq#500 — read that issue before acting on either
+side of this. The decision is open; this file records both positions and picks
+neither.*
 REQ-TB-001 states that the implementation "MUST NOT introduce a
 `TrialBalanceService.php`, `TrialBalanceReportBuilder.php`, or any PHP class
 whose responsibility is 'assemble the trial balance'", and its scenario asks
