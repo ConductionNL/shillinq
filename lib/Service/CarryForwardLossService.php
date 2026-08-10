@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-3
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-007
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,7 +37,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Side-effect-free loss carry-forward arithmetic helper (REQ-IBA-005, REQ-IBA-007).
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-3
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-007
  */
 class CarryForwardLossService
 {
@@ -77,7 +77,7 @@ class CarryForwardLossService
      *   status: string
      * }
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-3
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-007
      */
     public function offsetLossAgainstProfit(
         float $openLoss,

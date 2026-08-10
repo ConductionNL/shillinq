@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Side-effect-free modified-nexus arithmetic helper (REQ-IBA-002).
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
  */
 class NexusCalculationService
 {
@@ -71,7 +71,7 @@ class NexusCalculationService
      *   totaleRdKosten: float
      * }
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-1
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
      */
     public function calculateNexusBreak(
         float $eigenRdKosten,
@@ -120,7 +120,7 @@ class NexusCalculationService
      *
      * @return float The applied (capped) nexusbreuk for the scenario.
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-1
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
      */
     public function scenarioNexusBreak(
         float $eigenRdKosten,

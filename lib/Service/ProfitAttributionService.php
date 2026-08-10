@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-2
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-003
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Side-effect-free profit-attribution arithmetic helper (REQ-IBA-003).
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-2
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-003
  */
 class ProfitAttributionService
 {
@@ -98,7 +98,7 @@ class ProfitAttributionService
      *   forfaitairCapApplied: bool
      * }
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-2
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-003
      */
     public function calculateKwalificerendeWinst(
         string $methode,
@@ -163,7 +163,7 @@ class ProfitAttributionService
      *   forfaitairCapApplied: bool
      * }
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-2
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-003
      */
     private function forfaitair(float $profit): array
     {
