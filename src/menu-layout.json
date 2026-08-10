@@ -53,6 +53,7 @@
 	"_settingsSection_note": "Ids lifted into Nextcloud's settings foldout (the bottom-left gear / NcAppNavigationSettings, OUTSIDE the scrollable nav) by applySettingsSection in main.js — each becomes a flat top-level item with section:'settings'. This is the special settings position, not a normal menu group.",
 	"settingsSection": [
 		"GeneralSettings",
+		"DeadlineCalendarSettings",
 		"BankImportPage",
 		"MatchingRules",
 		"DunningLadders",
@@ -195,7 +196,6 @@
 		"ReserveStock",
 		"SbrXbrlFilings",
 		"SchatkistPositie",
-		"Settings",
 		"SisaRapportages",
 		"SmsReminderChannels",
 		"StockByLocation",

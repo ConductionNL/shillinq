@@ -33,17 +33,28 @@ test.describe('shillinq spec-coverage — Dashboard & Settings', () => {
 		assertNoShillinqFailures(rec, '/')
 	})
 
-	test('Settings — settings page mounts', async ({ page }) => {
+	// ADR-079 D1: app configuration lives in the Nextcloud settings framework
+	// at /settings/admin/shillinq (AdminSettings.php → AdminRoot.vue), NOT on
+	// an in-app `type: settings` page. This test used to drive the in-app
+	// /settings route, which duplicated the same register form and shipped
+	// three link sections whose `links[]` key CnSettingsPage does not read, so
+	// they rendered as empty cards. That page has been deleted; the surface
+	// this asserts is the platform one — hence no `gotoPage`, which pins the
+	// URL to /apps/shillinq.
+	test('Settings — the platform admin settings section mounts', async ({ page }) => {
 		const rec = recordShillinqErrors(page)
-		await gotoPage(page, '/settings')
-		await expect(page.locator('#content-vue').getByText(/Settings|Instelling/i).first())
+		await page.goto('/index.php/settings/admin/shillinq', { waitUntil: 'domcontentloaded', timeout: 25_000 })
+		await page.waitForSelector('#shillinq-settings', { timeout: 15_000 })
+		await dismissOverlays(page)
+		await page.waitForTimeout(1_000)
+		await expect(page.locator('#shillinq-settings').getByText(/Configuration|Configuratie/i).first())
 			.toBeVisible({ timeout: 12_000 })
 		// A settings surface: form fields, toggles, sections, or save buttons.
 		const surfaces = await page.locator(
-			'#content-vue input, #content-vue [class*="settings" i], #content-vue [role="switch"], #content-vue button:visible, #content-vue fieldset, #content-vue section',
+			'#shillinq-settings input, #shillinq-settings [class*="settings" i], #shillinq-settings [role="switch"], #shillinq-settings button:visible, #shillinq-settings fieldset, #shillinq-settings section',
 		).count().catch(() => 0)
-		expect(surfaces, 'settings should render a settings surface').toBeGreaterThan(0)
-		assertNoShillinqFailures(rec, '/settings')
+		expect(surfaces, 'admin settings should render a settings surface').toBeGreaterThan(0)
+		assertNoShillinqFailures(rec, '/settings/admin/shillinq')
 	})
 
 	test('Features & roadmap — page mounts', async ({ page }) => {
