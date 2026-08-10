@@ -209,9 +209,9 @@ class MandateEnforcerTest extends TestCase
         return array_merge(
             [
                 'administrationId'                  => 'adm-1',
-                'mandaatcode'                       => 'M-INKOOP-50K',
+                'mandateCode'                       => 'M-INKOOP-50K',
                 'maximumbedrag'                     => 5000000,
-                'soort_verplichting'                => ['inkooporder', 'raamovereenkomst'],
+                'commitmentType'                => ['inkooporder', 'raamovereenkomst'],
                 'is_override'                       => false,
                 'geldig_van'                        => '2020-01-01',
                 'geldig_tot'                        => '2999-12-31',
@@ -234,7 +234,7 @@ class MandateEnforcerTest extends TestCase
     {
         return [
             'administrationId'      => 'adm-1',
-            'verplichtingsnummer'   => 'PO-1',
+            'commitmentNumber'   => 'PO-1',
             'soort'                 => $soort,
             'totaalbedrag_excl_btw' => $bedrag,
         ];
@@ -286,7 +286,7 @@ class MandateEnforcerTest extends TestCase
     {
         $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$this->mandate()]]));
 
-        // An arbeidscontract is not in the mandate's soort_verplichting list.
+        // An arbeidscontract is not in the mandate's commitmentType list.
         $this->assertFalse(
             $this->guard->hasSufficientMandate('PO-1', $this->commitment('arbeidscontract', 1000000))
         );
@@ -352,15 +352,15 @@ class MandateEnforcerTest extends TestCase
      */
     public function testResolvesLeastPrivilegeNonOverrideMandate(): void
     {
-        $small    = $this->mandate(['mandaatcode' => 'SMALL', 'maximumbedrag' => 5000000]);
-        $big      = $this->mandate(['mandaatcode' => 'BIG', 'maximumbedrag' => 25000000]);
-        $override = $this->mandate(['mandaatcode' => 'OVR', 'maximumbedrag' => 1000000000, 'is_override' => true]);
+        $small    = $this->mandate(['mandateCode' => 'SMALL', 'maximumbedrag' => 5000000]);
+        $big      = $this->mandate(['mandateCode' => 'BIG', 'maximumbedrag' => 25000000]);
+        $override = $this->mandate(['mandateCode' => 'OVR', 'maximumbedrag' => 1000000000, 'is_override' => true]);
 
         $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$big, $override, $small]]));
 
         $resolved = $this->guard->resolveApplicableMandate($this->commitment('inkooporder', 3000000));
         $this->assertNotNull($resolved);
-        $this->assertSame('SMALL', $resolved['mandaatcode']);
+        $this->assertSame('SMALL', $resolved['mandateCode']);
 
     }//end testResolvesLeastPrivilegeNonOverrideMandate()
 

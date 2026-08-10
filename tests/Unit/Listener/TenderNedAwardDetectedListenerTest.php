@@ -11,8 +11,8 @@
  *  - No tenant KvK configured -> NO promotion (ambiguous).
  *  - Tenant KvK does NOT match the awarded supplier -> NO promotion.
  *  - Tenant KvK MATCHES + value valid + OR available -> promotion attempted
- *    (saveObject invoked on Verplichting + emitter fires).
- *  - Idempotency: when an existing Verplichting carries the bronReferentie,
+ *    (saveObject invoked on Commitment + emitter fires).
+ *  - Idempotency: when an existing Commitment carries the bronReferentie,
  *    no new saveObject is issued; the budget event IS re-emitted.
  *  - Handler swallows all downstream exceptions (fail-soft).
  *
@@ -124,7 +124,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
 
     /**
      * Build a container that resolves the OR ObjectService to a recording
-     * fluent stub. Returns an array $verplichtingenRows on the Verplichting
+     * fluent stub. Returns an array $verplichtingenRows on the Commitment
      * lookup.
      *
      * @param array<int, array<string, mixed>> $verplichtingenRows Existing matching obligations.
@@ -172,7 +172,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
 
             public function findAll(array $opts=[]): array
             {
-                if ($this->currentSchema === 'Verplichting') {
+                if ($this->currentSchema === 'Commitment') {
                     return $this->verplichtingenRows;
                 }
                 return [];
@@ -222,7 +222,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
     private function listener(
         ContainerInterface $container,
         string $tenantKvk='',
-        string $schemaSlug='TenderNedAanbesteding'
+        string $schemaSlug='TenderNedProcurement'
     ): array {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
@@ -283,7 +283,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
     public function testNonAanbestedingSchemaIsIgnored(): void
     {
         [$container, $recorder] = $this->containerAndRecorder([]);
-        [$listener, $dispatcher] = $this->listener($container, '30280353', 'Verplichting');
+        [$listener, $dispatcher] = $this->listener($container, '30280353', 'Commitment');
 
         $event = new ObjectCreatedEvent(
             $this->entity('1089', ['status' => 'gegund', 'contractWaarde' => 100.0])
@@ -397,7 +397,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
     }//end testSupplierMismatchSkipsPromotion()
 
     /**
-     * A KvK match writes a Verplichting + emits the budget event (REQ-002 / REQ-007).
+     * A KvK match writes a Commitment + emits the budget event (REQ-002 / REQ-007).
      *
      * @return void
      */
@@ -422,11 +422,11 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
 
         $listener->handle($event);
 
-        // 1 Verplichting + 1 update of the aanbesteding to in-uitvoering = 2 saves.
+        // 1 Commitment + 1 update of the aanbesteding to in-uitvoering = 2 saves.
         $this->assertGreaterThanOrEqual(1, count($recorder->saves));
         $verplichtingSave = null;
         foreach ($recorder->saves as $save) {
-            if ($save['schema'] === 'Verplichting') {
+            if ($save['schema'] === 'Commitment') {
                 $verplichtingSave = $save['object'];
                 break;
             }
@@ -444,15 +444,15 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
     }//end testMatchingKvkPromotesAndEmits()
 
     /**
-     * An existing Verplichting with the same bronReferentie is idempotent —
-     * no new Verplichting is written; the budget event IS re-emitted.
+     * An existing Commitment with the same bronReferentie is idempotent —
+     * no new Commitment is written; the budget event IS re-emitted.
      *
      * @return void
      */
     public function testIdempotentOnExistingBronReferentie(): void
     {
         $existing = [
-            'verplichtingsnummer' => 'TN-TN-2026-0001',
+            'commitmentNumber' => 'TN-TN-2026-0001',
             'soort'               => 'inkooporder',
             'bron'                => 'tenderned',
             'bronReferentie'      => 'TN-2026-0001',
@@ -475,9 +475,9 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
 
         $listener->handle($event);
 
-        // No NEW Verplichting save.
+        // No NEW Commitment save.
         foreach ($recorder->saves as $save) {
-            $this->assertNotSame('Verplichting', $save['schema'], 'No new Verplichting should be created on idempotent re-event');
+            $this->assertNotSame('Commitment', $save['schema'], 'No new Commitment should be created on idempotent re-event');
         }
 
         // Budget impact event WAS re-emitted to nudge launchpad.

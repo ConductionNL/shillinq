@@ -89,9 +89,9 @@ class TenderNedProcurementGuardTest extends TestCase
     }//end setUp()
 
     /**
-     * Build a fluent ObjectService stub returning the given OpdrachtUitvoering records.
+     * Build a fluent ObjectService stub returning the given OrderFulfilment records.
      *
-     * @param array<int, array<string, mixed>> $records OpdrachtUitvoering records.
+     * @param array<int, array<string, mixed>> $records OrderFulfilment records.
      *
      * @return object
      */
@@ -226,7 +226,7 @@ class TenderNedProcurementGuardTest extends TestCase
         $this->container->method('get')->willReturn($stub);
 
         $this->assertTrue(
-            $this->guard->canAfronden(['aanbestedingId' => 'TN-1', 'verplichtingId' => 'vpl-1'])
+            $this->guard->canAfronden(['aanbestedingId' => 'TN-1', 'commitmentId' => 'vpl-1'])
         );
 
     }//end testCanAfrondenPermitsWithApprovedEindoplevering()
@@ -242,7 +242,7 @@ class TenderNedProcurementGuardTest extends TestCase
         $this->container->method('get')->willReturn($stub);
 
         $this->assertFalse(
-            $this->guard->canAfronden(['aanbestedingId' => 'TN-1', 'verplichtingId' => 'vpl-1'])
+            $this->guard->canAfronden(['aanbestedingId' => 'TN-1', 'commitmentId' => 'vpl-1'])
         );
 
     }//end testCanAfrondenDeniesWithoutEindoplevering()
@@ -260,7 +260,7 @@ class TenderNedProcurementGuardTest extends TestCase
         $this->container->method('get')->willReturn($stub);
 
         $this->assertFalse(
-            $this->guard->canAfronden(['aanbestedingId' => 'TN-1', 'verplichtingId' => 'vpl-1'])
+            $this->guard->canAfronden(['aanbestedingId' => 'TN-1', 'commitmentId' => 'vpl-1'])
         );
 
     }//end testCanAfrondenDeniesWhenEindopleveringNotApproved()

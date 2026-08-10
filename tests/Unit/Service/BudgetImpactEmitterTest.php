@@ -9,7 +9,7 @@
  *    event with the contractWaarde / kostenplaats / period / dossier URL
  *    payload (REQ-007).
  *  - `emitMilestoneCompleted()` dispatches one
- *    `shillinq.milestone.completed` event with the verplichtingId /
+ *    `shillinq.milestone.completed` event with the commitmentId /
  *    mijlpaalId / approval marker / bewijsstuk count payload (REQ-005).
  *  - A dispatcher exception is swallowed (fail-soft).
  *  - An emittedAt ISO-8601 timestamp is always set.
@@ -226,7 +226,7 @@ final class BudgetImpactEmitterTest extends TestCase
 
         $emitter->emitMilestoneCompleted(
             [
-                'verplichtingId'   => 'TN-TN-2026-0001',
+                'commitmentId'   => 'TN-TN-2026-0001',
                 'mijlpaalId'       => 'M-Q1',
                 'opleveringsType'  => 'eindoplevering',
                 'opleveringsDatum' => '2026-12-15',
@@ -243,7 +243,7 @@ final class BudgetImpactEmitterTest extends TestCase
         $this->assertSame(BudgetImpactEmitter::EVENT_MILESTONE_COMPLETED, $dispatcher->events[0]['name']);
 
         $args = $dispatcher->events[0]['event']->getArguments();
-        $this->assertSame('TN-TN-2026-0001', $args['verplichtingId']);
+        $this->assertSame('TN-TN-2026-0001', $args['commitmentId']);
         $this->assertSame('M-Q1', $args['mijlpaalId']);
         $this->assertSame('eindoplevering', $args['opleveringsType']);
         $this->assertTrue((bool) $args['goedgekeurd']);
@@ -276,7 +276,7 @@ final class BudgetImpactEmitterTest extends TestCase
     {
         $emitter = new BudgetImpactEmitter($this->throwingDispatcher(), new NullLogger());
 
-        $emitter->emitMilestoneCompleted(['verplichtingId' => 'TN-X']);
+        $emitter->emitMilestoneCompleted(['commitmentId' => 'TN-X']);
         $this->addToAssertionCount(1);
 
     }//end testEmitMilestoneCompletedSwallowsDispatcherException()

@@ -5,12 +5,12 @@
  *
  * Verifies the listener's contract (Task 5.3 / REQ-005 / REQ-006):
  *
- *  - Transition to=completed on OpdrachtUitvoering emits milestone.completed.
+ *  - Transition to=completed on OrderFulfilment emits milestone.completed.
  *  - Approved eindoplevering triggers the outbound TenderNed sync.
  *  - Non-eindoplevering completion does NOT trigger sync (only the audit emit).
  *  - Unapproved eindoplevering does NOT trigger sync.
  *  - Non-completed transition is ignored.
- *  - Non-OpdrachtUitvoering schema is ignored.
+ *  - Non-OrderFulfilment schema is ignored.
  *  - Handler swallows downstream exceptions (fail-soft).
  *
  * @category Test
@@ -219,13 +219,13 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         $listener   = new OrderFulfilmentTransitionListener(
             $emitter,
             $sync,
-            $this->resolver('OpdrachtUitvoering'),
+            $this->resolver('OrderFulfilment'),
             new NullLogger()
         );
 
         $event = new ObjectTransitionedEvent(
             $this->entity('1201', [
-                'verplichtingId'  => 'TN-2026-0001',
+                'commitmentId'  => 'TN-2026-0001',
                 'mijlpaalId'      => 'M-Q1',
                 'opleveringsType' => 'tussenoplevering',
                 'goedgekeurd'     => true,
@@ -236,7 +236,7 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
             'completed',
             'admin',
             'shillinq',
-            'OpdrachtUitvoering'
+            'OrderFulfilment'
         );
 
         $listener->handle($event);
@@ -260,13 +260,13 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         $listener   = new OrderFulfilmentTransitionListener(
             $emitter,
             $sync,
-            $this->resolver('OpdrachtUitvoering'),
+            $this->resolver('OrderFulfilment'),
             new NullLogger()
         );
 
         $event = new ObjectTransitionedEvent(
             $this->entity('1201', [
-                'verplichtingId'  => 'TN-2026-0001',
+                'commitmentId'  => 'TN-2026-0001',
                 'mijlpaalId'      => 'M-EIND',
                 'opleveringsType' => 'eindoplevering',
                 'goedgekeurd'     => true,
@@ -277,7 +277,7 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
             'completed',
             'admin',
             'shillinq',
-            'OpdrachtUitvoering'
+            'OrderFulfilment'
         );
 
         $listener->handle($event);
@@ -300,13 +300,13 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         $listener   = new OrderFulfilmentTransitionListener(
             $emitter,
             $sync,
-            $this->resolver('OpdrachtUitvoering'),
+            $this->resolver('OrderFulfilment'),
             new NullLogger()
         );
 
         $event = new ObjectTransitionedEvent(
             $this->entity('1201', [
-                'verplichtingId'  => 'TN-2026-0001',
+                'commitmentId'  => 'TN-2026-0001',
                 'mijlpaalId'      => 'M-EIND',
                 'opleveringsType' => 'eindoplevering',
                 'goedgekeurd'     => false,
@@ -317,7 +317,7 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
             'completed',
             'admin',
             'shillinq',
-            'OpdrachtUitvoering'
+            'OrderFulfilment'
         );
 
         $listener->handle($event);
@@ -339,13 +339,13 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         $listener   = new OrderFulfilmentTransitionListener(
             $emitter,
             $sync,
-            $this->resolver('OpdrachtUitvoering'),
+            $this->resolver('OrderFulfilment'),
             new NullLogger()
         );
 
         $event = new ObjectTransitionedEvent(
             $this->entity('1201', [
-                'verplichtingId'  => 'TN-2026-0001',
+                'commitmentId'  => 'TN-2026-0001',
                 'mijlpaalId'      => 'M-EIND',
                 'opleveringsType' => 'eindoplevering',
                 'goedgekeurd'     => true,
@@ -355,7 +355,7 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
             'in-progress',
             'admin',
             'shillinq',
-            'OpdrachtUitvoering'
+            'OrderFulfilment'
         );
 
         $listener->handle($event);
@@ -366,11 +366,11 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
     }//end testNonCompletedTransitionIsIgnored()
 
     /**
-     * A non-OpdrachtUitvoering schema is ignored.
+     * A non-OrderFulfilment schema is ignored.
      *
      * @return void
      */
-    public function testNonOpdrachtUitvoeringSchemaIsIgnored(): void
+    public function testNonOrderFulfilmentSchemaIsIgnored(): void
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
@@ -378,7 +378,7 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         $listener   = new OrderFulfilmentTransitionListener(
             $emitter,
             $sync,
-            $this->resolver('Verplichting'),
+            $this->resolver('Commitment'),
             new NullLogger()
         );
 
@@ -389,7 +389,7 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
             'completed',
             'admin',
             'shillinq',
-            'Verplichting'
+            'Commitment'
         );
 
         $listener->handle($event);
@@ -397,5 +397,5 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase
         $this->assertCount(0, $dispatcher->events);
         $this->assertCount(0, $sync->syncCalls);
 
-    }//end testNonOpdrachtUitvoeringSchemaIsIgnored()
+    }//end testNonOrderFulfilmentSchemaIsIgnored()
 }//end class

@@ -3,7 +3,7 @@
 /**
  * End-to-end workflow scenarios for verplichtingenadministratie.
  *
- * Composes the three Verplichting lifecycle guards (BudgetBlocker +
+ * Composes the three Commitment lifecycle guards (BudgetBlocker +
  * MandateEnforcer + CommitmentGuard) and walks through the REQ-VPL-001 ..
  * REQ-VPL-010 GIVEN/WHEN/THEN scenarios at the unit level. The lifecycle
  * engine and a live OpenRegister instance are simulated by an in-memory
@@ -45,7 +45,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Verplichting workflow scenarios per REQ-VPL-001 through REQ-VPL-004.
+ * Commitment workflow scenarios per REQ-VPL-001 through REQ-VPL-004.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -241,7 +241,7 @@ class CommitmentWorkflowTest extends TestCase
     public function testInkooporderWithinBudgetAndMandateSignsCleanly(): void
     {
         $budget    = $this->makeBudget(['geautoriseerd_bedrag' => 50000000, 'gerealiseerd_bedrag' => 0]);
-        $mandaat   = $this->makeMandate(['mandaatcode' => 'M-INKOOP-100K', 'maximumbedrag' => 10000000]);
+        $mandaat   = $this->makeMandate(['mandateCode' => 'M-INKOOP-100K', 'maximumbedrag' => 10000000]);
         $verplicht = $this->makeCommitment(75 * 100000);
 
         $this->withObjectService(
@@ -282,7 +282,7 @@ class CommitmentWorkflowTest extends TestCase
     public function testMandateExceededRoutesToApprovalWorkflow(): void
     {
         $budget    = $this->makeBudget();
-        $mandaat   = $this->makeMandate(['mandaatcode' => 'M-INKOOP-50K', 'maximumbedrag' => 5000000]);
+        $mandaat   = $this->makeMandate(['mandateCode' => 'M-INKOOP-50K', 'maximumbedrag' => 5000000]);
         $verplicht = $this->makeCommitment(75 * 100000);
 
         $this->withObjectService(
@@ -294,7 +294,7 @@ class CommitmentWorkflowTest extends TestCase
             )
         );
 
-        // Mandate check fails → must route to in_goedkeuring (Goedkeuringsstap created).
+        // Mandate check fails → must route to in_goedkeuring (ApprovalStep created).
         $this->assertFalse($this->mandaat->hasSufficientMandate('PO-1', $verplicht));
         $this->assertTrue($this->mandaat->requiresApproval('PO-1', $verplicht));
 
@@ -335,7 +335,7 @@ class CommitmentWorkflowTest extends TestCase
 
         $overcommit = [
             'administrationId'      => 'adm-1',
-            'verplichtingsnummer'   => 'RO-1',
+            'commitmentNumber'   => 'RO-1',
             'soort'                 => 'raamovereenkomst',
             'totaalbedrag_excl_btw' => 20000000,
             'regels'                => [
@@ -368,7 +368,7 @@ class CommitmentWorkflowTest extends TestCase
         $budget    = $this->makeBudget(['geautoriseerd_bedrag' => 20000000, 'gerealiseerd_bedrag' => 0]);
         $override  = $this->makeMandate(
             [
-                'mandaatcode'   => 'M-CFO-OVERRIDE',
+                'mandateCode'   => 'M-CFO-OVERRIDE',
                 'maximumbedrag' => 1000000000,
                 'is_override'   => true,
             ]
@@ -400,7 +400,7 @@ class CommitmentWorkflowTest extends TestCase
     {
         $mandaat   = $this->makeMandate(
             [
-                'mandaatcode'                       => 'M-INKOOP-50K-2SIG',
+                'mandateCode'                       => 'M-INKOOP-50K-2SIG',
                 'maximumbedrag'                     => 5000000,
                 'vereist_tweede_handtekening_boven' => 2500000,
             ]
@@ -460,9 +460,9 @@ class CommitmentWorkflowTest extends TestCase
         return array_merge(
             [
                 'administrationId'   => 'adm-1',
-                'mandaatcode'        => 'M-INKOOP-100K',
+                'mandateCode'        => 'M-INKOOP-100K',
                 'maximumbedrag'      => 10000000,
-                'soort_verplichting' => ['inkooporder', 'raamovereenkomst'],
+                'commitmentType' => ['inkooporder', 'raamovereenkomst'],
                 'is_override'        => false,
                 'geldig_van'         => '2020-01-01',
                 'geldig_tot'         => '2999-12-31',
@@ -483,7 +483,7 @@ class CommitmentWorkflowTest extends TestCase
     {
         return [
             'administrationId'      => 'adm-1',
-            'verplichtingsnummer'   => 'PO-1',
+            'commitmentNumber'   => 'PO-1',
             'soort'                 => 'inkooporder',
             'totaalbedrag_excl_btw' => $bedrag,
             'regels'                => [

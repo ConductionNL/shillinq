@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for the Verplichting declarative approval-chain block.
+ * Unit tests for the Commitment declarative approval-chain block.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Settings
@@ -26,7 +26,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Verifies the declarative `x-openregister-approval-chains` block that gates the
- * Verplichting `goedkeuren` transition (REQ-VPL-013).
+ * Commitment `goedkeuren` transition (REQ-VPL-013).
  *
  * The runtime gate itself (block-until-approved, separation of duties, tier
  * routing, auto-advance) is exercised by OpenRegister's own approval-chains tests
@@ -37,11 +37,11 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class VerplichtingApprovalChainFragmentTest extends TestCase
+final class CommitmentApprovalChainFragmentTest extends TestCase
 {
 
     /**
-     * Absolute path to the Verplichting register fragment.
+     * Absolute path to the Commitment register fragment.
      *
      * @var string
      */
@@ -59,15 +59,15 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
     }//end fragment()
 
     /**
-     * Load the Verplichting schema definition from the fragment.
+     * Load the Commitment schema definition from the fragment.
      *
      * @return array<string, mixed>
      */
     private function verplichting(): array
     {
         $schemas = ($this->fragment()['components']['schemas'] ?? []);
-        self::assertArrayHasKey('Verplichting', $schemas, 'Fragment must declare the Verplichting schema');
-        return $schemas['Verplichting'];
+        self::assertArrayHasKey('Commitment', $schemas, 'Fragment must declare the Commitment schema');
+        return $schemas['Commitment'];
 
     }//end verplichting()
 
@@ -79,7 +79,7 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase
     private function chain(): array
     {
         $schema = $this->verplichting();
-        self::assertArrayHasKey('x-openregister-approval-chains', $schema, 'Verplichting must declare x-openregister-approval-chains');
+        self::assertArrayHasKey('x-openregister-approval-chains', $schema, 'Commitment must declare x-openregister-approval-chains');
         $chains = $schema['x-openregister-approval-chains'];
         self::assertArrayHasKey('verplichting-goedkeuring', $chains);
         return $chains['verplichting-goedkeuring'];

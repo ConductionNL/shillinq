@@ -5,11 +5,11 @@
  *
  * Verifies the listener's contract (Task 5.2 / REQ-007):
  *
- *  - Created Verplichting with bron=tenderned + status=active -> emit.
- *  - Created Verplichting with bron=manual -> NO emit.
- *  - Transitioned Verplichting to=active + bron=tenderned -> emit.
- *  - Transitioned Verplichting to=concept -> NO emit.
- *  - Non-Verplichting schema event -> NO emit.
+ *  - Created Commitment with bron=tenderned + status=active -> emit.
+ *  - Created Commitment with bron=manual -> NO emit.
+ *  - Transitioned Commitment to=active + bron=tenderned -> emit.
+ *  - Transitioned Commitment to=concept -> NO emit.
+ *  - Non-Commitment schema event -> NO emit.
  *  - Handler swallows downstream exceptions (fail-soft).
  *
  * @category Test
@@ -140,7 +140,7 @@ final class CommitmentTransitionListenerTest extends TestCase
     }//end resolver()
 
     /**
-     * A created Verplichting with bron=tenderned + status=active emits.
+     * A created Commitment with bron=tenderned + status=active emits.
      *
      * @return void
      */
@@ -148,7 +148,7 @@ final class CommitmentTransitionListenerTest extends TestCase
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new CommitmentTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
+        $listener   = new CommitmentTransitionListener($emitter, $this->resolver('Commitment'), new NullLogger());
 
         $event = new ObjectCreatedEvent(
             $this->entity('1089', [
@@ -167,15 +167,15 @@ final class CommitmentTransitionListenerTest extends TestCase
     }//end testCreatedTenderNedActiveEmitsBudgetEvent()
 
     /**
-     * A created manual Verplichting does NOT emit.
+     * A created manual Commitment does NOT emit.
      *
      * @return void
      */
-    public function testCreatedManualVerplichtingDoesNotEmit(): void
+    public function testCreatedManualCommitmentDoesNotEmit(): void
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new CommitmentTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
+        $listener   = new CommitmentTransitionListener($emitter, $this->resolver('Commitment'), new NullLogger());
 
         $event = new ObjectCreatedEvent(
             $this->entity('1089', [
@@ -189,19 +189,19 @@ final class CommitmentTransitionListenerTest extends TestCase
 
         $this->assertCount(0, $dispatcher->events);
 
-    }//end testCreatedManualVerplichtingDoesNotEmit()
+    }//end testCreatedManualCommitmentDoesNotEmit()
 
     /**
-     * A created Verplichting with status=concept is ignored
+     * A created Commitment with status=concept is ignored
      * (REQ-002 promotion writes status=active immediately).
      *
      * @return void
      */
-    public function testCreatedConceptVerplichtingDoesNotEmit(): void
+    public function testCreatedConceptCommitmentDoesNotEmit(): void
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new CommitmentTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
+        $listener   = new CommitmentTransitionListener($emitter, $this->resolver('Commitment'), new NullLogger());
 
         $event = new ObjectCreatedEvent(
             $this->entity('1089', [
@@ -215,10 +215,10 @@ final class CommitmentTransitionListenerTest extends TestCase
 
         $this->assertCount(0, $dispatcher->events);
 
-    }//end testCreatedConceptVerplichtingDoesNotEmit()
+    }//end testCreatedConceptCommitmentDoesNotEmit()
 
     /**
-     * A transition to=active on a tenderned-sourced Verplichting emits.
+     * A transition to=active on a tenderned-sourced Commitment emits.
      *
      * @return void
      */
@@ -226,7 +226,7 @@ final class CommitmentTransitionListenerTest extends TestCase
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new CommitmentTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
+        $listener   = new CommitmentTransitionListener($emitter, $this->resolver('Commitment'), new NullLogger());
 
         $event = new ObjectTransitionedEvent(
             $this->entity('1089', [
@@ -239,7 +239,7 @@ final class CommitmentTransitionListenerTest extends TestCase
             'active',
             'admin',
             'shillinq',
-            'Verplichting'
+            'Commitment'
         );
 
         $listener->handle($event);
@@ -257,7 +257,7 @@ final class CommitmentTransitionListenerTest extends TestCase
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $listener   = new CommitmentTransitionListener($emitter, $this->resolver('Verplichting'), new NullLogger());
+        $listener   = new CommitmentTransitionListener($emitter, $this->resolver('Commitment'), new NullLogger());
 
         $event = new ObjectTransitionedEvent(
             $this->entity('1089', [
@@ -270,7 +270,7 @@ final class CommitmentTransitionListenerTest extends TestCase
             'concept',
             'admin',
             'shillinq',
-            'Verplichting'
+            'Commitment'
         );
 
         $listener->handle($event);
@@ -280,17 +280,17 @@ final class CommitmentTransitionListenerTest extends TestCase
     }//end testTransitionedToConceptDoesNotEmit()
 
     /**
-     * A non-Verplichting schema event is ignored.
+     * A non-Commitment schema event is ignored.
      *
      * @return void
      */
-    public function testNonVerplichtingSchemaIsIgnored(): void
+    public function testNonCommitmentSchemaIsIgnored(): void
     {
         $dispatcher = $this->recordingDispatcher();
         $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
         $listener   = new CommitmentTransitionListener(
             $emitter,
-            $this->resolver('TenderNedAanbesteding'),
+            $this->resolver('TenderNedProcurement'),
             new NullLogger()
         );
 
@@ -305,7 +305,7 @@ final class CommitmentTransitionListenerTest extends TestCase
 
         $this->assertCount(0, $dispatcher->events);
 
-    }//end testNonVerplichtingSchemaIsIgnored()
+    }//end testNonCommitmentSchemaIsIgnored()
 
     /**
      * An entity with a null payload is handled gracefully (the listener
@@ -313,7 +313,7 @@ final class CommitmentTransitionListenerTest extends TestCase
      *
      * Originally this test passed a null event but the OR
      * ObjectCreatedEvent constructor now type-hints non-null ObjectEntity.
-     * The fail-soft contract is identical: a non-Verplichting / payload-less
+     * The fail-soft contract is identical: a non-Commitment / payload-less
      * entity must NOT cause an emit.
      *
      * @return void
