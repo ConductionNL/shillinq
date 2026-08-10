@@ -85,8 +85,113 @@
 	"item": [
 		{
 			"name": "Period Close",
-			"description": "bookkeeping-period-close (T2): guided close lifecycle + AI close-assistant flags. Requires the period-close register fragment seeded (adm-smb-1 periods 2026-01..2026-04) and the acting user in the period-closer / auditor group for the privileged transitions.",
+			"description": "bookkeeping-period-close (T2): guided close lifecycle + AI close-assistant flags.\n\nThe folder SEEDS ITS OWN FiscalPeriod fixtures (adm-smb-1: 2026-01 audit-locked, 2026-02 closed, 2026-04 open) and deletes them again at the end. It used to assume they were already present, but nothing in the product creates them: PeriodCloseBackfill seeds a rolling FORWARD horizon (current month + twelve), which by construction never contains a period in the past, and BackfillFiscalPeriods only materialises periods that historical GLLine rows already reference. On a fresh install `GET /apps/openregister/api/objects/shillinq/FiscalPeriod` returns zero rows, so all seven assertions below were asserting against 404 rather than against the close lifecycle. Seeding them here makes the folder self-contained and makes the assertions actually exercise the transitions.",
 			"item": [
+				{
+					"name": "Setup — seed the 2026-04 open period",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"periodId\": \"{{period_id_open}}\",\n  \"name\": \"April 2026\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"startDate\": \"2026-04-01\",\n  \"endDate\": \"2026-04-30\",\n  \"fiscalYear\": 2026,\n  \"state\": \"open\",\n  \"reopenedHistory\": [],\n  \"taskChecklistItems\": [],\n  \"aiFlags\": []\n}"
+						},
+						"description": "Fixture for the open → closing → closed path."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('open period fixture created', function () {",
+									"    pm.expect([200, 201]).to.include(pm.response.code);",
+									"    const body = pm.response.json();",
+									"    const uuid = body.id || body['@self']?.id || body.uuid;",
+									"    pm.expect(uuid).to.be.a('string').and.not.equal('');",
+									"    pm.collectionVariables.set('fixture_period_open_uuid', String(uuid));",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Setup — seed the 2026-02 closed period",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"periodId\": \"{{period_id_closed}}\",\n  \"name\": \"February 2026\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"startDate\": \"2026-02-01\",\n  \"endDate\": \"2026-02-28\",\n  \"fiscalYear\": 2026,\n  \"state\": \"closed\",\n  \"closedAt\": \"2026-03-05T10:00:00+00:00\",\n  \"closedBy\": \"admin\",\n  \"reopenedHistory\": [],\n  \"taskChecklistItems\": [],\n  \"aiFlags\": []\n}"
+						},
+						"description": "Fixture for the reopen path (REQ-PC-006)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('closed period fixture created', function () {",
+									"    pm.expect([200, 201]).to.include(pm.response.code);",
+									"    const body = pm.response.json();",
+									"    const uuid = body.id || body['@self']?.id || body.uuid;",
+									"    pm.expect(uuid).to.be.a('string').and.not.equal('');",
+									"    pm.collectionVariables.set('fixture_period_closed_uuid', String(uuid));",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Setup — seed the 2026-01 audit-locked period",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"periodId\": \"{{period_id_locked}}\",\n  \"name\": \"January 2026\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"startDate\": \"2026-01-01\",\n  \"endDate\": \"2026-01-31\",\n  \"fiscalYear\": 2026,\n  \"state\": \"audit-locked\",\n  \"closedAt\": \"2026-02-05T10:00:00+00:00\",\n  \"closedBy\": \"admin\",\n  \"auditLockedAt\": \"2026-03-01T10:00:00+00:00\",\n  \"auditLockedBy\": \"admin\",\n  \"reopenedHistory\": [],\n  \"taskChecklistItems\": [],\n  \"aiFlags\": []\n}"
+						},
+						"description": "Fixture for the irreversible audit-lock conflict (REQ-PC-002)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('audit-locked period fixture created', function () {",
+									"    pm.expect([200, 201]).to.include(pm.response.code);",
+									"    const body = pm.response.json();",
+									"    const uuid = body.id || body['@self']?.id || body.uuid;",
+									"    pm.expect(uuid).to.be.a('string').and.not.equal('');",
+									"    pm.collectionVariables.set('fixture_period_locked_uuid', String(uuid));",
+									"});"
+								]
+							}
+						}
+					]
+				},
 				{
 					"name": "GET period detail + AI flags",
 					"request": {
@@ -306,6 +411,69 @@
 								"exec": [
 									"pm.test('409 invalid state', function () {",
 									"    pm.response.to.have.status(409);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Teardown — delete the open period fixture",
+					"request": {
+						"method": "DELETE",
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod/{{fixture_period_open_uuid}}",
+						"description": "Leaves the instance as this folder found it, so a re-run seeds a clean fixture instead of a second row with the same periodId."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('open fixture cleaned up', function () {",
+									"    pm.expect(pm.response.code === 404 || (pm.response.code >= 200 && pm.response.code < 300)).to.be.true;",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Teardown — delete the closed period fixture",
+					"request": {
+						"method": "DELETE",
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod/{{fixture_period_closed_uuid}}",
+						"description": "Leaves the instance as this folder found it."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('closed fixture cleaned up', function () {",
+									"    pm.expect(pm.response.code === 404 || (pm.response.code >= 200 && pm.response.code < 300)).to.be.true;",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Teardown — delete the audit-locked period fixture",
+					"request": {
+						"method": "DELETE",
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod/{{fixture_period_locked_uuid}}",
+						"description": "Leaves the instance as this folder found it."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('audit-locked fixture cleaned up', function () {",
+									"    pm.expect(pm.response.code === 404 || (pm.response.code >= 200 && pm.response.code < 300)).to.be.true;",
 									"});"
 								]
 							}
