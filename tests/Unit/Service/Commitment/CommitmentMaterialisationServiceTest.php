@@ -251,11 +251,11 @@ class CommitmentMaterialisationServiceTest extends TestCase
             [
                 'administrationId'           => 'adm-1',
                 'programmaCode'              => '5.1',
-                'kostenplaats'               => 'FAC-2026',
-                'boekjaar'                   => 2026,
-                'geautoriseerd_bedrag'       => 50000000,
-                'gerealiseerd_bedrag'        => 20000000,
-                'openstaande_verplichtingen' => 0,
+                'costCentre'               => 'FAC-2026',
+                'fiscalYear'                   => 2026,
+                'authorisedAmount'       => 50000000,
+                'realisedAmount'        => 20000000,
+                'outstandingCommitments' => 0,
             ],
             $overrides
         );
@@ -327,11 +327,11 @@ class CommitmentMaterialisationServiceTest extends TestCase
                     [
                         'administrationId'   => 'adm-1',
                         'mandateCode'        => 'M-INKOOP-50K',
-                        'maximumbedrag'      => 10000000,
+                        'maximumAmount'      => 10000000,
                         'commitmentType' => ['inkooporder'],
-                        'is_override'        => false,
-                        'geldig_van'         => '2020-01-01',
-                        'geldig_tot'         => '2999-12-31',
+                        'isOverride'        => false,
+                        'validFrom'         => '2020-01-01',
+                        'validUntil'         => '2999-12-31',
                     ],
                 ],
                 'PurchaseOrderLine'  => [$this->purchaseOrderLine()],
@@ -343,15 +343,15 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $result = $service->materialiseFromPurchaseOrder(purchaseOrder: $this->purchaseOrder());
 
         self::assertNotNull($result);
-        self::assertSame('PO-2026-0207', $result['bronReferentie']);
+        self::assertSame('PO-2026-0207', $result['sourceReference']);
         self::assertSame('aangegaan', $result['status']);
-        self::assertSame(7500000, $result['totaalbedrag_excl_btw']);
+        self::assertSame(7500000, $result['totalAmountExclVat']);
 
         $regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'CommitmentLine'));
         self::assertCount(1, $regelSaves);
-        self::assertSame('5.1', $regelSaves[0][1]['programma']);
-        self::assertSame(2026, $regelSaves[0][1]['boekjaar']);
-        self::assertSame(7500000, $regelSaves[0][1]['bedrag_excl_btw']);
+        self::assertSame('5.1', $regelSaves[0][1]['programme']);
+        self::assertSame(2026, $regelSaves[0][1]['fiscalYear']);
+        self::assertSame(7500000, $regelSaves[0][1]['amountExclVat']);
 
     }//end testPurchaseOrderApprovalMaterialisesCommitment()
 
@@ -366,7 +366,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $existing = [
             'administrationId'    => 'adm-1',
             'commitmentNumber' => 'PO-2026-0207',
-            'bronReferentie'      => 'PO-2026-0207',
+            'sourceReference'      => 'PO-2026-0207',
             'status'              => 'aangegaan',
         ];
 
@@ -397,7 +397,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
      */
     public function testInsufficientBudgetBlocksPurchaseOrderApproval(): void
     {
-        $tightBudget = $this->budget(['geautoriseerd_bedrag' => 8000000, 'gerealiseerd_bedrag' => 7000000]);
+        $tightBudget = $this->budget(['authorisedAmount' => 8000000, 'realisedAmount' => 7000000]);
 
         $service = $this->buildService(
             [
@@ -411,11 +411,11 @@ class CommitmentMaterialisationServiceTest extends TestCase
                         // so the mandate-sufficiency check passes and the flow reaches
                         // the budget check (this test is specifically about budget
                         // denial, not mandate denial).
-                        'maximumbedrag'      => 100000000,
+                        'maximumAmount'      => 100000000,
                         'commitmentType' => ['inkooporder'],
-                        'is_override'        => false,
-                        'geldig_van'         => '2020-01-01',
-                        'geldig_tot'         => '2999-12-31',
+                        'isOverride'        => false,
+                        'validFrom'         => '2020-01-01',
+                        'validUntil'         => '2999-12-31',
                     ],
                 ],
                 // EUR 300.000 line, free room only EUR 10.000.
@@ -443,7 +443,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
      */
     public function testOverrideMandateMaterialisesAndRecordsAfwijking(): void
     {
-        $tightBudget = $this->budget(['geautoriseerd_bedrag' => 8000000, 'gerealiseerd_bedrag' => 7000000]);
+        $tightBudget = $this->budget(['authorisedAmount' => 8000000, 'realisedAmount' => 7000000]);
 
         $service = $this->buildService(
             [
@@ -455,11 +455,11 @@ class CommitmentMaterialisationServiceTest extends TestCase
                     [
                         'administrationId'   => 'adm-1',
                         'mandateCode'        => 'M-CFO-OVERRIDE',
-                        'maximumbedrag'      => 1000000000,
+                        'maximumAmount'      => 1000000000,
                         'commitmentType' => ['inkooporder'],
-                        'is_override'        => true,
-                        'geldig_van'         => '2020-01-01',
-                        'geldig_tot'         => '2999-12-31',
+                        'isOverride'        => true,
+                        'validFrom'         => '2020-01-01',
+                        'validUntil'         => '2999-12-31',
                     ],
                 ],
                 'PurchaseOrderLine'        => [$this->purchaseOrderLine(['lineTotal' => 30000000])],
@@ -475,7 +475,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
 
         $bevindingSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Rechtmatigheidsbevinding'));
         self::assertCount(1, $bevindingSaves);
-        self::assertSame('fout', $bevindingSaves[0][1]['soort']);
+        self::assertSame('fout', $bevindingSaves[0][1]['commitmentType']);
         self::assertSame('begroting', $bevindingSaves[0][1]['criterium']);
 
     }//end testOverrideMandateMaterialisesAndRecordsAfwijking()
@@ -514,17 +514,17 @@ class CommitmentMaterialisationServiceTest extends TestCase
      */
     public function testMultiYearFrameworkMaterialisesOneRegelPerBoekjaar(): void
     {
-        $budget2026 = $this->budget(['boekjaar' => 2026, 'geautoriseerd_bedrag' => 20000000, 'gerealiseerd_bedrag' => 0]);
-        $budget2027 = $this->budget(['boekjaar' => 2027, 'geautoriseerd_bedrag' => 20000000, 'gerealiseerd_bedrag' => 0]);
+        $budget2026 = $this->budget(['fiscalYear' => 2026, 'authorisedAmount' => 20000000, 'realisedAmount' => 0]);
+        $budget2027 = $this->budget(['fiscalYear' => 2027, 'authorisedAmount' => 20000000, 'realisedAmount' => 0]);
 
         $mandaat = [
             'administrationId'   => 'adm-1',
             'mandateCode'        => 'M-DIRECTEUR-250K',
-            'maximumbedrag'      => 25000000,
+            'maximumAmount'      => 25000000,
             'commitmentType' => ['inkooporder'],
-            'is_override'        => false,
-            'geldig_van'         => '2020-01-01',
-            'geldig_tot'         => '2999-12-31',
+            'isOverride'        => false,
+            'validFrom'         => '2020-01-01',
+            'validUntil'         => '2999-12-31',
         ];
 
         $service = $this->buildService(
@@ -547,7 +547,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
 
         $regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'CommitmentLine'));
         self::assertCount(2, $regelSaves);
-        $boekjaren = array_map(static fn ($s) => $s[1]['boekjaar'], $regelSaves);
+        $boekjaren = array_map(static fn ($s) => $s[1]['fiscalYear'], $regelSaves);
         sort($boekjaren);
         self::assertSame([2026, 2027], $boekjaren);
 
@@ -561,7 +561,7 @@ class CommitmentMaterialisationServiceTest extends TestCase
      */
     public function testContractActivationIsFailSoftOnBudgetDenial(): void
     {
-        $tightBudget = $this->budget(['geautoriseerd_bedrag' => 1000000, 'gerealiseerd_bedrag' => 900000]);
+        $tightBudget = $this->budget(['authorisedAmount' => 1000000, 'realisedAmount' => 900000]);
 
         $service = $this->buildService(
             [
@@ -571,11 +571,11 @@ class CommitmentMaterialisationServiceTest extends TestCase
                     [
                         'administrationId'   => 'adm-1',
                         'mandateCode'        => 'M-DIRECTEUR-250K',
-                        'maximumbedrag'      => 25000000,
+                        'maximumAmount'      => 25000000,
                         'commitmentType' => ['leasing', 'overig', 'huurovereenkomst'],
-                        'is_override'        => false,
-                        'geldig_van'         => '2020-01-01',
-                        'geldig_tot'         => '2999-12-31',
+                        'isOverride'        => false,
+                        'validFrom'         => '2020-01-01',
+                        'validUntil'         => '2999-12-31',
                     ],
                 ],
             ]
@@ -609,17 +609,17 @@ class CommitmentMaterialisationServiceTest extends TestCase
      */
     public function testContractSpanningYearsSplitsPerBoekjaar(): void
     {
-        $budget2026 = $this->budget(['boekjaar' => 2026, 'geautoriseerd_bedrag' => 5000000, 'gerealiseerd_bedrag' => 0]);
-        $budget2027 = $this->budget(['boekjaar' => 2027, 'geautoriseerd_bedrag' => 5000000, 'gerealiseerd_bedrag' => 0]);
+        $budget2026 = $this->budget(['fiscalYear' => 2026, 'authorisedAmount' => 5000000, 'realisedAmount' => 0]);
+        $budget2027 = $this->budget(['fiscalYear' => 2027, 'authorisedAmount' => 5000000, 'realisedAmount' => 0]);
 
         $mandaat = [
             'administrationId'   => 'adm-1',
             'mandateCode'        => 'M-DIRECTEUR-250K',
-            'maximumbedrag'      => 25000000,
+            'maximumAmount'      => 25000000,
             'commitmentType' => ['overig'],
-            'is_override'        => false,
-            'geldig_van'         => '2020-01-01',
-            'geldig_tot'         => '2999-12-31',
+            'isOverride'        => false,
+            'validFrom'         => '2020-01-01',
+            'validUntil'         => '2999-12-31',
         ];
 
         $service = $this->buildService(
@@ -646,14 +646,14 @@ class CommitmentMaterialisationServiceTest extends TestCase
         $result = $service->materialiseFromContract(contract: $contract);
 
         self::assertNotNull($result);
-        self::assertSame('overig', $result['soort']);
+        self::assertSame('overig', $result['commitmentType']);
         $regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'CommitmentLine'));
         self::assertCount(2, $regelSaves);
         // EUR 20.000,00 = 2.000.000 cents, split evenly across 2026 + 2027.
-        $totalCents = array_sum(array_map(static fn ($s) => $s[1]['bedrag_excl_btw'], $regelSaves));
+        $totalCents = array_sum(array_map(static fn ($s) => $s[1]['amountExclVat'], $regelSaves));
         self::assertSame(2000000, $totalCents);
         foreach ($regelSaves as $save) {
-            self::assertSame(1000000, $save[1]['bedrag_excl_btw']);
+            self::assertSame(1000000, $save[1]['amountExclVat']);
         }
 
     }//end testContractSpanningYearsSplitsPerBoekjaar()

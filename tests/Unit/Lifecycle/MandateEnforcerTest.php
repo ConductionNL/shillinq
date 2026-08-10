@@ -210,11 +210,11 @@ class MandateEnforcerTest extends TestCase
             [
                 'administrationId'                  => 'adm-1',
                 'mandateCode'                       => 'M-INKOOP-50K',
-                'maximumbedrag'                     => 5000000,
+                'maximumAmount'                     => 5000000,
                 'commitmentType'                => ['inkooporder', 'raamovereenkomst'],
-                'is_override'                       => false,
-                'geldig_van'                        => '2020-01-01',
-                'geldig_tot'                        => '2999-12-31',
+                'isOverride'                       => false,
+                'validFrom'                        => '2020-01-01',
+                'validUntil'                        => '2999-12-31',
                 'vereist_tweede_handtekening_boven' => null,
             ],
             $overrides
@@ -235,8 +235,8 @@ class MandateEnforcerTest extends TestCase
         return [
             'administrationId'      => 'adm-1',
             'commitmentNumber'   => 'PO-1',
-            'soort'                 => $soort,
-            'totaalbedrag_excl_btw' => $bedrag,
+            'commitmentType'                 => $soort,
+            'totalAmountExclVat' => $bedrag,
         ];
 
     }//end commitment()
@@ -300,7 +300,7 @@ class MandateEnforcerTest extends TestCase
      */
     public function testExpiredMandateIsIgnored(): void
     {
-        $expired = $this->mandate(['geldig_tot' => '2000-01-01']);
+        $expired = $this->mandate(['validUntil' => '2000-01-01']);
         $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$expired]]));
 
         $this->assertFalse(
@@ -316,7 +316,7 @@ class MandateEnforcerTest extends TestCase
      */
     public function testFutureMandateIsIgnored(): void
     {
-        $future = $this->mandate(['geldig_van' => '2999-01-01']);
+        $future = $this->mandate(['validFrom' => '2999-01-01']);
         $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$future]]));
 
         $this->assertFalse(
@@ -352,9 +352,9 @@ class MandateEnforcerTest extends TestCase
      */
     public function testResolvesLeastPrivilegeNonOverrideMandate(): void
     {
-        $small    = $this->mandate(['mandateCode' => 'SMALL', 'maximumbedrag' => 5000000]);
-        $big      = $this->mandate(['mandateCode' => 'BIG', 'maximumbedrag' => 25000000]);
-        $override = $this->mandate(['mandateCode' => 'OVR', 'maximumbedrag' => 1000000000, 'is_override' => true]);
+        $small    = $this->mandate(['mandateCode' => 'SMALL', 'maximumAmount' => 5000000]);
+        $big      = $this->mandate(['mandateCode' => 'BIG', 'maximumAmount' => 25000000]);
+        $override = $this->mandate(['mandateCode' => 'OVR', 'maximumAmount' => 1000000000, 'isOverride' => true]);
 
         $this->withObjectService($this->buildObjectServiceStub(['Mandaat' => [$big, $override, $small]]));
 
