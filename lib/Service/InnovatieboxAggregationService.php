@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-4
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,7 +41,7 @@ use Psr\Container\ContainerInterface;
 /**
  * Computes the per-asset innovatiebox Vpb roll-up (REQ-IBA-006).
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-4
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
  */
 class InnovatieboxAggregationService
 {
@@ -73,7 +73,7 @@ class InnovatieboxAggregationService
      *
      * @return array{data: array<int,array<string,mixed>>, total: int, totals: array<string,float>}
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-3-4
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
      */
     public function aggregate(string $administrationId, int $boekjaar): array
     {

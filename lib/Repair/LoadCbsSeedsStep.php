@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md#task-91
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Idempotently seeds CBSSubmission + CBSLine fixtures from the change fragment.
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md#task-91
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  *
  * @SuppressWarnings(PHPMD.CyclomaticComplexity) Pre-existing debt (issue
  *     #506): inherent branch complexity in this domain logic; deferred

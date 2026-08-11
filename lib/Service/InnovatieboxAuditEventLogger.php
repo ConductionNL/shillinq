@@ -28,7 +28,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-5-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Throwable;
 /**
  * Append-only writer of InnovatieboxAuditEvent records (REQ-IBA-008/009).
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-5-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  */
 class InnovatieboxAuditEventLogger
 {
@@ -98,7 +98,7 @@ class InnovatieboxAuditEventLogger
      *
      * @return bool TRUE on successful append, FALSE on a logged failure.
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-5-1
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
      */
     public function record(array $options): bool
     {

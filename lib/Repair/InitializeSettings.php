@@ -1821,7 +1821,7 @@ class InitializeSettings implements IRepairStep
      *
      * @return void
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-3.4
+     * @spec openspec/specs/bookkeeping-financial-statements/spec.md
      */
     private function seedStatementManifests(IOutput $output): void
     {

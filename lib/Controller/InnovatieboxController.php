@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-7-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,7 +48,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Read-only innovatiebox-administratie endpoints (REQ-IBA-006/009/004).
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-7-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
  */
 class InnovatieboxController extends Controller
 {
@@ -93,7 +93,7 @@ class InnovatieboxController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-7-1
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
      */
     #[NoAdminRequired]
     public function aggregation(): JSONResponse
@@ -143,7 +143,7 @@ class InnovatieboxController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-7-1
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-009
      */
     #[NoAdminRequired]
     public function scenario(): JSONResponse
@@ -186,7 +186,7 @@ class InnovatieboxController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-7-1
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004
      */
     #[NoAdminRequired]
     public function doorsnijdingsverbod(): JSONResponse
@@ -242,7 +242,7 @@ class InnovatieboxController extends Controller
      *
      * @return JSONResponse
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-8-1
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
      */
     #[NoAdminRequired]
     public function export(): JSONResponse

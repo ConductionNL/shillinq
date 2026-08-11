@@ -2778,7 +2778,7 @@ class SettingsService
      *
      * @return array<string,mixed> Result with success flag, imported count, skipped count.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-3.4
+     * @spec openspec/specs/bookkeeping-financial-statements/spec.md
      */
     public function seedStatementManifests(): array
     {

@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
  * Referenced as `OCA\Shillinq\Lifecycle\ThreeWayMatchGuard::matches` from the
  * APInvoice schema lifecycle. Exactly one public precondition method.
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.1
+ * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-004
  */
 class ThreeWayMatchGuard
 {
@@ -90,7 +90,7 @@ class ThreeWayMatchGuard
      *
      * @return bool True when the match precondition is satisfied.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-6.1
+     * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md#req-po3w-004
      */
     public function matches(array $invoice): bool
     {
