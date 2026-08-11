@@ -21605,7 +21605,7 @@
       "icon": "ReceiptTextOutline",
       "version": "0.1.0",
       "title": "Kostenpost",
-      "description": "Individual expense line item within a subsidie dossier. Linked to parent Subsidie via subsidieId. The allowed kostencategorie values are constrained per-regeling via JSON Schema allOf/if-then blocks (REQ-RDS-002). MIT: personnel/materials/external-services/equipment-depreciation/other-direct. SBIR: personnel/materials/equipment-depreciation/other-direct. EU Horizon: personnel/subcontracting/other-direct/indirect-25-percent. EFRO: personnel/external-services/materials/equipment/other/indirect-flat-rate. REACT-EU: EFRO + green-recovery. No PHP category validator per ADR-031.",
+      "description": "Individual expense line item within a subsidie dossier. Linked to parent Subsidie via subsidieId. kostencategorie is constrained to the full enum on the property itself. The per-regeling NARROWING (REQ-RDS-002) is NOT ENFORCED: it was declared as a top-level JSON Schema allOf/if-then block, which OpenRegister's importer cannot read — SchemaMapper::resolveSchemaExtension() treats every allOf entry as a parent-schema identifier and throws on a subschema, aborting the import of the WHOLE register (openregister#2419). The block never ran: this schema sat above components.schemas until #511 and was never imported at all. The intended narrowing, for whoever restores it: MIT: personnel/materials/external-services/equipment-depreciation/other-direct. SBIR: personnel/materials/equipment-depreciation/other-direct. EU Horizon: personnel/subcontracting/other-direct/indirect-25-percent. EFRO: personnel/external-services/materials/equipment/other/indirect-flat-rate. REACT-EU: EFRO + green-recovery. No PHP category validator per ADR-031.",
       "x-schema-org": "schema:MonetaryAmount",
       "type": "object",
       "required": [
@@ -21699,134 +21699,6 @@
           "example": "adm-1"
         }
       },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "subsidieRegeling": {
-                "const": "mit"
-              }
-            },
-            "required": [
-              "subsidieRegeling"
-            ]
-          },
-          "then": {
-            "properties": {
-              "kostencategorie": {
-                "enum": [
-                  "personnel",
-                  "materials",
-                  "external-services",
-                  "equipment-depreciation",
-                  "other-direct"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "subsidieRegeling": {
-                "const": "sbir"
-              }
-            },
-            "required": [
-              "subsidieRegeling"
-            ]
-          },
-          "then": {
-            "properties": {
-              "kostencategorie": {
-                "enum": [
-                  "personnel",
-                  "materials",
-                  "equipment-depreciation",
-                  "other-direct"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "subsidieRegeling": {
-                "const": "eu-horizon"
-              }
-            },
-            "required": [
-              "subsidieRegeling"
-            ]
-          },
-          "then": {
-            "properties": {
-              "kostencategorie": {
-                "enum": [
-                  "personnel",
-                  "subcontracting",
-                  "other-direct",
-                  "indirect-25-percent"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "subsidieRegeling": {
-                "const": "efro"
-              }
-            },
-            "required": [
-              "subsidieRegeling"
-            ]
-          },
-          "then": {
-            "properties": {
-              "kostencategorie": {
-                "enum": [
-                  "personnel",
-                  "external-services",
-                  "materials",
-                  "equipment",
-                  "other",
-                  "indirect-flat-rate"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "subsidieRegeling": {
-                "const": "react-eu"
-              }
-            },
-            "required": [
-              "subsidieRegeling"
-            ]
-          },
-          "then": {
-            "properties": {
-              "kostencategorie": {
-                "enum": [
-                  "personnel",
-                  "external-services",
-                  "materials",
-                  "equipment",
-                  "other",
-                  "indirect-flat-rate",
-                  "green-recovery"
-                ]
-              }
-            }
-          }
-        }
-      ],
       "x-openregister-lifecycle": {
         "states": {
           "entered": "Ingevoerd, wacht op goedkeuring.",
