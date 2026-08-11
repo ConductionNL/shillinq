@@ -258,9 +258,9 @@
         },
         "x-openregister-notifications": {
           "onTriggerEventFired": {
-            "trigger": "@self.triggerType",
-            "channels": "@self.channels",
-            "scheduleOffsetHours": "@self.reminderHoursBeforeStart",
+            "trigger": "{{triggerType}}",
+            "channels": "{{channels}}",
+            "scheduleOffsetHours": "{{reminderHoursBeforeStart}}",
             "appliesWhen": {
               "field": "status",
               "in": [
@@ -272,7 +272,7 @@
               "matchBooking": "slug",
               "nullMeansGlobal": true
             },
-            "recipients": "@self.recipients",
+            "recipients": "{{recipients}}",
             "selectTemplate": {
               "byType": {
                 "booking.created": "BookingConfirmationTemplate",
@@ -280,27 +280,27 @@
                 "booking.cancelled": "BookingCancellationTemplate",
                 "booking.reminder": "BookingReminderTemplate"
               },
-              "overrideSlug": "@self.templateOverrideSlug",
+              "overrideSlug": "{{templateOverrideSlug}}",
               "matchLocale": "recipient.languagePreference"
             },
             "skipWhen": {
               "any": [
                 {
-                  "recipientField": "notificationOptOut[@self.triggerType]",
+                  "recipientField": "notificationOptOut[{{triggerType}}]",
                   "equals": true,
-                  "onlyIf": "@self.respectOptOut"
+                  "onlyIf": "{{respectOptOut}}"
                 },
                 {
                   "rateLimit": {
                     "scope": "booking",
-                    "max": "@self.rateLimitPerBookingPerHour",
+                    "max": "{{rateLimitPerBookingPerHour}}",
                     "windowMinutes": 60
                   }
                 },
                 {
                   "rateLimit": {
                     "scope": "organizer",
-                    "max": "@self.rateLimitPerOrganizerPerDay",
+                    "max": "{{rateLimitPerOrganizerPerDay}}",
                     "windowMinutes": 1440
                   }
                 },
@@ -311,7 +311,7 @@
                       "triggerType",
                       "bookingId"
                     ],
-                    "windowMinutes": "@self.deduplicationWindowMinutes"
+                    "windowMinutes": "{{deduplicationWindowMinutes}}"
                   }
                 }
               ]
@@ -325,8 +325,8 @@
                 "queued"
               ],
               "fields": {
-                "triggerName": "@self.name",
-                "triggerType": "@self.triggerType",
+                "triggerName": "{{name}}",
+                "triggerType": "{{triggerType}}",
                 "bookingId": "booking.id",
                 "channel": "channel",
                 "recipient": "recipient.address",
@@ -338,7 +338,7 @@
             },
             "fallback": {
               "mode": "next-channel",
-              "description": "On adapter failure, advance to the next channel in @self.channels. Each attempt is recorded in NotificationDelivery (REQ-BNT-004/005)."
+              "description": "On adapter failure, advance to the next channel in the trigger's own channels list. Each attempt is recorded in NotificationDelivery (REQ-BNT-004/005)."
             },
             "description": "Declarative trigger dispatch consumed from OR's notification engine (ADR-022, REQ-BNT-001/003/004/005/006/009). When the configured booking lifecycle event fires (booking.created / changed / cancelled / reminder), the engine evaluates appliesWhen (status=enabled), scope (appliesToBookingSlug null = global, else match), the recipient rules (each rule's condition expression), the skipWhen gates (opt-out, rate-limit per booking/organizer, dedupe), and dispatches the rendered template through the first available channel. Every attempt is recorded immutably in NotificationDelivery for audit (REQ-BNT-005). Pure-logic gating (rate-limit window, dedupe key, recipient-rule condition parsing, opt-out lookup) is implemented in Shillinq's Notification/ helper namespace for unit-test coverage; live dispatch stays in OR's engine."
           }

@@ -63,9 +63,9 @@
 			"id": "AdministrationSwitcher",
 			"route": "/administratie/wisselen",
 			"type": "custom",
-			"kind": "page",
 			"component": "AdministrationSwitcherPage",
-			"title": "Switch administration"
+			"title": "Switch administration",
+			"_note": "Session-scope switcher, not a record view. The page's whole job is to CHANGE the active administration for the session and reload the shell (AdministratieSwitcher, reload-after-switch); a single-membership user gets an explainer instead of a dropdown (REQ-MA-003). The Administrations themselves already have index/detail pages — this page writes session state rather than reading or editing an object, which no standard page type does. See src/views/AdministrationSwitcherPage.vue."
 		},
 		{
 			"id": "Administraties",

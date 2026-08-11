@@ -33,6 +33,7 @@ namespace OCA\Shillinq\Service\Signing;
 
 use InvalidArgumentException;
 use OCA\Decidesk\Event\DecisionRequestedEvent;
+use OCA\Shillinq\Service\ApprovalActivityEmitter;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -64,14 +65,19 @@ class SignoffDecisionService
     /**
      * Constructor.
      *
-     * @param SettingsService  $settingsService Shillinq settings (register slug).
-     * @param IEventDispatcher $eventDispatcher Event dispatcher for the decidesk contract.
-     * @param LoggerInterface  $logger          Logger.
+     * @param SettingsService              $settingsService Shillinq settings (register slug).
+     * @param IEventDispatcher             $eventDispatcher Event dispatcher for the decidesk contract.
+     * @param LoggerInterface              $logger          Logger.
+     * @param ApprovalActivityEmitter|null $activityEmitter Optional Activity emitter for the
+     *                                                      REQ-RAP-006 `decision_made` event;
+     *                                                      nullable so unit tests need not wire
+     *                                                      IActivityManager.
      */
     public function __construct(
         private readonly SettingsService $settingsService,
         private readonly IEventDispatcher $eventDispatcher,
         private readonly LoggerInterface $logger,
+        private readonly ?ApprovalActivityEmitter $activityEmitter=null,
     ) {
     }//end __construct()
 
@@ -182,6 +188,9 @@ class SignoffDecisionService
      * @param string              $outcome             'approved' | 'rejected'.
      * @param string              $decisionRef         The decidesk Decision id.
      * @param callable|null       $consequenceCallback Called on 'approved' to fire the GL consequence.
+     * @param string              $subjectSchema       Finance schema slug of $financeObject, used as the
+     *                                                 Activity object type for the REQ-RAP-006
+     *                                                 `decision_made` event. Empty string skips the emit.
      *
      * @return array<string,mixed> Updated finance object.
      *
@@ -191,7 +200,8 @@ class SignoffDecisionService
         array $financeObject,
         string $outcome,
         string $decisionRef,
-        ?callable $consequenceCallback=null
+        ?callable $consequenceCallback=null,
+        string $subjectSchema=''
     ): array {
         if (in_array($outcome, self::TERMINAL_OUTCOMES, true) === false) {
             throw new InvalidArgumentException('Unknown decision outcome: '.$outcome);
@@ -211,6 +221,22 @@ class SignoffDecisionService
         if ($outcome === 'approved' && $consequenceCallback !== null) {
             // Fire the accounting consequence exactly once (REQ-SIGN-006).
             $consequenceCallback($financeObject);
+        }
+
+        // REQ-RAP-006 row 5 (`decision_made`): "Decision status changed".
+        // Both terminal outcomes are reported (approved AND rejected) — the
+        // event carries the new status as a subject parameter, so suppressing
+        // the rejection would leave the audit feed showing only the decisions
+        // that went through. Placed after the idempotency guard above, so a
+        // repeated decidesk conclusion cannot publish a duplicate entry.
+        if ($subjectSchema !== '' && $this->activityEmitter !== null) {
+            $this->activityEmitter->emitDecisionMade(
+                objectType:  $subjectSchema,
+                objectId:    (string) ($financeObject['id'] ?? ''),
+                actorUid:    '',
+                newStatus:   $outcome,
+                summaryHint: sprintf('%s %s', $subjectSchema, (string) ($financeObject['id'] ?? ''))
+            );
         }
 
         $this->logger->info(

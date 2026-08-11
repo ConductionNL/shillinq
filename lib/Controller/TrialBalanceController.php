@@ -22,6 +22,9 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-1
+ * KNOWINGLY DANGLING until shillinq#500 — the endpoint's only canonical
+ * description would be REQ-TB-009, which was never canonical, and REQ-TB-001
+ * forbids the service behind it.
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,6 +48,9 @@ use Psr\Log\LoggerInterface;
  * GET /api/trial-balance — period-scoped per-account trial balance.
  *
  * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-1
+ * KNOWINGLY DANGLING until shillinq#500 — the endpoint's only canonical
+ * description would be REQ-TB-009, which was never canonical, and REQ-TB-001
+ * forbids the service behind it.
  */
 class TrialBalanceController extends Controller
 {
@@ -82,6 +88,9 @@ class TrialBalanceController extends Controller
      * @return JSONResponse
      *
      * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-1
+ * KNOWINGLY DANGLING until shillinq#500 — the endpoint's only canonical
+ * description would be REQ-TB-009, which was never canonical, and REQ-TB-001
+ * forbids the service behind it.
      */
     #[NoAdminRequired]
     public function index(): JSONResponse

@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-8-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

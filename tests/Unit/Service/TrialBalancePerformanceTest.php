@@ -17,6 +17,8 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-13-2
+ * KNOWINGLY DANGLING until shillinq#500 — the < 2s budget it asserts
+ * (archived REQ-TB-014) was never canonical.
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2

@@ -44,6 +44,7 @@
 			"type": "custom",
 			"title": "BBV Compliance Dashboard",
 			"component": "BBVComplianceDashboard",
+			"_note": "DECOMPOSITION CANDIDATE, kept custom for now. The layout is an ordinary dashboard (four KPI cards, a compliance pie, a YTD trend line, a programme-utilization table) and its host component already renders CnDashboardPage, so the widgets map onto `type: dashboard` one for one. What blocks the move today is the data source: every widget reads the SAME single fetch of BBVProgramme objects, on which the slice-02 x-openregister-aggregations materialise totalBudget, ytdSpend, utilization, utilizationPercentage and complianceStatus per object — declarative widgets each issue their own dataSource fetch, so converting now means five fetches where there is one. Revisit when slice 04's GET /bbv-dashboard envelope lands and the widgets can bind to one endpointSource.",
 			"config": {
 				"register": "shillinq"
 			}
@@ -54,6 +55,7 @@
 			"type": "custom",
 			"title": "Budget Mapping",
 			"component": "BudgetBBVMappingIndex",
+			"_note": "DECOMPOSITION CANDIDATE, kept custom for now. The component is a thin wrapper around the library's own CnIndexPage — columns, sort, paging, empty state and the Add affordance are all platform-rendered. What it adds is a header-actions filter row with an allocation-percentage RANGE and an effective-date RANGE (REQ-BBVW-004), plus a debounced search that matches GL account number OR programme code. `type: index` facets are per-value, not per-range, and its search is single-field, so converting today would drop three of the spec's filters. Revisit when range facets and multi-field search exist in the shared index.",
 			"config": {
 				"register": "shillinq",
 				"schema": "BudgetBBVMapping",

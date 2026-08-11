@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bbv-compliance/specs/bookkeeping-bbv-compliance/spec.md
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md#seed-data
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,7 +33,7 @@ use Psr\Log\LoggerInterface;
  * Covers Task 5.12: the BBV seed repair step imports all catalogues
  * idempotently and re-runs detect existing rows and skip them.
  *
- * @spec openspec/changes/bookkeeping-bbv-compliance/tasks.md#task-512
+ * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md#seed-data
  */
 class BbvSeedServiceTest extends TestCase
 {

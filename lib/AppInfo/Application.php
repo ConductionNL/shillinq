@@ -50,6 +50,7 @@ use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
 use OCA\Shillinq\Listener\DBAFactuurMonitorListener;
+use OCA\Shillinq\Listener\ContractObligationTaskListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
@@ -1293,6 +1294,16 @@ class Application extends App implements IBootstrap
             schemas: ['Appointment']
         );
 
+        // --- gate-57 region: ContractObligation task trigger (REQ-CDC-005).
+        // The bridge shipped, its trigger never did — see
+        // ContractObligationTaskListener's docblock for the rationale and the
+        // re-entry guard its own write-back depends on.
+        $this->registerFilteredObjectWriteListener(
+            dispatcher: $dispatcher,
+            listener: ContractObligationTaskListener::class,
+            schemas: ['ContractObligation']
+        );
+        // --- end gate-57 region ---
         // IFRS-16 lease schedule trigger (revive-lease-capabilities,
         // shillinq#446). When a LeaseContract is created already `active` or is
         // updated across the `draft → active` edge, materialise its
@@ -1393,15 +1404,8 @@ class Application extends App implements IBootstrap
         //
         // Interest declared up front: the three slugs are the listener's own
         // SCHEMA_NEXUS / SCHEMA_PROFIT / SCHEMA_LOSS constants.
-        $this->registerFilteredObjectListener(
+        $this->registerFilteredObjectWriteListener(
             dispatcher: $dispatcher,
-            event: ObjectCreatedEvent::class,
-            listener: InnovatieboxAuditTrailListener::class,
-            schemas: ['NexusCalculation', 'IBProfitAttribution', 'CarryForwardLoss']
-        );
-        $this->registerFilteredObjectListener(
-            dispatcher: $dispatcher,
-            event: ObjectUpdatedEvent::class,
             listener: InnovatieboxAuditTrailListener::class,
             schemas: ['NexusCalculation', 'IBProfitAttribution', 'CarryForwardLoss']
         );

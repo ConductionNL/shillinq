@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-5-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -99,7 +99,7 @@ final class FakeAuditObjectService
  * - unauthenticated session: no actor_uid stamped
  * - OR write failure swallowed, logger warns, record() returns false
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-5-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  */
 final class InnovatieboxAuditEventLoggerTest extends TestCase
 {

@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+ * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -50,7 +50,7 @@ use Psr\Container\ContainerInterface;
  * the claim quarter, restricted to accounts the administration's BbvAccountMapping
  * marks bcfCompensable and weighted by compensablePercentage (REQ-BCF-002).
  *
- * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+ * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  */
 class BcfClaimService
 {
@@ -82,7 +82,7 @@ class BcfClaimService
      *
      * @return array{administrationId: string, claimQuarter: string, totalCompensableAmount: float, breakdown: array<int,array<string,mixed>>}
      *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
      */
     public function computeClaim(string $administrationId, string $claimQuarter): array
     {

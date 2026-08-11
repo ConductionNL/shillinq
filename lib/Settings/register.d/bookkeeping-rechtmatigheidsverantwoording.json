@@ -478,18 +478,34 @@
         },
         "x-openregister-notifications": {
           "onBudgetOvershoot": {
-            "trigger": "object.create",
+            "trigger": {
+              "type": "created",
+              "filter": {
+                "criterium": "begroting",
+                "soort": "fout"
+              }
+            },
             "description": "REQ-RV-001: notify the portefeuillehouder of the affected programma when a begroting-fout bevinding is created.",
-            "condition": {
-              "criterium": "begroting",
-              "soort": "fout"
-            },
-            "recipients": {
-              "role": "portefeuillehouder",
-              "scope": "@self.administrationId"
-            },
-            "title": "Begrotingsoverschrijding geconstateerd",
-            "message": "Rechtmatigheidsbevinding @self.bevindingsnummer (programma @self.programma): begrotingsoverschrijding van EUR @self.bedrag_fout."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "portefeuillehouder"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Begrotingsoverschrijding geconstateerd — bevinding {{bevindingsnummer}} (programma {{programma}}): EUR {{bedrag_fout}}",
+              "en": "Budget overrun found — finding {{bevindingsnummer}} (programme {{programma}}): EUR {{bedrag_fout}}"
+            }
           }
         },
         "x-openregister-rbac": {
@@ -692,12 +708,26 @@
               "type": "created"
             },
             "description": "REQ-RV-005: notify college secretaris + auditcommissie that the paragraaf is ready for review.",
-            "recipients": {
-              "role": "auditcommissie",
-              "scope": "@self.administrationId"
-            },
-            "title": "Rechtmatigheidsparagraaf gereed voor beoordeling",
-            "message": "Rechtmatigheidsparagraaf boekjaar @self.boekjaar is geaggregeerd en gereed voor college-beoordeling."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "auditcommissie"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Rechtmatigheidsparagraaf boekjaar {{boekjaar}} is geaggregeerd en gereed voor college-beoordeling",
+              "en": "Lawfulness paragraph for financial year {{boekjaar}} has been aggregated and is ready for board review"
+            }
           }
         },
         "x-openregister-rbac": {

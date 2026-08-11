@@ -35,7 +35,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Idempotently imports the RJ 270 statement-presentation manifests.
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-3.4
+ * @spec openspec/specs/bookkeeping-financial-statements/spec.md
  */
 class StatementManifestService
 {
@@ -74,7 +74,7 @@ class StatementManifestService
      *
      * @return array{success: bool, imported: int, skipped: int, message?: string}
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-3.4
+     * @spec openspec/specs/bookkeeping-financial-statements/spec.md
      */
     public function import(): array
     {
@@ -90,7 +90,7 @@ class StatementManifestService
      *
      * @return array{success: bool, imported: int, skipped: int, message?: string}
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-3.4
+     * @spec openspec/specs/bookkeeping-financial-statements/spec.md
      */
     public function importForced(): array
     {
