@@ -1647,7 +1647,13 @@ class SettingsService
      * @return array<string,mixed> Result with success flag, seeded count, skipped count.
      *
      * @deprecated 0.2.0 Use seedAllocationRules() instead.
-     * @spec       openspec/changes/add-shillinq-cost-centers-dimensions/tasks.md#task-11
+     * @spec       openspec/specs/bookkeeping-cost-centers-dimensions/spec.md
+     *
+     * @orphaned-write-capability exclude a deprecated one-line alias, not an
+     * unreachable capability — it delegates verbatim to seedAllocationRules(),
+     * which IS wired (InitializeSettings.php:1424). Nothing is unseeded by this
+     * having no caller; deleting it is a breaking-change decision for whoever
+     * owns the 0.2.0 deprecation window, not a gate fix.
      */
     public function seedAllocationRuleExamples(string $administrationId): array
     {
@@ -1667,7 +1673,13 @@ class SettingsService
      *
      * @return array<string,mixed> Result with success flag, seeded count, skipped count.
      *
-     * @spec openspec/changes/inventory-product-catalog/tasks.md#task-13
+     * @spec openspec/specs/inventory-product-catalog/spec.md
+     *
+     * @orphaned-write-capability exclude deliberately unwired, not dead by
+     * accident — ProductAttribute moved to pipelinq in the
+     * MigrateProductVendorMasterToPipelinq change, so run() stopped calling
+     * this. The method is kept as a reachable seam for that migration path and
+     * InitializeSettingsTest documents the absent expectation at the call site.
      */
     public function seedProductAttributes(string $category): array
     {
