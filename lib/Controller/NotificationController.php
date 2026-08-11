@@ -521,7 +521,8 @@ class NotificationController extends Controller
                 continue;
             }
 
-            // canAccess() fails closed on '' (AdministrationContextService:220).
+            // A booking with no administrationId is refused: canAccess() fails
+            // closed on '' (AdministrationContextService:220).
             if ($this->context->canAccess(administrationId: (string) ($row['administrationId'] ?? '')) === true) {
                 return null;
             }

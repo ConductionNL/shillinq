@@ -169,7 +169,7 @@ class VATLineController extends Controller
             );
 
             return new JSONResponse(['error' => 'Failed to list VAT lines'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+        }//end try
 
         return new JSONResponse(
             [

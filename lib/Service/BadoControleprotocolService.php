@@ -567,9 +567,31 @@ class BadoControleprotocolService
      */
     public function organisationIdFor(string $protocolId): ?string
     {
-        $protocol = $this->resolveProtocol(protocolId: $protocolId, object: null);
+        if ($protocolId === '') {
+            return null;
+        }
+
+        // ⚠️ Deliberately NOT resolveProtocol()/resolveObject(). Those go through
+        // `findAll(['filters' => ['id' => $id]])`, and `id` is NOT a body
+        // property — it is `@self.id`, a bigint column. Postgres answers that
+        // query with SQLSTATE[22P02] "invalid input syntax for type bigint",
+        // which the service swallows, so the lookup returns null for every
+        // protocol that exists. Using it here would have made this guard refuse
+        // the legitimate owner as well as the attacker — measured on a
+        // two-account rig: owner 200 → 404. ObjectService::find() addresses the
+        // object by its identity and is the call the rest of the app uses.
+        $protocol = $this->objects()->find(
+            id: $protocolId,
+            register: $this->register(),
+            schema: 'Controleprotocol'
+        );
+
         if ($protocol === null) {
             return null;
+        }
+
+        if (is_array($protocol) === false) {
+            $protocol = (array) $protocol->jsonSerialize();
         }
 
         return (string) ($protocol['organisationId'] ?? '');

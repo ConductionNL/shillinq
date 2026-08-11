@@ -397,5 +397,4 @@ class SepaAuditService
 
         return $register;
     }//end resolveRegister()
-
 }//end class

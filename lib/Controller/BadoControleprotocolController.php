@@ -257,7 +257,8 @@ class BadoControleprotocolController extends Controller
             return new JSONResponse(['error' => 'Controleprotocol not found'], Http::STATUS_NOT_FOUND);
         }
 
-        // canAccess() already fails closed on '' (AdministrationContextService:220).
+        // A protocol with no organisationId is refused: canAccess() already
+        // fails closed on '' (AdministrationContextService:220).
         if ($organisationId === null || $this->context->canAccess(administrationId: $organisationId) === false) {
             return new JSONResponse(['error' => 'Controleprotocol not found'], Http::STATUS_NOT_FOUND);
         }

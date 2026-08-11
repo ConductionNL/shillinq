@@ -250,41 +250,21 @@ class VATReturnController extends Controller
         $periodNumber     = (int) $this->request->getParam('periodNumber', 0);
         $regime           = trim((string) $this->request->getParam('regime', 'standard'));
 
-        if ($this->validId(id: $administrationId) === false) {
-            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+        // Authorisation first, then shape. A caller who may not touch this
+        // administration is told nothing about which periods it would accept.
+        $refusal = $this->requireAccessibleAdministration(administrationId: $administrationId);
+        if ($refusal !== null) {
+            return $refusal;
         }
 
-        // ADR-005 / REQ-MA-001. VATReturnService::createReturn() documents its
-        // $administrationId as "Server-resolved administration scope"; this
-        // controller reads it off the wire, so the membership check that makes
-        // that contract true has to happen here. Without it any authenticated
-        // user could inject a statutory Dutch VAT filing into any administration.
-        if ($this->context->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-        }
-
-        if (in_array($period, self::PERIOD_VALUES, true) === false) {
-            return new JSONResponse(['error' => 'period must be one of quarter | month | year'], Http::STATUS_BAD_REQUEST);
-        }
-
-        if (in_array($regime, self::REGIME_VALUES, true) === false) {
-            return new JSONResponse(['error' => 'regime must be one of standard | kor | reverse-charge'], Http::STATUS_BAD_REQUEST);
-        }
-
-        if ($periodYear < 2020 || $periodYear > 2099 || $periodNumber < 1) {
-            return new JSONResponse(['error' => 'periodYear / periodNumber must be valid'], Http::STATUS_BAD_REQUEST);
-        }
-
-        if ($period === 'quarter' && $periodNumber > 4) {
-            return new JSONResponse(['error' => 'periodNumber must be 1..4 for quarter'], Http::STATUS_BAD_REQUEST);
-        }
-
-        if ($period === 'month' && $periodNumber > 12) {
-            return new JSONResponse(['error' => 'periodNumber must be 1..12 for month'], Http::STATUS_BAD_REQUEST);
-        }
-
-        if ($this->isPeriodInFuture(periodYear: $periodYear, periodNumber: $periodNumber, period: $period) === true) {
-            return new JSONResponse(['error' => 'Cannot create returns for future periods'], Http::STATUS_BAD_REQUEST);
+        $refusal = $this->validateCreatePeriod(
+            period: $period,
+            periodYear: $periodYear,
+            periodNumber: $periodNumber,
+            regime: $regime
+        );
+        if ($refusal !== null) {
+            return $refusal;
         }
 
         try {
@@ -502,6 +482,84 @@ class VATReturnController extends Controller
     }//end destroy()
 
     /**
+     * Require an administrationId that is well-formed AND one of the caller's (ADR-005).
+     *
+     * VATReturnService::createReturn() documents its $administrationId as
+     * "Server-resolved administration scope". This controller reads it off the
+     * wire, so the membership check that makes that contract true has to happen
+     * here. Without it any authenticated user could inject a statutory Dutch VAT
+     * filing into any administration (REQ-MA-001).
+     *
+     * @param string $administrationId The administration id read from the request.
+     *
+     * @return JSONResponse|null A 400/404 response when refused, null when allowed.
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    private function requireAccessibleAdministration(string $administrationId): ?JSONResponse
+    {
+        if ($this->validId(id: $administrationId) === false) {
+            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if ($this->context->canAccess(administrationId: $administrationId) === false) {
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+        }
+
+        return null;
+
+    }//end requireAccessibleAdministration()
+
+    /**
+     * Validate the period/regime shape of a create request (REQ-VAT-001).
+     *
+     * Split out of create() so the method keeps a readable cyclomatic
+     * complexity now that the ADR-005 membership check lives there too.
+     *
+     * @param string $period       quarter | month | year.
+     * @param int    $periodYear   Fiscal year.
+     * @param int    $periodNumber Period within the year.
+     * @param string $regime       standard | kor | reverse-charge.
+     *
+     * @return JSONResponse|null A 400 response when invalid, null when acceptable.
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    private function validateCreatePeriod(
+        string $period,
+        int $periodYear,
+        int $periodNumber,
+        string $regime
+    ): ?JSONResponse {
+        if (in_array($period, self::PERIOD_VALUES, true) === false) {
+            return new JSONResponse(['error' => 'period must be one of quarter | month | year'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if (in_array($regime, self::REGIME_VALUES, true) === false) {
+            return new JSONResponse(['error' => 'regime must be one of standard | kor | reverse-charge'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if ($periodYear < 2020 || $periodYear > 2099 || $periodNumber < 1) {
+            return new JSONResponse(['error' => 'periodYear / periodNumber must be valid'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if ($period === 'quarter' && $periodNumber > 4) {
+            return new JSONResponse(['error' => 'periodNumber must be 1..4 for quarter'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if ($period === 'month' && $periodNumber > 12) {
+            return new JSONResponse(['error' => 'periodNumber must be 1..12 for month'], Http::STATUS_BAD_REQUEST);
+        }
+
+        if ($this->isPeriodInFuture(periodYear: $periodYear, periodNumber: $periodNumber, period: $period) === true) {
+            return new JSONResponse(['error' => 'Cannot create returns for future periods'], Http::STATUS_BAD_REQUEST);
+        }
+
+        return null;
+
+    }//end validateCreatePeriod()
+
+    /**
      * Whether the caller may act on a loaded VAT return (ADR-005 IDOR guard).
      *
      * A missing row and a row belonging to an administration the caller has no
@@ -550,10 +608,10 @@ class VATReturnController extends Controller
             $filters['statusCode'] = $status;
         }
 
-        // administrationId is deliberately NOT read here: index() resolves the
-        // administration scope from the caller's memberships and only ever
-        // narrows it (ADR-005). Reading it as a plain filter here would let an
-        // unguarded value back in.
+        // The administrationId param is deliberately NOT read here: index()
+        // resolves the administration scope from the caller's memberships and
+        // only ever narrows it (ADR-005). Reading it as a plain filter here
+        // would let an unguarded value back in.
         return $filters;
 
     }//end buildListFilters()

@@ -124,7 +124,7 @@ class VATDeclarationController extends Controller
             );
 
             return new JSONResponse(['error' => 'Failed to list declarations'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+        }//end try
 
         return new JSONResponse(
             [
