@@ -101,6 +101,18 @@ final class VATReturnControllerTest extends TestCase
     private bool $canAccess = true;
 
     /**
+     * What accessibleAdministrationIds() answers when canAccess is true.
+     *
+     * Separate from $canAccess so a test can hold MORE than one membership and
+     * still distinguish "the scope is the caller's memberships" from "the scope
+     * was narrowed to the requested administration" — with a single-element
+     * default the two are indistinguishable and a narrowing bug reads as green.
+     *
+     * @var array<int,string>
+     */
+    private array $accessible = ['adm-1'];
+
+    /**
      * Controller under test.
      *
      * @var VATReturnController
@@ -129,10 +141,11 @@ final class VATReturnControllerTest extends TestCase
         $this->logger     = $this->createMock(LoggerInterface::class);
         $this->context    = $this->createMock(AdministrationContextService::class);
 
-        $this->canAccess = true;
+        $this->canAccess  = true;
+        $this->accessible = ['adm-1'];
         $this->context->method('canAccess')->willReturnCallback(fn (): bool => $this->canAccess);
         $this->context->method('accessibleAdministrationIds')->willReturnCallback(
-            fn (): array => $this->canAccess === true ? ['adm-1'] : []
+            fn (): array => $this->canAccess === true ? $this->accessible : []
         );
 
         $this->controller = new VATReturnController(
@@ -713,4 +726,200 @@ final class VATReturnControllerTest extends TestCase
         self::assertSame('r-1', $payload['data'][0]['id']);
 
     }//end testIndexIsScopedToTheCallersMemberships()
+
+    /**
+     * create() refuses an omitted administrationId with 400, before any lookup.
+     *
+     * The membership guard runs first and its "not well-formed" arm is the only
+     * one that answers 400 rather than 404: an empty administration is a client
+     * error, an inaccessible one is masked as absent.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function testCreateRefusesAnOmittedAdministrationId(): void
+    {
+        $this->withParams(
+            [
+                'administrationId' => '',
+                'period'           => 'quarter',
+                'periodYear'       => 2024,
+                'periodNumber'     => 1,
+                'regime'           => 'standard',
+            ]
+        );
+        $this->service->expects($this->never())->method('createReturn');
+
+        $response = $this->controller->create();
+
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+        self::assertSame('administrationId is required', $response->getData()['error']);
+
+    }//end testCreateRefusesAnOmittedAdministrationId()
+
+    /**
+     * create() rejects a period unit outside quarter | month | year.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function testCreateRejectsAnUnknownPeriodUnit(): void
+    {
+        $this->withParams(
+            [
+                'administrationId' => 'adm-1',
+                'period'           => 'fortnight',
+                'periodYear'       => 2024,
+                'periodNumber'     => 1,
+                'regime'           => 'standard',
+            ]
+        );
+        $this->service->expects($this->never())->method('createReturn');
+
+        $response = $this->controller->create();
+
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+        self::assertSame('period must be one of quarter | month | year', $response->getData()['error']);
+
+    }//end testCreateRejectsAnUnknownPeriodUnit()
+
+    /**
+     * create() rejects a fiscal year outside the 2020..2099 window.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function testCreateRejectsAnOutOfRangeFiscalYear(): void
+    {
+        $this->withParams(
+            [
+                'administrationId' => 'adm-1',
+                'period'           => 'quarter',
+                'periodYear'       => 1999,
+                'periodNumber'     => 1,
+                'regime'           => 'standard',
+            ]
+        );
+        $this->service->expects($this->never())->method('createReturn');
+
+        $response = $this->controller->create();
+
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+        self::assertSame('periodYear / periodNumber must be valid', $response->getData()['error']);
+
+    }//end testCreateRejectsAnOutOfRangeFiscalYear()
+
+    /**
+     * create() rejects a fifth quarter — the period unit bounds its number.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function testCreateRejectsAFifthQuarter(): void
+    {
+        $this->withParams(
+            [
+                'administrationId' => 'adm-1',
+                'period'           => 'quarter',
+                'periodYear'       => 2024,
+                'periodNumber'     => 5,
+                'regime'           => 'standard',
+            ]
+        );
+        $this->service->expects($this->never())->method('createReturn');
+
+        $response = $this->controller->create();
+
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+        self::assertSame('periodNumber must be 1..4 for quarter', $response->getData()['error']);
+
+    }//end testCreateRejectsAFifthQuarter()
+
+    /**
+     * create() rejects a thirteenth month.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function testCreateRejectsAThirteenthMonth(): void
+    {
+        $this->withParams(
+            [
+                'administrationId' => 'adm-1',
+                'period'           => 'month',
+                'periodYear'       => 2024,
+                'periodNumber'     => 13,
+                'regime'           => 'standard',
+            ]
+        );
+        $this->service->expects($this->never())->method('createReturn');
+
+        $response = $this->controller->create();
+
+        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+        self::assertSame('periodNumber must be 1..12 for month', $response->getData()['error']);
+
+    }//end testCreateRejectsAThirteenthMonth()
+
+    /**
+     * index() refuses an explicit administrationId the caller is not a member of.
+     *
+     * The filter may only NARROW the membership scope; a value outside it is
+     * masked as 404 rather than silently ignored, because silently ignoring it
+     * would answer 200 with the caller's own rows and read as success.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function testIndexRefusesAForeignAdministrationFilter(): void
+    {
+        $this->canAccess = false;
+        $this->withParams(['administrationId' => 'adm-9', '_page' => 1, '_limit' => 10]);
+        $this->container->expects($this->never())->method('get');
+
+        $response = $this->controller->index();
+
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+        self::assertSame('Administration not found', $response->getData()['error']);
+
+    }//end testIndexRefusesAForeignAdministrationFilter()
+
+    /**
+     * index() narrows the scope to an explicit administration inside it.
+     *
+     * The caller holds two memberships and asks for one; the other's rows must
+     * not appear. With a single-membership fixture this assertion cannot fail,
+     * which is why $accessible carries two ids here.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function testIndexNarrowsToAnExplicitAdministrationInScope(): void
+    {
+        $this->accessible = ['adm-1', 'adm-2'];
+        $this->withParams(['administrationId' => 'adm-2', '_page' => 1, '_limit' => 10]);
+        $this->withObjectService(
+            $this->fakeObjectService(
+                [
+                    'BtwAangifte' => [
+                        ['id' => 'r-1', 'administrationId' => 'adm-1', 'period' => 'quarter', 'regime' => 'standard', 'statusCode' => 'draft'],
+                        ['id' => 'r-2', 'administrationId' => 'adm-2', 'period' => 'quarter', 'regime' => 'standard', 'statusCode' => 'draft'],
+                    ],
+                ]
+            )
+        );
+
+        $payload = $this->controller->index()->getData();
+
+        self::assertSame(1, $payload['total']);
+        self::assertSame('r-2', $payload['data'][0]['id']);
+
+    }//end testIndexNarrowsToAnExplicitAdministrationInScope()
 }//end class
