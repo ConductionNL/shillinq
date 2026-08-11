@@ -185,10 +185,11 @@
           },
           "mandateApplied": {
             "type": "string",
+            "$ref": "Mandate",
             "nullable": true,
-            "description": "FK to the Mandaat under whose authority this commitment was signed (REQ-VPL-002).",
+            "description": "FK to the Mandate under whose authority this commitment was signed (REQ-VPL-002), joined on its mandateCode.",
             "example": "M-INKOOP-50K",
-            "title": "Mandaat Toegepast"
+            "title": "Mandate Applied"
           },
           "overrideReason": {
             "type": "string",
@@ -226,7 +227,33 @@
             "example": [
               "docudesk:doc-991"
             ],
-            "title": "Documenten"
+            "title": "Documents"
+          },
+          "lines": {
+            "type": "array",
+            "nullable": true,
+            "description": "The commitment's budget-tracking lines, one per budget coding combination / fiscal year (D2). This is the INVERSE side of CommitmentLine.commitment — it exists as a real property because ADR-062 rule 7 expresses relations as property-level $ref, and a one-to-many with no local property had nowhere to carry one. Values join on CommitmentLine's commitment field (the commitmentNumber), so this is deliberately not format:uuid.",
+            "items": {
+              "type": "string",
+              "$ref": "CommitmentLine"
+            },
+            "example": [
+              "PO-2026-00874"
+            ],
+            "title": "Lines"
+          },
+          "movements": {
+            "type": "array",
+            "nullable": true,
+            "description": "The immutable movement log for this commitment (D1) — every state change is recorded as a CommitmentMovement. Inverse side of CommitmentMovement.commitment, expressed as a property for the same reason as `lines`.",
+            "items": {
+              "type": "string",
+              "$ref": "CommitmentMovement"
+            },
+            "example": [
+              "PO-2026-00874"
+            ],
+            "title": "Movements"
           }
         },
         "x-openregister-lifecycle": {
@@ -353,29 +380,6 @@
             "onApprove": "advanceTransition"
           }
         },
-        "x-openregister-relations": {
-          "regels": {
-            "localField": "commitmentNumber",
-            "relatedSchema": "CommitmentLine",
-            "relatedField": "commitment",
-            "cardinality": "one-to-many",
-            "description": "Budget-tracking line items, one per coderingscombinatie / boekjaar (D2)."
-          },
-          "mutaties": {
-            "localField": "commitmentNumber",
-            "relatedSchema": "CommitmentMovement",
-            "relatedField": "commitment",
-            "cardinality": "one-to-many",
-            "description": "Immutable audit log of every state change (D1)."
-          },
-          "mandate": {
-            "localField": "mandateApplied",
-            "relatedSchema": "Mandate",
-            "relatedField": "mandateCode",
-            "cardinality": "many-to-one",
-            "description": "The mandaat under whose authority the commitment was signed."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "commitment-administrator": {
@@ -433,7 +437,8 @@
           },
           "commitment": {
             "type": "string",
-            "description": "FK to the parent Verplichting (verplichtingsnummer).",
+            "$ref": "Commitment",
+            "description": "FK to the parent Commitment, joined on its commitmentNumber. Carries the canonical property-level $ref (ADR-062 rule 7) rather than a per-schema x-openregister-relations block. Deliberately NOT format:uuid — this join is on the business key, and declaring uuid would reject every existing value.",
             "example": "PO-2026-00874",
             "title": "Commitment"
           },
@@ -541,15 +546,6 @@
             "title": "Closed"
           }
         },
-        "x-openregister-relations": {
-          "commitmentFk": {
-            "localField": "commitment",
-            "relatedSchema": "Commitment",
-            "relatedField": "commitmentNumber",
-            "cardinality": "many-to-one",
-            "description": "Parent commitment."
-          }
-        },
         "x-openregister-aggregations": {
           "committedVsRealisedPerBudgetLine": {
             "description": "REQ-VPL-011: per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching Budget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures — no parallel PHP reporting service (ADR-031).",
@@ -609,7 +605,8 @@
           },
           "commitment": {
             "type": "string",
-            "description": "FK to the parent Verplichting (verplichtingsnummer).",
+            "$ref": "Commitment",
+            "description": "FK to the parent Commitment, joined on its commitmentNumber. Carries the canonical property-level $ref (ADR-062 rule 7) rather than a per-schema x-openregister-relations block. Deliberately NOT format:uuid — this join is on the business key, and declaring uuid would reject every existing value.",
             "example": "PO-2026-00874",
             "title": "Commitment"
           },
@@ -691,15 +688,6 @@
             "description": "FK to the Nextcloud user who triggered the mutation.",
             "example": "user-5",
             "title": "User"
-          }
-        },
-        "x-openregister-relations": {
-          "commitmentFk": {
-            "localField": "commitment",
-            "relatedSchema": "Commitment",
-            "relatedField": "commitmentNumber",
-            "cardinality": "many-to-one",
-            "description": "Parent commitment."
           }
         },
         "x-openregister-audit-trail": {
@@ -882,7 +870,8 @@
           },
           "commitment": {
             "type": "string",
-            "description": "FK to the Verplichting awaiting approval.",
+            "$ref": "Commitment",
+            "description": "FK to the Commitment awaiting approval, joined on its commitmentNumber.",
             "example": "PO-2026-00874",
             "title": "Commitment"
           },
@@ -953,15 +942,6 @@
             "description": "File URI of the captured signature.",
             "example": "docudesk:sig-12",
             "title": "Handtekening Bestand"
-          }
-        },
-        "x-openregister-relations": {
-          "commitmentFk": {
-            "localField": "commitment",
-            "relatedSchema": "Commitment",
-            "relatedField": "commitmentNumber",
-            "cardinality": "many-to-one",
-            "description": "The commitment awaiting approval."
           }
         },
         "x-openregister-audit-trail": {

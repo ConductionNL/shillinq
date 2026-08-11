@@ -108,6 +108,7 @@
           },
           "commitmentId": {
             "type": "string",
+            "$ref": "Commitment",
             "description": "FK to the materialised Shillinq Commitment (obligation). Null until import promotes the dossier to a concept obligation (REQ-001).",
             "nullable": true,
             "title": "Commitment ID"
@@ -191,15 +192,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "commitment": {
-            "localField": "commitmentId",
-            "relatedSchema": "Commitment",
-            "relatedField": "id",
-            "cardinality": "one-to-one",
-            "description": "The Shillinq Commitment materialised from this tender on import (REQ-001)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "contractmanager": {
@@ -269,10 +261,18 @@
           },
           "sourceReference": {
             "type": "string",
-            "description": "TenderNed aanbestedingId when bron is tenderned; null otherwise (conditional-required, design validation rules).",
+            "description": "Provenance key for the object this commitment was raised from: the TenderNed procurementId when source is tenderned, otherwise a PurchaseOrder poNumber or Contract contractNumber. POLYMORPHIC on purpose — it points at a different schema depending on `source`, which is precisely why it carries no $ref. The typed TenderNed link lives on `procurement` below.",
             "nullable": true,
-            "x-openregister-conditional-required": "bron == 'tenderned'",
+            "x-openregister-conditional-required": "source == 'tenderned'",
             "title": "Source Reference"
+          },
+          "procurement": {
+            "type": "string",
+            "$ref": "TenderNedProcurement",
+            "nullable": true,
+            "description": "The source TenderNed tender, when this commitment was materialised from one (REQ-005 audit-trail lineage). This is the inverse of TenderNedProcurement.commitmentId, and exists as a real property because ADR-062 rule 7 expresses relations as a property-level $ref — the retired x-openregister-relations block hung this relation off `sourceReference`, which cannot carry a $ref because it is polymorphic. Null for manually-raised and purchase-order-raised commitments.",
+            "example": "TN-2026-0001",
+            "title": "Procurement"
           },
           "amount": {
             "type": "number",
@@ -424,15 +424,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "procurement": {
-            "localField": "sourceReference",
-            "relatedSchema": "TenderNedProcurement",
-            "relatedField": "procurementId",
-            "cardinality": "one-to-one",
-            "description": "The source TenderNed tender when bron is tenderned (REQ-005 audit-trail lineage)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "contractmanager": {
@@ -484,6 +475,7 @@
         "properties": {
           "commitmentId": {
             "type": "string",
+            "$ref": "Commitment",
             "description": "FK to the parent Commitment (design D5).",
             "title": "Commitment ID"
           },
@@ -601,15 +593,6 @@
               "label": "Annuleren",
               "description": "Cancel the delivery; record stays in the audit-trail (REQ-005)."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "commitment": {
-            "localField": "commitmentId",
-            "relatedSchema": "Commitment",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The parent obligation this execution record belongs to (design D5)."
           }
         },
         "x-openregister-rbac": {
