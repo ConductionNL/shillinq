@@ -155,17 +155,24 @@ class VATReturnController extends Controller
         }
 
         try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $vatReturn     = $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->find($returnId);
-            if (is_array($vatReturn) === false) {
+            // OpenRegister's ObjectService::find() returns `?ObjectEntity`, never
+            // an array. The previous `is_array()` test was therefore false for
+            // EVERY row that was actually found, so this endpoint answered 404
+            // for every VAT return that exists — including the one POST
+            // /api/vat-returns had just created and returned an id for.
+            // VATReturnService::findReturn() performs the entity → array
+            // normalisation and returns null only when the row is genuinely absent.
+            $vatReturn = $this->service->findReturn(returnId: $returnId);
+            if ($vatReturn === null) {
                 return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
             }
 
-            $declarations = $objectService
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            $declarations  = $objectService
                 ->setRegister(register: 'shillinq')
                 ->setSchema(schema: 'VATDeclaration')
                 ->findAll(['filters' => ['returnId' => $returnId]]);
-            $lines        = $objectService
+            $lines         = $objectService
                 ->setRegister(register: 'shillinq')
                 ->setSchema(schema: 'VATLine')
                 ->findAll(['filters' => ['returnId' => $returnId]]);
@@ -281,9 +288,10 @@ class VATReturnController extends Controller
         $notes = (string) $this->request->getParam('notes', '');
 
         try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $vatReturn     = $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->find($returnId);
-            if (is_array($vatReturn) === false) {
+            // See show(): find() yields `?ObjectEntity`, so the previous
+            // `is_array()` test rejected every existing record as "not found".
+            $vatReturn = $this->service->findReturn(returnId: $returnId);
+            if ($vatReturn === null) {
                 return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
             }
 
@@ -292,6 +300,7 @@ class VATReturnController extends Controller
             }
 
             $vatReturn['notes'] = $notes;
+            $objectService      = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $saved = $objectService
                 ->setRegister(register: 'shillinq')
                 ->setSchema(schema: 'BtwAangifte')
@@ -408,9 +417,12 @@ class VATReturnController extends Controller
         }
 
         try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $vatReturn     = $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->find($returnId);
-            if (is_array($vatReturn) === false) {
+            // See show(): find() yields `?ObjectEntity`, so the previous
+            // `is_array()` test masked every existing record as 404 — which
+            // meant a SUBMITTED return answered 404 instead of the 409 the
+            // "only draft returns can be deleted" rule is supposed to give.
+            $vatReturn = $this->service->findReturn(returnId: $returnId);
+            if ($vatReturn === null) {
                 return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
             }
 
@@ -418,6 +430,7 @@ class VATReturnController extends Controller
                 return new JSONResponse(['error' => 'Only draft returns can be deleted'], Http::STATUS_CONFLICT);
             }
 
+            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
             $objectService->setRegister(register: 'shillinq')->setSchema(schema: 'BtwAangifte')->deleteObject($returnId);
         } catch (\Throwable $e) {
             $this->logger->error(

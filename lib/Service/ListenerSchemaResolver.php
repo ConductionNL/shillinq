@@ -62,6 +62,8 @@ use Throwable;
 /**
  * Turns an OpenRegister entity's schema id into its slug, scoped to shillinq's
  * own register.
+ *
+ * @spec openspec/specs/missing-lifecycle-guards/spec.md
  */
 class ListenerSchemaResolver
 {
@@ -114,27 +116,119 @@ class ListenerSchemaResolver
      * @param object|null $entity The OpenRegister ObjectEntity from the event.
      *
      * @return string The schema slug, or '' when this is not a shillinq object.
+     *
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      */
     public function schemaSlug(?object $entity): string
     {
-        if ($entity === null || method_exists($entity, 'getSchema') === false) {
+        $rawSchema = $this->readAccessor(entity: $entity, getter: 'getSchema');
+        if ($rawSchema === '') {
             return '';
         }
-
-        $rawSchema = (string) ($entity->getSchema() ?? '');
 
         // Gate closed: reproduce the pre-fix comparison exactly.
         if ($this->contract->isEnabled() === false) {
             return $rawSchema;
         }
 
-        if ($rawSchema === '' || $this->isOwnRegister(entity: $entity) === false) {
+        if ($this->isOwnRegister(entity: $entity) === false) {
             return '';
         }
 
         return $this->resolveSlug(service: self::SCHEMA_MAPPER, id: $rawSchema);
 
     }//end schemaSlug()
+
+    /**
+     * Read a value off an OpenRegister entity through an accessor that may be magic.
+     *
+     * `method_exists($entity, 'getSchema')` is FALSE for a real
+     * `OCA\OpenRegister\Db\ObjectEntity`: it extends Nextcloud's
+     * `OCP\AppFramework\Db\Entity`, which serves `getSchema()` / `getRegister()`
+     * through `__call()` rather than declaring them. Guarding an accessor with
+     * `method_exists()` therefore reported "this entity has no schema" for every
+     * entity that actually has one, which silently turned every listener built on
+     * this resolver into a no-op. Measured on a live instance: an
+     * `ObjectCreatingEvent` listener saw `getSchema` as missing on the very
+     * entity being persisted.
+     *
+     * Calls the accessor and tolerates failure — `Entity::__call()` throws
+     * `BadFunctionCallException` for an unknown property, and a non-scalar value
+     * is treated as absent.
+     *
+     * @param object|null $entity The OpenRegister ObjectEntity from the event.
+     * @param string      $getter The accessor name (e.g. 'getSchema').
+     *
+     * @return string The scalar value as a string, or '' when unavailable.
+     */
+    private function readAccessor(?object $entity, string $getter): string
+    {
+        if ($entity === null) {
+            return '';
+        }
+
+        try {
+            $value = $entity->{$getter}();
+        } catch (Throwable $e) {
+            return '';
+        }
+
+        if (is_scalar($value) === false) {
+            return '';
+        }
+
+        return (string) $value;
+
+    }//end readAccessor()
+
+    /**
+     * Whether an entity is an instance of the named shillinq schema.
+     *
+     * Unlike {@see schemaSlug()} this does NOT depend on {@see ListenerSlugContract}:
+     * while that gate is closed `schemaSlug()` deliberately returns the entity's
+     * raw schema value, which OpenRegister stamps as a numeric ID — so a caller
+     * comparing it against a slug literal never matches and its listener silently
+     * never fires. A write-path guard cannot be allowed to fail that way, so this
+     * method accepts either form: a raw value that already IS the slug (hand-built
+     * entities and unit-test doubles), or a schema ID resolved through
+     * OpenRegister's SchemaMapper.
+     *
+     * Scoped to shillinq's own register, so a same-slug schema owned by another
+     * app can never trip a shillinq guard.
+     *
+     * @param object|null $entity       The OpenRegister ObjectEntity from the event.
+     * @param string      $expectedSlug The schema slug to match (e.g. 'OpdrachtUitvoering').
+     *
+     * @return bool True when the entity is an instance of that schema.
+     *
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
+     */
+    public function matchesSchema(?object $entity, string $expectedSlug): bool
+    {
+        if ($expectedSlug === '') {
+            return false;
+        }
+
+        $rawSchema = $this->readAccessor(entity: $entity, getter: 'getSchema');
+        if ($rawSchema === '') {
+            return false;
+        }
+
+        // The entity already carries a slug rather than an id.
+        if (strcasecmp($rawSchema, $expectedSlug) === 0) {
+            return true;
+        }
+
+        if ($this->isOwnRegister(entity: $entity) === false) {
+            return false;
+        }
+
+        return strcasecmp(
+            $this->resolveSlug(service: self::SCHEMA_MAPPER, id: $rawSchema),
+            $expectedSlug
+        ) === 0;
+
+    }//end matchesSchema()
 
     /**
      * Whether the entity belongs to shillinq's own OpenRegister register.
@@ -146,14 +240,12 @@ class ListenerSchemaResolver
      * @param object|null $entity The OpenRegister ObjectEntity from the event.
      *
      * @return bool True when the entity sits in shillinq's register.
+     *
+     * @spec openspec/specs/missing-lifecycle-guards/spec.md
      */
     public function isOwnRegister(?object $entity): bool
     {
-        if ($entity === null || method_exists($entity, 'getRegister') === false) {
-            return false;
-        }
-
-        $rawRegister = (string) ($entity->getRegister() ?? '');
+        $rawRegister = $this->readAccessor(entity: $entity, getter: 'getRegister');
         if ($rawRegister === '') {
             return false;
         }
@@ -185,8 +277,14 @@ class ListenerSchemaResolver
     {
         try {
             $entity = $this->container->get($service)->find($id);
-            if (is_object($entity) === true && method_exists($entity, 'getSlug') === true) {
-                return (string) ($entity->getSlug() ?? '');
+            if (is_object($entity) === true) {
+                // `getSlug()` is a MAGIC accessor on OpenRegister's Schema /
+                // Register entities (both extend OCP\AppFramework\Db\Entity), so
+                // the previous `method_exists($entity, 'getSlug')` guard was
+                // false for every entity the mapper returns and this method
+                // answered '' for every id it was ever given — the silent
+                // reason the slug matching below could never succeed.
+                return $this->readAccessor(entity: $entity, getter: 'getSlug');
             }
         } catch (Throwable $e) {
             $this->logger->debug(
