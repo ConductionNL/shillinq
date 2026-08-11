@@ -51,7 +51,6 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  */
 final class SigningDelegationRegistration
 {
-
     /**
      * Register all four listeners on the app registration context.
      *
