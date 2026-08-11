@@ -22,13 +22,25 @@ therefore the **schema**, never the file.
       filing payloads. These are wire and must not be renamed. An unclassified property
       does not get renamed.
 
+- [ ] 1.4 Count stored objects across all 177 schemas. Resolve numeric register and schema
+      ids through `oc_openregister_schemas`, then read the
+      `oc_openregister_table_<reg>_<schema>` shards — matching shard table names against
+      the schema title matches nothing and reports zero for every app. Exclude `_deleted`,
+      sum across every register each schema is in, and prove the query can return non-zero
+      before recording any zero.
+- [ ] 1.5 Plan the migration per schema off the 1.2 index. ⚠️ The commitment rename
+      already shipped **without** one and had to be repaired afterwards
+      (`fix/fragment-vocabulary-group-a`: "the rename had no data migration — every
+      renamed property now has one"). This task exists so that is not repeated at
+      610-property scale.
+
 ## 2. Agree the shared names before renaming
 
 - [ ] 2.1 Agree `Employee` and `Administration` with hrmq — both apps declare them today,
-      and shillinq consumes hrmq properties, so the two already share a window.
-- [ ] 2.2 Confirm whether `Requisition`'s mirroring of `Commitment`'s field names is
-      documented anywhere, or known only through the guard that depends on it. Record it
-      in the schema either way; renaming one side silently mis-evaluates the other.
+      and shillinq consumes hrmq properties, so the two already share a window. Also
+      confirm whether `Requisition`'s mirroring of `Commitment`'s field names is documented
+      anywhere or known only through the guard that depends on it, and record it in the
+      schema; renaming one side silently mis-evaluates the other.
 
 ## 3. Worked example first — prove the process on BbvTaakveld
 
@@ -37,8 +49,9 @@ therefore the **schema**, never the file.
       `add-shillinq-bbv-compliance.json`, `add-shillinq-bookkeeping-operations.json` and
       the two declaring `Taakveld`). Run `validate-registers` immediately after. If the
       process handles this correctly it handles the other 143.
-- [ ] 3.2 Confirm the BBV/IV3 taakveld **codes** (`0.1`, `6.71`, …) are unchanged — they
-      are published statutory classification values, i.e. data, not identifiers.
+      Confirm in the same pass that the BBV/IV3 taakveld **codes** (`0.1`, `6.71`, …) are
+      unchanged — they are published statutory classification values, i.e. data, not
+      identifiers — and that the stored objects migrated with the schema.
 
 ## 4. Rename statutory financial vocabulary with markers
 
@@ -106,6 +119,8 @@ therefore the **schema**, never the file.
 ## Acceptance criteria
 
 - The schema → declaring-fragments index exists and was used as the work plan.
+- Stored-object counts measured across all 177 schemas and proven by a positive control;
+  every non-zero schema migrated **with** its rename, not repaired after it.
 - Every renamed property renamed in **all** its declaring fragments; `validate-registers`
   run per batch, not once.
 - BBV/IV3 codes and every filing payload field byte-identical.
