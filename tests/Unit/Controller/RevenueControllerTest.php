@@ -263,7 +263,7 @@ final class RevenueControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/specs/bookkeeping-revenue-recognition/spec.md
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
      */
     public function testForeignAdministrationReturns404AndNeverReachesTheService(): void
     {

@@ -300,7 +300,7 @@ final class RecognitionControllerTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/specs/bookkeeping-revenue-recognition/spec.md
+     * @spec openspec/specs/recurring-revenue-recognition/spec.md
      */
     public function testForeignAdministrationReturns404AndNeverReachesTheService(): void
     {

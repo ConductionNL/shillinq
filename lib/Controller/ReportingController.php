@@ -32,7 +32,12 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec exclude The reporting capability has no canonical spec. This tag pointed at
+ *       openspec/changes/reporting-compliance-consolidation (a change directory that
+ *       exists neither under changes nor under changes/archive), and no canonical
+ *       reporting capability exists under openspec/specs either. Tracked in #525.
+ *       Deliberately NOT resolved by writing that spec — authoring the requirement
+ *       a tag is checked against turns the gate green over an unspecified capability.
  *
  * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
  * The change directory it names was never committed, and the `reporting`
@@ -68,7 +73,12 @@ use OCP\IUserSession;
 /**
  * HTTP surface for Reporting & Compliance: catalogue, generation, listing, download.
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec exclude The reporting capability has no canonical spec. This tag pointed at
+ *       openspec/changes/reporting-compliance-consolidation (a change directory that
+ *       exists neither under changes nor under changes/archive), and no canonical
+ *       reporting capability exists under openspec/specs either. Tracked in #525.
+ *       Deliberately NOT resolved by writing that spec — authoring the requirement
+ *       a tag is checked against turns the gate green over an unspecified capability.
  *
  * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
  * The change directory it names was never committed, and the `reporting`
@@ -150,6 +160,8 @@ class ReportingController extends Controller
      * + downloadPath). A service-level `{ error: ... }` envelope is surfaced as 422.
      *
      * @return JSONResponse The GeneratedReport record, or an error envelope.
+     *
+     * @spec exclude No canonical requirement exists for the reporting capability — see #525.
      */
     #[NoAdminRequired]
     public function generate(): JSONResponse
@@ -200,6 +212,8 @@ class ReportingController extends Controller
      * included, which then fed `download/{id}`.
      *
      * @return JSONResponse `{ reports: [...] }`.
+     *
+     * @spec exclude No canonical requirement exists for the reporting capability — see #525.
      */
     #[NoAdminRequired]
     public function generated(): JSONResponse
@@ -253,6 +267,8 @@ class ReportingController extends Controller
      * @param string $id The GeneratedReport id.
      *
      * @return DataDownloadResponse|JSONResponse The streamed file, or a 404 JSON envelope.
+     *
+     * @spec exclude No canonical requirement exists for the reporting capability — see #525.
      */
     #[NoAdminRequired]
     public function download(string $id): DataDownloadResponse|JSONResponse

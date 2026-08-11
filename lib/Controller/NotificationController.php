@@ -110,6 +110,8 @@ class NotificationController extends Controller
      *
      * @return JSONResponse `{triggers: [{slug, name, triggerType, channels, status, appliesToBookingSlug}]}`.
      *
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
+     *
      * @NoAdminRequired
      */
     #[NoAdminRequired]
@@ -171,6 +173,8 @@ class NotificationController extends Controller
      * @param string $id Booking slug / uuid.
      *
      * @return JSONResponse `{triggers: […]}` or error envelope.
+     *
+     * @spec openspec/specs/bookings-notification-triggers/spec.md
      *
      * @NoAdminRequired
      */
