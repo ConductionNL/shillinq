@@ -35,7 +35,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-8-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ namespace OCA\Shillinq\Service;
  * Pure SBR/XBRL + PDF hand-off renderer for the Vpb innovatiebox-sectie
  * (REQ-IBA-006).
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-8-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
@@ -89,7 +89,7 @@ class InnovatieboxSbrExportService
      *
      * @return array<string,mixed> The SBR/XBRL instance hand-off payload.
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-8-1
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
      */
     public function toSbrInstancePayload(
         array $aggregation,
@@ -149,7 +149,7 @@ class InnovatieboxSbrExportService
      *
      * @return array<string,mixed> The docudesk template context.
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-8-1
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-006
      */
     public function toPdfRenderContext(
         array $aggregation,

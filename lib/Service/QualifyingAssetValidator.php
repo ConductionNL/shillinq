@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-2
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-001
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ namespace OCA\Shillinq\Service;
 /**
  * Side-effect-free toegangsticket validator for QualifyingAsset (REQ-IBA-001).
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-2
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-001
  */
 class QualifyingAssetValidator
 {
@@ -60,7 +60,7 @@ class QualifyingAssetValidator
      *
      * @return array{status: string, valid: bool, errors: array<int,string>}
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-2
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-001
      */
     public function validateAccessTicket(array $asset, string $referenceDate=''): array
     {

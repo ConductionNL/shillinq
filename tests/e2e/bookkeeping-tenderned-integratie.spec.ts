@@ -19,7 +19,7 @@
  * `tenderned.award.detected` CloudEvent + a seeded tenant KvK + a vendor-
  * isolated session, which the build sandbox does not provide.
  *
- * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-10-4
+ * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-001
  */
 
 import { test, expect } from '@playwright/test'

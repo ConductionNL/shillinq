@@ -27,6 +27,16 @@
  * scaffolding is seeded so the IDOR-guarded endpoint resolves real data.
  *
  * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-1
+ *
+ * The `@spec` above is KNOWINGLY DANGLING and must stay that way until
+ * shillinq#500 is answered. `#task-4-1` cannot resolve (the task list is
+ * written `- [x] Task 4.1:`, so the checker reads `Task` as the item id), but
+ * neither canonical target is honest either: REQ-TB-001 forbids the
+ * `TrialBalanceService` this test exercises, and the archived change's
+ * REQ-TB-009 is change-local, not canon. A tag that resolves to a requirement
+ * the code violates is worse than one that resolves to nothing.
+ *
+ * @e2e openspec/specs/bookkeeping-trial-balance/spec.md#balanced-trial-balance-returns-no-invariant-error
  */
 
 import { test, expect, request as pwRequest } from '@playwright/test'

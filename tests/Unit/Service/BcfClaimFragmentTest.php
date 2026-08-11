@@ -257,7 +257,7 @@ final class BcfClaimFragmentTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-3
+     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-009
      */
     public function testApprovalChainGatesSubmitTransition(): void
     {
@@ -323,7 +323,7 @@ final class BcfClaimFragmentTest extends TestCase
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-4
+     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-007
      */
     public function testSettlementWebhookRoutesToSettleTransition(): void
     {

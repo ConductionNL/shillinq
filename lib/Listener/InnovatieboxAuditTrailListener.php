@@ -38,7 +38,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-5-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -64,7 +64,7 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-5-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  */
 final class InnovatieboxAuditTrailListener implements IEventListener
 {
@@ -112,7 +112,7 @@ final class InnovatieboxAuditTrailListener implements IEventListener
      *
      * @return void
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-5-1
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
      */
     public function handle(Event $event): void
     {

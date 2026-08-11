@@ -23,7 +23,7 @@
  * Each route MUST answer 200 (logged in via storage state) or 302 to
  * /login (storage state unset); 5xx is a hard failure.
  *
- * @spec openspec/changes/bookkeeping-provincies-bbv-variant/tasks.md#smoke-tests
+ * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
  */
 
 import { test, expect } from '@playwright/test'
