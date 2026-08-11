@@ -393,9 +393,7 @@
         "tuesday": "09:00-17:00",
         "wednesday": "09:00-17:00",
         "thursday": "09:00-17:00",
-        "friday": "09:00-17:00",
-        "saturday": null,
-        "sunday": null
+        "friday": "09:00-17:00"
       },
       "status": "active"
     },
@@ -415,8 +413,7 @@
         "wednesday": "08:00-18:00",
         "thursday": "08:00-18:00",
         "friday": "08:00-18:00",
-        "saturday": "09:00-13:00",
-        "sunday": null
+        "saturday": "09:00-13:00"
       },
       "status": "active"
     },
@@ -436,8 +433,7 @@
         "wednesday": "10:00-18:00",
         "thursday": "10:00-18:00",
         "friday": "10:00-20:00",
-        "saturday": "10:00-16:00",
-        "sunday": null
+        "saturday": "10:00-16:00"
       },
       "status": "active"
     },
