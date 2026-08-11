@@ -516,15 +516,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "generatedInvoices": {
-            "localField": "id",
-            "relatedSchema": "ARInvoice",
-            "relatedField": "recurringProfileId",
-            "cardinality": "one-to-many",
-            "description": "The ordinary ARInvoice records this profile has generated, linked by the recurringProfileId provenance field."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {

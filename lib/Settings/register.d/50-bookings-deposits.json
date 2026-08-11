@@ -126,6 +126,8 @@
           },
           "arInvoiceId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "ARInvoice",
             "description": "FK to the Shillinq AR invoice materialised on authorization (one-to-one). Populated by the authorize-transition action (REQ-DP-003).",
             "nullable": true,
             "example": "inv-ar-9002",
@@ -133,6 +135,8 @@
           },
           "creditNoteId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "CreditNote",
             "description": "FK to the Shillinq AR credit note materialised on void (REQ-DP-008).",
             "nullable": true,
             "example": "cn-ar-9050",
@@ -364,22 +368,6 @@
               "eventDate",
               "dueOffsetDays"
             ]
-          }
-        },
-        "x-openregister-relations": {
-          "arInvoice": {
-            "localField": "arInvoiceId",
-            "relatedSchema": "ARInvoice",
-            "relatedField": "id",
-            "cardinality": "one-to-one",
-            "description": "The Shillinq AR invoice materialised from this deposit on authorization."
-          },
-          "creditNote": {
-            "localField": "creditNoteId",
-            "relatedSchema": "CreditNote",
-            "relatedField": "id",
-            "cardinality": "one-to-one",
-            "description": "The Shillinq AR credit note materialised when this deposit is voided."
           }
         },
         "x-openregister-rbac": {
