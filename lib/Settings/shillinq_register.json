@@ -20804,29 +20804,34 @@
         "invoiceNumber": {
           "type": "string",
           "description": "Shillinq-side reference (auto-generated per administration).",
-          "example": "INV-V-2026-0001"
+          "example": "INV-V-2026-0001",
+          "title": "Our Reference"
         },
         "vendorInvoiceRef": {
           "type": "string",
           "description": "The vendor's own invoice number as it appears on the paper/PDF invoice.",
-          "example": "ACME-2026-00123"
+          "example": "ACME-2026-00123",
+          "title": "Supplier's Invoice Number"
         },
         "vendorId": {
           "type": "string",
           "description": "FK to VendorMaster UUID.",
-          "example": "vendor-acme-1"
+          "example": "vendor-acme-1",
+          "title": "Supplier"
         },
         "invoiceDate": {
           "type": "string",
           "format": "date",
           "description": "Date on the vendor's invoice.",
-          "example": "2026-01-15"
+          "example": "2026-01-15",
+          "title": "Invoice Date"
         },
         "dueDate": {
           "type": "string",
           "format": "date",
           "description": "Auto-calculated from invoiceDate + vendor.paymentTermDays; overrideable by operator.",
-          "example": "2026-02-14"
+          "example": "2026-02-14",
+          "title": "Payment Due"
         },
         "currency": {
           "type": "string",
@@ -20834,25 +20839,29 @@
           "maxLength": 3,
           "description": "ISO 4217 currency code. T2: base currency only; T5 adds multi-currency.",
           "default": "EUR",
-          "example": "EUR"
+          "example": "EUR",
+          "title": "Currency"
         },
         "totalAmount": {
           "type": "number",
           "minimum": 0,
           "description": "Total amount including tax. Credit notes are separate journal types, not negative totals.",
-          "example": 1250.0
+          "example": 1250.0,
+          "title": "Total Including VAT"
         },
         "taxAmount": {
           "type": "number",
           "minimum": 0,
           "description": "VAT/BTW amount. T3 adds automated VAT posting; T2 carries the field for reporting.",
           "nullable": true,
-          "example": 217.98
+          "example": 217.98,
+          "title": "VAT Amount"
         },
         "lines": {
           "type": "array",
           "minItems": 1,
           "description": "Invoice line breakdown. Each line maps to one GL expense account.",
+          "title": "Invoice Lines",
           "items": {
             "type": "object",
             "required": [
@@ -20863,31 +20872,37 @@
             "properties": {
               "description": {
                 "type": "string",
-                "description": "Line description."
+                "description": "Line description.",
+                "title": "Description"
               },
               "accountNumber": {
                 "type": "string",
-                "description": "FK to Account.accountNumber (expense account)."
+                "description": "FK to Account.accountNumber (expense account).",
+                "title": "Expense Account"
               },
               "amount": {
                 "type": "number",
                 "minimum": 0,
-                "description": "Line amount (non-negative; see REQ-AP-003)."
+                "description": "Line amount (non-negative; see REQ-AP-003).",
+                "title": "Line Amount"
               },
               "taxCode": {
                 "type": "string",
                 "description": "Tax code for this line (e.g. BTW21, BTW9, BTW0).",
-                "nullable": true
+                "nullable": true,
+                "title": "VAT Code"
               },
               "quantity": {
                 "type": "number",
                 "description": "Quantity ordered/received (required for 3-way match when PO/GR present).",
-                "nullable": true
+                "nullable": true,
+                "title": "Quantity"
               },
               "unitPrice": {
                 "type": "number",
                 "description": "Unit price (required for 3-way match quantity parity check).",
-                "nullable": true
+                "nullable": true,
+                "title": "Unit Price"
               }
             }
           }
@@ -20896,17 +20911,20 @@
           "type": "string",
           "description": "docudesk FK URI per bookkeeping-document-attachment-integration. Points to the scanned vendor invoice PDF.",
           "nullable": true,
-          "example": "docudesk://files/shillinq/invoices/acme-2026-00123.pdf"
+          "example": "docudesk://files/shillinq/invoices/acme-2026-00123.pdf",
+          "title": "Scanned Invoice"
         },
         "purchaseOrderRef": {
           "type": "string",
           "description": "FK to PO register UUID (future T4 procurement; nullable in T2). Declared so T4 attaches additively per REQ-AP-006.",
-          "nullable": true
+          "nullable": true,
+          "title": "Purchase Order"
         },
         "goodsReceiptRef": {
           "type": "string",
           "description": "FK to Goods Receipt register UUID (future T4; nullable in T2). Declared so T4 attaches additively per REQ-AP-006.",
-          "nullable": true
+          "nullable": true,
+          "title": "Goods Receipt"
         },
         "approvalState": {
           "type": "string",
@@ -20917,7 +20935,8 @@
             "rejected"
           ],
           "description": "OR approval-workflow state mirror per REQ-AP-005. Tracks the approval routing status.",
-          "example": "pending"
+          "example": "pending",
+          "title": "Approval Status"
         },
         "state": {
           "type": "string",
@@ -20932,29 +20951,34 @@
           ],
           "description": "AP invoice lifecycle state per REQ-AP-004.",
           "default": "draft",
-          "example": "draft"
+          "example": "draft",
+          "title": "Status"
         },
         "glTransactionId": {
           "type": "string",
           "description": "Back-reference to the materialised GLTransaction once the invoice is posted.",
           "nullable": true,
-          "example": "gl-txn-2026-ap-0001"
+          "example": "gl-txn-2026-ap-0001",
+          "title": "Journal Entry"
         },
         "idealLink": {
           "type": "string",
           "description": "Per-invoice iDEAL payment link (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=ideal.",
-          "nullable": true
+          "nullable": true,
+          "title": "iDEAL Payment Link"
         },
         "periodId": {
           "type": "string",
           "description": "FK to the FiscalPeriod for GL posting (resolved on post transition per REQ-AP-004).",
           "nullable": true,
-          "example": "2026-Q1"
+          "example": "2026-Q1",
+          "title": "Accounting Period"
         },
         "administrationId": {
           "type": "string",
           "description": "FK to the administration owning this AP invoice.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration"
         }
       },
       "x-openregister-notifications": {
