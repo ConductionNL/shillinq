@@ -320,8 +320,21 @@ final class OverdueVerantwoordingNotificationTest extends TestCase
             self::assertContains($channel, self::VALID_CHANNELS);
         }
 
-        self::assertIsString($rule['subject']);
-        self::assertNotSame('', $rule['subject']);
+        // `subject` is the canonical per-locale map (ADR-031). The
+        // validator accepts a bare string too, but this rule carries the
+        // interpolated identifiers the retired job put in its body, so
+        // both locales must render them with the `{{prop}}` token — the
+        // legacy `@self.` form is what gate-18 rejects.
+        $subject = $rule['subject'];
+        self::assertIsArray($subject, 'subject must be a per-locale map.');
+        foreach (['nl', 'en'] as $locale) {
+            self::assertArrayHasKey($locale, $subject);
+            self::assertIsString($subject[$locale]);
+            self::assertNotSame('', $subject[$locale]);
+            self::assertStringContainsString('{{verantwoordingId}}', $subject[$locale]);
+            self::assertStringContainsString('{{grantId}}', $subject[$locale]);
+            self::assertStringNotContainsString('@self.', $subject[$locale]);
+        }
 
     }//end testOnOverdueNotificationRuleShape()
 

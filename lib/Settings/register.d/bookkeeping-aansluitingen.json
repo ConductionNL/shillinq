@@ -157,6 +157,8 @@
         "properties": {
           "aansluitingId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "Aansluiting",
             "description": "FK to the Aansluiting definition this result was computed for.",
             "example": "aansl-btw-ledger-aangifte-smb",
             "title": "Aansluiting ID"
@@ -376,15 +378,6 @@
             "filter": {
               "status": "open"
             }
-          }
-        },
-        "x-openregister-relations": {
-          "aansluiting": {
-            "localField": "aansluitingId",
-            "relatedSchema": "Aansluiting",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The Aansluiting definition this result was computed for."
           }
         },
         "x-openregister-rbac": {

@@ -147,6 +147,11 @@ final class BookingNotificationTriggersFragmentTest extends TestCase
      * engine consumes (selectTemplate.byType maps each trigger type onto
      * the bookings-email-templates schemas).
      *
+     * The trigger type and channel list are read off the stored trigger
+     * object itself, expressed with the canonical `{{prop}}` interpolation
+     * token — the legacy `@self.` form is the one gate-18 (ADR-031)
+     * rejects inside a notification block.
+     *
      * @return void
      */
     public function testTriggerNotificationBindsToEmailTemplates(): void
@@ -154,12 +159,34 @@ final class BookingNotificationTriggersFragmentTest extends TestCase
         $data = $this->fragment();
         $bind = $data['components']['schemas']['BookingNotificationTrigger']['x-openregister-notifications']['onTriggerEventFired'];
 
-        self::assertSame('@self.triggerType', $bind['trigger']);
-        self::assertSame('@self.channels', $bind['channels']);
+        self::assertSame('{{triggerType}}', $bind['trigger']);
+        self::assertSame('{{channels}}', $bind['channels']);
         self::assertSame('BookingConfirmationTemplate', $bind['selectTemplate']['byType']['booking.created']);
         self::assertSame('BookingCancellationTemplate', $bind['selectTemplate']['byType']['booking.cancelled']);
         self::assertSame('BookingReminderTemplate', $bind['selectTemplate']['byType']['booking.reminder']);
     }//end testTriggerNotificationBindsToEmailTemplates()
+
+
+    /**
+     * No rule in the trigger fragment may carry the retired `@self.`
+     * interpolation token (ADR-031 / gate-18). Written as a whole-block
+     * scan so a future rule cannot reintroduce the legacy dialect in a
+     * key this test does not name individually.
+     *
+     * @return void
+     */
+    public function testNoNotificationRuleUsesTheLegacySelfToken(): void
+    {
+        $data          = $this->fragment();
+        $notifications = ($data['components']['schemas']['BookingNotificationTrigger']['x-openregister-notifications'] ?? []);
+
+        self::assertNotEmpty($notifications);
+        self::assertStringNotContainsString(
+            '@self.',
+            (string) json_encode($notifications),
+            'x-openregister-notifications must use {{prop}}, not the legacy @self. token.'
+        );
+    }//end testNoNotificationRuleUsesTheLegacySelfToken()
 
 
     /**

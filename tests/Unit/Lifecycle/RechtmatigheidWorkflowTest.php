@@ -141,8 +141,14 @@ class RechtmatigheidWorkflowTest extends TestCase
      *       soort=fout and a non-zero bedrag_fout,
      * WHEN the fragment is loaded by the OpenRegister engine,
      * THEN the declarative `onBudgetOvershoot` notification fires for the
-     *      affected portefeuillehouder with title/message templates referencing
+     *      affected portefeuillehouder with subject templates referencing
      *      the bevindingsnummer + programma + bedrag_fout.
+     *
+     * Asserted in the canonical ADR-031 dialect: `trigger` is an object
+     * (`type` + `filter`), `recipients` is a list of `{kind: …}` entries,
+     * `subject` is a per-locale map, and interpolation uses `{{prop}}`.
+     * The legacy `object.create` / `condition` / `recipients.role` /
+     * `@self.` shape this test used to pin is the one gate-18 rejects.
      *
      * @return void
      */
@@ -156,25 +162,57 @@ class RechtmatigheidWorkflowTest extends TestCase
             message: 'Bevinding must declare onBudgetOvershoot notification (Task 11).'
         );
 
-        $notif = $notifications['onBudgetOvershoot'];
-        self::assertSame(expected: 'object.create', actual: ($notif['trigger'] ?? null));
-        self::assertSame(expected: 'begroting', actual: (($notif['condition'] ?? [])['criterium'] ?? null));
-        self::assertSame(expected: 'fout', actual: (($notif['condition'] ?? [])['soort'] ?? null));
-        self::assertSame(
-            expected: 'portefeuillehouder',
-            actual: (($notif['recipients'] ?? [])['role'] ?? null),
+        $notif   = $notifications['onBudgetOvershoot'];
+        $trigger = ($notif['trigger'] ?? []);
+        self::assertIsArray(
+            actual: $trigger,
+            message: 'trigger must be the canonical object form, not a legacy event string.'
+        );
+        self::assertSame(expected: 'created', actual: ($trigger['type'] ?? null));
+        self::assertTrue(condition: ($notif['enabled'] ?? false), message: 'Rule must be enabled.');
+
+        $filter = ($trigger['filter'] ?? []);
+        self::assertSame(expected: 'begroting', actual: ($filter['criterium'] ?? null));
+        self::assertSame(expected: 'fout', actual: ($filter['soort'] ?? null));
+
+        $groups = [];
+        foreach (($notif['recipients'] ?? []) as $recipient) {
+            if (($recipient['kind'] ?? '') === 'groups') {
+                $groups = array_merge($groups, ($recipient['groups'] ?? []));
+            }
+        }
+
+        self::assertContains(
+            needle: 'portefeuillehouder',
+            haystack: $groups,
             message: 'Notification must address the portefeuillehouder.'
         );
-        self::assertStringContainsString(
-            needle: '@self.bevindingsnummer',
-            haystack: (string) ($notif['message'] ?? ''),
-            message: 'Message template must interpolate the bevindingsnummer.'
-        );
-        self::assertStringContainsString(
-            needle: '@self.bedrag_fout',
-            haystack: (string) ($notif['message'] ?? ''),
-            message: 'Message template must interpolate the bedrag_fout.'
-        );
+
+        $subject = ($notif['subject'] ?? []);
+        self::assertIsArray(actual: $subject, message: 'subject must be a per-locale map.');
+        foreach (['nl', 'en'] as $locale) {
+            self::assertArrayHasKey(key: $locale, array: $subject);
+            self::assertStringContainsString(
+                needle: '{{bevindingsnummer}}',
+                haystack: (string) $subject[$locale],
+                message: 'Subject ('.$locale.') must interpolate the bevindingsnummer.'
+            );
+            self::assertStringContainsString(
+                needle: '{{bedrag_fout}}',
+                haystack: (string) $subject[$locale],
+                message: 'Subject ('.$locale.') must interpolate the bedrag_fout.'
+            );
+            self::assertStringContainsString(
+                needle: '{{programma}}',
+                haystack: (string) $subject[$locale],
+                message: 'Subject ('.$locale.') must interpolate the programma.'
+            );
+            self::assertStringNotContainsString(
+                needle: '@self.',
+                haystack: (string) $subject[$locale],
+                message: 'Subject ('.$locale.') must not use the legacy @self. token.'
+            );
+        }
 
     }//end testBegrotingFoutTriggersOnBudgetOvershootNotification()
 

@@ -90,14 +90,6 @@
             "taxonomyVersion"
           ]
         ],
-        "x-openregister-relations": {
-          "mappings": {
-            "description": "XBRLMapping records referencing this taxonomy version.",
-            "type": "one-to-many",
-            "target": "XBRLMapping",
-            "via": "taxonomyVersion"
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "finance-manager": {
@@ -380,20 +372,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "administration": {
-            "description": "Administration owning this filing (FK).",
-            "type": "many-to-one",
-            "target": "Administration",
-            "via": "administrationId"
-          },
-          "taxonomy": {
-            "description": "Selected XBRLTaxonomy version (FK).",
-            "type": "many-to-one",
-            "target": "XBRLTaxonomy",
-            "via": "taxonomyVersion"
-          }
-        },
         "x-openregister-aggregations": {
           "unmappedAccountCount": {
             "description": "Count of active Account records that lack an XBRLMapping entry for @self.taxonomyVersion (REQ-SBR-006 mapping coverage + REQ-SBR-007).",
@@ -627,6 +605,8 @@
         "properties": {
           "sourceAccountId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "Account",
             "description": "FK to Account.id (REQ-SBR-004).",
             "example": "acct-1000-current-assets",
             "title": "Source Account ID"
@@ -680,20 +660,6 @@
             "taxonomyVersion"
           ]
         ],
-        "x-openregister-relations": {
-          "sourceAccount": {
-            "description": "Source Account (FK).",
-            "type": "many-to-one",
-            "target": "Account",
-            "via": "sourceAccountId"
-          },
-          "taxonomy": {
-            "description": "XBRLTaxonomy version (FK).",
-            "type": "many-to-one",
-            "target": "XBRLTaxonomy",
-            "via": "taxonomyVersion"
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "finance-manager": {

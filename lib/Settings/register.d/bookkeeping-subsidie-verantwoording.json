@@ -353,15 +353,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "grant": {
-            "localField": "grantId",
-            "relatedSchema": "Subsidie",
-            "relatedField": "subsidieNumber",
-            "cardinality": "many-to-one",
-            "description": "The Subsidie grant master this accountability record verantwoordt (REQ-SUBV-002)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "subsidie-coordinator": {
@@ -667,15 +658,6 @@
               "nl": "Accountantsverklaring {{statementId}} is met voorbehoud goedgekeurd",
               "en": "Auditor statement {{statementId}} is conditionally approved, with caveats"
             }
-          }
-        },
-        "x-openregister-relations": {
-          "grant": {
-            "localField": "grantId",
-            "relatedSchema": "Subsidie",
-            "relatedField": "subsidieNumber",
-            "cardinality": "many-to-one",
-            "description": "The Subsidie grant master this auditor statement verifies (REQ-SUBV-004)."
           }
         },
         "x-openregister-rbac": {

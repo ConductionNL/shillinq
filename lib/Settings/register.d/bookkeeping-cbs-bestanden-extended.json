@@ -184,14 +184,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "administration": {
-            "description": "Reporting Administration (FK).",
-            "type": "many-to-one",
-            "target": "Administration",
-            "via": "administrationId"
-          }
-        },
         "x-openregister-aggregations": {
           "totalAggregatedAmount": {
             "description": "Sum of CBSLine.aggregatedAmount for this submission, used by validation to compare against GL totals (REQ-CBS-008).",
@@ -306,6 +298,8 @@
         "properties": {
           "cbsSubmissionId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "CBSSubmission",
             "description": "FK to CBSSubmission (REQ-CBS-002).",
             "example": "cbs-sub-2025-org-001",
             "title": "CBS Submission ID"
@@ -367,14 +361,6 @@
             "nullable": true,
             "description": "Notes on the aggregation logic or variance.",
             "title": "Description"
-          }
-        },
-        "x-openregister-relations": {
-          "cbsSubmission": {
-            "description": "Parent CBSSubmission (FK).",
-            "type": "many-to-one",
-            "target": "CBSSubmission",
-            "via": "cbsSubmissionId"
           }
         },
         "x-openregister-rbac": {
