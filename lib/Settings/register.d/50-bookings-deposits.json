@@ -126,6 +126,8 @@
           },
           "arInvoiceId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "ARInvoice",
             "description": "FK to the Shillinq AR invoice materialised on authorization (one-to-one). Populated by the authorize-transition action (REQ-DP-003).",
             "nullable": true,
             "example": "inv-ar-9002",
@@ -133,6 +135,8 @@
           },
           "creditNoteId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "CreditNote",
             "description": "FK to the Shillinq AR credit note materialised on void (REQ-DP-008).",
             "nullable": true,
             "example": "cn-ar-9050",
@@ -366,22 +370,6 @@
             ]
           }
         },
-        "x-openregister-relations": {
-          "arInvoice": {
-            "localField": "arInvoiceId",
-            "relatedSchema": "ARInvoice",
-            "relatedField": "id",
-            "cardinality": "one-to-one",
-            "description": "The Shillinq AR invoice materialised from this deposit on authorization."
-          },
-          "creditNote": {
-            "localField": "creditNoteId",
-            "relatedSchema": "CreditNote",
-            "relatedField": "id",
-            "cardinality": "one-to-one",
-            "description": "The Shillinq AR credit note materialised when this deposit is voided."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
@@ -444,12 +432,26 @@
               "action": "authorize"
             },
             "description": "Confirm to the booking-operator that the deposit was authorized and the invoice was created.",
-            "recipients": {
-              "role": "booking-operator",
-              "scope": "@self.orderId"
-            },
-            "title": "Deposit authorized",
-            "message": "Deposit of @self.amount cents for booking @self.orderId is authorized; invoice @self.arInvoiceId created."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "booking-operator"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Aanbetaling geautoriseerd: {{amount}} cent voor boeking {{orderId}}; factuur {{arInvoiceId}} aangemaakt",
+              "en": "Deposit authorized: {{amount}} cents for booking {{orderId}}; invoice {{arInvoiceId}} created"
+            }
           },
           "onFailed": {
             "trigger": {
@@ -457,12 +459,26 @@
               "action": "fail"
             },
             "description": "Alert the booking-operator that a deposit authorization failed and needs follow-up.",
-            "recipients": {
-              "role": "booking-operator",
-              "scope": "@self.orderId"
-            },
-            "title": "Deposit payment failed",
-            "message": "Deposit for booking @self.orderId failed: @self.lastErrorMessage (@self.lastErrorCode)."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "booking-operator"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Aanbetaling mislukt voor boeking {{orderId}}: {{lastErrorMessage}} ({{lastErrorCode}})",
+              "en": "Deposit payment failed for booking {{orderId}}: {{lastErrorMessage}} ({{lastErrorCode}})"
+            }
           },
           "onVoided": {
             "trigger": {
@@ -473,12 +489,26 @@
               ]
             },
             "description": "Confirm a refund was initiated and a credit note created.",
-            "recipients": {
-              "role": "booking-operator",
-              "scope": "@self.orderId"
-            },
-            "title": "Deposit refunded",
-            "message": "Deposit for booking @self.orderId was voided; credit note @self.creditNoteId created."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "booking-operator"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Aanbetaling teruggeboekt voor boeking {{orderId}}; creditnota {{creditNoteId}} aangemaakt",
+              "en": "Deposit refunded for booking {{orderId}}; credit note {{creditNoteId}} created"
+            }
           }
         },
         "x-openregister-scheduled-workflows": {

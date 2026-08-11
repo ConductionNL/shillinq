@@ -104,7 +104,8 @@
 			"route": "/bookkeeping/multi-currency/fx-rates/admin",
 			"type": "custom",
 			"title": "FX Rates (Admin)",
-			"component": "FxRatesAdmin"
+			"component": "FxRatesAdmin",
+			"_note": "Operator overlay on top of the declarative FxRate grid: an import-status strip that reads /api/admin/fx-rate-import-status for the last FxRateImportJob run timestamp and the TreasuryRateAdapter dormancy flag. Those two values come from job/adapter state, not from any FxRate object, so `type: index` — whose whole surface is rows of one register/schema — has nowhere to put them. The rate list itself stays declarative on the FxRates page; this page exists only for the cron-health header."
 		}
 	]
 }
