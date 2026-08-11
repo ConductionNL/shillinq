@@ -364,28 +364,64 @@
         },
         "x-openregister-notifications": {
           "onCreate": {
-            "trigger": "onCreate",
-            "description": "Notify the rule owner / assignee when a critical or high-severity finding is created (REQ-CCM-008).",
-            "recipients": {
-              "resolver": "assignee",
-              "fallback": "ruleOwner"
+            "trigger": {
+              "type": "created",
+              "condition": {
+                "field": "severity",
+                "operator": "in",
+                "value": [
+                  "critical",
+                  "high"
+                ]
+              }
             },
+            "description": "Notify the rule owner / assignee when a critical or high-severity finding is created (REQ-CCM-008). The `field` recipient resolves the finding's own assignee and yields nobody while a finding is still unassigned; the `relation` recipient reaches the owner of the CcmRule that fired, which is the fallback the retired imperative dispatcher applied.",
+            "enabled": true,
             "channels": [
-              "in-app"
+              "nc-notification"
             ],
-            "condition": "@self.severity in ['critical','high']",
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "assignee"
+              },
+              {
+                "kind": "relation",
+                "relation": "rule"
+              }
+            ],
+            "subject": {
+              "nl": "CCM-bevinding ({{severity}}) op regel {{ruleCode}}: {{title}}",
+              "en": "CCM finding ({{severity}}) on rule {{ruleCode}}: {{title}}"
+            },
             "template": "ccm-finding-created"
           },
           "onAutoEscalate": {
-            "trigger": "scheduled.autoEscalate",
-            "description": "Auto-escalate critical findings still open after 24h to the CFO (REQ-CCM-008).",
-            "recipients": {
-              "role": "finance-director"
+            "trigger": {
+              "type": "scheduled",
+              "intervalSec": 86400,
+              "filter": {
+                "severity": "critical",
+                "status": "open"
+              }
             },
+            "description": "Auto-escalate critical findings still open after 24h to the CFO (REQ-CCM-008). The 24h re-check cadence is the scheduled trigger's intervalSec; the filter is the escalation condition.",
+            "enabled": true,
             "channels": [
-              "in-app"
+              "nc-notification"
             ],
-            "condition": "@self.severity == 'critical' && @self.status == 'open'",
+            "recipients": [
+              {
+                "kind": "groups",
+                "groups": [
+                  "finance-director"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Escalatie: kritieke CCM-bevinding op regel {{ruleCode}} staat nog open — {{title}}",
+              "en": "Escalation: critical CCM finding on rule {{ruleCode}} is still open — {{title}}"
+            },
             "template": "ccm-finding-escalated"
           }
         },

@@ -208,12 +208,26 @@
               "action": "adopt"
             },
             "description": "Notify the concerncontroller when a protocol is adopted.",
-            "recipients": {
-              "role": "concerncontroller",
-              "scope": "@self.organisationId"
-            },
-            "title": "Controleprotocol vastgesteld",
-            "message": "Controleprotocol @self.version voor auditjaar @self.auditYear is vastgesteld."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "concerncontroller"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Controleprotocol {{version}} voor auditjaar {{auditYear}} is vastgesteld",
+              "en": "Audit protocol {{version}} for audit year {{auditYear}} has been adopted"
+            }
           }
         },
         "x-openregister-events": {

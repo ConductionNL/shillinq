@@ -503,6 +503,13 @@
             "nullable": true,
             "description": "UBL 2.1 document reference, declared for T4 Peppol BIS 3.0 outbound.",
             "title": "Ubl Ref"
+          },
+          "writeOffReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator-authored, audit-trailed reason for declaring this invoice uncollectible. Read by WriteOffReasonGuard::requireReason, which blocks both write-off transitions until it is non-empty (REQ-AR-007).",
+            "example": "Customer insolvency, court-confirmed uncollectible per ruling 2026-04-22.",
+            "title": "Write-Off Reason"
           }
         },
         "x-openregister-lifecycle": {
@@ -567,14 +574,16 @@
               "from": "issued",
               "to": "written-off",
               "label": "Write off",
-              "description": "Posts compensating GLTransaction; requires period-closer or ar-controller role.",
+              "description": "Posts compensating GLTransaction; requires period-closer or ar-controller role. Blocked until writeOffReason is set (REQ-AR-007).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\WriteOffReasonGuard::requireReason",
               "x-openregister-rbac-required-role": "ar-controller"
             },
             "write-off-overdue": {
               "from": "overdue",
               "to": "written-off",
               "label": "Write off overdue",
-              "description": "Posts compensating GLTransaction; requires period-closer or ar-controller role.",
+              "description": "Posts compensating GLTransaction; requires period-closer or ar-controller role. Blocked until writeOffReason is set (REQ-AR-007).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\WriteOffReasonGuard::requireReason",
               "x-openregister-rbac-required-role": "ar-controller"
             }
           }
