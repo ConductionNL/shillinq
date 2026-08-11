@@ -8,10 +8,10 @@
  * BezwaarBeroep schema lifecycle transitions reference the methods below for
  * the date-arithmetic preconditions that the declarative DSL cannot yet express:
  *
- *  - canBezwaarMaken():    bezwaar against a DefinitieveAanslag must be lodged
+ *  - canFileObjection():    bezwaar against a DefinitieveAanslag must be lodged
  *                          within 6 weeks of the aanslag dagtekening (REQ-VPB-010,
  *                          Awb art. 6:7).
- *  - canBeroepInstellen(): beroep must be lodged within 6 weeks of the inspecteur
+ *  - canFileAppeal(): beroep must be lodged within 6 weeks of the inspecteur
  *                          uitspraak on the bezwaar (REQ-VPB-010, Awb art. 6:7).
  *
  * ADR-031 exception reason: the date arithmetic spans sibling schemas
@@ -49,18 +49,18 @@ use Psr\Log\LoggerInterface;
  * Statutory termijn guards for the bezwaar/beroep workflow.
  *
  * Referenced from the bookkeeping-vpb-mkb register.d fragment schema lifecycle
- * transitions as OCA\Shillinq\Lifecycle\BezwaarTermijnGuard::<method>.
+ * transitions as OCA\Shillinq\Lifecycle\ObjectionPeriodGuard::<method>.
  *
  * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
  */
-class BezwaarTermijnGuard
+class ObjectionPeriodGuard
 {
     /**
-     * The statutory termijn length for bezwaar and beroep (Awb art. 6:7).
+     * The statutory period for objection and appeal (Awb art. 6:7).
      *
      * @var string
      */
-    private const TERMIJN = '6 weeks';
+    private const STATUTORY_PERIOD = '6 weeks';
 
     /**
      * Construct the guard with DI dependencies.
@@ -85,35 +85,38 @@ class BezwaarTermijnGuard
      * Fail-closed: returns false on any exception, a missing aanslag, or a
      * dagtekening that cannot be parsed.
      *
-     * @param string                   $aangifteId The VpbAangifte id (call-signature parity).
-     * @param array<string,mixed>|null $object     The aangifte being transitioned.
+     * @param string                   $taxReturnId The VpbAangifte id (call-signature parity).
+     * @param array<string,mixed>|null $object      The tax return being transitioned.
      *
-     * @return bool True when the bezwaartermijn has not yet expired.
+     * @return bool True when the objection period has not yet expired.
      *
      * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
      */
-    public function canBezwaarMaken(string $aangifteId, ?array $object=null): bool
+    public function canFileObjection(string $taxReturnId, ?array $object=null): bool
     {
         try {
-            $resolvedId = $aangifteId;
+            $resolvedId = $taxReturnId;
             if ($object !== null && (string) ($object['id'] ?? '') !== '') {
                 $resolvedId = (string) $object['id'];
             }
 
-            $aanslag = $this->resolveAanslagForAangifte(aangifteId: $resolvedId);
-            if ($aanslag === null) {
+            $assessment = $this->resolveAssessmentForTaxReturn(taxReturnId: $resolvedId);
+            if ($assessment === null) {
                 return false;
             }
 
-            return $this->withinTermijn(startDate: (string) ($aanslag['dagtekening'] ?? ''));
+            // 'dagtekening' is a SCHEMA PROPERTY KEY, not an identifier: it names a
+            // column on the DefinitieveAanslag shard table. It moves when that
+            // schema is renamed, together with its data migration — not here.
+            return $this->withinPeriod(startDate: (string) ($assessment['dagtekening'] ?? ''));
         } catch (\Throwable $e) {
             $this->logger->error(
-                'BezwaarTermijnGuard: canBezwaarMaken check failed — denying transition (fail-closed)',
-                ['aangifteId' => $aangifteId, 'exception' => $e->getMessage()]
+                'ObjectionPeriodGuard: canFileObjection check failed — denying transition (fail-closed)',
+                ['taxReturnId' => $taxReturnId, 'exception' => $e->getMessage()]
             );
             return false;
         }//end try
-    }//end canBezwaarMaken()
+    }//end canFileObjection()
 
     /**
      * Returns true iff beroep may still be lodged after the inspecteur uitspraak.
@@ -121,48 +124,51 @@ class BezwaarTermijnGuard
      * REQ-VPB-010: beroep is admissible within 6 weeks of the uitspraakDatum on
      * the bezwaar. Fail-closed on any exception or an unparseable uitspraakDatum.
      *
-     * @param string                   $bezwaarId The BezwaarBeroep id (call-signature parity).
-     * @param array<string,mixed>|null $object    The bezwaar record being transitioned.
+     * @param string                   $objectionId The BezwaarBeroep id (call-signature parity).
+     * @param array<string,mixed>|null $object      The objection record being transitioned.
      *
-     * @return bool True when the beroepstermijn has not yet expired.
+     * @return bool True when the appeal period has not yet expired.
      *
      * @spec openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md
      */
-    public function canBeroepInstellen(string $bezwaarId, ?array $object=null): bool
+    public function canFileAppeal(string $objectionId, ?array $object=null): bool
     {
         try {
-            $bezwaar = $object;
-            if ($bezwaar === null || isset($bezwaar['uitspraakDatum']) === false) {
-                $bezwaar = $this->resolveObject(schema: 'BezwaarBeroep', id: $bezwaarId);
+            // 'BezwaarBeroep' and 'uitspraakDatum' are the SCHEMA NAME and a
+            // SCHEMA PROPERTY KEY — the data contract, renamed with their
+            // migration, not with this class.
+            $objection = $object;
+            if ($objection === null || isset($objection['uitspraakDatum']) === false) {
+                $objection = $this->resolveObject(schema: 'BezwaarBeroep', id: $objectionId);
             }
 
-            if ($bezwaar === null) {
+            if ($objection === null) {
                 return false;
             }
 
-            $uitspraakDatum = (string) ($bezwaar['uitspraakDatum'] ?? '');
-            if ($uitspraakDatum === '') {
+            $rulingDate = (string) ($objection['uitspraakDatum'] ?? '');
+            if ($rulingDate === '') {
                 return false;
             }
 
-            return $this->withinTermijn(startDate: $uitspraakDatum);
+            return $this->withinPeriod(startDate: $rulingDate);
         } catch (\Throwable $e) {
             $this->logger->error(
-                'BezwaarTermijnGuard: canBeroepInstellen check failed — denying transition (fail-closed)',
-                ['bezwaarId' => $bezwaarId, 'exception' => $e->getMessage()]
+                'ObjectionPeriodGuard: canFileAppeal check failed — denying transition (fail-closed)',
+                ['objectionId' => $objectionId, 'exception' => $e->getMessage()]
             );
             return false;
         }//end try
-    }//end canBeroepInstellen()
+    }//end canFileAppeal()
 
     /**
-     * Returns true iff today is on or before startDate + the statutory termijn.
+     * Returns true iff today is on or before startDate + the statutory period.
      *
-     * @param string $startDate The termijn start date (YYYY-MM-DD).
+     * @param string $startDate The period start date (YYYY-MM-DD).
      *
-     * @return bool True when within the termijn; false on an empty/invalid date.
+     * @return bool True when within the period; false on an empty/invalid date.
      */
-    private function withinTermijn(string $startDate): bool
+    private function withinPeriod(string $startDate): bool
     {
         if ($startDate === '') {
             return false;
@@ -174,41 +180,44 @@ class BezwaarTermijnGuard
             return false;
         }
 
-        $deadline = $start->modify('+'.self::TERMIJN);
+        $deadline = $start->modify('+'.self::STATUTORY_PERIOD);
         $today    = new DateTimeImmutable('today');
 
         return $today <= $deadline;
-    }//end withinTermijn()
+    }//end withinPeriod()
 
     /**
-     * Resolve the DefinitieveAanslag linked to a given aangifte.
+     * Resolve the DefinitieveAanslag linked to a given tax return.
      *
-     * @param string $aangifteId The VpbAangifte id.
+     * @param string $taxReturnId The VpbAangifte id.
      *
-     * @return array<string,mixed>|null The aanslag, or null when not found.
+     * @return array<string,mixed>|null The assessment, or null when not found.
      */
-    private function resolveAanslagForAangifte(string $aangifteId): ?array
+    private function resolveAssessmentForTaxReturn(string $taxReturnId): ?array
     {
-        if ($aangifteId === '') {
+        if ($taxReturnId === '') {
             return null;
         }
 
         $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
         $register      = $this->resolveRegister();
 
-        $aanslagen = $objectService
+        // 'DefinitieveAanslag' and the 'aangifte' filter key are the data
+        // contract — the registered schema title and one of its property
+        // columns. Both move with the schema rename and its migration.
+        $assessments = $objectService
             ->setRegister($register)
             ->setSchema('DefinitieveAanslag')
-            ->findAll(['filters' => ['aangifte' => $aangifteId]]);
+            ->findAll(['filters' => ['aangifte' => $taxReturnId]]);
 
-        foreach ($aanslagen as $aanslag) {
-            if (is_array($aanslag) === true) {
-                return $aanslag;
+        foreach ($assessments as $assessment) {
+            if (is_array($assessment) === true) {
+                return $assessment;
             }
         }
 
         return null;
-    }//end resolveAanslagForAangifte()
+    }//end resolveAssessmentForTaxReturn()
 
     /**
      * Resolve an object of the given schema by id via ObjectService.
