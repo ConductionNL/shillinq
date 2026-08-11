@@ -243,34 +243,60 @@ class WidgetService
     /**
      * Create an appointment from a widget payload (REQ-WSW-003, REQ-WSW-008).
      *
-     * Validates input, re-checks slot availability against confirmed
-     * appointments (server-authoritative double-booking prevention), persists
-     * the appointment, and invalidates the slot cache. Returns a structured
-     * result whose `code` maps to the HTTP status the controller emits.
+     * THE SINGLE WRITE PATH for widget bookings. `WidgetApiController::appointments()`
+     * used to re-implement this inline; the two copies had already drifted once on
+     * a security check (PR #491 had to patch an `isPublic` gate into the routed copy
+     * that this method always had) and a second time on customer data (the routed
+     * copy persisted only an anonymised `customerId`, silently dropping the
+     * `customerName` / `customerEmail` / `customerPhone` fields that
+     * `register.d/30-bookings-self-service-widget.json` declares on `Appointment`
+     * and that REQ-WSW-006 and the REQ-BCF-003 confirmation email both need).
+     * The controller now delegates here.
+     *
+     * Contract notes:
+     *  - The service is resolved by `serviceId` (REQ-WSW-001/003 payload shape),
+     *    and must be BOTH `isPublic` and `status = active` to be bookable.
+     *  - Availability is re-checked server-side against SlotService, which is
+     *    authoritative and already excludes confirmed appointments (REQ-WSW-002).
+     *  - Status is `pending_confirmation`, NOT `confirmed`: this is the customer
+     *    self-service pathway (REQ-BCA-005 pathway 2, REQ-BCF-010), and
+     *    bookings-confirm-flow keys its ConfirmationToken, confirmation email and
+     *    auto-cancel job off that status.
+     *  - Customer contact details are stored write-only and are never echoed back
+     *    to the public API (design D6).
+     *
+     * Boundary validation (name/email/phone/notes/ISO format) is the controller's
+     * `validateAppointmentPayload()`, which owns the user-facing REQ-WSW-008
+     * messages. This method re-checks email and phone as documented server-side
+     * defence-in-depth; it deliberately does NOT re-check the name, because the
+     * two name patterns differ and silently adopting the stricter one here would
+     * change what the live endpoint accepts (see the PR notes).
      *
      * @param string              $administrationId The owning administration.
-     * @param array<string,mixed> $payload          Widget payload (serviceSlug, startTime, customer*).
+     * @param array<string,mixed> $payload          Widget payload (serviceId, resourceId,
+     *                                              startTime, endTime, customer*).
      *
      * @return array<string,mixed> ['code' => int, ...] where code is 201/400/404/409/500.
+     *
+     * @spec openspec/specs/bookings-self-service-widget/spec.md
      */
     public function createAppointment(string $administrationId, array $payload): array
     {
-        $serviceSlug = trim((string) ($payload['serviceSlug'] ?? ''));
-        $startTime   = trim((string) ($payload['startTime'] ?? ''));
-        $name        = trim((string) ($payload['customerName'] ?? ''));
-        $email       = trim((string) ($payload['customerEmail'] ?? ''));
-        $phone       = trim((string) ($payload['customerPhone'] ?? ''));
-        $notes       = (string) ($payload['notes'] ?? '');
+        $serviceId  = trim((string) ($payload['serviceId'] ?? ''));
+        $resourceId = trim((string) ($payload['resourceId'] ?? ''));
+        $startTime  = trim((string) ($payload['startTime'] ?? ''));
+        $endTime    = trim((string) ($payload['endTime'] ?? ''));
+        $name       = trim((string) ($payload['customerName'] ?? ''));
+        $email      = trim((string) ($payload['customerEmail'] ?? ''));
+        $phone      = trim((string) ($payload['customerPhone'] ?? ''));
+        $notes      = (string) ($payload['notes'] ?? '');
 
-        // Input validation (REQ-WSW-006). Messages are i18n keys resolved client-side.
-        if ($serviceSlug === '' || $startTime === '') {
+        if ($serviceId === '' || $resourceId === '' || $startTime === '' || $endTime === '') {
             return ['code' => 400, 'error' => 'missing_fields'];
         }
 
-        if ($this->validateName(name: $name) === false) {
-            return ['code' => 400, 'error' => 'invalid_name'];
-        }
-
+        // Server-side re-check (REQ-WSW-006). Name is deliberately excluded —
+        // see the docblock.
         if ($this->validateEmail(email: $email) === false) {
             return ['code' => 400, 'error' => 'invalid_email'];
         }
@@ -285,6 +311,7 @@ class WidgetService
 
         try {
             $start = new DateTimeImmutable($startTime);
+            $end   = new DateTimeImmutable($endTime);
         } catch (\Throwable) {
             return ['code' => 400, 'error' => 'invalid_start_time'];
         }
@@ -294,36 +321,30 @@ class WidgetService
             return ['code' => 500, 'error' => 'service_unavailable'];
         }
 
-        // Resolve the canonical Service for duration + resource (and isPublic gate).
-        $service = $this->findOne(
+        // The #491 gate: a caller who knows any serviceId must not be able to
+        // book a service the business never published. Fail-closed — an
+        // unresolvable catalogue denies rather than permits.
+        $service = $this->findPublicService(
             objectService: $objectService,
-            schema: 'Service',
-            slug: $serviceSlug,
-            administrationId: $administrationId
+            serviceId: $serviceId
         );
-        if ($service === null || (bool) ($service['isPublic'] ?? false) === false) {
+        if ($service === null) {
             return ['code' => 404, 'error' => 'service_not_found'];
         }
 
-        $duration   = (int) ($service['duration'] ?? 0);
-        $resourceId = (string) ($service['resourceId'] ?? '');
-        $serviceId  = (string) ($service['serviceId'] ?? '');
-        if ($duration <= 0 || $resourceId === '') {
-            return ['code' => 404, 'error' => 'service_not_bookable'];
-        }
-
         $startUtc = $start->setTimezone(new DateTimeZone('UTC'));
-        $endUtc   = $startUtc->modify('+'.$duration.' minutes');
+        $endUtc   = $end->setTimezone(new DateTimeZone('UTC'));
 
-        // Server-authoritative double-booking check (REQ-WSW-003 race scenario).
-        $conflict = $this->hasConflict(
-            objectService: $objectService,
+        // Server-authoritative availability re-check (REQ-WSW-003 race
+        // scenario). SlotService is the authority and already excludes
+        // confirmed appointments and out-of-hours times (REQ-WSW-002).
+        if ($this->isSlotOffered(
+            serviceId: $serviceId,
             resourceId: $resourceId,
-            administrationId: $administrationId,
-            startUtc: $startUtc,
-            endUtc: $endUtc
-        );
-        if ($conflict === true) {
+            startTime: $startTime,
+            endTime: $endTime
+        ) === false
+        ) {
             return ['code' => 409, 'error' => 'slot_unavailable'];
         }
 
@@ -341,15 +362,22 @@ class WidgetService
         // Nextcloud contact entity: the public widget has no authenticated user,
         // so a deterministic guest customerId is derived from the captured email
         // and the captured contact details are stored write-only (design D6).
+        //
+        // status = pending_confirmation, NOT confirmed. This is the customer
+        // self-service pathway (REQ-BCA-005 pathway 2 / REQ-BCF-010); the
+        // ConfirmationToken, the confirmation email and the
+        // CancelUnconfirmedAppointments job all key off this value, and
+        // creating the row already `confirmed` would bypass the whole
+        // bookings-confirm-flow capability.
         $appointment = [
             'administrationId' => $administrationId,
             'appointmentId'    => 'wsw-'.bin2hex(random_bytes(8)),
             'serviceId'        => $serviceId,
             'resourceId'       => $resourceId,
-            'customerId'       => 'guest-'.substr(hash('sha256', strtolower($email)), 0, 16),
+            'customerId'       => 'cust-anon-'.substr(hash('sha256', strtolower($email)), 0, 16),
             'startTime'        => $startUtc->format('Y-m-d\TH:i:s\Z'),
             'endTime'          => $endUtc->format('Y-m-d\TH:i:s\Z'),
-            'status'           => 'confirmed',
+            'status'           => 'pending_confirmation',
             'customerName'     => $name,
             'customerEmail'    => $email,
             'customerPhone'    => $phoneValue,
@@ -380,127 +408,120 @@ class WidgetService
             date: $startUtc->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d')
         );
 
-        // Design D6: never echo customer PII back to the public API.
+        // Design D6: never echo customer PII back to the public API. The
+        // appointmentId / status / confirmationMessage keys and their values
+        // reproduce what the routed endpoint already returned, so delegating
+        // does not change the widget's contract.
         return [
             'code'                => 201,
-            'appointmentId'       => (string) ($saved['@self']['slug'] ?? ($saved['@self']['id'] ?? '')),
-            'status'              => 'confirmed',
+            'appointmentId'       => (string) ($saved['appointmentId'] ?? $appointment['appointmentId']),
+            'status'              => (string) ($saved['status'] ?? 'pending_confirmation'),
             'startTime'           => $startUtc->format('Y-m-d\TH:i:s\Z'),
             'endTime'             => $endUtc->format('Y-m-d\TH:i:s\Z'),
-            'confirmationMessage' => 'appointment_confirmed',
+            'confirmationMessage' => 'Your appointment was created. You will receive a confirmation email shortly.',
         ];
 
     }//end createAppointment()
 
     /**
-     * Whether a confirmed appointment overlaps the candidate interval.
+     * Resolve a bookable public Service by its serviceId, or null.
      *
-     * @param object            $objectService    OR ObjectService.
-     * @param string            $resourceId       The resource.
-     * @param string            $administrationId Tenant scope.
-     * @param DateTimeImmutable $startUtc         Candidate start (UTC).
-     * @param DateTimeImmutable $endUtc           Candidate end (UTC).
+     * Fail-closed in every direction: an unresolvable catalogue, a missing
+     * service, a service that is not `isPublic`, or one whose status is not
+     * `active` all deny the booking. This is the PR #491 gate — without it a
+     * caller who knew any serviceId could book a service the business never
+     * published.
      *
-     * @return bool True when a conflict exists (or the check could not be made safely).
+     * @param object $objectService OR ObjectService.
+     * @param string $serviceId     The service to resolve.
+     *
+     * @return array<string,mixed>|null The service row, or null when not bookable.
      */
-    private function hasConflict(
-        object $objectService,
-        string $resourceId,
-        string $administrationId,
-        DateTimeImmutable $startUtc,
-        DateTimeImmutable $endUtc
-    ): bool {
-        try {
-            $appointments = $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('Appointment')
-                ->findAll(
-                    [
-                        'filters' => [
-                            'resourceId'       => $resourceId,
-                            'administrationId' => $administrationId,
-                            'status'           => 'confirmed',
-                        ],
-                        'limit'   => 500,
-                    ]
-                );
-        } catch (\Throwable $e) {
-            // Fail-closed: deny the booking rather than risk a double-book.
-            $this->logger->error(
-                'WidgetService: conflict check failed',
-                ['exception' => $e->getMessage()]
-            );
-            return true;
-        }//end try
-
-        $candStart = $startUtc->getTimestamp();
-        $candEnd   = $endUtc->getTimestamp();
-
-        foreach ($appointments as $appointment) {
-            $appointment = $this->toArray(record: $appointment);
-            if ($appointment === null) {
-                continue;
-            }
-
-            try {
-                $existStart = (new DateTimeImmutable((string) ($appointment['startTime'] ?? '')))->getTimestamp();
-                $existEnd   = (new DateTimeImmutable((string) ($appointment['endTime'] ?? '')))->getTimestamp();
-            } catch (\Throwable) {
-                continue;
-            }
-
-            if ($candStart < $existEnd && $existStart < $candEnd) {
-                return true;
-            }
-        }//end foreach
-
-        return false;
-
-    }//end hasConflict()
-
-    /**
-     * Find a single object by slug within an administration.
-     *
-     * @param object $objectService    OR ObjectService.
-     * @param string $schema           The schema slug.
-     * @param string $slug             The object slug.
-     * @param string $administrationId Tenant scope.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function findOne(object $objectService, string $schema, string $slug, string $administrationId): ?array
+    private function findPublicService(object $objectService, string $serviceId): ?array
     {
         try {
-            $matches = $objectService
+            $records = $objectService
                 ->setRegister($this->getRegisterSlug())
-                ->setSchema($schema)
+                ->setSchema('Service')
                 ->findAll(
                     [
-                        'filters' => ['administrationId' => $administrationId],
-                        'limit'   => 200,
+                        'filters' => ['serviceId' => $serviceId],
+                        'limit'   => 1,
                     ]
                 );
         } catch (\Throwable $e) {
             $this->logger->error(
-                'WidgetService: '.$schema.' lookup failed',
-                ['exception' => $e->getMessage()]
+                'WidgetService: public-service resolution failed',
+                ['exception' => $e->getMessage(), 'serviceId' => $serviceId]
             );
             return null;
         }
 
-        foreach ($matches as $match) {
-            $match = $this->toArray(record: $match);
-            if ($match === null) {
-                continue;
+        foreach ($records as $record) {
+            $row = $this->toArray(record: $record);
+            if ($row === null) {
+                return null;
             }
 
-            $matchSlug = (string) ($match['@self']['slug'] ?? ($match['slug'] ?? ''));
-            if ($matchSlug === $slug) {
-                return $match;
+            if ((bool) ($row['isPublic'] ?? false) !== true) {
+                return null;
             }
+
+            if ((string) ($row['status'] ?? '') !== 'active') {
+                return null;
+            }
+
+            return $row;
         }
 
         return null;
 
-    }//end findOne()
+    }//end findPublicService()
+
+    /**
+     * Whether SlotService currently offers exactly this interval.
+     *
+     * SlotService is the availability authority (REQ-WSW-002): its list already
+     * excludes confirmed appointments, past slots and out-of-hours times, so
+     * matching against it is the same check the routed endpoint performed.
+     * Fail-closed: a lookup failure denies rather than permits.
+     *
+     * @param string $serviceId  The service.
+     * @param string $resourceId The resource.
+     * @param string $startTime  Candidate start, ISO 8601 UTC.
+     * @param string $endTime    Candidate end, ISO 8601 UTC.
+     *
+     * @return bool
+     */
+    private function isSlotOffered(
+        string $serviceId,
+        string $resourceId,
+        string $startTime,
+        string $endTime
+    ): bool {
+        try {
+            $check = $this->slotService->getAvailableSlots(
+                serviceId: $serviceId,
+                resourceId: $resourceId,
+                date: substr($startTime, 0, 10)
+            );
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                'WidgetService: slot availability check failed',
+                ['exception' => $e->getMessage(), 'serviceId' => $serviceId]
+            );
+            return false;
+        }
+
+        foreach (($check['slots'] ?? []) as $slot) {
+            if ((string) ($slot['startTime'] ?? '') === $startTime
+                && (string) ($slot['endTime'] ?? '') === $endTime
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }//end isSlotOffered()
 }//end class

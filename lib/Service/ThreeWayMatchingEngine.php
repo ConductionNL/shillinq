@@ -212,18 +212,28 @@ class ThreeWayMatchingEngine
     /**
      * Constructor.
      *
-     * @param ContainerInterface      $container        DI container —
-     *                                                  OR's ObjectService
-     *                                                  is fetched lazily
-     *                                                  so unit tests can
-     *                                                  swap an in-memory
-     *                                                  stub.
-     * @param IAppConfig              $appConfig        App config for the OR register slug.
-     * @param ToleranceProfileService $toleranceService Tolerance resolution + evaluation.
-     * @param SupplierInvoiceService  $invoiceService   For lifecycle transitions on the
-     *                                                  matched invoice (received →
-     *                                                  matching → matched/exception).
-     * @param LoggerInterface         $logger           Logger (no sensitive payloads).
+     * @param ContainerInterface              $container           DI container
+     *                                                             — OR's
+     *                                                             ObjectService
+     *                                                             is fetched
+     *                                                             lazily so
+     *                                                             unit tests
+     *                                                             can swap an
+     *                                                             in-memory
+     *                                                             stub.
+     * @param IAppConfig                      $appConfig           App config for the OR register slug.
+     * @param ToleranceProfileService         $toleranceService    Tolerance resolution + evaluation.
+     * @param SupplierInvoiceService          $invoiceService      For lifecycle transitions on the
+     *                                                             matched invoice (received →
+     *                                                             matching → matched/exception).
+     * @param LoggerInterface                 $logger              Logger (no sensitive payloads).
+     * @param ExceptionResolutionService|null $exceptionResolution Raises the
+     *                                                             crediteuren-administrateur
+     *                                                             alert when a match is routed
+     *                                                             to an exception status
+     *                                                             (REQ-PO3W-004); nullable so
+     *                                                             unit tests need not wire the
+     *                                                             notification manager.
      *
      * @return void
      */
@@ -233,6 +243,7 @@ class ThreeWayMatchingEngine
         private readonly ToleranceProfileService $toleranceService,
         private readonly SupplierInvoiceService $invoiceService,
         private readonly LoggerInterface $logger,
+        private readonly ?ExceptionResolutionService $exceptionResolution=null,
     ) {
 
     }//end __construct()
@@ -809,9 +820,63 @@ class ThreeWayMatchingEngine
         $saved = $this->saveObject(schema: self::SCHEMA_THREE_WAY_MATCH, object: $match);
         $this->safeTransition(administrationId: $administrationId, invoiceId: $invoiceId, toStatus: 'exception');
 
+        // Alert the crediteuren-administrateur. REQ-PO3W-004
+        // (openspec/specs/bookkeeping-purchase-order-3way/spec.md:291) requires
+        // the system to "create a notification for the crediteuren-
+        // administrateur" when it marks an exception status, and :300 spells
+        // out "routes to crediteuren-administrateur via notification". Until
+        // now the record went into the exception queue and alerted NOBODY:
+        // ExceptionResolutionService::notifyOnException() implemented exactly
+        // this and had zero callers, and the engine contained no notification
+        // code at all. Its docblock even names this site — "wired from the
+        // matching engine in slice 06 once it ships".
+        //
+        // Fail-soft: the ThreeWayMatch is already persisted and the invoice
+        // already transitioned, so a notification outage must not roll the
+        // match back or bubble a 500 into the evaluate endpoint. The service
+        // re-reads the match by id and re-checks the exception status itself,
+        // so passing the saved id is sufficient and cannot notify on a
+        // non-exception record.
+        $this->notifyException(administrationId: $administrationId, match: $saved);
+
         return $saved;
 
     }//end routeToException()
+
+    /**
+     * Raise the exception alert for a freshly routed ThreeWayMatch.
+     *
+     * @param string              $administrationId Administration scope.
+     * @param array<string,mixed> $match            The persisted ThreeWayMatch.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-purchase-order-3way/spec.md
+     */
+    private function notifyException(string $administrationId, array $match): void
+    {
+        if ($this->exceptionResolution === null) {
+            return;
+        }
+
+        $matchId = (string) ($match['id'] ?? ($match['@self']['id'] ?? ''));
+        if ($matchId === '') {
+            return;
+        }
+
+        try {
+            $this->exceptionResolution->notifyOnException(
+                administrationId: $administrationId,
+                matchId: $matchId
+            );
+        } catch (\Throwable $e) {
+            $this->logger->warning(
+                'ThreeWayMatchingEngine: exception alert failed (fail-soft)',
+                ['matchId' => $matchId, 'exception' => $e->getMessage()]
+            );
+        }
+
+    }//end notifyException()
 
     /**
      * Pick the PO line that best matches an invoice line — exact product

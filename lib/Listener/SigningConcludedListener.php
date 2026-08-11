@@ -190,6 +190,11 @@ final class SigningConcludedListener implements IEventListener
                     $consequence = $this->consequenceDelta(object: $object, outcome: $outcome);
                     return $object;
                 },
+                // Activity object type for the REQ-RAP-006 `document_signed`
+                // event raised inside onSigningCallback(). This listener is the
+                // sole production caller, so omitting it here would leave that
+                // event permanently unemitted.
+                $schema,
             );
 
             // Persist the mirror (signingRequestRef + signingStatus +

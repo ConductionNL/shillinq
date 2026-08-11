@@ -36,6 +36,55 @@ use OCP\EventDispatcher\IEventDispatcher;
 trait FilteredObjectListenerTrait
 {
     /**
+     * Register one listener for BOTH the create and the update event.
+     *
+     * A listener that has to react to "the object was written" needs the pair,
+     * and registering them separately is six lines of near-identical named
+     * arguments twice over — repeated verbatim for several listeners in
+     * Application::boot(), which sits against PHPMD's class-length budget.
+     * Same filtering semantics and same fallback as
+     * {@see registerFilteredObjectListener()}; the event classes are named as
+     * strings for the same reason (they exist only once OpenRegister does).
+     *
+     * @param IEventDispatcher       $dispatcher The live event dispatcher.
+     * @param string                 $listener   Listener class name.
+     * @param array<int,string>|null $registers  Register slugs the listener reacts to, or null for all.
+     * @param array<int,string>|null $schemas    Schema slugs the listener reacts to, or null for all.
+     *
+     * @return void
+     *
+     * @spec exclude Performance-only registration plumbing — narrows which
+     *       dispatches reach an existing listener without changing any
+     *       behaviour a spec describes.
+     */
+    private function registerFilteredObjectWriteListener(
+        IEventDispatcher $dispatcher,
+        string $listener,
+        ?array $registers=null,
+        ?array $schemas=null
+    ): void {
+        // NO leading backslash. `Foo::class` never produces one and
+        // `get_class($event)` never returns one, so a listener registered under
+        // `\OCA\...\ObjectCreatedEvent` would be keyed under a string the
+        // dispatcher never looks up — a registration that exists and never
+        // fires. Same leading-backslash trap the gate helpers document.
+        $events = [
+            'OCA\\OpenRegister\\Event\\ObjectCreatedEvent',
+            'OCA\\OpenRegister\\Event\\ObjectUpdatedEvent',
+        ];
+        foreach ($events as $event) {
+            $this->registerFilteredObjectListener(
+                dispatcher: $dispatcher,
+                event: $event,
+                listener: $listener,
+                registers: $registers,
+                schemas: $schemas
+            );
+        }
+
+    }//end registerFilteredObjectWriteListener()
+
+    /**
      * Register an object-lifecycle listener that declares its interest up front.
      *
      * OpenRegister's `ObjectEventSubscription` records the register/schema slugs

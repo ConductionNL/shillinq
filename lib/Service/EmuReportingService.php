@@ -498,34 +498,6 @@ class EmuReportingService
     }//end sumByType()
 
     /**
-     * Export the 10 CBS-tussenregels as RFC 4180 CSV (Task 31).
-     *
-     * Header row + 10 data rows, semicolon-separated per CBS-template
-     * convention. Bedrag is the signed euro amount, two-decimal, period
-     * decimal separator (CBS-CSV convention; not the Dutch comma). Caller
-     * persists the string to a file or streams it to the user.
-     *
-     * @param array<int,array{regel:int,label:string,bedrag:float}> $tussenregels From renderCbsTussenregels.
-     *
-     * @return string CSV body (no BOM).
-     *
-     * @spec openspec/specs/bookkeeping-emu-reporting/spec.md
-     */
-    public function exportCsv(array $tussenregels): string
-    {
-        $lines = ['regel;label;bedrag'];
-        foreach ($tussenregels as $row) {
-            $regel   = (int) ($row['regel'] ?? 0);
-            $label   = str_replace(';', ',', (string) ($row['label'] ?? ''));
-            $bedrag  = number_format((float) ($row['bedrag'] ?? 0.0), 2, '.', '');
-            $lines[] = $regel.';'.$label.';'.$bedrag;
-        }
-
-        return implode("\n", $lines);
-
-    }//end exportCsv()
-
-    /**
      * Cascading IV3 lookup for a CashFlowItem (Task 14, REQ-EMU-010).
      *
      * Resolves the IV3 (hoofdstuk-functie-categorie) classification for a

@@ -150,30 +150,6 @@ class AcmReportGenerator
     }//end compose()
 
     /**
-     * Verify totals match the source omzetByActivity sum (REQ-WMO-006 §integriteit).
-     *
-     * @param array<string,mixed> $report         The composed report.
-     * @param float               $omzetSumLedger Sum of revenue GL lines for the period.
-     * @param float               $tolerance      Cents tolerance (default 1.00 EUR).
-     *
-     * @return bool True when the report omzet matches the ledger omzet within tolerance.
-     */
-    public function reconcileOmzet(array $report, float $omzetSumLedger, float $tolerance=1.0): bool
-    {
-        $sum = 0.0;
-        foreach ((array) ($report['activiteiten'] ?? []) as $line) {
-            if (is_array($line) === false) {
-                continue;
-            }
-
-            $sum += (float) ($line['omzet'] ?? 0);
-        }
-
-        return abs($sum - $omzetSumLedger) <= $tolerance;
-
-    }//end reconcileOmzet()
-
-    /**
      * Submit a signed report (REQ-WMO-006 §submit). Status flips to `verzonden`.
      *
      * @param array<string,mixed> $report           A signed report.

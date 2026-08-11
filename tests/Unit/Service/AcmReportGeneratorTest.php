@@ -110,17 +110,6 @@ final class AcmReportGeneratorTest extends TestCase
     }//end testSubmitFlipsToVerzonden()
 
     /**
-     * reconcileOmzet checks per-activity sum vs ledger total within tolerance.
-     */
-    public function testReconcileOmzet(): void
-    {
-        $report = ['activiteiten' => [['omzet' => 92_000.00], ['omzet' => 50_000.00]]];
-        self::assertTrue($this->svc->reconcileOmzet($report, 142_000.00));
-        self::assertFalse($this->svc->reconcileOmzet($report, 145_000.00));
-
-    }//end testReconcileOmzet()
-
-    /**
      * toJson + toXml serialize without throwing.
      */
     public function testJsonAndXmlSerialize(): void

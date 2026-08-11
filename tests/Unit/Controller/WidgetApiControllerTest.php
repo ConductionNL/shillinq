@@ -29,8 +29,8 @@ use OCA\Shillinq\Controller\WidgetApiController;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\SlotService;
 use OCA\Shillinq\Service\WidgetAuthService;
+use OCA\Shillinq\Service\WidgetService;
 use OCP\AppFramework\Http;
-use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -81,11 +81,11 @@ class WidgetApiControllerTest extends TestCase
     private ContainerInterface&MockObject $container;
 
     /**
-     * Time factory stub.
+     * The widget booking write path the controller delegates to.
      *
-     * @var ITimeFactory&MockObject
+     * @var WidgetService&MockObject
      */
-    private ITimeFactory&MockObject $time;
+    private WidgetService&MockObject $widgetService;
 
     /**
      * Logger stub.
@@ -106,10 +106,9 @@ class WidgetApiControllerTest extends TestCase
         $this->auth      = $this->createMock(WidgetAuthService::class);
         $this->slots     = $this->createMock(SlotService::class);
         $this->settings  = $this->createMock(SettingsService::class);
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->time      = $this->createMock(ITimeFactory::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
-        $this->time->method('getTime')->willReturn(1717000000);
+        $this->container     = $this->createMock(ContainerInterface::class);
+        $this->widgetService = $this->createMock(WidgetService::class);
+        $this->logger        = $this->createMock(LoggerInterface::class);
 
     }//end setUp()
 
@@ -123,10 +122,10 @@ class WidgetApiControllerTest extends TestCase
         return new WidgetApiController(
             request: $this->request,
             auth: $this->auth,
+            widgetService: $this->widgetService,
             slots: $this->slots,
             settings: $this->settings,
             container: $this->container,
-            time: $this->time,
             logger: $this->logger,
         );
 
@@ -395,28 +394,27 @@ class WidgetApiControllerTest extends TestCase
     }//end testServicesOmitsPriceWhenPriceVisibleIsFalse()
 
     /**
-     * The booking endpoint must refuse a serviceId that is not public, even
-     * though the caller holds a valid widget API key. Without this the widget
-     * key — which ships in the embedding page — was enough to book any
-     * service whose id could be guessed or read from another surface.
+     * A booking the write path refuses as not-bookable surfaces as HTTP 404
+     * with the `service-not-found` code, even though the caller holds a valid
+     * widget API key. Without this the widget key — which ships in the
+     * embedding page — was enough to book any service whose id could be
+     * guessed or read from another surface (PR #491).
+     *
+     * The isPublic / status enforcement ITSELF now lives in WidgetService,
+     * where it is pinned directly by
+     * WidgetServiceTest::testCreateAppointmentRejectsNonPublicService() and
+     * ::testCreateAppointmentRejectsInactiveService(). This test pins the
+     * other half — that the controller does not swallow that refusal or
+     * report it as a server error.
      *
      * @return void
      */
-    public function testAppointmentsRefusesAServiceThatIsNotPublic(): void
+    public function testAppointmentsRefusesAServiceThatIsNotBookable(): void
     {
         $this->authoriseWidgetCaller();
-        $this->container->method('get')->willReturn(
-            $this->catalogueStub(
-                [
-                    [
-                        'serviceId' => 'svc-internal',
-                        'name'      => 'Internal staff slot',
-                        'status'    => 'active',
-                        'isPublic'  => false,
-                    ],
-                ]
-            )
-        );
+        $this->settings->method('isOpenRegisterAvailable')->willReturn(true);
+        $this->widgetService->method('createAppointment')
+            ->willReturn(['code' => 404, 'error' => 'service_not_found']);
 
         $response = $this->makeController()->appointments(
             serviceId: 'svc-internal',
@@ -430,29 +428,51 @@ class WidgetApiControllerTest extends TestCase
         self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
         self::assertSame('service-not-found', $response->getData()['error']);
 
-    }//end testAppointmentsRefusesAServiceThatIsNotPublic()
+    }//end testAppointmentsRefusesAServiceThatIsNotBookable()
 
     /**
-     * An unknown serviceId is refused for the same reason — resolvePublicService()
-     * must fail closed rather than fall through to the slot check.
+     * The controller hands the customer's contact details to the write path.
+     *
+     * REGRESSION PIN for the delegation itself. The controller used to build
+     * the Appointment inline and never passed name / email / phone anywhere;
+     * if a future edit drops them from this call, the fields stop being
+     * persisted again and nothing else would notice.
      *
      * @return void
      */
-    public function testAppointmentsRefusesAnUnknownService(): void
+    public function testAppointmentsForwardsCustomerContactDetailsToTheWritePath(): void
     {
         $this->authoriseWidgetCaller();
-        $this->container->method('get')->willReturn($this->catalogueStub([]));
+        $this->settings->method('isOpenRegisterAvailable')->willReturn(true);
+
+        $captured = null;
+        $this->widgetService->method('createAppointment')
+            ->willReturnCallback(
+                function (string $administrationId, array $payload) use (&$captured): array {
+                    $captured = $payload;
+                    return [
+                        'code'                => 201,
+                        'appointmentId'       => 'apt-1',
+                        'status'              => 'pending_confirmation',
+                        'confirmationMessage' => 'ok',
+                    ];
+                }
+            );
 
         $response = $this->makeController()->appointments(
-            serviceId: 'svc-does-not-exist',
+            serviceId: 'svc-001',
             resourceId: 'res-001',
             startTime: '2026-05-21T10:00:00Z',
             endTime: '2026-05-21T10:30:00Z',
             customerName: 'Anna de Wit',
             email: 'anna@example.com',
+            phone: '+31612345678',
         );
 
-        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+        self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+        self::assertSame('Anna de Wit', $captured['customerName'] ?? null);
+        self::assertSame('anna@example.com', $captured['customerEmail'] ?? null);
+        self::assertSame('+31612345678', $captured['customerPhone'] ?? null);
 
-    }//end testAppointmentsRefusesAnUnknownService()
+    }//end testAppointmentsForwardsCustomerContactDetailsToTheWritePath()
 }//end class

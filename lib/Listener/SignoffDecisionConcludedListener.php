@@ -171,6 +171,11 @@ final class SignoffDecisionConcludedListener implements IEventListener
                     $consequence = $this->consequenceDelta(object: $object, outcome: $outcome);
                     return $object;
                 },
+                // Activity object type for the REQ-RAP-006 `decision_made`
+                // event raised inside onDecisionCallback(). This listener is the
+                // sole production caller, so omitting it here would leave that
+                // event permanently unemitted.
+                $schema,
             );
 
             // Persist the mirror (decisionRef + decisionOutcome) plus any local
