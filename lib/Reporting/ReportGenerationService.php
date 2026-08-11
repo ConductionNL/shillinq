@@ -56,7 +56,6 @@ use OCP\Files\File;
 use ReflectionClass;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
-use OCP\Files\NotFoundException;
 use OCP\IUserSession;
 use OCP\SystemTag\ISystemTagManager;
 use OCP\SystemTag\ISystemTagObjectMapper;
@@ -269,32 +268,75 @@ class ReportGenerationService
             return null;
         }
 
+        return $this->resolveRecordFile(record: $record);
+
+    }//end resolveFile()
+
+    /**
+     * Resolve the stored Nextcloud File for an ALREADY-AUTHORISED GeneratedReport record.
+     *
+     * ⚠️ This method performs NO authorisation. The caller must have established
+     * that the current user may read `$record` — in practice
+     * `AdministrationContextService::canAccess($record['administrationId'])` —
+     * BEFORE calling it. It is split out from resolveFile() precisely so the
+     * caller can interpose that check between "load the record" and "read the
+     * bytes" (ADR-005; see ReportingController::download()).
+     *
+     * Resolution order, tightest first:
+     *  1. the CURRENT user's Files home — the same home storeFile() writes into
+     *     (`:410 getUserFolder($userId)`), so this is the path a report's own
+     *     author always takes;
+     *  2. the instance-wide file cache, but only for a node whose path is exactly
+     *     the `filePath` recorded on the report. Previously this branch was an
+     *     unconstrained `IRootFolder::getById()` followed by an unconstrained
+     *     `IRootFolder::get($path)`, which resolves across EVERY user's storage.
+     *     It is retained (narrowed) so a colleague in the same administration can
+     *     still download a report a co-worker generated.
+     *
+     * @param array<string,mixed> $record The GeneratedReport record.
+     *
+     * @return File|null The stored file, or null when the record/file is not resolvable.
+     */
+    public function resolveRecordFile(array $record): ?File
+    {
         $fileId = ($record['fileId'] ?? null);
-        if (is_numeric($fileId) === true) {
-            $nodes = $this->rootFolder->getById((int) $fileId);
-            foreach ($nodes as $node) {
-                if ($node instanceof File) {
-                    return $node;
+        $path   = ($record['filePath'] ?? null);
+        $userId = ($this->userSession->getUser()?->getUID() ?? '');
+
+        if (is_numeric($fileId) === true && $userId !== '') {
+            try {
+                foreach ($this->rootFolder->getUserFolder($userId)->getById((int) $fileId) as $node) {
+                    if ($node instanceof File) {
+                        return $node;
+                    }
                 }
+            } catch (\Throwable $e) {
+                $this->logger->warning(
+                    'ReportGenerationService: report file not resolvable in the user home',
+                    ['fileId' => $fileId, 'exception' => $e->getMessage()]
+                );
             }
         }
 
-        // Fall back to the stored path when the id no longer resolves.
-        $path = ($record['filePath'] ?? null);
-        if (is_string($path) === true && $path !== '') {
-            try {
-                $node = $this->rootFolder->get($path);
-                if ($node instanceof File) {
+        if (is_numeric($fileId) === true && is_string($path) === true && $path !== '') {
+            foreach ($this->rootFolder->getById((int) $fileId) as $node) {
+                // The recorded path is server-written by storeFile(); requiring an
+                // exact match stops a stale or tampered fileId resolving to some
+                // unrelated node elsewhere on the instance.
+                if ($node instanceof File && $node->getPath() === $path) {
                     return $node;
                 }
-            } catch (NotFoundException $e) {
-                $this->logger->warning('ReportGenerationService: stored report file missing', ['id' => $id, 'path' => $path]);
             }
+
+            $this->logger->warning(
+                'ReportGenerationService: stored report file missing',
+                ['fileId' => $fileId, 'path' => $path]
+            );
         }
 
         return null;
 
-    }//end resolveFile()
+    }//end resolveRecordFile()
 
     /**
      * Look up a single GeneratedReport record by id.

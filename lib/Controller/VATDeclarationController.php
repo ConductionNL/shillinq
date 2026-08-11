@@ -9,8 +9,14 @@
  *
  *   GET /api/vat-returns/{returnId}/declarations
  *
- * The endpoint is authenticated (#[NoAdminRequired]); the per-object
- * multitenancy is enforced by OpenRegister's ObjectService.
+ * The endpoint is authenticated (#[NoAdminRequired]) AND scoped to the
+ * caller's administration memberships in this controller
+ * (AdministrationContextService::accessibleAdministrationIds(), ADR-005 /
+ * REQ-MA-001).
+ *
+ * ⚠️ This paragraph previously claimed "the per-object multitenancy is
+ * enforced by OpenRegister's ObjectService". It was not: the query passed
+ * no administration term into OpenRegister at all.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -32,6 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -53,15 +60,17 @@ class VATDeclarationController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest           $request   The request object.
-     * @param ContainerInterface $container DI container for OR's ObjectService.
-     * @param IUserSession       $session   User session for the authentication guard.
-     * @param LoggerInterface    $logger    Logger.
+     * @param IRequest                     $request   The request object.
+     * @param ContainerInterface           $container DI container for OR's ObjectService.
+     * @param IUserSession                 $session   User session for the authentication guard.
+     * @param AdministrationContextService $context   RBAC guard — resolves the user's administration memberships.
+     * @param LoggerInterface              $logger    Logger.
      */
     public function __construct(
         IRequest $request,
         private readonly ContainerInterface $container,
         private readonly IUserSession $session,
+        private readonly AdministrationContextService $context,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -87,12 +96,27 @@ class VATDeclarationController extends Controller
             return new JSONResponse(['error' => 'returnId is required'], Http::STATUS_BAD_REQUEST);
         }
 
+        // ADR-005 / REQ-MA-001. VATDeclaration carries administrationId; the
+        // scope is the caller's memberships, one query per administration.
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $declarations  = $objectService
-                ->setRegister(register: 'shillinq')
-                ->setSchema(schema: 'VATDeclaration')
-                ->findAll(['filters' => ['returnId' => $returnId]]);
+            $declarations  = [];
+            foreach ($this->context->accessibleAdministrationIds() as $administrationId) {
+                $declarations = array_merge(
+                    $declarations,
+                    $objectService
+                        ->setRegister(register: 'shillinq')
+                        ->setSchema(schema: 'VATDeclaration')
+                        ->findAll(
+                            [
+                                'filters' => [
+                                    'returnId'         => $returnId,
+                                    'administrationId' => $administrationId,
+                                ],
+                            ]
+                        )
+                );
+            }
         } catch (\Throwable $e) {
             $this->logger->error(
                 'VATDeclarationController: failed to list declarations',

@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\VATReturnController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\VATReturnService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -82,6 +83,24 @@ final class VATReturnControllerTest extends TestCase
     private LoggerInterface&MockObject $logger;
 
     /**
+     * Mock AdministrationContextService — the ADR-005 membership guard.
+     *
+     * @var AdministrationContextService&MockObject
+     */
+    private AdministrationContextService&MockObject $context;
+
+    /**
+     * What canAccess() answers. Flipped by the ADR-005 refusal tests.
+     *
+     * Read through a callback rather than re-stubbed per test: a second
+     * `->method('canAccess')` APPENDS a matcher instead of replacing the first,
+     * so re-stubbing would silently keep answering true.
+     *
+     * @var bool
+     */
+    private bool $canAccess = true;
+
+    /**
      * Controller under test.
      *
      * @var VATReturnController
@@ -108,11 +127,20 @@ final class VATReturnControllerTest extends TestCase
         $this->container  = $this->createMock(ContainerInterface::class);
         $this->session    = $this->createMock(IUserSession::class);
         $this->logger     = $this->createMock(LoggerInterface::class);
+        $this->context    = $this->createMock(AdministrationContextService::class);
+
+        $this->canAccess = true;
+        $this->context->method('canAccess')->willReturnCallback(fn (): bool => $this->canAccess);
+        $this->context->method('accessibleAdministrationIds')->willReturnCallback(
+            fn (): array => $this->canAccess === true ? ['adm-1'] : []
+        );
+
         $this->controller = new VATReturnController(
             request: $this->request,
             service: $this->service,
             container: $this->container,
             session: $this->session,
+            context: $this->context,
             logger: $this->logger,
         );
 
@@ -326,9 +354,11 @@ final class VATReturnControllerTest extends TestCase
         $this->withObjectService(
             $this->fakeObjectService(
                 [
+                    // administrationId is now part of every index() query: the
+                    // listing is scoped to the caller's memberships (ADR-005).
                     'BtwAangifte' => [
-                        ['id' => 'r-1', 'period' => 'quarter', 'regime' => 'standard', 'statusCode' => 'draft'],
-                        ['id' => 'r-2', 'period' => 'quarter', 'regime' => 'kor', 'statusCode' => 'submitted'],
+                        ['id' => 'r-1', 'administrationId' => 'adm-1', 'period' => 'quarter', 'regime' => 'standard', 'statusCode' => 'draft'],
+                        ['id' => 'r-2', 'administrationId' => 'adm-1', 'period' => 'quarter', 'regime' => 'kor', 'statusCode' => 'submitted'],
                     ],
                 ]
             )
@@ -354,9 +384,11 @@ final class VATReturnControllerTest extends TestCase
         $this->withObjectService(
             $this->fakeObjectService(
                 [
+                    // administrationId is now part of every index() query: the
+                    // listing is scoped to the caller's memberships (ADR-005).
                     'BtwAangifte' => [
-                        ['id' => 'r-1', 'period' => 'quarter', 'regime' => 'standard', 'statusCode' => 'draft'],
-                        ['id' => 'r-2', 'period' => 'quarter', 'regime' => 'kor', 'statusCode' => 'submitted'],
+                        ['id' => 'r-1', 'administrationId' => 'adm-1', 'period' => 'quarter', 'regime' => 'standard', 'statusCode' => 'draft'],
+                        ['id' => 'r-2', 'administrationId' => 'adm-1', 'period' => 'quarter', 'regime' => 'kor', 'statusCode' => 'submitted'],
                     ],
                 ]
             )
@@ -499,6 +531,10 @@ final class VATReturnControllerTest extends TestCase
     public function testSubmitReturns200(): void
     {
         $this->withUser(uid: 'alice');
+        // submit() now loads the return first to authorise the caller against
+        // its administration (ADR-005) before filing it.
+        $this->service->method('findReturn')
+            ->willReturn(['id' => 'ret-1', 'administrationId' => 'adm-1', 'statusCode' => 'draft']);
         $this->service->expects($this->once())
             ->method('submitReturn')
             ->with('ret-1', 'alice')
@@ -519,6 +555,8 @@ final class VATReturnControllerTest extends TestCase
     public function testSubmitReturns409OnConflict(): void
     {
         $this->withUser(uid: 'alice');
+        $this->service->method('findReturn')
+            ->willReturn(['id' => 'ret-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted']);
         $this->service->method('submitReturn')->willThrowException(new \RuntimeException('not draft'));
 
         $response = $this->controller->submit(returnId: 'ret-1');
@@ -535,6 +573,8 @@ final class VATReturnControllerTest extends TestCase
     public function testRebaseReturns200(): void
     {
         $this->withUser(uid: 'bob');
+        $this->service->method('findReturn')
+            ->willReturn(['id' => 'ret-1', 'administrationId' => 'adm-1', 'statusCode' => 'submitted']);
         $this->service->expects($this->once())
             ->method('rebaseReturn')
             ->with('ret-1', 'bob')
@@ -577,4 +617,100 @@ final class VATReturnControllerTest extends TestCase
         self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
 
     }//end testDestroyRejectsNonDraft()
+
+    /**
+     * create() refuses to file a statutory VAT return into a foreign administration (#518).
+     *
+     * This is the worst of the 23 findings: `POST /api/vat-returns` took
+     * `administrationId` straight off the wire behind nothing but
+     * `preg_match('/^[A-Za-z0-9_.\-]{1,64}$/')`, while
+     * VATReturnService::createReturn()'s own docblock declares the parameter
+     * "Server-resolved administration scope". Live on a two-account rig the
+     * pre-fix call answered **HTTP 201**.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function testCreateRefusesAForeignAdministration(): void
+    {
+        $this->canAccess = false;
+        $this->withParams(
+            [
+                'administrationId' => 'adm-not-mine',
+                'period'           => 'quarter',
+                'periodYear'       => 2020,
+                'periodNumber'     => 1,
+                'regime'           => 'standard',
+            ]
+        );
+        $this->service->expects($this->never())->method('createReturn');
+
+        $response = $this->controller->create();
+
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+    }//end testCreateRefusesAForeignAdministration()
+
+    /**
+     * show/update/submit/rebase/destroy all mask a foreign return as 404 (#518).
+     *
+     * The whole BtwAangifte chain resolved `returnId` with
+     * `->setSchema('BtwAangifte')->find($returnId)` and no administration
+     * filter, so quoting another tenant's id was enough to read it, edit it,
+     * file it, or revert a submitted filing to draft. Every one answered 200
+     * live before this change.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function testForeignReturnIsMaskedAs404OnEveryVerb(): void
+    {
+        $this->canAccess = false;
+        $this->withParams(['notes' => 'owned by someone else']);
+        $this->service->method('findReturn')
+            ->willReturn(['id' => 'ret-1', 'administrationId' => 'adm-not-mine', 'statusCode' => 'draft']);
+        $this->service->expects($this->never())->method('submitReturn');
+        $this->service->expects($this->never())->method('rebaseReturn');
+        $this->withObjectService($this->fakeObjectService(['BtwAangifte' => []]));
+
+        self::assertSame(Http::STATUS_NOT_FOUND, $this->controller->show(returnId: 'ret-1')->getStatus());
+        self::assertSame(Http::STATUS_NOT_FOUND, $this->controller->update(returnId: 'ret-1')->getStatus());
+        self::assertSame(Http::STATUS_NOT_FOUND, $this->controller->submit(returnId: 'ret-1')->getStatus());
+        self::assertSame(Http::STATUS_NOT_FOUND, $this->controller->rebase(returnId: 'ret-1')->getStatus());
+        self::assertSame(Http::STATUS_NOT_FOUND, $this->controller->destroy(returnId: 'ret-1')->getStatus());
+
+    }//end testForeignReturnIsMaskedAs404OnEveryVerb()
+
+    /**
+     * index() lists only administrations the caller is a member of (#518).
+     *
+     * `administrationId` used to be an OPTIONAL filter, so omitting it returned
+     * every tenant's statutory returns in one page.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    public function testIndexIsScopedToTheCallersMemberships(): void
+    {
+        $this->withParams(['_page' => 1, '_limit' => 10]);
+        $this->withObjectService(
+            $this->fakeObjectService(
+                [
+                    'BtwAangifte' => [
+                        ['id' => 'r-1', 'administrationId' => 'adm-1', 'period' => 'quarter', 'regime' => 'standard', 'statusCode' => 'draft'],
+                        ['id' => 'r-9', 'administrationId' => 'adm-9', 'period' => 'quarter', 'regime' => 'standard', 'statusCode' => 'draft'],
+                    ],
+                ]
+            )
+        );
+
+        $payload = $this->controller->index()->getData();
+
+        self::assertSame(1, $payload['total']);
+        self::assertSame('r-1', $payload['data'][0]['id']);
+
+    }//end testIndexIsScopedToTheCallersMemberships()
 }//end class

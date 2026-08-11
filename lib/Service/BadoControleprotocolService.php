@@ -549,6 +549,34 @@ class BadoControleprotocolService
     }//end allSisaRegelingenCovered()
 
     /**
+     * Resolve the tenant (organisation) a Controleprotocol belongs to.
+     *
+     * `Controleprotocol.organisationId` is the tenant scope for the whole BADO
+     * bundle: none of the six child schemas (ToleranceMatrix, Materialiteit,
+     * AuditSample, AuditFinding, VerklaringDraft, SiSaAssurance) carries a tenant
+     * field of its own — they hang off the protocol's FK. So the protocol's
+     * organisationId is the only value an ADR-005 membership check can be made
+     * against, and this accessor exists so the controller can make it: every
+     * loader in this class and in AccountantsdossierExportService was private.
+     *
+     * @param string $protocolId The Controleprotocol.id.
+     *
+     * @return string|null The organisation id, or null when the protocol does not exist.
+     *
+     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     */
+    public function organisationIdFor(string $protocolId): ?string
+    {
+        $protocol = $this->resolveProtocol(protocolId: $protocolId, object: null);
+        if ($protocol === null) {
+            return null;
+        }
+
+        return (string) ($protocol['organisationId'] ?? '');
+
+    }//end organisationIdFor()
+
+    /**
      * Resolve a Controleprotocol from a supplied object or by id.
      *
      * @param string                   $protocolId The Controleprotocol.id.

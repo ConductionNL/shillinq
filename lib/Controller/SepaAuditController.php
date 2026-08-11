@@ -68,8 +68,14 @@ class SepaAuditController extends Controller
      * Export the audit dossier for a single mandate as a ZIP (REQ-SDD-010).
      *
      * Scoped to the authenticated user's accessible administrations by the
-     * service (IDOR-safe per ADR-005): a mandate the caller may not read
-     * yields a 404 rather than leaking its existence.
+     * service (IDOR-safe per ADR-005 / REQ-MA-001): a mandate the caller may not
+     * read yields a 404 rather than leaking its existence.
+     *
+     * ⚠️ This sentence was written before it was true. Until this change the
+     * service scoped to `appConfig('administration_id')` — an instance-wide
+     * constant, never the caller's memberships — and skipped the comparison
+     * entirely when that key was unset (its default). The dossier is mandate +
+     * collections + R-transactions + pre-notifications as a ZIP.
      *
      * @param string $mandateId The SepaMandate UUID/slug to export.
      *

@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\TaxReportController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\TaxReportService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -73,6 +74,23 @@ final class TaxReportControllerTest extends TestCase
     private LoggerInterface&MockObject $logger;
 
     /**
+     * Mock AdministrationContextService — the ADR-005 membership guard.
+     *
+     * @var AdministrationContextService&MockObject
+     */
+    private AdministrationContextService&MockObject $context;
+
+    /**
+     * What canAccess() answers. Flipped by the ADR-005 refusal tests.
+     *
+     * Read through a callback rather than re-stubbed per test: a second
+     * `->method('canAccess')` APPENDS a matcher instead of replacing the first.
+     *
+     * @var bool
+     */
+    private bool $canAccess = true;
+
+    /**
      * The controller under test.
      *
      * @var TaxReportController
@@ -91,6 +109,10 @@ final class TaxReportControllerTest extends TestCase
         $this->service     = $this->createMock(TaxReportService::class);
         $this->userSession = $this->createMock(IUserSession::class);
         $this->logger      = $this->createMock(LoggerInterface::class);
+        $this->context     = $this->createMock(AdministrationContextService::class);
+
+        $this->canAccess = true;
+        $this->context->method('canAccess')->willReturnCallback(fn (): bool => $this->canAccess);
 
         $user = $this->createMock(IUser::class);
         $user->method('getUID')->willReturn('alice');
@@ -100,6 +122,7 @@ final class TaxReportControllerTest extends TestCase
             request: $this->request,
             taxReportService: $this->service,
             userSession: $this->userSession,
+            context: $this->context,
             logger: $this->logger,
         );
 
@@ -233,4 +256,45 @@ final class TaxReportControllerTest extends TestCase
         self::assertSame($payload, $response->getData());
 
     }//end testAnnualValidReturns200()
+
+    /**
+     * quarter(): a foreign administration_id yields 404 and never reaches the service (ADR-005 / #518).
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
+     */
+    public function testQuarterForeignAdministrationReturns404(): void
+    {
+        $this->canAccess = false;
+        $this->withAdmin('adm-not-mine');
+        $this->service->expects($this->never())->method('computeQuarter');
+
+        $response = $this->controller->quarter('2026', '1');
+
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+    }//end testQuarterForeignAdministrationReturns404()
+
+    /**
+     * annual(): a foreign administration_id yields 404 and never reaches the service (ADR-005 / #518).
+     *
+     * Both endpoints route through the same helper, which used to be named
+     * `validateAdministration()` and was entirely a character-class regex.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
+     */
+    public function testAnnualForeignAdministrationReturns404(): void
+    {
+        $this->canAccess = false;
+        $this->withAdmin('adm-not-mine');
+        $this->service->expects($this->never())->method('computeAnnual');
+
+        $response = $this->controller->annual('2026');
+
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+    }//end testAnnualForeignAdministrationReturns404()
 }//end class

@@ -15,11 +15,22 @@
  *   POST   /api/vat-returns/{returnId}/rebase      — re-open + re-derive
  *   DELETE /api/vat-returns/{returnId}             — delete (draft only)
  *
- * The endpoints are authenticated (#[NoAdminRequired]); per-object
- * authorisation is delegated to OpenRegister's ObjectService which
- * enforces administration-scoped multitenancy. Future returns are
- * rejected at the controller (REQ-VAT-001); lifecycle status checks
- * live in VATReturnService.
+ * The endpoints are authenticated (#[NoAdminRequired]) AND authorised
+ * per administration in this controller, via
+ * AdministrationContextService::canAccess() (ADR-005, REQ-MA-001).
+ *
+ * ⚠️ The previous version of this paragraph claimed authorisation was
+ * "delegated to OpenRegister's ObjectService which enforces
+ * administration-scoped multitenancy". That was false in both halves:
+ * none of these endpoints passes an administration term into
+ * OpenRegister at all, and a schema that declares no `authorization`
+ * block — as all ~871 of this app's schemas do — grants every action to
+ * every authenticated user (openregister PermissionHandler::
+ * hasGroupPermission(), `enforce_default_closed` defaults false). The
+ * controller guard is not the outer of two layers; it is the only layer.
+ *
+ * Future returns are rejected at the controller (REQ-VAT-001);
+ * lifecycle status checks live in VATReturnService.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -41,6 +52,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\VATReturnService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -67,17 +79,19 @@ class VATReturnController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest           $request   The request object.
-     * @param VATReturnService   $service   The VAT return service.
-     * @param ContainerInterface $container DI container for OR's ObjectService.
-     * @param IUserSession       $session   User session (for actor identity).
-     * @param LoggerInterface    $logger    Logger.
+     * @param IRequest                     $request   The request object.
+     * @param VATReturnService             $service   The VAT return service.
+     * @param ContainerInterface           $container DI container for OR's ObjectService.
+     * @param IUserSession                 $session   User session (for actor identity).
+     * @param AdministrationContextService $context   RBAC guard — resolves the user's administration memberships.
+     * @param LoggerInterface              $logger    Logger.
      */
     public function __construct(
         IRequest $request,
         private readonly VATReturnService $service,
         private readonly ContainerInterface $container,
         private readonly IUserSession $session,
+        private readonly AdministrationContextService $context,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -101,12 +115,32 @@ class VATReturnController extends Controller
         $page    = max(1, (int) $this->request->getParam('_page', 1));
         $limit   = max(1, min(200, (int) $this->request->getParam('_limit', 25)));
 
+        // ADR-005 / REQ-MA-001. The administrationId filter used to be OPTIONAL,
+        // so omitting it listed every tenant's statutory VAT returns. The scope
+        // is now always the caller's memberships; an explicit administrationId
+        // may only NARROW it, never widen it.
+        $requested = trim((string) $this->request->getParam('administrationId', ''));
+        $scope     = $this->context->accessibleAdministrationIds();
+        if ($requested !== '') {
+            if ($this->context->canAccess(administrationId: $requested) === false) {
+                return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+            }
+
+            $scope = [$requested];
+        }
+
         try {
             $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $all           = $objectService
-                ->setRegister(register: 'shillinq')
-                ->setSchema(schema: 'BtwAangifte')
-                ->findAll(['filters' => $filters]);
+            $all           = [];
+            foreach ($scope as $administrationId) {
+                $all = array_merge(
+                    $all,
+                    $objectService
+                        ->setRegister(register: 'shillinq')
+                        ->setSchema(schema: 'BtwAangifte')
+                        ->findAll(['filters' => ($filters + ['administrationId' => $administrationId])])
+                );
+            }
         } catch (\Throwable $e) {
             $this->logger->error(
                 'VATReturnController: failed to list VAT returns',
@@ -163,7 +197,7 @@ class VATReturnController extends Controller
             // VATReturnService::findReturn() performs the entity → array
             // normalisation and returns null only when the row is genuinely absent.
             $vatReturn = $this->service->findReturn(returnId: $returnId);
-            if ($vatReturn === null) {
+            if ($this->mayAccessReturn(vatReturn: $vatReturn) === false) {
                 return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
             }
 
@@ -218,6 +252,15 @@ class VATReturnController extends Controller
 
         if ($this->validId(id: $administrationId) === false) {
             return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+        }
+
+        // ADR-005 / REQ-MA-001. VATReturnService::createReturn() documents its
+        // $administrationId as "Server-resolved administration scope"; this
+        // controller reads it off the wire, so the membership check that makes
+        // that contract true has to happen here. Without it any authenticated
+        // user could inject a statutory Dutch VAT filing into any administration.
+        if ($this->context->canAccess(administrationId: $administrationId) === false) {
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
         }
 
         if (in_array($period, self::PERIOD_VALUES, true) === false) {
@@ -291,7 +334,7 @@ class VATReturnController extends Controller
             // See show(): find() yields `?ObjectEntity`, so the previous
             // `is_array()` test rejected every existing record as "not found".
             $vatReturn = $this->service->findReturn(returnId: $returnId);
-            if ($vatReturn === null) {
+            if ($this->mayAccessReturn(vatReturn: $vatReturn) === false) {
                 return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
             }
 
@@ -341,6 +384,13 @@ class VATReturnController extends Controller
         $userId = $this->resolveUserId();
 
         try {
+            // ADR-005 / REQ-MA-001 — filing another tenant's statutory return.
+            // $userId below is stamped as the actor but was never compared to
+            // anything, so it authorised nothing on its own.
+            if ($this->mayAccessReturn(vatReturn: $this->service->findReturn(returnId: $returnId)) === false) {
+                return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
+            }
+
             $vatReturn = $this->service->submitReturn(returnId: $returnId, userId: $userId);
         } catch (\RuntimeException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
@@ -380,6 +430,12 @@ class VATReturnController extends Controller
         $userId = $this->resolveUserId();
 
         try {
+            // ADR-005 / REQ-MA-001 — reverting another tenant's SUBMITTED
+            // statutory filing back to draft.
+            if ($this->mayAccessReturn(vatReturn: $this->service->findReturn(returnId: $returnId)) === false) {
+                return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
+            }
+
             $vatReturn = $this->service->rebaseReturn(returnId: $returnId, userId: $userId);
         } catch (\RuntimeException $e) {
             return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
@@ -422,7 +478,7 @@ class VATReturnController extends Controller
             // meant a SUBMITTED return answered 404 instead of the 409 the
             // "only draft returns can be deleted" rule is supposed to give.
             $vatReturn = $this->service->findReturn(returnId: $returnId);
-            if ($vatReturn === null) {
+            if ($this->mayAccessReturn(vatReturn: $vatReturn) === false) {
                 return new JSONResponse(['error' => 'VAT return not found'], Http::STATUS_NOT_FOUND);
             }
 
@@ -444,6 +500,31 @@ class VATReturnController extends Controller
         return new JSONResponse(['data' => ['id' => $returnId, 'deleted' => true]], Http::STATUS_OK);
 
     }//end destroy()
+
+    /**
+     * Whether the caller may act on a loaded VAT return (ADR-005 IDOR guard).
+     *
+     * A missing row and a row belonging to an administration the caller has no
+     * membership for are deliberately indistinguishable — canAccess()'s contract
+     * is that a refusal is masked as a 404 and never confirms the record exists.
+     *
+     * @param array<string,mixed>|null $vatReturn The loaded VAT return, or null.
+     *
+     * @return bool True when the row exists AND the caller is a member of its administration.
+     *
+     * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+     */
+    private function mayAccessReturn(?array $vatReturn): bool
+    {
+        if ($vatReturn === null) {
+            return false;
+        }
+
+        return $this->context->canAccess(
+            administrationId: (string) ($vatReturn['administrationId'] ?? '')
+        );
+
+    }//end mayAccessReturn()
 
     /**
      * Build the list-filter map from query params; only allow whitelisted keys.
@@ -469,11 +550,10 @@ class VATReturnController extends Controller
             $filters['statusCode'] = $status;
         }
 
-        $administrationId = (string) $this->request->getParam('administrationId', '');
-        if ($administrationId !== '' && $this->validId(id: $administrationId) === true) {
-            $filters['administrationId'] = $administrationId;
-        }
-
+        // administrationId is deliberately NOT read here: index() resolves the
+        // administration scope from the caller's memberships and only ever
+        // narrows it (ADR-005). Reading it as a plain filter here would let an
+        // unguarded value back in.
         return $filters;
 
     }//end buildListFilters()

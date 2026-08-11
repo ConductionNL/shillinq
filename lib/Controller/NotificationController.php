@@ -50,6 +50,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SettingsService;
 use RuntimeException;
 use OCP\AppFramework\Controller;
@@ -77,17 +78,19 @@ class NotificationController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest           $request     Request object.
-     * @param ContainerInterface $container   DI container for lazy ObjectService resolution.
-     * @param SettingsService    $settings    Register slug + OR availability.
-     * @param IUserSession       $userSession Logged-in user for the per-booking authorization gate.
-     * @param LoggerInterface    $logger      Logger for failure paths.
+     * @param IRequest                     $request     Request object.
+     * @param ContainerInterface           $container   DI container for lazy ObjectService resolution.
+     * @param SettingsService              $settings    Register slug + OR availability.
+     * @param IUserSession                 $userSession Logged-in user — the 401 anonymous-rejection guard only.
+     * @param AdministrationContextService $context     RBAC guard — the per-booking authorization gate (ADR-005).
+     * @param LoggerInterface              $logger      Logger for failure paths.
      */
     public function __construct(
         IRequest $request,
         private readonly ContainerInterface $container,
         private readonly SettingsService $settings,
         private readonly IUserSession $userSession,
+        private readonly AdministrationContextService $context,
         private readonly LoggerInterface $logger
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -114,6 +117,11 @@ class NotificationController extends Controller
     {
         if ($this->userSession->getUser() === null) {
             return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $error = $this->requireAccessibleBooking(bookingId: $id);
+        if ($error !== null) {
+            return $error;
         }
 
         try {
@@ -171,6 +179,11 @@ class NotificationController extends Controller
     {
         if ($this->userSession->getUser() === null) {
             return new JSONResponse(data: ['message' => 'Not logged in'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $error = $this->requireAccessibleBooking(bookingId: $id);
+        if ($error !== null) {
+            return $error;
         }
 
         $params  = $this->request->getParams();
@@ -465,4 +478,58 @@ class NotificationController extends Controller
 
         return null;
     }//end findTriggerBySlug()
+
+    /**
+     * Require the caller to be a member of the administration owning a booking (ADR-005).
+     *
+     * `BookingNotificationTrigger` carries no tenant field at all — its only
+     * scoping is `appliesToBookingSlug` — so the administration has to come from
+     * the `Booking` the route names. Both endpoints previously fetched the
+     * triggers instance-wide and used the booking id only to WIDEN the filter
+     * (a trigger with an empty `appliesToBookingSlug` matches every booking), so
+     * quoting any booking id returned the instance's trigger configuration.
+     *
+     * A booking that does not exist and a booking in another administration both
+     * answer 404 (REQ-MA-001: mask, never confirm).
+     *
+     * @param string $bookingId The booking slug / uuid from the route.
+     *
+     * @return JSONResponse|null A 404 response when refused, null when allowed.
+     *
+     * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-8
+     */
+    private function requireAccessibleBooking(string $bookingId): ?JSONResponse
+    {
+        try {
+            $service = $this->resolveObjectService();
+            $rows    = $service
+                ->setRegister($this->settings->getRegisterSlug())
+                ->setSchema('Booking')
+                ->findAll(['filters' => ['id' => $bookingId]]);
+        } catch (Throwable $e) {
+            $this->logger->warning('shillinq.notification.booking.unavailable', ['error' => $e->getMessage()]);
+            return new JSONResponse(data: ['message' => 'Booking unavailable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
+        }
+
+        foreach ((array) $rows as $row) {
+            if (is_array($row) === false) {
+                $row = (array) json_decode((string) json_encode($row), true);
+            }
+
+            $rowId = (string) ($row['id'] ?? ($row['@self']['id'] ?? ''));
+            if ($rowId !== $bookingId && (string) ($row['bookingId'] ?? '') !== $bookingId) {
+                continue;
+            }
+
+            // canAccess() fails closed on '' (AdministrationContextService:220).
+            if ($this->context->canAccess(administrationId: (string) ($row['administrationId'] ?? '')) === true) {
+                return null;
+            }
+
+            break;
+        }
+
+        return new JSONResponse(data: ['message' => 'Booking not found'], statusCode: Http::STATUS_NOT_FOUND);
+
+    }//end requireAccessibleBooking()
 }//end class

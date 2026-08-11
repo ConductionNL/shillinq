@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\InventoryScanController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\InventoryScanService;
 use OCP\AppFramework\Http;
 use OCP\IGroupManager;
@@ -83,6 +84,23 @@ class InventoryScanControllerTest extends TestCase
     private LoggerInterface&MockObject $logger;
 
     /**
+     * Mock AdministrationContextService — the ADR-005 membership guard.
+     *
+     * @var AdministrationContextService&MockObject
+     */
+    private AdministrationContextService&MockObject $context;
+
+    /**
+     * What canAccess() answers. Flipped by the ADR-005 refusal tests.
+     *
+     * Read through a callback rather than re-stubbed per test: a second
+     * `->method('canAccess')` APPENDS a matcher instead of replacing the first.
+     *
+     * @var bool
+     */
+    private bool $canAccess = true;
+
+    /**
      * Set up test fixtures.
      *
      * @return void
@@ -96,6 +114,10 @@ class InventoryScanControllerTest extends TestCase
         $this->groupManager = $this->createMock(IGroupManager::class);
         $this->scanService  = $this->createMock(InventoryScanService::class);
         $this->logger       = $this->createMock(LoggerInterface::class);
+        $this->context      = $this->createMock(AdministrationContextService::class);
+
+        $this->canAccess = true;
+        $this->context->method('canAccess')->willReturnCallback(fn (): bool => $this->canAccess);
 
     }//end setUp()
 
@@ -111,6 +133,7 @@ class InventoryScanControllerTest extends TestCase
             userSession: $this->userSession,
             groupManager: $this->groupManager,
             scanService: $this->scanService,
+            context: $this->context,
             logger: $this->logger,
         );
 
@@ -139,7 +162,7 @@ class InventoryScanControllerTest extends TestCase
     public function testScanRejectsAnonymous(): void
     {
         $this->userSession->method('getUser')->willReturn(null);
-        $response = $this->controller()->scan([['type' => 'receive', 'transactionId' => 't1']]);
+        $response = $this->controller()->scan([['type' => 'receive', 'transactionId' => 't1']], 'adm-1');
         $this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
     }//end testScanRejectsAnonymous()
@@ -158,7 +181,8 @@ class InventoryScanControllerTest extends TestCase
         $this->scanService->expects($this->never())->method('applyOperation');
 
         $response = $this->controller()->scan(
-            [['type' => 'receive', 'transactionId' => 't1', 'sku' => 'X', 'location' => 'L']]
+            [['type' => 'receive', 'transactionId' => 't1', 'sku' => 'X', 'location' => 'L']],
+            'adm-1'
         );
 
         $data = $response->getData();
@@ -181,7 +205,8 @@ class InventoryScanControllerTest extends TestCase
             ->willReturn(['status' => 'applied', 'transactionId' => 't1', 'syncedAt' => 'now', 'resultingQuantity' => 95.0]);
 
         $response = $this->controller()->scan(
-            [['type' => 'receive', 'transactionId' => 't1', 'sku' => 'X', 'location' => 'L', 'quantity' => 50]]
+            [['type' => 'receive', 'transactionId' => 't1', 'sku' => 'X', 'location' => 'L', 'quantity' => 50]],
+            'adm-1'
         );
 
         $data = $response->getData();
@@ -220,7 +245,7 @@ class InventoryScanControllerTest extends TestCase
             'quantity'      => 5,
             'performedBy'   => 'mallory',
         ];
-        $response = $this->controller()->scan([$op]);
+        $response = $this->controller()->scan([$op], 'adm-1');
 
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
 
@@ -236,7 +261,7 @@ class InventoryScanControllerTest extends TestCase
         $this->loginAs('alice');
         $this->scanService->expects($this->never())->method('applyOperation');
 
-        $response = $this->controller()->scan([['type' => 'receive', 'sku' => 'X', 'location' => 'L']]);
+        $response = $this->controller()->scan([['type' => 'receive', 'sku' => 'X', 'location' => 'L']], 'adm-1');
         $data     = $response->getData();
         $this->assertSame('rejected', $data['results'][0]['status']);
 
@@ -250,7 +275,7 @@ class InventoryScanControllerTest extends TestCase
     public function testScanRejectsEmptyBatch(): void
     {
         $this->loginAs('alice');
-        $response = $this->controller()->scan([]);
+        $response = $this->controller()->scan([], 'adm-1');
         $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
     }//end testScanRejectsEmptyBatch()
@@ -264,7 +289,7 @@ class InventoryScanControllerTest extends TestCase
     {
         $this->loginAs('alice');
         $batch    = array_fill(0, 201, ['type' => 'count', 'transactionId' => 't', 'sku' => 'X', 'location' => 'L']);
-        $response = $this->controller()->scan($batch);
+        $response = $this->controller()->scan($batch, 'adm-1');
         $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
     }//end testScanRejectsOversizedBatch()
@@ -280,11 +305,11 @@ class InventoryScanControllerTest extends TestCase
         $this->scanService->method('resolveBarcode')
             ->willReturnOnConsecutiveCalls(['sku' => 'WIDGET-001', 'name' => 'Blue Widget'], null);
 
-        $found = $this->controller()->resolve('5901234123457');
+        $found = $this->controller()->resolve('5901234123457', 'adm-1');
         $this->assertTrue($found->getData()['found']);
         $this->assertSame('WIDGET-001', $found->getData()['item']['sku']);
 
-        $missing = $this->controller()->resolve('NOPE');
+        $missing = $this->controller()->resolve('NOPE', 'adm-1');
         $this->assertFalse($missing->getData()['found']);
 
     }//end testResolveReturnsItemOrNotFound()
@@ -297,7 +322,7 @@ class InventoryScanControllerTest extends TestCase
     public function testResolveRejectsEmptyBarcode(): void
     {
         $this->loginAs('alice');
-        $response = $this->controller()->resolve('');
+        $response = $this->controller()->resolve('', 'adm-1');
         $this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
     }//end testResolveRejectsEmptyBarcode()
@@ -313,10 +338,65 @@ class InventoryScanControllerTest extends TestCase
         $this->scanService->method('getStockDelta')
             ->willReturn([['sku' => 'WIDGET-001', 'location' => 'WH-A1', 'quantity' => 45]]);
 
-        $response = $this->controller()->sync('2026-05-15T00:00:00Z');
+        $response = $this->controller()->sync('2026-05-15T00:00:00Z', 'adm-1');
         $data     = $response->getData();
         $this->assertArrayHasKey('serverTime', $data);
         $this->assertCount(1, $data['stock']);
 
     }//end testSyncReturnsStockDelta()
+
+    /**
+     * An OMITTED administrationId is a 400, not a silent fallback to 'adm-1' (#518).
+     *
+     * The parameter used to default to the literal `'adm-1'` on resolve(),
+     * sync() and scan(), so a request that named no tenant read and wrote a real
+     * one. A tenant is never a default.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.3
+     */
+    public function testOmittedAdministrationNoLongerDefaultsToAdm1(): void
+    {
+        $this->loginAs('alice');
+        $this->scanService->expects($this->never())->method('getStockDelta');
+        $this->scanService->expects($this->never())->method('resolveBarcode');
+
+        self::assertSame(Http::STATUS_BAD_REQUEST, $this->controller()->sync('2026-05-15T00:00:00Z')->getStatus());
+        self::assertSame(Http::STATUS_BAD_REQUEST, $this->controller()->resolve('5901234123457')->getStatus());
+
+    }//end testOmittedAdministrationNoLongerDefaultsToAdm1()
+
+    /**
+     * A foreign administrationId yields 404 on every endpoint (ADR-005 / #518).
+     *
+     * @return void
+     *
+     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.3
+     */
+    public function testForeignAdministrationReturns404OnEveryEndpoint(): void
+    {
+        $this->loginAs('alice');
+        $this->canAccess = false;
+        $this->scanService->expects($this->never())->method('getStockDelta');
+        $this->scanService->expects($this->never())->method('resolveBarcode');
+        $this->scanService->expects($this->never())->method('applyOperation');
+
+        self::assertSame(
+            Http::STATUS_NOT_FOUND,
+            $this->controller()->sync('2026-05-15T00:00:00Z', 'adm-not-mine')->getStatus()
+        );
+        self::assertSame(
+            Http::STATUS_NOT_FOUND,
+            $this->controller()->resolve('5901234123457', 'adm-not-mine')->getStatus()
+        );
+        self::assertSame(
+            Http::STATUS_NOT_FOUND,
+            $this->controller()->scan(
+                [['type' => 'receive', 'transactionId' => 't1', 'sku' => 'X', 'location' => 'L']],
+                'adm-not-mine'
+            )->getStatus()
+        );
+
+    }//end testForeignAdministrationReturns404OnEveryEndpoint()
 }//end class
