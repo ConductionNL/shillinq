@@ -19,18 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
- *
- * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
- * The change directory it names was never committed, and the `reporting`
- * capability has NO canonical spec. One was drafted during gate remediation
- * and withdrawn: a spec written to fit the code, by the process whose job is
- * to check the code against a spec, is not a specification anyone agreed to.
- * Authoring it is the capability owner's decision, not a gate fix. Note in
- * particular that bookkeeping-trial-balance REQ-TB-001 forbids a PHP report
- * builder for the trial balance outright, which is what this class is — see
- * shillinq#500; pointing there would report conformance to a rule this code
- * breaks.
+ * @spec openspec/specs/reporting/spec.md#req-rpt-003
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.Commenting.InlineComment
  */

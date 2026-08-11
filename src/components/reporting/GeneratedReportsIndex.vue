@@ -26,14 +26,7 @@
  `index` page type (ADR-024 / ADR-036). The manifest fragment
  src/manifest.d/reporting-compliance.json declares the route.
 
- @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
-
- KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
- The change directory it names was never committed, and the `reporting`
- capability has NO canonical spec. One was drafted during gate remediation and
- withdrawn: a spec written to fit the code, by the process whose job is to
- check the code against a spec, is not a specification anyone agreed to.
- Authoring it is the capability owner's decision, not a gate fix.
+ @spec openspec/specs/reporting/spec.md#req-rpt-007
 -->
 <template>
 	<div class="generated-reports" data-testid="generated-reports">
