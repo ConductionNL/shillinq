@@ -81,6 +81,75 @@ final class ModelOrReferencesPilotSeedIntegrationTest extends TestCase
     }//end register()
 
     /**
+     * The EFFECTIVE register config — the monolith with every
+     * `register.d/*.json` fragment deep-merged over it, which is what
+     * `SettingsService::loadRegisterConfigData()` hands to
+     * `ConfigurationService::importFromApp()`.
+     *
+     * Reading the monolith alone is what let the Cluster-B pilot look
+     * declared for months while OpenRegister never saw it: the declaration
+     * sat at `components.<Name>`, one level above `components.schemas`, and
+     * the only assertions on it read it back from that same dead path. A
+     * schema question can only be answered against the merged result.
+     *
+     * Mirrors `deepMergeConfig()`: maps recurse, lists CONCATENATE.
+     *
+     * @return array<string,mixed>
+     */
+    private function effectiveRegister(): array
+    {
+        $merged = $this->register();
+
+        $fragments = glob(__DIR__.'/../../lib/Settings/register.d/*.json');
+        self::assertNotEmpty($fragments, 'No register.d fragments found — the merge would be a no-op.');
+        sort($fragments);
+
+        foreach ($fragments as $fragment) {
+            $raw = file_get_contents($fragment);
+            if ($raw === false) {
+                self::fail('Could not read fragment: '.$fragment);
+            }
+
+            $data = json_decode($raw, true);
+            if (is_array($data) === false) {
+                self::fail('Fragment is not valid JSON: '.$fragment);
+            }
+
+            $merged = $this->deepMerge(base: $merged, overlay: $data);
+        }
+
+        return $merged;
+
+    }//end effectiveRegister()
+
+    /**
+     * Deep-merge one config over another, exactly as OpenRegister does.
+     *
+     * @param array<mixed> $base    The config merged onto.
+     * @param array<mixed> $overlay The config merged in.
+     *
+     * @return array<mixed> The merged config.
+     */
+    private function deepMerge(array $base, array $overlay): array
+    {
+        if (array_is_list($base) === true && array_is_list($overlay) === true) {
+            return array_merge($base, $overlay);
+        }
+
+        foreach ($overlay as $key => $value) {
+            if (isset($base[$key]) === true && is_array($base[$key]) === true && is_array($value) === true) {
+                $base[$key] = $this->deepMerge(base: $base[$key], overlay: $value);
+                continue;
+            }
+
+            $base[$key] = $value;
+        }
+
+        return $base;
+
+    }//end deepMerge()
+
+    /**
      * All seeded `objects[]` entries for a given schema slug.
      *
      * @param string $schema Schema slug (e.g. "GLTransaction").
@@ -271,15 +340,25 @@ final class ModelOrReferencesPilotSeedIntegrationTest extends TestCase
     // -----------------------------------------------------------------
 
     /**
-     * Task 5 — ARInvoice.customerId + glTransactionId declare the $ref
-     * idiom, and the pre-existing descriptive x-openregister-relations block
-     * is left intact (not the resolving idiom, per design.md).
+     * Task 5 — ARInvoice.customerId + glTransactionId declare the $ref idiom
+     * in the EFFECTIVE config, and the seeded values actually resolve.
+     *
+     * Asserted against `effectiveRegister()`, not the monolith. The
+     * declaration this test used to read sat at `components.ARInvoice` — one
+     * level above `components.schemas`, the only branch OpenRegister's
+     * ImportHandler iterates — so it never reached the engine, and this test
+     * passed by reading it back from the same dead path. The declaration is
+     * now on the live schema, and the shape assertion is paired with a
+     * resolution assertion on the seeded data so the two cannot drift apart
+     * again: a declaration nothing loads and a value nothing resolves look
+     * identical from a shape check alone.
      *
      * @return void
      */
     public function testArInvoiceDeclaresCustomerAndGlTransactionReferences(): void
     {
-        $arInvoice  = $this->register()['components']['ARInvoice'];
+        $effective  = $this->effectiveRegister();
+        $arInvoice  = $effective['components']['schemas']['ARInvoice'];
         $properties = $arInvoice['properties'];
 
         $customerId = $properties['customerId'];
@@ -293,27 +372,62 @@ final class ModelOrReferencesPilotSeedIntegrationTest extends TestCase
         self::assertSame('uuid', $glTransactionId['format']);
         self::assertSame(self::NIL_UUID, $glTransactionId['example']);
 
-        // The pre-existing descriptive block is metadata the relation graph
-        // does NOT read; the pilot must leave it in place, untouched.
-        self::assertArrayHasKey('x-openregister-relations', $arInvoice);
-        self::assertArrayHasKey('customer', $arInvoice['x-openregister-relations']);
-        self::assertSame('customerId', $arInvoice['x-openregister-relations']['customer']['localField']);
-        self::assertArrayHasKey('glTransaction', $arInvoice['x-openregister-relations']);
+        // The declaration is only worth anything if the shipped data obeys
+        // it. Every seeded ARInvoice must point at a CustomerMaster object
+        // that exists, by UUID — never at the per-administration customer
+        // CODE (CustomerMaster.customerId, e.g. "DEB-0001"), which is a
+        // different identifier space and is not globally unique.
+        $customerUuids = [];
+        foreach ($this->seededObjects('CustomerMaster') as $customer) {
+            $customerUuids[] = ($customer['@self']['id'] ?? null);
+        }
+
+        $invoices = $this->seededObjects('ARInvoice');
+        self::assertNotEmpty($invoices, 'No seeded ARInvoice — this test would assert nothing.');
+
+        foreach ($invoices as $invoice) {
+            self::assertContains(
+                ($invoice['customerId'] ?? null),
+                $customerUuids,
+                'Seeded ARInvoice.customerId must be the object UUID of a seeded CustomerMaster.'
+            );
+        }
 
     }//end testArInvoiceDeclaresCustomerAndGlTransactionReferences()
 
     /**
-     * Task 6 — CustomerMaster declares the inverse `invoices` array.
+     * Task 6 — CustomerMaster declares the inverse `invoices` array in the
+     * EFFECTIVE config, and the inverse resolves back.
      *
      * @return void
      */
     public function testCustomerMasterDeclaresInverseInvoicesArray(): void
     {
-        $invoices = $this->register()['components']['CustomerMaster']['properties']['invoices'];
+        $invoices = $this->effectiveRegister()['components']['schemas']['CustomerMaster']['properties']['invoices'];
 
         self::assertSame('array', $invoices['type']);
         self::assertSame('ARInvoice', $invoices['items']['$ref']);
         self::assertSame('uuid', $invoices['items']['format']);
+
+        // The inverse must resolve back: at least one seeded CustomerMaster
+        // is reachable from a seeded ARInvoice via customerId.
+        $reachable = [];
+        foreach ($this->seededObjects('ARInvoice') as $invoice) {
+            $reachable[] = ($invoice['customerId'] ?? null);
+        }
+
+        $resolved = 0;
+        foreach ($this->seededObjects('CustomerMaster') as $customer) {
+            if (in_array(($customer['@self']['id'] ?? null), $reachable, true) === true) {
+                $resolved++;
+            }
+        }
+
+        self::assertGreaterThan(
+            0,
+            $resolved,
+            'No seeded CustomerMaster is reachable through ARInvoice.customerId — the inverse resolves to nothing.'
+        );
 
     }//end testCustomerMasterDeclaresInverseInvoicesArray()
 

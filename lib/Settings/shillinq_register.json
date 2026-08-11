@@ -327,7 +327,9 @@
         "properties": {
           "bankConnectionId": {
             "type": "string",
-            "description": "FK to the BankConnection that sourced this statement.",
+            "format": "uuid",
+            "$ref": "BankConnection",
+            "description": "Reference to the PSD2 BankConnection that generated this statement.",
             "example": "bank-conn-uuid-1",
             "title": "Bank Connection ID"
           },
@@ -383,15 +385,6 @@
             ],
             "template": "bank-statement-available",
             "description": "Notify the configured bank-connection operator when a new statement is available. Declarative fan-out per ADR-031; no BankNotificationService."
-          }
-        },
-        "x-openregister-relations": {
-          "bankConnection": {
-            "localField": "bankConnectionId",
-            "relatedSchema": "BankConnection",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The PSD2 bank connection that generated this statement."
           }
         },
         "x-openregister-rbac": {
@@ -563,15 +556,6 @@
               "label": "Reverse transaction",
               "description": "Mark this transaction as reversed. A compensating GLTransaction referencing this one via reversesTransactionId must exist."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "lines": {
-            "localField": "id",
-            "relatedSchema": "GLLine",
-            "relatedField": "transactionId",
-            "cardinality": "one-to-many",
-            "description": "All GLLine rows belonging to this transaction."
           }
         },
         "x-openregister-rbac": {
@@ -815,7 +799,7 @@
           },
           "accountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber.",
+            "description": "FK to Account.accountNumber (bookkeeping-chart-of-accounts). A business key, not an object identifier — the referenced Account must be in lifecycleState active for the post transition to succeed.",
             "example": "4100",
             "title": "Account Number"
           },
@@ -897,17 +881,17 @@
           },
           "costCenterCode": {
             "type": "string",
-            "description": "FK to CostCenter.code for analytical cost-center reporting. Backwards-compatible with the existing costCenter field per REQ-CC-003.",
+            "description": "FK to AnalyticalDimension.code (dimensionType=cost-center) for dimension-tagged analytical reporting per REQ-CC-003 + REQ-ADIM-101. A business key, not an object identifier. Field name and stored values are unchanged; only the target was re-pointed from the retired CostCenter schema to the unified AnalyticalDimension, so this stays backwards-compatible with the existing costCenter field.",
             "nullable": true,
             "example": "KC-100",
             "title": "Cost Center Code"
           },
           "kostenDragerCode": {
             "type": "string",
-            "description": "FK to KostenDrager.code for cost-unit analytical reporting per REQ-CC-003.",
+            "description": "FK to AnalyticalDimension.code (dimensionType=cost-object) for cost-unit analytical reporting per REQ-CC-003 + REQ-ADIM-101. A business key, not an object identifier. Field name and stored values are unchanged; only the target was re-pointed from the retired KostenDrager schema to the unified AnalyticalDimension.",
             "nullable": true,
             "example": "KD-001",
-            "title": "Cost Center Code"
+            "title": "Kosten Drager Code"
           },
           "projectCode": {
             "type": "string",
@@ -946,43 +930,6 @@
               "eigenaars-woning"
             ],
             "title": "OZB Category"
-          }
-        },
-        "x-openregister-relations": {
-          "parentTransaction": {
-            "localField": "transactionId",
-            "relatedSchema": "GLTransaction",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The parent GLTransaction that owns this line."
-          },
-          "account": {
-            "localField": "accountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to Account.accountNumber (bookkeeping-chart-of-accounts). Requires Account.lifecycleState = active on the post transition."
-          },
-          "costCenterRelation": {
-            "localField": "costCenterCode",
-            "relatedSchema": "AnalyticalDimension",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "FK to AnalyticalDimension.code (dimensionType=cost-center) for dimension-tagged analytical reporting per REQ-CC-003 + REQ-ADIM-101. Field name and stored values unchanged; register re-targeted from the retired CostCenter to the unified AnalyticalDimension."
-          },
-          "kostenDragerRelation": {
-            "localField": "kostenDragerCode",
-            "relatedSchema": "AnalyticalDimension",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "FK to AnalyticalDimension.code (dimensionType=cost-object) for cost-unit analytical reporting per REQ-CC-003 + REQ-ADIM-101. Field name and stored values unchanged; register re-targeted from the retired KostenDrager to the unified AnalyticalDimension."
-          },
-          "projectRelation": {
-            "localField": "projectCode",
-            "relatedSchema": "Project",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "FK to Project.code for project accounting and WBSO time-per-project per REQ-CC-003 + REQ-CC-007."
           }
         },
         "x-openregister-aggregations": {
@@ -1571,15 +1518,6 @@
               "description": "Move to historical archive from blocked state. Requires zero open balance.",
               "requires": "OCA\\Shillinq\\Guard\\AccountBalanceGuard::requireZeroBalance"
             }
-          }
-        },
-        "x-openregister-relations": {
-          "parentAccount": {
-            "localField": "parentAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "Self-relation enabling hierarchical chart-of-accounts navigation."
           }
         },
         "x-openregister-rbac": {
@@ -3368,15 +3306,6 @@
               }
             }
           }
-        },
-        "x-openregister-relations": {
-          "parentProgramma": {
-            "localField": "parentCode",
-            "relatedSchema": "BBVProgramma",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "Self-relation for hierarchical programma navigation (hoofdprogramma → sub-programma)."
-          }
         }
       },
       "WaterschapHeffingPosting": {
@@ -3770,7 +3699,9 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the Administration owning this asset. Scopes uniqueness of assetNumber.",
+            "format": "uuid",
+            "$ref": "Administration",
+            "description": "Reference to the Administration owning this asset. Scopes uniqueness of assetNumber.",
             "example": "adm-1",
             "title": "Administration ID"
           }
@@ -4146,36 +4077,6 @@
               "label": "Reject proposal",
               "description": "Reject the asset proposal without capitalising it."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "administration": {
-            "localField": "administrationId",
-            "relatedSchema": "Administration",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Administration that owns this asset."
-          },
-          "assetAccount": {
-            "localField": "assetAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "Balance-sheet account carrying the asset's gross value."
-          },
-          "accumulatedDepAccount": {
-            "localField": "accumulatedDepAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "Contra account for accumulated depreciation."
-          },
-          "depreciationExpenseAccount": {
-            "localField": "depreciationExpenseAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "P&L account for the periodic depreciation expense charge."
           }
         },
         "x-openregister-rbac": {
@@ -5599,15 +5500,6 @@
             "description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
           }
         },
-        "x-openregister-relations": {
-          "parentProject": {
-            "localField": "parentCode",
-            "relatedSchema": "Project",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "Self-relation enabling hierarchical project navigation per REQ-CC-002."
-          }
-        },
         "x-openregister-aggregations": {
           "segmentPnl": {
             "description": "Segment P&L for this project: sum of GLLine amounts whose projectCode equals this record's code per REQ-CC-005. Shape is sufficient for WBSO time-per-project join per REQ-CC-007.",
@@ -5876,7 +5768,12 @@
           },
           "projectId": {
             "type": "string",
-            "description": "FK to the analytical dimension (AnalyticalDimension with dimensionType=project) for this budget allocation per REQ-CPA-103. Formerly CostProject.id — retargeted to AnalyticalDimension by retire-cost-project.",
+            "format": "uuid",
+            "$ref": "AnalyticalDimension",
+            "x-relation-filter": {
+              "dimensionType": "project"
+            },
+            "description": "Reference to the parent analytical dimension (an AnalyticalDimension with dimensionType=project) for this budget allocation per REQ-CPA-103. Formerly CostProject.id — retargeted to AnalyticalDimension by retire-cost-project.",
             "example": "cp-1",
             "title": "Project ID"
           },
@@ -5946,15 +5843,6 @@
             "rule": "selectielijst:5.1.2",
             "years": 7,
             "description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-115)."
-          }
-        },
-        "x-openregister-relations": {
-          "analyticalDimension": {
-            "localField": "projectId",
-            "relatedSchema": "AnalyticalDimension",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Parent AnalyticalDimension (dimensionType=project) for this allocation per REQ-CPA-103. Formerly CostProject; retargeted to AnalyticalDimension by retire-cost-project."
           }
         },
         "x-openregister-rbac": {
@@ -8545,7 +8433,9 @@
           },
           "fiscalYearId": {
             "type": "string",
-            "description": "FK to the FiscalYear this closing entry belongs to. Per REQ-YEC-001.",
+            "format": "uuid",
+            "$ref": "FiscalYear",
+            "description": "Reference to the FiscalYear this closing entry belongs to. Per REQ-YEC-001.",
             "example": "fy-2026-nl",
             "title": "Fiscal Year ID"
           },
@@ -8603,8 +8493,10 @@
           },
           "glTransactionId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "GLTransaction",
             "nullable": true,
-            "description": "FK to the GLTransaction that materialised this closing entry when posted. Set by the lifecycle action on transition:post per REQ-YEC-009.",
+            "description": "Reference to the GLTransaction that materialised this closing entry when posted. Set by the lifecycle action on transition:post per REQ-YEC-009.",
             "example": "gl-txn-2026-close-revenue",
             "title": "GL Transaction ID"
           },
@@ -8720,27 +8612,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "fiscalYear": {
-            "localField": "fiscalYearId",
-            "relatedSchema": "FiscalYear",
-            "cardinality": "many-to-one",
-            "description": "The fiscal year this closing entry belongs to."
-          },
-          "template": {
-            "localField": "automationTemplate",
-            "relatedSchema": "ClosingEntryTemplate",
-            "relatedField": "templateId",
-            "cardinality": "many-to-one",
-            "description": "The closing-entry template that generated this entry (when generated automatically)."
-          },
-          "glTransaction": {
-            "localField": "glTransactionId",
-            "relatedSchema": "GLTransaction",
-            "cardinality": "one-to-one",
-            "description": "The materialised GL transaction (set when the entry is posted)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
@@ -8825,7 +8696,9 @@
           },
           "fiscalYearId": {
             "type": "string",
-            "description": "FK to the FiscalYear this record covers. One RetainedEarnings record per (fiscalYearId, administrationId). Per REQ-YEC-002.",
+            "format": "uuid",
+            "$ref": "FiscalYear",
+            "description": "Reference to the FiscalYear this record covers. One RetainedEarnings record per (fiscalYearId, administrationId). Per REQ-YEC-002.",
             "example": "fy-2026-nl",
             "title": "Fiscal Year ID"
           },
@@ -8866,8 +8739,10 @@
           },
           "closingEntryId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "ClosingEntry",
             "nullable": true,
-            "description": "FK to the ClosingEntry that materialised the retained-earnings transfer for this FY. Set when the FY close lifecycle posts the entry per REQ-YEC-002 / REQ-YEC-009.",
+            "description": "Reference to the ClosingEntry that materialised the retained-earnings transfer for this FY. Set when the FY close lifecycle posts the entry per REQ-YEC-002 / REQ-YEC-009.",
             "example": "ce-2026-retained-earnings",
             "title": "Closing Entry ID"
           },
@@ -8876,20 +8751,6 @@
             "description": "FK to the Administration that owns this retained-earnings record. Composite uniqueness with fiscalYearId per D5.",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
-          }
-        },
-        "x-openregister-relations": {
-          "fiscalYear": {
-            "localField": "fiscalYearId",
-            "relatedSchema": "FiscalYear",
-            "cardinality": "many-to-one",
-            "description": "The fiscal year this retained-earnings record covers."
-          },
-          "closingEntry": {
-            "localField": "closingEntryId",
-            "relatedSchema": "ClosingEntry",
-            "cardinality": "one-to-one",
-            "description": "The closing entry that materialised the retained-earnings rollforward."
           }
         },
         "x-openregister-aggregations": {
@@ -8994,15 +8855,6 @@
             "description": "Optional start date if the administration rotates closing accounts across fiscal years (e.g. switching from 9900 to 9990). When null, this ClosingAccount applies indefinitely. Per REQ-YEC-003.",
             "example": "2026-01-01",
             "title": "Effective From"
-          }
-        },
-        "x-openregister-relations": {
-          "account": {
-            "localField": "accountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "The GL account designated as the closing / income-summary account."
           }
         },
         "x-openregister-rbac": {
@@ -9184,15 +9036,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "closingAccount": {
-            "localField": "closingAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "The GL account these closing entries flow through."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "bookkeeper": {
@@ -9329,7 +9172,9 @@
           },
           "claimId": {
             "type": "string",
-            "description": "FK to parent ExpenseClaimEntry.id; null until the receipt is added to a claim.",
+            "format": "uuid",
+            "$ref": "ExpenseClaimEntry",
+            "description": "Reference to the parent ExpenseClaimEntry; null until the receipt is added to a claim.",
             "nullable": true,
             "example": "exp-claim-2026-0001",
             "title": "Claim ID"
@@ -9417,15 +9262,6 @@
               "value": "@self.receiptDate"
             },
             "nullable": true
-          }
-        },
-        "x-openregister-relations": {
-          "claim": {
-            "localField": "claimId",
-            "relatedSchema": "ExpenseClaimEntry",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Parent expense claim this receipt belongs to."
           }
         },
         "x-openregister-rbac": {
@@ -9543,7 +9379,9 @@
           },
           "claimId": {
             "type": "string",
-            "description": "FK to parent ExpenseClaimEntry.id; null until added to a claim.",
+            "format": "uuid",
+            "$ref": "ExpenseClaimEntry",
+            "description": "Reference to the parent ExpenseClaimEntry; null until added to a claim.",
             "nullable": true,
             "example": "exp-claim-2026-0001",
             "title": "Claim ID"
@@ -9612,15 +9450,6 @@
               "prop": "@ref.rate.ratePerKm"
             },
             "targetField": "ratePerKm"
-          }
-        },
-        "x-openregister-relations": {
-          "claim": {
-            "localField": "claimId",
-            "relatedSchema": "ExpenseClaimEntry",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Parent expense claim this mileage entry belongs to."
           }
         },
         "x-openregister-rbac": {
@@ -9727,7 +9556,9 @@
           },
           "claimId": {
             "type": "string",
-            "description": "FK to parent ExpenseClaimEntry.id; null until added to a claim.",
+            "format": "uuid",
+            "$ref": "ExpenseClaimEntry",
+            "description": "Reference to the parent ExpenseClaimEntry; null until added to a claim.",
             "nullable": true,
             "example": "exp-claim-2026-0001",
             "title": "Claim ID"
@@ -9831,15 +9662,6 @@
               "value": "@self.travelStartDate"
             },
             "nullable": true
-          }
-        },
-        "x-openregister-relations": {
-          "claim": {
-            "localField": "claimId",
-            "relatedSchema": "ExpenseClaimEntry",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "Parent expense claim this per-diem record belongs to."
           }
         },
         "x-openregister-rbac": {
@@ -9949,9 +9771,11 @@
           "receiptIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid",
+              "$ref": "Receipt"
             },
-            "description": "FKs to linked Receipt records.",
+            "description": "References to the Receipt records linked to this claim.",
             "nullable": true,
             "example": [
               "REC-2026-0001",
@@ -9962,9 +9786,11 @@
           "mileageIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid",
+              "$ref": "MileageEntry"
             },
-            "description": "FKs to linked MileageEntry records.",
+            "description": "References to the MileageEntry records linked to this claim.",
             "nullable": true,
             "example": [
               "MLG-2026-0001"
@@ -9974,9 +9800,11 @@
           "perDiemIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid",
+              "$ref": "PerDiem"
             },
-            "description": "FKs to linked PerDiem records.",
+            "description": "References to the PerDiem records linked to this claim.",
             "nullable": true,
             "example": [
               "PDM-2026-0001"
@@ -10249,29 +10077,6 @@
             ],
             "operation": "sum",
             "targetField": "totalAmount"
-          }
-        },
-        "x-openregister-relations": {
-          "receipts": {
-            "localField": "receiptIds",
-            "relatedSchema": "Receipt",
-            "relatedField": "id",
-            "cardinality": "one-to-many",
-            "description": "All Receipt records linked to this claim."
-          },
-          "mileageEntries": {
-            "localField": "mileageIds",
-            "relatedSchema": "MileageEntry",
-            "relatedField": "id",
-            "cardinality": "one-to-many",
-            "description": "All MileageEntry records linked to this claim."
-          },
-          "perDiemEntries": {
-            "localField": "perDiemIds",
-            "relatedSchema": "PerDiem",
-            "relatedField": "id",
-            "cardinality": "one-to-many",
-            "description": "All PerDiem records linked to this claim."
           }
         },
         "x-openregister-rbac": {
@@ -13181,7 +12986,9 @@
           },
           "assetRef": {
             "type": "string",
-            "description": "FK to FixedAsset UUID (OpenRegister relation).",
+            "format": "uuid",
+            "$ref": "FixedAsset",
+            "description": "Reference to the FixedAsset this depreciation schedule belongs to.",
             "example": "fa-uuid-0001",
             "title": "Asset Ref"
           },
@@ -13405,15 +13212,6 @@
                 "operation": "sum"
               }
             }
-          }
-        },
-        "x-openregister-relations": {
-          "fixedAsset": {
-            "localField": "assetRef",
-            "relatedSchema": "FixedAsset",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The fixed asset this depreciation schedule belongs to."
           }
         },
         "x-openregister-audit-trail": {
@@ -14593,15 +14391,6 @@
               }
             }
           }
-        },
-        "x-openregister-relations": {
-          "linkedAccount": {
-            "localField": "linkedAccountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to Chart-of-Accounts entry for GL classification per T1 bookkeeping-chart-of-accounts."
-          }
         }
       },
       "SBRDocumentType": {
@@ -14931,7 +14720,9 @@
         "properties": {
           "sourceAccountId": {
             "type": "string",
-            "description": "FK to Account.id — the Shillinq chart-of-accounts entry being mapped.",
+            "format": "uuid",
+            "$ref": "Account",
+            "description": "Reference to the Shillinq chart-of-accounts Account being mapped to an XBRL GL concept.",
             "example": "account-uuid-1000",
             "title": "Source Account ID"
           },
@@ -14971,22 +14762,6 @@
             "nullable": true,
             "example": "Direct mapping per RGS 3.5 MKB classification.",
             "title": "Notes"
-          }
-        },
-        "x-openregister-relations": {
-          "account": {
-            "localField": "sourceAccountId",
-            "relatedSchema": "Account",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The Shillinq Account being mapped to an XBRL GL concept."
-          },
-          "taxonomy": {
-            "localField": "taxonomyVersion",
-            "relatedSchema": "XBRLTaxonomy",
-            "relatedField": "taxonomyVersion",
-            "cardinality": "many-to-one",
-            "description": "The XBRLTaxonomy version this mapping applies to."
           }
         },
         "x-openregister-rbac": {
@@ -15591,15 +15366,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "repaymentInstallments": {
-            "localField": "id",
-            "relatedSchema": "RepaymentInstallment",
-            "relatedField": "subsidieId",
-            "cardinality": "one-to-many",
-            "description": "Child RepaymentInstallment records for the terugvordering afbetalingsregeling per REQ-SUB-007. NOT a parallel state machine per ADR-022."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "subsidie-coordinator": {
@@ -15650,7 +15416,9 @@
         "properties": {
           "subsidieId": {
             "type": "string",
-            "description": "FK to the Subsidie.id that this instalment belongs to.",
+            "format": "uuid",
+            "$ref": "Subsidie",
+            "description": "Reference to the Subsidie this instalment belongs to, as part of its terugvordering afbetalingsregeling per REQ-SUB-007.",
             "example": "sub-terugvordering-uuid",
             "title": "Subsidy ID"
           },
@@ -15837,15 +15605,6 @@
             "description": "Notify subsidie-coordinator when a repayment instalment becomes overdue per REQ-SUB-007 + REQ-SUB-010."
           }
         },
-        "x-openregister-relations": {
-          "subsidie": {
-            "localField": "subsidieId",
-            "relatedSchema": "Subsidie",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The Subsidie record for which this instalment is part of the afbetalingsregeling per REQ-SUB-007."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "subsidie-coordinator": {
@@ -15990,22 +15749,6 @@
             "administrationId",
             "accountNumber"
           ]
-        },
-        "x-openregister-relations": {
-          "account": {
-            "localField": "accountNumber",
-            "relatedSchema": "Account",
-            "relatedField": "accountNumber",
-            "cardinality": "many-to-one",
-            "description": "FK to the T1 Account schema (chart of accounts)."
-          },
-          "bbvTaakveld": {
-            "localField": "taakveld",
-            "relatedSchema": "BbvTaakveld",
-            "relatedField": "taakveldCode",
-            "cardinality": "many-to-one",
-            "description": "FK to the BbvTaakveld catalogue entry."
-          }
         },
         "x-openregister-rbac": {
           "roles": {
@@ -16177,7 +15920,9 @@
         "properties": {
           "statementId": {
             "type": "string",
-            "description": "FK to the parent BankStatement.",
+            "format": "uuid",
+            "$ref": "BankStatement",
+            "description": "Reference to the parent BankStatement this line was imported from.",
             "example": "bs-uuid-1",
             "title": "Statement ID"
           },
@@ -16299,15 +16044,6 @@
               "trigger": "operator-action",
               "description": "Operator marks line as \"unmatched final\". Lifecycle materialises a GLTransaction to the designated suspense account per REQ-BR-007. Declarative per ADR-031."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "statement": {
-            "localField": "statementId",
-            "relatedSchema": "BankStatement",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The parent bank statement."
           }
         },
         "x-openregister-rbac": {
@@ -16632,7 +16368,9 @@
           },
           "matchingRuleId": {
             "type": "string",
-            "description": "FK to the MatchingRule that produced this candidate.",
+            "format": "uuid",
+            "$ref": "MatchingRule",
+            "description": "Reference to the MatchingRule that produced this candidate match.",
             "nullable": true,
             "example": "rule-uuid-1",
             "title": "Matching Rule ID"
@@ -16713,15 +16451,6 @@
             "confidenceField": "confidenceScore",
             "emitSchema": "ReconciliationMatch",
             "deduplication": "first-match-wins"
-          }
-        },
-        "x-openregister-relations": {
-          "matchingRule": {
-            "localField": "matchingRuleId",
-            "relatedSchema": "MatchingRule",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The matching rule that produced this candidate."
           }
         },
         "x-openregister-rbac": {
@@ -16993,15 +16722,6 @@
             "description": "FK to the Administration that owns this IP asset.",
             "example": "adm-1",
             "title": "Administration ID"
-          }
-        },
-        "x-openregister-relations": {
-          "winstToerekeningen": {
-            "localField": "id",
-            "relatedSchema": "WinstToerekening",
-            "relatedField": "ipAssetId",
-            "cardinality": "one-to-many",
-            "description": "All WinstToerekening records attributed to this IP asset."
           }
         },
         "x-openregister-audit-trail": {
@@ -17414,9 +17134,11 @@
         "properties": {
           "ipAssetId": {
             "type": "string",
-            "description": "FK to IPAssetValuation.id this toerekening applies to.",
+            "format": "uuid",
+            "$ref": "IPAssetValuation",
+            "description": "Reference to the IPAssetValuation this profit attribution applies to.",
             "example": "ip-asset-uuid-1",
-            "title": "Ip Asset ID"
+            "title": "IP Asset ID"
           },
           "periodId": {
             "type": "string",
@@ -17552,15 +17274,6 @@
             "type": "number",
             "description": "Computed verdeelsleutel ratio for omzet-aandeel and r-en-d-uren methods. Null for custom-formula. JSON-AST nested if over verdeelsleutel with division.",
             "example": 0.3
-          }
-        },
-        "x-openregister-relations": {
-          "ipAsset": {
-            "localField": "ipAssetId",
-            "relatedSchema": "IPAssetValuation",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The IP asset this profit attribution belongs to."
           }
         },
         "x-openregister-rbac": {
@@ -18507,15 +18220,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "currencyBalances": {
-            "localField": "id",
-            "relatedSchema": "CurrencyBalance",
-            "relatedField": "accountId",
-            "cardinality": "one-to-many",
-            "description": "All CurrencyBalance snapshot records for this bank account across currencies."
-          }
-        },
         "x-openregister-aggregations": {
           "balanceByCurrency": {
             "description": "Latest balance per currency for this bank account. Aggregates CurrencyBalance records grouped by currency. Used for T3 cash-position dashboards per REQ-MC-004.",
@@ -18556,7 +18260,9 @@
           },
           "accountId": {
             "type": "string",
-            "description": "FK to BankAccount.id. Identifies which bank account this balance belongs to.",
+            "format": "uuid",
+            "$ref": "BankAccount",
+            "description": "Reference to the BankAccount this balance snapshot belongs to. Enables account metadata lookup on the detail page.",
             "example": "bank-eur-op",
             "title": "Account ID"
           },
@@ -18588,15 +18294,6 @@
             "description": "Timestamp of the most recent balance update. Used to determine snapshot freshness for reconciliation and cash-position reports.",
             "example": "2026-05-21T09:00:00Z",
             "title": "Last Updated"
-          }
-        },
-        "x-openregister-relations": {
-          "bankAccount": {
-            "localField": "accountId",
-            "relatedSchema": "BankAccount",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "The bank account this balance snapshot belongs to. FK enabling account metadata lookup on the detail page."
           }
         },
         "x-openregister-filters": {
@@ -19684,15 +19381,6 @@
             "default": false,
             "description": "Whether this categorie is mandatory in the Iv3-aanlevering per informatievoorschrift.",
             "title": "Iv3 Mandatory"
-          }
-        },
-        "x-openregister-relations": {
-          "parent": {
-            "localField": "parentCode",
-            "relatedSchema": "EconomischeCategorie",
-            "relatedField": "code",
-            "cardinality": "many-to-one",
-            "description": "Self-relation for the economische-categorie hierarchy."
           }
         },
         "x-openregister-rbac": {
@@ -21085,900 +20773,14 @@
             "field": "administrationId",
             "enforce": true
           }
-        },
-        "x-openregister-relations": {
-          "order": {
-            "localField": "orderId",
-            "relatedSchema": "SalesOrder",
-            "relatedField": "orderId",
-            "cardinality": "many-to-one",
-            "description": "The parent SalesOrder this line belongs to."
-          }
-        }
-      }
-    },
-    "SisaReport": {
-      "slug": "SisaReport",
-      "icon": "FileDocumentCheckOutline",
-      "version": "0.1.0",
-      "title": "SiSa Report",
-      "description": "Single Information Single Audit (SiSa) compliance report per fiscal year per REQ-SISA-001. Aggregates transaction counts, on-time settlement %, audit findings, and overall audit opinion for Dutch government grant compliance (WBSO, BBV).",
-      "x-schema-org": "schema:Report",
-      "type": "object",
-      "required": [
-        "reportNumber",
-        "fiscalYear",
-        "administrationId",
-        "reportDate",
-        "currency",
-        "auditOpinion",
-        "complianceStatus",
-        "lifecycleState"
-      ],
-      "properties": {
-        "reportNumber": {
-          "type": "string",
-          "description": "Unique report identifier per administration (e.g., SISA-2026-ADM001).",
-          "example": "SISA-2026-ADM001"
-        },
-        "fiscalYear": {
-          "type": "integer",
-          "minimum": 2000,
-          "maximum": 2100,
-          "description": "Fiscal year covered by this SiSa report (e.g., 2026).",
-          "example": 2026
-        },
-        "administrationId": {
-          "type": "string",
-          "description": "FK to the Administration this report belongs to.",
-          "example": "adm-gem-amsterdam"
-        },
-        "reportDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Date the report was generated or finalised.",
-          "example": "2026-12-31T00:00:00Z"
-        },
-        "totalTransactionCount": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Total number of financial transactions in the fiscal period.",
-          "nullable": true,
-          "example": 1250
-        },
-        "onTimeSettlementPercent": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 100,
-          "description": "Percentage of obligations settled by their due date (0–100). Computed via x-openregister-aggregations.onTimeSettlement.",
-          "nullable": true,
-          "example": 95.4
-        },
-        "totalAmount": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Total financial value of all transactions in the fiscal period (EUR).",
-          "nullable": true,
-          "example": 4250000.0
-        },
-        "currency": {
-          "type": "string",
-          "minLength": 3,
-          "maxLength": 3,
-          "description": "ISO 4217 currency code for all monetary amounts in this report.",
-          "default": "EUR",
-          "example": "EUR"
-        },
-        "criticalFindingsCount": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Count of critical-severity audit findings from ComplianceAuditTrail.",
-          "nullable": true,
-          "example": 0
-        },
-        "majorFindingsCount": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Count of major-severity audit findings.",
-          "nullable": true,
-          "example": 1
-        },
-        "minorFindingsCount": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Count of minor-severity audit findings.",
-          "nullable": true,
-          "example": 3
-        },
-        "observationsCount": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Count of governance observations from ComplianceAuditTrail.",
-          "nullable": true,
-          "example": 2
-        },
-        "remediationOverdueCount": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Count of remediation actions that are overdue (remediationDueDate < today AND remediationStatus != completed).",
-          "nullable": true,
-          "example": 0
-        },
-        "auditOpinion": {
-          "type": "string",
-          "enum": [
-            "unqualified",
-            "qualified",
-            "adverse",
-            "disclaimer"
-          ],
-          "description": "Overall audit opinion per REQ-SISA-009: unqualified (0 findings), qualified (1-2 major), adverse (3+ major or any critical), disclaimer (any overdue remediation).",
-          "example": "unqualified"
-        },
-        "managementLetterId": {
-          "type": "string",
-          "description": "FK to the ManagementLetter record associated with this report.",
-          "nullable": true,
-          "example": "mgmt-letter-2026-001"
-        },
-        "complianceStatus": {
-          "type": "string",
-          "enum": [
-            "compliant",
-            "non-compliant",
-            "under-review"
-          ],
-          "description": "Overall compliance status of the administration for this fiscal year.",
-          "example": "compliant"
-        },
-        "lifecycleState": {
-          "type": "string",
-          "enum": [
-            "draft",
-            "finalized",
-            "submitted",
-            "archived"
-          ],
-          "description": "Lifecycle state of this SiSa report.",
-          "default": "draft",
-          "example": "draft"
-        },
-        "submissionDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Date this report was submitted to the relevant authority.",
-          "nullable": true,
-          "example": "2027-03-01T09:00:00Z"
         }
       },
-      "x-openregister-lifecycle": {
-        "field": "lifecycleState",
-        "initialState": "draft",
-        "states": {
-          "draft": {
-            "label": "Draft",
-            "description": "Report is being compiled. Aggregation data may be incomplete."
-          },
-          "finalized": {
-            "label": "Finalized",
-            "description": "Audit opinion computed; report is ready for authority submission."
-          },
-          "submitted": {
-            "label": "Submitted",
-            "description": "Report submitted to the relevant government authority."
-          },
-          "archived": {
-            "label": "Archived",
-            "description": "Historical archive state; retained per audit-retention rules."
-          }
-        },
-        "transitions": {
-          "finalize": {
-            "from": "draft",
-            "to": "finalized",
-            "label": "Finalize report",
-            "description": "Lock aggregation data and compute audit opinion. Calls SisaReportingService::calculateAuditOpinion() per ADR-031 exception if OR conditional aggregations are not stable.",
-            "requires": "OCA\\Shillinq\\Service\\SisaReportingService::canBeFinalized"
-          },
-          "submit": {
-            "from": "finalized",
-            "to": "submitted",
-            "label": "Submit to authority",
-            "description": "Mark report as submitted to the government authority."
-          },
-          "archive": {
-            "from": "submitted",
-            "to": "archived",
-            "label": "Archive report",
-            "description": "Move to historical archive after authority acknowledgement."
-          },
-          "reopen": {
-            "from": "finalized",
-            "to": "draft",
-            "label": "Reopen for correction",
-            "description": "Return finalized report to draft for correction (before submission only)."
-          }
-        }
-      },
-      "x-openregister-aggregations": {
-        "onTimeSettlement": {
-          "description": "On-time settlement compliance per REQ-SISA-007: COUNT(obligations settled by dueDate) / COUNT(all non-draft, non-voided obligations) * 100. Source: Obligation and Payment registers from T1 bookkeeping-general-ledger. Filters to isSISAEligible grants only.",
-          "sourceSchema": "Obligation",
-          "sourceRegister": "shillinq",
-          "filter": {
-            "administrationId": "@self.administrationId",
-            "fiscalYear": "@self.fiscalYear",
-            "grantIsSISAEligible": true,
-            "status": {
-              "not_in": [
-                "draft",
-                "voided",
-                "written-off"
-              ]
-            }
-          },
-          "operations": {
-            "totalObligations": {
-              "field": "id",
-              "operation": "count"
-            },
-            "onTimeObligations": {
-              "field": "id",
-              "operation": "count",
-              "condition": "settledDate <= dueDate"
-            }
-          },
-          "output": "onTimeSettlementPercent",
-          "outputFormula": "onTimeObligations / totalObligations * 100"
-        },
-        "findingCounts": {
-          "description": "Aggregate audit finding counts per REQ-SISA-008 from ComplianceAuditTrail. Groups by severity and counts overdue remediations.",
-          "sourceSchema": "ComplianceAuditTrail",
-          "sourceRegister": "shillinq",
-          "filter": {
-            "administrationId": "@self.administrationId",
-            "fiscalYear": "@self.fiscalYear"
-          },
-          "operations": {
-            "criticalFindingsCount": {
-              "field": "id",
-              "operation": "count",
-              "condition": "findingSeverity = 'critical'"
-            },
-            "majorFindingsCount": {
-              "field": "id",
-              "operation": "count",
-              "condition": "findingSeverity = 'major'"
-            },
-            "minorFindingsCount": {
-              "field": "id",
-              "operation": "count",
-              "condition": "findingSeverity = 'minor'"
-            },
-            "observationsCount": {
-              "field": "id",
-              "operation": "count",
-              "condition": "observationNumber IS NOT NULL"
-            },
-            "remediationOverdueCount": {
-              "field": "id",
-              "operation": "count",
-              "condition": "remediationStatus = 'overdue'"
-            }
-          }
-        }
-      },
-      "x-openregister-calculations": {
-        "auditOpinion": {
-          "materialise": true,
-          "targetField": "auditOpinion",
-          "type": "string",
-          "description": "Declarative audit opinion rule per REQ-SISA-009. JSON-AST: nested if — disclaimer if remediationOverdueCount>0; adverse if criticalFindingsCount>0 or majorFindingsCount>=3; qualified if majorFindingsCount>=1; else unqualified.",
-          "expression": {
-            "if": [
-              {
-                "gt": [
-                  {
-                    "prop": "remediationOverdueCount"
-                  },
-                  {
-                    "lit": 0
-                  }
-                ]
-              },
-              {
-                "lit": "disclaimer"
-              },
-              {
-                "if": [
-                  {
-                    "or": [
-                      {
-                        "gt": [
-                          {
-                            "prop": "criticalFindingsCount"
-                          },
-                          {
-                            "lit": 0
-                          }
-                        ]
-                      },
-                      {
-                        "gte": [
-                          {
-                            "prop": "majorFindingsCount"
-                          },
-                          {
-                            "lit": 3
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "lit": "adverse"
-                  },
-                  {
-                    "if": [
-                      {
-                        "gte": [
-                          {
-                            "prop": "majorFindingsCount"
-                          },
-                          {
-                            "lit": 1
-                          }
-                        ]
-                      },
-                      {
-                        "lit": "qualified"
-                      },
-                      {
-                        "lit": "unqualified"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      },
-      "x-openregister-rbac": {
-        "roles": {
-          "sisa-controller": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        }
-      }
-    },
-    "AuditDocument": {
-      "slug": "AuditDocument",
-      "icon": "FileSign",
-      "version": "0.1.0",
-      "title": "Audit Document",
-      "description": "A financial document participating in SiSa audit (invoice, purchase order, journal entry, payment). Every state transition triggers an immutable audit-trail event via OR's audit service per REQ-SISA-001 and REQ-SISA-003.",
-      "x-schema-org": "schema:DigitalDocument",
-      "type": "object",
-      "required": [
-        "documentNumber",
-        "documentType",
-        "glTransactionId",
-        "administrationId",
-        "signingUser",
-        "signingTimestamp",
-        "state",
-        "lifecycleState",
-        "currency"
-      ],
-      "properties": {
-        "documentNumber": {
-          "type": "string",
-          "description": "Unique document identifier per administration.",
-          "example": "DOC-2026-00001"
-        },
-        "documentType": {
-          "type": "string",
-          "enum": [
-            "invoice",
-            "purchase-order",
-            "journal-entry",
-            "payment"
-          ],
-          "description": "Type of financial document participating in SiSa audit.",
-          "example": "invoice"
-        },
-        "glTransactionId": {
-          "type": "string",
-          "description": "FK to the related GLTransaction (T1 general-ledger).",
-          "example": "glt-2026-00123"
-        },
-        "administrationId": {
-          "type": "string",
-          "description": "FK to the Administration owning this document.",
-          "example": "adm-gem-amsterdam"
-        },
-        "signingUser": {
-          "type": "string",
-          "description": "Nextcloud user ID who signed or issued the document. Captured by OR audit service on the issued/signed transition.",
-          "example": "alice@gemeente-amsterdam.nl"
-        },
-        "signingTimestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp when the document was signed. Captured by OR audit service.",
-          "example": "2026-06-15T10:30:00Z"
-        },
-        "signingReason": {
-          "type": "string",
-          "description": "Optional reason or comment on signing (e.g., 'approved per committee decision 2026-06-14').",
-          "nullable": true,
-          "example": "Approved per procurement committee decision 2026-06-14"
-        },
-        "state": {
-          "type": "string",
-          "enum": [
-            "draft",
-            "issued",
-            "signed",
-            "voided"
-          ],
-          "description": "Document signing state per REQ-SISA-004 lifecycle.",
-          "default": "draft",
-          "example": "draft"
-        },
-        "lifecycleState": {
-          "type": "string",
-          "enum": [
-            "active",
-            "archived"
-          ],
-          "description": "Archival lifecycle state.",
-          "default": "active",
-          "example": "active"
-        },
-        "relatedTransactionAmount": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Amount of the related GL transaction for context display.",
-          "nullable": true,
-          "example": 12500.0
-        },
-        "currency": {
-          "type": "string",
-          "minLength": 3,
-          "maxLength": 3,
-          "description": "ISO 4217 currency code for relatedTransactionAmount.",
-          "default": "EUR",
-          "example": "EUR"
-        }
-      },
-      "x-openregister-audit-trail": {
-        "enabled": true,
-        "description": "OR audit service captures every state transition automatically (actor, timestamp, action, before/after state). No app-local event table per ADR-022 D2."
-      },
-      "x-openregister-lifecycle": {
-        "field": "state",
-        "initialState": "draft",
-        "states": {
-          "draft": {
-            "label": "Draft",
-            "description": "Document is being prepared. Not yet legally effective."
-          },
-          "issued": {
-            "label": "Issued",
-            "description": "Document issued and legally effective. Awaiting authorised signature."
-          },
-          "signed": {
-            "label": "Signed",
-            "description": "Document signed by authorised user. Immutable; captured in OR audit trail."
-          },
-          "voided": {
-            "label": "Voided",
-            "description": "Document voided. Compensating GL posting required per T1 REQ-GL-004."
-          }
-        },
-        "transitions": {
-          "issue": {
-            "from": "draft",
-            "to": "issued",
-            "label": "Issue document",
-            "description": "Operator issues the document after validating format against the linked GL transaction."
-          },
-          "sign": {
-            "from": "issued",
-            "to": "signed",
-            "label": "Sign document",
-            "description": "Authorised user signs the document. Signature authority verified per T2 authorization-mandate-management (deferred to T3 if not yet stable)."
-          },
-          "voidFromDraft": {
-            "from": "draft",
-            "to": "voided",
-            "label": "Void draft",
-            "description": "Operator cancels the document before issuance."
-          },
-          "voidFromSigned": {
-            "from": "signed",
-            "to": "voided",
-            "label": "Void signed document",
-            "description": "Operator reverses a signed document. Requires compensating GL posting created per T1 REQ-GL-004."
-          }
-        }
-      },
-      "x-openregister-rbac": {
-        "roles": {
-          "bookkeeper": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "sisa-controller": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        }
-      }
-    },
-    "ComplianceAuditTrail": {
-      "slug": "ComplianceAuditTrail",
-      "icon": "ClipboardCheckOutline",
-      "version": "0.1.0",
-      "title": "Compliance Audit Trail",
-      "description": "Auditor working log per administration tracking audit findings (critical/major/minor), governance observations, and remediation status per REQ-SISA-005. Referenced by SisaReport aggregation to compute finding counts and overall opinion.",
-      "x-schema-org": "schema:Event",
-      "type": "object",
-      "required": [
-        "trailNumber",
-        "administrationId",
-        "fiscalYear",
-        "auditDate",
-        "status"
-      ],
-      "properties": {
-        "trailNumber": {
-          "type": "string",
-          "description": "Unique compliance audit trail identifier.",
-          "example": "CAT-2026-ADM001-001"
-        },
-        "administrationId": {
-          "type": "string",
-          "description": "FK to the Administration under audit.",
-          "example": "adm-gem-amsterdam"
-        },
-        "fiscalYear": {
-          "type": "integer",
-          "minimum": 2000,
-          "maximum": 2100,
-          "description": "Fiscal year under audit.",
-          "example": 2026
-        },
-        "findingNumber": {
-          "type": "string",
-          "description": "Reference number of an individual audit finding.",
-          "nullable": true,
-          "example": "FIND-2026-001"
-        },
-        "findingSeverity": {
-          "type": "string",
-          "enum": [
-            "critical",
-            "major",
-            "minor"
-          ],
-          "description": "Severity classification of the finding.",
-          "nullable": true,
-          "example": "major"
-        },
-        "findingDescription": {
-          "type": "string",
-          "description": "Detailed description of the audit finding.",
-          "nullable": true,
-          "example": "BTW-afdracht over Q3 2026 niet tijdig ingediend; €18.500 achterstalling."
-        },
-        "observationNumber": {
-          "type": "string",
-          "description": "Reference number of an individual governance observation.",
-          "nullable": true,
-          "example": "OBS-2026-001"
-        },
-        "observationDescription": {
-          "type": "string",
-          "description": "Governance improvement observation (non-finding, informational).",
-          "nullable": true,
-          "example": "Inkoopproces mist formele budgethouder-goedkeuring voor orders boven €10.000."
-        },
-        "remediationDueDate": {
-          "type": "string",
-          "format": "date",
-          "description": "Target date for remediation completion.",
-          "nullable": true,
-          "example": "2027-03-31"
-        },
-        "remediationStatus": {
-          "type": "string",
-          "enum": [
-            "pending",
-            "in-progress",
-            "completed",
-            "overdue"
-          ],
-          "description": "Current remediation status.",
-          "nullable": true,
-          "example": "pending"
-        },
-        "remediationCompletionDate": {
-          "type": "string",
-          "format": "date",
-          "description": "Date remediation was completed.",
-          "nullable": true,
-          "example": null
-        },
-        "auditorName": {
-          "type": "string",
-          "description": "Auditor or audit firm name responsible for this trail entry.",
-          "nullable": true,
-          "example": "Ernst & Young Accountants LLP"
-        },
-        "auditDate": {
-          "type": "string",
-          "format": "date",
-          "description": "Date of the audit fieldwork or finding issuance.",
-          "example": "2026-11-15"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "draft",
-            "submitted",
-            "closed"
-          ],
-          "description": "Status of this audit trail record.",
-          "default": "draft",
-          "example": "submitted"
-        }
-      },
-      "x-openregister-lifecycle": {
-        "field": "status",
-        "initialState": "draft",
-        "states": {
-          "draft": {
-            "label": "Draft",
-            "description": "Trail entry being compiled by auditor."
-          },
-          "submitted": {
-            "label": "Submitted",
-            "description": "Trail entry submitted to management for acknowledgement."
-          },
-          "closed": {
-            "label": "Closed",
-            "description": "Finding remediated or observation acknowledged; trail closed."
-          }
-        },
-        "transitions": {
-          "submit": {
-            "from": "draft",
-            "to": "submitted",
-            "label": "Submit to management",
-            "description": "Auditor submits the finding or observation to management."
-          },
-          "close": {
-            "from": "submitted",
-            "to": "closed",
-            "label": "Close trail",
-            "description": "Management acknowledges finding or remediation is complete."
-          }
-        }
-      }
-    },
-    "ManagementLetter": {
-      "slug": "ManagementLetter",
-      "icon": "EmailOutline",
-      "version": "0.1.0",
-      "title": "Management Letter",
-      "description": "Formal auditor-to-management communication documenting SiSa findings, observations, and remediation recommendations per REQ-SISA-006. T2 provides the data structure; T4 attaches external auditor signature and authority submission. Note: a ManagementLetter entity also exists in compliance-audit spec; reconciliation during T2/T4 implementing cycle will merge or disambiguate.",
-      "x-schema-org": "schema:DigitalDocument",
-      "type": "object",
-      "required": [
-        "letterNumber",
-        "sisaReportId",
-        "auditorName",
-        "issuedDate",
-        "status"
-      ],
-      "properties": {
-        "letterNumber": {
-          "type": "string",
-          "description": "Unique management letter identifier.",
-          "example": "ML-2026-ADM001-001"
-        },
-        "sisaReportId": {
-          "type": "string",
-          "description": "FK to the SisaReport this letter belongs to.",
-          "example": "sisa-report-uuid-001"
-        },
-        "auditorName": {
-          "type": "string",
-          "description": "Auditor or audit firm name who issued this letter.",
-          "example": "Deloitte Accountants B.V."
-        },
-        "issuedDate": {
-          "type": "string",
-          "format": "date",
-          "description": "Date this management letter was issued.",
-          "example": "2027-01-15"
-        },
-        "dueResponseDate": {
-          "type": "string",
-          "format": "date",
-          "description": "Deadline for management to respond to the letter.",
-          "nullable": true,
-          "example": "2027-02-15"
-        },
-        "findingsSummary": {
-          "type": "string",
-          "description": "Summary of audit findings included in this letter.",
-          "nullable": true,
-          "example": "1 major bevinding (BTW-afdracht) en 3 mineure bevindingen aangetroffen in FY2026."
-        },
-        "observationsSummary": {
-          "type": "string",
-          "description": "Summary of governance improvement observations.",
-          "nullable": true,
-          "example": "Aanbeveling: versterking van het inkoopproces voor orders boven €10.000."
-        },
-        "remediationRecommendations": {
-          "type": "string",
-          "description": "Recommended corrective actions for identified findings.",
-          "nullable": true,
-          "example": "Herstel BTW-aangifte Q3 2026 vóór 31 maart 2027. Implementeer budgethouder-goedkeuring."
-        },
-        "auditOpinion": {
-          "type": "string",
-          "description": "Auditor's audit opinion as stated in this letter (pre-computed from SisaReport.auditOpinion).",
-          "nullable": true,
-          "example": "qualified"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "draft",
-            "issued",
-            "acknowledged",
-            "archived"
-          ],
-          "description": "Status of this management letter.",
-          "default": "draft",
-          "example": "issued"
-        }
-      },
-      "x-openregister-lifecycle": {
-        "field": "status",
-        "initialState": "draft",
-        "states": {
-          "draft": {
-            "label": "Draft",
-            "description": "Letter is being composed."
-          },
-          "issued": {
-            "label": "Issued",
-            "description": "Letter formally issued to management."
-          },
-          "acknowledged": {
-            "label": "Acknowledged",
-            "description": "Management has acknowledged receipt and committed to remediation."
-          },
-          "archived": {
-            "label": "Archived",
-            "description": "Letter archived after remediation cycle completion."
-          }
-        },
-        "transitions": {
-          "issue": {
-            "from": "draft",
-            "to": "issued",
-            "label": "Issue letter",
-            "description": "Auditor formally issues the management letter."
-          },
-          "acknowledge": {
-            "from": "issued",
-            "to": "acknowledged",
-            "label": "Acknowledge",
-            "description": "Management acknowledges the letter and commits to action."
-          },
-          "archive": {
-            "from": "acknowledged",
-            "to": "archived",
-            "label": "Archive",
-            "description": "Archive letter after remediation cycle is complete."
-          }
-        }
-      }
-    },
-    "Grant": {
-      "slug": "Grant",
-      "icon": "HandCoinOutline",
-      "version": "0.1.0",
-      "title": "Grant",
-      "description": "A financial grant or subsidy awarded to an organization under a subsidy scheme (WBSO, BBV, NSO, Tozo). Includes isSISAEligible flag per REQ-SISA-010 to control SiSa report aggregation filtering. Full grant lifecycle (application, disbursement, compliance) is declared by add-shillinq-grant-subsidy-management; this stub adds the SiSa eligibility field.",
-      "x-schema-org": "schema:Grant",
-      "type": "object",
-      "required": [
-        "grantId",
-        "name",
-        "awardedAmount",
-        "awardDate",
-        "status"
-      ],
-      "properties": {
-        "grantId": {
-          "type": "string",
-          "description": "Unique grant identifier.",
-          "example": "WBSO-2026-AMS-001"
-        },
-        "name": {
-          "type": "string",
-          "description": "Grant name or description.",
-          "example": "WBSO Subsidie 2026 — R&D innovatie"
-        },
-        "awardedAmount": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Total amount awarded in EUR.",
-          "example": 125000.0
-        },
-        "awardDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Date the grant was formally awarded.",
-          "example": "2026-01-01T00:00:00Z"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "active",
-            "completed",
-            "suspended",
-            "revoked"
-          ],
-          "description": "Current grant status.",
-          "default": "active",
-          "example": "active"
-        },
-        "accountingStandard": {
-          "type": "string",
-          "description": "Governmental accounting standard applied (e.g., BBV, RJ290).",
-          "nullable": true,
-          "example": "BBV"
-        },
-        "isSISAEligible": {
-          "type": "boolean",
-          "description": "Whether this grant requires Single Information Single Audit compliance per REQ-SISA-010. WBSO and BBV grants are eligible; Tozo and NSO grants are not.",
-          "default": false,
-          "example": true
-        }
-      }
-    },
     "APInvoice": {
       "slug": "APInvoice",
+      "x-openregister-audit-trail": {
+        "enabled": true,
+        "description": "Every create, update and delete of an AP Invoice is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+      },
       "icon": "ReceiptTextOutline",
       "version": "0.1.0",
       "title": "AP Invoice",
@@ -22002,29 +20804,34 @@
         "invoiceNumber": {
           "type": "string",
           "description": "Shillinq-side reference (auto-generated per administration).",
-          "example": "INV-V-2026-0001"
+          "example": "INV-V-2026-0001",
+          "title": "Our Reference"
         },
         "vendorInvoiceRef": {
           "type": "string",
           "description": "The vendor's own invoice number as it appears on the paper/PDF invoice.",
-          "example": "ACME-2026-00123"
+          "example": "ACME-2026-00123",
+          "title": "Supplier's Invoice Number"
         },
         "vendorId": {
           "type": "string",
           "description": "FK to VendorMaster UUID.",
-          "example": "vendor-acme-1"
+          "example": "vendor-acme-1",
+          "title": "Supplier"
         },
         "invoiceDate": {
           "type": "string",
           "format": "date",
           "description": "Date on the vendor's invoice.",
-          "example": "2026-01-15"
+          "example": "2026-01-15",
+          "title": "Invoice Date"
         },
         "dueDate": {
           "type": "string",
           "format": "date",
           "description": "Auto-calculated from invoiceDate + vendor.paymentTermDays; overrideable by operator.",
-          "example": "2026-02-14"
+          "example": "2026-02-14",
+          "title": "Payment Due"
         },
         "currency": {
           "type": "string",
@@ -22032,25 +20839,29 @@
           "maxLength": 3,
           "description": "ISO 4217 currency code. T2: base currency only; T5 adds multi-currency.",
           "default": "EUR",
-          "example": "EUR"
+          "example": "EUR",
+          "title": "Currency"
         },
         "totalAmount": {
           "type": "number",
           "minimum": 0,
           "description": "Total amount including tax. Credit notes are separate journal types, not negative totals.",
-          "example": 1250.0
+          "example": 1250.0,
+          "title": "Total Including VAT"
         },
         "taxAmount": {
           "type": "number",
           "minimum": 0,
           "description": "VAT/BTW amount. T3 adds automated VAT posting; T2 carries the field for reporting.",
           "nullable": true,
-          "example": 217.98
+          "example": 217.98,
+          "title": "VAT Amount"
         },
         "lines": {
           "type": "array",
           "minItems": 1,
           "description": "Invoice line breakdown. Each line maps to one GL expense account.",
+          "title": "Invoice Lines",
           "items": {
             "type": "object",
             "required": [
@@ -22061,31 +20872,37 @@
             "properties": {
               "description": {
                 "type": "string",
-                "description": "Line description."
+                "description": "Line description.",
+                "title": "Description"
               },
               "accountNumber": {
                 "type": "string",
-                "description": "FK to Account.accountNumber (expense account)."
+                "description": "FK to Account.accountNumber (expense account).",
+                "title": "Expense Account"
               },
               "amount": {
                 "type": "number",
                 "minimum": 0,
-                "description": "Line amount (non-negative; see REQ-AP-003)."
+                "description": "Line amount (non-negative; see REQ-AP-003).",
+                "title": "Line Amount"
               },
               "taxCode": {
                 "type": "string",
                 "description": "Tax code for this line (e.g. BTW21, BTW9, BTW0).",
-                "nullable": true
+                "nullable": true,
+                "title": "VAT Code"
               },
               "quantity": {
                 "type": "number",
                 "description": "Quantity ordered/received (required for 3-way match when PO/GR present).",
-                "nullable": true
+                "nullable": true,
+                "title": "Quantity"
               },
               "unitPrice": {
                 "type": "number",
                 "description": "Unit price (required for 3-way match quantity parity check).",
-                "nullable": true
+                "nullable": true,
+                "title": "Unit Price"
               }
             }
           }
@@ -22094,17 +20911,20 @@
           "type": "string",
           "description": "docudesk FK URI per bookkeeping-document-attachment-integration. Points to the scanned vendor invoice PDF.",
           "nullable": true,
-          "example": "docudesk://files/shillinq/invoices/acme-2026-00123.pdf"
+          "example": "docudesk://files/shillinq/invoices/acme-2026-00123.pdf",
+          "title": "Scanned Invoice"
         },
         "purchaseOrderRef": {
           "type": "string",
           "description": "FK to PO register UUID (future T4 procurement; nullable in T2). Declared so T4 attaches additively per REQ-AP-006.",
-          "nullable": true
+          "nullable": true,
+          "title": "Purchase Order"
         },
         "goodsReceiptRef": {
           "type": "string",
           "description": "FK to Goods Receipt register UUID (future T4; nullable in T2). Declared so T4 attaches additively per REQ-AP-006.",
-          "nullable": true
+          "nullable": true,
+          "title": "Goods Receipt"
         },
         "approvalState": {
           "type": "string",
@@ -22115,7 +20935,8 @@
             "rejected"
           ],
           "description": "OR approval-workflow state mirror per REQ-AP-005. Tracks the approval routing status.",
-          "example": "pending"
+          "example": "pending",
+          "title": "Approval Status"
         },
         "state": {
           "type": "string",
@@ -22130,29 +20951,34 @@
           ],
           "description": "AP invoice lifecycle state per REQ-AP-004.",
           "default": "draft",
-          "example": "draft"
+          "example": "draft",
+          "title": "Status"
         },
         "glTransactionId": {
           "type": "string",
           "description": "Back-reference to the materialised GLTransaction once the invoice is posted.",
           "nullable": true,
-          "example": "gl-txn-2026-ap-0001"
+          "example": "gl-txn-2026-ap-0001",
+          "title": "Journal Entry"
         },
         "idealLink": {
           "type": "string",
           "description": "Per-invoice iDEAL payment link (x-openregister-calculations output per REQ-AP-007). Populated when paymentMethod=ideal.",
-          "nullable": true
+          "nullable": true,
+          "title": "iDEAL Payment Link"
         },
         "periodId": {
           "type": "string",
           "description": "FK to the FiscalPeriod for GL posting (resolved on post transition per REQ-AP-004).",
           "nullable": true,
-          "example": "2026-Q1"
+          "example": "2026-Q1",
+          "title": "Accounting Period"
         },
         "administrationId": {
           "type": "string",
           "description": "FK to the administration owning this AP invoice.",
-          "example": "adm-1"
+          "example": "adm-1",
+          "title": "Administration"
         }
       },
       "x-openregister-notifications": {
@@ -22403,1111 +21229,6 @@
         }
       }
     },
-    "CustomerMaster": {
-      "slug": "CustomerMaster",
-      "icon": "AccountTieOutline",
-      "version": "0.1.0",
-      "title": "Customer",
-      "description": "Customer party record for accounts receivable. Holds billing address, payment terms, tax registration, credit limit, dunning-policy reference, and Peppol endpoint for outbound e-invoicing within a single administration. Per REQ-AR-002.",
-      "x-openregister-audit-trail": {
-        "enabled": true,
-        "description": "Bookkeeping master register; every create / update / delete is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
-      },
-      "x-schema-org": "schema:Organization",
-      "type": "object",
-      "required": [
-        "customerNumber",
-        "name",
-        "paymentTermDays",
-        "administrationId",
-        "lifecycleState"
-      ],
-      "properties": {
-        "customerNumber": {
-          "type": "string",
-          "description": "Stable customer identifier unique per administration.",
-          "example": "C-2026-001"
-        },
-        "name": {
-          "type": "string",
-          "description": "Legal name of the customer.",
-          "example": "Klant Voorbeeld BV"
-        },
-        "tradingName": {
-          "type": "string",
-          "description": "Alternate or DBA trading name.",
-          "nullable": true,
-          "example": "Klant Voorbeeld"
-        },
-        "kvkNumber": {
-          "type": "string",
-          "description": "Dutch KvK number (8 digits).",
-          "nullable": true,
-          "example": "12345678"
-        },
-        "btwNumber": {
-          "type": "string",
-          "description": "Dutch BTW / EU VAT number.",
-          "nullable": true,
-          "example": "NL123456789B01"
-        },
-        "paymentTermDays": {
-          "type": "integer",
-          "minimum": 0,
-          "default": 30,
-          "description": "Default payment term in days (auto-sets ARInvoice.dueDate on creation).",
-          "example": 30
-        },
-        "defaultRevenueAccountNumber": {
-          "type": "string",
-          "description": "FK to Account.accountNumber for default revenue coding on AR invoices.",
-          "nullable": true,
-          "example": "8000"
-        },
-        "creditLimit": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Credit limit in administration's base currency. When > 0, REQ-AR-006 evaluates SUM(open ARInvoice.totalAmount where customerId=this.id) against this value on draft AR invoices.",
-          "nullable": true,
-          "example": 10000.0
-        },
-        "dunningPolicyRef": {
-          "type": "string",
-          "description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null. Resolution deferred to implementing cycle.",
-          "nullable": true
-        },
-        "peppolEndpoint": {
-          "type": "string",
-          "description": "Peppol BIS 3.0 endpoint identifier for outbound e-invoicing (consumed by T4 e-invoicing capability; declared in T2 so T4 attaches additively per REQ-AR-009). Format: scheme::value (e.g. 0106::12345678 for Dutch KvK).",
-          "nullable": true,
-          "example": "0106::12345678"
-        },
-        "address": {
-          "type": "object",
-          "description": "Postal billing address of the customer.",
-          "nullable": true,
-          "properties": {
-            "street": {
-              "type": "string"
-            },
-            "houseNumber": {
-              "type": "string"
-            },
-            "postcode": {
-              "type": "string"
-            },
-            "city": {
-              "type": "string"
-            },
-            "country": {
-              "type": "string",
-              "default": "NL"
-            }
-          }
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "Primary billing email for invoice dispatch and dunning notifications.",
-          "nullable": true,
-          "example": "facturen@klant-voorbeeld.nl"
-        },
-        "phone": {
-          "type": "string",
-          "description": "Primary contact phone number.",
-          "nullable": true,
-          "example": "+31201234567"
-        },
-        "contactRef": {
-          "type": "string",
-          "description": "FK to OR contact abstraction if stable per ADR-022; else null. Symmetric to AP REQ-AP-002. Resolution deferred to implementing cycle.",
-          "nullable": true
-        },
-        "invoices": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "format": "uuid",
-            "$ref": "ARInvoice"
-          },
-          "description": "Inverse of ARInvoice.customerId; back-reference populated by OpenRegister."
-        },
-        "administrationId": {
-          "type": "string",
-          "description": "FK to the administration owning this customer record.",
-          "example": "adm-1"
-        },
-        "lifecycleState": {
-          "type": "string",
-          "enum": [
-            "active",
-            "blocked",
-            "archived"
-          ],
-          "description": "Customer master lifecycle state. blocked: new invoices cannot be issued; archived: historical reference only.",
-          "default": "active",
-          "example": "active"
-        }
-      },
-      "x-openregister-lifecycle": {
-        "field": "lifecycleState",
-        "initialState": "active",
-        "states": {
-          "active": {
-            "label": "Active",
-            "description": "Customer is active; AR invoices may be issued."
-          },
-          "blocked": {
-            "label": "Blocked",
-            "description": "Customer is blocked; new AR invoices cannot transition from draft to issued."
-          },
-          "archived": {
-            "label": "Archived",
-            "description": "Customer is archived for historical reference; no new invoices may be drafted."
-          }
-        },
-        "transitions": {
-          "block": {
-            "from": "active",
-            "to": "blocked",
-            "label": "Block customer",
-            "description": "Suspend new invoicing for this customer (e.g. credit hold)."
-          },
-          "unblock": {
-            "from": "blocked",
-            "to": "active",
-            "label": "Unblock customer",
-            "description": "Restore customer to active status."
-          },
-          "archive": {
-            "from": [
-              "active",
-              "blocked"
-            ],
-            "to": "archived",
-            "label": "Archive customer",
-            "description": "Archive customer after all open AR invoices are settled or written off."
-          }
-        }
-      },
-      "x-openregister-rbac": {
-        "roles": {
-          "bookkeeper": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        }
-      }
-    },
-    "ARInvoice": {
-      "slug": "ARInvoice",
-      "icon": "ReceiptTextOutline",
-      "version": "0.1.0",
-      "title": "AR Invoice",
-      "description": "Accounts receivable sub-ledger invoice recording customer billing and revenue recognition. Issuing materialises a balanced GLTransaction per T1 REQ-JE-007 (debit AR control, credit revenue per lines). Lifecycle: draft → issued → paid with partially-paid / overdue / disputed / written-off / voided branches per REQ-AR-004. Carries UBL 2.1 / Peppol BIS 3.0 field shape declared but NOT computed in T2 — T4 e-invoicing populates ublXml + peppolDispatchedAt additively per REQ-AR-009. Per REQ-AR-003 and REQ-AR-004.",
-      "x-openregister-audit-trail": {
-        "enabled": true,
-        "description": "Bookkeeping sub-ledger register; every lifecycle transition (issue / overdue / match / dispute / write-off / void) and every header / line edit is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. Audit trail is the canonical evidence chain for the AR write-off scenario per REQ-AR-007."
-      },
-      "x-schema-org": "schema:Invoice",
-      "type": "object",
-      "required": [
-        "invoiceNumber",
-        "customerId",
-        "invoiceDate",
-        "dueDate",
-        "currency",
-        "totalAmount",
-        "lines",
-        "state",
-        "administrationId"
-      ],
-      "properties": {
-        "invoiceNumber": {
-          "type": "string",
-          "description": "Shillinq-side invoice number (auto-generated per administration). Unique per administration.",
-          "example": "INV-C-2026-0001"
-        },
-        "customerId": {
-          "type": "string",
-          "format": "uuid",
-          "$ref": "CustomerMaster",
-          "inversedBy": "invoices",
-          "description": "Reference to the CustomerMaster this invoice bills (holds its object UUID).",
-          "example": "00000000-0000-0000-0000-000000000000"
-        },
-        "invoiceDate": {
-          "type": "string",
-          "format": "date",
-          "description": "Date of invoice issuance.",
-          "example": "2026-01-15"
-        },
-        "dueDate": {
-          "type": "string",
-          "format": "date",
-          "description": "Auto-calculated from invoiceDate + customer.paymentTermDays; overrideable by operator.",
-          "example": "2026-02-14"
-        },
-        "currency": {
-          "type": "string",
-          "minLength": 3,
-          "maxLength": 3,
-          "description": "ISO 4217 currency code. T2: base currency only; T5 adds multi-currency.",
-          "default": "EUR",
-          "example": "EUR"
-        },
-        "totalAmount": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Total amount including tax. Credit notes are separate journal types, not negative totals.",
-          "example": 1250.0
-        },
-        "taxAmount": {
-          "type": "number",
-          "minimum": 0,
-          "description": "VAT/BTW amount. T3 adds automated VAT posting; T2 carries the field for reporting.",
-          "nullable": true,
-          "example": 217.98
-        },
-        "lines": {
-          "type": "array",
-          "minItems": 1,
-          "description": "Invoice line breakdown. Each line maps to one GL revenue account. Per bookkeeping-invoice-vat-kassakoppeling REQ-VAT-001 each line additionally carries vatRate (21|9|6|0), vatAmount (decimal euros computed via bankerRound), and serviceCategory (product|service|exempt) gating REQ-VAT-002 validation.",
-          "items": {
-            "type": "object",
-            "required": [
-              "description",
-              "accountNumber",
-              "amount"
-            ],
-            "properties": {
-              "description": {
-                "type": "string",
-                "description": "Line description."
-              },
-              "accountNumber": {
-                "type": "string",
-                "description": "FK to Account.accountNumber (revenue account)."
-              },
-              "amount": {
-                "type": "number",
-                "minimum": 0,
-                "description": "Line amount (non-negative; see REQ-AR-003). Net of VAT; the per-line VAT is stored separately in vatAmount per REQ-VAT-001."
-              },
-              "taxCode": {
-                "type": "string",
-                "description": "Tax code for this line (e.g. BTW21, BTW9, BTW0). Pre-VAT-spec free-form field retained for legacy compatibility; new VAT logic uses the structured vatRate field per REQ-VAT-001.",
-                "nullable": true
-              },
-              "vatRate": {
-                "type": "integer",
-                "enum": [
-                  21,
-                  9,
-                  6,
-                  0
-                ],
-                "description": "Per-line Dutch VAT rate in percent (REQ-VAT-001). Defaults to the administration's standard rate (typically 21). REQ-VAT-002 precondition gates which rates are permitted for each serviceCategory.",
-                "default": 21,
-                "example": 9
-              },
-              "vatAmount": {
-                "type": "number",
-                "minimum": 0,
-                "description": "Per-line VAT in decimal euros (REQ-VAT-001). Computed as bankerRound(amount * vatRate / 100, 2) per REQ-VAT-007. Sum of per-line vatAmount populates ARInvoice.taxAmount; no invoice-level rounding adjustment line is emitted.",
-                "nullable": true,
-                "example": 18.0
-              },
-              "serviceCategory": {
-                "type": "string",
-                "enum": [
-                  "product",
-                  "service",
-                  "exempt"
-                ],
-                "description": "Per-line service / product / exempt classification gating VAT rate validity (REQ-VAT-002). product permits {0,6,21}; service permits {0,9,21}; exempt permits only 0. Exceptions are recorded in ServiceCategoryOverride per REQ-VAT-002bis.",
-                "default": "product",
-                "example": "service"
-              },
-              "quantity": {
-                "type": "number",
-                "description": "Quantity sold.",
-                "nullable": true
-              },
-              "unitPrice": {
-                "type": "number",
-                "description": "Unit price.",
-                "nullable": true
-              }
-            }
-          }
-        },
-        "sourceDocumentUri": {
-          "type": "string",
-          "description": "docudesk FK URI per bookkeeping-document-attachment-integration. Points to the issued invoice PDF.",
-          "nullable": true,
-          "example": "docudesk://files/shillinq/invoices/inv-c-2026-0001.pdf"
-        },
-        "ublXml": {
-          "type": "string",
-          "description": "UBL 2.1 / Peppol BIS 3.0 XML representation. Declared in T2 but NOT computed in T2 — T4 e-invoicing populates this field via additional x-openregister-calculations per REQ-AR-009. Always null in T2.",
-          "nullable": true
-        },
-        "peppolDispatchedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of Peppol dispatch. Set by T4 e-invoicing capability; always null in T2 per REQ-AR-009.",
-          "nullable": true
-        },
-        "state": {
-          "type": "string",
-          "enum": [
-            "draft",
-            "issued",
-            "partially-paid",
-            "paid",
-            "overdue",
-            "disputed",
-            "written-off",
-            "voided"
-          ],
-          "description": "AR invoice lifecycle state per REQ-AR-004.",
-          "default": "draft",
-          "example": "draft"
-        },
-        "glTransactionId": {
-          "type": "string",
-          "format": "uuid",
-          "$ref": "GLTransaction",
-          "description": "Reference to the materialised issue GLTransaction (holds its object UUID).",
-          "nullable": true,
-          "example": "00000000-0000-0000-0000-000000000000"
-        },
-        "writeOffReason": {
-          "type": "string",
-          "description": "Operator-authored audit-trailed reason for write-off. Required on the writeOff lifecycle transition per REQ-AR-007.",
-          "nullable": true,
-          "example": "Customer insolvency, court-confirmed uncollectible per ruling 2026-04-22."
-        },
-        "writeOffGlTransactionId": {
-          "type": "string",
-          "description": "Back-reference to the compensating GLTransaction emitted on write-off (debit bad-debt expense, credit AR control) per REQ-AR-007.",
-          "nullable": true,
-          "example": "gl-txn-2026-wo-0001"
-        },
-        "periodId": {
-          "type": "string",
-          "description": "FK to the FiscalPeriod for GL posting (resolved on issue transition per REQ-AR-004).",
-          "nullable": true,
-          "example": "2026-Q1"
-        },
-        "administrationId": {
-          "type": "string",
-          "description": "FK to the administration owning this AR invoice.",
-          "example": "adm-1"
-        }
-      },
-      "x-openregister-lifecycle": {
-        "field": "state",
-        "initialState": "draft",
-        "states": {
-          "draft": {
-            "label": "Draft",
-            "description": "Under construction. Lines and header fields may be edited."
-          },
-          "issued": {
-            "label": "Issued",
-            "description": "Immutable header. GL transaction materialised; awaiting payment match."
-          },
-          "partially-paid": {
-            "label": "Partially paid",
-            "description": "One or more bank-reconciliation matches have applied but cumulative matched amount is less than totalAmount."
-          },
-          "paid": {
-            "label": "Paid",
-            "description": "Full payment matched via bank-reconciliation engine. Terminal state for the happy path."
-          },
-          "overdue": {
-            "label": "Overdue",
-            "description": "today > dueDate and no full payment match yet. OR's dunning-workflow drives REQ-AR-005 reminder cadence from this state."
-          },
-          "disputed": {
-            "label": "Disputed",
-            "description": "Operator placed payment-match pursuit on hold pending customer-raised dispute investigation."
-          },
-          "written-off": {
-            "label": "Written off",
-            "description": "Bad-debt write-off; compensating GL posting emitted per REQ-AR-007. Terminal state."
-          },
-          "voided": {
-            "label": "Voided",
-            "description": "Issued invoice voided. The materialised issue GLTransaction MUST already be reversed per T1 REQ-GL-004."
-          }
-        },
-        "transitions": {
-          "issue": {
-            "from": "draft",
-            "to": "issued",
-            "label": "Issue invoice",
-            "description": "Issue the AR invoice. Guards: (1) FiscalPeriod open per REQ-PC-004; (2) balance guard (T1 REQ-JE-007); (3) credit-limit precondition per REQ-AR-006 — evaluated against the customerOpenArBalance aggregation; emits a warning by default, hard-block when administration policy sets requires.creditLimit.mode='block'; (4) per-line service-category VAT-rate gate per bookkeeping-invoice-vat-kassakoppeling REQ-VAT-002 (consults ServiceCategoryOverride before rejecting per REQ-VAT-002bis); (5) VATGLAccounts configured for the administration per REQ-VAT-006 (actionable error message + deep link per REQ-VAT-008). Actions: (a) materialise one balanced GLTransaction per T1 REQ-JE-007 pattern with revenue + VATPayable21/9/6/0 credits per REQ-VAT-003; (b) append one VATAuditRecord per line with lifecycleEvent=issued and settlementPeriod bound from invoiceDate + administration.vatFilingFrequency per REQ-VAT-004 + REQ-VAT-005. Sets glTransactionId back-reference.",
-            "requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced",
-            "preconditions": [
-              {
-                "id": "credit-limit",
-                "type": "aggregation-predicate",
-                "aggregation": "customerOpenArBalance",
-                "groupBy": "customerId",
-                "predicate": "(@aggregation.openBalance + this.totalAmount) <= CustomerMaster[id=this.customerId].creditLimit",
-                "appliesWhen": "CustomerMaster[id=this.customerId].creditLimit IS NOT NULL AND CustomerMaster[id=this.customerId].creditLimit > 0",
-                "defaultSeverity": "warning",
-                "administrationPolicyKey": "ar.creditLimit.mode",
-                "administrationPolicyValues": {
-                  "warn": "warning",
-                  "block": "block"
-                },
-                "messageTemplate": {
-                  "nl": "Kredietlimiet overschreden: open AR €{{openBalance}} + factuur €{{totalAmount}} = €{{projectedBalance}} > limiet €{{creditLimit}} voor klant {{customerNumber}}.",
-                  "en": "Credit limit exceeded: open AR €{{openBalance}} + invoice €{{totalAmount}} = €{{projectedBalance}} > limit €{{creditLimit}} for customer {{customerNumber}}."
-                },
-                "description": "REQ-AR-006 declarative aggregation predicate. Aggregates customer's open AR balance (sum of totalAmount for state in issued/partially-paid/overdue/disputed) and compares against CustomerMaster.creditLimit. Pure x-openregister-aggregations per ADR-031; no CreditLimitService PHP class."
-              },
-              {
-                "id": "vat-service-category-gate",
-                "type": "per-line-predicate",
-                "appliesPerItem": "lines[]",
-                "defaultMatrix": {
-                  "product": [
-                    0,
-                    6,
-                    21
-                  ],
-                  "service": [
-                    0,
-                    9,
-                    21
-                  ],
-                  "exempt": [
-                    0
-                  ]
-                },
-                "predicate": "this.vatRate IN defaultMatrix[this.serviceCategory] OR EXISTS(ServiceCategoryOverride WHERE administrationId=ARInvoice.administrationId AND serviceCategory=this.serviceCategory AND vatRate=this.vatRate)",
-                "defaultSeverity": "block",
-                "messageTemplate": {
-                  "nl": "Regel {{lineSequence}}: servicecategorie '{{serviceCategory}}' staat geen BTW-tarief {{vatRate}}% toe. Controleer de admin-instellingen voor servicecategorie-uitzonderingen.",
-                  "en": "Line {{lineSequence}}: Service category '{{serviceCategory}}' does not permit {{vatRate}}% VAT. Check admin settings for service-category overrides."
-                },
-                "description": "REQ-VAT-002 + REQ-VAT-002bis: validates every line's vatRate against the serviceCategory matrix; consults ServiceCategoryOverride before rejecting. Pure declarative predicate per ADR-031; no PHP VAT validator service. When an override authorises the line, the resulting VATAuditRecord stores overrideId for audit traceability per REQ-VAT-004."
-              },
-              {
-                "id": "vat-gl-accounts-configured",
-                "type": "existence-check",
-                "target": "VATGLAccounts",
-                "predicate": "EXISTS(VATGLAccounts WHERE administrationId=this.administrationId)",
-                "appliesWhen": "ANY(this.lines[].vatRate > 0) OR ANY(this.lines[].vatAmount > 0)",
-                "defaultSeverity": "block",
-                "messageTemplate": {
-                  "nl": "Kan factuur niet uitgeven: BTW-grootboekrekeningen zijn niet geconfigureerd voor deze administratie. Ga naar Instellingen > Boekhouding > BTW-configuratie om de vier BTW-grootboekrekeningen toe te wijzen.",
-                  "en": "Cannot issue invoice: VAT GL accounts not configured for administration. Go to Settings > Accounting > Tax Configuration to assign VAT GL accounts."
-                },
-                "deepLink": "/index.php/apps/shillinq/settings/tax-configuration",
-                "description": "REQ-VAT-006 + REQ-VAT-008: ensures the administration has configured the four VATPayable* GL accounts before VAT accrual materialises. The actionable error message + deep link guide the operator straight to the Tax Configuration admin panel."
-              }
-            ],
-            "actions": [
-              {
-                "trigger": "x-openregister-lifecycle-action",
-                "action": "materialise-gl-transaction",
-                "description": "Emit one balanced GLTransaction with debit to AR control account (Account.isARControlAccount = true), credit to revenue accounts per lines per T1 REQ-JE-007 pattern, and credit to VATPayable21/9/6/0 per rate bucket per REQ-VAT-003 (account numbers resolved from VATGLAccounts for the administration). Sets glTransactionId back-reference; sets GLLine.subLedgerType=ar + GLLine.subLedgerRef=<ARInvoice UUID> per REQ-AR-001.",
-                "actionParameters": {
-                  "register": "shillinq",
-                  "targetSchema": "GLTransaction",
-                  "debitMapping": "Account[isARControlAccount=true].accountNumber",
-                  "creditMapping": "lines[].accountNumber",
-                  "vatBucketMapping": {
-                    "21": "VATGLAccounts[administrationId=this.administrationId].vat21Account",
-                    "9": "VATGLAccounts[administrationId=this.administrationId].vat9Account",
-                    "6": "VATGLAccounts[administrationId=this.administrationId].vat6Account",
-                    "0": "VATGLAccounts[administrationId=this.administrationId].vat0Account"
-                  },
-                  "vatAmountField": "lines[].vatAmount",
-                  "vatRateField": "lines[].vatRate",
-                  "subLedgerType": "ar",
-                  "subLedgerRefField": "id",
-                  "keepBalanced": true
-                }
-              },
-              {
-                "trigger": "x-openregister-lifecycle-action",
-                "action": "append-vat-audit-record",
-                "description": "Per REQ-VAT-004 + REQ-VAT-005: append one VATAuditRecord per ARInvoice line with lifecycleEvent='issued', settlementPeriod bound from invoiceDate + administration.vatFilingFrequency (monthly|quarterly|annual), and immutable copies of (lineSequence, lineDescription, lineAmount, vatRate, vatAmount, serviceCategory). When the line was authorised under a ServiceCategoryOverride, the matching override's id is captured on overrideId. Pure declarative materialisation per ADR-031; no app-local VAT-audit service.",
-                "actionParameters": {
-                  "register": "shillinq",
-                  "targetSchema": "VATAuditRecord",
-                  "perItem": "lines[]",
-                  "setFields": {
-                    "invoiceNumber": "this.invoiceNumber",
-                    "invoiceDate": "this.invoiceDate",
-                    "lineSequence": "item.index + 1",
-                    "lineDescription": "item.description",
-                    "lineAmount": "item.amount",
-                    "vatRate": "item.vatRate",
-                    "vatAmount": "item.vatAmount",
-                    "serviceCategory": "item.serviceCategory",
-                    "lifecycleEvent": "issued",
-                    "eventDate": "NOW()",
-                    "settlementPeriod": "bindSettlementPeriod(this.invoiceDate, Administration[id=this.administrationId].vatFilingFrequency)",
-                    "administrationId": "this.administrationId"
-                  }
-                }
-              }
-            ]
-          },
-          "markOverdue": {
-            "from": [
-              "issued",
-              "partially-paid"
-            ],
-            "to": "overdue",
-            "label": "Mark overdue",
-            "description": "Scheduled OR ScheduledWorkflow tick when today > dueDate and no payment match has cleared totalAmount. Per ADR-031 §'Background jobs that walk an object queue' path 2 — no shillinq *Job PHP class.",
-            "trigger": {
-              "type": "scheduled",
-              "engine": "x-openregister-scheduled-workflow",
-              "condition": "today > dueDate AND state IN ('issued','partially-paid')"
-            }
-          },
-          "matchPartial": {
-            "from": [
-              "issued",
-              "overdue"
-            ],
-            "to": "partially-paid",
-            "label": "Mark partially paid",
-            "description": "Event-driven transition fired when bookkeeping-bank-reconciliation emits a confirmed ReconciliationMatch (targetType=ar-invoice, targetId=this.id) per REQ-BR-006 AND the cumulative matched amount for this invoice is greater than 0 but less than totalAmount. Operator confirms the candidate match in bank-reconciliation UI; the lifecycle engine consumes the OR-native event. No shillinq matcher service per REQ-AR-009-bis; symmetric to AP matchPaid (REQ-AP-008).",
-            "trigger": {
-              "type": "event",
-              "engine": "x-openregister-event",
-              "eventSource": "bookkeeping-bank-reconciliation",
-              "eventName": "reconciliation-match-confirmed",
-              "filter": {
-                "targetType": "ar-invoice",
-                "targetId": "{{this.id}}"
-              },
-              "condition": "0 < SUM(ReconciliationMatch.amount WHERE targetType='ar-invoice' AND targetId=this.id AND state='confirmed') < this.totalAmount"
-            },
-            "actions": [
-              {
-                "trigger": "x-openregister-lifecycle-action",
-                "action": "audit-trail-append",
-                "description": "Append a partial-payment audit-trail event capturing the ReconciliationMatch UUID, matched amount, cumulative paid amount, and remaining balance for REQ-AR-009-bis scenario 'partial payment yields partially-paid state'.",
-                "actionParameters": {
-                  "eventName": "ar-invoice-partial-payment",
-                  "contextFields": [
-                    "matchId",
-                    "matchedAmount",
-                    "cumulativeMatchedAmount",
-                    "remainingBalance"
-                  ]
-                }
-              }
-            ]
-          },
-          "matchPaid": {
-            "from": [
-              "issued",
-              "partially-paid",
-              "overdue"
-            ],
-            "to": "paid",
-            "label": "Mark paid",
-            "description": "Event-driven transition fired when bookkeeping-bank-reconciliation emits a confirmed ReconciliationMatch (targetType=ar-invoice, targetId=this.id) per REQ-BR-006 AND the cumulative matched amount equals totalAmount. Operator confirms the candidate match in bank-reconciliation UI; the lifecycle engine consumes the OR-native event. No shillinq matcher service per REQ-AR-009-bis; symmetric to AP matchPaid (REQ-AP-008).",
-            "trigger": {
-              "type": "event",
-              "engine": "x-openregister-event",
-              "eventSource": "bookkeeping-bank-reconciliation",
-              "eventName": "reconciliation-match-confirmed",
-              "filter": {
-                "targetType": "ar-invoice",
-                "targetId": "{{this.id}}"
-              },
-              "condition": "SUM(ReconciliationMatch.amount WHERE targetType='ar-invoice' AND targetId=this.id AND state='confirmed') >= this.totalAmount"
-            },
-            "actions": [
-              {
-                "trigger": "x-openregister-lifecycle-action",
-                "action": "audit-trail-append",
-                "description": "Append a paid audit-trail event capturing the ReconciliationMatch UUID(s), final matched amount, and the bank statement line refs that cleared the invoice for REQ-AR-009-bis scenario 'exact-amount bank line marks invoice paid'.",
-                "actionParameters": {
-                  "eventName": "ar-invoice-paid",
-                  "contextFields": [
-                    "matchIds",
-                    "finalMatchedAmount",
-                    "bankLineRefs"
-                  ]
-                }
-              }
-            ]
-          },
-          "dispute": {
-            "from": [
-              "issued",
-              "overdue"
-            ],
-            "to": "disputed",
-            "label": "Raise dispute",
-            "description": "Operator places payment-match pursuit on hold pending customer-raised dispute investigation. Dunning escalation pauses while in disputed state."
-          },
-          "resolveDispute": {
-            "from": "disputed",
-            "to": "issued",
-            "label": "Resolve dispute",
-            "description": "Operator resolves the dispute; invoice returns to issued and dunning escalation resumes."
-          },
-          "writeOff": {
-            "from": [
-              "overdue",
-              "disputed"
-            ],
-            "to": "written-off",
-            "label": "Write off",
-            "description": "Operator in role controller declares the invoice uncollectible. Requires writeOffReason for audit-trail. Action: materialise a balanced compensating GLTransaction (debit bad-debt expense, credit AR control) for the residual open balance per REQ-AR-007. Sets writeOffGlTransactionId back-reference.",
-            "requires": "OCA\\Shillinq\\Lifecycle\\WriteOffReasonGuard::requireReason",
-            "rbac": {
-              "requiredRole": "controller"
-            },
-            "actions": [
-              {
-                "trigger": "x-openregister-lifecycle-action",
-                "action": "materialise-gl-transaction",
-                "description": "Emit one balanced compensating GLTransaction with debit to bad-debt expense account (Account.isBadDebtExpenseAccount=true) and credit to AR control account (Account.isARControlAccount=true) for the invoice's residual open balance per REQ-AR-007. Sets writeOffGlTransactionId back-reference; sets GLLine.subLedgerType=ar + GLLine.subLedgerRef=<ARInvoice UUID> + GLLine.description='AR write-off: <writeOffReason>' for audit-trail traceability. The amount written off equals totalAmount minus cumulative matched payments (the residual open balance).",
-                "actionParameters": {
-                  "register": "shillinq",
-                  "targetSchema": "GLTransaction",
-                  "debitMapping": "Account[isBadDebtExpenseAccount=true].accountNumber",
-                  "creditMapping": "Account[isARControlAccount=true].accountNumber",
-                  "subLedgerType": "ar",
-                  "subLedgerRefField": "id",
-                  "amountExpression": "totalAmount - SUM(ReconciliationMatch.amount WHERE arInvoiceId = this.id)",
-                  "descriptionExpression": "'AR write-off: ' + writeOffReason",
-                  "sourceReferenceField": "invoiceNumber",
-                  "backReferenceField": "writeOffGlTransactionId",
-                  "keepBalanced": true
-                }
-              }
-            ]
-          },
-          "void": {
-            "from": "issued",
-            "to": "voided",
-            "label": "Void",
-            "description": "Void a posted-and-issued invoice. Guard: the materialised GLTransaction MUST already be reversed per T1 REQ-GL-004.",
-            "requires": "OCA\\Shillinq\\Lifecycle\\GLReversalGuard::isReversed"
-          }
-        }
-      },
-      "x-openregister-aggregations": {
-        "customerOpenArBalance": {
-          "label": "Customer open AR balance",
-          "description": "REQ-AR-006 declarative aggregation: sum of open AR exposure per customer. Consumed as the predicate basis for the credit-limit precondition on ARInvoice.issue. Excludes paid / written-off / voided invoices. Pure aggregation per ADR-031; no CreditLimitService PHP class.",
-          "register": "shillinq",
-          "schema": "ARInvoice",
-          "filter": {
-            "state": {
-              "in": [
-                "issued",
-                "partially-paid",
-                "overdue",
-                "disputed"
-              ]
-            }
-          },
-          "groupBy": [
-            "customerId"
-          ],
-          "operations": {
-            "openBalance": {
-              "field": "totalAmount",
-              "operation": "sum",
-              "description": "Sum of totalAmount across the customer's open AR invoices (states: issued, partially-paid, overdue, disputed)."
-            },
-            "openCount": {
-              "operation": "count",
-              "description": "Count of open AR invoices for the customer."
-            }
-          },
-          "meta": {
-            "consumedBy": "ARInvoice.issue.preconditions.credit-limit",
-            "cadence": "on-demand"
-          }
-        },
-        "arAging": {
-          "label": "AR Aging",
-          "description": "REQ-AR-008 declarative aggregation: groups open AR invoices by (customerId, agingBucket) where agingBucket is computed from (today - dueDate) thresholds. Excludes paid / voided / written-off invoices. Pure aggregation per ADR-031; no ARAgingReportService PHP class. Symmetric to AP apAging (REQ-AP-009).",
-          "register": "shillinq",
-          "schema": "ARInvoice",
-          "filter": {
-            "state": {
-              "not-in": [
-                "paid",
-                "voided",
-                "written-off"
-              ]
-            }
-          },
-          "groupBy": [
-            "customerId",
-            "agingBucket"
-          ],
-          "computedFields": {
-            "agingBucket": {
-              "type": "date-bucket",
-              "field": "dueDate",
-              "referenceDate": "today",
-              "direction": "past",
-              "buckets": [
-                {
-                  "label": "current",
-                  "maxDaysOverdue": 0
-                },
-                {
-                  "label": "1-30 days",
-                  "minDaysOverdue": 1,
-                  "maxDaysOverdue": 30
-                },
-                {
-                  "label": "31-60 days",
-                  "minDaysOverdue": 31,
-                  "maxDaysOverdue": 60
-                },
-                {
-                  "label": "61-90 days",
-                  "minDaysOverdue": 61,
-                  "maxDaysOverdue": 90
-                },
-                {
-                  "label": ">90 days",
-                  "minDaysOverdue": 91
-                }
-              ]
-            }
-          },
-          "metrics": [
-            "count",
-            "totalAmount"
-          ]
-        }
-      },
-      "x-openregister-relations": {
-        "customer": {
-          "localField": "customerId",
-          "relatedSchema": "CustomerMaster",
-          "relatedField": "id",
-          "cardinality": "many-to-one",
-          "description": "FK to the CustomerMaster record this invoice bills."
-        },
-        "glTransaction": {
-          "localField": "glTransactionId",
-          "relatedSchema": "GLTransaction",
-          "relatedField": "id",
-          "cardinality": "many-to-one",
-          "description": "Back-reference to the materialised issue GLTransaction."
-        },
-        "writeOffGlTransaction": {
-          "localField": "writeOffGlTransactionId",
-          "relatedSchema": "GLTransaction",
-          "relatedField": "id",
-          "cardinality": "many-to-one",
-          "description": "Back-reference to the compensating write-off GLTransaction per REQ-AR-007."
-        },
-        "dunningRecords": {
-          "localField": "id",
-          "relatedSchema": "DunningRecord",
-          "relatedField": "invoiceRef",
-          "cardinality": "one-to-many",
-          "description": "Dunning timeline rows for this invoice per REQ-AR-005."
-        }
-      },
-      "x-openregister-rbac": {
-        "roles": {
-          "bookkeeper": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "controller": {
-            "permissions": [
-              "read",
-              "update"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        }
-      },
-      "AnalyticalDimension": {
-        "slug": "AnalyticalDimension",
-        "icon": "TagMultipleOutline",
-        "version": "0.1.0",
-        "title": "Analytical Dimension",
-        "description": "An operator-defined custom analytical dimension (e.g. region, product line, channel). Allows administrations to extend GLLine.dimensions with new dimension types without code changes per REQ-CD-001 and REQ-CD-006. Values for each dimension are stored as separate OR register instances.",
-        "x-schema-org": "schema:DefinedTerm",
-        "x-openregister-purpose": "dimension",
-        "type": "object",
-        "required": [
-          "code",
-          "name",
-          "dataType",
-          "administrationId"
-        ],
-        "properties": {
-          "code": {
-            "type": "string",
-            "description": "Unique dimension identifier used as keys in GLLine.dimensions map (e.g. region, product-line). Must be lowercase kebab-case per REQ-CD-006.",
-            "pattern": "^[a-z][a-z0-9-]*$",
-            "example": "region"
-          },
-          "name": {
-            "type": "string",
-            "description": "Human-readable dimension name shown in the UI per REQ-CD-006.",
-            "example": "Regio"
-          },
-          "description": {
-            "type": "string",
-            "description": "Description of what this dimension captures per REQ-CD-006.",
-            "nullable": true,
-            "example": "Geographic region for segment P&L analysis"
-          },
-          "dataType": {
-            "type": "string",
-            "enum": [
-              "string",
-              "number",
-              "date"
-            ],
-            "description": "Value data type determining validation of dimension values per REQ-CD-006.",
-            "example": "string"
-          },
-          "isHierarchical": {
-            "type": "boolean",
-            "default": false,
-            "description": "Whether values in this dimension support parent-child relationships for hierarchical roll-up per REQ-CD-006 + REQ-CD-007.",
-            "example": false
-          },
-          "administrationId": {
-            "type": "string",
-            "description": "FK to the Administration owning this analytical dimension per REQ-CD-006.",
-            "example": "adm-1"
-          }
-        },
-        "x-openregister-lifecycle": {
-          "field": "lifecycleState",
-          "initialState": "active",
-          "states": {
-            "active": {
-              "label": "Active",
-              "description": "Dimension is usable in GLLine.dimensions map entries."
-            },
-            "blocked": {
-              "label": "Blocked",
-              "description": "Readable but rejected as target of new GLLine dimension entries."
-            },
-            "archived": {
-              "label": "Archived",
-              "description": "Historical only; GLLine entries with this dimension code remain queryable."
-            }
-          },
-          "transitions": {
-            "block": {
-              "from": "active",
-              "to": "blocked",
-              "label": "Block dimension",
-              "description": "Prevent new GLLine entries using this dimension key."
-            },
-            "unblock": {
-              "from": "blocked",
-              "to": "active",
-              "label": "Unblock dimension",
-              "description": "Re-enable GLLine entries using this dimension key."
-            },
-            "archive": {
-              "from": [
-                "active",
-                "blocked"
-              ],
-              "to": "archived",
-              "label": "Archive dimension",
-              "description": "Move to historical archive; existing GLLine dimension entries remain queryable."
-            }
-          }
-        },
-        "x-openregister-rbac": {
-          "roles": {
-            "bookkeeper": {
-              "permissions": [
-                "read"
-              ]
-            },
-            "admin": {
-              "permissions": [
-                "create",
-                "read",
-                "update",
-                "delete"
-              ]
-            },
-            "auditor": {
-              "permissions": [
-                "read"
-              ]
-            }
-          }
-        }
-      }
-    },
-    "DunningRecord": {
-      "slug": "DunningRecord",
-      "icon": "EmailAlertOutline",
-      "version": "0.1.0",
-      "title": "Dunning Record",
-      "description": "Per-invoice dunning timeline record capturing one reminder, formal notice, or collection escalation dispatched against an overdue ARInvoice. Append-only timeline; new rows are written by OR's dunning-workflow engine (or by the conditional DunningGuard fallback per ADR-031 exception if OR's extension is not yet stable). Shillinq carries no app-local dunning service per REQ-AR-005. Per REQ-AR-005.",
-      "x-openregister-audit-trail": {
-        "enabled": true,
-        "description": "Bookkeeping evidence register; every dispatch is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. Forms the per-invoice dunning evidence chain for incassowet / aanmaningsprocedure compliance."
-      },
-      "x-schema-org": "schema:Action",
-      "type": "object",
-      "required": [
-        "invoiceRef",
-        "reminderLevel",
-        "dispatchedAt",
-        "dispatchedBy",
-        "administrationId"
-      ],
-      "properties": {
-        "invoiceRef": {
-          "type": "string",
-          "description": "FK to ARInvoice UUID.",
-          "example": "arinv-2026-0001"
-        },
-        "reminderLevel": {
-          "type": "string",
-          "enum": [
-            "reminder-1",
-            "reminder-2",
-            "formal-notice",
-            "collection"
-          ],
-          "description": "Dunning step. reminder-1 (default +14 days), reminder-2 (default +30 days), formal-notice (default +45 days; aanmaning), collection (default +60 days; doorgegeven aan incassobureau). Cadence is configurable per administration policy per REQ-AR-005.",
-          "example": "reminder-1"
-        },
-        "dispatchedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When this dunning step was dispatched.",
-          "example": "2026-05-14T08:00:00Z"
-        },
-        "dispatchedBy": {
-          "type": "string",
-          "description": "Actor that dispatched the dunning step. 'system' for the scheduled-workflow tick; otherwise the operator NC uid.",
-          "example": "system"
-        },
-        "channel": {
-          "type": "string",
-          "enum": [
-            "email",
-            "post",
-            "portal",
-            "sms",
-            "phone"
-          ],
-          "description": "Channel used to deliver the dunning notice. Defaults to email; post / phone capture operator-logged contact attempts.",
-          "nullable": true,
-          "example": "email"
-        },
-        "templateRef": {
-          "type": "string",
-          "description": "FK to OR's notification template used for this dispatch (per ADR-022). Resolution deferred to implementing cycle if OR's notification-template abstraction is not yet stable.",
-          "nullable": true
-        },
-        "payload": {
-          "type": "object",
-          "description": "Snapshot of the rendered message for audit traceability (subject + body excerpt + recipient). Operator-readable; not used for re-dispatch.",
-          "nullable": true,
-          "properties": {
-            "subject": {
-              "type": "string"
-            },
-            "recipient": {
-              "type": "string"
-            },
-            "bodyExcerpt": {
-              "type": "string"
-            }
-          }
-        },
-        "escalationLevel": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "1-based escalation counter for this invoice (1 = first reminder, 2 = second, …). Surfaces on the AR detail page dunning timeline.",
-          "nullable": true,
-          "example": 1
-        },
-        "acknowledgedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the customer responded (operator-logged or portal-captured). Pauses further dunning escalation per OR's dunning-workflow policy when set within a configured response window.",
-          "nullable": true
-        },
-        "administrationId": {
-          "type": "string",
-          "description": "FK to the administration owning this dunning record.",
-          "example": "adm-1"
-        }
-      },
-      "x-openregister-relations": {
-        "invoice": {
-          "localField": "invoiceRef",
-          "relatedSchema": "ARInvoice",
-          "relatedField": "id",
-          "cardinality": "many-to-one",
-          "description": "FK to the parent ARInvoice this dunning record belongs to."
-        }
-      },
-      "x-openregister-rbac": {
-        "roles": {
-          "bookkeeper": {
-            "permissions": [
-              "create",
-              "read"
-            ]
-          },
-          "controller": {
-            "permissions": [
-              "create",
-              "read"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        }
-      }
-    },
     "VATAuditRecord": {
       "slug": "VATAuditRecord",
       "icon": "FileCertificateOutline",
@@ -23621,7 +21342,9 @@
         },
         "overrideId": {
           "type": "string",
-          "description": "Optional FK to ServiceCategoryOverride if this line's vatRate / serviceCategory combination was authorised under an exception per REQ-VAT-002bis.",
+          "format": "uuid",
+          "$ref": "ServiceCategoryOverride",
+          "description": "Optional reference to the ServiceCategoryOverride consulted at issue time, when this line's vatRate / serviceCategory combination was authorised under an exception per REQ-VAT-002bis.",
           "nullable": true,
           "example": "sco-2026-0001"
         },
@@ -23629,29 +21352,6 @@
           "type": "string",
           "description": "FK to the administration owning this audit record.",
           "example": "adm-1"
-        }
-      },
-      "x-openregister-relations": {
-        "invoice": {
-          "localField": "invoiceNumber",
-          "relatedSchema": "ARInvoice",
-          "relatedField": "invoiceNumber",
-          "cardinality": "many-to-one",
-          "description": "FK to the ARInvoice the audit record belongs to. The number is a stable business key; immutable once issued."
-        },
-        "fiscalPeriod": {
-          "localField": "settlementPeriod",
-          "relatedSchema": "FiscalPeriod",
-          "relatedField": "periodId",
-          "cardinality": "many-to-one",
-          "description": "FK to the FiscalPeriod bound at issue time per REQ-VAT-005."
-        },
-        "override": {
-          "localField": "overrideId",
-          "relatedSchema": "ServiceCategoryOverride",
-          "relatedField": "id",
-          "cardinality": "many-to-one",
-          "description": "Optional link to the ServiceCategoryOverride consulted at issue time per REQ-VAT-002bis."
         }
       },
       "x-openregister-aggregations": {
@@ -23898,6 +21598,10 @@
     },
     "Kostenpost": {
       "slug": "Kostenpost",
+      "x-openregister-audit-trail": {
+        "enabled": true,
+        "description": "Every create, update and delete of a Kostenpost is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+      },
       "icon": "ReceiptTextOutline",
       "version": "0.1.0",
       "title": "Kostenpost",
@@ -24649,96 +22353,12 @@
         }
       }
     },
-    "InventoryStock": {
-      "slug": "InventoryStock",
-      "icon": "PackageVariantClosed",
-      "version": "0.1.0",
-      "title": "Inventory Stock",
-      "description": "Stock level per SKU at a specific bin Location per REQ-LOC-009 and inventory-stock-tracking spec. Always recorded at bin level (most-granular); warehouse/zone aggregation via Location.stockRollup. locationId FK references bin-type Location only.",
-      "x-schema-org": "schema:Thing",
-      "type": "object",
-      "required": [
-        "sku",
-        "locationId",
-        "quantity",
-        "administrationId"
-      ],
-      "properties": {
-        "sku": {
-          "type": "string",
-          "description": "Product SKU. References Product.sku.",
-          "example": "LAPTOP-001"
-        },
-        "locationId": {
-          "type": "string",
-          "description": "FK to Location (must be bin type per REQ-LOC-009). Aggregation queries traverse hierarchy upward.",
-          "example": "loc-w01-z01-b100"
-        },
-        "quantity": {
-          "type": "number",
-          "minimum": 0,
-          "description": "On-hand stock quantity at this bin location.",
-          "example": 25.0
-        },
-        "reservedQuantity": {
-          "type": "number",
-          "minimum": 0,
-          "nullable": true,
-          "default": 0,
-          "description": "Quantity reserved for pending orders (not available for new allocations).",
-          "example": 5.0
-        },
-        "unitCost": {
-          "type": "number",
-          "nullable": true,
-          "minimum": 0,
-          "description": "Unit cost at this location for inventory valuation.",
-          "example": 899.0
-        },
-        "lastMovementDate": {
-          "type": "string",
-          "format": "date",
-          "nullable": true,
-          "description": "Date of most recent stock movement at this location.",
-          "example": "2026-06-01"
-        },
-        "administrationId": {
-          "type": "string",
-          "description": "FK to Administration. Scoped per org.",
-          "example": "adm-1"
-        }
-      },
-      "x-openregister-rbac": {
-        "roles": {
-          "warehouse_manager": {
-            "permissions": [
-              "create",
-              "read",
-              "update",
-              "delete"
-            ]
-          },
-          "inventory": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        },
-        "adminScope": {
-          "field": "administrationId",
-          "enforce": true
-        }
-      }
-    },
     "WBSOTag": {
       "slug": "WBSOTag",
+      "x-openregister-audit-trail": {
+        "enabled": true,
+        "description": "Every create, update and delete of a WBSO Tag is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+      },
       "icon": "TagCheckOutline",
       "version": "0.1.0",
       "title": "WBSO Tag",
@@ -24857,6 +22477,10 @@
     },
     "WBSOActivityCode": {
       "slug": "WBSOActivityCode",
+      "x-openregister-audit-trail": {
+        "enabled": true,
+        "description": "Every create, update and delete of a WBSO Activity Code is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+      },
       "icon": "ClipboardListOutline",
       "version": "0.1.0",
       "title": "WBSO Activity Code",
@@ -24987,6 +22611,10 @@
     },
     "WBSOExportLog": {
       "slug": "WBSOExportLog",
+      "x-openregister-audit-trail": {
+        "enabled": true,
+        "description": "Every create, update and delete of a WBSO Export Log is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+      },
       "icon": "FileExportOutline",
       "version": "0.1.0",
       "title": "WBSO Export Log",
@@ -25282,6 +22910,10 @@
     },
     "SisaRegelingIndicator": {
       "slug": "SisaRegelingIndicator",
+      "x-openregister-audit-trail": {
+        "enabled": true,
+        "description": "Every create, update and delete of a SiSa Regeling Indicator is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+      },
       "icon": "FileCheckOutline",
       "version": "0.1.0",
       "title": "SiSa Regeling Indicator",
@@ -25302,7 +22934,9 @@
       "properties": {
         "subsidieId": {
           "type": "string",
-          "description": "FK to the parent Subsidie record of subtype specifieke-uitkering. Per ADR-022, no parallel SiSa subsidie register — indicator attaches to the existing T3 subsidie register.",
+          "format": "uuid",
+          "$ref": "Subsidie",
+          "description": "Reference to the parent Subsidie record of subtype specifieke-uitkering. Per ADR-022, no parallel SiSa subsidie register — the indicator attaches to the existing T3 subsidie register.",
           "example": "subsidie-uuid-d8-2026"
         },
         "regelingCode": {
@@ -25428,15 +23062,6 @@
           "description": "Notify the financial officer when a SiSa bijlage is submitted to BZK. Declarative; no SisaSubmissionService per ADR-031."
         }
       },
-      "x-openregister-relations": {
-        "subsidie": {
-          "localField": "subsidieId",
-          "relatedSchema": "Subsidie",
-          "relatedField": "id",
-          "cardinality": "many-to-one",
-          "description": "FK to the parent Subsidie record of subtype specifieke-uitkering. Declared per ADR-022 child-register pattern; no parallel SiSa subsidie register."
-        }
-      },
       "x-openregister-audit": {
         "immutable": true,
         "events": {
@@ -25463,152 +23088,12 @@
         }
       }
     },
-    "VpbBalansLink": {
-      "slug": "VpbBalansLink",
-      "icon": "ScaleBalance",
-      "version": "0.1.0",
-      "title": "Vpb-balans Link",
-      "description": "Overlay register tying an ondernemingsactiviteit cost-center to its cluster of Vpb-pligtige accounts. Declared per REQ-VPB-002 from bookkeeping-vpb-corporate-tax. No PHP service — pure schema overlay per ADR-031.",
-      "type": "object",
-      "x-schema-org": "schema:Dataset",
-      "required": [
-        "costCenterId",
-        "accountNumbers",
-        "vpbPligtigVanaf",
-        "administrationId"
-      ],
-      "properties": {
-        "costCenterId": {
-          "type": "string",
-          "description": "FK to AnalyticalDimension.code (dimensionType=cost-center) with ondernemingsActiviteit: true. The ondernemingsactiviteit whose Vpb-pligtige accounts this link declares. Re-targeted from the retired CostCenter to the unified AnalyticalDimension per REQ-ADIM-102; stored values unchanged.",
-          "example": "KC-OA-001"
-        },
-        "accountNumbers": {
-          "type": "array",
-          "description": "Array of Account.accountNumber strings identifying the Vpb-pligtige accounts belonging to this ondernemingsactiviteit. All referenced accounts MUST have vpbPligtig: true.",
-          "items": {
-            "type": "string"
-          },
-          "minItems": 1,
-          "example": [
-            "4100",
-            "4200",
-            "4300",
-            "8000",
-            "8100"
-          ]
-        },
-        "vpbPligtigVanaf": {
-          "type": "string",
-          "format": "date",
-          "description": "Start date of Vpb-pligtigheid for this ondernemingsactiviteit cluster per Wet modernisering Vpb-plicht (2016). Postings before this date are excluded from the Vpb-balans.",
-          "example": "2016-01-01"
-        },
-        "administrationId": {
-          "type": "string",
-          "description": "FK to the Administration owning this link. Scopes the link to one bookkeeping administration.",
-          "example": "adm-1"
-        },
-        "description": {
-          "type": "string",
-          "description": "Operator-authored description of the ondernemingsactiviteit Vpb cluster.",
-          "nullable": true,
-          "example": "Zwembad exploitatie — ondernemingsactiviteit per Vpb-plicht 2016"
-        }
-      },
-      "x-openregister-aggregations": {
-        "vpbBalansFiltered": {
-          "description": "Vpb-balans per ondernemingsactiviteit (REQ-VPB-003): filters GLLine rows where accountNumber is in this link's accountNumbers AND the periodId falls within a closed fiscal year (fiscalYearPeriods), groups per costCenterId, and produces Activa / Passiva / Resultaat columns. Balanced per T1 REQ-GL-005 invariant — unbalanced cost-centers surface as warnings. Output carries schema:Dataset annotation per ADR-031.",
-          "outputType": "VpbBalansFiltered",
-          "schemaOrg": "schema:Dataset",
-          "source": "GLLine",
-          "filter": {
-            "accountNumber": {
-              "operator": "in",
-              "field": "@self.accountNumbers"
-            },
-            "periodId": {
-              "operator": "in",
-              "field": "@params.fiscalYearPeriods"
-            },
-            "periodState": "closed"
-          },
-          "groupBy": "costCenterId",
-          "operations": {
-            "totalActiva": {
-              "field": "GLLine.amount",
-              "operation": "sum",
-              "condition": "GLLine.side = 'debit' AND Account[GLLine.accountNumber].accountType IN ('assets')"
-            },
-            "totalPassiva": {
-              "field": "GLLine.amount",
-              "operation": "sum",
-              "condition": "GLLine.side = 'credit' AND Account[GLLine.accountNumber].accountType IN ('liabilities', 'equity')"
-            },
-            "totalResultaat": {
-              "field": "GLLine.debit - GLLine.credit",
-              "operation": "sum",
-              "condition": "Account[GLLine.accountNumber].accountType IN ('revenue', 'expenses')"
-            }
-          },
-          "invariants": [
-            {
-              "id": "balance-check",
-              "description": "Per REQ-GL-005 (T1 balance invariant): totalActiva MUST equal totalPassiva + totalResultaat per ondernemingsactiviteit. Unbalanced cost-centers surface as warnings, not hard failures, per REQ-VPB-003.",
-              "expression": "abs(totalActiva - (totalPassiva + totalResultaat)) < 0.005",
-              "severity": "warning"
-            },
-            {
-              "id": "orphaned-vpb-pligt",
-              "description": "Per REQ-VPB-003 + REQ-VPB-002: every Account with vpbPligtig: true in this administration MUST appear in at least one VpbBalansLink.accountNumbers. Accounts not referenced by any link are orphaned Vpb-pligtige accounts and surface as warnings in the Vpb menu detail view (REQ-VPB-002 + Task 11).",
-              "expression": "Account.filter(a => a.vpbPligtig AND a.administrationId = @self.administrationId).every(a => @self.accountNumbers.includes(a.accountNumber))",
-              "severity": "warning"
-            }
-          ],
-          "sbrPayloadBinding": {
-            "description": "SBR payload binding for Vpb-aangifte transmission. The VpbBalansFiltered aggregation output maps to Belastingdienst Vpb XSD fields. Actual transmission rides the T4-base bookkeeping-sbr-xbrl-reporting SBR endpoint per REQ-VPB-004 and ADR-019 — no new SBR client is declared here.",
-            "endpoint": "bookkeeping-sbr-xbrl-reporting",
-            "entryPoint": "belastingdienst-vpb",
-            "xsdReference": "vpb-aangifte-{{ fiscalYear }}.xsd",
-            "fieldMapping": {
-              "VpbAangifte.FiscaalJaar": "@params.fiscalYear",
-              "VpbAangifte.AdministratieId": "administrationId",
-              "VpbAangifte.CostCenterId": "costCenterId",
-              "VpbAangifte.Activa": "totalActiva",
-              "VpbAangifte.Passiva": "totalPassiva",
-              "VpbAangifte.Resultaat": "totalResultaat"
-            }
-          }
-        }
-      },
-      "x-openregister-relations": {
-        "costCenter": {
-          "localField": "costCenterId",
-          "relatedSchema": "AnalyticalDimension",
-          "relatedField": "code",
-          "cardinality": "many-to-one",
-          "description": "FK to the ondernemingsactiviteit cost-center dimension. AnalyticalDimension.dimensionType MUST be cost-center AND AnalyticalDimension.ondernemingsActiviteit MUST be true per REQ-VPB-002 + REQ-ADIM-102. Re-targeted from the retired CostCenter to the unified AnalyticalDimension; stored costCenterId values unchanged."
-        }
-      },
-      "x-openregister-rbac": {
-        "roles": {
-          "bookkeeper": {
-            "permissions": [
-              "create",
-              "read",
-              "update"
-            ]
-          },
-          "auditor": {
-            "permissions": [
-              "read"
-            ]
-          }
-        }
-      }
-    },
     "SoProject": {
       "slug": "SoProject",
+      "x-openregister-audit-trail": {
+        "enabled": true,
+        "description": "Every create, update and delete of an S&O-project is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+      },
       "icon": "FlaskOutline",
       "version": "0.1.0",
       "title": "S&O-project",
@@ -25698,6 +23183,10 @@
     },
     "SoUrenStaat": {
       "slug": "SoUrenStaat",
+      "x-openregister-audit-trail": {
+        "enabled": true,
+        "description": "Every create, update and delete of an S&O-uren-staat is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+      },
       "icon": "ClockCheckOutline",
       "version": "0.1.0",
       "title": "S&O-uren-staat",
@@ -25887,6 +23376,7 @@
           }
         }
       }
+    }
     }
   },
   "mappings": {
