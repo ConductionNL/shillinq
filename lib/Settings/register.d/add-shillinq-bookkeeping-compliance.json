@@ -317,6 +317,16 @@
             "nullable": true,
             "description": "UBL 2.1 AccountingCustomerParty ID, declared for T4 Peppol outbound.",
             "title": "Ubl Debtor Ref"
+          },
+          "invoices": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "$ref": "ARInvoice"
+            },
+            "description": "Inverse of ARInvoice.customerId; back-reference populated by OpenRegister.",
+            "title": "Invoices"
           }
         },
         "x-openregister-lifecycle": {
@@ -415,7 +425,11 @@
           },
           "customerId": {
             "type": "string",
-            "description": "FK to CustomerMaster.customerId.",
+            "format": "uuid",
+            "$ref": "CustomerMaster",
+            "inversedBy": "invoices",
+            "description": "Reference to the CustomerMaster this invoice is billed to (holds its object UUID, NOT the per-administration customer code CustomerMaster.customerId). PortalContributionProvider scopes a debtor's visible invoices on this field against the customerMasterId claim, and its cross-administration isolation argument depends on the value being the globally-unique object UUID.",
+            "example": "00000000-0000-0000-0000-000000000000",
             "title": "Customer ID"
           },
           "administrationId": {
@@ -482,8 +496,11 @@
           },
           "glTransactionId": {
             "type": "string",
+            "format": "uuid",
+            "$ref": "GLTransaction",
             "nullable": true,
-            "description": "UUID of the materialised GLTransaction on issue.",
+            "description": "Reference to the GLTransaction materialised on issue (holds its object UUID).",
+            "example": "00000000-0000-0000-0000-000000000000",
             "title": "GL Transaction ID"
           },
           "sourceDocumentUri": {

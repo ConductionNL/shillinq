@@ -79,6 +79,33 @@ final class ShillinqNotificationsFragmentTest extends TestCase
 
 
     /**
+     * The EFFECTIVE register config: the monolith with EVERY register.d
+     * fragment merged over it, which is what
+     * `SettingsService::loadRegisterConfigData()` hands to the importer.
+     *
+     * Needed for any question about a schema a fragment owns — the monolith
+     * alone cannot answer one, and the retired top-level `components.<Name>`
+     * path that used to look like an answer was never imported.
+     *
+     * @return array<string,mixed> The merged config.
+     */
+    private function effective(): array
+    {
+        $merged    = $this->jsonFile($this->registerPath);
+        $fragments = glob(__DIR__.'/../../../lib/Settings/register.d/*.json');
+        self::assertNotEmpty($fragments, 'No register.d fragments found — the merge would be a no-op.');
+        sort($fragments);
+
+        foreach ($fragments as $fragment) {
+            $merged = $this->merge(base: $merged, overlay: $this->jsonFile($fragment));
+        }
+
+        return $merged;
+
+    }//end effective()
+
+
+    /**
      * Decode a JSON file to an array.
      *
      * @param string $path Path to the JSON document.
@@ -324,14 +351,17 @@ final class ShillinqNotificationsFragmentTest extends TestCase
         self::assertArrayHasKey('approved', $poRules);
 
         // APInvoice keeps the approvalNeeded rule from the monolith (AP-core).
-        // NOTE: PaymentRun lives under components.schemas (not top-level components)
-        // and does not currently carry x-openregister-notifications — the description
-        // that said "PaymentRun rules were already published" was premature; that
-        // notification set was never shipped. Asserting only APInvoice which is
-        // confirmed present in the monolith top-level components.
+        // Read from components.schemas — the only branch OpenRegister's
+        // ImportHandler iterates. APInvoice used to sit one level above it, at
+        // the monolith's top-level `components.APInvoice`, so this assertion
+        // was reading a rule the importer never loaded; the schema has since
+        // been moved and the rule has to be found where it now lives.
+        // NOTE: PaymentRun does not currently carry x-openregister-notifications
+        // — the description that said "PaymentRun rules were already published"
+        // was premature; that notification set was never shipped.
         self::assertArrayHasKey(
             'approvalNeeded',
-            $merged['components']['APInvoice']['x-openregister-notifications']
+            $merged['components']['schemas']['APInvoice']['x-openregister-notifications']
         );
 
         // The `requester` field referenced by both PO rules exists on
@@ -341,10 +371,40 @@ final class ShillinqNotificationsFragmentTest extends TestCase
             $merged['components']['schemas']['PurchaseOrder']['properties']
         );
 
-        // The `state` field referenced by AR's paid rule + the `dueDate`
+        // The lifecycle field referenced by AR's paid rule + the `dueDate`
         // field referenced by AR's overdue filter exist on ARInvoice.
-        self::assertArrayHasKey('state', $merged['components']['ARInvoice']['properties']);
-        self::assertArrayHasKey('dueDate', $merged['components']['ARInvoice']['properties']);
+        //
+        // ARInvoice is owned by a register.d fragment, not by the monolith,
+        // so the three-document merge above cannot answer this — and the
+        // retired `components.ARInvoice` path these two assertions used to
+        // read was never loaded by the importer at all. Answered against the
+        // full effective config, which is what OpenRegister receives.
+        //
+        // The field is `lifecycleState`, not `state`. `state` was a property
+        // of the retired schema version that lived at the dead path; the live
+        // ARInvoice has never had it. Both rules in this fragment filter on
+        // `lifecycleState` (overdue: trigger.filter, paid: trigger.condition),
+        // so asserting `state` checked a name nothing uses against a schema
+        // nothing loads. Read the rules' own field names off the fragment so
+        // this cannot drift again.
+        $arInvoice = $this->effective()['components']['schemas']['ARInvoice']['properties'];
+        $arRuleSet = $this->jsonFile($this->fragmentPath)['components']['schemas']['ARInvoice']['x-openregister-notifications'];
+
+        $referencedFields = [
+            array_key_first($arRuleSet['overdue']['trigger']['filter']),
+            $arRuleSet['paid']['trigger']['condition']['field'],
+        ];
+
+        foreach ($referencedFields as $field) {
+            self::assertArrayHasKey(
+                $field,
+                $arInvoice,
+                'AR notification rule references field "'.$field.'", which ARInvoice does not declare.'
+            );
+        }
+
+        self::assertContains('lifecycleState', $referencedFields);
+        self::assertArrayHasKey('dueDate', $arInvoice);
 
     }//end testFragmentOverlaysWithoutClobber()
 
