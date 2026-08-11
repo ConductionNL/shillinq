@@ -12,7 +12,8 @@
 			"route": "/inkoop/3way-matches/:id",
 			"type": "custom",
 			"title": "3-way Match",
-			"component": "ThreeWayMatchExceptionPanel"
+			"component": "ThreeWayMatchExceptionPanel",
+			"_note": "The page is a side-by-side reconciliation of THREE different objects (purchase order, goods receipt note, supplier invoice) with the per-field divergence computed across them (REQ-PO3W-005). `type: detail` is bound to a single register/schema/:id triple and renders that object's fields; it has no comparison view across three schemas. On top of that the three dispositions (accept with motivation, file dispute, reject and block payment) POST to /api/three-way-match/exceptions/{accept,dispute,reject} sharing one motivation input, which config.lifecycleActions — a per-transition button on the object itself — cannot express."
 		}
 	]
 }

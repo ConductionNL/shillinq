@@ -292,15 +292,10 @@
 			"route": "/contracts/spend",
 			"type": "custom",
 			"title": "Contract Spend",
+			"_note": "Placeholder with NO component on purpose, so CnPageRenderer shows its empty state. The intended page rolls purchase orders (committed) and AP/AR invoices (invoiced) up per contract, sliceable by cost center / dimension, with over-commitment and over-invoicing flags (REQ-CLM-006) — figures that are CHAINED behind bookkeeping-purchase-order-3way, add-shillinq-accounts-payable-core and add-shillinq-accounts-receivable-core. Until those schemas land and carry contractReference there is nothing to aggregate, and a `type: dashboard` page would render widgets over absent data as zeroes, which reads as 'no spend' rather than 'not wired yet'. An honest empty state, never stub figures.",
 			"config": {
-				"componentName": "shillinq-empty-state",
 				"register": "shillinq",
-				"schema": "Contract",
-				"props": {
-					"title": "No linked spend data",
-					"message": "The committed-vs-invoiced-vs-contracted spend dashboard rolls up purchase orders (committed) and AP/AR invoices (invoiced) per contract, sliceable by cost center / dimension, with over-commitment and over-invoicing flags (REQ-CLM-006). These figures are CHAINED behind bookkeeping-purchase-order-3way and the AP/AR core changes; until those schemas land and carry contractReference, this dashboard renders an honest empty state — never stub figures.",
-					"chained": ["bookkeeping-purchase-order-3way", "add-shillinq-accounts-payable-core", "add-shillinq-accounts-receivable-core"]
-				}
+				"schema": "Contract"
 			}
 		}
 	]

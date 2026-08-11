@@ -46,7 +46,31 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // never ships its JSON) is the explicit, larger, still-undecided scope of
 // shillinq-manifest-boot-payload-reduction (REQ-MBP-001) — this tripwire is
 // deliberately kept loose, not re-architected, here.
-const DEFAULT_BUDGET_BYTES = 1_100_000
+//
+// Re-measured 2026-08-10 (gate-53 effective-manifest-crossref): 1,110,250
+// bytes, +16,588 on the 1,093,662 this branch started from. The growth is one
+// deliberate, non-recurring addition — the v2 schema requires a `_note` on
+// every `type:"custom"` page whose component is not a lib `Cn*` SFC,
+// documenting why decomposition into a standard page type was not feasible,
+// and 45 such pages had none. Writing those notes cost ~19 KB of prose; the
+// same branch freed ~1 KB by deleting dead keys (featureFlag, group, kind,
+// i18n, visibility) and ~3 KB by deleting the duplicate in-app Settings page.
+// Raised, not trimmed, on purpose: trimming here means deleting the schema's
+// required documentation, which is the opposite of what the gate asks for.
+// The number of custom pages is bounded, so this is a one-off step, not a new
+// growth rate — the structural fix (code-splitting manifest.d/) is still the
+// undecided scope of REQ-MBP-001.
+//
+// HEADROOM IS PART OF THE SETTING, not a leftover. 1,120,000 leaves 9,750 B
+// (0.88%), deliberately close to the 6,338 B (0.58%) this check ran with
+// before, so the tripwire keeps its sensitivity. The first draft of this bump
+// set 1,150,000 — 6.3x more slack than the change needed — which would have
+// let the next ~38 KB of growth, none of it schema-mandated prose, land
+// silently. A tripwire that only fires after 38 KB of drift is not measuring
+// the thing it was written to measure. When a future change legitimately needs
+// more, re-measure and re-state the ratio here rather than leaving slack
+// behind for it.
+const DEFAULT_BUDGET_BYTES = 1_120_000
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

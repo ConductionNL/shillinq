@@ -221,9 +221,9 @@
             "channels": [
               "sms"
             ],
-            "connector": "@self.providerConfig.connectorId",
-            "template": "@self.messageTemplate",
-            "sender": "@self.senderId",
+            "connector": "{{providerConfig.connectorId}}",
+            "template": "{{messageTemplate}}",
+            "sender": "{{senderId}}",
             "appliesWhen": {
               "field": "status",
               "in": [
@@ -233,11 +233,11 @@
             "skipWhen": {
               "recipientField": "smsOptOut",
               "equals": true,
-              "onlyIf": "@self.respectOptOut"
+              "onlyIf": "{{respectOptOut}}"
             },
             "retry": {
-              "count": "@self.retryCount",
-              "intervalSeconds": "@self.retryIntervalSeconds"
+              "count": "{{retryCount}}",
+              "intervalSeconds": "{{retryIntervalSeconds}}"
             },
             "description": "Declarative SMS dispatch consumed from OR's notification engine (ADR-022, REQ-SMS-005/008/018/021). When a booking.reminder-due event fires, active channels render their template with booking variables and dispatch via the referenced openconnector connector — unless the recipient has opted out (skipWhen, respected when respectOptOut is true). Retries on transient provider error per retryCount/retryIntervalSeconds; failures are logged with a masked phone number. The pure-logic gating/rendering/normalization is implemented in Shillinq's SmsReminderDispatcher helper (provider-adapter interface), keeping the orchestration unit-tested while live dispatch stays in OR's engine."
           }

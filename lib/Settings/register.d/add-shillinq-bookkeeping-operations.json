@@ -208,12 +208,26 @@
               "action": "submit"
             },
             "description": "Notify the vat-administrator when a return is submitted.",
-            "recipients": {
-              "role": "vat-administrator",
-              "scope": "@self.administrationId"
-            },
-            "title": "BTW-aangifte ingediend",
-            "message": "BTW-aangifte voor @self.periodYear is ingediend via Digipoort."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "vat-administrator"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "BTW-aangifte voor {{periodYear}} is ingediend via Digipoort",
+              "en": "VAT return for {{periodYear}} was submitted through Digipoort"
+            }
           }
         },
         "x-openregister-rbac": {
@@ -1000,12 +1014,26 @@
               "action": "submit"
             },
             "description": "Notify the bcf-administrator when a claim is submitted.",
-            "recipients": {
-              "role": "bcf-administrator",
-              "scope": "@self.administrationId"
-            },
-            "title": "BCF-claim ingediend",
-            "message": "BCF-claim @self.claimNumber is ingediend bij het Compensatiefonds."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bcf-administrator"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "BCF-claim {{claimNumber}} is ingediend bij het BTW-compensatiefonds",
+              "en": "BCF claim {{claimNumber}} was submitted to the VAT compensation fund"
+            }
           }
         },
         "x-openregister-rbac": {
@@ -1310,14 +1338,35 @@
         },
         "x-openregister-notifications": {
           "onAboveThreshold": {
-            "trigger": "field.aboveThreshold==true",
-            "description": "Alert the treasury-officer when the daily position exceeds the drempelbedrag (REQ-SBK-008).",
-            "recipients": {
-              "role": "treasury-officer",
-              "scope": "@self.administrationId"
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "aboveThreshold",
+                "operator": "equals",
+                "value": true
+              }
             },
-            "title": "Schatkist-drempel overschreden",
-            "message": "De schatkist-positie van @self.position EUR op @self.businessDate overschrijdt het drempelbedrag."
+            "description": "Alert the treasury-officer when the daily position exceeds the drempelbedrag (REQ-SBK-008).",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "treasury-officer"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Schatkist-drempel overschreden: positie {{position}} EUR op {{businessDate}}",
+              "en": "Treasury banking threshold exceeded: position {{position}} EUR on {{businessDate}}"
+            }
           }
         },
         "x-openregister-widgets": {

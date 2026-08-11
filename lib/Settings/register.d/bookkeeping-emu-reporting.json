@@ -242,22 +242,53 @@
               "type": "created"
             },
             "description": "Notify the concerncontroller when a quarterly concept-aangifte is generated (REQ-EMU-001).",
-            "recipients": {
-              "role": "emu-concerncontroller",
-              "scope": "@self.administrationId"
-            },
-            "title": "EMU-conceptaangifte gereed",
-            "message": "De EMU-conceptaangifte voor @self.periodeJaar is gegenereerd en wacht op review."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "emu-concerncontroller"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "EMU-conceptaangifte voor {{periodeJaar}} is gegenereerd en wacht op review",
+              "en": "EMU draft return for {{periodeJaar}} has been generated and is awaiting review"
+            }
           },
           "onIngediend": {
-            "trigger": "lifecycle.indienen",
-            "description": "Notify on successful CBS submission (REQ-EMU-006).",
-            "recipients": {
-              "role": "emu-concerncontroller",
-              "scope": "@self.administrationId"
+            "trigger": {
+              "type": "transition",
+              "action": "indienen"
             },
-            "title": "EMU-aangifte ingediend",
-            "message": "EMU-aangifte @self.periodeJaar is ingediend bij het CBS."
+            "description": "Notify on successful CBS submission (REQ-EMU-006).",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "emu-concerncontroller"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "EMU-aangifte {{periodeJaar}} is ingediend bij het CBS",
+              "en": "EMU return {{periodeJaar}} was submitted to Statistics Netherlands (CBS)"
+            }
           }
         },
         "x-openregister-rbac": {
@@ -673,14 +704,35 @@
         },
         "x-openregister-notifications": {
           "onSchatkistNegatief": {
-            "trigger": "field.instrument=='schatkistbankieren-rekeningcourant'",
-            "description": "Alert the treasury-officer when a negative schatkistbankieren position is recorded as EMU-schuld (REQ-EMU-011).",
-            "recipients": {
-              "role": "treasury-officer",
-              "scope": "@self.reportId"
+            "trigger": {
+              "type": "created",
+              "condition": {
+                "field": "instrument",
+                "operator": "equals",
+                "value": "schatkistbankieren-rekeningcourant"
+              }
             },
-            "title": "Schatkistbankieren rood — EMU-schuld",
-            "message": "Een negatieve schatkistbankieren-positie van @self.uitstaandeSchuld telt mee als EMU-schuld op @self.peildatum."
+            "description": "Alert the treasury-officer when a negative schatkistbankieren position is recorded as EMU-schuld (REQ-EMU-011).",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "treasury-officer"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Schatkistbankieren rood: negatieve positie van {{uitstaandeSchuld}} telt mee als EMU-schuld op {{peildatum}}",
+              "en": "Treasury banking overdrawn: a negative position of {{uitstaandeSchuld}} counts towards EMU debt on {{peildatum}}"
+            }
           }
         },
         "x-openregister-rbac": {

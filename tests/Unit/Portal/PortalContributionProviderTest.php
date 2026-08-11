@@ -587,4 +587,188 @@ class PortalContributionProviderTest extends TestCase
         );
 
     }//end testExistingManifestsAreUnchanged()
+
+
+    /**
+     * The EFFECTIVE register config — monolith + every register.d fragment,
+     * as `SettingsService::loadRegisterConfigData()` assembles it.
+     *
+     * @return array<string,mixed> The merged config.
+     */
+    private function effectiveRegister(): array
+    {
+        $decode = static function (string $path): array {
+            $data = json_decode((string) file_get_contents($path), true);
+            return is_array($data) === true ? $data : [];
+        };
+
+        $deepMerge = static function (array $base, array $overlay) use (&$deepMerge): array {
+            if (array_is_list($base) === true && array_is_list($overlay) === true) {
+                return array_merge($base, $overlay);
+            }
+
+            foreach ($overlay as $key => $value) {
+                if (isset($base[$key]) === true && is_array($base[$key]) === true && is_array($value) === true) {
+                    $base[$key] = $deepMerge($base[$key], $value);
+                    continue;
+                }
+
+                $base[$key] = $value;
+            }
+
+            return $base;
+        };
+
+        $merged    = $decode(__DIR__.'/../../../lib/Settings/shillinq_register.json');
+        $fragments = glob(__DIR__.'/../../../lib/Settings/register.d/*.json');
+        $this->assertNotEmpty($fragments, 'No register.d fragments — the merge would be a no-op.');
+        sort($fragments);
+
+        foreach ($fragments as $fragment) {
+            $merged = $deepMerge($merged, $decode($fragment));
+        }
+
+        return $merged;
+
+    }//end effectiveRegister()
+
+
+    /**
+     * THE ISOLATION INVARIANT: every customer-manifest scopeField must resolve
+     * to a schema property that is DECLARED as an object reference — never to
+     * a per-administration natural key.
+     *
+     * This is the link that was missing, and its absence is why a real defect
+     * survived. `testCustomerInvoiceIdorBoundary` asserts the manifest NAMES
+     * `customerId`, and its comment claims "UUID scope, not the guessable
+     * per-administration code" — but a manifest is only a declaration of which
+     * field to scope on. What the field actually IS lives in the register, and
+     * no test read the register. For months `ARInvoice.customerId` carried no
+     * `format`, no `$ref`, and a description pointing at
+     * `CustomerMaster.customerId` (the customer CODE, e.g. "DEB-0001"), while
+     * PortalContributionProvider's cross-administration isolation argument
+     * rested on the value being the globally-unique CustomerMaster OBJECT
+     * UUID. Both halves looked fine in isolation; nothing joined them.
+     *
+     * A code-shaped scope value is not merely weaker — `CustomerMaster.customerId`
+     * is unique only WITHIN an administration, so two administrations can each
+     * hold a "DEB-0001". Scoping a debtor's invoices on that field is a
+     * cross-tenant collision by construction.
+     *
+     * NOT ASSERTED HERE, AND DELIBERATELY NAMED RATHER THAN PASSED OVER:
+     * `PaymentRequest.invoiceReference` — the OUTER field of the
+     * paymentRequests join — is declared `{"type": "string"}` with the
+     * description "FK to the ARInvoice (UUID or slug)" and a slug-shaped
+     * example, carrying no `format` and no `$ref`. The join collects ARInvoice
+     * object IDS (`targetField: 'id'`, asserted below), so a value holding a
+     * slug does not compare equal to an id. Narrowing that field to a
+     * `$ref: ARInvoice` object reference is a data-model decision with seed
+     * impact and is filed separately — asserting it here would make this test
+     * red for a defect it did not find and cannot fix.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/portal-contribution/spec.md
+     */
+    public function testEveryCustomerScopeFieldIsADeclaredObjectReference(): void
+    {
+        $schemas  = $this->effectiveRegister()['components']['schemas'];
+        $manifest = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
+
+        $checked = 0;
+        foreach ($manifest['collections'] as $collection) {
+            // The isolation hinge is the field the SUBJECT'S IDENTITY is
+            // compared against. For a directly-scoped collection that is its
+            // own scopeField; for one reached through a reverse `via` join it
+            // is the join's scopeField on the hopped-through schema (the
+            // collection's own scopeField is then a join key between two
+            // rows, not a subject identity — see the note below).
+            if (isset($collection['via']) === true) {
+                $targets = [[$collection['via']['schema'], $collection['via']['scopeField']]];
+            } else {
+                $targets = [[$collection['schema'], $collection['scopeField']]];
+            }
+
+            foreach ($targets as [$schemaName, $scopeField]) {
+                $this->assertArrayHasKey($schemaName, $schemas, 'Manifest names an undeclared schema: '.$schemaName);
+                $properties = ($schemas[$schemaName]['properties'] ?? []);
+
+                // A scopeField that is not a property at all cannot be
+                // filtered on: the scope would silently match nothing, or
+                // everything, depending on the consumer.
+                $this->assertArrayHasKey(
+                    $scopeField,
+                    $properties,
+                    $schemaName.'.'.$scopeField.' is the portal scope field but is not a declared property.'
+                );
+
+                $property = $properties[$scopeField];
+
+                // Only the customerMasterId-claimed collections carry the
+                // object-reference guarantee; the Wave-1 collections scope on
+                // a verified contact reference under a different claim.
+                $claim = ($collection['scopeClaim'] ?? '');
+                if ($claim !== 'customerMasterId') {
+                    continue;
+                }
+
+                $this->assertSame(
+                    'uuid',
+                    ($property['format'] ?? null),
+                    $schemaName.'.'.$scopeField.' scopes a portal collection on the customerMasterId claim, '
+                    .'so it must be declared format:uuid — a per-administration code is not globally unique.'
+                );
+                $this->assertSame(
+                    'CustomerMaster',
+                    ($property['$ref'] ?? null),
+                    $schemaName.'.'.$scopeField.' must $ref CustomerMaster so the scope value is the object UUID, '
+                    .'not CustomerMaster.customerId (the per-administration customer code).'
+                );
+
+                $checked++;
+            }
+        }
+
+        // Guard against the assertion silently covering nothing if the
+        // manifest is refactored — the failure mode this whole test exists
+        // to catch.
+        $this->assertGreaterThanOrEqual(
+            2,
+            $checked,
+            'Expected the salesInvoices scope and the paymentRequests via-join scope to be checked.'
+        );
+
+    }//end testEveryCustomerScopeFieldIsADeclaredObjectReference()
+
+
+    /**
+     * The reverse `via` join must land on the object identity, not on a
+     * schema property — otherwise a PaymentRequest could be matched to an
+     * invoice by a value that repeats across administrations.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/portal-contribution/spec.md
+     */
+    public function testViaJoinMatchesOnObjectIdentity(): void
+    {
+        $manifest = $this->provider->getContribution(self::CUSTOMER_SUBJECT);
+
+        $joins = 0;
+        foreach ($manifest['collections'] as $collection) {
+            if (isset($collection['via']) === false) {
+                continue;
+            }
+
+            $this->assertSame(
+                'id',
+                ($collection['via']['targetField'] ?? null),
+                $collection['id'].': the via join must collect object ids, so the outer scope compares identities.'
+            );
+            $joins++;
+        }
+
+        $this->assertSame(1, $joins, 'Expected exactly the paymentRequests via join.');
+
+    }//end testViaJoinMatchesOnObjectIdentity()
 }//end class
