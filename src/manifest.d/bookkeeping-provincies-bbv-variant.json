@@ -5,11 +5,6 @@
 			"label": "BBV Province",
 			"icon": "MapOutline",
 			"order": 75,
-			"visibilityPredicate": {
-				"administrationType": [
-					"provincie"
-				]
-			},
 			"children": [
 				{
 					"id": "BbvComplianceDashboard",
@@ -34,12 +29,6 @@
 			"route": "/bbv-provincie/compliance-dashboard",
 			"type": "dashboard",
 			"title": "BBV Compliance Dashboard",
-			"visibility": {
-				"field": "administrationType",
-				"in": [
-					"provincie"
-				]
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "Budget",
@@ -223,12 +212,6 @@
 			"route": "/bbv-provincie/budget-to-programme",
 			"type": "index",
 			"title": "Budget Links",
-			"visibility": {
-				"field": "administrationType",
-				"in": [
-					"provincie"
-				]
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "GLLine",
@@ -353,12 +336,6 @@
 			"route": "/bbv-provincie/budget-to-programme/:id",
 			"type": "detail",
 			"title": "GL line",
-			"visibility": {
-				"field": "administrationType",
-				"in": [
-					"provincie"
-				]
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "GLLine",
