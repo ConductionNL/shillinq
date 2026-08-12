@@ -1402,7 +1402,7 @@
       },
       "AuditTrail": {
         "slug": "AuditTrail",
-        "icon": "ClipboardTextClockOutline",
+        "icon": "History",
         "version": "0.1.0",
         "title": "Audit-trail",
         "description": "Onveranderlijk append-only event-log voor alle EU-fondsen state-transities (boeking → declaratie → certificering → betaling → correctie → audit) met before/after-state en bewijs-URI (REQ-EUF-009, art 69 + 82 CPR). Maakt 5+ jaar reconstructie na project-sluiting mogelijk.",
