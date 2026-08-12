@@ -615,8 +615,8 @@ class RenameDutchColumns implements IRepairStep
             }
 
             foreach ($wanted as $marker) {
-                $at = strpos($name, $marker);
-                if ($at !== false && ctype_digit(substr($name, ($at + strlen($marker)))) === true) {
+                $offset = strpos($name, $marker);
+                if ($offset !== false && ctype_digit(substr($name, ($offset + strlen($marker)))) === true) {
                     $tables[] = $name;
                 }
             }
