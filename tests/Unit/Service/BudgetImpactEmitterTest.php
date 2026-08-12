@@ -188,7 +188,7 @@ final class BudgetImpactEmitterTest extends TestCase
         $emitter->emitActivated(
             [
                 'bronReferentie'   => 'TN-2026-0001',
-                'bedrag'           => 50000.0,
+                'amount'           => 50000.0,
                 'kostenplaats'     => 'KP-100',
                 'looptijdStart'    => '2026-01-01',
                 'looptijdEind'     => '2026-12-31',

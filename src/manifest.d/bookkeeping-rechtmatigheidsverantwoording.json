@@ -59,7 +59,7 @@
 					{ "key": "uitkomst", "label": "Outcome", "sortable": true },
 					{ "key": "toetstype", "label": "Assessment type", "sortable": true },
 					{ "key": "toetsdatum", "label": "Assessment date", "sortable": true },
-					{ "key": "bedrag_betrokken", "label": "Amount", "sortable": true },
+					{ "key": "amount_involved", "label": "Amount", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "toetsdatum",
@@ -83,7 +83,7 @@
 					{ "key": "toetsdatum", "label": "Assessment date", "type": "string" },
 					{ "key": "toetser", "label": "Assessor", "type": "string" },
 					{ "key": "onderbouwing", "label": "Substantiation", "type": "string" },
-					{ "key": "bedrag_betrokken", "label": "Amount", "type": "string" },
+					{ "key": "amount_involved", "label": "Amount", "type": "string" },
 					{ "key": "bewijsstukken", "label": "Supporting documents", "type": "string" },
 					{ "key": "regelverwijzing", "label": "Rule reference", "type": "string" },
 					{ "key": "rechtmatigheidsbevinding", "label": "Finding", "type": "string" },
@@ -124,8 +124,8 @@
 					{ "key": "bevindingsnummer", "label": "Finding number", "sortable": true },
 					{ "key": "soort", "label": "Kind", "sortable": true },
 					{ "key": "criterium", "label": "Criterion", "sortable": true },
-					{ "key": "bedrag_fout", "label": "Error amount", "sortable": true },
-					{ "key": "bedrag_onzekerheid", "label": "Uncertainty amount", "sortable": true },
+					{ "key": "amount_error", "label": "Error amount", "sortable": true },
+					{ "key": "amount_uncertainty", "label": "Uncertainty amount", "sortable": true },
 					{ "key": "boekjaar", "label": "Financial year", "sortable": true },
 					{ "key": "programma", "label": "Programme", "sortable": true },
 					{ "key": "status", "label": "Status", "sortable": true }
@@ -147,8 +147,8 @@
 					{ "key": "bevindingsnummer", "label": "Finding number", "type": "string" },
 					{ "key": "soort", "label": "Kind", "type": "string" },
 					{ "key": "criterium", "label": "Criterion", "type": "string" },
-					{ "key": "bedrag_fout", "label": "Error amount", "type": "string" },
-					{ "key": "bedrag_onzekerheid", "label": "Uncertainty amount", "type": "string" },
+					{ "key": "amount_error", "label": "Error amount", "type": "string" },
+					{ "key": "amount_uncertainty", "label": "Uncertainty amount", "type": "string" },
 					{ "key": "boekjaar", "label": "Financial year", "type": "string" },
 					{ "key": "programma", "label": "Programme", "type": "string" },
 					{ "key": "omschrijving", "label": "Description", "type": "string" },
@@ -275,8 +275,8 @@
 				"fields": [
 					{ "key": "boekjaar", "label": "Financial year", "type": "string" },
 					{ "key": "totaal_lasten_inclusief_mutaties_reserves", "label": "Total expenses incl. reserve movements", "type": "string" },
-					{ "key": "tolerantiegrens_fout_bedrag", "label": "Tolerance threshold error (amount)", "type": "string" },
-					{ "key": "tolerantiegrens_onzekerheid_bedrag", "label": "Tolerance threshold uncertainty (amount)", "type": "string" },
+					{ "key": "tolerance_error_amount", "label": "Tolerance threshold error (amount)", "type": "string" },
+					{ "key": "tolerance_uncertainty_amount", "label": "Tolerance threshold uncertainty (amount)", "type": "string" },
 					{ "key": "totaal_geconstateerde_fouten", "label": "Total identified errors", "type": "string" },
 					{ "key": "totaal_geconstateerde_onzekerheden", "label": "Total identified uncertainties", "type": "string" },
 					{ "key": "binnen_tolerantie", "label": "Within tolerance", "type": "string" },
@@ -322,7 +322,7 @@
 					{ "key": "uitkomst", "label": "Outcome", "sortable": true },
 					{ "key": "toetsdatum", "label": "Assessment date", "sortable": true },
 					{ "key": "toetser", "label": "Assessor", "sortable": true },
-					{ "key": "bedrag_betrokken", "label": "Amount", "sortable": true }
+					{ "key": "amount_involved", "label": "Amount", "sortable": true }
 				],
 				"defaultSort": "toetsdatum",
 				"detailRoute": "RechtmatigheidstoetsDetail"

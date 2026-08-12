@@ -115,7 +115,7 @@
 					{ "key": "frequentie", "label": "Frequency", "type": "string" },
 					{ "key": "dagVanMaand", "label": "Day of month", "type": "number" },
 					{ "key": "maandVanJaar", "label": "Month of year", "type": "number" },
-					{ "key": "standaardBedrag", "label": "Amount", "type": "number" },
+					{ "key": "standardAmount", "label": "Amount", "type": "number" },
 					{ "key": "indexatieRegel", "label": "Indexation rule", "type": "string" },
 					{ "key": "geldigVan", "label": "Valid from", "type": "string" },
 					{ "key": "geldigTot", "label": "Valid until", "type": "string" },

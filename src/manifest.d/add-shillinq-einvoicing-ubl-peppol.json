@@ -187,7 +187,7 @@
                   "label": "Delivery status"
                 },
                 {
-                  "key": "incassokostenBedrag",
+                  "key": "collectionCostAmount",
                   "label": "Collection costs"
                 }
               ],

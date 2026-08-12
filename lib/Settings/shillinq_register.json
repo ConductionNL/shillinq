@@ -3321,7 +3321,7 @@
           "aanslagJaar",
           "tariefGrondslag",
           "tarief",
-          "aanslagBedrag",
+          "assessmentAmount",
           "administrationId",
           "state"
         ],
@@ -3356,7 +3356,7 @@
             "example": 85.5,
             "title": "Rate"
           },
-          "aanslagBedrag": {
+          "assessmentAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Total aanslag amount in EUR (tarief × grondslag-quantity). This amount is materialised into a balanced GLTransaction on post.",
@@ -3461,7 +3461,7 @@
               "actionParameters": {
                 "debitField": "debitAccountNumber",
                 "creditField": "creditAccountNumber",
-                "amountField": "aanslagBedrag",
+                "amountField": "assessmentAmount",
                 "currency": "EUR",
                 "sourceReference": "@self.id",
                 "journalEntryIdField": "journalEntryId",
@@ -3477,7 +3477,7 @@
             "groupBy": "heffingType",
             "operations": {
               "totalAanslag": {
-                "field": "aanslagBedrag",
+                "field": "assessmentAmount",
                 "operation": "sum"
               },
               "count": {
@@ -3491,7 +3491,7 @@
             "filter": "state = 'posted' AND emuExclusionRule != 'excluded'",
             "operations": {
               "emuTotal": {
-                "field": "aanslagBedrag",
+                "field": "assessmentAmount",
                 "operation": "sum"
               }
             }
@@ -11473,7 +11473,7 @@
           "arInvoiceId",
           "factuurDatum",
           "vervalDatum",
-          "openstaandBedrag",
+          "outstandingAmount",
           "verwachtOntvangstDatum",
           "administrationId"
         ],
@@ -11516,7 +11516,7 @@
             "example": "2026-05-15",
             "title": "Due Date"
           },
-          "openstaandBedrag": {
+          "outstandingAmount": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
@@ -11612,7 +11612,7 @@
           "apTransactionId",
           "vervalDatum",
           "geplandeBetaalDatum",
-          "bedrag",
+          "amount",
           "administrationId"
         ],
         "properties": {
@@ -11654,7 +11654,7 @@
             "example": "2026-05-30",
             "title": "Planned Payment Date"
           },
-          "bedrag": {
+          "amount": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
@@ -11738,7 +11738,7 @@
           "categorie",
           "richting",
           "frequentie",
-          "standaardBedrag",
+          "standardAmount",
           "geldigVan",
           "administrationId"
         ],
@@ -11816,7 +11816,7 @@
             "example": 7,
             "title": "Month of Year"
           },
-          "standaardBedrag": {
+          "standardAmount": {
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
@@ -12211,7 +12211,7 @@
                 "description": "ISO week-number string of the lowest saldo week.",
                 "title": "Min Buffer Week"
               },
-              "minBufferBedrag": {
+              "minBufferAmount": {
                 "type": "number",
                 "multipleOf": 0.01,
                 "description": "Saldo value in that week.",
@@ -14889,7 +14889,7 @@
           "counterpartyName",
           "regelingNaam",
           "aanvraagDate",
-          "aangevraagdBedrag",
+          "requestedAmount",
           "state"
         ],
         "properties": {
@@ -14964,14 +14964,14 @@
             "example": "2026-10-01",
             "title": "Determination Date"
           },
-          "aangevraagdBedrag": {
+          "requestedAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Applied-for amount in EUR.",
             "example": 25000.0,
             "title": "Requested Amount"
           },
-          "verleendBedrag": {
+          "grantedAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Granted amount in EUR. Required on verleen transition.",
@@ -14979,7 +14979,7 @@
             "example": 20000.0,
             "title": "Granted Amount"
           },
-          "vastgesteldBedrag": {
+          "determinedAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Settled amount in EUR. Required on vaststel transition.",
@@ -14987,7 +14987,7 @@
             "example": 18500.0,
             "title": "Final Amount"
           },
-          "uitbetaaldBedrag": {
+          "paidOutAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Paid amount in EUR. Required on uitbetaal transition.",
@@ -14995,7 +14995,7 @@
             "example": 18500.0,
             "title": "Disbursed Amount"
           },
-          "teruggevorderdBedrag": {
+          "reclaimedAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Reclaimed amount in EUR. Required on terugvorder transition.",
@@ -15205,7 +15205,7 @@
                   "description": "Subsidie-coordinator initieert, manager keurt goed (dual control per REQ-SUB-004)."
                 },
                 "fields": [
-                  "verleendBedrag"
+                  "grantedAmount"
                 ]
               }
             },
@@ -15228,7 +15228,7 @@
               "requires": {
                 "fields": [
                   "prestatieverantwoording",
-                  "vastgesteldBedrag"
+                  "determinedAmount"
                 ]
               }
             },
@@ -15239,7 +15239,7 @@
               "description": "Betaal de vastgestelde subsidie uit. Vereist uitbetaaldBedrag. Aanmaken van JournalEntry in state pending per REQ-SUB-005 (NOOIT auto-posted).",
               "requires": {
                 "fields": [
-                  "uitbetaaldBedrag"
+                  "paidOutAmount"
                 ]
               },
               "postTransition": {
@@ -15292,7 +15292,7 @@
                   "description": "Subsidie-coordinator initieert, manager keurt goed (dual control per REQ-SUB-004)."
                 },
                 "fields": [
-                  "teruggevorderdBedrag",
+                  "reclaimedAmount",
                   "afwijzingsReden"
                 ]
               }
@@ -16485,7 +16485,7 @@
         "required": [
           "fondsType",
           "uitkeringJaar",
-          "uitkeringBedrag",
+          "benefitAmount",
           "administrationId",
           "state"
         ],
@@ -16508,7 +16508,7 @@
             "example": 2026,
             "title": "Distribution Year"
           },
-          "uitkeringBedrag": {
+          "benefitAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Total uitkering amount in EUR. This amount is materialised into a balanced GLTransaction on post per REQ-PRB-004.",
@@ -16608,7 +16608,7 @@
               "actionParameters": {
                 "debitField": "debitAccountNumber",
                 "creditField": "creditAccountNumber",
-                "amountField": "uitkeringBedrag",
+                "amountField": "benefitAmount",
                 "currency": "EUR",
                 "sourceReference": "@self.id",
                 "journalEntryIdField": "journalEntryId",
@@ -16624,7 +16624,7 @@
             "groupBy": "fondsType",
             "operations": {
               "totalUitkering": {
-                "field": "uitkeringBedrag",
+                "field": "benefitAmount",
                 "operation": "sum"
               },
               "count": {
@@ -16650,7 +16650,7 @@
         "required": [
           "assetNaam",
           "assetType",
-          "valuationBedrag",
+          "valuationAmount",
           "valuationDate",
           "applicableTariff",
           "vpbBalansLinkId",
@@ -16690,7 +16690,7 @@
             "example": "EP1234567B1",
             "title": "Patent Number"
           },
-          "valuationBedrag": {
+          "valuationAmount": {
             "type": "number",
             "minimum": 0,
             "description": "Capitalised valuation of the IP asset in euros.",
@@ -16811,7 +16811,7 @@
             "example": 0.09,
             "title": "Applicable Tariff"
           },
-          "forfaitairCapBedrag": {
+          "flatRateCapAmount": {
             "type": "number",
             "description": "Statutory cap on innovation-attributed profit under the forfaitair route (Wet Vpb art. 12bg). Required when route is forfaitair. Default 25000.",
             "default": 25000.0,
@@ -16866,7 +16866,7 @@
                           "operatingProfit"
                         ]
                       },
-                      "forfaitairCapBedrag"
+                      "flatRateCapAmount"
                     ],
                     "target": "innovationAttributedProfit"
                   },
@@ -16959,7 +16959,7 @@
                       ]
                     },
                     {
-                      "prop": "forfaitairCapBedrag"
+                      "prop": "flatRateCapAmount"
                     }
                   ]
                 },
@@ -17066,7 +17066,7 @@
             "example": 0.25,
             "title": "Flat-Rate Percentage"
           },
-          "forfaitairCapBedrag": {
+          "flatRateCapAmount": {
             "type": "number",
             "description": "Statutory cap on innovation-attributed profit under the forfaitair route in EUR (Wet Vpb art. 12bg). Default 25000.",
             "nullable": true,
@@ -19168,19 +19168,19 @@
             "nullable": true,
             "title": "Economic Category"
           },
-          "bedragOorspronkelijkCents": {
+          "originalAmountCents": {
             "type": "integer",
             "default": 0,
             "description": "Original amount in integer eurocents.",
             "title": "Original Amount (Cents)"
           },
-          "bedragWijzigingCents": {
+          "amountChangeCents": {
             "type": "integer",
             "default": 0,
             "description": "Change amount (may be negative) in integer eurocents.",
             "title": "Amendment Amount (Cents)"
           },
-          "bedragNieuwCents": {
+          "newAmountCents": {
             "type": "integer",
             "default": 0,
             "description": "Resulting amount in integer eurocents.",

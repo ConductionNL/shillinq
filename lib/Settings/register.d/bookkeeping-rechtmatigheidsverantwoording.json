@@ -153,7 +153,7 @@
             "example": "Factuur 2026-441 valt onder raamovereenkomst RO-2024-12 (TenderNed 2024/S-117-356721, eerder Europees aanbesteed).",
             "title": "Onderbouwing"
           },
-          "bedrag_betrokken": {
+          "amount_involved": {
             "type": "number",
             "nullable": true,
             "description": "Monetary amount involved in this toets (MonetaryAmount, EUR).",
@@ -239,7 +239,7 @@
               "administrationId": "@self.administrationId"
             },
             "sum": [
-              "bedrag_betrokken"
+              "amount_involved"
             ]
           }
         },
@@ -337,13 +337,13 @@
             "description": "The wettelijk criterium the finding pertains to.",
             "title": "Criterium"
           },
-          "bedrag_fout": {
+          "amount_error": {
             "type": "number",
             "default": 0,
             "description": "Error amount (EUR). Counts towards the fout-tolerance aggregation (REQ-RV-005).",
             "title": "Bedrag Fout"
           },
-          "bedrag_onzekerheid": {
+          "amount_uncertainty": {
             "type": "number",
             "default": 0,
             "description": "Uncertainty amount (EUR). Counts towards the onzekerheid-tolerance aggregation (REQ-RV-005).",
@@ -471,8 +471,8 @@
               "administrationId": "@self.administrationId"
             },
             "sum": [
-              "bedrag_fout",
-              "bedrag_onzekerheid"
+              "amount_error",
+              "amount_uncertainty"
             ]
           }
         },
@@ -579,7 +579,7 @@
             "description": "Snapshot of the fout-tolerance percentage at aggregation time.",
             "title": "Tolerantiegrens Fout Percentage"
           },
-          "tolerantiegrens_fout_bedrag": {
+          "tolerance_error_amount": {
             "type": "number",
             "default": 0,
             "description": "tolerantiegrens_fout_percentage% of totaal_lasten (REQ-RV-005).",
@@ -591,7 +591,7 @@
             "description": "Snapshot of the onzekerheid-tolerance percentage at aggregation time.",
             "title": "Tolerantiegrens Onzekerheid Percentage"
           },
-          "tolerantiegrens_onzekerheid_bedrag": {
+          "tolerance_uncertainty_amount": {
             "type": "number",
             "default": 0,
             "description": "tolerantiegrens_onzekerheid_percentage% of totaal_lasten (REQ-RV-005).",

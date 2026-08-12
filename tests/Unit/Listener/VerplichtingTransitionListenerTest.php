@@ -155,7 +155,7 @@ final class VerplichtingTransitionListenerTest extends TestCase
                 'bron'           => 'tenderned',
                 'bronReferentie' => 'TN-2026-0001',
                 'status'         => 'active',
-                'bedrag'         => 50000.0,
+                'amount'         => 50000.0,
             ])
         );
 
@@ -181,7 +181,7 @@ final class VerplichtingTransitionListenerTest extends TestCase
             $this->entity('1089', [
                 'bron'   => 'manual',
                 'status' => 'active',
-                'bedrag' => 5000.0,
+                'amount' => 5000.0,
             ])
         );
 
@@ -207,7 +207,7 @@ final class VerplichtingTransitionListenerTest extends TestCase
             $this->entity('1089', [
                 'bron'   => 'tenderned',
                 'status' => 'concept',
-                'bedrag' => 5000.0,
+                'amount' => 5000.0,
             ])
         );
 
@@ -232,7 +232,7 @@ final class VerplichtingTransitionListenerTest extends TestCase
             $this->entity('1089', [
                 'bron'   => 'tenderned',
                 'status' => 'active',
-                'bedrag' => 5000.0,
+                'amount' => 5000.0,
             ]),
             'activeren',
             'concept',
@@ -263,7 +263,7 @@ final class VerplichtingTransitionListenerTest extends TestCase
             $this->entity('1089', [
                 'bron'   => 'tenderned',
                 'status' => 'concept',
-                'bedrag' => 5000.0,
+                'amount' => 5000.0,
             ]),
             'reactiveren',
             'active',

@@ -228,7 +228,7 @@ class MilestoneTemplateService
                 'datum'        => (string) ($mijlpaal['datum'] ?? ''),
                 'omschrijving' => (string) ($mijlpaal['omschrijving'] ?? ''),
                 'percentage'   => $percentage,
-                'bedrag'       => $bedrag,
+                'amount'       => $bedrag,
             ];
         }//end foreach
 

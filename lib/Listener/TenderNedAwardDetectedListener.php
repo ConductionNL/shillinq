@@ -274,7 +274,7 @@ class TenderNedAwardDetectedListener implements IEventListener
             'omschrijving'       => (string) ($payload['titel'] ?? $aanbestedingId),
             'bron'               => 'tenderned',
             'bronReferentie'     => $aanbestedingId,
-            'bedrag'             => (float) ($payload['contractWaarde'] ?? 0),
+            'amount'             => (float) ($payload['contractWaarde'] ?? 0),
             'looptijdStart'      => (string) ($payload['looptijdStart'] ?? ''),
             'looptijdEind'       => (string) ($payload['looptijdEind'] ?? ''),
             'mijlpalen'          => $plan,

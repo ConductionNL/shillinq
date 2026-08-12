@@ -528,7 +528,7 @@
           "arInvoiceId",
           "factuurDatum",
           "vervalDatum",
-          "openstaandBedrag",
+          "outstandingAmount",
           "verwachtOntvangstDatum",
           "administrationId"
         ],
@@ -571,7 +571,7 @@
             "example": "2026-05-15",
             "title": "Verval Datum"
           },
-          "openstaandBedrag": {
+          "outstandingAmount": {
             "type": "number",
             "description": "Outstanding amount in EUR (REQ-CF-004).",
             "example": 8400.0,
@@ -657,7 +657,7 @@
         },
         "x-openregister-aggregations": {
           "projectedReceiptsByWeek": {
-            "field": "openstaandBedrag",
+            "field": "outstandingAmount",
             "operation": "sum",
             "groupBy": "verwachtOntvangstWeek",
             "description": "Sum of outstanding AR amounts grouped by projected receipt week (REQ-CF-002/003). This is the source aggregation for CashflowWeek.inflows_ar_geprognosticeerd."
@@ -680,7 +680,7 @@
           "apTransactionId",
           "vervalDatum",
           "geplandeBetaalDatum",
-          "bedrag",
+          "amount",
           "administrationId"
         ],
         "properties": {
@@ -722,7 +722,7 @@
             "example": "2026-05-30",
             "title": "Geplande Betaal Datum"
           },
-          "bedrag": {
+          "amount": {
             "type": "number",
             "description": "Amount to pay in EUR (REQ-CF-006).",
             "example": 184.0,
@@ -791,7 +791,7 @@
         },
         "x-openregister-aggregations": {
           "scheduledPaymentsByCategory": {
-            "field": "bedrag",
+            "field": "amount",
             "operation": "sum",
             "groupBy": "categorie",
             "description": "Sum of scheduled AP outflows grouped by category (REQ-CF-006). Feeds CashflowWeek.outflows_ap_geprognosticeerd."
@@ -815,7 +815,7 @@
           "categorie",
           "richting",
           "frequentie",
-          "standaardBedrag",
+          "standardAmount",
           "geldigVan",
           "administrationId"
         ],
@@ -890,7 +890,7 @@
             "example": 7,
             "title": "Maand Van Jaar"
           },
-          "standaardBedrag": {
+          "standardAmount": {
             "type": "number",
             "description": "Base amount in EUR (REQ-CF-005).",
             "example": 850.0,
@@ -1226,7 +1226,7 @@
                 "example": "2026-w26",
                 "title": "Min Buffer Week"
               },
-              "minBufferBedrag": {
+              "minBufferAmount": {
                 "type": "number",
                 "description": "Minimum saldo across the horizon in EUR.",
                 "example": 100.0,
@@ -1538,7 +1538,7 @@
       "klantId": "klant-acme-bv",
       "factuurDatum": "2026-04-15",
       "vervalDatum": "2026-05-15",
-      "openstaandBedrag": 8400.0,
+      "outstandingAmount": 8400.0,
       "verwachtOntvangstDatum": "2026-05-28",
       "verwachtOntvangstWeek": "2026-w22",
       "betalingsHistorie_gemiddeldeAfwijking": "+13 days",
@@ -1559,7 +1559,7 @@
       "leverancierNaam": "KPN Zakelijk",
       "vervalDatum": "2026-05-30",
       "geplandeBetaalDatum": "2026-05-30",
-      "bedrag": 184.0,
+      "amount": 184.0,
       "categorie": "LEVERANCIER",
       "betalingsmethode": "AUTOMATISCHE_INCASSO_SEPA",
       "administrationId": "adm-consultancy-nl"
@@ -1577,7 +1577,7 @@
       "richting": "OUT",
       "frequentie": "MAANDELIJKS",
       "dagVanMaand": 1,
-      "standaardBedrag": 1200.0,
+      "standardAmount": 1200.0,
       "indexatieRegel": "FIXED",
       "geldigVan": "2024-09-01",
       "accountNumberExpense": "4300",
@@ -1596,7 +1596,7 @@
       "richting": "OUT",
       "frequentie": "JAARLIJKS",
       "maandVanJaar": 7,
-      "standaardBedrag": 620.0,
+      "standardAmount": 620.0,
       "indexatieRegel": "CPI_AFGELOPEN_JAAR",
       "geldigVan": "2024-07-01",
       "accountNumberExpense": "4310",
@@ -1636,7 +1636,7 @@
       ],
       "resultaat": {
         "minBufferWeek": "2026-w26",
-        "minBufferBedrag": 64100.0,
+        "minBufferAmount": 64100.0,
         "onderschrijdingBuffer": false,
         "actiesuggesties": [
           "Stuur aanmaning fase 2 naar Acme BV.",

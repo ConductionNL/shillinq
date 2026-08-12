@@ -95,7 +95,7 @@ class DoorsnijdingsVerbodValidator
         if ($this->auditLogger !== null) {
             $totalAmount = 0.0;
             foreach ($findings as $finding) {
-                $totalAmount += (float) ($finding['bedrag'] ?? 0);
+                $totalAmount += (float) ($finding['amount'] ?? 0);
             }
 
             if ($findings !== []) {
@@ -169,7 +169,7 @@ class DoorsnijdingsVerbodValidator
             }
 
             if (isset($glPairs[$account.'|'.$plaats]) === true) {
-                $bedrag     = (float) ($allocation['bedrag'] ?? 0);
+                $bedrag     = (float) ($allocation['amount'] ?? 0);
                 $plaatsText = '-';
                 if ($plaats !== '') {
                     $plaatsText = $plaats;
@@ -178,7 +178,7 @@ class DoorsnijdingsVerbodValidator
                 $findings[] = [
                     'grootboekrekening' => $account,
                     'kostenplaats'      => $plaats,
-                    'bedrag'            => $bedrag,
+                    'amount'            => $bedrag,
                     'message'           => sprintf(
                         'EUR %s (account %s, kostenplaats %s) appears in both innovatiebox '
                         .'allocation AND GL regular deduction. Resolve conflict before year-end close.',

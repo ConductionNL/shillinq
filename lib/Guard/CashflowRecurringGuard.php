@@ -125,9 +125,9 @@ class CashflowRecurringGuard
      */
     private function hasNonNegativeAmount(array $recurring): bool
     {
-        if (isset($recurring['standaardBedrag']) === false
-            || is_numeric($recurring['standaardBedrag']) === false
-            || (float) $recurring['standaardBedrag'] < 0.0
+        if (isset($recurring['standardAmount']) === false
+            || is_numeric($recurring['standardAmount']) === false
+            || (float) $recurring['standardAmount'] < 0.0
         ) {
             $this->logger->info(
                 'CashflowRecurringGuard: missing or negative standaardBedrag — denying save',

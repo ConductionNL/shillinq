@@ -133,7 +133,7 @@ class EmuReportingService
             'reportId'        => $reportId,
             'type'            => $type,
             'richting'        => $richting,
-            'bedrag'          => abs((float) ($glLine['amount'] ?? 0)),
+            'amount'          => abs((float) ($glLine['amount'] ?? 0)),
             'bron'            => [
                 'grootboekrekening' => $account,
                 'omschrijving'      => (string) ($glLine['description'] ?? ''),
@@ -165,7 +165,7 @@ class EmuReportingService
     {
         $cents = 0;
         foreach ($adjustments as $adj) {
-            $bedragCents = (int) round((float) ($adj['bedrag'] ?? 0) * 100);
+            $bedragCents = (int) round((float) ($adj['amount'] ?? 0) * 100);
             $richting    = (string) ($adj['richting'] ?? 'saldo-neutraal');
             if ($richting === 'saldo-verhogend') {
                 $cents += $bedragCents;
@@ -266,7 +266,7 @@ class EmuReportingService
         usort(
             $adjustments,
             static function (array $a, array $b): int {
-                return ((float) ($b['bedrag'] ?? 0) <=> (float) ($a['bedrag'] ?? 0));
+                return ((float) ($b['amount'] ?? 0) <=> (float) ($a['amount'] ?? 0));
             }
         );
 
@@ -443,24 +443,24 @@ class EmuReportingService
         $sumByType = $this->sumByType(adjustments: $adjustments);
 
         return [
-            ['regel' => 1, 'label' => 'Saldo van baten en lasten BBV', 'bedrag' => round($bbvSaldoBatenLasten, 2)],
-            ['regel' => 2, 'label' => 'Mutatie reserves', 'bedrag' => round(($sumByType['eliminatie-onttrekking-reserve'] ?? 0.0), 2)],
-            ['regel' => 3, 'label' => 'Bruto investeringen MVA', 'bedrag' => round(-1.0 * ($sumByType['toevoeging-bruto-investering'] ?? 0.0), 2)],
-            ['regel' => 4, 'label' => 'Bijdragen van derden in investeringen', 'bedrag' => 0.0],
-            ['regel' => 5, 'label' => 'Desinvesteringen', 'bedrag' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2)],
-            ['regel' => 6, 'label' => 'Afschrijvingen', 'bedrag' => round(($sumByType['eliminatie-afschrijving'] ?? 0.0), 2)],
+            ['regel' => 1, 'label' => 'Saldo van baten en lasten BBV', 'amount' => round($bbvSaldoBatenLasten, 2)],
+            ['regel' => 2, 'label' => 'Mutatie reserves', 'amount' => round(($sumByType['eliminatie-onttrekking-reserve'] ?? 0.0), 2)],
+            ['regel' => 3, 'label' => 'Bruto investeringen MVA', 'amount' => round(-1.0 * ($sumByType['toevoeging-bruto-investering'] ?? 0.0), 2)],
+            ['regel' => 4, 'label' => 'Bijdragen van derden in investeringen', 'amount' => 0.0],
+            ['regel' => 5, 'label' => 'Desinvesteringen', 'amount' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2)],
+            ['regel' => 6, 'label' => 'Afschrijvingen', 'amount' => round(($sumByType['eliminatie-afschrijving'] ?? 0.0), 2)],
             [
                 'regel'  => 7,
                 'label'  => 'Dotaties voorzieningen ten laste exploitatie',
-                'bedrag' => round(($sumByType['eliminatie-voorzieningdotatie'] ?? 0.0), 2),
+                'amount' => round(($sumByType['eliminatie-voorzieningdotatie'] ?? 0.0), 2),
             ],
-            ['regel' => 8, 'label' => 'Onttrekkingen voorzieningen via exploitatie', 'bedrag' => 0.0],
+            ['regel' => 8, 'label' => 'Onttrekkingen voorzieningen via exploitatie', 'amount' => 0.0],
             [
                 'regel'  => 9,
                 'label'  => 'Boekwinst / verlies desinvesteringen',
-                'bedrag' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2),
+                'amount' => round(($sumByType['eliminatie-boekwinst-desinvestering'] ?? 0.0), 2),
             ],
-            ['regel' => 10, 'label' => 'EMU-saldo', 'bedrag' => round($emuSaldoBerekend, 2)],
+            ['regel' => 10, 'label' => 'EMU-saldo', 'amount' => round($emuSaldoBerekend, 2)],
         ];
 
     }//end renderCbsTussenregels()
@@ -478,7 +478,7 @@ class EmuReportingService
         foreach ($adjustments as $adj) {
             $type        = (string) ($adj['type'] ?? '');
             $richting    = (string) ($adj['richting'] ?? 'saldo-neutraal');
-            $bedragCents = (int) round((float) ($adj['bedrag'] ?? 0) * 100);
+            $bedragCents = (int) round((float) ($adj['amount'] ?? 0) * 100);
             if ($richting === 'saldo-verlagend') {
                 $bedragCents = -1 * $bedragCents;
             } else if ($richting === 'saldo-neutraal') {

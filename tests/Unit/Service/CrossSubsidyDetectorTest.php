@@ -150,9 +150,9 @@ final class CrossSubsidyDetectorTest extends TestCase
     public function testDetectBevoordelingRisk(): void
     {
         $benchmarks = [
-            ['bedrag' => 245.0],
-            ['bedrag' => 240.0],
-            ['bedrag' => 238.0],
+            ['amount' => 245.0],
+            ['amount' => 240.0],
+            ['amount' => 238.0],
         ];
         // Median = 240; 200 < 240 * 0.85 = 204 → flag.
         self::assertTrue($this->svc->detectBevoordelingRisk(200.0, 180.0, $benchmarks));

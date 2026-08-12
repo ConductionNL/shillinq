@@ -245,7 +245,7 @@
           "verplichtingNummer",
           "omschrijving",
           "bron",
-          "bedrag",
+          "amount",
           "administrationId",
           "status"
         ],
@@ -280,7 +280,7 @@
             "x-openregister-conditional-required": "bron == 'tenderned'",
             "title": "Bron Referentie"
           },
-          "bedrag": {
+          "amount": {
             "type": "number",
             "minimum": 0,
             "description": "Committed amount excluding BTW, in the administration's base currency.",
@@ -710,7 +710,7 @@
       "omschrijving": "Schoonmaakcontract gemeentehuis Utrecht 2026",
       "bron": "tenderned",
       "bronReferentie": "TN-2026-0001",
-      "bedrag": 50000.0,
+      "amount": 50000.0,
       "kostenplaats": "FAC-001",
       "grootboekrekening": "4500",
       "looptijdStart": "2026-02-01",

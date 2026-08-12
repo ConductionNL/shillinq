@@ -456,7 +456,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase
             'bron'               => 'tenderned',
             'bronReferentie'     => 'TN-2026-0001',
             'status'             => 'active',
-            'bedrag'             => 50000.0,
+            'amount'             => 50000.0,
             'administrationId'   => 'adm-x',
         ];
         [$container, $recorder] = $this->containerAndRecorder([$existing]);

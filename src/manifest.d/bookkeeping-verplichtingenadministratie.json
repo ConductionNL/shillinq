@@ -92,7 +92,7 @@
 							"register": "shillinq",
 							"schema": "Verplichtingsregel",
 							"filterField": "verplichting",
-							"columns": ["regelnummer", "omschrijving", "bedrag_excl_btw", "geleverd_bedrag", "gefactureerd_bedrag", "restant_verplicht"]
+							"columns": ["regelnummer", "omschrijving", "amount_excl_vat", "delivered_amount", "invoiced_amount", "restant_verplicht"]
 						}
 					},
 					{
@@ -103,7 +103,7 @@
 							"register": "shillinq",
 							"schema": "Verplichtingsmutatie",
 							"filterField": "verplichting",
-							"columns": ["datum", "soort", "bedrag", "gerelateerde_factuur", "journaalpost"]
+							"columns": ["datum", "soort", "amount", "gerelateerde_factuur", "journaalpost"]
 						}
 					},
 					{

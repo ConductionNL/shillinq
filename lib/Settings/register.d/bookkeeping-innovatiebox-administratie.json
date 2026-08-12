@@ -566,7 +566,7 @@
           "periode",
           "kostensoort",
           "bron",
-          "bedrag",
+          "amount",
           "grootboekrekening",
           "kostenplaats",
           "kostendrager_id",
@@ -650,7 +650,7 @@
             "title": "Bron Referentie",
             "description": "A structured bron referentie object with nested properties."
           },
-          "bedrag": {
+          "amount": {
             "type": "number",
             "minimum": 0,
             "example": 60000.0,
@@ -749,7 +749,7 @@
                   "title": "Jaar",
                   "description": "The numeric value for jaar."
                 },
-                "bedrag": {
+                "amount": {
                   "type": "number",
                   "title": "Bedrag",
                   "description": "The numeric value for bedrag."
@@ -1086,7 +1086,7 @@
           "totale_so_uren": 800.0,
           "uurtarief_intern": 75.0
         },
-        "bedrag": 60000.0,
+        "amount": 60000.0,
         "grootboekrekening": "4010",
         "kostenplaats": "rd-team-1",
         "kostendrager_id": "kd-platform-team",
