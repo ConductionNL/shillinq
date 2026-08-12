@@ -265,11 +265,11 @@ class FoldIntoOrderTest extends TestCase {
 			'aanvraagDate' => '2026-02-01',
 			'beschikkingDate' => '2026-03-15',
 			'vaststellingDate' => '2026-10-01',
-			'aangevraagdBedrag' => 25000.0,
-			'verleendBedrag' => 20000.0,
-			'vastgesteldBedrag' => 18500.0,
-			'uitbetaaldBedrag' => 18500.0,
-			'teruggevorderdBedrag' => null,
+			'requestedAmount' => 25000.0,
+			'grantedAmount' => 20000.0,
+			'determinedAmount' => 18500.0,
+			'paidOutAmount' => 18500.0,
+			'reclaimedAmount' => null,
 			'beschikkingUri' => 'docudesk://x/verlening.pdf',
 			'vaststellingUri' => null,
 			'prestatieverantwoording' => 'Aangewend zoals beschreven.',
@@ -307,10 +307,10 @@ class FoldIntoOrderTest extends TestCase {
 		// No regulatory field dropped — every Subsidie field lands on the group.
 		self::assertSame('Subsidieregeling cultuur 2026', $order['subsidie']['regelingNaam']);
 		self::assertSame('Art. 3.1', $order['subsidie']['regelingArtikel']);
-		self::assertSame(25000.0, $order['subsidie']['aangevraagdBedrag']);
-		self::assertSame(20000.0, $order['subsidie']['verleendBedrag']);
-		self::assertSame(18500.0, $order['subsidie']['vastgesteldBedrag']);
-		self::assertSame(18500.0, $order['subsidie']['uitbetaaldBedrag']);
+		self::assertSame(25000.0, $order['subsidie']['requestedAmount']);
+		self::assertSame(20000.0, $order['subsidie']['grantedAmount']);
+		self::assertSame(18500.0, $order['subsidie']['determinedAmount']);
+		self::assertSame(18500.0, $order['subsidie']['paidOutAmount']);
 		self::assertSame('docudesk://x/verlening.pdf', $order['subsidie']['beschikkingUri']);
 		self::assertSame('Aangewend zoals beschreven.', $order['subsidie']['prestatieverantwoording']);
 
@@ -488,8 +488,8 @@ class FoldIntoOrderTest extends TestCase {
 				'direction' => 'outgoing',
 				'subsidieNumber' => sprintf('SUB-2026-%04d', $i),
 				'counterpartyName' => 'Stichting ' . $i,
-				'aangevraagdBedrag' => 1000.0,
-				'verleendBedrag' => 900.0,
+				'requestedAmount' => 1000.0,
+				'grantedAmount' => 900.0,
 				'state' => 'verleend',
 				'currency' => 'EUR',
 			];
@@ -536,8 +536,8 @@ class FoldIntoOrderTest extends TestCase {
 			'direction' => 'outgoing',
 			'subsidieNumber' => 'SUB-2026-777',
 			'counterpartyName' => 'Stichting Entity',
-			'aangevraagdBedrag' => 5000.0,
-			'verleendBedrag' => 4500.0,
+			'requestedAmount' => 5000.0,
+			'grantedAmount' => 4500.0,
 			'state' => 'verleend',
 			'currency' => 'EUR',
 		];
@@ -615,7 +615,7 @@ class FoldIntoOrderTest extends TestCase {
 					'direction' => 'outgoing',
 					'subsidieNumber' => 'SUB-IDEM-1',
 					'counterpartyName' => 'Stichting Idem',
-					'verleendBedrag' => 100.0,
+					'grantedAmount' => 100.0,
 					'state' => 'verleend',
 					'currency' => 'EUR',
 				],

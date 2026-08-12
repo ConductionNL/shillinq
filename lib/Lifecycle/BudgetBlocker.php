@@ -144,8 +144,8 @@ class BudgetBlocker {
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.4
 	 */
 	public function freeRoom(array $budget): int {
-		$authorised = (int)($budget['geautoriseerd_bedrag'] ?? 0);
-		$realised = (int)($budget['gerealiseerd_bedrag'] ?? 0);
+		$authorised = (int)($budget['authorised_amount'] ?? 0);
+		$realised = (int)($budget['realised_amount'] ?? 0);
 		$committed = (int)($budget['openstaande_verplichtingen'] ?? 0);
 
 		return ($authorised - $realised - $committed);
@@ -204,7 +204,7 @@ class BudgetBlocker {
 			return false;
 		}
 
-		return $this->fits(budget: $budget, bedrag: (int)($regel['bedrag_excl_btw'] ?? 0));
+		return $this->fits(budget: $budget, bedrag: (int)($regel['amount_excl_vat'] ?? 0));
 	}//end regelFitsBudget()
 
 	/**
@@ -239,7 +239,7 @@ class BudgetBlocker {
 			[
 				'programma' => (string)($verplichting['programma'] ?? ''),
 				'boekjaar' => (int)($verplichting['boekjaar'] ?? 0),
-				'bedrag_excl_btw' => (int)($verplichting['totaalbedrag_excl_btw'] ?? 0),
+				'amount_excl_vat' => (int)($verplichting['totaalbedrag_excl_btw'] ?? 0),
 			],
 		];
 

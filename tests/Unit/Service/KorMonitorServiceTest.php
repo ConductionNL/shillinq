@@ -182,7 +182,7 @@ final class KorMonitorServiceTest extends TestCase {
 	private function invoice(string $admin, float $bedrag, string $date, string $grond = 'KOR_ART25_OB', string $status = 'issued'): array {
 		return [
 			'administrationId' => $admin,
-			'bedrag' => $bedrag,
+			'amount' => $bedrag,
 			'leveringsDatum' => $date,
 			'vrijstellingsGrondslag' => $grond,
 			'status' => $status,

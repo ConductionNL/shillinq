@@ -65,7 +65,7 @@ final class BankfeedMatcherTest extends TestCase {
 		$candidate = [
 			'arInvoiceId' => 'fact-2026-0247',
 			'klantId' => 'klant-acme-bv',
-			'openstaandBedrag' => 8400.00,
+			'outstandingAmount' => 8400.00,
 			'verwachtOntvangstDatum' => '2026-05-28',
 		];
 
@@ -91,7 +91,7 @@ final class BankfeedMatcherTest extends TestCase {
 		$candidate = [
 			'arInvoiceId' => 'fact-2026-0247',
 			'klantId' => 'klant-acme-bv',
-			'openstaandBedrag' => 100.00,
+			'outstandingAmount' => 100.00,
 			'verwachtOntvangstDatum' => '2026-05-28',
 		];
 
@@ -133,13 +133,13 @@ final class BankfeedMatcherTest extends TestCase {
 			[
 				'arInvoiceId' => 'fact-2026-0247',
 				'klantId' => 'klant-acme-bv',
-				'openstaandBedrag' => 1210.00,
+				'outstandingAmount' => 1210.00,
 				'verwachtOntvangstDatum' => '2026-05-28',
 			],
 			[
 				'arInvoiceId' => 'fact-2026-0250',
 				'klantId' => 'klant-other',
-				'openstaandBedrag' => 1209.00,
+				'outstandingAmount' => 1209.00,
 				'verwachtOntvangstDatum' => '2026-07-15',
 			],
 		];
@@ -165,7 +165,7 @@ final class BankfeedMatcherTest extends TestCase {
 		$candidate = [
 			'arInvoiceId' => 'fact-jan-2026-023',
 			'klantId' => 'klant-acme-bv',
-			'openstaandBedrag' => 5200.00,
+			'outstandingAmount' => 5200.00,
 			'verwachtOntvangstDatum' => '2026-06-10',
 		];
 
@@ -186,7 +186,7 @@ final class BankfeedMatcherTest extends TestCase {
 		$candidate = [
 			'arInvoiceId' => 'fact-x',
 			'klantId' => 'klant-x',
-			'openstaandBedrag' => 1000.00,
+			'outstandingAmount' => 1000.00,
 			'verwachtOntvangstDatum' => '2026-06-01',
 		];
 

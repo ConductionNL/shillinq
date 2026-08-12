@@ -71,7 +71,7 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 				continue;
 			}
 
-			$amount = (float)($rec['standaardBedrag'] ?? 0.0);
+			$amount = (float)($rec['standardAmount'] ?? 0.0);
 			switch ($rec['frequentie'] ?? 'MAANDELIJKS') {
 				case 'WEKELIJKS':
 					$total += ($amount * (52 / 12));
@@ -123,7 +123,7 @@ final class CashflowSeedDataIntegrationTest extends TestCase {
 		$monthlyOut = $this->sumMonthlyRecurringOut($profile);
 		$arMonth = 0.0;
 		foreach ($profile['arInvoices'] as $inv) {
-			$arMonth += (float)($inv['openstaandBedrag'] ?? 0);
+			$arMonth += (float)($inv['outstandingAmount'] ?? 0);
 		}
 
 		self::assertGreaterThan($monthlyOut, $arMonth);

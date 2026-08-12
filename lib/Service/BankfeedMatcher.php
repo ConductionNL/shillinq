@@ -72,7 +72,7 @@ class BankfeedMatcher {
 		$bestInvoiceId = null;
 
 		foreach ($candidateInvoices as $candidate) {
-			$candAmount = (float)($candidate['openstaandBedrag'] ?? 0.0);
+			$candAmount = (float)($candidate['outstandingAmount'] ?? 0.0);
 			$candId = (string)($candidate['arInvoiceId'] ?? '');
 			$candKlant = (string)($candidate['klantId'] ?? '');
 			$candDate = (string)($candidate['verwachtOntvangstDatum'] ?? '');

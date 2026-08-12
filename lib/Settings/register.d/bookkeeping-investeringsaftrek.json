@@ -260,7 +260,7 @@
             "example": 100,
             "title": "Deelpercentage"
           },
-          "maxBedragPerEenheid": {
+          "maxAmountPerUnit": {
             "type": "integer",
             "nullable": true,
             "description": "Maximum qualifying amount per unit in EUR cents, when capped.",
@@ -361,7 +361,7 @@
             "title": "Deelpercentage",
             "description": "The numeric value for deelpercentage."
           },
-          "maxBedrag": {
+          "maxAmount": {
             "type": "integer",
             "nullable": true,
             "description": "Maximum qualifying amount in EUR cents, when capped.",
@@ -476,7 +476,7 @@
                 "title": "Beschikkingsdatum",
                 "description": "The date and time for beschikkingsdatum."
               },
-              "toegekendBedrag": {
+              "awardedAmount": {
                 "type": "integer",
                 "example": 2000000,
                 "title": "Toegekend Bedrag",
@@ -647,7 +647,7 @@
             "example": 28,
             "title": "Percentage"
           },
-          "vastBedrag": {
+          "fixedAmount": {
             "type": "integer",
             "nullable": true,
             "description": "Flat KIA amount for the tier in EUR cents (tier 3/4 anchor). Null where the tier is purely percentage.",

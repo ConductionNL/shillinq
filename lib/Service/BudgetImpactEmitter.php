@@ -106,7 +106,7 @@ class BudgetImpactEmitter {
 		$payload = [
 			'eventName' => self::EVENT_OBLIGATION_ACTIVATED,
 			'bronReferentie' => (string)($verplichting['bronReferentie'] ?? ''),
-			'contractWaarde' => (float)($verplichting['bedrag'] ?? 0),
+			'contractWaarde' => (float)($verplichting['amount'] ?? 0),
 			'kostenplaats' => (string)($verplichting['kostenplaats'] ?? ''),
 			'looptijdStart' => (string)($verplichting['looptijdStart'] ?? ''),
 			'looptijdEind' => (string)($verplichting['looptijdEind'] ?? ''),

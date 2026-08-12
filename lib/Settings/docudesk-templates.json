@@ -477,7 +477,7 @@
               "type": "string"
             },
             {
-              "key": "vastgesteldBedrag",
+              "key": "determinedAmount",
               "label": "Vastgesteld bedrag (EUR)",
               "type": "currency"
             }
@@ -580,7 +580,7 @@
         "klantNaam",
         "factuurNummer",
         "factuurDatum",
-        "openstaandBedrag",
+        "outstandingAmount",
         "vervaldatum",
         "IBAN",
         "betaaltermijn"
@@ -599,7 +599,7 @@
         "klantNaam",
         "factuurNummer",
         "factuurDatum",
-        "openstaandBedrag",
+        "outstandingAmount",
         "vervaldatum",
         "IBAN",
         "betaaltermijn"
@@ -618,7 +618,7 @@
         "klantNaam",
         "factuurNummer",
         "factuurDatum",
-        "openstaandBedrag",
+        "outstandingAmount",
         "vervaldatum",
         "IBAN",
         "betaaltermijn",
@@ -639,7 +639,7 @@
         "klantNaam",
         "factuurNummer",
         "factuurDatum",
-        "openstaandBedrag",
+        "outstandingAmount",
         "vervaldatum",
         "IBAN",
         "incassokosten",

@@ -303,7 +303,7 @@ class CrossSubsidyDetector {
 				continue;
 			}
 
-			$bedrag = (float)($bench['bedrag'] ?? 0);
+			$bedrag = (float)($bench['amount'] ?? 0);
 			if ($bedrag > 0.0) {
 				$values[] = $bedrag;
 			}

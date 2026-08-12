@@ -173,7 +173,7 @@ final class PurchaseRequisitionFragmentTest extends TestCase {
 			}
 
 			$contents = (string)file_get_contents($file->getPathname());
-			if (str_contains($contents, 'geautoriseerd_bedrag') === true
+			if (str_contains($contents, 'authorised_amount') === true
 				|| str_contains($contents, 'vrije_ruimte') === true
 			) {
 				$suspects[] = $file->getPathname();

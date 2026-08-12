@@ -355,7 +355,7 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 			'qualifying_asset_id' => 'asset-1',
 			'administrationId' => 'adm-x',
 			'origin_boekjaar' => 2024,
-			'verrekend_boekjaar' => [['jaar' => 2026, 'bedrag' => 215000, 'saldo_na' => 0]],
+			'verrekend_boekjaar' => [['jaar' => 2026, 'amount' => 215000, 'saldo_na' => 0]],
 			'saldo_na' => 0,
 			'status' => 'consumed',
 		]);
@@ -370,7 +370,7 @@ final class InnovatieboxAuditTrailListenerTest extends TestCase {
 		);
 		$this->assertSame(
 			215000,
-			$logger->calls[0]['details']['new_entries'][0]['bedrag']
+			$logger->calls[0]['details']['new_entries'][0]['amount']
 		);
 
 	}//end testLossOffsetAppliedFiresOnVerrekendGrowth()

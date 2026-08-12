@@ -40,13 +40,13 @@
                 "description": "Planned date the next dunning stage is due to be executed (ISO date). Computed by the credit-control scheduler; not carried on a historical DunningRun.",
                 "title": "Next Dunning Date"
               },
-              "incassokostenBedrag": {
+              "collectionCostAmount": {
                 "type": "number",
                 "nullable": true,
                 "description": "Incasso (collection) costs accrued as at the latest dunning stage (EUR). Source: DunningRun.incassokostenBedrag.",
                 "title": "Incassokosten Bedrag"
               },
-              "renteBedrag": {
+              "interestAmount": {
                 "type": "number",
                 "nullable": true,
                 "description": "Wettelijke rente (statutory interest) accrued as at the latest dunning stage (EUR). Source: DunningRun.renteBedrag.",
@@ -97,7 +97,7 @@
                 "description": "Principal amount written off, excluding VAT (EUR). Source: OninbaarAfschrijving.hoofdsomAfgeschreven.",
                 "title": "Hoofdsom Afgeschreven"
               },
-              "btwBedrag": {
+              "vatAmount": {
                 "type": "number",
                 "nullable": true,
                 "description": "VAT amount eligible for teruggaaf per art. 29 OB (EUR). Source: OninbaarAfschrijving.btwBedrag.",

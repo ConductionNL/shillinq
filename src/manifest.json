@@ -3722,7 +3722,7 @@
 						"sortable": true
 					},
 					{
-						"key": "aanslagBedrag",
+						"key": "assessmentAmount",
 						"label": "Assessment amount",
 						"sortable": true
 					},
@@ -3774,7 +3774,7 @@
 						"type": "number"
 					},
 					{
-						"key": "aanslagBedrag",
+						"key": "assessmentAmount",
 						"label": "Assessment amount (EUR)",
 						"type": "number"
 					},
@@ -8043,7 +8043,7 @@
 									"label": "Delivery status"
 								},
 								{
-									"key": "incassokostenBedrag",
+									"key": "collectionCostAmount",
 									"label": "Collection costs"
 								}
 							],
@@ -8476,7 +8476,7 @@
 						"type": "string"
 					},
 					{
-						"key": "valuationBedrag",
+						"key": "valuationAmount",
 						"label": "Valuation (EUR)",
 						"type": "number"
 					},
@@ -8581,7 +8581,7 @@
 						"help": "Huidig wettelijk tarief: 0.09 (9%) per Wet Vpb art. 12b 2026"
 					},
 					{
-						"key": "forfaitairCapBedrag",
+						"key": "flatRateCapAmount",
 						"label": "Flat-rate cap (EUR)",
 						"type": "number",
 						"help": "Maximaal in aanmerking komende winst (default EUR 25.000)"
@@ -8642,7 +8642,7 @@
 								"label": "Type"
 							},
 							{
-								"key": "valuationBedrag",
+								"key": "valuationAmount",
 								"label": "Valuation (EUR)"
 							},
 							{
@@ -8768,7 +8768,7 @@
 						"sortable": true
 					},
 					{
-						"key": "aangevraagdBedrag",
+						"key": "requestedAmount",
 						"label": "Requested (EUR)",
 						"sortable": true
 					},
@@ -8835,17 +8835,17 @@
 						"type": "date"
 					},
 					{
-						"key": "aangevraagdBedrag",
+						"key": "requestedAmount",
 						"label": "Requested amount (EUR)",
 						"type": "number"
 					},
 					{
-						"key": "verleendBedrag",
+						"key": "grantedAmount",
 						"label": "Granted amount (EUR)",
 						"type": "number"
 					},
 					{
-						"key": "vastgesteldBedrag",
+						"key": "determinedAmount",
 						"label": "Determined amount (EUR)",
 						"type": "number"
 					},
@@ -12407,7 +12407,7 @@
 						"sortable": true
 					},
 					{
-						"key": "standaardBedrag",
+						"key": "standardAmount",
 						"label": "Amount (EUR)",
 						"sortable": true
 					},
@@ -12820,17 +12820,17 @@
 						"type": "datetime"
 					},
 					{
-						"key": "factuurBedrag",
+						"key": "invoiceAmount",
 						"label": "Invoice amount",
 						"type": "money"
 					},
 					{
-						"key": "incassokostenBedrag",
+						"key": "collectionCostAmount",
 						"label": "Collection costs",
 						"type": "money"
 					},
 					{
-						"key": "renteBedrag",
+						"key": "interestAmount",
 						"label": "Interest",
 						"type": "money"
 					},
@@ -13008,7 +13008,7 @@
 						"sortable": true
 					},
 					{
-						"key": "btwBedrag",
+						"key": "vatAmount",
 						"label": "VAT recovery",
 						"sortable": true
 					},
@@ -13051,7 +13051,7 @@
 						"type": "money"
 					},
 					{
-						"key": "btwBedrag",
+						"key": "vatAmount",
 						"label": "VAT recovery (art. 29 OB)",
 						"type": "money"
 					},
@@ -18735,7 +18735,7 @@
 						"sortable": true
 					},
 					{
-						"key": "aangevraagdBedrag",
+						"key": "requestedAmount",
 						"label": "Requested (EUR)",
 						"sortable": true
 					},
@@ -18783,7 +18783,7 @@
 						"sortable": true
 					},
 					{
-						"key": "teruggevorderdBedrag",
+						"key": "reclaimedAmount",
 						"label": "To be reclaimed (EUR)",
 						"sortable": true
 					},
@@ -18850,27 +18850,27 @@
 						"type": "date"
 					},
 					{
-						"key": "aangevraagdBedrag",
+						"key": "requestedAmount",
 						"label": "Requested (EUR)",
 						"type": "number"
 					},
 					{
-						"key": "verleendBedrag",
+						"key": "grantedAmount",
 						"label": "Granted (EUR)",
 						"type": "number"
 					},
 					{
-						"key": "vastgesteldBedrag",
+						"key": "determinedAmount",
 						"label": "Determined (EUR)",
 						"type": "number"
 					},
 					{
-						"key": "uitbetaaldBedrag",
+						"key": "paidOutAmount",
 						"label": "Paid out (EUR)",
 						"type": "number"
 					},
 					{
-						"key": "teruggevorderdBedrag",
+						"key": "reclaimedAmount",
 						"label": "Reclaimed (EUR)",
 						"type": "number"
 					},

@@ -122,7 +122,7 @@ final class CashflowPdfRendererTest extends TestCase {
 			'description' => 'Acme delays invoice by 4 weeks',
 			'resultaat' => [
 				'minBufferWeek' => '2026-w26',
-				'minBufferBedrag' => 100.0,
+				'minBufferAmount' => 100.0,
 				'onderschrijdingBuffer' => true,
 			],
 		];

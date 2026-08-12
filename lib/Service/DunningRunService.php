@@ -249,7 +249,7 @@ class DunningRunService {
 					'stageNr' => $stageNr,
 					'kanaal' => $kanaal,
 					'templateId' => $tplId,
-					'factuurBedrag' => (float)($invoice['grossAmount'] ?? 0.0),
+					'invoiceAmount' => (float)($invoice['grossAmount'] ?? 0.0),
 					'deliveryStatus' => 'PENDING',
 				],
 				$params
@@ -411,9 +411,9 @@ class DunningRunService {
 			'openTracking' => ($params['openTracking'] ?? null),
 			'postageStatus' => ($params['postageStatus'] ?? null),
 			'digitalSignature' => ($params['digitalSignature'] ?? null),
-			'factuurBedrag' => (float)($params['factuurBedrag'] ?? 0.0),
-			'incassokostenBedrag' => ($params['incassokostenBedrag'] ?? null),
-			'renteBedrag' => ($params['renteBedrag'] ?? null),
+			'invoiceAmount' => (float)($params['invoiceAmount'] ?? 0.0),
+			'collectionCostAmount' => ($params['collectionCostAmount'] ?? null),
+			'interestAmount' => ($params['interestAmount'] ?? null),
 			'administrationId' => $administrationId,
 			'lifecycleState' => 'executed',
 		];
@@ -552,7 +552,7 @@ class DunningRunService {
 	public function writeOff(string $administrationId, array $params): array {
 		$factuurId = (string)($params['factuurId'] ?? '');
 		$hoofdsom = (float)($params['hoofdsomAfgeschreven'] ?? 0.0);
-		$btwBedrag = ($params['btwBedrag'] ?? null);
+		$btwBedrag = ($params['vatAmount'] ?? null);
 		$periode = (string)($params['btwAangiftePeriode'] ?? $this->nextVATPeriod());
 		$callerBoekId = (string)($params['boekingId'] ?? '');
 
@@ -581,7 +581,7 @@ class DunningRunService {
 		$record = [
 			'factuurId' => $factuurId,
 			'hoofdsomAfgeschreven' => $hoofdsom,
-			'btwBedrag' => $btwBedrag,
+			'vatAmount' => $btwBedrag,
 			'art29OBVerklaring' => (string)($params['art29OBVerklaring'] ?? ''),
 			'evidenceRef' => ($params['evidenceRef'] ?? null),
 			'boekingId' => $boekingIdValue,

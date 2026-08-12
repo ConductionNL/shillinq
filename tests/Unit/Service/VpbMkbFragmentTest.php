@@ -288,7 +288,7 @@ final class VpbMkbFragmentTest extends TestCase {
 		self::assertSame(2026, $bySchema['VpbTariefcatalogus']['belastingjaar']);
 		self::assertSame(0.19, $bySchema['VpbTariefcatalogus']['tarief1']);
 		self::assertSame(0.258, $bySchema['VpbTariefcatalogus']['tarief2']);
-		self::assertSame(245000, $bySchema['VpbTariefcatalogus']['belastbaarBedragGrens']);
+		self::assertSame(245000, $bySchema['VpbTariefcatalogus']['taxableAmountThreshold']);
 
 		self::assertArrayHasKey('Belastingplichtige', $bySchema);
 		self::assertSame('EH3', $bySchema['Belastingplichtige']['eHerkenningsNiveau']);

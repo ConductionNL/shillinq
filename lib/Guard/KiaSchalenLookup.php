@@ -121,7 +121,7 @@ class KiaSchalenLookup {
 	 */
 	private function aftrekForTier(array $tier, int $jaartotaal): int {
 		$percentage = $tier['percentage'];
-		$vastBedrag = $tier['vastBedrag'];
+		$vastBedrag = $tier['fixedAmount'];
 		$vanaf = (int)($tier['vanaf'] ?? 0);
 
 		// Tier-4 taper: flat anchor minus a percentage of the excess over `vanaf`.

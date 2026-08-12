@@ -107,7 +107,7 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 			$agg['groupBy']
 		);
 		self::assertContains('restant_verplicht', $agg['sum']);
-		self::assertContains('gefactureerd_bedrag', $agg['sum']);
+		self::assertContains('invoiced_amount', $agg['sum']);
 		self::assertSame('Budget', $agg['join']['through']);
 
 	}//end testVerplichtingsregelDeclaresCommittedVsRealisedAggregation()

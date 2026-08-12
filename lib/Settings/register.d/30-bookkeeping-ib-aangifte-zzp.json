@@ -442,7 +442,7 @@
               "type": "object",
               "required": [
                 "post",
-                "bedrag",
+                "amount",
                 "grondslag"
               ],
               "properties": {
@@ -451,7 +451,7 @@
                   "description": "Adjustment type, e.g. REPRESENTATIE_DREMPEL, GOODWILL_AFSCHRIJVING, AUTOKOSTEN_BIJTELLING.",
                   "title": "Post"
                 },
-                "bedrag": {
+                "amount": {
                   "type": "number",
                   "description": "EUR adjustment (MonetaryAmount).",
                   "title": "Bedrag"
@@ -570,7 +570,7 @@
                 "title": "Toegestaan",
                 "description": "Indicates whether toegestaan applies."
               },
-              "bedrag": {
+              "amount": {
                 "type": "number",
                 "title": "Bedrag",
                 "description": "The numeric value for bedrag."
@@ -605,7 +605,7 @@
                 "title": "Max Keer",
                 "description": "The numeric value for max keer."
               },
-              "bedrag": {
+              "amount": {
                 "type": "number",
                 "title": "Bedrag",
                 "description": "The numeric value for bedrag."
@@ -640,7 +640,7 @@
                 "title": "Toegestaan",
                 "description": "Indicates whether toegestaan applies."
               },
-              "bedrag": {
+              "amount": {
                 "type": "number",
                 "nullable": true,
                 "title": "Bedrag",
@@ -885,7 +885,7 @@
             "type": "object",
             "description": "AOV premiums (fully deductible for ondernemers).",
             "properties": {
-              "bedrag": {
+              "amount": {
                 "type": "number",
                 "title": "Bedrag",
                 "description": "The numeric value for bedrag."
@@ -986,7 +986,7 @@
             "example": 0.22,
             "title": "Bijtellings Pct"
           },
-          "bijtellingBedrag": {
+          "benefitInKindAmount": {
             "type": "number",
             "description": "cataloguswaardeNieuw × bijtellingsPct (MonetaryAmount EUR).",
             "example": 8360.0,
@@ -1045,7 +1045,7 @@
           }
         },
         "x-openregister-calculations": {
-          "bijtellingBedrag": {
+          "benefitInKindAmount": {
             "description": "Regulier: cataloguswaarde × evBijtellingStaffel2Pct. EV: evBijtellingStaffel1Pct on first evBijtellingStaffel1Cap, evBijtellingStaffel2Pct on the excess. Staffel parameters from IBTaxParameterYear (REQ-IB-013).",
             "grondslag": "art. 3.20 Wet IB 2001",
             "guard": "OCA\\Shillinq\\Guard\\IbBijtellingGuard::computeBijtelling",
@@ -1297,12 +1297,12 @@
             "example": 2026,
             "title": "Fiscal Year"
           },
-          "zelfstandigenaftrekBedrag": {
+          "selfEmployedDeductionAmount": {
             "type": "number",
             "description": "Zelfstandigenaftrek amount (MonetaryAmount EUR).",
             "title": "Zelfstandigenaftrek Bedrag"
           },
-          "startersaftrekBedrag": {
+          "starterDeductionAmount": {
             "type": "number",
             "description": "Startersaftrek amount (MonetaryAmount EUR).",
             "title": "Startersaftrek Bedrag"
@@ -1404,8 +1404,8 @@
         "slug": "ib-tax-parameters-2025"
       },
       "fiscalYear": 2025,
-      "zelfstandigenaftrekBedrag": 2470.0,
-      "startersaftrekBedrag": 2123.0,
+      "selfEmployedDeductionAmount": 2470.0,
+      "starterDeductionAmount": 2123.0,
       "mkbExemptionRate": 0.127,
       "ahkMax": 3362.0,
       "ahkPhaseoutRate": 0.06337,
@@ -1430,8 +1430,8 @@
         "slug": "ib-tax-parameters-2026"
       },
       "fiscalYear": 2026,
-      "zelfstandigenaftrekBedrag": 2470.0,
-      "startersaftrekBedrag": 2123.0,
+      "selfEmployedDeductionAmount": 2470.0,
+      "starterDeductionAmount": 2123.0,
       "mkbExemptionRate": 0.127,
       "ahkMax": 3362.0,
       "ahkPhaseoutRate": 0.06337,
@@ -1502,7 +1502,7 @@
       "fiscaleAfwijkingenLog": [
         {
           "post": "REPRESENTATIE_DREMPEL",
-          "bedrag": -320.0,
+          "amount": -320.0,
           "grondslag": "art. 3.15 Wet IB 2001, max 5% winst",
           "gebruiker": "system"
         }
@@ -1524,14 +1524,14 @@
       },
       "zelfstandigenaftrek": {
         "toegestaan": true,
-        "bedrag": 2470.0,
+        "amount": 2470.0,
         "grondslag": "art. 3.76 Wet IB 2001, tarief 2025"
       },
       "startersaftrek": {
         "toegestaan": false,
         "jaarVanGebruik": null,
         "maxKeer": 3,
-        "bedrag": 0
+        "amount": 0
       },
       "soAftrek": {
         "toegestaan": false,
@@ -1539,7 +1539,7 @@
       },
       "meewerkaftrek": {
         "toegestaan": false,
-        "bedrag": null
+        "amount": null
       },
       "investeringsaftrek": {
         "kia": 0,
@@ -1591,7 +1591,7 @@
         "resterend": 9100.0
       },
       "aovPremies": {
-        "bedrag": 2400.0,
+        "amount": 2400.0,
         "polisnummer": "AOV-MOVIR-789123",
         "verzekeraar": "Movir N.V."
       },
@@ -1610,7 +1610,7 @@
       "datumEersteRegistratie": "2024-04-15",
       "bijtellingsCategorie": "REGULIER_22PCT",
       "bijtellingsPct": 0.22,
-      "bijtellingBedrag": 8360.0,
+      "benefitInKindAmount": 8360.0,
       "eigenBijdrage": 0,
       "nettoBijtelling": 8360.0,
       "kilometerAdministratie": {

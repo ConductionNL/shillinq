@@ -228,7 +228,7 @@ class VerplichtingWorkflowTest extends TestCase {
 	 * @return void
 	 */
 	public function testInkooporderWithinBudgetAndMandateSignsCleanly(): void {
-		$budget = $this->makeBudget(['geautoriseerd_bedrag' => 50000000, 'gerealiseerd_bedrag' => 0]);
+		$budget = $this->makeBudget(['authorised_amount' => 50000000, 'realised_amount' => 0]);
 		$mandaat = $this->makeMandate(['mandaatcode' => 'M-INKOOP-100K', 'maximumbedrag' => 10000000]);
 		$verplicht = $this->makeCommitment(75 * 100000);
 
@@ -304,10 +304,10 @@ class VerplichtingWorkflowTest extends TestCase {
 	 */
 	public function testMultiYearRaamovereenkomstIsolatesBudgetPerBoekjaar(): void {
 		$budget2026 = $this->makeBudget(
-			['boekjaar' => 2026, 'geautoriseerd_bedrag' => 12000000, 'gerealiseerd_bedrag' => 0]
+			['boekjaar' => 2026, 'authorised_amount' => 12000000, 'realised_amount' => 0]
 		);
 		$budget2027 = $this->makeBudget(
-			['boekjaar' => 2027, 'geautoriseerd_bedrag' => 5000000,  'gerealiseerd_bedrag' => 0]
+			['boekjaar' => 2027, 'authorised_amount' => 5000000,  'realised_amount' => 0]
 		);
 
 		$this->withObjectService(
@@ -325,8 +325,8 @@ class VerplichtingWorkflowTest extends TestCase {
 			'soort' => 'raamovereenkomst',
 			'totaalbedrag_excl_btw' => 20000000,
 			'regels' => [
-				['programma' => '5.1', 'boekjaar' => 2026, 'bedrag_excl_btw' => 10000000],
-				['programma' => '5.1', 'boekjaar' => 2027, 'bedrag_excl_btw' => 10000000],
+				['programma' => '5.1', 'boekjaar' => 2026, 'amount_excl_vat' => 10000000],
+				['programma' => '5.1', 'boekjaar' => 2027, 'amount_excl_vat' => 10000000],
 			],
 		];
 
@@ -334,7 +334,7 @@ class VerplichtingWorkflowTest extends TestCase {
 		$this->assertFalse($this->budget->canCommit('RO-1', $overcommit));
 
 		$within = $overcommit;
-		$within['regels'][1]['bedrag_excl_btw'] = 5000000;
+		$within['regels'][1]['amount_excl_vat'] = 5000000;
 		$within['totaalbedrag_excl_btw'] = 15000000;
 
 		// 2027 right-sized to EUR 50k → both regels fit and the raamovereenkomst signs.
@@ -350,7 +350,7 @@ class VerplichtingWorkflowTest extends TestCase {
 	 * @return void
 	 */
 	public function testOverrideMandateForcesAcceptanceOfOverBudgetCommitment(): void {
-		$budget = $this->makeBudget(['geautoriseerd_bedrag' => 20000000, 'gerealiseerd_bedrag' => 0]);
+		$budget = $this->makeBudget(['authorised_amount' => 20000000, 'realised_amount' => 0]);
 		$override = $this->makeMandate(
 			[
 				'mandaatcode' => 'M-CFO-OVERRIDE',
@@ -422,8 +422,8 @@ class VerplichtingWorkflowTest extends TestCase {
 				'administrationId' => 'adm-1',
 				'programmaCode' => '5.1',
 				'boekjaar' => 2026,
-				'geautoriseerd_bedrag' => 50000000,
-				'gerealiseerd_bedrag' => 0,
+				'authorised_amount' => 50000000,
+				'realised_amount' => 0,
 				'openstaande_verplichtingen' => 0,
 			],
 			$overrides
@@ -471,7 +471,7 @@ class VerplichtingWorkflowTest extends TestCase {
 				[
 					'programma' => '5.1',
 					'boekjaar' => 2026,
-					'bedrag_excl_btw' => $bedrag,
+					'amount_excl_vat' => $bedrag,
 				],
 			],
 		];

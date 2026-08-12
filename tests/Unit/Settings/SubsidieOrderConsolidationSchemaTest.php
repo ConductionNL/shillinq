@@ -152,7 +152,7 @@ final class SubsidieOrderConsolidationSchemaTest extends TestCase {
 			'regelingNaam', 'regelingArtikel', 'subsidieRegeling',
 			'beschikkingDate', 'beschikkingUri',
 			'vaststellingDate', 'vaststellingUri',
-			'aangevraagdBedrag', 'verleendBedrag', 'vastgesteldBedrag', 'uitbetaaldBedrag', 'teruggevorderdBedrag',
+			'requestedAmount', 'grantedAmount', 'determinedAmount', 'paidOutAmount', 'reclaimedAmount',
 			'prestatieverantwoording', 'repaymentPlanId',
 		];
 		foreach ($regulatory as $field) {

@@ -71,11 +71,11 @@ class KiaSchalenLookupTest extends TestCase {
 		$this->lookup = new KiaSchalenLookup(logger: $this->logger);
 
 		$this->tiers = [
-			['tier' => 1, 'vanaf' => 0,        'tot' => 280000,   'percentage' => 0,     'vastBedrag' => 0],
-			['tier' => 2, 'vanaf' => 280000,   'tot' => 7060200,  'percentage' => 28,    'vastBedrag' => null],
-			['tier' => 3, 'vanaf' => 7060200,  'tot' => 13074400, 'percentage' => null,  'vastBedrag' => 1976900],
-			['tier' => 4, 'vanaf' => 13074400, 'tot' => 39223000, 'percentage' => -7.56, 'vastBedrag' => 1976900],
-			['tier' => 5, 'vanaf' => 39223000, 'tot' => null,     'percentage' => 0,     'vastBedrag' => 0],
+			['tier' => 1, 'vanaf' => 0,        'tot' => 280000,   'percentage' => 0,     'fixedAmount' => 0],
+			['tier' => 2, 'vanaf' => 280000,   'tot' => 7060200,  'percentage' => 28,    'fixedAmount' => null],
+			['tier' => 3, 'vanaf' => 7060200,  'tot' => 13074400, 'percentage' => null,  'fixedAmount' => 1976900],
+			['tier' => 4, 'vanaf' => 13074400, 'tot' => 39223000, 'percentage' => -7.56, 'fixedAmount' => 1976900],
+			['tier' => 5, 'vanaf' => 39223000, 'tot' => null,     'percentage' => 0,     'fixedAmount' => 0],
 		];
 
 	}//end setUp()

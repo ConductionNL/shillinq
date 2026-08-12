@@ -2150,7 +2150,7 @@
           "commercialActivityId",
           "peildatum",
           "bron",
-          "bedrag",
+          "amount",
           "eenheid",
           "administrationId"
         ],
@@ -2179,7 +2179,7 @@
             "title": "Bron",
             "description": "The bron."
           },
-          "bedrag": {
+          "amount": {
             "type": "number",
             "minimum": 0,
             "description": "Benchmark price in EUR.",

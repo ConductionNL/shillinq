@@ -124,7 +124,7 @@ class VpbBerekeningGuard {
 	private function applySchijftarief(array $tarief, float $belastbaar): float {
 		$tarief1 = (float)($tarief['tarief1'] ?? 0);
 		$tarief2 = (float)($tarief['tarief2'] ?? 0);
-		$grens = (float)($tarief['belastbaarBedragGrens'] ?? 0);
+		$grens = (float)($tarief['taxableAmountThreshold'] ?? 0);
 
 		$belastbaarCents = (int)round($belastbaar * 100);
 		$grensCents = (int)round($grens * 100);

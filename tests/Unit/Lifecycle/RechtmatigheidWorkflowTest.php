@@ -439,7 +439,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 			'toetsdatum',
 			'toetser',
 			'onderbouwing',
-			'bedrag_betrokken',
+			'amount_involved',
 			'bewijsstukken',
 			'rechtmatigheidsbevinding',
 			'regelverwijzing',
@@ -495,7 +495,7 @@ class RechtmatigheidWorkflowTest extends TestCase {
 			message: 'foutenPerBoekjaar must group by boekjaar.'
 		);
 		self::assertSame(
-			expected: ['bedrag_fout', 'bedrag_onzekerheid'],
+			expected: ['amount_error', 'amount_uncertainty'],
 			actual: ($agg['sum'] ?? null),
 			message: 'foutenPerBoekjaar must sum bedrag_fout + bedrag_onzekerheid.'
 		);

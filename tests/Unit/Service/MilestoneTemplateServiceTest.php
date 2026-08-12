@@ -150,7 +150,7 @@ class MilestoneTemplateServiceTest extends TestCase {
 
 		$total = 0.0;
 		foreach ($forecast as $entry) {
-			$total += (float)$entry['bedrag'];
+			$total += (float)$entry['amount'];
 		}
 
 		$this->assertEqualsWithDelta(10000.0, $total, 0.001);
@@ -168,7 +168,7 @@ class MilestoneTemplateServiceTest extends TestCase {
 
 		$this->assertCount(4, $forecast);
 		foreach ($forecast as $entry) {
-			$this->assertEqualsWithDelta(12500.0, (float)$entry['bedrag'], 0.001);
+			$this->assertEqualsWithDelta(12500.0, (float)$entry['amount'], 0.001);
 		}
 
 	}//end testCashflowForecastPhasedSplit()

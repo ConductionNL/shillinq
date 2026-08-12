@@ -242,7 +242,7 @@ class CommitmentMaterialisationService {
 
 		$totaal = 0;
 		foreach ($regelInputs as $regel) {
-			$totaal += (int)($regel['bedrag_excl_btw'] ?? 0);
+			$totaal += (int)($regel['amount_excl_vat'] ?? 0);
 		}
 
 		$draft = [
@@ -343,11 +343,11 @@ class CommitmentMaterialisationService {
 					'kostenplaats' => $kostenplaats,
 					'grootboekrekening' => $grootboek,
 					'boekjaar' => $boekjaar,
-					'bedrag_excl_btw' => 0,
+					'amount_excl_vat' => 0,
 				];
 			}
 
-			$grouped[$key]['bedrag_excl_btw'] += $bedrag;
+			$grouped[$key]['amount_excl_vat'] += $bedrag;
 		}//end foreach
 
 		foreach ($grouped as $key => $regel) {
@@ -402,7 +402,7 @@ class CommitmentMaterialisationService {
 				'kostenplaats' => $kostenplaats,
 				'grootboekrekening' => '',
 				'boekjaar' => $boekjaar,
-				'bedrag_excl_btw' => $bedrag,
+				'amount_excl_vat' => $bedrag,
 				'programma' => $this->resolveProgramma(
 					administrationId: $administrationId,
 					kostenplaats: $kostenplaats,
@@ -550,11 +550,11 @@ class CommitmentMaterialisationService {
 						'verplichting' => (string)($draft['verplichtingsnummer'] ?? ''),
 						'regelnummer' => $regelnummer,
 						'boekjaar' => (int)($regel['boekjaar'] ?? 0),
-						'bedrag_excl_btw' => (int)($regel['bedrag_excl_btw'] ?? 0),
+						'amount_excl_vat' => (int)($regel['amount_excl_vat'] ?? 0),
 						'grootboekrekening' => (string)($regel['grootboekrekening'] ?? ''),
 						'kostenplaats' => (string)($regel['kostenplaats'] ?? ''),
 						'programma' => (string)($regel['programma'] ?? ''),
-						'restant_verplicht' => (int)($regel['bedrag_excl_btw'] ?? 0),
+						'restant_verplicht' => (int)($regel['amount_excl_vat'] ?? 0),
 					]
 				);
 			$regelnummer++;
@@ -597,7 +597,7 @@ class CommitmentMaterialisationService {
 						'criterium' => 'begroting',
 						'boekjaar' => $boekjaar,
 						'programma' => (string)($first['programma'] ?? ''),
-						'bedrag_fout' => $bedrag,
+						'amount_error' => $bedrag,
 						'omschrijving' => (string)($verplichting['override_reden'] ?? ''),
 						'oorzaak' => sprintf(
 							'Verplichting %s automatisch aangegaan onder override-mandaat wegens ontoereikende vrije_ruimte.',

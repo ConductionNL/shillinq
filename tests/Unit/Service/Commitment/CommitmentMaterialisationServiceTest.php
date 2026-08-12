@@ -239,8 +239,8 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 				'programmaCode' => '5.1',
 				'kostenplaats' => 'FAC-2026',
 				'boekjaar' => 2026,
-				'geautoriseerd_bedrag' => 50000000,
-				'gerealiseerd_bedrag' => 20000000,
+				'authorised_amount' => 50000000,
+				'realised_amount' => 20000000,
 				'openstaande_verplichtingen' => 0,
 			],
 			$overrides
@@ -334,7 +334,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		self::assertCount(1, $regelSaves);
 		self::assertSame('5.1', $regelSaves[0][1]['programma']);
 		self::assertSame(2026, $regelSaves[0][1]['boekjaar']);
-		self::assertSame(7500000, $regelSaves[0][1]['bedrag_excl_btw']);
+		self::assertSame(7500000, $regelSaves[0][1]['amount_excl_vat']);
 
 	}//end testPurchaseOrderApprovalMaterialisesCommitment()
 
@@ -378,7 +378,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testInsufficientBudgetBlocksPurchaseOrderApproval(): void {
-		$tightBudget = $this->budget(['geautoriseerd_bedrag' => 8000000, 'gerealiseerd_bedrag' => 7000000]);
+		$tightBudget = $this->budget(['authorised_amount' => 8000000, 'realised_amount' => 7000000]);
 
 		$service = $this->buildService(
 			[
@@ -423,7 +423,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testOverrideMandateMaterialisesAndRecordsAfwijking(): void {
-		$tightBudget = $this->budget(['geautoriseerd_bedrag' => 8000000, 'gerealiseerd_bedrag' => 7000000]);
+		$tightBudget = $this->budget(['authorised_amount' => 8000000, 'realised_amount' => 7000000]);
 
 		$service = $this->buildService(
 			[
@@ -492,8 +492,8 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testMultiYearFrameworkMaterialisesOneRegelPerBoekjaar(): void {
-		$budget2026 = $this->budget(['boekjaar' => 2026, 'geautoriseerd_bedrag' => 20000000, 'gerealiseerd_bedrag' => 0]);
-		$budget2027 = $this->budget(['boekjaar' => 2027, 'geautoriseerd_bedrag' => 20000000, 'gerealiseerd_bedrag' => 0]);
+		$budget2026 = $this->budget(['boekjaar' => 2026, 'authorised_amount' => 20000000, 'realised_amount' => 0]);
+		$budget2027 = $this->budget(['boekjaar' => 2027, 'authorised_amount' => 20000000, 'realised_amount' => 0]);
 
 		$mandaat = [
 			'administrationId' => 'adm-1',
@@ -538,7 +538,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testContractActivationIsFailSoftOnBudgetDenial(): void {
-		$tightBudget = $this->budget(['geautoriseerd_bedrag' => 1000000, 'gerealiseerd_bedrag' => 900000]);
+		$tightBudget = $this->budget(['authorised_amount' => 1000000, 'realised_amount' => 900000]);
 
 		$service = $this->buildService(
 			[
@@ -585,8 +585,8 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testContractSpanningYearsSplitsPerBoekjaar(): void {
-		$budget2026 = $this->budget(['boekjaar' => 2026, 'geautoriseerd_bedrag' => 5000000, 'gerealiseerd_bedrag' => 0]);
-		$budget2027 = $this->budget(['boekjaar' => 2027, 'geautoriseerd_bedrag' => 5000000, 'gerealiseerd_bedrag' => 0]);
+		$budget2026 = $this->budget(['boekjaar' => 2026, 'authorised_amount' => 5000000, 'realised_amount' => 0]);
+		$budget2027 = $this->budget(['boekjaar' => 2027, 'authorised_amount' => 5000000, 'realised_amount' => 0]);
 
 		$mandaat = [
 			'administrationId' => 'adm-1',
@@ -626,10 +626,10 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$regelSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'Verplichtingsregel'));
 		self::assertCount(2, $regelSaves);
 		// EUR 20.000,00 = 2.000.000 cents, split evenly across 2026 + 2027.
-		$totalCents = array_sum(array_map(static fn ($s) => $s[1]['bedrag_excl_btw'], $regelSaves));
+		$totalCents = array_sum(array_map(static fn ($s) => $s[1]['amount_excl_vat'], $regelSaves));
 		self::assertSame(2000000, $totalCents);
 		foreach ($regelSaves as $save) {
-			self::assertSame(1000000, $save[1]['bedrag_excl_btw']);
+			self::assertSame(1000000, $save[1]['amount_excl_vat']);
 		}
 
 	}//end testContractSpanningYearsSplitsPerBoekjaar()

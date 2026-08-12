@@ -458,7 +458,7 @@ class FoldIntoOrder implements IRepairStep {
 	 * @return array<string,mixed> The Order record.
 	 */
 	private function buildSubsidieOrder(array $src, string $migrationKey): array {
-		$grantedAmount = $src['verleendBedrag'] ?? ($src['awardAmount'] ?? null);
+		$grantedAmount = $src['grantedAmount'] ?? ($src['awardAmount'] ?? null);
 
 		return [
 			'administrationId' => (string)($src['administrationId'] ?? 'unknown'),
@@ -482,11 +482,11 @@ class FoldIntoOrder implements IRepairStep {
 				'vaststellingDate' => $this->toDate($src['vaststellingDate'] ?? ($src['settlementDate'] ?? null)),
 				'settlementDate' => $this->toDate($src['settlementDate'] ?? null),
 				'disbursementDate' => $this->toDate($src['disbursementDate'] ?? null),
-				'aangevraagdBedrag' => $this->floatOrNull($src['aangevraagdBedrag'] ?? null),
-				'verleendBedrag' => $this->floatOrNull($src['verleendBedrag'] ?? ($src['awardAmount'] ?? null)),
-				'vastgesteldBedrag' => $this->floatOrNull($src['vastgesteldBedrag'] ?? null),
-				'uitbetaaldBedrag' => $this->floatOrNull($src['uitbetaaldBedrag'] ?? null),
-				'teruggevorderdBedrag' => $this->floatOrNull($src['teruggevorderdBedrag'] ?? null),
+				'requestedAmount' => $this->floatOrNull($src['requestedAmount'] ?? null),
+				'grantedAmount' => $this->floatOrNull($src['grantedAmount'] ?? ($src['awardAmount'] ?? null)),
+				'determinedAmount' => $this->floatOrNull($src['determinedAmount'] ?? null),
+				'paidOutAmount' => $this->floatOrNull($src['paidOutAmount'] ?? null),
+				'reclaimedAmount' => $this->floatOrNull($src['reclaimedAmount'] ?? null),
 				'beschikkingUri' => $this->stringOrNull($src['beschikkingUri'] ?? null),
 				'vaststellingUri' => $this->stringOrNull($src['vaststellingUri'] ?? null),
 				'attachmentUri' => $this->stringOrNull($src['attachmentUri'] ?? null),
