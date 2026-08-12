@@ -4,13 +4,19 @@
  * OSS (One-Stop-Shop) Controller
  *
  * Tier-2 read API for the Union One-Stop-Shop pipeline. Exposes two GET
- * endpoints, both available to any authenticated user (#[NoAdminRequired]) and both
- * scoped to a server-validated administration so no cross-administration data
- * leaks (REQ-OSS-002, REQ-OSS-004): destination-country VAT-rate resolution
- * (REQ-OSS-001) and quarterly draft-return generation (REQ-OSS-004). Threshold
+ * endpoints, both available to any authenticated user (#[NoAdminRequired]):
+ * destination-country VAT-rate resolution (REQ-OSS-001, no administration
+ * parameter) and quarterly draft-return generation (REQ-OSS-004), which is
+ * authorised against the caller's administration memberships here
+ * (AdministrationContextService::canAccess(), ADR-005 / REQ-MA-001). Threshold
  * evaluation (REQ-OSS-002) is enforced server-side at invoice-save time through
- * OssThresholdGuard, not as a client endpoint. Reads are delegated to
- * OpenRegister's ObjectService, which enforces multitenancy / RBAC. No mutation
+ * OssThresholdGuard, not as a client endpoint.
+ *
+ * ⚠️ This paragraph used to say both endpoints were "scoped to a server-validated
+ * administration so no cross-administration data leaks" and that reads were
+ * "delegated to OpenRegister's ObjectService, which enforces multitenancy /
+ * RBAC". The "server validation" was `preg_match(self::ID_PATTERN, …)`, and
+ * OpenRegister received no administration term. No mutation
  * routes — OSS records are created/transitioned through the OpenRegister lifecycle.
  * No stack traces are returned to the client.
  *
@@ -34,6 +40,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\OssRateResolver;
 use OCA\Shillinq\Service\OssReturnGenerator;
 use OCP\AppFramework\Controller;
@@ -61,11 +68,12 @@ class OssController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest           $request         The request object.
-     * @param OssRateResolver    $rateResolver    Destination-country VAT-rate resolver.
-     * @param OssReturnGenerator $returnGenerator Quarterly return draft generator.
-     * @param LoggerInterface    $logger          Logger (no stack traces to client).
-     * @param IUserSession       $userSession     The user session.
+     * @param IRequest                     $request         The request object.
+     * @param OssRateResolver              $rateResolver    Destination-country VAT-rate resolver.
+     * @param OssReturnGenerator           $returnGenerator Quarterly return draft generator.
+     * @param LoggerInterface              $logger          Logger (no stack traces to client).
+     * @param IUserSession                 $userSession     The user session.
+     * @param AdministrationContextService $context         RBAC guard — resolves the user's administration memberships.
      *
      * @return void
      */
@@ -75,6 +83,7 @@ class OssController extends Controller
         private readonly OssReturnGenerator $returnGenerator,
         private readonly LoggerInterface $logger,
         private readonly IUserSession $userSession,
+        private readonly AdministrationContextService $context,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -167,6 +176,14 @@ class OssController extends Controller
 
         if (preg_match(self::ID_PATTERN, $registrationId) !== 1) {
             return new JSONResponse(['error' => 'registration_id is required'], Http::STATUS_BAD_REQUEST);
+        }
+
+        // ⚠️ `preg_match(self::ID_PATTERN, ...)` is a character-class test, not a
+        // "server-validated administration". This draft exposes cross-border EU
+        // OSS turnover per member state, so the membership check belongs here
+        // (ADR-005 / REQ-MA-001).
+        if ($this->context->canAccess(administrationId: $administrationId) === false) {
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
         }
 
         try {

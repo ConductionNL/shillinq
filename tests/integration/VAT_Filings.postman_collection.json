@@ -35,6 +35,67 @@
 	],
 	"item": [
 		{
+			"name": "Setup — grant the caller a membership in the administration (ADR-005)",
+			"item": [
+				{
+					"name": "POST AdministrationMembership for {{admin_user}} on {{administration_id}}",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Every /api/vat-returns endpoint is #[NoAdminRequired] AND authorised per",
+									"// administration by AdministrationContextService::canAccess(), which grants",
+									"// access on a valid AdministrationMembership and NOTHING else — being a",
+									"// Nextcloud admin does not imply a membership. That is the same guard the 29",
+									"// other shillinq controllers already use, so this collection has to supply the",
+									"// precondition a real tenant user would have.",
+									"//",
+									"// Until the guard landed these endpoints read administrationId straight off the",
+									"// wire, so the collection was green precisely BECAUSE nothing was checked.",
+									"// This request is the fixture, not a workaround: seeding what it needs and",
+									"// tearing it down is this suite's stated contract (see run-newman.sh).",
+									"pm.test('membership created or already present', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+									"const body = pm.response.json();",
+									"const id = body.id || body['@self']?.id;",
+									"if (id) { pm.collectionVariables.set('membership_id', id); }"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/AdministrationMembership",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"openregister",
+								"api",
+								"objects",
+								"shillinq",
+								"AdministrationMembership"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"userId\":\"{{admin_user}}\",\"administrationId\":\"{{administration_id}}\",\"role\":\"eigenaar\",\"mayPostJournalEntries\":true,\"mayCloseFiscalYear\":true}"
+						}
+					}
+				}
+			]
+		},
+		{
 			"name": "Happy path — create + derive + submit",
 			"item": [
 				{
@@ -262,6 +323,38 @@
 					"request": {
 						"method": "GET",
 						"url": {"raw": "{{base_url}}/index.php/apps/shillinq/api/vat-returns/{{return_id}}/declarations", "host": ["{{base_url}}"], "path": ["index.php", "apps", "shillinq", "api", "vat-returns", "{{return_id}}", "declarations"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "Teardown — revoke the membership seeded by Setup",
+			"item": [
+				{
+					"name": "DELETE the AdministrationMembership",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Idempotent teardown: this suite's contract is that a collection seeds what",
+									"// it needs and removes it again, so a later run starts from the same state.",
+									"// Skipped rather than failed when Setup did not record an id, so a partial",
+									"// run cannot turn a teardown into a spurious red.",
+									"if (!pm.collectionVariables.get('membership_id')) {",
+									"    pm.test('nothing to revoke', () => pm.expect(true).to.be.true);",
+									"} else {",
+									"    pm.test('membership revoked', () => pm.expect(pm.response.code).to.be.oneOf([200, 204, 404]));",
+									"}",
+									"pm.collectionVariables.unset('membership_id');"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"url": {"raw": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/AdministrationMembership/{{membership_id}}", "host": ["{{base_url}}"], "path": ["index.php", "apps", "openregister", "api", "objects", "shillinq", "AdministrationMembership", "{{membership_id}}"]}
 					}
 				}
 			]

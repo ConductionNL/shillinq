@@ -318,7 +318,7 @@
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
-                  "action": "append-reopen-history",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\AppendReopenHistoryAction",
                   "description": "Append {closedAt, closedBy, reopenedAt, reopenedBy, closeReason} to reopenedHistory and clear closedAt/closedBy (REQ-PC-006).",
                   "actionParameters": {
                     "target": "reopenedHistory"

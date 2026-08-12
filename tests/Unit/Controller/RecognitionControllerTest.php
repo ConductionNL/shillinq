@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\RecognitionController;
 use OCA\Shillinq\Recognition\RevenueRecognitionService;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -74,6 +75,24 @@ final class RecognitionControllerTest extends TestCase
     private LoggerInterface&MockObject $logger;
 
     /**
+     * Mock AdministrationContextService — the ADR-005 membership guard.
+     *
+     * @var AdministrationContextService&MockObject
+     */
+    private AdministrationContextService&MockObject $context;
+
+    /**
+     * What canAccess() answers. Flipped by the ADR-005 refusal test.
+     *
+     * Read through a callback rather than re-stubbed per test: a second
+     * `->method('canAccess')` APPENDS a matcher instead of replacing the first,
+     * so re-stubbing would silently keep answering true.
+     *
+     * @var bool
+     */
+    private bool $canAccess = true;
+
+    /**
      * The controller under test.
      *
      * @var RecognitionController
@@ -92,6 +111,10 @@ final class RecognitionControllerTest extends TestCase
         $this->service     = $this->createMock(RevenueRecognitionService::class);
         $this->userSession = $this->createMock(IUserSession::class);
         $this->logger      = $this->createMock(LoggerInterface::class);
+        $this->context     = $this->createMock(AdministrationContextService::class);
+
+        $this->canAccess = true;
+        $this->context->method('canAccess')->willReturnCallback(fn (): bool => $this->canAccess);
 
         $user = $this->createMock(IUser::class);
         $user->method('getUID')->willReturn('alice');
@@ -101,6 +124,7 @@ final class RecognitionControllerTest extends TestCase
             request: $this->request,
             recognitionService: $this->service,
             userSession: $this->userSession,
+            context: $this->context,
             logger: $this->logger,
         );
 
@@ -147,6 +171,7 @@ final class RecognitionControllerTest extends TestCase
             request: $request,
             recognitionService: $service,
             userSession: $userSession,
+            context: $this->context,
             logger: $this->logger,
         );
 
@@ -265,4 +290,27 @@ final class RecognitionControllerTest extends TestCase
         self::assertStringNotContainsStringIgnoringCase('boom', (string) $data['error']);
 
     }//end testServiceExceptionReturns500WithoutStackTrace()
+
+    /**
+     * A well-formed administrationId the caller has NO membership for yields 404 (ADR-005 / #518).
+     *
+     * The id passes every format check in the method; the docblock's
+     * "ADR-005 IDOR-safety" used to be satisfied by a character-class regex
+     * alone. The service must never be reached.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/recurring-revenue-recognition/spec.md
+     */
+    public function testForeignAdministrationReturns404AndNeverReachesTheService(): void
+    {
+        $this->canAccess = false;
+        $this->withParams('adm-not-mine', '2026-01-01', '2026-03-31');
+        $this->service->expects($this->never())->method('computeRecurring');
+
+        $response = $this->controller->recurringRevenue();
+
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+    }//end testForeignAdministrationReturns404AndNeverReachesTheService()
 }//end class

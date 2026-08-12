@@ -5,9 +5,14 @@
  *
  * Assembles the per-mandate audit dossier (REQ-SDD-010): the mandate, its
  * collections, R-transactions, pre-notifications, and archived pain.008 /
- * pain.002 XML, zipped for the 7-year bewaarplicht. All queries are scoped to
- * the administration configured for the app so a caller cannot export another
- * tenant's mandate (IDOR-safe per ADR-005).
+ * pain.002 XML, zipped for the 7-year bewaarplicht. The mandate is scoped to the
+ * CALLER's administration memberships so a caller cannot export another tenant's
+ * mandate (IDOR-safe per ADR-005 / REQ-MA-001).
+ *
+ * ⚠️ This paragraph used to say "scoped to the administration configured for the
+ * app". That is a different thing and it is not access control: the config key
+ * `administration_id` is instance-wide, has no relation to the calling user, and
+ * defaults to '' — at which value the old guard was skipped entirely.
  *
  * @category Service
  * @package  OCA\Shillinq\Service
@@ -44,23 +49,32 @@ class SepaAuditService
     /**
      * Construct the service.
      *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug + administration scope.
-     * @param LoggerInterface    $logger    Logger.
+     * @param ContainerInterface           $container DI container for lazy ObjectService resolution.
+     * @param IAppConfig                   $appConfig App config for the register slug.
+     * @param AdministrationContextService $context   RBAC guard — the caller's administration memberships.
+     * @param LoggerInterface              $logger    Logger.
      */
     public function __construct(
         private readonly ContainerInterface $container,
         private readonly IAppConfig $appConfig,
+        private readonly AdministrationContextService $context,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
 
     /**
-     * Build the audit dossier for one mandate, scoped to the app administration.
+     * Build the audit dossier for one mandate, scoped to the CALLER's administrations.
      *
-     * Returns null when the mandate does not exist or is outside the
-     * configured administration (treated as not-found to avoid leaking
-     * existence; IDOR-safe per ADR-005).
+     * Returns null when the mandate does not exist or belongs to an
+     * administration the caller has no membership for (treated as not-found to
+     * avoid leaking existence; IDOR-safe per ADR-005 / REQ-MA-001).
+     *
+     * ⚠️ This used to read "outside the CONFIGURED administration", and that is
+     * exactly what it did: `resolveAdministration()` returned
+     * `appConfig->getValueString(APP_ID, 'administration_id', '')` — an
+     * instance-wide constant with no relation to the calling user — and the
+     * `$administration !== ''` short-circuit made the guard a complete no-op
+     * whenever that key was unset, which is its default.
      *
      * @param string $mandateId The SepaMandate UUID/slug.
      *
@@ -74,9 +88,8 @@ class SepaAuditService
             return null;
         }
 
-        $register       = $this->resolveRegister();
-        $administration = $this->resolveAdministration();
-        $objectService  = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+        $register      = $this->resolveRegister();
+        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
         $mandate = $this->findOne(
             objectService: $objectService,
@@ -89,8 +102,10 @@ class SepaAuditService
             return null;
         }
 
-        // Tenant guard: refuse mandates outside the configured administration.
-        if ($administration !== '' && (string) ($mandate['administrationId'] ?? '') !== $administration) {
+        // Tenant guard: refuse mandates outside the CALLER's administrations.
+        // canAccess() fails closed on '' — a mandate with no administrationId is
+        // refused rather than exported (AdministrationContextService:220).
+        if ($this->context->canAccess(administrationId: (string) ($mandate['administrationId'] ?? '')) === false) {
             return null;
         }
 
@@ -382,14 +397,4 @@ class SepaAuditService
 
         return $register;
     }//end resolveRegister()
-
-    /**
-     * Resolve the configured administration id used to scope the export.
-     *
-     * @return string The administration id, or '' if unconfigured.
-     */
-    private function resolveAdministration(): string
-    {
-        return $this->appConfig->getValueString(Application::APP_ID, 'administration_id', '');
-    }//end resolveAdministration()
 }//end class

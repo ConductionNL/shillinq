@@ -47,8 +47,8 @@ use OCA\Shillinq\Listener\LeaseActivationListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
-use OCA\Shillinq\Listener\DBAFactuurMonitorListener;
 use OCA\Shillinq\Listener\ContractObligationTaskListener;
+use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
 use OCA\Shillinq\Listener\DeliveryDispatchListener;
 use OCA\Shillinq\Listener\ExtractionCompletedListener;
@@ -655,7 +655,7 @@ class Application extends App implements IBootstrap
         // narrow behaviour on an assumption the code does not state.
         $context->registerEventListener(
             event: ObjectCreatedEvent::class,
-            listener: DBAFactuurMonitorListener::class
+            listener: DbaInvoiceMonitorListener::class
         );
 
         // Bookkeeping-tenderned-integratie Tasks 5.1 / 5.2 / 5.3 — react to

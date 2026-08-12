@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\RevenueController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\RevenueCutoffService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -73,6 +74,24 @@ final class RevenueControllerTest extends TestCase
     private LoggerInterface&MockObject $logger;
 
     /**
+     * Mock AdministrationContextService — the ADR-005 membership guard.
+     *
+     * @var AdministrationContextService&MockObject
+     */
+    private AdministrationContextService&MockObject $context;
+
+    /**
+     * What canAccess() answers. Flipped by the ADR-005 refusal tests.
+     *
+     * Read through a callback rather than re-stubbed per test: a second
+     * `->method('canAccess')` on the same mock APPENDS a matcher, it does not
+     * replace the first, so re-stubbing would silently keep answering true.
+     *
+     * @var bool
+     */
+    private bool $canAccess = true;
+
+    /**
      * The controller under test.
      *
      * @var RevenueController
@@ -91,6 +110,12 @@ final class RevenueControllerTest extends TestCase
         $this->service     = $this->createMock(RevenueCutoffService::class);
         $this->userSession = $this->createMock(IUserSession::class);
         $this->logger      = $this->createMock(LoggerInterface::class);
+        $this->context     = $this->createMock(AdministrationContextService::class);
+
+        // Default: the caller IS a member. $this->canAccess is flipped by the
+        // ADR-005 refusal test.
+        $this->canAccess = true;
+        $this->context->method('canAccess')->willReturnCallback(fn (): bool => $this->canAccess);
 
         $user = $this->createMock(IUser::class);
         $user->method('getUID')->willReturn('alice');
@@ -100,6 +125,7 @@ final class RevenueControllerTest extends TestCase
             request: $this->request,
             cutoffService: $this->service,
             userSession: $this->userSession,
+            context: $this->context,
             logger: $this->logger,
         );
 
@@ -226,4 +252,28 @@ final class RevenueControllerTest extends TestCase
         self::assertStringNotContainsStringIgnoringCase('boom', (string) $data['error']);
 
     }//end testServiceExceptionReturns500WithoutStackTrace()
+
+    /**
+     * A well-formed administration_id the caller has NO membership for yields 404 (ADR-005 / #518).
+     *
+     * The id passes every format check in the method — this is exactly the case
+     * the old code allowed through, because a character-class regex was the only
+     * thing between an authenticated user and another tenant's revenue cut-off.
+     * The service must never be reached.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-ifrs15-revenue/spec.md
+     */
+    public function testForeignAdministrationReturns404AndNeverReachesTheService(): void
+    {
+        $this->canAccess = false;
+        $this->withParams('adm-not-mine', '2026-06-30');
+        $this->service->expects($this->never())->method('compute');
+
+        $response = $this->controller->cutoff();
+
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+    }//end testForeignAdministrationReturns404AndNeverReachesTheService()
 }//end class
