@@ -134,6 +134,8 @@ class WidgetService
      * @param string $administrationId The owning administration (tenant scope).
      *
      * @return array<int,array<string,mixed>> The public service list.
+     *
+     * @spec openspec/specs/bookings-self-service-widget/spec.md#req-wsw-001
      */
     public function listPublicServices(string $administrationId): array
     {
@@ -178,7 +180,20 @@ class WidgetService
             ];
 
             if ((bool) ($service['priceVisible'] ?? false) === true) {
-                $public['price']    = (float) ($service['price'] ?? 0);
+                // `basePrice` is the property the Service schema actually
+                // DECLARES — and it is in its `required` list
+                // (bookings-service-catalog.json). `price` is declared by NO
+                // fragment, and OpenRegister's MagicMapper discards undeclared
+                // properties, so no stored Service can ever carry it. Reading
+                // `price` first therefore published 0.00 for EVERY service with
+                // priceVisible=true. Measured on a live instance: a Service
+                // saved with basePrice=125.50 renders `basePrice => 125.5` and
+                // `price => ABSENT`.
+                //
+                // `price` is retained only as a fallback for any object stored
+                // under an older schema revision that did declare it; it must
+                // stay SECOND, because the whole defect was ordering.
+                $public['price']    = (float) ($service['basePrice'] ?? $service['price'] ?? 0);
                 $public['currency'] = (string) ($service['currency'] ?? 'EUR');
             }
 

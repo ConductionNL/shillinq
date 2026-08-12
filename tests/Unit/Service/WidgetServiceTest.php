@@ -223,7 +223,7 @@ class WidgetServiceTest extends TestCase
      */
     public function testCreateAppointmentRejectsNonPublicService(): void
     {
-        $private       = $this->bookableService();
+        $private = $this->bookableService();
         $private['isPublic'] = false;
 
         $objectService = $this->buildObjectService(services: [$private], appointments: [], saved: null);
@@ -421,6 +421,100 @@ class WidgetServiceTest extends TestCase
         self::assertArrayNotHasKey('isPublic', $list[0]);
 
     }//end testListPublicServicesReturnsSafeSubset()
+
+    /**
+     * A service stored under the real schema publishes its basePrice, not 0.00.
+     *
+     * ⚠️ This is the test the suite did not have, and its absence is why the
+     * widget shipped 0.00 for every priced service.
+     *
+     * The Service schema is declared across two fragments:
+     * `30-bookings-self-service-widget.json` declares `priceVisible`, and
+     * `bookings-service-catalog.json` declares `basePrice` — which is in its
+     * `required` list. **No fragment declares `price`**, and OpenRegister's
+     * MagicMapper discards undeclared properties, so no stored Service can
+     * carry one. Measured on a live instance: a Service saved with
+     * `basePrice = 125.50` renders `basePrice => 125.5` and `price => ABSENT`.
+     *
+     * 🔑 The fixture below therefore omits `price` deliberately. The pre-existing
+     * `testListPublicServicesReturnsSafeSubset` supplies `'price' => 35.0` — a
+     * key OpenRegister has never emitted — which is exactly why it stayed green
+     * over a broken production path. It also asserts only `assertArrayHasKey`,
+     * so it could not have caught a 0.00 VALUE even with the invented key.
+     *
+     * @return void
+     */
+    public function testPricedServicePublishesBasePriceNotZero(): void
+    {
+        $service       = [
+            '@self'            => ['slug' => 'consult'],
+            'name'             => 'Consultation',
+            'duration'         => 30,
+            'basePrice'        => 125.50,
+            'currency'         => 'EUR',
+            'priceVisible'     => true,
+            'isPublic'         => true,
+            'administrationId' => 'salon-demo',
+        ];
+        $objectService = $this->buildObjectService(services: [$service], appointments: [], saved: null);
+        $this->container->method('get')->willReturn($objectService);
+
+        $list = $this->service->listPublicServices('salon-demo');
+
+        self::assertCount(1, $list);
+        self::assertSame(
+            125.50,
+            $list[0]['price'],
+            'the widget must publish the stored basePrice, not 0.00'
+        );
+        self::assertNotSame(0.0, $list[0]['price']);
+        self::assertSame('EUR', $list[0]['currency']);
+
+    }//end testPricedServicePublishesBasePriceNotZero()
+
+    /**
+     * A legacy object still carrying `price` keeps working.
+     *
+     * `basePrice` must win when both are present — the defect was ordering, so
+     * the fallback has to stay second.
+     *
+     * @return void
+     */
+    public function testLegacyPriceIsUsedOnlyAsFallback(): void
+    {
+        $legacyOnly    = [
+            '@self'        => ['slug' => 'legacy'],
+            'name'         => 'Legacy service',
+            'duration'     => 15,
+            'price'        => 42.0,
+            'currency'     => 'EUR',
+            'priceVisible' => true,
+            'isPublic'     => true,
+        ];
+        $bothPresent   = [
+            '@self'        => ['slug' => 'both'],
+            'name'         => 'Both spellings',
+            'duration'     => 15,
+            'basePrice'    => 99.0,
+            'price'        => 42.0,
+            'currency'     => 'EUR',
+            'priceVisible' => true,
+            'isPublic'     => true,
+        ];
+        $objectService = $this->buildObjectService(
+            services: [$legacyOnly, $bothPresent],
+            appointments: [],
+            saved: null
+        );
+        $this->container->method('get')->willReturn($objectService);
+
+        $list = $this->service->listPublicServices('salon-demo');
+
+        self::assertCount(2, $list);
+        self::assertSame(42.0, $list[0]['price'], 'legacy price is still honoured when it is all there is');
+        self::assertSame(99.0, $list[1]['price'], 'basePrice must win over the legacy spelling');
+
+    }//end testLegacyPriceIsUsedOnlyAsFallback()
 
     /**
      * Build a fluent ObjectService stub returning services / appointments by schema.
