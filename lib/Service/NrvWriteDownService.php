@@ -140,9 +140,9 @@ class NrvWriteDownService {
 
 		$administrationId = (string)($valuation['administrationId'] ?? '');
 		$itemId = (string)($valuation['productId'] ?? '');
-		$effective_date = date('Y-m-d');
+		$effectiveDate = date('Y-m-d');
 		if ($postingDate !== '') {
-			$effective_date = substr($postingDate, 0, 10);
+			$effectiveDate = substr($postingDate, 0, 10);
 		}
 
 		$sourceReference = 'inventory';
@@ -158,7 +158,7 @@ class NrvWriteDownService {
 			journalCode: 'NRV',
 			description: $this->describe(itemId: $itemId, writeDownCents: $writeDownCents, nrvPerUnit: $nrvPerUnit),
 			sourceReference: $sourceReference,
-			postingDate: $effective_date,
+			postingDate: $effectiveDate,
 			periodId: $periodId
 		);
 

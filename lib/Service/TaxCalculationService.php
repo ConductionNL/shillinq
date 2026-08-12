@@ -398,12 +398,12 @@ class TaxCalculationService {
 
 		foreach ($enactedRates as $jurisdiction => $rateInfo) {
 			$newRateBps = (int)$rateInfo['rate'];
-			$effective_date = (string)$rateInfo['effectiveDate'];
-			if ($newRateBps === 0 || $effective_date === '') {
+			$effectiveDate = (string)$rateInfo['effectiveDate'];
+			if ($newRateBps === 0 || $effectiveDate === '') {
 				continue;
 			}
 
-			$effectiveYear = (int)substr($effective_date, 0, 4);
+			$effectiveYear = (int)substr($effectiveDate, 0, 4);
 
 			// Fetch all TemporaryDifference records for this jurisdiction.
 			$diffs = $objectService

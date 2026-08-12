@@ -84,7 +84,7 @@ class InnovatieboxSbrExportService {
 	 * @param string $administrationId Administration scope (server-resolved, REQ-IBA-008).
 	 * @param int $boekjaar Fiscal year.
 	 * @param string $method Election: 'per_asset_afpelmethode' (default)
-	 *                        or 'forfaitair_25pct'.
+	 *                       or 'forfaitair_25pct'.
 	 *
 	 * @return array<string,mixed> The SBR/XBRL instance hand-off payload.
 	 *
