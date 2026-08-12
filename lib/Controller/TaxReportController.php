@@ -6,10 +6,17 @@
  * Tier-2 read-only Vpb quarterly/annual tax-statement API (REQ-VPB-003,
  * REQ-VPB-009, REQ-VPB-010, REQ-VPB-012). Exposes two GET endpoints returning
  * the aggregated income statement for one administration + fiscal period. The
- * endpoints are available to any authenticated user (#[NoAdminRequired]); the
- * administration scope is validated and reads are delegated to OpenRegister's
- * ObjectService, which enforces multitenancy / RBAC, so no cross-administration
- * data leaks. The statement is computed (read-only) — there is no
+ * endpoints are available to any authenticated user (#[NoAdminRequired]) and are
+ * authorised per administration here, against the caller's memberships
+ * (AdministrationContextService::canAccess(), ADR-005 / REQ-MA-001).
+ *
+ * ⚠️ This paragraph used to say the scope "is validated and reads are delegated
+ * to OpenRegister's ObjectService, which enforces multitenancy / RBAC, so no
+ * cross-administration data leaks". Both halves were false: the only check was a
+ * character-class regex on the id, and OpenRegister grants every action on a
+ * schema that declares no `authorization` block — which is all ~871 of them here.
+ *
+ * The statement is computed (read-only) — there is no
  * create/update/delete route; deadline/payment CRUD is served by OpenRegister's
  * generic object API.
  *
@@ -33,6 +40,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\TaxReportService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -53,10 +61,11 @@ class TaxReportController extends Controller
     /**
      * Constructor for the TaxReportController.
      *
-     * @param IRequest         $request          The request object.
-     * @param TaxReportService $taxReportService The tax-statement computation service.
-     * @param IUserSession     $userSession      Session for the auth body-guard.
-     * @param LoggerInterface  $logger           Logger for diagnostics (no stack traces to client).
+     * @param IRequest                     $request          The request object.
+     * @param TaxReportService             $taxReportService The tax-statement computation service.
+     * @param IUserSession                 $userSession      Session for the auth body-guard.
+     * @param AdministrationContextService $context          RBAC guard — resolves the user's administration memberships.
+     * @param LoggerInterface              $logger           Logger for diagnostics (no stack traces to client).
      *
      * @return void
      */
@@ -64,6 +73,7 @@ class TaxReportController extends Controller
         IRequest $request,
         private readonly TaxReportService $taxReportService,
         private readonly IUserSession $userSession,
+        private readonly AdministrationContextService $context,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -99,7 +109,7 @@ class TaxReportController extends Controller
 
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
 
-        $error = $this->validateAdministration(administrationId: $administrationId);
+        $error = $this->requireAccessibleAdministration(administrationId: $administrationId);
         if ($error !== null) {
             return $error;
         }
@@ -159,7 +169,7 @@ class TaxReportController extends Controller
 
         $administrationId = trim((string) $this->request->getParam('administration_id', ''));
 
-        $error = $this->validateAdministration(administrationId: $administrationId);
+        $error = $this->requireAccessibleAdministration(administrationId: $administrationId);
         if ($error !== null) {
             return $error;
         }
@@ -195,13 +205,20 @@ class TaxReportController extends Controller
     }//end annual()
 
     /**
-     * Validate the administration_id query parameter (REQ-VPB-003 scoping).
+     * Validate AND authorise the administration_id query parameter (REQ-VPB-003 scoping).
+     *
+     * ⚠️ Renamed from `validateAdministration()`. The old name implied an access
+     * check; the old body was entirely an empty-check plus
+     * `preg_match('/^[A-Za-z0-9_.\-]{1,64}$/')` — a character-class test. Format
+     * validation is not authorisation, and both callers relied on this method for
+     * the latter. It now performs the membership check as well (ADR-005 /
+     * REQ-MA-001), masking a non-member's administration as 404.
      *
      * @param string $administrationId The administration identifier to validate.
      *
-     * @return JSONResponse|null A 400 response when invalid, null when acceptable.
+     * @return JSONResponse|null A 400/404 response when refused, null when acceptable.
      */
-    private function validateAdministration(string $administrationId): ?JSONResponse
+    private function requireAccessibleAdministration(string $administrationId): ?JSONResponse
     {
         if ($administrationId === '') {
             return new JSONResponse(
@@ -217,7 +234,11 @@ class TaxReportController extends Controller
             );
         }
 
+        if ($this->context->canAccess(administrationId: $administrationId) === false) {
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+        }
+
         return null;
 
-    }//end validateAdministration()
+    }//end requireAccessibleAdministration()
 }//end class

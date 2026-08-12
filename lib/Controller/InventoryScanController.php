@@ -17,8 +17,16 @@
  * (@NoAdminRequired — normal warehouse staff, not admins). The POST endpoint
  * additionally re-checks the acting user's role per operation type against
  * Nextcloud group membership; admins implicitly hold all roles. The asserted
- * client-side role is never trusted. IDOR-safe: the acting user id is taken from
- * the session, never from the request body.
+ * client-side role is never trusted. The acting user id is taken from the
+ * session, never from the request body, AND the administration named on the
+ * request is checked against the caller's memberships
+ * (AdministrationContextService::canAccess(), ADR-005 / REQ-MA-001).
+ *
+ * ⚠️ This paragraph used to end "IDOR-safe: the acting user id is taken from the
+ * session, never from the request body." True and irrelevant: the ADMINISTRATION
+ * id was a request parameter with the hardcoded default `'adm-1'`, so a request
+ * that simply omitted it read (and wrote) tenant `adm-1`. The default is gone;
+ * an absent or non-member administration is now a 400/404.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -40,6 +48,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\InventoryScanService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -79,17 +88,19 @@ class InventoryScanController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest             $request      The request.
-     * @param IUserSession         $userSession  The user session (acting user / IDOR scope).
-     * @param IGroupManager        $groupManager Group membership for role checks.
-     * @param InventoryScanService $scanService  Server-authoritative scan logic.
-     * @param LoggerInterface      $logger       Logger.
+     * @param IRequest                     $request      The request.
+     * @param IUserSession                 $userSession  The user session (acting user identity).
+     * @param IGroupManager                $groupManager Group membership for role checks.
+     * @param InventoryScanService         $scanService  Server-authoritative scan logic.
+     * @param AdministrationContextService $context      RBAC guard — resolves the user's administration memberships.
+     * @param LoggerInterface              $logger       Logger.
      */
     public function __construct(
         IRequest $request,
         private readonly IUserSession $userSession,
         private readonly IGroupManager $groupManager,
         private readonly InventoryScanService $scanService,
+        private readonly AdministrationContextService $context,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -109,7 +120,7 @@ class InventoryScanController extends Controller
      * @NoAdminRequired
      */
     #[NoAdminRequired]
-    public function resolve(string $barcode='', string $administrationId='adm-1'): JSONResponse
+    public function resolve(string $barcode='', string $administrationId=''): JSONResponse
     {
         $user = $this->userSession->getUser();
         if ($user === null) {
@@ -121,7 +132,13 @@ class InventoryScanController extends Controller
             return new JSONResponse(data: ['message' => 'A barcode or SKU is required.'], statusCode: Http::STATUS_BAD_REQUEST);
         }
 
-        $item = $this->scanService->resolveBarcode(barcode: $barcode, administrationId: trim($administrationId));
+        $administrationId = trim($administrationId);
+        $error            = $this->requireAccessibleAdministration(administrationId: $administrationId);
+        if ($error !== null) {
+            return $error;
+        }
+
+        $item = $this->scanService->resolveBarcode(barcode: $barcode, administrationId: $administrationId);
         if ($item === null) {
             return new JSONResponse(data: ['found' => false]);
         }
@@ -143,7 +160,7 @@ class InventoryScanController extends Controller
      * @NoAdminRequired
      */
     #[NoAdminRequired]
-    public function sync(string $since='', string $administrationId='adm-1'): JSONResponse
+    public function sync(string $since='', string $administrationId=''): JSONResponse
     {
         $user = $this->userSession->getUser();
         if ($user === null) {
@@ -155,7 +172,13 @@ class InventoryScanController extends Controller
             $sinceArg = null;
         }
 
-        $stock = $this->scanService->getStockDelta(since: $sinceArg, administrationId: trim($administrationId));
+        $administrationId = trim($administrationId);
+        $error            = $this->requireAccessibleAdministration(administrationId: $administrationId);
+        if ($error !== null) {
+            return $error;
+        }
+
+        $stock = $this->scanService->getStockDelta(since: $sinceArg, administrationId: $administrationId);
 
         return new JSONResponse(
             data: [
@@ -171,8 +194,10 @@ class InventoryScanController extends Controller
      *
      * Each operation is role-gated (REQ-PERM-001), deduplicated on its
      * transactionId (REQ-SYNC-001), and applied to the stock ledger. The acting
-     * user id is taken from the session (IDOR-safe). Returns one ACK per
-     * operation, keyed by transactionId.
+     * user id is taken from the session, and the administration is checked
+     * against the caller's memberships before any operation is applied
+     * (ADR-005 / REQ-MA-001). Returns one ACK per operation, keyed by
+     * transactionId.
      *
      * @param array<int, array<string, mixed>> $operations       The operation batch.
      * @param string                           $administrationId Administration scope.
@@ -184,7 +209,7 @@ class InventoryScanController extends Controller
      * @NoAdminRequired
      */
     #[NoAdminRequired]
-    public function scan(array $operations=[], string $administrationId='adm-1'): JSONResponse
+    public function scan(array $operations=[], string $administrationId=''): JSONResponse
     {
         $user = $this->userSession->getUser();
         if ($user === null) {
@@ -202,8 +227,13 @@ class InventoryScanController extends Controller
             );
         }
 
+        $admin = trim($administrationId);
+        $error = $this->requireAccessibleAdministration(administrationId: $admin);
+        if ($error !== null) {
+            return $error;
+        }
+
         $userId  = $user->getUID();
-        $admin   = trim($administrationId);
         $results = [];
 
         foreach ($operations as $operation) {
@@ -213,6 +243,40 @@ class InventoryScanController extends Controller
         return new JSONResponse(data: ['results' => $results]);
 
     }//end scan()
+
+    /**
+     * Require the caller to be a member of the named administration (ADR-005).
+     *
+     * The administration is a request parameter on every endpoint of this
+     * controller. It used to default to the literal `'adm-1'`, so omitting it
+     * silently selected a real tenant; the default is now empty and an empty
+     * value is refused.
+     *
+     * @param string $administrationId The already-trimmed administration id.
+     *
+     * @return JSONResponse|null A 400/404 response when refused, null when allowed.
+     *
+     * @spec openspec/changes/inventory-mobile-scanner/tasks.md#T1.3
+     */
+    private function requireAccessibleAdministration(string $administrationId): ?JSONResponse
+    {
+        if ($administrationId === '') {
+            return new JSONResponse(
+                data: ['message' => 'An administrationId is required.'],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        if ($this->context->canAccess(administrationId: $administrationId) === false) {
+            return new JSONResponse(
+                data: ['message' => 'Administration not found'],
+                statusCode: Http::STATUS_NOT_FOUND
+            );
+        }
+
+        return null;
+
+    }//end requireAccessibleAdministration()
 
     /**
      * Validate, authorise and apply a single operation, returning its ACK.

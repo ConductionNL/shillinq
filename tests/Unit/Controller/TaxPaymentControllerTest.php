@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\TaxPaymentController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\TaxPaymentReconciliationService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -71,6 +72,23 @@ final class TaxPaymentControllerTest extends TestCase
     private LoggerInterface&MockObject $logger;
 
     /**
+     * Mock AdministrationContextService — the ADR-005 membership guard.
+     *
+     * @var AdministrationContextService&MockObject
+     */
+    private AdministrationContextService&MockObject $context;
+
+    /**
+     * What canAccess() answers. Flipped by the ADR-005 refusal test.
+     *
+     * Read through a callback rather than re-stubbed per test: a second
+     * `->method('canAccess')` APPENDS a matcher instead of replacing the first.
+     *
+     * @var bool
+     */
+    private bool $canAccess = true;
+
+    /**
      * The controller under test.
      *
      * @var TaxPaymentController
@@ -89,6 +107,10 @@ final class TaxPaymentControllerTest extends TestCase
         $this->service     = $this->createMock(TaxPaymentReconciliationService::class);
         $this->userSession = $this->createMock(IUserSession::class);
         $this->logger      = $this->createMock(LoggerInterface::class);
+        $this->context     = $this->createMock(AdministrationContextService::class);
+
+        $this->canAccess = true;
+        $this->context->method('canAccess')->willReturnCallback(fn (): bool => $this->canAccess);
 
         $user = $this->createMock(IUser::class);
         $user->method('getUID')->willReturn('alice');
@@ -98,6 +120,7 @@ final class TaxPaymentControllerTest extends TestCase
             request: $this->request,
             reconciliation: $this->service,
             userSession: $this->userSession,
+            context: $this->context,
             logger: $this->logger,
         );
 
@@ -196,4 +219,27 @@ final class TaxPaymentControllerTest extends TestCase
         self::assertSame(['error' => 'Failed to reconcile payment'], $response->getData());
 
     }//end testReconcileServiceFailureReturns500()
+
+    /**
+     * A well-formed administration_id the caller has NO membership for yields 404 (ADR-005 / #518).
+     *
+     * reconcile() WRITES against the administration named on the wire, and both
+     * of the old checks were character-class tests. The service must never be
+     * reached.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
+     */
+    public function testForeignAdministrationReturns404AndNeverReachesTheService(): void
+    {
+        $this->canAccess = false;
+        $this->withAdmin('adm-not-mine');
+        $this->service->expects($this->never())->method('reconcile');
+
+        $response = $this->controller->reconcile('tp-001');
+
+        self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+    }//end testForeignAdministrationReturns404AndNeverReachesTheService()
 }//end class
