@@ -55,216 +55,211 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
  */
-class SubsidieVerantwoordingService
-{
-    /**
-     * Default auditor threshold in the administration's base currency (EUR).
-     *
-     * REQ-SUBV-006 / design D3 — grants at or above this awarded amount require
-     * an auditor statement. Operators override via the `auditor_threshold` app
-     * config key.
-     */
-    public const DEFAULT_AUDIT_THRESHOLD = 25000.0;
+class SubsidieVerantwoordingService {
+	/**
+	 * Default auditor threshold in the administration's base currency (EUR).
+	 *
+	 * REQ-SUBV-006 / design D3 — grants at or above this awarded amount require
+	 * an auditor statement. Operators override via the `auditor_threshold` app
+	 * config key.
+	 */
+	public const DEFAULT_AUDIT_THRESHOLD = 25000.0;
 
-    /**
-     * Construct the service.
-     *
-     * @param IAppConfig $appConfig App config for the auditor threshold.
-     */
-    public function __construct(
-        private readonly IAppConfig $appConfig,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the service.
+	 *
+	 * @param IAppConfig $appConfig App config for the auditor threshold.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+	) {
+	}//end __construct()
 
-    /**
-     * Build the draft SubsidieVerantwoording payload for a grant award/disbursement.
-     *
-     * REQ-SUBV-009 / REQ-SUBV-002: reportDate is the supplied reference date
-     * (today by default), reportingPeriod spans from the grant award date to the
-     * report date, and status starts at `draft`. awardedAmount is copied onto the
-     * verantwoording so the approval guard (REQ-SUBV-003) and the auditor-trigger
-     * (REQ-SUBV-006) can evaluate the threshold without a cross-schema join.
-     *
-     * Pure: no I/O. Returns the payload; the caller persists it via persistChange().
-     *
-     * @param array<string,mixed> $grant      The Subsidie grant object.
-     * @param string|null         $reportDate The report reference date (Y-m-d); today when null.
-     *
-     * @return array<string,mixed> The draft SubsidieVerantwoording payload.
-     *
-     * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
-     */
-    public function buildVerantwoordingForGrant(array $grant, ?string $reportDate=null): array
-    {
-        $report = $reportDate;
-        if ($report === null || $report === '') {
-            $report = (new DateTimeImmutable())->format('Y-m-d');
-        }
+	/**
+	 * Build the draft SubsidieVerantwoording payload for a grant award/disbursement.
+	 *
+	 * REQ-SUBV-009 / REQ-SUBV-002: reportDate is the supplied reference date
+	 * (today by default), reportingPeriod spans from the grant award date to the
+	 * report date, and status starts at `draft`. awardedAmount is copied onto the
+	 * verantwoording so the approval guard (REQ-SUBV-003) and the auditor-trigger
+	 * (REQ-SUBV-006) can evaluate the threshold without a cross-schema join.
+	 *
+	 * Pure: no I/O. Returns the payload; the caller persists it via persistChange().
+	 *
+	 * @param array<string,mixed> $grant The Subsidie grant object.
+	 * @param string|null $reportDate The report reference date (Y-m-d); today when null.
+	 *
+	 * @return array<string,mixed> The draft SubsidieVerantwoording payload.
+	 *
+	 * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+	 */
+	public function buildVerantwoordingForGrant(array $grant, ?string $reportDate = null): array {
+		$report = $reportDate;
+		if ($report === null || $report === '') {
+			$report = (new DateTimeImmutable())->format('Y-m-d');
+		}
 
-        $grantId          = (string) ($grant['subsidieNumber'] ?? $grant['grantId'] ?? '');
-        $awardDate        = (string) ($grant['awardDate'] ?? '');
-        $administrationId = (string) ($grant['administrationId'] ?? '');
-        $awardedAmount    = (float) ($grant['awardAmount'] ?? $grant['awardedAmount'] ?? 0.0);
+		$grantId = (string)($grant['subsidieNumber'] ?? $grant['grantId'] ?? '');
+		$awardDate = (string)($grant['awardDate'] ?? '');
+		$administrationId = (string)($grant['administrationId'] ?? '');
+		$awardedAmount = (float)($grant['awardAmount'] ?? $grant['awardedAmount'] ?? 0.0);
 
-        return [
-            'verantwoordingId' => 'SV-'.$grantId,
-            'grantId'          => $grantId,
-            'reportDate'       => $report,
-            'reportingPeriod'  => $this->calculateReportingPeriod(awardDate: $awardDate, reportDate: $report),
-            'status'           => 'draft',
-            'awardedAmount'    => $awardedAmount,
-            'administrationId' => $administrationId,
-        ];
-    }//end buildVerantwoordingForGrant()
+		return [
+			'verantwoordingId' => 'SV-' . $grantId,
+			'grantId' => $grantId,
+			'reportDate' => $report,
+			'reportingPeriod' => $this->calculateReportingPeriod(awardDate: $awardDate, reportDate: $report),
+			'status' => 'draft',
+			'awardedAmount' => $awardedAmount,
+			'administrationId' => $administrationId,
+		];
+	}//end buildVerantwoordingForGrant()
 
-    /**
-     * Build the pending AuditorStatement payload when a verantwoording crosses the threshold.
-     *
-     * REQ-SUBV-006: returns null (no auditor statement required) when the grant's
-     * awarded amount is below the auditor threshold; otherwise returns the pending
-     * AuditorStatement payload with auditThresholdApplied true.
-     *
-     * Pure: no I/O. Returns the payload or null; the caller persists it via persistChange().
-     *
-     * @param array<string,mixed> $verantwoording The SubsidieVerantwoording object.
-     * @param string              $auditorUserId  The auditor user assigned (may be a placeholder).
-     * @param string|null         $auditDate      The audit reference date (Y-m-d); today when null.
-     *
-     * @return array<string,mixed>|null The pending AuditorStatement payload, or null when below threshold.
-     *
-     * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
-     */
-    public function buildAuditorStatementForVerantwoording(
-        array $verantwoording,
-        string $auditorUserId,
-        ?string $auditDate=null
-    ): ?array {
-        $awardedAmount = (float) ($verantwoording['awardedAmount'] ?? 0.0);
-        if ($this->requiresAuditorStatement(awardedAmount: $awardedAmount) === false) {
-            return null;
-        }
+	/**
+	 * Build the pending AuditorStatement payload when a verantwoording crosses the threshold.
+	 *
+	 * REQ-SUBV-006: returns null (no auditor statement required) when the grant's
+	 * awarded amount is below the auditor threshold; otherwise returns the pending
+	 * AuditorStatement payload with auditThresholdApplied true.
+	 *
+	 * Pure: no I/O. Returns the payload or null; the caller persists it via persistChange().
+	 *
+	 * @param array<string,mixed> $verantwoording The SubsidieVerantwoording object.
+	 * @param string $auditorUserId The auditor user assigned (may be a placeholder).
+	 * @param string|null $auditDate The audit reference date (Y-m-d); today when null.
+	 *
+	 * @return array<string,mixed>|null The pending AuditorStatement payload, or null when below threshold.
+	 *
+	 * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+	 */
+	public function buildAuditorStatementForVerantwoording(
+		array $verantwoording,
+		string $auditorUserId,
+		?string $auditDate = null,
+	): ?array {
+		$awardedAmount = (float)($verantwoording['awardedAmount'] ?? 0.0);
+		if ($this->requiresAuditorStatement(awardedAmount: $awardedAmount) === false) {
+			return null;
+		}
 
-        $audit = $auditDate;
-        if ($audit === null || $audit === '') {
-            $audit = (new DateTimeImmutable())->format('Y-m-d');
-        }
+		$audit = $auditDate;
+		if ($audit === null || $audit === '') {
+			$audit = (new DateTimeImmutable())->format('Y-m-d');
+		}
 
-        $grantId = (string) ($verantwoording['grantId'] ?? '');
+		$grantId = (string)($verantwoording['grantId'] ?? '');
 
-        return [
-            'statementId'           => 'AS-'.$grantId,
-            'grantId'               => $grantId,
-            'auditThresholdApplied' => true,
-            'auditDate'             => $audit,
-            'auditorUserId'         => $auditorUserId,
-            'status'                => 'pending',
-            'findings'              => [],
-            'administrationId'      => (string) ($verantwoording['administrationId'] ?? ''),
-        ];
-    }//end buildAuditorStatementForVerantwoording()
+		return [
+			'statementId' => 'AS-' . $grantId,
+			'grantId' => $grantId,
+			'auditThresholdApplied' => true,
+			'auditDate' => $audit,
+			'auditorUserId' => $auditorUserId,
+			'status' => 'pending',
+			'findings' => [],
+			'administrationId' => (string)($verantwoording['administrationId'] ?? ''),
+		];
+	}//end buildAuditorStatementForVerantwoording()
 
-    /**
-     * Determine whether a grant's awarded amount requires an auditor statement.
-     *
-     * @param float $awardedAmount The grant's awarded amount.
-     *
-     * @return bool True when the amount is at or above the auditor threshold.
-     *
-     * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
-     */
-    public function requiresAuditorStatement(float $awardedAmount): bool
-    {
-        return $awardedAmount >= $this->resolveThreshold();
-    }//end requiresAuditorStatement()
+	/**
+	 * Determine whether a grant's awarded amount requires an auditor statement.
+	 *
+	 * @param float $awardedAmount The grant's awarded amount.
+	 *
+	 * @return bool True when the amount is at or above the auditor threshold.
+	 *
+	 * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+	 */
+	public function requiresAuditorStatement(float $awardedAmount): bool {
+		return $awardedAmount >= $this->resolveThreshold();
+	}//end requiresAuditorStatement()
 
-    /**
-     * Persist a generated record idempotently via the real ObjectService API (ADR-022).
-     *
-     * Deduplication is by the supplied unique business key (verantwoordingId or
-     * statementId): if a record already exists it is skipped so re-running the
-     * lifecycle action is safe and never produces duplicates.
-     *
-     * @param object              $objectService The OpenRegister ObjectService.
-     * @param string              $register      The register slug.
-     * @param string              $schema        The schema slug.
-     * @param string              $dedupeField   The unique business-key field name.
-     * @param array<string,mixed> $payload       The record payload to persist.
-     *
-     * @return bool True when a new record was created, false when skipped as duplicate.
-     *
-     * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
-     */
-    public function persistChange(
-        object $objectService,
-        string $register,
-        string $schema,
-        string $dedupeField,
-        array $payload
-    ): bool {
-        $dedupeValue = (string) ($payload[$dedupeField] ?? '');
-        if ($dedupeValue !== '') {
-            $existing = $objectService
-                ->setRegister($register)
-                ->setSchema($schema)
-                ->findAll(
-                    [
-                        'filters' => [$dedupeField => $dedupeValue],
-                        'limit'   => 1,
-                    ]
-                );
+	/**
+	 * Persist a generated record idempotently via the real ObjectService API (ADR-022).
+	 *
+	 * Deduplication is by the supplied unique business key (verantwoordingId or
+	 * statementId): if a record already exists it is skipped so re-running the
+	 * lifecycle action is safe and never produces duplicates.
+	 *
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param string $register The register slug.
+	 * @param string $schema The schema slug.
+	 * @param string $dedupeField The unique business-key field name.
+	 * @param array<string,mixed> $payload The record payload to persist.
+	 *
+	 * @return bool True when a new record was created, false when skipped as duplicate.
+	 *
+	 * @spec openspec/changes/bookkeeping-subsidie-verantwoording/specs.md
+	 */
+	public function persistChange(
+		object $objectService,
+		string $register,
+		string $schema,
+		string $dedupeField,
+		array $payload,
+	): bool {
+		$dedupeValue = (string)($payload[$dedupeField] ?? '');
+		if ($dedupeValue !== '') {
+			$existing = $objectService
+				->setRegister($register)
+				->setSchema($schema)
+				->findAll(
+					[
+						'filters' => [$dedupeField => $dedupeValue],
+						'limit' => 1,
+					]
+				);
 
-            if (empty($existing) === false) {
-                return false;
-            }
-        }
+			if (empty($existing) === false) {
+				return false;
+			}
+		}
 
-        $objectService->saveObject(
-            object: $payload,
-            register: $register,
-            schema: $schema,
-        );
+		$objectService->saveObject(
+			object: $payload,
+			register: $register,
+			schema: $schema,
+		);
 
-        return true;
-    }//end persistChange()
+		return true;
+	}//end persistChange()
 
-    /**
-     * Compute the reporting period string from a grant award date to the report date.
-     *
-     * Returns "<awardDate> to <reportDate>" when the award date is present and
-     * parseable, otherwise falls back to "<reportDate> to <reportDate>".
-     *
-     * @param string $awardDate  The grant award date (Y-m-d), may be empty.
-     * @param string $reportDate The report date (Y-m-d).
-     *
-     * @return string The reporting period.
-     */
-    private function calculateReportingPeriod(string $awardDate, string $reportDate): string
-    {
-        if ($awardDate === '') {
-            return $reportDate.' to '.$reportDate;
-        }
+	/**
+	 * Compute the reporting period string from a grant award date to the report date.
+	 *
+	 * Returns "<awardDate> to <reportDate>" when the award date is present and
+	 * parseable, otherwise falls back to "<reportDate> to <reportDate>".
+	 *
+	 * @param string $awardDate The grant award date (Y-m-d), may be empty.
+	 * @param string $reportDate The report date (Y-m-d).
+	 *
+	 * @return string The reporting period.
+	 */
+	private function calculateReportingPeriod(string $awardDate, string $reportDate): string {
+		if ($awardDate === '') {
+			return $reportDate . ' to ' . $reportDate;
+		}
 
-        try {
-            $start = (new DateTimeImmutable($awardDate))->format('Y-m-d');
-        } catch (Throwable) {
-            $start = $reportDate;
-        }
+		try {
+			$start = (new DateTimeImmutable($awardDate))->format('Y-m-d');
+		} catch (Throwable) {
+			$start = $reportDate;
+		}
 
-        return $start.' to '.$reportDate;
-    }//end calculateReportingPeriod()
+		return $start . ' to ' . $reportDate;
+	}//end calculateReportingPeriod()
 
-    /**
-     * Resolve the configured auditor threshold, defaulting to EUR 25,000.
-     *
-     * @return float The auditor threshold in the base currency.
-     */
-    private function resolveThreshold(): float
-    {
-        $raw = $this->appConfig->getValueString(Application::APP_ID, 'auditor_threshold', '');
-        if ($raw === '' || is_numeric($raw) === false) {
-            return self::DEFAULT_AUDIT_THRESHOLD;
-        }
+	/**
+	 * Resolve the configured auditor threshold, defaulting to EUR 25,000.
+	 *
+	 * @return float The auditor threshold in the base currency.
+	 */
+	private function resolveThreshold(): float {
+		$raw = $this->appConfig->getValueString(Application::APP_ID, 'auditor_threshold', '');
+		if ($raw === '' || is_numeric($raw) === false) {
+			return self::DEFAULT_AUDIT_THRESHOLD;
+		}
 
-        return (float) $raw;
-    }//end resolveThreshold()
+		return (float)$raw;
+	}//end resolveThreshold()
 }//end class

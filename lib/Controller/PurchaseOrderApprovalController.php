@@ -57,148 +57,141 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
  */
-class PurchaseOrderApprovalController extends Controller
-{
+class PurchaseOrderApprovalController extends Controller {
 
-    /**
-     * Short-slug identifier pattern shared by every scope/path parameter.
-     *
-     * @var string
-     */
-    private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
+	/**
+	 * Short-slug identifier pattern shared by every scope/path parameter.
+	 *
+	 * @var string
+	 */
+	private const ID_PATTERN = '/^[A-Za-z0-9_.\\-]{1,64}$/';
 
-    /**
-     * Constructor.
-     *
-     * @param IRequest                     $request               The request object.
-     * @param PurchaseOrderApprovalService $approvalService       The approval service.
-     * @param AdministrationContextService $administrationContext IDOR + tenant scope.
-     * @param IUserSession                 $userSession           User-session guard.
-     * @param LoggerInterface              $logger                Logger (no stack traces to
-     *                                                            client).
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly PurchaseOrderApprovalService $approvalService,
-        private readonly AdministrationContextService $administrationContext,
-        private readonly IUserSession $userSession,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+	/**
+	 * Constructor.
+	 *
+	 * @param IRequest $request The request object.
+	 * @param PurchaseOrderApprovalService $approvalService The approval service.
+	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param IUserSession $userSession User-session guard.
+	 * @param LoggerInterface $logger Logger (no stack traces to
+	 *                                client).
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly PurchaseOrderApprovalService $approvalService,
+		private readonly AdministrationContextService $administrationContext,
+		private readonly IUserSession $userSession,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Record the authenticated user's decision on a PurchaseOrder's
-     * approval chain.
-     *
-     * POST /api/purchase-orders/{id}/approval-decision
-     * Body: administrationId, decision, comment (optional).
-     *
-     * @param string $id The PurchaseOrder id (URL path param).
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
-     */
-    #[NoAdminRequired]
-    public function decide(string $id): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Record the authenticated user's decision on a PurchaseOrder's
+	 * approval chain.
+	 *
+	 * POST /api/purchase-orders/{id}/approval-decision
+	 * Body: administrationId, decision, comment (optional).
+	 *
+	 * @param string $id The PurchaseOrder id (URL path param).
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
+	 */
+	#[NoAdminRequired]
+	public function decide(string $id): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        $administrationId = $this->scopeParam(name: 'administrationId');
-        if ($administrationId === '') {
-            return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$administrationId = $this->scopeParam(name: 'administrationId');
+		if ($administrationId === '') {
+			return new JSONResponse(['error' => 'administrationId is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Purchase order not found'], Http::STATUS_NOT_FOUND);
-        }
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Purchase order not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        $purchaseOrderId = trim((string) $id);
-        if ($purchaseOrderId === '' || preg_match(self::ID_PATTERN, $purchaseOrderId) !== 1) {
-            return new JSONResponse(['error' => 'Purchase order id is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$purchaseOrderId = trim((string)$id);
+		if ($purchaseOrderId === '' || preg_match(self::ID_PATTERN, $purchaseOrderId) !== 1) {
+			return new JSONResponse(['error' => 'Purchase order id is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $decision = trim((string) $this->request->getParam('decision', ''));
-        if ($decision === '') {
-            return new JSONResponse(['error' => 'decision is required'], Http::STATUS_BAD_REQUEST);
-        }
+		$decision = trim((string)$this->request->getParam('decision', ''));
+		if ($decision === '') {
+			return new JSONResponse(['error' => 'decision is required'], Http::STATUS_BAD_REQUEST);
+		}
 
-        $commentParam = $this->request->getParam('comment', null);
-        $comment      = null;
-        if (is_string($commentParam) === true) {
-            $comment = $commentParam;
-        }
+		$commentParam = $this->request->getParam('comment', null);
+		$comment = null;
+		if (is_string($commentParam) === true) {
+			$comment = $commentParam;
+		}
 
-        try {
-            $purchaseOrder = $this->approvalService->recordApprovalDecision(
-                administrationId: $administrationId,
-                purchaseOrderId:  $purchaseOrderId,
-                decision:         $decision,
-                comment:          $comment
-            );
-        } catch (\RuntimeException $e) {
-            return $this->mapRuntimeException(exception: $e);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'PurchaseOrderApprovalController: failed to record approval decision',
-                [
-                    'administrationId' => $administrationId,
-                    'purchaseOrderId'  => $purchaseOrderId,
-                    'exception'        => $e->getMessage(),
-                ]
-            );
-            return new JSONResponse(['error' => 'Could not record approval decision'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }
+		try {
+			$purchaseOrder = $this->approvalService->recordApprovalDecision(
+				administrationId: $administrationId,
+				purchaseOrderId:  $purchaseOrderId,
+				decision:         $decision,
+				comment:          $comment
+			);
+		} catch (\RuntimeException $e) {
+			return $this->mapRuntimeException(exception: $e);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'PurchaseOrderApprovalController: failed to record approval decision',
+				[
+					'administrationId' => $administrationId,
+					'purchaseOrderId' => $purchaseOrderId,
+					'exception' => $e->getMessage(),
+				]
+			);
+			return new JSONResponse(['error' => 'Could not record approval decision'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
-        return new JSONResponse($purchaseOrder, Http::STATUS_OK);
+		return new JSONResponse($purchaseOrder, Http::STATUS_OK);
+	}//end decide()
 
-    }//end decide()
+	/**
+	 * Read + validate a scope parameter; '' when blank/malformed.
+	 *
+	 * @param string $name Parameter name.
+	 *
+	 * @return string
+	 */
+	private function scopeParam(string $name): string {
+		$value = trim((string)$this->request->getParam($name, ''));
+		if ($value === '' || preg_match(self::ID_PATTERN, $value) !== 1) {
+			return '';
+		}
 
-    /**
-     * Read + validate a scope parameter; '' when blank/malformed.
-     *
-     * @param string $name Parameter name.
-     *
-     * @return string
-     */
-    private function scopeParam(string $name): string
-    {
-        $value = trim((string) $this->request->getParam($name, ''));
-        if ($value === '' || preg_match(self::ID_PATTERN, $value) !== 1) {
-            return '';
-        }
+		return $value;
+	}//end scopeParam()
 
-        return $value;
+	/**
+	 * Map a service-level RuntimeException to a JSONResponse.
+	 *
+	 * @param \RuntimeException $exception The exception.
+	 *
+	 * @return JSONResponse
+	 */
+	private function mapRuntimeException(\RuntimeException $exception): JSONResponse {
+		$message = $exception->getMessage();
+		if (str_contains($message, 'not found') === true) {
+			return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
+		}
 
-    }//end scopeParam()
+		if (str_contains($message, 'not pending') === true
+			|| str_contains($message, 'fully signed') === true
+		) {
+			return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
+		}
 
-    /**
-     * Map a service-level RuntimeException to a JSONResponse.
-     *
-     * @param \RuntimeException $exception The exception.
-     *
-     * @return JSONResponse
-     */
-    private function mapRuntimeException(\RuntimeException $exception): JSONResponse
-    {
-        $message = $exception->getMessage();
-        if (str_contains($message, 'not found') === true) {
-            return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
-        }
-
-        if (str_contains($message, 'not pending') === true
-            || str_contains($message, 'fully signed') === true
-        ) {
-            return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
-        }
-
-        return new JSONResponse(['error' => $message], Http::STATUS_BAD_REQUEST);
-
-    }//end mapRuntimeException()
+		return new JSONResponse(['error' => $message], Http::STATUS_BAD_REQUEST);
+	}//end mapRuntimeException()
 }//end class

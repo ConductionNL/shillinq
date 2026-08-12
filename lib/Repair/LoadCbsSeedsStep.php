@@ -53,177 +53,171 @@ use Psr\Log\LoggerInterface;
  *     #506): inherent branch complexity in this domain logic; deferred
  *     pending a dedicated refactor.
  */
-class LoadCbsSeedsStep implements IRepairStep
-{
+class LoadCbsSeedsStep implements IRepairStep {
 
-    /**
-     * Absolute path to the canonical seed JSON (the register fragment).
-     *
-     * @var string
-     */
-    private string $seedPath;
+	/**
+	 * Absolute path to the canonical seed JSON (the register fragment).
+	 *
+	 * @var string
+	 */
+	private string $seedPath;
 
-    /**
-     * Construct the repair step.
-     *
-     * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig         $appConfig App config for the register slug lookup.
-     * @param LoggerInterface    $logger    Logger for diagnostics.
-     *
-     * @return void
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-        $this->seedPath = __DIR__.'/../Settings/register.d/bookkeeping-cbs-bestanden-extended.json';
+	/**
+	 * Construct the repair step.
+	 *
+	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
+	 * @param IAppConfig $appConfig App config for the register slug lookup.
+	 * @param LoggerInterface $logger Logger for diagnostics.
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+		$this->seedPath = __DIR__ . '/../Settings/register.d/bookkeeping-cbs-bestanden-extended.json';
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Human-readable name of this repair step.
-     *
-     * @return string
-     */
-    public function getName(): string
-    {
-        return 'Seed CBS Submissions example records (bookkeeping-cbs-bestanden-extended)';
+	/**
+	 * Human-readable name of this repair step.
+	 *
+	 * @return string
+	 */
+	public function getName(): string {
+		return 'Seed CBS Submissions example records (bookkeeping-cbs-bestanden-extended)';
+	}//end getName()
 
-    }//end getName()
+	/**
+	 * Run the repair step.
+	 *
+	 * Reads the canonical fragment, walks the `objects[]` array, and for each
+	 * CBSSubmission / CBSLine object checks whether an object with the same
+	 * `@self.slug` already exists in OpenRegister; if not, saves it via the
+	 * real OR ObjectService API (`saveObject` named-arg form per the OR-API
+	 * memory). Non-fatal on any failure.
+	 *
+	 * @param IOutput $output Progress output interface.
+	 *
+	 * @return void
+	 */
+	public function run(IOutput $output): void {
+		$output->info('Seeding CBSSubmission + CBSLine example records...');
 
-    /**
-     * Run the repair step.
-     *
-     * Reads the canonical fragment, walks the `objects[]` array, and for each
-     * CBSSubmission / CBSLine object checks whether an object with the same
-     * `@self.slug` already exists in OpenRegister; if not, saves it via the
-     * real OR ObjectService API (`saveObject` named-arg form per the OR-API
-     * memory). Non-fatal on any failure.
-     *
-     * @param IOutput $output Progress output interface.
-     *
-     * @return void
-     */
-    public function run(IOutput $output): void
-    {
-        $output->info('Seeding CBSSubmission + CBSLine example records...');
+		if (file_exists($this->seedPath) === false) {
+			$output->warning('CBS seed fragment not found at ' . $this->seedPath . ', skipping');
+			return;
+		}
 
-        if (file_exists($this->seedPath) === false) {
-            $output->warning('CBS seed fragment not found at '.$this->seedPath.', skipping');
-            return;
-        }
+		$content = file_get_contents($this->seedPath);
+		if ($content === false) {
+			$output->warning('Failed to read CBS seed fragment, skipping');
+			return;
+		}
 
-        $content = file_get_contents($this->seedPath);
-        if ($content === false) {
-            $output->warning('Failed to read CBS seed fragment, skipping');
-            return;
-        }
+		$data = json_decode($content, true);
+		if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
+			$output->warning('Failed to parse CBS seed fragment: ' . json_last_error_msg());
+			return;
+		}
 
-        $data = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE || is_array($data) === false) {
-            $output->warning('Failed to parse CBS seed fragment: '.json_last_error_msg());
-            return;
-        }
+		$objects = ($data['objects'] ?? []);
+		if (is_array($objects) === false || $objects === []) {
+			$output->info('CBS seed fragment carries no objects; nothing to seed');
+			return;
+		}
 
-        $objects = ($data['objects'] ?? []);
-        if (is_array($objects) === false || $objects === []) {
-            $output->info('CBS seed fragment carries no objects; nothing to seed');
-            return;
-        }
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (\Throwable $e) {
+			$output->warning('OpenRegister ObjectService unavailable; skipping CBS seed: ' . $e->getMessage());
+			return;
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        } catch (\Throwable $e) {
-            $output->warning('OpenRegister ObjectService unavailable; skipping CBS seed: '.$e->getMessage());
-            return;
-        }
+		$registerSlug = $this->register();
+		$seeded = 0;
+		$skipped = 0;
 
-        $registerSlug = $this->register();
-        $seeded       = 0;
-        $skipped      = 0;
+		foreach ($objects as $object) {
+			if (is_array($object) === false) {
+				continue;
+			}
 
-        foreach ($objects as $object) {
-            if (is_array($object) === false) {
-                continue;
-            }
+			$self = (array)($object['@self'] ?? []);
+			$schema = (string)($self['schema'] ?? '');
+			$slug = (string)($self['slug'] ?? '');
+			if ($schema === '' || $slug === '') {
+				continue;
+			}
 
-            $self   = (array) ($object['@self'] ?? []);
-            $schema = (string) ($self['schema'] ?? '');
-            $slug   = (string) ($self['slug'] ?? '');
-            if ($schema === '' || $slug === '') {
-                continue;
-            }
+			if (in_array($schema, ['CBSSubmission', 'CBSLine'], true) === false) {
+				continue;
+			}
 
-            if (in_array($schema, ['CBSSubmission', 'CBSLine'], true) === false) {
-                continue;
-            }
+			try {
+				$existing = $objectService
+					->setRegister($registerSlug)
+					->setSchema($schema)
+					->findAll(
+						[
+							'filters' => ['slug' => $slug],
+							'limit' => 1,
+						]
+					);
 
-            try {
-                $existing = $objectService
-                    ->setRegister($registerSlug)
-                    ->setSchema($schema)
-                    ->findAll(
-                        [
-                            'filters' => ['slug' => $slug],
-                            'limit'   => 1,
-                        ]
-                    );
+				if (empty($existing) === false) {
+					$skipped++;
+					continue;
+				}
 
-                if (empty($existing) === false) {
-                    $skipped++;
-                    continue;
-                }
+				// Drop the @self envelope before persisting — the OR backend
+				// honours register + schema named args, not the inline block.
+				$payload = $object;
+				unset($payload['@self']);
+				$payload['slug'] = $slug;
 
-                // Drop the @self envelope before persisting — the OR backend
-                // honours register + schema named args, not the inline block.
-                $payload = $object;
-                unset($payload['@self']);
-                $payload['slug'] = $slug;
+				// Runs in the installer/repair context where no web user is
+				// authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
+				// seed persists instead of throwing "User 'Anonymous' does not have
+				// permission to 'create'" — mirrors the OR ImportHandler fix.
+				$objectService->saveObject(
+					object: $payload,
+					register: $registerSlug,
+					schema: $schema,
+					_rbac: false,
+					_multitenancy: false,
+				);
+				$seeded++;
+			} catch (\Throwable $e) {
+				$this->logger->warning(
+					'CBS seed: failed to save record',
+					['schema' => $schema, 'slug' => $slug, 'exception' => $e->getMessage()]
+				);
+			}//end try
+		}//end foreach
 
-                // Runs in the installer/repair context where no web user is
-                // authenticated ('Anonymous'). Bypass RBAC + multi-tenancy so the
-                // seed persists instead of throwing "User 'Anonymous' does not have
-                // permission to 'create'" — mirrors the OR ImportHandler fix.
-                $objectService->saveObject(
-                    object: $payload,
-                    register: $registerSlug,
-                    schema: $schema,
-                    _rbac: false,
-                    _multitenancy: false,
-                );
-                $seeded++;
-            } catch (\Throwable $e) {
-                $this->logger->warning(
-                    'CBS seed: failed to save record',
-                    ['schema' => $schema, 'slug' => $slug, 'exception' => $e->getMessage()]
-                );
-            }//end try
-        }//end foreach
+		$output->info(
+			sprintf(
+				'CBS seed: %d created, %d skipped (already exist).',
+				$seeded,
+				$skipped,
+			)
+		);
 
-        $output->info(
-            sprintf(
-                'CBS seed: %d created, %d skipped (already exist).',
-                $seeded,
-                $skipped,
-            )
-        );
+	}//end run()
 
-    }//end run()
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

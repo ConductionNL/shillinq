@@ -41,334 +41,319 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class IntercompanyToleranceGuardTest extends TestCase
-{
+final class IntercompanyToleranceGuardTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var IntercompanyToleranceGuard
-     */
-    private IntercompanyToleranceGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var IntercompanyToleranceGuard
+	 */
+	private IntercompanyToleranceGuard $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->guard = new IntercompanyToleranceGuard(
-            $this->container,
-            $this->appConfig,
-            $this->logger
-        );
+		$this->guard = new IntercompanyToleranceGuard(
+			$this->container,
+			$this->appConfig,
+			$this->logger
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * A near-zero mismatch is always within tolerance without any rule lookup.
-     *
-     * @return void
-     */
-    public function testPerfectMatchAlwaysWithin(): void
-    {
-        $match = [
-            'matchId'        => 'm1',
-            'matchStatus'    => 'perfect-match',
-            'mismatchAmount' => 0.0,
-        ];
-        self::assertTrue($this->guard->isWithinTolerance($match));
+	/**
+	 * A near-zero mismatch is always within tolerance without any rule lookup.
+	 *
+	 * @return void
+	 */
+	public function testPerfectMatchAlwaysWithin(): void {
+		$match = [
+			'matchId' => 'm1',
+			'matchStatus' => 'perfect-match',
+			'mismatchAmount' => 0.0,
+		];
+		self::assertTrue($this->guard->isWithinTolerance($match));
 
-    }//end testPerfectMatchAlwaysWithin()
+	}//end testPerfectMatchAlwaysWithin()
 
-    /**
-     * One-sided matches are never within tolerance (await counterparty booking).
-     *
-     * @return void
-     */
-    public function testOneSidedNeverWithin(): void
-    {
-        self::assertFalse(
-            $this->guard->isWithinTolerance(['matchId' => 'm2', 'matchStatus' => 'one-sided-A', 'mismatchAmount' => 5.0])
-        );
-        self::assertFalse(
-            $this->guard->isWithinTolerance(['matchId' => 'm3', 'matchStatus' => 'one-sided-B', 'mismatchAmount' => 5.0])
-        );
+	/**
+	 * One-sided matches are never within tolerance (await counterparty booking).
+	 *
+	 * @return void
+	 */
+	public function testOneSidedNeverWithin(): void {
+		self::assertFalse(
+			$this->guard->isWithinTolerance(['matchId' => 'm2', 'matchStatus' => 'one-sided-A', 'mismatchAmount' => 5.0])
+		);
+		self::assertFalse(
+			$this->guard->isWithinTolerance(['matchId' => 'm3', 'matchStatus' => 'one-sided-B', 'mismatchAmount' => 5.0])
+		);
 
-    }//end testOneSidedNeverWithin()
+	}//end testOneSidedNeverWithin()
 
-    /**
-     * A small mismatch within the configured rule's relative threshold passes.
-     *
-     * @return void
-     */
-    public function testWithinConfiguredRule(): void
-    {
-        $this->container->method('get')->willReturn(
-            $this->buildObjectServiceStub(
-                relations: [['relationId' => 'rel1', 'relationType' => 'sales-of-services']],
-                rules: [
-                    [
-                        'relationTypeFilter' => 'sales-of-services',
-                        'toleranceAbsolute'  => 10.0,
-                        'toleranceRelative'  => 0.5,
-                        'toleranceMethod'    => 'max-of-absolute-relative',
-                    ],
-                ]
-            )
-        );
+	/**
+	 * A small mismatch within the configured rule's relative threshold passes.
+	 *
+	 * @return void
+	 */
+	public function testWithinConfiguredRule(): void {
+		$this->container->method('get')->willReturn(
+			$this->buildObjectServiceStub(
+				relations: [['relationId' => 'rel1', 'relationType' => 'sales-of-services']],
+				rules: [
+					[
+						'relationTypeFilter' => 'sales-of-services',
+						'toleranceAbsolute' => 10.0,
+						'toleranceRelative' => 0.5,
+						'toleranceMethod' => 'max-of-absolute-relative',
+					],
+				]
+			)
+		);
 
-        $match = [
-            'matchId'            => 'm4',
-            'matchStatus'        => 'outside-tolerance',
-            'relationId'         => 'rel1',
-            'administrationId'   => 'adm1',
-            'mismatchAmount'     => 7.0,
-            'mismatchPercentage' => 0.007,
-            'totalAmountA'       => 100000.0,
-            'totalAmountB'       => 99993.0,
-        ];
-        self::assertTrue($this->guard->isWithinTolerance($match));
+		$match = [
+			'matchId' => 'm4',
+			'matchStatus' => 'outside-tolerance',
+			'relationId' => 'rel1',
+			'administrationId' => 'adm1',
+			'mismatchAmount' => 7.0,
+			'mismatchPercentage' => 0.007,
+			'totalAmountA' => 100000.0,
+			'totalAmountB' => 99993.0,
+		];
+		self::assertTrue($this->guard->isWithinTolerance($match));
 
-    }//end testWithinConfiguredRule()
+	}//end testWithinConfiguredRule()
 
-    /**
-     * A mismatch beyond both thresholds of the configured rule is rejected.
-     *
-     * @return void
-     */
-    public function testOutsideConfiguredRule(): void
-    {
-        $this->container->method('get')->willReturn(
-            $this->buildObjectServiceStub(
-                relations: [['relationId' => 'rel1', 'relationType' => 'sales-of-services']],
-                rules: [
-                    [
-                        'relationTypeFilter' => 'sales-of-services',
-                        'toleranceAbsolute'  => 10.0,
-                        'toleranceRelative'  => 0.5,
-                        'toleranceMethod'    => 'max-of-absolute-relative',
-                    ],
-                ]
-            )
-        );
+	/**
+	 * A mismatch beyond both thresholds of the configured rule is rejected.
+	 *
+	 * @return void
+	 */
+	public function testOutsideConfiguredRule(): void {
+		$this->container->method('get')->willReturn(
+			$this->buildObjectServiceStub(
+				relations: [['relationId' => 'rel1', 'relationType' => 'sales-of-services']],
+				rules: [
+					[
+						'relationTypeFilter' => 'sales-of-services',
+						'toleranceAbsolute' => 10.0,
+						'toleranceRelative' => 0.5,
+						'toleranceMethod' => 'max-of-absolute-relative',
+					],
+				]
+			)
+		);
 
-        $match = [
-            'matchId'            => 'm5',
-            'matchStatus'        => 'outside-tolerance',
-            'relationId'         => 'rel1',
-            'administrationId'   => 'adm1',
-            'mismatchAmount'     => 25000.0,
-            'mismatchPercentage' => 25.0,
-            'totalAmountA'       => 100000.0,
-            'totalAmountB'       => 75000.0,
-        ];
-        self::assertFalse($this->guard->isWithinTolerance($match));
+		$match = [
+			'matchId' => 'm5',
+			'matchStatus' => 'outside-tolerance',
+			'relationId' => 'rel1',
+			'administrationId' => 'adm1',
+			'mismatchAmount' => 25000.0,
+			'mismatchPercentage' => 25.0,
+			'totalAmountA' => 100000.0,
+			'totalAmountB' => 75000.0,
+		];
+		self::assertFalse($this->guard->isWithinTolerance($match));
 
-    }//end testOutsideConfiguredRule()
+	}//end testOutsideConfiguredRule()
 
-    /**
-     * The min-of-absolute-relative method requires both thresholds, so a
-     * passing-absolute but failing-relative mismatch is rejected.
-     *
-     * @return void
-     */
-    public function testMinOfMethodStricter(): void
-    {
-        $this->container->method('get')->willReturn(
-            $this->buildObjectServiceStub(
-                relations: [['relationId' => 'rel1', 'relationType' => 'dividend']],
-                rules: [
-                    [
-                        'relationTypeFilter' => 'dividend',
-                        'toleranceAbsolute'  => 5000.0,
-                        'toleranceRelative'  => 0.01,
-                        'toleranceMethod'    => 'min-of-absolute-relative',
-                    ],
-                ]
-            )
-        );
+	/**
+	 * The min-of-absolute-relative method requires both thresholds, so a
+	 * passing-absolute but failing-relative mismatch is rejected.
+	 *
+	 * @return void
+	 */
+	public function testMinOfMethodStricter(): void {
+		$this->container->method('get')->willReturn(
+			$this->buildObjectServiceStub(
+				relations: [['relationId' => 'rel1', 'relationType' => 'dividend']],
+				rules: [
+					[
+						'relationTypeFilter' => 'dividend',
+						'toleranceAbsolute' => 5000.0,
+						'toleranceRelative' => 0.01,
+						'toleranceMethod' => 'min-of-absolute-relative',
+					],
+				]
+			)
+		);
 
-        $match = [
-            'matchId'            => 'm6',
-            'matchStatus'        => 'outside-tolerance',
-            'relationId'         => 'rel1',
-            'administrationId'   => 'adm1',
-            'mismatchAmount'     => 100.0,
-            'mismatchPercentage' => 1.0,
-            'totalAmountA'       => 10000.0,
-            'totalAmountB'       => 9900.0,
-        ];
-        // Absolute passes (100 <= 5000) but relative fails (1% > 0.01%) -> reject.
-        self::assertFalse($this->guard->isWithinTolerance($match));
+		$match = [
+			'matchId' => 'm6',
+			'matchStatus' => 'outside-tolerance',
+			'relationId' => 'rel1',
+			'administrationId' => 'adm1',
+			'mismatchAmount' => 100.0,
+			'mismatchPercentage' => 1.0,
+			'totalAmountA' => 10000.0,
+			'totalAmountB' => 9900.0,
+		];
+		// Absolute passes (100 <= 5000) but relative fails (1% > 0.01%) -> reject.
+		self::assertFalse($this->guard->isWithinTolerance($match));
 
-    }//end testMinOfMethodStricter()
+	}//end testMinOfMethodStricter()
 
-    /**
-     * With no rule configured, the conservative defaults (EUR 10 / 0.5% / max-of) apply.
-     *
-     * @return void
-     */
-    public function testDefaultsWhenNoRule(): void
-    {
-        $this->container->method('get')->willReturn(
-            $this->buildObjectServiceStub(
-                relations: [['relationId' => 'rel1', 'relationType' => 'sales-of-goods']],
-                rules: []
-            )
-        );
+	/**
+	 * With no rule configured, the conservative defaults (EUR 10 / 0.5% / max-of) apply.
+	 *
+	 * @return void
+	 */
+	public function testDefaultsWhenNoRule(): void {
+		$this->container->method('get')->willReturn(
+			$this->buildObjectServiceStub(
+				relations: [['relationId' => 'rel1', 'relationType' => 'sales-of-goods']],
+				rules: []
+			)
+		);
 
-        $match = [
-            'matchId'            => 'm7',
-            'matchStatus'        => 'outside-tolerance',
-            'relationId'         => 'rel1',
-            'administrationId'   => 'adm1',
-            'mismatchAmount'     => 7.0,
-            'mismatchPercentage' => 0.007,
-            'totalAmountA'       => 100000.0,
-            'totalAmountB'       => 99993.0,
-        ];
-        self::assertTrue($this->guard->isWithinTolerance($match));
+		$match = [
+			'matchId' => 'm7',
+			'matchStatus' => 'outside-tolerance',
+			'relationId' => 'rel1',
+			'administrationId' => 'adm1',
+			'mismatchAmount' => 7.0,
+			'mismatchPercentage' => 0.007,
+			'totalAmountA' => 100000.0,
+			'totalAmountB' => 99993.0,
+		];
+		self::assertTrue($this->guard->isWithinTolerance($match));
 
-    }//end testDefaultsWhenNoRule()
+	}//end testDefaultsWhenNoRule()
 
-    /**
-     * An ObjectService failure fails closed (denies within-tolerance).
-     *
-     * @return void
-     */
-    public function testFailClosedOnException(): void
-    {
-        $this->container->method('get')->willThrowException(new \RuntimeException('OR unavailable'));
+	/**
+	 * An ObjectService failure fails closed (denies within-tolerance).
+	 *
+	 * @return void
+	 */
+	public function testFailClosedOnException(): void {
+		$this->container->method('get')->willThrowException(new \RuntimeException('OR unavailable'));
 
-        $match = [
-            'matchId'          => 'm8',
-            'matchStatus'      => 'outside-tolerance',
-            'relationId'       => 'rel1',
-            'administrationId' => 'adm1',
-            'mismatchAmount'   => 7.0,
-            'totalAmountA'     => 100000.0,
-            'totalAmountB'     => 99993.0,
-        ];
-        self::assertFalse($this->guard->isWithinTolerance($match));
+		$match = [
+			'matchId' => 'm8',
+			'matchStatus' => 'outside-tolerance',
+			'relationId' => 'rel1',
+			'administrationId' => 'adm1',
+			'mismatchAmount' => 7.0,
+			'totalAmountA' => 100000.0,
+			'totalAmountB' => 99993.0,
+		];
+		self::assertFalse($this->guard->isWithinTolerance($match));
 
-    }//end testFailClosedOnException()
+	}//end testFailClosedOnException()
 
-    /**
-     * Build an anonymous ObjectService stub returning relations or rules by schema.
-     *
-     * @param array<mixed> $relations IntercompanyRelation rows.
-     * @param array<mixed> $rules     ToleranceRule rows.
-     *
-     * @return object
-     */
-    private function buildObjectServiceStub(array $relations, array $rules): object
-    {
-        return new class($relations, $rules) {
+	/**
+	 * Build an anonymous ObjectService stub returning relations or rules by schema.
+	 *
+	 * @param array<mixed> $relations IntercompanyRelation rows.
+	 * @param array<mixed> $rules ToleranceRule rows.
+	 *
+	 * @return object
+	 */
+	private function buildObjectServiceStub(array $relations, array $rules): object {
+		return new class($relations, $rules) {
+			/**
+			 * IntercompanyRelation rows.
+			 *
+			 * @var array<mixed>
+			 */
+			private array $relations;
 
-            /**
-             * IntercompanyRelation rows.
-             *
-             * @var array<mixed>
-             */
-            private array $relations;
+			/**
+			 * ToleranceRule rows.
+			 *
+			 * @var array<mixed>
+			 */
+			private array $rules;
 
-            /**
-             * ToleranceRule rows.
-             *
-             * @var array<mixed>
-             */
-            private array $rules;
+			/**
+			 * The schema last selected via setSchema().
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * The schema last selected via setSchema().
-             *
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * Constructor.
+			 *
+			 * @param array<mixed> $relations IntercompanyRelation rows.
+			 * @param array<mixed> $rules ToleranceRule rows.
+			 */
+			public function __construct(array $relations, array $rules) {
+				$this->relations = $relations;
+				$this->rules = $rules;
+			}//end __construct()
 
-            /**
-             * Constructor.
-             *
-             * @param array<mixed> $relations IntercompanyRelation rows.
-             * @param array<mixed> $rules     ToleranceRule rows.
-             */
-            public function __construct(array $relations, array $rules)
-            {
-                $this->relations = $relations;
-                $this->rules     = $rules;
-            }//end __construct()
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent schema setter that records the selected schema.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Fluent schema setter that records the selected schema.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
+			/**
+			 * Return relations or rules depending on the selected schema.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused in stub).
+			 *
+			 * @return array<mixed>
+			 */
+			public function findAll(array $params = []): array {
+				if ($this->schema === 'ToleranceRule') {
+					return $this->rules;
+				}
 
-            /**
-             * Return relations or rules depending on the selected schema.
-             *
-             * @param array<string,mixed> $params Query parameters (unused in stub).
-             *
-             * @return array<mixed>
-             */
-            public function findAll(array $params=[]): array
-            {
-                if ($this->schema === 'ToleranceRule') {
-                    return $this->rules;
-                }
-
-                return $this->relations;
-            }//end findAll()
-        };
-    }//end buildObjectServiceStub()
+				return $this->relations;
+			}//end findAll()
+		};
+	}//end buildObjectServiceStub()
 }//end class

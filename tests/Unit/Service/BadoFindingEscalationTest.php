@@ -51,7 +51,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 
-require_once __DIR__.'/InMemoryObjectService.php';
+require_once __DIR__ . '/InMemoryObjectService.php';
 
 /**
  * BADO finding escalation workflow integration test.
@@ -61,242 +61,238 @@ require_once __DIR__.'/InMemoryObjectService.php';
  * @covers \OCA\Shillinq\Service\BadoControleprotocolService
  * @covers \OCA\Shillinq\Service\BadoControleprotocolCalculator
  */
-final class BadoFindingEscalationTest extends TestCase
-{
+final class BadoFindingEscalationTest extends TestCase {
 
-    /**
-     * In-memory ObjectService.
-     *
-     * @var InMemoryObjectService
-     */
-    private InMemoryObjectService $os;
+	/**
+	 * In-memory ObjectService.
+	 *
+	 * @var InMemoryObjectService
+	 */
+	private InMemoryObjectService $os;
 
-    /**
-     * Production BADO service.
-     *
-     * @var BadoControleprotocolService
-     */
-    private BadoControleprotocolService $service;
+	/**
+	 * Production BADO service.
+	 *
+	 * @var BadoControleprotocolService
+	 */
+	private BadoControleprotocolService $service;
 
-    /**
-     * Build the harness.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->os = new InMemoryObjectService();
+	/**
+	 * Build the harness.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->os = new InMemoryObjectService();
 
-        $container = $this->createStub(ContainerInterface::class);
-        $container->method('get')->willReturn($this->os);
+		$container = $this->createStub(ContainerInterface::class);
+		$container->method('get')->willReturn($this->os);
 
-        $appConfig = $this->createStub(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturnCallback(
-            static fn (string $app, string $key, string $default=''): string => $default
-        );
+		$appConfig = $this->createStub(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => $default
+		);
 
-        $this->service = new BadoControleprotocolService(
-            container: $container,
-            appConfig: $appConfig,
-            calculator: new BadoControleprotocolCalculator(),
-            logger: new NullLogger(),
-        );
+		$this->service = new BadoControleprotocolService(
+			container: $container,
+			appConfig: $appConfig,
+			calculator: new BadoControleprotocolCalculator(),
+			logger: new NullLogger(),
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Full escalation workflow: open → disputed → resolved with both axes.
-     *
-     * @return void
-     */
-    public function testEscalationWorkflowFromOpenToResolved(): void
-    {
-        $protocolId = 'cp-2026-escalation';
-        $sampleId   = 'sample-escalation';
-        $findingId  = 'finding-escalated';
+	/**
+	 * Full escalation workflow: open → disputed → resolved with both axes.
+	 *
+	 * @return void
+	 */
+	public function testEscalationWorkflowFromOpenToResolved(): void {
+		$protocolId = 'cp-2026-escalation';
+		$sampleId = 'sample-escalation';
+		$findingId = 'finding-escalated';
 
-        $this->os->seed(
-                schema: 'Controleprotocol',
-                rows: [
-                    [
-                        'id'                => $protocolId,
-                        'version'           => '2026.1',
-                        'auditYear'         => 2026,
-                        'organisationId'    => 'gemeente-rotterdam',
-                        'organisationType'  => 'gemeente',
-                        'materialityBase'   => 'lasten',
-                        'materialityAmount' => 2000000.0,
-                        'effectiveFrom'     => '2026-01-01',
-                        'effectiveTo'       => '2026-12-31',
-                        'status'            => 'adopted',
-                    ],
-                ]
-                );
-        $this->os->seed(
-                schema: 'Materialiteit',
-                rows: [
-                    [
-                        'protocol'         => $protocolId,
-                        'scope'            => 'overall',
-                        'base'             => 200000000.0,
-                        'percentage'       => 1.0,
-                        'calculatedAmount' => 2000000.0,
-                        'status'           => 'frozen',
-                    ],
-                ]
-                );
-        $this->os->seed(
-                schema: 'ToleranceMatrix',
-                rows: [
-                    [
-                        'protocol'                           => $protocolId,
-                        'topic'                              => 'Subsidies & Bijdragen',
-                        'getrouwheidApprovalCeiling'         => 1.0,
-                        'getrouwheidQualificationCeiling'    => 3.0,
-                        'rechtmatigheidApprovalCeiling'      => 1.0,
-                        'rechtmatigheidQualificationCeiling' => 3.0,
-                        'uncertaintyCeiling'                 => 3.0,
-                    ],
-                ]
-                );
-        $this->os->seed(
-                schema: 'AuditSample',
-                rows: [
-                    [
-                        'id'               => $sampleId,
-                        'protocol'         => $protocolId,
-                        'population'       => 'Subsidies > €100k boekjaar 2026',
-                        'selectionMethod'  => 'risk-based',
-                        'sampleSize'       => 15,
-                        'reproducibleSeed' => 'esc-seed-2026',
-                        'extractedAt'      => '2026-12-19T08:30:00Z',
-                        'extractedBy'      => 'auditor-2',
-                    ],
-                ]
-                );
+		$this->os->seed(
+			schema: 'Controleprotocol',
+			rows: [
+				[
+					'id' => $protocolId,
+					'version' => '2026.1',
+					'auditYear' => 2026,
+					'organisationId' => 'gemeente-rotterdam',
+					'organisationType' => 'gemeente',
+					'materialityBase' => 'lasten',
+					'materialityAmount' => 2000000.0,
+					'effectiveFrom' => '2026-01-01',
+					'effectiveTo' => '2026-12-31',
+					'status' => 'adopted',
+				],
+			]
+		);
+		$this->os->seed(
+			schema: 'Materialiteit',
+			rows: [
+				[
+					'protocol' => $protocolId,
+					'scope' => 'overall',
+					'base' => 200000000.0,
+					'percentage' => 1.0,
+					'calculatedAmount' => 2000000.0,
+					'status' => 'frozen',
+				],
+			]
+		);
+		$this->os->seed(
+			schema: 'ToleranceMatrix',
+			rows: [
+				[
+					'protocol' => $protocolId,
+					'topic' => 'Subsidies & Bijdragen',
+					'getrouwheidApprovalCeiling' => 1.0,
+					'getrouwheidQualificationCeiling' => 3.0,
+					'rechtmatigheidApprovalCeiling' => 1.0,
+					'rechtmatigheidQualificationCeiling' => 3.0,
+					'uncertaintyCeiling' => 3.0,
+				],
+			]
+		);
+		$this->os->seed(
+			schema: 'AuditSample',
+			rows: [
+				[
+					'id' => $sampleId,
+					'protocol' => $protocolId,
+					'population' => 'Subsidies > €100k boekjaar 2026',
+					'selectionMethod' => 'risk-based',
+					'sampleSize' => 15,
+					'reproducibleSeed' => 'esc-seed-2026',
+					'extractedAt' => '2026-12-19T08:30:00Z',
+					'extractedBy' => 'auditor-2',
+				],
+			]
+		);
 
-        // 1. AuditFinding with controller disagreement (status=open).
-        $this->os->seed(
-                schema: 'AuditFinding',
-                rows: [
-                    [
-                        'id'          => $findingId,
-                        'sample'      => $sampleId,
-                        'transaction' => 'sub-tx-001',
-                        'findingType' => 'rechtmatigheid',
-                        'topic'       => 'Subsidies & Bijdragen',
-                        'amount'      => 25000.0,
-                        'narrative'   => 'Mogelijk onbevoegd toegekend',
-                        'status'      => 'open',
-                    ],
-                ]
-                );
+		// 1. AuditFinding with controller disagreement (status=open).
+		$this->os->seed(
+			schema: 'AuditFinding',
+			rows: [
+				[
+					'id' => $findingId,
+					'sample' => $sampleId,
+					'transaction' => 'sub-tx-001',
+					'findingType' => 'rechtmatigheid',
+					'topic' => 'Subsidies & Bijdragen',
+					'amount' => 25000.0,
+					'narrative' => 'Mogelijk onbevoegd toegekend',
+					'status' => 'open',
+				],
+			]
+		);
 
-        // Sanity: at this point no controllerResponse → cannot move open → agreed.
-        self::assertFalse($this->service->hasControllerResponse(findingId: $findingId));
+		// Sanity: at this point no controllerResponse → cannot move open → agreed.
+		self::assertFalse($this->service->hasControllerResponse(findingId: $findingId));
 
-        // 2. Controller submits response.
-        $this->updateFinding(
-            findingId: $findingId,
-            patch: [
-                'controllerResponse' => 'Niet eens — toekenning conform delegatiebesluit B-2026/07.',
-            ]
-        );
-        self::assertTrue($this->service->hasControllerResponse(findingId: $findingId));
+		// 2. Controller submits response.
+		$this->updateFinding(
+			findingId: $findingId,
+			patch: [
+				'controllerResponse' => 'Niet eens — toekenning conform delegatiebesluit B-2026/07.',
+			]
+		);
+		self::assertTrue($this->service->hasControllerResponse(findingId: $findingId));
 
-        // 3. Auditor reviews and concludes escalation required.
-        $this->updateFinding(
-            findingId: $findingId,
-            patch: [
-                'auditorConclusion' => 'escalation required',
-                'status'            => 'disputed',
-            ]
-        );
+		// 3. Auditor reviews and concludes escalation required.
+		$this->updateFinding(
+			findingId: $findingId,
+			patch: [
+				'auditorConclusion' => 'escalation required',
+				'status' => 'disputed',
+			]
+		);
 
-        // Mid-escalation: only one axis carries severity, the other is still
-        // blank → four-eye guard MUST refuse resolution.
-        $this->updateFinding(
-            findingId: $findingId,
-            patch: [
-                'rechtmatigheid'         => 'exception',
-                'rechtmatigheidSeverity' => 'te-corrigeren',
-            ]
-        );
-        self::assertFalse($this->service->isFourEyeComplete(findingId: $findingId));
+		// Mid-escalation: only one axis carries severity, the other is still
+		// blank → four-eye guard MUST refuse resolution.
+		$this->updateFinding(
+			findingId: $findingId,
+			patch: [
+				'rechtmatigheid' => 'exception',
+				'rechtmatigheidSeverity' => 'te-corrigeren',
+			]
+		);
+		self::assertFalse($this->service->isFourEyeComplete(findingId: $findingId));
 
-        // 4. Escalation task assigned to external audit manager — modelled as
-        // a state-only transition in the in-memory store (no task schema in
-        // this fragment; the audit manager is the actor on resolution).
-        // 5. Audit manager resolves: both axes documented + severities recorded.
-        $this->updateFinding(
-            findingId: $findingId,
-            patch: [
-                'rechtmatigheid'         => 'exception',
-                'rechtmatigheidSeverity' => 'te-corrigeren',
-                'getrouwheid'            => 'compliant',
-                'getrouwheidSeverity'    => 'acceptabel',
-                'controllerResponse'     => 'Niet eens; audit manager bevestigt rechtmatigheid-uitzondering.',
-                'auditorConclusion'      => 'accepted; escalation resolved; rechtmatigheid-uitzondering te-corrigeren, geen getrouwheid-impact',
-            ]
-        );
+		// 4. Escalation task assigned to external audit manager — modelled as
+		// a state-only transition in the in-memory store (no task schema in
+		// this fragment; the audit manager is the actor on resolution).
+		// 5. Audit manager resolves: both axes documented + severities recorded.
+		$this->updateFinding(
+			findingId: $findingId,
+			patch: [
+				'rechtmatigheid' => 'exception',
+				'rechtmatigheidSeverity' => 'te-corrigeren',
+				'getrouwheid' => 'compliant',
+				'getrouwheidSeverity' => 'acceptabel',
+				'controllerResponse' => 'Niet eens; audit manager bevestigt rechtmatigheid-uitzondering.',
+				'auditorConclusion' => 'accepted; escalation resolved; rechtmatigheid-uitzondering te-corrigeren, geen getrouwheid-impact',
+			]
+		);
 
-        // 6. After both axes are present + responses recorded, four-eye guard
-        // must accept resolution.
-        self::assertTrue($this->service->isFourEyeComplete(findingId: $findingId));
+		// 6. After both axes are present + responses recorded, four-eye guard
+		// must accept resolution.
+		self::assertTrue($this->service->isFourEyeComplete(findingId: $findingId));
 
-        // 7. Once status → resolved, the finding aggregates into the protocol
-        // opinion calculation.
-        $this->updateFinding(
-            findingId: $findingId,
-            patch: ['status' => 'resolved']
-        );
+		// 7. Once status → resolved, the finding aggregates into the protocol
+		// opinion calculation.
+		$this->updateFinding(
+			findingId: $findingId,
+			patch: ['status' => 'resolved']
+		);
 
-        $aggregation = $this->service->computeAggregation(protocolId: $protocolId);
-        self::assertNotEmpty($aggregation['topics']);
+		$aggregation = $this->service->computeAggregation(protocolId: $protocolId);
+		self::assertNotEmpty($aggregation['topics']);
 
-        $matched = null;
-        foreach ($aggregation['topics'] as $row) {
-            if ($row['topic'] === 'Subsidies & Bijdragen') {
-                $matched = $row;
-                break;
-            }
-        }
+		$matched = null;
+		foreach ($aggregation['topics'] as $row) {
+			if ($row['topic'] === 'Subsidies & Bijdragen') {
+				$matched = $row;
+				break;
+			}
+		}
 
-        self::assertNotNull(
-            $matched,
-            'resolved finding must aggregate into its topic verdict'
-        );
+		self::assertNotNull(
+			$matched,
+			'resolved finding must aggregate into its topic verdict'
+		);
 
-        // €25k on a €2M materialiteit (1% = €20k approval, 3% = €60k qualification)
-        // → te-corrigeren → 'qualified' verdict for the topic.
-        self::assertSame('qualified', $matched['verdict']);
-        self::assertGreaterThanOrEqual(1, ($matched['teCorrigerenCount'] ?? 0));
+		// €25k on a €2M materialiteit (1% = €20k approval, 3% = €60k qualification)
+		// → te-corrigeren → 'qualified' verdict for the topic.
+		self::assertSame('qualified', $matched['verdict']);
+		self::assertGreaterThanOrEqual(1, ($matched['teCorrigerenCount'] ?? 0));
 
-    }//end testEscalationWorkflowFromOpenToResolved()
+	}//end testEscalationWorkflowFromOpenToResolved()
 
-    /**
-     * Helper: merge-update an AuditFinding in the in-memory store.
-     *
-     * @param string              $findingId The AuditFinding.id.
-     * @param array<string,mixed> $patch     Fields to merge.
-     *
-     * @return void
-     */
-    private function updateFinding(string $findingId, array $patch): void
-    {
-        $reflection = new \ReflectionClass(InMemoryObjectService::class);
-        $records    = $reflection->getProperty('records');
-        $records->setAccessible(true);
+	/**
+	 * Helper: merge-update an AuditFinding in the in-memory store.
+	 *
+	 * @param string $findingId The AuditFinding.id.
+	 * @param array<string,mixed> $patch Fields to merge.
+	 *
+	 * @return void
+	 */
+	private function updateFinding(string $findingId, array $patch): void {
+		$reflection = new \ReflectionClass(InMemoryObjectService::class);
+		$records = $reflection->getProperty('records');
+		$records->setAccessible(true);
 
-        $all = $records->getValue($this->os);
-        foreach (($all['AuditFinding'] ?? []) as $index => $row) {
-            if ((string) ($row['id'] ?? '') === $findingId) {
-                $all['AuditFinding'][$index] = array_merge($row, $patch);
-            }
-        }
+		$all = $records->getValue($this->os);
+		foreach (($all['AuditFinding'] ?? []) as $index => $row) {
+			if ((string)($row['id'] ?? '') === $findingId) {
+				$all['AuditFinding'][$index] = array_merge($row, $patch);
+			}
+		}
 
-        $records->setValue($this->os, $all);
+		$records->setValue($this->os, $all);
 
-    }//end updateFinding()
+	}//end updateFinding()
 }//end class

@@ -53,101 +53,98 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-35
  */
-class TaxPaymentController extends Controller
-{
-    /**
-     * Constructor for the TaxPaymentController.
-     *
-     * @param IRequest                        $request        The request object.
-     * @param TaxPaymentReconciliationService $reconciliation The reconciliation service.
-     * @param IUserSession                    $userSession    Session for the auth body-guard.
-     * @param AdministrationContextService    $context        RBAC guard — resolves the user's administration memberships.
-     * @param LoggerInterface                 $logger         Logger (no stack traces to client).
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly TaxPaymentReconciliationService $reconciliation,
-        private readonly IUserSession $userSession,
-        private readonly AdministrationContextService $context,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
-    }//end __construct()
+class TaxPaymentController extends Controller {
+	/**
+	 * Constructor for the TaxPaymentController.
+	 *
+	 * @param IRequest $request The request object.
+	 * @param TaxPaymentReconciliationService $reconciliation The reconciliation service.
+	 * @param IUserSession $userSession Session for the auth body-guard.
+	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
+	 * @param LoggerInterface $logger Logger (no stack traces to client).
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly TaxPaymentReconciliationService $reconciliation,
+		private readonly IUserSession $userSession,
+		private readonly AdministrationContextService $context,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
+	}//end __construct()
 
-    /**
-     * Reconcile a payment record against the GL (REQ-VPB-008).
-     *
-     * Path parameter:
-     *  - id (string) slug or id of the TaxPaymentTracking record.
-     *
-     * Query/body parameter:
-     *  - administration_id (required) administration scope (REQ-VPB-003).
-     *
-     * Returns HTTP 200 with { matched, paymentAmount, glAmount, variance,
-     * glLineCount }; HTTP 400 on an invalid parameter; HTTP 500 (no stack trace)
-     * on a GL fetch failure.
-     *
-     * @param string $id The payment record identifier.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-35
-     */
-    #[NoAdminRequired]
-    public function reconcile(string $id): JSONResponse
-    {
-        if ($this->userSession->getUser() === null) {
-            return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Reconcile a payment record against the GL (REQ-VPB-008).
+	 *
+	 * Path parameter:
+	 *  - id (string) slug or id of the TaxPaymentTracking record.
+	 *
+	 * Query/body parameter:
+	 *  - administration_id (required) administration scope (REQ-VPB-003).
+	 *
+	 * Returns HTTP 200 with { matched, paymentAmount, glAmount, variance,
+	 * glLineCount }; HTTP 400 on an invalid parameter; HTTP 500 (no stack trace)
+	 * on a GL fetch failure.
+	 *
+	 * @param string $id The payment record identifier.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-35
+	 */
+	#[NoAdminRequired]
+	public function reconcile(string $id): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
-        $paymentId        = trim($id);
+		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
+		$paymentId = trim($id);
 
-        if ($administrationId === '' || preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-            return new JSONResponse(
-                ['error' => 'administration_id must be a valid administration identifier'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if ($administrationId === '' || preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
+			return new JSONResponse(
+				['error' => 'administration_id must be a valid administration identifier'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        if ($paymentId === '' || preg_match('/^[A-Za-z0-9_.\\-]{1,128}$/', $paymentId) !== 1) {
-            return new JSONResponse(
-                ['error' => 'id must be a valid payment identifier'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if ($paymentId === '' || preg_match('/^[A-Za-z0-9_.\\-]{1,128}$/', $paymentId) !== 1) {
+			return new JSONResponse(
+				['error' => 'id must be a valid payment identifier'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        // ⚠️ Both checks above are character-class tests. The reconciliation
-        // WRITES against the administration named on the wire, so the membership
-        // check has to happen before it (ADR-005 / REQ-MA-001).
-        if ($this->context->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
-        }
+		// ⚠️ Both checks above are character-class tests. The reconciliation
+		// WRITES against the administration named on the wire, so the membership
+		// check has to happen before it (ADR-005 / REQ-MA-001).
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
+		}
 
-        try {
-            $result = $this->reconciliation->reconcile(
-                administrationId: $administrationId,
-                paymentId: $paymentId
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'TaxPaymentController: failed to reconcile payment',
-                [
-                    'administrationId' => $administrationId,
-                    'paymentId'        => $paymentId,
-                    'exception'        => $e->getMessage(),
-                ]
-            );
+		try {
+			$result = $this->reconciliation->reconcile(
+				administrationId: $administrationId,
+				paymentId: $paymentId
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'TaxPaymentController: failed to reconcile payment',
+				[
+					'administrationId' => $administrationId,
+					'paymentId' => $paymentId,
+					'exception' => $e->getMessage(),
+				]
+			);
 
-            return new JSONResponse(
-                ['error' => 'Failed to reconcile payment'],
-                Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }//end try
+			return new JSONResponse(
+				['error' => 'Failed to reconcile payment'],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}//end try
 
-        return new JSONResponse($result, Http::STATUS_OK);
-
-    }//end reconcile()
+		return new JSONResponse($result, Http::STATUS_OK);
+	}//end reconcile()
 }//end class

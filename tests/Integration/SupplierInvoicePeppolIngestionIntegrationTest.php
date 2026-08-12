@@ -55,194 +55,184 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class SupplierInvoicePeppolIngestionIntegrationTest extends TestCase
-{
+final class SupplierInvoicePeppolIngestionIntegrationTest extends TestCase {
 
-    /**
-     * Captured saves from the ObjectService stub, populated by the
-     * SupplierInvoiceService through the wired listener.
-     *
-     * @var array<int,array<string,mixed>>
-     */
-    private array $saved = [];
+	/**
+	 * Captured saves from the ObjectService stub, populated by the
+	 * SupplierInvoiceService through the wired listener.
+	 *
+	 * @var array<int,array<string,mixed>>
+	 */
+	private array $saved = [];
 
-    /**
-     * Build an in-memory OR ObjectService stub that captures saves and
-     * supports findAll filters.
-     *
-     * @return object
-     */
-    private function objectServiceStub(): object
-    {
-        return new class($this->saved) {
+	/**
+	 * Build an in-memory OR ObjectService stub that captures saves and
+	 * supports findAll filters.
+	 *
+	 * @return object
+	 */
+	private function objectServiceStub(): object {
+		return new class($this->saved) {
+			/**
+			 * Reference to the test's $saved buffer.
+			 *
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $saved;
 
-            /**
-             * Reference to the test's $saved buffer.
-             *
-             * @var array<int,array<string,mixed>>
-             */
-            private array $saved;
+			/**
+			 * Active schema slug.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * Active schema slug.
-             *
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * Increment id counter to stamp newly-persisted records.
+			 *
+			 * @var integer
+			 */
+			private int $idCounter = 0;
 
-            /**
-             * Increment id counter to stamp newly-persisted records.
-             *
-             * @var integer
-             */
-            private int $idCounter = 0;
+			/**
+			 * Constructor.
+			 *
+			 * @param array<int,array<string,mixed>> $saved Capture buffer ref.
+			 */
+			public function __construct(array &$saved) {
+				$this->saved = &$saved;
+			}//end __construct()
 
-            /**
-             * Constructor.
-             *
-             * @param array<int,array<string,mixed>> $saved Capture buffer ref.
-             */
-            public function __construct(array &$saved)
-            {
-                $this->saved = &$saved;
-            }//end __construct()
+			/**
+			 * Fluent register setter (no-op).
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent register setter (no-op).
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Fluent schema setter.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
+			/**
+			 * Equality-filtered query over previously-captured saves of the
+			 * active schema (so SupplierInvoiceService::findOne sees the
+			 * record it just wrote — supporting the de-duplication path).
+			 *
+			 * @param array<string,mixed> $params Query params.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$schema = $this->schema;
+				$filters = ($params['filters'] ?? []);
 
-            /**
-             * Equality-filtered query over previously-captured saves of the
-             * active schema (so SupplierInvoiceService::findOne sees the
-             * record it just wrote — supporting the de-duplication path).
-             *
-             * @param array<string,mixed> $params Query params.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $schema  = $this->schema;
-                $filters = ($params['filters'] ?? []);
+				$matches = [];
+				foreach ($this->saved as $entry) {
+					if ($entry['schema'] !== $schema) {
+						continue;
+					}
 
-                $matches = [];
-                foreach ($this->saved as $entry) {
-                    if ($entry['schema'] !== $schema) {
-                        continue;
-                    }
+					$row = $entry['object'];
+					$accept = true;
+					foreach ($filters as $key => $value) {
+						if (($row[$key] ?? null) !== $value) {
+							$accept = false;
+							break;
+						}
+					}
 
-                    $row     = $entry['object'];
-                    $accept  = true;
-                    foreach ($filters as $key => $value) {
-                        if (($row[$key] ?? null) !== $value) {
-                            $accept = false;
-                            break;
-                        }
-                    }
+					if ($accept === true) {
+						$matches[] = $row;
+					}
+				}
 
-                    if ($accept === true) {
-                        $matches[] = $row;
-                    }
-                }
+				return $matches;
+			}//end findAll()
 
-                return $matches;
-            }//end findAll()
+			/**
+			 * Capture a save (stamp an id when absent).
+			 *
+			 * @param array<string,mixed> $object Object payload.
+			 *
+			 * @return array<string,mixed>
+			 */
+			public function saveObject(array $object): array {
+				if (isset($object['id']) === false || $object['id'] === '') {
+					$this->idCounter++;
+					$object['id'] = 'obj-' . $this->idCounter;
+				}
 
-            /**
-             * Capture a save (stamp an id when absent).
-             *
-             * @param array<string,mixed> $object Object payload.
-             *
-             * @return array<string,mixed>
-             */
-            public function saveObject(array $object): array
-            {
-                if (isset($object['id']) === false || $object['id'] === '') {
-                    $this->idCounter++;
-                    $object['id'] = 'obj-'.$this->idCounter;
-                }
+				$this->saved[] = ['schema' => $this->schema, 'object' => $object];
+				return $object;
+			}//end saveObject()
+		};
 
-                $this->saved[] = ['schema' => $this->schema, 'object' => $object];
-                return $object;
-            }//end saveObject()
-        };
+	}//end objectServiceStub()
 
-    }//end objectServiceStub()
+	/**
+	 * Build the listener wired to a service that accepts adm-1 and writes
+	 * captures into $this->saved.
+	 *
+	 * @return PeppolInboundUblInvoiceListener
+	 */
+	private function buildListener(): PeppolInboundUblInvoiceListener {
+		$stub = $this->objectServiceStub();
 
-    /**
-     * Build the listener wired to a service that accepts adm-1 and writes
-     * captures into $this->saved.
-     *
-     * @return PeppolInboundUblInvoiceListener
-     */
-    private function buildListener(): PeppolInboundUblInvoiceListener
-    {
-        $stub = $this->objectServiceStub();
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($stub);
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturn($stub);
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
 
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
+		$administrationContext = $this->createMock(AdministrationContextService::class);
+		$administrationContext->method('canAccess')->willReturnCallback(
+			static fn (string $administrationId): bool => $administrationId === 'adm-1'
+		);
 
-        $administrationContext = $this->createMock(AdministrationContextService::class);
-        $administrationContext->method('canAccess')->willReturnCallback(
-            static fn (string $administrationId): bool => $administrationId === 'adm-1'
-        );
+		$logger = $this->createMock(LoggerInterface::class);
 
-        $logger = $this->createMock(LoggerInterface::class);
+		$service = new SupplierInvoiceService(
+			container: $container,
+			appConfig: $appConfig,
+			administrationContext: $administrationContext,
+			logger: $logger,
+		);
 
-        $service = new SupplierInvoiceService(
-            container: $container,
-            appConfig: $appConfig,
-            administrationContext: $administrationContext,
-            logger: $logger,
-        );
+		// OpenRegister stamps the numeric schema id on the entity; the slug
+		// only ever reaches the listener through the resolver.
+		$schemaResolver = $this->createMock(ListenerSchemaResolver::class);
+		$schemaResolver->method('schemaSlug')
+			->willReturn(PeppolInboundUblInvoiceListener::PEPPOL_INBOUND_SCHEMA);
 
-        // OpenRegister stamps the numeric schema id on the entity; the slug
-        // only ever reaches the listener through the resolver.
-        $schemaResolver = $this->createMock(ListenerSchemaResolver::class);
-        $schemaResolver->method('schemaSlug')
-            ->willReturn(PeppolInboundUblInvoiceListener::PEPPOL_INBOUND_SCHEMA);
+		return new PeppolInboundUblInvoiceListener(
+			supplierInvoices: $service,
+			schemaResolver: $schemaResolver,
+			logger: $logger,
+		);
 
-        return new PeppolInboundUblInvoiceListener(
-            supplierInvoices: $service,
-            schemaResolver: $schemaResolver,
-            logger: $logger,
-        );
+	}//end buildListener()
 
-    }//end buildListener()
-
-    /**
-     * Build a sample Peppol BIS Invoice XML (the same shape the supplier
-     * 'ErenteSchreuders' from the spec scenario would send).
-     *
-     * @return string
-     */
-    private function peppolInvoiceXml(): string
-    {
-        return <<<'XML'
+	/**
+	 * Build a sample Peppol BIS Invoice XML (the same shape the supplier
+	 * 'ErenteSchreuders' from the spec scenario would send).
+	 *
+	 * @return string
+	 */
+	private function peppolInvoiceXml(): string {
+		return <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
          xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
@@ -288,172 +278,166 @@ final class SupplierInvoicePeppolIngestionIntegrationTest extends TestCase
 </Invoice>
 XML;
 
-    }//end peppolInvoiceXml()
+	}//end peppolInvoiceXml()
 
-    /**
-     * Construct a PeppolInboundMessage ObjectEntity with the supplied
-     * payload + metadata so the listener can dispatch it.
-     *
-     * @param array<string,mixed> $message Message payload.
-     *
-     * @return ObjectEntity
-     */
-    private function peppolInboundEntity(array $message): ObjectEntity
-    {
-        $entity = new ObjectEntity();
-        // The numeric schema **id**, exactly as OpenRegister stamps it
-        // (`setSchema((string) $schema->getId())`) — never the slug.
-        $entity->setSchema('6104');
-        $entity->setObject($message);
+	/**
+	 * Construct a PeppolInboundMessage ObjectEntity with the supplied
+	 * payload + metadata so the listener can dispatch it.
+	 *
+	 * @param array<string,mixed> $message Message payload.
+	 *
+	 * @return ObjectEntity
+	 */
+	private function peppolInboundEntity(array $message): ObjectEntity {
+		$entity = new ObjectEntity();
+		// The numeric schema **id**, exactly as OpenRegister stamps it
+		// (`setSchema((string) $schema->getId())`) — never the slug.
+		$entity->setSchema('6104');
+		$entity->setObject($message);
 
-        return $entity;
+		return $entity;
+	}//end peppolInboundEntity()
 
-    }//end peppolInboundEntity()
+	/**
+	 * REQ-PO3W-004: a Peppol-received UBL Invoice becomes a SupplierInvoice
+	 * record at statusCode=received with ubl_source_uri + peppol_received_at.
+	 *
+	 * @return void
+	 */
+	public function testPeppolUblInvoiceBecomesSupplierInvoice(): void {
+		$listener = $this->buildListener();
 
-    /**
-     * REQ-PO3W-004: a Peppol-received UBL Invoice becomes a SupplierInvoice
-     * record at statusCode=received with ubl_source_uri + peppol_received_at.
-     *
-     * @return void
-     */
-    public function testPeppolUblInvoiceBecomesSupplierInvoice(): void
-    {
-        $listener = $this->buildListener();
+		$event = new ObjectCreatedEvent(
+			$this->peppolInboundEntity(
+				[
+					'documentType' => PeppolInboundUblInvoiceListener::DOCUMENT_TYPE_INVOICE,
+					'administrationId' => 'adm-1',
+					'peppolMessageId' => 'msg-2026-07-20-abcdef',
+					'receivedAt' => '2026-07-20T10:15:00+02:00',
+					'payload' => $this->peppolInvoiceXml(),
+				]
+			)
+		);
 
-        $event = new ObjectCreatedEvent(
-            $this->peppolInboundEntity(
-                [
-                    'documentType'     => PeppolInboundUblInvoiceListener::DOCUMENT_TYPE_INVOICE,
-                    'administrationId' => 'adm-1',
-                    'peppolMessageId'  => 'msg-2026-07-20-abcdef',
-                    'receivedAt'       => '2026-07-20T10:15:00+02:00',
-                    'payload'          => $this->peppolInvoiceXml(),
-                ]
-            )
-        );
+		$listener->handle($event);
 
-        $listener->handle($event);
+		$invoiceSaves = array_values(
+			array_filter(
+				$this->saved,
+				static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'
+			)
+		);
+		self::assertCount(1, $invoiceSaves);
 
-        $invoiceSaves = array_values(
-            array_filter(
-                $this->saved,
-                static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'
-            )
-        );
-        self::assertCount(1, $invoiceSaves);
+		$persisted = $invoiceSaves[0]['object'];
+		self::assertSame('INV-ERS-2026-00445', $persisted['invoiceNumber']);
+		self::assertSame('erente-schreuders', $persisted['supplierId']);
+		self::assertSame('adm-1', $persisted['administrationId']);
+		self::assertSame('received', $persisted['statusCode']);
+		self::assertSame('ubl', $persisted['sourceFormat']);
+		self::assertSame('peppol:msg-2026-07-20-abcdef', $persisted['ublSourceUri']);
+		self::assertSame('2026-07-20T10:15:00+02:00', $persisted['peppolReceivedAt']);
+		self::assertSame(484000, $persisted['totalInclVat']);
+		self::assertCount(1, $persisted['lines']);
+		self::assertSame('COFFEE-PRO-1', $persisted['lines'][0]['productCode']);
 
-        $persisted = $invoiceSaves[0]['object'];
-        self::assertSame('INV-ERS-2026-00445', $persisted['invoiceNumber']);
-        self::assertSame('erente-schreuders', $persisted['supplierId']);
-        self::assertSame('adm-1', $persisted['administrationId']);
-        self::assertSame('received', $persisted['statusCode']);
-        self::assertSame('ubl', $persisted['sourceFormat']);
-        self::assertSame('peppol:msg-2026-07-20-abcdef', $persisted['ublSourceUri']);
-        self::assertSame('2026-07-20T10:15:00+02:00', $persisted['peppolReceivedAt']);
-        self::assertSame(484000, $persisted['totalInclVat']);
-        self::assertCount(1, $persisted['lines']);
-        self::assertSame('COFFEE-PRO-1', $persisted['lines'][0]['productCode']);
+	}//end testPeppolUblInvoiceBecomesSupplierInvoice()
 
-    }//end testPeppolUblInvoiceBecomesSupplierInvoice()
+	/**
+	 * The listener ignores non-Invoice Peppol document types (CreditNote,
+	 * Order, etc.) — only Invoice flows to SupplierInvoiceService.
+	 *
+	 * @return void
+	 */
+	public function testListenerIgnoresNonInvoiceDocumentTypes(): void {
+		$listener = $this->buildListener();
 
-    /**
-     * The listener ignores non-Invoice Peppol document types (CreditNote,
-     * Order, etc.) — only Invoice flows to SupplierInvoiceService.
-     *
-     * @return void
-     */
-    public function testListenerIgnoresNonInvoiceDocumentTypes(): void
-    {
-        $listener = $this->buildListener();
+		$event = new ObjectCreatedEvent(
+			$this->peppolInboundEntity(
+				[
+					'documentType' => 'CreditNote',
+					'administrationId' => 'adm-1',
+					'peppolMessageId' => 'msg-cn-1',
+					'receivedAt' => '2026-07-20T10:15:00+02:00',
+					'payload' => $this->peppolInvoiceXml(),
+				]
+			)
+		);
 
-        $event = new ObjectCreatedEvent(
-            $this->peppolInboundEntity(
-                [
-                    'documentType'     => 'CreditNote',
-                    'administrationId' => 'adm-1',
-                    'peppolMessageId'  => 'msg-cn-1',
-                    'receivedAt'       => '2026-07-20T10:15:00+02:00',
-                    'payload'          => $this->peppolInvoiceXml(),
-                ]
-            )
-        );
+		$listener->handle($event);
 
-        $listener->handle($event);
+		$invoiceSaves = array_filter(
+			$this->saved,
+			static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'
+		);
+		self::assertCount(0, $invoiceSaves);
 
-        $invoiceSaves = array_filter(
-            $this->saved,
-            static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'
-        );
-        self::assertCount(0, $invoiceSaves);
+	}//end testListenerIgnoresNonInvoiceDocumentTypes()
 
-    }//end testListenerIgnoresNonInvoiceDocumentTypes()
+	/**
+	 * Re-delivery of the same Peppol message (same invoiceNumber +
+	 * supplierId + administrationId) does not create a second
+	 * SupplierInvoice — REQ-PO3W-004 idempotency.
+	 *
+	 * @return void
+	 */
+	public function testPeppolRedeliveryIsIdempotent(): void {
+		$listener = $this->buildListener();
 
-    /**
-     * Re-delivery of the same Peppol message (same invoiceNumber +
-     * supplierId + administrationId) does not create a second
-     * SupplierInvoice — REQ-PO3W-004 idempotency.
-     *
-     * @return void
-     */
-    public function testPeppolRedeliveryIsIdempotent(): void
-    {
-        $listener = $this->buildListener();
+		$event = new ObjectCreatedEvent(
+			$this->peppolInboundEntity(
+				[
+					'documentType' => PeppolInboundUblInvoiceListener::DOCUMENT_TYPE_INVOICE,
+					'administrationId' => 'adm-1',
+					'peppolMessageId' => 'msg-1',
+					'receivedAt' => '2026-07-20T10:15:00+02:00',
+					'payload' => $this->peppolInvoiceXml(),
+				]
+			)
+		);
 
-        $event = new ObjectCreatedEvent(
-            $this->peppolInboundEntity(
-                [
-                    'documentType'     => PeppolInboundUblInvoiceListener::DOCUMENT_TYPE_INVOICE,
-                    'administrationId' => 'adm-1',
-                    'peppolMessageId'  => 'msg-1',
-                    'receivedAt'       => '2026-07-20T10:15:00+02:00',
-                    'payload'          => $this->peppolInvoiceXml(),
-                ]
-            )
-        );
+		// Same Peppol Invoice delivered twice (the access point retries on
+		// transient failure).
+		$listener->handle($event);
+		$listener->handle($event);
 
-        // Same Peppol Invoice delivered twice (the access point retries on
-        // transient failure).
-        $listener->handle($event);
-        $listener->handle($event);
+		$invoiceSaves = array_filter(
+			$this->saved,
+			static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'
+		);
+		self::assertCount(1, $invoiceSaves);
 
-        $invoiceSaves = array_filter(
-            $this->saved,
-            static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'
-        );
-        self::assertCount(1, $invoiceSaves);
+	}//end testPeppolRedeliveryIsIdempotent()
 
-    }//end testPeppolRedeliveryIsIdempotent()
+	/**
+	 * A Peppol message that arrives without an administrationId is
+	 * skipped (not persisted) — the openconnector pipeline is expected to
+	 * resolve tenant identity upstream; without it we cannot apply the
+	 * ADR-005 IDOR gate.
+	 *
+	 * @return void
+	 */
+	public function testMissingAdministrationIdIsSkipped(): void {
+		$listener = $this->buildListener();
 
-    /**
-     * A Peppol message that arrives without an administrationId is
-     * skipped (not persisted) — the openconnector pipeline is expected to
-     * resolve tenant identity upstream; without it we cannot apply the
-     * ADR-005 IDOR gate.
-     *
-     * @return void
-     */
-    public function testMissingAdministrationIdIsSkipped(): void
-    {
-        $listener = $this->buildListener();
+		$event = new ObjectCreatedEvent(
+			$this->peppolInboundEntity(
+				[
+					'documentType' => PeppolInboundUblInvoiceListener::DOCUMENT_TYPE_INVOICE,
+					'peppolMessageId' => 'msg-orphan',
+					'receivedAt' => '2026-07-20T10:15:00+02:00',
+					'payload' => $this->peppolInvoiceXml(),
+				]
+			)
+		);
 
-        $event = new ObjectCreatedEvent(
-            $this->peppolInboundEntity(
-                [
-                    'documentType'    => PeppolInboundUblInvoiceListener::DOCUMENT_TYPE_INVOICE,
-                    'peppolMessageId' => 'msg-orphan',
-                    'receivedAt'      => '2026-07-20T10:15:00+02:00',
-                    'payload'         => $this->peppolInvoiceXml(),
-                ]
-            )
-        );
+		$listener->handle($event);
 
-        $listener->handle($event);
+		$invoiceSaves = array_filter(
+			$this->saved,
+			static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'
+		);
+		self::assertCount(0, $invoiceSaves);
 
-        $invoiceSaves = array_filter(
-            $this->saved,
-            static fn (array $row): bool => $row['schema'] === 'SupplierInvoice'
-        );
-        self::assertCount(0, $invoiceSaves);
-
-    }//end testMissingAdministrationIdIsSkipped()
+	}//end testMissingAdministrationIdIsSkipped()
 }//end class

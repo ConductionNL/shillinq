@@ -39,147 +39,140 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class WbsoAdministratieControllerTest extends TestCase
-{
+final class WbsoAdministratieControllerTest extends TestCase {
 
-    /**
-     * Mock IRequest.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * Mock IRequest.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Mock WbsoAdministratieService.
-     *
-     * @var WbsoAdministratieService&MockObject
-     */
-    private WbsoAdministratieService&MockObject $service;
+	/**
+	 * Mock WbsoAdministratieService.
+	 *
+	 * @var WbsoAdministratieService&MockObject
+	 */
+	private WbsoAdministratieService&MockObject $service;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The controller under test.
-     *
-     * @var WbsoAdministratieController
-     */
-    private WbsoAdministratieController $controller;
+	/**
+	 * The controller under test.
+	 *
+	 * @var WbsoAdministratieController
+	 */
+	private WbsoAdministratieController $controller;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->request    = $this->createMock(IRequest::class);
-        $this->service    = $this->createMock(WbsoAdministratieService::class);
-        $this->logger     = $this->createMock(LoggerInterface::class);
-        $this->controller = new WbsoAdministratieController(
-            request: $this->request,
-            service: $this->service,
-            logger: $this->logger,
-        );
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->request = $this->createMock(IRequest::class);
+		$this->service = $this->createMock(WbsoAdministratieService::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->controller = new WbsoAdministratieController(
+			request: $this->request,
+			service: $this->service,
+			logger: $this->logger,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Configure the administration_id request param.
-     *
-     * @param string $admin The administration_id param value.
-     *
-     * @return void
-     */
-    private function withAdmin(string $admin): void
-    {
-        $this->request->method('getParam')->willReturnCallback(
-            static function (string $key, mixed $default=null) use ($admin): mixed {
-                if ($key === 'administration_id') {
-                    return $admin;
-                }
+	/**
+	 * Configure the administration_id request param.
+	 *
+	 * @param string $admin The administration_id param value.
+	 *
+	 * @return void
+	 */
+	private function withAdmin(string $admin): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) use ($admin): mixed {
+				if ($key === 'administration_id') {
+					return $admin;
+				}
 
-                return $default;
-            }
-        );
+				return $default;
+			}
+		);
 
-    }//end withAdmin()
+	}//end withAdmin()
 
-    /**
-     * A valid request returns 200 with the service result.
-     *
-     * @return void
-     */
-    public function testReturnsOkWithRealisatieSummary(): void
-    {
-        $this->withAdmin('adm-a');
-        $payload = ['data' => [['beschikkingNumber' => 'WBSO-1', 'exceeded' => false]], 'total' => 1];
-        $this->service->expects(self::once())
-            ->method('realisatieSummary')
-            ->with('adm-a')
-            ->willReturn($payload);
+	/**
+	 * A valid request returns 200 with the service result.
+	 *
+	 * @return void
+	 */
+	public function testReturnsOkWithRealisatieSummary(): void {
+		$this->withAdmin('adm-a');
+		$payload = ['data' => [['beschikkingNumber' => 'WBSO-1', 'exceeded' => false]], 'total' => 1];
+		$this->service->expects(self::once())
+			->method('realisatieSummary')
+			->with('adm-a')
+			->willReturn($payload);
 
-        $response = $this->controller->realisatie();
-        self::assertInstanceOf(JSONResponse::class, $response);
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        self::assertSame($payload, $response->getData());
+		$response = $this->controller->realisatie();
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($payload, $response->getData());
 
-    }//end testReturnsOkWithRealisatieSummary()
+	}//end testReturnsOkWithRealisatieSummary()
 
-    /**
-     * A missing administration_id yields HTTP 400.
-     *
-     * @return void
-     */
-    public function testMissingAdministrationIsBadRequest(): void
-    {
-        $this->withAdmin('');
-        $this->service->expects(self::never())->method('realisatieSummary');
+	/**
+	 * A missing administration_id yields HTTP 400.
+	 *
+	 * @return void
+	 */
+	public function testMissingAdministrationIsBadRequest(): void {
+		$this->withAdmin('');
+		$this->service->expects(self::never())->method('realisatieSummary');
 
-        $response = $this->controller->realisatie();
-        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$response = $this->controller->realisatie();
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-    }//end testMissingAdministrationIsBadRequest()
+	}//end testMissingAdministrationIsBadRequest()
 
-    /**
-     * A malformed administration_id yields HTTP 400 before touching the service.
-     *
-     * @return void
-     */
-    public function testMalformedAdministrationIsBadRequest(): void
-    {
-        $this->withAdmin('adm a/../../etc');
-        $this->service->expects(self::never())->method('realisatieSummary');
+	/**
+	 * A malformed administration_id yields HTTP 400 before touching the service.
+	 *
+	 * @return void
+	 */
+	public function testMalformedAdministrationIsBadRequest(): void {
+		$this->withAdmin('adm a/../../etc');
+		$this->service->expects(self::never())->method('realisatieSummary');
 
-        $response = $this->controller->realisatie();
-        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$response = $this->controller->realisatie();
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-    }//end testMalformedAdministrationIsBadRequest()
+	}//end testMalformedAdministrationIsBadRequest()
 
-    /**
-     * A service failure yields HTTP 500 and no stack trace in the body (ADR-005).
-     *
-     * @return void
-     */
-    public function testServiceFailureIsInternalServerErrorWithoutStackTrace(): void
-    {
-        $this->withAdmin('adm-a');
-        $this->service->method('realisatieSummary')
-            ->willThrowException(new \RuntimeException('boom at /var/www/secret.php:42'));
+	/**
+	 * A service failure yields HTTP 500 and no stack trace in the body (ADR-005).
+	 *
+	 * @return void
+	 */
+	public function testServiceFailureIsInternalServerErrorWithoutStackTrace(): void {
+		$this->withAdmin('adm-a');
+		$this->service->method('realisatieSummary')
+			->willThrowException(new \RuntimeException('boom at /var/www/secret.php:42'));
 
-        $response = $this->controller->realisatie();
-        self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-        $body = $response->getData();
-        self::assertArrayHasKey('error', $body);
-        self::assertStringNotContainsString('secret.php', (string) $body['error']);
-        self::assertStringNotContainsString('boom', (string) $body['error']);
+		$response = $this->controller->realisatie();
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		$body = $response->getData();
+		self::assertArrayHasKey('error', $body);
+		self::assertStringNotContainsString('secret.php', (string)$body['error']);
+		self::assertStringNotContainsString('boom', (string)$body['error']);
 
-    }//end testServiceFailureIsInternalServerErrorWithoutStackTrace()
+	}//end testServiceFailureIsInternalServerErrorWithoutStackTrace()
 
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

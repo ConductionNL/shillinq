@@ -35,121 +35,115 @@ use Psr\Container\ContainerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class DoorsnijdingsVerbodValidatorTest extends TestCase
-{
+final class DoorsnijdingsVerbodValidatorTest extends TestCase {
 
-    /**
-     * The validator under test.
-     *
-     * @var DoorsnijdingsVerbodValidator
-     */
-    private DoorsnijdingsVerbodValidator $val;
+	/**
+	 * The validator under test.
+	 *
+	 * @var DoorsnijdingsVerbodValidator
+	 */
+	private DoorsnijdingsVerbodValidator $val;
 
-    /**
-     * Set up test fixtures with mocked DI (unused by detectDuplicates).
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->val = new DoorsnijdingsVerbodValidator(
-            $this->createMock(ContainerInterface::class),
-            $this->createMock(IAppConfig::class)
-        );
+	/**
+	 * Set up test fixtures with mocked DI (unused by detectDuplicates).
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->val = new DoorsnijdingsVerbodValidator(
+			$this->createMock(ContainerInterface::class),
+			$this->createMock(IAppConfig::class)
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * A 60k exclusive allocation on account 4010 that also appears in the GL is
-     * flagged as a duplicate (REQ-IBA-004).
-     *
-     * @return void
-     */
-    public function testFlagsDuplicateAccountKostenplaatsPair(): void
-    {
-        $allocations = [
-            [
-                'grootboekrekening'          => '4010',
-                'kostenplaats'               => 'rd-team-1',
-                'amount'                     => 60000.0,
-                'exclusief_in_winstbepaling' => true,
-            ],
-        ];
-        $glLines     = [
-            ['accountNumber' => '4010', 'kostenplaats' => 'rd-team-1', 'amount' => 60000.0],
-        ];
+	/**
+	 * A 60k exclusive allocation on account 4010 that also appears in the GL is
+	 * flagged as a duplicate (REQ-IBA-004).
+	 *
+	 * @return void
+	 */
+	public function testFlagsDuplicateAccountKostenplaatsPair(): void {
+		$allocations = [
+			[
+				'grootboekrekening' => '4010',
+				'kostenplaats' => 'rd-team-1',
+				'amount' => 60000.0,
+				'exclusief_in_winstbepaling' => true,
+			],
+		];
+		$glLines = [
+			['accountNumber' => '4010', 'kostenplaats' => 'rd-team-1', 'amount' => 60000.0],
+		];
 
-        $findings = $this->val->detectDuplicates($allocations, $glLines);
-        self::assertCount(1, $findings);
-        self::assertSame('4010', $findings[0]['grootboekrekening']);
-        self::assertSame(60000.0, $findings[0]['amount']);
-        self::assertStringContainsString('year-end close', $findings[0]['message']);
+		$findings = $this->val->detectDuplicates($allocations, $glLines);
+		self::assertCount(1, $findings);
+		self::assertSame('4010', $findings[0]['grootboekrekening']);
+		self::assertSame(60000.0, $findings[0]['amount']);
+		self::assertStringContainsString('year-end close', $findings[0]['message']);
 
-    }//end testFlagsDuplicateAccountKostenplaatsPair()
+	}//end testFlagsDuplicateAccountKostenplaatsPair()
 
-    /**
-     * A clean allocation with no GL duplicate produces no findings (REQ-IBA-004).
-     *
-     * @return void
-     */
-    public function testCleanCaseHasNoFindings(): void
-    {
-        $allocations = [
-            [
-                'grootboekrekening'          => '4010',
-                'kostenplaats'               => 'rd-team-1',
-                'amount'                     => 60000.0,
-                'exclusief_in_winstbepaling' => true,
-            ],
-        ];
-        $glLines     = [
-            ['accountNumber' => '4100', 'kostenplaats' => 'overige', 'amount' => 5000.0],
-        ];
+	/**
+	 * A clean allocation with no GL duplicate produces no findings (REQ-IBA-004).
+	 *
+	 * @return void
+	 */
+	public function testCleanCaseHasNoFindings(): void {
+		$allocations = [
+			[
+				'grootboekrekening' => '4010',
+				'kostenplaats' => 'rd-team-1',
+				'amount' => 60000.0,
+				'exclusief_in_winstbepaling' => true,
+			],
+		];
+		$glLines = [
+			['accountNumber' => '4100', 'kostenplaats' => 'overige', 'amount' => 5000.0],
+		];
 
-        self::assertSame([], $this->val->detectDuplicates($allocations, $glLines));
+		self::assertSame([], $this->val->detectDuplicates($allocations, $glLines));
 
-    }//end testCleanCaseHasNoFindings()
+	}//end testCleanCaseHasNoFindings()
 
-    /**
-     * A non-exclusive allocation is never flagged even on a matching pair.
-     *
-     * @return void
-     */
-    public function testNonExclusiveAllocationIsIgnored(): void
-    {
-        $allocations = [
-            [
-                'grootboekrekening'          => '4010',
-                'kostenplaats'               => 'rd-team-1',
-                'amount'                     => 60000.0,
-                'exclusief_in_winstbepaling' => false,
-            ],
-        ];
-        $glLines     = [['accountNumber' => '4010', 'kostenplaats' => 'rd-team-1']];
+	/**
+	 * A non-exclusive allocation is never flagged even on a matching pair.
+	 *
+	 * @return void
+	 */
+	public function testNonExclusiveAllocationIsIgnored(): void {
+		$allocations = [
+			[
+				'grootboekrekening' => '4010',
+				'kostenplaats' => 'rd-team-1',
+				'amount' => 60000.0,
+				'exclusief_in_winstbepaling' => false,
+			],
+		];
+		$glLines = [['accountNumber' => '4010', 'kostenplaats' => 'rd-team-1']];
 
-        self::assertSame([], $this->val->detectDuplicates($allocations, $glLines));
+		self::assertSame([], $this->val->detectDuplicates($allocations, $glLines));
 
-    }//end testNonExclusiveAllocationIsIgnored()
+	}//end testNonExclusiveAllocationIsIgnored()
 
-    /**
-     * A different kostenplaats on the same account is not a duplicate.
-     *
-     * @return void
-     */
-    public function testDifferentKostenplaatsIsNotDuplicate(): void
-    {
-        $allocations = [
-            [
-                'grootboekrekening'          => '4010',
-                'kostenplaats'               => 'rd-team-1',
-                'amount'                     => 60000.0,
-                'exclusief_in_winstbepaling' => true,
-            ],
-        ];
-        $glLines     = [['accountNumber' => '4010', 'kostenplaats' => 'sales-team']];
+	/**
+	 * A different kostenplaats on the same account is not a duplicate.
+	 *
+	 * @return void
+	 */
+	public function testDifferentKostenplaatsIsNotDuplicate(): void {
+		$allocations = [
+			[
+				'grootboekrekening' => '4010',
+				'kostenplaats' => 'rd-team-1',
+				'amount' => 60000.0,
+				'exclusief_in_winstbepaling' => true,
+			],
+		];
+		$glLines = [['accountNumber' => '4010', 'kostenplaats' => 'sales-team']];
 
-        self::assertSame([], $this->val->detectDuplicates($allocations, $glLines));
+		self::assertSame([], $this->val->detectDuplicates($allocations, $glLines));
 
-    }//end testDifferentKostenplaatsIsNotDuplicate()
+	}//end testDifferentKostenplaatsIsNotDuplicate()
 }//end class

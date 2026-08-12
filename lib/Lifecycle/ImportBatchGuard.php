@@ -35,73 +35,68 @@ namespace OCA\Shillinq\Lifecycle;
  *
  * @spec openspec/changes/administration-import-migration/tasks.md#task-3
  */
-class ImportBatchGuard
-{
-    /**
-     * Whether a batch may leave draft for parsing (REQ-AIM-002).
-     *
-     * Requires sourceFiles, administrationId, migrationDate, and at least one
-     * scope flag set true. Fail-closed: any missing precondition denies.
-     *
-     * @param array<string,mixed> $batch The ImportBatch object data.
-     *
-     * @return bool True only when every parse precondition is satisfied.
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-3
-     */
-    public function canParse(array $batch): bool
-    {
-        $sourceFiles = ($batch['sourceFiles'] ?? []);
-        if (is_array($sourceFiles) === false || $sourceFiles === []) {
-            return false;
-        }
+class ImportBatchGuard {
+	/**
+	 * Whether a batch may leave draft for parsing (REQ-AIM-002).
+	 *
+	 * Requires sourceFiles, administrationId, migrationDate, and at least one
+	 * scope flag set true. Fail-closed: any missing precondition denies.
+	 *
+	 * @param array<string,mixed> $batch The ImportBatch object data.
+	 *
+	 * @return bool True only when every parse precondition is satisfied.
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-3
+	 */
+	public function canParse(array $batch): bool {
+		$sourceFiles = ($batch['sourceFiles'] ?? []);
+		if (is_array($sourceFiles) === false || $sourceFiles === []) {
+			return false;
+		}
 
-        if (empty($batch['administrationId']) === true) {
-            return false;
-        }
+		if (empty($batch['administrationId']) === true) {
+			return false;
+		}
 
-        if (empty($batch['migrationDate']) === true) {
-            return false;
-        }
+		if (empty($batch['migrationDate']) === true) {
+			return false;
+		}
 
-        $scope = ($batch['scope'] ?? []);
-        if (is_array($scope) === false) {
-            return false;
-        }
+		$scope = ($batch['scope'] ?? []);
+		if (is_array($scope) === false) {
+			return false;
+		}
 
-        foreach (['chartOfAccounts', 'openingBalance', 'openItems', 'relations'] as $flag) {
-            if (($scope[$flag] ?? false) === true) {
-                return true;
-            }
-        }
+		foreach (['chartOfAccounts', 'openingBalance', 'openItems', 'relations'] as $flag) {
+			if (($scope[$flag] ?? false) === true) {
+				return true;
+			}
+		}
 
-        return false;
+		return false;
+	}//end canParse()
 
-    }//end canParse()
+	/**
+	 * Whether a posted batch may be reversed (REQ-AIM-009).
+	 *
+	 * True only when the batch is in the posted state AND the target period is
+	 * still open. Fail-closed: a closed period or any non-posted state denies,
+	 * so reversal can never unwind books in a closed period.
+	 *
+	 * @param array<string,mixed> $batch The ImportBatch object data.
+	 * @param bool $periodOpen Whether the target FiscalPeriod is open
+	 *                         (resolved by the caller via the
+	 *                         bookkeeping-period-close surface).
+	 *
+	 * @return bool True only for a posted batch in an open period.
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-3
+	 */
+	public function canReverse(array $batch, bool $periodOpen): bool {
+		if (($batch['status'] ?? '') !== 'posted') {
+			return false;
+		}
 
-    /**
-     * Whether a posted batch may be reversed (REQ-AIM-009).
-     *
-     * True only when the batch is in the posted state AND the target period is
-     * still open. Fail-closed: a closed period or any non-posted state denies,
-     * so reversal can never unwind books in a closed period.
-     *
-     * @param array<string,mixed> $batch      The ImportBatch object data.
-     * @param bool                $periodOpen Whether the target FiscalPeriod is open
-     *                                        (resolved by the caller via the
-     *                                        bookkeeping-period-close surface).
-     *
-     * @return bool True only for a posted batch in an open period.
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-3
-     */
-    public function canReverse(array $batch, bool $periodOpen): bool
-    {
-        if (($batch['status'] ?? '') !== 'posted') {
-            return false;
-        }
-
-        return $periodOpen === true;
-
-    }//end canReverse()
+		return $periodOpen === true;
+	}//end canReverse()
 }//end class

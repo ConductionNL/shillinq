@@ -50,32 +50,31 @@ namespace OCA\Shillinq\Reporting;
 /**
  * Contract for a single report type's generator.
  */
-interface ReportGeneratorInterface
-{
-    /**
-     * The ReportCatalogue report-type id this generator produces (e.g. 'saft',
-     * 'trial-balance', 'annual-accounts', 'vat-return').
-     *
-     * @return string
-     */
-    public static function reportType(): string;
+interface ReportGeneratorInterface {
+	/**
+	 * The ReportCatalogue report-type id this generator produces (e.g. 'saft',
+	 * 'trial-balance', 'annual-accounts', 'vat-return').
+	 *
+	 * @return string
+	 */
+	public static function reportType(): string;
 
-    /**
-     * The formats this generator can emit, in preference order. DATA reports return
-     * e.g. ['xml'] or ['csv']; DOCUMENT reports return ['docx', 'odt', 'pdf'] (the
-     * editable formats first, since docudesk renders them from one template).
-     *
-     * @return array<int, string>
-     */
-    public static function supportedFormats(): array;
+	/**
+	 * The formats this generator can emit, in preference order. DATA reports return
+	 * e.g. ['xml'] or ['csv']; DOCUMENT reports return ['docx', 'odt', 'pdf'] (the
+	 * editable formats first, since docudesk renders them from one template).
+	 *
+	 * @return array<int, string>
+	 */
+	public static function supportedFormats(): array;
 
-    /**
-     * Render the report.
-     *
-     * @param array<string, mixed> $context `{ period, administrationId, jurisdiction?, ... }`.
-     * @param string               $format  One of supportedFormats().
-     *
-     * @return GeneratedFile
-     */
-    public function generate(array $context, string $format): GeneratedFile;
+	/**
+	 * Render the report.
+	 *
+	 * @param array<string, mixed> $context `{ period, administrationId, jurisdiction?, ... }`.
+	 * @param string $format One of supportedFormats().
+	 *
+	 * @return GeneratedFile
+	 */
+	public function generate(array $context, string $format): GeneratedFile;
 }//end interface

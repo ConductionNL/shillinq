@@ -29,189 +29,172 @@ use ZipArchive;
 /**
  * Tests REQ-ENSIA-006 college-verklaring DOCX generation.
  */
-class ENSIAVerklaringGeneratorTest extends TestCase
-{
+class ENSIAVerklaringGeneratorTest extends TestCase {
 
-    private ENSIAVerklaringGenerator $generator;
+	private ENSIAVerklaringGenerator $generator;
 
+	protected function setUp(): void {
+		parent::setUp();
+		$this->generator = new ENSIAVerklaringGenerator();
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->generator = new ENSIAVerklaringGenerator();
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * REQ-ENSIA-006: result is a valid OOXML ZIP archive carrying the four
+	 * required parts.
+	 *
+	 * @return void
+	 */
+	public function testRenderProducesValidDocxArchive(): void {
+		$docx = $this->generator->render(
+			cyclus: [
+				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'year' => 2026,
+			],
+			vragen: [],
+			bevindingen: []
+		);
 
+		$this->assertGreaterThan(500, strlen($docx));
 
-    /**
-     * REQ-ENSIA-006: result is a valid OOXML ZIP archive carrying the four
-     * required parts.
-     *
-     * @return void
-     */
-    public function testRenderProducesValidDocxArchive(): void
-    {
-        $docx = $this->generator->render(
-            cyclus: [
-                'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
-                'year'        => 2026,
-            ],
-            vragen: [],
-            bevindingen: []
-        );
+		$tmp = tempnam(sys_get_temp_dir(), 'docx-test-');
+		file_put_contents($tmp, $docx);
 
-        $this->assertGreaterThan(500, strlen($docx));
+		$zip = new ZipArchive();
+		$opened = $zip->open($tmp);
+		$this->assertTrue($opened === true);
 
-        $tmp = tempnam(sys_get_temp_dir(), 'docx-test-');
-        file_put_contents($tmp, $docx);
+		$parts = [];
+		for ($i = 0; $i < $zip->numFiles; $i++) {
+			$parts[] = $zip->getNameIndex($i);
+		}
 
-        $zip    = new ZipArchive();
-        $opened = $zip->open($tmp);
-        $this->assertTrue($opened === true);
+		$this->assertContains('[Content_Types].xml', $parts);
+		$this->assertContains('_rels/.rels', $parts);
+		$this->assertContains('word/_rels/document.xml.rels', $parts);
+		$this->assertContains('word/document.xml', $parts);
 
-        $parts = [];
-        for ($i = 0; $i < $zip->numFiles; $i++) {
-            $parts[] = $zip->getNameIndex($i);
-        }
+		$zip->close();
+		unlink($tmp);
 
-        $this->assertContains('[Content_Types].xml', $parts);
-        $this->assertContains('_rels/.rels', $parts);
-        $this->assertContains('word/_rels/document.xml.rels', $parts);
-        $this->assertContains('word/document.xml', $parts);
+	}//end testRenderProducesValidDocxArchive()
 
-        $zip->close();
-        unlink($tmp);
+	/**
+	 * REQ-ENSIA-006: rendered DOCX includes organisation name + KvK.
+	 *
+	 * @return void
+	 */
+	public function testRenderIncludesOrganisationData(): void {
+		$docx = $this->generator->render(
+			cyclus: [
+				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'year' => 2026,
+			],
+			vragen: [],
+			bevindingen: []
+		);
 
-    }//end testRenderProducesValidDocxArchive()
+		$documentXml = $this->extractDocumentXml($docx);
 
+		$this->assertStringContainsString('Gemeente Voorbeeld', $documentXml);
+		$this->assertStringContainsString('12345678', $documentXml);
+		$this->assertStringContainsString('2026', $documentXml);
 
-    /**
-     * REQ-ENSIA-006: rendered DOCX includes organisation name + KvK.
-     *
-     * @return void
-     */
-    public function testRenderIncludesOrganisationData(): void
-    {
-        $docx = $this->generator->render(
-            cyclus: [
-                'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
-                'year'        => 2026,
-            ],
-            vragen: [],
-            bevindingen: []
-        );
+	}//end testRenderIncludesOrganisationData()
 
-        $documentXml = $this->extractDocumentXml($docx);
+	/**
+	 * REQ-ENSIA-006: rendered DOCX includes per-domein summary lines.
+	 *
+	 * @return void
+	 */
+	public function testRenderIncludesPerDomeinSummary(): void {
+		$docx = $this->generator->render(
+			cyclus: [
+				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'year' => 2026,
+			],
+			vragen: [
+				['domein' => 'BIO',   'volwassenheidsScore' => 4, 'normniveau' => 3],
+				['domein' => 'BIO',   'volwassenheidsScore' => 2, 'normniveau' => 3],
+				['domein' => 'DigiD', 'antwoord' => 'ja'],
+			],
+			bevindingen: []
+		);
 
-        $this->assertStringContainsString('Gemeente Voorbeeld', $documentXml);
-        $this->assertStringContainsString('12345678', $documentXml);
-        $this->assertStringContainsString('2026', $documentXml);
+		$documentXml = $this->extractDocumentXml($docx);
+		$this->assertStringContainsString('BIO', $documentXml);
+		$this->assertStringContainsString('DigiD', $documentXml);
 
-    }//end testRenderIncludesOrganisationData()
+	}//end testRenderIncludesPerDomeinSummary()
 
+	/**
+	 * REQ-ENSIA-006: rendered DOCX lists top findings + mitigation plan.
+	 *
+	 * @return void
+	 */
+	public function testRenderListsTopFindings(): void {
+		$docx = $this->generator->render(
+			cyclus: [
+				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'year' => 2026,
+			],
+			vragen: [],
+			bevindingen: [
+				[
+					'type' => 'tekortkoming',
+					'beschrijving' => 'BIO-9.1.1 score 2 onder norm 3',
+					'mitigatieActie' => 'Implementeer access-review proces.',
+				],
+			]
+		);
 
-    /**
-     * REQ-ENSIA-006: rendered DOCX includes per-domein summary lines.
-     *
-     * @return void
-     */
-    public function testRenderIncludesPerDomeinSummary(): void
-    {
-        $docx = $this->generator->render(
-            cyclus: [
-                'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
-                'year'        => 2026,
-            ],
-            vragen: [
-                ['domein' => 'BIO',   'volwassenheidsScore' => 4, 'normniveau' => 3],
-                ['domein' => 'BIO',   'volwassenheidsScore' => 2, 'normniveau' => 3],
-                ['domein' => 'DigiD', 'antwoord' => 'ja'],
-            ],
-            bevindingen: []
-        );
+		$documentXml = $this->extractDocumentXml($docx);
+		$this->assertStringContainsString('BIO-9.1.1', $documentXml);
+		$this->assertStringContainsString('access-review', $documentXml);
 
-        $documentXml = $this->extractDocumentXml($docx);
-        $this->assertStringContainsString('BIO', $documentXml);
-        $this->assertStringContainsString('DigiD', $documentXml);
+	}//end testRenderListsTopFindings()
 
-    }//end testRenderIncludesPerDomeinSummary()
+	/**
+	 * REQ-ENSIA-006: rendered DOCX carries handtekeningvelden for ondertekenaars.
+	 *
+	 * @return void
+	 */
+	public function testRenderIncludesSignatureFields(): void {
+		$docx = $this->generator->render(
+			cyclus: [
+				'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
+				'year' => 2026,
+			],
+			vragen: [],
+			bevindingen: []
+		);
 
+		$documentXml = $this->extractDocumentXml($docx);
+		$this->assertStringContainsString('Burgemeester', $documentXml);
+		$this->assertStringContainsString('Wethouder', $documentXml);
+		$this->assertStringContainsString('Secretaris', $documentXml);
+		$this->assertStringContainsString('Datum', $documentXml);
 
-    /**
-     * REQ-ENSIA-006: rendered DOCX lists top findings + mitigation plan.
-     *
-     * @return void
-     */
-    public function testRenderListsTopFindings(): void
-    {
-        $docx = $this->generator->render(
-            cyclus: [
-                'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
-                'year'        => 2026,
-            ],
-            vragen: [],
-            bevindingen: [
-                [
-                    'type'           => 'tekortkoming',
-                    'beschrijving'   => 'BIO-9.1.1 score 2 onder norm 3',
-                    'mitigatieActie' => 'Implementeer access-review proces.',
-                ],
-            ]
-        );
+	}//end testRenderIncludesSignatureFields()
 
-        $documentXml = $this->extractDocumentXml($docx);
-        $this->assertStringContainsString('BIO-9.1.1', $documentXml);
-        $this->assertStringContainsString('access-review', $documentXml);
+	/**
+	 * Pull word/document.xml out of a DOCX byte string for assertion.
+	 *
+	 * @param string $docx Binary DOCX content.
+	 *
+	 * @return string XML.
+	 */
+	private function extractDocumentXml(string $docx): string {
+		$tmp = tempnam(sys_get_temp_dir(), 'docx-extract-');
+		file_put_contents($tmp, $docx);
 
-    }//end testRenderListsTopFindings()
+		$zip = new ZipArchive();
+		$zip->open($tmp);
+		$xml = (string)$zip->getFromName('word/document.xml');
+		$zip->close();
+		unlink($tmp);
 
-
-    /**
-     * REQ-ENSIA-006: rendered DOCX carries handtekeningvelden for ondertekenaars.
-     *
-     * @return void
-     */
-    public function testRenderIncludesSignatureFields(): void
-    {
-        $docx = $this->generator->render(
-            cyclus: [
-                'organisatie' => ['kvk' => '12345678', 'name' => 'Gemeente Voorbeeld'],
-                'year'        => 2026,
-            ],
-            vragen: [],
-            bevindingen: []
-        );
-
-        $documentXml = $this->extractDocumentXml($docx);
-        $this->assertStringContainsString('Burgemeester', $documentXml);
-        $this->assertStringContainsString('Wethouder', $documentXml);
-        $this->assertStringContainsString('Secretaris', $documentXml);
-        $this->assertStringContainsString('Datum', $documentXml);
-
-    }//end testRenderIncludesSignatureFields()
-
-
-    /**
-     * Pull word/document.xml out of a DOCX byte string for assertion.
-     *
-     * @param string $docx Binary DOCX content.
-     *
-     * @return string XML.
-     */
-    private function extractDocumentXml(string $docx): string
-    {
-        $tmp = tempnam(sys_get_temp_dir(), 'docx-extract-');
-        file_put_contents($tmp, $docx);
-
-        $zip = new ZipArchive();
-        $zip->open($tmp);
-        $xml = (string) $zip->getFromName('word/document.xml');
-        $zip->close();
-        unlink($tmp);
-
-        return $xml;
-
-    }//end extractDocumentXml()
-
+		return $xml;
+	}//end extractDocumentXml()
 
 }//end class

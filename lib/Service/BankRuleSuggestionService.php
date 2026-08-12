@@ -55,218 +55,212 @@ use Psr\Log\LoggerInterface;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-class BankRuleSuggestionService
-{
-    /**
-     * Default repeat threshold when the caller does not supply one.
-     *
-     * @var int
-     */
-    public const DEFAULT_THRESHOLD = 3;
+class BankRuleSuggestionService {
+	/**
+	 * Default repeat threshold when the caller does not supply one.
+	 *
+	 * @var int
+	 */
+	public const DEFAULT_THRESHOLD = 3;
 
-    /**
-     * Constructor.
-     *
-     * @param LoggerInterface $logger Logger (AI-degradation diagnostics).
-     *
-     * @return void
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Logger (AI-degradation diagnostics).
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Suggest MatchingRule proposals from a normalised categorisation history.
-     *
-     * Groups the history by (counterparty, targetGlAccount) and, for each group
-     * seen `k` or more times, emits ONE proposal. Nothing is persisted.
-     *
-     * @param list<array<string,mixed>> $history  Prior categorisations. Each item:
-     *                                            {counterpartyName, counterpartyIban,
-     *                                            targetType, targetGlAccount}.
-     * @param int                       $k        Repeat threshold (>= 1).
-     * @param object|null               $aiRanker Optional ranker exposing
-     *                                            rank(array $proposals): array. When
-     *                                            null / erroring, deterministic order.
-     *
-     * @return list<array<string,mixed>> Proposed rules (never persisted).
-     *
-     * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
-     */
-    public function suggestRulesFromHistory(array $history, int $k=self::DEFAULT_THRESHOLD, ?object $aiRanker=null): array
-    {
-        if ($k < 1) {
-            $k = 1;
-        }
+	/**
+	 * Suggest MatchingRule proposals from a normalised categorisation history.
+	 *
+	 * Groups the history by (counterparty, targetGlAccount) and, for each group
+	 * seen `k` or more times, emits ONE proposal. Nothing is persisted.
+	 *
+	 * @param list<array<string,mixed>> $history Prior categorisations. Each item:
+	 *                                           {counterpartyName, counterpartyIban,
+	 *                                           targetType, targetGlAccount}.
+	 * @param int $k Repeat threshold (>= 1).
+	 * @param object|null $aiRanker Optional ranker exposing
+	 *                              rank(array $proposals): array. When
+	 *                              null / erroring, deterministic order.
+	 *
+	 * @return list<array<string,mixed>> Proposed rules (never persisted).
+	 *
+	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-012)
+	 */
+	public function suggestRulesFromHistory(array $history, int $k = self::DEFAULT_THRESHOLD, ?object $aiRanker = null): array {
+		if ($k < 1) {
+			$k = 1;
+		}
 
-        // Aggregate occurrences per (counterparty, GL account).
-        $groups = [];
-        foreach ($history as $entry) {
-            if (is_array($entry) === false) {
-                continue;
-            }
+		// Aggregate occurrences per (counterparty, GL account).
+		$groups = [];
+		foreach ($history as $entry) {
+			if (is_array($entry) === false) {
+				continue;
+			}
 
-            $name = trim((string) ($entry['counterpartyName'] ?? ''));
-            $iban = trim((string) ($entry['counterpartyIban'] ?? ''));
-            $gl   = trim((string) ($entry['targetGlAccount'] ?? ''));
+			$name = trim((string)($entry['counterpartyName'] ?? ''));
+			$iban = trim((string)($entry['counterpartyIban'] ?? ''));
+			$gl = trim((string)($entry['targetGlAccount'] ?? ''));
 
-            // A categorisation needs a counterparty signal AND a GL target.
-            $counterpartyKey = $iban;
-            if ($name !== '') {
-                $counterpartyKey = $name;
-            }
+			// A categorisation needs a counterparty signal AND a GL target.
+			$counterpartyKey = $iban;
+			if ($name !== '') {
+				$counterpartyKey = $name;
+			}
 
-            if ($counterpartyKey === '' || $gl === '') {
-                continue;
-            }
+			if ($counterpartyKey === '' || $gl === '') {
+				continue;
+			}
 
-            $groupKey = $counterpartyKey.'|'.$gl;
-            if (isset($groups[$groupKey]) === false) {
-                $groups[$groupKey] = [
-                    'counterpartyName' => $name,
-                    'counterpartyIban' => $iban,
-                    'targetType'       => (string) ($entry['targetType'] ?? 'gl-transaction'),
-                    'targetGlAccount'  => $gl,
-                    'occurrences'      => 0,
-                ];
-            }
+			$groupKey = $counterpartyKey . '|' . $gl;
+			if (isset($groups[$groupKey]) === false) {
+				$groups[$groupKey] = [
+					'counterpartyName' => $name,
+					'counterpartyIban' => $iban,
+					'targetType' => (string)($entry['targetType'] ?? 'gl-transaction'),
+					'targetGlAccount' => $gl,
+					'occurrences' => 0,
+				];
+			}
 
-            $groups[$groupKey]['occurrences']++;
+			$groups[$groupKey]['occurrences']++;
 
-            // Preserve an IBAN if a later occurrence carries one.
-            if ($iban !== '' && $groups[$groupKey]['counterpartyIban'] === '') {
-                $groups[$groupKey]['counterpartyIban'] = $iban;
-            }
-        }//end foreach
+			// Preserve an IBAN if a later occurrence carries one.
+			if ($iban !== '' && $groups[$groupKey]['counterpartyIban'] === '') {
+				$groups[$groupKey]['counterpartyIban'] = $iban;
+			}
+		}//end foreach
 
-        // Emit a proposal for every group at or above the threshold.
-        $proposals = [];
-        foreach ($groups as $group) {
-            if ($group['occurrences'] < $k) {
-                continue;
-            }
+		// Emit a proposal for every group at or above the threshold.
+		$proposals = [];
+		foreach ($groups as $group) {
+			if ($group['occurrences'] < $k) {
+				continue;
+			}
 
-            $proposals[] = $this->toProposal(group: $group);
-        }
+			$proposals[] = $this->toProposal(group: $group);
+		}
 
-        // Deterministic order: occurrences desc, then counterparty asc.
-        usort(
-            $proposals,
-            static function (array $left, array $right): int {
-                if ($left['occurrences'] !== $right['occurrences']) {
-                    return ($right['occurrences'] <=> $left['occurrences']);
-                }
+		// Deterministic order: occurrences desc, then counterparty asc.
+		usort(
+			$proposals,
+			static function (array $left, array $right): int {
+				if ($left['occurrences'] !== $right['occurrences']) {
+					return ($right['occurrences'] <=> $left['occurrences']);
+				}
 
-                return strcmp((string) $left['ruleName'], (string) $right['ruleName']);
-            }
-        );
+				return strcmp((string)$left['ruleName'], (string)$right['ruleName']);
+			}
+		);
 
-        if ($aiRanker === null) {
-            return $proposals;
-        }
+		if ($aiRanker === null) {
+			return $proposals;
+		}
 
-        return $this->applyRankerOrFallback(aiRanker: $aiRanker, deterministic: $proposals);
+		return $this->applyRankerOrFallback(aiRanker: $aiRanker, deterministic: $proposals);
+	}//end suggestRulesFromHistory()
 
-    }//end suggestRulesFromHistory()
+	/**
+	 * Build a proposal (an unsaved MatchingRule shape) from an aggregated group.
+	 *
+	 * @param array<string,mixed> $group The aggregated counterparty/GL group.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function toProposal(array $group): array {
+		$name = (string)$group['counterpartyName'];
+		$iban = (string)$group['counterpartyIban'];
+		$gl = (string)$group['targetGlAccount'];
 
-    /**
-     * Build a proposal (an unsaved MatchingRule shape) from an aggregated group.
-     *
-     * @param array<string,mixed> $group The aggregated counterparty/GL group.
-     *
-     * @return array<string,mixed>
-     */
-    private function toProposal(array $group): array
-    {
-        $name = (string) $group['counterpartyName'];
-        $iban = (string) $group['counterpartyIban'];
-        $gl   = (string) $group['targetGlAccount'];
+		// Prefer an exact IBAN predicate when we have one (higher precision);
+		// otherwise a fuzzy name predicate.
+		if ($iban !== '') {
+			$predicates = [
+				[
+					'op' => 'counterparty-iban',
+					'iban' => $iban,
+				],
+			];
+			$label = $iban;
+			if ($name !== '') {
+				$label = $name;
+			}
+		} else {
+			$predicates = [
+				[
+					'op' => 'counterparty-fuzzy',
+					'name' => $name,
+					'threshold' => 0.9,
+				],
+			];
+			$label = $name;
+		}//end if
 
-        // Prefer an exact IBAN predicate when we have one (higher precision);
-        // otherwise a fuzzy name predicate.
-        if ($iban !== '') {
-            $predicates = [
-                [
-                    'op'   => 'counterparty-iban',
-                    'iban' => $iban,
-                ],
-            ];
-            $label      = $iban;
-            if ($name !== '') {
-                $label = $name;
-            }
-        } else {
-            $predicates = [
-                [
-                    'op'        => 'counterparty-fuzzy',
-                    'name'      => $name,
-                    'threshold' => 0.9,
-                ],
-            ];
-            $label      = $name;
-        }//end if
+		$occurrences = (int)$group['occurrences'];
 
-        $occurrences = (int) $group['occurrences'];
+		// Confidence grows with evidence, capped just under 1.0 (never certain
+		// from history alone; the human confirms).
+		$confidence = min(0.95, (0.6 + (0.05 * $occurrences)));
 
-        // Confidence grows with evidence, capped just under 1.0 (never certain
-        // from history alone; the human confirms).
-        $confidence = min(0.95, (0.6 + (0.05 * $occurrences)));
+		return [
+			'ruleName' => $label . ' → ' . $gl,
+			'predicates' => $predicates,
+			'targetType' => (string)$group['targetType'],
+			'targetGlAccount' => $gl,
+			'occurrences' => $occurrences,
+			'confidence' => round($confidence, 2),
+			'source' => 'history',
+		];
 
-        return [
-            'ruleName'        => $label.' → '.$gl,
-            'predicates'      => $predicates,
-            'targetType'      => (string) $group['targetType'],
-            'targetGlAccount' => $gl,
-            'occurrences'     => $occurrences,
-            'confidence'      => round($confidence, 2),
-            'source'          => 'history',
-        ];
+	}//end toProposal()
 
-    }//end toProposal()
+	/**
+	 * Ask the optional AI ranker to re-order the proposals, falling back to the
+	 * deterministic order on any absence / failure / malformed response.
+	 *
+	 * @param object $aiRanker Ranker with rank(array): array.
+	 * @param list<array<string,mixed>> $deterministic The deterministic proposals.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function applyRankerOrFallback(object $aiRanker, array $deterministic): array {
+		if (method_exists($aiRanker, 'rank') === false) {
+			return $deterministic;
+		}
 
-    /**
-     * Ask the optional AI ranker to re-order the proposals, falling back to the
-     * deterministic order on any absence / failure / malformed response.
-     *
-     * @param object                    $aiRanker      Ranker with rank(array): array.
-     * @param list<array<string,mixed>> $deterministic The deterministic proposals.
-     *
-     * @return list<array<string,mixed>>
-     */
-    private function applyRankerOrFallback(object $aiRanker, array $deterministic): array
-    {
-        if (method_exists($aiRanker, 'rank') === false) {
-            return $deterministic;
-        }
+		try {
+			$ranked = $aiRanker->rank($deterministic);
+		} catch (\Throwable $e) {
+			$this->logger->debug(
+				'BankRuleSuggestionService: AI ranker failed; using deterministic order',
+				['exception' => $e->getMessage()]
+			);
+			return $deterministic;
+		}
 
-        try {
-            $ranked = $aiRanker->rank($deterministic);
-        } catch (\Throwable $e) {
-            $this->logger->debug(
-                'BankRuleSuggestionService: AI ranker failed; using deterministic order',
-                ['exception' => $e->getMessage()]
-            );
-            return $deterministic;
-        }
+		// A ranker MUST return the same set (just re-ordered). Any shape drift
+		// (non-array, wrong count) is treated as unusable — fail safe.
+		if (is_array($ranked) === false || count($ranked) !== count($deterministic)) {
+			$this->logger->debug('BankRuleSuggestionService: AI ranker returned a malformed result; using deterministic order');
+			return $deterministic;
+		}
 
-        // A ranker MUST return the same set (just re-ordered). Any shape drift
-        // (non-array, wrong count) is treated as unusable — fail safe.
-        if (is_array($ranked) === false || count($ranked) !== count($deterministic)) {
-            $this->logger->debug('BankRuleSuggestionService: AI ranker returned a malformed result; using deterministic order');
-            return $deterministic;
-        }
+		$clean = [];
+		foreach ($ranked as $item) {
+			if (is_array($item) === false || isset($item['targetGlAccount']) === false) {
+				return $deterministic;
+			}
 
-        $clean = [];
-        foreach ($ranked as $item) {
-            if (is_array($item) === false || isset($item['targetGlAccount']) === false) {
-                return $deterministic;
-            }
+			$clean[] = $item;
+		}
 
-            $clean[] = $item;
-        }
-
-        return $clean;
-
-    }//end applyRankerOrFallback()
+		return $clean;
+	}//end applyRankerOrFallback()
 }//end class

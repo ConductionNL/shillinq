@@ -37,257 +37,243 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class LeasePaymentScheduleServiceTest extends TestCase
-{
+final class LeasePaymentScheduleServiceTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Captured saveObject() calls from the stub.
-     *
-     * @var array<int,array<string,mixed>>
-     */
-    private array $saved = [];
+	/**
+	 * Captured saveObject() calls from the stub.
+	 *
+	 * @var array<int,array<string,mixed>>
+	 */
+	private array $saved = [];
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->saved     = [];
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->saved = [];
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build the service with an ObjectService stub over the given leases.
-     *
-     * @param array<int,array<string,mixed>> $leases LeaseContract records.
-     *
-     * @return LeasePaymentScheduleService
-     */
-    private function buildService(array $leases): LeasePaymentScheduleService
-    {
-        $saved = &$this->saved;
-        $stub  = new class($leases, $saved) {
+	/**
+	 * Build the service with an ObjectService stub over the given leases.
+	 *
+	 * @param array<int,array<string,mixed>> $leases LeaseContract records.
+	 *
+	 * @return LeasePaymentScheduleService
+	 */
+	private function buildService(array $leases): LeasePaymentScheduleService {
+		$saved = &$this->saved;
+		$stub = new class($leases, $saved) {
 
-            /**
-             * Lease records.
-             *
-             * @var array<int,array<string,mixed>>
-             */
-            private array $leases;
+			/**
+			 * Lease records.
+			 *
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $leases;
 
-            /**
-             * Reference to the captured saveObject payloads.
-             *
-             * @var array<int,array<string,mixed>>
-             */
-            private array $saved;
+			/**
+			 * Reference to the captured saveObject payloads.
+			 *
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $saved;
 
-            /**
-             * Constructor.
-             *
-             * @param array<int,array<string,mixed>> $leases Lease records.
-             * @param array<int,array<string,mixed>> $saved  Capture sink (by reference).
-             */
-            public function __construct(array $leases, array &$saved)
-            {
-                $this->leases =& $leases;
-                $this->saved  =& $saved;
-            }//end __construct()
+			/**
+			 * Constructor.
+			 *
+			 * @param array<int,array<string,mixed>> $leases Lease records.
+			 * @param array<int,array<string,mixed>> $saved Capture sink (by reference).
+			 */
+			public function __construct(array $leases, array &$saved) {
+				$this->leases = & $leases;
+				$this->saved = & $saved;
+			}//end __construct()
 
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent schema setter.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                return $this;
-            }//end setSchema()
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Return leases matching the administration filter.
-             *
-             * @param array<string,mixed> $params Query params.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $admin = ($params['filters']['administrationId'] ?? null);
-                if ($admin === null) {
-                    return $this->leases;
-                }
+			/**
+			 * Return leases matching the administration filter.
+			 *
+			 * @param array<string,mixed> $params Query params.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$admin = ($params['filters']['administrationId'] ?? null);
+				if ($admin === null) {
+					return $this->leases;
+				}
 
-                return array_values(
-                    array_filter(
-                        $this->leases,
-                        static fn (array $lease): bool => ($lease['administrationId'] ?? null) === $admin
-                    )
-                );
-            }//end findAll()
+				return array_values(
+					array_filter(
+						$this->leases,
+						static fn (array $lease): bool => ($lease['administrationId'] ?? null) === $admin
+					)
+				);
+			}//end findAll()
 
-            /**
-             * Capture a saved object.
-             *
-             * @param array<string,mixed> $object   The object payload.
-             * @param string              $register Register slug.
-             * @param string              $schema   Schema slug.
-             *
-             * @return array<string,mixed>
-             */
-            public function saveObject(array $object, string $register, string $schema): array
-            {
-                $this->saved[] = ['object' => $object, 'schema' => $schema];
-                return $object;
-            }//end saveObject()
-        };
+			/**
+			 * Capture a saved object.
+			 *
+			 * @param array<string,mixed> $object The object payload.
+			 * @param string $register Register slug.
+			 * @param string $schema Schema slug.
+			 *
+			 * @return array<string,mixed>
+			 */
+			public function saveObject(array $object, string $register, string $schema): array {
+				$this->saved[] = ['object' => $object, 'schema' => $schema];
+				return $object;
+			}//end saveObject()
+		};
 
-        $this->container->method('get')->willReturn($stub);
+		$this->container->method('get')->willReturn($stub);
 
-        return new LeasePaymentScheduleService(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            calculator: new LeaseAmortizationCalculator(),
-            logger: $this->createMock(LoggerInterface::class),
-        );
+		return new LeasePaymentScheduleService(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			calculator: new LeaseAmortizationCalculator(),
+			logger: $this->createMock(LoggerInterface::class),
+		);
 
-    }//end buildService()
+	}//end buildService()
 
-    /**
-     * A capitalised lease writes one schedule row per period (REQ-LA-002).
-     *
-     * @return void
-     */
-    public function testGeneratesOneRowPerPeriod(): void
-    {
-        $lease = $this->capitalisedLease();
-        $count = $this->buildService([$lease])->generateSchedule('lease-1', 'adm-1');
+	/**
+	 * A capitalised lease writes one schedule row per period (REQ-LA-002).
+	 *
+	 * @return void
+	 */
+	public function testGeneratesOneRowPerPeriod(): void {
+		$lease = $this->capitalisedLease();
+		$count = $this->buildService([$lease])->generateSchedule('lease-1', 'adm-1');
 
-        self::assertSame(36, $count);
-        self::assertCount(36, $this->saved);
-        self::assertSame('LeasePaymentSchedule', $this->saved[0]['schema']);
-        self::assertSame('lease-1', $this->saved[0]['object']['leaseContract']);
-        self::assertSame('adm-1', $this->saved[0]['object']['administrationId']);
-        self::assertNull($this->saved[0]['object']['postedToGl']);
+		self::assertSame(36, $count);
+		self::assertCount(36, $this->saved);
+		self::assertSame('LeasePaymentSchedule', $this->saved[0]['schema']);
+		self::assertSame('lease-1', $this->saved[0]['object']['leaseContract']);
+		self::assertSame('adm-1', $this->saved[0]['object']['administrationId']);
+		self::assertNull($this->saved[0]['object']['postedToGl']);
 
-    }//end testGeneratesOneRowPerPeriod()
+	}//end testGeneratesOneRowPerPeriod()
 
-    /**
-     * A lease from another administration is invisible — IDOR-safe (ADR-005).
-     *
-     * @return void
-     */
-    public function testOutOfScopeLeaseWritesNothing(): void
-    {
-        $lease = $this->capitalisedLease();
-        // Same lease id but the caller passes a different administration scope.
-        $count = $this->buildService([$lease])->generateSchedule('lease-1', 'adm-OTHER');
+	/**
+	 * A lease from another administration is invisible — IDOR-safe (ADR-005).
+	 *
+	 * @return void
+	 */
+	public function testOutOfScopeLeaseWritesNothing(): void {
+		$lease = $this->capitalisedLease();
+		// Same lease id but the caller passes a different administration scope.
+		$count = $this->buildService([$lease])->generateSchedule('lease-1', 'adm-OTHER');
 
-        self::assertSame(0, $count);
-        self::assertCount(0, $this->saved);
+		self::assertSame(0, $count);
+		self::assertCount(0, $this->saved);
 
-    }//end testOutOfScopeLeaseWritesNothing()
+	}//end testOutOfScopeLeaseWritesNothing()
 
-    /**
-     * An exempt lease carries no schedule (REQ-LE-003).
-     *
-     * @return void
-     */
-    public function testExemptLeaseWritesNothing(): void
-    {
-        $lease = $this->capitalisedLease();
-        $lease['classification'] = 'short-term-exempt';
+	/**
+	 * An exempt lease carries no schedule (REQ-LE-003).
+	 *
+	 * @return void
+	 */
+	public function testExemptLeaseWritesNothing(): void {
+		$lease = $this->capitalisedLease();
+		$lease['classification'] = 'short-term-exempt';
 
-        $count = $this->buildService([$lease])->generateSchedule('lease-1', 'adm-1');
-        self::assertSame(0, $count);
-        self::assertCount(0, $this->saved);
+		$count = $this->buildService([$lease])->generateSchedule('lease-1', 'adm-1');
+		self::assertSame(0, $count);
+		self::assertCount(0, $this->saved);
 
-    }//end testExemptLeaseWritesNothing()
+	}//end testExemptLeaseWritesNothing()
 
-    /**
-     * Regenerating from a later sequence writes only the forward rows (REQ-LA-002).
-     *
-     * @return void
-     */
-    public function testRegenerateFromSequence(): void
-    {
-        $lease = $this->capitalisedLease();
-        $count = $this->buildService([$lease])->generateSchedule('lease-1', 'adm-1', 25);
+	/**
+	 * Regenerating from a later sequence writes only the forward rows (REQ-LA-002).
+	 *
+	 * @return void
+	 */
+	public function testRegenerateFromSequence(): void {
+		$lease = $this->capitalisedLease();
+		$count = $this->buildService([$lease])->generateSchedule('lease-1', 'adm-1', 25);
 
-        // Periods 25..36 = 12 rows.
-        self::assertSame(12, $count);
-        self::assertSame(25, $this->saved[0]['object']['periodSequence']);
+		// Periods 25..36 = 12 rows.
+		self::assertSame(12, $count);
+		self::assertSame(25, $this->saved[0]['object']['periodSequence']);
 
-    }//end testRegenerateFromSequence()
+	}//end testRegenerateFromSequence()
 
-    /**
-     * The read-only buildSchedule preview returns rows without persisting (REQ-LA-002).
-     *
-     * @return void
-     */
-    public function testBuildScheduleDoesNotPersist(): void
-    {
-        $lease = $this->capitalisedLease();
-        $rows  = $this->buildService([$lease])->buildSchedule('lease-1', 'adm-1');
+	/**
+	 * The read-only buildSchedule preview returns rows without persisting (REQ-LA-002).
+	 *
+	 * @return void
+	 */
+	public function testBuildScheduleDoesNotPersist(): void {
+		$lease = $this->capitalisedLease();
+		$rows = $this->buildService([$lease])->buildSchedule('lease-1', 'adm-1');
 
-        self::assertCount(36, $rows);
-        self::assertCount(0, $this->saved);
+		self::assertCount(36, $rows);
+		self::assertCount(0, $this->saved);
 
-    }//end testBuildScheduleDoesNotPersist()
+	}//end testBuildScheduleDoesNotPersist()
 
-    /**
-     * A capitalised lease fixture with a slug id.
-     *
-     * @return array<string,mixed>
-     */
-    private function capitalisedLease(): array
-    {
-        return [
-            '@self'                    => ['slug' => 'lease-1'],
-            'assetClass'               => 'vehicle',
-            'classification'           => 'IFRS16-capitalised',
-            'nonCancellableTermMonths' => 36,
-            'paymentFrequency'         => 'monthly',
-            'paymentTiming'            => 'in-arrears',
-            'basePaymentAmount'        => 1000.0,
-            'ibrPercent'               => 4.0,
-            'administrationId'         => 'adm-1',
-            'extensionOptions'         => [],
-        ];
+	/**
+	 * A capitalised lease fixture with a slug id.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function capitalisedLease(): array {
+		return [
+			'@self' => ['slug' => 'lease-1'],
+			'assetClass' => 'vehicle',
+			'classification' => 'IFRS16-capitalised',
+			'nonCancellableTermMonths' => 36,
+			'paymentFrequency' => 'monthly',
+			'paymentTiming' => 'in-arrears',
+			'basePaymentAmount' => 1000.0,
+			'ibrPercent' => 4.0,
+			'administrationId' => 'adm-1',
+			'extensionOptions' => [],
+		];
 
-    }//end capitalisedLease()
+	}//end capitalisedLease()
 }//end class

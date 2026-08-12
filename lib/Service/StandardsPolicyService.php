@@ -43,166 +43,157 @@ use Throwable;
 /**
  * Resolves the precedence-winning accounting framework from the StandardsPolicy.
  */
-class StandardsPolicyService
-{
+class StandardsPolicyService {
 
-    /**
-     * OpenRegister register slug the StandardsPolicy object lives in.
-     *
-     * @var string
-     */
-    private const REGISTER_SLUG = 'shillinq';
+	/**
+	 * OpenRegister register slug the StandardsPolicy object lives in.
+	 *
+	 * @var string
+	 */
+	private const REGISTER_SLUG = 'shillinq';
 
-    /**
-     * StandardsPolicy schema slug.
-     *
-     * @var string
-     */
-    private const SCHEMA = 'StandardsPolicy';
+	/**
+	 * StandardsPolicy schema slug.
+	 *
+	 * @var string
+	 */
+	private const SCHEMA = 'StandardsPolicy';
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily (ADR-022).
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-    ) {
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily (ADR-022).
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Resolve the highest-precedence enabled framework for a conflict topic.
-     *
-     * Loads the administration's StandardsPolicy (the default policy when
-     * $administrationId is null) and returns the winning framework key, or null
-     * when the policy is missing or has no enabled framework. The $topic argument
-     * is reserved for future per-topic applicability and does not yet narrow the
-     * result.
-     *
-     * @param string|null $topic            Conflict topic (e.g. 'leases', 'revenue'); reserved.
-     * @param string|null $administrationId Optional administration scope.
-     *
-     * @return string|null The winning framework key, or null.
-     */
-    public function resolve(?string $topic=null, ?string $administrationId=null): ?string
-    {
-        return $this->resolveFromPolicy($this->loadFrameworks($administrationId), $topic);
+	/**
+	 * Resolve the highest-precedence enabled framework for a conflict topic.
+	 *
+	 * Loads the administration's StandardsPolicy (the default policy when
+	 * $administrationId is null) and returns the winning framework key, or null
+	 * when the policy is missing or has no enabled framework. The $topic argument
+	 * is reserved for future per-topic applicability and does not yet narrow the
+	 * result.
+	 *
+	 * @param string|null $topic Conflict topic (e.g. 'leases', 'revenue'); reserved.
+	 * @param string|null $administrationId Optional administration scope.
+	 *
+	 * @return string|null The winning framework key, or null.
+	 */
+	public function resolve(?string $topic = null, ?string $administrationId = null): ?string {
+		return $this->resolveFromPolicy($this->loadFrameworks($administrationId), $topic);
+	}//end resolve()
 
-    }//end resolve()
+	/**
+	 * Pure ranking logic: pick the enabled framework with the lowest precedence.
+	 *
+	 * Disabled frameworks are ignored; ties break on the original order. Returns
+	 * null when no framework is enabled. Side-effect free and fully unit-tested
+	 * (REQ-ASP-003).
+	 *
+	 * @param array<int, array<string, mixed>> $frameworks The policy's frameworks[] list.
+	 * @param string|null $topic Conflict topic; reserved for future use.
+	 *
+	 * @return string|null The winning framework key, or null.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $topic is explicitly
+	 *     reserved for future use per its own docblock line above.
+	 */
+	public function resolveFromPolicy(array $frameworks, ?string $topic = null): ?string {
+		$enabled = array_values(
+			array_filter(
+				$frameworks,
+				static function ($framework): bool {
+					return is_array($framework) === true
+						&& ($framework['enabled'] ?? false) === true
+						&& isset($framework['key']) === true
+						&& is_string($framework['key']) === true;
+				}
+			)
+		);
 
-    /**
-     * Pure ranking logic: pick the enabled framework with the lowest precedence.
-     *
-     * Disabled frameworks are ignored; ties break on the original order. Returns
-     * null when no framework is enabled. Side-effect free and fully unit-tested
-     * (REQ-ASP-003).
-     *
-     * @param array<int, array<string, mixed>> $frameworks The policy's frameworks[] list.
-     * @param string|null                      $topic      Conflict topic; reserved for future use.
-     *
-     * @return string|null The winning framework key, or null.
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) $topic is explicitly
-     *     reserved for future use per its own docblock line above.
-     */
-    public function resolveFromPolicy(array $frameworks, ?string $topic=null): ?string
-    {
-        $enabled = array_values(
-            array_filter(
-                $frameworks,
-                static function ($framework): bool {
-                    return is_array($framework) === true
-                        && ($framework['enabled'] ?? false) === true
-                        && isset($framework['key']) === true
-                        && is_string($framework['key']) === true;
-                }
-            )
-        );
+		if (empty($enabled) === true) {
+			return null;
+		}
 
-        if (empty($enabled) === true) {
-            return null;
-        }
+		usort(
+			$enabled,
+			static function (array $left, array $right): int {
+				return ((int)($left['precedence'] ?? PHP_INT_MAX)) <=> ((int)($right['precedence'] ?? PHP_INT_MAX));
+			}
+		);
 
-        usort(
-            $enabled,
-            static function (array $left, array $right): int {
-                return ((int) ($left['precedence'] ?? PHP_INT_MAX)) <=> ((int) ($right['precedence'] ?? PHP_INT_MAX));
-            }
-        );
+		return (string)$enabled[0]['key'];
+	}//end resolveFromPolicy()
 
-        return (string) $enabled[0]['key'];
+	/**
+	 * Load the StandardsPolicy frameworks[] list through the real ObjectService.
+	 *
+	 * Returns the frameworks of the first matching StandardsPolicy object, or an
+	 * empty array when no policy exists (or OpenRegister is unavailable). Read
+	 * via the fluent setRegister/setSchema/findAll API per ADR-022.
+	 *
+	 * @param string|null $administrationId Optional administration scope.
+	 *
+	 * @return array<int, array<string, mixed>> The frameworks list (possibly empty).
+	 */
+	private function loadFrameworks(?string $administrationId): array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-    }//end resolveFromPolicy()
+			$filters = [];
+			if ($administrationId !== null) {
+				$filters['administrationId'] = $administrationId;
+			}
 
-    /**
-     * Load the StandardsPolicy frameworks[] list through the real ObjectService.
-     *
-     * Returns the frameworks of the first matching StandardsPolicy object, or an
-     * empty array when no policy exists (or OpenRegister is unavailable). Read
-     * via the fluent setRegister/setSchema/findAll API per ADR-022.
-     *
-     * @param string|null $administrationId Optional administration scope.
-     *
-     * @return array<int, array<string, mixed>> The frameworks list (possibly empty).
-     */
-    private function loadFrameworks(?string $administrationId): array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister(self::REGISTER_SLUG)
+				->setSchema(self::SCHEMA)
+				->findAll(
+					[
+						'filters' => $filters,
+						'limit' => 1,
+					]
+				);
+		} catch (Throwable $e) {
+			return [];
+		}
 
-            $filters = [];
-            if ($administrationId !== null) {
-                $filters['administrationId'] = $administrationId;
-            }
+		if (empty($rows) === true) {
+			return [];
+		}
 
-            $rows = $objectService
-                ->setRegister(self::REGISTER_SLUG)
-                ->setSchema(self::SCHEMA)
-                ->findAll(
-                    [
-                        'filters' => $filters,
-                        'limit'   => 1,
-                    ]
-                );
-        } catch (Throwable $e) {
-            return [];
-        }
+		$policy = $this->normalise($rows[0]);
+		$frameworks = ($policy['frameworks'] ?? []);
 
-        if (empty($rows) === true) {
-            return [];
-        }
+		return is_array($frameworks) === true ? $frameworks : [];
+	}//end loadFrameworks()
 
-        $policy     = $this->normalise($rows[0]);
-        $frameworks = ($policy['frameworks'] ?? []);
+	/**
+	 * Normalise an ObjectService row (ObjectEntity or array) to a plain array.
+	 *
+	 * @param mixed $row Raw row from ObjectService::findAll().
+	 *
+	 * @return array<string, mixed> The object as an associative array.
+	 */
+	private function normalise(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
 
-        return is_array($frameworks) === true ? $frameworks : [];
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$serialised = $row->jsonSerialize();
+			return is_array($serialised) === true ? $serialised : [];
+		}
 
-    }//end loadFrameworks()
+		if (is_object($row) === true) {
+			return (array)$row;
+		}
 
-    /**
-     * Normalise an ObjectService row (ObjectEntity or array) to a plain array.
-     *
-     * @param mixed $row Raw row from ObjectService::findAll().
-     *
-     * @return array<string, mixed> The object as an associative array.
-     */
-    private function normalise(mixed $row): array
-    {
-        if (is_array($row) === true) {
-            return $row;
-        }
-
-        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-            $serialised = $row->jsonSerialize();
-            return is_array($serialised) === true ? $serialised : [];
-        }
-
-        if (is_object($row) === true) {
-            return (array) $row;
-        }
-
-        return [];
-
-    }//end normalise()
+		return [];
+	}//end normalise()
 }//end class

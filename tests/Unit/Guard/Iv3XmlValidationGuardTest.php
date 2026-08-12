@@ -25,67 +25,62 @@ namespace OCA\Shillinq\Tests\Unit\Guard;
 use OCA\Shillinq\Guard\Iv3XmlValidationGuard;
 use PHPUnit\Framework\TestCase;
 
-final class Iv3XmlValidationGuardTest extends TestCase
-{
-    private Iv3XmlValidationGuard $guard;
+final class Iv3XmlValidationGuardTest extends TestCase {
+	private Iv3XmlValidationGuard $guard;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->guard = new Iv3XmlValidationGuard();
-    }//end setUp()
+	protected function setUp(): void {
+		parent::setUp();
+		$this->guard = new Iv3XmlValidationGuard();
+	}//end setUp()
 
-    /**
-     * Good path: xmlAttachmentUri set + buckets non-empty passes.
-     *
-     * @return void
-     */
-    public function testValidateAllowedWhenXmlAndBucketsPresent(): void
-    {
-        $allowed = $this->guard->requireValidXml(
-            [
-                'xmlAttachmentUri' => 'docudesk://iv3-2026-q1.xml',
-                'buckets'          => [['code' => '1A', 'amount' => 1000]],
-            ]
-        );
+	/**
+	 * Good path: xmlAttachmentUri set + buckets non-empty passes.
+	 *
+	 * @return void
+	 */
+	public function testValidateAllowedWhenXmlAndBucketsPresent(): void {
+		$allowed = $this->guard->requireValidXml(
+			[
+				'xmlAttachmentUri' => 'docudesk://iv3-2026-q1.xml',
+				'buckets' => [['code' => '1A', 'amount' => 1000]],
+			]
+		);
 
-        self::assertTrue($allowed);
+		self::assertTrue($allowed);
 
-    }//end testValidateAllowedWhenXmlAndBucketsPresent()
+	}//end testValidateAllowedWhenXmlAndBucketsPresent()
 
-    /**
-     * Bad path: no xmlAttachmentUri denies (nothing generated yet).
-     *
-     * @return void
-     */
-    public function testValidateDeniedWithoutXmlAttachment(): void
-    {
-        $allowed = $this->guard->requireValidXml(
-            [
-                'xmlAttachmentUri' => '',
-                'buckets'          => [['code' => '1A', 'amount' => 1000]],
-            ]
-        );
+	/**
+	 * Bad path: no xmlAttachmentUri denies (nothing generated yet).
+	 *
+	 * @return void
+	 */
+	public function testValidateDeniedWithoutXmlAttachment(): void {
+		$allowed = $this->guard->requireValidXml(
+			[
+				'xmlAttachmentUri' => '',
+				'buckets' => [['code' => '1A', 'amount' => 1000]],
+			]
+		);
 
-        self::assertFalse($allowed);
+		self::assertFalse($allowed);
 
-    }//end testValidateDeniedWithoutXmlAttachment()
+	}//end testValidateDeniedWithoutXmlAttachment()
 
-    /**
-     * Bad path: empty buckets denies (nothing aggregated).
-     *
-     * @return void
-     */
-    public function testValidateDeniedWithEmptyBuckets(): void
-    {
-        $allowed = $this->guard->requireValidXml(
-            [
-                'xmlAttachmentUri' => 'docudesk://iv3-2026-q1.xml',
-                'buckets'          => [],
-            ]
-        );
+	/**
+	 * Bad path: empty buckets denies (nothing aggregated).
+	 *
+	 * @return void
+	 */
+	public function testValidateDeniedWithEmptyBuckets(): void {
+		$allowed = $this->guard->requireValidXml(
+			[
+				'xmlAttachmentUri' => 'docudesk://iv3-2026-q1.xml',
+				'buckets' => [],
+			]
+		);
 
-        self::assertFalse($allowed);
+		self::assertFalse($allowed);
 
-    }//end testValidateDeniedWithEmptyBuckets()
+	}//end testValidateDeniedWithEmptyBuckets()
 }//end class

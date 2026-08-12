@@ -35,42 +35,40 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-24
  */
-class ProgrammaAggregator
-{
-    /**
-     * Aggregate the child Taakvelden into a Programma's totals.
-     *
-     * Computes batenTotaal = Σ(Taakveld.baten); lastenTotaal = Σ(Taakveld.lasten);
-     * saldoVoorMutaties = batenTotaal - lastenTotaal; saldoNaMutaties =
-     * saldoVoorMutaties + mutatiesReserves. All sums are accumulated in integer
-     * cents to guarantee the programma-view equals the taakveld-view exactly.
-     *
-     * @param array<int,array<string,mixed>> $taakvelden       The child Taakveld rows.
-     * @param float                          $mutatiesReserves The reserve mutation (positive = toevoeging).
-     *
-     * @return array{batenTotaal:float,lastenTotaal:float,saldoVoorMutaties:float,saldoNaMutaties:float}
-     *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-24
-     */
-    public function aggregate(array $taakvelden, float $mutatiesReserves=0.0): array
-    {
-        $batenCents  = 0;
-        $lastenCents = 0;
-        foreach ($taakvelden as $taakveld) {
-            $batenCents  += (int) round(((float) ($taakveld['baten'] ?? 0)) * 100);
-            $lastenCents += (int) round(((float) ($taakveld['lasten'] ?? 0)) * 100);
-        }
+class ProgrammaAggregator {
+	/**
+	 * Aggregate the child Taakvelden into a Programma's totals.
+	 *
+	 * Computes batenTotaal = Σ(Taakveld.baten); lastenTotaal = Σ(Taakveld.lasten);
+	 * saldoVoorMutaties = batenTotaal - lastenTotaal; saldoNaMutaties =
+	 * saldoVoorMutaties + mutatiesReserves. All sums are accumulated in integer
+	 * cents to guarantee the programma-view equals the taakveld-view exactly.
+	 *
+	 * @param array<int,array<string,mixed>> $taakvelden The child Taakveld rows.
+	 * @param float $mutatiesReserves The reserve mutation (positive = toevoeging).
+	 *
+	 * @return array{batenTotaal:float,lastenTotaal:float,saldoVoorMutaties:float,saldoNaMutaties:float}
+	 *
+	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-24
+	 */
+	public function aggregate(array $taakvelden, float $mutatiesReserves = 0.0): array {
+		$batenCents = 0;
+		$lastenCents = 0;
+		foreach ($taakvelden as $taakveld) {
+			$batenCents += (int)round(((float)($taakveld['baten'] ?? 0)) * 100);
+			$lastenCents += (int)round(((float)($taakveld['lasten'] ?? 0)) * 100);
+		}
 
-        $saldoVoorCents = ($batenCents - $lastenCents);
-        $mutatiesCents  = (int) round($mutatiesReserves * 100);
-        $saldoNaCents   = ($saldoVoorCents + $mutatiesCents);
+		$saldoVoorCents = ($batenCents - $lastenCents);
+		$mutatiesCents = (int)round($mutatiesReserves * 100);
+		$saldoNaCents = ($saldoVoorCents + $mutatiesCents);
 
-        return [
-            'revenueTotal'       => (float) ($batenCents / 100),
-            'expensesTotal'      => (float) ($lastenCents / 100),
-            'balanceBeforeMovements' => (float) ($saldoVoorCents / 100),
-            'balanceAfterMovements'   => (float) ($saldoNaCents / 100),
-        ];
+		return [
+			'revenueTotal' => (float)($batenCents / 100),
+			'expensesTotal' => (float)($lastenCents / 100),
+			'balanceBeforeMovements' => (float)($saldoVoorCents / 100),
+			'balanceAfterMovements' => (float)($saldoNaCents / 100),
+		];
 
-    }//end aggregate()
+	}//end aggregate()
 }//end class

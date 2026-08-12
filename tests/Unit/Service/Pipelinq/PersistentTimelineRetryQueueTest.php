@@ -50,371 +50,333 @@ use Psr\Log\AbstractLogger;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/tasks.md
  */
-final class PersistentTimelineRetryQueueTest extends TestCase
-{
+final class PersistentTimelineRetryQueueTest extends TestCase {
 
+	/**
+	 * Build a recording logger.
+	 *
+	 * @return AbstractLogger
+	 */
+	private function recordingLogger(): AbstractLogger {
+		return new class extends AbstractLogger {
+			/**
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $records = [];
 
-    /**
-     * Build a recording logger.
-     *
-     * @return AbstractLogger
-     */
-    private function recordingLogger(): AbstractLogger
-    {
-        return new class extends AbstractLogger {
+			/**
+			 * @param mixed $level Level.
+			 * @param string|\Stringable $message Message.
+			 * @param array<string, mixed> $context Context.
+			 *
+			 * @return void
+			 */
+			public function log($level, string|\Stringable $message, array $context = []): void {
+				$this->records[] = ['level' => $level, 'message' => (string)$message, 'context' => $context];
+			}//end log()
+		};
 
-            /**
-             * @var array<int, array<string, mixed>>
-             */
-            public array $records = [];
+	}//end recordingLogger()
 
-            /**
-             * @param mixed                $level   Level.
-             * @param string|\Stringable   $message Message.
-             * @param array<string, mixed> $context Context.
-             *
-             * @return void
-             */
-            public function log($level, string|\Stringable $message, array $context=[]): void
-            {
-                $this->records[] = ['level' => $level, 'message' => (string) $message, 'context' => $context];
-            }//end log()
-        };
+	/**
+	 * Build a stub ObjectService that records saveObject() calls and
+	 * returns a stable id from a hand-coded sequence.
+	 *
+	 * @param array<int, array<string, mixed>> &$saved Capture of save calls.
+	 * @param string $idToReturn Id to return.
+	 *
+	 * @return object
+	 */
+	private function objectService(array &$saved, string $idToReturn = 'retry-entry-1'): object {
+		return new class($saved, $idToReturn) {
+			/**
+			 * @var array<int, array<string, mixed>>
+			 */
+			private array $saved;
 
-    }//end recordingLogger()
+			/**
+			 * @var string
+			 */
+			private string $idToReturn;
 
+			/**
+			 * @var string|null
+			 */
+			private ?string $register = null;
 
-    /**
-     * Build a stub ObjectService that records saveObject() calls and
-     * returns a stable id from a hand-coded sequence.
-     *
-     * @param array<int, array<string, mixed>> &$saved Capture of save calls.
-     * @param string                            $idToReturn Id to return.
-     *
-     * @return object
-     */
-    private function objectService(array &$saved, string $idToReturn='retry-entry-1'): object
-    {
-        return new class($saved, $idToReturn) {
+			/**
+			 * @var string|null
+			 */
+			private ?string $schema = null;
 
-            /**
-             * @var array<int, array<string, mixed>>
-             */
-            private array $saved;
+			/**
+			 * @param array<int, array<string, mixed>> &$saved Capture sink.
+			 * @param string $idToReturn Id returned by saveObject.
+			 */
+			public function __construct(array &$saved, string $idToReturn) {
+				$this->saved = & $saved;
+				$this->idToReturn = $idToReturn;
+			}//end __construct()
 
-            /**
-             * @var string
-             */
-            private string $idToReturn;
+			/**
+			 * @param string $slug Register slug.
+			 *
+			 * @return self
+			 */
+			public function setRegister(string $slug): self {
+				$this->register = $slug;
+				return $this;
+			}//end setRegister()
 
-            /**
-             * @var string|null
-             */
-            private ?string $register = null;
+			/**
+			 * @param string $schema Schema name.
+			 *
+			 * @return self
+			 */
+			public function setSchema(string $schema): self {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * @var string|null
-             */
-            private ?string $schema = null;
+			/**
+			 * @param array<string, mixed> $object Payload.
+			 * @param string|null $register Register slug (named).
+			 * @param string|null $schema Schema name (named).
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+				$this->saved[] = [
+					'register' => ($register ?? $this->register),
+					'schema' => ($schema ?? $this->schema),
+					'object' => $object,
+				];
 
-            /**
-             * @param array<int, array<string, mixed>> &$saved      Capture sink.
-             * @param string                            $idToReturn Id returned by saveObject.
-             */
-            public function __construct(array &$saved, string $idToReturn)
-            {
-                $this->saved      =& $saved;
-                $this->idToReturn = $idToReturn;
-            }//end __construct()
+				return array_merge(['id' => $this->idToReturn], $object);
+			}//end saveObject()
+		};
 
-            /**
-             * @param string $slug Register slug.
-             *
-             * @return self
-             */
-            public function setRegister(string $slug): self
-            {
-                $this->register = $slug;
-                return $this;
-            }//end setRegister()
+	}//end objectService()
 
-            /**
-             * @param string $schema Schema name.
-             *
-             * @return self
-             */
-            public function setSchema(string $schema): self
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
+	/**
+	 * Build a stub ObjectService whose saveObject() raises.
+	 *
+	 * @return object
+	 */
+	private function failingObjectService(): object {
+		return new class {
+			/**
+			 * @param string $slug Slug.
+			 *
+			 * @return self
+			 */
+			public function setRegister(string $slug): self {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * @param array<string, mixed> $object   Payload.
-             * @param string|null          $register Register slug (named).
-             * @param string|null          $schema   Schema name (named).
-             *
-             * @return array<string, mixed>
-             */
-            public function saveObject(array $object, ?string $register=null, ?string $schema=null): array
-            {
-                $this->saved[] = [
-                    'register' => ($register ?? $this->register),
-                    'schema'   => ($schema ?? $this->schema),
-                    'object'   => $object,
-                ];
+			/**
+			 * @param string $schema Schema.
+			 *
+			 * @return self
+			 */
+			public function setSchema(string $schema): self {
+				return $this;
+			}//end setSchema()
 
-                return array_merge(['id' => $this->idToReturn], $object);
-            }//end saveObject()
-        };
+			/**
+			 * @param array<string, mixed> $object Payload.
+			 * @param string|null $register Register (named).
+			 * @param string|null $schema Schema (named).
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function saveObject(array $object, ?string $register = null, ?string $schema = null): array {
+				throw new \RuntimeException('OR write failed');
+			}//end saveObject()
+		};
 
-    }//end objectService()
+	}//end failingObjectService()
 
+	/**
+	 * Build a container that returns the supplied ObjectService for the OR id.
+	 *
+	 * @param object $objectService Stub ObjectService.
+	 *
+	 * @return ContainerInterface
+	 */
+	private function container(object $objectService): ContainerInterface {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')
+			->willReturnCallback(function (string $id) use ($objectService) {
+				if ($id === 'OCA\\OpenRegister\\Service\\ObjectService') {
+					return $objectService;
+				}
 
-    /**
-     * Build a stub ObjectService whose saveObject() raises.
-     *
-     * @return object
-     */
-    private function failingObjectService(): object
-    {
-        return new class {
-            /**
-             * @param string $slug Slug.
-             *
-             * @return self
-             */
-            public function setRegister(string $slug): self
-            {
-                return $this;
-            }//end setRegister()
+				throw new \RuntimeException('Unexpected container lookup: ' . $id);
+			});
 
-            /**
-             * @param string $schema Schema.
-             *
-             * @return self
-             */
-            public function setSchema(string $schema): self
-            {
-                return $this;
-            }//end setSchema()
+		return $container;
+	}//end container()
 
-            /**
-             * @param array<string, mixed> $object   Payload.
-             * @param string|null          $register Register (named).
-             * @param string|null          $schema   Schema (named).
-             *
-             * @return array<string, mixed>
-             */
-            public function saveObject(array $object, ?string $register=null, ?string $schema=null): array
-            {
-                throw new \RuntimeException('OR write failed');
-            }//end saveObject()
-        };
+	/**
+	 * Build a recording IJobList stub.
+	 *
+	 * @param array<int, array{job:string, argument:mixed}> &$added Sink.
+	 *
+	 * @return IJobList
+	 */
+	private function jobList(array &$added): IJobList {
+		$jobList = $this->createMock(IJobList::class);
+		$jobList->method('add')->willReturnCallback(
+			function ($job, $argument = null) use (&$added) {
+				$added[] = ['job' => (string)$job, 'argument' => $argument];
+			}
+		);
 
-    }//end failingObjectService()
+		return $jobList;
+	}//end jobList()
 
+	/**
+	 * Build an ITimeFactory pinned to the supplied UTC timestamp.
+	 *
+	 * @param string $iso ISO-8601 instant (UTC).
+	 *
+	 * @return ITimeFactory
+	 */
+	private function timeAt(string $iso): ITimeFactory {
+		$factory = $this->createMock(ITimeFactory::class);
+		$factory->method('getDateTime')
+			->willReturn(new \DateTime($iso, new DateTimeZone('UTC')));
 
-    /**
-     * Build a container that returns the supplied ObjectService for the OR id.
-     *
-     * @param object $objectService Stub ObjectService.
-     *
-     * @return ContainerInterface
-     */
-    private function container(object $objectService): ContainerInterface
-    {
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')
-            ->willReturnCallback(function (string $id) use ($objectService) {
-                if ($id === 'OCA\\OpenRegister\\Service\\ObjectService') {
-                    return $objectService;
-                }
+		return $factory;
+	}//end timeAt()
 
-                throw new \RuntimeException('Unexpected container lookup: '.$id);
-            });
+	/**
+	 * Build the SettingsService mock with the supplied availability + slug.
+	 *
+	 * @param bool $available isOpenRegisterAvailable() result.
+	 * @param string $slug getRegisterSlug() result.
+	 *
+	 * @return SettingsService
+	 */
+	private function settings(bool $available, string $slug = 'shillinq'): SettingsService {
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('isOpenRegisterAvailable')->willReturn($available);
+		$settings->method('getRegisterSlug')->willReturn($slug);
 
-        return $container;
+		return $settings;
+	}//end settings()
 
-    }//end container()
+	/**
+	 * Build a TimelineEventDto with sensible defaults.
+	 *
+	 * @return TimelineEventDto
+	 */
+	private function event(): TimelineEventDto {
+		return new TimelineEventDto(
+			type: TimelineEventDto::TYPE_BOOKING_CREATED,
+			externalId: 'booking-abc-123',
+			timestamp: new DateTimeImmutable('2026-06-07T12:34:56Z', new DateTimeZone('UTC')),
+			contactId: 'pl-contact-42',
+			metadata: [
+				'bookingNumber' => 'booking-abc-123',
+				'service' => 'haircut',
+			]
+		);
 
+	}//end event()
 
-    /**
-     * Build a recording IJobList stub.
-     *
-     * @param array<int, array{job:string, argument:mixed}> &$added Sink.
-     *
-     * @return IJobList
-     */
-    private function jobList(array &$added): IJobList
-    {
-        $jobList = $this->createMock(IJobList::class);
-        $jobList->method('add')->willReturnCallback(
-            function ($job, $argument=null) use (&$added) {
-                $added[] = ['job' => (string) $job, 'argument' => $argument];
-            }
-        );
+	/**
+	 * Happy path: writes the retry entry, schedules a job tick.
+	 *
+	 * @return void
+	 */
+	public function testEnqueuePersistsEntryAndSchedulesJob(): void {
+		$saved = [];
+		$added = [];
+		$stub = $this->objectService($saved, idToReturn: 'retry-entry-77');
+		$logger = $this->recordingLogger();
 
-        return $jobList;
+		$queue = new PersistentTimelineRetryQueue(
+			settings: $this->settings(available: true),
+			container: $this->container($stub),
+			jobList: $this->jobList($added),
+			time: $this->timeAt('2026-06-07T13:00:00Z'),
+			logger: $logger,
+		);
 
-    }//end jobList()
+		$queue->enqueue(event: $this->event());
 
+		self::assertCount(1, $saved);
+		self::assertSame('TimelinePublishRetryEntry', $saved[0]['schema']);
 
-    /**
-     * Build an ITimeFactory pinned to the supplied UTC timestamp.
-     *
-     * @param string $iso ISO-8601 instant (UTC).
-     *
-     * @return ITimeFactory
-     */
-    private function timeAt(string $iso): ITimeFactory
-    {
-        $factory = $this->createMock(ITimeFactory::class);
-        $factory->method('getDateTime')
-            ->willReturn(new \DateTime($iso, new DateTimeZone('UTC')));
+		$payload = $saved[0]['object'];
+		self::assertSame('booking.created', $payload['type']);
+		self::assertSame('booking-abc-123', $payload['externalId']);
+		self::assertSame('pl-contact-42', $payload['contactId']);
+		self::assertSame('2026-06-07T12:34:56Z', $payload['timestampIso']);
+		self::assertSame(0, $payload['retryCount']);
+		self::assertSame(PipelinqTimelineRetryJob::DEFAULT_MAX_RETRIES, $payload['maxRetries']);
+		self::assertSame('2026-06-07T13:00:00Z', $payload['nextRetryAt']);
+		self::assertNull($payload['lastError']);
+		self::assertNull($payload['lastAttemptAt']);
 
-        return $factory;
+		self::assertCount(1, $added);
+		self::assertSame(PipelinqTimelineRetryJob::class, $added[0]['job']);
+		self::assertSame(['entryId' => 'retry-entry-77'], $added[0]['argument']);
 
-    }//end timeAt()
+	}//end testEnqueuePersistsEntryAndSchedulesJob()
 
+	/**
+	 * When OR is not available we short-circuit to a WARNING and do not
+	 * touch the job list.
+	 *
+	 * @return void
+	 */
+	public function testEnqueueWithoutOpenRegisterIsNoop(): void {
+		$added = [];
+		$logger = $this->recordingLogger();
 
-    /**
-     * Build the SettingsService mock with the supplied availability + slug.
-     *
-     * @param bool   $available isOpenRegisterAvailable() result.
-     * @param string $slug      getRegisterSlug() result.
-     *
-     * @return SettingsService
-     */
-    private function settings(bool $available, string $slug='shillinq'): SettingsService
-    {
-        $settings = $this->createMock(SettingsService::class);
-        $settings->method('isOpenRegisterAvailable')->willReturn($available);
-        $settings->method('getRegisterSlug')->willReturn($slug);
+		$queue = new PersistentTimelineRetryQueue(
+			settings: $this->settings(available: false),
+			container: $this->createMock(ContainerInterface::class),
+			jobList: $this->jobList($added),
+			time: $this->timeAt('2026-06-07T13:00:00Z'),
+			logger: $logger,
+		);
 
-        return $settings;
+		$queue->enqueue(event: $this->event());
 
-    }//end settings()
+		self::assertCount(0, $added);
+		self::assertNotEmpty($logger->records);
+		self::assertSame('warning', $logger->records[0]['level']);
 
+	}//end testEnqueueWithoutOpenRegisterIsNoop()
 
-    /**
-     * Build a TimelineEventDto with sensible defaults.
-     *
-     * @return TimelineEventDto
-     */
-    private function event(): TimelineEventDto
-    {
-        return new TimelineEventDto(
-            type: TimelineEventDto::TYPE_BOOKING_CREATED,
-            externalId: 'booking-abc-123',
-            timestamp: new DateTimeImmutable('2026-06-07T12:34:56Z', new DateTimeZone('UTC')),
-            contactId: 'pl-contact-42',
-            metadata: [
-                'bookingNumber' => 'booking-abc-123',
-                'service'       => 'haircut',
-            ]
-        );
+	/**
+	 * A failing OR write degrades to a WARNING without raising.
+	 *
+	 * @return void
+	 */
+	public function testEnqueueSwallowsOrWriteFailure(): void {
+		$added = [];
+		$logger = $this->recordingLogger();
 
-    }//end event()
+		$queue = new PersistentTimelineRetryQueue(
+			settings: $this->settings(available: true),
+			container: $this->container($this->failingObjectService()),
+			jobList: $this->jobList($added),
+			time: $this->timeAt('2026-06-07T13:00:00Z'),
+			logger: $logger,
+		);
 
+		// MUST NOT raise.
+		$queue->enqueue(event: $this->event());
 
-    /**
-     * Happy path: writes the retry entry, schedules a job tick.
-     *
-     * @return void
-     */
-    public function testEnqueuePersistsEntryAndSchedulesJob(): void
-    {
-        $saved  = [];
-        $added  = [];
-        $stub   = $this->objectService($saved, idToReturn: 'retry-entry-77');
-        $logger = $this->recordingLogger();
+		self::assertCount(0, $added);
+		self::assertNotEmpty($logger->records);
+		self::assertSame('warning', $logger->records[0]['level']);
 
-        $queue = new PersistentTimelineRetryQueue(
-            settings: $this->settings(available: true),
-            container: $this->container($stub),
-            jobList: $this->jobList($added),
-            time: $this->timeAt('2026-06-07T13:00:00Z'),
-            logger: $logger,
-        );
-
-        $queue->enqueue(event: $this->event());
-
-        self::assertCount(1, $saved);
-        self::assertSame('TimelinePublishRetryEntry', $saved[0]['schema']);
-
-        $payload = $saved[0]['object'];
-        self::assertSame('booking.created', $payload['type']);
-        self::assertSame('booking-abc-123', $payload['externalId']);
-        self::assertSame('pl-contact-42', $payload['contactId']);
-        self::assertSame('2026-06-07T12:34:56Z', $payload['timestampIso']);
-        self::assertSame(0, $payload['retryCount']);
-        self::assertSame(PipelinqTimelineRetryJob::DEFAULT_MAX_RETRIES, $payload['maxRetries']);
-        self::assertSame('2026-06-07T13:00:00Z', $payload['nextRetryAt']);
-        self::assertNull($payload['lastError']);
-        self::assertNull($payload['lastAttemptAt']);
-
-        self::assertCount(1, $added);
-        self::assertSame(PipelinqTimelineRetryJob::class, $added[0]['job']);
-        self::assertSame(['entryId' => 'retry-entry-77'], $added[0]['argument']);
-
-    }//end testEnqueuePersistsEntryAndSchedulesJob()
-
-
-    /**
-     * When OR is not available we short-circuit to a WARNING and do not
-     * touch the job list.
-     *
-     * @return void
-     */
-    public function testEnqueueWithoutOpenRegisterIsNoop(): void
-    {
-        $added  = [];
-        $logger = $this->recordingLogger();
-
-        $queue = new PersistentTimelineRetryQueue(
-            settings: $this->settings(available: false),
-            container: $this->createMock(ContainerInterface::class),
-            jobList: $this->jobList($added),
-            time: $this->timeAt('2026-06-07T13:00:00Z'),
-            logger: $logger,
-        );
-
-        $queue->enqueue(event: $this->event());
-
-        self::assertCount(0, $added);
-        self::assertNotEmpty($logger->records);
-        self::assertSame('warning', $logger->records[0]['level']);
-
-    }//end testEnqueueWithoutOpenRegisterIsNoop()
-
-
-    /**
-     * A failing OR write degrades to a WARNING without raising.
-     *
-     * @return void
-     */
-    public function testEnqueueSwallowsOrWriteFailure(): void
-    {
-        $added  = [];
-        $logger = $this->recordingLogger();
-
-        $queue = new PersistentTimelineRetryQueue(
-            settings: $this->settings(available: true),
-            container: $this->container($this->failingObjectService()),
-            jobList: $this->jobList($added),
-            time: $this->timeAt('2026-06-07T13:00:00Z'),
-            logger: $logger,
-        );
-
-        // MUST NOT raise.
-        $queue->enqueue(event: $this->event());
-
-        self::assertCount(0, $added);
-        self::assertNotEmpty($logger->records);
-        self::assertSame('warning', $logger->records[0]['level']);
-
-    }//end testEnqueueSwallowsOrWriteFailure()
-
+	}//end testEnqueueSwallowsOrWriteFailure()
 
 }//end class

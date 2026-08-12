@@ -28,272 +28,258 @@ use ReflectionMethod;
  * Cashflow schemas with their lifecycle/aggregations, and merges additively onto
  * the monolith without dropping existing schemas or objects (ADR-037).
  */
-final class CashflowForecastFragmentTest extends TestCase
-{
+final class CashflowForecastFragmentTest extends TestCase {
 
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/zzp-cashflow-13wk.json';
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/zzp-cashflow-13wk.json';
 
-    /**
-     * Absolute path to the monolith register file.
-     *
-     * @var string
-     */
-    private string $registerPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+	/**
+	 * Absolute path to the monolith register file.
+	 *
+	 * @var string
+	 */
+	private string $registerPath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
 
-    /**
-     * The eight schemas the fragment must declare.
-     *
-     * @var array<int,string>
-     */
-    private array $expectedSchemas = [
-        'CashflowForecastHorizon',
-        'CashflowWeek',
-        'CashflowARProjection',
-        'CashflowAPSchedule',
-        'CashflowRecurring',
-        'CashflowBufferPolicy',
-        'CashflowScenario',
-        'CashflowCalibrationReport',
-    ];
+	/**
+	 * The eight schemas the fragment must declare.
+	 *
+	 * @var array<int,string>
+	 */
+	private array $expectedSchemas = [
+		'CashflowForecastHorizon',
+		'CashflowWeek',
+		'CashflowARProjection',
+		'CashflowAPSchedule',
+		'CashflowRecurring',
+		'CashflowBufferPolicy',
+		'CashflowScenario',
+		'CashflowCalibrationReport',
+	];
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    }//end merge()
+	/**
+	 * Load and decode a JSON file.
+	 *
+	 * @param string $path Absolute path.
+	 *
+	 * @return array<mixed>
+	 */
+	private function load(string $path): array {
+		$data = json_decode((string)file_get_contents($path), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertIsArray($data);
+		return $data;
+	}//end load()
 
-    /**
-     * Load and decode a JSON file.
-     *
-     * @param string $path Absolute path.
-     *
-     * @return array<mixed>
-     */
-    private function load(string $path): array
-    {
-        $data = json_decode((string) file_get_contents($path), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertIsArray($data);
-        return $data;
+	/**
+	 * The fragment file is present and valid JSON with a components.schemas object.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = $this->load($this->fragmentPath);
+		self::assertArrayHasKey('schemas', $data['components']);
 
-    }//end load()
+	}//end testFragmentIsValidJson()
 
-    /**
-     * The fragment file is present and valid JSON with a components.schemas object.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = $this->load($this->fragmentPath);
-        self::assertArrayHasKey('schemas', $data['components']);
+	/**
+	 * The fragment declares all eight cashflow schemas.
+	 *
+	 * @return void
+	 */
+	public function testFragmentDeclaresAllCashflowSchemas(): void {
+		$data = $this->load($this->fragmentPath);
+		$schemas = $data['components']['schemas'];
 
-    }//end testFragmentIsValidJson()
+		foreach ($this->expectedSchemas as $name) {
+			self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
+			self::assertArrayHasKey('required', $schemas[$name]);
+			self::assertArrayHasKey('properties', $schemas[$name]);
+		}
 
-    /**
-     * The fragment declares all eight cashflow schemas.
-     *
-     * @return void
-     */
-    public function testFragmentDeclaresAllCashflowSchemas(): void
-    {
-        $data    = $this->load($this->fragmentPath);
-        $schemas = $data['components']['schemas'];
+	}//end testFragmentDeclaresAllCashflowSchemas()
 
-        foreach ($this->expectedSchemas as $name) {
-            self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
-            self::assertArrayHasKey('required', $schemas[$name]);
-            self::assertArrayHasKey('properties', $schemas[$name]);
-        }
+	/**
+	 * Every required field of every schema is also declared as a property.
+	 *
+	 * @return void
+	 */
+	public function testRequiredFieldsAreDeclaredProperties(): void {
+		$schemas = $this->load($this->fragmentPath)['components']['schemas'];
 
-    }//end testFragmentDeclaresAllCashflowSchemas()
+		foreach ($schemas as $name => $schema) {
+			$props = array_keys($schema['properties']);
+			foreach ($schema['required'] as $req) {
+				self::assertContains($req, $props, "$name.$req must be a declared property");
+			}
+		}
 
-    /**
-     * Every required field of every schema is also declared as a property.
-     *
-     * @return void
-     */
-    public function testRequiredFieldsAreDeclaredProperties(): void
-    {
-        $schemas = $this->load($this->fragmentPath)['components']['schemas'];
+	}//end testRequiredFieldsAreDeclaredProperties()
 
-        foreach ($schemas as $name => $schema) {
-            $props = array_keys($schema['properties']);
-            foreach ($schema['required'] as $req) {
-                self::assertContains($req, $props, "$name.$req must be a declared property");
-            }
-        }
+	/**
+	 * The horizon declares its rolling lifecycle (active/rolling/archived) per REQ-CF-000.
+	 *
+	 * @return void
+	 */
+	public function testHorizonDeclaresRollingLifecycle(): void {
+		$schemas = $this->load($this->fragmentPath)['components']['schemas'];
+		$lifecycle = $schemas['CashflowForecastHorizon']['x-openregister-lifecycle'];
 
-    }//end testRequiredFieldsAreDeclaredProperties()
+		self::assertSame('lifecycleState', $lifecycle['field']);
+		foreach (['active', 'rolling', 'archived'] as $state) {
+			self::assertArrayHasKey($state, $lifecycle['states'], "Lifecycle must declare $state");
+		}
 
-    /**
-     * The horizon declares its rolling lifecycle (active/rolling/archived) per REQ-CF-000.
-     *
-     * @return void
-     */
-    public function testHorizonDeclaresRollingLifecycle(): void
-    {
-        $schemas   = $this->load($this->fragmentPath)['components']['schemas'];
-        $lifecycle = $schemas['CashflowForecastHorizon']['x-openregister-lifecycle'];
+	}//end testHorizonDeclaresRollingLifecycle()
 
-        self::assertSame('lifecycleState', $lifecycle['field']);
-        foreach (['active', 'rolling', 'archived'] as $state) {
-            self::assertArrayHasKey($state, $lifecycle['states'], "Lifecycle must declare $state");
-        }
+	/**
+	 * The recurring schema's save precondition is the CashflowRecurringGuard.
+	 *
+	 * @return void
+	 */
+	public function testRecurringDeclaresGuardPrecondition(): void {
+		$schemas = $this->load($this->fragmentPath)['components']['schemas'];
+		$lifecycle = $schemas['CashflowRecurring']['x-openregister-lifecycle'];
 
-    }//end testHorizonDeclaresRollingLifecycle()
+		self::assertSame(
+			'OCA\\Shillinq\\Guard\\CashflowRecurringGuard::validateOnSave',
+			$lifecycle['preconditions']['save'],
+			'CashflowRecurring save must be guarded by CashflowRecurringGuard'
+		);
 
-    /**
-     * The recurring schema's save precondition is the CashflowRecurringGuard.
-     *
-     * @return void
-     */
-    public function testRecurringDeclaresGuardPrecondition(): void
-    {
-        $schemas   = $this->load($this->fragmentPath)['components']['schemas'];
-        $lifecycle = $schemas['CashflowRecurring']['x-openregister-lifecycle'];
+	}//end testRecurringDeclaresGuardPrecondition()
 
-        self::assertSame(
-            'OCA\\Shillinq\\Guard\\CashflowRecurringGuard::validateOnSave',
-            $lifecycle['preconditions']['save'],
-            'CashflowRecurring save must be guarded by CashflowRecurringGuard'
-        );
+	/**
+	 * The AR projection schema declares the receipts-by-week aggregation per REQ-CF-003.
+	 *
+	 * @return void
+	 */
+	public function testArProjectionDeclaresReceiptsAggregation(): void {
+		$schemas = $this->load($this->fragmentPath)['components']['schemas'];
+		$aggs = $schemas['CashflowARProjection']['x-openregister-aggregations'];
 
-    }//end testRecurringDeclaresGuardPrecondition()
+		self::assertArrayHasKey('projectedReceiptsByWeek', $aggs);
+		self::assertSame('sum', $aggs['projectedReceiptsByWeek']['operation']);
+		self::assertSame('verwachtOntvangstWeek', $aggs['projectedReceiptsByWeek']['groupBy']);
 
-    /**
-     * The AR projection schema declares the receipts-by-week aggregation per REQ-CF-003.
-     *
-     * @return void
-     */
-    public function testArProjectionDeclaresReceiptsAggregation(): void
-    {
-        $schemas = $this->load($this->fragmentPath)['components']['schemas'];
-        $aggs    = $schemas['CashflowARProjection']['x-openregister-aggregations'];
+	}//end testArProjectionDeclaresReceiptsAggregation()
 
-        self::assertArrayHasKey('projectedReceiptsByWeek', $aggs);
-        self::assertSame('sum', $aggs['projectedReceiptsByWeek']['operation']);
-        self::assertSame('verwachtOntvangstWeek', $aggs['projectedReceiptsByWeek']['groupBy']);
+	/**
+	 * Merging the fragment onto the monolith unions additively (ADR-037):
+	 * existing base schemas survive, every expected cashflow schema is
+	 * present in the merged output, and the fragment's seed objects are
+	 * concatenated onto the base's top-level objects list.
+	 *
+	 * Historical note: when this fragment was first authored its schemas
+	 * were net-new. They have since been promoted into the base monolith
+	 * (the merge is idempotent — re-importing the same key set is a no-op
+	 * by the deep-merge contract). This test now asserts the merge's
+	 * additive *outcome* rather than a strict net-new schema count.
+	 *
+	 * @return void
+	 */
+	public function testFragmentMergesAdditivelyOntoMonolith(): void {
+		$base = $this->load($this->registerPath);
+		$fragment = $this->load($this->fragmentPath);
 
-    }//end testArProjectionDeclaresReceiptsAggregation()
+		$baseSchemaCount = count($base['components']['schemas']);
+		$baseObjectCount = count(($base['objects'] ?? []));
 
-    /**
-     * Merging the fragment onto the monolith unions additively (ADR-037):
-     * existing base schemas survive, every expected cashflow schema is
-     * present in the merged output, and the fragment's seed objects are
-     * concatenated onto the base's top-level objects list.
-     *
-     * Historical note: when this fragment was first authored its schemas
-     * were net-new. They have since been promoted into the base monolith
-     * (the merge is idempotent — re-importing the same key set is a no-op
-     * by the deep-merge contract). This test now asserts the merge's
-     * additive *outcome* rather than a strict net-new schema count.
-     *
-     * @return void
-     */
-    public function testFragmentMergesAdditivelyOntoMonolith(): void
-    {
-        $base     = $this->load($this->registerPath);
-        $fragment = $this->load($this->fragmentPath);
+		$merged = $this->merge($base, $fragment);
 
-        $baseSchemaCount = count($base['components']['schemas']);
-        $baseObjectCount = count(($base['objects'] ?? []));
+		// Existing schemas are preserved (no key collision drops anything).
+		self::assertArrayHasKey('GLTransaction', $merged['components']['schemas']);
+		self::assertArrayHasKey('Account', $merged['components']['schemas']);
+		foreach (array_keys($base['components']['schemas']) as $existing) {
+			self::assertArrayHasKey(
+				$existing,
+				$merged['components']['schemas'],
+				"Existing schema $existing must survive merge"
+			);
+		}
 
-        $merged = $this->merge($base, $fragment);
+		// Every expected cashflow schema is present in the merged output.
+		foreach ($this->expectedSchemas as $name) {
+			self::assertArrayHasKey($name, $merged['components']['schemas']);
+		}
 
-        // Existing schemas are preserved (no key collision drops anything).
-        self::assertArrayHasKey('GLTransaction', $merged['components']['schemas']);
-        self::assertArrayHasKey('Account', $merged['components']['schemas']);
-        foreach (array_keys($base['components']['schemas']) as $existing) {
-            self::assertArrayHasKey(
-                $existing,
-                $merged['components']['schemas'],
-                "Existing schema $existing must survive merge"
-            );
-        }
+		// Schema count grows by the count of *net-new* schemas only — for an
+		// already-promoted fragment this is zero, the merge is idempotent.
+		$fragSchemas = array_keys($fragment['components']['schemas']);
+		$netNew = array_diff($fragSchemas, array_keys($base['components']['schemas']));
+		self::assertSame(
+			($baseSchemaCount + count($netNew)),
+			count($merged['components']['schemas']),
+			'Schema count after merge equals base + net-new fragment schemas (key union)'
+		);
 
-        // Every expected cashflow schema is present in the merged output.
-        foreach ($this->expectedSchemas as $name) {
-            self::assertArrayHasKey($name, $merged['components']['schemas']);
-        }
+		// Seed objects are concatenated (list union), not replaced.
+		$fragmentObjects = ($fragment['objects'] ?? []);
+		self::assertSame(
+			($baseObjectCount + count($fragmentObjects)),
+			count(($merged['objects'] ?? [])),
+			'Top-level objects are concatenated by list-union'
+		);
 
-        // Schema count grows by the count of *net-new* schemas only — for an
-        // already-promoted fragment this is zero, the merge is idempotent.
-        $fragSchemas = array_keys($fragment['components']['schemas']);
-        $netNew      = array_diff($fragSchemas, array_keys($base['components']['schemas']));
-        self::assertSame(
-            ($baseSchemaCount + count($netNew)),
-            count($merged['components']['schemas']),
-            'Schema count after merge equals base + net-new fragment schemas (key union)'
-        );
+	}//end testFragmentMergesAdditivelyOntoMonolith()
 
-        // Seed objects are concatenated (list union), not replaced.
-        $fragmentObjects = ($fragment['objects'] ?? []);
-        self::assertSame(
-            ($baseObjectCount + count($fragmentObjects)),
-            count(($merged['objects'] ?? [])),
-            'Top-level objects are concatenated by list-union'
-        );
+	/**
+	 * Every seed object references a schema declared in the fragment and carries
+	 * that schema's required fields.
+	 *
+	 * @return void
+	 */
+	public function testSeedObjectsAreValid(): void {
+		$fragment = $this->load($this->fragmentPath);
+		$schemas = $fragment['components']['schemas'];
 
-    }//end testFragmentMergesAdditivelyOntoMonolith()
+		foreach (($fragment['objects'] ?? []) as $object) {
+			$schemaName = $object['@self']['schema'];
+			self::assertArrayHasKey($schemaName, $schemas, "Seed references unknown schema $schemaName");
+			foreach ($schemas[$schemaName]['required'] as $req) {
+				self::assertArrayHasKey($req, $object, "Seed for $schemaName missing required $req");
+			}
+		}
 
-    /**
-     * Every seed object references a schema declared in the fragment and carries
-     * that schema's required fields.
-     *
-     * @return void
-     */
-    public function testSeedObjectsAreValid(): void
-    {
-        $fragment = $this->load($this->fragmentPath);
-        $schemas  = $fragment['components']['schemas'];
+	}//end testSeedObjectsAreValid()
 
-        foreach (($fragment['objects'] ?? []) as $object) {
-            $schemaName = $object['@self']['schema'];
-            self::assertArrayHasKey($schemaName, $schemas, "Seed references unknown schema $schemaName");
-            foreach ($schemas[$schemaName]['required'] as $req) {
-                self::assertArrayHasKey($req, $object, "Seed for $schemaName missing required $req");
-            }
-        }
+	/**
+	 * The buffer-policy seed obeys the two-tier alert ratios (REQ-CF-009):
+	 * vooralarm = buffer x 1.5, ondergrens = buffer x 0.5.
+	 *
+	 * @return void
+	 */
+	public function testBufferPolicySeedAlertRatios(): void {
+		$fragment = $this->load($this->fragmentPath);
+		$policy = null;
+		foreach (($fragment['objects'] ?? []) as $object) {
+			if ($object['@self']['schema'] === 'CashflowBufferPolicy') {
+				$policy = $object;
+				break;
+			}
+		}
 
-    }//end testSeedObjectsAreValid()
+		self::assertNotNull($policy, 'A CashflowBufferPolicy seed must exist');
+		self::assertEqualsWithDelta($policy['berekendeBuffer'] * 1.5, $policy['alertVooralarm'], 0.01);
+		self::assertEqualsWithDelta($policy['berekendeBuffer'] * 0.5, $policy['alertOndergrens'], 0.01);
 
-    /**
-     * The buffer-policy seed obeys the two-tier alert ratios (REQ-CF-009):
-     * vooralarm = buffer x 1.5, ondergrens = buffer x 0.5.
-     *
-     * @return void
-     */
-    public function testBufferPolicySeedAlertRatios(): void
-    {
-        $fragment = $this->load($this->fragmentPath);
-        $policy   = null;
-        foreach (($fragment['objects'] ?? []) as $object) {
-            if ($object['@self']['schema'] === 'CashflowBufferPolicy') {
-                $policy = $object;
-                break;
-            }
-        }
-
-        self::assertNotNull($policy, 'A CashflowBufferPolicy seed must exist');
-        self::assertEqualsWithDelta($policy['berekendeBuffer'] * 1.5, $policy['alertVooralarm'], 0.01);
-        self::assertEqualsWithDelta($policy['berekendeBuffer'] * 0.5, $policy['alertOndergrens'], 0.01);
-
-    }//end testBufferPolicySeedAlertRatios()
+	}//end testBufferPolicySeedAlertRatios()
 }//end class

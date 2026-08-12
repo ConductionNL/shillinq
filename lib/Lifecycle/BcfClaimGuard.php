@@ -58,167 +58,159 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-bcf-vat-compensation/specs.md
  */
-class BcfClaimGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface        $container    DI container for lazy ObjectService resolution.
-     * @param IAppConfig                $appConfig    App config for the register slug.
-     * @param BcfClaimService           $claimService Server-authoritative claim computation.
-     * @param BcfCompensationCalculator $calculator   Pure-logic submit-precondition helper.
-     * @param LoggerInterface           $logger       Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly BcfClaimService $claimService,
-        private readonly BcfCompensationCalculator $calculator,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class BcfClaimGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param BcfClaimService $claimService Server-authoritative claim computation.
+	 * @param BcfCompensationCalculator $calculator Pure-logic submit-precondition helper.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly BcfClaimService $claimService,
+		private readonly BcfCompensationCalculator $calculator,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the claim is non-empty and its quarter is closed (REQ-BCF-003).
-     *
-     * The compensable total is recomputed from the GL for the claim's
-     * administration + quarter (never trusted from the client object), and the
-     * quarter's FiscalPeriod must be closed. Fail-closed: returns false on any
-     * exception, a missing administration/quarter, an empty claim, or an open
-     * quarter (CWE-863).
-     *
-     * @param string                   $bcfClaimId The BcfClaim.id being transitioned.
-     * @param array<string,mixed>|null $object     The BcfClaim object being transitioned.
-     *
-     * @return bool True when the claim may transition to submitted.
-     *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/specs.md
-     */
-    public function canSubmit(string $bcfClaimId, ?array $object=null): bool
-    {
-        try {
-            $claim = $object;
-            if ($claim === null || isset($claim['claimQuarter']) === false) {
-                $claim = $this->resolveClaim(bcfClaimId: $bcfClaimId);
-            }
+	/**
+	 * Returns true iff the claim is non-empty and its quarter is closed (REQ-BCF-003).
+	 *
+	 * The compensable total is recomputed from the GL for the claim's
+	 * administration + quarter (never trusted from the client object), and the
+	 * quarter's FiscalPeriod must be closed. Fail-closed: returns false on any
+	 * exception, a missing administration/quarter, an empty claim, or an open
+	 * quarter (CWE-863).
+	 *
+	 * @param string $bcfClaimId The BcfClaim.id being transitioned.
+	 * @param array<string,mixed>|null $object The BcfClaim object being transitioned.
+	 *
+	 * @return bool True when the claim may transition to submitted.
+	 *
+	 * @spec openspec/changes/bookkeeping-bcf-vat-compensation/specs.md
+	 */
+	public function canSubmit(string $bcfClaimId, ?array $object = null): bool {
+		try {
+			$claim = $object;
+			if ($claim === null || isset($claim['claimQuarter']) === false) {
+				$claim = $this->resolveClaim(bcfClaimId: $bcfClaimId);
+			}
 
-            if ($claim === null) {
-                return false;
-            }
+			if ($claim === null) {
+				return false;
+			}
 
-            $administrationId = (string) ($claim['administrationId'] ?? '');
-            $claimQuarter     = (string) ($claim['claimQuarter'] ?? '');
-            if ($administrationId === '' || $claimQuarter === '') {
-                return false;
-            }
+			$administrationId = (string)($claim['administrationId'] ?? '');
+			$claimQuarter = (string)($claim['claimQuarter'] ?? '');
+			if ($administrationId === '' || $claimQuarter === '') {
+				return false;
+			}
 
-            // Server-authoritative recomputation — never trust the client total.
-            $computed = $this->claimService->computeClaim(
-                administrationId: $administrationId,
-                claimQuarter: $claimQuarter
-            );
+			// Server-authoritative recomputation — never trust the client total.
+			$computed = $this->claimService->computeClaim(
+				administrationId: $administrationId,
+				claimQuarter: $claimQuarter
+			);
 
-            $quarterClosed = $this->isQuarterClosed(
-                administrationId: $administrationId,
-                claimQuarter: $claimQuarter
-            );
+			$quarterClosed = $this->isQuarterClosed(
+				administrationId: $administrationId,
+				claimQuarter: $claimQuarter
+			);
 
-            return $this->calculator->canSubmit(
-                compensableTotal: $computed['totalCompensableAmount'],
-                quarterClosed: $quarterClosed
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'BcfClaimGuard: submit precondition check failed — denying submit transition (fail-closed)',
-                ['bcfClaimId' => $bcfClaimId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return $this->calculator->canSubmit(
+				compensableTotal: $computed['totalCompensableAmount'],
+				quarterClosed: $quarterClosed
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'BcfClaimGuard: submit precondition check failed — denying submit transition (fail-closed)',
+				['bcfClaimId' => $bcfClaimId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end canSubmit()
+	}//end canSubmit()
 
-    /**
-     * Resolve the BcfClaim object by id when it was not supplied to the guard.
-     *
-     * @param string $bcfClaimId The BcfClaim.id to resolve.
-     *
-     * @return array<string,mixed>|null The claim object, or null when not found.
-     */
-    private function resolveClaim(string $bcfClaimId): ?array
-    {
-        if ($bcfClaimId === '') {
-            return null;
-        }
+	/**
+	 * Resolve the BcfClaim object by id when it was not supplied to the guard.
+	 *
+	 * @param string $bcfClaimId The BcfClaim.id to resolve.
+	 *
+	 * @return array<string,mixed>|null The claim object, or null when not found.
+	 */
+	private function resolveClaim(string $bcfClaimId): ?array {
+		if ($bcfClaimId === '') {
+			return null;
+		}
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $claims        = $objectService
-            ->setRegister($this->register())
-            ->setSchema('BcfClaim')
-            ->findAll(['filters' => ['id' => $bcfClaimId]]);
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$claims = $objectService
+			->setRegister($this->register())
+			->setSchema('BcfClaim')
+			->findAll(['filters' => ['id' => $bcfClaimId]]);
 
-        foreach ($claims as $claim) {
-            $id = (string) ($claim['id'] ?? ($claim['@self']['id'] ?? ''));
-            if ($id === $bcfClaimId || isset($claim['claimQuarter']) === true) {
-                return $claim;
-            }
-        }
+		foreach ($claims as $claim) {
+			$id = (string)($claim['id'] ?? ($claim['@self']['id'] ?? ''));
+			if ($id === $bcfClaimId || isset($claim['claimQuarter']) === true) {
+				return $claim;
+			}
+		}
 
-        return null;
+		return null;
+	}//end resolveClaim()
 
-    }//end resolveClaim()
+	/**
+	 * Determine whether the claim quarter's fiscal period is closed (REQ-BCF-003).
+	 *
+	 * Looks up the administration's FiscalPeriod for the claim quarter; the
+	 * quarter is closed when a matching period exists with a closed/locked
+	 * status. A missing period or an open status fails closed (the quarter is
+	 * treated as not closed), preventing a mid-quarter submission.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $claimQuarter Quarter identifier (FiscalPeriod.periodId).
+	 *
+	 * @return bool True when the quarter's period is closed.
+	 */
+	private function isQuarterClosed(string $administrationId, string $claimQuarter): bool {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$periods = $objectService
+			->setRegister($this->register())
+			->setSchema('FiscalPeriod')
+			->findAll(
+				['filters' => ['administrationId' => $administrationId, 'periodId' => $claimQuarter]]
+			);
 
-    /**
-     * Determine whether the claim quarter's fiscal period is closed (REQ-BCF-003).
-     *
-     * Looks up the administration's FiscalPeriod for the claim quarter; the
-     * quarter is closed when a matching period exists with a closed/locked
-     * status. A missing period or an open status fails closed (the quarter is
-     * treated as not closed), preventing a mid-quarter submission.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $claimQuarter     Quarter identifier (FiscalPeriod.periodId).
-     *
-     * @return bool True when the quarter's period is closed.
-     */
-    private function isQuarterClosed(string $administrationId, string $claimQuarter): bool
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $periods       = $objectService
-            ->setRegister($this->register())
-            ->setSchema('FiscalPeriod')
-            ->findAll(
-                ['filters' => ['administrationId' => $administrationId, 'periodId' => $claimQuarter]]
-            );
+		$closedStatuses = ['closed', 'locked', 'gesloten', 'vergrendeld'];
+		foreach ($periods as $period) {
+			$status = strtolower((string)($period['status'] ?? ($period['state'] ?? '')));
+			if (in_array($status, $closedStatuses, true) === true) {
+				return true;
+			}
 
-        $closedStatuses = ['closed', 'locked', 'gesloten', 'vergrendeld'];
-        foreach ($periods as $period) {
-            $status = strtolower((string) ($period['status'] ?? ($period['state'] ?? '')));
-            if (in_array($status, $closedStatuses, true) === true) {
-                return true;
-            }
+			if (($period['closed'] ?? false) === true || ($period['isClosed'] ?? false) === true) {
+				return true;
+			}
+		}
 
-            if (($period['closed'] ?? false) === true || ($period['isClosed'] ?? false) === true) {
-                return true;
-            }
-        }
+		return false;
+	}//end isQuarterClosed()
 
-        return false;
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    }//end isQuarterClosed()
-
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

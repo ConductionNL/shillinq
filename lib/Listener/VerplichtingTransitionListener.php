@@ -64,143 +64,135 @@ use Throwable;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
  */
-class VerplichtingTransitionListener implements IEventListener
-{
-    /**
-     * Construct the listener.
-     *
-     * @param BudgetImpactEmitter    $emitter        Shared cross-app CloudEvent emitter.
-     * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
-     * @param LoggerInterface        $logger         Logger for fail-soft diagnostics.
-     */
-    public function __construct(
-        private readonly BudgetImpactEmitter $emitter,
-        private readonly ListenerSchemaResolver $schemaResolver,
-        private readonly LoggerInterface $logger,
-    ) {
+class VerplichtingTransitionListener implements IEventListener {
+	/**
+	 * Construct the listener.
+	 *
+	 * @param BudgetImpactEmitter $emitter Shared cross-app CloudEvent emitter.
+	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 */
+	public function __construct(
+		private readonly BudgetImpactEmitter $emitter,
+		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Handle an OR ObjectCreatedEvent or ObjectTransitionedEvent on the
-     * Verplichting schema.
-     *
-     * @param Event $event OR object lifecycle event.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
-     */
-    public function handle(Event $event): void
-    {
-        try {
-            $payload = $this->extractActivatedVerplichting(event: $event);
-            if ($payload === null) {
-                return;
-            }
+	/**
+	 * Handle an OR ObjectCreatedEvent or ObjectTransitionedEvent on the
+	 * Verplichting schema.
+	 *
+	 * @param Event $event OR object lifecycle event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+	 */
+	public function handle(Event $event): void {
+		try {
+			$payload = $this->extractActivatedVerplichting(event: $event);
+			if ($payload === null) {
+				return;
+			}
 
-            $this->emitIfTenderNed(verplichting: $payload);
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'VerplichtingTransitionListener: emission failed — fail-soft',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->emitIfTenderNed(verplichting: $payload);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'VerplichtingTransitionListener: emission failed — fail-soft',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Pull the activated Verplichting payload from an OR event, or null
-     * when the event is irrelevant.
-     *
-     * @param Event $event OR event.
-     *
-     * @return array<string, mixed>|null
-     */
-    private function extractActivatedVerplichting(Event $event): ?array
-    {
-        $entity = $this->resolveTargetEntity(event: $event);
-        if ($entity === null) {
-            return null;
-        }
+	/**
+	 * Pull the activated Verplichting payload from an OR event, or null
+	 * when the event is irrelevant.
+	 *
+	 * @param Event $event OR event.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function extractActivatedVerplichting(Event $event): ?array {
+		$entity = $this->resolveTargetEntity(event: $event);
+		if ($entity === null) {
+			return null;
+		}
 
-        $schema = $this->schemaResolver->schemaSlug(entity: $entity);
-        if ($this->isVerplichtingSchema(schema: $schema) === false) {
-            return null;
-        }
+		$schema = $this->schemaResolver->schemaSlug(entity: $entity);
+		if ($this->isVerplichtingSchema(schema: $schema) === false) {
+			return null;
+		}
 
-        $payload = $entity->getObject();
-        if (is_array($payload) === false) {
-            return null;
-        }
+		$payload = $entity->getObject();
+		if (is_array($payload) === false) {
+			return null;
+		}
 
-        // ObjectCreatedEvent fires for every fresh Verplichting; only emit
-        // for those that are already in the active state (the REQ-002
-        // auto-promotion path, design D4).
-        if ($event instanceof ObjectCreatedEvent === true
-            && (string) ($payload['status'] ?? '') !== 'active'
-        ) {
-            return null;
-        }
+		// ObjectCreatedEvent fires for every fresh Verplichting; only emit
+		// for those that are already in the active state (the REQ-002
+		// auto-promotion path, design D4).
+		if ($event instanceof ObjectCreatedEvent === true
+			&& (string)($payload['status'] ?? '') !== 'active'
+		) {
+			return null;
+		}
 
-        return $payload;
+		return $payload;
+	}//end extractActivatedVerplichting()
 
-    }//end extractActivatedVerplichting()
+	/**
+	 * Resolve the carrying entity for ObjectCreatedEvent or
+	 * ObjectTransitionedEvent-to-active, returning null when the event is
+	 * not a relevant lifecycle hook.
+	 *
+	 * @param Event $event OR event.
+	 *
+	 * @return \OCA\OpenRegister\Db\ObjectEntity|null
+	 */
+	private function resolveTargetEntity(Event $event): ?\OCA\OpenRegister\Db\ObjectEntity {
+		if ($event instanceof ObjectCreatedEvent === true) {
+			return $event->getObject();
+		}
 
-    /**
-     * Resolve the carrying entity for ObjectCreatedEvent or
-     * ObjectTransitionedEvent-to-active, returning null when the event is
-     * not a relevant lifecycle hook.
-     *
-     * @param Event $event OR event.
-     *
-     * @return \OCA\OpenRegister\Db\ObjectEntity|null
-     */
-    private function resolveTargetEntity(Event $event): ?\OCA\OpenRegister\Db\ObjectEntity
-    {
-        if ($event instanceof ObjectCreatedEvent === true) {
-            return $event->getObject();
-        }
+		if ($event instanceof ObjectTransitionedEvent === true
+			&& $event->getTo() === 'active'
+		) {
+			return $event->getObject();
+		}
 
-        if ($event instanceof ObjectTransitionedEvent === true
-            && $event->getTo() === 'active'
-        ) {
-            return $event->getObject();
-        }
+		return null;
+	}//end resolveTargetEntity()
 
-        return null;
+	/**
+	 * Emit the budget-impact event only for TenderNed-sourced obligations.
+	 *
+	 * @param array<string, mixed> $verplichting Verplichting payload.
+	 *
+	 * @return void
+	 */
+	private function emitIfTenderNed(array $verplichting): void {
+		if ((string)($verplichting['bron'] ?? '') !== 'tenderned') {
+			return;
+		}
 
-    }//end resolveTargetEntity()
+		$this->emitter->emitActivated(verplichting: $verplichting);
 
-    /**
-     * Emit the budget-impact event only for TenderNed-sourced obligations.
-     *
-     * @param array<string, mixed> $verplichting Verplichting payload.
-     *
-     * @return void
-     */
-    private function emitIfTenderNed(array $verplichting): void
-    {
-        if ((string) ($verplichting['bron'] ?? '') !== 'tenderned') {
-            return;
-        }
+	}//end emitIfTenderNed()
 
-        $this->emitter->emitActivated(verplichting: $verplichting);
+	/**
+	 * Check whether the schema slug is Verplichting.
+	 *
+	 * @param string $schema Schema slug from the event.
+	 *
+	 * @return bool
+	 */
+	private function isVerplichtingSchema(string $schema): bool {
+		$normalised = strtolower(trim($schema));
+		return ($normalised === 'verplichting'
+			|| str_ends_with(haystack: $normalised, needle: 'verplichting'));
 
-    }//end emitIfTenderNed()
-
-    /**
-     * Check whether the schema slug is Verplichting.
-     *
-     * @param string $schema Schema slug from the event.
-     *
-     * @return bool
-     */
-    private function isVerplichtingSchema(string $schema): bool
-    {
-        $normalised = strtolower(trim($schema));
-        return ($normalised === 'verplichting'
-            || str_ends_with(haystack: $normalised, needle: 'verplichting'));
-
-    }//end isVerplichtingSchema()
+	}//end isVerplichtingSchema()
 }//end class

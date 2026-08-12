@@ -34,64 +34,59 @@ namespace OCA\Shillinq\Service\Sms;
  *
  * @spec openspec/changes/bookings-sms-reminder-channel/tasks.md#task-21
  */
-final class SmsOptOutPolicy
-{
-    /**
-     * Whether a reminder is allowed to be sent to a recipient on a channel.
-     *
-     * Returns false (skip) when the channel is not active, or when the
-     * recipient has opted out and the channel respects opt-out. The default
-     * is to respect opt-out, so a missing/unknown respectOptOut flag is
-     * treated as true (fail-closed).
-     *
-     * @param array<string, mixed> $channel   The channel object (status, respectOptOut).
-     * @param array<string, mixed> $recipient The recipient contact (smsOptOut).
-     *
-     * @return bool True when dispatch is permitted.
-     *
-     * @spec openspec/changes/bookings-sms-reminder-channel/tasks.md#task-21
-     */
-    public function isSendAllowed(array $channel, array $recipient): bool
-    {
-        $status = ($channel['status'] ?? '');
-        if ($status !== 'active') {
-            return false;
-        }
+final class SmsOptOutPolicy {
+	/**
+	 * Whether a reminder is allowed to be sent to a recipient on a channel.
+	 *
+	 * Returns false (skip) when the channel is not active, or when the
+	 * recipient has opted out and the channel respects opt-out. The default
+	 * is to respect opt-out, so a missing/unknown respectOptOut flag is
+	 * treated as true (fail-closed).
+	 *
+	 * @param array<string, mixed> $channel The channel object (status, respectOptOut).
+	 * @param array<string, mixed> $recipient The recipient contact (smsOptOut).
+	 *
+	 * @return bool True when dispatch is permitted.
+	 *
+	 * @spec openspec/changes/bookings-sms-reminder-channel/tasks.md#task-21
+	 */
+	public function isSendAllowed(array $channel, array $recipient): bool {
+		$status = ($channel['status'] ?? '');
+		if ($status !== 'active') {
+			return false;
+		}
 
-        $respectOptOut = (bool) ($channel['respectOptOut'] ?? true);
-        $optedOut      = (bool) ($recipient['smsOptOut'] ?? false);
+		$respectOptOut = (bool)($channel['respectOptOut'] ?? true);
+		$optedOut = (bool)($recipient['smsOptOut'] ?? false);
 
-        if ($respectOptOut === true && $optedOut === true) {
-            return false;
-        }
+		if ($respectOptOut === true && $optedOut === true) {
+			return false;
+		}
 
-        return true;
+		return true;
+	}//end isSendAllowed()
 
-    }//end isSendAllowed()
+	/**
+	 * A PII-free reason a recipient was skipped, or null when sending is
+	 * allowed. Used for the notification history without revealing the number.
+	 *
+	 * @param array<string, mixed> $channel The channel object.
+	 * @param array<string, mixed> $recipient The recipient contact.
+	 *
+	 * @return string|null Skip reason, or null when sending is allowed.
+	 *
+	 * @spec openspec/changes/bookings-sms-reminder-channel/tasks.md#task-32
+	 */
+	public function skipReason(array $channel, array $recipient): ?string {
+		if (($channel['status'] ?? '') !== 'active') {
+			return 'channel not active';
+		}
 
-    /**
-     * A PII-free reason a recipient was skipped, or null when sending is
-     * allowed. Used for the notification history without revealing the number.
-     *
-     * @param array<string, mixed> $channel   The channel object.
-     * @param array<string, mixed> $recipient The recipient contact.
-     *
-     * @return string|null Skip reason, or null when sending is allowed.
-     *
-     * @spec openspec/changes/bookings-sms-reminder-channel/tasks.md#task-32
-     */
-    public function skipReason(array $channel, array $recipient): ?string
-    {
-        if (($channel['status'] ?? '') !== 'active') {
-            return 'channel not active';
-        }
+		$respectOptOut = (bool)($channel['respectOptOut'] ?? true);
+		if ($respectOptOut === true && (bool)($recipient['smsOptOut'] ?? false) === true) {
+			return 'recipient opted out of SMS reminders';
+		}
 
-        $respectOptOut = (bool) ($channel['respectOptOut'] ?? true);
-        if ($respectOptOut === true && (bool) ($recipient['smsOptOut'] ?? false) === true) {
-            return 'recipient opted out of SMS reminders';
-        }
-
-        return null;
-
-    }//end skipReason()
+		return null;
+	}//end skipReason()
 }//end class

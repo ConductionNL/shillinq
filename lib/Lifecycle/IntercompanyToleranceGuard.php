@@ -52,222 +52,210 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-13
  */
-class IntercompanyToleranceGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class IntercompanyToleranceGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Return the configured register slug, falling back to 'shillinq' if unset.
-     *
-     * @return string The register slug.
-     */
-    private function getRegisterSlug(): string
-    {
-        $slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($slug === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Return the configured register slug, falling back to 'shillinq' if unset.
+	 *
+	 * @return string The register slug.
+	 */
+	private function getRegisterSlug(): string {
+		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($slug === '') {
+			return 'shillinq';
+		}
 
-        return $slug;
+		return $slug;
+	}//end getRegisterSlug()
 
-    }//end getRegisterSlug()
+	/**
+	 * Returns true iff the match's mismatch is within the applicable tolerance.
+	 *
+	 * A perfect match (mismatchAmount == 0) is always within tolerance. A one-sided
+	 * match (matchStatus one-sided-A/one-sided-B) is never within tolerance — it must
+	 * wait for the counterparty booking. Otherwise the applicable ToleranceRule is
+	 * resolved (relation-type-specific rule first, then the all-types rule for the
+	 * administration) and the mismatch is evaluated against its absolute and relative
+	 * thresholds using the rule's combination method. When no rule is configured, a
+	 * conservative default is applied (absolute EUR 10, relative 0.5%, max-of).
+	 *
+	 * Fail-closed: returns false on any exception so a match is never silently
+	 * stamped within-tolerance during an infrastructure outage (REQ-ICE-004 / CWE-863).
+	 *
+	 * @param array<string, mixed> $match The IntercompanyMatch object array.
+	 *
+	 * @return bool True when the mismatch is within tolerance.
+	 *
+	 * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-13
+	 */
+	public function isWithinTolerance(array $match): bool {
+		$status = (string)($match['matchStatus'] ?? '');
+		if ($status === 'one-sided-A' || $status === 'one-sided-B') {
+			return false;
+		}
 
-    /**
-     * Returns true iff the match's mismatch is within the applicable tolerance.
-     *
-     * A perfect match (mismatchAmount == 0) is always within tolerance. A one-sided
-     * match (matchStatus one-sided-A/one-sided-B) is never within tolerance — it must
-     * wait for the counterparty booking. Otherwise the applicable ToleranceRule is
-     * resolved (relation-type-specific rule first, then the all-types rule for the
-     * administration) and the mismatch is evaluated against its absolute and relative
-     * thresholds using the rule's combination method. When no rule is configured, a
-     * conservative default is applied (absolute EUR 10, relative 0.5%, max-of).
-     *
-     * Fail-closed: returns false on any exception so a match is never silently
-     * stamped within-tolerance during an infrastructure outage (REQ-ICE-004 / CWE-863).
-     *
-     * @param array<string, mixed> $match The IntercompanyMatch object array.
-     *
-     * @return bool True when the mismatch is within tolerance.
-     *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-13
-     */
-    public function isWithinTolerance(array $match): bool
-    {
-        $status = (string) ($match['matchStatus'] ?? '');
-        if ($status === 'one-sided-A' || $status === 'one-sided-B') {
-            return false;
-        }
+		$mismatchAmount = (float)($match['mismatchAmount'] ?? 0.0);
+		if (abs($mismatchAmount) < 0.005) {
+			// Perfect match within half a cent — always acceptable.
+			return true;
+		}
 
-        $mismatchAmount = (float) ($match['mismatchAmount'] ?? 0.0);
-        if (abs($mismatchAmount) < 0.005) {
-            // Perfect match within half a cent — always acceptable.
-            return true;
-        }
+		try {
+			$rule = $this->resolveToleranceRule(
+				relationId: (string)($match['relationId'] ?? ''),
+				administrationId: (string)($match['administrationId'] ?? '')
+			);
 
-        try {
-            $rule = $this->resolveToleranceRule(
-                relationId: (string) ($match['relationId'] ?? ''),
-                administrationId: (string) ($match['administrationId'] ?? '')
-            );
+			$absolute = (float)($rule['toleranceAbsolute'] ?? 10.0);
+			$relative = (float)($rule['toleranceRelative'] ?? 0.5);
+			$method = (string)($rule['toleranceMethod'] ?? 'max-of-absolute-relative');
 
-            $absolute = (float) ($rule['toleranceAbsolute'] ?? 10.0);
-            $relative = (float) ($rule['toleranceRelative'] ?? 0.5);
-            $method   = (string) ($rule['toleranceMethod'] ?? 'max-of-absolute-relative');
+			$largerSide = max(
+				abs((float)($match['totalAmountA'] ?? 0.0)),
+				abs((float)($match['totalAmountB'] ?? 0.0))
+			);
 
-            $largerSide = max(
-                abs((float) ($match['totalAmountA'] ?? 0.0)),
-                abs((float) ($match['totalAmountB'] ?? 0.0))
-            );
+			$relativePercentage = (float)($match['mismatchPercentage'] ?? 0.0);
+			if ($relativePercentage === 0.0 && $largerSide > 0.0) {
+				$relativePercentage = (abs($mismatchAmount) / $largerSide) * 100.0;
+			}
 
-            $relativePercentage = (float) ($match['mismatchPercentage'] ?? 0.0);
-            if ($relativePercentage === 0.0 && $largerSide > 0.0) {
-                $relativePercentage = (abs($mismatchAmount) / $largerSide) * 100.0;
-            }
+			$absolutePass = abs($mismatchAmount) <= $absolute;
+			$relativePass = $relativePercentage <= $relative;
 
-            $absolutePass = abs($mismatchAmount) <= $absolute;
-            $relativePass = $relativePercentage <= $relative;
+			return $this->combine(
+				method: $method,
+				absolutePass: $absolutePass,
+				relativePass: $relativePass
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'IntercompanyToleranceGuard: tolerance evaluation failed — denying within-tolerance (fail-closed)',
+				['matchId' => ($match['matchId'] ?? 'unknown'), 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-            return $this->combine(
-                method: $method,
-                absolutePass: $absolutePass,
-                relativePass: $relativePass
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'IntercompanyToleranceGuard: tolerance evaluation failed — denying within-tolerance (fail-closed)',
-                ['matchId' => ($match['matchId'] ?? 'unknown'), 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+	}//end isWithinTolerance()
 
-    }//end isWithinTolerance()
+	/**
+	 * Combine the absolute and relative pass flags per the rule's method.
+	 *
+	 * @param string $method The tolerance combination method.
+	 * @param bool $absolutePass Whether the absolute threshold passed.
+	 * @param bool $relativePass Whether the relative threshold passed.
+	 *
+	 * @return bool True when the combined tolerance passes.
+	 */
+	private function combine(string $method, bool $absolutePass, bool $relativePass): bool {
+		if ($method === 'absolute-only') {
+			return $absolutePass;
+		}
 
-    /**
-     * Combine the absolute and relative pass flags per the rule's method.
-     *
-     * @param string $method       The tolerance combination method.
-     * @param bool   $absolutePass Whether the absolute threshold passed.
-     * @param bool   $relativePass Whether the relative threshold passed.
-     *
-     * @return bool True when the combined tolerance passes.
-     */
-    private function combine(string $method, bool $absolutePass, bool $relativePass): bool
-    {
-        if ($method === 'absolute-only') {
-            return $absolutePass;
-        }
+		if ($method === 'min-of-absolute-relative') {
+			// Both thresholds must pass (the stricter interpretation).
+			return $absolutePass === true && $relativePass === true;
+		}
 
-        if ($method === 'min-of-absolute-relative') {
-            // Both thresholds must pass (the stricter interpretation).
-            return $absolutePass === true && $relativePass === true;
-        }
+		// Default max-of-absolute-relative: either threshold passing is enough.
+		return $absolutePass === true || $relativePass === true;
+	}//end combine()
 
-        // Default max-of-absolute-relative: either threshold passing is enough.
-        return $absolutePass === true || $relativePass === true;
+	/**
+	 * Resolve the applicable ToleranceRule for a relation within an administration.
+	 *
+	 * Looks up the IntercompanyRelation to learn its relation type, then prefers a
+	 * ToleranceRule whose relationTypeFilter matches that type; failing that, an
+	 * all-types rule (no relationTypeFilter) for the administration. Returns an empty
+	 * array when nothing is configured (callers apply conservative defaults).
+	 *
+	 * @param string $relationId The IntercompanyRelation id.
+	 * @param string $administrationId The administration (tenant) id.
+	 *
+	 * @return array<string, mixed> The matching rule, or an empty array.
+	 */
+	private function resolveToleranceRule(string $relationId, string $administrationId): array {
+		if ($administrationId === '') {
+			return [];
+		}
 
-    }//end combine()
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-    /**
-     * Resolve the applicable ToleranceRule for a relation within an administration.
-     *
-     * Looks up the IntercompanyRelation to learn its relation type, then prefers a
-     * ToleranceRule whose relationTypeFilter matches that type; failing that, an
-     * all-types rule (no relationTypeFilter) for the administration. Returns an empty
-     * array when nothing is configured (callers apply conservative defaults).
-     *
-     * @param string $relationId       The IntercompanyRelation id.
-     * @param string $administrationId The administration (tenant) id.
-     *
-     * @return array<string, mixed> The matching rule, or an empty array.
-     */
-    private function resolveToleranceRule(string $relationId, string $administrationId): array
-    {
-        if ($administrationId === '') {
-            return [];
-        }
+		$relationType = $this->lookupRelationType(
+			objectService: $objectService,
+			relationId: $relationId,
+			administrationId: $administrationId
+		);
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$rules = $objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('ToleranceRule')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-        $relationType = $this->lookupRelationType(
-            objectService: $objectService,
-            relationId: $relationId,
-            administrationId: $administrationId
-        );
+		return $this->selectRule(rules: $rules, relationType: $relationType);
+	}//end resolveToleranceRule()
 
-        $rules = $objectService
-            ->setRegister($this->getRegisterSlug())
-            ->setSchema('ToleranceRule')
-            ->findAll(['filters' => ['administrationId' => $administrationId]]);
+	/**
+	 * Look up the relation type for a relation within an administration.
+	 *
+	 * @param object $objectService OpenRegister ObjectService.
+	 * @param string $relationId The IntercompanyRelation id.
+	 * @param string $administrationId The administration (tenant) id.
+	 *
+	 * @return string The relation type, or an empty string when unknown.
+	 */
+	private function lookupRelationType(object $objectService, string $relationId, string $administrationId): string {
+		if ($relationId === '') {
+			return '';
+		}
 
-        return $this->selectRule(rules: $rules, relationType: $relationType);
+		$relations = $objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('IntercompanyRelation')
+			->findAll(['filters' => ['relationId' => $relationId, 'administrationId' => $administrationId]]);
 
-    }//end resolveToleranceRule()
+		$relation = ($relations[0] ?? null);
+		if ($relation === null) {
+			return '';
+		}
 
-    /**
-     * Look up the relation type for a relation within an administration.
-     *
-     * @param object $objectService    OpenRegister ObjectService.
-     * @param string $relationId       The IntercompanyRelation id.
-     * @param string $administrationId The administration (tenant) id.
-     *
-     * @return string The relation type, or an empty string when unknown.
-     */
-    private function lookupRelationType(object $objectService, string $relationId, string $administrationId): string
-    {
-        if ($relationId === '') {
-            return '';
-        }
+		return (string)($relation['relationType'] ?? '');
+	}//end lookupRelationType()
 
-        $relations = $objectService
-            ->setRegister($this->getRegisterSlug())
-            ->setSchema('IntercompanyRelation')
-            ->findAll(['filters' => ['relationId' => $relationId, 'administrationId' => $administrationId]]);
+	/**
+	 * Select the applicable rule: a relation-type-specific rule wins over an all-types rule.
+	 *
+	 * @param array<int, array<string, mixed>> $rules The candidate ToleranceRule rows.
+	 * @param string $relationType The relation type to match.
+	 *
+	 * @return array<string, mixed> The selected rule, or an empty array when none match.
+	 */
+	private function selectRule(array $rules, string $relationType): array {
+		$allTypes = null;
+		foreach ($rules as $rule) {
+			$filter = ($rule['relationTypeFilter'] ?? null);
+			if ($relationType !== '' && $filter === $relationType) {
+				return $rule;
+			}
 
-        $relation = ($relations[0] ?? null);
-        if ($relation === null) {
-            return '';
-        }
+			if (($filter === null || $filter === '') && $allTypes === null) {
+				$allTypes = $rule;
+			}
+		}
 
-        return (string) ($relation['relationType'] ?? '');
-
-    }//end lookupRelationType()
-
-    /**
-     * Select the applicable rule: a relation-type-specific rule wins over an all-types rule.
-     *
-     * @param array<int, array<string, mixed>> $rules        The candidate ToleranceRule rows.
-     * @param string                           $relationType The relation type to match.
-     *
-     * @return array<string, mixed> The selected rule, or an empty array when none match.
-     */
-    private function selectRule(array $rules, string $relationType): array
-    {
-        $allTypes = null;
-        foreach ($rules as $rule) {
-            $filter = ($rule['relationTypeFilter'] ?? null);
-            if ($relationType !== '' && $filter === $relationType) {
-                return $rule;
-            }
-
-            if (($filter === null || $filter === '') && $allTypes === null) {
-                $allTypes = $rule;
-            }
-        }
-
-        return ($allTypes ?? []);
-
-    }//end selectRule()
+		return ($allTypes ?? []);
+	}//end selectRule()
 }//end class

@@ -38,92 +38,89 @@ namespace OCA\Shillinq\Validation;
  *
  * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
  */
-final class BsnValidator
-{
-    /**
-     * The number of visible trailing digits when masking a BSN for display.
-     */
-    private const VISIBLE_TRAILING_DIGITS = 4;
+final class BsnValidator {
+	/**
+	 * The number of visible trailing digits when masking a BSN for display.
+	 */
+	private const VISIBLE_TRAILING_DIGITS = 4;
 
-    /**
-     * Validate a BSN against the Dutch 11-proef checksum.
-     *
-     * A BSN is exactly 9 digits. The weighted sum uses descending weights
-     * 9..2 for the first eight digits and weight -1 for the ninth; the sum
-     * must be a non-zero multiple of 11 (REQ-PAY-001). A null or empty BSN is
-     * treated as "not provided" and is considered valid for B2B contractors
-     * who legitimately have no BSN — callers requiring a BSN must check
-     * presence separately.
-     *
-     * @param string|null $bsn The candidate BSN, or null when absent.
-     *
-     * @return bool True when the BSN is absent or passes the 11-proef.
-     *
-     * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
-     */
-    public static function isValid(?string $bsn): bool
-    {
-        if ($bsn === null) {
-            return true;
-        }
+	/**
+	 * Validate a BSN against the Dutch 11-proef checksum.
+	 *
+	 * A BSN is exactly 9 digits. The weighted sum uses descending weights
+	 * 9..2 for the first eight digits and weight -1 for the ninth; the sum
+	 * must be a non-zero multiple of 11 (REQ-PAY-001). A null or empty BSN is
+	 * treated as "not provided" and is considered valid for B2B contractors
+	 * who legitimately have no BSN — callers requiring a BSN must check
+	 * presence separately.
+	 *
+	 * @param string|null $bsn The candidate BSN, or null when absent.
+	 *
+	 * @return bool True when the BSN is absent or passes the 11-proef.
+	 *
+	 * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+	 */
+	public static function isValid(?string $bsn): bool {
+		if ($bsn === null) {
+			return true;
+		}
 
-        $bsn = trim($bsn);
-        if ($bsn === '') {
-            return true;
-        }
+		$bsn = trim($bsn);
+		if ($bsn === '') {
+			return true;
+		}
 
-        if (preg_match('/^[0-9]{9}$/', $bsn) !== 1) {
-            return false;
-        }
+		if (preg_match('/^[0-9]{9}$/', $bsn) !== 1) {
+			return false;
+		}
 
-        $sum = 0;
-        for ($i = 0; $i < 9; $i++) {
-            $digit  = (int) $bsn[$i];
-            $weight = (9 - $i);
-            if ($i === 8) {
-                $weight = -1;
-            }
+		$sum = 0;
+		for ($i = 0; $i < 9; $i++) {
+			$digit = (int)$bsn[$i];
+			$weight = (9 - $i);
+			if ($i === 8) {
+				$weight = -1;
+			}
 
-            $sum += ($digit * $weight);
-        }
+			$sum += ($digit * $weight);
+		}
 
-        if ($sum === 0) {
-            return false;
-        }
+		if ($sum === 0) {
+			return false;
+		}
 
-        return ($sum % 11) === 0;
-    }//end isValid()
+		return ($sum % 11) === 0;
+	}//end isValid()
 
-    /**
-     * Mask a BSN for display, revealing only the trailing digits.
-     *
-     * Renders the canonical `***<last4>` form (REQ-PAY-012). A null or empty
-     * BSN renders as an empty string; short or non-numeric values are fully
-     * masked so a malformed value can never leak.
-     *
-     * @param string|null $bsn The BSN to mask, or null when absent.
-     *
-     * @return string The masked representation, e.g. `*****6782`.
-     *
-     * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
-     */
-    public static function mask(?string $bsn): string
-    {
-        if ($bsn === null) {
-            return '';
-        }
+	/**
+	 * Mask a BSN for display, revealing only the trailing digits.
+	 *
+	 * Renders the canonical `***<last4>` form (REQ-PAY-012). A null or empty
+	 * BSN renders as an empty string; short or non-numeric values are fully
+	 * masked so a malformed value can never leak.
+	 *
+	 * @param string|null $bsn The BSN to mask, or null when absent.
+	 *
+	 * @return string The masked representation, e.g. `*****6782`.
+	 *
+	 * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md
+	 */
+	public static function mask(?string $bsn): string {
+		if ($bsn === null) {
+			return '';
+		}
 
-        $bsn = trim($bsn);
-        if ($bsn === '') {
-            return '';
-        }
+		$bsn = trim($bsn);
+		if ($bsn === '') {
+			return '';
+		}
 
-        $length = strlen($bsn);
-        if ($length <= self::VISIBLE_TRAILING_DIGITS) {
-            return str_repeat('*', $length);
-        }
+		$length = strlen($bsn);
+		if ($length <= self::VISIBLE_TRAILING_DIGITS) {
+			return str_repeat('*', $length);
+		}
 
-        $visible = substr($bsn, -self::VISIBLE_TRAILING_DIGITS);
-        return str_repeat('*', ($length - self::VISIBLE_TRAILING_DIGITS)).$visible;
-    }//end mask()
+		$visible = substr($bsn, -self::VISIBLE_TRAILING_DIGITS);
+		return str_repeat('*', ($length - self::VISIBLE_TRAILING_DIGITS)) . $visible;
+	}//end mask()
 }//end class

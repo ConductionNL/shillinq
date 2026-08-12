@@ -41,110 +41,105 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
  */
-final class GrotendeelsCriteriumService
-{
-    /**
-     * Construct the service.
-     *
-     * @param UrencriteriumYearGuard $guard  Owns the >50% policy.
-     * @param LoggerInterface        $logger Diagnostics logger.
-     */
-    public function __construct(
-        private readonly UrencriteriumYearGuard $guard,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+final class GrotendeelsCriteriumService {
+	/**
+	 * Construct the service.
+	 *
+	 * @param UrencriteriumYearGuard $guard Owns the >50% policy.
+	 * @param LoggerInterface $logger Diagnostics logger.
+	 */
+	public function __construct(
+		private readonly UrencriteriumYearGuard $guard,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Sum the onderneming hours from a UrenDagregistratie collection.
-     *
-     * Entries that do not count toward the urencriterium (telTMee=false on the
-     * category-table) are excluded by the caller; this method counts every
-     * supplied entry's `getoldeUren` (preferring it over `uren` so the
-     * reistijd-cap is honoured).
-     *
-     * @param array<int, array<string, mixed>> $dagregistraties Year-to-date entries.
-     *
-     * @return float Total onderneming hours (post-cap).
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
-     */
-    public function telOndernemingsUren(array $dagregistraties): float
-    {
-        $totaal = 0.0;
-        foreach ($dagregistraties as $entry) {
-            if (is_array($entry) === false) {
-                continue;
-            }
+	/**
+	 * Sum the onderneming hours from a UrenDagregistratie collection.
+	 *
+	 * Entries that do not count toward the urencriterium (telTMee=false on the
+	 * category-table) are excluded by the caller; this method counts every
+	 * supplied entry's `getoldeUren` (preferring it over `uren` so the
+	 * reistijd-cap is honoured).
+	 *
+	 * @param array<int, array<string, mixed>> $dagregistraties Year-to-date entries.
+	 *
+	 * @return float Total onderneming hours (post-cap).
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
+	 */
+	public function telOndernemingsUren(array $dagregistraties): float {
+		$totaal = 0.0;
+		foreach ($dagregistraties as $entry) {
+			if (is_array($entry) === false) {
+				continue;
+			}
 
-            $geteld  = $entry['getoldeUren'] ?? $entry['uren'] ?? 0;
-            $totaal += (float) $geteld;
-        }
+			$geteld = $entry['getoldeUren'] ?? $entry['uren'] ?? 0;
+			$totaal += (float)$geteld;
+		}
 
-        return $totaal;
+		return $totaal;
+	}//end telOndernemingsUren()
 
-    }//end telOndernemingsUren()
+	/**
+	 * Classify the grotendeels-criterium from the YTD totals.
+	 *
+	 * Thin wrapper around UrencriteriumYearGuard::bepaalGrotendeelsCriterium so a
+	 * single canonical policy is used by both the year-init service and the
+	 * daily batch.
+	 *
+	 * @param float $ondernemingsUren YTD onderneming hours.
+	 * @param float $loondienstUren YTD payroll hours.
+	 *
+	 * @return string NIET_TOEPASSELIJK / GROTENDEELS_ONDERNEMING / NIET_GROTENDEELS_ONDERNEMING.
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
+	 */
+	public function classifeer(float $ondernemingsUren, float $loondienstUren): string {
+		return $this->guard->bepaalGrotendeelsCriterium(
+			ondernemingsUren: $ondernemingsUren,
+			loondienstUren: $loondienstUren
+		);
 
-    /**
-     * Classify the grotendeels-criterium from the YTD totals.
-     *
-     * Thin wrapper around UrencriteriumYearGuard::bepaalGrotendeelsCriterium so a
-     * single canonical policy is used by both the year-init service and the
-     * daily batch.
-     *
-     * @param float $ondernemingsUren YTD onderneming hours.
-     * @param float $loondienstUren   YTD payroll hours.
-     *
-     * @return string NIET_TOEPASSELIJK / GROTENDEELS_ONDERNEMING / NIET_GROTENDEELS_ONDERNEMING.
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
-     */
-    public function classifeer(float $ondernemingsUren, float $loondienstUren): string
-    {
-        return $this->guard->bepaalGrotendeelsCriterium(
-            ondernemingsUren: $ondernemingsUren,
-            loondienstUren: $loondienstUren
-        );
+	}//end classifeer()
 
-    }//end classifeer()
+	/**
+	 * Build the grotendeels patch to apply to a UrencriteriumYear record.
+	 *
+	 * Returns the canonical {grotendeelsCriterium, blokkeertZelfstandigenaftrek}
+	 * shape: NIET_GROTENDEELS_ONDERNEMING blocks the zelfstandigenaftrek
+	 * (REQ-URC-007), the other markings do not.
+	 *
+	 * @param array<int, array<string, mixed>> $dagregistraties YTD onderneming entries.
+	 * @param float $loondienstUren YTD payroll hours.
+	 *
+	 * @return array{grotendeelsCriterium: string, blokkeertZelfstandigenaftrek: bool}
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
+	 */
+	public function bouwPatch(array $dagregistraties, float $loondienstUren): array {
+		$ondernemingsUren = $this->telOndernemingsUren(dagregistraties: $dagregistraties);
+		$marking = $this->classifeer(
+			ondernemingsUren: $ondernemingsUren,
+			loondienstUren: $loondienstUren
+		);
 
-    /**
-     * Build the grotendeels patch to apply to a UrencriteriumYear record.
-     *
-     * Returns the canonical {grotendeelsCriterium, blokkeertZelfstandigenaftrek}
-     * shape: NIET_GROTENDEELS_ONDERNEMING blocks the zelfstandigenaftrek
-     * (REQ-URC-007), the other markings do not.
-     *
-     * @param array<int, array<string, mixed>> $dagregistraties YTD onderneming entries.
-     * @param float                            $loondienstUren  YTD payroll hours.
-     *
-     * @return array{grotendeelsCriterium: string, blokkeertZelfstandigenaftrek: bool}
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
-     */
-    public function bouwPatch(array $dagregistraties, float $loondienstUren): array
-    {
-        $ondernemingsUren = $this->telOndernemingsUren(dagregistraties: $dagregistraties);
-        $marking          = $this->classifeer(
-            ondernemingsUren: $ondernemingsUren,
-            loondienstUren: $loondienstUren
-        );
+		$blokkeert = ($marking === 'NIET_GROTENDEELS_ONDERNEMING');
+		if ($blokkeert === true) {
+			$this->logger->warning(
+				'GrotendeelsCriteriumService: grotendeels-criterium niet behaald — zelfstandigenaftrek geblokkeerd',
+				[
+					'ondernemingsUren' => $ondernemingsUren,
+					'loondienstUren' => $loondienstUren,
+				]
+			);
+		}
 
-        $blokkeert = ($marking === 'NIET_GROTENDEELS_ONDERNEMING');
-        if ($blokkeert === true) {
-            $this->logger->warning(
-                'GrotendeelsCriteriumService: grotendeels-criterium niet behaald — zelfstandigenaftrek geblokkeerd',
-                [
-                    'ondernemingsUren' => $ondernemingsUren,
-                    'loondienstUren'   => $loondienstUren,
-                ]
-            );
-        }
+		return [
+			'grotendeelsCriterium' => $marking,
+			'blokkeertZelfstandigenaftrek' => $blokkeert,
+		];
 
-        return [
-            'grotendeelsCriterium'         => $marking,
-            'blokkeertZelfstandigenaftrek' => $blokkeert,
-        ];
-
-    }//end bouwPatch()
+	}//end bouwPatch()
 }//end class

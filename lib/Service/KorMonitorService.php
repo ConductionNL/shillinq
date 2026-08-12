@@ -47,244 +47,230 @@ use Psr\Container\ContainerInterface;
  *
  * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  */
-class KorMonitorService
-{
-    /**
-     * Construct the service with lazy DI of OpenRegister's ObjectService.
-     *
-     * @param ContainerInterface     $container  DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig             $appConfig  App config for the register slug.
-     * @param KorThresholdCalculator $calculator Pure-logic KOR arithmetic helper.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly KorThresholdCalculator $calculator,
-    ) {
-    }//end __construct()
+class KorMonitorService {
+	/**
+	 * Construct the service with lazy DI of OpenRegister's ObjectService.
+	 *
+	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param KorThresholdCalculator $calculator Pure-logic KOR arithmetic helper.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly KorThresholdCalculator $calculator,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute the KOR drempel-status for one administration + year (REQ-KOR-002, REQ-KOR-003).
-     *
-     * @param string $administrationId Administration scope (server-resolved, REQ-KOR-002).
-     * @param int    $year             Calendar year to report.
-     *
-     * @return array{
-     *   administrationId:string, jaar:int, lopendeOmzet:float, drempel:float,
-     *   drempelBenutting:float, perMaand:array<string,float>, prognoseEindeJaar:float,
-     *   prognoseStatus:string, ernst:?string, trigger:?string, optOutPermitted:bool
-     * }
-     *
-     * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
-     */
-    public function status(string $administrationId, int $year): array
-    {
-        $drempelCents = $this->resolveDrempelCents(administrationId: $administrationId);
-        $invoices     = $this->fetchKorInvoices(administrationId: $administrationId, year: $year);
+	/**
+	 * Compute the KOR drempel-status for one administration + year (REQ-KOR-002, REQ-KOR-003).
+	 *
+	 * @param string $administrationId Administration scope (server-resolved, REQ-KOR-002).
+	 * @param int $year Calendar year to report.
+	 *
+	 * @return array{
+	 *   administrationId:string, jaar:int, lopendeOmzet:float, drempel:float,
+	 *   drempelBenutting:float, perMaand:array<string,float>, prognoseEindeJaar:float,
+	 *   prognoseStatus:string, ernst:?string, trigger:?string, optOutPermitted:bool
+	 * }
+	 *
+	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
+	 */
+	public function status(string $administrationId, int $year): array {
+		$drempelCents = $this->resolveDrempelCents(administrationId: $administrationId);
+		$invoices = $this->fetchKorInvoices(administrationId: $administrationId, year: $year);
 
-        $omzetCents = $this->calculator->runningOmzetCents(invoices: $invoices, year: $year);
-        $perMaand   = $this->monthlyBreakdown(invoices: $invoices, year: $year);
+		$omzetCents = $this->calculator->runningOmzetCents(invoices: $invoices, year: $year);
+		$perMaand = $this->monthlyBreakdown(invoices: $invoices, year: $year);
 
-        $currentMonth  = $this->lastMonthWithOmzet(perMaand: $perMaand);
-        $prognoseCents = $this->calculator->prognoseEndOfYearCents(
-            lopendeCents: $omzetCents,
-            currentMonth: $currentMonth
-        );
+		$currentMonth = $this->lastMonthWithOmzet(perMaand: $perMaand);
+		$prognoseCents = $this->calculator->prognoseEndOfYearCents(
+			lopendeCents: $omzetCents,
+			currentMonth: $currentMonth
+		);
 
-        $benutting = $this->calculator->benutting(omzetCents: $omzetCents, drempelCents: $drempelCents);
-        $schijf    = $this->calculator->crossedSchijf(previousBenutting: 0.0, newBenutting: $benutting);
+		$benutting = $this->calculator->benutting(omzetCents: $omzetCents, drempelCents: $drempelCents);
+		$schijf = $this->calculator->crossedSchijf(previousBenutting: 0.0, newBenutting: $benutting);
 
-        return [
-            'administrationId'  => $administrationId,
-            'year'              => $year,
-            'currentRevenue'      => $this->calculator->fromCents(cents: $omzetCents),
-            'drempel'           => $this->calculator->fromCents(cents: $drempelCents),
-            'drempelBenutting'  => round($benutting, 4),
-            'perMaand'          => $perMaand,
-            'forecastYearEnd' => $this->calculator->fromCents(cents: $prognoseCents),
-            'prognoseStatus'    => $this->calculator->prognoseStatus(
-                prognoseCents: $prognoseCents,
-                drempelCents: $drempelCents
-            ),
-            'ernst'             => ($schijf['ernst'] ?? null),
-            'trigger'           => ($schijf['trigger'] ?? null),
-            'optOutPermitted'   => $this->resolveOptOutPermitted(administrationId: $administrationId),
-        ];
+		return [
+			'administrationId' => $administrationId,
+			'year' => $year,
+			'currentRevenue' => $this->calculator->fromCents(cents: $omzetCents),
+			'drempel' => $this->calculator->fromCents(cents: $drempelCents),
+			'drempelBenutting' => round($benutting, 4),
+			'perMaand' => $perMaand,
+			'forecastYearEnd' => $this->calculator->fromCents(cents: $prognoseCents),
+			'prognoseStatus' => $this->calculator->prognoseStatus(
+				prognoseCents: $prognoseCents,
+				drempelCents: $drempelCents
+			),
+			'ernst' => ($schijf['ernst'] ?? null),
+			'trigger' => ($schijf['trigger'] ?? null),
+			'optOutPermitted' => $this->resolveOptOutPermitted(administrationId: $administrationId),
+		];
 
-    }//end status()
+	}//end status()
 
-    /**
-     * Resolve whether the administration's ACTIEF KOR-registratie may opt out today (REQ-KOR-007).
-     *
-     * Composes the calculator's lock-in arithmetic with the persisted registration
-     * window so the manifest's KorOpzegging page can gate the lifecycle action.
-     *
-     * @param string $administrationId Administration scope.
-     *
-     * @return bool True when an operator may opt out today.
-     */
-    private function resolveOptOutPermitted(string $administrationId): bool
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registrations = $objectService
-                ->setRegister($this->register())
-                ->setSchema('KORRegistration')
-                ->findAll(
-                    ['filters' => ['administrationId' => $administrationId, 'status' => 'ACTIEF']]
-                );
-        } catch (\Throwable $e) {
-            return false;
-        }
+	/**
+	 * Resolve whether the administration's ACTIEF KOR-registratie may opt out today (REQ-KOR-007).
+	 *
+	 * Composes the calculator's lock-in arithmetic with the persisted registration
+	 * window so the manifest's KorOpzegging page can gate the lifecycle action.
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return bool True when an operator may opt out today.
+	 */
+	private function resolveOptOutPermitted(string $administrationId): bool {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$registrations = $objectService
+				->setRegister($this->register())
+				->setSchema('KORRegistration')
+				->findAll(
+					['filters' => ['administrationId' => $administrationId, 'status' => 'ACTIEF']]
+				);
+		} catch (\Throwable $e) {
+			return false;
+		}
 
-        $today = date('Y-m-d');
-        foreach ($registrations as $registration) {
-            $vroegste = (string) ($registration['vroegsteOpzegDatum'] ?? '');
-            $eind     = (string) ($registration['lockInEndDate'] ?? '');
-            if ($this->calculator->isOptOutPermitted(
-                today: $today,
-                vroegsteOpzegDatum: $vroegste,
-                lockInEindDatum: $eind
-            ) === true
-            ) {
-                return true;
-            }
-        }
+		$today = date('Y-m-d');
+		foreach ($registrations as $registration) {
+			$vroegste = (string)($registration['vroegsteOpzegDatum'] ?? '');
+			$eind = (string)($registration['lockInEndDate'] ?? '');
+			if ($this->calculator->isOptOutPermitted(
+				today: $today,
+				vroegsteOpzegDatum: $vroegste,
+				lockInEindDatum: $eind
+			) === true
+			) {
+				return true;
+			}
+		}
 
-        return false;
+		return false;
+	}//end resolveOptOutPermitted()
 
-    }//end resolveOptOutPermitted()
+	/**
+	 * Fetch the administration's KOR-eligible AR invoices for the year (REQ-KOR-002).
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param int $year Calendar year.
+	 *
+	 * @return array<int,array<string,mixed>> KOR-eligible AR-invoice records.
+	 */
+	private function fetchKorInvoices(string $administrationId, int $year): array {
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$invoices = $objectService
+			->setRegister($this->register())
+			->setSchema('ARInvoice')
+			->findAll(
+				['filters' => ['administrationId' => $administrationId, 'vrijstellingsGrondslag' => 'KOR_ART25_OB']]
+			);
 
-    /**
-     * Fetch the administration's KOR-eligible AR invoices for the year (REQ-KOR-002).
-     *
-     * @param string $administrationId Administration scope.
-     * @param int    $year             Calendar year.
-     *
-     * @return array<int,array<string,mixed>> KOR-eligible AR-invoice records.
-     */
-    private function fetchKorInvoices(string $administrationId, int $year): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $invoices      = $objectService
-            ->setRegister($this->register())
-            ->setSchema('ARInvoice')
-            ->findAll(
-                ['filters' => ['administrationId' => $administrationId, 'vrijstellingsGrondslag' => 'KOR_ART25_OB']]
-            );
+		$eligible = [];
+		foreach ($invoices as $invoice) {
+			if ($this->calculator->isKorEligible(invoice: $invoice, year: $year) === true) {
+				$eligible[] = $invoice;
+			}
+		}
 
-        $eligible = [];
-        foreach ($invoices as $invoice) {
-            if ($this->calculator->isKorEligible(invoice: $invoice, year: $year) === true) {
-                $eligible[] = $invoice;
-            }
-        }
+		return $eligible;
+	}//end fetchKorInvoices()
 
-        return $eligible;
+	/**
+	 * Build the YYYY-MM => omzet breakdown for the year (REQ-KOR-002).
+	 *
+	 * @param array<int,array<string,mixed>> $invoices KOR-eligible AR invoices.
+	 * @param int $year Calendar year.
+	 *
+	 * @return array<string,float> Month key (YYYY-MM) => omzet.
+	 */
+	private function monthlyBreakdown(array $invoices, int $year): array {
+		$cents = [];
+		foreach ($invoices as $invoice) {
+			$leveringsDatum = (string)($invoice['leveringsDatum'] ?? ($invoice['invoiceDate'] ?? ''));
+			$month = substr($leveringsDatum, 0, 7);
+			if ($month === '' || substr($month, 0, 4) !== (string)$year) {
+				continue;
+			}
 
-    }//end fetchKorInvoices()
+			$cents[$month] = (($cents[$month] ?? 0) + $this->calculator->toCents(amount: ($invoice['amount'] ?? ($invoice['netAmount'] ?? 0))));
+		}
 
-    /**
-     * Build the YYYY-MM => omzet breakdown for the year (REQ-KOR-002).
-     *
-     * @param array<int,array<string,mixed>> $invoices KOR-eligible AR invoices.
-     * @param int                            $year     Calendar year.
-     *
-     * @return array<string,float> Month key (YYYY-MM) => omzet.
-     */
-    private function monthlyBreakdown(array $invoices, int $year): array
-    {
-        $cents = [];
-        foreach ($invoices as $invoice) {
-            $leveringsDatum = (string) ($invoice['leveringsDatum'] ?? ($invoice['invoiceDate'] ?? ''));
-            $month          = substr($leveringsDatum, 0, 7);
-            if ($month === '' || substr($month, 0, 4) !== (string) $year) {
-                continue;
-            }
+		ksort($cents);
+		$perMaand = [];
+		foreach ($cents as $month => $value) {
+			$perMaand[$month] = $this->calculator->fromCents(cents: $value);
+		}
 
-            $cents[$month] = (($cents[$month] ?? 0) + $this->calculator->toCents(amount: ($invoice['amount'] ?? ($invoice['netAmount'] ?? 0))));
-        }
+		return $perMaand;
+	}//end monthlyBreakdown()
 
-        ksort($cents);
-        $perMaand = [];
-        foreach ($cents as $month => $value) {
-            $perMaand[$month] = $this->calculator->fromCents(cents: $value);
-        }
+	/**
+	 * Resolve the latest calendar month that has omzet, for the prognose base (REQ-KOR-002).
+	 *
+	 * @param array<string,float> $perMaand Month key (YYYY-MM) => omzet.
+	 *
+	 * @return int Latest month number with omzet (1..12); 1 when none.
+	 */
+	private function lastMonthWithOmzet(array $perMaand): int {
+		$last = 1;
+		foreach (array_keys($perMaand) as $month) {
+			$num = (int)substr((string)$month, 5, 2);
+			if ($num > $last) {
+				$last = $num;
+			}
+		}
 
-        return $perMaand;
+		return $last;
+	}//end lastMonthWithOmzet()
 
-    }//end monthlyBreakdown()
+	/**
+	 * Resolve the configured KOR drempel for an administration, in cents (REQ-KOR-002).
+	 *
+	 * Defaults to EUR 20.000 when no ACTIEF KORRegistration overrides drempelJaar.
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return int Threshold in cents.
+	 */
+	private function resolveDrempelCents(string $administrationId): int {
+		$default = $this->calculator->toCents(amount: 20000);
 
-    /**
-     * Resolve the latest calendar month that has omzet, for the prognose base (REQ-KOR-002).
-     *
-     * @param array<string,float> $perMaand Month key (YYYY-MM) => omzet.
-     *
-     * @return int Latest month number with omzet (1..12); 1 when none.
-     */
-    private function lastMonthWithOmzet(array $perMaand): int
-    {
-        $last = 1;
-        foreach (array_keys($perMaand) as $month) {
-            $num = (int) substr((string) $month, 5, 2);
-            if ($num > $last) {
-                $last = $num;
-            }
-        }
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$registrations = $objectService
+				->setRegister($this->register())
+				->setSchema('KORRegistration')
+				->findAll(
+					['filters' => ['administrationId' => $administrationId, 'status' => 'ACTIEF']]
+				);
+		} catch (\Throwable $e) {
+			return $default;
+		}
 
-        return $last;
+		foreach ($registrations as $registration) {
+			$drempel = ($registration['thresholdYear'] ?? null);
+			if ($drempel !== null) {
+				return $this->calculator->toCents(amount: $drempel);
+			}
+		}
 
-    }//end lastMonthWithOmzet()
+		return $default;
+	}//end resolveDrempelCents()
 
-    /**
-     * Resolve the configured KOR drempel for an administration, in cents (REQ-KOR-002).
-     *
-     * Defaults to EUR 20.000 when no ACTIEF KORRegistration overrides drempelJaar.
-     *
-     * @param string $administrationId Administration scope.
-     *
-     * @return int Threshold in cents.
-     */
-    private function resolveDrempelCents(string $administrationId): int
-    {
-        $default = $this->calculator->toCents(amount: 20000);
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registrations = $objectService
-                ->setRegister($this->register())
-                ->setSchema('KORRegistration')
-                ->findAll(
-                    ['filters' => ['administrationId' => $administrationId, 'status' => 'ACTIEF']]
-                );
-        } catch (\Throwable $e) {
-            return $default;
-        }
-
-        foreach ($registrations as $registration) {
-            $drempel = ($registration['thresholdYear'] ?? null);
-            if ($drempel !== null) {
-                return $this->calculator->toCents(amount: $drempel);
-            }
-        }
-
-        return $default;
-
-    }//end resolveDrempelCents()
-
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

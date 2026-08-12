@@ -45,73 +45,71 @@ use Psr\Log\LoggerInterface;
  *     not in the project's curated idiomatic-abbreviation allowlist;
  *     deferred pending a dedicated rename pass.
  */
-class KlantLadderOverrideApprovalGuard
-{
-    /**
-     * Construct the guard with DI for OR ObjectService.
-     *
-     * @param ContainerInterface $container Lazy DI container.
-     * @param IAppConfig         $appConfig App config.
-     * @param LoggerInterface    $logger    Logger.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class KlantLadderOverrideApprovalGuard {
+	/**
+	 * Construct the guard with DI for OR ObjectService.
+	 *
+	 * @param ContainerInterface $container Lazy DI container.
+	 * @param IAppConfig $appConfig App config.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Whether the override is permitted to activate.
-     *
-     * @param string $overrideId The KlantLadderOverride.id.
-     *
-     * @return bool True when activation is allowed.
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-6
-     */
-    public function isApprovedForElevatedStages(string $overrideId): bool
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $register      = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-            if ($register === '') {
-                $register = 'shillinq';
-            }
+	/**
+	 * Whether the override is permitted to activate.
+	 *
+	 * @param string $overrideId The KlantLadderOverride.id.
+	 *
+	 * @return bool True when activation is allowed.
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-6
+	 */
+	public function isApprovedForElevatedStages(string $overrideId): bool {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			if ($register === '') {
+				$register = 'shillinq';
+			}
 
-            $rows = $objectService
-                ->setRegister($register)
-                ->setSchema('KlantLadderOverride')
-                ->findAll(['filters' => ['id' => $overrideId]]);
+			$rows = $objectService
+				->setRegister($register)
+				->setSchema('KlantLadderOverride')
+				->findAll(['filters' => ['id' => $overrideId]]);
 
-            if (is_array($rows) === false || $rows === []) {
-                $this->logger->warning('Shillinq: KlantLadderOverride '.$overrideId.' not found; fail-closed.');
-                return false;
-            }
+			if (is_array($rows) === false || $rows === []) {
+				$this->logger->warning('Shillinq: KlantLadderOverride ' . $overrideId . ' not found; fail-closed.');
+				return false;
+			}
 
-            $override        = $rows[0];
-            $stages          = (array) ($override['overrides']['stages'] ?? []);
-            $touchesElevated = false;
-            foreach ($stages as $stage) {
-                $nr = (int) ($stage['nr'] ?? 0);
-                if ($nr >= 4) {
-                    $touchesElevated = true;
-                    break;
-                }
-            }
+			$override = $rows[0];
+			$stages = (array)($override['overrides']['stages'] ?? []);
+			$touchesElevated = false;
+			foreach ($stages as $stage) {
+				$nr = (int)($stage['nr'] ?? 0);
+				if ($nr >= 4) {
+					$touchesElevated = true;
+					break;
+				}
+			}
 
-            if ($touchesElevated === false) {
-                return true;
-            }
+			if ($touchesElevated === false) {
+				return true;
+			}
 
-            $approvedBy = (string) ($override['approvedBy'] ?? '');
-            $approvedAt = (string) ($override['approvedAt'] ?? '');
+			$approvedBy = (string)($override['approvedBy'] ?? '');
+			$approvedAt = (string)($override['approvedAt'] ?? '');
 
-            return ($approvedBy !== '' && $approvedAt !== '');
-        } catch (\Throwable $e) {
-            $this->logger->warning('Shillinq: KlantLadderOverrideApprovalGuard failed: '.$e->getMessage());
-            return false;
-        }//end try
+			return ($approvedBy !== '' && $approvedAt !== '');
+		} catch (\Throwable $e) {
+			$this->logger->warning('Shillinq: KlantLadderOverrideApprovalGuard failed: ' . $e->getMessage());
+			return false;
+		}//end try
 
-    }//end isApprovedForElevatedStages()
+	}//end isApprovedForElevatedStages()
 }//end class

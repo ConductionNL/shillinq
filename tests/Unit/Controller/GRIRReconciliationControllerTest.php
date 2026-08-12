@@ -43,188 +43,181 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
-require_once __DIR__.'/../Service/InMemoryObjectService.php';
+require_once __DIR__ . '/../Service/InMemoryObjectService.php';
 
 /**
  * Tests the GR/IR period-end saldo endpoint.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class GRIRReconciliationControllerTest extends TestCase
-{
+class GRIRReconciliationControllerTest extends TestCase {
 
-    /**
-     * The in-memory ObjectService backing the real service.
-     *
-     * @var InMemoryObjectService
-     */
-    private InMemoryObjectService $objects;
+	/**
+	 * The in-memory ObjectService backing the real service.
+	 *
+	 * @var InMemoryObjectService
+	 */
+	private InMemoryObjectService $objects;
 
-    /**
-     * Set up the in-memory GL lines on the GR/IR clearing account.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up the in-memory GL lines on the GR/IR clearing account.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->objects = new InMemoryObjectService();
-        $this->objects->seed(
-            'GLLine',
-            [
-                [
-                    'id'               => 'glline-1',
-                    'accountNumber'    => '2910',
-                    'side'             => 'credit',
-                    'amount'           => 18500.40,
-                    'periodId'         => '2026-Q2',
-                    'administrationId' => 'adm-1',
-                ],
-            ]
-        );
+		$this->objects = new InMemoryObjectService();
+		$this->objects->seed(
+			'GLLine',
+			[
+				[
+					'id' => 'glline-1',
+					'accountNumber' => '2910',
+					'side' => 'credit',
+					'amount' => 18500.40,
+					'periodId' => '2026-Q2',
+					'administrationId' => 'adm-1',
+				],
+			]
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build the controller with the given access + session posture.
-     *
-     * @param boolean              $canAccess Whether the caller can see the administration.
-     * @param boolean              $loggedIn  Whether a user session exists.
-     * @param array<string,string> $params    The request parameters.
-     *
-     * @return GRIRReconciliationController
-     */
-    private function controller(bool $canAccess, bool $loggedIn, array $params): GRIRReconciliationController
-    {
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturn($this->objects);
+	/**
+	 * Build the controller with the given access + session posture.
+	 *
+	 * @param boolean $canAccess Whether the caller can see the administration.
+	 * @param boolean $loggedIn Whether a user session exists.
+	 * @param array<string,string> $params The request parameters.
+	 *
+	 * @return GRIRReconciliationController
+	 */
+	private function controller(bool $canAccess, bool $loggedIn, array $params): GRIRReconciliationController {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($this->objects);
 
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturnCallback(
-            static function (string $app, string $key, string $default='') {
-                if ($key === GRIRClearingService::CFG_GR_IR_CLEARING_ACCOUNT) {
-                    return '2910';
-                }
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') {
+				if ($key === GRIRClearingService::CFG_GR_IR_CLEARING_ACCOUNT) {
+					return '2910';
+				}
 
-                if ($key === 'register') {
-                    return 'shillinq';
-                }
+				if ($key === 'register') {
+					return 'shillinq';
+				}
 
-                return $default;
-            }
-        );
+				return $default;
+			}
+		);
 
-        $administrationContext = $this->createMock(AdministrationContextService::class);
-        $administrationContext->method('canAccess')->willReturn($canAccess);
+		$administrationContext = $this->createMock(AdministrationContextService::class);
+		$administrationContext->method('canAccess')->willReturn($canAccess);
 
-        $service = new GRIRClearingService(
-            container: $container,
-            appConfig: $appConfig,
-            administrationContext: $administrationContext,
-            logger: $this->createMock(LoggerInterface::class),
-        );
+		$service = new GRIRClearingService(
+			container: $container,
+			appConfig: $appConfig,
+			administrationContext: $administrationContext,
+			logger: $this->createMock(LoggerInterface::class),
+		);
 
-        $request = $this->createMock(IRequest::class);
-        $request->method('getParam')->willReturnCallback(
-            static function (string $name, $default='') use ($params) {
-                return ($params[$name] ?? $default);
-            }
-        );
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			static function (string $name, $default = '') use ($params) {
+				return ($params[$name] ?? $default);
+			}
+		);
 
-        $userSession = $this->createMock(IUserSession::class);
-        $user        = null;
-        if ($loggedIn === true) {
-            $user = $this->createMock(IUser::class);
-        }
+		$userSession = $this->createMock(IUserSession::class);
+		$user = null;
+		if ($loggedIn === true) {
+			$user = $this->createMock(IUser::class);
+		}
 
-        $userSession->method('getUser')->willReturn($user);
+		$userSession->method('getUser')->willReturn($user);
 
-        return new GRIRReconciliationController(
-            request: $request,
-            grirClearingService: $service,
-            administrationContext: $administrationContext,
-            userSession: $userSession,
-            logger: $this->createMock(LoggerInterface::class),
-        );
+		return new GRIRReconciliationController(
+			request: $request,
+			grirClearingService: $service,
+			administrationContext: $administrationContext,
+			userSession: $userSession,
+			logger: $this->createMock(LoggerInterface::class),
+		);
 
-    }//end controller()
+	}//end controller()
 
-    /**
-     * The endpoint returns the reconciliation envelope for the period
-     * (REQ-GLTAX-003).
-     *
-     * @return void
-     */
-    public function testSaldoReturnsTheReconciliationEnvelope(): void
-    {
-        $controller = $this->controller(
-            canAccess: true,
-            loggedIn: true,
-            params: ['administrationId' => 'adm-1', 'periodId' => '2026-Q2']
-        );
+	/**
+	 * The endpoint returns the reconciliation envelope for the period
+	 * (REQ-GLTAX-003).
+	 *
+	 * @return void
+	 */
+	public function testSaldoReturnsTheReconciliationEnvelope(): void {
+		$controller = $this->controller(
+			canAccess: true,
+			loggedIn: true,
+			params: ['administrationId' => 'adm-1', 'periodId' => '2026-Q2']
+		);
 
-        $response = $controller->saldo();
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$response = $controller->saldo();
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
 
-        $data = $response->getData();
-        self::assertSame('2026-Q2', $data['periodId']);
-        self::assertSame('2910', $data['clearingAccount']);
-        self::assertSame(0, $data['debitCents']);
-        self::assertSame(1850040, $data['creditCents']);
-        self::assertSame(-1850040, $data['saldoCents'], 'Goods received but never invoiced leave a credit saldo.');
-        self::assertFalse($data['balanced']);
+		$data = $response->getData();
+		self::assertSame('2026-Q2', $data['periodId']);
+		self::assertSame('2910', $data['clearingAccount']);
+		self::assertSame(0, $data['debitCents']);
+		self::assertSame(1850040, $data['creditCents']);
+		self::assertSame(-1850040, $data['saldoCents'], 'Goods received but never invoiced leave a credit saldo.');
+		self::assertFalse($data['balanced']);
 
-    }//end testSaldoReturnsTheReconciliationEnvelope()
+	}//end testSaldoReturnsTheReconciliationEnvelope()
 
-    /**
-     * An anonymous caller gets 401 (ADR-005).
-     *
-     * @return void
-     */
-    public function testAnonymousCallerIsUnauthorized(): void
-    {
-        $controller = $this->controller(
-            canAccess: true,
-            loggedIn: false,
-            params: ['administrationId' => 'adm-1', 'periodId' => '2026-Q2']
-        );
+	/**
+	 * An anonymous caller gets 401 (ADR-005).
+	 *
+	 * @return void
+	 */
+	public function testAnonymousCallerIsUnauthorized(): void {
+		$controller = $this->controller(
+			canAccess: true,
+			loggedIn: false,
+			params: ['administrationId' => 'adm-1', 'periodId' => '2026-Q2']
+		);
 
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $controller->saldo()->getStatus());
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $controller->saldo()->getStatus());
 
-    }//end testAnonymousCallerIsUnauthorized()
+	}//end testAnonymousCallerIsUnauthorized()
 
-    /**
-     * A cross-tenant administration is masked as 404 (ADR-005).
-     *
-     * @return void
-     */
-    public function testCrossTenantAdministrationIsMaskedAsNotFound(): void
-    {
-        $controller = $this->controller(
-            canAccess: false,
-            loggedIn: true,
-            params: ['administrationId' => 'adm-other', 'periodId' => '2026-Q2']
-        );
+	/**
+	 * A cross-tenant administration is masked as 404 (ADR-005).
+	 *
+	 * @return void
+	 */
+	public function testCrossTenantAdministrationIsMaskedAsNotFound(): void {
+		$controller = $this->controller(
+			canAccess: false,
+			loggedIn: true,
+			params: ['administrationId' => 'adm-other', 'periodId' => '2026-Q2']
+		);
 
-        self::assertSame(Http::STATUS_NOT_FOUND, $controller->saldo()->getStatus());
+		self::assertSame(Http::STATUS_NOT_FOUND, $controller->saldo()->getStatus());
 
-    }//end testCrossTenantAdministrationIsMaskedAsNotFound()
+	}//end testCrossTenantAdministrationIsMaskedAsNotFound()
 
-    /**
-     * A missing periodId is a 400 (REQ-GLTAX-003).
-     *
-     * @return void
-     */
-    public function testMissingPeriodIdIsABadRequest(): void
-    {
-        $controller = $this->controller(
-            canAccess: true,
-            loggedIn: true,
-            params: ['administrationId' => 'adm-1']
-        );
+	/**
+	 * A missing periodId is a 400 (REQ-GLTAX-003).
+	 *
+	 * @return void
+	 */
+	public function testMissingPeriodIdIsABadRequest(): void {
+		$controller = $this->controller(
+			canAccess: true,
+			loggedIn: true,
+			params: ['administrationId' => 'adm-1']
+		);
 
-        self::assertSame(Http::STATUS_BAD_REQUEST, $controller->saldo()->getStatus());
+		self::assertSame(Http::STATUS_BAD_REQUEST, $controller->saldo()->getStatus());
 
-    }//end testMissingPeriodIdIsABadRequest()
+	}//end testMissingPeriodIdIsABadRequest()
 }//end class

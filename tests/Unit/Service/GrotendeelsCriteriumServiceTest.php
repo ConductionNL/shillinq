@@ -30,136 +30,119 @@ use Psr\Log\LoggerInterface;
 /**
  * Covers REQ-URC-007: grotendeels-criterium daily evaluation.
  */
-final class GrotendeelsCriteriumServiceTest extends TestCase
-{
+final class GrotendeelsCriteriumServiceTest extends TestCase {
 
+	/**
+	 * Build a service with a real guard.
+	 *
+	 * @return GrotendeelsCriteriumService
+	 */
+	private function build(): GrotendeelsCriteriumService {
+		$logger = $this->createMock(LoggerInterface::class);
+		$guard = new UrencriteriumYearGuard(logger: $logger);
+		return new GrotendeelsCriteriumService(guard: $guard, logger: $logger);
+	}//end build()
 
-    /**
-     * Build a service with a real guard.
-     *
-     * @return GrotendeelsCriteriumService
-     */
-    private function build(): GrotendeelsCriteriumService
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        $guard  = new UrencriteriumYearGuard(logger: $logger);
-        return new GrotendeelsCriteriumService(guard: $guard, logger: $logger);
+	/**
+	 * telOndernemingsUren sums getoldeUren (preferring it over uren).
+	 *
+	 * @return void
+	 */
+	public function testTelOndernemingsUrenPrefersGetoldeUren(): void {
+		$service = $this->build();
+		$totaal = $service->telOndernemingsUren(
+			dagregistraties: [
+				['uren' => 8, 'getoldeUren' => 8],
+				['uren' => 6, 'getoldeUren' => 4],
+				['uren' => 2],
+			]
+		);
 
-    }//end build()
+		self::assertSame(14.0, $totaal);
 
+	}//end testTelOndernemingsUrenPrefersGetoldeUren()
 
-    /**
-     * telOndernemingsUren sums getoldeUren (preferring it over uren).
-     *
-     * @return void
-     */
-    public function testTelOndernemingsUrenPrefersGetoldeUren(): void
-    {
-        $service = $this->build();
-        $totaal  = $service->telOndernemingsUren(
-            dagregistraties: [
-                ['uren' => 8, 'getoldeUren' => 8],
-                ['uren' => 6, 'getoldeUren' => 4],
-                ['uren' => 2],
-            ]
-        );
+	/**
+	 * telOndernemingsUren tolerates non-array entries (graceful for streaming feeds).
+	 *
+	 * @return void
+	 */
+	public function testTelOndernemingsUrenIgnoresNonArrayEntries(): void {
+		$service = $this->build();
+		$totaal = $service->telOndernemingsUren(
+			dagregistraties: [
+				['uren' => 8],
+				'garbage',
+				123,
+				['uren' => 4, 'getoldeUren' => 4],
+			]
+		);
 
-        self::assertSame(14.0, $totaal);
+		self::assertSame(12.0, $totaal);
 
-    }//end testTelOndernemingsUrenPrefersGetoldeUren()
+	}//end testTelOndernemingsUrenIgnoresNonArrayEntries()
 
+	/**
+	 * No loondienst yields NIET_TOEPASSELIJK regardless of onderneming hours.
+	 *
+	 * @return void
+	 */
+	public function testNoLoondienstYieldsNietToepasselijk(): void {
+		$patch = $this->build()->bouwPatch(
+			dagregistraties: [['uren' => 800]],
+			loondienstUren: 0.0
+		);
 
-    /**
-     * telOndernemingsUren tolerates non-array entries (graceful for streaming feeds).
-     *
-     * @return void
-     */
-    public function testTelOndernemingsUrenIgnoresNonArrayEntries(): void
-    {
-        $service = $this->build();
-        $totaal  = $service->telOndernemingsUren(
-            dagregistraties: [
-                ['uren' => 8],
-                'garbage',
-                123,
-                ['uren' => 4, 'getoldeUren' => 4],
-            ]
-        );
+		self::assertSame('NIET_TOEPASSELIJK', $patch['grotendeelsCriterium']);
+		self::assertFalse($patch['blokkeertZelfstandigenaftrek']);
 
-        self::assertSame(12.0, $totaal);
+	}//end testNoLoondienstYieldsNietToepasselijk()
 
-    }//end testTelOndernemingsUrenIgnoresNonArrayEntries()
+	/**
+	 * Onderneming >50% yields GROTENDEELS_ONDERNEMING (does not block aftrek).
+	 *
+	 * @return void
+	 */
+	public function testGrotendeelsOndernemingDoesNotBlockAftrek(): void {
+		$patch = $this->build()->bouwPatch(
+			dagregistraties: [['uren' => 1200]],
+			loondienstUren: 800.0
+		);
 
+		self::assertSame('GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);
+		self::assertFalse($patch['blokkeertZelfstandigenaftrek']);
 
-    /**
-     * No loondienst yields NIET_TOEPASSELIJK regardless of onderneming hours.
-     *
-     * @return void
-     */
-    public function testNoLoondienstYieldsNietToepasselijk(): void
-    {
-        $patch = $this->build()->bouwPatch(
-            dagregistraties: [['uren' => 800]],
-            loondienstUren: 0.0
-        );
+	}//end testGrotendeelsOndernemingDoesNotBlockAftrek()
 
-        self::assertSame('NIET_TOEPASSELIJK', $patch['grotendeelsCriterium']);
-        self::assertFalse($patch['blokkeertZelfstandigenaftrek']);
+	/**
+	 * Loondienst-majority blocks the zelfstandigenaftrek (REQ-URC-007).
+	 *
+	 * @return void
+	 */
+	public function testLoondienstMajorityBlocksAftrek(): void {
+		$patch = $this->build()->bouwPatch(
+			dagregistraties: [['uren' => 400]],
+			loondienstUren: 1200.0
+		);
 
-    }//end testNoLoondienstYieldsNietToepasselijk()
+		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);
+		self::assertTrue($patch['blokkeertZelfstandigenaftrek']);
 
+	}//end testLoondienstMajorityBlocksAftrek()
 
-    /**
-     * Onderneming >50% yields GROTENDEELS_ONDERNEMING (does not block aftrek).
-     *
-     * @return void
-     */
-    public function testGrotendeelsOndernemingDoesNotBlockAftrek(): void
-    {
-        $patch = $this->build()->bouwPatch(
-            dagregistraties: [['uren' => 1200]],
-            loondienstUren: 800.0
-        );
+	/**
+	 * Equal onderneming + loondienst hours (50/50) is NOT grotendeels (>50 required).
+	 *
+	 * @return void
+	 */
+	public function testFiftyFiftyIsNietGrotendeels(): void {
+		$patch = $this->build()->bouwPatch(
+			dagregistraties: [['uren' => 800]],
+			loondienstUren: 800.0
+		);
 
-        self::assertSame('GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);
-        self::assertFalse($patch['blokkeertZelfstandigenaftrek']);
+		self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);
 
-    }//end testGrotendeelsOndernemingDoesNotBlockAftrek()
-
-
-    /**
-     * Loondienst-majority blocks the zelfstandigenaftrek (REQ-URC-007).
-     *
-     * @return void
-     */
-    public function testLoondienstMajorityBlocksAftrek(): void
-    {
-        $patch = $this->build()->bouwPatch(
-            dagregistraties: [['uren' => 400]],
-            loondienstUren: 1200.0
-        );
-
-        self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);
-        self::assertTrue($patch['blokkeertZelfstandigenaftrek']);
-
-    }//end testLoondienstMajorityBlocksAftrek()
-
-
-    /**
-     * Equal onderneming + loondienst hours (50/50) is NOT grotendeels (>50 required).
-     *
-     * @return void
-     */
-    public function testFiftyFiftyIsNietGrotendeels(): void
-    {
-        $patch = $this->build()->bouwPatch(
-            dagregistraties: [['uren' => 800]],
-            loondienstUren: 800.0
-        );
-
-        self::assertSame('NIET_GROTENDEELS_ONDERNEMING', $patch['grotendeelsCriterium']);
-
-    }//end testFiftyFiftyIsNietGrotendeels()
-
+	}//end testFiftyFiftyIsNietGrotendeels()
 
 }//end class

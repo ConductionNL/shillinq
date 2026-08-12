@@ -44,131 +44,128 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
  */
-final class UrenTallyService
-{
+final class UrenTallyService {
 
-    /**
-     * Categories that do NOT count toward the urencriterium total.
-     *
-     * The UrenCategorie seed has telTMee=true for every standard category, so this
-     * list is empty by default. The constant is kept as the integration point for
-     * future categories (e.g. a future "NIET_TELLEND" debug category).
-     *
-     * @var array<int, string>
-     */
-    // phpcs:ignore -- intentional: integration point for future non-counting categories
-    private const NON_COUNTING_CATEGORIES = []; // @phpstan-ignore-line
+	/**
+	 * Categories that do NOT count toward the urencriterium total.
+	 *
+	 * The UrenCategorie seed has telTMee=true for every standard category, so this
+	 * list is empty by default. The constant is kept as the integration point for
+	 * future categories (e.g. a future "NIET_TELLEND" debug category).
+	 *
+	 * @var array<int, string>
+	 */
+	// phpcs:ignore -- intentional: integration point for future non-counting categories
+	private const NON_COUNTING_CATEGORIES = []; // @phpstan-ignore-line
 
-    /**
-     * Construct the service.
-     *
-     * @param UrenDagregistratieGuard $guard  The reistijd-cap policy owner.
-     * @param LoggerInterface         $logger Diagnostics logger.
-     */
-    public function __construct(
-        private readonly UrenDagregistratieGuard $guard,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the service.
+	 *
+	 * @param UrenDagregistratieGuard $guard The reistijd-cap policy owner.
+	 * @param LoggerInterface $logger Diagnostics logger.
+	 */
+	public function __construct(
+		private readonly UrenDagregistratieGuard $guard,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Aggregate UrenDagregistratie entries for one day.
-     *
-     * Returns:
-     *  - totaalUren: float — sum of counted hours after cap and category filter.
-     *  - perCategorie: array<string, float> — counted hours per category.
-     *  - overages: array<int, array{categorie: string, ingevoerd: float, geteld: float, notitie: string}>
-     *    — entries whose hours exceeded a category cap.
-     *
-     * @param array<int, array<string, mixed>> $entries Day entries.
-     *
-     * @return array{totaalUren: float, perCategorie: array<string, float>, overages: array<int, array<string, mixed>>}
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
-     */
-    public function tallyDag(array $entries): array
-    {
-        $totaal       = 0.0;
-        $perCategorie = [];
-        $overages     = [];
+	/**
+	 * Aggregate UrenDagregistratie entries for one day.
+	 *
+	 * Returns:
+	 *  - totaalUren: float — sum of counted hours after cap and category filter.
+	 *  - perCategorie: array<string, float> — counted hours per category.
+	 *  - overages: array<int, array{categorie: string, ingevoerd: float, geteld: float, notitie: string}>
+	 *    — entries whose hours exceeded a category cap.
+	 *
+	 * @param array<int, array<string, mixed>> $entries Day entries.
+	 *
+	 * @return array{totaalUren: float, perCategorie: array<string, float>, overages: array<int, array<string, mixed>>}
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
+	 */
+	public function tallyDag(array $entries): array {
+		$totaal = 0.0;
+		$perCategorie = [];
+		$overages = [];
 
-        foreach ($entries as $entry) {
-            if (is_array($entry) === false) {
-                continue;
-            }
+		foreach ($entries as $entry) {
+			if (is_array($entry) === false) {
+				continue;
+			}
 
-            $categorie = (string) ($entry['categorie'] ?? '');
-            if ($categorie === '') {
-                continue;
-            }
+			$categorie = (string)($entry['categorie'] ?? '');
+			if ($categorie === '') {
+				continue;
+			}
 
-            $uren    = (float) ($entry['uren'] ?? 0);
-            $capInfo = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
-            $geteld  = $capInfo['getoldeUren'];
-            $notitie = $capInfo['capNotitie'];
+			$uren = (float)($entry['uren'] ?? 0);
+			$capInfo = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
+			$geteld = $capInfo['getoldeUren'];
+			$notitie = $capInfo['capNotitie'];
 
-            $totaal += $geteld;
-            $perCategorie[$categorie] = (($perCategorie[$categorie] ?? 0.0) + $geteld);
+			$totaal += $geteld;
+			$perCategorie[$categorie] = (($perCategorie[$categorie] ?? 0.0) + $geteld);
 
-            if ($notitie !== null) {
-                $overages[] = [
-                    'categorie' => $categorie,
-                    'ingevoerd' => $uren,
-                    'geteld'    => $geteld,
-                    'notitie'   => $notitie,
-                ];
-            }
-        }//end foreach
+			if ($notitie !== null) {
+				$overages[] = [
+					'categorie' => $categorie,
+					'ingevoerd' => $uren,
+					'geteld' => $geteld,
+					'notitie' => $notitie,
+				];
+			}
+		}//end foreach
 
-        return [
-            'totalHours'   => $totaal,
-            'perCategorie' => $perCategorie,
-            'overages'     => $overages,
-        ];
+		return [
+			'totalHours' => $totaal,
+			'perCategorie' => $perCategorie,
+			'overages' => $overages,
+		];
 
-    }//end tallyDag()
+	}//end tallyDag()
 
-    /**
-     * Aggregate YTD UrenDagregistratie entries into a UrencriteriumYear patch.
-     *
-     * Sums every counted hour across the supplied YTD entries and returns the
-     * canonical {lopendeUren, berekendOp} patch shape. The caller persists this
-     * onto the UrencriteriumYear record.
-     *
-     * @param array<int, array<string, mixed>> $entries YTD entries.
-     * @param string                           $now     ISO-8601 berekendOp timestamp.
-     *
-     * @return array{lopendeUren: float, berekendOp: string}
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
-     */
-    public function tallyYearToDate(array $entries, string $now): array
-    {
-        $totaal = 0.0;
-        foreach ($entries as $entry) {
-            if (is_array($entry) === false) {
-                continue;
-            }
+	/**
+	 * Aggregate YTD UrenDagregistratie entries into a UrencriteriumYear patch.
+	 *
+	 * Sums every counted hour across the supplied YTD entries and returns the
+	 * canonical {lopendeUren, berekendOp} patch shape. The caller persists this
+	 * onto the UrencriteriumYear record.
+	 *
+	 * @param array<int, array<string, mixed>> $entries YTD entries.
+	 * @param string $now ISO-8601 berekendOp timestamp.
+	 *
+	 * @return array{lopendeUren: float, berekendOp: string}
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-11
+	 */
+	public function tallyYearToDate(array $entries, string $now): array {
+		$totaal = 0.0;
+		foreach ($entries as $entry) {
+			if (is_array($entry) === false) {
+				continue;
+			}
 
-            $categorie = (string) ($entry['categorie'] ?? '');
-            if ($categorie === '') {
-                continue;
-            }
+			$categorie = (string)($entry['categorie'] ?? '');
+			if ($categorie === '') {
+				continue;
+			}
 
-            $uren    = (float) ($entry['uren'] ?? 0);
-            $cap     = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
-            $totaal += $cap['getoldeUren'];
-        }
+			$uren = (float)($entry['uren'] ?? 0);
+			$cap = $this->guard->pasReistijdCapToe(categorie: $categorie, uren: $uren);
+			$totaal += $cap['getoldeUren'];
+		}
 
-        $this->logger->info(
-            'UrenTallyService: YTD tally complete',
-            ['totalHours' => $totaal, 'berekendOp' => $now]
-        );
+		$this->logger->info(
+			'UrenTallyService: YTD tally complete',
+			['totalHours' => $totaal, 'berekendOp' => $now]
+		);
 
-        return [
-            'lopendeUren' => $totaal,
-            'berekendOp'  => $now,
-        ];
+		return [
+			'lopendeUren' => $totaal,
+			'berekendOp' => $now,
+		];
 
-    }//end tallyYearToDate()
+	}//end tallyYearToDate()
 }//end class

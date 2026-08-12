@@ -52,43 +52,41 @@ use OCA\Shillinq\Service\IntercompanyLinkService;
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
-class IntercompanyEliminationGuard
-{
-    /**
-     * Construct the guard.
-     *
-     * @param IntercompanyLinkService    $linkService    Resolves the counter-side entry.
-     * @param IntercompanyJournalService $journalService The pure-logic REQ-MA-004 kernel.
-     */
-    public function __construct(
-        private readonly IntercompanyLinkService $linkService,
-        private readonly IntercompanyJournalService $journalService,
-    ) {
+class IntercompanyEliminationGuard {
+	/**
+	 * Construct the guard.
+	 *
+	 * @param IntercompanyLinkService $linkService Resolves the counter-side entry.
+	 * @param IntercompanyJournalService $journalService The pure-logic REQ-MA-004 kernel.
+	 */
+	public function __construct(
+		private readonly IntercompanyLinkService $linkService,
+		private readonly IntercompanyJournalService $journalService,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Precondition for `eliminate`: the two sides of the pair must balance.
-     *
-     * @param array<string,mixed> $entry The IntercompanyJournalEntry being transitioned.
-     *
-     * @return bool True when the pair reconciles to the cent.
-     *
-     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
-     */
-    public function requireReconciledPair(array $entry): bool
-    {
-        $counter = $this->linkService->findCounterSide(entry: $entry);
-        if ($counter === null) {
-            // No counter-side booked: the pair cannot be reconciled, so the
-            // elimination cannot be justified. Fail-closed.
-            return false;
-        }
+	/**
+	 * Precondition for `eliminate`: the two sides of the pair must balance.
+	 *
+	 * @param array<string,mixed> $entry The IntercompanyJournalEntry being transitioned.
+	 *
+	 * @return bool True when the pair reconciles to the cent.
+	 *
+	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
+	 */
+	public function requireReconciledPair(array $entry): bool {
+		$counter = $this->linkService->findCounterSide(entry: $entry);
+		if ($counter === null) {
+			// No counter-side booked: the pair cannot be reconciled, so the
+			// elimination cannot be justified. Fail-closed.
+			return false;
+		}
 
-        return $this->journalService->isBalanced(
-            sourceAmount: ($entry['amount'] ?? 0),
-            destinationAmount: ($counter['amount'] ?? 0)
-        );
+		return $this->journalService->isBalanced(
+			sourceAmount: ($entry['amount'] ?? 0),
+			destinationAmount: ($counter['amount'] ?? 0)
+		);
 
-    }//end requireReconciledPair()
+	}//end requireReconciledPair()
 }//end class

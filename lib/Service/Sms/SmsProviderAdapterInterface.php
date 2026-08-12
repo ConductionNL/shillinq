@@ -37,24 +37,23 @@ namespace OCA\Shillinq\Service\Sms;
  * (personal data, ADR-005). Credentials are owned by the referenced
  * openconnector connector, never passed here in cleartext.
  */
-interface SmsProviderAdapterInterface
-{
-    /**
-     * Dispatch one rendered SMS message.
-     *
-     * @param string      $connectorId   Slug/id of the openconnector connector holding provider credentials.
-     * @param string      $e164Recipient Recipient phone number in E.164 form (already validated/normalized).
-     * @param string      $body          Fully rendered message body (≤ provider limit).
-     * @param string|null $senderId      Optional alphanumeric sender id (≤11 chars).
-     *
-     * @return SmsSendResult Outcome of the send attempt (status + provider reference, no PII).
-     *
-     * @spec openspec/changes/bookings-sms-reminder-channel/tasks.md#task-6
-     */
-    public function send(
-        string $connectorId,
-        string $e164Recipient,
-        string $body,
-        ?string $senderId=null
-    ): SmsSendResult;
+interface SmsProviderAdapterInterface {
+	/**
+	 * Dispatch one rendered SMS message.
+	 *
+	 * @param string $connectorId Slug/id of the openconnector connector holding provider credentials.
+	 * @param string $e164Recipient Recipient phone number in E.164 form (already validated/normalized).
+	 * @param string $body Fully rendered message body (≤ provider limit).
+	 * @param string|null $senderId Optional alphanumeric sender id (≤11 chars).
+	 *
+	 * @return SmsSendResult Outcome of the send attempt (status + provider reference, no PII).
+	 *
+	 * @spec openspec/changes/bookings-sms-reminder-channel/tasks.md#task-6
+	 */
+	public function send(
+		string $connectorId,
+		string $e164Recipient,
+		string $body,
+		?string $senderId = null,
+	): SmsSendResult;
 }//end interface

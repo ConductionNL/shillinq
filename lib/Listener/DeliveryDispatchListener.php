@@ -55,79 +55,75 @@ use Throwable;
  *
  * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
  */
-class DeliveryDispatchListener implements IEventListener
-{
-    /**
-     * Construct the listener with DI dependencies.
-     *
-     * @param SalesDispatchStockIssueService $dispatchService The issue/reversal service.
-     * @param LoggerInterface                $logger          Logger for fail-soft diagnostics.
-     */
-    public function __construct(
-        private readonly SalesDispatchStockIssueService $dispatchService,
-        private readonly LoggerInterface $logger,
-    ) {
+class DeliveryDispatchListener implements IEventListener {
+	/**
+	 * Construct the listener with DI dependencies.
+	 *
+	 * @param SalesDispatchStockIssueService $dispatchService The issue/reversal service.
+	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 */
+	public function __construct(
+		private readonly SalesDispatchStockIssueService $dispatchService,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Handle an ObjectTransitionedEvent.
-     *
-     * @param Event $event Event from OpenRegister.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof ObjectTransitionedEvent === false) {
-            return;
-        }
+	/**
+	 * Handle an ObjectTransitionedEvent.
+	 *
+	 * @param Event $event Event from OpenRegister.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/inventory-sales-issue-cogs-trigger/spec.md
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof ObjectTransitionedEvent === false) {
+			return;
+		}
 
-        try {
-            if ($this->isDeliverySchema(schema: (string) $event->getSchema()) === false) {
-                return;
-            }
+		try {
+			if ($this->isDeliverySchema(schema: (string)$event->getSchema()) === false) {
+				return;
+			}
 
-            $entity   = $event->getObject();
-            $delivery = $entity->getObject();
-            if (is_array($delivery) === false) {
-                return;
-            }
+			$entity = $event->getObject();
+			$delivery = $entity->getObject();
+			if (is_array($delivery) === false) {
+				return;
+			}
 
-            $to = (string) $event->getTo();
-            if ($to === 'confirmed') {
-                $this->dispatchService->issueForDelivery(delivery: $delivery);
-                return;
-            }
+			$to = (string)$event->getTo();
+			if ($to === 'confirmed') {
+				$this->dispatchService->issueForDelivery(delivery: $delivery);
+				return;
+			}
 
-            if ($to === 'cancelled') {
-                $this->dispatchService->reverseForDelivery(delivery: $delivery);
-            }
-        } catch (Throwable $e) {
-            // Fail-soft: the Delivery transition itself already committed;
-            // never bubble up and block it. Mirrors
-            // StockMoveTransitionedListener's fail-soft contract.
-            $this->logger->error(
-                'DeliveryDispatchListener: dispatch failed (fail-soft)',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			if ($to === 'cancelled') {
+				$this->dispatchService->reverseForDelivery(delivery: $delivery);
+			}
+		} catch (Throwable $e) {
+			// Fail-soft: the Delivery transition itself already committed;
+			// never bubble up and block it. Mirrors
+			// StockMoveTransitionedListener's fail-soft contract.
+			$this->logger->error(
+				'DeliveryDispatchListener: dispatch failed (fail-soft)',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Schema-name match for Delivery (plain slug or namespaced).
-     *
-     * @param string $schema Schema identifier.
-     *
-     * @return bool
-     */
-    private function isDeliverySchema(string $schema): bool
-    {
-        $normalised = strtolower(trim($schema));
-        return ($normalised === 'delivery' || str_ends_with($normalised, '/delivery'));
-
-    }//end isDeliverySchema()
+	/**
+	 * Schema-name match for Delivery (plain slug or namespaced).
+	 *
+	 * @param string $schema Schema identifier.
+	 *
+	 * @return bool
+	 */
+	private function isDeliverySchema(string $schema): bool {
+		$normalised = strtolower(trim($schema));
+		return ($normalised === 'delivery' || str_ends_with($normalised, '/delivery'));
+	}//end isDeliverySchema()
 }//end class

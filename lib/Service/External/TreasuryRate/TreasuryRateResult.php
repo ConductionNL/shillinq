@@ -37,50 +37,49 @@ namespace OCA\Shillinq\Service\External\TreasuryRate;
  *
  * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  */
-final class TreasuryRateResult
-{
-    /**
-     * Construct the result value-object.
-     *
-     * @param string              $status   One of SNAPSHOT_OK |
-     *                                      SNAPSHOT_STALE |
-     *                                      SNAPSHOT_DEFERRED |
-     *                                      SNAPSHOT_ERROR.
-     * @param string              $rateId   Adapter-side opaque id of the
-     *                                      rate snapshot (synthetic for
-     *                                      dormant).
-     * @param string              $rateCode Reference-rate code or
-     *                                      ISO 4217 currency
-     *                                      pair, e.g.
-     *                                      `EURIBOR-3M`, `SOFR`,
-     *                                      `SARON`, `EUR/USD`,
-     *                                      `EUR/GBP`.
-     * @param string              $value    Rate value as a decimal string
-     *                                      to avoid float drift (e.g.
-     *                                      `0.03875` for 3.875% or
-     *                                      `1.0832` for an FX spot).
-     * @param string              $asOf     ISO-8601 date the rate refers
-     *                                      to (`YYYY-MM-DD`).
-     * @param string              $source   Source slug —
-     *                                      `bloomberg`, `refinitiv`,
-     *                                      `ecb-sdmx`, `manual`,
-     *                                      `LOG_DEFERRED`.
-     * @param bool                $dormant  TRUE when the adapter was
-     *                                      dormant.
-     * @param array<string,mixed> $extras   Provider-specific extras
-     *                                      (e.g. quoteCurrency,
-     *                                      tenor, provider message
-     *                                      id).
-     */
-    public function __construct(
-        public readonly string $status,
-        public readonly string $rateId,
-        public readonly string $rateCode,
-        public readonly string $value,
-        public readonly string $asOf,
-        public readonly string $source,
-        public readonly bool $dormant,
-        public readonly array $extras=[],
-    ) {
-    }//end __construct()
+final class TreasuryRateResult {
+	/**
+	 * Construct the result value-object.
+	 *
+	 * @param string $status One of SNAPSHOT_OK |
+	 *                       SNAPSHOT_STALE |
+	 *                       SNAPSHOT_DEFERRED |
+	 *                       SNAPSHOT_ERROR.
+	 * @param string $rateId Adapter-side opaque id of the
+	 *                       rate snapshot (synthetic for
+	 *                       dormant).
+	 * @param string $rateCode Reference-rate code or
+	 *                         ISO 4217 currency
+	 *                         pair, e.g.
+	 *                         `EURIBOR-3M`, `SOFR`,
+	 *                         `SARON`, `EUR/USD`,
+	 *                         `EUR/GBP`.
+	 * @param string $value Rate value as a decimal string
+	 *                      to avoid float drift (e.g.
+	 *                      `0.03875` for 3.875% or
+	 *                      `1.0832` for an FX spot).
+	 * @param string $asOf ISO-8601 date the rate refers
+	 *                     to (`YYYY-MM-DD`).
+	 * @param string $source Source slug —
+	 *                       `bloomberg`, `refinitiv`,
+	 *                       `ecb-sdmx`, `manual`,
+	 *                       `LOG_DEFERRED`.
+	 * @param bool $dormant TRUE when the adapter was
+	 *                      dormant.
+	 * @param array<string,mixed> $extras Provider-specific extras
+	 *                                    (e.g. quoteCurrency,
+	 *                                    tenor, provider message
+	 *                                    id).
+	 */
+	public function __construct(
+		public readonly string $status,
+		public readonly string $rateId,
+		public readonly string $rateCode,
+		public readonly string $value,
+		public readonly string $asOf,
+		public readonly string $source,
+		public readonly bool $dormant,
+		public readonly array $extras = [],
+	) {
+	}//end __construct()
 }//end class

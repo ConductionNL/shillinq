@@ -36,150 +36,140 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class MilestoneTemplateServiceTest extends TestCase
-{
+class MilestoneTemplateServiceTest extends TestCase {
 
-    /**
-     * The service under test (reads the bundled templates file).
-     *
-     * @var MilestoneTemplateService
-     */
-    private MilestoneTemplateService $service;
+	/**
+	 * The service under test (reads the bundled templates file).
+	 *
+	 * @var MilestoneTemplateService
+	 */
+	private MilestoneTemplateService $service;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->service = new MilestoneTemplateService();
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->service = new MilestoneTemplateService();
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * The getTemplate selection returns the requested template and falls back to 'other'.
-     *
-     * @return void
-     */
-    public function testGetTemplateSelectsByTypeWithFallback(): void
-    {
-        $this->assertSame('levering-in-fases', $this->service->getTemplate('levering-in-fases')['opdrachttype']);
-        $this->assertSame('other', $this->service->getTemplate('does-not-exist')['opdrachttype']);
+	/**
+	 * The getTemplate selection returns the requested template and falls back to 'other'.
+	 *
+	 * @return void
+	 */
+	public function testGetTemplateSelectsByTypeWithFallback(): void {
+		$this->assertSame('levering-in-fases', $this->service->getTemplate('levering-in-fases')['opdrachttype']);
+		$this->assertSame('other', $this->service->getTemplate('does-not-exist')['opdrachttype']);
 
-    }//end testGetTemplateSelectsByTypeWithFallback()
+	}//end testGetTemplateSelectsByTypeWithFallback()
 
-    /**
-     * The phased plan produces 4 milestones inside the term, ending on eindoplevering.
-     *
-     * @return void
-     */
-    public function testGeneratePhasedPlan(): void
-    {
-        $plan = $this->service->generatePlan('levering-in-fases', '2026-02-01', '2027-01-31');
+	/**
+	 * The phased plan produces 4 milestones inside the term, ending on eindoplevering.
+	 *
+	 * @return void
+	 */
+	public function testGeneratePhasedPlan(): void {
+		$plan = $this->service->generatePlan('levering-in-fases', '2026-02-01', '2027-01-31');
 
-        $this->assertCount(4, $plan);
-        $this->assertSame('eindoplevering', $plan[3]['opleveringsType']);
-        $this->assertSame('planned', $plan[0]['status']);
+		$this->assertCount(4, $plan);
+		$this->assertSame('eindoplevering', $plan[3]['opleveringsType']);
+		$this->assertSame('planned', $plan[0]['status']);
 
-        foreach ($plan as $mijlpaal) {
-            $this->assertGreaterThanOrEqual('2026-02-01', $mijlpaal['datum']);
-            $this->assertLessThanOrEqual('2027-01-31', $mijlpaal['datum']);
-            $this->assertNotEmpty($mijlpaal['mijlpaalId']);
-        }
+		foreach ($plan as $mijlpaal) {
+			$this->assertGreaterThanOrEqual('2026-02-01', $mijlpaal['datum']);
+			$this->assertLessThanOrEqual('2027-01-31', $mijlpaal['datum']);
+			$this->assertNotEmpty($mijlpaal['mijlpaalId']);
+		}
 
-        $this->assertSame(100.0, $this->service->sumPercentage($plan));
+		$this->assertSame(100.0, $this->service->sumPercentage($plan));
 
-    }//end testGeneratePhasedPlan()
+	}//end testGeneratePhasedPlan()
 
-    /**
-     * The recurring plan produces 12 milestones summing to ~100% (8.33 noise absorbed).
-     *
-     * @return void
-     */
-    public function testGenerateRecurringPlan(): void
-    {
-        $plan = $this->service->generatePlan('dienstverlening-doorlopend', '2026-01-01', '2026-12-31');
+	/**
+	 * The recurring plan produces 12 milestones summing to ~100% (8.33 noise absorbed).
+	 *
+	 * @return void
+	 */
+	public function testGenerateRecurringPlan(): void {
+		$plan = $this->service->generatePlan('dienstverlening-doorlopend', '2026-01-01', '2026-12-31');
 
-        $this->assertCount(12, $plan);
-        $this->assertSame(100.0, $this->service->sumPercentage($plan));
+		$this->assertCount(12, $plan);
+		$this->assertSame(100.0, $this->service->sumPercentage($plan));
 
-    }//end testGenerateRecurringPlan()
+	}//end testGenerateRecurringPlan()
 
-    /**
-     * Unknown opdrachttype falls back to the 2-milestone 'other' template.
-     *
-     * @return void
-     */
-    public function testGenerateFallbackPlan(): void
-    {
-        $plan = $this->service->generatePlan('mystery-type', '2026-01-01', '2026-12-31');
+	/**
+	 * Unknown opdrachttype falls back to the 2-milestone 'other' template.
+	 *
+	 * @return void
+	 */
+	public function testGenerateFallbackPlan(): void {
+		$plan = $this->service->generatePlan('mystery-type', '2026-01-01', '2026-12-31');
 
-        $this->assertCount(2, $plan);
-        $this->assertSame(100.0, $this->service->sumPercentage($plan));
+		$this->assertCount(2, $plan);
+		$this->assertSame(100.0, $this->service->sumPercentage($plan));
 
-    }//end testGenerateFallbackPlan()
+	}//end testGenerateFallbackPlan()
 
-    /**
-     * Reversed contract dates raise InvalidArgumentException.
-     *
-     * @return void
-     */
-    public function testReversedDatesThrow(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->service->generatePlan('other', '2027-01-01', '2026-01-01');
+	/**
+	 * Reversed contract dates raise InvalidArgumentException.
+	 *
+	 * @return void
+	 */
+	public function testReversedDatesThrow(): void {
+		$this->expectException(\InvalidArgumentException::class);
+		$this->service->generatePlan('other', '2027-01-01', '2026-01-01');
 
-    }//end testReversedDatesThrow()
+	}//end testReversedDatesThrow()
 
-    /**
-     * Unparseable contract dates raise InvalidArgumentException.
-     *
-     * @return void
-     */
-    public function testInvalidDatesThrow(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->service->generatePlan('other', 'not-a-date', 'also-not');
+	/**
+	 * Unparseable contract dates raise InvalidArgumentException.
+	 *
+	 * @return void
+	 */
+	public function testInvalidDatesThrow(): void {
+		$this->expectException(\InvalidArgumentException::class);
+		$this->service->generatePlan('other', 'not-a-date', 'also-not');
 
-    }//end testInvalidDatesThrow()
+	}//end testInvalidDatesThrow()
 
-    /**
-     * The cashflow forecast distributes the contract value exactly (no cent drift).
-     *
-     * @return void
-     */
-    public function testCashflowForecastTotalsExactly(): void
-    {
-        $plan     = $this->service->generatePlan('dienstverlening-doorlopend', '2026-01-01', '2026-12-31');
-        $forecast = $this->service->buildCashflowForecast(10000.0, $plan);
+	/**
+	 * The cashflow forecast distributes the contract value exactly (no cent drift).
+	 *
+	 * @return void
+	 */
+	public function testCashflowForecastTotalsExactly(): void {
+		$plan = $this->service->generatePlan('dienstverlening-doorlopend', '2026-01-01', '2026-12-31');
+		$forecast = $this->service->buildCashflowForecast(10000.0, $plan);
 
-        $this->assertCount(12, $forecast);
+		$this->assertCount(12, $forecast);
 
-        $total = 0.0;
-        foreach ($forecast as $entry) {
-            $total += (float) $entry['amount'];
-        }
+		$total = 0.0;
+		foreach ($forecast as $entry) {
+			$total += (float)$entry['amount'];
+		}
 
-        $this->assertEqualsWithDelta(10000.0, $total, 0.001);
+		$this->assertEqualsWithDelta(10000.0, $total, 0.001);
 
-    }//end testCashflowForecastTotalsExactly()
+	}//end testCashflowForecastTotalsExactly()
 
-    /**
-     * The phased forecast distributes a clean 25/25/25/25 split.
-     *
-     * @return void
-     */
-    public function testCashflowForecastPhasedSplit(): void
-    {
-        $plan     = $this->service->generatePlan('levering-in-fases', '2026-02-01', '2027-01-31');
-        $forecast = $this->service->buildCashflowForecast(50000.0, $plan);
+	/**
+	 * The phased forecast distributes a clean 25/25/25/25 split.
+	 *
+	 * @return void
+	 */
+	public function testCashflowForecastPhasedSplit(): void {
+		$plan = $this->service->generatePlan('levering-in-fases', '2026-02-01', '2027-01-31');
+		$forecast = $this->service->buildCashflowForecast(50000.0, $plan);
 
-        $this->assertCount(4, $forecast);
-        foreach ($forecast as $entry) {
-            $this->assertEqualsWithDelta(12500.0, (float) $entry['amount'], 0.001);
-        }
+		$this->assertCount(4, $forecast);
+		foreach ($forecast as $entry) {
+			$this->assertEqualsWithDelta(12500.0, (float)$entry['amount'], 0.001);
+		}
 
-    }//end testCashflowForecastPhasedSplit()
+	}//end testCashflowForecastPhasedSplit()
 }//end class

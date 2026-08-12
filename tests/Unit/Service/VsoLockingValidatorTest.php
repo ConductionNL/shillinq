@@ -38,79 +38,74 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class VsoLockingValidatorTest extends TestCase
-{
+final class VsoLockingValidatorTest extends TestCase {
 
-    /**
-     * The validator under test.
-     *
-     * @var VsoLockingValidator
-     */
-    private VsoLockingValidator $val;
+	/**
+	 * The validator under test.
+	 *
+	 * @var VsoLockingValidator
+	 */
+	private VsoLockingValidator $val;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->val = new VsoLockingValidator(
-            $this->createMock(ContainerInterface::class),
-            $appConfig,
-            $this->createMock(LoggerInterface::class)
-        );
+		$this->val = new VsoLockingValidator(
+			$this->createMock(ContainerInterface::class),
+			$appConfig,
+			$this->createMock(LoggerInterface::class)
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Empty administrationId short-circuits to unlocked.
-     *
-     * @return void
-     */
-    public function testEmptyAdministrationReturnsUnlocked(): void
-    {
-        $this->assertFalse($this->val->isYearLocked('', 2026));
+	/**
+	 * Empty administrationId short-circuits to unlocked.
+	 *
+	 * @return void
+	 */
+	public function testEmptyAdministrationReturnsUnlocked(): void {
+		$this->assertFalse($this->val->isYearLocked('', 2026));
 
-    }//end testEmptyAdministrationReturnsUnlocked()
+	}//end testEmptyAdministrationReturnsUnlocked()
 
-    /**
-     * Non-positive boekjaar short-circuits to unlocked.
-     *
-     * @return void
-     */
-    public function testNonPositiveBoekjaarReturnsUnlocked(): void
-    {
-        $this->assertFalse($this->val->isYearLocked('adm-x', 0));
-        $this->assertFalse($this->val->isYearLocked('adm-x', -1));
+	/**
+	 * Non-positive boekjaar short-circuits to unlocked.
+	 *
+	 * @return void
+	 */
+	public function testNonPositiveBoekjaarReturnsUnlocked(): void {
+		$this->assertFalse($this->val->isYearLocked('adm-x', 0));
+		$this->assertFalse($this->val->isYearLocked('adm-x', -1));
 
-    }//end testNonPositiveBoekjaarReturnsUnlocked()
+	}//end testNonPositiveBoekjaarReturnsUnlocked()
 
-    /**
-     * A container failure (ObjectService not available) downgrades to
-     * "not locked" + a logged warning — fail-soft per the contract.
-     *
-     * @return void
-     */
-    public function testContainerFailureFailsSoftToUnlocked(): void
-    {
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
+	/**
+	 * A container failure (ObjectService not available) downgrades to
+	 * "not locked" + a logged warning — fail-soft per the contract.
+	 *
+	 * @return void
+	 */
+	public function testContainerFailureFailsSoftToUnlocked(): void {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willThrowException(new \RuntimeException('not bound'));
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willThrowException(new \RuntimeException('not bound'));
 
-        $val = new VsoLockingValidator(
-            $container,
-            $appConfig,
-            $this->createMock(LoggerInterface::class)
-        );
+		$val = new VsoLockingValidator(
+			$container,
+			$appConfig,
+			$this->createMock(LoggerInterface::class)
+		);
 
-        $this->assertFalse($val->isYearLocked('adm-x', 2026));
+		$this->assertFalse($val->isYearLocked('adm-x', 2026));
 
-    }//end testContainerFailureFailsSoftToUnlocked()
+	}//end testContainerFailureFailsSoftToUnlocked()
 }//end class

@@ -68,419 +68,403 @@ use RuntimeException;
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
  */
-class PurchaseOrderApprovalService
-{
+class PurchaseOrderApprovalService {
 
-    /**
-     * Decision enum values mirror the slice-01 PurchaseOrder.approvalChain.decision enum.
-     *
-     * @var string
-     */
-    public const DECISION_APPROVED = 'approved';
+	/**
+	 * Decision enum values mirror the slice-01 PurchaseOrder.approvalChain.decision enum.
+	 *
+	 * @var string
+	 */
+	public const DECISION_APPROVED = 'approved';
 
-    /**
-     * Decision rejected — terminal: the PO advances to lifecycleState=rejected.
-     *
-     * @var string
-     */
-    public const DECISION_REJECTED = 'rejected';
+	/**
+	 * Decision rejected — terminal: the PO advances to lifecycleState=rejected.
+	 *
+	 * @var string
+	 */
+	public const DECISION_REJECTED = 'rejected';
 
-    /**
-     * Decision delegated — chains the slot to another role; not advanced here.
-     *
-     * @var string
-     */
-    public const DECISION_DELEGATED = 'delegated';
+	/**
+	 * Decision delegated — chains the slot to another role; not advanced here.
+	 *
+	 * @var string
+	 */
+	public const DECISION_DELEGATED = 'delegated';
 
-    /**
-     * Schema slug for PurchaseOrder records (slice 01).
-     *
-     * @var string
-     */
-    private const SCHEMA_PURCHASE_ORDER = 'PurchaseOrder';
+	/**
+	 * Schema slug for PurchaseOrder records (slice 01).
+	 *
+	 * @var string
+	 */
+	private const SCHEMA_PURCHASE_ORDER = 'PurchaseOrder';
 
-    /**
-     * The accepted decision enum — anything else is rejected with a
-     * RuntimeException so the controller maps it to a 400.
-     *
-     * @var array<int,string>
-     */
-    private const ALLOWED_DECISIONS = [
-        self::DECISION_APPROVED,
-        self::DECISION_REJECTED,
-        self::DECISION_DELEGATED,
-    ];
+	/**
+	 * The accepted decision enum — anything else is rejected with a
+	 * RuntimeException so the controller maps it to a 400.
+	 *
+	 * @var array<int,string>
+	 */
+	private const ALLOWED_DECISIONS = [
+		self::DECISION_APPROVED,
+		self::DECISION_REJECTED,
+		self::DECISION_DELEGATED,
+	];
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface           $container             DI container — OR's
-     *                                                            ObjectService is fetched
-     *                                                            lazily so unit tests
-     *                                                            swap an in-memory stub.
-     * @param IAppConfig                   $appConfig             App config for the OR
-     *                                                            register slug.
-     * @param AdministrationContextService $administrationContext IDOR + tenant scope.
-     * @param IUserSession                 $userSession           Session for userId
-     *                                                            attribution
-     *                                                            (server-authoritative).
-     * @param LoggerInterface              $logger                Logger (no sensitive
-     *                                                            payloads).
-     * @param ApprovalActivityEmitter|null $activityEmitter       Optional emitter for
-     *                                                            approval activity events.
-     *
-     * @return void
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly AdministrationContextService $administrationContext,
-        private readonly IUserSession $userSession,
-        private readonly LoggerInterface $logger,
-        private readonly ?ApprovalActivityEmitter $activityEmitter=null,
-    ) {
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — OR's
+	 *                                      ObjectService is fetched
+	 *                                      lazily so unit tests
+	 *                                      swap an in-memory stub.
+	 * @param IAppConfig $appConfig App config for the OR
+	 *                              register slug.
+	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
+	 * @param IUserSession $userSession Session for userId
+	 *                                  attribution
+	 *                                  (server-authoritative).
+	 * @param LoggerInterface $logger Logger (no sensitive
+	 *                                payloads).
+	 * @param ApprovalActivityEmitter|null $activityEmitter Optional emitter for
+	 *                                                      approval activity events.
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly AdministrationContextService $administrationContext,
+		private readonly IUserSession $userSession,
+		private readonly LoggerInterface $logger,
+		private readonly ?ApprovalActivityEmitter $activityEmitter = null,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Record an approver decision on a PurchaseOrder's approval chain.
-     *
-     * The method stamps the next pending entry's `userId` from the
-     * authenticated user session (NEVER from the request body), the
-     * `decision` from the (validated) input and a deterministic
-     * `decidedAt` ISO timestamp. When the chain becomes fully approved
-     * the PO lifecycleState advances to `approved`; any rejection
-     * advances it to `rejected`. Delegated does not advance the
-     * lifecycle (the slot remains pending under a different role —
-     * outside slice 11 scope).
-     *
-     * Server-authoritative:
-     *  - administration scope is validated;
-     *  - the poId is re-loaded from OR so a forged POST cannot pivot to
-     *    a cross-tenant record;
-     *  - the decision is validated against {@see ALLOWED_DECISIONS};
-     *  - the PO must currently be in `pending_approval` — calling on an
-     *    already-approved or terminated PO throws a RuntimeException;
-     *  - the chain must carry at least one pending entry — calling on
-     *    a fully-signed chain throws a RuntimeException.
-     *
-     * @param string      $administrationId Tenant scope.
-     * @param string      $purchaseOrderId  PurchaseOrder id.
-     * @param string      $decision         One of {@see ALLOWED_DECISIONS}.
-     * @param string|null $comment          Optional approver comment.
-     *
-     * @return array<string,mixed> The updated PurchaseOrder record.
-     *
-     * @throws \RuntimeException On cross-tenant access, missing PO,
-     *                            invalid decision, non-pending PO state,
-     *                            or fully-signed chain.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
-     */
-    public function recordApprovalDecision(
-        string $administrationId,
-        string $purchaseOrderId,
-        string $decision,
-        ?string $comment=null,
-    ): array {
-        $this->assertAccess(administrationId: $administrationId);
-        if ($purchaseOrderId === '') {
-            throw new RuntimeException('Purchase order not found');
-        }
+	/**
+	 * Record an approver decision on a PurchaseOrder's approval chain.
+	 *
+	 * The method stamps the next pending entry's `userId` from the
+	 * authenticated user session (NEVER from the request body), the
+	 * `decision` from the (validated) input and a deterministic
+	 * `decidedAt` ISO timestamp. When the chain becomes fully approved
+	 * the PO lifecycleState advances to `approved`; any rejection
+	 * advances it to `rejected`. Delegated does not advance the
+	 * lifecycle (the slot remains pending under a different role —
+	 * outside slice 11 scope).
+	 *
+	 * Server-authoritative:
+	 *  - administration scope is validated;
+	 *  - the poId is re-loaded from OR so a forged POST cannot pivot to
+	 *    a cross-tenant record;
+	 *  - the decision is validated against {@see ALLOWED_DECISIONS};
+	 *  - the PO must currently be in `pending_approval` — calling on an
+	 *    already-approved or terminated PO throws a RuntimeException;
+	 *  - the chain must carry at least one pending entry — calling on
+	 *    a fully-signed chain throws a RuntimeException.
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $purchaseOrderId PurchaseOrder id.
+	 * @param string $decision One of {@see ALLOWED_DECISIONS}.
+	 * @param string|null $comment Optional approver comment.
+	 *
+	 * @return array<string,mixed> The updated PurchaseOrder record.
+	 *
+	 * @throws \RuntimeException On cross-tenant access, missing PO,
+	 *                           invalid decision, non-pending PO state,
+	 *                           or fully-signed chain.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-11-audit-trail-export/tasks.md
+	 */
+	public function recordApprovalDecision(
+		string $administrationId,
+		string $purchaseOrderId,
+		string $decision,
+		?string $comment = null,
+	): array {
+		$this->assertAccess(administrationId: $administrationId);
+		if ($purchaseOrderId === '') {
+			throw new RuntimeException('Purchase order not found');
+		}
 
-        if (in_array($decision, self::ALLOWED_DECISIONS, true) === false) {
-            throw new RuntimeException('Invalid approval decision');
-        }
+		if (in_array($decision, self::ALLOWED_DECISIONS, true) === false) {
+			throw new RuntimeException('Invalid approval decision');
+		}
 
-        $purchaseOrder = $this->loadPurchaseOrder(
-            administrationId: $administrationId,
-            purchaseOrderId: $purchaseOrderId
-        );
+		$purchaseOrder = $this->loadPurchaseOrder(
+			administrationId: $administrationId,
+			purchaseOrderId: $purchaseOrderId
+		);
 
-        $lifecycleState = (string) ($purchaseOrder['lifecycleState'] ?? '');
-        if ($lifecycleState !== 'pending_approval') {
-            throw new RuntimeException('Purchase order is not pending approval');
-        }
+		$lifecycleState = (string)($purchaseOrder['lifecycleState'] ?? '');
+		if ($lifecycleState !== 'pending_approval') {
+			throw new RuntimeException('Purchase order is not pending approval');
+		}
 
-        $chain = (array) ($purchaseOrder['approvalChain'] ?? []);
-        if ($chain === []) {
-            throw new RuntimeException('Approval chain is empty');
-        }
+		$chain = (array)($purchaseOrder['approvalChain'] ?? []);
+		if ($chain === []) {
+			throw new RuntimeException('Approval chain is empty');
+		}
 
-        $decidedAt = $this->nowIso();
-        $userId    = $this->currentUserId();
-        $signed    = false;
-        foreach ($chain as $index => $entry) {
-            if (is_array($entry) === false) {
-                continue;
-            }
+		$decidedAt = $this->nowIso();
+		$userId = $this->currentUserId();
+		$signed = false;
+		foreach ($chain as $index => $entry) {
+			if (is_array($entry) === false) {
+				continue;
+			}
 
-            if ((string) ($entry['decision'] ?? '') !== 'pending') {
-                continue;
-            }
+			if ((string)($entry['decision'] ?? '') !== 'pending') {
+				continue;
+			}
 
-            $entry['userId']    = $userId;
-            $entry['decision']  = $decision;
-            $entry['decidedAt'] = $decidedAt;
-            if ($comment !== null) {
-                $trimmed = trim($comment);
-                if ($trimmed !== '') {
-                    $entry['comment'] = $trimmed;
-                }
-            }
+			$entry['userId'] = $userId;
+			$entry['decision'] = $decision;
+			$entry['decidedAt'] = $decidedAt;
+			if ($comment !== null) {
+				$trimmed = trim($comment);
+				if ($trimmed !== '') {
+					$entry['comment'] = $trimmed;
+				}
+			}
 
-            $chain[$index] = $entry;
-            $signed        = true;
-            break;
-        }//end foreach
+			$chain[$index] = $entry;
+			$signed = true;
+			break;
+		}//end foreach
 
-        if ($signed === false) {
-            throw new RuntimeException('Approval chain is fully signed');
-        }
+		if ($signed === false) {
+			throw new RuntimeException('Approval chain is fully signed');
+		}
 
-        $purchaseOrder['approvalChain']  = $chain;
-        $purchaseOrder['lifecycleState'] = $this->nextLifecycleState(
-            decision: $decision,
-            chain: $chain,
-            current: $lifecycleState
-        );
+		$purchaseOrder['approvalChain'] = $chain;
+		$purchaseOrder['lifecycleState'] = $this->nextLifecycleState(
+			decision: $decision,
+			chain: $chain,
+			current: $lifecycleState
+		);
 
-        $saved = $this->saveObject(schema: self::SCHEMA_PURCHASE_ORDER, object: $purchaseOrder);
+		$saved = $this->saveObject(schema: self::SCHEMA_PURCHASE_ORDER, object: $purchaseOrder);
 
-        // Emit a Nextcloud Activity event per REQ-RAP-006 so the
-        // BookkeepingActivityFeed manifest entry surfaces the decision
-        // in the user-facing timeline. The emitter is optional (nullable)
-        // so unit tests don't have to wire IActivityManager; production
-        // DI always provides it via ApplicationServer.
-        if ($this->activityEmitter !== null) {
-            $summary = sprintf('Purchase order %s', (string) ($purchaseOrder['poNumber'] ?? $purchaseOrderId));
-            if ($decision === self::DECISION_APPROVED) {
-                $this->activityEmitter->emitApprovalApproved(
-                    objectType:  self::SCHEMA_PURCHASE_ORDER,
-                    objectId:    $purchaseOrderId,
-                    actorUid:    $userId,
-                    summaryHint: $summary,
-                    comment:     (string) ($comment ?? '')
-                );
-            } else if ($decision === self::DECISION_REJECTED) {
-                $this->activityEmitter->emitApprovalRejected(
-                    objectType:  self::SCHEMA_PURCHASE_ORDER,
-                    objectId:    $purchaseOrderId,
-                    actorUid:    $userId,
-                    summaryHint: $summary,
-                    reason:      (string) ($comment ?? '')
-                );
-            }
-        }
+		// Emit a Nextcloud Activity event per REQ-RAP-006 so the
+		// BookkeepingActivityFeed manifest entry surfaces the decision
+		// in the user-facing timeline. The emitter is optional (nullable)
+		// so unit tests don't have to wire IActivityManager; production
+		// DI always provides it via ApplicationServer.
+		if ($this->activityEmitter !== null) {
+			$summary = sprintf('Purchase order %s', (string)($purchaseOrder['poNumber'] ?? $purchaseOrderId));
+			if ($decision === self::DECISION_APPROVED) {
+				$this->activityEmitter->emitApprovalApproved(
+					objectType:  self::SCHEMA_PURCHASE_ORDER,
+					objectId:    $purchaseOrderId,
+					actorUid:    $userId,
+					summaryHint: $summary,
+					comment:     (string)($comment ?? '')
+				);
+			} elseif ($decision === self::DECISION_REJECTED) {
+				$this->activityEmitter->emitApprovalRejected(
+					objectType:  self::SCHEMA_PURCHASE_ORDER,
+					objectId:    $purchaseOrderId,
+					actorUid:    $userId,
+					summaryHint: $summary,
+					reason:      (string)($comment ?? '')
+				);
+			}
+		}
 
-        return $saved;
+		return $saved;
+	}//end recordApprovalDecision()
 
-    }//end recordApprovalDecision()
+	/**
+	 * Determine the next PO lifecycleState after a decision.
+	 *
+	 * - rejected → rejected (terminal for this slice; cancels payment chain)
+	 * - approved + every chain entry approved → approved
+	 * - approved + chain still has pending entries → pending_approval
+	 * - delegated → pending_approval (the slot is re-routed; outside this slice)
+	 *
+	 * @param string $decision The decision recorded.
+	 * @param array<int,mixed> $chain The updated approval chain.
+	 * @param string $current Current lifecycle (always `pending_approval`).
+	 *
+	 * @return string
+	 */
+	private function nextLifecycleState(string $decision, array $chain, string $current): string {
+		if ($decision === self::DECISION_REJECTED) {
+			return 'rejected';
+		}
 
-    /**
-     * Determine the next PO lifecycleState after a decision.
-     *
-     * - rejected → rejected (terminal for this slice; cancels payment chain)
-     * - approved + every chain entry approved → approved
-     * - approved + chain still has pending entries → pending_approval
-     * - delegated → pending_approval (the slot is re-routed; outside this slice)
-     *
-     * @param string           $decision The decision recorded.
-     * @param array<int,mixed> $chain    The updated approval chain.
-     * @param string           $current  Current lifecycle (always `pending_approval`).
-     *
-     * @return string
-     */
-    private function nextLifecycleState(string $decision, array $chain, string $current): string
-    {
-        if ($decision === self::DECISION_REJECTED) {
-            return 'rejected';
-        }
+		if ($decision === self::DECISION_DELEGATED) {
+			return $current;
+		}
 
-        if ($decision === self::DECISION_DELEGATED) {
-            return $current;
-        }
+		$fullyApproved = true;
+		foreach ($chain as $entry) {
+			if (is_array($entry) === false) {
+				continue;
+			}
 
-        $fullyApproved = true;
-        foreach ($chain as $entry) {
-            if (is_array($entry) === false) {
-                continue;
-            }
+			$entryDecision = (string)($entry['decision'] ?? '');
+			if ($entryDecision !== self::DECISION_APPROVED) {
+				$fullyApproved = false;
+				break;
+			}
+		}
 
-            $entryDecision = (string) ($entry['decision'] ?? '');
-            if ($entryDecision !== self::DECISION_APPROVED) {
-                $fullyApproved = false;
-                break;
-            }
-        }
+		if ($fullyApproved === true) {
+			return 'approved';
+		}
 
-        if ($fullyApproved === true) {
-            return 'approved';
-        }
+		return $current;
+	}//end nextLifecycleState()
 
-        return $current;
+	/**
+	 * Load a PurchaseOrder by id, scoped to the administration so a
+	 * forged id from another tenant masks as "not found" (ADR-005).
+	 *
+	 * @param string $administrationId Tenant scope.
+	 * @param string $purchaseOrderId PurchaseOrder id.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws \RuntimeException When the PO is not found in the tenant.
+	 */
+	private function loadPurchaseOrder(string $administrationId, string $purchaseOrderId): array {
+		$purchaseOrder = $this->findOne(
+			schema: self::SCHEMA_PURCHASE_ORDER,
+			filters: [
+				'id' => $purchaseOrderId,
+				'administrationId' => $administrationId,
+			]
+		);
+		if ($purchaseOrder === null) {
+			throw new RuntimeException('Purchase order not found');
+		}
 
-    }//end nextLifecycleState()
+		return $purchaseOrder;
+	}//end loadPurchaseOrder()
 
-    /**
-     * Load a PurchaseOrder by id, scoped to the administration so a
-     * forged id from another tenant masks as "not found" (ADR-005).
-     *
-     * @param string $administrationId Tenant scope.
-     * @param string $purchaseOrderId  PurchaseOrder id.
-     *
-     * @return array<string,mixed>
-     *
-     * @throws \RuntimeException When the PO is not found in the tenant.
-     */
-    private function loadPurchaseOrder(string $administrationId, string $purchaseOrderId): array
-    {
-        $purchaseOrder = $this->findOne(
-            schema: self::SCHEMA_PURCHASE_ORDER,
-            filters: [
-                'id'               => $purchaseOrderId,
-                'administrationId' => $administrationId,
-            ]
-        );
-        if ($purchaseOrder === null) {
-            throw new RuntimeException('Purchase order not found');
-        }
+	/**
+	 * Validate the administration scope (ADR-005 IDOR-safe).
+	 *
+	 * @param string $administrationId Tenant id.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the administration is inaccessible.
+	 */
+	private function assertAccess(string $administrationId): void {
+		if ($administrationId === '') {
+			throw new RuntimeException('administrationId is required');
+		}
 
-        return $purchaseOrder;
+		if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
+			throw new RuntimeException('Administration not found');
+		}
 
-    }//end loadPurchaseOrder()
+	}//end assertAccess()
 
-    /**
-     * Validate the administration scope (ADR-005 IDOR-safe).
-     *
-     * @param string $administrationId Tenant id.
-     *
-     * @return void
-     *
-     * @throws \RuntimeException When the administration is inaccessible.
-     */
-    private function assertAccess(string $administrationId): void
-    {
-        if ($administrationId === '') {
-            throw new RuntimeException('administrationId is required');
-        }
+	/**
+	 * Resolve the current user id — anonymous callers cannot record
+	 * approval decisions (the controller rejects them with 401 before
+	 * the service is called, but we belt-and-brace here).
+	 *
+	 * @return string
+	 *
+	 * @throws \RuntimeException When no user session is bound.
+	 */
+	private function currentUserId(): string {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			throw new RuntimeException('Approval decision requires an authenticated user');
+		}
 
-        if ($this->administrationContext->canAccess(administrationId: $administrationId) === false) {
-            throw new RuntimeException('Administration not found');
-        }
+		return $user->getUID();
+	}//end currentUserId()
 
-    }//end assertAccess()
+	/**
+	 * Persist via the real ObjectService API (saveObject).
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param array<string,mixed> $object Object to persist.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function saveObject(string $schema, array $object): array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$result = $objectService
+				->setRegister($this->register())
+				->setSchema($schema)
+				->saveObject($object);
 
-    /**
-     * Resolve the current user id — anonymous callers cannot record
-     * approval decisions (the controller rejects them with 401 before
-     * the service is called, but we belt-and-brace here).
-     *
-     * @return string
-     *
-     * @throws \RuntimeException When no user session is bound.
-     */
-    private function currentUserId(): string
-    {
-        $user = $this->userSession->getUser();
-        if ($user === null) {
-            throw new RuntimeException('Approval decision requires an authenticated user');
-        }
+			if (is_array($result) === true) {
+				return $result;
+			}
 
-        return $user->getUID();
+			return $object;
+		} catch (\Throwable $exception) {
+			$this->logger->error(
+				'PurchaseOrderApprovalService: failed to persist object',
+				['schema' => $schema, 'exception' => $exception->getMessage()]
+			);
+			throw new RuntimeException('Failed to persist ' . $schema);
+		}
 
-    }//end currentUserId()
+	}//end saveObject()
 
-    /**
-     * Persist via the real ObjectService API (saveObject).
-     *
-     * @param string              $schema OR schema slug.
-     * @param array<string,mixed> $object Object to persist.
-     *
-     * @return array<string,mixed>
-     */
-    private function saveObject(string $schema, array $object): array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $result        = $objectService
-                ->setRegister($this->register())
-                ->setSchema($schema)
-                ->saveObject($object);
+	/**
+	 * Fetch one record via the real ObjectService API (findAll then first).
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param array<string,mixed> $filters Equality filters.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findOne(string $schema, array $filters): ?array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister($this->register())
+				->setSchema($schema)
+				->findAll(['filters' => $filters]);
+		} catch (\Throwable $exception) {
+			$this->logger->error(
+				'PurchaseOrderApprovalService: failed to query OpenRegister',
+				['schema' => $schema, 'exception' => $exception->getMessage()]
+			);
+			return null;
+		}
 
-            if (is_array($result) === true) {
-                return $result;
-            }
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				return $row;
+			}
+		}
 
-            return $object;
-        } catch (\Throwable $exception) {
-            $this->logger->error(
-                'PurchaseOrderApprovalService: failed to persist object',
-                ['schema' => $schema, 'exception' => $exception->getMessage()]
-            );
-            throw new RuntimeException('Failed to persist '.$schema);
-        }
+		return null;
+	}//end findOne()
 
-    }//end saveObject()
+	/**
+	 * Resolve the OR register slug from app config (defaults to "shillinq").
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Fetch one record via the real ObjectService API (findAll then first).
-     *
-     * @param string              $schema  OR schema slug.
-     * @param array<string,mixed> $filters Equality filters.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function findOne(string $schema, array $filters): ?array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister($this->register())
-                ->setSchema($schema)
-                ->findAll(['filters' => $filters]);
-        } catch (\Throwable $exception) {
-            $this->logger->error(
-                'PurchaseOrderApprovalService: failed to query OpenRegister',
-                ['schema' => $schema, 'exception' => $exception->getMessage()]
-            );
-            return null;
-        }
+		return $register;
+	}//end register()
 
-        foreach ($rows as $row) {
-            if (is_array($row) === true) {
-                return $row;
-            }
-        }
-
-        return null;
-
-    }//end findOne()
-
-    /**
-     * Resolve the OR register slug from app config (defaults to "shillinq").
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
-
-    /**
-     * Current timestamp in ISO-8601 — server-authoritative.
-     *
-     * @return string
-     */
-    private function nowIso(): string
-    {
-        return date('c');
-
-    }//end nowIso()
+	/**
+	 * Current timestamp in ISO-8601 — server-authoritative.
+	 *
+	 * @return string
+	 */
+	private function nowIso(): string {
+		return date('c');
+	}//end nowIso()
 }//end class

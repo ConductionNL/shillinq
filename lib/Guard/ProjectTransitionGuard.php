@@ -36,20 +36,17 @@ namespace OCA\Shillinq\Guard;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class ProjectTransitionGuard
-{
-    /**
-     * Precondition for `putOnHold`: `closureJustification` must be set.
-     *
-     * @param array<string, mixed> $project The Project object being transitioned.
-     *
-     * @return bool True when the project may be put on hold.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireReason(array $project): bool
-    {
-        return trim((string) ($project['closureJustification'] ?? '')) !== '';
-
-    }//end requireReason()
+class ProjectTransitionGuard {
+	/**
+	 * Precondition for `putOnHold`: `closureJustification` must be set.
+	 *
+	 * @param array<string, mixed> $project The Project object being transitioned.
+	 *
+	 * @return bool True when the project may be put on hold.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireReason(array $project): bool {
+		return trim((string)($project['closureJustification'] ?? '')) !== '';
+	}//end requireReason()
 }//end class

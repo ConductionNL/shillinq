@@ -53,320 +53,303 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
  */
-class UrencriteriumYearGuard
-{
+class UrencriteriumYearGuard {
 
-    /**
-     * The regular urencriterium norm in hours (art. 3.6 lid 1 Wet IB 2001).
-     */
-    public const NORM_REGULIER = 1225;
+	/**
+	 * The regular urencriterium norm in hours (art. 3.6 lid 1 Wet IB 2001).
+	 */
+	public const NORM_REGULIER = 1225;
 
-    /**
-     * The reduced norm for entrepreneurs with UWV-assessed incapacity for work
-     * (art. 3.6 lid 5 Wet IB 2001).
-     */
-    public const NORM_AO = 800;
+	/**
+	 * The reduced norm for entrepreneurs with UWV-assessed incapacity for work
+	 * (art. 3.6 lid 5 Wet IB 2001).
+	 */
+	public const NORM_AO = 800;
 
-    /**
-     * The meewerkaftrek norm in hours.
-     */
-    public const NORM_MEEWERK = 525;
+	/**
+	 * The meewerkaftrek norm in hours.
+	 */
+	public const NORM_MEEWERK = 525;
 
-    /**
-     * Construct the guard.
-     *
-     * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the guard.
+	 *
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Save precondition for the UrencriteriumYear schema.
-     *
-     * Validates the norm / grondslag / grotendeels / drempel invariants. Returns
-     * true only when every check passes. Fail-closed: returns false on any
-     * exception (denies the save) per CWE-863.
-     *
-     * @param array<string, mixed> $year UrencriteriumYear object array supplied by OR.
-     *
-     * @return bool True when the record may be saved.
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
-     */
-    public function validateOnSave(array $year): bool
-    {
-        try {
-            if ($this->hasValidNorm(year: $year) === false) {
-                return false;
-            }
+	/**
+	 * Save precondition for the UrencriteriumYear schema.
+	 *
+	 * Validates the norm / grondslag / grotendeels / drempel invariants. Returns
+	 * true only when every check passes. Fail-closed: returns false on any
+	 * exception (denies the save) per CWE-863.
+	 *
+	 * @param array<string, mixed> $year UrencriteriumYear object array supplied by OR.
+	 *
+	 * @return bool True when the record may be saved.
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+	 */
+	public function validateOnSave(array $year): bool {
+		try {
+			if ($this->hasValidNorm(year: $year) === false) {
+				return false;
+			}
 
-            if ($this->normMatchesGrondslag(year: $year) === false) {
-                return false;
-            }
+			if ($this->normMatchesGrondslag(year: $year) === false) {
+				return false;
+			}
 
-            if ($this->grotendeelsIsConsistent(year: $year) === false) {
-                return false;
-            }
+			if ($this->grotendeelsIsConsistent(year: $year) === false) {
+				return false;
+			}
 
-            return $this->drempelStatusMatchesPrognose(year: $year);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'UrencriteriumYearGuard: validateOnSave failed — denying save (fail-closed)',
-                [
-                    'enterpriseId' => ($year['enterpriseId'] ?? 'unknown'),
-                    'exception'     => $e->getMessage(),
-                ]
-            );
-            return false;
-        }//end try
+			return $this->drempelStatusMatchesPrognose(year: $year);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'UrencriteriumYearGuard: validateOnSave failed — denying save (fail-closed)',
+				[
+					'enterpriseId' => ($year['enterpriseId'] ?? 'unknown'),
+					'exception' => $e->getMessage(),
+				]
+			);
+			return false;
+		}//end try
 
-    }//end validateOnSave()
+	}//end validateOnSave()
 
-    /**
-     * Determine the applicable doel-norm from an entrepreneur profile.
-     *
-     * Pure, deterministic norm-determination per REQ-URC-000/006:
-     *   - AO (arbeidsongeschiktheid) → 800 (art. 3.6 lid 5).
-     *   - meewerkende partner without own onderneming → 525 (meewerkaftrek).
-     *   - otherwise → 1225 (art. 3.6 lid 1).
-     *
-     * @param array<string, mixed> $profiel Profile flags: 'arbeidsongeschikt' (bool),
-     *                                      'meewerkendePartner' (bool).
-     *
-     * @return int One of NORM_REGULIER / NORM_AO / NORM_MEEWERK.
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
-     */
-    public function bepaalDoelNorm(array $profiel): int
-    {
-        if (($profiel['arbeidsongeschikt'] ?? false) === true) {
-            return self::NORM_AO;
-        }
+	/**
+	 * Determine the applicable doel-norm from an entrepreneur profile.
+	 *
+	 * Pure, deterministic norm-determination per REQ-URC-000/006:
+	 *   - AO (arbeidsongeschiktheid) → 800 (art. 3.6 lid 5).
+	 *   - meewerkende partner without own onderneming → 525 (meewerkaftrek).
+	 *   - otherwise → 1225 (art. 3.6 lid 1).
+	 *
+	 * @param array<string, mixed> $profiel Profile flags: 'arbeidsongeschikt' (bool),
+	 *                                      'meewerkendePartner' (bool).
+	 *
+	 * @return int One of NORM_REGULIER / NORM_AO / NORM_MEEWERK.
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+	 */
+	public function bepaalDoelNorm(array $profiel): int {
+		if (($profiel['arbeidsongeschikt'] ?? false) === true) {
+			return self::NORM_AO;
+		}
 
-        if (($profiel['meewerkendePartner'] ?? false) === true) {
-            return self::NORM_MEEWERK;
-        }
+		if (($profiel['meewerkendePartner'] ?? false) === true) {
+			return self::NORM_MEEWERK;
+		}
 
-        return self::NORM_REGULIER;
+		return self::NORM_REGULIER;
+	}//end bepaalDoelNorm()
 
-    }//end bepaalDoelNorm()
+	/**
+	 * Determine the fiscal grondslag citation for a doel-norm.
+	 *
+	 * @param int $doelNorm One of the recognised norm values.
+	 *
+	 * @return string The legal grondslag citation.
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+	 */
+	public function bepaalNormGrondslag(int $doelNorm): string {
+		return match ($doelNorm) {
+			self::NORM_AO => 'art. 3.6 lid 5 Wet IB 2001',
+			self::NORM_MEEWERK => 'art. 3.6 lid 1 Wet IB 2001 (meewerkaftrek)',
+			default => 'art. 3.6 lid 1 Wet IB 2001',
+		};
 
-    /**
-     * Determine the fiscal grondslag citation for a doel-norm.
-     *
-     * @param int $doelNorm One of the recognised norm values.
-     *
-     * @return string The legal grondslag citation.
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
-     */
-    public function bepaalNormGrondslag(int $doelNorm): string
-    {
-        return match ($doelNorm) {
-            self::NORM_AO => 'art. 3.6 lid 5 Wet IB 2001',
-            self::NORM_MEEWERK => 'art. 3.6 lid 1 Wet IB 2001 (meewerkaftrek)',
-            default => 'art. 3.6 lid 1 Wet IB 2001',
-        };
+	}//end bepaalNormGrondslag()
 
-    }//end bepaalNormGrondslag()
+	/**
+	 * Classify the drempel-status from lopende uren, prognose and norm.
+	 *
+	 * Deterministic classification per REQ-URC-003:
+	 *   - lopendeUren >= norm                       → BEHAALD.
+	 *   - prognose >= norm                          → OP_KOERS.
+	 *   - prognose >= 80% of norm                   → RISICO.
+	 *   - prognose <  80% of norm                   → KRITIEK.
+	 *
+	 * @param float $lopendeUren Cumulative realised hours.
+	 * @param float $prognose Forecast year-end hours.
+	 * @param int $norm Applicable doel-norm.
+	 *
+	 * @return string One of BEHAALD / OP_KOERS / RISICO / KRITIEK.
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+	 */
+	public function bepaalDrempelStatus(float $lopendeUren, float $prognose, int $norm): string {
+		if ($lopendeUren >= $norm) {
+			return 'BEHAALD';
+		}
 
-    /**
-     * Classify the drempel-status from lopende uren, prognose and norm.
-     *
-     * Deterministic classification per REQ-URC-003:
-     *   - lopendeUren >= norm                       → BEHAALD.
-     *   - prognose >= norm                          → OP_KOERS.
-     *   - prognose >= 80% of norm                   → RISICO.
-     *   - prognose <  80% of norm                   → KRITIEK.
-     *
-     * @param float $lopendeUren Cumulative realised hours.
-     * @param float $prognose    Forecast year-end hours.
-     * @param int   $norm        Applicable doel-norm.
-     *
-     * @return string One of BEHAALD / OP_KOERS / RISICO / KRITIEK.
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
-     */
-    public function bepaalDrempelStatus(float $lopendeUren, float $prognose, int $norm): string
-    {
-        if ($lopendeUren >= $norm) {
-            return 'BEHAALD';
-        }
+		if ($prognose >= $norm) {
+			return 'OP_KOERS';
+		}
 
-        if ($prognose >= $norm) {
-            return 'OP_KOERS';
-        }
+		if ($prognose >= ($norm * 0.8)) {
+			return 'RISICO';
+		}
 
-        if ($prognose >= ($norm * 0.8)) {
-            return 'RISICO';
-        }
+		return 'KRITIEK';
+	}//end bepaalDrempelStatus()
 
-        return 'KRITIEK';
+	/**
+	 * Evaluate the grotendeels-criterium (>50% onderneming vs loondienst).
+	 *
+	 * Per art. 3.6 lid 2 Wet IB 2001 (REQ-URC-007): when the entrepreneur also
+	 * works in paid employment, more than 50% of total working time must be spent
+	 * on the onderneming.
+	 *
+	 * @param float $ondernemingsUren Hours spent on the onderneming.
+	 * @param float $loondienstUren Hours spent in paid employment (0 = none).
+	 *
+	 * @return string NIET_TOEPASSELIJK when no loondienst, otherwise
+	 *                GROTENDEELS_ONDERNEMING / NIET_GROTENDEELS_ONDERNEMING.
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
+	 */
+	public function bepaalGrotendeelsCriterium(float $ondernemingsUren, float $loondienstUren): string {
+		if ($loondienstUren <= 0.0) {
+			return 'NIET_TOEPASSELIJK';
+		}
 
-    }//end bepaalDrempelStatus()
+		$totaal = ($ondernemingsUren + $loondienstUren);
+		if ($totaal <= 0.0) {
+			return 'NIET_TOEPASSELIJK';
+		}
 
-    /**
-     * Evaluate the grotendeels-criterium (>50% onderneming vs loondienst).
-     *
-     * Per art. 3.6 lid 2 Wet IB 2001 (REQ-URC-007): when the entrepreneur also
-     * works in paid employment, more than 50% of total working time must be spent
-     * on the onderneming.
-     *
-     * @param float $ondernemingsUren Hours spent on the onderneming.
-     * @param float $loondienstUren   Hours spent in paid employment (0 = none).
-     *
-     * @return string NIET_TOEPASSELIJK when no loondienst, otherwise
-     *                GROTENDEELS_ONDERNEMING / NIET_GROTENDEELS_ONDERNEMING.
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-15
-     */
-    public function bepaalGrotendeelsCriterium(float $ondernemingsUren, float $loondienstUren): string
-    {
-        if ($loondienstUren <= 0.0) {
-            return 'NIET_TOEPASSELIJK';
-        }
+		if (($ondernemingsUren / $totaal) > 0.5) {
+			return 'GROTENDEELS_ONDERNEMING';
+		}
 
-        $totaal = ($ondernemingsUren + $loondienstUren);
-        if ($totaal <= 0.0) {
-            return 'NIET_TOEPASSELIJK';
-        }
+		return 'NIET_GROTENDEELS_ONDERNEMING';
+	}//end bepaalGrotendeelsCriterium()
 
-        if (($ondernemingsUren / $totaal) > 0.5) {
-            return 'GROTENDEELS_ONDERNEMING';
-        }
+	/**
+	 * Verify the doel-norm is one of the recognised values.
+	 *
+	 * @param array<string, mixed> $year UrencriteriumYear object array.
+	 *
+	 * @return bool True when doelNorm is 1225, 800 or 525.
+	 */
+	private function hasValidNorm(array $year): bool {
+		$norm = (int)($year['doelNorm'] ?? 0);
+		if (in_array($norm, [self::NORM_REGULIER, self::NORM_AO, self::NORM_MEEWERK], true) === false) {
+			$this->logger->info(
+				'UrencriteriumYearGuard: doelNorm not a recognised value — denying save',
+				['doelNorm' => $norm]
+			);
+			return false;
+		}
 
-        return 'NIET_GROTENDEELS_ONDERNEMING';
+		return true;
+	}//end hasValidNorm()
 
-    }//end bepaalGrotendeelsCriterium()
+	/**
+	 * Verify the supplied norm-grondslag matches the doel-norm.
+	 *
+	 * The 800-uren norm MUST cite art. 3.6 lid 5; any other norm MUST NOT.
+	 *
+	 * @param array<string, mixed> $year UrencriteriumYear object array.
+	 *
+	 * @return bool True when the citation is consistent with the norm.
+	 */
+	private function normMatchesGrondslag(array $year): bool {
+		$norm = (int)($year['doelNorm'] ?? 0);
+		$grondslag = (string)($year['normGrondslag'] ?? '');
+		$citeertLid5 = (str_contains($grondslag, 'lid 5') === true);
 
-    /**
-     * Verify the doel-norm is one of the recognised values.
-     *
-     * @param array<string, mixed> $year UrencriteriumYear object array.
-     *
-     * @return bool True when doelNorm is 1225, 800 or 525.
-     */
-    private function hasValidNorm(array $year): bool
-    {
-        $norm = (int) ($year['doelNorm'] ?? 0);
-        if (in_array($norm, [self::NORM_REGULIER, self::NORM_AO, self::NORM_MEEWERK], true) === false) {
-            $this->logger->info(
-                'UrencriteriumYearGuard: doelNorm not a recognised value — denying save',
-                ['doelNorm' => $norm]
-            );
-            return false;
-        }
+		if ($norm === self::NORM_AO && $citeertLid5 === false) {
+			$this->logger->info(
+				'UrencriteriumYearGuard: 800-uren norm must cite art. 3.6 lid 5 — denying save',
+				['normGrondslag' => $grondslag]
+			);
+			return false;
+		}
 
-        return true;
+		if ($norm !== self::NORM_AO && $citeertLid5 === true) {
+			$this->logger->info(
+				'UrencriteriumYearGuard: only the 800-uren norm may cite art. 3.6 lid 5 — denying save',
+				['doelNorm' => $norm, 'normGrondslag' => $grondslag]
+			);
+			return false;
+		}
 
-    }//end hasValidNorm()
+		return true;
+	}//end normMatchesGrondslag()
 
-    /**
-     * Verify the supplied norm-grondslag matches the doel-norm.
-     *
-     * The 800-uren norm MUST cite art. 3.6 lid 5; any other norm MUST NOT.
-     *
-     * @param array<string, mixed> $year UrencriteriumYear object array.
-     *
-     * @return bool True when the citation is consistent with the norm.
-     */
-    private function normMatchesGrondslag(array $year): bool
-    {
-        $norm        = (int) ($year['doelNorm'] ?? 0);
-        $grondslag   = (string) ($year['normGrondslag'] ?? '');
-        $citeertLid5 = (str_contains($grondslag, 'lid 5') === true);
+	/**
+	 * Verify the grotendeels-criterium value is internally consistent.
+	 *
+	 * Only a value within the recognised enum is accepted. A
+	 * NIET_GROTENDEELS_ONDERNEMING marking implies the zelfstandigenaftrek is
+	 * blocked, which the IB-aangifte consumer reads downstream (REQ-URC-007).
+	 *
+	 * @param array<string, mixed> $year UrencriteriumYear object array.
+	 *
+	 * @return bool True when the value is recognised.
+	 */
+	private function grotendeelsIsConsistent(array $year): bool {
+		$value = (string)($year['grotendeelsCriterium'] ?? 'NIET_TOEPASSELIJK');
+		$allowed = [
+			'NIET_TOEPASSELIJK',
+			'GROTENDEELS_ONDERNEMING',
+			'NIET_GROTENDEELS_ONDERNEMING',
+		];
 
-        if ($norm === self::NORM_AO && $citeertLid5 === false) {
-            $this->logger->info(
-                'UrencriteriumYearGuard: 800-uren norm must cite art. 3.6 lid 5 — denying save',
-                ['normGrondslag' => $grondslag]
-            );
-            return false;
-        }
+		if (in_array($value, $allowed, true) === false) {
+			$this->logger->info(
+				'UrencriteriumYearGuard: grotendeelsCriterium has an unrecognised value — denying save',
+				['grotendeelsCriterium' => $value]
+			);
+			return false;
+		}
 
-        if ($norm !== self::NORM_AO && $citeertLid5 === true) {
-            $this->logger->info(
-                'UrencriteriumYearGuard: only the 800-uren norm may cite art. 3.6 lid 5 — denying save',
-                ['doelNorm' => $norm, 'normGrondslag' => $grondslag]
-            );
-            return false;
-        }
+		return true;
+	}//end grotendeelsIsConsistent()
 
-        return true;
+	/**
+	 * Verify the drempel-status matches the prognose / norm relationship.
+	 *
+	 * When a prognose is present the stored drempelStatus must equal the
+	 * deterministically-derived status; this keeps batch-written and UI-written
+	 * records canonical. When no prognose is present yet, the status is accepted
+	 * as-is (initial OP_KOERS).
+	 *
+	 * @param array<string, mixed> $year UrencriteriumYear object array.
+	 *
+	 * @return bool True when consistent (or no prognose yet).
+	 */
+	private function drempelStatusMatchesPrognose(array $year): bool {
+		if (isset($year['forecastYearEnd']) === false) {
+			return true;
+		}
 
-    }//end normMatchesGrondslag()
+		$expected = $this->bepaalDrempelStatus(
+			lopendeUren: (float)($year['lopendeUren'] ?? 0),
+			prognose: (float)$year['forecastYearEnd'],
+			norm: (int)($year['doelNorm'] ?? self::NORM_REGULIER)
+		);
 
-    /**
-     * Verify the grotendeels-criterium value is internally consistent.
-     *
-     * Only a value within the recognised enum is accepted. A
-     * NIET_GROTENDEELS_ONDERNEMING marking implies the zelfstandigenaftrek is
-     * blocked, which the IB-aangifte consumer reads downstream (REQ-URC-007).
-     *
-     * @param array<string, mixed> $year UrencriteriumYear object array.
-     *
-     * @return bool True when the value is recognised.
-     */
-    private function grotendeelsIsConsistent(array $year): bool
-    {
-        $value   = (string) ($year['grotendeelsCriterium'] ?? 'NIET_TOEPASSELIJK');
-        $allowed = [
-            'NIET_TOEPASSELIJK',
-            'GROTENDEELS_ONDERNEMING',
-            'NIET_GROTENDEELS_ONDERNEMING',
-        ];
+		$actual = (string)($year['drempelStatus'] ?? '');
+		if ($actual !== $expected) {
+			$this->logger->info(
+				'UrencriteriumYearGuard: drempelStatus does not match prognose/norm — denying save',
+				[
+					'actual' => $actual,
+					'expected' => $expected,
+				]
+			);
+			return false;
+		}
 
-        if (in_array($value, $allowed, true) === false) {
-            $this->logger->info(
-                'UrencriteriumYearGuard: grotendeelsCriterium has an unrecognised value — denying save',
-                ['grotendeelsCriterium' => $value]
-            );
-            return false;
-        }
-
-        return true;
-
-    }//end grotendeelsIsConsistent()
-
-    /**
-     * Verify the drempel-status matches the prognose / norm relationship.
-     *
-     * When a prognose is present the stored drempelStatus must equal the
-     * deterministically-derived status; this keeps batch-written and UI-written
-     * records canonical. When no prognose is present yet, the status is accepted
-     * as-is (initial OP_KOERS).
-     *
-     * @param array<string, mixed> $year UrencriteriumYear object array.
-     *
-     * @return bool True when consistent (or no prognose yet).
-     */
-    private function drempelStatusMatchesPrognose(array $year): bool
-    {
-        if (isset($year['forecastYearEnd']) === false) {
-            return true;
-        }
-
-        $expected = $this->bepaalDrempelStatus(
-            lopendeUren: (float) ($year['lopendeUren'] ?? 0),
-            prognose: (float) $year['forecastYearEnd'],
-            norm: (int) ($year['doelNorm'] ?? self::NORM_REGULIER)
-        );
-
-        $actual = (string) ($year['drempelStatus'] ?? '');
-        if ($actual !== $expected) {
-            $this->logger->info(
-                'UrencriteriumYearGuard: drempelStatus does not match prognose/norm — denying save',
-                [
-                    'actual'   => $actual,
-                    'expected' => $expected,
-                ]
-            );
-            return false;
-        }
-
-        return true;
-
-    }//end drempelStatusMatchesPrognose()
+		return true;
+	}//end drempelStatusMatchesPrognose()
 }//end class

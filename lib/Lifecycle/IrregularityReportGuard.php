@@ -53,118 +53,114 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
  */
-class IrregularityReportGuard
-{
+class IrregularityReportGuard {
 
-    /**
-     * OLAF IMS-meldplicht threshold in EUR (REQ-EUF-007).
-     *
-     * @var float
-     */
-    public const OLAF_THRESHOLD_EUR = 10000.0;
+	/**
+	 * OLAF IMS-meldplicht threshold in EUR (REQ-EUF-007).
+	 *
+	 * @var float
+	 */
+	public const OLAF_THRESHOLD_EUR = 10000.0;
 
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the irregularity may be escalated to vervolgcontrole.
-     *
-     * REQ-EUF-007: when amountConcerned >= the OLAF threshold (€10.000), an
-     * imsReference must be present (the IMS-melding has been filed) before the
-     * report may escalate. Below the threshold, escalation is unconditional.
-     *
-     * Fail-closed: returns false on any exception (REQ-EUF-007 / CWE-863).
-     *
-     * @param string                   $irregularityReportId The IrregularityReport.id (call-signature parity).
-     * @param array<string,mixed>|null $object               The IrregularityReport object being transitioned.
-     *
-     * @return bool True when the report may escalate.
-     *
-     * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
-     */
-    public function canEscalate(string $irregularityReportId, ?array $object=null): bool
-    {
-        try {
-            $report = $this->resolveReport(irregularityReportId: $irregularityReportId, object: $object);
-            if ($report === null) {
-                return false;
-            }
+	/**
+	 * Returns true iff the irregularity may be escalated to vervolgcontrole.
+	 *
+	 * REQ-EUF-007: when amountConcerned >= the OLAF threshold (€10.000), an
+	 * imsReference must be present (the IMS-melding has been filed) before the
+	 * report may escalate. Below the threshold, escalation is unconditional.
+	 *
+	 * Fail-closed: returns false on any exception (REQ-EUF-007 / CWE-863).
+	 *
+	 * @param string $irregularityReportId The IrregularityReport.id (call-signature parity).
+	 * @param array<string,mixed>|null $object The IrregularityReport object being transitioned.
+	 *
+	 * @return bool True when the report may escalate.
+	 *
+	 * @spec openspec/changes/bookkeeping-single-audit-eu-fondsen/specs/bookkeeping-single-audit-eu-fondsen/spec.md
+	 */
+	public function canEscalate(string $irregularityReportId, ?array $object = null): bool {
+		try {
+			$report = $this->resolveReport(irregularityReportId: $irregularityReportId, object: $object);
+			if ($report === null) {
+				return false;
+			}
 
-            $amount = (float) ($report['amountConcerned'] ?? 0.0);
-            if ($amount < self::OLAF_THRESHOLD_EUR) {
-                // Below OLAF threshold — IMS-melding not mandatory.
-                return true;
-            }
+			$amount = (float)($report['amountConcerned'] ?? 0.0);
+			if ($amount < self::OLAF_THRESHOLD_EUR) {
+				// Below OLAF threshold — IMS-melding not mandatory.
+				return true;
+			}
 
-            // At/above threshold — IMS-melding (imsReference) must be present.
-            $imsReference = trim((string) ($report['imsReference'] ?? ''));
-            return $imsReference !== '';
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'IrregularityReportGuard: escalate check failed — denying escalate transition (fail-closed)',
-                ['irregularityReportId' => $irregularityReportId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canEscalate()
+			// At/above threshold — IMS-melding (imsReference) must be present.
+			$imsReference = trim((string)($report['imsReference'] ?? ''));
+			return $imsReference !== '';
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'IrregularityReportGuard: escalate check failed — denying escalate transition (fail-closed)',
+				['irregularityReportId' => $irregularityReportId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canEscalate()
 
-    /**
-     * Resolve the IrregularityReport object, preferring the supplied object and
-     * falling back to an ObjectService lookup by id.
-     *
-     * @param string                   $irregularityReportId The IrregularityReport.id.
-     * @param array<string,mixed>|null $object               The in-flight object, if provided.
-     *
-     * @return array<string,mixed>|null The report, or null when unresolved.
-     */
-    private function resolveReport(string $irregularityReportId, ?array $object): ?array
-    {
-        if ($object !== null) {
-            return $object;
-        }
+	/**
+	 * Resolve the IrregularityReport object, preferring the supplied object and
+	 * falling back to an ObjectService lookup by id.
+	 *
+	 * @param string $irregularityReportId The IrregularityReport.id.
+	 * @param array<string,mixed>|null $object The in-flight object, if provided.
+	 *
+	 * @return array<string,mixed>|null The report, or null when unresolved.
+	 */
+	private function resolveReport(string $irregularityReportId, ?array $object): ?array {
+		if ($object !== null) {
+			return $object;
+		}
 
-        if ($irregularityReportId === '') {
-            return null;
-        }
+		if ($irregularityReportId === '') {
+			return null;
+		}
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $reports       = $objectService
-            ->setRegister($this->resolveRegister())
-            ->setSchema('IrregularityReport')
-            ->findAll(['filters' => ['id' => $irregularityReportId], 'limit' => 1]);
+		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$reports = $objectService
+			->setRegister($this->resolveRegister())
+			->setSchema('IrregularityReport')
+			->findAll(['filters' => ['id' => $irregularityReportId], 'limit' => 1]);
 
-        foreach ($reports as $report) {
-            if (is_array($report) === true) {
-                return $report;
-            }
-        }
+		foreach ($reports as $report) {
+			if (is_array($report) === true) {
+				return $report;
+			}
+		}
 
-        return null;
-    }//end resolveReport()
+		return null;
+	}//end resolveReport()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-     *
-     * @return string The register slug.
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
+	 *
+	 * @return string The register slug.
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

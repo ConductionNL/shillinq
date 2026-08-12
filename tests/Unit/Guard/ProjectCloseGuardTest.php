@@ -25,36 +25,31 @@ namespace OCA\Shillinq\Tests\Unit\Guard;
 use OCA\Shillinq\Guard\ProjectCloseGuard;
 use PHPUnit\Framework\TestCase;
 
-final class ProjectCloseGuardTest extends TestCase
-{
-    private ProjectCloseGuard $guard;
+final class ProjectCloseGuardTest extends TestCase {
+	private ProjectCloseGuard $guard;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->guard = new ProjectCloseGuard();
-    }//end setUp()
+	protected function setUp(): void {
+		parent::setUp();
+		$this->guard = new ProjectCloseGuard();
+	}//end setUp()
 
-    public function testCloseAllowedWithZeroWip(): void
-    {
-        self::assertTrue(
-            $this->guard->requireWipJustificationOrZero(['wipBalance' => 0, 'closureJustification' => null])
-        );
-    }//end testCloseAllowedWithZeroWip()
+	public function testCloseAllowedWithZeroWip(): void {
+		self::assertTrue(
+			$this->guard->requireWipJustificationOrZero(['wipBalance' => 0, 'closureJustification' => null])
+		);
+	}//end testCloseAllowedWithZeroWip()
 
-    public function testCloseAllowedWithNonZeroWipAndJustification(): void
-    {
-        self::assertTrue(
-            $this->guard->requireWipJustificationOrZero(
-                ['wipBalance' => 4250.50, 'closureJustification' => 'Client agreed to write off remaining WIP']
-            )
-        );
-    }//end testCloseAllowedWithNonZeroWipAndJustification()
+	public function testCloseAllowedWithNonZeroWipAndJustification(): void {
+		self::assertTrue(
+			$this->guard->requireWipJustificationOrZero(
+				['wipBalance' => 4250.50, 'closureJustification' => 'Client agreed to write off remaining WIP']
+			)
+		);
+	}//end testCloseAllowedWithNonZeroWipAndJustification()
 
-    public function testCloseDeniedWithNonZeroWipAndNoJustification(): void
-    {
-        self::assertFalse(
-            $this->guard->requireWipJustificationOrZero(['wipBalance' => 4250.50, 'closureJustification' => null])
-        );
-    }//end testCloseDeniedWithNonZeroWipAndNoJustification()
+	public function testCloseDeniedWithNonZeroWipAndNoJustification(): void {
+		self::assertFalse(
+			$this->guard->requireWipJustificationOrZero(['wipBalance' => 4250.50, 'closureJustification' => null])
+		);
+	}//end testCloseDeniedWithNonZeroWipAndNoJustification()
 }//end class

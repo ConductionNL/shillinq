@@ -35,278 +35,253 @@ use OCP\Security\ICredentialsManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Tests the decidesk webhook delivery skeleton.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class LeaseDecideskWebhookServiceTest extends TestCase
-{
+final class LeaseDecideskWebhookServiceTest extends TestCase {
 
-    private IAppConfig&MockObject $appConfig;
+	private IAppConfig&MockObject $appConfig;
 
-    private ICredentialsManager&MockObject $credentialsManager;
+	private ICredentialsManager&MockObject $credentialsManager;
 
-    private IClientService&MockObject $clientService;
+	private IClientService&MockObject $clientService;
 
-    private LoggerInterface&MockObject $logger;
+	private LoggerInterface&MockObject $logger;
 
-    private LeaseDecideskWebhookService $service;
+	private LeaseDecideskWebhookService $service;
 
+	/**
+	 * Build a fresh service with all collaborators mocked.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-    /**
-     * Build a fresh service with all collaborators mocked.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+		$this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
+		$this->credentialsManager = $this->createMock(originalClassName: ICredentialsManager::class);
+		$this->clientService = $this->createMock(originalClassName: IClientService::class);
+		$this->logger = $this->createMock(originalClassName: LoggerInterface::class);
 
-        $this->appConfig          = $this->createMock(originalClassName: IAppConfig::class);
-        $this->credentialsManager = $this->createMock(originalClassName: ICredentialsManager::class);
-        $this->clientService      = $this->createMock(originalClassName: IClientService::class);
-        $this->logger             = $this->createMock(originalClassName: LoggerInterface::class);
+		$this->service = new LeaseDecideskWebhookService(
+			appConfig: $this->appConfig,
+			credentialsManager: $this->credentialsManager,
+			clientService: $this->clientService,
+			logger: $this->logger,
+		);
 
-        $this->service = new LeaseDecideskWebhookService(
-            appConfig: $this->appConfig,
-            credentialsManager: $this->credentialsManager,
-            clientService: $this->clientService,
-            logger: $this->logger,
-        );
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * The buildPayload helper preserves the audit-relevant fields and stamps
+	 * a kind + ISO 8601 requestedAt.
+	 *
+	 * @return void
+	 */
+	public function testBuildPayloadIncludesAuditFields(): void {
+		$event = [
+			'id' => 'evt-001',
+			'reassessmentNumber' => 'LEASE-001-reassess-001',
+			'eventType' => 'extension-option-reassessment',
+			'sourceLease' => 'LEASE-001',
+			'administrationId' => 'admin-01',
+			'triggerDescription' => 'Board decision: renew',
+			'preEventLiabilityCents' => 100_000_00,
+			'postEventLiabilityCents' => 150_000_00,
+			'rouAssetAdjustmentCents' => 50_000_00,
+			'plImpactCents' => 0,
+			'remeasurementApproach' => 'catch-up-adjustment',
+			'approver' => 'person-99',
+		];
 
+		$payload = $this->service->buildPayload(event: $event);
 
-    /**
-     * The buildPayload helper preserves the audit-relevant fields and stamps
-     * a kind + ISO 8601 requestedAt.
-     *
-     * @return void
-     */
-    public function testBuildPayloadIncludesAuditFields(): void
-    {
-        $event = [
-            'id'                      => 'evt-001',
-            'reassessmentNumber'      => 'LEASE-001-reassess-001',
-            'eventType'               => 'extension-option-reassessment',
-            'sourceLease'             => 'LEASE-001',
-            'administrationId'        => 'admin-01',
-            'triggerDescription'      => 'Board decision: renew',
-            'preEventLiabilityCents'  => 100_000_00,
-            'postEventLiabilityCents' => 150_000_00,
-            'rouAssetAdjustmentCents' => 50_000_00,
-            'plImpactCents'           => 0,
-            'remeasurementApproach'   => 'catch-up-adjustment',
-            'approver'                => 'person-99',
-        ];
+		$this->assertSame(expected: 'shillinq', actual: $payload['source']);
+		$this->assertSame(expected: 'lease-reassessment-approval-request', actual: $payload['kind']);
+		$this->assertSame(expected: 'evt-001', actual: $payload['eventId']);
+		$this->assertSame(expected: 'LEASE-001', actual: $payload['leaseContractId']);
+		$this->assertSame(expected: 50_000_00, actual: $payload['rouAssetAdjustmentCents']);
+		$this->assertNotEmpty(actual: $payload['requestedAt']);
 
-        $payload = $this->service->buildPayload(event: $event);
+	}//end testBuildPayloadIncludesAuditFields()
 
-        $this->assertSame(expected: 'shillinq', actual: $payload['source']);
-        $this->assertSame(expected: 'lease-reassessment-approval-request', actual: $payload['kind']);
-        $this->assertSame(expected: 'evt-001', actual: $payload['eventId']);
-        $this->assertSame(expected: 'LEASE-001', actual: $payload['leaseContractId']);
-        $this->assertSame(expected: 50_000_00, actual: $payload['rouAssetAdjustmentCents']);
-        $this->assertNotEmpty(actual: $payload['requestedAt']);
+	/**
+	 * shouldDeliver returns false when the event is already approved.
+	 *
+	 * @return void
+	 */
+	public function testShouldDeliverFalseForApprovedEvent(): void {
+		$this->assertFalse(
+			condition: $this->service->shouldDeliver(event: ['status' => 'approved'])
+		);
 
-    }//end testBuildPayloadIncludesAuditFields()
+	}//end testShouldDeliverFalseForApprovedEvent()
 
+	/**
+	 * shouldDeliver returns false when no URL is configured even if the
+	 * event is pending-approval.
+	 *
+	 * @return void
+	 */
+	public function testShouldDeliverFalseWhenWebhookDisabled(): void {
+		$this->appConfig->method('getValueString')->willReturn('');
 
-    /**
-     * shouldDeliver returns false when the event is already approved.
-     *
-     * @return void
-     */
-    public function testShouldDeliverFalseForApprovedEvent(): void
-    {
-        $this->assertFalse(
-            condition: $this->service->shouldDeliver(event: ['status' => 'approved'])
-        );
+		$this->assertFalse(
+			condition: $this->service->shouldDeliver(event: ['status' => 'pending-approval'])
+		);
 
-    }//end testShouldDeliverFalseForApprovedEvent()
+	}//end testShouldDeliverFalseWhenWebhookDisabled()
 
+	/**
+	 * shouldDeliver returns true on a pending-approval event with a
+	 * configured URL.
+	 *
+	 * @return void
+	 */
+	public function testShouldDeliverTrueOnPendingApprovalWithUrl(): void {
+		$this->appConfig->method('getValueString')->willReturn('https://decidesk.example/webhook');
 
-    /**
-     * shouldDeliver returns false when no URL is configured even if the
-     * event is pending-approval.
-     *
-     * @return void
-     */
-    public function testShouldDeliverFalseWhenWebhookDisabled(): void
-    {
-        $this->appConfig->method('getValueString')->willReturn('');
+		$this->assertTrue(
+			condition: $this->service->shouldDeliver(event: ['status' => 'pending-approval'])
+		);
 
-        $this->assertFalse(
-            condition: $this->service->shouldDeliver(event: ['status' => 'pending-approval'])
-        );
+	}//end testShouldDeliverTrueOnPendingApprovalWithUrl()
 
-    }//end testShouldDeliverFalseWhenWebhookDisabled()
+	/**
+	 * A 2xx response from decidesk yields a true delivery result and
+	 * does NOT log a warning.
+	 *
+	 * @return void
+	 */
+	public function testDeliverReturnsTrueOn2xxResponse(): void {
+		$this->appConfig->method('getValueString')->willReturn('https://decidesk.example/webhook');
+		$this->credentialsManager->method('retrieve')->willReturn('secret-token');
 
+		$response = $this->createMock(originalClassName: IResponse::class);
+		$response->method('getStatusCode')->willReturn(202);
 
-    /**
-     * shouldDeliver returns true on a pending-approval event with a
-     * configured URL.
-     *
-     * @return void
-     */
-    public function testShouldDeliverTrueOnPendingApprovalWithUrl(): void
-    {
-        $this->appConfig->method('getValueString')->willReturn('https://decidesk.example/webhook');
+		$client = $this->createMock(originalClassName: IClient::class);
+		$client->expects($this->once())
+			->method('post')
+			->willReturn($response);
 
-        $this->assertTrue(
-            condition: $this->service->shouldDeliver(event: ['status' => 'pending-approval'])
-        );
+		$this->clientService->method('newClient')->willReturn($client);
+		$this->logger->expects($this->never())->method('warning');
 
-    }//end testShouldDeliverTrueOnPendingApprovalWithUrl()
+		$result = $this->service->deliver(event: [
+			'id' => 'evt-002',
+			'status' => 'pending-approval',
+		]);
 
+		$this->assertTrue(condition: $result);
 
-    /**
-     * A 2xx response from decidesk yields a true delivery result and
-     * does NOT log a warning.
-     *
-     * @return void
-     */
-    public function testDeliverReturnsTrueOn2xxResponse(): void
-    {
-        $this->appConfig->method('getValueString')->willReturn('https://decidesk.example/webhook');
-        $this->credentialsManager->method('retrieve')->willReturn('secret-token');
+	}//end testDeliverReturnsTrueOn2xxResponse()
 
-        $response = $this->createMock(originalClassName: IResponse::class);
-        $response->method('getStatusCode')->willReturn(202);
+	/**
+	 * A non-2xx response logs a warning and returns false (fail-soft).
+	 *
+	 * @return void
+	 */
+	public function testDeliverReturnsFalseOnNon2xx(): void {
+		$this->appConfig->method('getValueString')->willReturn('https://decidesk.example/webhook');
+		$this->credentialsManager->method('retrieve')->willReturn('');
 
-        $client = $this->createMock(originalClassName: IClient::class);
-        $client->expects($this->once())
-            ->method('post')
-            ->willReturn($response);
+		$response = $this->createMock(originalClassName: IResponse::class);
+		$response->method('getStatusCode')->willReturn(500);
 
-        $this->clientService->method('newClient')->willReturn($client);
-        $this->logger->expects($this->never())->method('warning');
+		$client = $this->createMock(originalClassName: IClient::class);
+		$client->method('post')->willReturn($response);
 
-        $result = $this->service->deliver(event: [
-            'id'     => 'evt-002',
-            'status' => 'pending-approval',
-        ]);
+		$this->clientService->method('newClient')->willReturn($client);
+		$this->logger->expects($this->once())->method('warning');
 
-        $this->assertTrue(condition: $result);
+		$result = $this->service->deliver(event: [
+			'id' => 'evt-003',
+			'status' => 'pending-approval',
+		]);
 
-    }//end testDeliverReturnsTrueOn2xxResponse()
+		$this->assertFalse(condition: $result);
 
+	}//end testDeliverReturnsFalseOnNon2xx()
 
-    /**
-     * A non-2xx response logs a warning and returns false (fail-soft).
-     *
-     * @return void
-     */
-    public function testDeliverReturnsFalseOnNon2xx(): void
-    {
-        $this->appConfig->method('getValueString')->willReturn('https://decidesk.example/webhook');
-        $this->credentialsManager->method('retrieve')->willReturn('');
+	/**
+	 * Transport-level exceptions are caught and logged; the caller never
+	 * sees the exception (fail-soft, the persisted event is the source of
+	 * truth).
+	 *
+	 * @return void
+	 */
+	public function testDeliverSwallowsTransportException(): void {
+		$this->appConfig->method('getValueString')->willReturn('https://decidesk.example/webhook');
+		$this->credentialsManager->method('retrieve')->willReturn('');
 
-        $response = $this->createMock(originalClassName: IResponse::class);
-        $response->method('getStatusCode')->willReturn(500);
+		$client = $this->createMock(originalClassName: IClient::class);
+		$client->method('post')->willThrowException(exception: new \RuntimeException(message: 'connection refused'));
 
-        $client = $this->createMock(originalClassName: IClient::class);
-        $client->method('post')->willReturn($response);
+		$this->clientService->method('newClient')->willReturn($client);
+		$this->logger->expects($this->once())->method('warning');
 
-        $this->clientService->method('newClient')->willReturn($client);
-        $this->logger->expects($this->once())->method('warning');
+		$result = $this->service->deliver(event: [
+			'id' => 'evt-004',
+			'status' => 'pending-approval',
+		]);
 
-        $result = $this->service->deliver(event: [
-            'id'     => 'evt-003',
-            'status' => 'pending-approval',
-        ]);
+		$this->assertFalse(condition: $result);
 
-        $this->assertFalse(condition: $result);
+	}//end testDeliverSwallowsTransportException()
 
-    }//end testDeliverReturnsFalseOnNon2xx()
+	/**
+	 * deliver short-circuits and returns false when shouldDeliver=false,
+	 * never invoking the HTTP client.
+	 *
+	 * @return void
+	 */
+	public function testDeliverShortCircuitsOnApprovedEvent(): void {
+		$this->clientService->expects($this->never())->method('newClient');
 
+		$result = $this->service->deliver(event: [
+			'id' => 'evt-005',
+			'status' => 'approved',
+		]);
 
-    /**
-     * Transport-level exceptions are caught and logged; the caller never
-     * sees the exception (fail-soft, the persisted event is the source of
-     * truth).
-     *
-     * @return void
-     */
-    public function testDeliverSwallowsTransportException(): void
-    {
-        $this->appConfig->method('getValueString')->willReturn('https://decidesk.example/webhook');
-        $this->credentialsManager->method('retrieve')->willReturn('');
+		$this->assertFalse(condition: $result);
 
-        $client = $this->createMock(originalClassName: IClient::class);
-        $client->method('post')->willThrowException(exception: new \RuntimeException(message: 'connection refused'));
+	}//end testDeliverShortCircuitsOnApprovedEvent()
 
-        $this->clientService->method('newClient')->willReturn($client);
-        $this->logger->expects($this->once())->method('warning');
+	/**
+	 * setWebhookToken with an empty string deletes the stored credential.
+	 *
+	 * @return void
+	 */
+	public function testSetWebhookTokenEmptyDeletes(): void {
+		$this->credentialsManager->expects($this->once())
+			->method('delete');
+		$this->credentialsManager->expects($this->never())
+			->method('store');
 
-        $result = $this->service->deliver(event: [
-            'id'     => 'evt-004',
-            'status' => 'pending-approval',
-        ]);
+		$this->service->setWebhookToken(token: '   ');
 
-        $this->assertFalse(condition: $result);
+	}//end testSetWebhookTokenEmptyDeletes()
 
-    }//end testDeliverSwallowsTransportException()
+	/**
+	 * setWebhookToken with a non-empty string stores the trimmed value.
+	 *
+	 * @return void
+	 */
+	public function testSetWebhookTokenStoresTrimmed(): void {
+		$this->credentialsManager->expects($this->once())
+			->method('store')
+			->with(
+				$this->anything(),
+				LeaseDecideskWebhookService::CREDENTIAL_ID_TOKEN,
+				'abc-123'
+			);
 
+		$this->service->setWebhookToken(token: '  abc-123  ');
 
-    /**
-     * deliver short-circuits and returns false when shouldDeliver=false,
-     * never invoking the HTTP client.
-     *
-     * @return void
-     */
-    public function testDeliverShortCircuitsOnApprovedEvent(): void
-    {
-        $this->clientService->expects($this->never())->method('newClient');
-
-        $result = $this->service->deliver(event: [
-            'id'     => 'evt-005',
-            'status' => 'approved',
-        ]);
-
-        $this->assertFalse(condition: $result);
-
-    }//end testDeliverShortCircuitsOnApprovedEvent()
-
-
-    /**
-     * setWebhookToken with an empty string deletes the stored credential.
-     *
-     * @return void
-     */
-    public function testSetWebhookTokenEmptyDeletes(): void
-    {
-        $this->credentialsManager->expects($this->once())
-            ->method('delete');
-        $this->credentialsManager->expects($this->never())
-            ->method('store');
-
-        $this->service->setWebhookToken(token: '   ');
-
-    }//end testSetWebhookTokenEmptyDeletes()
-
-
-    /**
-     * setWebhookToken with a non-empty string stores the trimmed value.
-     *
-     * @return void
-     */
-    public function testSetWebhookTokenStoresTrimmed(): void
-    {
-        $this->credentialsManager->expects($this->once())
-            ->method('store')
-            ->with(
-                $this->anything(),
-                LeaseDecideskWebhookService::CREDENTIAL_ID_TOKEN,
-                'abc-123'
-            );
-
-        $this->service->setWebhookToken(token: '  abc-123  ');
-
-    }//end testSetWebhookTokenStoresTrimmed()
-
+	}//end testSetWebhookTokenStoresTrimmed()
 
 }//end class

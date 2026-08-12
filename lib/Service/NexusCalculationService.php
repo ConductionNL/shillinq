@@ -41,99 +41,97 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
  */
-class NexusCalculationService
-{
-    /**
-     * The fixed OECD BEPS Action 5 uplift factor.
-     *
-     * @var float
-     */
-    public const UPLIFT_FACTOR = 1.3;
+class NexusCalculationService {
+	/**
+	 * The fixed OECD BEPS Action 5 uplift factor.
+	 *
+	 * @var float
+	 */
+	public const UPLIFT_FACTOR = 1.3;
 
-    /**
-     * Compute the modified-nexus break for one asset/year (REQ-IBA-002).
-     *
-     * Returns the full breakdown so callers (and the audit trail) can record
-     * every intermediate value. All monetary inputs are plain euros; the ratios
-     * are rounded to four decimals to keep the result stable.
-     *
-     * @param float $eigenRdKosten       Internal R&D cost (loon + material).
-     * @param float $uitbesteedDerden    R&D outsourced to unrelated third parties (teller).
-     * @param float $uitbesteedVerbonden R&D outsourced to related entities (noemer only).
-     * @param float $upliftFactor        Uplift factor, default 1.3 per OECD.
-     *
-     * @return array{
-     *   tellerVoorUplift: float,
-     *   tellerNaUplift: float,
-     *   noemer: float,
-     *   nexusbreukOngecapt: float,
-     *   nexusbreukToegepast: float,
-     *   totaleRdKosten: float
-     * }
-     *
-     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
-     */
-    public function calculateNexusBreak(
-        float $eigenRdKosten,
-        float $uitbesteedDerden,
-        float $uitbesteedVerbonden,
-        float $upliftFactor=self::UPLIFT_FACTOR
-    ): array {
-        $eigen     = max(0.0, $eigenRdKosten);
-        $derden    = max(0.0, $uitbesteedDerden);
-        $verbonden = max(0.0, $uitbesteedVerbonden);
+	/**
+	 * Compute the modified-nexus break for one asset/year (REQ-IBA-002).
+	 *
+	 * Returns the full breakdown so callers (and the audit trail) can record
+	 * every intermediate value. All monetary inputs are plain euros; the ratios
+	 * are rounded to four decimals to keep the result stable.
+	 *
+	 * @param float $eigenRdKosten Internal R&D cost (loon + material).
+	 * @param float $uitbesteedDerden R&D outsourced to unrelated third parties (teller).
+	 * @param float $uitbesteedVerbonden R&D outsourced to related entities (noemer only).
+	 * @param float $upliftFactor Uplift factor, default 1.3 per OECD.
+	 *
+	 * @return array{
+	 *   tellerVoorUplift: float,
+	 *   tellerNaUplift: float,
+	 *   noemer: float,
+	 *   nexusbreukOngecapt: float,
+	 *   nexusbreukToegepast: float,
+	 *   totaleRdKosten: float
+	 * }
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
+	 */
+	public function calculateNexusBreak(
+		float $eigenRdKosten,
+		float $uitbesteedDerden,
+		float $uitbesteedVerbonden,
+		float $upliftFactor = self::UPLIFT_FACTOR,
+	): array {
+		$eigen = max(0.0, $eigenRdKosten);
+		$derden = max(0.0, $uitbesteedDerden);
+		$verbonden = max(0.0, $uitbesteedVerbonden);
 
-        $tellerVoorUplift = ($eigen + $derden);
-        $totaal           = ($eigen + $derden + $verbonden);
+		$tellerVoorUplift = ($eigen + $derden);
+		$totaal = ($eigen + $derden + $verbonden);
 
-        // Teller_na_uplift never exceeds the total R&D cost (OECD cap on the teller).
-        $tellerNaUplift = min(($upliftFactor * $tellerVoorUplift), $totaal);
+		// Teller_na_uplift never exceeds the total R&D cost (OECD cap on the teller).
+		$tellerNaUplift = min(($upliftFactor * $tellerVoorUplift), $totaal);
 
-        $ongecapt = 0.0;
-        if ($totaal > 0.0) {
-            $ongecapt = ($tellerNaUplift / $totaal);
-        }
+		$ongecapt = 0.0;
+		if ($totaal > 0.0) {
+			$ongecapt = ($tellerNaUplift / $totaal);
+		}
 
-        // The nexusbreuk itself is capped at 100% (1.0).
-        $toegepast = min($ongecapt, 1.0);
+		// The nexusbreuk itself is capped at 100% (1.0).
+		$toegepast = min($ongecapt, 1.0);
 
-        return [
-            'tellerVoorUplift'    => round($tellerVoorUplift, 2),
-            'tellerNaUplift'      => round($tellerNaUplift, 2),
-            'noemer'              => round($totaal, 2),
-            'totaleRdKosten'      => round($totaal, 2),
-            'nexusbreukOngecapt'  => round($ongecapt, 4),
-            'nexusbreukToegepast' => round($toegepast, 4),
-        ];
+		return [
+			'tellerVoorUplift' => round($tellerVoorUplift, 2),
+			'tellerNaUplift' => round($tellerNaUplift, 2),
+			'noemer' => round($totaal, 2),
+			'totaleRdKosten' => round($totaal, 2),
+			'nexusbreukOngecapt' => round($ongecapt, 4),
+			'nexusbreukToegepast' => round($toegepast, 4),
+		];
 
-    }//end calculateNexusBreak()
+	}//end calculateNexusBreak()
 
-    /**
-     * Recompute a nexus break for a scenario without persisting it (REQ-IBA-009).
-     *
-     * Convenience wrapper that returns only the applied nexusbreuk so the
-     * scenario endpoint can compare a base position against a what-if change.
-     *
-     * @param float $eigenRdKosten       Internal R&D cost.
-     * @param float $uitbesteedDerden    Unrelated third-party R&D.
-     * @param float $uitbesteedVerbonden Related-party R&D.
-     *
-     * @return float The applied (capped) nexusbreuk for the scenario.
-     *
-     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
-     */
-    public function scenarioNexusBreak(
-        float $eigenRdKosten,
-        float $uitbesteedDerden,
-        float $uitbesteedVerbonden
-    ): float {
-        $result = $this->calculateNexusBreak(
-            eigenRdKosten: $eigenRdKosten,
-            uitbesteedDerden: $uitbesteedDerden,
-            uitbesteedVerbonden: $uitbesteedVerbonden
-        );
+	/**
+	 * Recompute a nexus break for a scenario without persisting it (REQ-IBA-009).
+	 *
+	 * Convenience wrapper that returns only the applied nexusbreuk so the
+	 * scenario endpoint can compare a base position against a what-if change.
+	 *
+	 * @param float $eigenRdKosten Internal R&D cost.
+	 * @param float $uitbesteedDerden Unrelated third-party R&D.
+	 * @param float $uitbesteedVerbonden Related-party R&D.
+	 *
+	 * @return float The applied (capped) nexusbreuk for the scenario.
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-002
+	 */
+	public function scenarioNexusBreak(
+		float $eigenRdKosten,
+		float $uitbesteedDerden,
+		float $uitbesteedVerbonden,
+	): float {
+		$result = $this->calculateNexusBreak(
+			eigenRdKosten: $eigenRdKosten,
+			uitbesteedDerden: $uitbesteedDerden,
+			uitbesteedVerbonden: $uitbesteedVerbonden
+		);
 
-        return (float) $result['nexusbreukToegepast'];
-
-    }//end scenarioNexusBreak()
+		return (float)$result['nexusbreukToegepast'];
+	}//end scenarioNexusBreak()
 }//end class

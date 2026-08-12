@@ -52,371 +52,349 @@ use Psr\Log\AbstractLogger;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class InnovatieboxAuditTrailListenerTest extends TestCase
-{
-    /**
-     * Build a recording logger.
-     *
-     * @return AbstractLogger
-     */
-    private function recordingLogger(): AbstractLogger
-    {
-        return new class extends AbstractLogger {
+final class InnovatieboxAuditTrailListenerTest extends TestCase {
+	/**
+	 * Build a recording logger.
+	 *
+	 * @return AbstractLogger
+	 */
+	private function recordingLogger(): AbstractLogger {
+		return new class extends AbstractLogger {
+			/**
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $records = [];
 
-            /**
-             * @var array<int, array<string, mixed>>
-             */
-            public array $records = [];
+			/**
+			 * @param mixed $level Level.
+			 * @param string|\Stringable $message Message.
+			 * @param array<string, mixed> $context Context.
+			 *
+			 * @return void
+			 */
+			public function log($level, string|\Stringable $message, array $context = []): void {
+				$this->records[] = ['level' => $level, 'message' => (string)$message, 'context' => $context];
+			}//end log()
+		};
 
-            /**
-             * @param mixed                $level   Level.
-             * @param string|\Stringable   $message Message.
-             * @param array<string, mixed> $context Context.
-             *
-             * @return void
-             */
-            public function log($level, string|\Stringable $message, array $context=[]): void
-            {
-                $this->records[] = ['level' => $level, 'message' => (string) $message, 'context' => $context];
-            }//end log()
-        };
+	}//end recordingLogger()
 
-    }//end recordingLogger()
+	/**
+	 * Build a fake InnovatieboxAuditEventLogger that captures every record() call.
+	 *
+	 * @return InnovatieboxAuditEventLogger&object{calls: array<int,array<string,mixed>>}
+	 */
+	private function fakeLogger(): InnovatieboxAuditEventLogger {
+		return new class extends InnovatieboxAuditEventLogger {
+			/**
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $calls = [];
 
-    /**
-     * Build a fake InnovatieboxAuditEventLogger that captures every record() call.
-     *
-     * @return InnovatieboxAuditEventLogger&object{calls: array<int,array<string,mixed>>}
-     */
-    private function fakeLogger(): InnovatieboxAuditEventLogger
-    {
-        return new class extends InnovatieboxAuditEventLogger {
+			public function __construct() {
+				// Skip parent constructor — we never touch the OR write path.
 
-            /**
-             * @var array<int, array<string, mixed>>
-             */
-            public array $calls = [];
+			}//end __construct()
 
-            public function __construct()
-            {
-                // Skip parent constructor — we never touch the OR write path.
+			/**
+			 * Capture the record call without touching OR.
+			 *
+			 * @param array<string,mixed> $options Event payload.
+			 *
+			 * @return bool
+			 */
+			public function record(array $options): bool {
+				$this->calls[] = $options;
+				return true;
+			}//end record()
+		};
 
-            }//end __construct()
+	}//end fakeLogger()
 
-            /**
-             * Capture the record call without touching OR.
-             *
-             * @param array<string,mixed> $options Event payload.
-             *
-             * @return bool
-             */
-            public function record(array $options): bool
-            {
-                $this->calls[] = $options;
-                return true;
+	/**
+	 * Build a fake VsoLockingValidator that returns a constant lock state.
+	 *
+	 * @param bool $locked Lock state.
+	 *
+	 * @return VsoLockingValidator
+	 */
+	private function fakeVsoValidator(bool $locked): VsoLockingValidator {
+		return new class($locked) extends VsoLockingValidator {
+			public function __construct(
+				private readonly bool $constantLock,
+			) {
+				// Skip parent constructor — we don't touch the OR write path.
 
-            }//end record()
-        };
+			}//end __construct()
 
-    }//end fakeLogger()
+			public function isYearLocked(string $administrationId, int $boekjaar): bool {
+				return $this->constantLock;
+			}//end isYearLocked()
+		};
 
-    /**
-     * Build a fake VsoLockingValidator that returns a constant lock state.
-     *
-     * @param bool $locked Lock state.
-     *
-     * @return VsoLockingValidator
-     */
-    private function fakeVsoValidator(bool $locked): VsoLockingValidator
-    {
-        return new class($locked) extends VsoLockingValidator {
+	}//end fakeVsoValidator()
 
-            public function __construct(private readonly bool $constantLock)
-            {
-                // Skip parent constructor — we don't touch the OR write path.
+	/**
+	 * Build an ObjectEntity stub carrying a numeric schema **id**, exactly as
+	 * OpenRegister stamps it (`setSchema((string) $schema->getId())`).
+	 *
+	 * A hand-built entity carrying the slug is a shape production never
+	 * produces; the slug arrives through {@see ListenerSchemaResolver}.
+	 *
+	 * @param string $schemaId Numeric schema id as OR stamps it.
+	 * @param array<string,mixed> $payload Object payload.
+	 * @param string|null $uuid Optional uuid.
+	 *
+	 * @return ObjectEntity
+	 */
+	private function entity(string $schemaId, array $payload, ?string $uuid = 'uuid-1'): ObjectEntity {
+		$entity = new ObjectEntity();
+		$entity->setSchema($schemaId);
+		$entity->setObject($payload);
+		$entity->setUuid($uuid);
+		return $entity;
+	}//end entity()
 
-            }//end __construct()
+	/**
+	 * Build a ListenerSchemaResolver stub that reports a given schema slug.
+	 *
+	 * @param string $slug Slug the resolver resolves the entity's id to.
+	 *
+	 * @return ListenerSchemaResolver
+	 */
+	private function resolver(string $slug): ListenerSchemaResolver {
+		$resolver = $this->createMock(ListenerSchemaResolver::class);
+		$resolver->method('schemaSlug')->willReturn($slug);
+		return $resolver;
+	}//end resolver()
 
-            public function isYearLocked(string $administrationId, int $boekjaar): bool
-            {
-                return $this->constantLock;
+	/**
+	 * A NexusCalculation create emits NexusCalculation.calculated with the
+	 * R&D breakdown sliced into the details blob.
+	 *
+	 * @return void
+	 */
+	public function testNexusCreateEmitsCalculatedEvent(): void {
+		$logger = $this->fakeLogger();
+		$vso = $this->fakeVsoValidator(false);
+		$listener = new InnovatieboxAuditTrailListener(
+			$logger,
+			$vso,
+			$this->resolver('NexusCalculation'),
+			$this->recordingLogger()
+		);
 
-            }//end isYearLocked()
-        };
+		$entity = $this->entity('4101', [
+			'qualifying_asset_id' => 'asset-1',
+			'administrationId' => 'adm-x',
+			'financialYear' => 2026,
+			'eigen_rd_kosten' => 480000,
+			'rd_kosten_uitbesteed_derden' => 120000,
+			'rd_kosten_uitbesteed_verbonden' => 80000,
+			'uplift_factor' => 1.3,
+			'nexusbreuk_ongecapt' => 1.10,
+			'nexusbreuk_toegepast' => 1.0,
+		]);
+		$event = new ObjectCreatedEvent($entity);
 
-    }//end fakeVsoValidator()
+		$listener->handle($event);
 
-    /**
-     * Build an ObjectEntity stub carrying a numeric schema **id**, exactly as
-     * OpenRegister stamps it (`setSchema((string) $schema->getId())`).
-     *
-     * A hand-built entity carrying the slug is a shape production never
-     * produces; the slug arrives through {@see ListenerSchemaResolver}.
-     *
-     * @param string              $schemaId Numeric schema id as OR stamps it.
-     * @param array<string,mixed> $payload  Object payload.
-     * @param string|null         $uuid     Optional uuid.
-     *
-     * @return ObjectEntity
-     */
-    private function entity(string $schemaId, array $payload, ?string $uuid='uuid-1'): ObjectEntity
-    {
-        $entity = new ObjectEntity();
-        $entity->setSchema($schemaId);
-        $entity->setObject($payload);
-        $entity->setUuid($uuid);
-        return $entity;
+		$this->assertCount(1, $logger->calls);
+		$this->assertSame(
+			InnovatieboxAuditEventLogger::EVENT_NEXUS_CALCULATED,
+			$logger->calls[0]['event_type']
+		);
+		$this->assertSame('asset-1', $logger->calls[0]['qualifying_asset_id']);
+		$this->assertSame(2026, $logger->calls[0]['financialYear']);
+		$this->assertSame(1.0, $logger->calls[0]['details']['nexusbreuk_toegepast']);
 
-    }//end entity()
+	}//end testNexusCreateEmitsCalculatedEvent()
 
-    /**
-     * Build a ListenerSchemaResolver stub that reports a given schema slug.
-     *
-     * @param string $slug Slug the resolver resolves the entity's id to.
-     *
-     * @return ListenerSchemaResolver
-     */
-    private function resolver(string $slug): ListenerSchemaResolver
-    {
-        $resolver = $this->createMock(ListenerSchemaResolver::class);
-        $resolver->method('schemaSlug')->willReturn($slug);
-        return $resolver;
+	/**
+	 * IBProfitAttribution create emits .created; if the methode is
+	 * forfaitair_25pct and pre-cap qualifying profit > 25k a twin
+	 * ForfaitairCap.applied event is recorded.
+	 *
+	 * @return void
+	 */
+	public function testForfaitairCreateEmitsCapAppliedTwinEvent(): void {
+		$logger = $this->fakeLogger();
+		$listener = new InnovatieboxAuditTrailListener(
+			$logger,
+			$this->fakeVsoValidator(false),
+			$this->resolver('IBProfitAttribution'),
+			$this->recordingLogger()
+		);
 
-    }//end resolver()
+		$entity = $this->entity('4102', [
+			'qualifying_asset_id' => 'asset-1',
+			'administrationId' => 'adm-x',
+			'financialYear' => 2026,
+			'methode' => 'forfaitair_25pct',
+			'kwalificerende_winst_voor_nexus' => 125000,
+			'kwalificerende_winst_na_nexus' => 25000,
+			'vso_locked' => false,
+		]);
+		$event = new ObjectCreatedEvent($entity);
 
-    /**
-     * A NexusCalculation create emits NexusCalculation.calculated with the
-     * R&D breakdown sliced into the details blob.
-     *
-     * @return void
-     */
-    public function testNexusCreateEmitsCalculatedEvent(): void
-    {
-        $logger   = $this->fakeLogger();
-        $vso      = $this->fakeVsoValidator(false);
-        $listener = new InnovatieboxAuditTrailListener(
-            $logger,
-            $vso,
-            $this->resolver('NexusCalculation'),
-            $this->recordingLogger()
-        );
+		$listener->handle($event);
 
-        $entity = $this->entity('4101', [
-            'qualifying_asset_id'             => 'asset-1',
-            'administrationId'                => 'adm-x',
-            'financialYear'                        => 2026,
-            'eigen_rd_kosten'                 => 480000,
-            'rd_kosten_uitbesteed_derden'     => 120000,
-            'rd_kosten_uitbesteed_verbonden'  => 80000,
-            'uplift_factor'                   => 1.3,
-            'nexusbreuk_ongecapt'             => 1.10,
-            'nexusbreuk_toegepast'            => 1.0,
-        ]);
-        $event = new ObjectCreatedEvent($entity);
+		$types = array_column($logger->calls, 'event_type');
+		$this->assertContains(InnovatieboxAuditEventLogger::EVENT_PROFIT_CREATED, $types);
+		$this->assertContains(InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED, $types);
 
-        $listener->handle($event);
+	}//end testForfaitairCreateEmitsCapAppliedTwinEvent()
 
-        $this->assertCount(1, $logger->calls);
-        $this->assertSame(
-            InnovatieboxAuditEventLogger::EVENT_NEXUS_CALCULATED,
-            $logger->calls[0]['event_type']
-        );
-        $this->assertSame('asset-1', $logger->calls[0]['qualifying_asset_id']);
-        $this->assertSame(2026, $logger->calls[0]['financialYear']);
-        $this->assertSame(1.0, $logger->calls[0]['details']['nexusbreuk_toegepast']);
+	/**
+	 * IBProfitAttribution update vso_locked false -> true emits the
+	 * .finalized event with reason vso_signed.
+	 *
+	 * @return void
+	 */
+	public function testProfitFinalizedFiresWhenVsoFlagFlips(): void {
+		$logger = $this->fakeLogger();
+		$listener = new InnovatieboxAuditTrailListener(
+			$logger,
+			$this->fakeVsoValidator(false),
+			$this->resolver('IBProfitAttribution'),
+			$this->recordingLogger()
+		);
 
-    }//end testNexusCreateEmitsCalculatedEvent()
+		$prior = $this->entity('4102', [
+			'qualifying_asset_id' => 'asset-1',
+			'administrationId' => 'adm-x',
+			'financialYear' => 2026,
+			'vso_locked' => false,
+		]);
+		$next = $this->entity('4102', [
+			'qualifying_asset_id' => 'asset-1',
+			'administrationId' => 'adm-x',
+			'financialYear' => 2026,
+			'vso_locked' => true,
+		]);
+		$event = new ObjectUpdatedEvent($next, $prior);
 
-    /**
-     * IBProfitAttribution create emits .created; if the methode is
-     * forfaitair_25pct and pre-cap qualifying profit > 25k a twin
-     * ForfaitairCap.applied event is recorded.
-     *
-     * @return void
-     */
-    public function testForfaitairCreateEmitsCapAppliedTwinEvent(): void
-    {
-        $logger   = $this->fakeLogger();
-        $listener = new InnovatieboxAuditTrailListener(
-            $logger,
-            $this->fakeVsoValidator(false),
-            $this->resolver('IBProfitAttribution'),
-            $this->recordingLogger()
-        );
+		$listener->handle($event);
 
-        $entity = $this->entity('4102', [
-            'qualifying_asset_id'             => 'asset-1',
-            'administrationId'                => 'adm-x',
-            'financialYear'                        => 2026,
-            'methode'                         => 'forfaitair_25pct',
-            'kwalificerende_winst_voor_nexus' => 125000,
-            'kwalificerende_winst_na_nexus'   => 25000,
-            'vso_locked'                      => false,
-        ]);
-        $event = new ObjectCreatedEvent($entity);
+		$this->assertCount(1, $logger->calls);
+		$this->assertSame(
+			InnovatieboxAuditEventLogger::EVENT_PROFIT_FINALIZED,
+			$logger->calls[0]['event_type']
+		);
+		$this->assertSame('vso_signed', $logger->calls[0]['reason']);
 
-        $listener->handle($event);
+	}//end testProfitFinalizedFiresWhenVsoFlagFlips()
 
-        $types = array_column($logger->calls, 'event_type');
-        $this->assertContains(InnovatieboxAuditEventLogger::EVENT_PROFIT_CREATED, $types);
-        $this->assertContains(InnovatieboxAuditEventLogger::EVENT_FORFAITAIR_CAP_APPLIED, $types);
+	/**
+	 * IBProfitAttribution update when the prior state is vso_locked = true
+	 * is recorded as an amendment_attempt_blocked event with reason vso_locked.
+	 *
+	 * @return void
+	 */
+	public function testProfitAmendmentBlockedWhenPriorWasLocked(): void {
+		$logger = $this->fakeLogger();
+		$listener = new InnovatieboxAuditTrailListener(
+			$logger,
+			$this->fakeVsoValidator(true),
+			$this->resolver('IBProfitAttribution'),
+			$this->recordingLogger()
+		);
 
-    }//end testForfaitairCreateEmitsCapAppliedTwinEvent()
+		$prior = $this->entity('4102', [
+			'qualifying_asset_id' => 'asset-1',
+			'administrationId' => 'adm-x',
+			'financialYear' => 2026,
+			'vso_locked' => true,
+			'voordeel_innovatiebox' => 72000,
+		]);
+		$next = $this->entity('4102', [
+			'qualifying_asset_id' => 'asset-1',
+			'administrationId' => 'adm-x',
+			'financialYear' => 2026,
+			'vso_locked' => true,
+			'voordeel_innovatiebox' => 80000,
+		]);
+		$event = new ObjectUpdatedEvent($next, $prior);
 
-    /**
-     * IBProfitAttribution update vso_locked false -> true emits the
-     * .finalized event with reason vso_signed.
-     *
-     * @return void
-     */
-    public function testProfitFinalizedFiresWhenVsoFlagFlips(): void
-    {
-        $logger   = $this->fakeLogger();
-        $listener = new InnovatieboxAuditTrailListener(
-            $logger,
-            $this->fakeVsoValidator(false),
-            $this->resolver('IBProfitAttribution'),
-            $this->recordingLogger()
-        );
+		$listener->handle($event);
 
-        $prior = $this->entity('4102', [
-            'qualifying_asset_id' => 'asset-1',
-            'administrationId'    => 'adm-x',
-            'financialYear'            => 2026,
-            'vso_locked'          => false,
-        ]);
-        $next  = $this->entity('4102', [
-            'qualifying_asset_id' => 'asset-1',
-            'administrationId'    => 'adm-x',
-            'financialYear'            => 2026,
-            'vso_locked'          => true,
-        ]);
-        $event = new ObjectUpdatedEvent($next, $prior);
+		$this->assertCount(1, $logger->calls);
+		$this->assertSame(
+			InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
+			$logger->calls[0]['event_type']
+		);
+		$this->assertSame('vso_locked', $logger->calls[0]['reason']);
+		$this->assertContains('voordeel_innovatiebox', $logger->calls[0]['details']['changed_keys']);
 
-        $listener->handle($event);
+	}//end testProfitAmendmentBlockedWhenPriorWasLocked()
 
-        $this->assertCount(1, $logger->calls);
-        $this->assertSame(
-            InnovatieboxAuditEventLogger::EVENT_PROFIT_FINALIZED,
-            $logger->calls[0]['event_type']
-        );
-        $this->assertSame('vso_signed', $logger->calls[0]['reason']);
+	/**
+	 * CarryForwardLoss update with a grown verrekend_boekjaar emits the
+	 * offset_applied event with the new entries in details.
+	 *
+	 * @return void
+	 */
+	public function testLossOffsetAppliedFiresOnVerrekendGrowth(): void {
+		$logger = $this->fakeLogger();
+		$listener = new InnovatieboxAuditTrailListener(
+			$logger,
+			$this->fakeVsoValidator(false),
+			$this->resolver('CarryForwardLoss'),
+			$this->recordingLogger()
+		);
 
-    }//end testProfitFinalizedFiresWhenVsoFlagFlips()
+		$prior = $this->entity('4103', [
+			'qualifying_asset_id' => 'asset-1',
+			'administrationId' => 'adm-x',
+			'origin_boekjaar' => 2024,
+			'settled_financial_year' => [],
+			'balance_after' => 215000,
+			'status' => 'open',
+		]);
+		$next = $this->entity('4103', [
+			'qualifying_asset_id' => 'asset-1',
+			'administrationId' => 'adm-x',
+			'origin_boekjaar' => 2024,
+			'settled_financial_year' => [['year' => 2026, 'amount' => 215000, 'balance_after' => 0]],
+			'balance_after' => 0,
+			'status' => 'consumed',
+		]);
+		$event = new ObjectUpdatedEvent($next, $prior);
 
-    /**
-     * IBProfitAttribution update when the prior state is vso_locked = true
-     * is recorded as an amendment_attempt_blocked event with reason vso_locked.
-     *
-     * @return void
-     */
-    public function testProfitAmendmentBlockedWhenPriorWasLocked(): void
-    {
-        $logger   = $this->fakeLogger();
-        $listener = new InnovatieboxAuditTrailListener(
-            $logger,
-            $this->fakeVsoValidator(true),
-            $this->resolver('IBProfitAttribution'),
-            $this->recordingLogger()
-        );
+		$listener->handle($event);
 
-        $prior = $this->entity('4102', [
-            'qualifying_asset_id' => 'asset-1',
-            'administrationId'    => 'adm-x',
-            'financialYear'            => 2026,
-            'vso_locked'          => true,
-            'voordeel_innovatiebox' => 72000,
-        ]);
-        $next  = $this->entity('4102', [
-            'qualifying_asset_id' => 'asset-1',
-            'administrationId'    => 'adm-x',
-            'financialYear'            => 2026,
-            'vso_locked'          => true,
-            'voordeel_innovatiebox' => 80000,
-        ]);
-        $event = new ObjectUpdatedEvent($next, $prior);
+		$this->assertCount(1, $logger->calls);
+		$this->assertSame(
+			InnovatieboxAuditEventLogger::EVENT_LOSS_OFFSET_APPLIED,
+			$logger->calls[0]['event_type']
+		);
+		$this->assertSame(
+			215000,
+			$logger->calls[0]['details']['new_entries'][0]['amount']
+		);
 
-        $listener->handle($event);
+	}//end testLossOffsetAppliedFiresOnVerrekendGrowth()
 
-        $this->assertCount(1, $logger->calls);
-        $this->assertSame(
-            InnovatieboxAuditEventLogger::EVENT_PROFIT_AMENDMENT_BLOCKED,
-            $logger->calls[0]['event_type']
-        );
-        $this->assertSame('vso_locked', $logger->calls[0]['reason']);
-        $this->assertContains('voordeel_innovatiebox', $logger->calls[0]['details']['changed_keys']);
+	/**
+	 * Non-innovatiebox schemas (e.g. GLLine) are silently skipped.
+	 *
+	 * @return void
+	 */
+	public function testNonInnovatieboxSchemaIsIgnored(): void {
+		$logger = $this->fakeLogger();
+		$listener = new InnovatieboxAuditTrailListener(
+			$logger,
+			$this->fakeVsoValidator(false),
+			$this->resolver('GLLine'),
+			$this->recordingLogger()
+		);
 
-    }//end testProfitAmendmentBlockedWhenPriorWasLocked()
+		$entity = $this->entity('4207', ['administrationId' => 'adm-x']);
+		$event = new ObjectCreatedEvent($entity);
 
-    /**
-     * CarryForwardLoss update with a grown verrekend_boekjaar emits the
-     * offset_applied event with the new entries in details.
-     *
-     * @return void
-     */
-    public function testLossOffsetAppliedFiresOnVerrekendGrowth(): void
-    {
-        $logger   = $this->fakeLogger();
-        $listener = new InnovatieboxAuditTrailListener(
-            $logger,
-            $this->fakeVsoValidator(false),
-            $this->resolver('CarryForwardLoss'),
-            $this->recordingLogger()
-        );
+		$listener->handle($event);
 
-        $prior = $this->entity('4103', [
-            'qualifying_asset_id'    => 'asset-1',
-            'administrationId'       => 'adm-x',
-            'origin_boekjaar'        => 2024,
-            'settled_financial_year'     => [],
-            'balance_after'               => 215000,
-            'status'                 => 'open',
-        ]);
-        $next = $this->entity('4103', [
-            'qualifying_asset_id' => 'asset-1',
-            'administrationId'    => 'adm-x',
-            'origin_boekjaar'     => 2024,
-            'settled_financial_year'  => [['year' => 2026, 'amount' => 215000, 'balance_after' => 0]],
-            'balance_after'            => 0,
-            'status'              => 'consumed',
-        ]);
-        $event = new ObjectUpdatedEvent($next, $prior);
+		$this->assertSame([], $logger->calls);
 
-        $listener->handle($event);
-
-        $this->assertCount(1, $logger->calls);
-        $this->assertSame(
-            InnovatieboxAuditEventLogger::EVENT_LOSS_OFFSET_APPLIED,
-            $logger->calls[0]['event_type']
-        );
-        $this->assertSame(
-            215000,
-            $logger->calls[0]['details']['new_entries'][0]['amount']
-        );
-
-    }//end testLossOffsetAppliedFiresOnVerrekendGrowth()
-
-    /**
-     * Non-innovatiebox schemas (e.g. GLLine) are silently skipped.
-     *
-     * @return void
-     */
-    public function testNonInnovatieboxSchemaIsIgnored(): void
-    {
-        $logger   = $this->fakeLogger();
-        $listener = new InnovatieboxAuditTrailListener(
-            $logger,
-            $this->fakeVsoValidator(false),
-            $this->resolver('GLLine'),
-            $this->recordingLogger()
-        );
-
-        $entity = $this->entity('4207', ['administrationId' => 'adm-x']);
-        $event  = new ObjectCreatedEvent($entity);
-
-        $listener->handle($event);
-
-        $this->assertSame([], $logger->calls);
-
-    }//end testNonInnovatieboxSchemaIsIgnored()
+	}//end testNonInnovatieboxSchemaIsIgnored()
 }//end class

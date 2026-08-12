@@ -56,135 +56,129 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class RateScheduleOverlapGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug resolution.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class RateScheduleOverlapGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for register slug resolution.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Precondition for `reactivate`: no overlapping active sibling schedule.
-     *
-     * @param array<string, mixed> $schedule The RateSchedule object being transitioned.
-     *
-     * @return bool True when no overlapping active schedule exists.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireNonOverlappingWindow(array $schedule): bool
-    {
-        $tier     = (string) ($schedule['tier'] ?? '');
-        $entityId = ($schedule['entityId'] ?? null);
-        $administrationId = (string) ($schedule['administrationId'] ?? '');
-        $effectiveDate    = trim((string) ($schedule['effectiveDate'] ?? ''));
-        if ($effectiveDate === '') {
-            // No window to compare — nothing to gate against.
-            return true;
-        }
+	/**
+	 * Precondition for `reactivate`: no overlapping active sibling schedule.
+	 *
+	 * @param array<string, mixed> $schedule The RateSchedule object being transitioned.
+	 *
+	 * @return bool True when no overlapping active schedule exists.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireNonOverlappingWindow(array $schedule): bool {
+		$tier = (string)($schedule['tier'] ?? '');
+		$entityId = ($schedule['entityId'] ?? null);
+		$administrationId = (string)($schedule['administrationId'] ?? '');
+		$effectiveDate = trim((string)($schedule['effectiveDate'] ?? ''));
+		if ($effectiveDate === '') {
+			// No window to compare — nothing to gate against.
+			return true;
+		}
 
-        $expiryDate = ($schedule['expiryDate'] ?? null);
+		$expiryDate = ($schedule['expiryDate'] ?? null);
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $siblings      = $objectService
-                ->setRegister($this->register())
-                ->setSchema('RateSchedule')
-                ->findAll(
-                    [
-                        'filters' => [
-                            'tier'             => $tier,
-                            'entityId'         => $entityId,
-                            'administrationId' => $administrationId,
-                            'status'           => 'active',
-                        ],
-                    ]
-                );
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$siblings = $objectService
+				->setRegister($this->register())
+				->setSchema('RateSchedule')
+				->findAll(
+					[
+						'filters' => [
+							'tier' => $tier,
+							'entityId' => $entityId,
+							'administrationId' => $administrationId,
+							'status' => 'active',
+						],
+					]
+				);
 
-            if (is_array($siblings) === false) {
-                $siblings = [];
-            }
+			if (is_array($siblings) === false) {
+				$siblings = [];
+			}
 
-            $currentId = ($schedule['id'] ?? null);
-            foreach ($siblings as $sibling) {
-                if ($currentId !== null && ($sibling['id'] ?? null) === $currentId) {
-                    continue;
-                }
+			$currentId = ($schedule['id'] ?? null);
+			foreach ($siblings as $sibling) {
+				if ($currentId !== null && ($sibling['id'] ?? null) === $currentId) {
+					continue;
+				}
 
-                if ($this->windowsOverlap(
-                    startA: $effectiveDate,
-                    endA: $expiryDate,
-                    startB: (string) ($sibling['effectiveDate'] ?? ''),
-                    endB: ($sibling['expiryDate'] ?? null)
-                ) === true
-                ) {
-                    $this->logger->info(
-                        'RateScheduleOverlapGuard: overlapping active schedule found — denying reactivate',
-                        ['tier' => $tier, 'entityId' => $entityId, 'conflictingId' => ($sibling['id'] ?? null)]
-                    );
-                    return false;
-                }
-            }
+				if ($this->windowsOverlap(
+					startA: $effectiveDate,
+					endA: $expiryDate,
+					startB: (string)($sibling['effectiveDate'] ?? ''),
+					endB: ($sibling['expiryDate'] ?? null)
+				) === true
+				) {
+					$this->logger->info(
+						'RateScheduleOverlapGuard: overlapping active schedule found — denying reactivate',
+						['tier' => $tier, 'entityId' => $entityId, 'conflictingId' => ($sibling['id'] ?? null)]
+					);
+					return false;
+				}
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'RateScheduleOverlapGuard: requireNonOverlappingWindow check failed — denying (fail-closed)',
-                ['exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'RateScheduleOverlapGuard: requireNonOverlappingWindow check failed — denying (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end requireNonOverlappingWindow()
+	}//end requireNonOverlappingWindow()
 
-    /**
-     * Whether two [start, end] date windows overlap. A null end means
-     * open-ended (extends to infinity).
-     *
-     * @param string      $startA Window A start (Y-m-d).
-     * @param string|null $endA   Window A end (Y-m-d), or null for open-ended.
-     * @param string      $startB Window B start (Y-m-d).
-     * @param string|null $endB   Window B end (Y-m-d), or null for open-ended.
-     *
-     * @return bool True when the windows overlap.
-     */
-    private function windowsOverlap(string $startA, ?string $endA, string $startB, ?string $endB): bool
-    {
-        if ($startB === '') {
-            return false;
-        }
+	/**
+	 * Whether two [start, end] date windows overlap. A null end means
+	 * open-ended (extends to infinity).
+	 *
+	 * @param string $startA Window A start (Y-m-d).
+	 * @param string|null $endA Window A end (Y-m-d), or null for open-ended.
+	 * @param string $startB Window B start (Y-m-d).
+	 * @param string|null $endB Window B end (Y-m-d), or null for open-ended.
+	 *
+	 * @return bool True when the windows overlap.
+	 */
+	private function windowsOverlap(string $startA, ?string $endA, string $startB, ?string $endB): bool {
+		if ($startB === '') {
+			return false;
+		}
 
-        // Two closed (or open-ended) intervals overlap iff each starts on or
-        // before the other's end.
-        $aEndsAfterOrOnBStart = ($endA === null || $endA >= $startB);
-        $bEndsAfterOrOnAStart = ($endB === null || $endB >= $startA);
+		// Two closed (or open-ended) intervals overlap iff each starts on or
+		// before the other's end.
+		$aEndsAfterOrOnBStart = ($endA === null || $endA >= $startB);
+		$bEndsAfterOrOnAStart = ($endB === null || $endB >= $startA);
 
-        return $aEndsAfterOrOnBStart && $bEndsAfterOrOnAStart;
+		return $aEndsAfterOrOnBStart && $bEndsAfterOrOnAStart;
+	}//end windowsOverlap()
 
-    }//end windowsOverlap()
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

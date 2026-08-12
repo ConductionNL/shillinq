@@ -46,185 +46,174 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
  */
-class DesinvesteringsbijtellingGuard
-{
-    /**
-     * GL account for desinvesteringsbijtelling postings (REQ-INV-010).
-     *
-     * @var string
-     */
-    public const GL_ACCOUNT_DESINVESTERING = '8120';
+class DesinvesteringsbijtellingGuard {
+	/**
+	 * GL account for desinvesteringsbijtelling postings (REQ-INV-010).
+	 *
+	 * @var string
+	 */
+	public const GL_ACCOUNT_DESINVESTERING = '8120';
 
-    /**
-     * Disposal-watch window length in years (art. 3.47 Wet IB 2001).
-     *
-     * @var int
-     */
-    public const DISPOSAL_WATCH_YEARS = 5;
+	/**
+	 * Disposal-watch window length in years (art. 3.47 Wet IB 2001).
+	 *
+	 * @var int
+	 */
+	public const DISPOSAL_WATCH_YEARS = 5;
 
-    /**
-     * Constructor.
-     *
-     * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute the RvO meldingstermijn deadline (REQ-INV-007).
-     *
-     * Deadline = opdrachtverleningDatum + 3 calendar months. The order date is
-     * authoritative — NOT the invoice or delivery date. Malformed input yields
-     * null so callers fail closed rather than computing a bogus deadline.
-     *
-     * @param string $opdrachtDatum Order date as YYYY-MM-DD.
-     *
-     * @return string|null Deadline as YYYY-MM-DD, or null if the input is malformed.
-     *
-     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
-     */
-    public function computeMeldingDeadline(string $opdrachtDatum): ?string
-    {
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $opdrachtDatum) !== 1) {
-            return null;
-        }
+	/**
+	 * Compute the RvO meldingstermijn deadline (REQ-INV-007).
+	 *
+	 * Deadline = opdrachtverleningDatum + 3 calendar months. The order date is
+	 * authoritative — NOT the invoice or delivery date. Malformed input yields
+	 * null so callers fail closed rather than computing a bogus deadline.
+	 *
+	 * @param string $opdrachtDatum Order date as YYYY-MM-DD.
+	 *
+	 * @return string|null Deadline as YYYY-MM-DD, or null if the input is malformed.
+	 *
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+	 */
+	public function computeMeldingDeadline(string $opdrachtDatum): ?string {
+		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $opdrachtDatum) !== 1) {
+			return null;
+		}
 
-        $base = new DateTimeImmutable($opdrachtDatum.' 00:00:00', new DateTimeZone('UTC'));
+		$base = new DateTimeImmutable($opdrachtDatum . ' 00:00:00', new DateTimeZone('UTC'));
 
-        return $base->add(new DateInterval('P3M'))->format('Y-m-d');
+		return $base->add(new DateInterval('P3M'))->format('Y-m-d');
+	}//end computeMeldingDeadline()
 
-    }//end computeMeldingDeadline()
+	/**
+	 * Whether a melding may still be marked definitief on a given date (REQ-INV-007).
+	 *
+	 * Once the deadline has passed the aftrek is irrevocably forfeited; the
+	 * system MUST NOT silently proceed.
+	 *
+	 * @param string $opdrachtDatum Order date as YYYY-MM-DD.
+	 * @param string $onDate The date the melding would be marked, YYYY-MM-DD.
+	 *
+	 * @return bool True when on/before the deadline; false when past it or input is malformed.
+	 *
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+	 */
+	public function canSubmitDefinitief(string $opdrachtDatum, string $onDate): bool {
+		$deadline = $this->computeMeldingDeadline(opdrachtDatum: $opdrachtDatum);
+		if ($deadline === null || preg_match('/^\d{4}-\d{2}-\d{2}$/', $onDate) !== 1) {
+			return false;
+		}
 
-    /**
-     * Whether a melding may still be marked definitief on a given date (REQ-INV-007).
-     *
-     * Once the deadline has passed the aftrek is irrevocably forfeited; the
-     * system MUST NOT silently proceed.
-     *
-     * @param string $opdrachtDatum Order date as YYYY-MM-DD.
-     * @param string $onDate        The date the melding would be marked, YYYY-MM-DD.
-     *
-     * @return bool True when on/before the deadline; false when past it or input is malformed.
-     *
-     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
-     */
-    public function canSubmitDefinitief(string $opdrachtDatum, string $onDate): bool
-    {
-        $deadline = $this->computeMeldingDeadline(opdrachtDatum: $opdrachtDatum);
-        if ($deadline === null || preg_match('/^\d{4}-\d{2}-\d{2}$/', $onDate) !== 1) {
-            return false;
-        }
+		return ($onDate <= $deadline);
+	}//end canSubmitDefinitief()
 
-        return ($onDate <= $deadline);
+	/**
+	 * Reminder dates at deadline minus 14 days and minus 3 days (REQ-INV-007).
+	 *
+	 * @param string $opdrachtDatum Order date as YYYY-MM-DD.
+	 *
+	 * @return array{0: string, 1: string}|null [reminder-14d, reminder-3d], or null if malformed.
+	 *
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+	 */
+	public function reminderDates(string $opdrachtDatum): ?array {
+		$deadline = $this->computeMeldingDeadline(opdrachtDatum: $opdrachtDatum);
+		if ($deadline === null) {
+			return null;
+		}
 
-    }//end canSubmitDefinitief()
+		$base = new DateTimeImmutable($deadline . ' 00:00:00', new DateTimeZone('UTC'));
 
-    /**
-     * Reminder dates at deadline minus 14 days and minus 3 days (REQ-INV-007).
-     *
-     * @param string $opdrachtDatum Order date as YYYY-MM-DD.
-     *
-     * @return array{0: string, 1: string}|null [reminder-14d, reminder-3d], or null if malformed.
-     *
-     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
-     */
-    public function reminderDates(string $opdrachtDatum): ?array
-    {
-        $deadline = $this->computeMeldingDeadline(opdrachtDatum: $opdrachtDatum);
-        if ($deadline === null) {
-            return null;
-        }
+		return [
+			$base->sub(new DateInterval('P14D'))->format('Y-m-d'),
+			$base->sub(new DateInterval('P3D'))->format('Y-m-d'),
+		];
 
-        $base = new DateTimeImmutable($deadline.' 00:00:00', new DateTimeZone('UTC'));
+	}//end reminderDates()
 
-        return [
-            $base->sub(new DateInterval('P14D'))->format('Y-m-d'),
-            $base->sub(new DateInterval('P3D'))->format('Y-m-d'),
-        ];
+	/**
+	 * The disposal-watch expiry date (REQ-INV-010, art. 3.47).
+	 *
+	 * The clock starts 1 januari of the kalenderjaar in which the asset was
+	 * acquired ("aanvang kalenderjaar van investering"), NOT the
+	 * opdrachtverleningDatum, and runs 5 years.
+	 *
+	 * @param int $acquisitionYear The kalenderjaar of investment (e.g. 2026).
+	 *
+	 * @return string The watch-expiry date as YYYY-MM-DD (1 jan of acquisitionYear + 5).
+	 *
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+	 */
+	public function disposalWatchExpiry(int $acquisitionYear): string {
+		return sprintf('%04d-01-01', ($acquisitionYear + self::DISPOSAL_WATCH_YEARS));
+	}//end disposalWatchExpiry()
 
-    }//end reminderDates()
+	/**
+	 * Whether a disposal triggers desinvesteringsbijtelling (REQ-INV-010).
+	 *
+	 * Triggered when the disposal occurs strictly before the watch expiry date.
+	 *
+	 * @param int $acquisitionYear The kalenderjaar of investment.
+	 * @param string $disposalDate Disposal date as YYYY-MM-DD.
+	 *
+	 * @return bool True when the disposal falls within the 5-year window.
+	 *
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+	 */
+	public function isWithinDisposalWindow(int $acquisitionYear, string $disposalDate): bool {
+		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $disposalDate) !== 1) {
+			return false;
+		}
 
-    /**
-     * The disposal-watch expiry date (REQ-INV-010, art. 3.47).
-     *
-     * The clock starts 1 januari of the kalenderjaar in which the asset was
-     * acquired ("aanvang kalenderjaar van investering"), NOT the
-     * opdrachtverleningDatum, and runs 5 years.
-     *
-     * @param int $acquisitionYear The kalenderjaar of investment (e.g. 2026).
-     *
-     * @return string The watch-expiry date as YYYY-MM-DD (1 jan of acquisitionYear + 5).
-     *
-     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
-     */
-    public function disposalWatchExpiry(int $acquisitionYear): string
-    {
-        return sprintf('%04d-01-01', ($acquisitionYear + self::DISPOSAL_WATCH_YEARS));
+		return ($disposalDate < $this->disposalWatchExpiry(acquisitionYear: $acquisitionYear));
+	}//end isWithinDisposalWindow()
 
-    }//end disposalWatchExpiry()
+	/**
+	 * Compute the desinvesteringsbijtelling on early disposal (REQ-INV-010).
+	 *
+	 * Bijtelling = aftrekPercentage% x min(opbrengst, aanschafwaarde),
+	 * capped at the original aftrek so er nooit meer wordt teruggepakt dan
+	 * oorspronkelijk is afgetrokken.
+	 *
+	 * @param float $aftrekPercentage Original aftrek percentage (e.g. 40 for EIA).
+	 * @param int $opbrengst Disposal proceeds in EUR cents.
+	 * @param int $aanschafwaarde Original acquisition value in EUR cents.
+	 * @param int $origineleAftrek Original aftrek amount in EUR cents (cap).
+	 *
+	 * @return int Desinvesteringsbijtelling in EUR cents (never negative, never above the cap).
+	 *
+	 * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+	 */
+	public function computeBijtelling(
+		float $aftrekPercentage,
+		int $opbrengst,
+		int $aanschafwaarde,
+		int $origineleAftrek,
+	): int {
+		$grondslag = min(max(0, $opbrengst), max(0, $aanschafwaarde));
+		$bijtelling = (int)round(($aftrekPercentage / 100.0) * $grondslag);
 
-    /**
-     * Whether a disposal triggers desinvesteringsbijtelling (REQ-INV-010).
-     *
-     * Triggered when the disposal occurs strictly before the watch expiry date.
-     *
-     * @param int    $acquisitionYear The kalenderjaar of investment.
-     * @param string $disposalDate    Disposal date as YYYY-MM-DD.
-     *
-     * @return bool True when the disposal falls within the 5-year window.
-     *
-     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
-     */
-    public function isWithinDisposalWindow(int $acquisitionYear, string $disposalDate): bool
-    {
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $disposalDate) !== 1) {
-            return false;
-        }
+		$capped = min($bijtelling, max(0, $origineleAftrek));
 
-        return ($disposalDate < $this->disposalWatchExpiry(acquisitionYear: $acquisitionYear));
+		$this->logger->debug(
+			'DesinvesteringsbijtellingGuard: computeBijtelling',
+			[
+				'percentage' => $aftrekPercentage,
+				'grondslag' => $grondslag,
+				'raw' => $bijtelling,
+				'capped' => $capped,
+			]
+		);
 
-    }//end isWithinDisposalWindow()
-
-    /**
-     * Compute the desinvesteringsbijtelling on early disposal (REQ-INV-010).
-     *
-     * Bijtelling = aftrekPercentage% x min(opbrengst, aanschafwaarde),
-     * capped at the original aftrek so er nooit meer wordt teruggepakt dan
-     * oorspronkelijk is afgetrokken.
-     *
-     * @param float $aftrekPercentage Original aftrek percentage (e.g. 40 for EIA).
-     * @param int   $opbrengst        Disposal proceeds in EUR cents.
-     * @param int   $aanschafwaarde   Original acquisition value in EUR cents.
-     * @param int   $origineleAftrek  Original aftrek amount in EUR cents (cap).
-     *
-     * @return int Desinvesteringsbijtelling in EUR cents (never negative, never above the cap).
-     *
-     * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
-     */
-    public function computeBijtelling(
-        float $aftrekPercentage,
-        int $opbrengst,
-        int $aanschafwaarde,
-        int $origineleAftrek
-    ): int {
-        $grondslag  = min(max(0, $opbrengst), max(0, $aanschafwaarde));
-        $bijtelling = (int) round(($aftrekPercentage / 100.0) * $grondslag);
-
-        $capped = min($bijtelling, max(0, $origineleAftrek));
-
-        $this->logger->debug(
-            'DesinvesteringsbijtellingGuard: computeBijtelling',
-            [
-                'percentage' => $aftrekPercentage,
-                'grondslag'  => $grondslag,
-                'raw'        => $bijtelling,
-                'capped'     => $capped,
-            ]
-        );
-
-        return max(0, $capped);
-
-    }//end computeBijtelling()
+		return max(0, $capped);
+	}//end computeBijtelling()
 }//end class

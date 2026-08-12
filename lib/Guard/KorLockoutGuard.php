@@ -45,44 +45,41 @@ use DateTimeImmutable;
  *
  * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
  */
-class KorLockoutGuard
-{
-    /**
-     * Lock-out period per Wet OB 1968 art. 25 lid 3.
-     *
-     * @var string
-     */
-    private const LOCKOUT_PERIOD = 'P3Y';
+class KorLockoutGuard {
+	/**
+	 * Lock-out period per Wet OB 1968 art. 25 lid 3.
+	 *
+	 * @var string
+	 */
+	private const LOCKOUT_PERIOD = 'P3Y';
 
-    /**
-     * Precondition for `returnToOutside`: the 3-year lock-out since
-     * `optedOutAt` must have fully elapsed.
-     *
-     * @param array<string, mixed> $regime The KorRegime object being transitioned.
-     *
-     * @return bool True when the lock-out has expired and re-entry is permitted.
-     *
-     * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
-     */
-    public function requireLockoutExpired(array $regime): bool
-    {
-        $optedOutAt = trim((string) ($regime['optedOutAt'] ?? ''));
-        if ($optedOutAt === '') {
-            // No opt-out timestamp recorded — cannot establish the lock-out
-            // window has elapsed. Fail-closed.
-            return false;
-        }
+	/**
+	 * Precondition for `returnToOutside`: the 3-year lock-out since
+	 * `optedOutAt` must have fully elapsed.
+	 *
+	 * @param array<string, mixed> $regime The KorRegime object being transitioned.
+	 *
+	 * @return bool True when the lock-out has expired and re-entry is permitted.
+	 *
+	 * @spec openspec/changes/missing-lifecycle-guards/tasks.md#task-2
+	 */
+	public function requireLockoutExpired(array $regime): bool {
+		$optedOutAt = trim((string)($regime['optedOutAt'] ?? ''));
+		if ($optedOutAt === '') {
+			// No opt-out timestamp recorded — cannot establish the lock-out
+			// window has elapsed. Fail-closed.
+			return false;
+		}
 
-        try {
-            $optedOut = new DateTimeImmutable($optedOutAt);
-        } catch (\Throwable) {
-            return false;
-        }
+		try {
+			$optedOut = new DateTimeImmutable($optedOutAt);
+		} catch (\Throwable) {
+			return false;
+		}
 
-        $lockoutEnds = $optedOut->add(new DateInterval(self::LOCKOUT_PERIOD));
-        $now         = new DateTimeImmutable('now');
+		$lockoutEnds = $optedOut->add(new DateInterval(self::LOCKOUT_PERIOD));
+		$now = new DateTimeImmutable('now');
 
-        return $now >= $lockoutEnds;
-
-    }//end requireLockoutExpired()
+		return $now >= $lockoutEnds;
+	}//end requireLockoutExpired()
 }//end class

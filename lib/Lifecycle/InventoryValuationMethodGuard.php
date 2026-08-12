@@ -52,162 +52,157 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-6
  */
-class InventoryValuationMethodGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
+class InventoryValuationMethodGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Predicate: the InventoryValuation's on-hand quantity is zero.
-     *
-     * Returns true (transition permitted) when quantity <= 0. Returns
-     * false (transition denied) when quantity > 0 OR on any exception
-     * (fail-closed).
-     *
-     * @param array<string,mixed> $valuation The InventoryValuation record.
-     *
-     * @return bool True when on-hand quantity is zero.
-     *
-     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-6
-     */
-    public function checkZeroStock(array $valuation): bool
-    {
-        try {
-            $quantity = (float) ($valuation['quantity'] ?? 0);
-            if ($quantity > 0) {
-                $this->logger->info(
-                    'InventoryValuationMethodGuard: transition denied — non-zero stock',
-                    [
-                        'productId'       => ($valuation['productId'] ?? null),
-                        'warehouse'       => ($valuation['warehouse'] ?? null),
-                        'quantity'        => $quantity,
-                        'valuationMethod' => ($valuation['valuationMethod'] ?? null),
-                    ]
-                );
-                return false;
-            }
+	/**
+	 * Predicate: the InventoryValuation's on-hand quantity is zero.
+	 *
+	 * Returns true (transition permitted) when quantity <= 0. Returns
+	 * false (transition denied) when quantity > 0 OR on any exception
+	 * (fail-closed).
+	 *
+	 * @param array<string,mixed> $valuation The InventoryValuation record.
+	 *
+	 * @return bool True when on-hand quantity is zero.
+	 *
+	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-6
+	 */
+	public function checkZeroStock(array $valuation): bool {
+		try {
+			$quantity = (float)($valuation['quantity'] ?? 0);
+			if ($quantity > 0) {
+				$this->logger->info(
+					'InventoryValuationMethodGuard: transition denied — non-zero stock',
+					[
+						'productId' => ($valuation['productId'] ?? null),
+						'warehouse' => ($valuation['warehouse'] ?? null),
+						'quantity' => $quantity,
+						'valuationMethod' => ($valuation['valuationMethod'] ?? null),
+					]
+				);
+				return false;
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'InventoryValuationMethodGuard: checkZeroStock failed — denying transition (fail-closed)',
-                ['exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'InventoryValuationMethodGuard: checkZeroStock failed — denying transition (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end checkZeroStock()
+	}//end checkZeroStock()
 
-    /**
-     * Predicate: no other active InventoryValuation snapshot exists for
-     * the same (productId, warehouse, administrationId) tuple per
-     * REQ-INV-005.
-     *
-     * Permits the create/transition when no other active row is found
-     * OR when the only match is the snapshot itself (by id). Denies on
-     * duplicate; fail-closed on exception.
-     *
-     * @param array<string,mixed> $proposed The proposed InventoryValuation record.
-     *
-     * @return bool True when uniqueness is respected.
-     *
-     * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-14
-     */
-    public function checkUniqueActiveSnapshot(array $proposed): bool
-    {
-        try {
-            $productId        = (string) ($proposed['productId'] ?? '');
-            $warehouse        = (string) ($proposed['warehouse'] ?? '');
-            $administrationId = (string) ($proposed['administrationId'] ?? '');
-            $selfId           = (string) ($proposed['id'] ?? ($proposed['@self']['id'] ?? ''));
+	/**
+	 * Predicate: no other active InventoryValuation snapshot exists for
+	 * the same (productId, warehouse, administrationId) tuple per
+	 * REQ-INV-005.
+	 *
+	 * Permits the create/transition when no other active row is found
+	 * OR when the only match is the snapshot itself (by id). Denies on
+	 * duplicate; fail-closed on exception.
+	 *
+	 * @param array<string,mixed> $proposed The proposed InventoryValuation record.
+	 *
+	 * @return bool True when uniqueness is respected.
+	 *
+	 * @spec openspec/changes/inventory-valuation-fifo-avg/tasks.md#task-14
+	 */
+	public function checkUniqueActiveSnapshot(array $proposed): bool {
+		try {
+			$productId = (string)($proposed['productId'] ?? '');
+			$warehouse = (string)($proposed['warehouse'] ?? '');
+			$administrationId = (string)($proposed['administrationId'] ?? '');
+			$selfId = (string)($proposed['id'] ?? ($proposed['@self']['id'] ?? ''));
 
-            // Snapshots without the tuple coordinates are accepted — the
-            // schema-level required-fields validation handles those cases.
-            if ($productId === '' || $warehouse === '' || $administrationId === '') {
-                return true;
-            }
+			// Snapshots without the tuple coordinates are accepted — the
+			// schema-level required-fields validation handles those cases.
+			if ($productId === '' || $warehouse === '' || $administrationId === '') {
+				return true;
+			}
 
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $existing      = $objectService
-                ->setRegister($this->register())
-                ->setSchema('InventoryValuation')
-                ->findAll(
-                    [
-                        'filters' => [
-                            'productId'        => $productId,
-                            'warehouse'        => $warehouse,
-                            'status'           => 'active',
-                            'administrationId' => $administrationId,
-                        ],
-                    ]
-                );
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$existing = $objectService
+				->setRegister($this->register())
+				->setSchema('InventoryValuation')
+				->findAll(
+					[
+						'filters' => [
+							'productId' => $productId,
+							'warehouse' => $warehouse,
+							'status' => 'active',
+							'administrationId' => $administrationId,
+						],
+					]
+				);
 
-            if (is_array($existing) === false) {
-                $existing = [];
-            }
+			if (is_array($existing) === false) {
+				$existing = [];
+			}
 
-            foreach ($existing as $row) {
-                $rowId = '';
-                if (is_array($row) === true) {
-                    $rowId = (string) ($row['id'] ?? ($row['@self']['id'] ?? ''));
-                } else if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-                    $data = $row->jsonSerialize();
-                    if (is_array($data) === true) {
-                        $rowId = (string) ($data['id'] ?? ($data['@self']['id'] ?? ''));
-                    }
-                }
+			foreach ($existing as $row) {
+				$rowId = '';
+				if (is_array($row) === true) {
+					$rowId = (string)($row['id'] ?? ($row['@self']['id'] ?? ''));
+				} elseif (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+					$data = $row->jsonSerialize();
+					if (is_array($data) === true) {
+						$rowId = (string)($data['id'] ?? ($data['@self']['id'] ?? ''));
+					}
+				}
 
-                if ($rowId !== '' && $rowId === $selfId) {
-                    continue;
-                }
+				if ($rowId !== '' && $rowId === $selfId) {
+					continue;
+				}
 
-                $this->logger->info(
-                    'InventoryValuationMethodGuard: duplicate active snapshot blocked',
-                    [
-                        'productId'        => $productId,
-                        'warehouse'        => $warehouse,
-                        'administrationId' => $administrationId,
-                    ]
-                );
-                return false;
-            }//end foreach
+				$this->logger->info(
+					'InventoryValuationMethodGuard: duplicate active snapshot blocked',
+					[
+						'productId' => $productId,
+						'warehouse' => $warehouse,
+						'administrationId' => $administrationId,
+					]
+				);
+				return false;
+			}//end foreach
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'InventoryValuationMethodGuard: checkUniqueActiveSnapshot failed — denying (fail-closed)',
-                ['exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'InventoryValuationMethodGuard: checkUniqueActiveSnapshot failed — denying (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end checkUniqueActiveSnapshot()
+	}//end checkUniqueActiveSnapshot()
 
-    /**
-     * Resolve the OR register slug, defaulting to 'shillinq'.
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the OR register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

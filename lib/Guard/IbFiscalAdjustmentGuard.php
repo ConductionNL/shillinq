@@ -42,57 +42,54 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
  */
-class IbFiscalAdjustmentGuard
-{
-    /**
-     * The statutory deductibility cap for representation costs (5% of profit).
-     *
-     * @var float
-     */
-    private const REPRESENTATIE_CAP_RATE = 0.05;
+class IbFiscalAdjustmentGuard {
+	/**
+	 * The statutory deductibility cap for representation costs (5% of profit).
+	 *
+	 * @var float
+	 */
+	private const REPRESENTATIE_CAP_RATE = 0.05;
 
-    /**
-     * Constructor.
-     *
-     * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute the representatiebeperking correction per art. 3.15 Wet IB 2001.
-     *
-     * Representation costs are deductible only up to 5% of the profit base; the
-     * excess is non-deductible and returned here as a positive add-back. When
-     * the costs are within the cap (or the profit base is zero/negative) the
-     * correction is 0.0.
-     *
-     * @param float $representatiekosten Booked representation costs (>= 0).
-     * @param float $winstBasis          Profit base the 5% cap is computed over.
-     *
-     * @return float The non-deductible correction to add back to fiscal profit (>= 0).
-     *
-     * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
-     */
-    public function representatieDrempel(float $representatiekosten, float $winstBasis): float
-    {
-        $this->logger->debug(
-            'IbFiscalAdjustmentGuard: representatieDrempel',
-            ['representatiekosten' => $representatiekosten, 'winstBasis' => $winstBasis]
-        );
+	/**
+	 * Compute the representatiebeperking correction per art. 3.15 Wet IB 2001.
+	 *
+	 * Representation costs are deductible only up to 5% of the profit base; the
+	 * excess is non-deductible and returned here as a positive add-back. When
+	 * the costs are within the cap (or the profit base is zero/negative) the
+	 * correction is 0.0.
+	 *
+	 * @param float $representatiekosten Booked representation costs (>= 0).
+	 * @param float $winstBasis Profit base the 5% cap is computed over.
+	 *
+	 * @return float The non-deductible correction to add back to fiscal profit (>= 0).
+	 *
+	 * @spec openspec/specs/bookkeeping-ib-aangifte-zzp/spec.md
+	 */
+	public function representatieDrempel(float $representatiekosten, float $winstBasis): float {
+		$this->logger->debug(
+			'IbFiscalAdjustmentGuard: representatieDrempel',
+			['representatiekosten' => $representatiekosten, 'winstBasis' => $winstBasis]
+		);
 
-        if ($representatiekosten <= 0.0 || $winstBasis <= 0.0) {
-            return 0.0;
-        }
+		if ($representatiekosten <= 0.0 || $winstBasis <= 0.0) {
+			return 0.0;
+		}
 
-        $aftrekbaar = ($winstBasis * self::REPRESENTATIE_CAP_RATE);
-        if ($representatiekosten <= $aftrekbaar) {
-            return 0.0;
-        }
+		$aftrekbaar = ($winstBasis * self::REPRESENTATIE_CAP_RATE);
+		if ($representatiekosten <= $aftrekbaar) {
+			return 0.0;
+		}
 
-        return round(($representatiekosten - $aftrekbaar), 2);
-
-    }//end representatieDrempel()
+		return round(($representatiekosten - $aftrekbaar), 2);
+	}//end representatieDrempel()
 }//end class

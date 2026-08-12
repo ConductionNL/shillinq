@@ -30,96 +30,90 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class ProgrammaAggregatorTest extends TestCase
-{
+final class ProgrammaAggregatorTest extends TestCase {
 
-    /**
-     * The aggregator under test.
-     *
-     * @var ProgrammaAggregator
-     */
-    private ProgrammaAggregator $aggregator;
+	/**
+	 * The aggregator under test.
+	 *
+	 * @var ProgrammaAggregator
+	 */
+	private ProgrammaAggregator $aggregator;
 
-    /**
-     * Set up the aggregator.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->aggregator = new ProgrammaAggregator();
+	/**
+	 * Set up the aggregator.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->aggregator = new ProgrammaAggregator();
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * REQ-002 scenario: two taakvelden roll up with no rounding drift.
-     *
-     * @return void
-     */
-    public function testAggregatesChildTaakveldenWithoutRoundingDrift(): void
-    {
-        $result = $this->aggregator->aggregate(
-            taakvelden: [
-                ['baten' => 100.0, 'lasten' => 500.0],
-                ['baten' => 50.0, 'lasten' => 450.0],
-            ]
-        );
+	/**
+	 * REQ-002 scenario: two taakvelden roll up with no rounding drift.
+	 *
+	 * @return void
+	 */
+	public function testAggregatesChildTaakveldenWithoutRoundingDrift(): void {
+		$result = $this->aggregator->aggregate(
+			taakvelden: [
+				['baten' => 100.0, 'lasten' => 500.0],
+				['baten' => 50.0, 'lasten' => 450.0],
+			]
+		);
 
-        self::assertSame(150.0, $result['revenueTotal']);
-        self::assertSame(950.0, $result['expensesTotal']);
-        self::assertSame(-800.0, $result['balanceBeforeMovements']);
-        self::assertSame(-800.0, $result['balanceAfterMovements']);
+		self::assertSame(150.0, $result['revenueTotal']);
+		self::assertSame(950.0, $result['expensesTotal']);
+		self::assertSame(-800.0, $result['balanceBeforeMovements']);
+		self::assertSame(-800.0, $result['balanceAfterMovements']);
 
-    }//end testAggregatesChildTaakveldenWithoutRoundingDrift()
+	}//end testAggregatesChildTaakveldenWithoutRoundingDrift()
 
-    /**
-     * REQ-002 scenario: mutatiesReserves are applied to saldoNaMutaties.
-     *
-     * @return void
-     */
-    public function testSaldoNaMutatiesAppliesReserveMutation(): void
-    {
-        $result = $this->aggregator->aggregate(
-            taakvelden: [['baten' => 0.0, 'lasten' => 500.0]],
-            mutatiesReserves: 200.0
-        );
+	/**
+	 * REQ-002 scenario: mutatiesReserves are applied to saldoNaMutaties.
+	 *
+	 * @return void
+	 */
+	public function testSaldoNaMutatiesAppliesReserveMutation(): void {
+		$result = $this->aggregator->aggregate(
+			taakvelden: [['baten' => 0.0, 'lasten' => 500.0]],
+			mutatiesReserves: 200.0
+		);
 
-        self::assertSame(-500.0, $result['balanceBeforeMovements']);
-        self::assertSame(-300.0, $result['balanceAfterMovements']);
+		self::assertSame(-500.0, $result['balanceBeforeMovements']);
+		self::assertSame(-300.0, $result['balanceAfterMovements']);
 
-    }//end testSaldoNaMutatiesAppliesReserveMutation()
+	}//end testSaldoNaMutatiesAppliesReserveMutation()
 
-    /**
-     * An empty taakveld set yields zeroed totals.
-     *
-     * @return void
-     */
-    public function testEmptyTaakveldenYieldsZeroTotals(): void
-    {
-        $result = $this->aggregator->aggregate(taakvelden: []);
-        self::assertSame(0.0, $result['revenueTotal']);
-        self::assertSame(0.0, $result['expensesTotal']);
-        self::assertSame(0.0, $result['balanceAfterMovements']);
+	/**
+	 * An empty taakveld set yields zeroed totals.
+	 *
+	 * @return void
+	 */
+	public function testEmptyTaakveldenYieldsZeroTotals(): void {
+		$result = $this->aggregator->aggregate(taakvelden: []);
+		self::assertSame(0.0, $result['revenueTotal']);
+		self::assertSame(0.0, $result['expensesTotal']);
+		self::assertSame(0.0, $result['balanceAfterMovements']);
 
-    }//end testEmptyTaakveldenYieldsZeroTotals()
+	}//end testEmptyTaakveldenYieldsZeroTotals()
 
-    /**
-     * Cent-level amounts sum exactly (integer-cent arithmetic).
-     *
-     * @return void
-     */
-    public function testCentLevelAmountsSumExactly(): void
-    {
-        $result = $this->aggregator->aggregate(
-            taakvelden: [
-                ['baten' => 0.10, 'lasten' => 0.0],
-                ['baten' => 0.20, 'lasten' => 0.0],
-            ]
-        );
-        self::assertSame(0.30, $result['revenueTotal']);
+	/**
+	 * Cent-level amounts sum exactly (integer-cent arithmetic).
+	 *
+	 * @return void
+	 */
+	public function testCentLevelAmountsSumExactly(): void {
+		$result = $this->aggregator->aggregate(
+			taakvelden: [
+				['baten' => 0.10, 'lasten' => 0.0],
+				['baten' => 0.20, 'lasten' => 0.0],
+			]
+		);
+		self::assertSame(0.30, $result['revenueTotal']);
 
-    }//end testCentLevelAmountsSumExactly()
+	}//end testCentLevelAmountsSumExactly()
 
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

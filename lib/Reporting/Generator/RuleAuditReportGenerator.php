@@ -48,155 +48,148 @@ use Psr\Log\LoggerInterface;
 /**
  * Rule-audit CSV generator that reuses RuleAuditService.
  */
-final class RuleAuditReportGenerator implements ReportGeneratorInterface
-{
+final class RuleAuditReportGenerator implements ReportGeneratorInterface {
 
-    use ReportDataTrait;
+	use ReportDataTrait;
 
-    /**
-     * Construct the rule-audit report generator.
-     *
-     * @param ContainerInterface $container DI container for lazy RuleAuditService resolution.
-     * @param LoggerInterface    $logger    Logger.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Construct the rule-audit report generator.
+	 *
+	 * @param ContainerInterface $container DI container for lazy RuleAuditService resolution.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * {@inheritDoc}
-     *
-     * @return string
-     */
-    public static function reportType(): string
-    {
-        return 'rule-audit';
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string
+	 */
+	public static function reportType(): string {
+		return 'rule-audit';
+	}//end reportType()
 
-    }//end reportType()
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return array<int, string>
+	 */
+	public static function supportedFormats(): array {
+		return ['csv'];
+	}//end supportedFormats()
 
-    /**
-     * {@inheritDoc}
-     *
-     * @return array<int, string>
-     */
-    public static function supportedFormats(): array
-    {
-        return ['csv'];
+	/**
+	 * Run the rule audit and render the result as CSV.
+	 *
+	 * @param array<string, mixed> $context `{ period?, administrationId?, jurisdiction? }`.
+	 * @param string $format Must be 'csv'.
+	 *
+	 * @return GeneratedFile
+	 */
+	public function generate(array $context, string $format): GeneratedFile {
+		$report = $this->runAudit($context);
 
-    }//end supportedFormats()
+		$handle = fopen('php://temp', 'r+');
 
-    /**
-     * Run the rule audit and render the result as CSV.
-     *
-     * @param array<string, mixed> $context `{ period?, administrationId?, jurisdiction? }`.
-     * @param string               $format  Must be 'csv'.
-     *
-     * @return GeneratedFile
-     */
-    public function generate(array $context, string $format): GeneratedFile
-    {
-        $report = $this->runAudit($context);
+		// --- Summary block ---.
+		fputcsv($handle, ['section', 'metric', 'value']);
+		fputcsv($handle, ['summary', 'catalogueVersion', (string)($report['catalogueVersion'] ?? '')]);
+		fputcsv($handle, ['summary', 'corpusTotal', (string)($report['corpusTotal'] ?? 0)]);
+		fputcsv($handle, ['summary', 'machineCheckable', (string)($report['machineCheckable'] ?? 0)]);
+		fputcsv($handle, ['summary', 'enforceableRules', (string)($report['enforceableRules'] ?? 0)]);
+		fputcsv($handle, ['summary', 'coveragePct', (string)($report['coveragePct'] ?? 0)]);
+		fputcsv($handle, ['summary', 'objectsChecked', (string)($report['objectsChecked'] ?? 0)]);
+		fputcsv($handle, ['summary', 'objectsCompliant', (string)($report['objectsCompliant'] ?? 0)]);
+		fputcsv($handle, ['summary', 'objectsWithViolations', (string)($report['objectsWithViolations'] ?? 0)]);
 
-        $handle = fopen('php://temp', 'r+');
+		$severity = ($report['violationsBySeverity'] ?? []);
+		foreach (['mandatory', 'conditional', 'recommended'] as $level) {
+			fputcsv($handle, ['severity', $level, (string)($severity[$level] ?? 0)]);
+		}
 
-        // --- Summary block ---.
-        fputcsv($handle, ['section', 'metric', 'value']);
-        fputcsv($handle, ['summary', 'catalogueVersion', (string) ($report['catalogueVersion'] ?? '')]);
-        fputcsv($handle, ['summary', 'corpusTotal', (string) ($report['corpusTotal'] ?? 0)]);
-        fputcsv($handle, ['summary', 'machineCheckable', (string) ($report['machineCheckable'] ?? 0)]);
-        fputcsv($handle, ['summary', 'enforceableRules', (string) ($report['enforceableRules'] ?? 0)]);
-        fputcsv($handle, ['summary', 'coveragePct', (string) ($report['coveragePct'] ?? 0)]);
-        fputcsv($handle, ['summary', 'objectsChecked', (string) ($report['objectsChecked'] ?? 0)]);
-        fputcsv($handle, ['summary', 'objectsCompliant', (string) ($report['objectsCompliant'] ?? 0)]);
-        fputcsv($handle, ['summary', 'objectsWithViolations', (string) ($report['objectsWithViolations'] ?? 0)]);
+		// --- Per object type ---.
+		fputcsv($handle, []);
+		fputcsv($handle, ['objectType', 'checked', 'compliant', 'withViolations', 'violations', 'compliancePct']);
+		foreach (($report['types'] ?? []) as $type => $stat) {
+			if (is_array($stat) === false) {
+				continue;
+			}
 
-        $severity = ($report['violationsBySeverity'] ?? []);
-        foreach (['mandatory', 'conditional', 'recommended'] as $level) {
-            fputcsv($handle, ['severity', $level, (string) ($severity[$level] ?? 0)]);
-        }
+			$checked = (int)($stat['checked'] ?? 0);
+			$compliant = (int)($stat['compliant'] ?? 0);
+			$compliance = ($checked > 0) ? round((($compliant / $checked) * 100), 1) : 0.0;
+			fputcsv(
+				$handle,
+				[
+					(string)$type,
+					(string)$checked,
+					(string)$compliant,
+					(string)($stat['withViolations'] ?? 0),
+					(string)($stat['violations'] ?? 0),
+					$this->money((float)$compliance),
+				]
+			);
+		}//end foreach
 
-        // --- Per object type ---.
-        fputcsv($handle, []);
-        fputcsv($handle, ['objectType', 'checked', 'compliant', 'withViolations', 'violations', 'compliancePct']);
-        foreach (($report['types'] ?? []) as $type => $stat) {
-            if (is_array($stat) === false) {
-                continue;
-            }
+		// --- Top violated rules ---.
+		fputcsv($handle, []);
+		fputcsv($handle, ['topViolatedRule', 'count']);
+		foreach (($report['topViolatedRules'] ?? []) as $entry) {
+			if (is_array($entry) === false) {
+				continue;
+			}
 
-            $checked    = (int) ($stat['checked'] ?? 0);
-            $compliant  = (int) ($stat['compliant'] ?? 0);
-            $compliance = ($checked > 0) ? round((($compliant / $checked) * 100), 1) : 0.0;
-            fputcsv(
-                $handle,
-                [
-                    (string) $type,
-                    (string) $checked,
-                    (string) $compliant,
-                    (string) ($stat['withViolations'] ?? 0),
-                    (string) ($stat['violations'] ?? 0),
-                    $this->money((float) $compliance),
-                ]
-            );
-        }//end foreach
+			fputcsv($handle, [(string)($entry['ruleId'] ?? ''), (string)($entry['count'] ?? 0)]);
+		}
 
-        // --- Top violated rules ---.
-        fputcsv($handle, []);
-        fputcsv($handle, ['topViolatedRule', 'count']);
-        foreach (($report['topViolatedRules'] ?? []) as $entry) {
-            if (is_array($entry) === false) {
-                continue;
-            }
+		rewind($handle);
+		$content = (string)stream_get_contents($handle);
+		fclose($handle);
 
-            fputcsv($handle, [(string) ($entry['ruleId'] ?? ''), (string) ($entry['count'] ?? 0)]);
-        }
+		return new GeneratedFile(
+			fileName: $this->fileName('rule-audit', $context, 'csv'),
+			mimeType: 'text/csv',
+			format: 'csv',
+			content: $content,
+		);
 
-        rewind($handle);
-        $content = (string) stream_get_contents($handle);
-        fclose($handle);
+	}//end generate()
 
-        return new GeneratedFile(
-            fileName: $this->fileName('rule-audit', $context, 'csv'),
-            mimeType: 'text/csv',
-            format: 'csv',
-            content: $content,
-        );
+	/**
+	 * Resolve RuleAuditService from the container and run its audit.
+	 *
+	 * Degrades to an empty (well-formed) report when the service cannot be
+	 * resolved or the audit fails, so the generator never fatals.
+	 *
+	 * @param array<string,mixed> $context Report context (passed to audit()).
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function runAudit(array $context): array {
+		try {
+			$service = $this->container->get(RuleAuditService::class);
+			return $service->audit($context);
+		} catch (\Throwable $e) {
+			$this->logger->warning('RuleAuditReportGenerator: audit failed: ' . $e->getMessage());
+			return [
+				'catalogueVersion' => '',
+				'corpusTotal' => 0,
+				'machineCheckable' => 0,
+				'enforceableRules' => 0,
+				'coveragePct' => 0.0,
+				'types' => [],
+				'objectsChecked' => 0,
+				'objectsCompliant' => 0,
+				'objectsWithViolations' => 0,
+				'violationsBySeverity' => ['mandatory' => 0, 'conditional' => 0, 'recommended' => 0],
+				'topViolatedRules' => [],
+			];
+		}
 
-    }//end generate()
-
-    /**
-     * Resolve RuleAuditService from the container and run its audit.
-     *
-     * Degrades to an empty (well-formed) report when the service cannot be
-     * resolved or the audit fails, so the generator never fatals.
-     *
-     * @param array<string,mixed> $context Report context (passed to audit()).
-     *
-     * @return array<string,mixed>
-     */
-    private function runAudit(array $context): array
-    {
-        try {
-            $service = $this->container->get(RuleAuditService::class);
-            return $service->audit($context);
-        } catch (\Throwable $e) {
-            $this->logger->warning('RuleAuditReportGenerator: audit failed: '.$e->getMessage());
-            return [
-                'catalogueVersion'      => '',
-                'corpusTotal'           => 0,
-                'machineCheckable'      => 0,
-                'enforceableRules'      => 0,
-                'coveragePct'           => 0.0,
-                'types'                 => [],
-                'objectsChecked'        => 0,
-                'objectsCompliant'      => 0,
-                'objectsWithViolations' => 0,
-                'violationsBySeverity'  => ['mandatory' => 0, 'conditional' => 0, 'recommended' => 0],
-                'topViolatedRules'      => [],
-            ];
-        }
-
-    }//end runAudit()
+	}//end runAudit()
 }//end class

@@ -38,20 +38,19 @@ namespace OCA\Shillinq\Service\Dunning;
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
  */
-interface DunningChannelAdapterInterface
-{
-    /**
-     * Send a dunning run through the named channel.
-     *
-     * @param string              $kanaal  One of EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API.
-     * @param array<string,mixed> $payload Channel-specific payload — for EMAIL: subject/body/recipientEmail;
-     *                                     for AANGETEKENDE_POST: recipientAdres/letterPdfRef; for
-     *                                     INCASSOBUREAU_API: dossier bundle (invoice, dunning runs, incasso
-     *                                     kosten, klant, evidence URIs).
-     *
-     * @return DunningChannelSendResult The dispatch attempt outcome.
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
-     */
-    public function send(string $kanaal, array $payload): DunningChannelSendResult;
+interface DunningChannelAdapterInterface {
+	/**
+	 * Send a dunning run through the named channel.
+	 *
+	 * @param string $kanaal One of EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API.
+	 * @param array<string,mixed> $payload Channel-specific payload — for EMAIL: subject/body/recipientEmail;
+	 *                                     for AANGETEKENDE_POST: recipientAdres/letterPdfRef; for
+	 *                                     INCASSOBUREAU_API: dossier bundle (invoice, dunning runs, incasso
+	 *                                     kosten, klant, evidence URIs).
+	 *
+	 * @return DunningChannelSendResult The dispatch attempt outcome.
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+	 */
+	public function send(string $kanaal, array $payload): DunningChannelSendResult;
 }//end interface

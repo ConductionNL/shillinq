@@ -37,353 +37,332 @@ use Psr\Log\LoggerInterface;
  * do not exceed the covering beschikking's granted ceiling and that beschikking
  * is still in the `granted` state).
  */
-class WbsoMededelingGuardTest extends TestCase
-{
+class WbsoMededelingGuardTest extends TestCase {
 
-    /**
-     * Administration id used across the fixtures.
-     *
-     * @var string
-     */
-    private const ADMIN = 'adm-consultancy-nl';
+	/**
+	 * Administration id used across the fixtures.
+	 *
+	 * @var string
+	 */
+	private const ADMIN = 'adm-consultancy-nl';
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var WbsoMededelingGuard
-     */
-    private WbsoMededelingGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var WbsoMededelingGuard
+	 */
+	private WbsoMededelingGuard $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        // phpcs:disable CustomSniffs.Functions.NamedParameters
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
-        // phpcs:enable CustomSniffs.Functions.NamedParameters
+		// phpcs:disable CustomSniffs.Functions.NamedParameters
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		// phpcs:enable CustomSniffs.Functions.NamedParameters
 
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->guard = new WbsoMededelingGuard(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            logger: $this->logger,
-        );
+		$this->guard = new WbsoMededelingGuard(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build a beschikking record fixture for the current administration.
-     *
-     * @param int|float $grantedSoHours Granted ceiling in S&O hours.
-     * @param string    $state          Beschikking lifecycle state.
-     *
-     * @return array<string,mixed>
-     */
-    private function beschikkingRecord(int|float $grantedSoHours, string $state): array
-    {
-        return [
-            'beschikkingNumber' => 'WBSO-2026-0001',
-            'grantedSoHours'    => $grantedSoHours,
-            'state'             => $state,
-            'administrationId'  => self::ADMIN,
-        ];
-    }//end beschikkingRecord()
+	/**
+	 * Build a beschikking record fixture for the current administration.
+	 *
+	 * @param int|float $grantedSoHours Granted ceiling in S&O hours.
+	 * @param string $state Beschikking lifecycle state.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function beschikkingRecord(int|float $grantedSoHours, string $state): array {
+		return [
+			'beschikkingNumber' => 'WBSO-2026-0001',
+			'grantedSoHours' => $grantedSoHours,
+			'state' => $state,
+			'administrationId' => self::ADMIN,
+		];
+	}//end beschikkingRecord()
 
-    /**
-     * Build a mededeling object fixture.
-     *
-     * @param int|float $realisedSoHours  Realised S&O hours reported.
-     * @param string    $administrationId Owning administration id.
-     *
-     * @return array<string,mixed>
-     */
-    private function mededelingObject(int|float $realisedSoHours, string $administrationId=self::ADMIN): array
-    {
-        return [
-            'beschikkingNumber' => 'WBSO-2026-0001',
-            'realisedSoHours'   => $realisedSoHours,
-            'administrationId'  => $administrationId,
-        ];
-    }//end mededelingObject()
+	/**
+	 * Build a mededeling object fixture.
+	 *
+	 * @param int|float $realisedSoHours Realised S&O hours reported.
+	 * @param string $administrationId Owning administration id.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function mededelingObject(int|float $realisedSoHours, string $administrationId = self::ADMIN): array {
+		return [
+			'beschikkingNumber' => 'WBSO-2026-0001',
+			'realisedSoHours' => $realisedSoHours,
+			'administrationId' => $administrationId,
+		];
+	}//end mededelingObject()
 
-    /**
-     * A realisatie below the granted ceiling on a granted beschikking may submit (REQ-WBSO-005).
-     *
-     * @return void
-     */
-    public function testRealisatieBelowCeilingCanSubmit(): void
-    {
-        $this->container->method('get')->willReturn(
-            $this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200, state: 'granted')])
-        );
+	/**
+	 * A realisatie below the granted ceiling on a granted beschikking may submit (REQ-WBSO-005).
+	 *
+	 * @return void
+	 */
+	public function testRealisatieBelowCeilingCanSubmit(): void {
+		$this->container->method('get')->willReturn(
+			$this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200, state: 'granted')])
+		);
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertTrue($this->guard->canSubmit(mededelingId: 'med-1', object: $this->mededelingObject(realisedSoHours: 980)));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertTrue($this->guard->canSubmit(mededelingId: 'med-1', object: $this->mededelingObject(realisedSoHours: 980)));
 
-    }//end testRealisatieBelowCeilingCanSubmit()
+	}//end testRealisatieBelowCeilingCanSubmit()
 
-    /**
-     * A realisatie exactly at the granted ceiling may submit — boundary case (REQ-WBSO-005).
-     *
-     * @return void
-     */
-    public function testRealisatieAtCeilingCanSubmit(): void
-    {
-        $this->container->method('get')->willReturn(
-            $this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200.5, state: 'granted')])
-        );
+	/**
+	 * A realisatie exactly at the granted ceiling may submit — boundary case (REQ-WBSO-005).
+	 *
+	 * @return void
+	 */
+	public function testRealisatieAtCeilingCanSubmit(): void {
+		$this->container->method('get')->willReturn(
+			$this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200.5, state: 'granted')])
+		);
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertTrue($this->guard->canSubmit(mededelingId: 'med-2', object: $this->mededelingObject(realisedSoHours: 1200.5)));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertTrue($this->guard->canSubmit(mededelingId: 'med-2', object: $this->mededelingObject(realisedSoHours: 1200.5)));
 
-    }//end testRealisatieAtCeilingCanSubmit()
+	}//end testRealisatieAtCeilingCanSubmit()
 
-    /**
-     * A realisatie above the granted ceiling cannot submit (REQ-WBSO-005).
-     *
-     * @return void
-     */
-    public function testRealisatieAboveCeilingCannotSubmit(): void
-    {
-        $this->container->method('get')->willReturn(
-            $this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200, state: 'granted')])
-        );
+	/**
+	 * A realisatie above the granted ceiling cannot submit (REQ-WBSO-005).
+	 *
+	 * @return void
+	 */
+	public function testRealisatieAboveCeilingCannotSubmit(): void {
+		$this->container->method('get')->willReturn(
+			$this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200, state: 'granted')])
+		);
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canSubmit(mededelingId: 'med-3', object: $this->mededelingObject(realisedSoHours: 1201)));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canSubmit(mededelingId: 'med-3', object: $this->mededelingObject(realisedSoHours: 1201)));
 
-    }//end testRealisatieAboveCeilingCannotSubmit()
+	}//end testRealisatieAboveCeilingCannotSubmit()
 
-    /**
-     * Submitting against an expired beschikking fails closed (REQ-WBSO-005).
-     *
-     * @return void
-     */
-    public function testExpiredBeschikkingCannotSubmit(): void
-    {
-        $this->container->method('get')->willReturn(
-            $this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200, state: 'expired')])
-        );
+	/**
+	 * Submitting against an expired beschikking fails closed (REQ-WBSO-005).
+	 *
+	 * @return void
+	 */
+	public function testExpiredBeschikkingCannotSubmit(): void {
+		$this->container->method('get')->willReturn(
+			$this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200, state: 'expired')])
+		);
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canSubmit(mededelingId: 'med-4', object: $this->mededelingObject(realisedSoHours: 100)));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canSubmit(mededelingId: 'med-4', object: $this->mededelingObject(realisedSoHours: 100)));
 
-    }//end testExpiredBeschikkingCannotSubmit()
+	}//end testExpiredBeschikkingCannotSubmit()
 
-    /**
-     * An unresolvable beschikking fails closed (REQ-WBSO-005 / CWE-863).
-     *
-     * @return void
-     */
-    public function testUnknownBeschikkingFailsClosed(): void
-    {
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub(records: []));
+	/**
+	 * An unresolvable beschikking fails closed (REQ-WBSO-005 / CWE-863).
+	 *
+	 * @return void
+	 */
+	public function testUnknownBeschikkingFailsClosed(): void {
+		$this->container->method('get')->willReturn($this->buildObjectServiceStub(records: []));
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canSubmit(mededelingId: 'med-5', object: $this->mededelingObject(realisedSoHours: 1)));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canSubmit(mededelingId: 'med-5', object: $this->mededelingObject(realisedSoHours: 1)));
 
-    }//end testUnknownBeschikkingFailsClosed()
+	}//end testUnknownBeschikkingFailsClosed()
 
-    /**
-     * A beschikking belonging to another administration is not honoured (REQ-WBSO-004).
-     *
-     * The stub returns a beschikking owned by a different administration; the
-     * guard's in-loop tenant check must reject it even though the number matches.
-     *
-     * @return void
-     */
-    public function testCrossTenantBeschikkingFailsClosed(): void
-    {
-        $foreign = [
-            'beschikkingNumber' => 'WBSO-2026-0001',
-            'grantedSoHours'    => 5000,
-            'state'             => 'granted',
-            'administrationId'  => 'adm-other-bv',
-        ];
+	/**
+	 * A beschikking belonging to another administration is not honoured (REQ-WBSO-004).
+	 *
+	 * The stub returns a beschikking owned by a different administration; the
+	 * guard's in-loop tenant check must reject it even though the number matches.
+	 *
+	 * @return void
+	 */
+	public function testCrossTenantBeschikkingFailsClosed(): void {
+		$foreign = [
+			'beschikkingNumber' => 'WBSO-2026-0001',
+			'grantedSoHours' => 5000,
+			'state' => 'granted',
+			'administrationId' => 'adm-other-bv',
+		];
 
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub(records: [$foreign]));
+		$this->container->method('get')->willReturn($this->buildObjectServiceStub(records: [$foreign]));
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse(
-            $this->guard->canSubmit(
-                mededelingId: 'med-tenant',
-                object: $this->mededelingObject(realisedSoHours: 100, administrationId: self::ADMIN)
-            )
-        );
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse(
+			$this->guard->canSubmit(
+				mededelingId: 'med-tenant',
+				object: $this->mededelingObject(realisedSoHours: 100, administrationId: self::ADMIN)
+			)
+		);
 
-    }//end testCrossTenantBeschikkingFailsClosed()
+	}//end testCrossTenantBeschikkingFailsClosed()
 
-    /**
-     * A missing beschikkingNumber fails closed (REQ-WBSO-005).
-     *
-     * @return void
-     */
-    public function testMissingBeschikkingNumberFailsClosed(): void
-    {
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse(
-            $this->guard->canSubmit(
-                mededelingId: 'med-6',
-                object: ['realisedSoHours' => 100, 'administrationId' => self::ADMIN]
-            )
-        );
+	/**
+	 * A missing beschikkingNumber fails closed (REQ-WBSO-005).
+	 *
+	 * @return void
+	 */
+	public function testMissingBeschikkingNumberFailsClosed(): void {
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse(
+			$this->guard->canSubmit(
+				mededelingId: 'med-6',
+				object: ['realisedSoHours' => 100, 'administrationId' => self::ADMIN]
+			)
+		);
 
-    }//end testMissingBeschikkingNumberFailsClosed()
+	}//end testMissingBeschikkingNumberFailsClosed()
 
-    /**
-     * A missing administrationId fails closed (REQ-WBSO-004).
-     *
-     * @return void
-     */
-    public function testMissingAdministrationIdFailsClosed(): void
-    {
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse(
-            $this->guard->canSubmit(
-                mededelingId: 'med-adm',
-                object: ['beschikkingNumber' => 'WBSO-2026-0001', 'realisedSoHours' => 100]
-            )
-        );
+	/**
+	 * A missing administrationId fails closed (REQ-WBSO-004).
+	 *
+	 * @return void
+	 */
+	public function testMissingAdministrationIdFailsClosed(): void {
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse(
+			$this->guard->canSubmit(
+				mededelingId: 'med-adm',
+				object: ['beschikkingNumber' => 'WBSO-2026-0001', 'realisedSoHours' => 100]
+			)
+		);
 
-    }//end testMissingAdministrationIdFailsClosed()
+	}//end testMissingAdministrationIdFailsClosed()
 
-    /**
-     * A null object fails closed (REQ-WBSO-005).
-     *
-     * @return void
-     */
-    public function testNullObjectFailsClosed(): void
-    {
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canSubmit(mededelingId: 'med-7', object: null));
+	/**
+	 * A null object fails closed (REQ-WBSO-005).
+	 *
+	 * @return void
+	 */
+	public function testNullObjectFailsClosed(): void {
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canSubmit(mededelingId: 'med-7', object: null));
 
-    }//end testNullObjectFailsClosed()
+	}//end testNullObjectFailsClosed()
 
-    /**
-     * A negative realised-hours figure fails closed (REQ-WBSO-005).
-     *
-     * @return void
-     */
-    public function testNegativeRealisedHoursFailsClosed(): void
-    {
-        $this->container->method('get')->willReturn(
-            $this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200, state: 'granted')])
-        );
+	/**
+	 * A negative realised-hours figure fails closed (REQ-WBSO-005).
+	 *
+	 * @return void
+	 */
+	public function testNegativeRealisedHoursFailsClosed(): void {
+		$this->container->method('get')->willReturn(
+			$this->buildObjectServiceStub(records: [$this->beschikkingRecord(grantedSoHours: 1200, state: 'granted')])
+		);
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canSubmit(mededelingId: 'med-8', object: $this->mededelingObject(realisedSoHours: -5)));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canSubmit(mededelingId: 'med-8', object: $this->mededelingObject(realisedSoHours: -5)));
 
-    }//end testNegativeRealisedHoursFailsClosed()
+	}//end testNegativeRealisedHoursFailsClosed()
 
-    /**
-     * An exception in the resolve path fails closed (returns false, logs error).
-     *
-     * @return void
-     */
-    public function testSubmitExceptionFailsClosed(): void
-    {
-        $this->container->method('get')
-            ->willThrowException(new \RuntimeException('ObjectService unavailable'));
+	/**
+	 * An exception in the resolve path fails closed (returns false, logs error).
+	 *
+	 * @return void
+	 */
+	public function testSubmitExceptionFailsClosed(): void {
+		$this->container->method('get')
+			->willThrowException(new \RuntimeException('ObjectService unavailable'));
 
-        $this->logger->expects($this->once())->method('error');
+		$this->logger->expects($this->once())->method('error');
 
-        // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canSubmit(mededelingId: 'med-9', object: $this->mededelingObject(realisedSoHours: 100)));
+		// phpcs:ignore CustomSniffs.Functions.NamedParameters
+		self::assertFalse($this->guard->canSubmit(mededelingId: 'med-9', object: $this->mededelingObject(realisedSoHours: 100)));
 
-    }//end testSubmitExceptionFailsClosed()
+	}//end testSubmitExceptionFailsClosed()
 
-    /**
-     * Build an anonymous ObjectService stub returning the given records from findAll().
-     *
-     * @param array<mixed> $records Records to return.
-     *
-     * @return object
-     */
-    private function buildObjectServiceStub(array $records): object
-    {
-        return new class($records) {
+	/**
+	 * Build an anonymous ObjectService stub returning the given records from findAll().
+	 *
+	 * @param array<mixed> $records Records to return.
+	 *
+	 * @return object
+	 */
+	private function buildObjectServiceStub(array $records): object {
+		return new class($records) {
+			/**
+			 * Records to return from findAll().
+			 *
+			 * @var array<mixed>
+			 */
+			private array $records;
 
-            /**
-             * Records to return from findAll().
-             *
-             * @var array<mixed>
-             */
-            private array $records;
+			/**
+			 * Constructor.
+			 *
+			 * @param array<mixed> $records Records to return.
+			 */
+			public function __construct(array $records) {
+				$this->records = $records;
+			}//end __construct()
 
-            /**
-             * Constructor.
-             *
-             * @param array<mixed> $records Records to return.
-             */
-            public function __construct(array $records)
-            {
-                $this->records = $records;
-            }//end __construct()
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Fluent schema setter.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                return $this;
-            }//end setSchema()
-
-            /**
-             * Return all stubbed records.
-             *
-             * @param array<string,mixed> $params Query parameters (unused in stub).
-             *
-             * @return array<mixed>
-             */
-            public function findAll(array $params=[]): array
-            {
-                return $this->records;
-            }//end findAll()
-        };
-    }//end buildObjectServiceStub()
+			/**
+			 * Return all stubbed records.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused in stub).
+			 *
+			 * @return array<mixed>
+			 */
+			public function findAll(array $params = []): array {
+				return $this->records;
+			}//end findAll()
+		};
+	}//end buildObjectServiceStub()
 }//end class

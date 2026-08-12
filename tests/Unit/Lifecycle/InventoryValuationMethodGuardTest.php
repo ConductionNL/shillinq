@@ -29,7 +29,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
-require_once __DIR__.'/../Service/InMemoryObjectService.php';
+require_once __DIR__ . '/../Service/InMemoryObjectService.php';
 
 /**
  * Tests for InventoryValuationMethodGuard.
@@ -40,214 +40,195 @@ require_once __DIR__.'/../Service/InMemoryObjectService.php';
  *  - missing quantity treated as zero => true
  *  - guard is fail-closed (returns false on any exception path)
  */
-class InventoryValuationMethodGuardTest extends TestCase
-{
+class InventoryValuationMethodGuardTest extends TestCase {
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var InventoryValuationMethodGuard
-     */
-    private InventoryValuationMethodGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var InventoryValuationMethodGuard
+	 */
+	private InventoryValuationMethodGuard $guard;
 
+	/**
+	 * In-memory ObjectService stub for uniqueness tests.
+	 *
+	 * @var \OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService
+	 */
+	private \OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService $os;
 
-    /**
-     * In-memory ObjectService stub for uniqueness tests.
-     *
-     * @var \OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService
-     */
-    private \OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService $os;
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
+		$this->os = new \OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService();
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+		$container = $this->createStub(ContainerInterface::class);
+		$container->method('get')->willReturn($this->os);
 
-        $this->os     = new \OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService();
-        $this->logger = $this->createMock(LoggerInterface::class);
+		$appConfig = $this->createStub(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
 
-        $container = $this->createStub(ContainerInterface::class);
-        $container->method('get')->willReturn($this->os);
+		$this->guard = new InventoryValuationMethodGuard(
+			container: $container,
+			appConfig: $appConfig,
+			logger: $this->logger,
+		);
 
-        $appConfig = $this->createStub(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
+	}//end setUp()
 
-        $this->guard = new InventoryValuationMethodGuard(
-            container: $container,
-            appConfig: $appConfig,
-            logger: $this->logger,
-        );
+	/**
+	 * Zero on-hand quantity permits the transition (REQ-INV-006).
+	 *
+	 * @return void
+	 */
+	public function testZeroQuantityPermitsTransition(): void {
+		$valuation = [
+			'productId' => 'GT-10-2026',
+			'warehouse' => 'Magazijn Noord',
+			'quantity' => 0.0,
+			'valuationMethod' => 'FIFO',
+		];
 
-    }//end setUp()
+		$this->assertTrue($this->guard->checkZeroStock(valuation: $valuation));
 
+	}//end testZeroQuantityPermitsTransition()
 
-    /**
-     * Zero on-hand quantity permits the transition (REQ-INV-006).
-     *
-     * @return void
-     */
-    public function testZeroQuantityPermitsTransition(): void
-    {
-        $valuation = [
-            'productId'       => 'GT-10-2026',
-            'warehouse'       => 'Magazijn Noord',
-            'quantity'        => 0.0,
-            'valuationMethod' => 'FIFO',
-        ];
+	/**
+	 * Non-zero on-hand quantity denies the transition (REQ-INV-006).
+	 *
+	 * @return void
+	 */
+	public function testNonZeroQuantityDeniesTransition(): void {
+		$valuation = [
+			'productId' => 'GT-10-2026',
+			'warehouse' => 'Magazijn Noord',
+			'quantity' => 50.0,
+			'valuationMethod' => 'FIFO',
+		];
 
-        $this->assertTrue($this->guard->checkZeroStock(valuation: $valuation));
+		$this->logger->expects($this->once())->method('info');
 
-    }//end testZeroQuantityPermitsTransition()
+		$this->assertFalse($this->guard->checkZeroStock(valuation: $valuation));
 
+	}//end testNonZeroQuantityDeniesTransition()
 
-    /**
-     * Non-zero on-hand quantity denies the transition (REQ-INV-006).
-     *
-     * @return void
-     */
-    public function testNonZeroQuantityDeniesTransition(): void
-    {
-        $valuation = [
-            'productId'       => 'GT-10-2026',
-            'warehouse'       => 'Magazijn Noord',
-            'quantity'        => 50.0,
-            'valuationMethod' => 'FIFO',
-        ];
+	/**
+	 * Missing quantity field is treated as zero (defensive default).
+	 *
+	 * @return void
+	 */
+	public function testMissingQuantityPermitsTransition(): void {
+		$valuation = [
+			'productId' => 'GT-10-2026',
+			'valuationMethod' => 'FIFO',
+		];
 
-        $this->logger->expects($this->once())->method('info');
+		$this->assertTrue($this->guard->checkZeroStock(valuation: $valuation));
 
-        $this->assertFalse($this->guard->checkZeroStock(valuation: $valuation));
+	}//end testMissingQuantityPermitsTransition()
 
-    }//end testNonZeroQuantityDeniesTransition()
+	/**
+	 * Fractional non-zero quantity denies the transition (cost distortion
+	 * is still possible even with partial stock).
+	 *
+	 * @return void
+	 */
+	public function testFractionalQuantityDeniesTransition(): void {
+		$valuation = [
+			'quantity' => 0.01,
+			'valuationMethod' => 'average',
+		];
 
+		$this->logger->expects($this->once())->method('info');
 
-    /**
-     * Missing quantity field is treated as zero (defensive default).
-     *
-     * @return void
-     */
-    public function testMissingQuantityPermitsTransition(): void
-    {
-        $valuation = [
-            'productId'       => 'GT-10-2026',
-            'valuationMethod' => 'FIFO',
-        ];
+		$this->assertFalse($this->guard->checkZeroStock(valuation: $valuation));
 
-        $this->assertTrue($this->guard->checkZeroStock(valuation: $valuation));
+	}//end testFractionalQuantityDeniesTransition()
 
-    }//end testMissingQuantityPermitsTransition()
+	/**
+	 * REQ-INV-005: empty store permits the creation.
+	 *
+	 * @return void
+	 */
+	public function testUniqueActiveSnapshotPermitsFirst(): void {
+		$proposed = [
+			'productId' => 'GT-10-2026',
+			'warehouse' => 'Magazijn Noord',
+			'administrationId' => 'adm-1',
+			'status' => 'active',
+		];
 
+		$this->assertTrue($this->guard->checkUniqueActiveSnapshot(proposed: $proposed));
 
-    /**
-     * Fractional non-zero quantity denies the transition (cost distortion
-     * is still possible even with partial stock).
-     *
-     * @return void
-     */
-    public function testFractionalQuantityDeniesTransition(): void
-    {
-        $valuation = [
-            'quantity'        => 0.01,
-            'valuationMethod' => 'average',
-        ];
+	}//end testUniqueActiveSnapshotPermitsFirst()
 
-        $this->logger->expects($this->once())->method('info');
+	/**
+	 * REQ-INV-005: pre-existing active snapshot blocks the second create.
+	 *
+	 * @return void
+	 */
+	public function testUniqueActiveSnapshotBlocksDuplicate(): void {
+		$this->os->seed(schema: 'InventoryValuation', rows: [
+			[
+				'id' => 'iv-existing',
+				'productId' => 'GT-10-2026',
+				'warehouse' => 'Magazijn Noord',
+				'status' => 'active',
+				'administrationId' => 'adm-1',
+			],
+		]);
 
-        $this->assertFalse($this->guard->checkZeroStock(valuation: $valuation));
+		$proposed = [
+			'productId' => 'GT-10-2026',
+			'warehouse' => 'Magazijn Noord',
+			'administrationId' => 'adm-1',
+			'status' => 'active',
+		];
 
-    }//end testFractionalQuantityDeniesTransition()
+		$this->logger->expects($this->once())->method('info');
 
+		$this->assertFalse($this->guard->checkUniqueActiveSnapshot(proposed: $proposed));
 
-    /**
-     * REQ-INV-005: empty store permits the creation.
-     *
-     * @return void
-     */
-    public function testUniqueActiveSnapshotPermitsFirst(): void
-    {
-        $proposed = [
-            'productId'        => 'GT-10-2026',
-            'warehouse'        => 'Magazijn Noord',
-            'administrationId' => 'adm-1',
-            'status'           => 'active',
-        ];
+	}//end testUniqueActiveSnapshotBlocksDuplicate()
 
-        $this->assertTrue($this->guard->checkUniqueActiveSnapshot(proposed: $proposed));
+	/**
+	 * REQ-INV-005: self-update with same id is allowed (own-row match).
+	 *
+	 * @return void
+	 */
+	public function testUniqueActiveSnapshotAllowsSelfMatch(): void {
+		$this->os->seed(schema: 'InventoryValuation', rows: [
+			[
+				'id' => 'iv-1',
+				'productId' => 'GT-10-2026',
+				'warehouse' => 'Magazijn Noord',
+				'status' => 'active',
+				'administrationId' => 'adm-1',
+			],
+		]);
 
-    }//end testUniqueActiveSnapshotPermitsFirst()
+		$proposed = [
+			'id' => 'iv-1',
+			'productId' => 'GT-10-2026',
+			'warehouse' => 'Magazijn Noord',
+			'administrationId' => 'adm-1',
+			'status' => 'active',
+		];
 
+		$this->assertTrue($this->guard->checkUniqueActiveSnapshot(proposed: $proposed));
 
-    /**
-     * REQ-INV-005: pre-existing active snapshot blocks the second create.
-     *
-     * @return void
-     */
-    public function testUniqueActiveSnapshotBlocksDuplicate(): void
-    {
-        $this->os->seed(schema: 'InventoryValuation', rows: [
-            [
-                'id'               => 'iv-existing',
-                'productId'        => 'GT-10-2026',
-                'warehouse'        => 'Magazijn Noord',
-                'status'           => 'active',
-                'administrationId' => 'adm-1',
-            ],
-        ]);
-
-        $proposed = [
-            'productId'        => 'GT-10-2026',
-            'warehouse'        => 'Magazijn Noord',
-            'administrationId' => 'adm-1',
-            'status'           => 'active',
-        ];
-
-        $this->logger->expects($this->once())->method('info');
-
-        $this->assertFalse($this->guard->checkUniqueActiveSnapshot(proposed: $proposed));
-
-    }//end testUniqueActiveSnapshotBlocksDuplicate()
-
-
-    /**
-     * REQ-INV-005: self-update with same id is allowed (own-row match).
-     *
-     * @return void
-     */
-    public function testUniqueActiveSnapshotAllowsSelfMatch(): void
-    {
-        $this->os->seed(schema: 'InventoryValuation', rows: [
-            [
-                'id'               => 'iv-1',
-                'productId'        => 'GT-10-2026',
-                'warehouse'        => 'Magazijn Noord',
-                'status'           => 'active',
-                'administrationId' => 'adm-1',
-            ],
-        ]);
-
-        $proposed = [
-            'id'               => 'iv-1',
-            'productId'        => 'GT-10-2026',
-            'warehouse'        => 'Magazijn Noord',
-            'administrationId' => 'adm-1',
-            'status'           => 'active',
-        ];
-
-        $this->assertTrue($this->guard->checkUniqueActiveSnapshot(proposed: $proposed));
-
-    }//end testUniqueActiveSnapshotAllowsSelfMatch()
-
+	}//end testUniqueActiveSnapshotAllowsSelfMatch()
 
 }//end class

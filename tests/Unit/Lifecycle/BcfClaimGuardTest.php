@@ -40,310 +40,295 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class BcfClaimGuardTest extends TestCase
-{
+class BcfClaimGuardTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Set up shared mocks.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+	/**
+	 * Set up shared mocks.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build a guard whose ObjectService stub returns the given per-schema records.
-     *
-     * @param array<string,array<mixed>> $recordsBySchema Schema slug => records.
-     *
-     * @return BcfClaimGuard
-     */
-    private function guardWith(array $recordsBySchema): BcfClaimGuard
-    {
-        $this->container->method('get')->willReturn($this->buildObjectServiceStub($recordsBySchema));
+	/**
+	 * Build a guard whose ObjectService stub returns the given per-schema records.
+	 *
+	 * @param array<string,array<mixed>> $recordsBySchema Schema slug => records.
+	 *
+	 * @return BcfClaimGuard
+	 */
+	private function guardWith(array $recordsBySchema): BcfClaimGuard {
+		$this->container->method('get')->willReturn($this->buildObjectServiceStub($recordsBySchema));
 
-        $calculator = new BcfCompensationCalculator();
-        $service    = new BcfClaimService(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            calculator: $calculator,
-        );
+		$calculator = new BcfCompensationCalculator();
+		$service = new BcfClaimService(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			calculator: $calculator,
+		);
 
-        return new BcfClaimGuard(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            claimService: $service,
-            calculator: $calculator,
-            logger: $this->logger,
-        );
+		return new BcfClaimGuard(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			claimService: $service,
+			calculator: $calculator,
+			logger: $this->logger,
+		);
 
-    }//end guardWith()
+	}//end guardWith()
 
-    /**
-     * A non-empty claim with a closed quarter may submit (REQ-BCF-003).
-     *
-     * @return void
-     */
-    public function testCanSubmitWhenNonEmptyAndQuarterClosed(): void
-    {
-        $guard = $this->guardWith(
-            [
-                'GLTransaction'     => [['id' => 'tx-1', 'administrationId' => 'adm-1', 'periodId' => '2026-Q1']],
-                'GLLine'            => [
-                    ['transactionId' => 'tx-1', 'accountNumber' => '3610', 'side' => 'debit', 'amount' => 100000.0, 'periodId' => '2026-Q1'],
-                ],
-                'BbvAccountMapping' => [
-                    ['administrationId' => 'adm-1', 'accountNumber' => '3610', 'bcfCompensable' => true, 'compensablePercentage' => 100],
-                ],
-                'FiscalPeriod'      => [['administrationId' => 'adm-1', 'periodId' => '2026-Q1', 'status' => 'closed']],
-            ]
-        );
+	/**
+	 * A non-empty claim with a closed quarter may submit (REQ-BCF-003).
+	 *
+	 * @return void
+	 */
+	public function testCanSubmitWhenNonEmptyAndQuarterClosed(): void {
+		$guard = $this->guardWith(
+			[
+				'GLTransaction' => [['id' => 'tx-1', 'administrationId' => 'adm-1', 'periodId' => '2026-Q1']],
+				'GLLine' => [
+					['transactionId' => 'tx-1', 'accountNumber' => '3610', 'side' => 'debit', 'amount' => 100000.0, 'periodId' => '2026-Q1'],
+				],
+				'BbvAccountMapping' => [
+					['administrationId' => 'adm-1', 'accountNumber' => '3610', 'bcfCompensable' => true, 'compensablePercentage' => 100],
+				],
+				'FiscalPeriod' => [['administrationId' => 'adm-1', 'periodId' => '2026-Q1', 'status' => 'closed']],
+			]
+		);
 
-        self::assertTrue(
-            $guard->canSubmit(
-                bcfClaimId: 'claim-1',
-                object: ['administrationId' => 'adm-1', 'claimQuarter' => '2026-Q1']
-            )
-        );
+		self::assertTrue(
+			$guard->canSubmit(
+				bcfClaimId: 'claim-1',
+				object: ['administrationId' => 'adm-1', 'claimQuarter' => '2026-Q1']
+			)
+		);
 
-    }//end testCanSubmitWhenNonEmptyAndQuarterClosed()
+	}//end testCanSubmitWhenNonEmptyAndQuarterClosed()
 
-    /**
-     * An empty claim (no compensable postings) cannot submit even when the quarter is closed (REQ-BCF-003).
-     *
-     * @return void
-     */
-    public function testCannotSubmitEmptyClaim(): void
-    {
-        $guard = $this->guardWith(
-            [
-                'GLTransaction'     => [['id' => 'tx-1', 'administrationId' => 'adm-1', 'periodId' => '2026-Q1']],
-                'GLLine'            => [
-                    ['transactionId' => 'tx-1', 'accountNumber' => '3650', 'side' => 'debit', 'amount' => 50000.0, 'periodId' => '2026-Q1'],
-                ],
-                'BbvAccountMapping' => [
-                    ['administrationId' => 'adm-1', 'accountNumber' => '3650', 'bcfCompensable' => false, 'compensablePercentage' => 0],
-                ],
-                'FiscalPeriod'      => [['administrationId' => 'adm-1', 'periodId' => '2026-Q1', 'status' => 'closed']],
-            ]
-        );
+	/**
+	 * An empty claim (no compensable postings) cannot submit even when the quarter is closed (REQ-BCF-003).
+	 *
+	 * @return void
+	 */
+	public function testCannotSubmitEmptyClaim(): void {
+		$guard = $this->guardWith(
+			[
+				'GLTransaction' => [['id' => 'tx-1', 'administrationId' => 'adm-1', 'periodId' => '2026-Q1']],
+				'GLLine' => [
+					['transactionId' => 'tx-1', 'accountNumber' => '3650', 'side' => 'debit', 'amount' => 50000.0, 'periodId' => '2026-Q1'],
+				],
+				'BbvAccountMapping' => [
+					['administrationId' => 'adm-1', 'accountNumber' => '3650', 'bcfCompensable' => false, 'compensablePercentage' => 0],
+				],
+				'FiscalPeriod' => [['administrationId' => 'adm-1', 'periodId' => '2026-Q1', 'status' => 'closed']],
+			]
+		);
 
-        self::assertFalse(
-            $guard->canSubmit(
-                bcfClaimId: 'claim-1',
-                object: ['administrationId' => 'adm-1', 'claimQuarter' => '2026-Q1']
-            )
-        );
+		self::assertFalse(
+			$guard->canSubmit(
+				bcfClaimId: 'claim-1',
+				object: ['administrationId' => 'adm-1', 'claimQuarter' => '2026-Q1']
+			)
+		);
 
-    }//end testCannotSubmitEmptyClaim()
+	}//end testCannotSubmitEmptyClaim()
 
-    /**
-     * A non-empty claim for an OPEN quarter cannot submit (REQ-BCF-003 period-lock).
-     *
-     * @return void
-     */
-    public function testCannotSubmitWhenQuarterOpen(): void
-    {
-        $guard = $this->guardWith(
-            [
-                'GLTransaction'     => [['id' => 'tx-1', 'administrationId' => 'adm-1', 'periodId' => '2026-Q1']],
-                'GLLine'            => [
-                    ['transactionId' => 'tx-1', 'accountNumber' => '3610', 'side' => 'debit', 'amount' => 100000.0, 'periodId' => '2026-Q1'],
-                ],
-                'BbvAccountMapping' => [
-                    ['administrationId' => 'adm-1', 'accountNumber' => '3610', 'bcfCompensable' => true, 'compensablePercentage' => 100],
-                ],
-                // Period exists but is open.
-                'FiscalPeriod'      => [['administrationId' => 'adm-1', 'periodId' => '2026-Q1', 'status' => 'open']],
-            ]
-        );
+	/**
+	 * A non-empty claim for an OPEN quarter cannot submit (REQ-BCF-003 period-lock).
+	 *
+	 * @return void
+	 */
+	public function testCannotSubmitWhenQuarterOpen(): void {
+		$guard = $this->guardWith(
+			[
+				'GLTransaction' => [['id' => 'tx-1', 'administrationId' => 'adm-1', 'periodId' => '2026-Q1']],
+				'GLLine' => [
+					['transactionId' => 'tx-1', 'accountNumber' => '3610', 'side' => 'debit', 'amount' => 100000.0, 'periodId' => '2026-Q1'],
+				],
+				'BbvAccountMapping' => [
+					['administrationId' => 'adm-1', 'accountNumber' => '3610', 'bcfCompensable' => true, 'compensablePercentage' => 100],
+				],
+				// Period exists but is open.
+				'FiscalPeriod' => [['administrationId' => 'adm-1', 'periodId' => '2026-Q1', 'status' => 'open']],
+			]
+		);
 
-        self::assertFalse(
-            $guard->canSubmit(
-                bcfClaimId: 'claim-1',
-                object: ['administrationId' => 'adm-1', 'claimQuarter' => '2026-Q1']
-            )
-        );
+		self::assertFalse(
+			$guard->canSubmit(
+				bcfClaimId: 'claim-1',
+				object: ['administrationId' => 'adm-1', 'claimQuarter' => '2026-Q1']
+			)
+		);
 
-    }//end testCannotSubmitWhenQuarterOpen()
+	}//end testCannotSubmitWhenQuarterOpen()
 
-    /**
-     * A missing fiscal period is treated as not closed (fail-closed, REQ-BCF-003).
-     *
-     * @return void
-     */
-    public function testCannotSubmitWhenNoFiscalPeriod(): void
-    {
-        $guard = $this->guardWith(
-            [
-                'GLTransaction'     => [['id' => 'tx-1', 'administrationId' => 'adm-1', 'periodId' => '2026-Q1']],
-                'GLLine'            => [
-                    ['transactionId' => 'tx-1', 'accountNumber' => '3610', 'side' => 'debit', 'amount' => 100000.0, 'periodId' => '2026-Q1'],
-                ],
-                'BbvAccountMapping' => [
-                    ['administrationId' => 'adm-1', 'accountNumber' => '3610', 'bcfCompensable' => true, 'compensablePercentage' => 100],
-                ],
-                'FiscalPeriod'      => [],
-            ]
-        );
+	/**
+	 * A missing fiscal period is treated as not closed (fail-closed, REQ-BCF-003).
+	 *
+	 * @return void
+	 */
+	public function testCannotSubmitWhenNoFiscalPeriod(): void {
+		$guard = $this->guardWith(
+			[
+				'GLTransaction' => [['id' => 'tx-1', 'administrationId' => 'adm-1', 'periodId' => '2026-Q1']],
+				'GLLine' => [
+					['transactionId' => 'tx-1', 'accountNumber' => '3610', 'side' => 'debit', 'amount' => 100000.0, 'periodId' => '2026-Q1'],
+				],
+				'BbvAccountMapping' => [
+					['administrationId' => 'adm-1', 'accountNumber' => '3610', 'bcfCompensable' => true, 'compensablePercentage' => 100],
+				],
+				'FiscalPeriod' => [],
+			]
+		);
 
-        self::assertFalse(
-            $guard->canSubmit(
-                bcfClaimId: 'claim-1',
-                object: ['administrationId' => 'adm-1', 'claimQuarter' => '2026-Q1']
-            )
-        );
+		self::assertFalse(
+			$guard->canSubmit(
+				bcfClaimId: 'claim-1',
+				object: ['administrationId' => 'adm-1', 'claimQuarter' => '2026-Q1']
+			)
+		);
 
-    }//end testCannotSubmitWhenNoFiscalPeriod()
+	}//end testCannotSubmitWhenNoFiscalPeriod()
 
-    /**
-     * A claim object missing administration/quarter cannot submit (REQ-BCF-010).
-     *
-     * @return void
-     */
-    public function testCannotSubmitWithoutScope(): void
-    {
-        $guard = $this->guardWith(['BcfClaim' => []]);
+	/**
+	 * A claim object missing administration/quarter cannot submit (REQ-BCF-010).
+	 *
+	 * @return void
+	 */
+	public function testCannotSubmitWithoutScope(): void {
+		$guard = $this->guardWith(['BcfClaim' => []]);
 
-        self::assertFalse($guard->canSubmit(bcfClaimId: '', object: ['claimQuarter' => '2026-Q1']));
+		self::assertFalse($guard->canSubmit(bcfClaimId: '', object: ['claimQuarter' => '2026-Q1']));
 
-    }//end testCannotSubmitWithoutScope()
+	}//end testCannotSubmitWithoutScope()
 
-    /**
-     * An exception in the submit path fails closed (returns false, logs error).
-     *
-     * @return void
-     */
-    public function testSubmitExceptionFailsClosed(): void
-    {
-        $this->container->method('get')->willThrowException(new \RuntimeException('ObjectService unavailable'));
-        $this->logger->expects($this->once())->method('error');
+	/**
+	 * An exception in the submit path fails closed (returns false, logs error).
+	 *
+	 * @return void
+	 */
+	public function testSubmitExceptionFailsClosed(): void {
+		$this->container->method('get')->willThrowException(new \RuntimeException('ObjectService unavailable'));
+		$this->logger->expects($this->once())->method('error');
 
-        $calculator = new BcfCompensationCalculator();
-        $service    = new BcfClaimService(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            calculator: $calculator,
-        );
-        $guard      = new BcfClaimGuard(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            claimService: $service,
-            calculator: $calculator,
-            logger: $this->logger,
-        );
+		$calculator = new BcfCompensationCalculator();
+		$service = new BcfClaimService(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			calculator: $calculator,
+		);
+		$guard = new BcfClaimGuard(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			claimService: $service,
+			calculator: $calculator,
+			logger: $this->logger,
+		);
 
-        self::assertFalse(
-            $guard->canSubmit(
-                bcfClaimId: 'claim-1',
-                object: ['administrationId' => 'adm-1', 'claimQuarter' => '2026-Q1']
-            )
-        );
+		self::assertFalse(
+			$guard->canSubmit(
+				bcfClaimId: 'claim-1',
+				object: ['administrationId' => 'adm-1', 'claimQuarter' => '2026-Q1']
+			)
+		);
 
-    }//end testSubmitExceptionFailsClosed()
+	}//end testSubmitExceptionFailsClosed()
 
-    /**
-     * Build an ObjectService stub that returns per-schema records based on setSchema().
-     *
-     * @param array<string,array<mixed>> $recordsBySchema Schema slug => records to return from findAll().
-     *
-     * @return object
-     */
-    private function buildObjectServiceStub(array $recordsBySchema): object
-    {
-        return new class($recordsBySchema) {
+	/**
+	 * Build an ObjectService stub that returns per-schema records based on setSchema().
+	 *
+	 * @param array<string,array<mixed>> $recordsBySchema Schema slug => records to return from findAll().
+	 *
+	 * @return object
+	 */
+	private function buildObjectServiceStub(array $recordsBySchema): object {
+		return new class($recordsBySchema) {
+			/**
+			 * Records keyed by schema slug.
+			 *
+			 * @var array<string,array<mixed>>
+			 */
+			private array $recordsBySchema;
 
-            /**
-             * Records keyed by schema slug.
-             *
-             * @var array<string,array<mixed>>
-             */
-            private array $recordsBySchema;
+			/**
+			 * Currently selected schema slug.
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * Currently selected schema slug.
-             *
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * Constructor.
+			 *
+			 * @param array<string,array<mixed>> $recordsBySchema Records keyed by schema slug.
+			 */
+			public function __construct(array $recordsBySchema) {
+				$this->recordsBySchema = $recordsBySchema;
+			}//end __construct()
 
-            /**
-             * Constructor.
-             *
-             * @param array<string,array<mixed>> $recordsBySchema Records keyed by schema slug.
-             */
-            public function __construct(array $recordsBySchema)
-            {
-                $this->recordsBySchema = $recordsBySchema;
-            }//end __construct()
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent schema setter — records the active schema.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Fluent schema setter — records the active schema.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
+			/**
+			 * Return the records for the active schema.
+			 *
+			 * @param array<string,mixed> $params Query parameters (unused in stub).
+			 *
+			 * @return array<mixed>
+			 */
+			public function findAll(array $params = []): array {
+				return ($this->recordsBySchema[$this->schema] ?? []);
+			}//end findAll()
+		};
 
-            /**
-             * Return the records for the active schema.
-             *
-             * @param array<string,mixed> $params Query parameters (unused in stub).
-             *
-             * @return array<mixed>
-             */
-            public function findAll(array $params=[]): array
-            {
-                return ($this->recordsBySchema[$this->schema] ?? []);
-            }//end findAll()
-        };
+	}//end buildObjectServiceStub()
 
-    }//end buildObjectServiceStub()
-
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

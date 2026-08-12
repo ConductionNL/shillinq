@@ -64,467 +64,453 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
-class RenameDutchColumns implements IRepairStep
-{
-    /**
-     * Slug prefix of the registers in scope.
-     *
-     * @var string
-     */
-    private const REGISTER_SLUG_PREFIX = 'shillinq';
+class RenameDutchColumns implements IRepairStep {
+	/**
+	 * Slug prefix of the registers in scope.
+	 *
+	 * @var string
+	 */
+	private const REGISTER_SLUG_PREFIX = 'shillinq';
 
-    /**
-     * Old snake_case column name => new snake_case column name.
-     *
-     * Snake_case, not camelCase: MagicMapper stores `requestedAmount` as
-     * `requested_amount`, and a camelCase column is exactly what its
-     * de-duplication path then drops.
-     *
-     * @var array<string, string>
-     */
-    private const COLUMN_MAP = [
-        'aangevraagd_bedrag'                        => 'requested_amount',
-        'aanslag_bedrag'                            => 'assessment_amount',
-        'aftrek_bedrag'                             => 'deduction_amount',
-        'bedrag'                                    => 'amount',
-        'bedrag_betrokken'                          => 'amount_involved',
-        'bedrag_excl_btw'                           => 'amount_excl_vat',
-        'bedrag_fout'                               => 'amount_error',
-        'bedrag_incl_btw'                           => 'amount_incl_vat',
-        'bedrag_nieuw_cents'                        => 'new_amount_cents',
-        'bedrag_onzekerheid'                        => 'amount_uncertainty',
-        'bedrag_oorspronkelijk_cents'               => 'original_amount_cents',
-        'bedrag_wijziging_cents'                    => 'amount_change_cents',
-        'belastbaar_bedrag_grens'                   => 'taxable_amount_threshold',
-        'betaald_bedrag'                            => 'paid_amount',
-        'bijtelling_bedrag'                         => 'benefit_in_kind_amount',
-        'btw_bedrag'                                => 'vat_amount',
-        'btw_suppletie_bedrag'                      => 'vat_supplementary_amount',
-        'commercieel_bedrag'                        => 'commercial_amount',
-        'commerciele_winst_bedrag'                  => 'commercial_profit_amount',
-        'correctie_bedrag'                          => 'correction_amount',
-        'factuur_bedrag'                            => 'invoice_amount',
-        'fiscaal_bedrag'                            => 'fiscal_amount',
-        'forfaitair_cap_bedrag'                     => 'flat_rate_cap_amount',
-        'geautoriseerd_bedrag'                      => 'authorised_amount',
-        'gefactureerd_bedrag'                       => 'invoiced_amount',
-        'geleverd_bedrag'                           => 'delivered_amount',
-        'gerealiseerd_bedrag'                       => 'realised_amount',
-        'geschat_belastbaar_bedrag'                 => 'estimated_taxable_amount',
-        'incassokosten_bedrag'                      => 'collection_cost_amount',
-        'innovatiebox_bedrag'                       => 'innovation_box_amount',
-        'max_bedrag'                                => 'max_amount',
-        'max_bedrag_per_eenheid'                    => 'max_amount_per_unit',
-        'min_buffer_bedrag'                         => 'min_buffer_amount',
-        'oorspronkelijk_bedrag'                     => 'original_amount',
-        'openstaand_bedrag'                         => 'outstanding_amount',
-        'rente_bedrag'                              => 'interest_amount',
-        'standaard_bedrag'                          => 'standard_amount',
-        'startersaftrek_bedrag'                     => 'starter_deduction_amount',
-        'teruggevorderd_bedrag'                     => 'reclaimed_amount',
-        'toegekend_bedrag'                          => 'awarded_amount',
-        'tolerantiegrens_fout_bedrag'               => 'tolerance_error_amount',
-        'tolerantiegrens_onzekerheid_bedrag'        => 'tolerance_uncertainty_amount',
-        'uitbetaald_bedrag'                         => 'paid_out_amount',
-        'uitkering_bedrag'                          => 'benefit_amount',
-        'valuation_bedrag'                          => 'valuation_amount',
-        'vast_bedrag'                               => 'fixed_amount',
-        'vastgesteld_bedrag'                        => 'determined_amount',
-        'vastgesteld_belastbaar_bedrag'             => 'determined_taxable_amount',
-        'verleend_bedrag'                           => 'granted_amount',
-        'zelfstandigenaftrek_bedrag'                => 'self_employed_deduction_amount',
+	/**
+	 * Old snake_case column name => new snake_case column name.
+	 *
+	 * Snake_case, not camelCase: MagicMapper stores `requestedAmount` as
+	 * `requested_amount`, and a camelCase column is exactly what its
+	 * de-duplication path then drops.
+	 *
+	 * @var array<string, string>
+	 */
+	private const COLUMN_MAP = [
+		'aangevraagd_bedrag' => 'requested_amount',
+		'aanslag_bedrag' => 'assessment_amount',
+		'aftrek_bedrag' => 'deduction_amount',
+		'bedrag' => 'amount',
+		'bedrag_betrokken' => 'amount_involved',
+		'bedrag_excl_btw' => 'amount_excl_vat',
+		'bedrag_fout' => 'amount_error',
+		'bedrag_incl_btw' => 'amount_incl_vat',
+		'bedrag_nieuw_cents' => 'new_amount_cents',
+		'bedrag_onzekerheid' => 'amount_uncertainty',
+		'bedrag_oorspronkelijk_cents' => 'original_amount_cents',
+		'bedrag_wijziging_cents' => 'amount_change_cents',
+		'belastbaar_bedrag_grens' => 'taxable_amount_threshold',
+		'betaald_bedrag' => 'paid_amount',
+		'bijtelling_bedrag' => 'benefit_in_kind_amount',
+		'btw_bedrag' => 'vat_amount',
+		'btw_suppletie_bedrag' => 'vat_supplementary_amount',
+		'commercieel_bedrag' => 'commercial_amount',
+		'commerciele_winst_bedrag' => 'commercial_profit_amount',
+		'correctie_bedrag' => 'correction_amount',
+		'factuur_bedrag' => 'invoice_amount',
+		'fiscaal_bedrag' => 'fiscal_amount',
+		'forfaitair_cap_bedrag' => 'flat_rate_cap_amount',
+		'geautoriseerd_bedrag' => 'authorised_amount',
+		'gefactureerd_bedrag' => 'invoiced_amount',
+		'geleverd_bedrag' => 'delivered_amount',
+		'gerealiseerd_bedrag' => 'realised_amount',
+		'geschat_belastbaar_bedrag' => 'estimated_taxable_amount',
+		'incassokosten_bedrag' => 'collection_cost_amount',
+		'innovatiebox_bedrag' => 'innovation_box_amount',
+		'max_bedrag' => 'max_amount',
+		'max_bedrag_per_eenheid' => 'max_amount_per_unit',
+		'min_buffer_bedrag' => 'min_buffer_amount',
+		'oorspronkelijk_bedrag' => 'original_amount',
+		'openstaand_bedrag' => 'outstanding_amount',
+		'rente_bedrag' => 'interest_amount',
+		'standaard_bedrag' => 'standard_amount',
+		'startersaftrek_bedrag' => 'starter_deduction_amount',
+		'teruggevorderd_bedrag' => 'reclaimed_amount',
+		'toegekend_bedrag' => 'awarded_amount',
+		'tolerantiegrens_fout_bedrag' => 'tolerance_error_amount',
+		'tolerantiegrens_onzekerheid_bedrag' => 'tolerance_uncertainty_amount',
+		'uitbetaald_bedrag' => 'paid_out_amount',
+		'uitkering_bedrag' => 'benefit_amount',
+		'valuation_bedrag' => 'valuation_amount',
+		'vast_bedrag' => 'fixed_amount',
+		'vastgesteld_bedrag' => 'determined_amount',
+		'vastgesteld_belastbaar_bedrag' => 'determined_taxable_amount',
+		'verleend_bedrag' => 'granted_amount',
+		'zelfstandigenaftrek_bedrag' => 'self_employed_deduction_amount',
 
+		// Batch 2 — the naam/totaal/jaar/omschrijving/saldo/omzet/regeling/
+		// programma/boekjaar/onderneming/eind/nummer clusters, 137 names.
+		// Same rule as above: every one was checked to be collision-free
+		// against its English target before being added here.
+		'aandeel_omzet12mnd' => 'revenue_share12m',
+		'aanslag_jaar' => 'assessment_year',
+		'actualisatie_frequentie_jaar' => 'update_frequency_years',
+		'afschrijving_jaar_cents' => 'depreciation_year_cents',
+		'afschrijvingstermijn_jaar' => 'depreciation_period_years',
+		'asset_naam' => 'asset_name',
+		'balans_totaal' => 'balance_sheet_total',
+		'baten_totaal' => 'revenue_total',
+		'bbv_saldo_baten_lasten' => 'municipal_accounting_balance_revenue_expenses',
+		'betalingen_totaal' => 'payments_total',
+		'boekjaar' => 'financial_year',
+		'boekjaar_eind' => 'financial_year_end',
+		'boekjaar_start' => 'financial_year_start',
+		'boekjaar_tot' => 'financial_year_until',
+		'boekjaar_van' => 'financial_year_from',
+		'boekwaarde_begin_jaar_cents' => 'book_value_year_start_cents',
+		'btw_nummer' => 'vat_number',
+		'concurrent_naam' => 'competitor_name',
+		'deal_naam' => 'deal_name',
+		'deelnemer_naam' => 'participant_name',
+		'dotaties_jaar_cents' => 'additions_year_cents',
+		'drempel_jaar' => 'threshold_year',
+		'eind_datum' => 'end_date',
+		'eind_saldo' => 'closing_balance',
+		'emu_saldo_afwijking' => 'emu_balance_deviation',
+		'emu_saldo_afwijking_percentage' => 'emu_balance_deviation_percentage',
+		'emu_saldo_begroot' => 'emu_balance_budgeted',
+		'emu_saldo_berekend' => 'emu_balance_calculated',
+		'ex_nummer' => 'ex_number',
+		'expat30_pct_regeling' => 'expat30_pct_scheme',
+		'feitelijke_eind_datum' => 'actual_end_date',
+		'fiscalist_becon_nummer' => 'tax_advisor_becon_number',
+		'gerealiseerde_omzet' => 'realised_revenue',
+		'hoofdfunctie_naam' => 'main_function_name',
+		'horizon_eind' => 'horizon_end',
+		'huidig_jaar' => 'current_year',
+		'indicator_omschrijving' => 'indicator_description',
+		'inflows_totaal' => 'inflows_total',
+		'jaar' => 'year',
+		'jaar_van_gebruik' => 'year_of_use',
+		'kostprijs_omzet' => 'cost_of_revenue',
+		'kvk_nummer' => 'chamber_of_commerce_number',
+		'kwekersrecht_nummer' => 'plant_breeders_right_number',
+		'lasten_totaal' => 'expenses_total',
+		'leverancier_naam' => 'supplier_name',
+		'lock_in_eind_datum' => 'lock_in_end_date',
+		'looptijd_eind' => 'term_end',
+		'lopende_omzet' => 'current_revenue',
+		'maand_van_jaar' => 'month_of_year',
+		'naam' => 'name',
+		'netto_omzet' => 'net_revenue',
+		'nummer' => 'number',
+		'octrooi_nummer' => 'patent_number',
+		'omschrijving' => 'description',
+		'omschrijving_iv3' => 'description_iv3',
+		'omzet' => 'revenue',
+		'omzet_aandeel' => 'revenue_share',
+		'omzet_exclusief_btw' => 'revenue_excluding_vat',
+		'omzet_op_moment' => 'revenue_at_moment',
+		'omzettings_regeling' => 'conversion_scheme',
+		'onderneming_id' => 'enterprise_id',
+		'ontvanger_naam' => 'recipient_name',
+		'opdracht_naam' => 'assignment_name',
+		'opening_saldo' => 'opening_balance',
+		'outflows_totaal' => 'outflows_total',
+		'pauze_eind' => 'pause_end',
+		'pensioen_regeling' => 'pension_scheme',
+		'periode_eind' => 'period_end',
+		'periode_jaar' => 'period_year',
+		'prognose_einde_jaar' => 'forecast_year_end',
+		'programma' => 'programme',
+		'programma_assigned_at' => 'programme_assigned_at',
+		'programma_code' => 'programme_code',
+		'programma_focus' => 'programme_focus',
+		'programma_id' => 'programme_id',
+		'programma_structure' => 'programme_structure',
+		'project_naam' => 'project_name',
+		'raadsbesluit_nummer' => 'council_resolution_number',
+		'regeling_artikel' => 'scheme_article',
+		'regeling_code' => 'scheme_code',
+		'regeling_naam' => 'scheme_name',
+		'regeling_tot_zakelijk' => 'scheme_until_business',
+		'rvo_project_nummer' => 'rvo_project_number',
+		's_en_ocertificaat_nummer' => 'rnd_certificate_number',
+		'saldo_begin_jaar_cents' => 'balance_year_start_cents',
+		'saldo_eind_jaar_cents' => 'balance_year_end_cents',
+		'saldo_incidenteel' => 'balance_incidental',
+		'saldo_na' => 'balance_after',
+		'saldo_na_mutaties' => 'balance_after_movements',
+		'saldo_open' => 'balance_open',
+		'saldo_structureel' => 'balance_structural',
+		'saldo_voor_mutaties' => 'balance_before_movements',
+		'sector_omschrijving' => 'sector_description',
+		'size_criteria_netto_omzet' => 'size_criteria_net_revenue',
+		'sleutel_naam' => 'key_name',
+		'so_verklaring_nummer' => 'rnd_declaration_number',
+		'subsidie_regeling' => 'subsidy_scheme',
+		'taak_omschrijving' => 'task_description',
+		'taakveld_naam' => 'task_field_name',
+		'totaal' => 'total',
+		'totaal_afdracht' => 'total_remittance',
+		'totaal_aftrek' => 'total_deduction',
+		'totaal_aftrekbaar' => 'total_deductible',
+		'totaal_box1_inkomen' => 'total_box1_income',
+		'totaal_box3_inkomen' => 'total_box3_income',
+		'totaal_brutoloon' => 'total_gross_pay',
+		'totaal_eindheffingen_wkr' => 'total_final_levies_work_related_costs',
+		'totaal_euomzet' => 'total_eu_revenue',
+		'totaal_geconstateerde_fouten' => 'total_identified_errors',
+		'totaal_geconstateerde_onzekerheden' => 'total_identified_uncertainties',
+		'totaal_heffingskortingen' => 'total_tax_credits',
+		'totaal_lasten_inclusief_mutaties_reserves' => 'total_expenses_including_reserve_movements',
+		'totaal_lhafdracht' => 'total_payroll_tax_remittance',
+		'totaal_loonheffing' => 'total_payroll_tax',
+		'totaal_netto_betaald' => 'total_net_paid',
+		'totaal_premies_sv' => 'total_social_insurance_contributions',
+		'totaal_premies_svafdracht' => 'total_social_insurance_remittance',
+		'totaal_prognose' => 'total_forecast',
+		'totaal_rendementsgrondslag' => 'total_yield_basis',
+		'totaal_score' => 'total_score',
+		'totaal_uren' => 'total_hours',
+		'totaal_verschuldigd' => 'total_due',
+		'totaal_zvw' => 'total_health_insurance',
+		'totaal_zvwafdracht' => 'total_health_insurance_remittance',
+		'uitkering_jaar' => 'distribution_year',
+		'verplichting_nummer' => 'commitment_number',
+		'verrekend_boekjaar' => 'settled_financial_year',
+		'verwachte_eind_datum' => 'expected_end_date',
+		'verwachte_omzet' => 'expected_revenue',
+		'voorgaande_omzet' => 'previous_revenue',
+		'vorig_jaar' => 'previous_year',
+		'vrijvallen_jaar_cents' => 'releases_year_cents',
+		'wbso_verklaring_nummer' => 'rnd_tax_credit_declaration_number',
+		'week_eind' => 'week_end',
+		'winst_uit_onderneming' => 'profit_from_enterprise',
+		'zzp_naam' => 'freelancer_name',
+	];
 
-        // Batch 2 — the naam/totaal/jaar/omschrijving/saldo/omzet/regeling/
-        // programma/boekjaar/onderneming/eind/nummer clusters, 137 names.
-        // Same rule as above: every one was checked to be collision-free
-        // against its English target before being added here.
-        'aandeel_omzet12mnd'                        => 'revenue_share12m',
-        'aanslag_jaar'                              => 'assessment_year',
-        'actualisatie_frequentie_jaar'              => 'update_frequency_years',
-        'afschrijving_jaar_cents'                   => 'depreciation_year_cents',
-        'afschrijvingstermijn_jaar'                 => 'depreciation_period_years',
-        'asset_naam'                                => 'asset_name',
-        'balans_totaal'                             => 'balance_sheet_total',
-        'baten_totaal'                              => 'revenue_total',
-        'bbv_saldo_baten_lasten'                    => 'municipal_accounting_balance_revenue_expenses',
-        'betalingen_totaal'                         => 'payments_total',
-        'boekjaar'                                  => 'financial_year',
-        'boekjaar_eind'                             => 'financial_year_end',
-        'boekjaar_start'                            => 'financial_year_start',
-        'boekjaar_tot'                              => 'financial_year_until',
-        'boekjaar_van'                              => 'financial_year_from',
-        'boekwaarde_begin_jaar_cents'               => 'book_value_year_start_cents',
-        'btw_nummer'                                => 'vat_number',
-        'concurrent_naam'                           => 'competitor_name',
-        'deal_naam'                                 => 'deal_name',
-        'deelnemer_naam'                            => 'participant_name',
-        'dotaties_jaar_cents'                       => 'additions_year_cents',
-        'drempel_jaar'                              => 'threshold_year',
-        'eind_datum'                                => 'end_date',
-        'eind_saldo'                                => 'closing_balance',
-        'emu_saldo_afwijking'                       => 'emu_balance_deviation',
-        'emu_saldo_afwijking_percentage'            => 'emu_balance_deviation_percentage',
-        'emu_saldo_begroot'                         => 'emu_balance_budgeted',
-        'emu_saldo_berekend'                        => 'emu_balance_calculated',
-        'ex_nummer'                                 => 'ex_number',
-        'expat30_pct_regeling'                      => 'expat30_pct_scheme',
-        'feitelijke_eind_datum'                     => 'actual_end_date',
-        'fiscalist_becon_nummer'                    => 'tax_advisor_becon_number',
-        'gerealiseerde_omzet'                       => 'realised_revenue',
-        'hoofdfunctie_naam'                         => 'main_function_name',
-        'horizon_eind'                              => 'horizon_end',
-        'huidig_jaar'                               => 'current_year',
-        'indicator_omschrijving'                    => 'indicator_description',
-        'inflows_totaal'                            => 'inflows_total',
-        'jaar'                                      => 'year',
-        'jaar_van_gebruik'                          => 'year_of_use',
-        'kostprijs_omzet'                           => 'cost_of_revenue',
-        'kvk_nummer'                                => 'chamber_of_commerce_number',
-        'kwekersrecht_nummer'                       => 'plant_breeders_right_number',
-        'lasten_totaal'                             => 'expenses_total',
-        'leverancier_naam'                          => 'supplier_name',
-        'lock_in_eind_datum'                        => 'lock_in_end_date',
-        'looptijd_eind'                             => 'term_end',
-        'lopende_omzet'                             => 'current_revenue',
-        'maand_van_jaar'                            => 'month_of_year',
-        'naam'                                      => 'name',
-        'netto_omzet'                               => 'net_revenue',
-        'nummer'                                    => 'number',
-        'octrooi_nummer'                            => 'patent_number',
-        'omschrijving'                              => 'description',
-        'omschrijving_iv3'                          => 'description_iv3',
-        'omzet'                                     => 'revenue',
-        'omzet_aandeel'                             => 'revenue_share',
-        'omzet_exclusief_btw'                       => 'revenue_excluding_vat',
-        'omzet_op_moment'                           => 'revenue_at_moment',
-        'omzettings_regeling'                       => 'conversion_scheme',
-        'onderneming_id'                            => 'enterprise_id',
-        'ontvanger_naam'                            => 'recipient_name',
-        'opdracht_naam'                             => 'assignment_name',
-        'opening_saldo'                             => 'opening_balance',
-        'outflows_totaal'                           => 'outflows_total',
-        'pauze_eind'                                => 'pause_end',
-        'pensioen_regeling'                         => 'pension_scheme',
-        'periode_eind'                              => 'period_end',
-        'periode_jaar'                              => 'period_year',
-        'prognose_einde_jaar'                       => 'forecast_year_end',
-        'programma'                                 => 'programme',
-        'programma_assigned_at'                     => 'programme_assigned_at',
-        'programma_code'                            => 'programme_code',
-        'programma_focus'                           => 'programme_focus',
-        'programma_id'                              => 'programme_id',
-        'programma_structure'                       => 'programme_structure',
-        'project_naam'                              => 'project_name',
-        'raadsbesluit_nummer'                       => 'council_resolution_number',
-        'regeling_artikel'                          => 'scheme_article',
-        'regeling_code'                             => 'scheme_code',
-        'regeling_naam'                             => 'scheme_name',
-        'regeling_tot_zakelijk'                     => 'scheme_until_business',
-        'rvo_project_nummer'                        => 'rvo_project_number',
-        's_en_ocertificaat_nummer'                  => 'rnd_certificate_number',
-        'saldo_begin_jaar_cents'                    => 'balance_year_start_cents',
-        'saldo_eind_jaar_cents'                     => 'balance_year_end_cents',
-        'saldo_incidenteel'                         => 'balance_incidental',
-        'saldo_na'                                  => 'balance_after',
-        'saldo_na_mutaties'                         => 'balance_after_movements',
-        'saldo_open'                                => 'balance_open',
-        'saldo_structureel'                         => 'balance_structural',
-        'saldo_voor_mutaties'                       => 'balance_before_movements',
-        'sector_omschrijving'                       => 'sector_description',
-        'size_criteria_netto_omzet'                 => 'size_criteria_net_revenue',
-        'sleutel_naam'                              => 'key_name',
-        'so_verklaring_nummer'                      => 'rnd_declaration_number',
-        'subsidie_regeling'                         => 'subsidy_scheme',
-        'taak_omschrijving'                         => 'task_description',
-        'taakveld_naam'                             => 'task_field_name',
-        'totaal'                                    => 'total',
-        'totaal_afdracht'                           => 'total_remittance',
-        'totaal_aftrek'                             => 'total_deduction',
-        'totaal_aftrekbaar'                         => 'total_deductible',
-        'totaal_box1_inkomen'                       => 'total_box1_income',
-        'totaal_box3_inkomen'                       => 'total_box3_income',
-        'totaal_brutoloon'                          => 'total_gross_pay',
-        'totaal_eindheffingen_wkr'                  => 'total_final_levies_work_related_costs',
-        'totaal_euomzet'                            => 'total_eu_revenue',
-        'totaal_geconstateerde_fouten'              => 'total_identified_errors',
-        'totaal_geconstateerde_onzekerheden'        => 'total_identified_uncertainties',
-        'totaal_heffingskortingen'                  => 'total_tax_credits',
-        'totaal_lasten_inclusief_mutaties_reserves' => 'total_expenses_including_reserve_movements',
-        'totaal_lhafdracht'                         => 'total_payroll_tax_remittance',
-        'totaal_loonheffing'                        => 'total_payroll_tax',
-        'totaal_netto_betaald'                      => 'total_net_paid',
-        'totaal_premies_sv'                         => 'total_social_insurance_contributions',
-        'totaal_premies_svafdracht'                 => 'total_social_insurance_remittance',
-        'totaal_prognose'                           => 'total_forecast',
-        'totaal_rendementsgrondslag'                => 'total_yield_basis',
-        'totaal_score'                              => 'total_score',
-        'totaal_uren'                               => 'total_hours',
-        'totaal_verschuldigd'                       => 'total_due',
-        'totaal_zvw'                                => 'total_health_insurance',
-        'totaal_zvwafdracht'                        => 'total_health_insurance_remittance',
-        'uitkering_jaar'                            => 'distribution_year',
-        'verplichting_nummer'                       => 'commitment_number',
-        'verrekend_boekjaar'                        => 'settled_financial_year',
-        'verwachte_eind_datum'                      => 'expected_end_date',
-        'verwachte_omzet'                           => 'expected_revenue',
-        'voorgaande_omzet'                          => 'previous_revenue',
-        'vorig_jaar'                                => 'previous_year',
-        'vrijvallen_jaar_cents'                     => 'releases_year_cents',
-        'wbso_verklaring_nummer'                    => 'rnd_tax_credit_declaration_number',
-        'week_eind'                                 => 'week_end',
-        'winst_uit_onderneming'                     => 'profit_from_enterprise',
-        'zzp_naam'                                  => 'freelancer_name',
-    ];
+	/**
+	 * Constructor.
+	 *
+	 * @param IDBConnection $db Database connection.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly IDBConnection $db,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Constructor.
-     *
-     * @param IDBConnection   $db     Database connection.
-     * @param LoggerInterface $logger Logger.
-     */
-    public function __construct(
-        private readonly IDBConnection $db,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Human-readable step name.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	public function getName(): string {
+		return 'Move shillinq data from the Dutch columns to the English ones';
+	}//end getName()
 
-    /**
-     * Human-readable step name.
-     *
-     * @return string
-     *
-     * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
-     */
-    public function getName(): string
-    {
-        return 'Move shillinq data from the Dutch columns to the English ones';
+	/**
+	 * Run the column migration across every shillinq shard table.
+	 *
+	 * @param IOutput $output Repair output.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	public function run(IOutput $output): void {
+		$tables = $this->shardTables();
+		if ($tables === []) {
+			$output->info('RenameDutchColumns: no shillinq shard tables on this install; nothing to do.');
+			return;
+		}
 
-    }//end getName()
+		$renamed = 0;
+		$copied = 0;
+		$refused = 0;
 
-    /**
-     * Run the column migration across every shillinq shard table.
-     *
-     * @param IOutput $output Repair output.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
-     */
-    public function run(IOutput $output): void
-    {
-        $tables = $this->shardTables();
-        if ($tables === []) {
-            $output->info('RenameDutchColumns: no shillinq shard tables on this install; nothing to do.');
-            return;
-        }
+		foreach ($tables as $table) {
+			$columns = $this->columnsOf(table: $table);
+			$qTable = $this->quote(identifier: $table);
 
-        $renamed = 0;
-        $copied  = 0;
-        $refused = 0;
+			foreach (self::COLUMN_MAP as $old => $new) {
+				if (in_array($old, $columns, true) === false) {
+					continue;
+				}
 
-        foreach ($tables as $table) {
-            $columns = $this->columnsOf(table: $table);
-            $qTable  = $this->quote(identifier: $table);
+				if ($this->hasCollision(columns: $columns, target: $new) === true) {
+					$this->logger->warning(
+						'RenameDutchColumns: two sources target one destination; migrating neither.',
+						['table' => $table, 'source' => $old, 'destination' => $new]
+					);
+					$refused++;
+					continue;
+				}
 
-            foreach (self::COLUMN_MAP as $old => $new) {
-                if (in_array($old, $columns, true) === false) {
-                    continue;
-                }
+				if (in_array($new, $columns, true) === false) {
+					$sql = 'ALTER TABLE ' . $qTable . ' RENAME COLUMN '
+						. $this->quote(identifier: $old) . ' TO ' . $this->quote(identifier: $new);
+					if ($this->exec(sql: $sql) === true) {
+						$renamed++;
+					}
 
-                if ($this->hasCollision(columns: $columns, target: $new) === true) {
-                    $this->logger->warning(
-                        'RenameDutchColumns: two sources target one destination; migrating neither.',
-                        ['table' => $table, 'source' => $old, 'destination' => $new]
-                    );
-                    $refused++;
-                    continue;
-                }
+					continue;
+				}
 
-                if (in_array($new, $columns, true) === false) {
-                    $sql = 'ALTER TABLE '.$qTable.' RENAME COLUMN '
-                        .$this->quote(identifier: $old).' TO '.$this->quote(identifier: $new);
-                    if ($this->exec(sql: $sql) === true) {
-                        $renamed++;
-                    }
+				$qNew = $this->quote(identifier: $new);
+				$qOld = $this->quote(identifier: $old);
+				$sql = 'UPDATE ' . $qTable . ' SET ' . $qNew . ' = ' . $qOld
+					. ' WHERE ' . $qNew . ' IS NULL AND ' . $qOld . ' IS NOT NULL';
+				if ($this->exec(sql: $sql) === true) {
+					$copied++;
+				}
+			}//end foreach
+		}//end foreach
 
-                    continue;
-                }
+		$output->info(
+			'RenameDutchColumns: ' . $renamed . ' renamed, ' . $copied . ' back-filled, '
+			. $refused . ' refused, across ' . count($tables) . ' shard table(s).'
+		);
 
-                $qNew = $this->quote(identifier: $new);
-                $qOld = $this->quote(identifier: $old);
-                $sql  = 'UPDATE '.$qTable.' SET '.$qNew.' = '.$qOld
-                    .' WHERE '.$qNew.' IS NULL AND '.$qOld.' IS NOT NULL';
-                if ($this->exec(sql: $sql) === true) {
-                    $copied++;
-                }
-            }//end foreach
-        }//end foreach
+	}//end run()
 
-        $output->info(
-            'RenameDutchColumns: '.$renamed.' renamed, '.$copied.' back-filled, '
-            .$refused.' refused, across '.count($tables).' shard table(s).'
-        );
+	/**
+	 * Whether another mapped source already targets the same destination here.
+	 *
+	 * @param array<int, string> $columns Column names present in the table.
+	 * @param string $target The destination column name.
+	 *
+	 * @return bool True when two sources compete for one destination.
+	 */
+	private function hasCollision(array $columns, string $target): bool {
+		$sources = 0;
+		foreach (self::COLUMN_MAP as $old => $new) {
+			if ($new === $target && in_array($old, $columns, true) === true) {
+				$sources++;
+			}
+		}
 
-    }//end run()
+		return $sources > 1;
+	}//end hasCollision()
 
-    /**
-     * Whether another mapped source already targets the same destination here.
-     *
-     * @param array<int, string> $columns Column names present in the table.
-     * @param string             $target  The destination column name.
-     *
-     * @return bool True when two sources compete for one destination.
-     */
-    private function hasCollision(array $columns, string $target): bool
-    {
-        $sources = 0;
-        foreach (self::COLUMN_MAP as $old => $new) {
-            if ($new === $target && in_array($old, $columns, true) === true) {
-                $sources++;
-            }
-        }
+	/**
+	 * Resolve the shard tables of every register whose slug starts with the prefix.
+	 *
+	 * Table discovery goes through information_schema, NOT IDBConnection:
+	 * OCP\IDBConnection exposes neither getSchema() nor getPrefix(), and calling
+	 * either is a runtime fatal that `php -l` and phpcs both report as clean.
+	 * Matching anchors on the `openregister_table_` MARKER rather than a computed
+	 * prefix, because getTableName('') yields the literal `*PREFIX*` placeholder
+	 * which a raw information_schema string never resolves.
+	 *
+	 * @return array<int, string>
+	 */
+	private function shardTables(): array {
+		try {
+			$ids = $this->db->executeQuery(
+				'SELECT id FROM `*PREFIX*openregister_registers` WHERE slug LIKE ?',
+				[self::REGISTER_SLUG_PREFIX . '%']
+			)->fetchAll(\PDO::FETCH_COLUMN);
+		} catch (Exception $e) {
+			$this->logger->warning(
+				'RenameDutchColumns: could not resolve the shillinq registers; skipping.',
+				['exception' => $e->getMessage()]
+			);
+			return [];
+		}
 
-        return $sources > 1;
+		if ($ids === []) {
+			return [];
+		}
 
-    }//end hasCollision()
+		try {
+			$stmt = $this->db->prepare(
+				'SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern'
+			);
+			$stmt->bindValue('pattern', '%openregister\_table\_%');
+			$stmt->execute();
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'RenameDutchColumns: could not list tables; skipping.',
+				['exception' => $e->getMessage()]
+			);
+			return [];
+		}
 
-    /**
-     * Resolve the shard tables of every register whose slug starts with the prefix.
-     *
-     * Table discovery goes through information_schema, NOT IDBConnection:
-     * OCP\IDBConnection exposes neither getSchema() nor getPrefix(), and calling
-     * either is a runtime fatal that `php -l` and phpcs both report as clean.
-     * Matching anchors on the `openregister_table_` MARKER rather than a computed
-     * prefix, because getTableName('') yields the literal `*PREFIX*` placeholder
-     * which a raw information_schema string never resolves.
-     *
-     * @return array<int, string>
-     */
-    private function shardTables(): array
-    {
-        try {
-            $ids = $this->db->executeQuery(
-                'SELECT id FROM `*PREFIX*openregister_registers` WHERE slug LIKE ?',
-                [self::REGISTER_SLUG_PREFIX.'%']
-            )->fetchAll(\PDO::FETCH_COLUMN);
-        } catch (Exception $e) {
-            $this->logger->warning(
-                'RenameDutchColumns: could not resolve the shillinq registers; skipping.',
-                ['exception' => $e->getMessage()]
-            );
-            return [];
-        }
+		$wanted = [];
+		foreach ($ids as $id) {
+			$wanted[] = 'openregister_table_' . ((int)$id) . '_';
+		}
 
-        if ($ids === []) {
-            return [];
-        }
+		$tables = [];
+		while (($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
+			$name = (string)($row['table_name'] ?? '');
+			if ($name === '') {
+				continue;
+			}
 
-        try {
-            $stmt = $this->db->prepare(
-                'SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern'
-            );
-            $stmt->bindValue('pattern', '%openregister\_table\_%');
-            $stmt->execute();
-        } catch (\Throwable $e) {
-            $this->logger->warning(
-                'RenameDutchColumns: could not list tables; skipping.',
-                ['exception' => $e->getMessage()]
-            );
-            return [];
-        }
+			foreach ($wanted as $marker) {
+				$at = strpos($name, $marker);
+				if ($at !== false && ctype_digit(substr($name, ($at + strlen($marker)))) === true) {
+					$tables[] = $name;
+				}
+			}
+		}
 
-        $wanted = [];
-        foreach ($ids as $id) {
-            $wanted[] = 'openregister_table_'.((int) $id).'_';
-        }
+		return array_values(array_unique($tables));
+	}//end shardTables()
 
-        $tables = [];
-        while (($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
-            $name = (string) ($row['table_name'] ?? '');
-            if ($name === '') {
-                continue;
-            }
+	/**
+	 * List the column names of a table.
+	 *
+	 * @param string $table Table name.
+	 *
+	 * @return array<int, string>
+	 */
+	private function columnsOf(string $table): array {
+		try {
+			$stmt = $this->db->prepare(
+				'SELECT column_name FROM information_schema.columns WHERE table_name = :table'
+			);
+			$stmt->bindValue('table', $table);
+			$stmt->execute();
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'RenameDutchColumns: could not read columns; skipping table.',
+				['table' => $table, 'exception' => $e->getMessage()]
+			);
+			return [];
+		}
 
-            foreach ($wanted as $marker) {
-                $at = strpos($name, $marker);
-                if ($at !== false && ctype_digit(substr($name, ($at + strlen($marker)))) === true) {
-                    $tables[] = $name;
-                }
-            }
-        }
+		$columns = [];
+		while (($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
+			$name = (string)($row['column_name'] ?? '');
+			if ($name !== '') {
+				$columns[] = $name;
+			}
+		}
 
-        return array_values(array_unique($tables));
+		return $columns;
+	}//end columnsOf()
 
-    }//end shardTables()
+	/**
+	 * Execute one statement, logging and swallowing failure.
+	 *
+	 * @param string $sql The statement.
+	 *
+	 * @return bool Whether it succeeded.
+	 */
+	private function exec(string $sql): bool {
+		try {
+			$this->db->executeStatement($sql);
+			return true;
+		} catch (Exception $e) {
+			$this->logger->warning(
+				'RenameDutchColumns: statement failed; leaving the column as it was.',
+				['sql' => $sql, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}
 
-    /**
-     * List the column names of a table.
-     *
-     * @param string $table Table name.
-     *
-     * @return array<int, string>
-     */
-    private function columnsOf(string $table): array
-    {
-        try {
-            $stmt = $this->db->prepare(
-                'SELECT column_name FROM information_schema.columns WHERE table_name = :table'
-            );
-            $stmt->bindValue('table', $table);
-            $stmt->execute();
-        } catch (\Throwable $e) {
-            $this->logger->warning(
-                'RenameDutchColumns: could not read columns; skipping table.',
-                ['table' => $table, 'exception' => $e->getMessage()]
-            );
-            return [];
-        }
+	}//end exec()
 
-        $columns = [];
-        while (($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
-            $name = (string) ($row['column_name'] ?? '');
-            if ($name !== '') {
-                $columns[] = $name;
-            }
-        }
-
-        return $columns;
-
-    }//end columnsOf()
-
-    /**
-     * Execute one statement, logging and swallowing failure.
-     *
-     * @param string $sql The statement.
-     *
-     * @return bool Whether it succeeded.
-     */
-    private function exec(string $sql): bool
-    {
-        try {
-            $this->db->executeStatement($sql);
-            return true;
-        } catch (Exception $e) {
-            $this->logger->warning(
-                'RenameDutchColumns: statement failed; leaving the column as it was.',
-                ['sql' => $sql, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }
-
-    }//end exec()
-
-    /**
-     * Quote an identifier for the active platform.
-     *
-     * @param string $identifier Table or column name.
-     *
-     * @return string
-     */
-    private function quote(string $identifier): string
-    {
-        return $this->db->getDatabasePlatform()->quoteSingleIdentifier($identifier);
-
-    }//end quote()
+	/**
+	 * Quote an identifier for the active platform.
+	 *
+	 * @param string $identifier Table or column name.
+	 *
+	 * @return string
+	 */
+	private function quote(string $identifier): string {
+		return $this->db->getDatabasePlatform()->quoteSingleIdentifier($identifier);
+	}//end quote()
 }//end class

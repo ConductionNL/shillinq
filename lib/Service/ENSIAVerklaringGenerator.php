@@ -51,229 +51,218 @@ use ZipArchive;
  * Pre-existing debt (issue #506): early-return refactor and variable
  * renames deferred pending a dedicated pass.
  */
-class ENSIAVerklaringGenerator
-{
-    /**
-     * Number of top findings to list on the verklaring.
-     *
-     * @var int
-     */
-    private const TOP_FINDINGS_LIMIT = 5;
+class ENSIAVerklaringGenerator {
+	/**
+	 * Number of top findings to list on the verklaring.
+	 *
+	 * @var int
+	 */
+	private const TOP_FINDINGS_LIMIT = 5;
 
-    /**
-     * Render the verklaring as DOCX bytes.
-     *
-     * @param array<string,mixed>            $cyclus      ENSIAJaarcyclus record.
-     * @param array<int,array<string,mixed>> $vragen      All Evaluatievraag children.
-     * @param array<int,array<string,mixed>> $bevindingen All Bevinding children
-     *                                                    ordered by impact desc.
-     *
-     * @return string Binary DOCX content.
-     *
-     * @throws RuntimeException When ZipArchive cannot open a temp file.
-     */
-    public function render(array $cyclus, array $vragen, array $bevindingen): string
-    {
-        $documentXml  = $this->buildDocumentXml(cyclus: $cyclus, vragen: $vragen, bevindingen: $bevindingen);
-        $contentTypes = $this->buildContentTypesXml();
-        $rels         = $this->buildRelsXml();
-        $documentRels = $this->buildDocumentRelsXml();
+	/**
+	 * Render the verklaring as DOCX bytes.
+	 *
+	 * @param array<string,mixed> $cyclus ENSIAJaarcyclus record.
+	 * @param array<int,array<string,mixed>> $vragen All Evaluatievraag children.
+	 * @param array<int,array<string,mixed>> $bevindingen All Bevinding children
+	 *                                                    ordered by impact desc.
+	 *
+	 * @return string Binary DOCX content.
+	 *
+	 * @throws RuntimeException When ZipArchive cannot open a temp file.
+	 */
+	public function render(array $cyclus, array $vragen, array $bevindingen): string {
+		$documentXml = $this->buildDocumentXml(cyclus: $cyclus, vragen: $vragen, bevindingen: $bevindingen);
+		$contentTypes = $this->buildContentTypesXml();
+		$rels = $this->buildRelsXml();
+		$documentRels = $this->buildDocumentRelsXml();
 
-        $tmpFile = tempnam(sys_get_temp_dir(), 'ensia-verklaring-');
-        if ($tmpFile === false) {
-            throw new RuntimeException('Failed to allocate DOCX temp file');
-        }
+		$tmpFile = tempnam(sys_get_temp_dir(), 'ensia-verklaring-');
+		if ($tmpFile === false) {
+			throw new RuntimeException('Failed to allocate DOCX temp file');
+		}
 
-        $zip    = new ZipArchive();
-        $opened = $zip->open($tmpFile, ZipArchive::OVERWRITE | ZipArchive::CREATE);
-        if ($opened !== true) {
-            unlink($tmpFile);
-            throw new RuntimeException('Failed to open DOCX ZIP for writing');
-        }
+		$zip = new ZipArchive();
+		$opened = $zip->open($tmpFile, ZipArchive::OVERWRITE | ZipArchive::CREATE);
+		if ($opened !== true) {
+			unlink($tmpFile);
+			throw new RuntimeException('Failed to open DOCX ZIP for writing');
+		}
 
-        $zip->addFromString('[Content_Types].xml', $contentTypes);
-        $zip->addFromString('_rels/.rels', $rels);
-        $zip->addFromString('word/_rels/document.xml.rels', $documentRels);
-        $zip->addFromString('word/document.xml', $documentXml);
-        $zip->close();
+		$zip->addFromString('[Content_Types].xml', $contentTypes);
+		$zip->addFromString('_rels/.rels', $rels);
+		$zip->addFromString('word/_rels/document.xml.rels', $documentRels);
+		$zip->addFromString('word/document.xml', $documentXml);
+		$zip->close();
 
-        $content = (string) file_get_contents($tmpFile);
-        unlink($tmpFile);
+		$content = (string)file_get_contents($tmpFile);
+		unlink($tmpFile);
 
-        return $content;
+		return $content;
+	}//end render()
 
-    }//end render()
+	/**
+	 * Build the [Content_Types].xml OOXML part registry.
+	 *
+	 * @return string XML.
+	 */
+	private function buildContentTypesXml(): string {
+		return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+			. '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+			. '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+			. '<Default Extension="xml" ContentType="application/xml"/>'
+			. '<Override PartName="/word/document.xml" '
+			. 'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+			. '</Types>';
 
-    /**
-     * Build the [Content_Types].xml OOXML part registry.
-     *
-     * @return string XML.
-     */
-    private function buildContentTypesXml(): string
-    {
-        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            .'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-            .'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-            .'<Default Extension="xml" ContentType="application/xml"/>'
-            .'<Override PartName="/word/document.xml" '
-            .'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
-            .'</Types>';
+	}//end buildContentTypesXml()
 
-    }//end buildContentTypesXml()
+	/**
+	 * Build the root relationships XML pointing at the document part.
+	 *
+	 * @return string XML.
+	 */
+	private function buildRelsXml(): string {
+		return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+			. '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+			. '<Relationship Id="rId1" '
+			. 'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
+			. 'Target="word/document.xml"/>'
+			. '</Relationships>';
 
-    /**
-     * Build the root relationships XML pointing at the document part.
-     *
-     * @return string XML.
-     */
-    private function buildRelsXml(): string
-    {
-        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            .'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            .'<Relationship Id="rId1" '
-            .'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
-            .'Target="word/document.xml"/>'
-            .'</Relationships>';
+	}//end buildRelsXml()
 
-    }//end buildRelsXml()
+	/**
+	 * Build the (empty) document-level relationships XML.
+	 *
+	 * @return string XML.
+	 */
+	private function buildDocumentRelsXml(): string {
+		return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+			. '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>';
 
-    /**
-     * Build the (empty) document-level relationships XML.
-     *
-     * @return string XML.
-     */
-    private function buildDocumentRelsXml(): string
-    {
-        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            .'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>';
+	}//end buildDocumentRelsXml()
 
-    }//end buildDocumentRelsXml()
+	/**
+	 * Build the OOXML word/document.xml body.
+	 *
+	 * @param array<string,mixed> $cyclus Cyclus record.
+	 * @param array<int,array<string,mixed>> $vragen Vragen array.
+	 * @param array<int,array<string,mixed>> $bevindingen Bevindingen ordered desc.
+	 *
+	 * @return string XML.
+	 */
+	private function buildDocumentXml(array $cyclus, array $vragen, array $bevindingen): string {
+		$org = $cyclus['organisatie'] ?? [];
+		$orgNaam = (string)($org['name'] ?? '');
+		$orgKvk = (string)($org['kvk'] ?? '');
+		$jaar = (string)($cyclus['year'] ?? '');
 
-    /**
-     * Build the OOXML word/document.xml body.
-     *
-     * @param array<string,mixed>            $cyclus      Cyclus record.
-     * @param array<int,array<string,mixed>> $vragen      Vragen array.
-     * @param array<int,array<string,mixed>> $bevindingen Bevindingen ordered desc.
-     *
-     * @return string XML.
-     */
-    private function buildDocumentXml(array $cyclus, array $vragen, array $bevindingen): string
-    {
-        $org     = $cyclus['organisatie'] ?? [];
-        $orgNaam = (string) ($org['name'] ?? '');
-        $orgKvk  = (string) ($org['kvk'] ?? '');
-        $jaar    = (string) ($cyclus['year'] ?? '');
+		$paras = [];
+		$paras[] = $this->para(text: 'College-verklaring ENSIA ' . $jaar, bold: true);
+		$paras[] = $this->para(text: 'Organisatie: ' . $orgNaam . ' (KvK ' . $orgKvk . ')');
+		$paras[] = $this->para(text: 'Verslagjaar: ' . $jaar);
+		$paras[] = $this->para(text: 'Datum opmaak: ' . (new DateTimeImmutable('now'))->format('Y-m-d'));
+		$paras[] = $this->para(text: '');
 
-        $paras   = [];
-        $paras[] = $this->para(text: 'College-verklaring ENSIA '.$jaar, bold: true);
-        $paras[] = $this->para(text: 'Organisatie: '.$orgNaam.' (KvK '.$orgKvk.')');
-        $paras[] = $this->para(text: 'Verslagjaar: '.$jaar);
-        $paras[] = $this->para(text: 'Datum opmaak: '.(new DateTimeImmutable('now'))->format('Y-m-d'));
-        $paras[] = $this->para(text: '');
+		// Per-domein summary.
+		$paras[] = $this->para(text: 'Samenvatting per verantwoordingsdomein:', bold: true);
+		foreach ($this->summariseByDomein(vragen: $vragen) as $line) {
+			$paras[] = $this->para(text: $line);
+		}
 
-        // Per-domein summary.
-        $paras[] = $this->para(text: 'Samenvatting per verantwoordingsdomein:', bold: true);
-        foreach ($this->summariseByDomein(vragen: $vragen) as $line) {
-            $paras[] = $this->para(text: $line);
-        }
+		$paras[] = $this->para(text: '');
 
-        $paras[] = $this->para(text: '');
+		// Top findings.
+		$paras[] = $this->para(text: 'Top ' . self::TOP_FINDINGS_LIMIT . ' bevindingen + mitigatieplan:', bold: true);
+		$top = array_slice($bevindingen, 0, self::TOP_FINDINGS_LIMIT);
+		if (count($top) === 0) {
+			$paras[] = $this->para(text: 'Geen openstaande bevindingen.');
+		} else {
+			$i = 1;
+			foreach ($top as $b) {
+				$type = (string)($b['type'] ?? 'tekortkoming');
+				$beschrijving = (string)($b['beschrijving'] ?? '');
+				$mitigatieActie = (string)($b['mitigatieActie'] ?? 'nader te bepalen');
+				$paras[] = $this->para(
+					text: sprintf('%d. [%s] %s — mitigatie: %s', $i, $type, $beschrijving, $mitigatieActie)
+				);
+				$i++;
+			}
+		}
 
-        // Top findings.
-        $paras[] = $this->para(text: 'Top '.self::TOP_FINDINGS_LIMIT.' bevindingen + mitigatieplan:', bold: true);
-        $top     = array_slice($bevindingen, 0, self::TOP_FINDINGS_LIMIT);
-        if (count($top) === 0) {
-            $paras[] = $this->para(text: 'Geen openstaande bevindingen.');
-        } else {
-            $i = 1;
-            foreach ($top as $b) {
-                $type           = (string) ($b['type'] ?? 'tekortkoming');
-                $beschrijving   = (string) ($b['beschrijving'] ?? '');
-                $mitigatieActie = (string) ($b['mitigatieActie'] ?? 'nader te bepalen');
-                $paras[]        = $this->para(
-                    text: sprintf('%d. [%s] %s — mitigatie: %s', $i, $type, $beschrijving, $mitigatieActie)
-                );
-                $i++;
-            }
-        }
+		$paras[] = $this->para(text: '');
+		$paras[] = $this->para(text: 'Handtekeningvelden:', bold: true);
+		$paras[] = $this->para(text: 'Burgemeester: ____________________________  Datum: __________');
+		$paras[] = $this->para(text: 'Wethouder:     ____________________________  Datum: __________');
+		$paras[] = $this->para(text: 'Secretaris:    ____________________________  Datum: __________');
 
-        $paras[] = $this->para(text: '');
-        $paras[] = $this->para(text: 'Handtekeningvelden:', bold: true);
-        $paras[] = $this->para(text: 'Burgemeester: ____________________________  Datum: __________');
-        $paras[] = $this->para(text: 'Wethouder:     ____________________________  Datum: __________');
-        $paras[] = $this->para(text: 'Secretaris:    ____________________________  Datum: __________');
+		$body = implode('', $paras);
 
-        $body = implode('', $paras);
+		return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+			. '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+			. '<w:body>'
+			. $body
+			. '</w:body>'
+			. '</w:document>';
 
-        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            .'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
-            .'<w:body>'
-            .$body
-            .'</w:body>'
-            .'</w:document>';
+	}//end buildDocumentXml()
 
-    }//end buildDocumentXml()
+	/**
+	 * Render one OOXML paragraph carrying the given text.
+	 *
+	 * @param string $text The paragraph text.
+	 * @param bool $bold Render text bold.
+	 *
+	 * @return string OOXML.
+	 */
+	private function para(string $text, bool $bold = false): string {
+		$escaped = htmlspecialchars($text, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+		$runProps = '';
+		if ($bold === true) {
+			$runProps = '<w:rPr><w:b/></w:rPr>';
+		}
 
-    /**
-     * Render one OOXML paragraph carrying the given text.
-     *
-     * @param string $text The paragraph text.
-     * @param bool   $bold Render text bold.
-     *
-     * @return string OOXML.
-     */
-    private function para(string $text, bool $bold=false): string
-    {
-        $escaped  = htmlspecialchars($text, ENT_XML1 | ENT_QUOTES, 'UTF-8');
-        $runProps = '';
-        if ($bold === true) {
-            $runProps = '<w:rPr><w:b/></w:rPr>';
-        }
+		return '<w:p><w:r>' . $runProps . '<w:t xml:space="preserve">' . $escaped . '</w:t></w:r></w:p>';
+	}//end para()
 
-        return '<w:p><w:r>'.$runProps.'<w:t xml:space="preserve">'.$escaped.'</w:t></w:r></w:p>';
+	/**
+	 * Build per-domein summary lines: how many questions met maturity ≥ 3.
+	 *
+	 * @param array<int,array<string,mixed>> $vragen Evaluatievraag children.
+	 *
+	 * @return array<int,string> Summary lines.
+	 */
+	private function summariseByDomein(array $vragen): array {
+		$counts = [];
+		foreach ($vragen as $v) {
+			$domein = (string)($v['domein'] ?? 'BIO');
+			if (isset($counts[$domein]) === false) {
+				$counts[$domein] = ['total' => 0, 'metNorm' => 0];
+			}
 
-    }//end para()
+			$counts[$domein]['total']++;
 
-    /**
-     * Build per-domein summary lines: how many questions met maturity ≥ 3.
-     *
-     * @param array<int,array<string,mixed>> $vragen Evaluatievraag children.
-     *
-     * @return array<int,string> Summary lines.
-     */
-    private function summariseByDomein(array $vragen): array
-    {
-        $counts = [];
-        foreach ($vragen as $v) {
-            $domein = (string) ($v['domein'] ?? 'BIO');
-            if (isset($counts[$domein]) === false) {
-                $counts[$domein] = ['total' => 0, 'metNorm' => 0];
-            }
+			$score = $v['volwassenheidsScore'] ?? null;
+			$norm = $v['normniveau'] ?? null;
+			if (is_int($score) === true && is_int($norm) === true && $score >= $norm) {
+				$counts[$domein]['metNorm']++;
+			} elseif ($score === null && (string)($v['antwoord'] ?? '') === 'ja') {
+				// Ja-nee-nvt: count 'ja' as norm-met.
+				$counts[$domein]['metNorm']++;
+			}
+		}
 
-            $counts[$domein]['total']++;
+		$lines = [];
+		foreach ($counts as $domein => $c) {
+			$lines[] = sprintf(
+				'- %s: %d van %d vragen voldoen aan VNG-norm.',
+				$domein,
+				$c['metNorm'],
+				$c['total']
+			);
+		}
 
-            $score = $v['volwassenheidsScore'] ?? null;
-            $norm  = $v['normniveau'] ?? null;
-            if (is_int($score) === true && is_int($norm) === true && $score >= $norm) {
-                $counts[$domein]['metNorm']++;
-            } else if ($score === null && (string) ($v['antwoord'] ?? '') === 'ja') {
-                // Ja-nee-nvt: count 'ja' as norm-met.
-                $counts[$domein]['metNorm']++;
-            }
-        }
-
-        $lines = [];
-        foreach ($counts as $domein => $c) {
-            $lines[] = sprintf(
-                '- %s: %d van %d vragen voldoen aan VNG-norm.',
-                $domein,
-                $c['metNorm'],
-                $c['total']
-            );
-        }
-
-        return $lines;
-
-    }//end summariseByDomein()
+		return $lines;
+	}//end summariseByDomein()
 }//end class

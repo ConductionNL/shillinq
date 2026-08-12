@@ -56,188 +56,181 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
  */
-class TenderNedAanbestedingGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug resolution.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class TenderNedAanbestedingGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for register slug resolution.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Return the configured register slug, falling back to 'shillinq'.
-     *
-     * @return string
-     */
-    private function getRegisterSlug(): string
-    {
-        $slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($slug === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Return the configured register slug, falling back to 'shillinq'.
+	 *
+	 * @return string
+	 */
+	private function getRegisterSlug(): string {
+		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($slug === '') {
+			return 'shillinq';
+		}
 
-        return $slug;
+		return $slug;
+	}//end getRegisterSlug()
 
-    }//end getRegisterSlug()
+	/**
+	 * Precondition for the gunnen (open → gegund) transition.
+	 *
+	 * REQ-002: the award is only recorded when the dossier carries the data
+	 * needed to materialise a concept obligation — a gegundeLeverancier and a
+	 * positive contractWaarde.
+	 *
+	 * Fail-closed: returns false on any exception (denies the award) per CWE-863.
+	 *
+	 * @param array<string, mixed> $aanbesteding TenderNedAanbesteding object array.
+	 *
+	 * @return bool True when the award may be recorded.
+	 *
+	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+	 */
+	public function canGunnen(array $aanbesteding): bool {
+		try {
+			if (trim((string)($aanbesteding['gegundeLeverancier'] ?? '')) === '') {
+				$this->logger->info(
+					'TenderNedAanbestedingGuard: no gegundeLeverancier — denying award (REQ-002)',
+					['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+				);
+				return false;
+			}
 
-    /**
-     * Precondition for the gunnen (open → gegund) transition.
-     *
-     * REQ-002: the award is only recorded when the dossier carries the data
-     * needed to materialise a concept obligation — a gegundeLeverancier and a
-     * positive contractWaarde.
-     *
-     * Fail-closed: returns false on any exception (denies the award) per CWE-863.
-     *
-     * @param array<string, mixed> $aanbesteding TenderNedAanbesteding object array.
-     *
-     * @return bool True when the award may be recorded.
-     *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
-     */
-    public function canGunnen(array $aanbesteding): bool
-    {
-        try {
-            if (trim((string) ($aanbesteding['gegundeLeverancier'] ?? '')) === '') {
-                $this->logger->info(
-                    'TenderNedAanbestedingGuard: no gegundeLeverancier — denying award (REQ-002)',
-                    ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
-                );
-                return false;
-            }
+			if ((float)($aanbesteding['contractWaarde'] ?? 0) <= 0.0) {
+				$this->logger->info(
+					'TenderNedAanbestedingGuard: contractWaarde must be positive — denying award (REQ-002)',
+					['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+				);
+				return false;
+			}
 
-            if ((float) ($aanbesteding['contractWaarde'] ?? 0) <= 0.0) {
-                $this->logger->info(
-                    'TenderNedAanbestedingGuard: contractWaarde must be positive — denying award (REQ-002)',
-                    ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
-                );
-                return false;
-            }
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'TenderNedAanbestedingGuard: canGunnen failed — denying award (fail-closed)',
+				[
+					'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
+					'exception' => $e->getMessage(),
+				]
+			);
+			return false;
+		}//end try
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'TenderNedAanbestedingGuard: canGunnen failed — denying award (fail-closed)',
-                [
-                    'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
-                    'exception'      => $e->getMessage(),
-                ]
-            );
-            return false;
-        }//end try
+	}//end canGunnen()
 
-    }//end canGunnen()
+	/**
+	 * Precondition for the afronden (in-uitvoering → afgerond) transition.
+	 *
+	 * REQ-006: a tender can only be completed once an eindoplevering
+	 * OpdrachtUitvoering for the linked Verplichting has been approved
+	 * (status completed, goedgekeurd true). This prevents the public dossier from
+	 * being marked afgerond before the final delivery is accepted.
+	 *
+	 * When the linked Verplichting cannot be resolved (no verplichtingId yet, or
+	 * the schema is not available in a T1 state) the completion is permitted with
+	 * a warning so manually-managed tenders are not blocked.
+	 *
+	 * Fail-closed: returns false on any exception (denies completion) per CWE-863.
+	 *
+	 * @param array<string, mixed> $aanbesteding TenderNedAanbesteding object array.
+	 *
+	 * @return bool True when the tender may be completed.
+	 *
+	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+	 */
+	public function canAfronden(array $aanbesteding): bool {
+		try {
+			$verplichtingId = trim((string)($aanbesteding['verplichtingId'] ?? ''));
+			if ($verplichtingId === '') {
+				$this->logger->warning(
+					'TenderNedAanbestedingGuard: no linked Verplichting — permitting completion without delivery check',
+					['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
+				);
+				return true;
+			}
 
-    /**
-     * Precondition for the afronden (in-uitvoering → afgerond) transition.
-     *
-     * REQ-006: a tender can only be completed once an eindoplevering
-     * OpdrachtUitvoering for the linked Verplichting has been approved
-     * (status completed, goedgekeurd true). This prevents the public dossier from
-     * being marked afgerond before the final delivery is accepted.
-     *
-     * When the linked Verplichting cannot be resolved (no verplichtingId yet, or
-     * the schema is not available in a T1 state) the completion is permitted with
-     * a warning so manually-managed tenders are not blocked.
-     *
-     * Fail-closed: returns false on any exception (denies completion) per CWE-863.
-     *
-     * @param array<string, mixed> $aanbesteding TenderNedAanbesteding object array.
-     *
-     * @return bool True when the tender may be completed.
-     *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
-     */
-    public function canAfronden(array $aanbesteding): bool
-    {
-        try {
-            $verplichtingId = trim((string) ($aanbesteding['verplichtingId'] ?? ''));
-            if ($verplichtingId === '') {
-                $this->logger->warning(
-                    'TenderNedAanbestedingGuard: no linked Verplichting — permitting completion without delivery check',
-                    ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown')]
-                );
-                return true;
-            }
+			return $this->hasApprovedEindoplevering(verplichtingId: $verplichtingId, aanbesteding: $aanbesteding);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'TenderNedAanbestedingGuard: canAfronden failed — denying completion (fail-closed)',
+				[
+					'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
+					'exception' => $e->getMessage(),
+				]
+			);
+			return false;
+		}//end try
 
-            return $this->hasApprovedEindoplevering(verplichtingId: $verplichtingId, aanbesteding: $aanbesteding);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'TenderNedAanbestedingGuard: canAfronden failed — denying completion (fail-closed)',
-                [
-                    'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
-                    'exception'      => $e->getMessage(),
-                ]
-            );
-            return false;
-        }//end try
+	}//end canAfronden()
 
-    }//end canAfronden()
+	/**
+	 * Verify an approved eindoplevering exists for the linked obligation.
+	 *
+	 * @param string $verplichtingId The linked obligation id.
+	 * @param array<string, mixed> $aanbesteding TenderNedAanbesteding for log context.
+	 *
+	 * @return bool True when an approved eindoplevering OpdrachtUitvoering exists.
+	 */
+	private function hasApprovedEindoplevering(string $verplichtingId, array $aanbesteding): bool {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$records = $objectService
+				->setRegister(register: $this->getRegisterSlug())
+				->setSchema(schema: 'OpdrachtUitvoering')
+				->findAll(
+					[
+						'filters' => [
+							'verplichtingId' => $verplichtingId,
+							'opleveringsType' => 'eindoplevering',
+						],
+					]
+				);
+		} catch (\Throwable $e) {
+			// OpdrachtUitvoering schema not available (T1 state) — permit completion.
+			$this->logger->debug(
+				'TenderNedAanbestedingGuard: OpdrachtUitvoering lookup unavailable (T1 state) — permitting completion',
+				['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'), 'exception' => $e->getMessage()]
+			);
+			return true;
+		}//end try
 
-    /**
-     * Verify an approved eindoplevering exists for the linked obligation.
-     *
-     * @param string               $verplichtingId The linked obligation id.
-     * @param array<string, mixed> $aanbesteding   TenderNedAanbesteding for log context.
-     *
-     * @return bool True when an approved eindoplevering OpdrachtUitvoering exists.
-     */
-    private function hasApprovedEindoplevering(string $verplichtingId, array $aanbesteding): bool
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $records       = $objectService
-                ->setRegister(register: $this->getRegisterSlug())
-                ->setSchema(schema: 'OpdrachtUitvoering')
-                ->findAll(
-                    [
-                        'filters' => [
-                            'verplichtingId'  => $verplichtingId,
-                            'opleveringsType' => 'eindoplevering',
-                        ],
-                    ]
-                );
-        } catch (\Throwable $e) {
-            // OpdrachtUitvoering schema not available (T1 state) — permit completion.
-            $this->logger->debug(
-                'TenderNedAanbestedingGuard: OpdrachtUitvoering lookup unavailable (T1 state) — permitting completion',
-                ['aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'), 'exception' => $e->getMessage()]
-            );
-            return true;
-        }//end try
+		if (is_array($records) === false) {
+			return false;
+		}
 
-        if (is_array($records) === false) {
-            return false;
-        }
+		foreach ($records as $record) {
+			if (is_array($record) === false) {
+				continue;
+			}
 
-        foreach ($records as $record) {
-            if (is_array($record) === false) {
-                continue;
-            }
+			if (($record['status'] ?? '') === 'completed'
+				&& ((bool)($record['goedgekeurd'] ?? false)) === true
+			) {
+				return true;
+			}
+		}
 
-            if (($record['status'] ?? '') === 'completed'
-                && ((bool) ($record['goedgekeurd'] ?? false)) === true
-            ) {
-                return true;
-            }
-        }
-
-        $this->logger->info(
-            'TenderNedAanbestedingGuard: no approved eindoplevering — denying completion (REQ-006)',
-            [
-                'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
-                'verplichtingId' => $verplichtingId,
-            ]
-        );
-        return false;
-
-    }//end hasApprovedEindoplevering()
+		$this->logger->info(
+			'TenderNedAanbestedingGuard: no approved eindoplevering — denying completion (REQ-006)',
+			[
+				'aanbestedingId' => ($aanbesteding['aanbestedingId'] ?? 'unknown'),
+				'verplichtingId' => $verplichtingId,
+			]
+		);
+		return false;
+	}//end hasApprovedEindoplevering()
 }//end class

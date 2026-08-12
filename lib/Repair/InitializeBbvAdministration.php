@@ -52,287 +52,275 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  */
-class InitializeBbvAdministration implements IRepairStep
-{
-    private const BBV_ADMINISTRATION_TYPES = ['gemeente', 'provincie', 'waterschap'];
+class InitializeBbvAdministration implements IRepairStep {
+	private const BBV_ADMINISTRATION_TYPES = ['gemeente', 'provincie', 'waterschap'];
 
-    private const RESERVE_TAAKVELD = '0.10';
+	private const RESERVE_TAAKVELD = '0.10';
 
-    private const RESERVE_TAAKVELD_NAAM = 'Mutaties reserves';
+	private const RESERVE_TAAKVELD_NAAM = 'Mutaties reserves';
 
-    private const ALGEMENE_RESERVE_NAAM = 'Algemene reserve';
+	private const ALGEMENE_RESERVE_NAAM = 'Algemene reserve';
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface $container DI container — ObjectService is fetched lazily.
-     * @param IAppConfig         $appConfig App config used to resolve the register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — ObjectService is fetched lazily.
+	 * @param IAppConfig $appConfig App config used to resolve the register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Repair step name.
-     *
-     * @return string
-     */
-    public function getName(): string
-    {
-        return 'Bootstrap BBV-administraties with algemene reserve and taakveld 0.10';
+	/**
+	 * Repair step name.
+	 *
+	 * @return string
+	 */
+	public function getName(): string {
+		return 'Bootstrap BBV-administraties with algemene reserve and taakveld 0.10';
+	}//end getName()
 
-    }//end getName()
+	/**
+	 * Resolve the configured register slug (falls back to 'shillinq').
+	 *
+	 * @return string
+	 */
+	private function getRegisterSlug(): string {
+		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($slug === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Resolve the configured register slug (falls back to 'shillinq').
-     *
-     * @return string
-     */
-    private function getRegisterSlug(): string
-    {
-        $slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($slug === '') {
-            return 'shillinq';
-        }
+		return $slug;
+	}//end getRegisterSlug()
 
-        return $slug;
+	/**
+	 * Run the repair step.
+	 *
+	 * @param IOutput $output The output interface for progress reporting.
+	 *
+	 * @return void
+	 */
+	public function run(IOutput $output): void {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (\Throwable $e) {
+			$output->info('Shillinq: ObjectService unavailable, skipping BBV-administration bootstrap');
+			return;
+		}
 
-    }//end getRegisterSlug()
+		$registerSlug = $this->getRegisterSlug();
 
-    /**
-     * Run the repair step.
-     *
-     * @param IOutput $output The output interface for progress reporting.
-     *
-     * @return void
-     */
-    public function run(IOutput $output): void
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        } catch (\Throwable $e) {
-            $output->info('Shillinq: ObjectService unavailable, skipping BBV-administration bootstrap');
-            return;
-        }
+		try {
+			$administrations = $objectService
+				->setRegister($registerSlug)
+				->setSchema('Administration')
+				->findAll(['limit' => 500]);
+		} catch (\Throwable $e) {
+			$output->info('Shillinq: Administration register not yet present, skipping BBV-administration bootstrap');
+			return;
+		}
 
-        $registerSlug = $this->getRegisterSlug();
+		if (empty($administrations) === true) {
+			$output->info('Shillinq: no administrations found, skipping BBV-administration bootstrap');
+			return;
+		}
 
-        try {
-            $administrations = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('Administration')
-                ->findAll(['limit' => 500]);
-        } catch (\Throwable $e) {
-            $output->info('Shillinq: Administration register not yet present, skipping BBV-administration bootstrap');
-            return;
-        }
+		$totalSeededReserves = 0;
+		$totalSkippedReserves = 0;
+		$totalSeededTaakvelden = 0;
 
-        if (empty($administrations) === true) {
-            $output->info('Shillinq: no administrations found, skipping BBV-administration bootstrap');
-            return;
-        }
+		foreach ($administrations as $administration) {
+			$row = $this->toArray(object: $administration);
+			$type = ($row['administrationType'] ?? null);
 
-        $totalSeededReserves   = 0;
-        $totalSkippedReserves  = 0;
-        $totalSeededTaakvelden = 0;
+			if (in_array($type, self::BBV_ADMINISTRATION_TYPES, true) === false) {
+				continue;
+			}
 
-        foreach ($administrations as $administration) {
-            $row  = $this->toArray(object: $administration);
-            $type = ($row['administrationType'] ?? null);
+			$administrationId = ($row['id'] ?? $row['uuid'] ?? null);
+			if ($administrationId === null) {
+				continue;
+			}
 
-            if (in_array($type, self::BBV_ADMINISTRATION_TYPES, true) === false) {
-                continue;
-            }
+			$reserveResult = $this->ensureAlgemeneReserve(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				administrationId: (string)$administrationId
+			);
+			$totalSeededReserves += $reserveResult['seeded'];
+			$totalSkippedReserves += $reserveResult['skipped'];
 
-            $administrationId = ($row['id'] ?? $row['uuid'] ?? null);
-            if ($administrationId === null) {
-                continue;
-            }
+			$taakveldResult = $this->ensureReserveTaakveld(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				overheidslaag: (string)$type
+			);
+			$totalSeededTaakvelden += $taakveldResult['seeded'];
+		}//end foreach
 
-            $reserveResult         = $this->ensureAlgemeneReserve(
-                objectService: $objectService,
-                registerSlug: $registerSlug,
-                administrationId: (string) $administrationId
-            );
-            $totalSeededReserves  += $reserveResult['seeded'];
-            $totalSkippedReserves += $reserveResult['skipped'];
+		$output->info(
+			sprintf(
+				'BBV-administration bootstrap: %d algemene reserve(s) created, %d skipped; %d reserve-taakveld(en) created.',
+				$totalSeededReserves,
+				$totalSkippedReserves,
+				$totalSeededTaakvelden
+			)
+		);
 
-            $taakveldResult         = $this->ensureReserveTaakveld(
-                objectService: $objectService,
-                registerSlug: $registerSlug,
-                overheidslaag: (string) $type
-            );
-            $totalSeededTaakvelden += $taakveldResult['seeded'];
-        }//end foreach
+	}//end run()
 
-        $output->info(
-            sprintf(
-                'BBV-administration bootstrap: %d algemene reserve(s) created, %d skipped; %d reserve-taakveld(en) created.',
-                $totalSeededReserves,
-                $totalSkippedReserves,
-                $totalSeededTaakvelden
-            )
-        );
+	/**
+	 * Ensure an Algemene reserve exists for the given administration.
+	 *
+	 * @param object $objectService OpenRegister ObjectService.
+	 * @param string $registerSlug Register slug.
+	 * @param string $administrationId Administration identifier.
+	 *
+	 * @return array{seeded:int,skipped:int}
+	 */
+	private function ensureAlgemeneReserve(object $objectService, string $registerSlug, string $administrationId): array {
+		try {
+			$existing = $objectService
+				->setRegister($registerSlug)
+				->setSchema('Reserve')
+				->findAll(
+					[
+						'filters' => [
+							'administrationId' => $administrationId,
+							'name' => self::ALGEMENE_RESERVE_NAAM,
+						],
+						'limit' => 1,
+					]
+				);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: Reserve register unavailable, skipping algemene reserve bootstrap',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
 
-    }//end run()
+			return ['seeded' => 0, 'skipped' => 0];
+		}//end try
 
-    /**
-     * Ensure an Algemene reserve exists for the given administration.
-     *
-     * @param object $objectService    OpenRegister ObjectService.
-     * @param string $registerSlug     Register slug.
-     * @param string $administrationId Administration identifier.
-     *
-     * @return array{seeded:int,skipped:int}
-     */
-    private function ensureAlgemeneReserve(object $objectService, string $registerSlug, string $administrationId): array
-    {
-        try {
-            $existing = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('Reserve')
-                ->findAll(
-                        [
-                            'filters' => [
-                                'administrationId' => $administrationId,
-                                'name'             => self::ALGEMENE_RESERVE_NAAM,
-                            ],
-                            'limit'   => 1,
-                        ]
-                        );
-        } catch (\Throwable $e) {
-            $this->logger->warning(
-                'Shillinq: Reserve register unavailable, skipping algemene reserve bootstrap',
-                ['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
+		if (empty($existing) === false) {
+			return ['seeded' => 0, 'skipped' => 1];
+		}
 
-            return ['seeded' => 0, 'skipped' => 0];
-        }//end try
+		$payload = [
+			'administrationId' => $administrationId,
+			'name' => self::ALGEMENE_RESERVE_NAAM,
+			'soort' => 'algemeen',
+			'saldoBeginJaar' => 0,
+			'rentetoerekening' => false,
+			'_meta' => [
+				'source' => 'bootstrap',
+				'createdBy' => 'InitializeBbvAdministration',
+			],
+		];
 
-        if (empty($existing) === false) {
-            return ['seeded' => 0, 'skipped' => 1];
-        }
+		try {
+			$objectService->saveObject(object: $payload, register: $registerSlug, schema: 'Reserve');
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: failed to seed algemene reserve',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return ['seeded' => 0, 'skipped' => 0];
+		}
 
-        $payload = [
-            'administrationId' => $administrationId,
-            'name'             => self::ALGEMENE_RESERVE_NAAM,
-            'soort'            => 'algemeen',
-            'saldoBeginJaar'   => 0,
-            'rentetoerekening' => false,
-            '_meta'            => [
-                'source'    => 'bootstrap',
-                'createdBy' => 'InitializeBbvAdministration',
-            ],
-        ];
+		return ['seeded' => 1, 'skipped' => 0];
+	}//end ensureAlgemeneReserve()
 
-        try {
-            $objectService->saveObject(object: $payload, register: $registerSlug, schema: 'Reserve');
-        } catch (\Throwable $e) {
-            $this->logger->warning(
-                'Shillinq: failed to seed algemene reserve',
-                ['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
-            return ['seeded' => 0, 'skipped' => 0];
-        }
+	/**
+	 * Ensure taakveld 0.10 "Mutaties reserves" exists for the overheidslaag.
+	 *
+	 * @param object $objectService OpenRegister ObjectService.
+	 * @param string $registerSlug Register slug.
+	 * @param string $overheidslaag Either gemeente, provincie or waterschap.
+	 *
+	 * @return array{seeded:int,skipped:int}
+	 */
+	private function ensureReserveTaakveld(object $objectService, string $registerSlug, string $overheidslaag): array {
+		try {
+			$existing = $objectService
+				->setRegister($registerSlug)
+				->setSchema('Taakveld')
+				->findAll(
+					[
+						'filters' => [
+							'code' => self::RESERVE_TAAKVELD,
+							'overheidslaag' => $overheidslaag,
+						],
+						'limit' => 1,
+					]
+				);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: Taakveld register unavailable, skipping reserve-taakveld bootstrap',
+				['overheidslaag' => $overheidslaag, 'exception' => $e->getMessage()]
+			);
 
-        return ['seeded' => 1, 'skipped' => 0];
+			return ['seeded' => 0, 'skipped' => 0];
+		}//end try
 
-    }//end ensureAlgemeneReserve()
+		if (empty($existing) === false) {
+			return ['seeded' => 0, 'skipped' => 1];
+		}
 
-    /**
-     * Ensure taakveld 0.10 "Mutaties reserves" exists for the overheidslaag.
-     *
-     * @param object $objectService OpenRegister ObjectService.
-     * @param string $registerSlug  Register slug.
-     * @param string $overheidslaag Either gemeente, provincie or waterschap.
-     *
-     * @return array{seeded:int,skipped:int}
-     */
-    private function ensureReserveTaakveld(object $objectService, string $registerSlug, string $overheidslaag): array
-    {
-        try {
-            $existing = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('Taakveld')
-                ->findAll(
-                        [
-                            'filters' => [
-                                'code'          => self::RESERVE_TAAKVELD,
-                                'overheidslaag' => $overheidslaag,
-                            ],
-                            'limit'   => 1,
-                        ]
-                        );
-        } catch (\Throwable $e) {
-            $this->logger->warning(
-                'Shillinq: Taakveld register unavailable, skipping reserve-taakveld bootstrap',
-                ['overheidslaag' => $overheidslaag, 'exception' => $e->getMessage()]
-            );
+		$payload = [
+			'code' => self::RESERVE_TAAKVELD,
+			'name' => self::RESERVE_TAAKVELD_NAAM,
+			'hoofdfunctie' => 0,
+			'mainFunctionName' => 'Bestuur en ondersteuning',
+			'descriptionIv3' => 'Resultaatbestemming: dotaties en onttrekkingen aan reserves (bootstrap).',
+			'overheidslaag' => $overheidslaag,
+			'geldigVanaf' => '2025-01-01',
+			'_meta' => [
+				'source' => 'bootstrap',
+				'createdBy' => 'InitializeBbvAdministration',
+			],
+		];
 
-            return ['seeded' => 0, 'skipped' => 0];
-        }//end try
+		try {
+			$objectService->saveObject(object: $payload, register: $registerSlug, schema: 'Taakveld');
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: failed to seed reserve-taakveld',
+				['overheidslaag' => $overheidslaag, 'exception' => $e->getMessage()]
+			);
+			return ['seeded' => 0, 'skipped' => 0];
+		}
 
-        if (empty($existing) === false) {
-            return ['seeded' => 0, 'skipped' => 1];
-        }
+		return ['seeded' => 1, 'skipped' => 0];
+	}//end ensureReserveTaakveld()
 
-        $payload = [
-            'code'             => self::RESERVE_TAAKVELD,
-            'name'             => self::RESERVE_TAAKVELD_NAAM,
-            'hoofdfunctie'     => 0,
-            'mainFunctionName' => 'Bestuur en ondersteuning',
-            'descriptionIv3'  => 'Resultaatbestemming: dotaties en onttrekkingen aan reserves (bootstrap).',
-            'overheidslaag'    => $overheidslaag,
-            'geldigVanaf'      => '2025-01-01',
-            '_meta'            => [
-                'source'    => 'bootstrap',
-                'createdBy' => 'InitializeBbvAdministration',
-            ],
-        ];
+	/**
+	 * Normalise a heterogeneous OR object into an associative array.
+	 *
+	 * @param mixed $object Object or array returned by OR ObjectService.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function toArray($object): array {
+		if (is_array($object) === true) {
+			return $object;
+		}
 
-        try {
-            $objectService->saveObject(object: $payload, register: $registerSlug, schema: 'Taakveld');
-        } catch (\Throwable $e) {
-            $this->logger->warning(
-                'Shillinq: failed to seed reserve-taakveld',
-                ['overheidslaag' => $overheidslaag, 'exception' => $e->getMessage()]
-            );
-            return ['seeded' => 0, 'skipped' => 0];
-        }
+		if (is_object($object) === true) {
+			if (method_exists($object, 'jsonSerialize') === true) {
+				$payload = $object->jsonSerialize();
+				if (is_array($payload) === true) {
+					return $payload;
+				}
+			}
 
-        return ['seeded' => 1, 'skipped' => 0];
+			return (array)$object;
+		}
 
-    }//end ensureReserveTaakveld()
-
-    /**
-     * Normalise a heterogeneous OR object into an associative array.
-     *
-     * @param mixed $object Object or array returned by OR ObjectService.
-     *
-     * @return array<string,mixed>
-     */
-    private function toArray($object): array
-    {
-        if (is_array($object) === true) {
-            return $object;
-        }
-
-        if (is_object($object) === true) {
-            if (method_exists($object, 'jsonSerialize') === true) {
-                $payload = $object->jsonSerialize();
-                if (is_array($payload) === true) {
-                    return $payload;
-                }
-            }
-
-            return (array) $object;
-        }
-
-        return [];
-
-    }//end toArray()
+		return [];
+	}//end toArray()
 }//end class

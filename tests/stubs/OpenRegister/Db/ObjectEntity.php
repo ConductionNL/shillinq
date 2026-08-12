@@ -20,166 +20,145 @@ namespace OCA\OpenRegister\Db;
 /**
  * Stub for OCA\OpenRegister\Db\ObjectEntity used by shillinq tests.
  */
-class ObjectEntity
-{
+class ObjectEntity {
 
-    /**
-     * The decoded object payload.
-     *
-     * @var array<string,mixed>|null
-     */
-    private ?array $object = null;
+	/**
+	 * The decoded object payload.
+	 *
+	 * @var array<string,mixed>|null
+	 */
+	private ?array $object = null;
 
-    /**
-     * The schema slug.
-     *
-     * @var string|null
-     */
-    private ?string $schema = null;
+	/**
+	 * The schema slug.
+	 *
+	 * @var string|null
+	 */
+	private ?string $schema = null;
 
-    /**
-     * The register slug.
-     *
-     * @var string|null
-     */
-    private ?string $register = null;
+	/**
+	 * The register slug.
+	 *
+	 * @var string|null
+	 */
+	private ?string $register = null;
 
-    /**
-     * The numeric or string id.
-     *
-     * @var integer|string|null
-     */
-    private $id = null;
+	/**
+	 * The numeric or string id.
+	 *
+	 * @var integer|string|null
+	 */
+	private $id = null;
 
-    /**
-     * The uuid.
-     *
-     * @var string|null
-     */
-    private ?string $uuid = null;
+	/**
+	 * The uuid.
+	 *
+	 * @var string|null
+	 */
+	private ?string $uuid = null;
 
-    /**
-     * Return the decoded object payload.
-     *
-     * @return array<string,mixed>|null
-     */
-    public function getObject(): ?array
-    {
-        return $this->object;
+	/**
+	 * Return the decoded object payload.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	public function getObject(): ?array {
+		return $this->object;
+	}//end getObject()
 
-    }//end getObject()
+	/**
+	 * Set the decoded object payload.
+	 *
+	 * @param array<string,mixed>|null $object The payload.
+	 *
+	 * @return self
+	 */
+	public function setObject(?array $object): self {
+		$this->object = $object;
+		return $this;
+	}//end setObject()
 
-    /**
-     * Set the decoded object payload.
-     *
-     * @param array<string,mixed>|null $object The payload.
-     *
-     * @return self
-     */
-    public function setObject(?array $object): self
-    {
-        $this->object = $object;
-        return $this;
+	/**
+	 * Return the schema slug.
+	 *
+	 * @return string|null
+	 */
+	public function getSchema(): ?string {
+		return $this->schema;
+	}//end getSchema()
 
-    }//end setObject()
+	/**
+	 * Set the schema slug.
+	 *
+	 * @param string|null $schema The schema slug.
+	 *
+	 * @return self
+	 */
+	public function setSchema(?string $schema): self {
+		$this->schema = $schema;
+		return $this;
+	}//end setSchema()
 
-    /**
-     * Return the schema slug.
-     *
-     * @return string|null
-     */
-    public function getSchema(): ?string
-    {
-        return $this->schema;
+	/**
+	 * Return the register slug.
+	 *
+	 * @return string|null
+	 */
+	public function getRegister(): ?string {
+		return $this->register;
+	}//end getRegister()
 
-    }//end getSchema()
+	/**
+	 * Set the register slug.
+	 *
+	 * @param string|null $register The register slug.
+	 *
+	 * @return self
+	 */
+	public function setRegister(?string $register): self {
+		$this->register = $register;
+		return $this;
+	}//end setRegister()
 
-    /**
-     * Set the schema slug.
-     *
-     * @param string|null $schema The schema slug.
-     *
-     * @return self
-     */
-    public function setSchema(?string $schema): self
-    {
-        $this->schema = $schema;
-        return $this;
+	/**
+	 * Return the id.
+	 *
+	 * @return integer|string|null
+	 */
+	public function getId() {
+		return $this->id;
+	}//end getId()
 
-    }//end setSchema()
+	/**
+	 * Set the id.
+	 *
+	 * @param integer|string|null $id The id.
+	 *
+	 * @return self
+	 */
+	public function setId($id): self {
+		$this->id = $id;
+		return $this;
+	}//end setId()
 
-    /**
-     * Return the register slug.
-     *
-     * @return string|null
-     */
-    public function getRegister(): ?string
-    {
-        return $this->register;
+	/**
+	 * Return the uuid.
+	 *
+	 * @return string|null
+	 */
+	public function getUuid(): ?string {
+		return $this->uuid;
+	}//end getUuid()
 
-    }//end getRegister()
-
-    /**
-     * Set the register slug.
-     *
-     * @param string|null $register The register slug.
-     *
-     * @return self
-     */
-    public function setRegister(?string $register): self
-    {
-        $this->register = $register;
-        return $this;
-
-    }//end setRegister()
-
-    /**
-     * Return the id.
-     *
-     * @return integer|string|null
-     */
-    public function getId()
-    {
-        return $this->id;
-
-    }//end getId()
-
-    /**
-     * Set the id.
-     *
-     * @param integer|string|null $id The id.
-     *
-     * @return self
-     */
-    public function setId($id): self
-    {
-        $this->id = $id;
-        return $this;
-
-    }//end setId()
-
-    /**
-     * Return the uuid.
-     *
-     * @return string|null
-     */
-    public function getUuid(): ?string
-    {
-        return $this->uuid;
-
-    }//end getUuid()
-
-    /**
-     * Set the uuid.
-     *
-     * @param string|null $uuid The uuid.
-     *
-     * @return self
-     */
-    public function setUuid(?string $uuid): self
-    {
-        $this->uuid = $uuid;
-        return $this;
-
-    }//end setUuid()
+	/**
+	 * Set the uuid.
+	 *
+	 * @param string|null $uuid The uuid.
+	 *
+	 * @return self
+	 */
+	public function setUuid(?string $uuid): self {
+		$this->uuid = $uuid;
+		return $this;
+	}//end setUuid()
 }//end class

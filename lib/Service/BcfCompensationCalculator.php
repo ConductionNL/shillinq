@@ -40,201 +40,187 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  */
-class BcfCompensationCalculator
-{
-    /**
-     * Convert a money amount to integer cents (REQ-BCF-002 precision rule).
-     *
-     * @param mixed $amount Money amount (float|int|numeric-string|null).
-     *
-     * @return int Amount in whole cents.
-     *
-     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
-     */
-    public function toCents(mixed $amount): int
-    {
-        return (int) round((float) ($amount ?? 0) * 100);
+class BcfCompensationCalculator {
+	/**
+	 * Convert a money amount to integer cents (REQ-BCF-002 precision rule).
+	 *
+	 * @param mixed $amount Money amount (float|int|numeric-string|null).
+	 *
+	 * @return int Amount in whole cents.
+	 *
+	 * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
+	 */
+	public function toCents(mixed $amount): int {
+		return (int)round((float)($amount ?? 0) * 100);
+	}//end toCents()
 
-    }//end toCents()
+	/**
+	 * Convert integer cents back to a float money amount.
+	 *
+	 * @param int $cents Amount in whole cents.
+	 *
+	 * @return float Money amount.
+	 *
+	 * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
+	 */
+	public function fromCents(int $cents): float {
+		return ($cents / 100);
+	}//end fromCents()
 
-    /**
-     * Convert integer cents back to a float money amount.
-     *
-     * @param int $cents Amount in whole cents.
-     *
-     * @return float Money amount.
-     *
-     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
-     */
-    public function fromCents(int $cents): float
-    {
-        return ($cents / 100);
+	/**
+	 * Clamp a compensable percentage to the closed range 0..100 (REQ-BCF-004).
+	 *
+	 * Mixed-use accounts carry a compensablePercentage between 0 and 100; values
+	 * outside that range (corrupt data, operator error) are clamped so a single
+	 * bad mapping can never over-claim. A non-numeric value is treated as 0
+	 * (fail-closed: do not claim what we cannot weight).
+	 *
+	 * @param mixed $percentage Raw compensablePercentage (int|float|numeric-string|null).
+	 *
+	 * @return int Percentage clamped to 0..100.
+	 *
+	 * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-005
+	 */
+	public function clampPercentage(mixed $percentage): int {
+		if (is_numeric($percentage) === false) {
+			return 0;
+		}
 
-    }//end fromCents()
+		$value = (int)round((float)$percentage);
+		if ($value < 0) {
+			return 0;
+		}
 
-    /**
-     * Clamp a compensable percentage to the closed range 0..100 (REQ-BCF-004).
-     *
-     * Mixed-use accounts carry a compensablePercentage between 0 and 100; values
-     * outside that range (corrupt data, operator error) are clamped so a single
-     * bad mapping can never over-claim. A non-numeric value is treated as 0
-     * (fail-closed: do not claim what we cannot weight).
-     *
-     * @param mixed $percentage Raw compensablePercentage (int|float|numeric-string|null).
-     *
-     * @return int Percentage clamped to 0..100.
-     *
-     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-005
-     */
-    public function clampPercentage(mixed $percentage): int
-    {
-        if (is_numeric($percentage) === false) {
-            return 0;
-        }
+		if ($value > 100) {
+			return 100;
+		}
 
-        $value = (int) round((float) $percentage);
-        if ($value < 0) {
-            return 0;
-        }
+		return $value;
+	}//end clampPercentage()
 
-        if ($value > 100) {
-            return 100;
-        }
+	/**
+	 * Weight a posting amount by a compensable percentage, in integer cents.
+	 *
+	 * The compensable cents equal round(amountCents * percentage / 100). Rounding
+	 * is performed once, on the cent result, so a 50%-weighted €40.005 line cannot
+	 * leak a sub-cent fraction into the quarter total.
+	 *
+	 * @param int $amountCents Posting amount in cents (already summed per account).
+	 * @param int $percentage Compensable percentage (0..100; caller clamps).
+	 *
+	 * @return int Compensable amount in cents.
+	 *
+	 * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
+	 */
+	public function weightedCents(int $amountCents, int $percentage): int {
+		return (int)round(($amountCents * $percentage) / 100);
+	}//end weightedCents()
 
-        return $value;
+	/**
+	 * Determine whether a BbvAccountMapping marks its account as BCF-compensable.
+	 *
+	 * A posting only contributes to the claim when its account's mapping has
+	 * bcfCompensable === true AND a positive compensablePercentage (REQ-BCF-002).
+	 * A missing or non-true flag excludes the account (fail-closed).
+	 *
+	 * @param array<string,mixed>|null $mapping The BbvAccountMapping for the account, or null.
+	 *
+	 * @return bool True when the account's VAT is eligible for BCF compensation.
+	 *
+	 * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-003
+	 */
+	public function isCompensable(?array $mapping): bool {
+		if ($mapping === null) {
+			return false;
+		}
 
-    }//end clampPercentage()
+		if (($mapping['bcfCompensable'] ?? false) !== true) {
+			return false;
+		}
 
-    /**
-     * Weight a posting amount by a compensable percentage, in integer cents.
-     *
-     * The compensable cents equal round(amountCents * percentage / 100). Rounding
-     * is performed once, on the cent result, so a 50%-weighted €40.005 line cannot
-     * leak a sub-cent fraction into the quarter total.
-     *
-     * @param int $amountCents Posting amount in cents (already summed per account).
-     * @param int $percentage  Compensable percentage (0..100; caller clamps).
-     *
-     * @return int Compensable amount in cents.
-     *
-     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
-     */
-    public function weightedCents(int $amountCents, int $percentage): int
-    {
-        return (int) round(($amountCents * $percentage) / 100);
+		return $this->clampPercentage(percentage: ($mapping['compensablePercentage'] ?? 0)) > 0;
+	}//end isCompensable()
 
-    }//end weightedCents()
+	/**
+	 * Compute the compensable-VAT breakdown and total for a quarter (REQ-BCF-002).
+	 *
+	 * Given the per-account VAT amounts posted in the quarter and the BBV account
+	 * mappings (keyed by accountNumber), this:
+	 *  - keeps only accounts whose mapping is bcfCompensable with percentage > 0,
+	 *  - weights each account's amount by its compensablePercentage,
+	 *  - sums the weighted cents to the quarter total,
+	 *  - returns one breakdown row per contributing account.
+	 *
+	 * Non-compensable accounts, accounts without a mapping, and zero/negative
+	 * amounts are excluded from the breakdown. The breakdown is sorted by
+	 * accountNumber for deterministic output.
+	 *
+	 * @param array<string,int|float> $amountsByAccount accountNumber => VAT amount posted in the quarter.
+	 * @param array<string,array<string,mixed>> $mappingsByAccount accountNumber => BbvAccountMapping.
+	 *
+	 * @return array{totalCompensableAmount: float, breakdown: array<int,array<string,mixed>>}
+	 *
+	 * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
+	 */
+	public function computeCompensation(array $amountsByAccount, array $mappingsByAccount): array {
+		$accountNumbers = array_keys($amountsByAccount);
+		sort($accountNumbers);
 
-    /**
-     * Determine whether a BbvAccountMapping marks its account as BCF-compensable.
-     *
-     * A posting only contributes to the claim when its account's mapping has
-     * bcfCompensable === true AND a positive compensablePercentage (REQ-BCF-002).
-     * A missing or non-true flag excludes the account (fail-closed).
-     *
-     * @param array<string,mixed>|null $mapping The BbvAccountMapping for the account, or null.
-     *
-     * @return bool True when the account's VAT is eligible for BCF compensation.
-     *
-     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-003
-     */
-    public function isCompensable(?array $mapping): bool
-    {
-        if ($mapping === null) {
-            return false;
-        }
+		$totalCents = 0;
+		$breakdown = [];
+		foreach ($accountNumbers as $accountNumber) {
+			$accountNumber = (string)$accountNumber;
+			$mapping = ($mappingsByAccount[$accountNumber] ?? null);
+			if ($this->isCompensable(mapping: $mapping) === false) {
+				continue;
+			}
 
-        if (($mapping['bcfCompensable'] ?? false) !== true) {
-            return false;
-        }
+			$amountCents = $this->toCents(amount: ($amountsByAccount[$accountNumber] ?? 0));
+			if ($amountCents <= 0) {
+				continue;
+			}
 
-        return $this->clampPercentage(percentage: ($mapping['compensablePercentage'] ?? 0)) > 0;
+			$percentage = $this->clampPercentage(percentage: ($mapping['compensablePercentage'] ?? 0));
+			$compensableCents = $this->weightedCents(amountCents: $amountCents, percentage: $percentage);
+			if ($compensableCents <= 0) {
+				continue;
+			}
 
-    }//end isCompensable()
+			$totalCents += $compensableCents;
+			$breakdown[] = [
+				'accountNumber' => $accountNumber,
+				'amount' => $this->fromCents(cents: $amountCents),
+				'compensablePercentage' => $percentage,
+				'compensableAmount' => $this->fromCents(cents: $compensableCents),
+			];
+		}//end foreach
 
-    /**
-     * Compute the compensable-VAT breakdown and total for a quarter (REQ-BCF-002).
-     *
-     * Given the per-account VAT amounts posted in the quarter and the BBV account
-     * mappings (keyed by accountNumber), this:
-     *  - keeps only accounts whose mapping is bcfCompensable with percentage > 0,
-     *  - weights each account's amount by its compensablePercentage,
-     *  - sums the weighted cents to the quarter total,
-     *  - returns one breakdown row per contributing account.
-     *
-     * Non-compensable accounts, accounts without a mapping, and zero/negative
-     * amounts are excluded from the breakdown. The breakdown is sorted by
-     * accountNumber for deterministic output.
-     *
-     * @param array<string,int|float>           $amountsByAccount  accountNumber => VAT amount posted in the quarter.
-     * @param array<string,array<string,mixed>> $mappingsByAccount accountNumber => BbvAccountMapping.
-     *
-     * @return array{totalCompensableAmount: float, breakdown: array<int,array<string,mixed>>}
-     *
-     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
-     */
-    public function computeCompensation(array $amountsByAccount, array $mappingsByAccount): array
-    {
-        $accountNumbers = array_keys($amountsByAccount);
-        sort($accountNumbers);
+		return [
+			'totalCompensableAmount' => $this->fromCents(cents: $totalCents),
+			'breakdown' => $breakdown,
+		];
 
-        $totalCents = 0;
-        $breakdown  = [];
-        foreach ($accountNumbers as $accountNumber) {
-            $accountNumber = (string) $accountNumber;
-            $mapping       = ($mappingsByAccount[$accountNumber] ?? null);
-            if ($this->isCompensable(mapping: $mapping) === false) {
-                continue;
-            }
+	}//end computeCompensation()
 
-            $amountCents = $this->toCents(amount: ($amountsByAccount[$accountNumber] ?? 0));
-            if ($amountCents <= 0) {
-                continue;
-            }
+	/**
+	 * Decide whether a draft claim may transition to submitted (REQ-BCF-003).
+	 *
+	 * The submit precondition requires a non-empty claim (totalCompensableAmount
+	 * strictly greater than zero) AND a closed claim quarter (period lock from
+	 * T2 period-close). An empty or open-quarter claim is rejected fail-closed.
+	 *
+	 * @param mixed $compensableTotal The claim's computed total (float|int|numeric-string|null).
+	 * @param bool $quarterClosed Whether the claim quarter's fiscal period is closed.
+	 *
+	 * @return bool True when both submit preconditions hold.
+	 *
+	 * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-006
+	 */
+	public function canSubmit(mixed $compensableTotal, bool $quarterClosed): bool {
+		if ($quarterClosed === false) {
+			return false;
+		}
 
-            $percentage       = $this->clampPercentage(percentage: ($mapping['compensablePercentage'] ?? 0));
-            $compensableCents = $this->weightedCents(amountCents: $amountCents, percentage: $percentage);
-            if ($compensableCents <= 0) {
-                continue;
-            }
-
-            $totalCents += $compensableCents;
-            $breakdown[] = [
-                'accountNumber'         => $accountNumber,
-                'amount'                => $this->fromCents(cents: $amountCents),
-                'compensablePercentage' => $percentage,
-                'compensableAmount'     => $this->fromCents(cents: $compensableCents),
-            ];
-        }//end foreach
-
-        return [
-            'totalCompensableAmount' => $this->fromCents(cents: $totalCents),
-            'breakdown'              => $breakdown,
-        ];
-
-    }//end computeCompensation()
-
-    /**
-     * Decide whether a draft claim may transition to submitted (REQ-BCF-003).
-     *
-     * The submit precondition requires a non-empty claim (totalCompensableAmount
-     * strictly greater than zero) AND a closed claim quarter (period lock from
-     * T2 period-close). An empty or open-quarter claim is rejected fail-closed.
-     *
-     * @param mixed $compensableTotal The claim's computed total (float|int|numeric-string|null).
-     * @param bool  $quarterClosed    Whether the claim quarter's fiscal period is closed.
-     *
-     * @return bool True when both submit preconditions hold.
-     *
-     * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-006
-     */
-    public function canSubmit(mixed $compensableTotal, bool $quarterClosed): bool
-    {
-        if ($quarterClosed === false) {
-            return false;
-        }
-
-        return $this->toCents(amount: $compensableTotal) > 0;
-
-    }//end canSubmit()
+		return $this->toCents(amount: $compensableTotal) > 0;
+	}//end canSubmit()
 }//end class

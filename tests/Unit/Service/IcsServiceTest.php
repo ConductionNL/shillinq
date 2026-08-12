@@ -31,185 +31,166 @@ use Psr\Log\NullLogger;
 /**
  * Behavioural tests for the RFC 5545 ICS composer (REQ-BCF-003/009).
  */
-final class IcsServiceTest extends TestCase
-{
+final class IcsServiceTest extends TestCase {
 
+	/**
+	 * Construct an IcsService with a stub TimezoneResolver pinned to a
+	 * specific IANA timezone for deterministic output.
+	 *
+	 * @param string $tz IANA timezone id.
+	 *
+	 * @return IcsService
+	 */
+	private function buildService(string $tz = 'Europe/Amsterdam'): IcsService {
+		$config = $this->createStub(IConfig::class);
+		$config->method('getUserValue')->willReturn($tz);
 
-    /**
-     * Construct an IcsService with a stub TimezoneResolver pinned to a
-     * specific IANA timezone for deterministic output.
-     *
-     * @param string $tz IANA timezone id.
-     *
-     * @return IcsService
-     */
-    private function buildService(string $tz='Europe/Amsterdam'): IcsService
-    {
-        $config = $this->createStub(IConfig::class);
-        $config->method('getUserValue')->willReturn($tz);
+		$resolver = new TimezoneResolver(config: $config, logger: new NullLogger());
+		return new IcsService(timezoneResolver: $resolver, logger: new NullLogger());
+	}//end buildService()
 
-        $resolver = new TimezoneResolver(config: $config, logger: new NullLogger());
-        return new IcsService(timezoneResolver: $resolver, logger: new NullLogger());
+	/**
+	 * The generated ICS contains the canonical RFC 5545 envelope.
+	 */
+	public function testEmitsCanonicalEnvelope(): void {
+		$ics = $this->buildService()->generateIcs(
+			appointment: [
+				'appointmentId' => 'apt-001',
+				'startTime' => '2026-05-22T12:30:00Z',
+				'endTime' => '2026-05-22T13:00:00Z',
+			],
+			customer: ['id' => 'cust-1', 'userId' => 'jan', 'email' => 'jan@example.nl', 'name' => 'Jan'],
+			confirmUrl: 'https://example.nl/index.php/apps/shillinq/confirm/apt-001?token=xyz',
+			context: ['serviceName' => 'Intake consultation'],
+		);
 
-    }//end buildService()
+		self::assertStringContainsString('BEGIN:VCALENDAR', $ics);
+		self::assertStringContainsString('END:VCALENDAR', $ics);
+		self::assertStringContainsString('METHOD:REQUEST', $ics);
+		self::assertStringContainsString('PRODID:', $ics);
+		self::assertStringContainsString('BEGIN:VEVENT', $ics);
+		self::assertStringContainsString('END:VEVENT', $ics);
 
+	}//end testEmitsCanonicalEnvelope()
 
-    /**
-     * The generated ICS contains the canonical RFC 5545 envelope.
-     */
-    public function testEmitsCanonicalEnvelope(): void
-    {
-        $ics = $this->buildService()->generateIcs(
-            appointment: [
-                'appointmentId' => 'apt-001',
-                'startTime'     => '2026-05-22T12:30:00Z',
-                'endTime'       => '2026-05-22T13:00:00Z',
-            ],
-            customer: ['id' => 'cust-1', 'userId' => 'jan', 'email' => 'jan@example.nl', 'name' => 'Jan'],
-            confirmUrl: 'https://example.nl/index.php/apps/shillinq/confirm/apt-001?token=xyz',
-            context: ['serviceName' => 'Intake consultation'],
-        );
+	/**
+	 * Lines are CRLF-terminated per RFC 5545 §3.1.
+	 */
+	public function testLinesAreCrlfTerminated(): void {
+		$ics = $this->buildService()->generateIcs(
+			appointment: [
+				'appointmentId' => 'apt-001',
+				'startTime' => '2026-05-22T12:30:00Z',
+				'endTime' => '2026-05-22T13:00:00Z',
+			],
+			customer: ['email' => 'jan@example.nl'],
+			confirmUrl: 'https://example.nl/confirm/apt-001?token=xyz',
+		);
 
-        self::assertStringContainsString('BEGIN:VCALENDAR', $ics);
-        self::assertStringContainsString('END:VCALENDAR', $ics);
-        self::assertStringContainsString('METHOD:REQUEST', $ics);
-        self::assertStringContainsString('PRODID:', $ics);
-        self::assertStringContainsString('BEGIN:VEVENT', $ics);
-        self::assertStringContainsString('END:VEVENT', $ics);
+		self::assertStringContainsString("\r\n", $ics);
 
-    }//end testEmitsCanonicalEnvelope()
+	}//end testLinesAreCrlfTerminated()
 
+	/**
+	 * DTSTART/DTEND include the resolved TZID.
+	 */
+	public function testEmitsTzidOnDtstartAndDtend(): void {
+		$ics = $this->buildService('Europe/Amsterdam')->generateIcs(
+			appointment: [
+				'appointmentId' => 'apt-001',
+				'startTime' => '2026-05-22T12:30:00Z',
+				'endTime' => '2026-05-22T13:00:00Z',
+			],
+			customer: ['userId' => 'jan', 'email' => 'jan@example.nl'],
+			confirmUrl: 'https://example.nl/confirm/apt-001?token=xyz',
+			context: ['serviceName' => 'Service A'],
+		);
 
-    /**
-     * Lines are CRLF-terminated per RFC 5545 §3.1.
-     */
-    public function testLinesAreCrlfTerminated(): void
-    {
-        $ics = $this->buildService()->generateIcs(
-            appointment: [
-                'appointmentId' => 'apt-001',
-                'startTime'     => '2026-05-22T12:30:00Z',
-                'endTime'       => '2026-05-22T13:00:00Z',
-            ],
-            customer: ['email' => 'jan@example.nl'],
-            confirmUrl: 'https://example.nl/confirm/apt-001?token=xyz',
-        );
+		self::assertStringContainsString('DTSTART;TZID=Europe/Amsterdam:', $ics);
+		self::assertStringContainsString('DTEND;TZID=Europe/Amsterdam:', $ics);
 
-        self::assertStringContainsString("\r\n", $ics);
+	}//end testEmitsTzidOnDtstartAndDtend()
 
-    }//end testLinesAreCrlfTerminated()
+	/**
+	 * VTIMEZONE block is emitted with the resolved TZID.
+	 */
+	public function testEmitsVtimezoneBlock(): void {
+		$ics = $this->buildService('Europe/Amsterdam')->generateIcs(
+			appointment: [
+				'appointmentId' => 'apt-001',
+				'startTime' => '2026-05-22T12:30:00Z',
+				'endTime' => '2026-05-22T13:00:00Z',
+			],
+			customer: ['userId' => 'jan', 'email' => 'jan@example.nl'],
+			confirmUrl: 'https://example.nl/confirm/apt-001?token=xyz',
+		);
 
+		self::assertStringContainsString('BEGIN:VTIMEZONE', $ics);
+		self::assertStringContainsString('TZID:Europe/Amsterdam', $ics);
+		self::assertStringContainsString('END:VTIMEZONE', $ics);
 
-    /**
-     * DTSTART/DTEND include the resolved TZID.
-     */
-    public function testEmitsTzidOnDtstartAndDtend(): void
-    {
-        $ics = $this->buildService('Europe/Amsterdam')->generateIcs(
-            appointment: [
-                'appointmentId' => 'apt-001',
-                'startTime'     => '2026-05-22T12:30:00Z',
-                'endTime'       => '2026-05-22T13:00:00Z',
-            ],
-            customer: ['userId' => 'jan', 'email' => 'jan@example.nl'],
-            confirmUrl: 'https://example.nl/confirm/apt-001?token=xyz',
-            context: ['serviceName' => 'Service A'],
-        );
+	}//end testEmitsVtimezoneBlock()
 
-        self::assertStringContainsString('DTSTART;TZID=Europe/Amsterdam:', $ics);
-        self::assertStringContainsString('DTEND;TZID=Europe/Amsterdam:', $ics);
+	/**
+	 * SUMMARY, ATTACH and URL properties reference the supplied context.
+	 */
+	public function testEmbedsContextProperties(): void {
+		$ics = $this->buildService()->generateIcs(
+			appointment: [
+				'appointmentId' => 'apt-001',
+				'startTime' => '2026-05-22T12:30:00Z',
+				'endTime' => '2026-05-22T13:00:00Z',
+				'notes' => 'Wheelchair access required.',
+			],
+			customer: ['userId' => 'jan', 'email' => 'jan@example.nl', 'name' => 'Jan'],
+			confirmUrl: 'https://example.nl/confirm/apt-001?token=xyz',
+			context: ['serviceName' => 'Intake consultation', 'location' => 'Room A', 'organizerEmail' => 'ops@example.nl'],
+		);
 
-    }//end testEmitsTzidOnDtstartAndDtend()
+		self::assertStringContainsString('SUMMARY:Intake consultation', $ics);
+		self::assertStringContainsString('LOCATION:Room A', $ics);
+		self::assertStringContainsString('DESCRIPTION:Wheelchair access required.', $ics);
+		self::assertStringContainsString('ATTACH;FMTTYPE=text/calendar:https://example.nl/confirm/apt-001?token=xyz', $ics);
+		self::assertStringContainsString('URL:https://example.nl/confirm/apt-001?token=xyz', $ics);
+		self::assertStringContainsString('ATTENDEE', $ics);
+		self::assertStringContainsString('ORGANIZER:mailto:ops@example.nl', $ics);
 
+	}//end testEmbedsContextProperties()
 
-    /**
-     * VTIMEZONE block is emitted with the resolved TZID.
-     */
-    public function testEmitsVtimezoneBlock(): void
-    {
-        $ics = $this->buildService('Europe/Amsterdam')->generateIcs(
-            appointment: [
-                'appointmentId' => 'apt-001',
-                'startTime'     => '2026-05-22T12:30:00Z',
-                'endTime'       => '2026-05-22T13:00:00Z',
-            ],
-            customer: ['userId' => 'jan', 'email' => 'jan@example.nl'],
-            confirmUrl: 'https://example.nl/confirm/apt-001?token=xyz',
-        );
+	/**
+	 * Special characters (comma, semicolon, newline) in text fields are
+	 * escaped per RFC 5545 §3.3.11.
+	 */
+	public function testEscapesSpecialCharacters(): void {
+		$ics = $this->buildService()->generateIcs(
+			appointment: [
+				'appointmentId' => 'apt-001',
+				'startTime' => '2026-05-22T12:30:00Z',
+				'endTime' => '2026-05-22T13:00:00Z',
+				'notes' => "Please, bring;\nyour ID.",
+			],
+			customer: ['email' => 'jan@example.nl'],
+			confirmUrl: 'https://example.nl/confirm/apt-001?token=xyz',
+			context: ['serviceName' => 'Intake; consultation, plus'],
+		);
 
-        self::assertStringContainsString('BEGIN:VTIMEZONE', $ics);
-        self::assertStringContainsString('TZID:Europe/Amsterdam', $ics);
-        self::assertStringContainsString('END:VTIMEZONE', $ics);
+		self::assertStringContainsString('SUMMARY:Intake\\; consultation\\, plus', $ics);
+		self::assertStringContainsString('DESCRIPTION:Please\\, bring\\;\\nyour ID.', $ics);
 
-    }//end testEmitsVtimezoneBlock()
+	}//end testEscapesSpecialCharacters()
 
+	/**
+	 * Unparseable startTime / endTime returns an empty ICS — the caller
+	 * decides whether to dispatch.
+	 */
+	public function testReturnsEmptyOnUnparseableTimes(): void {
+		$ics = $this->buildService()->generateIcs(
+			appointment: ['appointmentId' => 'apt-001', 'startTime' => 'not a date', 'endTime' => 'also not'],
+			customer: ['email' => 'jan@example.nl'],
+			confirmUrl: 'https://example.nl/confirm/apt-001?token=xyz',
+		);
+		self::assertSame('', $ics);
 
-    /**
-     * SUMMARY, ATTACH and URL properties reference the supplied context.
-     */
-    public function testEmbedsContextProperties(): void
-    {
-        $ics = $this->buildService()->generateIcs(
-            appointment: [
-                'appointmentId' => 'apt-001',
-                'startTime'     => '2026-05-22T12:30:00Z',
-                'endTime'       => '2026-05-22T13:00:00Z',
-                'notes'         => 'Wheelchair access required.',
-            ],
-            customer: ['userId' => 'jan', 'email' => 'jan@example.nl', 'name' => 'Jan'],
-            confirmUrl: 'https://example.nl/confirm/apt-001?token=xyz',
-            context: ['serviceName' => 'Intake consultation', 'location' => 'Room A', 'organizerEmail' => 'ops@example.nl'],
-        );
-
-        self::assertStringContainsString('SUMMARY:Intake consultation', $ics);
-        self::assertStringContainsString('LOCATION:Room A', $ics);
-        self::assertStringContainsString('DESCRIPTION:Wheelchair access required.', $ics);
-        self::assertStringContainsString('ATTACH;FMTTYPE=text/calendar:https://example.nl/confirm/apt-001?token=xyz', $ics);
-        self::assertStringContainsString('URL:https://example.nl/confirm/apt-001?token=xyz', $ics);
-        self::assertStringContainsString('ATTENDEE', $ics);
-        self::assertStringContainsString('ORGANIZER:mailto:ops@example.nl', $ics);
-
-    }//end testEmbedsContextProperties()
-
-
-    /**
-     * Special characters (comma, semicolon, newline) in text fields are
-     * escaped per RFC 5545 §3.3.11.
-     */
-    public function testEscapesSpecialCharacters(): void
-    {
-        $ics = $this->buildService()->generateIcs(
-            appointment: [
-                'appointmentId' => 'apt-001',
-                'startTime'     => '2026-05-22T12:30:00Z',
-                'endTime'       => '2026-05-22T13:00:00Z',
-                'notes'         => "Please, bring;\nyour ID.",
-            ],
-            customer: ['email' => 'jan@example.nl'],
-            confirmUrl: 'https://example.nl/confirm/apt-001?token=xyz',
-            context: ['serviceName' => 'Intake; consultation, plus'],
-        );
-
-        self::assertStringContainsString('SUMMARY:Intake\\; consultation\\, plus', $ics);
-        self::assertStringContainsString('DESCRIPTION:Please\\, bring\\;\\nyour ID.', $ics);
-
-    }//end testEscapesSpecialCharacters()
-
-
-    /**
-     * Unparseable startTime / endTime returns an empty ICS — the caller
-     * decides whether to dispatch.
-     */
-    public function testReturnsEmptyOnUnparseableTimes(): void
-    {
-        $ics = $this->buildService()->generateIcs(
-            appointment: ['appointmentId' => 'apt-001', 'startTime' => 'not a date', 'endTime' => 'also not'],
-            customer: ['email' => 'jan@example.nl'],
-            confirmUrl: 'https://example.nl/confirm/apt-001?token=xyz',
-        );
-        self::assertSame('', $ics);
-
-    }//end testReturnsEmptyOnUnparseableTimes()
-
+	}//end testReturnsEmptyOnUnparseableTimes()
 
 }//end class

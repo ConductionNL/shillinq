@@ -39,72 +39,70 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookings-deposits/spec.md
  * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
-class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface
-{
-    /**
-     * Construct the log-backed Mollie adapter.
-     *
-     * @param LoggerInterface $logger Structured logger.
-     */
-    public function __construct(private readonly LoggerInterface $logger)
-    {
-    }//end __construct()
+class LogMolliePaymentAdapter implements MolliePaymentAdapterInterface {
+	/**
+	 * Construct the log-backed Mollie adapter.
+	 *
+	 * @param LoggerInterface $logger Structured logger.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Log the intent + synthesise a PAYMENT_DEFERRED result.
-     *
-     * The payment payload is logged in full minus the redirect /
-     * webhook URLs (which may carry tenant-scoped tokens). The
-     * customer-side `description` may surface an invoice number; we
-     * keep it because the audit trail needs it to correlate the
-     * dormant intent back to a Shillinq record once the live binding
-     * is provisioned.
-     *
-     * @param array<string,mixed> $payload Payment envelope.
-     *
-     * @return MolliePaymentResult The dispatch outcome.
-     *
-     * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
-     */
-    public function createPayment(array $payload): MolliePaymentResult
-    {
-        $sanitised = $payload;
-        unset($sanitised['redirectUrl'], $sanitised['webhookUrl']);
+	/**
+	 * Log the intent + synthesise a PAYMENT_DEFERRED result.
+	 *
+	 * The payment payload is logged in full minus the redirect /
+	 * webhook URLs (which may carry tenant-scoped tokens). The
+	 * customer-side `description` may surface an invoice number; we
+	 * keep it because the audit trail needs it to correlate the
+	 * dormant intent back to a Shillinq record once the live binding
+	 * is provisioned.
+	 *
+	 * @param array<string,mixed> $payload Payment envelope.
+	 *
+	 * @return MolliePaymentResult The dispatch outcome.
+	 *
+	 * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
+	 */
+	public function createPayment(array $payload): MolliePaymentResult {
+		$sanitised = $payload;
+		unset($sanitised['redirectUrl'], $sanitised['webhookUrl']);
 
-        $mollieId = 'tr_log_'.bin2hex(random_bytes(7));
-        $this->logger->info(
-            'Shillinq Mollie createPayment deferred (no outbound connector bound)',
-            [
-                'molliePaymentId' => $mollieId,
-                'payload'         => $sanitised,
-            ]
-        );
+		$mollieId = 'tr_log_' . bin2hex(random_bytes(7));
+		$this->logger->info(
+			'Shillinq Mollie createPayment deferred (no outbound connector bound)',
+			[
+				'molliePaymentId' => $mollieId,
+				'payload' => $sanitised,
+			]
+		);
 
-        return new MolliePaymentResult(
-            paymentStatus: 'PAYMENT_DEFERRED',
-            molliePaymentId: $mollieId,
-            checkoutUrl: '',
-            dormant: true,
-            extras: [
-                'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `mollie-payments` (Mollie Payments API v2, '
-                    .'per-tenant API key + webhook HMAC secret) and override MolliePaymentAdapterInterface '
-                    .'in Application::register() to enable real transport.',
-            ],
-        );
-    }//end createPayment()
+		return new MolliePaymentResult(
+			paymentStatus: 'PAYMENT_DEFERRED',
+			molliePaymentId: $mollieId,
+			checkoutUrl: '',
+			dormant: true,
+			extras: [
+				'reason' => 'no-outbound-connector-bound',
+				'note' => 'Bind openconnector source slug `mollie-payments` (Mollie Payments API v2, '
+					. 'per-tenant API key + webhook HMAC secret) and override MolliePaymentAdapterInterface '
+					. 'in Application::register() to enable real transport.',
+			],
+		);
+	}//end createPayment()
 
-    /**
-     * Report whether this adapter is dormant.
-     *
-     * @return bool True when no outbound connector is bound.
-     *
-     * @inheritDoc
-     *
-     * @spec openspec/specs/bookings-deposits/spec.md
-     */
-    public function isDormant(): bool
-    {
-        return true;
-    }//end isDormant()
+	/**
+	 * Report whether this adapter is dormant.
+	 *
+	 * @return bool True when no outbound connector is bound.
+	 *
+	 * @inheritDoc
+	 *
+	 * @spec openspec/specs/bookings-deposits/spec.md
+	 */
+	public function isDormant(): bool {
+		return true;
+	}//end isDormant()
 }//end class

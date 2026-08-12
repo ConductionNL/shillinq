@@ -31,98 +31,93 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for the idempotent statement-manifest import (REQ-FS-002).
  */
-class StatementManifestServiceTest extends TestCase
-{
+class StatementManifestServiceTest extends TestCase {
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * The service under test.
-     *
-     * @var StatementManifestService
-     */
-    private StatementManifestService $service;
+	/**
+	 * The service under test.
+	 *
+	 * @var StatementManifestService
+	 */
+	private StatementManifestService $service;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
-        $logger          = $this->createMock(originalClassName: LoggerInterface::class);
+		$this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 
-        $this->service = new StatementManifestService(
-            appConfig: $this->appConfig,
-            logger: $logger,
-        );
+		$this->service = new StatementManifestService(
+			appConfig: $this->appConfig,
+			logger: $logger,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Import() writes all three manifests when no config exists.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-financial-statements/spec.md (REQ-FS-002)
-     */
-    public function testImportImportsAllWhenAbsent(): void
-    {
-        $this->appConfig->method('getValueString')->willReturn('');
-        $this->appConfig->expects($this->exactly(count: 3))->method('setValueString');
+	/**
+	 * Import() writes all three manifests when no config exists.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-financial-statements/spec.md (REQ-FS-002)
+	 */
+	public function testImportImportsAllWhenAbsent(): void {
+		$this->appConfig->method('getValueString')->willReturn('');
+		$this->appConfig->expects($this->exactly(count: 3))->method('setValueString');
 
-        $result = $this->service->import();
+		$result = $this->service->import();
 
-        self::assertTrue(condition: $result['success']);
-        self::assertSame(expected: 3, actual: $result['imported']);
-        self::assertSame(expected: 0, actual: $result['skipped']);
+		self::assertTrue(condition: $result['success']);
+		self::assertSame(expected: 3, actual: $result['imported']);
+		self::assertSame(expected: 0, actual: $result['skipped']);
 
-    }//end testImportImportsAllWhenAbsent()
+	}//end testImportImportsAllWhenAbsent()
 
-    /**
-     * Import() preserves operator edits — skips keys that already exist.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-financial-statements/spec.md (REQ-FS-002)
-     */
-    public function testImportSkipsExistingWithoutForce(): void
-    {
-        $this->appConfig->method('getValueString')->willReturn('{"_meta":{},"sections":[]}');
-        $this->appConfig->expects($this->never())->method('setValueString');
+	/**
+	 * Import() preserves operator edits — skips keys that already exist.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-financial-statements/spec.md (REQ-FS-002)
+	 */
+	public function testImportSkipsExistingWithoutForce(): void {
+		$this->appConfig->method('getValueString')->willReturn('{"_meta":{},"sections":[]}');
+		$this->appConfig->expects($this->never())->method('setValueString');
 
-        $result = $this->service->import();
+		$result = $this->service->import();
 
-        self::assertTrue(condition: $result['success']);
-        self::assertSame(expected: 0, actual: $result['imported']);
-        self::assertSame(expected: 3, actual: $result['skipped']);
+		self::assertTrue(condition: $result['success']);
+		self::assertSame(expected: 0, actual: $result['imported']);
+		self::assertSame(expected: 3, actual: $result['skipped']);
 
-    }//end testImportSkipsExistingWithoutForce()
+	}//end testImportSkipsExistingWithoutForce()
 
-    /**
-     * ImportForced() re-imports existing keys, overwriting operator edits.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-financial-statements/spec.md (REQ-FS-002)
-     */
-    public function testImportForcedReimports(): void
-    {
-        $this->appConfig->method('getValueString')->willReturn('{"_meta":{},"sections":[]}');
-        $this->appConfig->expects($this->exactly(count: 3))->method('setValueString');
+	/**
+	 * ImportForced() re-imports existing keys, overwriting operator edits.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/add-shillinq-bookkeeping-compliance/specs/bookkeeping-financial-statements/spec.md (REQ-FS-002)
+	 */
+	public function testImportForcedReimports(): void {
+		$this->appConfig->method('getValueString')->willReturn('{"_meta":{},"sections":[]}');
+		$this->appConfig->expects($this->exactly(count: 3))->method('setValueString');
 
-        $result = $this->service->importForced();
+		$result = $this->service->importForced();
 
-        self::assertTrue(condition: $result['success']);
-        self::assertSame(expected: 3, actual: $result['imported']);
+		self::assertTrue(condition: $result['success']);
+		self::assertSame(expected: 3, actual: $result['imported']);
 
-    }//end testImportForcedReimports()
+	}//end testImportForcedReimports()
 }//end class

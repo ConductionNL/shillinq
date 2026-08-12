@@ -48,47 +48,45 @@ use InvalidArgumentException;
  *
  * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
  */
-class LotTrackingReceiptGuard
-{
-    /**
-     * Validate a GoodsReceipt save against the lot-tracking requirement.
-     *
-     * @param array<string,mixed>            $receipt Save payload of the GoodsReceipt.
-     * @param array<string,mixed>|null       $product Product master record for the receipt SKU (null = not found).
-     * @param array<int,array<string,mixed>> $lots    InventoryLot records referencing this receipt's id.
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When the product requires lot tracking and no lot is supplied.
-     *
-     * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
-     */
-    public function validate(array $receipt, ?array $product, array $lots): void
-    {
-        if ($product === null) {
-            // Unknown product — leave to the existing FK validator; not our concern.
-            return;
-        }
+class LotTrackingReceiptGuard {
+	/**
+	 * Validate a GoodsReceipt save against the lot-tracking requirement.
+	 *
+	 * @param array<string,mixed> $receipt Save payload of the GoodsReceipt.
+	 * @param array<string,mixed>|null $product Product master record for the receipt SKU (null = not found).
+	 * @param array<int,array<string,mixed>> $lots InventoryLot records referencing this receipt's id.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the product requires lot tracking and no lot is supplied.
+	 *
+	 * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
+	 */
+	public function validate(array $receipt, ?array $product, array $lots): void {
+		if ($product === null) {
+			// Unknown product — leave to the existing FK validator; not our concern.
+			return;
+		}
 
-        $requiresLot = (bool) ($product['requiresLotTracking'] ?? false);
-        if ($requiresLot === false) {
-            return;
-        }
+		$requiresLot = (bool)($product['requiresLotTracking'] ?? false);
+		if ($requiresLot === false) {
+			return;
+		}
 
-        $sku = (string) ($receipt['sku'] ?? '');
-        foreach ($lots as $lot) {
-            $lotSku = (string) ($lot['productSku'] ?? '');
-            if ($lotSku === $sku && $lotSku !== '') {
-                return;
-            }
-        }
+		$sku = (string)($receipt['sku'] ?? '');
+		foreach ($lots as $lot) {
+			$lotSku = (string)($lot['productSku'] ?? '');
+			if ($lotSku === $sku && $lotSku !== '') {
+				return;
+			}
+		}
 
-        throw new InvalidArgumentException(
-            sprintf(
-                'Lot number required for tracked item: Product "%s" has requiresLotTracking=true; receipt MUST reference an InventoryLot.',
-                $sku
-            )
-        );
+		throw new InvalidArgumentException(
+			sprintf(
+				'Lot number required for tracked item: Product "%s" has requiresLotTracking=true; receipt MUST reference an InventoryLot.',
+				$sku
+			)
+		);
 
-    }//end validate()
+	}//end validate()
 }//end class

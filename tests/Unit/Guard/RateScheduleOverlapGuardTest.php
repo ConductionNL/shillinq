@@ -31,202 +31,192 @@ use Psr\Log\LoggerInterface;
 /**
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class RateScheduleOverlapGuardTest extends TestCase
-{
-    /**
-     * @param array<int,array<string,mixed>> $siblings RateSchedule rows.
-     *
-     * @return RateScheduleOverlapGuard
-     */
-    private function buildGuard(array $siblings): RateScheduleOverlapGuard
-    {
-        $stub = new class($siblings) {
-            /**
-             * @var array<int,array<string,mixed>>
-             */
-            private array $siblings;
+final class RateScheduleOverlapGuardTest extends TestCase {
+	/**
+	 * @param array<int,array<string,mixed>> $siblings RateSchedule rows.
+	 *
+	 * @return RateScheduleOverlapGuard
+	 */
+	private function buildGuard(array $siblings): RateScheduleOverlapGuard {
+		$stub = new class($siblings) {
+			/**
+			 * @var array<int,array<string,mixed>>
+			 */
+			private array $siblings;
 
-            /**
-             * @param array<int,array<string,mixed>> $siblings RateSchedule rows.
-             */
-            public function __construct(array $siblings)
-            {
-                $this->siblings = $siblings;
-            }//end __construct()
+			/**
+			 * @param array<int,array<string,mixed>> $siblings RateSchedule rows.
+			 */
+			public function __construct(array $siblings) {
+				$this->siblings = $siblings;
+			}//end __construct()
 
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            public function setSchema(string $schema): static
-            {
-                return $this;
-            }//end setSchema()
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
 
-            /**
-             * @param array<string,mixed> $params Query parameters.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $filters = ($params['filters'] ?? []);
-                return array_values(
-                    array_filter(
-                        $this->siblings,
-                        static function (array $row) use ($filters): bool {
-                            foreach ($filters as $key => $value) {
-                                if (($row[$key] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+			/**
+			 * @param array<string,mixed> $params Query parameters.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$filters = ($params['filters'] ?? []);
+				return array_values(
+					array_filter(
+						$this->siblings,
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-                            return true;
-                        }
-                    )
-                );
-            }//end findAll()
-        };
+							return true;
+						}
+					)
+				);
+			}//end findAll()
+		};
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturn($stub);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($stub);
 
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturn('shillinq');
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
 
-        return new RateScheduleOverlapGuard(
-            container: $container,
-            appConfig: $appConfig,
-            logger: $this->createMock(LoggerInterface::class),
-        );
+		return new RateScheduleOverlapGuard(
+			container: $container,
+			appConfig: $appConfig,
+			logger: $this->createMock(LoggerInterface::class),
+		);
 
-    }//end buildGuard()
+	}//end buildGuard()
 
-    /**
-     * Good path: no other active schedule for this tier/entity — no overlap.
-     *
-     * @return void
-     */
-    public function testReactivateAllowedWithNoSiblings(): void
-    {
-        $guard = $this->buildGuard([]);
+	/**
+	 * Good path: no other active schedule for this tier/entity — no overlap.
+	 *
+	 * @return void
+	 */
+	public function testReactivateAllowedWithNoSiblings(): void {
+		$guard = $this->buildGuard([]);
 
-        $allowed = $guard->requireNonOverlappingWindow(
-            [
-                'tier'             => 'user',
-                'entityId'         => 'user-alice',
-                'administrationId' => 'adm-1',
-                'effectiveDate'    => '2026-04-01',
-                'expiryDate'       => null,
-            ]
-        );
-        self::assertTrue($allowed);
+		$allowed = $guard->requireNonOverlappingWindow(
+			[
+				'tier' => 'user',
+				'entityId' => 'user-alice',
+				'administrationId' => 'adm-1',
+				'effectiveDate' => '2026-04-01',
+				'expiryDate' => null,
+			]
+		);
+		self::assertTrue($allowed);
 
-    }//end testReactivateAllowedWithNoSiblings()
+	}//end testReactivateAllowedWithNoSiblings()
 
-    /**
-     * Good path: sibling window ends before this one starts — no overlap.
-     *
-     * @return void
-     */
-    public function testReactivateAllowedWithNonOverlappingWindow(): void
-    {
-        $guard = $this->buildGuard(
-            [
-                [
-                    'id'               => 'rs-1',
-                    'tier'             => 'user',
-                    'entityId'         => 'user-alice',
-                    'administrationId' => 'adm-1',
-                    'status'           => 'active',
-                    'effectiveDate'    => '2026-01-01',
-                    'expiryDate'       => '2026-03-31',
-                ],
-            ]
-        );
+	/**
+	 * Good path: sibling window ends before this one starts — no overlap.
+	 *
+	 * @return void
+	 */
+	public function testReactivateAllowedWithNonOverlappingWindow(): void {
+		$guard = $this->buildGuard(
+			[
+				[
+					'id' => 'rs-1',
+					'tier' => 'user',
+					'entityId' => 'user-alice',
+					'administrationId' => 'adm-1',
+					'status' => 'active',
+					'effectiveDate' => '2026-01-01',
+					'expiryDate' => '2026-03-31',
+				],
+			]
+		);
 
-        $allowed = $guard->requireNonOverlappingWindow(
-            [
-                'id'               => 'rs-2',
-                'tier'             => 'user',
-                'entityId'         => 'user-alice',
-                'administrationId' => 'adm-1',
-                'effectiveDate'    => '2026-04-01',
-                'expiryDate'       => null,
-            ]
-        );
-        self::assertTrue($allowed);
+		$allowed = $guard->requireNonOverlappingWindow(
+			[
+				'id' => 'rs-2',
+				'tier' => 'user',
+				'entityId' => 'user-alice',
+				'administrationId' => 'adm-1',
+				'effectiveDate' => '2026-04-01',
+				'expiryDate' => null,
+			]
+		);
+		self::assertTrue($allowed);
 
-    }//end testReactivateAllowedWithNonOverlappingWindow()
+	}//end testReactivateAllowedWithNonOverlappingWindow()
 
-    /**
-     * Bad path: sibling window overlaps this one — deny reactivate.
-     *
-     * @return void
-     */
-    public function testReactivateDeniedWithOverlappingWindow(): void
-    {
-        $guard = $this->buildGuard(
-            [
-                [
-                    'id'               => 'rs-1',
-                    'tier'             => 'user',
-                    'entityId'         => 'user-alice',
-                    'administrationId' => 'adm-1',
-                    'status'           => 'active',
-                    'effectiveDate'    => '2026-01-01',
-                    'expiryDate'       => null,
-                ],
-            ]
-        );
+	/**
+	 * Bad path: sibling window overlaps this one — deny reactivate.
+	 *
+	 * @return void
+	 */
+	public function testReactivateDeniedWithOverlappingWindow(): void {
+		$guard = $this->buildGuard(
+			[
+				[
+					'id' => 'rs-1',
+					'tier' => 'user',
+					'entityId' => 'user-alice',
+					'administrationId' => 'adm-1',
+					'status' => 'active',
+					'effectiveDate' => '2026-01-01',
+					'expiryDate' => null,
+				],
+			]
+		);
 
-        $allowed = $guard->requireNonOverlappingWindow(
-            [
-                'id'               => 'rs-2',
-                'tier'             => 'user',
-                'entityId'         => 'user-alice',
-                'administrationId' => 'adm-1',
-                'effectiveDate'    => '2026-04-01',
-                'expiryDate'       => null,
-            ]
-        );
-        self::assertFalse($allowed);
+		$allowed = $guard->requireNonOverlappingWindow(
+			[
+				'id' => 'rs-2',
+				'tier' => 'user',
+				'entityId' => 'user-alice',
+				'administrationId' => 'adm-1',
+				'effectiveDate' => '2026-04-01',
+				'expiryDate' => null,
+			]
+		);
+		self::assertFalse($allowed);
 
-    }//end testReactivateDeniedWithOverlappingWindow()
+	}//end testReactivateDeniedWithOverlappingWindow()
 
-    /**
-     * Re-checking the SAME record (same id) does not self-collide.
-     *
-     * @return void
-     */
-    public function testReactivateAllowedWhenOnlyMatchIsSelf(): void
-    {
-        $guard = $this->buildGuard(
-            [
-                [
-                    'id'               => 'rs-1',
-                    'tier'             => 'user',
-                    'entityId'         => 'user-alice',
-                    'administrationId' => 'adm-1',
-                    'status'           => 'active',
-                    'effectiveDate'    => '2026-01-01',
-                    'expiryDate'       => null,
-                ],
-            ]
-        );
+	/**
+	 * Re-checking the SAME record (same id) does not self-collide.
+	 *
+	 * @return void
+	 */
+	public function testReactivateAllowedWhenOnlyMatchIsSelf(): void {
+		$guard = $this->buildGuard(
+			[
+				[
+					'id' => 'rs-1',
+					'tier' => 'user',
+					'entityId' => 'user-alice',
+					'administrationId' => 'adm-1',
+					'status' => 'active',
+					'effectiveDate' => '2026-01-01',
+					'expiryDate' => null,
+				],
+			]
+		);
 
-        $allowed = $guard->requireNonOverlappingWindow(
-            [
-                'id'               => 'rs-1',
-                'tier'             => 'user',
-                'entityId'         => 'user-alice',
-                'administrationId' => 'adm-1',
-                'effectiveDate'    => '2026-01-01',
-                'expiryDate'       => null,
-            ]
-        );
-        self::assertTrue($allowed);
+		$allowed = $guard->requireNonOverlappingWindow(
+			[
+				'id' => 'rs-1',
+				'tier' => 'user',
+				'entityId' => 'user-alice',
+				'administrationId' => 'adm-1',
+				'effectiveDate' => '2026-01-01',
+				'expiryDate' => null,
+			]
+		);
+		self::assertTrue($allowed);
 
-    }//end testReactivateAllowedWhenOnlyMatchIsSelf()
+	}//end testReactivateAllowedWhenOnlyMatchIsSelf()
 }//end class

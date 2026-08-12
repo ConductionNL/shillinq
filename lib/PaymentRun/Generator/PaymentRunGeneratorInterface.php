@@ -38,24 +38,23 @@ use OCA\Shillinq\PaymentRun\RenderedFile;
 /**
  * Contract for a single payment-run export-format generator.
  */
-interface PaymentRunGeneratorInterface
-{
-    /**
-     * The export format this generator produces: 'sepa-pain001' or 'csv'.
-     *
-     * @return string
-     */
-    public static function format(): string;
+interface PaymentRunGeneratorInterface {
+	/**
+	 * The export format this generator produces: 'sepa-pain001' or 'csv'.
+	 *
+	 * @return string
+	 */
+	public static function format(): string;
 
-    /**
-     * Render the bank file for the given (validated, approved) PaymentRun.
-     *
-     * @param array<string, mixed> $paymentRun The PaymentRun object array
-     *                                         (runNumber, executionDate,
-     *                                         debtorAccountIban, totalAmount,
-     *                                         currency, paymentLines[], ...).
-     *
-     * @return RenderedFile
-     */
-    public function render(array $paymentRun): RenderedFile;
+	/**
+	 * Render the bank file for the given (validated, approved) PaymentRun.
+	 *
+	 * @param array<string, mixed> $paymentRun The PaymentRun object array
+	 *                                         (runNumber, executionDate,
+	 *                                         debtorAccountIban, totalAmount,
+	 *                                         currency, paymentLines[], ...).
+	 *
+	 * @return RenderedFile
+	 */
+	public function render(array $paymentRun): RenderedFile;
 }//end interface

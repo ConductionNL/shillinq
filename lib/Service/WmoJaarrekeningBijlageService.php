@@ -45,244 +45,238 @@ use DateTimeZone;
  * Pre-existing debt (issue #506): early-return refactor and variable
  * renames deferred pending a dedicated pass.
  */
-class WmoJaarrekeningBijlageService
-{
-    /**
-     * Compose a WMO jaarrekening-bijlage for a fiscal year (REQ-WMO-004).
-     *
-     * @param array<string,mixed> $input Inputs (fiscalYear, administrationId, activities,
-     *                                   definitiefIkpByActivity, priorYearIkpByActivity?,
-     *                                   omzetByActivity, priorYearOmzetByActivity?,
-     *                                   abbByActivity?, manualOverridesByActivity?).
-     *
-     * @return array<string,mixed> Bijlage payload.
-     */
-    public function compose(array $input): array
-    {
-        $activities      = (array) $input['activities'];
-        $ikpByAct        = (array) $input['definitiefIkpByActivity'];
-        $priorIkpByAct   = (array) ($input['priorYearIkpByActivity'] ?? []);
-        $omzetByAct      = (array) $input['omzetByActivity'];
-        $priorOmzetByAct = (array) ($input['priorYearOmzetByActivity'] ?? []);
-        $abbByAct        = (array) ($input['abbByActivity'] ?? []);
-        $overridesByAct  = (array) ($input['manualOverridesByActivity'] ?? []);
+class WmoJaarrekeningBijlageService {
+	/**
+	 * Compose a WMO jaarrekening-bijlage for a fiscal year (REQ-WMO-004).
+	 *
+	 * @param array<string,mixed> $input Inputs (fiscalYear, administrationId, activities,
+	 *                                   definitiefIkpByActivity, priorYearIkpByActivity?,
+	 *                                   omzetByActivity, priorYearOmzetByActivity?,
+	 *                                   abbByActivity?, manualOverridesByActivity?).
+	 *
+	 * @return array<string,mixed> Bijlage payload.
+	 */
+	public function compose(array $input): array {
+		$activities = (array)$input['activities'];
+		$ikpByAct = (array)$input['definitiefIkpByActivity'];
+		$priorIkpByAct = (array)($input['priorYearIkpByActivity'] ?? []);
+		$omzetByAct = (array)$input['omzetByActivity'];
+		$priorOmzetByAct = (array)($input['priorYearOmzetByActivity'] ?? []);
+		$abbByAct = (array)($input['abbByActivity'] ?? []);
+		$overridesByAct = (array)($input['manualOverridesByActivity'] ?? []);
 
-        $rows           = [];
-        $compliantCount = 0;
-        $totalCount     = 0;
+		$rows = [];
+		$compliantCount = 0;
+		$totalCount = 0;
 
-        foreach ($activities as $activity) {
-            if (is_array($activity) === false) {
-                continue;
-            }
+		foreach ($activities as $activity) {
+			if (is_array($activity) === false) {
+				continue;
+			}
 
-            $activityId = (string) ($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
-            $code       = (string) ($activity['code'] ?? '');
-            $naam       = (string) ($activity['name'] ?? '');
+			$activityId = (string)($activity['id'] ?? $activity['_id'] ?? $activity['code'] ?? '');
+			$code = (string)($activity['code'] ?? '');
+			$naam = (string)($activity['name'] ?? '');
 
-            $ikp           = (array) ($ikpByAct[$activityId] ?? []);
-            $integraleCost = (float) ($ikp['totaleKosten'] ?? 0);
-            $omzet         = (float) ($omzetByAct[$activityId] ?? 0);
-            $ratio         = null;
-            if ($integraleCost > 0.0) {
-                $ratio = round(($omzet / $integraleCost), 4);
-            }
+			$ikp = (array)($ikpByAct[$activityId] ?? []);
+			$integraleCost = (float)($ikp['totaleKosten'] ?? 0);
+			$omzet = (float)($omzetByAct[$activityId] ?? 0);
+			$ratio = null;
+			if ($integraleCost > 0.0) {
+				$ratio = round(($omzet / $integraleCost), 4);
+			}
 
-            $compliant   = ($omzet >= $integraleCost);
-            $colorStatus = 'rood';
-            if ($compliant === true) {
-                $colorStatus = 'groen';
-            }
+			$compliant = ($omzet >= $integraleCost);
+			$colorStatus = 'rood';
+			if ($compliant === true) {
+				$colorStatus = 'groen';
+			}
 
-            $priorIkp   = (array) ($priorIkpByAct[$activityId] ?? []);
-            $priorCost  = (float) ($priorIkp['totaleKosten'] ?? 0);
-            $priorOmzet = (float) ($priorOmzetByAct[$activityId] ?? 0);
-            $priorRatio = null;
-            if ($priorCost > 0.0) {
-                $priorRatio = round(($priorOmzet / $priorCost), 4);
-            }
+			$priorIkp = (array)($priorIkpByAct[$activityId] ?? []);
+			$priorCost = (float)($priorIkp['totaleKosten'] ?? 0);
+			$priorOmzet = (float)($priorOmzetByAct[$activityId] ?? 0);
+			$priorRatio = null;
+			if ($priorCost > 0.0) {
+				$priorRatio = round(($priorOmzet / $priorCost), 4);
+			}
 
-            $abb           = (array) ($abbByAct[$activityId] ?? []);
-            $abbReferentie = null;
-            if ((bool) ($activity['isExempted'] ?? false) === true) {
-                $abbReferentie = (string) ($abb['kenmerk'] ?? $activity['exemptionBesluitId'] ?? '');
-            }
+			$abb = (array)($abbByAct[$activityId] ?? []);
+			$abbReferentie = null;
+			if ((bool)($activity['isExempted'] ?? false) === true) {
+				$abbReferentie = (string)($abb['kenmerk'] ?? $activity['exemptionBesluitId'] ?? '');
+			}
 
-            $rows[] = [
-                'commercialActivityId'        => $activityId,
-                'code'                        => $code,
-                'name'                        => $naam,
-                'revenue'                       => $omzet,
-                'integraleKostprijs'          => $integraleCost,
-                'kostendekkingsratio'         => $ratio,
-                'compliant'                   => $compliant,
-                'complianceColor'             => $colorStatus,
-                'priorYearOmzet'              => $priorOmzet,
-                'priorYearIntegraleKostprijs' => $priorCost,
-                'priorYearRatio'              => $priorRatio,
-                'abbReferentie'               => $abbReferentie,
-                'manualOverrides'             => (int) ($overridesByAct[$activityId] ?? 0),
-            ];
+			$rows[] = [
+				'commercialActivityId' => $activityId,
+				'code' => $code,
+				'name' => $naam,
+				'revenue' => $omzet,
+				'integraleKostprijs' => $integraleCost,
+				'kostendekkingsratio' => $ratio,
+				'compliant' => $compliant,
+				'complianceColor' => $colorStatus,
+				'priorYearOmzet' => $priorOmzet,
+				'priorYearIntegraleKostprijs' => $priorCost,
+				'priorYearRatio' => $priorRatio,
+				'abbReferentie' => $abbReferentie,
+				'manualOverrides' => (int)($overridesByAct[$activityId] ?? 0),
+			];
 
-            if ($compliant === true) {
-                $compliantCount++;
-            }
+			if ($compliant === true) {
+				$compliantCount++;
+			}
 
-            $totalCount++;
-        }//end foreach
+			$totalCount++;
+		}//end foreach
 
-        return [
-            'format'           => 'WMO-jaarrekening-bijlage-2024',
-            'fiscalYear'       => (string) $input['fiscalYear'],
-            'administrationId' => (string) $input['administrationId'],
-            'generatedAt'      => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
-            'activiteiten'     => $rows,
-            'samenvatting'     => [
-                'total'       => $totalCount,
-                'compliant'    => $compliantCount,
-                'nonCompliant' => ($totalCount - $compliantCount),
-            ],
-        ];
+		return [
+			'format' => 'WMO-jaarrekening-bijlage-2024',
+			'fiscalYear' => (string)$input['fiscalYear'],
+			'administrationId' => (string)$input['administrationId'],
+			'generatedAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
+			'activiteiten' => $rows,
+			'samenvatting' => [
+				'total' => $totalCount,
+				'compliant' => $compliantCount,
+				'nonCompliant' => ($totalCount - $compliantCount),
+			],
+		];
 
-    }//end compose()
+	}//end compose()
 
-    /**
-     * Aggregate compliance status (REQ-WMO-004 §validate).
-     *
-     * @param array<string,mixed> $bijlage The composed bijlage.
-     *
-     * @return array{compliant:int,nonCompliant:int,total:int,overallCompliant:bool}
-     */
-    public function summariseCompliance(array $bijlage): array
-    {
-        $compliant    = 0;
-        $nonCompliant = 0;
+	/**
+	 * Aggregate compliance status (REQ-WMO-004 §validate).
+	 *
+	 * @param array<string,mixed> $bijlage The composed bijlage.
+	 *
+	 * @return array{compliant:int,nonCompliant:int,total:int,overallCompliant:bool}
+	 */
+	public function summariseCompliance(array $bijlage): array {
+		$compliant = 0;
+		$nonCompliant = 0;
 
-        foreach ((array) ($bijlage['activiteiten'] ?? []) as $row) {
-            if (is_array($row) === false) {
-                continue;
-            }
+		foreach ((array)($bijlage['activiteiten'] ?? []) as $row) {
+			if (is_array($row) === false) {
+				continue;
+			}
 
-            if ((bool) ($row['compliant'] ?? false)) {
-                $compliant++;
-            } else {
-                $nonCompliant++;
-            }
-        }
+			if ((bool)($row['compliant'] ?? false)) {
+				$compliant++;
+			} else {
+				$nonCompliant++;
+			}
+		}
 
-        $total = ($compliant + $nonCompliant);
+		$total = ($compliant + $nonCompliant);
 
-        return [
-            'compliant'        => $compliant,
-            'nonCompliant'     => $nonCompliant,
-            'total'            => $total,
-            'overallCompliant' => ($nonCompliant === 0 && $total > 0),
-        ];
+		return [
+			'compliant' => $compliant,
+			'nonCompliant' => $nonCompliant,
+			'total' => $total,
+			'overallCompliant' => ($nonCompliant === 0 && $total > 0),
+		];
 
-    }//end summariseCompliance()
+	}//end summariseCompliance()
 
-    /**
-     * Render the WMO-bijlage as PDF-ready Markdown (REQ-WMO-004 §pdf).
-     *
-     * The actual PDF render is handled by the shared CashflowPdfRenderer / a
-     * future MdToPdf step; this returns the canonical Markdown source.
-     *
-     * @param array<string,mixed> $bijlage The composed bijlage.
-     *
-     * @return string Markdown source.
-     */
-    public function toMarkdown(array $bijlage): string
-    {
-        $lines   = [];
-        $lines[] = '# WMO-bijlage jaarrekening '.(string) ($bijlage['fiscalYear'] ?? '');
-        $lines[] = '';
-        $lines[] = '_Format: '.(string) ($bijlage['format'] ?? '').'_';
-        $lines[] = '';
-        $lines[] = '| Code | Naam | Omzet | Integrale Kostprijs | Ratio | Compliant | ABB |';
-        $lines[] = '|------|------|-------|---------------------|-------|-----------|-----|';
+	/**
+	 * Render the WMO-bijlage as PDF-ready Markdown (REQ-WMO-004 §pdf).
+	 *
+	 * The actual PDF render is handled by the shared CashflowPdfRenderer / a
+	 * future MdToPdf step; this returns the canonical Markdown source.
+	 *
+	 * @param array<string,mixed> $bijlage The composed bijlage.
+	 *
+	 * @return string Markdown source.
+	 */
+	public function toMarkdown(array $bijlage): string {
+		$lines = [];
+		$lines[] = '# WMO-bijlage jaarrekening ' . (string)($bijlage['fiscalYear'] ?? '');
+		$lines[] = '';
+		$lines[] = '_Format: ' . (string)($bijlage['format'] ?? '') . '_';
+		$lines[] = '';
+		$lines[] = '| Code | Naam | Omzet | Integrale Kostprijs | Ratio | Compliant | ABB |';
+		$lines[] = '|------|------|-------|---------------------|-------|-----------|-----|';
 
-        foreach ((array) ($bijlage['activiteiten'] ?? []) as $row) {
-            if (is_array($row) === false) {
-                continue;
-            }
+		foreach ((array)($bijlage['activiteiten'] ?? []) as $row) {
+			if (is_array($row) === false) {
+				continue;
+			}
 
-            $ratioText = '—';
-            if ($row['kostendekkingsratio'] !== null) {
-                $ratioText = (string) $row['kostendekkingsratio'];
-            }
+			$ratioText = '—';
+			if ($row['kostendekkingsratio'] !== null) {
+				$ratioText = (string)$row['kostendekkingsratio'];
+			}
 
-            $compliantText = 'rood';
-            if ((bool) ($row['compliant'] ?? false) === true) {
-                $compliantText = 'groen';
-            }
+			$compliantText = 'rood';
+			if ((bool)($row['compliant'] ?? false) === true) {
+				$compliantText = 'groen';
+			}
 
-            $lines[] = sprintf(
-                '| %s | %s | %.2f | %.2f | %s | %s | %s |',
-                (string) ($row['code'] ?? ''),
-                (string) ($row['name'] ?? ''),
-                (float) ($row['revenue'] ?? 0),
-                (float) ($row['integraleKostprijs'] ?? 0),
-                $ratioText,
-                $compliantText,
-                (string) ($row['abbReferentie'] ?? '—')
-            );
-        }//end foreach
+			$lines[] = sprintf(
+				'| %s | %s | %.2f | %.2f | %s | %s | %s |',
+				(string)($row['code'] ?? ''),
+				(string)($row['name'] ?? ''),
+				(float)($row['revenue'] ?? 0),
+				(float)($row['integraleKostprijs'] ?? 0),
+				$ratioText,
+				$compliantText,
+				(string)($row['abbReferentie'] ?? '—')
+			);
+		}//end foreach
 
-        $sam     = (array) ($bijlage['samenvatting'] ?? []);
-        $lines[] = '';
-        $lines[] = sprintf('**Samenvatting**: %d compliant / %d totaal', (int) ($sam['compliant'] ?? 0), (int) ($sam['total'] ?? 0));
+		$sam = (array)($bijlage['samenvatting'] ?? []);
+		$lines[] = '';
+		$lines[] = sprintf('**Samenvatting**: %d compliant / %d totaal', (int)($sam['compliant'] ?? 0), (int)($sam['total'] ?? 0));
 
-        return implode("\n", $lines);
+		return implode("\n", $lines);
+	}//end toMarkdown()
 
-    }//end toMarkdown()
+	/**
+	 * Render the WMO-bijlage as minimal SBR/XBRL-style XML (REQ-WMO-004 §xml).
+	 *
+	 * @param array<string,mixed> $bijlage The composed bijlage.
+	 *
+	 * @return string XML serialization.
+	 */
+	public function toXml(array $bijlage): string {
+		$fy = htmlspecialchars((string)($bijlage['fiscalYear'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
+		$administrationId = htmlspecialchars((string)($bijlage['administrationId'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
 
-    /**
-     * Render the WMO-bijlage as minimal SBR/XBRL-style XML (REQ-WMO-004 §xml).
-     *
-     * @param array<string,mixed> $bijlage The composed bijlage.
-     *
-     * @return string XML serialization.
-     */
-    public function toXml(array $bijlage): string
-    {
-        $fy = htmlspecialchars((string) ($bijlage['fiscalYear'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
-        $administrationId = htmlspecialchars((string) ($bijlage['administrationId'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8');
+		$rows = [];
+		foreach ((array)($bijlage['activiteiten'] ?? []) as $r) {
+			if (is_array($r) === false) {
+				continue;
+			}
 
-        $rows = [];
-        foreach ((array) ($bijlage['activiteiten'] ?? []) as $r) {
-            if (is_array($r) === false) {
-                continue;
-            }
+			$ratioAttr = '';
+			if ($r['kostendekkingsratio'] !== null) {
+				$ratioAttr = (string)$r['kostendekkingsratio'];
+			}
 
-            $ratioAttr = '';
-            if ($r['kostendekkingsratio'] !== null) {
-                $ratioAttr = (string) $r['kostendekkingsratio'];
-            }
+			$compliantAttr = 'false';
+			if ((bool)($r['compliant'] ?? false) === true) {
+				$compliantAttr = 'true';
+			}
 
-            $compliantAttr = 'false';
-            if ((bool) ($r['compliant'] ?? false) === true) {
-                $compliantAttr = 'true';
-            }
+			$rows[] = sprintf(
+				'  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s" abb="%s"/>',
+				htmlspecialchars((string)($r['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
+				(float)($r['revenue'] ?? 0),
+				(float)($r['integraleKostprijs'] ?? 0),
+				$ratioAttr,
+				$compliantAttr,
+				htmlspecialchars((string)($r['abbReferentie'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8')
+			);
+		}//end foreach
 
-            $rows[] = sprintf(
-                '  <Activiteit code="%s" omzet="%.2f" integraleKostprijs="%.2f" kostendekkingsratio="%s" compliant="%s" abb="%s"/>',
-                htmlspecialchars((string) ($r['code'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8'),
-                (float) ($r['revenue'] ?? 0),
-                (float) ($r['integraleKostprijs'] ?? 0),
-                $ratioAttr,
-                $compliantAttr,
-                htmlspecialchars((string) ($r['abbReferentie'] ?? ''), ENT_XML1 | ENT_QUOTES, 'UTF-8')
-            );
-        }//end foreach
+		$body = implode("\n", $rows);
 
-        $body = implode("\n", $rows);
-
-        return <<<XML
+		return <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
 <WMOJaarrekeningBijlage fiscalYear="{$fy}" administrationId="{$administrationId}">
 {$body}
 </WMOJaarrekeningBijlage>
 XML;
 
-    }//end toXml()
+	}//end toXml()
 }//end class

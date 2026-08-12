@@ -63,353 +63,339 @@ use Throwable;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-final class SigningConcludedListener implements IEventListener
-{
+final class SigningConcludedListener implements IEventListener {
 
-    /**
-     * Finance schemas that carry the document-signing consumer field set.
-     * Matched against the concluded event's subjectSchema, with a fallback
-     * scan when the schema is absent.
-     *
-     * @var array<string>
-     */
-    private const SUBJECT_SCHEMAS = ['ACMReport', 'AnnualReport', 'ManagementLetter'];
+	/**
+	 * Finance schemas that carry the document-signing consumer field set.
+	 * Matched against the concluded event's subjectSchema, with a fallback
+	 * scan when the schema is absent.
+	 *
+	 * @var array<string>
+	 */
+	private const SUBJECT_SCHEMAS = ['ACMReport', 'AnnualReport', 'ManagementLetter'];
 
-    /**
-     * Docudesk statuses that map to a terminal shillinq signingStatus. A
-     * `cancelled` request is, like an `expired` one, a non-completing terminal
-     * outcome that must not open the submission gate, so it maps to `expired`.
-     *
-     * @var array<string,string>
-     */
-    private const STATUS_MAP = [
-        'signed'    => 'signed',
-        'declined'  => 'declined',
-        'expired'   => 'expired',
-        'cancelled' => 'expired',
-    ];
+	/**
+	 * Docudesk statuses that map to a terminal shillinq signingStatus. A
+	 * `cancelled` request is, like an `expired` one, a non-completing terminal
+	 * outcome that must not open the submission gate, so it maps to `expired`.
+	 *
+	 * @var array<string,string>
+	 */
+	private const STATUS_MAP = [
+		'signed' => 'signed',
+		'declined' => 'declined',
+		'expired' => 'expired',
+		'cancelled' => 'expired',
+	];
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface       $container       DI container — OR ObjectService pulled
-     *                                                  lazily.
-     * @param SettingsService          $settingsService Shillinq settings (register slug).
-     * @param SigningDelegationService $signingService  The document-signing consumer service.
-     * @param LoggerInterface          $logger          Logger.
-     *
-     * @return void
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly SettingsService $settingsService,
-        private readonly SigningDelegationService $signingService,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — OR ObjectService pulled
+	 *                                      lazily.
+	 * @param SettingsService $settingsService Shillinq settings (register slug).
+	 * @param SigningDelegationService $signingService The document-signing consumer service.
+	 * @param LoggerInterface $logger Logger.
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly SettingsService $settingsService,
+		private readonly SigningDelegationService $signingService,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle a docudesk SigningConcludedEvent.
-     *
-     * Fail-soft: any error logs and returns; never bubbles back into docudesk's
-     * dispatch.
-     *
-     * @param Event $event The dispatched event.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        // Only react to the docudesk SigningConcludedEvent. Guarded by
-        // class_exists so the listener is inert when docudesk is absent.
-        if (class_exists(\OCA\DocuDesk\Event\SigningConcludedEvent::class) === false) {
-            return;
-        }
+	/**
+	 * Handle a docudesk SigningConcludedEvent.
+	 *
+	 * Fail-soft: any error logs and returns; never bubbles back into docudesk's
+	 * dispatch.
+	 *
+	 * @param Event $event The dispatched event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/shillinq-signing-via-events/specs/shillinq-delegate-signing/spec.md
+	 */
+	public function handle(Event $event): void {
+		// Only react to the docudesk SigningConcludedEvent. Guarded by
+		// class_exists so the listener is inert when docudesk is absent.
+		if (class_exists(\OCA\DocuDesk\Event\SigningConcludedEvent::class) === false) {
+			return;
+		}
 
-        if (($event instanceof \OCA\DocuDesk\Event\SigningConcludedEvent) === false) {
-            return;
-        }
+		if (($event instanceof \OCA\DocuDesk\Event\SigningConcludedEvent) === false) {
+			return;
+		}
 
-        try {
-            // Filter to shillinq-originated signing requests only.
-            if ($event->getSourceApp() !== 'shillinq') {
-                return;
-            }
+		try {
+			// Filter to shillinq-originated signing requests only.
+			if ($event->getSourceApp() !== 'shillinq') {
+				return;
+			}
 
-            $outcome = self::STATUS_MAP[$event->getStatus()] ?? null;
-            if ($outcome === null) {
-                // Unknown / non-terminal status — no projection.
-                return;
-            }
+			$outcome = self::STATUS_MAP[$event->getStatus()] ?? null;
+			if ($outcome === null) {
+				// Unknown / non-terminal status — no projection.
+				return;
+			}
 
-            $signingRequestRef = (string) $event->getSigningRequestId();
-            $subjectId         = $this->resolveSubjectId(event: $event);
-            if ($subjectId === '') {
-                $this->logger->info(
-                    'SigningConcludedListener: no subject id on concluded signing request (skipping)',
-                    ['signingRequestRef' => $signingRequestRef]
-                );
-                return;
-            }
+			$signingRequestRef = (string)$event->getSigningRequestId();
+			$subjectId = $this->resolveSubjectId(event: $event);
+			if ($subjectId === '') {
+				$this->logger->info(
+					'SigningConcludedListener: no subject id on concluded signing request (skipping)',
+					['signingRequestRef' => $signingRequestRef]
+				);
+				return;
+			}
 
-            $resolved = $this->resolveFinanceObject(event: $event, subjectId: $subjectId);
-            if ($resolved === null) {
-                $this->logger->info(
-                    'SigningConcludedListener: no matching finance object (skipping)',
-                    ['signingRequestRef' => $signingRequestRef, 'subjectId' => $subjectId]
-                );
-                return;
-            }
+			$resolved = $this->resolveFinanceObject(event: $event, subjectId: $subjectId);
+			if ($resolved === null) {
+				$this->logger->info(
+					'SigningConcludedListener: no matching finance object (skipping)',
+					['signingRequestRef' => $signingRequestRef, 'subjectId' => $subjectId]
+				);
+				return;
+			}
 
-            [$schema, $financeObject] = $resolved;
+			[$schema, $financeObject] = $resolved;
 
-            $signedDocumentRef = (string) $event->getSignedDocumentRef();
+			$signedDocumentRef = (string)$event->getSignedDocumentRef();
 
-            // Capture the accounting-consequence mutation so it can be persisted
-            // alongside the mirror. onSigningCallback owns the idempotency guard
-            // and fires the consequence exactly once on 'signed'; a repeated
-            // conclusion is a no-op and $consequence stays empty.
-            $consequence = [];
-            if ($signedDocumentRef !== '') {
-                $signedDocumentValue = $signedDocumentRef;
-            } else {
-                $signedDocumentValue = null;
-            }
+			// Capture the accounting-consequence mutation so it can be persisted
+			// alongside the mirror. onSigningCallback owns the idempotency guard
+			// and fires the consequence exactly once on 'signed'; a repeated
+			// conclusion is a no-op and $consequence stays empty.
+			$consequence = [];
+			if ($signedDocumentRef !== '') {
+				$signedDocumentValue = $signedDocumentRef;
+			} else {
+				$signedDocumentValue = null;
+			}
 
-            $updated = $this->signingService->onSigningCallback(
-                $financeObject,
-                $outcome,
-                $signingRequestRef,
-                null,
-                null,
-                $signedDocumentValue,
-                function (array $object) use ($schema, $outcome, &$consequence): array {
-                    $object      = $this->applyAccountingConsequence(schema: $schema, object: $object, outcome: $outcome);
-                    $consequence = $this->consequenceDelta(object: $object, outcome: $outcome);
-                    return $object;
-                },
-                // Activity object type for the REQ-RAP-006 `document_signed`
-                // event raised inside onSigningCallback(). This listener is the
-                // sole production caller, so omitting it here would leave that
-                // event permanently unemitted.
-                $schema,
-            );
+			$updated = $this->signingService->onSigningCallback(
+				$financeObject,
+				$outcome,
+				$signingRequestRef,
+				null,
+				null,
+				$signedDocumentValue,
+				function (array $object) use ($schema, $outcome, &$consequence): array {
+					$object = $this->applyAccountingConsequence(schema: $schema, object: $object, outcome: $outcome);
+					$consequence = $this->consequenceDelta(object: $object, outcome: $outcome);
+					return $object;
+				},
+				// Activity object type for the REQ-RAP-006 `document_signed`
+				// event raised inside onSigningCallback(). This listener is the
+				// sole production caller, so omitting it here would leave that
+				// event permanently unemitted.
+				$schema,
+			);
 
-            // Persist the mirror (signingRequestRef + signingStatus +
-            // signedDocumentRef) plus any local accounting-consequence delta
-            // (REQ-SIGN-006) through OR.
-            $updates = [
-                'signingRequestRef' => $updated['signingRequestRef'] ?? $signingRequestRef,
-                'signingStatus'     => $updated['signingStatus'] ?? $outcome,
-            ];
-            if (array_key_exists('signedDocumentRef', $updated) === true) {
-                $updates['signedDocumentRef'] = $updated['signedDocumentRef'];
-            }
+			// Persist the mirror (signingRequestRef + signingStatus +
+			// signedDocumentRef) plus any local accounting-consequence delta
+			// (REQ-SIGN-006) through OR.
+			$updates = [
+				'signingRequestRef' => $updated['signingRequestRef'] ?? $signingRequestRef,
+				'signingStatus' => $updated['signingStatus'] ?? $outcome,
+			];
+			if (array_key_exists('signedDocumentRef', $updated) === true) {
+				$updates['signedDocumentRef'] = $updated['signedDocumentRef'];
+			}
 
-            $this->persist(schema: $schema, id: $subjectId, updates: ($updates + $consequence));
+			$this->persist(schema: $schema, id: $subjectId, updates: ($updates + $consequence));
 
-            $this->logger->info(
-                    'SigningConcludedListener: outcome consumed',
-                    [
-                        'schema'            => $schema,
-                        'subjectId'         => $subjectId,
-                        'outcome'           => $outcome,
-                        'signingRequestRef' => $signingRequestRef,
-                    ]
-                    );
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'SigningConcludedListener: projection failed (fail-soft)',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->logger->info(
+				'SigningConcludedListener: outcome consumed',
+				[
+					'schema' => $schema,
+					'subjectId' => $subjectId,
+					'outcome' => $outcome,
+					'signingRequestRef' => $signingRequestRef,
+				]
+			);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'SigningConcludedListener: projection failed (fail-soft)',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Resolve the subject id from the concluded event — prefer the
-     * externalReference we sent on the request, fall back to subjectId.
-     *
-     * @param \OCA\DocuDesk\Event\SigningConcludedEvent $event The concluded event.
-     *
-     * @return string The subject id, or '' when none.
-     */
-    private function resolveSubjectId(\OCA\DocuDesk\Event\SigningConcludedEvent $event): string
-    {
-        $external = (string) $event->getExternalReference();
-        if ($external !== '') {
-            return $external;
-        }
+	/**
+	 * Resolve the subject id from the concluded event — prefer the
+	 * externalReference we sent on the request, fall back to subjectId.
+	 *
+	 * @param \OCA\DocuDesk\Event\SigningConcludedEvent $event The concluded event.
+	 *
+	 * @return string The subject id, or '' when none.
+	 */
+	private function resolveSubjectId(\OCA\DocuDesk\Event\SigningConcludedEvent $event): string {
+		$external = (string)$event->getExternalReference();
+		if ($external !== '') {
+			return $external;
+		}
 
-        return (string) ($event->getSubjectId() ?? '');
+		return (string)($event->getSubjectId() ?? '');
+	}//end resolveSubjectId()
 
-    }//end resolveSubjectId()
+	/**
+	 * Resolve the finance object the concluded signing request belongs to.
+	 *
+	 * Uses the event's subjectSchema when present; otherwise scans the known
+	 * document-signing subject schemas for the id.
+	 *
+	 * @param \OCA\DocuDesk\Event\SigningConcludedEvent $event The concluded event.
+	 * @param string $subjectId The finance object id.
+	 *
+	 * @return array{0:string,1:array<string,mixed>}|null [schema, object] or null.
+	 */
+	private function resolveFinanceObject(\OCA\DocuDesk\Event\SigningConcludedEvent $event, string $subjectId): ?array {
+		$hintedSchema = (string)($event->getSubjectSchema() ?? '');
 
-    /**
-     * Resolve the finance object the concluded signing request belongs to.
-     *
-     * Uses the event's subjectSchema when present; otherwise scans the known
-     * document-signing subject schemas for the id.
-     *
-     * @param \OCA\DocuDesk\Event\SigningConcludedEvent $event     The concluded event.
-     * @param string                                    $subjectId The finance object id.
-     *
-     * @return array{0:string,1:array<string,mixed>}|null [schema, object] or null.
-     */
-    private function resolveFinanceObject(\OCA\DocuDesk\Event\SigningConcludedEvent $event, string $subjectId): ?array
-    {
-        $hintedSchema = (string) ($event->getSubjectSchema() ?? '');
+		$schemas = self::SUBJECT_SCHEMAS;
+		if ($hintedSchema !== '') {
+			// Try the hinted schema first.
+			array_unshift($schemas, $hintedSchema);
+			$schemas = array_values(array_unique($schemas));
+		}
 
-        $schemas = self::SUBJECT_SCHEMAS;
-        if ($hintedSchema !== '') {
-            // Try the hinted schema first.
-            array_unshift($schemas, $hintedSchema);
-            $schemas = array_values(array_unique($schemas));
-        }
+		foreach ($schemas as $schema) {
+			$object = $this->findObject(schema: $schema, id: $subjectId);
+			if ($object !== null) {
+				return [$schema, $object];
+			}
+		}
 
-        foreach ($schemas as $schema) {
-            $object = $this->findObject(schema: $schema, id: $subjectId);
-            if ($object !== null) {
-                return [$schema, $object];
-            }
-        }
+		return null;
+	}//end resolveFinanceObject()
 
-        return null;
+	/**
+	 * Apply the local accounting consequence on a completed signature
+	 * (REQ-SIGN-006). The consequence stays in shillinq: on `signed` the finance
+	 * submission gate opens through the existing OR write path so the report
+	 * becomes submittable. On any non-signed outcome no gate opens.
+	 *
+	 * @param string $schema The finance schema.
+	 * @param array<string,mixed> $object The finance object (already carrying the mirror).
+	 * @param string $outcome 'signed' | 'declined' | 'expired'.
+	 *
+	 * @return array<string,mixed> The (possibly mutated) finance object.
+	 */
+	private function applyAccountingConsequence(string $schema, array $object, string $outcome): array {
+		if ($outcome !== 'signed') {
+			return $object;
+		}
 
-    }//end resolveFinanceObject()
+		// The accounting consequence opens the finance submission gate through
+		// the existing OR write path. shillinq owns no signing engine — it
+		// records the docudesk outcome and opens its own downstream gate
+		// (submission) exactly once.
+		$object['signedAt'] = gmdate('Y-m-d\TH:i:s\Z');
+		$object['submissionGateOpen'] = true;
 
-    /**
-     * Apply the local accounting consequence on a completed signature
-     * (REQ-SIGN-006). The consequence stays in shillinq: on `signed` the finance
-     * submission gate opens through the existing OR write path so the report
-     * becomes submittable. On any non-signed outcome no gate opens.
-     *
-     * @param string              $schema  The finance schema.
-     * @param array<string,mixed> $object  The finance object (already carrying the mirror).
-     * @param string              $outcome 'signed' | 'declined' | 'expired'.
-     *
-     * @return array<string,mixed> The (possibly mutated) finance object.
-     */
-    private function applyAccountingConsequence(string $schema, array $object, string $outcome): array
-    {
-        if ($outcome !== 'signed') {
-            return $object;
-        }
+		$this->logger->info(
+			'SigningConcludedListener: accounting consequence applied',
+			[
+				'schema' => $schema,
+				'outcome' => $outcome,
+			]
+		);
 
-        // The accounting consequence opens the finance submission gate through
-        // the existing OR write path. shillinq owns no signing engine — it
-        // records the docudesk outcome and opens its own downstream gate
-        // (submission) exactly once.
-        $object['signedAt']           = gmdate('Y-m-d\TH:i:s\Z');
-        $object['submissionGateOpen'] = true;
+		return $object;
+	}//end applyAccountingConsequence()
 
-        $this->logger->info(
-                'SigningConcludedListener: accounting consequence applied',
-                [
-                    'schema'  => $schema,
-                    'outcome' => $outcome,
-                ]
-                );
+	/**
+	 * Extract the accounting-consequence fields written by
+	 * {@see self::applyAccountingConsequence} so they can be persisted with the
+	 * mirror in a single OR write.
+	 *
+	 * @param array<string,mixed> $object The finance object after the consequence.
+	 * @param string $outcome 'signed' | 'declined' | 'expired'.
+	 *
+	 * @return array<string,mixed> The consequence delta (empty on non-signed).
+	 */
+	private function consequenceDelta(array $object, string $outcome): array {
+		if ($outcome !== 'signed') {
+			return [];
+		}
 
-        return $object;
+		$delta = [];
+		foreach (['signedAt', 'submissionGateOpen'] as $key) {
+			if (array_key_exists($key, $object) === true) {
+				$delta[$key] = $object[$key];
+			}
+		}
 
-    }//end applyAccountingConsequence()
+		return $delta;
+	}//end consequenceDelta()
 
-    /**
-     * Extract the accounting-consequence fields written by
-     * {@see self::applyAccountingConsequence} so they can be persisted with the
-     * mirror in a single OR write.
-     *
-     * @param array<string,mixed> $object  The finance object after the consequence.
-     * @param string              $outcome 'signed' | 'declined' | 'expired'.
-     *
-     * @return array<string,mixed> The consequence delta (empty on non-signed).
-     */
-    private function consequenceDelta(array $object, string $outcome): array
-    {
-        if ($outcome !== 'signed') {
-            return [];
-        }
+	/**
+	 * Find a finance object by id within a schema, returning a plain array.
+	 *
+	 * @param string $schema The schema slug.
+	 * @param string $id The object id.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findObject(string $schema, string $id): ?array {
+		try {
+			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+			$result = $objectService
+				->setRegister($this->settingsService->getRegisterSlug())
+				->setSchema($schema)
+				->find($id);
 
-        $delta = [];
-        foreach (['signedAt', 'submissionGateOpen'] as $key) {
-            if (array_key_exists($key, $object) === true) {
-                $delta[$key] = $object[$key];
-            }
-        }
+			return $this->toArray(result: $result);
+		} catch (Throwable $e) {
+			return null;
+		}
 
-        return $delta;
+	}//end findObject()
 
-    }//end consequenceDelta()
+	/**
+	 * Persist the mirror updates onto the finance object via OR.
+	 *
+	 * @param string $schema The schema slug.
+	 * @param string $id The object id.
+	 * @param array<string,mixed> $updates The fields to write.
+	 *
+	 * @return void
+	 */
+	private function persist(string $schema, string $id, array $updates): void {
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		$objectService
+			->setRegister($this->settingsService->getRegisterSlug())
+			->setSchema($schema)
+			->updateObject($id, $updates);
 
-    /**
-     * Find a finance object by id within a schema, returning a plain array.
-     *
-     * @param string $schema The schema slug.
-     * @param string $id     The object id.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function findObject(string $schema, string $id): ?array
-    {
-        try {
-            $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $result        = $objectService
-                ->setRegister($this->settingsService->getRegisterSlug())
-                ->setSchema($schema)
-                ->find($id);
+	}//end persist()
 
-            return $this->toArray(result: $result);
-        } catch (Throwable $e) {
-            return null;
-        }
+	/**
+	 * Normalise an OR find result to a plain array.
+	 *
+	 * @param mixed $result OR return value.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function toArray(mixed $result): ?array {
+		if (is_array($result) === true) {
+			return $result;
+		}
 
-    }//end findObject()
+		if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
+			$serialized = $result->jsonSerialize();
+			if (is_array($serialized) === true) {
+				return $serialized;
+			}
 
-    /**
-     * Persist the mirror updates onto the finance object via OR.
-     *
-     * @param string              $schema  The schema slug.
-     * @param string              $id      The object id.
-     * @param array<string,mixed> $updates The fields to write.
-     *
-     * @return void
-     */
-    private function persist(string $schema, string $id, array $updates): void
-    {
-        $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $objectService
-            ->setRegister($this->settingsService->getRegisterSlug())
-            ->setSchema($schema)
-            ->updateObject($id, $updates);
+			return null;
+		}
 
-    }//end persist()
-
-    /**
-     * Normalise an OR find result to a plain array.
-     *
-     * @param mixed $result OR return value.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function toArray(mixed $result): ?array
-    {
-        if (is_array($result) === true) {
-            return $result;
-        }
-
-        if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
-            $serialized = $result->jsonSerialize();
-            if (is_array($serialized) === true) {
-                return $serialized;
-            }
-
-            return null;
-        }
-
-        return null;
-
-    }//end toArray()
+		return null;
+	}//end toArray()
 }//end class

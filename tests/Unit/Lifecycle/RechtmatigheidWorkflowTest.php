@@ -57,518 +57,507 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class RechtmatigheidWorkflowTest extends TestCase
-{
+class RechtmatigheidWorkflowTest extends TestCase {
 
-    /**
-     * The decoded register fragment.
-     *
-     * @var array<string, mixed>
-     */
-    private array $fragment;
+	/**
+	 * The decoded register fragment.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private array $fragment;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Guard under test.
-     *
-     * @var RechtmatigheidGuard
-     */
-    private RechtmatigheidGuard $guard;
+	/**
+	 * Guard under test.
+	 *
+	 * @var RechtmatigheidGuard
+	 */
+	private RechtmatigheidGuard $guard;
 
-    /**
-     * Set up shared fixtures: fragment + guard.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up shared fixtures: fragment + guard.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-rechtmatigheidsverantwoording.json';
-        self::assertFileExists(filename: $fragmentPath, message: 'Fragment file must exist.');
+		$fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-rechtmatigheidsverantwoording.json';
+		self::assertFileExists(filename: $fragmentPath, message: 'Fragment file must exist.');
 
-        $raw = file_get_contents($fragmentPath);
-        self::assertNotFalse(condition: $raw, message: 'Fragment must be readable.');
+		$raw = file_get_contents($fragmentPath);
+		self::assertNotFalse(condition: $raw, message: 'Fragment must be readable.');
 
-        $decoded = json_decode($raw, true);
-        self::assertSame(
-            expected: JSON_ERROR_NONE,
-            actual: json_last_error(),
-            message: 'Fragment must be valid JSON.'
-        );
-        self::assertIsArray(actual: $decoded, message: 'Fragment must decode to an array.');
-        $this->fragment = $decoded;
+		$decoded = json_decode($raw, true);
+		self::assertSame(
+			expected: JSON_ERROR_NONE,
+			actual: json_last_error(),
+			message: 'Fragment must be valid JSON.'
+		);
+		self::assertIsArray(actual: $decoded, message: 'Fragment must decode to an array.');
+		$this->fragment = $decoded;
 
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->guard  = new RechtmatigheidGuard(logger: $this->logger);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->guard = new RechtmatigheidGuard(logger: $this->logger);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Resolve a schema by name from the fragment.
-     *
-     * @param string $name Schema name (e.g. 'Rechtmatigheidsbevinding').
-     *
-     * @return array<string, mixed> Decoded schema definition.
-     */
-    private function schema(string $name): array
-    {
-        $components = ($this->fragment['components'] ?? []);
-        $schemas    = ($components['schemas'] ?? []);
-        self::assertArrayHasKey(key: $name, array: $schemas, message: 'Fragment must declare schema: '.$name);
+	/**
+	 * Resolve a schema by name from the fragment.
+	 *
+	 * @param string $name Schema name (e.g. 'Rechtmatigheidsbevinding').
+	 *
+	 * @return array<string, mixed> Decoded schema definition.
+	 */
+	private function schema(string $name): array {
+		$components = ($this->fragment['components'] ?? []);
+		$schemas = ($components['schemas'] ?? []);
+		self::assertArrayHasKey(key: $name, array: $schemas, message: 'Fragment must declare schema: ' . $name);
 
-        return $schemas[$name];
+		return $schemas[$name];
+	}//end schema()
 
-    }//end schema()
+	/*
+	 * --------------------------------------------------------------
+	 * Task 11 — onBudgetOvershoot notification
+	 * --------------------------------------------------------------
+	 */
 
-    /*
-     * --------------------------------------------------------------
-     * Task 11 — onBudgetOvershoot notification
-     * --------------------------------------------------------------
-     */
+	/**
+	 * REQ-RV-001 — a begroting-fout bevinding wires up the portefeuillehouder
+	 * email notification declaratively (Task 11 handoff surface).
+	 *
+	 * GIVEN a Rechtmatigheidsbevinding is created with criterium=begroting +
+	 *       soort=fout and a non-zero bedrag_fout,
+	 * WHEN the fragment is loaded by the OpenRegister engine,
+	 * THEN the declarative `onBudgetOvershoot` notification fires for the
+	 *      affected portefeuillehouder with subject templates referencing
+	 *      the bevindingsnummer + programma + bedrag_fout.
+	 *
+	 * Asserted in the canonical ADR-031 dialect: `trigger` is an object
+	 * (`type` + `filter`), `recipients` is a list of `{kind: …}` entries,
+	 * `subject` is a per-locale map, and interpolation uses `{{prop}}`.
+	 * The legacy `object.create` / `condition` / `recipients.role` /
+	 * `@self.` shape this test used to pin is the one gate-18 rejects.
+	 *
+	 * @return void
+	 */
+	public function testBegrotingFoutTriggersOnBudgetOvershootNotification(): void {
+		$bevinding = $this->schema(name: 'Rechtmatigheidsbevinding');
+		$notifications = ($bevinding['x-openregister-notifications'] ?? []);
+		self::assertArrayHasKey(
+			key: 'onBudgetOvershoot',
+			array: $notifications,
+			message: 'Bevinding must declare onBudgetOvershoot notification (Task 11).'
+		);
 
-    /**
-     * REQ-RV-001 — a begroting-fout bevinding wires up the portefeuillehouder
-     * email notification declaratively (Task 11 handoff surface).
-     *
-     * GIVEN a Rechtmatigheidsbevinding is created with criterium=begroting +
-     *       soort=fout and a non-zero bedrag_fout,
-     * WHEN the fragment is loaded by the OpenRegister engine,
-     * THEN the declarative `onBudgetOvershoot` notification fires for the
-     *      affected portefeuillehouder with subject templates referencing
-     *      the bevindingsnummer + programma + bedrag_fout.
-     *
-     * Asserted in the canonical ADR-031 dialect: `trigger` is an object
-     * (`type` + `filter`), `recipients` is a list of `{kind: …}` entries,
-     * `subject` is a per-locale map, and interpolation uses `{{prop}}`.
-     * The legacy `object.create` / `condition` / `recipients.role` /
-     * `@self.` shape this test used to pin is the one gate-18 rejects.
-     *
-     * @return void
-     */
-    public function testBegrotingFoutTriggersOnBudgetOvershootNotification(): void
-    {
-        $bevinding   = $this->schema(name: 'Rechtmatigheidsbevinding');
-        $notifications = ($bevinding['x-openregister-notifications'] ?? []);
-        self::assertArrayHasKey(
-            key: 'onBudgetOvershoot',
-            array: $notifications,
-            message: 'Bevinding must declare onBudgetOvershoot notification (Task 11).'
-        );
+		$notif = $notifications['onBudgetOvershoot'];
+		$trigger = ($notif['trigger'] ?? []);
+		self::assertIsArray(
+			actual: $trigger,
+			message: 'trigger must be the canonical object form, not a legacy event string.'
+		);
+		self::assertSame(expected: 'created', actual: ($trigger['type'] ?? null));
+		self::assertTrue(condition: ($notif['enabled'] ?? false), message: 'Rule must be enabled.');
 
-        $notif   = $notifications['onBudgetOvershoot'];
-        $trigger = ($notif['trigger'] ?? []);
-        self::assertIsArray(
-            actual: $trigger,
-            message: 'trigger must be the canonical object form, not a legacy event string.'
-        );
-        self::assertSame(expected: 'created', actual: ($trigger['type'] ?? null));
-        self::assertTrue(condition: ($notif['enabled'] ?? false), message: 'Rule must be enabled.');
+		$filter = ($trigger['filter'] ?? []);
+		self::assertSame(expected: 'begroting', actual: ($filter['criterium'] ?? null));
+		self::assertSame(expected: 'fout', actual: ($filter['soort'] ?? null));
 
-        $filter = ($trigger['filter'] ?? []);
-        self::assertSame(expected: 'begroting', actual: ($filter['criterium'] ?? null));
-        self::assertSame(expected: 'fout', actual: ($filter['soort'] ?? null));
+		$groups = [];
+		foreach (($notif['recipients'] ?? []) as $recipient) {
+			if (($recipient['kind'] ?? '') === 'groups') {
+				$groups = array_merge($groups, ($recipient['groups'] ?? []));
+			}
+		}
 
-        $groups = [];
-        foreach (($notif['recipients'] ?? []) as $recipient) {
-            if (($recipient['kind'] ?? '') === 'groups') {
-                $groups = array_merge($groups, ($recipient['groups'] ?? []));
-            }
-        }
+		self::assertContains(
+			needle: 'portefeuillehouder',
+			haystack: $groups,
+			message: 'Notification must address the portefeuillehouder.'
+		);
 
-        self::assertContains(
-            needle: 'portefeuillehouder',
-            haystack: $groups,
-            message: 'Notification must address the portefeuillehouder.'
-        );
+		$subject = ($notif['subject'] ?? []);
+		self::assertIsArray(actual: $subject, message: 'subject must be a per-locale map.');
+		foreach (['nl', 'en'] as $locale) {
+			self::assertArrayHasKey(key: $locale, array: $subject);
+			self::assertStringContainsString(
+				needle: '{{bevindingsnummer}}',
+				haystack: (string)$subject[$locale],
+				message: 'Subject (' . $locale . ') must interpolate the bevindingsnummer.'
+			);
+			self::assertStringContainsString(
+				needle: '{{bedrag_fout}}',
+				haystack: (string)$subject[$locale],
+				message: 'Subject (' . $locale . ') must interpolate the bedrag_fout.'
+			);
+			self::assertStringContainsString(
+				needle: '{{programma}}',
+				haystack: (string)$subject[$locale],
+				message: 'Subject (' . $locale . ') must interpolate the programma.'
+			);
+			self::assertStringNotContainsString(
+				needle: '@self.',
+				haystack: (string)$subject[$locale],
+				message: 'Subject (' . $locale . ') must not use the legacy @self. token.'
+			);
+		}
 
-        $subject = ($notif['subject'] ?? []);
-        self::assertIsArray(actual: $subject, message: 'subject must be a per-locale map.');
-        foreach (['nl', 'en'] as $locale) {
-            self::assertArrayHasKey(key: $locale, array: $subject);
-            self::assertStringContainsString(
-                needle: '{{bevindingsnummer}}',
-                haystack: (string) $subject[$locale],
-                message: 'Subject ('.$locale.') must interpolate the bevindingsnummer.'
-            );
-            self::assertStringContainsString(
-                needle: '{{bedrag_fout}}',
-                haystack: (string) $subject[$locale],
-                message: 'Subject ('.$locale.') must interpolate the bedrag_fout.'
-            );
-            self::assertStringContainsString(
-                needle: '{{programma}}',
-                haystack: (string) $subject[$locale],
-                message: 'Subject ('.$locale.') must interpolate the programma.'
-            );
-            self::assertStringNotContainsString(
-                needle: '@self.',
-                haystack: (string) $subject[$locale],
-                message: 'Subject ('.$locale.') must not use the legacy @self. token.'
-            );
-        }
+	}//end testBegrotingFoutTriggersOnBudgetOvershootNotification()
 
-    }//end testBegrotingFoutTriggersOnBudgetOvershootNotification()
+	/*
+	 * --------------------------------------------------------------
+	 * Task 13 — procest workflow integration surface
+	 * --------------------------------------------------------------
+	 */
 
-    /*
-     * --------------------------------------------------------------
-     * Task 13 — procest workflow integration surface
-     * --------------------------------------------------------------
-     */
+	/**
+	 * REQ-RV-002 — manual toets in_behandeling/getoetst lifecycle is the
+	 * integration surface for procest task sync (Task 13 handoff).
+	 *
+	 * GIVEN a Rechtmatigheidstoets with toetstype=handmatig,
+	 * WHEN it transitions in_behandeling -> getoetst via the `afronden`
+	 *      transition (mirroring procest task completion),
+	 * THEN the guard accepts the transition when onderbouwing + bevinding are
+	 *      present, and rejects it otherwise — covering both the procest
+	 *      "task completed cleanly" and "task escalated without resolution"
+	 *      paths the live connector will replay.
+	 *
+	 * @return void
+	 */
+	public function testManualToetsLifecycleSurfacesProcestSync(): void {
+		$toetsSchema = $this->schema(name: 'Rechtmatigheidstoets');
+		$lifecycle = ($toetsSchema['x-openregister-lifecycle'] ?? []);
+		self::assertSame(
+			expected: 'in_behandeling',
+			actual: ($lifecycle['initialState'] ?? null),
+			message: 'Toets must start in_behandeling (procest task open).'
+		);
 
-    /**
-     * REQ-RV-002 — manual toets in_behandeling/getoetst lifecycle is the
-     * integration surface for procest task sync (Task 13 handoff).
-     *
-     * GIVEN a Rechtmatigheidstoets with toetstype=handmatig,
-     * WHEN it transitions in_behandeling -> getoetst via the `afronden`
-     *      transition (mirroring procest task completion),
-     * THEN the guard accepts the transition when onderbouwing + bevinding are
-     *      present, and rejects it otherwise — covering both the procest
-     *      "task completed cleanly" and "task escalated without resolution"
-     *      paths the live connector will replay.
-     *
-     * @return void
-     */
-    public function testManualToetsLifecycleSurfacesProcestSync(): void
-    {
-        $toetsSchema = $this->schema(name: 'Rechtmatigheidstoets');
-        $lifecycle   = ($toetsSchema['x-openregister-lifecycle'] ?? []);
-        self::assertSame(
-            expected: 'in_behandeling',
-            actual: ($lifecycle['initialState'] ?? null),
-            message: 'Toets must start in_behandeling (procest task open).'
-        );
+		$transitions = ($lifecycle['transitions'] ?? []);
+		self::assertArrayHasKey(key: 'afronden', array: $transitions);
+		self::assertSame(
+			expected: 'OCA\\Shillinq\\Lifecycle\\RechtmatigheidGuard::canFinaliseToets',
+			actual: ($transitions['afronden']['requires'] ?? null),
+			message: 'afronden transition must be gated by canFinaliseToets.'
+		);
 
-        $transitions = ($lifecycle['transitions'] ?? []);
-        self::assertArrayHasKey(key: 'afronden', array: $transitions);
-        self::assertSame(
-            expected: 'OCA\\Shillinq\\Lifecycle\\RechtmatigheidGuard::canFinaliseToets',
-            actual: ($transitions['afronden']['requires'] ?? null),
-            message: 'afronden transition must be gated by canFinaliseToets.'
-        );
+		// Procest "task escalated without resolution" replay — guard rejects.
+		$escalated = $this->guard->canFinaliseToets(
+			toets: [
+				'uitkomst' => 'voldoet_niet',
+				'onderbouwing' => 'Te kort.',
+				'rechtmatigheidsbevinding' => '',
+			]
+		);
+		self::assertFalse(
+			condition: $escalated,
+			message: 'Escalated procest task without resolution must be rejected on sync.'
+		);
 
-        // Procest "task escalated without resolution" replay — guard rejects.
-        $escalated = $this->guard->canFinaliseToets(
-            toets: [
-                'uitkomst'                 => 'voldoet_niet',
-                'onderbouwing'             => 'Te kort.',
-                'rechtmatigheidsbevinding' => '',
-            ]
-        );
-        self::assertFalse(
-            condition: $escalated,
-            message: 'Escalated procest task without resolution must be rejected on sync.'
-        );
+		// Procest "task completed cleanly" replay — guard accepts.
+		$completed = $this->guard->canFinaliseToets(
+			toets: [
+				'uitkomst' => 'voldoet_niet',
+				'onderbouwing' => 'Inkoopadviseur bevestigt dat de drempel niet is overschreden; clustering blijft onder EUR 221k.',
+				'rechtmatigheidsbevinding' => 'bev-77',
+			]
+		);
+		self::assertTrue(
+			condition: $completed,
+			message: 'Completed procest task with substantiated outcome must sync to getoetst.'
+		);
 
-        // Procest "task completed cleanly" replay — guard accepts.
-        $completed = $this->guard->canFinaliseToets(
-            toets: [
-                'uitkomst'                 => 'voldoet_niet',
-                'onderbouwing'             => 'Inkoopadviseur bevestigt dat de drempel niet is overschreden; clustering blijft onder EUR 221k.',
-                'rechtmatigheidsbevinding' => 'bev-77',
-            ]
-        );
-        self::assertTrue(
-            condition: $completed,
-            message: 'Completed procest task with substantiated outcome must sync to getoetst.'
-        );
+	}//end testManualToetsLifecycleSurfacesProcestSync()
 
-    }//end testManualToetsLifecycleSurfacesProcestSync()
+	/*
+	 * --------------------------------------------------------------
+	 * Task 14 — PO toets-inheritance + 10%-delta re-toetsing
+	 * --------------------------------------------------------------
+	 */
 
-    /*
-     * --------------------------------------------------------------
-     * Task 14 — PO toets-inheritance + 10%-delta re-toetsing
-     * --------------------------------------------------------------
-     */
+	/**
+	 * REQ-RV-008 — a factuur that matches its PO bedrag within +/-10% reuses
+	 * the PO toets-outcome; a > 10% delta forces re-toetsing (Task 14 handoff).
+	 *
+	 * GIVEN a Rechtmatigheidstoets recorded on PO bedrag 100k,
+	 * WHEN a factuur of 105k posts (within 10%),
+	 * THEN re-toetsing is not required and the guard accepts inheritance of
+	 *      the original onderbouwing without amendment.
+	 *
+	 * WHEN a factuur of 130k posts (> 10% delta),
+	 * THEN re-toetsing IS required: the inherited outcome stays voldoet_niet
+	 *      but the guard demands the updated onderbouwing wording.
+	 *
+	 * @return void
+	 */
+	public function testPoToetsInheritsWhenAmountWithinTenPercent(): void {
+		$poAmount = 100000.00;
+		$factuurClose = 105000.00;
+		$factuurDeviation = 130000.00;
 
-    /**
-     * REQ-RV-008 — a factuur that matches its PO bedrag within +/-10% reuses
-     * the PO toets-outcome; a > 10% delta forces re-toetsing (Task 14 handoff).
-     *
-     * GIVEN a Rechtmatigheidstoets recorded on PO bedrag 100k,
-     * WHEN a factuur of 105k posts (within 10%),
-     * THEN re-toetsing is not required and the guard accepts inheritance of
-     *      the original onderbouwing without amendment.
-     *
-     * WHEN a factuur of 130k posts (> 10% delta),
-     * THEN re-toetsing IS required: the inherited outcome stays voldoet_niet
-     *      but the guard demands the updated onderbouwing wording.
-     *
-     * @return void
-     */
-    public function testPoToetsInheritsWhenAmountWithinTenPercent(): void
-    {
-        $poAmount         = 100000.00;
-        $factuurClose     = 105000.00;
-        $factuurDeviation = 130000.00;
+		$deltaClose = (abs(($factuurClose - $poAmount)) / $poAmount);
+		$deltaDeviation = (abs(($factuurDeviation - $poAmount)) / $poAmount);
 
-        $deltaClose     = (abs(($factuurClose - $poAmount)) / $poAmount);
-        $deltaDeviation = (abs(($factuurDeviation - $poAmount)) / $poAmount);
+		self::assertLessThanOrEqual(
+			expected: 0.10,
+			actual: $deltaClose,
+			message: 'Factuur within 10% must short-circuit re-toetsing per REQ-RV-008.'
+		);
+		self::assertGreaterThan(
+			expected: 0.10,
+			actual: $deltaDeviation,
+			message: 'Factuur > 10% delta must trigger re-toetsing per REQ-RV-008.'
+		);
 
-        self::assertLessThanOrEqual(
-            expected: 0.10,
-            actual: $deltaClose,
-            message: 'Factuur within 10% must short-circuit re-toetsing per REQ-RV-008.'
-        );
-        self::assertGreaterThan(
-            expected: 0.10,
-            actual: $deltaDeviation,
-            message: 'Factuur > 10% delta must trigger re-toetsing per REQ-RV-008.'
-        );
+		// Inherited toets — long onderbouwing carries over verbatim.
+		$inherited = $this->guard->canFinaliseToets(
+			toets: [
+				'uitkomst' => 'voldoet_niet',
+				'onderbouwing' => 'Inheriting PO RV-toets PO-2026-441 (bedrag 100k); factuur 105k binnen 10% tolerantie.',
+				'rechtmatigheidsbevinding' => 'bev-200',
+			]
+		);
+		self::assertTrue(
+			condition: $inherited,
+			message: 'Within-tolerance factuur must accept inherited PO toets outcome.'
+		);
 
-        // Inherited toets — long onderbouwing carries over verbatim.
-        $inherited = $this->guard->canFinaliseToets(
-            toets: [
-                'uitkomst'                 => 'voldoet_niet',
-                'onderbouwing'             => 'Inheriting PO RV-toets PO-2026-441 (bedrag 100k); factuur 105k binnen 10% tolerantie.',
-                'rechtmatigheidsbevinding' => 'bev-200',
-            ]
-        );
-        self::assertTrue(
-            condition: $inherited,
-            message: 'Within-tolerance factuur must accept inherited PO toets outcome.'
-        );
+		// Re-toetsing — caller must supply the updated reasoning (>= 50 chars).
+		$retoetsedShort = $this->guard->canFinaliseToets(
+			toets: [
+				'uitkomst' => 'voldoet_niet',
+				'onderbouwing' => 'Wijkt af.',
+				'rechtmatigheidsbevinding' => 'bev-201',
+			]
+		);
+		self::assertFalse(
+			condition: $retoetsedShort,
+			message: 'Re-toetsing without updated onderbouwing must be denied.'
+		);
 
-        // Re-toetsing — caller must supply the updated reasoning (>= 50 chars).
-        $retoetsedShort = $this->guard->canFinaliseToets(
-            toets: [
-                'uitkomst'                 => 'voldoet_niet',
-                'onderbouwing'             => 'Wijkt af.',
-                'rechtmatigheidsbevinding' => 'bev-201',
-            ]
-        );
-        self::assertFalse(
-            condition: $retoetsedShort,
-            message: 'Re-toetsing without updated onderbouwing must be denied.'
-        );
+		$retoetsedFull = $this->guard->canFinaliseToets(
+			toets: [
+				'uitkomst' => 'voldoet_niet',
+				'onderbouwing' => 'Factuur 130k wijkt 30% af van PO 100k; herziene toets vereist conform REQ-RV-008.',
+				'rechtmatigheidsbevinding' => 'bev-201',
+			]
+		);
+		self::assertTrue(
+			condition: $retoetsedFull,
+			message: 'Re-toetsing with updated onderbouwing must be accepted.'
+		);
 
-        $retoetsedFull = $this->guard->canFinaliseToets(
-            toets: [
-                'uitkomst'                 => 'voldoet_niet',
-                'onderbouwing'             => 'Factuur 130k wijkt 30% af van PO 100k; herziene toets vereist conform REQ-RV-008.',
-                'rechtmatigheidsbevinding' => 'bev-201',
-            ]
-        );
-        self::assertTrue(
-            condition: $retoetsedFull,
-            message: 'Re-toetsing with updated onderbouwing must be accepted.'
-        );
+	}//end testPoToetsInheritsWhenAmountWithinTenPercent()
 
-    }//end testPoToetsInheritsWhenAmountWithinTenPercent()
+	/*
+	 * --------------------------------------------------------------
+	 * Task 17 — TenderNed integration short-circuit
+	 * --------------------------------------------------------------
+	 */
 
-    /*
-     * --------------------------------------------------------------
-     * Task 17 — TenderNed integration short-circuit
-     * --------------------------------------------------------------
-     */
+	/**
+	 * REQ-RV-007 — when a raamovereenkomst FK is present, the TenderNed lookup
+	 * is skipped because the framework is presumed pre-aanbesteed (Task 17).
+	 *
+	 * The Rechtmatigheidstoets schema must expose the `raamovereenkomst` FK as
+	 * an integration anchor for the OpenConnector–TenderNed adapter that will
+	 * land later. We verify the field is declared so the optional connector
+	 * can short-circuit the EU-aanbesteden check without an in-app refactor.
+	 *
+	 * @return void
+	 */
+	public function testTenderNedRaamovereenkomstShortCircuitsEUCheck(): void {
+		$toetsSchema = $this->schema(name: 'Rechtmatigheidstoets');
+		$properties = ($toetsSchema['properties'] ?? []);
 
-    /**
-     * REQ-RV-007 — when a raamovereenkomst FK is present, the TenderNed lookup
-     * is skipped because the framework is presumed pre-aanbesteed (Task 17).
-     *
-     * The Rechtmatigheidstoets schema must expose the `raamovereenkomst` FK as
-     * an integration anchor for the OpenConnector–TenderNed adapter that will
-     * land later. We verify the field is declared so the optional connector
-     * can short-circuit the EU-aanbesteden check without an in-app refactor.
-     *
-     * @return void
-     */
-    public function testTenderNedRaamovereenkomstShortCircuitsEUCheck(): void
-    {
-        $toetsSchema = $this->schema(name: 'Rechtmatigheidstoets');
-        $properties  = ($toetsSchema['properties'] ?? []);
+		self::assertArrayHasKey(
+			key: 'raamovereenkomst',
+			array: $properties,
+			message: 'Rechtmatigheidstoets must expose the raamovereenkomst FK (Task 17).'
+		);
+		self::assertArrayHasKey(
+			key: 'criterium',
+			array: $properties,
+			message: 'Rechtmatigheidstoets must expose the criterium enum.'
+		);
 
-        self::assertArrayHasKey(
-            key: 'raamovereenkomst',
-            array: $properties,
-            message: 'Rechtmatigheidstoets must expose the raamovereenkomst FK (Task 17).'
-        );
-        self::assertArrayHasKey(
-            key: 'criterium',
-            array: $properties,
-            message: 'Rechtmatigheidstoets must expose the criterium enum.'
-        );
+		$criteriumEnum = (($properties['criterium'] ?? [])['enum'] ?? []);
+		self::assertContains(
+			needle: 'europees_aanbesteden',
+			haystack: $criteriumEnum,
+			message: 'criterium enum must include europees_aanbesteden so the TenderNed connector can attach.'
+		);
 
-        $criteriumEnum = (($properties['criterium'] ?? [])['enum'] ?? []);
-        self::assertContains(
-            needle: 'europees_aanbesteden',
-            haystack: $criteriumEnum,
-            message: 'criterium enum must include europees_aanbesteden so the TenderNed connector can attach.'
-        );
+		// A toets carrying a raamovereenkomst + voldoet outcome must finalise
+		// without further onderbouwing — the short-circuit path.
+		$shortCircuit = $this->guard->canFinaliseToets(
+			toets: [
+				'uitkomst' => 'voldoet',
+				'raamovereenkomst' => 'ro-2024-12',
+			]
+		);
+		self::assertTrue(
+			condition: $shortCircuit,
+			message: 'Raamovereenkomst short-circuit must accept the toets without onderbouwing.'
+		);
 
-        // A toets carrying a raamovereenkomst + voldoet outcome must finalise
-        // without further onderbouwing — the short-circuit path.
-        $shortCircuit = $this->guard->canFinaliseToets(
-            toets: [
-                'uitkomst'         => 'voldoet',
-                'raamovereenkomst' => 'ro-2024-12',
-            ]
-        );
-        self::assertTrue(
-            condition: $shortCircuit,
-            message: 'Raamovereenkomst short-circuit must accept the toets without onderbouwing.'
-        );
+	}//end testTenderNedRaamovereenkomstShortCircuitsEUCheck()
 
-    }//end testTenderNedRaamovereenkomstShortCircuitsEUCheck()
+	/*
+	 * --------------------------------------------------------------
+	 * Task 22 — audit-export field-shape exposure
+	 * --------------------------------------------------------------
+	 */
 
-    /*
-     * --------------------------------------------------------------
-     * Task 22 — audit-export field-shape exposure
-     * --------------------------------------------------------------
-     */
+	/**
+	 * REQ-RV-004 — every field the audit-export endpoint will need is exposed
+	 * on the Rechtmatigheidstoets schema (Task 22 handoff).
+	 *
+	 * The dedicated CSV/XBRL endpoint is deferred (perf benchmarking + signed
+	 * envelope), but the data shape must be locked in so the live endpoint
+	 * can simply project these fields without a schema migration.
+	 *
+	 * @return void
+	 */
+	public function testAuditExportFieldShapeIsComplete(): void {
+		$toetsSchema = $this->schema(name: 'Rechtmatigheidstoets');
+		$properties = ($toetsSchema['properties'] ?? []);
 
-    /**
-     * REQ-RV-004 — every field the audit-export endpoint will need is exposed
-     * on the Rechtmatigheidstoets schema (Task 22 handoff).
-     *
-     * The dedicated CSV/XBRL endpoint is deferred (perf benchmarking + signed
-     * envelope), but the data shape must be locked in so the live endpoint
-     * can simply project these fields without a schema migration.
-     *
-     * @return void
-     */
-    public function testAuditExportFieldShapeIsComplete(): void
-    {
-        $toetsSchema = $this->schema(name: 'Rechtmatigheidstoets');
-        $properties  = ($toetsSchema['properties'] ?? []);
+		// OpenRegister auto-supplies the `id` field; the schema must expose
+		// every other column the audit-export needs to project verbatim.
+		$required = [
+			'journaalpost',
+			'criterium',
+			'uitkomst',
+			'toetsdatum',
+			'toetser',
+			'onderbouwing',
+			'amount_involved',
+			'bewijsstukken',
+			'rechtmatigheidsbevinding',
+			'regelverwijzing',
+		];
 
-        // OpenRegister auto-supplies the `id` field; the schema must expose
-        // every other column the audit-export needs to project verbatim.
-        $required = [
-            'journaalpost',
-            'criterium',
-            'uitkomst',
-            'toetsdatum',
-            'toetser',
-            'onderbouwing',
-            'amount_involved',
-            'bewijsstukken',
-            'rechtmatigheidsbevinding',
-            'regelverwijzing',
-        ];
+		foreach ($required as $field) {
+			self::assertArrayHasKey(
+				key: $field,
+				array: $properties,
+				message: 'Audit-export field missing on Rechtmatigheidstoets: ' . $field
+			);
+		}
 
-        foreach ($required as $field) {
-            self::assertArrayHasKey(
-                key: $field,
-                array: $properties,
-                message: 'Audit-export field missing on Rechtmatigheidstoets: '.$field
-            );
-        }
+		// The lifecycle is the per-transition audit anchor — OpenRegister
+		// records every state change to the immutable log.
+		self::assertArrayHasKey(
+			key: 'x-openregister-lifecycle',
+			array: $toetsSchema,
+			message: 'Rechtmatigheidstoets lifecycle drives the immutable audit log.'
+		);
 
-        // The lifecycle is the per-transition audit anchor — OpenRegister
-        // records every state change to the immutable log.
-        self::assertArrayHasKey(
-            key: 'x-openregister-lifecycle',
-            array: $toetsSchema,
-            message: 'Rechtmatigheidstoets lifecycle drives the immutable audit log.'
-        );
+	}//end testAuditExportFieldShapeIsComplete()
 
-    }//end testAuditExportFieldShapeIsComplete()
+	/*
+	 * --------------------------------------------------------------
+	 * Task 28 — quarterly report aggregation cutoff
+	 * --------------------------------------------------------------
+	 */
 
-    /*
-     * --------------------------------------------------------------
-     * Task 28 — quarterly report aggregation cutoff
-     * --------------------------------------------------------------
-     */
+	/**
+	 * REQ-RV-009 — the quarterly report aggregates openstaande bevindingen
+	 * (status != opgelost) per boekjaar (Task 28 handoff surface).
+	 *
+	 * The bespoke PDF endpoint is deferred but the aggregation shape that
+	 * feeds it (`foutenPerBoekjaar`) must be declared in the fragment so the
+	 * report renderer can simply read it.
+	 *
+	 * @return void
+	 */
+	public function testQuarterlyReportFiltersOpenstaandeBevindingen(): void {
+		$bevinding = $this->schema(name: 'Rechtmatigheidsbevinding');
+		$aggregations = ($bevinding['x-openregister-aggregations'] ?? []);
+		self::assertArrayHasKey(
+			key: 'foutenPerBoekjaar',
+			array: $aggregations,
+			message: 'Bevinding must declare foutenPerBoekjaar aggregation (Task 28).'
+		);
 
-    /**
-     * REQ-RV-009 — the quarterly report aggregates openstaande bevindingen
-     * (status != opgelost) per boekjaar (Task 28 handoff surface).
-     *
-     * The bespoke PDF endpoint is deferred but the aggregation shape that
-     * feeds it (`foutenPerBoekjaar`) must be declared in the fragment so the
-     * report renderer can simply read it.
-     *
-     * @return void
-     */
-    public function testQuarterlyReportFiltersOpenstaandeBevindingen(): void
-    {
-        $bevinding    = $this->schema(name: 'Rechtmatigheidsbevinding');
-        $aggregations = ($bevinding['x-openregister-aggregations'] ?? []);
-        self::assertArrayHasKey(
-            key: 'foutenPerBoekjaar',
-            array: $aggregations,
-            message: 'Bevinding must declare foutenPerBoekjaar aggregation (Task 28).'
-        );
+		$agg = $aggregations['foutenPerBoekjaar'];
+		self::assertSame(
+			expected: ['financialYear'],
+			actual: ($agg['groupBy'] ?? null),
+			message: 'foutenPerBoekjaar must group by boekjaar.'
+		);
+		self::assertSame(
+			expected: ['amount_error', 'amount_uncertainty'],
+			actual: ($agg['sum'] ?? null),
+			message: 'foutenPerBoekjaar must sum bedrag_fout + bedrag_onzekerheid.'
+		);
 
-        $agg = $aggregations['foutenPerBoekjaar'];
-        self::assertSame(
-            expected: ['financialYear'],
-            actual: ($agg['groupBy'] ?? null),
-            message: 'foutenPerBoekjaar must group by boekjaar.'
-        );
-        self::assertSame(
-            expected: ['amount_error', 'amount_uncertainty'],
-            actual: ($agg['sum'] ?? null),
-            message: 'foutenPerBoekjaar must sum bedrag_fout + bedrag_onzekerheid.'
-        );
+		// Status enum must allow the report to filter on != opgelost.
+		$statusEnum = ((($bevinding['properties'] ?? [])['status'] ?? [])['enum'] ?? []);
+		self::assertContains(
+			needle: 'opgelost',
+			haystack: $statusEnum,
+			message: 'Bevinding status enum must include opgelost for the != filter.'
+		);
+		self::assertContains(needle: 'open', haystack: $statusEnum);
+		self::assertContains(needle: 'in_behandeling', haystack: $statusEnum);
+		self::assertContains(needle: 'opgenomen_in_paragraaf', haystack: $statusEnum);
 
-        // Status enum must allow the report to filter on != opgelost.
-        $statusEnum = ((($bevinding['properties'] ?? [])['status'] ?? [])['enum'] ?? []);
-        self::assertContains(
-            needle: 'opgelost',
-            haystack: $statusEnum,
-            message: 'Bevinding status enum must include opgelost for the != filter.'
-        );
-        self::assertContains(needle: 'open', haystack: $statusEnum);
-        self::assertContains(needle: 'in_behandeling', haystack: $statusEnum);
-        self::assertContains(needle: 'opgenomen_in_paragraaf', haystack: $statusEnum);
+	}//end testQuarterlyReportFiltersOpenstaandeBevindingen()
 
-    }//end testQuarterlyReportFiltersOpenstaandeBevindingen()
+	/*
+	 * --------------------------------------------------------------
+	 * Task 29 — jaarrekening-export gate
+	 * --------------------------------------------------------------
+	 */
 
-    /*
-     * --------------------------------------------------------------
-     * Task 29 — jaarrekening-export gate
-     * --------------------------------------------------------------
-     */
+	/**
+	 * REQ-RV-006 — the bookkeeping-financial-statements export integration
+	 * may only consume a paragraaf in status definitief (Task 29 handoff).
+	 *
+	 * The cross-spec wiring lands with bookkeeping-financial-statements, but
+	 * the export gate is implemented today and must reject every
+	 * concept/vastgesteld_college/behandeld_raad status while accepting
+	 * definitief.
+	 *
+	 * @return void
+	 */
+	public function testJaarrekeningExportGateOnlyAcceptsDefinitief(): void {
+		foreach (['concept', 'vastgesteld_college', 'behandeld_raad'] as $blockedStatus) {
+			$result = $this->guard->canExportParagraaf(
+				paragraaf: ['status' => $blockedStatus, 'financialYear' => 2026]
+			);
+			self::assertFalse(
+				condition: $result,
+				message: 'Export must be denied for paragraaf in status ' . $blockedStatus
+			);
+		}
 
-    /**
-     * REQ-RV-006 — the bookkeeping-financial-statements export integration
-     * may only consume a paragraaf in status definitief (Task 29 handoff).
-     *
-     * The cross-spec wiring lands with bookkeeping-financial-statements, but
-     * the export gate is implemented today and must reject every
-     * concept/vastgesteld_college/behandeld_raad status while accepting
-     * definitief.
-     *
-     * @return void
-     */
-    public function testJaarrekeningExportGateOnlyAcceptsDefinitief(): void
-    {
-        foreach (['concept', 'vastgesteld_college', 'behandeld_raad'] as $blockedStatus) {
-            $result = $this->guard->canExportParagraaf(
-                paragraaf: ['status' => $blockedStatus, 'financialYear' => 2026]
-            );
-            self::assertFalse(
-                condition: $result,
-                message: 'Export must be denied for paragraaf in status '.$blockedStatus
-            );
-        }
+		$definitief = $this->guard->canExportParagraaf(
+			paragraaf: ['status' => 'definitief', 'financialYear' => 2026]
+		);
+		self::assertTrue(
+			condition: $definitief,
+			message: 'Export must be permitted for paragraaf in status definitief.'
+		);
 
-        $definitief = $this->guard->canExportParagraaf(
-            paragraaf: ['status' => 'definitief', 'financialYear' => 2026]
-        );
-        self::assertTrue(
-            condition: $definitief,
-            message: 'Export must be permitted for paragraaf in status definitief.'
-        );
+		// The paragraaf schema must also declare the four-state lifecycle so
+		// the financial-statements module can subscribe to status changes.
+		$paragraafSchema = $this->schema(name: 'Rechtmatigheidsparagraaf');
+		$statusEnum = ((($paragraafSchema['properties'] ?? [])['status'] ?? [])['enum'] ?? []);
+		self::assertSame(
+			expected: ['concept', 'vastgesteld_college', 'behandeld_raad', 'definitief'],
+			actual: $statusEnum,
+			message: 'Paragraaf must declare the four-state lifecycle for cross-app subscription.'
+		);
 
-        // The paragraaf schema must also declare the four-state lifecycle so
-        // the financial-statements module can subscribe to status changes.
-        $paragraafSchema = $this->schema(name: 'Rechtmatigheidsparagraaf');
-        $statusEnum      = ((($paragraafSchema['properties'] ?? [])['status'] ?? [])['enum'] ?? []);
-        self::assertSame(
-            expected: ['concept', 'vastgesteld_college', 'behandeld_raad', 'definitief'],
-            actual: $statusEnum,
-            message: 'Paragraaf must declare the four-state lifecycle for cross-app subscription.'
-        );
-
-    }//end testJaarrekeningExportGateOnlyAcceptsDefinitief()
+	}//end testJaarrekeningExportGateOnlyAcceptsDefinitief()
 }//end class

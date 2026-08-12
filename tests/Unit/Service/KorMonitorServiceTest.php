@@ -37,293 +37,279 @@ use Psr\Container\ContainerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class KorMonitorServiceTest extends TestCase
-{
+final class KorMonitorServiceTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build the service with an ObjectService stub returning the given data sets.
-     *
-     * @param array<int,array<string,mixed>> $invoices      ARInvoice records.
-     * @param array<int,array<string,mixed>> $registrations KORRegistration records.
-     *
-     * @return KorMonitorService
-     */
-    private function buildService(array $invoices, array $registrations): KorMonitorService
-    {
-        $stub = new class($invoices, $registrations) {
+	/**
+	 * Build the service with an ObjectService stub returning the given data sets.
+	 *
+	 * @param array<int,array<string,mixed>> $invoices ARInvoice records.
+	 * @param array<int,array<string,mixed>> $registrations KORRegistration records.
+	 *
+	 * @return KorMonitorService
+	 */
+	private function buildService(array $invoices, array $registrations): KorMonitorService {
+		$stub = new class($invoices, $registrations) {
 
-            /**
-             * Data sets keyed by schema slug.
-             *
-             * @var array<string,array<int,array<string,mixed>>>
-             */
-            private array $data;
+			/**
+			 * Data sets keyed by schema slug.
+			 *
+			 * @var array<string,array<int,array<string,mixed>>>
+			 */
+			private array $data;
 
-            /**
-             * Last schema selected via setSchema().
-             *
-             * @var string
-             */
-            private string $schema = '';
+			/**
+			 * Last schema selected via setSchema().
+			 *
+			 * @var string
+			 */
+			private string $schema = '';
 
-            /**
-             * Constructor.
-             *
-             * @param array<int,array<string,mixed>> $invoices      ARInvoice records.
-             * @param array<int,array<string,mixed>> $registrations KORRegistration records.
-             */
-            public function __construct(array $invoices, array $registrations)
-            {
-                $this->data = [
-                    'ARInvoice'       => $invoices,
-                    'KORRegistration' => $registrations,
-                ];
-            }//end __construct()
+			/**
+			 * Constructor.
+			 *
+			 * @param array<int,array<string,mixed>> $invoices ARInvoice records.
+			 * @param array<int,array<string,mixed>> $registrations KORRegistration records.
+			 */
+			public function __construct(array $invoices, array $registrations) {
+				$this->data = [
+					'ARInvoice' => $invoices,
+					'KORRegistration' => $registrations,
+				];
+			}//end __construct()
 
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent schema setter; records the active schema.
-             *
-             * @param string $schema Schema slug.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                $this->schema = $schema;
-                return $this;
-            }//end setSchema()
+			/**
+			 * Fluent schema setter; records the active schema.
+			 *
+			 * @param string $schema Schema slug.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				$this->schema = $schema;
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Return the data set for the active schema, applying simple equality filters.
-             *
-             * @param array<string,mixed> $params Query parameters.
-             *
-             * @return array<int,array<string,mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                $rows    = ($this->data[$this->schema] ?? []);
-                $filters = ($params['filters'] ?? []);
-                if ($filters === []) {
-                    return $rows;
-                }
+			/**
+			 * Return the data set for the active schema, applying simple equality filters.
+			 *
+			 * @param array<string,mixed> $params Query parameters.
+			 *
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				$rows = ($this->data[$this->schema] ?? []);
+				$filters = ($params['filters'] ?? []);
+				if ($filters === []) {
+					return $rows;
+				}
 
-                return array_values(
-                    array_filter(
-                        $rows,
-                        static function (array $row) use ($filters): bool {
-                            foreach ($filters as $key => $value) {
-                                if (($row[$key] ?? null) !== $value) {
-                                    return false;
-                                }
-                            }
+				return array_values(
+					array_filter(
+						$rows,
+						static function (array $row) use ($filters): bool {
+							foreach ($filters as $key => $value) {
+								if (($row[$key] ?? null) !== $value) {
+									return false;
+								}
+							}
 
-                            return true;
-                        }
-                    )
-                );
-            }//end findAll()
-        };
+							return true;
+						}
+					)
+				);
+			}//end findAll()
+		};
 
-        $this->container->method('get')->willReturn($stub);
+		$this->container->method('get')->willReturn($stub);
 
-        return new KorMonitorService(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            calculator: new KorThresholdCalculator(),
-        );
+		return new KorMonitorService(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			calculator: new KorThresholdCalculator(),
+		);
 
-    }//end buildService()
+	}//end buildService()
 
-    /**
-     * Build an ARInvoice fixture row.
-     *
-     * @param string $admin  Administration id.
-     * @param float  $bedrag Gross amount.
-     * @param string $date   Delivery date (YYYY-MM-DD).
-     * @param string $grond  vrijstellingsGrondslag.
-     * @param string $status Invoice status.
-     *
-     * @return array<string,mixed>
-     */
-    private function invoice(string $admin, float $bedrag, string $date, string $grond='KOR_ART25_OB', string $status='issued'): array
-    {
-        return [
-            'administrationId'       => $admin,
-            'amount'                 => $bedrag,
-            'leveringsDatum'         => $date,
-            'vrijstellingsGrondslag' => $grond,
-            'status'                 => $status,
-        ];
+	/**
+	 * Build an ARInvoice fixture row.
+	 *
+	 * @param string $admin Administration id.
+	 * @param float $bedrag Gross amount.
+	 * @param string $date Delivery date (YYYY-MM-DD).
+	 * @param string $grond vrijstellingsGrondslag.
+	 * @param string $status Invoice status.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function invoice(string $admin, float $bedrag, string $date, string $grond = 'KOR_ART25_OB', string $status = 'issued'): array {
+		return [
+			'administrationId' => $admin,
+			'amount' => $bedrag,
+			'leveringsDatum' => $date,
+			'vrijstellingsGrondslag' => $grond,
+			'status' => $status,
+		];
 
-    }//end invoice()
+	}//end invoice()
 
-    /**
-     * The running omzet sums only this administration's KOR-eligible invoices (REQ-KOR-002).
-     *
-     * @return void
-     */
-    public function testStatusScopesToAdministration(): void
-    {
-        $invoices = [
-            $this->invoice('adm-1', 16420.00, '2026-08-12'),
-            $this->invoice('adm-1', 200.00, '2026-08-20'),
-            // Other administration must not leak in.
-            $this->invoice('adm-2', 99999.00, '2026-08-15'),
-            // Non-KOR omzet excluded.
-            $this->invoice('adm-1', 5000.00, '2026-08-21', 'REGULIER_21PCT_VAT'),
-        ];
+	/**
+	 * The running omzet sums only this administration's KOR-eligible invoices (REQ-KOR-002).
+	 *
+	 * @return void
+	 */
+	public function testStatusScopesToAdministration(): void {
+		$invoices = [
+			$this->invoice('adm-1', 16420.00, '2026-08-12'),
+			$this->invoice('adm-1', 200.00, '2026-08-20'),
+			// Other administration must not leak in.
+			$this->invoice('adm-2', 99999.00, '2026-08-15'),
+			// Non-KOR omzet excluded.
+			$this->invoice('adm-1', 5000.00, '2026-08-21', 'REGULIER_21PCT_VAT'),
+		];
 
-        $service = $this->buildService($invoices, []);
-        $result  = $service->status(administrationId: 'adm-1', year: 2026);
+		$service = $this->buildService($invoices, []);
+		$result = $service->status(administrationId: 'adm-1', year: 2026);
 
-        self::assertSame('adm-1', $result['administrationId']);
-        self::assertSame(16620.00, $result['currentRevenue']);
-        self::assertSame(20000.00, $result['drempel']);
-        self::assertEqualsWithDelta(0.831, $result['drempelBenutting'], 0.001);
+		self::assertSame('adm-1', $result['administrationId']);
+		self::assertSame(16620.00, $result['currentRevenue']);
+		self::assertSame(20000.00, $result['drempel']);
+		self::assertEqualsWithDelta(0.831, $result['drempelBenutting'], 0.001);
 
-    }//end testStatusScopesToAdministration()
+	}//end testStatusScopesToAdministration()
 
-    /**
-     * Crossing 80% surfaces the VROEG schijf (REQ-KOR-003).
-     *
-     * @return void
-     */
-    public function testStatusReportsAlertSchijf(): void
-    {
-        $invoices = [$this->invoice('adm-1', 16620.00, '2026-08-12')];
+	/**
+	 * Crossing 80% surfaces the VROEG schijf (REQ-KOR-003).
+	 *
+	 * @return void
+	 */
+	public function testStatusReportsAlertSchijf(): void {
+		$invoices = [$this->invoice('adm-1', 16620.00, '2026-08-12')];
 
-        $service = $this->buildService($invoices, []);
-        $result  = $service->status(administrationId: 'adm-1', year: 2026);
+		$service = $this->buildService($invoices, []);
+		$result = $service->status(administrationId: 'adm-1', year: 2026);
 
-        self::assertSame('DREMPEL_80PCT', $result['trigger']);
-        self::assertSame('VROEG', $result['ernst']);
+		self::assertSame('DREMPEL_80PCT', $result['trigger']);
+		self::assertSame('VROEG', $result['ernst']);
 
-    }//end testStatusReportsAlertSchijf()
+	}//end testStatusReportsAlertSchijf()
 
-    /**
-     * The monthly breakdown and prognose drive the prognose-status (REQ-KOR-002).
-     *
-     * @return void
-     */
-    public function testStatusBuildsMonthlyPrognose(): void
-    {
-        $invoices = [
-            $this->invoice('adm-1', 2000.00, '2026-01-10'),
-            $this->invoice('adm-1', 2000.00, '2026-02-10'),
-            $this->invoice('adm-1', 2000.00, '2026-08-10'),
-        ];
+	/**
+	 * The monthly breakdown and prognose drive the prognose-status (REQ-KOR-002).
+	 *
+	 * @return void
+	 */
+	public function testStatusBuildsMonthlyPrognose(): void {
+		$invoices = [
+			$this->invoice('adm-1', 2000.00, '2026-01-10'),
+			$this->invoice('adm-1', 2000.00, '2026-02-10'),
+			$this->invoice('adm-1', 2000.00, '2026-08-10'),
+		];
 
-        $service = $this->buildService($invoices, []);
-        $result  = $service->status(administrationId: 'adm-1', year: 2026);
+		$service = $this->buildService($invoices, []);
+		$result = $service->status(administrationId: 'adm-1', year: 2026);
 
-        self::assertArrayHasKey('2026-01', $result['perMaand']);
-        self::assertArrayHasKey('2026-08', $result['perMaand']);
-        self::assertSame(6000.00, $result['currentRevenue']);
-        // Month 8, avg 750/mo, +4 months => 6000 + 3000 = 9000 prognose, well under drempel.
-        self::assertSame(9000.00, $result['forecastYearEnd']);
-        self::assertSame('ONDER_DREMPEL', $result['prognoseStatus']);
+		self::assertArrayHasKey('2026-01', $result['perMaand']);
+		self::assertArrayHasKey('2026-08', $result['perMaand']);
+		self::assertSame(6000.00, $result['currentRevenue']);
+		// Month 8, avg 750/mo, +4 months => 6000 + 3000 = 9000 prognose, well under drempel.
+		self::assertSame(9000.00, $result['forecastYearEnd']);
+		self::assertSame('ONDER_DREMPEL', $result['prognoseStatus']);
 
-    }//end testStatusBuildsMonthlyPrognose()
+	}//end testStatusBuildsMonthlyPrognose()
 
-    /**
-     * An ACTIEF registration's drempelJaar overrides the default EUR 20.000 (REQ-KOR-002).
-     *
-     * @return void
-     */
-    public function testRegistrationDrempelOverride(): void
-    {
-        $invoices      = [$this->invoice('adm-1', 4000.00, '2026-03-01')];
-        $registrations = [
-            ['administrationId' => 'adm-1', 'status' => 'ACTIEF', 'thresholdYear' => 10000],
-        ];
+	/**
+	 * An ACTIEF registration's drempelJaar overrides the default EUR 20.000 (REQ-KOR-002).
+	 *
+	 * @return void
+	 */
+	public function testRegistrationDrempelOverride(): void {
+		$invoices = [$this->invoice('adm-1', 4000.00, '2026-03-01')];
+		$registrations = [
+			['administrationId' => 'adm-1', 'status' => 'ACTIEF', 'thresholdYear' => 10000],
+		];
 
-        $service = $this->buildService($invoices, $registrations);
-        $result  = $service->status(administrationId: 'adm-1', year: 2026);
+		$service = $this->buildService($invoices, $registrations);
+		$result = $service->status(administrationId: 'adm-1', year: 2026);
 
-        self::assertSame(10000.00, $result['drempel']);
-        self::assertEqualsWithDelta(0.4, $result['drempelBenutting'], 0.0001);
+		self::assertSame(10000.00, $result['drempel']);
+		self::assertEqualsWithDelta(0.4, $result['drempelBenutting'], 0.0001);
 
-    }//end testRegistrationDrempelOverride()
+	}//end testRegistrationDrempelOverride()
 
-    /**
-     * Status exposes optOutPermitted, false outside the lock-in opt-out window (REQ-KOR-007).
-     *
-     * @return void
-     */
-    public function testOptOutPermittedFalseWithoutWindow(): void
-    {
-        $service = $this->buildService([], []);
-        $result  = $service->status(administrationId: 'adm-1', year: 2026);
+	/**
+	 * Status exposes optOutPermitted, false outside the lock-in opt-out window (REQ-KOR-007).
+	 *
+	 * @return void
+	 */
+	public function testOptOutPermittedFalseWithoutWindow(): void {
+		$service = $this->buildService([], []);
+		$result = $service->status(administrationId: 'adm-1', year: 2026);
 
-        self::assertArrayHasKey('optOutPermitted', $result);
-        self::assertFalse($result['optOutPermitted']);
+		self::assertArrayHasKey('optOutPermitted', $result);
+		self::assertFalse($result['optOutPermitted']);
 
-    }//end testOptOutPermittedFalseWithoutWindow()
+	}//end testOptOutPermittedFalseWithoutWindow()
 
-    /**
-     * Status reports optOutPermitted=true when ACTIEF registratie's window covers today (REQ-KOR-007).
-     *
-     * @return void
-     */
-    public function testOptOutPermittedTrueInsideWindow(): void
-    {
-        $today         = date('Y-m-d');
-        $registrations = [
-            [
-                'administrationId'   => 'adm-1',
-                'status'             => 'ACTIEF',
-                'vroegsteOpzegDatum' => '1900-01-01',
-                'lockInEndDate'    => '9999-12-31',
-            ],
-        ];
+	/**
+	 * Status reports optOutPermitted=true when ACTIEF registratie's window covers today (REQ-KOR-007).
+	 *
+	 * @return void
+	 */
+	public function testOptOutPermittedTrueInsideWindow(): void {
+		$today = date('Y-m-d');
+		$registrations = [
+			[
+				'administrationId' => 'adm-1',
+				'status' => 'ACTIEF',
+				'vroegsteOpzegDatum' => '1900-01-01',
+				'lockInEndDate' => '9999-12-31',
+			],
+		];
 
-        $service = $this->buildService([], $registrations);
-        $result  = $service->status(administrationId: 'adm-1', year: (int) substr($today, 0, 4));
+		$service = $this->buildService([], $registrations);
+		$result = $service->status(administrationId: 'adm-1', year: (int)substr($today, 0, 4));
 
-        self::assertTrue($result['optOutPermitted']);
+		self::assertTrue($result['optOutPermitted']);
 
-    }//end testOptOutPermittedTrueInsideWindow()
+	}//end testOptOutPermittedTrueInsideWindow()
 
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

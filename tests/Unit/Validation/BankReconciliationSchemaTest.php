@@ -38,413 +38,396 @@ use PHPUnit\Framework\TestCase;
 /**
  * Verifies the BankReconciliation register fragment shape against the spec.
  */
-final class BankReconciliationSchemaTest extends TestCase
-{
+final class BankReconciliationSchemaTest extends TestCase {
 
-    /**
-     * Decoded fragment contents.
-     *
-     * @var array<string,mixed>
-     */
-    private array $fragment;
+	/**
+	 * Decoded fragment contents.
+	 *
+	 * @var array<string,mixed>
+	 */
+	private array $fragment;
 
-    /**
-     * Load and decode the register fragment once per test.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $path = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-bank-reconciliation.json';
-        self::assertFileExists($path, 'BankReconciliation register fragment must exist (ADR-037, not the monolith).');
-        $raw = file_get_contents($path);
-        self::assertIsString($raw);
-        $decoded = json_decode($raw, true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), 'Fragment must be valid JSON.');
-        $this->fragment = $decoded;
+	/**
+	 * Load and decode the register fragment once per test.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$path = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-bank-reconciliation.json';
+		self::assertFileExists($path, 'BankReconciliation register fragment must exist (ADR-037, not the monolith).');
+		$raw = file_get_contents($path);
+		self::assertIsString($raw);
+		$decoded = json_decode($raw, true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), 'Fragment must be valid JSON.');
+		$this->fragment = $decoded;
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * The fragment declares both BankReconciliation and BankReconciliationMatch schemas.
-     *
-     * @return void
-     */
-    public function testFragmentDeclaresBothSchemas(): void
-    {
-        self::assertArrayHasKey('components', $this->fragment);
-        self::assertArrayHasKey('schemas', $this->fragment['components']);
-        self::assertArrayHasKey('BankReconciliation', $this->fragment['components']['schemas']);
-        self::assertArrayHasKey('BankReconciliationMatch', $this->fragment['components']['schemas']);
+	/**
+	 * The fragment declares both BankReconciliation and BankReconciliationMatch schemas.
+	 *
+	 * @return void
+	 */
+	public function testFragmentDeclaresBothSchemas(): void {
+		self::assertArrayHasKey('components', $this->fragment);
+		self::assertArrayHasKey('schemas', $this->fragment['components']);
+		self::assertArrayHasKey('BankReconciliation', $this->fragment['components']['schemas']);
+		self::assertArrayHasKey('BankReconciliationMatch', $this->fragment['components']['schemas']);
 
-    }//end testFragmentDeclaresBothSchemas()
+	}//end testFragmentDeclaresBothSchemas()
 
-    /**
-     * REQ-BBR-001: BankReconciliation declares the required minimum field set.
-     *
-     * @return void
-     */
-    public function testReconciliationDeclaresRequiredFieldSet(): void
-    {
-        $schema = $this->fragment['components']['schemas']['BankReconciliation'];
+	/**
+	 * REQ-BBR-001: BankReconciliation declares the required minimum field set.
+	 *
+	 * @return void
+	 */
+	public function testReconciliationDeclaresRequiredFieldSet(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliation'];
 
-        $expectedProperties = [
-            'name',
-            'bankAccountId',
-            'administrationId',
-            'statementStartDate',
-            'statementEndDate',
-            'openingBalance',
-            'closingBalance',
-            'reconciledBalance',
-            'variance',
-            'matchedCount',
-            'unmatchedBankCount',
-            'unmatchedJournalCount',
-            'status',
-            'approvedBy',
-            'approvedAt',
-            'varianceReason',
-            'notes',
-        ];
-        foreach ($expectedProperties as $field) {
-            self::assertArrayHasKey($field, $schema['properties'], "Missing property: $field");
-        }
+		$expectedProperties = [
+			'name',
+			'bankAccountId',
+			'administrationId',
+			'statementStartDate',
+			'statementEndDate',
+			'openingBalance',
+			'closingBalance',
+			'reconciledBalance',
+			'variance',
+			'matchedCount',
+			'unmatchedBankCount',
+			'unmatchedJournalCount',
+			'status',
+			'approvedBy',
+			'approvedAt',
+			'varianceReason',
+			'notes',
+		];
+		foreach ($expectedProperties as $field) {
+			self::assertArrayHasKey($field, $schema['properties'], "Missing property: $field");
+		}
 
-        $expectedRequired = [
-            'name',
-            'bankAccountId',
-            'statementStartDate',
-            'statementEndDate',
-            'openingBalance',
-            'closingBalance',
-            'status',
-        ];
-        foreach ($expectedRequired as $field) {
-            self::assertContains($field, $schema['required'], "Field must be required: $field");
-        }
+		$expectedRequired = [
+			'name',
+			'bankAccountId',
+			'statementStartDate',
+			'statementEndDate',
+			'openingBalance',
+			'closingBalance',
+			'status',
+		];
+		foreach ($expectedRequired as $field) {
+			self::assertContains($field, $schema['required'], "Field must be required: $field");
+		}
 
-    }//end testReconciliationDeclaresRequiredFieldSet()
+	}//end testReconciliationDeclaresRequiredFieldSet()
 
-    /**
-     * REQ-BBR-006 / Task 3: BankReconciliation status is a closed four-value enum
-     * that drives the lock-on-approve immutability.
-     *
-     * @return void
-     */
-    public function testReconciliationStatusIsClosedEnum(): void
-    {
-        $schema = $this->fragment['components']['schemas']['BankReconciliation'];
-        self::assertSame(
-            ['draft', 'in-progress', 'reconciled', 'archived'],
-            $schema['properties']['status']['enum']
-        );
-        self::assertSame('draft', $schema['properties']['status']['default']);
+	/**
+	 * REQ-BBR-006 / Task 3: BankReconciliation status is a closed four-value enum
+	 * that drives the lock-on-approve immutability.
+	 *
+	 * @return void
+	 */
+	public function testReconciliationStatusIsClosedEnum(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliation'];
+		self::assertSame(
+			['draft', 'in-progress', 'reconciled', 'archived'],
+			$schema['properties']['status']['enum']
+		);
+		self::assertSame('draft', $schema['properties']['status']['default']);
 
-    }//end testReconciliationStatusIsClosedEnum()
+	}//end testReconciliationStatusIsClosedEnum()
 
-    /**
-     * REQ-BBR-006 / Tasks 17, 29, 30: the BankReconciliation lifecycle declares
-     * draft/in-progress/reconciled/archived and the startReconciling/approve/
-     * approveFromDraft/archive transitions, with the requireResolvedMatches +
-     * requireUnlockedAndValidDates PHP guards bound by FQCN.
-     *
-     * @return void
-     */
-    public function testReconciliationLifecycleStatesAndTransitions(): void
-    {
-        $schema    = $this->fragment['components']['schemas']['BankReconciliation'];
-        $lifecycle = $schema['x-openregister-lifecycle'];
-        self::assertSame('status', $lifecycle['field']);
-        self::assertSame('draft', $lifecycle['initialState']);
-        self::assertTrue($lifecycle['audit'] ?? false, 'BankReconciliation lifecycle must audit-trail every transition (Task 25).');
+	/**
+	 * REQ-BBR-006 / Tasks 17, 29, 30: the BankReconciliation lifecycle declares
+	 * draft/in-progress/reconciled/archived and the startReconciling/approve/
+	 * approveFromDraft/archive transitions, with the requireResolvedMatches +
+	 * requireUnlockedAndValidDates PHP guards bound by FQCN.
+	 *
+	 * @return void
+	 */
+	public function testReconciliationLifecycleStatesAndTransitions(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliation'];
+		$lifecycle = $schema['x-openregister-lifecycle'];
+		self::assertSame('status', $lifecycle['field']);
+		self::assertSame('draft', $lifecycle['initialState']);
+		self::assertTrue($lifecycle['audit'] ?? false, 'BankReconciliation lifecycle must audit-trail every transition (Task 25).');
 
-        foreach (['draft', 'in-progress', 'reconciled', 'archived'] as $state) {
-            self::assertArrayHasKey($state, $lifecycle['states'], "Missing state: $state");
-        }
+		foreach (['draft', 'in-progress', 'reconciled', 'archived'] as $state) {
+			self::assertArrayHasKey($state, $lifecycle['states'], "Missing state: $state");
+		}
 
-        foreach (['startReconciling', 'approve', 'approveFromDraft', 'archive'] as $transition) {
-            self::assertArrayHasKey($transition, $lifecycle['transitions'], "Missing transition: $transition");
-        }
+		foreach (['startReconciling', 'approve', 'approveFromDraft', 'archive'] as $transition) {
+			self::assertArrayHasKey($transition, $lifecycle['transitions'], "Missing transition: $transition");
+		}
 
-        // The approve paths must invoke the resolved-matches precondition that
-        // recomputes server-authoritative balance and locks the session.
-        self::assertSame(
-            'OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireResolvedMatches',
-            $lifecycle['transitions']['approve']['requires']
-        );
-        self::assertSame(
-            'OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireResolvedMatches',
-            $lifecycle['transitions']['approveFromDraft']['requires']
-        );
+		// The approve paths must invoke the resolved-matches precondition that
+		// recomputes server-authoritative balance and locks the session.
+		self::assertSame(
+			'OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireResolvedMatches',
+			$lifecycle['transitions']['approve']['requires']
+		);
+		self::assertSame(
+			'OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireResolvedMatches',
+			$lifecycle['transitions']['approveFromDraft']['requires']
+		);
 
-        // The save precondition enforces the lock + valid statement period.
-        self::assertSame(
-            'OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireUnlockedAndValidDates',
-            $lifecycle['preconditions']['save']
-        );
+		// The save precondition enforces the lock + valid statement period.
+		self::assertSame(
+			'OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireUnlockedAndValidDates',
+			$lifecycle['preconditions']['save']
+		);
 
-    }//end testReconciliationLifecycleStatesAndTransitions()
+	}//end testReconciliationLifecycleStatesAndTransitions()
 
-    /**
-     * REQ-BBR-005: derived monetary fields are nullable on the schema (the guard
-     * writes them server-side; the client must never supply them).
-     *
-     * @return void
-     */
-    public function testServerAuthoritativeDerivedFieldsAreNullable(): void
-    {
-        $schema = $this->fragment['components']['schemas']['BankReconciliation'];
+	/**
+	 * REQ-BBR-005: derived monetary fields are nullable on the schema (the guard
+	 * writes them server-side; the client must never supply them).
+	 *
+	 * @return void
+	 */
+	public function testServerAuthoritativeDerivedFieldsAreNullable(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliation'];
 
-        foreach (['reconciledBalance', 'variance', 'matchedCount', 'unmatchedBankCount', 'unmatchedJournalCount'] as $derived) {
-            self::assertTrue(
-                ($schema['properties'][$derived]['nullable'] ?? false),
-                "$derived MUST be nullable so the guard can recompute it server-side (ADR-005)."
-            );
-            self::assertNotContains(
-                $derived,
-                $schema['required'],
-                "$derived MUST NOT be in `required` — client-supplied values are ignored."
-            );
-        }
+		foreach (['reconciledBalance', 'variance', 'matchedCount', 'unmatchedBankCount', 'unmatchedJournalCount'] as $derived) {
+			self::assertTrue(
+				($schema['properties'][$derived]['nullable'] ?? false),
+				"$derived MUST be nullable so the guard can recompute it server-side (ADR-005)."
+			);
+			self::assertNotContains(
+				$derived,
+				$schema['required'],
+				"$derived MUST NOT be in `required` — client-supplied values are ignored."
+			);
+		}
 
-    }//end testServerAuthoritativeDerivedFieldsAreNullable()
+	}//end testServerAuthoritativeDerivedFieldsAreNullable()
 
-    /**
-     * BankReconciliation declares the one-to-many relation to its match pairs and
-     * countByStatus aggregation that the manifest index filters on.
-     *
-     * @return void
-     */
-    public function testReconciliationRelationsAndAggregations(): void
-    {
-        $schema = $this->fragment['components']['schemas']['BankReconciliation'];
+	/**
+	 * BankReconciliation declares the one-to-many relation to its match pairs and
+	 * countByStatus aggregation that the manifest index filters on.
+	 *
+	 * @return void
+	 */
+	public function testReconciliationRelationsAndAggregations(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliation'];
 
-        $rel = $schema['x-openregister-relations']['matches'];
-        self::assertSame('id', $rel['localField']);
-        self::assertSame('BankReconciliationMatch', $rel['relatedSchema']);
-        self::assertSame('reconciliationId', $rel['relatedField']);
-        self::assertSame('one-to-many', $rel['cardinality']);
+		$rel = $schema['x-openregister-relations']['matches'];
+		self::assertSame('id', $rel['localField']);
+		self::assertSame('BankReconciliationMatch', $rel['relatedSchema']);
+		self::assertSame('reconciliationId', $rel['relatedField']);
+		self::assertSame('one-to-many', $rel['cardinality']);
 
-        $agg = $schema['x-openregister-aggregations']['countByStatus'];
-        self::assertSame('status', $agg['field']);
-        self::assertSame('count', $agg['operation']);
-        self::assertSame('status', $agg['groupBy']);
+		$agg = $schema['x-openregister-aggregations']['countByStatus'];
+		self::assertSame('status', $agg['field']);
+		self::assertSame('count', $agg['operation']);
+		self::assertSame('status', $agg['groupBy']);
 
-    }//end testReconciliationRelationsAndAggregations()
+	}//end testReconciliationRelationsAndAggregations()
 
-    /**
-     * BankReconciliation declares the bookkeeper/auditor RBAC roles per ADR-005.
-     *
-     * @return void
-     */
-    public function testReconciliationRbacRoles(): void
-    {
-        $schema = $this->fragment['components']['schemas']['BankReconciliation'];
+	/**
+	 * BankReconciliation declares the bookkeeper/auditor RBAC roles per ADR-005.
+	 *
+	 * @return void
+	 */
+	public function testReconciliationRbacRoles(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliation'];
 
-        $roles = $schema['x-openregister-rbac']['roles'];
-        self::assertEqualsCanonicalizing(['create', 'read', 'update'], $roles['bookkeeper']['permissions']);
-        self::assertEqualsCanonicalizing(['read'], $roles['auditor']['permissions']);
+		$roles = $schema['x-openregister-rbac']['roles'];
+		self::assertEqualsCanonicalizing(['create', 'read', 'update'], $roles['bookkeeper']['permissions']);
+		self::assertEqualsCanonicalizing(['read'], $roles['auditor']['permissions']);
 
-    }//end testReconciliationRbacRoles()
+	}//end testReconciliationRbacRoles()
 
-    /**
-     * REQ-BBR-002 / Task 4: BankReconciliationMatch declares the required minimum
-     * field set including the deduplicating bankTransactionRef key (design D3).
-     *
-     * @return void
-     */
-    public function testMatchDeclaresRequiredFieldSet(): void
-    {
-        $schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
+	/**
+	 * REQ-BBR-002 / Task 4: BankReconciliationMatch declares the required minimum
+	 * field set including the deduplicating bankTransactionRef key (design D3).
+	 *
+	 * @return void
+	 */
+	public function testMatchDeclaresRequiredFieldSet(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
 
-        $expectedProperties = [
-            'reconciliationId',
-            'bankTransactionRef',
-            'bankTransactionAmount',
-            'journalEntryId',
-            'journalEntryDescription',
-            'matchType',
-            'confidenceScore',
-            'operatorNotes',
-            'createdBy',
-            'approvedAt',
-            'approvedBy',
-        ];
-        foreach ($expectedProperties as $field) {
-            self::assertArrayHasKey($field, $schema['properties'], "Missing property: $field");
-        }
+		$expectedProperties = [
+			'reconciliationId',
+			'bankTransactionRef',
+			'bankTransactionAmount',
+			'journalEntryId',
+			'journalEntryDescription',
+			'matchType',
+			'confidenceScore',
+			'operatorNotes',
+			'createdBy',
+			'approvedAt',
+			'approvedBy',
+		];
+		foreach ($expectedProperties as $field) {
+			self::assertArrayHasKey($field, $schema['properties'], "Missing property: $field");
+		}
 
-        $expectedRequired = [
-            'reconciliationId',
-            'bankTransactionRef',
-            'bankTransactionAmount',
-            'matchType',
-            'createdBy',
-        ];
-        foreach ($expectedRequired as $field) {
-            self::assertContains($field, $schema['required'], "Field must be required: $field");
-        }
+		$expectedRequired = [
+			'reconciliationId',
+			'bankTransactionRef',
+			'bankTransactionAmount',
+			'matchType',
+			'createdBy',
+		];
+		foreach ($expectedRequired as $field) {
+			self::assertContains($field, $schema['required'], "Field must be required: $field");
+		}
 
-    }//end testMatchDeclaresRequiredFieldSet()
+	}//end testMatchDeclaresRequiredFieldSet()
 
-    /**
-     * Task 4 + REQ-BBR-002/003/004: matchType is a closed four-value enum and
-     * defaults to pending-review so operator review is the safe default.
-     *
-     * @return void
-     */
-    public function testMatchTypeIsClosedEnum(): void
-    {
-        $schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
-        self::assertSame(
-            ['auto-matched', 'pending-review', 'approved', 'rejected'],
-            $schema['properties']['matchType']['enum']
-        );
-        self::assertSame('pending-review', $schema['properties']['matchType']['default']);
+	/**
+	 * Task 4 + REQ-BBR-002/003/004: matchType is a closed four-value enum and
+	 * defaults to pending-review so operator review is the safe default.
+	 *
+	 * @return void
+	 */
+	public function testMatchTypeIsClosedEnum(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
+		self::assertSame(
+			['auto-matched', 'pending-review', 'approved', 'rejected'],
+			$schema['properties']['matchType']['enum']
+		);
+		self::assertSame('pending-review', $schema['properties']['matchType']['default']);
 
-    }//end testMatchTypeIsClosedEnum()
+	}//end testMatchTypeIsClosedEnum()
 
-    /**
-     * Task 42 / engine-ready fixture shape: confidenceScore is a bounded
-     * integer 0..100 so the auto-matching engine's score band thresholds
-     * (≥70 auto-matched, 30..69 pending-review, <30 orphaned) are well-defined.
-     *
-     * @return void
-     */
-    public function testConfidenceScoreIsBoundedInteger(): void
-    {
-        $schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
-        $score  = $schema['properties']['confidenceScore'];
+	/**
+	 * Task 42 / engine-ready fixture shape: confidenceScore is a bounded
+	 * integer 0..100 so the auto-matching engine's score band thresholds
+	 * (≥70 auto-matched, 30..69 pending-review, <30 orphaned) are well-defined.
+	 *
+	 * @return void
+	 */
+	public function testConfidenceScoreIsBoundedInteger(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
+		$score = $schema['properties']['confidenceScore'];
 
-        self::assertSame('integer', $score['type']);
-        self::assertSame(0, $score['minimum']);
-        self::assertSame(100, $score['maximum']);
-        self::assertTrue(($score['nullable'] ?? false), 'confidenceScore MUST be nullable for operator-only matches.');
+		self::assertSame('integer', $score['type']);
+		self::assertSame(0, $score['minimum']);
+		self::assertSame(100, $score['maximum']);
+		self::assertTrue(($score['nullable'] ?? false), 'confidenceScore MUST be nullable for operator-only matches.');
 
-    }//end testConfidenceScoreIsBoundedInteger()
+	}//end testConfidenceScoreIsBoundedInteger()
 
-    /**
-     * Tasks 14, 15, 16: BankReconciliationMatch lifecycle declares
-     * auto-matched/pending-review/approved/rejected with the
-     * approve/approvePending/rejectFromPending/rejectFromAuto/unmatch transitions
-     * and the requireParentUnlocked save precondition that blocks any match
-     * mutation while the parent reconciliation is locked.
-     *
-     * @return void
-     */
-    public function testMatchLifecycleStatesAndTransitions(): void
-    {
-        $schema    = $this->fragment['components']['schemas']['BankReconciliationMatch'];
-        $lifecycle = $schema['x-openregister-lifecycle'];
-        self::assertSame('matchType', $lifecycle['field']);
-        self::assertSame('pending-review', $lifecycle['initialState']);
-        self::assertTrue($lifecycle['audit'] ?? false, 'BankReconciliationMatch lifecycle must audit-trail every transition (Task 25).');
+	/**
+	 * Tasks 14, 15, 16: BankReconciliationMatch lifecycle declares
+	 * auto-matched/pending-review/approved/rejected with the
+	 * approve/approvePending/rejectFromPending/rejectFromAuto/unmatch transitions
+	 * and the requireParentUnlocked save precondition that blocks any match
+	 * mutation while the parent reconciliation is locked.
+	 *
+	 * @return void
+	 */
+	public function testMatchLifecycleStatesAndTransitions(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
+		$lifecycle = $schema['x-openregister-lifecycle'];
+		self::assertSame('matchType', $lifecycle['field']);
+		self::assertSame('pending-review', $lifecycle['initialState']);
+		self::assertTrue($lifecycle['audit'] ?? false, 'BankReconciliationMatch lifecycle must audit-trail every transition (Task 25).');
 
-        foreach (['auto-matched', 'pending-review', 'approved', 'rejected'] as $state) {
-            self::assertArrayHasKey($state, $lifecycle['states'], "Missing state: $state");
-        }
+		foreach (['auto-matched', 'pending-review', 'approved', 'rejected'] as $state) {
+			self::assertArrayHasKey($state, $lifecycle['states'], "Missing state: $state");
+		}
 
-        $transitions = [
-            'approve'           => ['from' => 'auto-matched',   'to' => 'approved'],
-            'approvePending'    => ['from' => 'pending-review', 'to' => 'approved'],
-            'rejectFromPending' => ['from' => 'pending-review', 'to' => 'rejected'],
-            'rejectFromAuto'    => ['from' => 'auto-matched',   'to' => 'rejected'],
-            'unmatch'           => ['from' => 'approved',       'to' => 'pending-review'],
-        ];
-        foreach ($transitions as $key => $expected) {
-            self::assertArrayHasKey($key, $lifecycle['transitions'], "Missing transition: $key");
-            self::assertSame($expected['from'], $lifecycle['transitions'][$key]['from']);
-            self::assertSame($expected['to'], $lifecycle['transitions'][$key]['to']);
-        }
+		$transitions = [
+			'approve' => ['from' => 'auto-matched',   'to' => 'approved'],
+			'approvePending' => ['from' => 'pending-review', 'to' => 'approved'],
+			'rejectFromPending' => ['from' => 'pending-review', 'to' => 'rejected'],
+			'rejectFromAuto' => ['from' => 'auto-matched',   'to' => 'rejected'],
+			'unmatch' => ['from' => 'approved',       'to' => 'pending-review'],
+		];
+		foreach ($transitions as $key => $expected) {
+			self::assertArrayHasKey($key, $lifecycle['transitions'], "Missing transition: $key");
+			self::assertSame($expected['from'], $lifecycle['transitions'][$key]['from']);
+			self::assertSame($expected['to'], $lifecycle['transitions'][$key]['to']);
+		}
 
-        self::assertSame(
-            'OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireParentUnlocked',
-            $lifecycle['preconditions']['save']
-        );
+		self::assertSame(
+			'OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireParentUnlocked',
+			$lifecycle['preconditions']['save']
+		);
 
-    }//end testMatchLifecycleStatesAndTransitions()
+	}//end testMatchLifecycleStatesAndTransitions()
 
-    /**
-     * REQ-BBR-005 / Task 27: BankReconciliationMatch declares the approvedAmountTotal
-     * aggregation that is the declarative basis for the server-recomputed
-     * reconciledBalance.
-     *
-     * @return void
-     */
-    public function testApprovedAmountTotalAggregation(): void
-    {
-        $schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
-        $agg    = $schema['x-openregister-aggregations']['approvedAmountTotal'];
+	/**
+	 * REQ-BBR-005 / Task 27: BankReconciliationMatch declares the approvedAmountTotal
+	 * aggregation that is the declarative basis for the server-recomputed
+	 * reconciledBalance.
+	 *
+	 * @return void
+	 */
+	public function testApprovedAmountTotalAggregation(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
+		$agg = $schema['x-openregister-aggregations']['approvedAmountTotal'];
 
-        self::assertSame("matchType = 'approved'", $agg['filter']);
-        self::assertSame('reconciliationId', $agg['groupBy']);
-        self::assertSame('bankTransactionAmount', $agg['operations']['approvedTotal']['field']);
-        self::assertSame('sum', $agg['operations']['approvedTotal']['operation']);
+		self::assertSame("matchType = 'approved'", $agg['filter']);
+		self::assertSame('reconciliationId', $agg['groupBy']);
+		self::assertSame('bankTransactionAmount', $agg['operations']['approvedTotal']['field']);
+		self::assertSame('sum', $agg['operations']['approvedTotal']['operation']);
 
-        $countByType = $schema['x-openregister-aggregations']['countByType'];
-        self::assertSame('matchType', $countByType['field']);
-        self::assertSame('count', $countByType['operation']);
-        self::assertSame('matchType', $countByType['groupBy']);
+		$countByType = $schema['x-openregister-aggregations']['countByType'];
+		self::assertSame('matchType', $countByType['field']);
+		self::assertSame('count', $countByType['operation']);
+		self::assertSame('matchType', $countByType['groupBy']);
 
-    }//end testApprovedAmountTotalAggregation()
+	}//end testApprovedAmountTotalAggregation()
 
-    /**
-     * BankReconciliationMatch declares the many-to-one relation back to its parent
-     * reconciliation, which the related-list on the detail page (Task 7/10) renders.
-     *
-     * @return void
-     */
-    public function testMatchReconciliationRelation(): void
-    {
-        $schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
-        $rel    = $schema['x-openregister-relations']['reconciliation'];
-        self::assertSame('reconciliationId', $rel['localField']);
-        self::assertSame('BankReconciliation', $rel['relatedSchema']);
-        self::assertSame('id', $rel['relatedField']);
-        self::assertSame('many-to-one', $rel['cardinality']);
+	/**
+	 * BankReconciliationMatch declares the many-to-one relation back to its parent
+	 * reconciliation, which the related-list on the detail page (Task 7/10) renders.
+	 *
+	 * @return void
+	 */
+	public function testMatchReconciliationRelation(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
+		$rel = $schema['x-openregister-relations']['reconciliation'];
+		self::assertSame('reconciliationId', $rel['localField']);
+		self::assertSame('BankReconciliation', $rel['relatedSchema']);
+		self::assertSame('id', $rel['relatedField']);
+		self::assertSame('many-to-one', $rel['cardinality']);
 
-    }//end testMatchReconciliationRelation()
+	}//end testMatchReconciliationRelation()
 
-    /**
-     * Design D3 / Task 41 dedupe contract: the bankTransactionRef field carries the
-     * documented composite key shape so re-imports of the same statement collide
-     * deterministically — locks the engine-ready dedupe key contract (Task 42).
-     *
-     * @return void
-     */
-    public function testBankTransactionRefDocumentsCompositeKey(): void
-    {
-        $schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
-        $ref    = $schema['properties']['bankTransactionRef'];
+	/**
+	 * Design D3 / Task 41 dedupe contract: the bankTransactionRef field carries the
+	 * documented composite key shape so re-imports of the same statement collide
+	 * deterministically — locks the engine-ready dedupe key contract (Task 42).
+	 *
+	 * @return void
+	 */
+	public function testBankTransactionRefDocumentsCompositeKey(): void {
+		$schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
+		$ref = $schema['properties']['bankTransactionRef'];
 
-        self::assertSame('string', $ref['type']);
-        // The composite key shape lives in the property description so the
-        // ingest engine (deferred to shillinq-integrations) has a single source
-        // of truth and re-imports dedupe deterministically per design D3.
-        self::assertStringContainsString('{bankAccountId}', $ref['description']);
-        self::assertStringContainsString('{statementDate}', $ref['description']);
-        self::assertStringContainsString('{amount}', $ref['description']);
-        self::assertStringContainsString('{externalId}', $ref['description']);
+		self::assertSame('string', $ref['type']);
+		// The composite key shape lives in the property description so the
+		// ingest engine (deferred to shillinq-integrations) has a single source
+		// of truth and re-imports dedupe deterministically per design D3.
+		self::assertStringContainsString('{bankAccountId}', $ref['description']);
+		self::assertStringContainsString('{statementDate}', $ref['description']);
+		self::assertStringContainsString('{amount}', $ref['description']);
+		self::assertStringContainsString('{externalId}', $ref['description']);
 
-    }//end testBankTransactionRefDocumentsCompositeKey()
+	}//end testBankTransactionRefDocumentsCompositeKey()
 
-    /**
-     * Task 46 input-validation contract: free-text fields cap at 500 characters so
-     * audit-trail rows stay bounded.
-     *
-     * @return void
-     */
-    public function testFreeTextFieldsHaveMaxLength(): void
-    {
-        $reconciliation = $this->fragment['components']['schemas']['BankReconciliation'];
-        self::assertSame(500, $reconciliation['properties']['notes']['maxLength']);
-        self::assertSame(500, $reconciliation['properties']['varianceReason']['maxLength']);
+	/**
+	 * Task 46 input-validation contract: free-text fields cap at 500 characters so
+	 * audit-trail rows stay bounded.
+	 *
+	 * @return void
+	 */
+	public function testFreeTextFieldsHaveMaxLength(): void {
+		$reconciliation = $this->fragment['components']['schemas']['BankReconciliation'];
+		self::assertSame(500, $reconciliation['properties']['notes']['maxLength']);
+		self::assertSame(500, $reconciliation['properties']['varianceReason']['maxLength']);
 
-        $match = $this->fragment['components']['schemas']['BankReconciliationMatch'];
-        self::assertSame(500, $match['properties']['operatorNotes']['maxLength']);
+		$match = $this->fragment['components']['schemas']['BankReconciliationMatch'];
+		self::assertSame(500, $match['properties']['operatorNotes']['maxLength']);
 
-    }//end testFreeTextFieldsHaveMaxLength()
+	}//end testFreeTextFieldsHaveMaxLength()
 
 }//end class

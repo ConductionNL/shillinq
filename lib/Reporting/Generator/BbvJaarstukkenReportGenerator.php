@@ -50,436 +50,417 @@ use PhpOffice\PhpWord\PhpWord;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerator
-{
-    /**
-     * The catalogue report-type id this generator produces.
-     *
-     * @return string
-     */
-    public static function reportType(): string
-    {
-        return 'bbv-jaarstukken';
+final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerator {
+	/**
+	 * The catalogue report-type id this generator produces.
+	 *
+	 * @return string
+	 */
+	public static function reportType(): string {
+		return 'bbv-jaarstukken';
+	}//end reportType()
 
-    }//end reportType()
+	/**
+	 * Cover title for the document.
+	 *
+	 * @return string
+	 */
+	protected function documentTitle(): string {
+		return 'BBV-jaarstukken';
+	}//end documentTitle()
 
-    /**
-     * Cover title for the document.
-     *
-     * @return string
-     */
-    protected function documentTitle(): string
-    {
-        return 'BBV-jaarstukken';
+	/**
+	 * Build the BBV jaarstukken body from the BbvStatement object.
+	 *
+	 * @param PhpWord $phpWord The styled document.
+	 * @param array<string, mixed> $context `{ reportType, period, administrationId }`.
+	 *
+	 * @return void
+	 */
+	protected function build(PhpWord $phpWord, array $context): void {
+		$statement = $this->resolveStatement($context);
+		$currency = $this->str($statement, 'currency');
+		if ($currency === '') {
+			$currency = 'EUR';
+		}
 
-    }//end documentTitle()
+		$section = $this->addSection($phpWord);
+		$this->addCover(
+			$section,
+			'BBV-jaarstukken',
+			$this->documentTypeLabel($this->str($statement, 'documentType')) . ' — programmaverantwoording',
+			$context
+		);
 
-    /**
-     * Build the BBV jaarstukken body from the BbvStatement object.
-     *
-     * @param PhpWord              $phpWord The styled document.
-     * @param array<string, mixed> $context `{ reportType, period, administrationId }`.
-     *
-     * @return void
-     */
-    protected function build(PhpWord $phpWord, array $context): void
-    {
-        $statement = $this->resolveStatement($context);
-        $currency  = $this->str($statement, 'currency');
-        if ($currency === '') {
-            $currency = 'EUR';
-        }
+		// --- Kerngegevens ---
+		$this->addHeading($section, 'Kerngegevens');
+		$this->addDetailsTable(
+			$section,
+			[
+				'Documenttype' => $this->documentTypeLabel($this->str($statement, 'documentType')),
+				'Soort lichaam' => $this->entityTypeLabel($this->str($statement, 'entityType')),
+				'Jurisdictie' => $this->str($statement, 'jurisdiction'),
+				'Boekjaar' => $this->str($statement, 'fiscalYear'),
+				'Valuta' => $currency,
+				'Onderdelen' => $this->joinList($statement['parts'] ?? []),
+			]
+		);
 
-        $section = $this->addSection($phpWord);
-        $this->addCover(
-            $section,
-            'BBV-jaarstukken',
-            $this->documentTypeLabel($this->str($statement, 'documentType')).' — programmaverantwoording',
-            $context
-        );
+		// --- Programmaplan (art. 8) ---
+		$section->addTextBreak(1);
+		$this->buildProgrammaplan($section, $statement, $currency);
 
-        // --- Kerngegevens ---
-        $this->addHeading($section, 'Kerngegevens');
-        $this->addDetailsTable(
-            $section,
-            [
-                'Documenttype'  => $this->documentTypeLabel($this->str($statement, 'documentType')),
-                'Soort lichaam' => $this->entityTypeLabel($this->str($statement, 'entityType')),
-                'Jurisdictie'   => $this->str($statement, 'jurisdiction'),
-                'Boekjaar'      => $this->str($statement, 'fiscalYear'),
-                'Valuta'        => $currency,
-                'Onderdelen'    => $this->joinList($statement['parts'] ?? []),
-            ]
-        );
+		// --- Verplichte paragrafen (art. 9) ---
+		$section->addTextBreak(1);
+		$this->addHeading($section, 'Verplichte paragrafen (art. 9 BBV)');
+		$this->buildParagraphs($section, $statement);
 
-        // --- Programmaplan (art. 8) ---
-        $section->addTextBreak(1);
-        $this->buildProgrammaplan($section, $statement, $currency);
+		// --- Taakvelden ---
+		$section->addTextBreak(1);
+		$this->buildTaakvelden($section, $statement, $currency);
 
-        // --- Verplichte paragrafen (art. 9) ---
-        $section->addTextBreak(1);
-        $this->addHeading($section, 'Verplichte paragrafen (art. 9 BBV)');
-        $this->buildParagraphs($section, $statement);
+		// --- Jaarrekening (art. 24) ---
+		$section->addTextBreak(1);
+		$this->buildJaarrekening($section, $statement);
 
-        // --- Taakvelden ---
-        $section->addTextBreak(1);
-        $this->buildTaakvelden($section, $statement, $currency);
+		// --- Vaste activa (arts. 59/62) ---
+		$section->addTextBreak(1);
+		$this->buildFixedAssets($section, $statement, $currency);
 
-        // --- Jaarrekening (art. 24) ---
-        $section->addTextBreak(1);
-        $this->buildJaarrekening($section, $statement);
+	}//end build()
 
-        // --- Vaste activa (arts. 59/62) ---
-        $section->addTextBreak(1);
-        $this->buildFixedAssets($section, $statement, $currency);
+	/**
+	 * Build the programmaplan section: the programmes plus the general cover
+	 * funds, overhead, VPB charge and onvoorzien.
+	 *
+	 * @param Section $section The section.
+	 * @param array<string, mixed> $statement The BbvStatement object.
+	 * @param string $currency The presentation currency.
+	 *
+	 * @return void
+	 */
+	private function buildProgrammaplan(Section $section, array $statement, string $currency): void {
+		$this->addHeading($section, 'Programmaplan (art. 8 BBV)');
 
-    }//end build()
+		$plan = $statement['programmaplan'] ?? [];
+		if (is_array($plan) === false) {
+			$plan = [];
+		}
 
-    /**
-     * Build the programmaplan section: the programmes plus the general cover
-     * funds, overhead, VPB charge and onvoorzien.
-     *
-     * @param Section              $section   The section.
-     * @param array<string, mixed> $statement The BbvStatement object.
-     * @param string               $currency  The presentation currency.
-     *
-     * @return void
-     */
-    private function buildProgrammaplan(Section $section, array $statement, string $currency): void
-    {
-        $this->addHeading($section, 'Programmaplan (art. 8 BBV)');
+		$programmes = $plan['programmes'] ?? [];
+		if (is_array($programmes) === true && $programmes !== []) {
+			$table = $section->addTable('reportTable');
+			$table->addRow();
+			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4), ['bgColor' => self::ACCENT_COLOUR])
+				->addText('Code', ['name' => 'DejaVu Sans', 'size' => 10, 'bold' => true, 'color' => 'FFFFFF']);
+			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(12), ['bgColor' => self::ACCENT_COLOUR])
+				->addText('Programma', ['name' => 'DejaVu Sans', 'size' => 10, 'bold' => true, 'color' => 'FFFFFF']);
 
-        $plan = $statement['programmaplan'] ?? [];
-        if (is_array($plan) === false) {
-            $plan = [];
-        }
+			foreach ($programmes as $programme) {
+				if (is_array($programme) === false) {
+					continue;
+				}
 
-        $programmes = $plan['programmes'] ?? [];
-        if (is_array($programmes) === true && $programmes !== []) {
-            $table = $section->addTable('reportTable');
-            $table->addRow();
-            $table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4), ['bgColor' => self::ACCENT_COLOUR])
-                ->addText('Code', ['name' => 'DejaVu Sans', 'size' => 10, 'bold' => true, 'color' => 'FFFFFF']);
-            $table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(12), ['bgColor' => self::ACCENT_COLOUR])
-                ->addText('Programma', ['name' => 'DejaVu Sans', 'size' => 10, 'bold' => true, 'color' => 'FFFFFF']);
+				$table->addRow();
+				$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($programme, 'code'), 'value');
+				$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(12))->addText($this->str($programme, 'name'), 'value');
+			}
+		} else {
+			$this->addNote($section, 'Geen programma\'s opgenomen in het programmaplan.');
+		}
 
-            foreach ($programmes as $programme) {
-                if (is_array($programme) === false) {
-                    continue;
-                }
+		$section->addTextBreak(1);
+		$this->addAmountTable(
+			$section,
+			'Algemene posten',
+			'Bedrag',
+			[
+				['label' => 'Algemene dekkingsmiddelen', 'amount' => $this->num($plan, 'algemeneDekkingsmiddelen')],
+				['label' => 'Overhead', 'amount' => $this->num($plan, 'overhead')],
+				['label' => 'Heffing vennootschapsbelasting (VPB)', 'amount' => $this->num($plan, 'vpbCharge')],
+				['label' => 'Onvoorzien', 'amount' => $this->num($plan, 'onvoorzien')],
+			],
+			null,
+			$currency
+		);
 
-                $table->addRow();
-                $table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($programme, 'code'), 'value');
-                $table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(12))->addText($this->str($programme, 'name'), 'value');
-            }
-        } else {
-            $this->addNote($section, 'Geen programma\'s opgenomen in het programmaplan.');
-        }
+	}//end buildProgrammaplan()
 
-        $section->addTextBreak(1);
-        $this->addAmountTable(
-            $section,
-            'Algemene posten',
-            'Bedrag',
-            [
-                ['label' => 'Algemene dekkingsmiddelen', 'amount' => $this->num($plan, 'algemeneDekkingsmiddelen')],
-                ['label' => 'Overhead', 'amount' => $this->num($plan, 'overhead')],
-                ['label' => 'Heffing vennootschapsbelasting (VPB)', 'amount' => $this->num($plan, 'vpbCharge')],
-                ['label' => 'Onvoorzien', 'amount' => $this->num($plan, 'onvoorzien')],
-            ],
-            null,
-            $currency
-        );
+	/**
+	 * List the mandatory BBV paragraphs (art. 9), flagging which of the seven
+	 * required paragraphs are present.
+	 *
+	 * @param Section $section The section.
+	 * @param array<string, mixed> $statement The BbvStatement object.
+	 *
+	 * @return void
+	 */
+	private function buildParagraphs(Section $section, array $statement): void {
+		$required = [
+			'lokaleHeffingen' => 'Lokale heffingen',
+			'weerstandsvermogen' => 'Weerstandsvermogen en risicobeheersing',
+			'onderhoudKapitaalgoederen' => 'Onderhoud kapitaalgoederen',
+			'financiering' => 'Financiering',
+			'bedrijfsvoering' => 'Bedrijfsvoering',
+			'verbondenPartijen' => 'Verbonden partijen',
+			'grondbeleid' => 'Grondbeleid',
+		];
 
-    }//end buildProgrammaplan()
+		$present = [];
+		foreach (($statement['paragraphs'] ?? []) as $paragraph) {
+			$present[strtolower((string)$paragraph)] = true;
+		}
 
-    /**
-     * List the mandatory BBV paragraphs (art. 9), flagging which of the seven
-     * required paragraphs are present.
-     *
-     * @param Section              $section   The section.
-     * @param array<string, mixed> $statement The BbvStatement object.
-     *
-     * @return void
-     */
-    private function buildParagraphs(Section $section, array $statement): void
-    {
-        $required = [
-            'lokaleHeffingen'           => 'Lokale heffingen',
-            'weerstandsvermogen'        => 'Weerstandsvermogen en risicobeheersing',
-            'onderhoudKapitaalgoederen' => 'Onderhoud kapitaalgoederen',
-            'financiering'              => 'Financiering',
-            'bedrijfsvoering'           => 'Bedrijfsvoering',
-            'verbondenPartijen'         => 'Verbonden partijen',
-            'grondbeleid'               => 'Grondbeleid',
-        ];
+		$rows = [];
+		foreach ($required as $key => $label) {
+			$isPresent = (isset($present[strtolower($key)]) === true || isset($present[strtolower($label)]) === true);
+			$rows[$label] = $isPresent === true ? 'Aanwezig' : 'Ontbreekt';
+		}
 
-        $present = [];
-        foreach (($statement['paragraphs'] ?? []) as $paragraph) {
-            $present[strtolower((string) $paragraph)] = true;
-        }
+		$this->addDetailsTable($section, $rows);
 
-        $rows = [];
-        foreach ($required as $key => $label) {
-            $isPresent    = (isset($present[strtolower($key)]) === true || isset($present[strtolower($label)]) === true);
-            $rows[$label] = $isPresent === true ? 'Aanwezig' : 'Ontbreekt';
-        }
+	}//end buildParagraphs()
 
-        $this->addDetailsTable($section, $rows);
+	/**
+	 * Build the taakvelden overview: estimated revenue and expense per taakveld.
+	 *
+	 * @param Section $section The section.
+	 * @param array<string, mixed> $statement The BbvStatement object.
+	 * @param string $currency The presentation currency.
+	 *
+	 * @return void
+	 */
+	private function buildTaakvelden(Section $section, array $statement, string $currency): void {
+		$this->addHeading($section, 'Overzicht taakvelden');
 
-    }//end buildParagraphs()
+		$taakvelden = $statement['taakvelden'] ?? [];
+		if (is_array($taakvelden) === false || $taakvelden === []) {
+			$this->addNote($section, 'Geen taakvelden opgenomen.');
+			return;
+		}
 
-    /**
-     * Build the taakvelden overview: estimated revenue and expense per taakveld.
-     *
-     * @param Section              $section   The section.
-     * @param array<string, mixed> $statement The BbvStatement object.
-     * @param string               $currency  The presentation currency.
-     *
-     * @return void
-     */
-    private function buildTaakvelden(Section $section, array $statement, string $currency): void
-    {
-        $this->addHeading($section, 'Overzicht taakvelden');
+		$table = $section->addTable('reportTable');
+		$table->addRow();
+		foreach (['Code', 'Taakveld', 'Baten', 'Lasten'] as $head) {
+			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4), ['bgColor' => self::ACCENT_COLOUR])
+				->addText($head, ['name' => 'DejaVu Sans', 'size' => 10, 'bold' => true, 'color' => 'FFFFFF']);
+		}
 
-        $taakvelden = $statement['taakvelden'] ?? [];
-        if (is_array($taakvelden) === false || $taakvelden === []) {
-            $this->addNote($section, 'Geen taakvelden opgenomen.');
-            return;
-        }
+		$totalRevenue = 0.0;
+		$totalExpense = 0.0;
+		foreach ($taakvelden as $taakveld) {
+			if (is_array($taakveld) === false) {
+				continue;
+			}
 
-        $table = $section->addTable('reportTable');
-        $table->addRow();
-        foreach (['Code', 'Taakveld', 'Baten', 'Lasten'] as $head) {
-            $table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4), ['bgColor' => self::ACCENT_COLOUR])
-                ->addText($head, ['name' => 'DejaVu Sans', 'size' => 10, 'bold' => true, 'color' => 'FFFFFF']);
-        }
+			$revenue = $this->num($taakveld, 'estimatedRevenue');
+			$expense = $this->num($taakveld, 'estimatedExpense');
+			$totalRevenue += $revenue;
+			$totalExpense += $expense;
 
-        $totalRevenue = 0.0;
-        $totalExpense = 0.0;
-        foreach ($taakvelden as $taakveld) {
-            if (is_array($taakveld) === false) {
-                continue;
-            }
+			$table->addRow();
+			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($taakveld, 'code'), 'value');
+			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($taakveld, 'name'), 'value');
+			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->money($revenue, $currency), 'amount', ['alignment' => 'end']);
+			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->money($expense, $currency), 'amount', ['alignment' => 'end']);
+		}
 
-            $revenue       = $this->num($taakveld, 'estimatedRevenue');
-            $expense       = $this->num($taakveld, 'estimatedExpense');
-            $totalRevenue += $revenue;
-            $totalExpense += $expense;
+		$table->addRow();
+		$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(8), ['bgColor' => 'EEF2FF', 'gridSpan' => 2])->addText('Totaal', 'amountBold');
+		$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4), ['bgColor' => 'EEF2FF'])->addText($this->money($totalRevenue, $currency), 'amountBold', ['alignment' => 'end']);
+		$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4), ['bgColor' => 'EEF2FF'])->addText($this->money($totalExpense, $currency), 'amountBold', ['alignment' => 'end']);
 
-            $table->addRow();
-            $table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($taakveld, 'code'), 'value');
-            $table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($taakveld, 'name'), 'value');
-            $table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->money($revenue, $currency), 'amount', ['alignment' => 'end']);
-            $table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->money($expense, $currency), 'amount', ['alignment' => 'end']);
-        }
+	}//end buildTaakvelden()
 
-        $table->addRow();
-        $table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(8), ['bgColor' => 'EEF2FF', 'gridSpan' => 2])->addText('Totaal', 'amountBold');
-        $table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4), ['bgColor' => 'EEF2FF'])->addText($this->money($totalRevenue, $currency), 'amountBold', ['alignment' => 'end']);
-        $table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4), ['bgColor' => 'EEF2FF'])->addText($this->money($totalExpense, $currency), 'amountBold', ['alignment' => 'end']);
+	/**
+	 * Build the jaarrekening composition (art. 24): which components are present.
+	 *
+	 * @param Section $section The section.
+	 * @param array<string, mixed> $statement The BbvStatement object.
+	 *
+	 * @return void
+	 */
+	private function buildJaarrekening(Section $section, array $statement): void {
+		$this->addHeading($section, 'Jaarrekening (art. 24 BBV)');
 
-    }//end buildTaakvelden()
+		$jaarrekening = $statement['jaarrekening'] ?? [];
+		if (is_array($jaarrekening) === false) {
+			$jaarrekening = [];
+		}
 
-    /**
-     * Build the jaarrekening composition (art. 24): which components are present.
-     *
-     * @param Section              $section   The section.
-     * @param array<string, mixed> $statement The BbvStatement object.
-     *
-     * @return void
-     */
-    private function buildJaarrekening(Section $section, array $statement): void
-    {
-        $this->addHeading($section, 'Jaarrekening (art. 24 BBV)');
+		$this->addDetailsTable(
+			$section,
+			[
+				'Overzicht van baten en lasten' => $this->yesNo($jaarrekening['overzichtBatenLasten'] ?? null),
+				'Balans' => $this->yesNo($jaarrekening['balans'] ?? null),
+				'Rechtmatigheidsverantwoording' => $this->yesNo($jaarrekening['rechtmatigheidsverantwoording'] ?? null),
+				'Accountantsverklaring' => $this->yesNo($jaarrekening['accountantsverklaring'] ?? null),
+			]
+		);
 
-        $jaarrekening = $statement['jaarrekening'] ?? [];
-        if (is_array($jaarrekening) === false) {
-            $jaarrekening = [];
-        }
+	}//end buildJaarrekening()
 
-        $this->addDetailsTable(
-            $section,
-            [
-                'Overzicht van baten en lasten' => $this->yesNo($jaarrekening['overzichtBatenLasten'] ?? null),
-                'Balans'                        => $this->yesNo($jaarrekening['balans'] ?? null),
-                'Rechtmatigheidsverantwoording' => $this->yesNo($jaarrekening['rechtmatigheidsverantwoording'] ?? null),
-                'Accountantsverklaring'         => $this->yesNo($jaarrekening['accountantsverklaring'] ?? null),
-            ]
-        );
+	/**
+	 * Build the fixed-assets overview (arts. 59/62): capitalisation + valuation.
+	 *
+	 * @param Section $section The section.
+	 * @param array<string, mixed> $statement The BbvStatement object.
+	 * @param string $currency The presentation currency.
+	 *
+	 * @return void
+	 */
+	private function buildFixedAssets(Section $section, array $statement, string $currency): void {
+		$this->addHeading($section, 'Vaste activa (art. 59/62 BBV)');
 
-    }//end buildJaarrekening()
+		$assets = $statement['fixedAssets'] ?? [];
+		if (is_array($assets) === false || $assets === []) {
+			$this->addNote($section, 'Geen vaste activa opgenomen.');
+			return;
+		}
 
-    /**
-     * Build the fixed-assets overview (arts. 59/62): capitalisation + valuation.
-     *
-     * @param Section              $section   The section.
-     * @param array<string, mixed> $statement The BbvStatement object.
-     * @param string               $currency  The presentation currency.
-     *
-     * @return void
-     */
-    private function buildFixedAssets(Section $section, array $statement, string $currency): void
-    {
-        $this->addHeading($section, 'Vaste activa (art. 59/62 BBV)');
+		$lines = [];
+		$total = 0.0;
+		foreach ($assets as $asset) {
+			if (is_array($asset) === false) {
+				continue;
+			}
 
-        $assets = $statement['fixedAssets'] ?? [];
-        if (is_array($assets) === false || $assets === []) {
-            $this->addNote($section, 'Geen vaste activa opgenomen.');
-            return;
-        }
+			$cost = $this->num($asset, 'acquisitionCost');
+			$total += $cost;
+			$kind = $this->str($asset, 'kind') === 'intangible' ? 'immaterieel' : 'materieel';
+			$capit = (($asset['capitalised'] ?? false) === true ? 'geactiveerd' : 'niet geactiveerd');
+			$lines[] = [
+				'label' => $this->str($asset, 'name') . ' (' . $kind . ', ' . $capit . ')',
+				'amount' => $cost,
+			];
+		}
 
-        $lines = [];
-        $total = 0.0;
-        foreach ($assets as $asset) {
-            if (is_array($asset) === false) {
-                continue;
-            }
+		$this->addAmountTable(
+			$section,
+			'Vast actief',
+			'Verkrijgings-/vervaardigingsprijs',
+			$lines,
+			['label' => 'Totaal vaste activa', 'amount' => $total],
+			$currency
+		);
 
-            $cost    = $this->num($asset, 'acquisitionCost');
-            $total  += $cost;
-            $kind    = $this->str($asset, 'kind') === 'intangible' ? 'immaterieel' : 'materieel';
-            $capit   = (($asset['capitalised'] ?? false) === true ? 'geactiveerd' : 'niet geactiveerd');
-            $lines[] = [
-                'label'  => $this->str($asset, 'name').' ('.$kind.', '.$capit.')',
-                'amount' => $cost,
-            ];
-        }
+	}//end buildFixedAssets()
 
-        $this->addAmountTable(
-            $section,
-            'Vast actief',
-            'Verkrijgings-/vervaardigingsprijs',
-            $lines,
-            ['label' => 'Totaal vaste activa', 'amount' => $total],
-            $currency
-        );
+	/**
+	 * Resolve the BbvStatement object for the report. A statementId / bbvStatementId
+	 * in the context is honoured first; otherwise the statement whose fiscalYear
+	 * matches the period (and, when given, administration) is picked, falling
+	 * back to the first available. Returns an empty array when none match.
+	 *
+	 * @param array<string, mixed> $context `{ period, administrationId, statementId? }`.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function resolveStatement(array $context): array {
+		$id = $this->str($context, 'statementId', 'bbvStatementId', 'objectId');
+		if ($id !== '') {
+			$object = $this->loadObject('BbvStatement', $id);
+			if ($object !== null) {
+				return $object;
+			}
+		}
 
-    }//end buildFixedAssets()
+		$administrationId = $this->str($context, 'administrationId');
+		$filters = [];
+		if ($administrationId !== '') {
+			$filters['administrationId'] = $administrationId;
+		}
 
-    /**
-     * Resolve the BbvStatement object for the report. A statementId / bbvStatementId
-     * in the context is honoured first; otherwise the statement whose fiscalYear
-     * matches the period (and, when given, administration) is picked, falling
-     * back to the first available. Returns an empty array when none match.
-     *
-     * @param array<string, mixed> $context `{ period, administrationId, statementId? }`.
-     *
-     * @return array<string, mixed>
-     */
-    private function resolveStatement(array $context): array
-    {
-        $id = $this->str($context, 'statementId', 'bbvStatementId', 'objectId');
-        if ($id !== '') {
-            $object = $this->loadObject('BbvStatement', $id);
-            if ($object !== null) {
-                return $object;
-            }
-        }
+		$candidates = $this->loadObjects('BbvStatement', $filters);
+		if ($candidates === [] && $filters !== []) {
+			$candidates = $this->loadObjects('BbvStatement');
+		}
 
-        $administrationId = $this->str($context, 'administrationId');
-        $filters          = [];
-        if ($administrationId !== '') {
-            $filters['administrationId'] = $administrationId;
-        }
+		if ($candidates === []) {
+			return [];
+		}
 
-        $candidates = $this->loadObjects('BbvStatement', $filters);
-        if ($candidates === [] && $filters !== []) {
-            $candidates = $this->loadObjects('BbvStatement');
-        }
+		$period = $this->str($context, 'period');
+		if ($period !== '') {
+			// Match the year (the BBV fiscalYear is a number; the period may be '2026' or '2026-...').
+			$year = preg_replace('/[^0-9]/', '', $period);
+			foreach ($candidates as $candidate) {
+				if ($year !== '' && (string)(int)$this->num($candidate, 'fiscalYear') === (string)(int)$year) {
+					return $candidate;
+				}
+			}
+		}
 
-        if ($candidates === []) {
-            return [];
-        }
+		// Prefer a jaarstukken document over a begroting when present.
+		foreach ($candidates as $candidate) {
+			if ($this->str($candidate, 'documentType') === 'jaarstukken') {
+				return $candidate;
+			}
+		}
 
-        $period = $this->str($context, 'period');
-        if ($period !== '') {
-            // Match the year (the BBV fiscalYear is a number; the period may be '2026' or '2026-...').
-            $year = preg_replace('/[^0-9]/', '', $period);
-            foreach ($candidates as $candidate) {
-                if ($year !== '' && (string) (int) $this->num($candidate, 'fiscalYear') === (string) (int) $year) {
-                    return $candidate;
-                }
-            }
-        }
+		return $candidates[0];
+	}//end resolveStatement()
 
-        // Prefer a jaarstukken document over a begroting when present.
-        foreach ($candidates as $candidate) {
-            if ($this->str($candidate, 'documentType') === 'jaarstukken') {
-                return $candidate;
-            }
-        }
+	/**
+	 * Map a documentType enum to a Dutch label.
+	 *
+	 * @param string $type The documentType value.
+	 *
+	 * @return string
+	 */
+	private function documentTypeLabel(string $type): string {
+		return match ($type) {
+			'begroting' => 'Begroting',
+			'jaarstukken' => 'Jaarstukken',
+			default => ($type !== '' ? $type : 'Jaarstukken'),
+		};
 
-        return $candidates[0];
+	}//end documentTypeLabel()
 
-    }//end resolveStatement()
+	/**
+	 * Map an entityType enum to a Dutch label.
+	 *
+	 * @param string $type The entityType value.
+	 *
+	 * @return string
+	 */
+	private function entityTypeLabel(string $type): string {
+		return match ($type) {
+			'gemeente' => 'Gemeente',
+			'provincie' => 'Provincie',
+			'waterschap' => 'Waterschap',
+			default => $type,
+		};
 
-    /**
-     * Map a documentType enum to a Dutch label.
-     *
-     * @param string $type The documentType value.
-     *
-     * @return string
-     */
-    private function documentTypeLabel(string $type): string
-    {
-        return match ($type) {
-            'begroting'   => 'Begroting',
-            'jaarstukken' => 'Jaarstukken',
-            default       => ($type !== '' ? $type : 'Jaarstukken'),
-        };
+	}//end entityTypeLabel()
 
-    }//end documentTypeLabel()
+	/**
+	 * Join a list of scalar values into a comma-separated string.
+	 *
+	 * @param mixed $list The list (array) value.
+	 *
+	 * @return string
+	 */
+	private function joinList(mixed $list): string {
+		if (is_array($list) === false || $list === []) {
+			return '';
+		}
 
-    /**
-     * Map an entityType enum to a Dutch label.
-     *
-     * @param string $type The entityType value.
-     *
-     * @return string
-     */
-    private function entityTypeLabel(string $type): string
-    {
-        return match ($type) {
-            'gemeente'  => 'Gemeente',
-            'provincie' => 'Provincie',
-            'waterschap' => 'Waterschap',
-            default     => $type,
-        };
+		return implode(', ', array_map('strval', $list));
+	}//end joinList()
 
-    }//end entityTypeLabel()
+	/**
+	 * Render a boolean as Ja / Nee (empty string when null).
+	 *
+	 * @param mixed $value The boolean-ish value.
+	 *
+	 * @return string
+	 */
+	private function yesNo(mixed $value): string {
+		if ($value === null) {
+			return '';
+		}
 
-    /**
-     * Join a list of scalar values into a comma-separated string.
-     *
-     * @param mixed $list The list (array) value.
-     *
-     * @return string
-     */
-    private function joinList(mixed $list): string
-    {
-        if (is_array($list) === false || $list === []) {
-            return '';
-        }
-
-        return implode(', ', array_map('strval', $list));
-
-    }//end joinList()
-
-    /**
-     * Render a boolean as Ja / Nee (empty string when null).
-     *
-     * @param mixed $value The boolean-ish value.
-     *
-     * @return string
-     */
-    private function yesNo(mixed $value): string
-    {
-        if ($value === null) {
-            return '';
-        }
-
-        return ((bool) $value === true) ? 'Ja' : 'Nee';
-
-    }//end yesNo()
+		return ((bool)$value === true) ? 'Ja' : 'Nee';
+	}//end yesNo()
 }//end class

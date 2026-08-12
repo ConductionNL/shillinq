@@ -33,243 +33,230 @@ use ReflectionMethod;
  * schemas or objects (ADR-037). The new daily-ledger schema is named
  * UrenDagregistratie to avoid colliding with the existing monolith UrenRegistratie.
  */
-final class ZzpUrencriteriumTrackerFragmentTest extends TestCase
-{
+final class ZzpUrencriteriumTrackerFragmentTest extends TestCase {
 
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/20-zzp-urencriterium-tracker.json';
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/20-zzp-urencriterium-tracker.json';
 
-    /**
-     * Absolute path to the monolith register file.
-     *
-     * @var string
-     */
-    private string $registerPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+	/**
+	 * Absolute path to the monolith register file.
+	 *
+	 * @var string
+	 */
+	private string $registerPath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
 
-    /**
-     * The six schemas declared by the fragment.
-     *
-     * @var array<int, string>
-     */
-    private array $expectedSchemas = [
-        'UrencriteriumYear',
-        'UrenDagregistratie',
-        'UrenCategorie',
-        'UrenPrognose',
-        'UrenAlert',
-        'UrenEvidence',
-    ];
+	/**
+	 * The six schemas declared by the fragment.
+	 *
+	 * @var array<int, string>
+	 */
+	private array $expectedSchemas = [
+		'UrencriteriumYear',
+		'UrenDagregistratie',
+		'UrenCategorie',
+		'UrenPrognose',
+		'UrenAlert',
+		'UrenEvidence',
+	];
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    }//end merge()
+	/**
+	 * Decode the fragment to an array.
+	 *
+	 * @return array<mixed>
+	 */
+	private function fragment(): array {
+		return json_decode((string)file_get_contents($this->fragmentPath), true);
+	}//end fragment()
 
-    /**
-     * Decode the fragment to an array.
-     *
-     * @return array<mixed>
-     */
-    private function fragment(): array
-    {
-        return json_decode((string) file_get_contents($this->fragmentPath), true);
+	/**
+	 * The fragment file is present and valid JSON with a schemas object.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertIsArray($data);
+		self::assertArrayHasKey('schemas', $data['components']);
 
-    }//end fragment()
+	}//end testFragmentIsValidJson()
 
-    /**
-     * The fragment file is present and valid JSON with a schemas object.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertIsArray($data);
-        self::assertArrayHasKey('schemas', $data['components']);
+	/**
+	 * The fragment declares all six urencriterium schemas.
+	 *
+	 * @return void
+	 */
+	public function testFragmentDeclaresAllSchemas(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		foreach ($this->expectedSchemas as $name) {
+			self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
+		}
 
-    }//end testFragmentIsValidJson()
+	}//end testFragmentDeclaresAllSchemas()
 
-    /**
-     * The fragment declares all six urencriterium schemas.
-     *
-     * @return void
-     */
-    public function testFragmentDeclaresAllSchemas(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
-        foreach ($this->expectedSchemas as $name) {
-            self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
-        }
+	/**
+	 * The fragment does NOT redeclare the existing monolith UrenRegistratie schema
+	 * (ADR-037: no shape collision with the billable time-tracking ledger).
+	 *
+	 * @return void
+	 */
+	public function testFragmentDoesNotRedeclareUrenRegistratie(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		self::assertArrayNotHasKey(
+			'UrenRegistratie',
+			$schemas,
+			'Fragment must not redeclare the existing monolith UrenRegistratie schema'
+		);
 
-    }//end testFragmentDeclaresAllSchemas()
+		$monolith = json_decode((string)file_get_contents($this->registerPath), true);
+		self::assertArrayHasKey(
+			'UrenRegistratie',
+			$monolith['components']['schemas'],
+			'The billable UrenRegistratie must remain the monolith time-tracking schema'
+		);
 
-    /**
-     * The fragment does NOT redeclare the existing monolith UrenRegistratie schema
-     * (ADR-037: no shape collision with the billable time-tracking ledger).
-     *
-     * @return void
-     */
-    public function testFragmentDoesNotRedeclareUrenRegistratie(): void
-    {
-        $schemas = $this->fragment()['components']['schemas'];
-        self::assertArrayNotHasKey(
-            'UrenRegistratie',
-            $schemas,
-            'Fragment must not redeclare the existing monolith UrenRegistratie schema'
-        );
+	}//end testFragmentDoesNotRedeclareUrenRegistratie()
 
-        $monolith = json_decode((string) file_get_contents($this->registerPath), true);
-        self::assertArrayHasKey(
-            'UrenRegistratie',
-            $monolith['components']['schemas'],
-            'The billable UrenRegistratie must remain the monolith time-tracking schema'
-        );
+	/**
+	 * The UrencriteriumYear schema declares its drempel-status lifecycle with the
+	 * UrencriteriumYearGuard save precondition and the four canonical statuses.
+	 *
+	 * @return void
+	 */
+	public function testUrencriteriumYearDeclaresLifecycleWithGuard(): void {
+		$year = $this->fragment()['components']['schemas']['UrencriteriumYear'];
 
-    }//end testFragmentDoesNotRedeclareUrenRegistratie()
+		self::assertArrayHasKey('x-openregister-lifecycle', $year);
+		$lifecycle = $year['x-openregister-lifecycle'];
+		self::assertSame('drempelStatus', $lifecycle['field']);
+		self::assertSame(
+			'OCA\\Shillinq\\Guard\\UrencriteriumYearGuard::validateOnSave',
+			$lifecycle['preconditions']['save'],
+			'UrencriteriumYear save must be guarded by UrencriteriumYearGuard'
+		);
 
-    /**
-     * The UrencriteriumYear schema declares its drempel-status lifecycle with the
-     * UrencriteriumYearGuard save precondition and the four canonical statuses.
-     *
-     * @return void
-     */
-    public function testUrencriteriumYearDeclaresLifecycleWithGuard(): void
-    {
-        $year = $this->fragment()['components']['schemas']['UrencriteriumYear'];
+		foreach (['OP_KOERS', 'RISICO', 'KRITIEK', 'BEHAALD'] as $state) {
+			self::assertArrayHasKey($state, $lifecycle['states'], "Lifecycle must declare $state");
+		}
 
-        self::assertArrayHasKey('x-openregister-lifecycle', $year);
-        $lifecycle = $year['x-openregister-lifecycle'];
-        self::assertSame('drempelStatus', $lifecycle['field']);
-        self::assertSame(
-            'OCA\\Shillinq\\Guard\\UrencriteriumYearGuard::validateOnSave',
-            $lifecycle['preconditions']['save'],
-            'UrencriteriumYear save must be guarded by UrencriteriumYearGuard'
-        );
+	}//end testUrencriteriumYearDeclaresLifecycleWithGuard()
 
-        foreach (['OP_KOERS', 'RISICO', 'KRITIEK', 'BEHAALD'] as $state) {
-            self::assertArrayHasKey($state, $lifecycle['states'], "Lifecycle must declare $state");
-        }
+	/**
+	 * The UrencriteriumYear schema constrains doelNorm to the three legal values.
+	 *
+	 * @return void
+	 */
+	public function testUrencriteriumYearConstrainsNorm(): void {
+		$year = $this->fragment()['components']['schemas']['UrencriteriumYear'];
+		$enum = $year['properties']['doelNorm']['enum'];
+		self::assertSame([1225, 800, 525], $enum);
 
-    }//end testUrencriteriumYearDeclaresLifecycleWithGuard()
+	}//end testUrencriteriumYearConstrainsNorm()
 
-    /**
-     * The UrencriteriumYear schema constrains doelNorm to the three legal values.
-     *
-     * @return void
-     */
-    public function testUrencriteriumYearConstrainsNorm(): void
-    {
-        $year = $this->fragment()['components']['schemas']['UrencriteriumYear'];
-        $enum = $year['properties']['doelNorm']['enum'];
-        self::assertSame([1225, 800, 525], $enum);
+	/**
+	 * The reistijd category seed declares the 4-hour daily cap (REQ-URC-001).
+	 *
+	 * @return void
+	 */
+	public function testReistijdCategorySeedsDailyCap(): void {
+		$objects = $this->fragment()['objects'];
+		$reistijd = null;
+		foreach ($objects as $object) {
+			if (($object['code'] ?? '') === 'REISTIJD_ZAKELIJK') {
+				$reistijd = $object;
+				break;
+			}
+		}
 
-    }//end testUrencriteriumYearConstrainsNorm()
+		self::assertNotNull($reistijd, 'A REISTIJD_ZAKELIJK category must be seeded');
+		self::assertSame(4, $reistijd['maxPerDag'], 'Reistijd cap must be 4 hours/day');
 
-    /**
-     * The reistijd category seed declares the 4-hour daily cap (REQ-URC-001).
-     *
-     * @return void
-     */
-    public function testReistijdCategorySeedsDailyCap(): void
-    {
-        $objects  = $this->fragment()['objects'];
-        $reistijd = null;
-        foreach ($objects as $object) {
-            if (($object['code'] ?? '') === 'REISTIJD_ZAKELIJK') {
-                $reistijd = $object;
-                break;
-            }
-        }
+	}//end testReistijdCategorySeedsDailyCap()
 
-        self::assertNotNull($reistijd, 'A REISTIJD_ZAKELIJK category must be seeded');
-        self::assertSame(4, $reistijd['maxPerDag'], 'Reistijd cap must be 4 hours/day');
+	/**
+	 * All seven standard categories are seeded, each with a fiscal grondslag.
+	 *
+	 * @return void
+	 */
+	public function testSevenCategoriesSeededWithGrondslag(): void {
+		$objects = array_filter(
+			$this->fragment()['objects'],
+			static fn (array $o): bool => ($o['@self']['schema'] ?? '') === 'UrenCategorie'
+		);
+		$codes = array_map(static fn (array $o): string => $o['code'], $objects);
+		$expected = [
+			'BILLABLE_KLANTWERK',
+			'ACQUISITIE',
+			'ADMINISTRATIE',
+			'REISTIJD_ZAKELIJK',
+			'SCHOLING',
+			'FICTIE_ZEZ',
+			'R_AND_D_WBSO',
+		];
 
-    }//end testReistijdCategorySeedsDailyCap()
+		foreach ($expected as $code) {
+			self::assertContains($code, $codes, "Category $code must be seeded");
+		}
 
-    /**
-     * All seven standard categories are seeded, each with a fiscal grondslag.
-     *
-     * @return void
-     */
-    public function testSevenCategoriesSeededWithGrondslag(): void
-    {
-        $objects  = array_filter(
-            $this->fragment()['objects'],
-            static fn(array $o): bool => ($o['@self']['schema'] ?? '') === 'UrenCategorie'
-        );
-        $codes    = array_map(static fn(array $o): string => $o['code'], $objects);
-        $expected = [
-            'BILLABLE_KLANTWERK',
-            'ACQUISITIE',
-            'ADMINISTRATIE',
-            'REISTIJD_ZAKELIJK',
-            'SCHOLING',
-            'FICTIE_ZEZ',
-            'R_AND_D_WBSO',
-        ];
+		foreach ($objects as $object) {
+			self::assertNotEmpty(
+				($object['fiscaleBron'] ?? ''),
+				'Each seeded category must cite a fiscal grondslag'
+			);
+		}
 
-        foreach ($expected as $code) {
-            self::assertContains($code, $codes, "Category $code must be seeded");
-        }
+	}//end testSevenCategoriesSeededWithGrondslag()
 
-        foreach ($objects as $object) {
-            self::assertNotEmpty(
-                ($object['fiscaleBron'] ?? ''),
-                'Each seeded category must cite a fiscal grondslag'
-            );
-        }
+	/**
+	 * Merging the fragment onto the monolith adds the six schemas and the seven
+	 * category seed objects without dropping any pre-existing schema or object.
+	 *
+	 * @return void
+	 */
+	public function testFragmentMergesAdditivelyOntoMonolith(): void {
+		$base = json_decode((string)file_get_contents($this->registerPath), true);
+		$frag = $this->fragment();
 
-    }//end testSevenCategoriesSeededWithGrondslag()
+		$schemaCountBefore = count($base['components']['schemas']);
+		$objectCountBefore = count(($base['objects'] ?? []));
 
-    /**
-     * Merging the fragment onto the monolith adds the six schemas and the seven
-     * category seed objects without dropping any pre-existing schema or object.
-     *
-     * @return void
-     */
-    public function testFragmentMergesAdditivelyOntoMonolith(): void
-    {
-        $base = json_decode((string) file_get_contents($this->registerPath), true);
-        $frag = $this->fragment();
+		$merged = $this->merge($base, $frag);
+		$schemas = $merged['components']['schemas'];
 
-        $schemaCountBefore = count($base['components']['schemas']);
-        $objectCountBefore = count(($base['objects'] ?? []));
+		foreach ($this->expectedSchemas as $name) {
+			self::assertArrayHasKey($name, $schemas);
+		}
 
-        $merged  = $this->merge($base, $frag);
-        $schemas = $merged['components']['schemas'];
+		self::assertCount($schemaCountBefore + 6, $schemas, 'Exactly six schemas must be added');
 
-        foreach ($this->expectedSchemas as $name) {
-            self::assertArrayHasKey($name, $schemas);
-        }
+		foreach (array_keys($base['components']['schemas']) as $name) {
+			self::assertArrayHasKey($name, $schemas, "$name must survive merge");
+		}
 
-        self::assertCount($schemaCountBefore + 6, $schemas, 'Exactly six schemas must be added');
+		self::assertCount(
+			$objectCountBefore + 7,
+			$merged['objects'],
+			'Seven category seed objects must be appended'
+		);
 
-        foreach (array_keys($base['components']['schemas']) as $name) {
-            self::assertArrayHasKey($name, $schemas, "$name must survive merge");
-        }
-
-        self::assertCount(
-            $objectCountBefore + 7,
-            $merged['objects'],
-            'Seven category seed objects must be appended'
-        );
-
-    }//end testFragmentMergesAdditivelyOntoMonolith()
+	}//end testFragmentMergesAdditivelyOntoMonolith()
 }//end class

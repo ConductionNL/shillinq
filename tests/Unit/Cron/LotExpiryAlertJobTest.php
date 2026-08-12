@@ -39,101 +39,90 @@ use ReflectionClass;
  * for both future and past expiry dates. The full sweep is integration-tested
  * with a running OpenRegister.
  */
-class LotExpiryAlertJobTest extends TestCase
-{
-    /**
-     * Instance under test (constructed via reflection to bypass DI).
-     *
-     * @var LotExpiryAlertJob
-     */
-    private LotExpiryAlertJob $job;
+class LotExpiryAlertJobTest extends TestCase {
+	/**
+	 * Instance under test (constructed via reflection to bypass DI).
+	 *
+	 * @var LotExpiryAlertJob
+	 */
+	private LotExpiryAlertJob $job;
 
-    /**
-     * Reflected daysBetween method handle.
-     *
-     * @var \ReflectionMethod
-     */
-    private \ReflectionMethod $daysBetween;
+	/**
+	 * Reflected daysBetween method handle.
+	 *
+	 * @var \ReflectionMethod
+	 */
+	private \ReflectionMethod $daysBetween;
 
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$time = $this->createMock(ITimeFactory::class);
+		$time->method('getDateTime')->willReturn(new \DateTime('2026-05-16'));
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $time = $this->createMock(ITimeFactory::class);
-        $time->method('getDateTime')->willReturn(new \DateTime('2026-05-16'));
+		$settings = $this->createMock(SettingsService::class);
+		$container = $this->createMock(ContainerInterface::class);
+		$logger = $this->createMock(LoggerInterface::class);
 
-        $settings  = $this->createMock(SettingsService::class);
-        $container = $this->createMock(ContainerInterface::class);
-        $logger    = $this->createMock(LoggerInterface::class);
+		$this->job = new LotExpiryAlertJob(
+			time: $time,
+			settings: $settings,
+			container: $container,
+			logger: $logger,
+		);
 
-        $this->job = new LotExpiryAlertJob(
-            time: $time,
-            settings: $settings,
-            container: $container,
-            logger: $logger,
-        );
+		$reflection = new ReflectionClass($this->job);
+		$this->daysBetween = $reflection->getMethod('daysBetween');
+		$this->daysBetween->setAccessible(true);
 
-        $reflection        = new ReflectionClass($this->job);
-        $this->daysBetween = $reflection->getMethod('daysBetween');
-        $this->daysBetween->setAccessible(true);
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * 30 days in the future returns 30.
+	 *
+	 * @return void
+	 */
+	public function testDaysBetweenFutureReturnsPositive(): void {
+		$days = $this->daysBetween->invoke($this->job, '2026-05-16', '2026-06-15');
+		self::assertSame(30, $days);
 
+	}//end testDaysBetweenFutureReturnsPositive()
 
-    /**
-     * 30 days in the future returns 30.
-     *
-     * @return void
-     */
-    public function testDaysBetweenFutureReturnsPositive(): void
-    {
-        $days = $this->daysBetween->invoke($this->job, '2026-05-16', '2026-06-15');
-        self::assertSame(30, $days);
+	/**
+	 * Past expiry returns a negative number.
+	 *
+	 * @return void
+	 */
+	public function testDaysBetweenPastReturnsNegative(): void {
+		$days = $this->daysBetween->invoke($this->job, '2026-05-16', '2026-05-01');
+		self::assertSame(-15, $days);
 
-    }//end testDaysBetweenFutureReturnsPositive()
+	}//end testDaysBetweenPastReturnsNegative()
 
+	/**
+	 * Same date returns zero (today is the expiry date — counts as expired
+	 * tomorrow per the >= comparison; the run-day itself is on the boundary).
+	 *
+	 * @return void
+	 */
+	public function testDaysBetweenSameDateReturnsZero(): void {
+		$days = $this->daysBetween->invoke($this->job, '2026-05-16', '2026-05-16');
+		self::assertSame(0, $days);
 
-    /**
-     * Past expiry returns a negative number.
-     *
-     * @return void
-     */
-    public function testDaysBetweenPastReturnsNegative(): void
-    {
-        $days = $this->daysBetween->invoke($this->job, '2026-05-16', '2026-05-01');
-        self::assertSame(-15, $days);
+	}//end testDaysBetweenSameDateReturnsZero()
 
-    }//end testDaysBetweenPastReturnsNegative()
+	/**
+	 * Seven days in the future matches the inner threshold.
+	 *
+	 * @return void
+	 */
+	public function testDaysBetweenSevenDaysInFuture(): void {
+		$days = $this->daysBetween->invoke($this->job, '2026-05-16', '2026-05-23');
+		self::assertSame(7, $days);
 
-
-    /**
-     * Same date returns zero (today is the expiry date — counts as expired
-     * tomorrow per the >= comparison; the run-day itself is on the boundary).
-     *
-     * @return void
-     */
-    public function testDaysBetweenSameDateReturnsZero(): void
-    {
-        $days = $this->daysBetween->invoke($this->job, '2026-05-16', '2026-05-16');
-        self::assertSame(0, $days);
-
-    }//end testDaysBetweenSameDateReturnsZero()
-
-
-    /**
-     * Seven days in the future matches the inner threshold.
-     *
-     * @return void
-     */
-    public function testDaysBetweenSevenDaysInFuture(): void
-    {
-        $days = $this->daysBetween->invoke($this->job, '2026-05-16', '2026-05-23');
-        self::assertSame(7, $days);
-
-    }//end testDaysBetweenSevenDaysInFuture()
+	}//end testDaysBetweenSevenDaysInFuture()
 }//end class

@@ -48,108 +48,106 @@ use OCA\Shillinq\Service\ViesService;
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
  */
-final class EInvoiceValidationService
-{
-    /**
-     * KvK number pattern: exactly 8 digits.
-     *
-     * @var string
-     */
-    private const KVK_PATTERN = '/^\d{8}$/';
+final class EInvoiceValidationService {
+	/**
+	 * KvK number pattern: exactly 8 digits.
+	 *
+	 * @var string
+	 */
+	private const KVK_PATTERN = '/^\d{8}$/';
 
-    /**
-     * NL BTW-nummer pattern: NL + 9 digits + B + 2 digits.
-     *
-     * @var string
-     */
-    private const VAT_PATTERN = '/^NL\d{9}B\d{2}$/';
+	/**
+	 * NL BTW-nummer pattern: NL + 9 digits + B + 2 digits.
+	 *
+	 * @var string
+	 */
+	private const VAT_PATTERN = '/^NL\d{9}B\d{2}$/';
 
-    /**
-     * Construct the validation service.
-     *
-     * @param ViesService                     $vies       VIES VAT-ID validator (reused, REQ-EINV-003).
-     * @param PeppolTransmissionPortInterface $peppolPort Generalised transmission port —
-     *                                                    its lookupParticipant() resolves
-     *                                                    (and implicitly confirms) the
-     *                                                    debtor's Peppol identity.
-     */
-    public function __construct(
-        private readonly ViesService $vies,
-        private readonly PeppolTransmissionPortInterface $peppolPort,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the validation service.
+	 *
+	 * @param ViesService $vies VIES VAT-ID validator (reused, REQ-EINV-003).
+	 * @param PeppolTransmissionPortInterface $peppolPort Generalised transmission port —
+	 *                                                    its lookupParticipant() resolves
+	 *                                                    (and implicitly confirms) the
+	 *                                                    debtor's Peppol identity.
+	 */
+	public function __construct(
+		private readonly ViesService $vies,
+		private readonly PeppolTransmissionPortInterface $peppolPort,
+	) {
+	}//end __construct()
 
-    /**
-     * Validate an ARInvoice's debtor identifiers ahead of a Send e-invoice attempt.
-     *
-     * @param string              $administrationId Administration scope (server-resolved).
-     * @param array<string,mixed> $arInvoice        The ARInvoice record (buyerLegalRegId,
-     *                                              buyerVatId, customerId).
-     *
-     * @return array{valid:bool,errors:array<int,array{field:string,code:string,message:string}>,warnings:array<int,array{field:string,code:string,message:string}>,peppolParticipantId:?string}
-     *
-     * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
-     */
-    public function validate(string $administrationId, array $arInvoice): array
-    {
-        $errors   = [];
-        $warnings = [];
+	/**
+	 * Validate an ARInvoice's debtor identifiers ahead of a Send e-invoice attempt.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param array<string,mixed> $arInvoice The ARInvoice record (buyerLegalRegId,
+	 *                                       buyerVatId, customerId).
+	 *
+	 * @return array{valid:bool,errors:array<int,array{field:string,code:string,message:string}>,warnings:array<int,array{field:string,code:string,message:string}>,peppolParticipantId:?string}
+	 *
+	 * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
+	 */
+	public function validate(string $administrationId, array $arInvoice): array {
+		$errors = [];
+		$warnings = [];
 
-        $kvk = trim((string) ($arInvoice['buyerLegalRegId'] ?? ''));
-        if (preg_match(self::KVK_PATTERN, $kvk) !== 1) {
-            $errors[] = [
-                'field'   => 'buyerLegalRegId',
-                'code'    => 'kvk_invalid',
-                'message' => 'KvK number must be exactly 8 digits',
-            ];
-        }
+		$kvk = trim((string)($arInvoice['buyerLegalRegId'] ?? ''));
+		if (preg_match(self::KVK_PATTERN, $kvk) !== 1) {
+			$errors[] = [
+				'field' => 'buyerLegalRegId',
+				'code' => 'kvk_invalid',
+				'message' => 'KvK number must be exactly 8 digits',
+			];
+		}
 
-        $vatId = trim((string) ($arInvoice['buyerVatId'] ?? ''));
-        if (preg_match(self::VAT_PATTERN, $vatId) !== 1) {
-            $errors[] = [
-                'field'   => 'buyerVatId',
-                'code'    => 'vat_format_invalid',
-                'message' => 'BTW-nummer must match the NL pattern (NL999999999B99)',
-            ];
-        } else {
-            $viesResult = $this->vies->validate(administrationId: $administrationId, vatId: $vatId);
-            if ($viesResult['outage'] === true && $viesResult['valid'] !== true) {
-                $warnings[] = [
-                    'field'   => 'buyerVatId',
-                    'code'    => 'vies_outage',
-                    'message' => 'VIES is temporarily unavailable — BTW-nummer format is valid; proceeding without live confirmation',
-                ];
-            } else if ($viesResult['valid'] !== true) {
-                $errors[] = [
-                    'field'   => 'buyerVatId',
-                    'code'    => 'vat_vies_invalid',
-                    'message' => 'BTW-nummer failed VIES verification',
-                ];
-            }
-        }//end if
+		$vatId = trim((string)($arInvoice['buyerVatId'] ?? ''));
+		if (preg_match(self::VAT_PATTERN, $vatId) !== 1) {
+			$errors[] = [
+				'field' => 'buyerVatId',
+				'code' => 'vat_format_invalid',
+				'message' => 'BTW-nummer must match the NL pattern (NL999999999B99)',
+			];
+		} else {
+			$viesResult = $this->vies->validate(administrationId: $administrationId, vatId: $vatId);
+			if ($viesResult['outage'] === true && $viesResult['valid'] !== true) {
+				$warnings[] = [
+					'field' => 'buyerVatId',
+					'code' => 'vies_outage',
+					'message' => 'VIES is temporarily unavailable — BTW-nummer format is valid; proceeding without live confirmation',
+				];
+			} elseif ($viesResult['valid'] !== true) {
+				$errors[] = [
+					'field' => 'buyerVatId',
+					'code' => 'vat_vies_invalid',
+					'message' => 'BTW-nummer failed VIES verification',
+				];
+			}
+		}//end if
 
-        $participantId = null;
-        if ($errors === []) {
-            $customerId    = trim((string) ($arInvoice['customerId'] ?? ''));
-            $participantId = $this->peppolPort->lookupParticipant(
-                administrationId: $administrationId,
-                partyId: $customerId
-            );
-            if ($participantId === null) {
-                $warnings[] = [
-                    'field'   => 'buyerPeppolParticipantId',
-                    'code'    => 'peppol_participant_not_found',
-                    'message' => 'No Peppol participant found for this debtor — falling back to PDF + email',
-                ];
-            }
-        }
+		$participantId = null;
+		if ($errors === []) {
+			$customerId = trim((string)($arInvoice['customerId'] ?? ''));
+			$participantId = $this->peppolPort->lookupParticipant(
+				administrationId: $administrationId,
+				partyId: $customerId
+			);
+			if ($participantId === null) {
+				$warnings[] = [
+					'field' => 'buyerPeppolParticipantId',
+					'code' => 'peppol_participant_not_found',
+					'message' => 'No Peppol participant found for this debtor — falling back to PDF + email',
+				];
+			}
+		}
 
-        return [
-            'valid'               => ($errors === []),
-            'errors'              => $errors,
-            'warnings'            => $warnings,
-            'peppolParticipantId' => $participantId,
-        ];
+		return [
+			'valid' => ($errors === []),
+			'errors' => $errors,
+			'warnings' => $warnings,
+			'peppolParticipantId' => $participantId,
+		];
 
-    }//end validate()
+	}//end validate()
 }//end class

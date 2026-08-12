@@ -50,149 +50,147 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/subject-cost-aggregation/spec.md
  */
-class SubjectCostAggregator
-{
-    /**
-     * Wire collaborators.
-     *
-     * @param LoggerInterface $logger PSR logger.
-     *
-     * @return void
-     */
-    public function __construct(private readonly LoggerInterface $logger)
-    {
-    }//end __construct()
+class SubjectCostAggregator {
+	/**
+	 * Wire collaborators.
+	 *
+	 * @param LoggerInterface $logger PSR logger.
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Aggregate an hour set into hours-per-person and, where possible, a cost.
-     *
-     * `$rates` maps personId => employer cost in CENTS per hour, as resolved
-     * from hrmq. Cents, not euros: money is integer here for the same reason it
-     * is integer in hrmq — a float total over many rows drifts, and a ledger
-     * that drifts is not a ledger.
-     *
-     * @param array<int, array<string, mixed>> $hourRows UrenRegistratie rows for one subject.
-     * @param array<string, int>               $rates    personId => cost cents per hour.
-     *
-     * @return array{
-     *     hours: float, costCents: int|null, complete: bool, currency: string,
-     *     perPerson: array<int, array{personId: string, hours: float, centsPerHour: int|null, costCents: int|null}>,
-     *     unpricedPersonIds: array<int, string>
-     * }
-     *
-     * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-a-cost-is-published-only-when-every-hour-in-it-could-be-priced
-     */
-    public function aggregate(array $hourRows, array $rates): array
-    {
-        $hoursByPerson = [];
-        foreach ($hourRows as $row) {
-            if (is_array($row) === false) {
-                continue;
-            }
+	/**
+	 * Aggregate an hour set into hours-per-person and, where possible, a cost.
+	 *
+	 * `$rates` maps personId => employer cost in CENTS per hour, as resolved
+	 * from hrmq. Cents, not euros: money is integer here for the same reason it
+	 * is integer in hrmq — a float total over many rows drifts, and a ledger
+	 * that drifts is not a ledger.
+	 *
+	 * @param array<int, array<string, mixed>> $hourRows UrenRegistratie rows for one subject.
+	 * @param array<string, int> $rates personId => cost cents per hour.
+	 *
+	 * @return array{
+	 *     hours: float, costCents: int|null, complete: bool, currency: string,
+	 *     perPerson: array<int, array{personId: string, hours: float, centsPerHour: int|null, costCents: int|null}>,
+	 *     unpricedPersonIds: array<int, string>
+	 * }
+	 *
+	 * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-a-cost-is-published-only-when-every-hour-in-it-could-be-priced
+	 */
+	public function aggregate(array $hourRows, array $rates): array {
+		$hoursByPerson = [];
+		foreach ($hourRows as $row) {
+			if (is_array($row) === false) {
+				continue;
+			}
 
-            $hours = $this->toFloat(value: ($row['hours'] ?? null));
-            if ($hours === null) {
-                // A row with no usable hours contributes nothing. Skipping is
-                // right; treating it as 0 silently would be too, but this way
-                // the row never reaches the per-person breakdown and cannot be
-                // mistaken for someone who worked zero hours.
-                continue;
-            }
+			$hours = $this->toFloat(value: ($row['hours'] ?? null));
+			if ($hours === null) {
+				// A row with no usable hours contributes nothing. Skipping is
+				// right; treating it as 0 silently would be too, but this way
+				// the row never reaches the per-person breakdown and cannot be
+				// mistaken for someone who worked zero hours.
+				continue;
+			}
 
-            $personId = trim((string) ($row['personId'] ?? ''));
-            if ($personId === '') {
-                // Hours nobody owns cannot be priced. They still count toward
-                // effort, under a reserved key, so the total hours stay honest.
-                $personId = '(unattributed)';
-            }
+			$personId = trim((string)($row['personId'] ?? ''));
+			if ($personId === '') {
+				// Hours nobody owns cannot be priced. They still count toward
+				// effort, under a reserved key, so the total hours stay honest.
+				$personId = '(unattributed)';
+			}
 
-            $hoursByPerson[$personId] = (($hoursByPerson[$personId] ?? 0.0) + $hours);
-        }//end foreach
+			$hoursByPerson[$personId] = (($hoursByPerson[$personId] ?? 0.0) + $hours);
+		}//end foreach
 
-        $perPerson  = [];
-        $totalHours = 0.0;
-        $totalCents = 0;
-        $unpriced   = [];
+		$perPerson = [];
+		$totalHours = 0.0;
+		$totalCents = 0;
+		$unpriced = [];
 
-        foreach ($hoursByPerson as $personId => $hours) {
-            $totalHours += $hours;
+		foreach ($hoursByPerson as $personId => $hours) {
+			$totalHours += $hours;
 
-            $centsPerHour = ($rates[$personId] ?? null);
-            if (is_int($centsPerHour) === false || $centsPerHour < 0) {
-                $centsPerHour = null;
-            }
+			$centsPerHour = ($rates[$personId] ?? null);
+			if (is_int($centsPerHour) === false || $centsPerHour < 0) {
+				$centsPerHour = null;
+			}
 
-            $costCents = null;
-            if ($centsPerHour === null) {
-                $unpriced[] = (string) $personId;
-            }
+			$costCents = null;
+			if ($centsPerHour === null) {
+				$unpriced[] = (string)$personId;
+			}
 
-            if ($centsPerHour !== null) {
-                // Round once, at the person level, rather than accumulating a
-                // float and rounding at the end — the latter lets sub-cent
-                // error from every row survive into the total.
-                $costCents   = (int) round($hours * $centsPerHour);
-                $totalCents += $costCents;
-            }
+			if ($centsPerHour !== null) {
+				// Round once, at the person level, rather than accumulating a
+				// float and rounding at the end — the latter lets sub-cent
+				// error from every row survive into the total.
+				$costCents = (int)round($hours * $centsPerHour);
+				$totalCents += $costCents;
+			}
 
-            $perPerson[] = [
-                'personId'     => (string) $personId,
-                'hours'        => round(num: $hours, precision: 2),
-                'centsPerHour' => $centsPerHour,
-                'costCents'    => $costCents,
-            ];
-        }//end foreach
+			$perPerson[] = [
+				'personId' => (string)$personId,
+				'hours' => round(num: $hours, precision: 2),
+				'centsPerHour' => $centsPerHour,
+				'costCents' => $costCents,
+			];
+		}//end foreach
 
-        $complete = ($unpriced === [] && $perPerson !== []);
+		$complete = ($unpriced === [] && $perPerson !== []);
 
-        // A cost is published only when every person with hours could be
-        // priced. See the class docblock: a partial total is plausible, always
-        // too low, and indistinguishable from a correct one.
-        $publishedCost = null;
-        if ($complete === true) {
-            $publishedCost = $totalCents;
-        }
+		// A cost is published only when every person with hours could be
+		// priced. See the class docblock: a partial total is plausible, always
+		// too low, and indistinguishable from a correct one.
+		$publishedCost = null;
+		if ($complete === true) {
+			$publishedCost = $totalCents;
+		}
 
-        if ($unpriced !== []) {
-            $this->logger->info(
-                'SubjectCostAggregator: cost withheld — some hours have no resolvable rate',
-                ['unpricedPersonIds' => $unpriced]
-            );
-        }
+		if ($unpriced !== []) {
+			$this->logger->info(
+				'SubjectCostAggregator: cost withheld — some hours have no resolvable rate',
+				['unpricedPersonIds' => $unpriced]
+			);
+		}
 
-        return [
-            'hours'             => round(num: $totalHours, precision: 2),
-            'costCents'         => $publishedCost,
-            'complete'          => $complete,
-            'currency'          => 'EUR',
-            'perPerson'         => $perPerson,
-            'unpricedPersonIds' => $unpriced,
-        ];
-    }//end aggregate()
+		return [
+			'hours' => round(num: $totalHours, precision: 2),
+			'costCents' => $publishedCost,
+			'complete' => $complete,
+			'currency' => 'EUR',
+			'perPerson' => $perPerson,
+			'unpricedPersonIds' => $unpriced,
+		];
+	}//end aggregate()
 
-    /**
-     * Coerce an hours value to float, or null when it is not a number.
-     *
-     * OpenRegister returns numeric properties as int, float or numeric string
-     * depending on the storage path, so this accepts all three and rejects
-     * everything else rather than letting PHP cast "" or "n/a" to 0.0.
-     *
-     * @param mixed $value The raw value.
-     *
-     * @return float|null The hours, or null when unusable.
-     *
-     * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-unusable-hours-are-rejected-rather-than-coerced
-     */
-    private function toFloat(mixed $value): ?float
-    {
-        if (is_int($value) === true || is_float($value) === true) {
-            return (float) $value;
-        }
+	/**
+	 * Coerce an hours value to float, or null when it is not a number.
+	 *
+	 * OpenRegister returns numeric properties as int, float or numeric string
+	 * depending on the storage path, so this accepts all three and rejects
+	 * everything else rather than letting PHP cast "" or "n/a" to 0.0.
+	 *
+	 * @param mixed $value The raw value.
+	 *
+	 * @return float|null The hours, or null when unusable.
+	 *
+	 * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-unusable-hours-are-rejected-rather-than-coerced
+	 */
+	private function toFloat(mixed $value): ?float {
+		if (is_int($value) === true || is_float($value) === true) {
+			return (float)$value;
+		}
 
-        if (is_string($value) === true && is_numeric(trim($value)) === true) {
-            return (float) trim($value);
-        }
+		if (is_string($value) === true && is_numeric(trim($value)) === true) {
+			return (float)trim($value);
+		}
 
-        return null;
-    }//end toFloat()
+		return null;
+	}//end toFloat()
 }//end class

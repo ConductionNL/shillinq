@@ -52,25 +52,24 @@ use OCA\Shillinq\Service\Peppol\PeppolTransmissionPortInterface;
  * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
  * @spec openspec/specs/bookkeeping-einvoicing-ubl-peppol/spec.md
  */
-interface PeppolTransmissionAdapterInterface extends PeppolTransmissionPortInterface
-{
-    /**
-     * Submit a UBL 2.1 Order to the Peppol Access Point.
-     *
-     * On success the adapter returns the Peppol message id (URN form,
-     * `urn:uuid:...`) so the orchestration layer can persist it on the
-     * PurchaseOrder record. On failure it MUST throw — the orchestration
-     * layer maps the throw into a `peppol_send_failed` fallback reason.
-     *
-     * @param string $participantId Peppol participant id resolved earlier
-     *                              (`scheme:identifier`).
-     * @param string $ublOrderXml   The UBL 2.1 Order document XML.
-     *
-     * @return string The Peppol message id (URN).
-     *
-     * @throws \RuntimeException When the access point refuses or fails.
-     *
-     * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
-     */
-    public function submitOrder(string $participantId, string $ublOrderXml): string;
+interface PeppolTransmissionAdapterInterface extends PeppolTransmissionPortInterface {
+	/**
+	 * Submit a UBL 2.1 Order to the Peppol Access Point.
+	 *
+	 * On success the adapter returns the Peppol message id (URN form,
+	 * `urn:uuid:...`) so the orchestration layer can persist it on the
+	 * PurchaseOrder record. On failure it MUST throw — the orchestration
+	 * layer maps the throw into a `peppol_send_failed` fallback reason.
+	 *
+	 * @param string $participantId Peppol participant id resolved earlier
+	 *                              (`scheme:identifier`).
+	 * @param string $ublOrderXml The UBL 2.1 Order document XML.
+	 *
+	 * @return string The Peppol message id (URN).
+	 *
+	 * @throws \RuntimeException When the access point refuses or fails.
+	 *
+	 * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
+	 */
+	public function submitOrder(string $participantId, string $ublOrderXml): string;
 }//end interface

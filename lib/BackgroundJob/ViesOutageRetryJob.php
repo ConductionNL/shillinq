@@ -45,108 +45,105 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
  */
-class ViesOutageRetryJob extends TimedJob
-{
-    /**
-     * Interval between runs (24 hours), per REQ-ICP-009 "daily job".
-     *
-     * @var int
-     */
-    private const INTERVAL_SECONDS = (24 * 60 * 60);
+class ViesOutageRetryJob extends TimedJob {
+	/**
+	 * Interval between runs (24 hours), per REQ-ICP-009 "daily job".
+	 *
+	 * @var int
+	 */
+	private const INTERVAL_SECONDS = (24 * 60 * 60);
 
-    /**
-     * Construct the job and set its daily interval.
-     *
-     * @param ITimeFactory         $time          Time factory for the TimedJob base.
-     * @param IcpFilingService     $filingService ICP filing service (pending-outage scan).
-     * @param ViesService          $viesService   VIES re-validation service.
-     * @param INotificationManager $notifications Notification manager for escalation.
-     * @param LoggerInterface      $logger        Logger for diagnostics.
-     */
-    public function __construct(
-        ITimeFactory $time,
-        private readonly IcpFilingService $filingService,
-        private readonly ViesService $viesService,
-        private readonly INotificationManager $notifications,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(time: $time);
-        $this->setInterval(seconds: self::INTERVAL_SECONDS);
-    }//end __construct()
+	/**
+	 * Construct the job and set its daily interval.
+	 *
+	 * @param ITimeFactory $time Time factory for the TimedJob base.
+	 * @param IcpFilingService $filingService ICP filing service (pending-outage scan).
+	 * @param ViesService $viesService VIES re-validation service.
+	 * @param INotificationManager $notifications Notification manager for escalation.
+	 * @param LoggerInterface $logger Logger for diagnostics.
+	 */
+	public function __construct(
+		ITimeFactory $time,
+		private readonly IcpFilingService $filingService,
+		private readonly ViesService $viesService,
+		private readonly INotificationManager $notifications,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(time: $time);
+		$this->setInterval(seconds: self::INTERVAL_SECONDS);
+	}//end __construct()
 
-    /**
-     * Re-validate pending-outage VAT-IDs for the administration in the argument.
-     *
-     * The job is enqueued per administration (the orchestration that creates outage
-     * evidence schedules this job with `['administrationId' => ...]`). For each
-     * pending outage it re-queries VIES; a definitive answer is persisted as fresh
-     * evidence, and an outage older than 14 days raises an escalation notification.
-     *
-     * @param mixed $argument The job argument; expects ['administrationId' => string].
-     *
-     * @return void
-     *
-     * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
-     */
-    protected function run($argument): void
-    {
-        $administrationId = '';
-        if (is_array($argument) === true) {
-            $administrationId = (string) ($argument['administrationId'] ?? '');
-        }
+	/**
+	 * Re-validate pending-outage VAT-IDs for the administration in the argument.
+	 *
+	 * The job is enqueued per administration (the orchestration that creates outage
+	 * evidence schedules this job with `['administrationId' => ...]`). For each
+	 * pending outage it re-queries VIES; a definitive answer is persisted as fresh
+	 * evidence, and an outage older than 14 days raises an escalation notification.
+	 *
+	 * @param mixed $argument The job argument; expects ['administrationId' => string].
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-icp-opgaaf/spec.md
+	 */
+	protected function run($argument): void {
+		$administrationId = '';
+		if (is_array($argument) === true) {
+			$administrationId = (string)($argument['administrationId'] ?? '');
+		}
 
-        if ($administrationId === '') {
-            return;
-        }
+		if ($administrationId === '') {
+			return;
+		}
 
-        $pending = $this->filingService->pendingOutages(administrationId: $administrationId);
-        foreach ($pending as $outage) {
-            $vatId = $outage['vatId'];
-            if ($vatId === '') {
-                continue;
-            }
+		$pending = $this->filingService->pendingOutages(administrationId: $administrationId);
+		foreach ($pending as $outage) {
+			$vatId = $outage['vatId'];
+			if ($vatId === '') {
+				continue;
+			}
 
-            if ($outage['escalate'] === true) {
-                $this->escalate(administrationId: $administrationId, vatId: $vatId, ageDays: $outage['ageDays']);
-                continue;
-            }
+			if ($outage['escalate'] === true) {
+				$this->escalate(administrationId: $administrationId, vatId: $vatId, ageDays: $outage['ageDays']);
+				continue;
+			}
 
-            $result = $this->viesService->validate(administrationId: $administrationId, vatId: $vatId);
-            if ($result['outage'] === false) {
-                $this->logger->info(
-                    'ViesOutageRetryJob: VIES returned a definitive answer for a pending VAT-ID',
-                    ['administrationId' => $administrationId, 'valid' => $result['valid']]
-                );
-            }
-        }//end foreach
+			$result = $this->viesService->validate(administrationId: $administrationId, vatId: $vatId);
+			if ($result['outage'] === false) {
+				$this->logger->info(
+					'ViesOutageRetryJob: VIES returned a definitive answer for a pending VAT-ID',
+					['administrationId' => $administrationId, 'valid' => $result['valid']]
+				);
+			}
+		}//end foreach
 
-    }//end run()
+	}//end run()
 
-    /**
-     * Raise a bookkeeper escalation for an outage that persisted beyond 14 days.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $vatId            The unresolved VAT-ID.
-     * @param int    $ageDays          Days the outage has persisted.
-     *
-     * @return void
-     */
-    private function escalate(string $administrationId, string $vatId, int $ageDays): void
-    {
-        try {
-            $notification = $this->notifications->createNotification();
-            $notification->setApp('shillinq')
-                ->setUser($administrationId)
-                ->setDateTime(new DateTime())
-                ->setObject('icp_vies_outage', $vatId)
-                ->setSubject('icp.vies.outage_escalated', ['vatId' => $vatId, 'ageDays' => $ageDays]);
-            $this->notifications->notify($notification);
-        } catch (\Throwable $e) {
-            $this->logger->warning(
-                'ViesOutageRetryJob: failed to deliver outage escalation',
-                ['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
-        }
+	/**
+	 * Raise a bookkeeper escalation for an outage that persisted beyond 14 days.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $vatId The unresolved VAT-ID.
+	 * @param int $ageDays Days the outage has persisted.
+	 *
+	 * @return void
+	 */
+	private function escalate(string $administrationId, string $vatId, int $ageDays): void {
+		try {
+			$notification = $this->notifications->createNotification();
+			$notification->setApp('shillinq')
+				->setUser($administrationId)
+				->setDateTime(new DateTime())
+				->setObject('icp_vies_outage', $vatId)
+				->setSubject('icp.vies.outage_escalated', ['vatId' => $vatId, 'ageDays' => $ageDays]);
+			$this->notifications->notify($notification);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'ViesOutageRetryJob: failed to deliver outage escalation',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+		}
 
-    }//end escalate()
+	}//end escalate()
 }//end class

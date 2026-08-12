@@ -36,232 +36,214 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class TenderNedAanbestedingGuardTest extends TestCase
-{
+class TenderNedAanbestedingGuardTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var TenderNedAanbestedingGuard
-     */
-    private TenderNedAanbestedingGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var TenderNedAanbestedingGuard
+	 */
+	private TenderNedAanbestedingGuard $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->guard = new TenderNedAanbestedingGuard(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            logger: $this->logger,
-        );
+		$this->guard = new TenderNedAanbestedingGuard(
+			container: $this->container,
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Build a fluent ObjectService stub returning the given OpdrachtUitvoering records.
-     *
-     * @param array<int, array<string, mixed>> $records OpdrachtUitvoering records.
-     *
-     * @return object
-     */
-    private function buildObjectServiceStub(array $records): object
-    {
-        return new class ($records) {
+	/**
+	 * Build a fluent ObjectService stub returning the given OpdrachtUitvoering records.
+	 *
+	 * @param array<int, array<string, mixed>> $records OpdrachtUitvoering records.
+	 *
+	 * @return object
+	 */
+	private function buildObjectServiceStub(array $records): object {
+		return new class($records) {
+			/**
+			 * Stubbed records.
+			 *
+			 * @var array<int, array<string, mixed>>
+			 */
+			private array $records;
 
-            /**
-             * Stubbed records.
-             *
-             * @var array<int, array<string, mixed>>
-             */
-            private array $records;
+			/**
+			 * Constructor.
+			 *
+			 * @param array<int, array<string, mixed>> $records Records to return.
+			 */
+			public function __construct(array $records) {
+				$this->records = $records;
 
-            /**
-             * Constructor.
-             *
-             * @param array<int, array<string, mixed>> $records Records to return.
-             */
-            public function __construct(array $records)
-            {
-                $this->records = $records;
+			}//end __construct()
 
-            }//end __construct()
+			/**
+			 * Fluent register setter.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Fluent register setter.
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
+			/**
+			 * Fluent schema setter.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
 
-            }//end setRegister()
+			/**
+			 * Return the stubbed records.
+			 *
+			 * @param array<string, mixed> $params Query parameters (unused).
+			 *
+			 * @return array<int, array<string, mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				return $this->records;
+			}//end findAll()
+		};
 
-            /**
-             * Fluent schema setter.
-             *
-             * @param string $schema Schema name.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                return $this;
+	}//end buildObjectServiceStub()
 
-            }//end setSchema()
+	/**
+	 * The canGunnen check denies the award when no supplier is recorded (REQ-002).
+	 *
+	 * @return void
+	 */
+	public function testCanGunnenDeniesWithoutSupplier(): void {
+		$this->assertFalse(
+			$this->guard->canGunnen(['aanbestedingId' => 'TN-1', 'contractWaarde' => 1000.0])
+		);
 
-            /**
-             * Return the stubbed records.
-             *
-             * @param array<string, mixed> $params Query parameters (unused).
-             *
-             * @return array<int, array<string, mixed>>
-             */
-            public function findAll(array $params=[]): array
-            {
-                return $this->records;
+	}//end testCanGunnenDeniesWithoutSupplier()
 
-            }//end findAll()
-        };
+	/**
+	 * The canGunnen check denies the award when the contract value is zero (REQ-002).
+	 *
+	 * @return void
+	 */
+	public function testCanGunnenDeniesWithZeroValue(): void {
+		$this->assertFalse(
+			$this->guard->canGunnen(
+				['aanbestedingId' => 'TN-1', 'gegundeLeverancier' => '76741850 Conduction B.V.', 'contractWaarde' => 0]
+			)
+		);
 
-    }//end buildObjectServiceStub()
+	}//end testCanGunnenDeniesWithZeroValue()
 
-    /**
-     * The canGunnen check denies the award when no supplier is recorded (REQ-002).
-     *
-     * @return void
-     */
-    public function testCanGunnenDeniesWithoutSupplier(): void
-    {
-        $this->assertFalse(
-            $this->guard->canGunnen(['aanbestedingId' => 'TN-1', 'contractWaarde' => 1000.0])
-        );
+	/**
+	 * The canGunnen check permits a complete award (REQ-002).
+	 *
+	 * @return void
+	 */
+	public function testCanGunnenPermitsValidAward(): void {
+		$this->assertTrue(
+			$this->guard->canGunnen(
+				['aanbestedingId' => 'TN-1', 'gegundeLeverancier' => '76741850 Conduction B.V.', 'contractWaarde' => 50000.0]
+			)
+		);
 
-    }//end testCanGunnenDeniesWithoutSupplier()
+	}//end testCanGunnenPermitsValidAward()
 
-    /**
-     * The canGunnen check denies the award when the contract value is zero (REQ-002).
-     *
-     * @return void
-     */
-    public function testCanGunnenDeniesWithZeroValue(): void
-    {
-        $this->assertFalse(
-            $this->guard->canGunnen(
-                ['aanbestedingId' => 'TN-1', 'gegundeLeverancier' => '76741850 Conduction B.V.', 'contractWaarde' => 0]
-            )
-        );
+	/**
+	 * The canAfronden check permits completion when there is no linked obligation.
+	 *
+	 * @return void
+	 */
+	public function testCanAfrondenPermitsWithoutLinkedObligation(): void {
+		$this->assertTrue($this->guard->canAfronden(['aanbestedingId' => 'TN-1']));
 
-    }//end testCanGunnenDeniesWithZeroValue()
+	}//end testCanAfrondenPermitsWithoutLinkedObligation()
 
-    /**
-     * The canGunnen check permits a complete award (REQ-002).
-     *
-     * @return void
-     */
-    public function testCanGunnenPermitsValidAward(): void
-    {
-        $this->assertTrue(
-            $this->guard->canGunnen(
-                ['aanbestedingId' => 'TN-1', 'gegundeLeverancier' => '76741850 Conduction B.V.', 'contractWaarde' => 50000.0]
-            )
-        );
+	/**
+	 * The canAfronden check permits completion when an approved eindoplevering exists (REQ-006).
+	 *
+	 * @return void
+	 */
+	public function testCanAfrondenPermitsWithApprovedEindoplevering(): void {
+		$stub = $this->buildObjectServiceStub(
+			[['opleveringsType' => 'eindoplevering', 'status' => 'completed', 'goedgekeurd' => true]]
+		);
+		$this->container->method('get')->willReturn($stub);
 
-    }//end testCanGunnenPermitsValidAward()
+		$this->assertTrue(
+			$this->guard->canAfronden(['aanbestedingId' => 'TN-1', 'verplichtingId' => 'vpl-1'])
+		);
 
-    /**
-     * The canAfronden check permits completion when there is no linked obligation.
-     *
-     * @return void
-     */
-    public function testCanAfrondenPermitsWithoutLinkedObligation(): void
-    {
-        $this->assertTrue($this->guard->canAfronden(['aanbestedingId' => 'TN-1']));
+	}//end testCanAfrondenPermitsWithApprovedEindoplevering()
 
-    }//end testCanAfrondenPermitsWithoutLinkedObligation()
+	/**
+	 * The canAfronden check denies completion when no eindoplevering exists (REQ-006).
+	 *
+	 * @return void
+	 */
+	public function testCanAfrondenDeniesWithoutEindoplevering(): void {
+		$stub = $this->buildObjectServiceStub([]);
+		$this->container->method('get')->willReturn($stub);
 
-    /**
-     * The canAfronden check permits completion when an approved eindoplevering exists (REQ-006).
-     *
-     * @return void
-     */
-    public function testCanAfrondenPermitsWithApprovedEindoplevering(): void
-    {
-        $stub = $this->buildObjectServiceStub(
-            [['opleveringsType' => 'eindoplevering', 'status' => 'completed', 'goedgekeurd' => true]]
-        );
-        $this->container->method('get')->willReturn($stub);
+		$this->assertFalse(
+			$this->guard->canAfronden(['aanbestedingId' => 'TN-1', 'verplichtingId' => 'vpl-1'])
+		);
 
-        $this->assertTrue(
-            $this->guard->canAfronden(['aanbestedingId' => 'TN-1', 'verplichtingId' => 'vpl-1'])
-        );
+	}//end testCanAfrondenDeniesWithoutEindoplevering()
 
-    }//end testCanAfrondenPermitsWithApprovedEindoplevering()
+	/**
+	 * The canAfronden check denies completion when the eindoplevering is not approved (REQ-006).
+	 *
+	 * @return void
+	 */
+	public function testCanAfrondenDeniesWhenEindopleveringNotApproved(): void {
+		$stub = $this->buildObjectServiceStub(
+			[['opleveringsType' => 'eindoplevering', 'status' => 'in-progress', 'goedgekeurd' => false]]
+		);
+		$this->container->method('get')->willReturn($stub);
 
-    /**
-     * The canAfronden check denies completion when no eindoplevering exists (REQ-006).
-     *
-     * @return void
-     */
-    public function testCanAfrondenDeniesWithoutEindoplevering(): void
-    {
-        $stub = $this->buildObjectServiceStub([]);
-        $this->container->method('get')->willReturn($stub);
+		$this->assertFalse(
+			$this->guard->canAfronden(['aanbestedingId' => 'TN-1', 'verplichtingId' => 'vpl-1'])
+		);
 
-        $this->assertFalse(
-            $this->guard->canAfronden(['aanbestedingId' => 'TN-1', 'verplichtingId' => 'vpl-1'])
-        );
-
-    }//end testCanAfrondenDeniesWithoutEindoplevering()
-
-    /**
-     * The canAfronden check denies completion when the eindoplevering is not approved (REQ-006).
-     *
-     * @return void
-     */
-    public function testCanAfrondenDeniesWhenEindopleveringNotApproved(): void
-    {
-        $stub = $this->buildObjectServiceStub(
-            [['opleveringsType' => 'eindoplevering', 'status' => 'in-progress', 'goedgekeurd' => false]]
-        );
-        $this->container->method('get')->willReturn($stub);
-
-        $this->assertFalse(
-            $this->guard->canAfronden(['aanbestedingId' => 'TN-1', 'verplichtingId' => 'vpl-1'])
-        );
-
-    }//end testCanAfrondenDeniesWhenEindopleveringNotApproved()
+	}//end testCanAfrondenDeniesWhenEindopleveringNotApproved()
 }//end class

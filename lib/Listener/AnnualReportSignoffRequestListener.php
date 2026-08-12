@@ -52,8 +52,8 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Service\Signing\SignoffDecisionService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Container\ContainerInterface;
@@ -69,149 +69,145 @@ use Throwable;
  *
  * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md (REQ-SIGN-005)
  */
-final class AnnualReportSignoffRequestListener implements IEventListener
-{
+final class AnnualReportSignoffRequestListener implements IEventListener {
 
-    /**
-     * The finance schema this listener requests a sign-off decision for.
-     *
-     * @var string
-     */
-    private const TARGET_SCHEMA = 'AnnualReport';
+	/**
+	 * The finance schema this listener requests a sign-off decision for.
+	 *
+	 * @var string
+	 */
+	private const TARGET_SCHEMA = 'AnnualReport';
 
-    /**
-     * The lifecycle state that raises the adoption decision request.
-     *
-     * @var string
-     */
-    private const TARGET_STATE = 'opgemaakt';
+	/**
+	 * The lifecycle state that raises the adoption decision request.
+	 *
+	 * @var string
+	 */
+	private const TARGET_STATE = 'opgemaakt';
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface     $container       DI container — OR ObjectService pulled
-     *                                                lazily.
-     * @param SettingsService        $settingsService Shillinq settings (register slug).
-     * @param SignoffDecisionService $signoffService  The sign-off request service.
-     * @param LoggerInterface        $logger          Logger.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly SettingsService $settingsService,
-        private readonly SignoffDecisionService $signoffService,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — OR ObjectService pulled
+	 *                                      lazily.
+	 * @param SettingsService $settingsService Shillinq settings (register slug).
+	 * @param SignoffDecisionService $signoffService The sign-off request service.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly SettingsService $settingsService,
+		private readonly SignoffDecisionService $signoffService,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle an OpenRegister ObjectTransitionedEvent.
-     *
-     * Fail-soft: any error logs and returns; the sign-off request can be
-     * retried, and `decisionOutcome` is never set to `approved` on a failure
-     * path (that guarantee lives in
-     * {@see SignoffDecisionService::requestSignoff()} itself).
-     *
-     * @param Event $event The dispatched event.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        if (($event instanceof ObjectTransitionedEvent) === false) {
-            return;
-        }
+	/**
+	 * Handle an OpenRegister ObjectTransitionedEvent.
+	 *
+	 * Fail-soft: any error logs and returns; the sign-off request can be
+	 * retried, and `decisionOutcome` is never set to `approved` on a failure
+	 * path (that guarantee lives in
+	 * {@see SignoffDecisionService::requestSignoff()} itself).
+	 *
+	 * @param Event $event The dispatched event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/shillinq-delegation-via-events/specs/shillinq-delegate-signing/spec.md
+	 */
+	public function handle(Event $event): void {
+		if (($event instanceof ObjectTransitionedEvent) === false) {
+			return;
+		}
 
-        try {
-            if ($event->getTo() !== self::TARGET_STATE) {
-                return;
-            }
+		try {
+			if ($event->getTo() !== self::TARGET_STATE) {
+				return;
+			}
 
-            if ($this->isAnnualReportSchema(schema: $event->getSchema()) === false) {
-                return;
-            }
+			if ($this->isAnnualReportSchema(schema: $event->getSchema()) === false) {
+				return;
+			}
 
-            $entity = $event->getObject();
-            $object = $entity->getObject();
-            if (is_array($object) === false) {
-                return;
-            }
+			$entity = $event->getObject();
+			$object = $entity->getObject();
+			if (is_array($object) === false) {
+				return;
+			}
 
-            $id = (string) ($object['id'] ?? $entity->getUuid() ?? $entity->getId() ?? '');
-            if ($id === '') {
-                $this->logger->info('AnnualReportSignoffRequestListener: no object id on opgemaakt transition (skipping)');
-                return;
-            }
+			$id = (string)($object['id'] ?? $entity->getUuid() ?? $entity->getId() ?? '');
+			if ($id === '') {
+				$this->logger->info('AnnualReportSignoffRequestListener: no object id on opgemaakt transition (skipping)');
+				return;
+			}
 
-            // Idempotent: only request once per adoption cycle.
-            $currentOutcome = (string) ($object['decisionOutcome'] ?? '');
-            if ($currentOutcome !== '') {
-                return;
-            }
+			// Idempotent: only request once per adoption cycle.
+			$currentOutcome = (string)($object['decisionOutcome'] ?? '');
+			if ($currentOutcome !== '') {
+				return;
+			}
 
-            $object['id'] = $id;
+			$object['id'] = $id;
 
-            $updated = $this->signoffService->requestSignoff(
-                financeObject: $object,
-                subjectSchema: self::TARGET_SCHEMA,
-                decisionType: 'adoption',
-            );
+			$updated = $this->signoffService->requestSignoff(
+				financeObject: $object,
+				subjectSchema: self::TARGET_SCHEMA,
+				decisionType: 'adoption',
+			);
 
-            $this->persist(
-                id: $id,
-                updates: [
-                    'decisionRef'     => $updated['decisionRef'] ?? null,
-                    'decisionOutcome' => $updated['decisionOutcome'] ?? 'pending',
-                ]
-            );
+			$this->persist(
+				id: $id,
+				updates: [
+					'decisionRef' => $updated['decisionRef'] ?? null,
+					'decisionOutcome' => $updated['decisionOutcome'] ?? 'pending',
+				]
+			);
 
-            $this->logger->info(
-                    'AnnualReportSignoffRequestListener: adoption decision requested',
-                    [
-                        'id'          => $id,
-                        'decisionRef' => $updated['decisionRef'] ?? null,
-                    ]
-                    );
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'AnnualReportSignoffRequestListener: adoption request failed (fail-soft; never auto-approves)',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->logger->info(
+				'AnnualReportSignoffRequestListener: adoption decision requested',
+				[
+					'id' => $id,
+					'decisionRef' => $updated['decisionRef'] ?? null,
+				]
+			);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'AnnualReportSignoffRequestListener: adoption request failed (fail-soft; never auto-approves)',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Check whether the schema slug is AnnualReport.
-     *
-     * @param string $schema Schema slug.
-     *
-     * @return bool
-     */
-    private function isAnnualReportSchema(string $schema): bool
-    {
-        $normalised = strtolower(trim($schema));
-        return ($normalised === strtolower(self::TARGET_SCHEMA)
-            || str_ends_with(haystack: $normalised, needle: strtolower(self::TARGET_SCHEMA)));
+	/**
+	 * Check whether the schema slug is AnnualReport.
+	 *
+	 * @param string $schema Schema slug.
+	 *
+	 * @return bool
+	 */
+	private function isAnnualReportSchema(string $schema): bool {
+		$normalised = strtolower(trim($schema));
+		return ($normalised === strtolower(self::TARGET_SCHEMA)
+			|| str_ends_with(haystack: $normalised, needle: strtolower(self::TARGET_SCHEMA)));
 
-    }//end isAnnualReportSchema()
+	}//end isAnnualReportSchema()
 
-    /**
-     * Persist the decisionRef/decisionOutcome mirror onto the AnnualReport via OR.
-     *
-     * @param string              $id      The AnnualReport id.
-     * @param array<string,mixed> $updates The fields to write.
-     *
-     * @return void
-     */
-    private function persist(string $id, array $updates): void
-    {
-        $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $objectService
-            ->setRegister($this->settingsService->getRegisterSlug())
-            ->setSchema(self::TARGET_SCHEMA)
-            ->updateObject($id, $updates);
+	/**
+	 * Persist the decisionRef/decisionOutcome mirror onto the AnnualReport via OR.
+	 *
+	 * @param string $id The AnnualReport id.
+	 * @param array<string,mixed> $updates The fields to write.
+	 *
+	 * @return void
+	 */
+	private function persist(string $id, array $updates): void {
+		$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+		$objectService
+			->setRegister($this->settingsService->getRegisterSlug())
+			->setSchema(self::TARGET_SCHEMA)
+			->updateObject($id, $updates);
 
-    }//end persist()
+	}//end persist()
 }//end class

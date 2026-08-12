@@ -53,109 +53,103 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/time-expense-invoice-intake/spec.md
  */
-class BillingIntakeController extends Controller
-{
-    /**
-     * Constructor.
-     *
-     * @param IRequest                     $request               Request.
-     * @param TimeIntakeService            $service               Validates/materialises/delegates the batch.
-     * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
-     * @param IUserSession                 $session               User session.
-     * @param LoggerInterface              $logger                Logger.
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly TimeIntakeService $service,
-        private readonly AdministrationContextService $administrationContext,
-        private readonly IUserSession $session,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+class BillingIntakeController extends Controller {
+	/**
+	 * Constructor.
+	 *
+	 * @param IRequest $request Request.
+	 * @param TimeIntakeService $service Validates/materialises/delegates the batch.
+	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
+	 * @param IUserSession $session User session.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly TimeIntakeService $service,
+		private readonly AdministrationContextService $administrationContext,
+		private readonly IUserSession $session,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Ingest a batch of approved time entries (POST /api/billing/time-intake).
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/specs/time-expense-invoice-intake/spec.md
-     */
-    #[NoAdminRequired]
-    public function timeIntake(): JSONResponse
-    {
-        $user = $this->session->getUser();
-        if ($user === null) {
-            return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
-        }
+	/**
+	 * Ingest a batch of approved time entries (POST /api/billing/time-intake).
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/time-expense-invoice-intake/spec.md
+	 */
+	#[NoAdminRequired]
+	public function timeIntake(): JSONResponse {
+		$user = $this->session->getUser();
+		if ($user === null) {
+			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+		}
 
-        try {
-            $admin    = $this->resolveAdministrationId();
-            $personId = $user->getUID();
-            $body     = $this->decodeBody();
+		try {
+			$admin = $this->resolveAdministrationId();
+			$personId = $user->getUID();
+			$body = $this->decodeBody();
 
-            $result = $this->service->ingest(administrationId: $admin, personId: $personId, body: $body);
+			$result = $this->service->ingest(administrationId: $admin, personId: $personId, body: $body);
 
-            return new JSONResponse($result, Http::STATUS_OK);
-        } catch (\InvalidArgumentException $e) {
-            return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
-        } catch (\RuntimeException $e) {
-            $message = $e->getMessage();
-            if (str_starts_with($message, 'Conflict:') === true) {
-                return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
-            }
+			return new JSONResponse($result, Http::STATUS_OK);
+		} catch (\InvalidArgumentException $e) {
+			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+		} catch (\RuntimeException $e) {
+			$message = $e->getMessage();
+			if (str_starts_with($message, 'Conflict:') === true) {
+				return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
+			}
 
-            return new JSONResponse(['error' => $message], Http::STATUS_UNPROCESSABLE_ENTITY);
-        } catch (\Throwable $e) {
-            $this->logger->error('BillingIntakeController.timeIntake failed: '.$e->getMessage());
-            return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
-        }//end try
+			return new JSONResponse(['error' => $message], Http::STATUS_UNPROCESSABLE_ENTITY);
+		} catch (\Throwable $e) {
+			$this->logger->error('BillingIntakeController.timeIntake failed: ' . $e->getMessage());
+			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
+		}//end try
 
-    }//end timeIntake()
+	}//end timeIntake()
 
-    /**
-     * Decode the JSON request body, falling back to POST/GET params.
-     *
-     * @return array<string,mixed>
-     */
-    private function decodeBody(): array
-    {
-        $raw = file_get_contents('php://input');
-        if ($raw !== false && $raw !== '') {
-            $decoded = json_decode($raw, true);
-            if (is_array($decoded) === true) {
-                return $decoded;
-            }
-        }
+	/**
+	 * Decode the JSON request body, falling back to POST/GET params.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function decodeBody(): array {
+		$raw = file_get_contents('php://input');
+		if ($raw !== false && $raw !== '') {
+			$decoded = json_decode($raw, true);
+			if (is_array($decoded) === true) {
+				return $decoded;
+			}
+		}
 
-        $params = $this->request->getParams();
-        if (is_array($params) === true) {
-            return $params;
-        }
+		$params = $this->request->getParams();
+		if (is_array($params) === true) {
+			return $params;
+		}
 
-        return [];
+		return [];
+	}//end decodeBody()
 
-    }//end decodeBody()
+	/**
+	 * Resolve the administration id server-side (never client-supplied — ADR-005).
+	 *
+	 * @return string
+	 */
+	private function resolveAdministrationId(): string {
+		try {
+			$context = $this->administrationContext->buildContext();
+			$candidate = (string)($context['activeAdministrationId'] ?? '');
+			if ($candidate !== '') {
+				return $candidate;
+			}
+		} catch (\Throwable $e) {
+			// Fall through to default.
+		}
 
-    /**
-     * Resolve the administration id server-side (never client-supplied — ADR-005).
-     *
-     * @return string
-     */
-    private function resolveAdministrationId(): string
-    {
-        try {
-            $context   = $this->administrationContext->buildContext();
-            $candidate = (string) ($context['activeAdministrationId'] ?? '');
-            if ($candidate !== '') {
-                return $candidate;
-            }
-        } catch (\Throwable $e) {
-            // Fall through to default.
-        }
-
-        return 'default';
-
-    }//end resolveAdministrationId()
+		return 'default';
+	}//end resolveAdministrationId()
 }//end class

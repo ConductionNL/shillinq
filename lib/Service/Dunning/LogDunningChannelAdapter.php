@@ -39,60 +39,59 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
  */
-class LogDunningChannelAdapter implements DunningChannelAdapterInterface
-{
-    /**
-     * Construct the log-backed channel adapter.
-     *
-     * @param LoggerInterface $logger Logger.
-     */
-    public function __construct(private readonly LoggerInterface $logger)
-    {
-    }//end __construct()
+class LogDunningChannelAdapter implements DunningChannelAdapterInterface {
+	/**
+	 * Construct the log-backed channel adapter.
+	 *
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Synthesise a DELIVERED send result + log the dispatch attempt.
-     *
-     * @param string              $kanaal  One of EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API.
-     * @param array<string,mixed> $payload Channel-specific payload.
-     *
-     * @return DunningChannelSendResult The (synthetic) dispatch outcome.
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
-     */
-    public function send(string $kanaal, array $payload): DunningChannelSendResult
-    {
-        $sanitised = $payload;
-        // Redact rendered body in log lines — keep the log focused on metadata.
-        unset($sanitised['renderedBody']);
-        unset($sanitised['renderedPdfBytes']);
+	/**
+	 * Synthesise a DELIVERED send result + log the dispatch attempt.
+	 *
+	 * @param string $kanaal One of EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API.
+	 * @param array<string,mixed> $payload Channel-specific payload.
+	 *
+	 * @return DunningChannelSendResult The (synthetic) dispatch outcome.
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+	 */
+	public function send(string $kanaal, array $payload): DunningChannelSendResult {
+		$sanitised = $payload;
+		// Redact rendered body in log lines — keep the log focused on metadata.
+		unset($sanitised['renderedBody']);
+		unset($sanitised['renderedPdfBytes']);
 
-        $this->logger->info(
-            'Shillinq dunning channel dispatch',
-            [
-                'kanaal'  => $kanaal,
-                'payload' => $sanitised,
-            ]
-        );
+		$this->logger->info(
+			'Shillinq dunning channel dispatch',
+			[
+				'kanaal' => $kanaal,
+				'payload' => $sanitised,
+			]
+		);
 
-        $messageId = 'dunning-log-'.bin2hex(random_bytes(8));
-        $extras    = [];
-        if ($kanaal === 'AANGETEKENDE_POST') {
-            // Synthetic PostNL Track & Trace barcode (3S + 13 digits) for evidence-trail.
-            $extras['barcode']     = '3S'.str_pad((string) random_int(1, 9999999999999), 13, '0', STR_PAD_LEFT);
-            $extras['trackingUrl'] = 'https://postnl.nl/tracktrace/'.$extras['barcode'];
-        }
+		$messageId = 'dunning-log-' . bin2hex(random_bytes(8));
+		$extras = [];
+		if ($kanaal === 'AANGETEKENDE_POST') {
+			// Synthetic PostNL Track & Trace barcode (3S + 13 digits) for evidence-trail.
+			$extras['barcode'] = '3S' . str_pad((string)random_int(1, 9999999999999), 13, '0', STR_PAD_LEFT);
+			$extras['trackingUrl'] = 'https://postnl.nl/tracktrace/' . $extras['barcode'];
+		}
 
-        if ($kanaal === 'INCASSOBUREAU_API') {
-            $extras['dossierId'] = 'dossier-stub-'.bin2hex(random_bytes(6));
-        }
+		if ($kanaal === 'INCASSOBUREAU_API') {
+			$extras['dossierId'] = 'dossier-stub-' . bin2hex(random_bytes(6));
+		}
 
-        return new DunningChannelSendResult(
-            kanaal: $kanaal,
-            deliveryStatus: 'DELIVERED',
-            providerMessageId: $messageId,
-            extras: $extras,
-        );
+		return new DunningChannelSendResult(
+			kanaal: $kanaal,
+			deliveryStatus: 'DELIVERED',
+			providerMessageId: $messageId,
+			extras: $extras,
+		);
 
-    }//end send()
+	}//end send()
 }//end class

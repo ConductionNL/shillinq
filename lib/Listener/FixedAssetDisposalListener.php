@@ -61,79 +61,77 @@ use Throwable;
  *
  * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
  */
-class FixedAssetDisposalListener implements IEventListener
-{
+class FixedAssetDisposalListener implements IEventListener {
 
-    /**
-     * The lifecycle state a disposed asset lands in (the schema's `status` enum).
-     *
-     * @var string
-     */
-    private const STATE_RETIRED = 'retired';
+	/**
+	 * The lifecycle state a disposed asset lands in (the schema's `status` enum).
+	 *
+	 * @var string
+	 */
+	private const STATE_RETIRED = 'retired';
 
-    /**
-     * Construct the listener with DI dependencies.
-     *
-     * @param FixedAssetDisposalService $disposalService The disposal posting orchestrator.
-     * @param LoggerInterface           $logger          Logger for fail-soft diagnostics.
-     */
-    public function __construct(
-        private readonly FixedAssetDisposalService $disposalService,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Construct the listener with DI dependencies.
+	 *
+	 * @param FixedAssetDisposalService $disposalService The disposal posting orchestrator.
+	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 */
+	public function __construct(
+		private readonly FixedAssetDisposalService $disposalService,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Handle an ObjectTransitionedEvent.
-     *
-     * @param Event $event Event from OpenRegister.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof ObjectTransitionedEvent === false) {
-            return;
-        }
+	/**
+	 * Handle an ObjectTransitionedEvent.
+	 *
+	 * @param Event $event Event from OpenRegister.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof ObjectTransitionedEvent === false) {
+			return;
+		}
 
-        try {
-            $schema = strtolower(trim((string) $event->getSchema()));
-            if ($schema !== 'fixedasset' && $schema !== 'fixed-asset' && $schema !== 'fixed_asset') {
-                return;
-            }
+		try {
+			$schema = strtolower(trim((string)$event->getSchema()));
+			if ($schema !== 'fixedasset' && $schema !== 'fixed-asset' && $schema !== 'fixed_asset') {
+				return;
+			}
 
-            if ((string) $event->getTo() !== self::STATE_RETIRED) {
-                return;
-            }
+			if ((string)$event->getTo() !== self::STATE_RETIRED) {
+				return;
+			}
 
-            $entity = $event->getObject();
-            $object = $entity->getObject();
-            if (is_array($object) === false) {
-                return;
-            }
+			$entity = $event->getObject();
+			$object = $entity->getObject();
+			if (is_array($object) === false) {
+				return;
+			}
 
-            $administrationId = trim((string) ($object['administrationId'] ?? ''));
-            if ($administrationId === '') {
-                $this->logger->warning(
-                    'FixedAssetDisposalListener: retired FixedAsset carries no administrationId; disposal journal skipped',
-                    ['assetNumber' => ($object['assetNumber'] ?? null)]
-                );
-                return;
-            }
+			$administrationId = trim((string)($object['administrationId'] ?? ''));
+			if ($administrationId === '') {
+				$this->logger->warning(
+					'FixedAssetDisposalListener: retired FixedAsset carries no administrationId; disposal journal skipped',
+					['assetNumber' => ($object['assetNumber'] ?? null)]
+				);
+				return;
+			}
 
-            $this->disposalService->postDisposalJournal(
-                administrationId: $administrationId,
-                asset: $object
-            );
-        } catch (Throwable $e) {
-            $this->logger->error(
-                'FixedAssetDisposalListener: failed to post the fixed-asset disposal journal',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->disposalService->postDisposalJournal(
+				administrationId: $administrationId,
+				asset: $object
+			);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'FixedAssetDisposalListener: failed to post the fixed-asset disposal journal',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 }//end class

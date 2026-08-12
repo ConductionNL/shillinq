@@ -44,109 +44,102 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class SigningDelegationRegistrationTest extends TestCase
-{
-    /**
-     * Captured [event, listener] pairs.
-     *
-     * @var array<int, array{0:string,1:string}>
-     */
-    private array $listeners = [];
+final class SigningDelegationRegistrationTest extends TestCase {
+	/**
+	 * Captured [event, listener] pairs.
+	 *
+	 * @var array<int, array{0:string,1:string}>
+	 */
+	private array $listeners = [];
 
-    /**
-     * A registration context that records registerEventListener() calls.
-     *
-     * @return IRegistrationContext The recording context.
-     */
-    private function recordingContext(): IRegistrationContext
-    {
-        $context = $this->createMock(IRegistrationContext::class);
-        $context->method('registerEventListener')->willReturnCallback(
-            function (string $event, string $listener, int $priority=0): void {
-                $this->listeners[] = [$event, $listener];
-            }
-        );
+	/**
+	 * A registration context that records registerEventListener() calls.
+	 *
+	 * @return IRegistrationContext The recording context.
+	 */
+	private function recordingContext(): IRegistrationContext {
+		$context = $this->createMock(IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			function (string $event, string $listener, int $priority = 0): void {
+				$this->listeners[] = [$event, $listener];
+			}
+		);
 
-        return $context;
+		return $context;
+	}//end recordingContext()
 
-    }//end recordingContext()
+	/**
+	 * Every listener registered maps to the event that actually carries it.
+	 *
+	 * @return void
+	 */
+	public function testEachListenerIsBoundToItsOwnEvent(): void {
+		(new SigningDelegationRegistration())->register($this->recordingContext());
 
+		$byListener = [];
+		foreach ($this->listeners as [$event, $listener]) {
+			$byListener[$listener] = $event;
+		}
 
-    /**
-     * Every listener registered maps to the event that actually carries it.
-     *
-     * @return void
-     */
-    public function testEachListenerIsBoundToItsOwnEvent(): void
-    {
-        (new SigningDelegationRegistration())->register($this->recordingContext());
+		// The two shillinq-side request legs ride OpenRegister transitions.
+		self::assertSame(
+			ObjectTransitionedEvent::class,
+			($byListener[AnnualReportSignoffRequestListener::class] ?? null)
+		);
+		self::assertSame(
+			ObjectTransitionedEvent::class,
+			($byListener[ACMReportSignTransitionListener::class] ?? null)
+		);
 
-        $byListener = [];
-        foreach ($this->listeners as [$event, $listener]) {
-            $byListener[$listener] = $event;
-        }
+		// The two outcome legs ride the OTHER app's terminal event. These are
+		// registered by FQCN string even when the class is not autoloadable,
+		// which is safe — but it also means a typo cannot fail at build time,
+		// so the exact keys are pinned here.
+		self::assertSame(
+			'OCA\Decidesk\Event\DecisionConcludedEvent',
+			($byListener[SignoffDecisionConcludedListener::class] ?? null)
+		);
+		self::assertSame(
+			'OCA\DocuDesk\Event\SigningConcludedEvent',
+			($byListener[SigningConcludedListener::class] ?? null)
+		);
 
-        // The two shillinq-side request legs ride OpenRegister transitions.
-        self::assertSame(
-            ObjectTransitionedEvent::class,
-            ($byListener[AnnualReportSignoffRequestListener::class] ?? null)
-        );
-        self::assertSame(
-            ObjectTransitionedEvent::class,
-            ($byListener[ACMReportSignTransitionListener::class] ?? null)
-        );
+	}//end testEachListenerIsBoundToItsOwnEvent()
 
-        // The two outcome legs ride the OTHER app's terminal event. These are
-        // registered by FQCN string even when the class is not autoloadable,
-        // which is safe — but it also means a typo cannot fail at build time,
-        // so the exact keys are pinned here.
-        self::assertSame(
-            'OCA\Decidesk\Event\DecisionConcludedEvent',
-            ($byListener[SignoffDecisionConcludedListener::class] ?? null)
-        );
-        self::assertSame(
-            'OCA\DocuDesk\Event\SigningConcludedEvent',
-            ($byListener[SigningConcludedListener::class] ?? null)
-        );
+	/**
+	 * Neither capability may be registered request-only.
+	 *
+	 * @return void
+	 */
+	public function testRequestAndOutcomeLegsAreRegisteredTogether(): void {
+		(new SigningDelegationRegistration())->register($this->recordingContext());
 
-    }//end testEachListenerIsBoundToItsOwnEvent()
+		$registered = array_column($this->listeners, 1);
 
+		foreach (
+			[
+				'governance decision' => [
+					AnnualReportSignoffRequestListener::class,
+					SignoffDecisionConcludedListener::class,
+				],
+				'document signature' => [
+					ACMReportSignTransitionListener::class,
+					SigningConcludedListener::class,
+				],
+			] as $capability => $pair
+		) {
+			[$request, $outcome] = $pair;
 
-    /**
-     * Neither capability may be registered request-only.
-     *
-     * @return void
-     */
-    public function testRequestAndOutcomeLegsAreRegisteredTogether(): void
-    {
-        (new SigningDelegationRegistration())->register($this->recordingContext());
+			self::assertContains($request, $registered, $capability . ': request leg missing.');
+			self::assertContains(
+				$outcome,
+				$registered,
+				$capability . ': the request leg is registered but the OUTCOME leg is not — the answer is '
+				. 'never projected back onto the finance object.'
+			);
+		}
 
-        $registered = array_column($this->listeners, 1);
+		self::assertCount(4, $this->listeners, 'Exactly the two request+outcome pairs.');
 
-        foreach (
-            [
-                'governance decision' => [
-                    AnnualReportSignoffRequestListener::class,
-                    SignoffDecisionConcludedListener::class,
-                ],
-                'document signature' => [
-                    ACMReportSignTransitionListener::class,
-                    SigningConcludedListener::class,
-                ],
-            ] as $capability => $pair
-        ) {
-            [$request, $outcome] = $pair;
-
-            self::assertContains($request, $registered, $capability.': request leg missing.');
-            self::assertContains(
-                $outcome,
-                $registered,
-                $capability.': the request leg is registered but the OUTCOME leg is not — the answer is '
-                .'never projected back onto the finance object.'
-            );
-        }
-
-        self::assertCount(4, $this->listeners, 'Exactly the two request+outcome pairs.');
-
-    }//end testRequestAndOutcomeLegsAreRegisteredTogether()
+	}//end testRequestAndOutcomeLegsAreRegisteredTogether()
 }//end class

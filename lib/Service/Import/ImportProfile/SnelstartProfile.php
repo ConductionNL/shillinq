@@ -36,102 +36,93 @@ use OCA\Shillinq\Service\Import\ImportProfileInterface;
  *
  * @spec openspec/changes/administration-import-migration/tasks.md#task-7
  */
-class SnelstartProfile implements ImportProfileInterface
-{
-    /**
-     * {@inheritDoc}
-     *
-     * @return string
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function sourceSystem(): string
-    {
-        return 'snelstart';
+class SnelstartProfile implements ImportProfileInterface {
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function sourceSystem(): string {
+		return 'snelstart';
+	}//end sourceSystem()
 
-    }//end sourceSystem()
+	/**
+	 * {@inheritDoc}
+	 *
+	 * SnelStart may prefix a ledger code with a single rubriek letter
+	 * (e.g. "G1300"); strip a leading non-digit so codes align with the chart.
+	 *
+	 * @param array<string,mixed> $parsed Parser output.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function normalizeLedgerAccounts(array $parsed): array {
+		$accounts = ($parsed['ledgerAccounts'] ?? []);
+		foreach ($accounts as &$account) {
+			if (isset($account['code']) === true && $account['code'] !== '') {
+				$account['code'] = preg_replace('/^[A-Za-z]+/', '', (string)$account['code']);
+			}
+		}
 
-    /**
-     * {@inheritDoc}
-     *
-     * SnelStart may prefix a ledger code with a single rubriek letter
-     * (e.g. "G1300"); strip a leading non-digit so codes align with the chart.
-     *
-     * @param array<string,mixed> $parsed Parser output.
-     *
-     * @return array<int,array<string,mixed>>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function normalizeLedgerAccounts(array $parsed): array
-    {
-        $accounts = ($parsed['ledgerAccounts'] ?? []);
-        foreach ($accounts as &$account) {
-            if (isset($account['code']) === true && $account['code'] !== '') {
-                $account['code'] = preg_replace('/^[A-Za-z]+/', '', (string) $account['code']);
-            }
-        }
+		unset($account);
+		return $accounts;
+	}//end normalizeLedgerAccounts()
 
-        unset($account);
-        return $accounts;
+	/**
+	 * {@inheritDoc}
+	 *
+	 * SnelStart "Openstaande posten" CSV header (semicolon-delimited):
+	 *   Relatienr;Relatie;Boekstuk;Boekdatum;Vervaldatum;Bedrag;Saldo;Dagboek
+	 *
+	 * @param string $artifact Artifact kind.
+	 *
+	 * @return array<string,string>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function mapCsvColumns(string $artifact): array {
+		if ($artifact === 'open-items') {
+			return [
+				'relationCode' => 'Relatienr',
+				'relationName' => 'Relatie',
+				'invoiceNumber' => 'Boekstuk',
+				'invoiceDate' => 'Boekdatum',
+				'dueDate' => 'Vervaldatum',
+				'totalAmount' => 'Bedrag',
+				'outstandingAmount' => 'Saldo',
+				'type' => 'Dagboek',
+			];
+		}
 
-    }//end normalizeLedgerAccounts()
+		if ($artifact === 'relations') {
+			return [
+				'code' => 'Relatienr',
+				'name' => 'Naam',
+				'kvk' => 'KvKnummer',
+				'btw' => 'BTWnummer',
+				'email' => 'Email',
+				'phone' => 'Telefoon',
+			];
+		}
 
-    /**
-     * {@inheritDoc}
-     *
-     * SnelStart "Openstaande posten" CSV header (semicolon-delimited):
-     *   Relatienr;Relatie;Boekstuk;Boekdatum;Vervaldatum;Bedrag;Saldo;Dagboek
-     *
-     * @param string $artifact Artifact kind.
-     *
-     * @return array<string,string>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function mapCsvColumns(string $artifact): array
-    {
-        if ($artifact === 'open-items') {
-            return [
-                'relationCode'      => 'Relatienr',
-                'relationName'      => 'Relatie',
-                'invoiceNumber'     => 'Boekstuk',
-                'invoiceDate'       => 'Boekdatum',
-                'dueDate'           => 'Vervaldatum',
-                'totalAmount'       => 'Bedrag',
-                'outstandingAmount' => 'Saldo',
-                'type'              => 'Dagboek',
-            ];
-        }
+		return [];
+	}//end mapCsvColumns()
 
-        if ($artifact === 'relations') {
-            return [
-                'code'  => 'Relatienr',
-                'name'  => 'Naam',
-                'kvk'   => 'KvKnummer',
-                'btw'   => 'BTWnummer',
-                'email' => 'Email',
-                'phone' => 'Telefoon',
-            ];
-        }
-
-        return [];
-
-    }//end mapCsvColumns()
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param array<string,mixed> $parsed Parser output.
-     *
-     * @return array<string,mixed>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function applyDialectQuirks(array $parsed): array
-    {
-        $parsed['ledgerAccounts'] = $this->normalizeLedgerAccounts(parsed: $parsed);
-        return $parsed;
-
-    }//end applyDialectQuirks()
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @param array<string,mixed> $parsed Parser output.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function applyDialectQuirks(array $parsed): array {
+		$parsed['ledgerAccounts'] = $this->normalizeLedgerAccounts(parsed: $parsed);
+		return $parsed;
+	}//end applyDialectQuirks()
 }//end class

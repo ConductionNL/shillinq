@@ -25,23 +25,19 @@ namespace OCA\Shillinq\Tests\Unit\Guard;
 use OCA\Shillinq\Guard\BcfSubmissionGuard;
 use PHPUnit\Framework\TestCase;
 
-final class BcfSubmissionGuardTest extends TestCase
-{
-    private BcfSubmissionGuard $guard;
+final class BcfSubmissionGuardTest extends TestCase {
+	private BcfSubmissionGuard $guard;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->guard = new BcfSubmissionGuard();
-    }//end setUp()
+	protected function setUp(): void {
+		parent::setUp();
+		$this->guard = new BcfSubmissionGuard();
+	}//end setUp()
 
-    public function testSubmitAllowedBelowThreshold(): void
-    {
-        self::assertTrue($this->guard->requireApproval(['totalClaimAmount' => 1000, 'approvalThreshold' => 5000]));
-    }//end testSubmitAllowedBelowThreshold()
+	public function testSubmitAllowedBelowThreshold(): void {
+		self::assertTrue($this->guard->requireApproval(['totalClaimAmount' => 1000, 'approvalThreshold' => 5000]));
+	}//end testSubmitAllowedBelowThreshold()
 
-    public function testSubmitDeniedAboveThreshold(): void
-    {
-        self::assertFalse($this->guard->requireApproval(['totalClaimAmount' => 8000, 'approvalThreshold' => 5000]));
-    }//end testSubmitDeniedAboveThreshold()
+	public function testSubmitDeniedAboveThreshold(): void {
+		self::assertFalse($this->guard->requireApproval(['totalClaimAmount' => 8000, 'approvalThreshold' => 5000]));
+	}//end testSubmitDeniedAboveThreshold()
 }//end class

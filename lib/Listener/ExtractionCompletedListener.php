@@ -64,304 +64,292 @@ use Throwable;
  *
  * @spec openspec/specs/receipt-extraction-consume/spec.md
  */
-class ExtractionCompletedListener implements IEventListener
-{
-    /**
-     * Notification object type for the "draft created" alert to requestedBy.
-     *
-     * @var string
-     */
-    private const NOTIFICATION_OBJECT_TYPE = 'extraction_draft';
+class ExtractionCompletedListener implements IEventListener {
+	/**
+	 * Notification object type for the "draft created" alert to requestedBy.
+	 *
+	 * @var string
+	 */
+	private const NOTIFICATION_OBJECT_TYPE = 'extraction_draft';
 
-    /**
-     * Notification subject identifier.
-     *
-     * @var string
-     */
-    private const NOTIFICATION_SUBJECT = 'extraction_draft_created';
+	/**
+	 * Notification subject identifier.
+	 *
+	 * @var string
+	 */
+	private const NOTIFICATION_SUBJECT = 'extraction_draft_created';
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface       $container           DI container — OR ObjectService
-     *                                                      pulled lazily.
-     * @param IAppConfig               $appConfig           App config for the register slug.
-     * @param ExtractionPrefillService $prefillService      Field-mapping service.
-     * @param INotificationManager     $notificationManager NC notification dispatcher.
-     * @param LoggerInterface          $logger              Logger for fail-soft diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly ExtractionPrefillService $prefillService,
-        private readonly INotificationManager $notificationManager,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — OR ObjectService
+	 *                                      pulled lazily.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param ExtractionPrefillService $prefillService Field-mapping service.
+	 * @param INotificationManager $notificationManager NC notification dispatcher.
+	 * @param LoggerInterface $logger Logger for fail-soft diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly ExtractionPrefillService $prefillService,
+		private readonly INotificationManager $notificationManager,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Handle a docudesk FinancialExtractionCompletedEvent.
-     *
-     * @param Event $event The dispatched event.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/receipt-extraction-consume/spec.md
-     */
-    public function handle(Event $event): void
-    {
-        // Guarded by class_exists so the listener is inert when docudesk is
-        // not installed (registration is safe even then — see class docblock).
-        if (class_exists(\OCA\DocuDesk\Event\FinancialExtractionCompletedEvent::class) === false) {
-            return;
-        }
+	/**
+	 * Handle a docudesk FinancialExtractionCompletedEvent.
+	 *
+	 * @param Event $event The dispatched event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/receipt-extraction-consume/spec.md
+	 */
+	public function handle(Event $event): void {
+		// Guarded by class_exists so the listener is inert when docudesk is
+		// not installed (registration is safe even then — see class docblock).
+		if (class_exists(\OCA\DocuDesk\Event\FinancialExtractionCompletedEvent::class) === false) {
+			return;
+		}
 
-        if (($event instanceof \OCA\DocuDesk\Event\FinancialExtractionCompletedEvent) === false) {
-            return;
-        }
+		if (($event instanceof \OCA\DocuDesk\Event\FinancialExtractionCompletedEvent) === false) {
+			return;
+		}
 
-        try {
-            $this->apply(event: $event);
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'ExtractionCompletedListener: failed to apply extraction-completed event — fail-soft',
-                ['exception' => $e->getMessage()]
-            );
-        }
+		try {
+			$this->apply(event: $event);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'ExtractionCompletedListener: failed to apply extraction-completed event — fail-soft',
+				['exception' => $e->getMessage()]
+			);
+		}
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Apply one extraction-completed payload to a draft.
-     *
-     * @param \OCA\DocuDesk\Event\FinancialExtractionCompletedEvent $event The event.
-     *
-     * @return void
-     */
-    private function apply(\OCA\DocuDesk\Event\FinancialExtractionCompletedEvent $event): void
-    {
-        $documentUri = trim($event->getDocumentUri());
-        $docType     = trim($event->getDocType());
-        if ($documentUri === '' || $docType === '') {
-            return;
-        }
+	/**
+	 * Apply one extraction-completed payload to a draft.
+	 *
+	 * @param \OCA\DocuDesk\Event\FinancialExtractionCompletedEvent $event The event.
+	 *
+	 * @return void
+	 */
+	private function apply(\OCA\DocuDesk\Event\FinancialExtractionCompletedEvent $event): void {
+		$documentUri = trim($event->getDocumentUri());
+		$docType = trim($event->getDocType());
+		if ($documentUri === '' || $docType === '') {
+			return;
+		}
 
-        $schema = $this->prefillService->schemaForDocType(docType: $docType);
-        if ($schema === null) {
-            $this->logger->info(
-                'ExtractionCompletedListener: unknown docType — skipping',
-                ['docType' => $docType]
-            );
-            return;
-        }
+		$schema = $this->prefillService->schemaForDocType(docType: $docType);
+		if ($schema === null) {
+			$this->logger->info(
+				'ExtractionCompletedListener: unknown docType — skipping',
+				['docType' => $docType]
+			);
+			return;
+		}
 
-        $existing = $this->findBySourceDocumentUri(schema: $schema, documentUri: $documentUri);
-        $isNew    = ($existing === null);
+		$existing = $this->findBySourceDocumentUri(schema: $schema, documentUri: $documentUri);
+		$isNew = ($existing === null);
 
-        $administrationId = ($existing['administrationId'] ?? null);
-        if (is_string($administrationId) === false || $administrationId === '') {
-            $administrationId = $this->resolveAdministrationId(userId: $event->getRequestedBy());
-        }
+		$administrationId = ($existing['administrationId'] ?? null);
+		if (is_string($administrationId) === false || $administrationId === '') {
+			$administrationId = $this->resolveAdministrationId(userId: $event->getRequestedBy());
+		}
 
-        $draft = $this->prefillService->buildDraft(
-            docType: $docType,
-            documentUri: $documentUri,
-            fields: $event->getFields(),
-            fieldConfidence: $event->getFieldConfidence(),
-            overallConfidence: $event->getOverallConfidence(),
-            existingDraft: $existing,
-            administrationId: (string) $administrationId
-        );
+		$draft = $this->prefillService->buildDraft(
+			docType: $docType,
+			documentUri: $documentUri,
+			fields: $event->getFields(),
+			fieldConfidence: $event->getFieldConfidence(),
+			overallConfidence: $event->getOverallConfidence(),
+			existingDraft: $existing,
+			administrationId: (string)$administrationId
+		);
 
-        $saved = $this->saveObject(schema: $schema, object: $draft);
+		$saved = $this->saveObject(schema: $schema, object: $draft);
 
-        $this->logger->info(
-            'ExtractionCompletedListener: extraction draft persisted',
-            [
-                'schema'      => $schema,
-                'documentUri' => $documentUri,
-                'created'     => $isNew,
-                'requestedBy' => $event->getRequestedBy(),
-            ]
-        );
+		$this->logger->info(
+			'ExtractionCompletedListener: extraction draft persisted',
+			[
+				'schema' => $schema,
+				'documentUri' => $documentUri,
+				'created' => $isNew,
+				'requestedBy' => $event->getRequestedBy(),
+			]
+		);
 
-        if ($isNew === true) {
-            // REQ-RXC-001 "unmatched documentUri is not dropped" — surface
-            // the new draft to whoever requested the extraction.
-            $this->notifyRequester(
-                requestedBy: $event->getRequestedBy(),
-                schema: $schema,
-                draft: $saved
-            );
-        }
+		if ($isNew === true) {
+			// REQ-RXC-001 "unmatched documentUri is not dropped" — surface
+			// the new draft to whoever requested the extraction.
+			$this->notifyRequester(
+				requestedBy: $event->getRequestedBy(),
+				schema: $schema,
+				draft: $saved
+			);
+		}
 
-    }//end apply()
+	}//end apply()
 
-    /**
-     * Find an existing draft carrying the same sourceDocumentUri.
-     *
-     * @param string $schema      OR schema slug.
-     * @param string $documentUri The docudesk documentUri.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function findBySourceDocumentUri(string $schema, string $documentUri): ?array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister($this->register())
-                ->setSchema($schema)
-                ->findAll(['filters' => ['sourceDocumentUri' => $documentUri]]);
-        } catch (Throwable $e) {
-            $this->logger->info(
-                'ExtractionCompletedListener: OR query unavailable — treating as new draft',
-                ['schema' => $schema, 'exception' => $e->getMessage()]
-            );
-            return null;
-        }
+	/**
+	 * Find an existing draft carrying the same sourceDocumentUri.
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param string $documentUri The docudesk documentUri.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findBySourceDocumentUri(string $schema, string $documentUri): ?array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister($this->register())
+				->setSchema($schema)
+				->findAll(['filters' => ['sourceDocumentUri' => $documentUri]]);
+		} catch (Throwable $e) {
+			$this->logger->info(
+				'ExtractionCompletedListener: OR query unavailable — treating as new draft',
+				['schema' => $schema, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
 
-        if (is_array($rows) === false) {
-            return null;
-        }
+		if (is_array($rows) === false) {
+			return null;
+		}
 
-        foreach ($rows as $row) {
-            if (is_array($row) === true) {
-                return $row;
-            }
-        }
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				return $row;
+			}
+		}
 
-        return null;
+		return null;
+	}//end findBySourceDocumentUri()
 
-    }//end findBySourceDocumentUri()
+	/**
+	 * Resolve an administration for a requesting user via their
+	 * AdministrationMembership, falling back to 'default' (mirrors
+	 * {@see \OCA\Shillinq\Controller\SupplierInvoiceImportController::resolveAdministrationId()}
+	 * for the no-membership case).
+	 *
+	 * @param string $userId The requesting NC user id.
+	 *
+	 * @return string
+	 */
+	private function resolveAdministrationId(string $userId): string {
+		if ($userId === '') {
+			return 'default';
+		}
 
-    /**
-     * Resolve an administration for a requesting user via their
-     * AdministrationMembership, falling back to 'default' (mirrors
-     * {@see \OCA\Shillinq\Controller\SupplierInvoiceImportController::resolveAdministrationId()}
-     * for the no-membership case).
-     *
-     * @param string $userId The requesting NC user id.
-     *
-     * @return string
-     */
-    private function resolveAdministrationId(string $userId): string
-    {
-        if ($userId === '') {
-            return 'default';
-        }
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$rows = $objectService
+				->setRegister($this->register())
+				->setSchema('AdministrationMembership')
+				->findAll(['filters' => ['userId' => $userId]]);
+		} catch (Throwable $e) {
+			return 'default';
+		}
 
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $rows          = $objectService
-                ->setRegister($this->register())
-                ->setSchema('AdministrationMembership')
-                ->findAll(['filters' => ['userId' => $userId]]);
-        } catch (Throwable $e) {
-            return 'default';
-        }
+		if (is_array($rows) === true) {
+			foreach ($rows as $row) {
+				if (is_array($row) === true) {
+					$administrationId = (string)($row['administrationId'] ?? '');
+					if ($administrationId !== '') {
+						return $administrationId;
+					}
+				}
+			}
+		}
 
-        if (is_array($rows) === true) {
-            foreach ($rows as $row) {
-                if (is_array($row) === true) {
-                    $administrationId = (string) ($row['administrationId'] ?? '');
-                    if ($administrationId !== '') {
-                        return $administrationId;
-                    }
-                }
-            }
-        }
+		return 'default';
+	}//end resolveAdministrationId()
 
-        return 'default';
+	/**
+	 * Notify the requesting user that a new extraction draft is ready for review.
+	 *
+	 * @param string $requestedBy NC user id.
+	 * @param string $schema OR schema slug.
+	 * @param array<string,mixed> $draft The persisted draft.
+	 *
+	 * @return void
+	 */
+	private function notifyRequester(string $requestedBy, string $schema, array $draft): void {
+		if ($requestedBy === '') {
+			return;
+		}
 
-    }//end resolveAdministrationId()
+		$reference = (string)($draft['invoiceNumber'] ?? ($draft['receiptNumber'] ?? ($draft['id'] ?? '')));
 
-    /**
-     * Notify the requesting user that a new extraction draft is ready for review.
-     *
-     * @param string              $requestedBy NC user id.
-     * @param string              $schema      OR schema slug.
-     * @param array<string,mixed> $draft       The persisted draft.
-     *
-     * @return void
-     */
-    private function notifyRequester(string $requestedBy, string $schema, array $draft): void
-    {
-        if ($requestedBy === '') {
-            return;
-        }
+		try {
+			$notification = $this->notificationManager->createNotification();
+			$notification
+				->setApp(Application::APP_ID)
+				->setUser($requestedBy)
+				->setDateTime(new DateTime())
+				->setObject(self::NOTIFICATION_OBJECT_TYPE, $reference)
+				->setSubject(
+					self::NOTIFICATION_SUBJECT,
+					[
+						'schema' => $schema,
+						'reference' => $reference,
+					]
+				);
+			$this->notificationManager->notify($notification);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'ExtractionCompletedListener: failed to dispatch extraction-draft notification',
+				['schema' => $schema, 'requestedBy' => $requestedBy, 'exception' => $e->getMessage()]
+			);
+		}//end try
 
-        $reference = (string) ($draft['invoiceNumber'] ?? ($draft['receiptNumber'] ?? ($draft['id'] ?? '')));
+	}//end notifyRequester()
 
-        try {
-            $notification = $this->notificationManager->createNotification();
-            $notification
-                ->setApp(Application::APP_ID)
-                ->setUser($requestedBy)
-                ->setDateTime(new DateTime())
-                ->setObject(self::NOTIFICATION_OBJECT_TYPE, $reference)
-                ->setSubject(
-                        self::NOTIFICATION_SUBJECT,
-                        [
-                            'schema'    => $schema,
-                            'reference' => $reference,
-                        ]
-                        );
-            $this->notificationManager->notify($notification);
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'ExtractionCompletedListener: failed to dispatch extraction-draft notification',
-                ['schema' => $schema, 'requestedBy' => $requestedBy, 'exception' => $e->getMessage()]
-            );
-        }//end try
+	/**
+	 * Persist a draft via the real ObjectService API (saveObject).
+	 *
+	 * @param string $schema OR schema slug.
+	 * @param array<string,mixed> $object Object payload.
+	 *
+	 * @return array<string,mixed> The persisted object (or the input on failure).
+	 */
+	private function saveObject(string $schema, array $object): array {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$result = $objectService
+				->setRegister($this->register())
+				->setSchema($schema)
+				->saveObject($object);
 
-    }//end notifyRequester()
+			if (is_array($result) === true) {
+				return $result;
+			}
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'ExtractionCompletedListener: failed to persist extraction draft',
+				['schema' => $schema, 'exception' => $e->getMessage()]
+			);
+		}
 
-    /**
-     * Persist a draft via the real ObjectService API (saveObject).
-     *
-     * @param string              $schema OR schema slug.
-     * @param array<string,mixed> $object Object payload.
-     *
-     * @return array<string,mixed> The persisted object (or the input on failure).
-     */
-    private function saveObject(string $schema, array $object): array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $result        = $objectService
-                ->setRegister($this->register())
-                ->setSchema($schema)
-                ->saveObject($object);
+		return $object;
+	}//end saveObject()
 
-            if (is_array($result) === true) {
-                return $result;
-            }
-        } catch (Throwable $e) {
-            $this->logger->error(
-                'ExtractionCompletedListener: failed to persist extraction draft',
-                ['schema' => $schema, 'exception' => $e->getMessage()]
-            );
-        }
+	/**
+	 * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $object;
-
-    }//end saveObject()
-
-    /**
-     * Resolve the OpenRegister register slug from app config (defaults to "shillinq").
-     *
-     * @return string
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

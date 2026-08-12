@@ -40,98 +40,95 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-011-lh-aangifte.md
  */
-class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface
-{
-    /**
-     * Construct the log-backed UWV adapter.
-     *
-     * @param LoggerInterface $logger Structured logger.
-     */
-    public function __construct(private readonly LoggerInterface $logger)
-    {
-    }//end __construct()
+class LogUwvLoonaangifteAdapter implements UwvLoonaangifteAdapterInterface {
+	/**
+	 * Construct the log-backed UWV adapter.
+	 *
+	 * @param LoggerInterface $logger Structured logger.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Log the loonaangifte-status pull intent + synthesise a
-     * STATUS_DEFERRED result.
-     *
-     * `loonheffingsnummer` is logged as-is (it is a tax-identifier of
-     * the employer entity, not of a natural person, and a
-     * loonaangifte-pull always needs it correlated to the kenmerk).
-     *
-     * @param array<string,mixed> $payload Pull envelope.
-     *
-     * @return UwvStatusResult The dispatch outcome.
-     */
-    public function pullStatus(array $payload): UwvStatusResult
-    {
-        $kenmerk = 'uwv-pull-log-'.bin2hex(random_bytes(8));
-        $this->logger->info(
-            'Shillinq UWV loonaangifte pullStatus deferred (no outbound connector bound)',
-            [
-                'kenmerk' => $kenmerk,
-                'payload' => $payload,
-            ]
-        );
+	/**
+	 * Log the loonaangifte-status pull intent + synthesise a
+	 * STATUS_DEFERRED result.
+	 *
+	 * `loonheffingsnummer` is logged as-is (it is a tax-identifier of
+	 * the employer entity, not of a natural person, and a
+	 * loonaangifte-pull always needs it correlated to the kenmerk).
+	 *
+	 * @param array<string,mixed> $payload Pull envelope.
+	 *
+	 * @return UwvStatusResult The dispatch outcome.
+	 */
+	public function pullStatus(array $payload): UwvStatusResult {
+		$kenmerk = 'uwv-pull-log-' . bin2hex(random_bytes(8));
+		$this->logger->info(
+			'Shillinq UWV loonaangifte pullStatus deferred (no outbound connector bound)',
+			[
+				'kenmerk' => $kenmerk,
+				'payload' => $payload,
+			]
+		);
 
-        return new UwvStatusResult(
-            outcome: 'STATUS_DEFERRED',
-            kenmerk: $kenmerk,
-            dormant: true,
-            extras: [
-                'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `uwv-loonaangifte` (PKIoverheid Services-server cert '
-                    .'+ UWV polisadministratie endpoint) and override UwvLoonaangifteAdapterInterface in '
-                    .'Application::register() to enable real status pull.',
-            ],
-        );
-    }//end pullStatus()
+		return new UwvStatusResult(
+			outcome: 'STATUS_DEFERRED',
+			kenmerk: $kenmerk,
+			dormant: true,
+			extras: [
+				'reason' => 'no-outbound-connector-bound',
+				'note' => 'Bind openconnector source slug `uwv-loonaangifte` (PKIoverheid Services-server cert '
+					. '+ UWV polisadministratie endpoint) and override UwvLoonaangifteAdapterInterface in '
+					. 'Application::register() to enable real status pull.',
+			],
+		);
+	}//end pullStatus()
 
-    /**
-     * Log the sectorindeling lookup intent + synthesise a
-     * SECTOR_DEFERRED result.
-     *
-     * @param string              $sectorCode Werkhervattingskas sector code.
-     * @param int                 $peiljaar   Calendar year.
-     * @param array<string,mixed> $context    Lookup context.
-     *
-     * @return UwvStatusResult The lookup outcome.
-     */
-    public function lookupSector(string $sectorCode, int $peiljaar, array $context=[]): UwvStatusResult
-    {
-        $kenmerk = 'uwv-sector-log-'.bin2hex(random_bytes(6));
-        $this->logger->info(
-            'Shillinq UWV Werkhervattingskas lookupSector deferred (no outbound connector bound)',
-            [
-                'kenmerk'    => $kenmerk,
-                'sectorCode' => $sectorCode,
-                'peiljaar'   => $peiljaar,
-                'context'    => $context,
-            ]
-        );
+	/**
+	 * Log the sectorindeling lookup intent + synthesise a
+	 * SECTOR_DEFERRED result.
+	 *
+	 * @param string $sectorCode Werkhervattingskas sector code.
+	 * @param int $peiljaar Calendar year.
+	 * @param array<string,mixed> $context Lookup context.
+	 *
+	 * @return UwvStatusResult The lookup outcome.
+	 */
+	public function lookupSector(string $sectorCode, int $peiljaar, array $context = []): UwvStatusResult {
+		$kenmerk = 'uwv-sector-log-' . bin2hex(random_bytes(6));
+		$this->logger->info(
+			'Shillinq UWV Werkhervattingskas lookupSector deferred (no outbound connector bound)',
+			[
+				'kenmerk' => $kenmerk,
+				'sectorCode' => $sectorCode,
+				'peiljaar' => $peiljaar,
+				'context' => $context,
+			]
+		);
 
-        return new UwvStatusResult(
-            outcome: 'SECTOR_DEFERRED',
-            kenmerk: $kenmerk,
-            dormant: true,
-            extras: [
-                'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `uwv-loonaangifte` + map sectorindeling endpoint, '
-                    .'then override UwvLoonaangifteAdapterInterface in Application::register() to enable real '
-                    .'sector validation.',
-            ],
-        );
-    }//end lookupSector()
+		return new UwvStatusResult(
+			outcome: 'SECTOR_DEFERRED',
+			kenmerk: $kenmerk,
+			dormant: true,
+			extras: [
+				'reason' => 'no-outbound-connector-bound',
+				'note' => 'Bind openconnector source slug `uwv-loonaangifte` + map sectorindeling endpoint, '
+					. 'then override UwvLoonaangifteAdapterInterface in Application::register() to enable real '
+					. 'sector validation.',
+			],
+		);
+	}//end lookupSector()
 
-    /**
-     * Report whether this adapter is a dormant log-only stand-in.
-     *
-     * @inheritDoc
-     *
-     * @return bool Always true for the log adapter.
-     */
-    public function isDormant(): bool
-    {
-        return true;
-    }//end isDormant()
+	/**
+	 * Report whether this adapter is a dormant log-only stand-in.
+	 *
+	 * @inheritDoc
+	 *
+	 * @return bool Always true for the log adapter.
+	 */
+	public function isDormant(): bool {
+		return true;
+	}//end isDormant()
 }//end class

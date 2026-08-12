@@ -82,114 +82,106 @@ use Throwable;
  *
  * @spec openspec/specs/inventory-cycle-count/spec.md
  */
-final class ObjectIdentifier
-{
-    /**
-     * Resolve the UUID from whatever ObjectService handed back.
-     *
-     * Accepts both the array shape and the entity shape, and answers in the same
-     * identifier space for both — the array arm already returned the UUID, and
-     * the object arm now agrees with it.
-     *
-     * @param mixed $saved Whatever ObjectService::saveObject()/findAll() returned.
-     *
-     * @return string The object's UUID, or '' when not derivable.
-     *
-     * @spec openspec/specs/inventory-cycle-count/spec.md
-     */
-    public static function resolve(mixed $saved): string
-    {
-        if (is_array($saved) === true) {
-            return self::stringify(value: $saved['id'] ?? $saved['@self']['id'] ?? null);
-        }
+final class ObjectIdentifier {
+	/**
+	 * Resolve the UUID from whatever ObjectService handed back.
+	 *
+	 * Accepts both the array shape and the entity shape, and answers in the same
+	 * identifier space for both — the array arm already returned the UUID, and
+	 * the object arm now agrees with it.
+	 *
+	 * @param mixed $saved Whatever ObjectService::saveObject()/findAll() returned.
+	 *
+	 * @return string The object's UUID, or '' when not derivable.
+	 *
+	 * @spec openspec/specs/inventory-cycle-count/spec.md
+	 */
+	public static function resolve(mixed $saved): string {
+		if (is_array($saved) === true) {
+			return self::stringify(value: $saved['id'] ?? $saved['@self']['id'] ?? null);
+		}
 
-        if (is_object($saved) === false) {
-            return '';
-        }
+		if (is_object($saved) === false) {
+			return '';
+		}
 
-        // `jsonSerialize()` IS concrete on ObjectEntity, so `method_exists()`
-        // answers it correctly, and it renders `id` as the UUID.
-        $rendered = self::rendered(entity: $saved);
-        if ($rendered !== '') {
-            return $rendered;
-        }
+		// `jsonSerialize()` IS concrete on ObjectEntity, so `method_exists()`
+		// answers it correctly, and it renders `id` as the UUID.
+		$rendered = self::rendered(entity: $saved);
+		if ($rendered !== '') {
+			return $rendered;
+		}
 
-        // `getUuid()` is magic, so `property_exists()` on the backing property is
-        // the only correct probe — and it is exactly what `Entity::getter()`
-        // itself decides on.
-        if (property_exists($saved, 'uuid') === false) {
-            return '';
-        }
+		// `getUuid()` is magic, so `property_exists()` on the backing property is
+		// the only correct probe — and it is exactly what `Entity::getter()`
+		// itself decides on.
+		if (property_exists($saved, 'uuid') === false) {
+			return '';
+		}
 
-        return self::accessor(entity: $saved, getter: 'getUuid');
+		return self::accessor(entity: $saved, getter: 'getUuid');
+	}//end resolve()
 
-    }//end resolve()
+	/**
+	 * Read the rendered `id` from an entity's jsonSerialize(), tolerating failure.
+	 *
+	 * @param object $entity The OpenRegister ObjectEntity.
+	 *
+	 * @return string The rendered id, or '' when unavailable.
+	 */
+	private static function rendered(object $entity): string {
+		if (method_exists($entity, 'jsonSerialize') === false) {
+			return '';
+		}
 
-    /**
-     * Read the rendered `id` from an entity's jsonSerialize(), tolerating failure.
-     *
-     * @param object $entity The OpenRegister ObjectEntity.
-     *
-     * @return string The rendered id, or '' when unavailable.
-     */
-    private static function rendered(object $entity): string
-    {
-        if (method_exists($entity, 'jsonSerialize') === false) {
-            return '';
-        }
+		try {
+			$payload = $entity->jsonSerialize();
+		} catch (Throwable $e) {
+			return '';
+		}
 
-        try {
-            $payload = $entity->jsonSerialize();
-        } catch (Throwable $e) {
-            return '';
-        }
+		if (is_array($payload) === false) {
+			return '';
+		}
 
-        if (is_array($payload) === false) {
-            return '';
-        }
+		return self::stringify(value: $payload['id'] ?? null);
+	}//end rendered()
 
-        return self::stringify(value: $payload['id'] ?? null);
+	/**
+	 * Call a magic accessor by variable name, tolerating failure.
+	 *
+	 * Mirrors ListenerSchemaResolver::readAccessor(). The accessor is invoked
+	 * through a variable method name because `property_exists()` — unlike
+	 * `method_exists()` — is not a static-analysis type guard, and because
+	 * `Entity::__call()` throws BadFunctionCallException for a property the
+	 * entity does not carry.
+	 *
+	 * @param object $entity The OpenRegister ObjectEntity.
+	 * @param string $getter The accessor name, e.g. 'getUuid'.
+	 *
+	 * @return string The scalar value as a string, or '' when unavailable.
+	 */
+	private static function accessor(object $entity, string $getter): string {
+		try {
+			return self::stringify(value: $entity->{$getter}());
+		} catch (Throwable $e) {
+			return '';
+		}
 
-    }//end rendered()
+	}//end accessor()
 
-    /**
-     * Call a magic accessor by variable name, tolerating failure.
-     *
-     * Mirrors ListenerSchemaResolver::readAccessor(). The accessor is invoked
-     * through a variable method name because `property_exists()` — unlike
-     * `method_exists()` — is not a static-analysis type guard, and because
-     * `Entity::__call()` throws BadFunctionCallException for a property the
-     * entity does not carry.
-     *
-     * @param object $entity The OpenRegister ObjectEntity.
-     * @param string $getter The accessor name, e.g. 'getUuid'.
-     *
-     * @return string The scalar value as a string, or '' when unavailable.
-     */
-    private static function accessor(object $entity, string $getter): string
-    {
-        try {
-            return self::stringify(value: $entity->{$getter}());
-        } catch (Throwable $e) {
-            return '';
-        }
+	/**
+	 * Render a scalar identifier as a non-empty string.
+	 *
+	 * @param mixed $value The candidate identifier.
+	 *
+	 * @return string The value as a string, or '' when absent or non-scalar.
+	 */
+	private static function stringify(mixed $value): string {
+		if (is_scalar($value) === false) {
+			return '';
+		}
 
-    }//end accessor()
-
-    /**
-     * Render a scalar identifier as a non-empty string.
-     *
-     * @param mixed $value The candidate identifier.
-     *
-     * @return string The value as a string, or '' when absent or non-scalar.
-     */
-    private static function stringify(mixed $value): string
-    {
-        if (is_scalar($value) === false) {
-            return '';
-        }
-
-        return (string) $value;
-
-    }//end stringify()
+		return (string)$value;
+	}//end stringify()
 }//end class

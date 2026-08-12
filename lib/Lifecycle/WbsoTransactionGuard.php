@@ -44,66 +44,61 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-wbso-sno-administratie/specs/bookkeeping-financial-administration/spec.md
  */
-class WbsoTransactionGuard
-{
-    /**
-     * Construct the guard.
-     *
-     * @param LoggerInterface $logger Logger.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class WbsoTransactionGuard {
+	/**
+	 * Construct the guard.
+	 *
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Precondition for the `post` transition (REQ-WBSO-008).
-     *
-     * Pure-shape validation only — no I/O. Returns true when the record is
-     * eligible, false otherwise (the engine surfaces a generic 409). The PHP
-     * service layer surfaces the precise reason.
-     *
-     * @param array<string,mixed> $record The Transaction record about to transition.
-     *
-     * @return bool
-     */
-    public function canPost(array $record): bool
-    {
-        if ((string) ($record['status'] ?? '') !== 'draft') {
-            $this->logger->debug('WbsoTransactionGuard: canPost rejected — not in draft');
-            return false;
-        }
+	/**
+	 * Precondition for the `post` transition (REQ-WBSO-008).
+	 *
+	 * Pure-shape validation only — no I/O. Returns true when the record is
+	 * eligible, false otherwise (the engine surfaces a generic 409). The PHP
+	 * service layer surfaces the precise reason.
+	 *
+	 * @param array<string,mixed> $record The Transaction record about to transition.
+	 *
+	 * @return bool
+	 */
+	public function canPost(array $record): bool {
+		if ((string)($record['status'] ?? '') !== 'draft') {
+			$this->logger->debug('WbsoTransactionGuard: canPost rejected — not in draft');
+			return false;
+		}
 
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($record['transactionDate'] ?? '')) !== 1) {
-            $this->logger->debug('WbsoTransactionGuard: canPost rejected — malformed transactionDate');
-            return false;
-        }
+		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($record['transactionDate'] ?? '')) !== 1) {
+			$this->logger->debug('WbsoTransactionGuard: canPost rejected — malformed transactionDate');
+			return false;
+		}
 
-        $amount = $record['amount'] ?? null;
-        if (is_numeric($amount) === false || (float) $amount < 0.0) {
-            $this->logger->debug('WbsoTransactionGuard: canPost rejected — invalid amount');
-            return false;
-        }
+		$amount = $record['amount'] ?? null;
+		if (is_numeric($amount) === false || (float)$amount < 0.0) {
+			$this->logger->debug('WbsoTransactionGuard: canPost rejected — invalid amount');
+			return false;
+		}
 
-        return true;
+		return true;
+	}//end canPost()
 
-    }//end canPost()
+	/**
+	 * Precondition for the `reverse` transition (REQ-WBSO-008).
+	 *
+	 * @param array<string,mixed> $record The Transaction record.
+	 *
+	 * @return bool
+	 */
+	public function canReverse(array $record): bool {
+		if ((string)($record['status'] ?? '') !== 'posted') {
+			$this->logger->debug('WbsoTransactionGuard: canReverse rejected — not in posted');
+			return false;
+		}
 
-    /**
-     * Precondition for the `reverse` transition (REQ-WBSO-008).
-     *
-     * @param array<string,mixed> $record The Transaction record.
-     *
-     * @return bool
-     */
-    public function canReverse(array $record): bool
-    {
-        if ((string) ($record['status'] ?? '') !== 'posted') {
-            $this->logger->debug('WbsoTransactionGuard: canReverse rejected — not in posted');
-            return false;
-        }
-
-        return true;
-
-    }//end canReverse()
+		return true;
+	}//end canReverse()
 }//end class

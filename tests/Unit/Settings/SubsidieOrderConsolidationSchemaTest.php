@@ -47,168 +47,160 @@ use PHPUnit\Framework\TestCase;
 /**
  * Verifies the consolidated Subsidie union + freed Order slug in the registers.
  */
-final class SubsidieOrderConsolidationSchemaTest extends TestCase
-{
+final class SubsidieOrderConsolidationSchemaTest extends TestCase {
 
-    /**
-     * Absolute path to lib/Settings.
-     *
-     * @var string
-     */
-    private string $settingsDir;
+	/**
+	 * Absolute path to lib/Settings.
+	 *
+	 * @var string
+	 */
+	private string $settingsDir;
 
-    /**
-     * Set up the settings directory path.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->settingsDir = dirname(__DIR__, 3).'/lib/Settings';
+	/**
+	 * Set up the settings directory path.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->settingsDir = dirname(__DIR__, 3) . '/lib/Settings';
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Collect every schema definition (slug => properties) across all registers.
-     *
-     * @return array<int, array{file: string, slug: string, props: array<int, string>}>
-     */
-    private function allSchemaDefinitions(): array
-    {
-        $found = [];
-        $files = glob($this->settingsDir.'/{*.json,register.d/*.json}', GLOB_BRACE);
-        foreach (($files ?: []) as $file) {
-            $data = json_decode((string) file_get_contents($file), true);
-            if (is_array($data) === false) {
-                continue;
-            }
+	/**
+	 * Collect every schema definition (slug => properties) across all registers.
+	 *
+	 * @return array<int, array{file: string, slug: string, props: array<int, string>}>
+	 */
+	private function allSchemaDefinitions(): array {
+		$found = [];
+		$files = glob($this->settingsDir . '/{*.json,register.d/*.json}', GLOB_BRACE);
+		foreach (($files ?: []) as $file) {
+			$data = json_decode((string)file_get_contents($file), true);
+			if (is_array($data) === false) {
+				continue;
+			}
 
-            $this->walk($data, $file, $found);
-        }
+			$this->walk($data, $file, $found);
+		}
 
-        return $found;
+		return $found;
+	}//end allSchemaDefinitions()
 
-    }//end allSchemaDefinitions()
+	/**
+	 * Recursively collect schema-like dicts (have properties + slug/title).
+	 *
+	 * @param mixed $node The current node.
+	 * @param string $file The source file.
+	 * @param array<int, array{file: string, slug: string, props: array<int, string>}> $found Accumulator (by reference).
+	 *
+	 * @return void
+	 */
+	private function walk($node, string $file, array &$found): void {
+		if (is_array($node) === false) {
+			return;
+		}
 
-    /**
-     * Recursively collect schema-like dicts (have properties + slug/title).
-     *
-     * @param mixed                                                                    $node  The current node.
-     * @param string                                                                   $file  The source file.
-     * @param array<int, array{file: string, slug: string, props: array<int, string>}> $found Accumulator (by reference).
-     *
-     * @return void
-     */
-    private function walk($node, string $file, array &$found): void
-    {
-        if (is_array($node) === false) {
-            return;
-        }
+		if (isset($node['properties']) === true && is_array($node['properties']) === true
+			&& (isset($node['slug']) === true || isset($node['title']) === true)
+		) {
+			$found[] = [
+				'file' => $file,
+				'slug' => (string)($node['slug'] ?? $node['title']),
+				'props' => array_keys($node['properties']),
+			];
+		}
 
-        if (isset($node['properties']) === true && is_array($node['properties']) === true
-            && (isset($node['slug']) === true || isset($node['title']) === true)
-        ) {
-            $found[] = [
-                'file'  => $file,
-                'slug'  => (string) ($node['slug'] ?? $node['title']),
-                'props' => array_keys($node['properties']),
-            ];
-        }
+		foreach ($node as $value) {
+			$this->walk($value, $file, $found);
+		}
 
-        foreach ($node as $value) {
-            $this->walk($value, $file, $found);
-        }
+	}//end walk()
 
-    }//end walk()
+	/**
+	 * Exactly one Subsidie schema definition survives, and no fragment redefines it.
+	 *
+	 * @return void
+	 */
+	public function testExactlyOneSubsidieDefinition(): void {
+		$subsidie = array_values(
+			array_filter($this->allSchemaDefinitions(), static fn ($s) => $s['slug'] === 'Subsidie')
+		);
 
-    /**
-     * Exactly one Subsidie schema definition survives, and no fragment redefines it.
-     *
-     * @return void
-     */
-    public function testExactlyOneSubsidieDefinition(): void
-    {
-        $subsidie = array_values(
-            array_filter($this->allSchemaDefinitions(), static fn ($s) => $s['slug'] === 'Subsidie')
-        );
+		$this->assertCount(
+			1,
+			$subsidie,
+			'Expected exactly one Subsidie schema; found: ' . implode(', ', array_column($subsidie, 'file'))
+		);
+		$this->assertStringEndsWith('shillinq_register.json', $subsidie[0]['file']);
 
-        $this->assertCount(
-            1,
-            $subsidie,
-            'Expected exactly one Subsidie schema; found: '.implode(', ', array_column($subsidie, 'file'))
-        );
-        $this->assertStringEndsWith('shillinq_register.json', $subsidie[0]['file']);
+	}//end testExactlyOneSubsidieDefinition()
 
-    }//end testExactlyOneSubsidieDefinition()
+	/**
+	 * The canonical Subsidie is the field UNION — no regulatory field dropped.
+	 *
+	 * @return void
+	 */
+	public function testCanonicalSubsidieIsTheFieldUnion(): void {
+		$subsidie = array_values(
+			array_filter($this->allSchemaDefinitions(), static fn ($s) => $s['slug'] === 'Subsidie')
+		);
+		$props = $subsidie[0]['props'];
 
-    /**
-     * The canonical Subsidie is the field UNION — no regulatory field dropped.
-     *
-     * @return void
-     */
-    public function testCanonicalSubsidieIsTheFieldUnion(): void
-    {
-        $subsidie = array_values(
-            array_filter($this->allSchemaDefinitions(), static fn ($s) => $s['slug'] === 'Subsidie')
-        );
-        $props = $subsidie[0]['props'];
+		// Regulatory fields (Dutch ASV-model) MUST all survive.
+		$regulatory = [
+			'schemeName', 'schemeArticle', 'subsidyScheme',
+			'beschikkingDate', 'beschikkingUri',
+			'vaststellingDate', 'vaststellingUri',
+			'requestedAmount', 'grantedAmount', 'determinedAmount', 'paidOutAmount', 'reclaimedAmount',
+			'prestatieverantwoording', 'repaymentPlanId',
+		];
+		foreach ($regulatory as $field) {
+			$this->assertContains($field, $props, 'Regulatory field dropped from Subsidie: ' . $field);
+		}
 
-        // Regulatory fields (Dutch ASV-model) MUST all survive.
-        $regulatory = [
-            'schemeName', 'schemeArticle', 'subsidyScheme',
-            'beschikkingDate', 'beschikkingUri',
-            'vaststellingDate', 'vaststellingUri',
-            'requestedAmount', 'grantedAmount', 'determinedAmount', 'paidOutAmount', 'reclaimedAmount',
-            'prestatieverantwoording', 'repaymentPlanId',
-        ];
-        foreach ($regulatory as $field) {
-            $this->assertContains($field, $props, 'Regulatory field dropped from Subsidie: '.$field);
-        }
+		// The English operations vocabulary MUST also survive (union, no data loss).
+		$englishUnion = [
+			'awardAmount', 'awardDate', 'subsidieName', 'grantProgram', 'granteeOrganization',
+			'approvingAuthority', 'attachmentUri', 'budgetYear', 'currency',
+			'disbursementDate', 'hasRepaymentPlan', 'notes', 'purposeDescription', 'settlementDate',
+		];
+		foreach ($englishUnion as $field) {
+			$this->assertContains($field, $props, 'Operations field dropped from Subsidie union: ' . $field);
+		}
 
-        // The English operations vocabulary MUST also survive (union, no data loss).
-        $englishUnion = [
-            'awardAmount', 'awardDate', 'subsidieName', 'grantProgram', 'granteeOrganization',
-            'approvingAuthority', 'attachmentUri', 'budgetYear', 'currency',
-            'disbursementDate', 'hasRepaymentPlan', 'notes', 'purposeDescription', 'settlementDate',
-        ];
-        foreach ($englishUnion as $field) {
-            $this->assertContains($field, $props, 'Operations field dropped from Subsidie union: '.$field);
-        }
+	}//end testCanonicalSubsidieIsTheFieldUnion()
 
-    }//end testCanonicalSubsidieIsTheFieldUnion()
+	/**
+	 * The generic Order slug is freed and stays UNCLAIMED; BookingOrder +
+	 * SalesOrder/PurchaseOrder exist; the abstract-order-primitive ships
+	 * under the distinct `OrderPrimitive` slug instead (issue #503).
+	 *
+	 * @return void
+	 */
+	public function testOrderSlugFreedAndSiblingsIntact(): void {
+		$slugs = array_column($this->allSchemaDefinitions(), 'slug');
 
-    /**
-     * The generic Order slug is freed and stays UNCLAIMED; BookingOrder +
-     * SalesOrder/PurchaseOrder exist; the abstract-order-primitive ships
-     * under the distinct `OrderPrimitive` slug instead (issue #503).
-     *
-     * @return void
-     */
-    public function testOrderSlugFreedAndSiblingsIntact(): void
-    {
-        $slugs = array_column($this->allSchemaDefinitions(), 'slug');
+		// UPDATE (issue #503, 2026-07-23): the freed slug is NOT reclaimed.
+		// Live-verification on 8080 found the bare `Order` slug collides
+		// (case-insensitively, instance-wide) with a live, foreign `decidesk`
+		// schema (id 1585) in the same organisation — reclaiming it would
+		// have overwritten that schema on import. abstract-order-primitive
+		// ships under `OrderPrimitive` instead, so `Order` stays free (0
+		// definitions), not "claimed exactly once" as originally planned.
+		$this->assertSame(
+			0,
+			count(array_filter($slugs, static fn (string $slug): bool => $slug === 'Order')),
+			'Order slug must stay unclaimed — it collides instance-wide with a live foreign schema (issue #503)'
+		);
+		$this->assertContains(
+			'OrderPrimitive',
+			$slugs,
+			'abstract-order-primitive must ship under the distinct OrderPrimitive slug, not the freed (collision-prone) Order slug'
+		);
+		$this->assertContains('BookingOrder', $slugs, 'Booking order must be renamed to BookingOrder');
+		$this->assertContains('SalesOrder', $slugs, 'SalesOrder must remain its own schema');
+		$this->assertContains('PurchaseOrder', $slugs, 'PurchaseOrder must remain its own schema');
 
-        // UPDATE (issue #503, 2026-07-23): the freed slug is NOT reclaimed.
-        // Live-verification on 8080 found the bare `Order` slug collides
-        // (case-insensitively, instance-wide) with a live, foreign `decidesk`
-        // schema (id 1585) in the same organisation — reclaiming it would
-        // have overwritten that schema on import. abstract-order-primitive
-        // ships under `OrderPrimitive` instead, so `Order` stays free (0
-        // definitions), not "claimed exactly once" as originally planned.
-        $this->assertSame(
-            0,
-            count(array_filter($slugs, static fn (string $slug): bool => $slug === 'Order')),
-            'Order slug must stay unclaimed — it collides instance-wide with a live foreign schema (issue #503)'
-        );
-        $this->assertContains(
-            'OrderPrimitive',
-            $slugs,
-            'abstract-order-primitive must ship under the distinct OrderPrimitive slug, not the freed (collision-prone) Order slug'
-        );
-        $this->assertContains('BookingOrder', $slugs, 'Booking order must be renamed to BookingOrder');
-        $this->assertContains('SalesOrder', $slugs, 'SalesOrder must remain its own schema');
-        $this->assertContains('PurchaseOrder', $slugs, 'PurchaseOrder must remain its own schema');
-
-    }//end testOrderSlugFreedAndSiblingsIntact()
+	}//end testOrderSlugFreedAndSiblingsIntact()
 }//end class

@@ -42,225 +42,221 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class InnovatieboxIntegrationTest extends TestCase
-{
+final class InnovatieboxIntegrationTest extends TestCase {
 
-    /**
-     * Afpelmethode worked example end-to-end: nexus -> profit attribution ->
-     * loss carry-forward -> SBR export. Verifies the four service classes
-     * agree on the same Vpb-aangifte regel 23 numbers (REQ-IBA-006/007).
-     *
-     * Scenario (from spec.md):
-     *  - eigen R&D EUR 480k, derden EUR 120k, verbonden EUR 80k -> nexus 100%.
-     *  - bruto opbrengst EUR 2.4M, directe kosten EUR 850k, routines EUR 750k
-     *    -> kwalificerende winst voor nexus EUR 800k.
-     *  - met nexus 100%, tariff 0.09 -> Vpb-impact EUR 72k.
-     *  - open verlies 2023 EUR 215k -> eerst @ standaardtarief, rest @ 9%.
-     *  - Total benefit ~EUR 108.15k.
-     *
-     * @return void
-     */
-    public function testAfpelmethodeWorkedExamplePipeline(): void
-    {
-        $nexus  = new NexusCalculationService();
-        $profit = new ProfitAttributionService();
-        $loss   = new CarryForwardLossService();
-        $export = new InnovatieboxSbrExportService();
+	/**
+	 * Afpelmethode worked example end-to-end: nexus -> profit attribution ->
+	 * loss carry-forward -> SBR export. Verifies the four service classes
+	 * agree on the same Vpb-aangifte regel 23 numbers (REQ-IBA-006/007).
+	 *
+	 * Scenario (from spec.md):
+	 *  - eigen R&D EUR 480k, derden EUR 120k, verbonden EUR 80k -> nexus 100%.
+	 *  - bruto opbrengst EUR 2.4M, directe kosten EUR 850k, routines EUR 750k
+	 *    -> kwalificerende winst voor nexus EUR 800k.
+	 *  - met nexus 100%, tariff 0.09 -> Vpb-impact EUR 72k.
+	 *  - open verlies 2023 EUR 215k -> eerst @ standaardtarief, rest @ 9%.
+	 *  - Total benefit ~EUR 108.15k.
+	 *
+	 * @return void
+	 */
+	public function testAfpelmethodeWorkedExamplePipeline(): void {
+		$nexus = new NexusCalculationService();
+		$profit = new ProfitAttributionService();
+		$loss = new CarryForwardLossService();
+		$export = new InnovatieboxSbrExportService();
 
-        $nexusResult = $nexus->calculateNexusBreak(
-            eigenRdKosten: 480000.0,
-            uitbesteedDerden: 120000.0,
-            uitbesteedVerbonden: 80000.0
-        );
-        $this->assertSame(1.0, $nexusResult['nexusbreukToegepast'], 'Nexus caps at 100% in this scenario.');
+		$nexusResult = $nexus->calculateNexusBreak(
+			eigenRdKosten: 480000.0,
+			uitbesteedDerden: 120000.0,
+			uitbesteedVerbonden: 80000.0
+		);
+		$this->assertSame(1.0, $nexusResult['nexusbreukToegepast'], 'Nexus caps at 100% in this scenario.');
 
-        $profitResult = $profit->calculateKwalificerendeWinst(
-            methode: 'per_asset_afpelmethode',
-            brutoOpbrengst: 2400000.0,
-            directeKosten: 850000.0,
-            routineWinst: 750000.0,
-            nexusBreak: (float) $nexusResult['nexusbreukToegepast']
-        );
-        $this->assertSame(800000.0, $profitResult['kwalificerendeWinstVoorNexus']);
-        $this->assertSame(800000.0, $profitResult['kwalificerendeWinstNaNexus']);
-        $this->assertSame(72000.0, $profitResult['vpbOpInnovatiedeel']);
+		$profitResult = $profit->calculateKwalificerendeWinst(
+			methode: 'per_asset_afpelmethode',
+			brutoOpbrengst: 2400000.0,
+			directeKosten: 850000.0,
+			routineWinst: 750000.0,
+			nexusBreak: (float)$nexusResult['nexusbreukToegepast']
+		);
+		$this->assertSame(800000.0, $profitResult['kwalificerendeWinstVoorNexus']);
+		$this->assertSame(800000.0, $profitResult['kwalificerendeWinstNaNexus']);
+		$this->assertSame(72000.0, $profitResult['vpbOpInnovatiedeel']);
 
-        // Loss carry-forward EUR 215k against the EUR 800k qualifying profit.
-        $lossResult = $loss->offsetLossAgainstProfit(
-            openLoss: 215000.0,
-            currentYearProfit: 800000.0,
-            nexusBreak: 1.0,
-            fullTariff: 0.258
-        );
-        // Per the existing CarryForwardLossServiceTest fixture: total benefit
-        // EUR 108 120 (55 470 loss-recovery + 52 650 IB on residual).
-        $this->assertEqualsWithDelta(108120.0, $lossResult['totalBenefit'], 1.0);
+		// Loss carry-forward EUR 215k against the EUR 800k qualifying profit.
+		$lossResult = $loss->offsetLossAgainstProfit(
+			openLoss: 215000.0,
+			currentYearProfit: 800000.0,
+			nexusBreak: 1.0,
+			fullTariff: 0.258
+		);
+		// Per the existing CarryForwardLossServiceTest fixture: total benefit
+		// EUR 108 120 (55 470 loss-recovery + 52 650 IB on residual).
+		$this->assertEqualsWithDelta(108120.0, $lossResult['totalBenefit'], 1.0);
 
-        // Now feed the same numbers through the SBR export.
-        $aggregation = [
-            'data' => [
-                [
-                    'qualifying_asset_id' => 'asset-1',
-                    'name'                => 'Slimme routeringsalgoritme',
-                    'winst_voor_nexus'    => $profitResult['kwalificerendeWinstVoorNexus'],
-                    'nexus'               => $profitResult['nexusbreukToegepast'],
-                    'winst_na_nexus'      => $profitResult['kwalificerendeWinstNaNexus'],
-                    'tariff'              => 0.09,
-                    'vpb_impact'          => $profitResult['vpbOpInnovatiedeel'],
-                ],
-            ],
-            'totals' => [
-                'kwalificerende_winst_voor_nexus' => $profitResult['kwalificerendeWinstVoorNexus'],
-                'kwalificerende_winst_na_nexus'   => $profitResult['kwalificerendeWinstNaNexus'],
-                'vpb_op_innovatiedeel'            => $profitResult['vpbOpInnovatiedeel'],
-                'voordeel_innovatiebox'           => $profitResult['voordeelInnovatiebox'],
-            ],
-        ];
+		// Now feed the same numbers through the SBR export.
+		$aggregation = [
+			'data' => [
+				[
+					'qualifying_asset_id' => 'asset-1',
+					'name' => 'Slimme routeringsalgoritme',
+					'winst_voor_nexus' => $profitResult['kwalificerendeWinstVoorNexus'],
+					'nexus' => $profitResult['nexusbreukToegepast'],
+					'winst_na_nexus' => $profitResult['kwalificerendeWinstNaNexus'],
+					'tariff' => 0.09,
+					'vpb_impact' => $profitResult['vpbOpInnovatiedeel'],
+				],
+			],
+			'totals' => [
+				'kwalificerende_winst_voor_nexus' => $profitResult['kwalificerendeWinstVoorNexus'],
+				'kwalificerende_winst_na_nexus' => $profitResult['kwalificerendeWinstNaNexus'],
+				'vpb_op_innovatiedeel' => $profitResult['vpbOpInnovatiedeel'],
+				'voordeel_innovatiebox' => $profitResult['voordeelInnovatiebox'],
+			],
+		];
 
-        $payload = $export->toSbrInstancePayload(
-            $aggregation,
-            'adm-mkb-1',
-            2026
-        );
-        $this->assertSame('VPB-XX-2026-adm-mkb-1-2026', $payload['instanceRef']);
-        $this->assertCount(1, $payload['perAssetRows']);
-        $this->assertSame(72000.0, $payload['regel23_vpbInnovatie']);
+		$payload = $export->toSbrInstancePayload(
+			$aggregation,
+			'adm-mkb-1',
+			2026
+		);
+		$this->assertSame('VPB-XX-2026-adm-mkb-1-2026', $payload['instanceRef']);
+		$this->assertCount(1, $payload['perAssetRows']);
+		$this->assertSame(72000.0, $payload['regel23_vpbInnovatie']);
 
-    }//end testAfpelmethodeWorkedExamplePipeline()
+	}//end testAfpelmethodeWorkedExamplePipeline()
 
-    /**
-     * Forfaitair election binds at the EUR 25k cap and collapses the export
-     * to a single line (REQ-IBA-003). No per-asset record required.
-     *
-     * @return void
-     */
-    public function testForfaitairElectionBindsAtCapEndToEnd(): void
-    {
-        $profit = new ProfitAttributionService();
-        $export = new InnovatieboxSbrExportService();
+	/**
+	 * Forfaitair election binds at the EUR 25k cap and collapses the export
+	 * to a single line (REQ-IBA-003). No per-asset record required.
+	 *
+	 * @return void
+	 */
+	public function testForfaitairElectionBindsAtCapEndToEnd(): void {
+		$profit = new ProfitAttributionService();
+		$export = new InnovatieboxSbrExportService();
 
-        $profitResult = $profit->calculateKwalificerendeWinst(
-            methode: 'forfaitair_25pct',
-            brutoOpbrengst: 500000.0
-        );
-        $this->assertSame(25000.0, $profitResult['kwalificerendeWinstNaNexus']);
-        $this->assertTrue($profitResult['forfaitairCapApplied']);
+		$profitResult = $profit->calculateKwalificerendeWinst(
+			methode: 'forfaitair_25pct',
+			brutoOpbrengst: 500000.0
+		);
+		$this->assertSame(25000.0, $profitResult['kwalificerendeWinstNaNexus']);
+		$this->assertTrue($profitResult['forfaitairCapApplied']);
 
-        $aggregation = [
-            'data'   => [],
-            'totals' => [
-                'kwalificerende_winst_voor_nexus' => $profitResult['kwalificerendeWinstVoorNexus'],
-                'kwalificerende_winst_na_nexus'   => $profitResult['kwalificerendeWinstNaNexus'],
-                'vpb_op_innovatiedeel'            => $profitResult['vpbOpInnovatiedeel'],
-                'voordeel_innovatiebox'           => $profitResult['voordeelInnovatiebox'],
-            ],
-        ];
+		$aggregation = [
+			'data' => [],
+			'totals' => [
+				'kwalificerende_winst_voor_nexus' => $profitResult['kwalificerendeWinstVoorNexus'],
+				'kwalificerende_winst_na_nexus' => $profitResult['kwalificerendeWinstNaNexus'],
+				'vpb_op_innovatiedeel' => $profitResult['vpbOpInnovatiedeel'],
+				'voordeel_innovatiebox' => $profitResult['voordeelInnovatiebox'],
+			],
+		];
 
-        $payload = $export->toSbrInstancePayload(
-            $aggregation,
-            'adm-mkb-1',
-            2026,
-            'forfaitair_25pct'
-        );
+		$payload = $export->toSbrInstancePayload(
+			$aggregation,
+			'adm-mkb-1',
+			2026,
+			'forfaitair_25pct'
+		);
 
-        $this->assertSame([], $payload['perAssetRows']);
-        $this->assertNotNull($payload['forfaitairLine']);
-        $this->assertTrue($payload['forfaitairLine']['capApplied']);
-        $this->assertSame(25000.0, $payload['forfaitairLine']['kwalifNaCap']);
+		$this->assertSame([], $payload['perAssetRows']);
+		$this->assertNotNull($payload['forfaitairLine']);
+		$this->assertTrue($payload['forfaitairLine']['capApplied']);
+		$this->assertSame(25000.0, $payload['forfaitairLine']['kwalifNaCap']);
 
-    }//end testForfaitairElectionBindsAtCapEndToEnd()
+	}//end testForfaitairElectionBindsAtCapEndToEnd()
 
-    /**
-     * Outsourcing R&D to a related (verbonden) party lowers the nexusbreuk
-     * (because related-party spend only enlarges the noemer, never the teller)
-     * which in turn reduces the Vpb-voordeel of the innovatiebox election
-     * (REQ-IBA-002 / task verification 184).
-     *
-     * Two scenarios with identical bruto opbrengst, directe kosten and routine
-     * winst — same EUR 800k kwalificerende winst voor nexus — but a different
-     * R&D mix:
-     *
-     *  - Baseline:     eigen EUR 480k + derden EUR 120k + verbonden EUR 80k.
-     *                  Nexus saturates at 100% (cap binds), full innovatiebox
-     *                  benefit applies.
-     *  - Outsourced:   eigen EUR 200k + derden EUR 50k + verbonden EUR 430k.
-     *                  Nexus = min(1.3 * 250k / 680k, 1) = 0.4779. Less of the
-     *                  EUR 800k qualifying profit lands at the 9% tariff, so
-     *                  voordeel_innovatiebox MUST be strictly smaller.
-     *
-     * This is the architectural sanity check behind the Belastingdienst
-     * BEPS-aligned design: shifting R&D to a verbonden lichaam erodes the
-     * tax benefit.
-     *
-     * @return void
-     */
-    public function testOutsourcingToRelatedPartyReducesVpbBenefit(): void
-    {
-        $nexus  = new NexusCalculationService();
-        $profit = new ProfitAttributionService();
+	/**
+	 * Outsourcing R&D to a related (verbonden) party lowers the nexusbreuk
+	 * (because related-party spend only enlarges the noemer, never the teller)
+	 * which in turn reduces the Vpb-voordeel of the innovatiebox election
+	 * (REQ-IBA-002 / task verification 184).
+	 *
+	 * Two scenarios with identical bruto opbrengst, directe kosten and routine
+	 * winst — same EUR 800k kwalificerende winst voor nexus — but a different
+	 * R&D mix:
+	 *
+	 *  - Baseline:     eigen EUR 480k + derden EUR 120k + verbonden EUR 80k.
+	 *                  Nexus saturates at 100% (cap binds), full innovatiebox
+	 *                  benefit applies.
+	 *  - Outsourced:   eigen EUR 200k + derden EUR 50k + verbonden EUR 430k.
+	 *                  Nexus = min(1.3 * 250k / 680k, 1) = 0.4779. Less of the
+	 *                  EUR 800k qualifying profit lands at the 9% tariff, so
+	 *                  voordeel_innovatiebox MUST be strictly smaller.
+	 *
+	 * This is the architectural sanity check behind the Belastingdienst
+	 * BEPS-aligned design: shifting R&D to a verbonden lichaam erodes the
+	 * tax benefit.
+	 *
+	 * @return void
+	 */
+	public function testOutsourcingToRelatedPartyReducesVpbBenefit(): void {
+		$nexus = new NexusCalculationService();
+		$profit = new ProfitAttributionService();
 
-        $baselineNexus = $nexus->calculateNexusBreak(
-            eigenRdKosten: 480000.0,
-            uitbesteedDerden: 120000.0,
-            uitbesteedVerbonden: 80000.0
-        );
+		$baselineNexus = $nexus->calculateNexusBreak(
+			eigenRdKosten: 480000.0,
+			uitbesteedDerden: 120000.0,
+			uitbesteedVerbonden: 80000.0
+		);
 
-        $outsourcedNexus = $nexus->calculateNexusBreak(
-            eigenRdKosten: 200000.0,
-            uitbesteedDerden: 50000.0,
-            uitbesteedVerbonden: 430000.0
-        );
+		$outsourcedNexus = $nexus->calculateNexusBreak(
+			eigenRdKosten: 200000.0,
+			uitbesteedDerden: 50000.0,
+			uitbesteedVerbonden: 430000.0
+		);
 
-        // Sanity: outsourcing to verbonden lichamen strictly lowers the
-        // nexusbreuk (this is the BEPS Action 5 design).
-        self::assertSame(1.0, $baselineNexus['nexusbreukToegepast']);
-        self::assertLessThan(
-            $baselineNexus['nexusbreukToegepast'],
-            $outsourcedNexus['nexusbreukToegepast']
-        );
+		// Sanity: outsourcing to verbonden lichamen strictly lowers the
+		// nexusbreuk (this is the BEPS Action 5 design).
+		self::assertSame(1.0, $baselineNexus['nexusbreukToegepast']);
+		self::assertLessThan(
+			$baselineNexus['nexusbreukToegepast'],
+			$outsourcedNexus['nexusbreukToegepast']
+		);
 
-        $baseline = $profit->calculateKwalificerendeWinst(
-            methode: 'per_asset_afpelmethode',
-            brutoOpbrengst: 2400000.0,
-            directeKosten: 850000.0,
-            routineWinst: 750000.0,
-            nexusBreak: (float) $baselineNexus['nexusbreukToegepast']
-        );
+		$baseline = $profit->calculateKwalificerendeWinst(
+			methode: 'per_asset_afpelmethode',
+			brutoOpbrengst: 2400000.0,
+			directeKosten: 850000.0,
+			routineWinst: 750000.0,
+			nexusBreak: (float)$baselineNexus['nexusbreukToegepast']
+		);
 
-        $outsourced = $profit->calculateKwalificerendeWinst(
-            methode: 'per_asset_afpelmethode',
-            brutoOpbrengst: 2400000.0,
-            directeKosten: 850000.0,
-            routineWinst: 750000.0,
-            nexusBreak: (float) $outsourcedNexus['nexusbreukToegepast']
-        );
+		$outsourced = $profit->calculateKwalificerendeWinst(
+			methode: 'per_asset_afpelmethode',
+			brutoOpbrengst: 2400000.0,
+			directeKosten: 850000.0,
+			routineWinst: 750000.0,
+			nexusBreak: (float)$outsourcedNexus['nexusbreukToegepast']
+		);
 
-        // Identical kwalif winst BEFORE nexus (same business outcome) ...
-        self::assertSame(
-            $baseline['kwalificerendeWinstVoorNexus'],
-            $outsourced['kwalificerendeWinstVoorNexus']
-        );
+		// Identical kwalif winst BEFORE nexus (same business outcome) ...
+		self::assertSame(
+			$baseline['kwalificerendeWinstVoorNexus'],
+			$outsourced['kwalificerendeWinstVoorNexus']
+		);
 
-        // ... but the post-nexus qualifying profit drops when more R&D is
-        // outsourced to a verbonden lichaam (less of the EUR 800k profit lands
-        // at the 9% innovatiebox tariff; the residual falls back to the
-        // standard Vpb-tarief).
-        self::assertLessThan(
-            $baseline['kwalificerendeWinstNaNexus'],
-            $outsourced['kwalificerendeWinstNaNexus']
-        );
+		// ... but the post-nexus qualifying profit drops when more R&D is
+		// outsourced to a verbonden lichaam (less of the EUR 800k profit lands
+		// at the 9% innovatiebox tariff; the residual falls back to the
+		// standard Vpb-tarief).
+		self::assertLessThan(
+			$baseline['kwalificerendeWinstNaNexus'],
+			$outsourced['kwalificerendeWinstNaNexus']
+		);
 
-        // The actual Vpb-voordeel (the tax SAVING vs. paying the standardrate
-        // on all kwalif-winst) is naNexus * (standard - innovatiebox_tariff)
-        // — that strictly decreases as the nexus ratio (and so naNexus) drops.
-        // ProfitAttributionService::voordeelInnovatiebox conflates "standard
-        // on voor-nexus" minus "9% on na-nexus" which masks this, so we
-        // compute the true tax-benefit metric directly from the post-nexus
-        // qualifying profit.
-        $deltaTarief        = (0.258 - 0.09);
-        $baselineTaxSaving  = ($baseline['kwalificerendeWinstNaNexus'] * $deltaTarief);
-        $outsourcedTaxSaving = ($outsourced['kwalificerendeWinstNaNexus'] * $deltaTarief);
-        self::assertLessThan($baselineTaxSaving, $outsourcedTaxSaving);
+		// The actual Vpb-voordeel (the tax SAVING vs. paying the standardrate
+		// on all kwalif-winst) is naNexus * (standard - innovatiebox_tariff)
+		// — that strictly decreases as the nexus ratio (and so naNexus) drops.
+		// ProfitAttributionService::voordeelInnovatiebox conflates "standard
+		// on voor-nexus" minus "9% on na-nexus" which masks this, so we
+		// compute the true tax-benefit metric directly from the post-nexus
+		// qualifying profit.
+		$deltaTarief = (0.258 - 0.09);
+		$baselineTaxSaving = ($baseline['kwalificerendeWinstNaNexus'] * $deltaTarief);
+		$outsourcedTaxSaving = ($outsourced['kwalificerendeWinstNaNexus'] * $deltaTarief);
+		self::assertLessThan($baselineTaxSaving, $outsourcedTaxSaving);
 
-    }//end testOutsourcingToRelatedPartyReducesVpbBenefit()
+	}//end testOutsourcingToRelatedPartyReducesVpbBenefit()
 }//end class

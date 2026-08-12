@@ -31,110 +31,104 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class IntegralCostPriceLockServiceTest extends TestCase
-{
+final class IntegralCostPriceLockServiceTest extends TestCase {
 
-    /**
-     * Service under test.
-     */
-    private IntegralCostPriceLockService $svc;
+	/**
+	 * Service under test.
+	 */
+	private IntegralCostPriceLockService $svc;
 
-    /**
-     * Set up test fixtures.
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->svc = new IntegralCostPriceLockService();
+	/**
+	 * Set up test fixtures.
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->svc = new IntegralCostPriceLockService();
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Aggregating 4 quarterly voorlopig records produces a definitief YTD record.
-     */
-    public function testLockAggregatesQuarterlyVoorlopig(): void
-    {
-        $voorlopig = [];
-        for ($q = 1; $q <= 4; $q++) {
-            $voorlopig[] = [
-                'periode'      => '2025-Q' . $q,
-                'totaleKosten' => 25_000.00,
-                'componenten'  => [
-                    'directeLoonkosten'     => 12_000.00,
-                    'directeMaterialen'     => 3_000.00,
-                    'directeAfschrijvingen' => 2_000.00,
-                    'indirecteOverhead'     => ['huisvesting' => 5_000.00, 'ict' => 2_000.00],
-                    'vermogenskosten'       => 500.00,
-                    'winstopslag'           => 500.00,
-                ],
-            ];
-        }
+	/**
+	 * Aggregating 4 quarterly voorlopig records produces a definitief YTD record.
+	 */
+	public function testLockAggregatesQuarterlyVoorlopig(): void {
+		$voorlopig = [];
+		for ($q = 1; $q <= 4; $q++) {
+			$voorlopig[] = [
+				'periode' => '2025-Q' . $q,
+				'totaleKosten' => 25_000.00,
+				'componenten' => [
+					'directeLoonkosten' => 12_000.00,
+					'directeMaterialen' => 3_000.00,
+					'directeAfschrijvingen' => 2_000.00,
+					'indirecteOverhead' => ['huisvesting' => 5_000.00, 'ict' => 2_000.00],
+					'vermogenskosten' => 500.00,
+					'winstopslag' => 500.00,
+				],
+			];
+		}
 
-        $definitief = $this->svc->lock([
-            'commercialActivityId' => 'ca-001',
-            'fiscalYear'           => '2025',
-            'voorlopigRecords'     => $voorlopig,
-            'signedBy'             => 'accountant-user',
-            'administrationId'     => 'adm-tilburg',
-            'verkochteEenheden'    => 312.0,
-            'eenheidLabel'         => 'dagdeel-zaalhuur',
-            'gehanteerdTarief'     => 295.0,
-        ]);
+		$definitief = $this->svc->lock([
+			'commercialActivityId' => 'ca-001',
+			'fiscalYear' => '2025',
+			'voorlopigRecords' => $voorlopig,
+			'signedBy' => 'accountant-user',
+			'administrationId' => 'adm-tilburg',
+			'verkochteEenheden' => 312.0,
+			'eenheidLabel' => 'dagdeel-zaalhuur',
+			'gehanteerdTarief' => 295.0,
+		]);
 
-        self::assertSame('definitief', $definitief['status']);
-        self::assertSame('2025-YTD', $definitief['periode']);
-        self::assertSame(100_000.00, $definitief['totaleKosten']);
-        self::assertSame(48_000.00, $definitief['componenten']['directeLoonkosten']);
-        self::assertSame(20_000.00, $definitief['componenten']['indirecteOverhead']['huisvesting']);
-        self::assertSame(8_000.00, $definitief['componenten']['indirecteOverhead']['ict']);
-        self::assertSame('accountant-user', $definitief['definitiefSignedBy']);
-        self::assertNotNull($definitief['definitiefSignedAt']);
-        self::assertEqualsWithDelta(320.51, $definitief['kostprijsPerEenheid'], 0.05);
+		self::assertSame('definitief', $definitief['status']);
+		self::assertSame('2025-YTD', $definitief['periode']);
+		self::assertSame(100_000.00, $definitief['totaleKosten']);
+		self::assertSame(48_000.00, $definitief['componenten']['directeLoonkosten']);
+		self::assertSame(20_000.00, $definitief['componenten']['indirecteOverhead']['huisvesting']);
+		self::assertSame(8_000.00, $definitief['componenten']['indirecteOverhead']['ict']);
+		self::assertSame('accountant-user', $definitief['definitiefSignedBy']);
+		self::assertNotNull($definitief['definitiefSignedAt']);
+		self::assertEqualsWithDelta(320.51, $definitief['kostprijsPerEenheid'], 0.05);
 
-    }//end testLockAggregatesQuarterlyVoorlopig()
+	}//end testLockAggregatesQuarterlyVoorlopig()
 
-    /**
-     * Lock without signed-by raises.
-     */
-    public function testLockRequiresSigner(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->svc->lock([
-            'commercialActivityId' => 'ca-001',
-            'fiscalYear'           => '2025',
-            'voorlopigRecords'     => [['totaleKosten' => 1.0]],
-            'signedBy'             => '',
-            'administrationId'     => 'adm',
-        ]);
+	/**
+	 * Lock without signed-by raises.
+	 */
+	public function testLockRequiresSigner(): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->svc->lock([
+			'commercialActivityId' => 'ca-001',
+			'fiscalYear' => '2025',
+			'voorlopigRecords' => [['totaleKosten' => 1.0]],
+			'signedBy' => '',
+			'administrationId' => 'adm',
+		]);
 
-    }//end testLockRequiresSigner()
+	}//end testLockRequiresSigner()
 
-    /**
-     * Lock without any voorlopig records raises.
-     */
-    public function testLockRequiresAtLeastOneVoorlopig(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->svc->lock([
-            'commercialActivityId' => 'ca-001',
-            'fiscalYear'           => '2025',
-            'voorlopigRecords'     => [],
-            'signedBy'             => 'u',
-            'administrationId'     => 'a',
-        ]);
+	/**
+	 * Lock without any voorlopig records raises.
+	 */
+	public function testLockRequiresAtLeastOneVoorlopig(): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->svc->lock([
+			'commercialActivityId' => 'ca-001',
+			'fiscalYear' => '2025',
+			'voorlopigRecords' => [],
+			'signedBy' => 'u',
+			'administrationId' => 'a',
+		]);
 
-    }//end testLockRequiresAtLeastOneVoorlopig()
+	}//end testLockRequiresAtLeastOneVoorlopig()
 
-    /**
-     * shouldLock fires on 31 March following the fiscal year.
-     */
-    public function testShouldLockFiresAtYearEndPlus3Months(): void
-    {
-        self::assertTrue($this->svc->shouldLock('2025', '2026-03-31'));
-        self::assertTrue($this->svc->shouldLock('2025', '2026-04-15'));
-        self::assertFalse($this->svc->shouldLock('2025', '2026-03-30'));
-        self::assertFalse($this->svc->shouldLock('2025', '2026-01-01'));
+	/**
+	 * shouldLock fires on 31 March following the fiscal year.
+	 */
+	public function testShouldLockFiresAtYearEndPlus3Months(): void {
+		self::assertTrue($this->svc->shouldLock('2025', '2026-03-31'));
+		self::assertTrue($this->svc->shouldLock('2025', '2026-04-15'));
+		self::assertFalse($this->svc->shouldLock('2025', '2026-03-30'));
+		self::assertFalse($this->svc->shouldLock('2025', '2026-01-01'));
 
-    }//end testShouldLockFiresAtYearEndPlus3Months()
+	}//end testShouldLockFiresAtYearEndPlus3Months()
 
 }//end class

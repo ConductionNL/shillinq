@@ -52,354 +52,330 @@ use Psr\Log\AbstractLogger;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-07-timeline-publish-core/tasks.md
  */
-final class PipelinqTimelinePublishTest extends TestCase
-{
-    /**
-     * Build a recording logger that captures every log call.
-     *
-     * @return AbstractLogger Anonymous logger with `$records`.
-     */
-    private function recordingLogger(): AbstractLogger
-    {
-        return new class extends AbstractLogger {
+final class PipelinqTimelinePublishTest extends TestCase {
+	/**
+	 * Build a recording logger that captures every log call.
+	 *
+	 * @return AbstractLogger Anonymous logger with `$records`.
+	 */
+	private function recordingLogger(): AbstractLogger {
+		return new class extends AbstractLogger {
+			/**
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $records = [];
 
-            /**
-             * @var array<int, array<string, mixed>>
-             */
-            public array $records = [];
+			/**
+			 * @param mixed $level Level.
+			 * @param string|\Stringable $message Message.
+			 * @param array<string, mixed> $context Context.
+			 *
+			 * @return void
+			 */
+			public function log($level, string|\Stringable $message, array $context = []): void {
+				$this->records[] = ['level' => $level, 'message' => (string)$message, 'context' => $context];
+			}//end log()
+		};
 
-            /**
-             * @param mixed                $level   Level.
-             * @param string|\Stringable   $message Message.
-             * @param array<string, mixed> $context Context.
-             *
-             * @return void
-             */
-            public function log($level, string|\Stringable $message, array $context=[]): void
-            {
-                $this->records[] = ['level' => $level, 'message' => (string) $message, 'context' => $context];
-            }//end log()
-        };
+	}//end recordingLogger()
 
-    }//end recordingLogger()
+	/**
+	 * Build a scripted adapter that captures dispatch calls + sleep
+	 * durations and uses the supplied response queue.
+	 *
+	 * @param array<int, IResponse|\Throwable> $script Scripted dispatch outcomes.
+	 * @param array<int, array{method:string, url:string, options: array<string, mixed>}> &$dispatchLog Captured dispatches.
+	 * @param array<int, int> &$sleepCalls Captured sleep durations.
+	 * @param CircuitBreaker|null $breaker Optional shared breaker.
+	 * @param AbstractLogger|null $logger Logger override.
+	 *
+	 * @return PipelinqContactAdapter
+	 */
+	private function buildAdapter(
+		array $script,
+		array &$dispatchLog,
+		array &$sleepCalls,
+		?CircuitBreaker $breaker = null,
+		?AbstractLogger $logger = null,
+	): PipelinqContactAdapter {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = ''): string {
+				if ($key === PipelinqContactAdapter::CONFIG_KEY_ENDPOINT) {
+					return 'https://pipelinq.test';
+				}
 
-    /**
-     * Build a scripted adapter that captures dispatch calls + sleep
-     * durations and uses the supplied response queue.
-     *
-     * @param array<int, IResponse|\Throwable>   $script        Scripted dispatch outcomes.
-     * @param array<int, array{method:string, url:string, options: array<string, mixed>}> &$dispatchLog Captured dispatches.
-     * @param array<int, int>                    &$sleepCalls   Captured sleep durations.
-     * @param CircuitBreaker|null                $breaker       Optional shared breaker.
-     * @param AbstractLogger|null                $logger        Logger override.
-     *
-     * @return PipelinqContactAdapter
-     */
-    private function buildAdapter(
-        array $script,
-        array &$dispatchLog,
-        array &$sleepCalls,
-        ?CircuitBreaker $breaker=null,
-        ?AbstractLogger $logger=null
-    ): PipelinqContactAdapter {
-        $appConfig = $this->createMock(IAppConfig::class);
-        $appConfig->method('getValueString')->willReturnCallback(
-            static function (string $app, string $key, string $default=''): string {
-                if ($key === PipelinqContactAdapter::CONFIG_KEY_ENDPOINT) {
-                    return 'https://pipelinq.test';
-                }
+				if ($key === PipelinqContactAdapter::CONFIG_KEY_TOKEN) {
+					return 'NEVER-LOG-ME-1234567890';
+				}
 
-                if ($key === PipelinqContactAdapter::CONFIG_KEY_TOKEN) {
-                    return 'NEVER-LOG-ME-1234567890';
-                }
+				return $default;
+			}
+		);
 
-                return $default;
-            }
-        );
+		if ($logger === null) {
+			$logger = $this->recordingLogger();
+		}
 
-        if ($logger === null) {
-            $logger = $this->recordingLogger();
-        }
+		$clientService = $this->createMock(IClientService::class);
+		$cache = $this->createMock(ICache::class);
 
-        $clientService = $this->createMock(IClientService::class);
-        $cache         = $this->createMock(ICache::class);
+		$sleeper = function (int $seconds) use (&$sleepCalls): void {
+			$sleepCalls[] = $seconds;
+		};
 
-        $sleeper = function (int $seconds) use (&$sleepCalls): void {
-            $sleepCalls[] = $seconds;
-        };
+		return new class($clientService, $appConfig, $logger, $cache, new RetryPolicy(), $breaker, $sleeper, $script, $dispatchLog) extends PipelinqContactAdapter {
+			/**
+			 * @var array<int, IResponse|\Throwable>
+			 */
+			private array $script;
 
-        return new class(
-            $clientService,
-            $appConfig,
-            $logger,
-            $cache,
-            new RetryPolicy(),
-            $breaker,
-            $sleeper,
-            $script,
-            $dispatchLog
-        ) extends PipelinqContactAdapter {
+			/**
+			 * @var array<int, array{method:string, url:string, options: array<string, mixed>}>
+			 */
+			private array $dispatchLog;
 
-            /**
-             * @var array<int, IResponse|\Throwable>
-             */
-            private array $script;
+			/**
+			 * @param IClientService $clientService Mock.
+			 * @param IAppConfig $appConfig Mock.
+			 * @param AbstractLogger $logger Recording logger.
+			 * @param ICache $cache Mock cache.
+			 * @param RetryPolicy $retryPolicy Retry policy.
+			 * @param CircuitBreaker|null $breaker Optional breaker.
+			 * @param \Closure $sleeper Stubbed sleeper.
+			 * @param array<int, IResponse|\Throwable> $script Scripted outcomes.
+			 * @param array<int, array{method:string, url:string, options: array<string, mixed>}> &$dispatchLog Capture sink.
+			 */
+			public function __construct(
+				IClientService $clientService,
+				IAppConfig $appConfig,
+				$logger,
+				ICache $cache,
+				RetryPolicy $retryPolicy,
+				?CircuitBreaker $breaker,
+				\Closure $sleeper,
+				array $script,
+				array &$dispatchLog,
+			) {
+				parent::__construct($clientService, $appConfig, $logger, $cache, $retryPolicy, $breaker, $sleeper);
+				$this->script = $script;
+				$this->dispatchLog = & $dispatchLog;
+			}//end __construct()
 
-            /**
-             * @var array<int, array{method:string, url:string, options: array<string, mixed>}>
-             */
-            private array $dispatchLog;
+			/**
+			 * Override dispatch to consume the scripted queue + record the call.
+			 *
+			 * @param string $method HTTP method.
+			 * @param string $url Full URL.
+			 * @param array<string, mixed> $options Guzzle-shaped options.
+			 *
+			 * @return IResponse
+			 */
+			protected function dispatch(string $method, string $url, array $options): IResponse {
+				$this->dispatchLog[] = ['method' => $method, 'url' => $url, 'options' => $options];
+				$outcome = array_shift($this->script);
+				if ($outcome instanceof \Throwable) {
+					throw $outcome;
+				}
 
-            /**
-             * @param IClientService                                                              $clientService Mock.
-             * @param IAppConfig                                                                  $appConfig     Mock.
-             * @param AbstractLogger                                                              $logger        Recording logger.
-             * @param ICache                                                                      $cache         Mock cache.
-             * @param RetryPolicy                                                                 $retryPolicy   Retry policy.
-             * @param CircuitBreaker|null                                                         $breaker       Optional breaker.
-             * @param \Closure                                                                    $sleeper       Stubbed sleeper.
-             * @param array<int, IResponse|\Throwable>                                            $script        Scripted outcomes.
-             * @param array<int, array{method:string, url:string, options: array<string, mixed>}> &$dispatchLog  Capture sink.
-             */
-            public function __construct(
-                IClientService $clientService,
-                IAppConfig $appConfig,
-                $logger,
-                ICache $cache,
-                RetryPolicy $retryPolicy,
-                ?CircuitBreaker $breaker,
-                \Closure $sleeper,
-                array $script,
-                array &$dispatchLog
-            ) {
-                parent::__construct($clientService, $appConfig, $logger, $cache, $retryPolicy, $breaker, $sleeper);
-                $this->script      = $script;
-                $this->dispatchLog =& $dispatchLog;
-            }//end __construct()
+				if ($outcome === null) {
+					throw new \RuntimeException('script exhausted');
+				}
 
-            /**
-             * Override dispatch to consume the scripted queue + record the call.
-             *
-             * @param string               $method  HTTP method.
-             * @param string               $url     Full URL.
-             * @param array<string, mixed> $options Guzzle-shaped options.
-             *
-             * @return IResponse
-             */
-            protected function dispatch(string $method, string $url, array $options): IResponse
-            {
-                $this->dispatchLog[] = ['method' => $method, 'url' => $url, 'options' => $options];
-                $outcome = array_shift($this->script);
-                if ($outcome instanceof \Throwable) {
-                    throw $outcome;
-                }
+				return $outcome;
+			}//end dispatch()
+		};
 
-                if ($outcome === null) {
-                    throw new \RuntimeException('script exhausted');
-                }
+	}//end buildAdapter()
 
-                return $outcome;
-            }//end dispatch()
-        };
+	/**
+	 * Build a canned IResponse with the given status and JSON body.
+	 *
+	 * @param int $statusCode HTTP status code.
+	 * @param array<string, mixed> $body JSON-serialisable body.
+	 *
+	 * @return IResponse
+	 */
+	private function response(int $statusCode, array $body = []): IResponse {
+		$encoded = json_encode($body, JSON_THROW_ON_ERROR);
 
-    }//end buildAdapter()
+		return new class($statusCode, (string)$encoded) implements IResponse {
+			/**
+			 * @param int $statusCode HTTP status.
+			 * @param string $body Body string.
+			 */
+			public function __construct(
+				private readonly int $statusCode,
+				private readonly string $body,
+			) {
+			}//end __construct()
 
-    /**
-     * Build a canned IResponse with the given status and JSON body.
-     *
-     * @param int                  $statusCode HTTP status code.
-     * @param array<string, mixed> $body       JSON-serialisable body.
-     *
-     * @return IResponse
-     */
-    private function response(int $statusCode, array $body=[]): IResponse
-    {
-        $encoded = json_encode($body, JSON_THROW_ON_ERROR);
+			/**
+			 * @return string
+			 */
+			public function getBody() {
+				return $this->body;
+			}//end getBody()
 
-        return new class($statusCode, (string) $encoded) implements IResponse {
-            /**
-             * @param int    $statusCode HTTP status.
-             * @param string $body       Body string.
-             */
-            public function __construct(private readonly int $statusCode, private readonly string $body)
-            {
-            }//end __construct()
+			/**
+			 * @return int
+			 */
+			public function getStatusCode(): int {
+				return $this->statusCode;
+			}//end getStatusCode()
 
-            /**
-             * @return string
-             */
-            public function getBody()
-            {
-                return $this->body;
-            }//end getBody()
+			/**
+			 * @param string $key Header name.
+			 *
+			 * @return string
+			 */
+			public function getHeader(string $key): string {
+				return '';
+			}//end getHeader()
 
-            /**
-             * @return int
-             */
-            public function getStatusCode(): int
-            {
-                return $this->statusCode;
-            }//end getStatusCode()
+			/**
+			 * @return array<string, string>
+			 */
+			public function getHeaders(): array {
+				return [];
+			}//end getHeaders()
+		};
 
-            /**
-             * @param string $key Header name.
-             *
-             * @return string
-             */
-            public function getHeader(string $key): string
-            {
-                return '';
-            }//end getHeader()
+	}//end response()
 
-            /**
-             * @return array<string, string>
-             */
-            public function getHeaders(): array
-            {
-                return [];
-            }//end getHeaders()
-        };
+	/**
+	 * Build a representative timeline event for the tests.
+	 *
+	 * @return TimelineEventDto
+	 */
+	private function sampleEvent(): TimelineEventDto {
+		return new TimelineEventDto(
+			type: TimelineEventDto::TYPE_BOOKING_CREATED,
+			externalId: 'booking-abc-123',
+			timestamp: new DateTimeImmutable('2026-06-06T12:34:56Z', new DateTimeZone('UTC')),
+			contactId: 'pl-contact-42',
+			metadata: [
+				'bookingNumber' => 'booking-abc-123',
+				'service' => 'haircut',
+			]
+		);
 
-    }//end response()
+	}//end sampleEvent()
 
-    /**
-     * Build a representative timeline event for the tests.
-     *
-     * @return TimelineEventDto
-     */
-    private function sampleEvent(): TimelineEventDto
-    {
-        return new TimelineEventDto(
-            type: TimelineEventDto::TYPE_BOOKING_CREATED,
-            externalId: 'booking-abc-123',
-            timestamp: new DateTimeImmutable('2026-06-06T12:34:56Z', new DateTimeZone('UTC')),
-            contactId: 'pl-contact-42',
-            metadata: [
-                'bookingNumber' => 'booking-abc-123',
-                'service'       => 'haircut',
-            ]
-        );
+	/**
+	 * A 201 Created publishes the fixed payload to `/api/v1/timeline`
+	 * with a Bearer token + returns TRUE.
+	 *
+	 * @return void
+	 */
+	public function testSuccessPostsFixedPayloadAndReturnsTrue(): void {
+		$dispatchLog = [];
+		$sleepCalls = [];
+		$script = [$this->response(201, ['accepted' => true])];
 
-    }//end sampleEvent()
+		$adapter = $this->buildAdapter($script, $dispatchLog, $sleepCalls);
 
-    /**
-     * A 201 Created publishes the fixed payload to `/api/v1/timeline`
-     * with a Bearer token + returns TRUE.
-     *
-     * @return void
-     */
-    public function testSuccessPostsFixedPayloadAndReturnsTrue(): void
-    {
-        $dispatchLog = [];
-        $sleepCalls  = [];
-        $script      = [$this->response(201, ['accepted' => true])];
+		$result = $adapter->publishTimelineEvent(event: $this->sampleEvent());
 
-        $adapter = $this->buildAdapter($script, $dispatchLog, $sleepCalls);
+		self::assertTrue($result);
+		self::assertCount(1, $dispatchLog);
+		self::assertSame('POST', $dispatchLog[0]['method']);
+		self::assertSame('https://pipelinq.test/api/v1/timeline', $dispatchLog[0]['url']);
 
-        $result = $adapter->publishTimelineEvent(event: $this->sampleEvent());
+		$options = $dispatchLog[0]['options'];
+		self::assertSame('application/json', $options['headers']['Content-Type']);
+		self::assertSame('Bearer NEVER-LOG-ME-1234567890', $options['headers']['Authorization']);
 
-        self::assertTrue($result);
-        self::assertCount(1, $dispatchLog);
-        self::assertSame('POST', $dispatchLog[0]['method']);
-        self::assertSame('https://pipelinq.test/api/v1/timeline', $dispatchLog[0]['url']);
+		$body = json_decode((string)$options['body'], true, 512, JSON_THROW_ON_ERROR);
+		self::assertSame(
+			[
+				'type' => 'booking.created',
+				'externalId' => 'booking-abc-123',
+				'timestamp' => '2026-06-06T12:34:56Z',
+				'contactId' => 'pl-contact-42',
+				'metadata' => [
+					'bookingNumber' => 'booking-abc-123',
+					'service' => 'haircut',
+				],
+			],
+			$body,
+			'POST body must match the design.md fixed payload contract.'
+		);
 
-        $options = $dispatchLog[0]['options'];
-        self::assertSame('application/json', $options['headers']['Content-Type']);
-        self::assertSame('Bearer NEVER-LOG-ME-1234567890', $options['headers']['Authorization']);
+	}//end testSuccessPostsFixedPayloadAndReturnsTrue()
 
-        $body = json_decode((string) $options['body'], true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame(
-            [
-                'type'       => 'booking.created',
-                'externalId' => 'booking-abc-123',
-                'timestamp'  => '2026-06-06T12:34:56Z',
-                'contactId'  => 'pl-contact-42',
-                'metadata'   => [
-                    'bookingNumber' => 'booking-abc-123',
-                    'service'       => 'haircut',
-                ],
-            ],
-            $body,
-            'POST body must match the design.md fixed payload contract.'
-        );
+	/**
+	 * Three transient 503s exhaust the retry budget; the publish method
+	 * returns FALSE (per the spec — best-effort, never raise).
+	 *
+	 * @return void
+	 */
+	public function testTransientFailureRetriesThenReturnsFalse(): void {
+		$dispatchLog = [];
+		$sleepCalls = [];
+		$script = [
+			$this->response(503),
+			$this->response(503),
+			$this->response(503),
+		];
 
-    }//end testSuccessPostsFixedPayloadAndReturnsTrue()
+		$adapter = $this->buildAdapter($script, $dispatchLog, $sleepCalls);
 
-    /**
-     * Three transient 503s exhaust the retry budget; the publish method
-     * returns FALSE (per the spec — best-effort, never raise).
-     *
-     * @return void
-     */
-    public function testTransientFailureRetriesThenReturnsFalse(): void
-    {
-        $dispatchLog = [];
-        $sleepCalls  = [];
-        $script      = [
-            $this->response(503),
-            $this->response(503),
-            $this->response(503),
-        ];
+		$result = $adapter->publishTimelineEvent(event: $this->sampleEvent());
 
-        $adapter = $this->buildAdapter($script, $dispatchLog, $sleepCalls);
+		self::assertFalse($result);
+		self::assertCount(3, $dispatchLog, 'All 3 attempts must be issued');
+		self::assertSame([1, 2], $sleepCalls, 'Backoff schedule 1s + 2s between the 3 attempts');
 
-        $result = $adapter->publishTimelineEvent(event: $this->sampleEvent());
+	}//end testTransientFailureRetriesThenReturnsFalse()
 
-        self::assertFalse($result);
-        self::assertCount(3, $dispatchLog, 'All 3 attempts must be issued');
-        self::assertSame([1, 2], $sleepCalls, 'Backoff schedule 1s + 2s between the 3 attempts');
+	/**
+	 * An already-open breaker fast-fails the publish without issuing a
+	 * dispatch.
+	 *
+	 * @return void
+	 */
+	public function testOpenBreakerFastFailsAndReturnsFalse(): void {
+		$breaker = new CircuitBreaker(failureThreshold: 5, cooldownSeconds: 300);
+		for ($i = 1; $i <= 5; $i++) {
+			$breaker->recordFailure();
+		}
 
-    }//end testTransientFailureRetriesThenReturnsFalse()
+		$dispatchLog = [];
+		$sleepCalls = [];
+		$adapter = $this->buildAdapter([], $dispatchLog, $sleepCalls, $breaker);
 
-    /**
-     * An already-open breaker fast-fails the publish without issuing a
-     * dispatch.
-     *
-     * @return void
-     */
-    public function testOpenBreakerFastFailsAndReturnsFalse(): void
-    {
-        $breaker = new CircuitBreaker(failureThreshold: 5, cooldownSeconds: 300);
-        for ($i = 1; $i <= 5; $i++) {
-            $breaker->recordFailure();
-        }
+		$result = $adapter->publishTimelineEvent(event: $this->sampleEvent());
 
-        $dispatchLog = [];
-        $sleepCalls  = [];
-        $adapter     = $this->buildAdapter([], $dispatchLog, $sleepCalls, $breaker);
+		self::assertFalse($result);
+		self::assertCount(0, $dispatchLog, 'No request must be issued while OPEN');
 
-        $result = $adapter->publishTimelineEvent(event: $this->sampleEvent());
+	}//end testOpenBreakerFastFailsAndReturnsFalse()
 
-        self::assertFalse($result);
-        self::assertCount(0, $dispatchLog, 'No request must be issued while OPEN');
+	/**
+	 * The bearer token never appears in any log line, even when every
+	 * attempt fails.
+	 *
+	 * @return void
+	 */
+	public function testBearerTokenIsNeverLogged(): void {
+		$dispatchLog = [];
+		$sleepCalls = [];
+		$script = [
+			$this->response(502),
+			$this->response(502),
+			$this->response(502),
+		];
 
-    }//end testOpenBreakerFastFailsAndReturnsFalse()
+		$logger = $this->recordingLogger();
+		$adapter = $this->buildAdapter($script, $dispatchLog, $sleepCalls, logger: $logger);
 
-    /**
-     * The bearer token never appears in any log line, even when every
-     * attempt fails.
-     *
-     * @return void
-     */
-    public function testBearerTokenIsNeverLogged(): void
-    {
-        $dispatchLog = [];
-        $sleepCalls  = [];
-        $script      = [
-            $this->response(502),
-            $this->response(502),
-            $this->response(502),
-        ];
+		$adapter->publishTimelineEvent(event: $this->sampleEvent());
 
-        $logger  = $this->recordingLogger();
-        $adapter = $this->buildAdapter($script, $dispatchLog, $sleepCalls, logger: $logger);
+		$haystack = json_encode($logger->records);
+		self::assertNotFalse($haystack);
+		self::assertStringNotContainsString('NEVER-LOG-ME-1234567890', $haystack);
 
-        $adapter->publishTimelineEvent(event: $this->sampleEvent());
-
-        $haystack = json_encode($logger->records);
-        self::assertNotFalse($haystack);
-        self::assertStringNotContainsString('NEVER-LOG-ME-1234567890', $haystack);
-
-    }//end testBearerTokenIsNeverLogged()
+	}//end testBearerTokenIsNeverLogged()
 
 }//end class
