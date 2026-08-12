@@ -208,25 +208,25 @@ final class VpbMkbFragmentTest extends TestCase
     }//end testVoorvoegingsverliesCalculations()
 
     /**
-     * The bezwaar/beroep lifecycle references the BezwaarTermijnGuard (REQ-VPB-010).
+     * The bezwaar/beroep lifecycle references the ObjectionPeriodGuard (REQ-VPB-010).
      *
      * @return void
      */
-    public function testBezwaarTermijnGuardReferenced(): void
+    public function testObjectionPeriodGuardReferenced(): void
     {
         $aangifte = $this->fragment()['components']['schemas']['VpbAangifte'];
         self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\BezwaarTermijnGuard::canBezwaarMaken',
+            'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileObjection',
             $aangifte['x-openregister-lifecycle']['transitions']['bezwaarMaken']['requires']
         );
 
         $bezwaar = $this->fragment()['components']['schemas']['BezwaarBeroep'];
         self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\BezwaarTermijnGuard::canBeroepInstellen',
+            'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileAppeal',
             $bezwaar['x-openregister-lifecycle']['transitions']['beroepInstellen']['requires']
         );
 
-    }//end testBezwaarTermijnGuardReferenced()
+    }//end testObjectionPeriodGuardReferenced()
 
     /**
      * Every guard class referenced by the fragment exists as a PHP file.
@@ -238,9 +238,9 @@ final class VpbMkbFragmentTest extends TestCase
         $json = (string) file_get_contents($this->fragmentPath);
 
         $guards = [
-            'OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard'    => __DIR__.'/../../../lib/Lifecycle/VpbAangifteGuard.php',
-            'OCA\\Shillinq\\Lifecycle\\BezwaarTermijnGuard' => __DIR__.'/../../../lib/Lifecycle/BezwaarTermijnGuard.php',
-            'OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard'  => __DIR__.'/../../../lib/Lifecycle/VpbBerekeningGuard.php',
+            'OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard'     => __DIR__.'/../../../lib/Lifecycle/VpbAangifteGuard.php',
+            'OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard' => __DIR__.'/../../../lib/Lifecycle/ObjectionPeriodGuard.php',
+            'OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard'   => __DIR__.'/../../../lib/Lifecycle/VpbBerekeningGuard.php',
         ];
 
         foreach ($guards as $fqcn => $path) {

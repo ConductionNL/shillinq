@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-vpb-mkb",
     "spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
-    "description": "ADR-037 register fragment declaring the reguliere Vennootschapsbelasting (Vpb) aangifte data model for BV/NV (T3, regulatory + compliance): Belastingplichtige, VpbAangifte, FiscaleCorrectie, Innovatiebox, Deelneming, FiscaleEenheid, Voorvoegingsverlies, InvesteringsAftrek, VoorlopigeAanslag, DefinitieveAanslag, BezwaarBeroep plus the VpbTariefcatalogus parameterisation table. Per ADR-031 all fiscal logic is declarative metadata: x-openregister-lifecycle state machines, x-openregister-calculations formulas (schijftarief, voorvoegingsverlies-verjaring, facility eligibility), x-openregister-unique constraints, x-openregister-relations and x-openregister-rbac. Cross-schema preconditions that the declarative DSL cannot yet express are delegated to OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard and OCA\\Shillinq\\Lifecycle\\BezwaarTermijnGuard (ADR-031 exception path). No PHP tax-calculation service is authored (ADR-022/ADR-031). Schijftarieven and facility percentages are stored as data (VpbTariefcatalogus) so wetswijzigingen are reproducible per belastingjaar.",
+    "description": "ADR-037 register fragment declaring the reguliere Vennootschapsbelasting (Vpb) aangifte data model for BV/NV (T3, regulatory + compliance): Belastingplichtige, VpbAangifte, FiscaleCorrectie, Innovatiebox, Deelneming, FiscaleEenheid, Voorvoegingsverlies, InvesteringsAftrek, VoorlopigeAanslag, DefinitieveAanslag, BezwaarBeroep plus the VpbTariefcatalogus parameterisation table. Per ADR-031 all fiscal logic is declarative metadata: x-openregister-lifecycle state machines, x-openregister-calculations formulas (schijftarief, voorvoegingsverlies-verjaring, facility eligibility), x-openregister-unique constraints, x-openregister-relations and x-openregister-rbac. Cross-schema preconditions that the declarative DSL cannot yet express are delegated to OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard and OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard (ADR-031 exception path). No PHP tax-calculation service is authored (ADR-022/ADR-031). Schijftarieven and facility percentages are stored as data (VpbTariefcatalogus) so wetswijzigingen are reproducible per belastingjaar.",
     "imported": "2026-06-05T00:00:00Z"
   },
   "components": {
@@ -483,8 +483,8 @@
               "from": "aanslag-ontvangen",
               "to": "bezwaar",
               "label": "Bezwaar maken",
-              "description": "Bezwaar mag alleen binnen de wettelijke termijn van 6 weken na de dagtekening van de aanslag (REQ-VPB-010). Cross-schema termijn-check: BezwaarTermijnGuard::canBezwaarMaken.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\BezwaarTermijnGuard::canBezwaarMaken"
+              "description": "Bezwaar mag alleen binnen de wettelijke termijn van 6 weken na de dagtekening van de aanslag (REQ-VPB-010). Cross-schema termijn-check: ObjectionPeriodGuard::canFileObjection.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileObjection"
             },
             "beroepInstellen": {
               "from": "bezwaar",
@@ -1799,8 +1799,8 @@
               "from": "uitspraak-inspecteur-ontvangen",
               "to": "beroep-pending",
               "label": "Beroep instellen",
-              "description": "Beroep bij de rechtbank binnen 6 weken na uitspraak (REQ-VPB-010). Termijn-check: BezwaarTermijnGuard::canBeroepInstellen.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\BezwaarTermijnGuard::canBeroepInstellen"
+              "description": "Beroep bij de rechtbank binnen 6 weken na uitspraak (REQ-VPB-010). Termijn-check: ObjectionPeriodGuard::canFileAppeal.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileAppeal"
             },
             "beroepUitspraak": {
               "from": "beroep-pending",
