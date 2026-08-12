@@ -39,15 +39,15 @@ class ProgrammaAggregator {
 	/**
 	 * Aggregate the child Taakvelden into a Programma's totals.
 	 *
-	 * Computes batenTotaal = Σ(Taakveld.baten); lastenTotaal = Σ(Taakveld.lasten);
-	 * saldoVoorMutaties = batenTotaal - lastenTotaal; saldoNaMutaties =
-	 * saldoVoorMutaties + mutatiesReserves. All sums are accumulated in integer
+	 * Computes revenueTotal = Σ(Taakveld.baten); expensesTotal = Σ(Taakveld.lasten);
+	 * balanceBeforeMovements = revenueTotal - expensesTotal; balanceAfterMovements =
+	 * balanceBeforeMovements + mutatiesReserves. All sums are accumulated in integer
 	 * cents to guarantee the programma-view equals the taakveld-view exactly.
 	 *
 	 * @param array<int,array<string,mixed>> $taakvelden The child Taakveld rows.
 	 * @param float $mutatiesReserves The reserve mutation (positive = toevoeging).
 	 *
-	 * @return array{batenTotaal:float,lastenTotaal:float,saldoVoorMutaties:float,saldoNaMutaties:float}
+	 * @return array{revenueTotal:float,expensesTotal:float,balanceBeforeMovements:float,balanceAfterMovements:float}
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-24
 	 */

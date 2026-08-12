@@ -114,7 +114,7 @@ class IntegralCostPriceCalculator {
 				continue;
 			}
 
-			$amount = (float)($line['amount'] ?? $line['amount'] ?? 0);
+			$amount = (float)($line['amount'] ?? 0);
 			if ($amount < 0) {
 				// Credit notes / reversals are subtracted (sign-preserved).
 				$totalCents += $this->toCents(amount: $amount);

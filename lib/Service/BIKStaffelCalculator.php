@@ -162,8 +162,8 @@ class BIKStaffelCalculator {
 	 * Calculate the BIK staffel breakdown for an outstanding principal.
 	 *
 	 * Returns the shape expected on IncassoKostenBerekening.berekening per
-	 * REQ-CCD-003: five slab amounts, the gross totaal, the statutory minimum
-	 * and maximum, toegepast = min(max(totaal, minimum), maximum), and the
+	 * REQ-CCD-003: five slab amounts, the gross total, the statutory minimum
+	 * and maximum, toegepast = min(max(total, minimum), maximum), and the
 	 * BTW-over-incassokosten surcharge (art. 2 lid 2 Besluit BIK) when the
 	 * creditor cannot offset VAT.
 	 *
@@ -171,7 +171,7 @@ class BIKStaffelCalculator {
 	 * @param bool $btwVerrekenbaar True when the creditor CAN offset VAT (no surcharge). Default true.
 	 * @param float $btwPercentage VAT rate applied when !btwVerrekenbaar (default 21%).
 	 *
-	 * @return array{schaal1_0_2500:float,schaal2_2500_5000:float,schaal3_5000_10000:float,schaal4_10000_200000:float,schaal5_200000plus:float,totaal:float,minimum:float,maximum:float,toegepast:float,btwVerrekenbaar:bool,btwPercentage:float,btwBedrag:float,toegepastInclBtw:float}
+	 * @return array{schaal1_0_2500:float,schaal2_2500_5000:float,schaal3_5000_10000:float,schaal4_10000_200000:float,schaal5_200000plus:float,total:float,minimum:float,maximum:float,toegepast:float,btwVerrekenbaar:bool,btwPercentage:float,vatAmount:float,toegepastInclBtw:float}
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
 	 */
@@ -252,7 +252,7 @@ class BIKStaffelCalculator {
 	 * @param float|null $tariefB2B Override the B2B handelsrente (flat, skips the table).
 	 * @param float|null $tariefB2C Override the B2C wettelijke rente (flat, skips the table).
 	 *
-	 * @return array{tarief:float,type:string,ingangsdatum:string,berekendOp:string,dagen:int,bedrag:float,perioden:array<int,array{van:string,tot:string,dagen:int,tarief:float,bedrag:float}>}
+	 * @return array{tarief:float,type:string,ingangsdatum:string,berekendOp:string,dagen:int,amount:float,perioden:array<int,array{van:string,tot:string,dagen:int,tarief:float,amount:float}>}
 	 *
 	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md
 	 */

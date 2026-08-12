@@ -53,7 +53,7 @@ class SluitendCalculator {
 	 * @param array<string,mixed> $year The meerjarenraming year row.
 	 * @param float $nominaleOntwikkeling The loon- en prijsindexatie percentage (e.g. 2.0).
 	 *
-	 * @return array{saldoStructureel:float,saldoIncidenteel:float,saldoReëel:float,sluitendStructureel:bool,sluitendReëel:bool,sluitend:bool}
+	 * @return array{balanceStructural:float,balanceIncidental:float,saldoReëel:float,sluitendStructureel:bool,sluitendReëel:bool,sluitend:bool}
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-19
 	 */

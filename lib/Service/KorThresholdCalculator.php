@@ -302,7 +302,7 @@ class KorThresholdCalculator {
 	 *
 	 * @param string $ingangsDatum KOR-NL effective date (YYYY-MM-DD).
 	 *
-	 * @return array{lockInEindDatum:string,vroegsteOpzegDatum:string}|null Window or null on invalid input.
+	 * @return array{lockInEndDate:string,vroegsteOpzegDatum:string}|null Window or null on invalid input.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
@@ -400,7 +400,7 @@ class KorThresholdCalculator {
 	 * @param array<string,float> $drempelsPerLidstaat Per-country drempel (EUR); e.g. ['BE' => 25000, 'DE' => 22000].
 	 * @param int $year Calendar year to bound the aggregation.
 	 *
-	 * @return array<string,array{omzet:float,drempel:float,benutting:float}> Per-lidstaat aggregate.
+	 * @return array<string,array{revenue:float,drempel:float,benutting:float}> Per-lidstaat aggregate.
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
 	 */
