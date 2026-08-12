@@ -13,10 +13,16 @@
  *
  * The endpoint is available to any authenticated user (#[NoAdminRequired]); it
  * rejects unauthenticated callers (401), validates administrationId + from/to before
- * the data layer (400), and delegates reads to OpenRegister's ObjectService, which
- * enforces per-administration multitenancy — so an authenticated user cannot read
- * another administration's orders (ADR-005 Rule 3 / no-admin-idor). This mirrors the
- * in-repo RevenueController precedent.
+ * the data layer (400), and authorises the administration against the caller's
+ * memberships here (AdministrationContextService::canAccess(), ADR-005 Rule 3 /
+ * no-admin-idor, REQ-MA-001).
+ *
+ * ⚠️ This paragraph used to end "delegates reads to OpenRegister's ObjectService,
+ * which enforces per-administration multitenancy — so an authenticated user cannot
+ * read another administration's orders". That was false: no administration term was
+ * passed into OpenRegister, and a schema with no `authorization` block grants every
+ * action to every authenticated user. Any authenticated user COULD read another
+ * administration's orders, and the sentence is why nobody looked.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -39,6 +45,7 @@ namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Recognition\RevenueRecognitionService;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -57,10 +64,11 @@ class RecognitionController extends Controller
     /**
      * Constructor for the RecognitionController.
      *
-     * @param IRequest                  $request            The request object.
-     * @param RevenueRecognitionService $recognitionService The recognition computation service.
-     * @param IUserSession              $userSession        Session for the auth body-guard.
-     * @param LoggerInterface           $logger             Logger for diagnostics (no stack traces to client).
+     * @param IRequest                     $request            The request object.
+     * @param RevenueRecognitionService    $recognitionService The recognition computation service.
+     * @param IUserSession                 $userSession        Session for the auth body-guard.
+     * @param AdministrationContextService $context            RBAC guard — resolves the user's administration memberships.
+     * @param LoggerInterface              $logger             Logger for diagnostics (no stack traces to client).
      *
      * @return void
      */
@@ -68,6 +76,7 @@ class RecognitionController extends Controller
         IRequest $request,
         private readonly RevenueRecognitionService $recognitionService,
         private readonly IUserSession $userSession,
+        private readonly AdministrationContextService $context,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -115,6 +124,14 @@ class RecognitionController extends Controller
                 ['error' => 'administrationId must be a valid administration identifier'],
                 Http::STATUS_BAD_REQUEST
             );
+        }
+
+        // ⚠️ The regex above is INPUT VALIDATION, not authorisation — it was the
+        // only thing standing between any authenticated user and another
+        // tenant's recurring-revenue book. The membership check is what the
+        // docblock's "ADR-005 IDOR-safety" always claimed (REQ-MA-001).
+        if ($this->context->canAccess(administrationId: $administrationId) === false) {
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
         }
 
         if (preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $from) !== 1) {

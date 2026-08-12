@@ -11,9 +11,17 @@
  * the browser for download.
  *
  * Every endpoint is `#[NoAdminRequired]` — finance officers and controllers, not
- * only admins, work with reports. The download endpoint resolves the GeneratedReport
- * record and its stored Nextcloud file through the service, which scopes file access
- * to the current user's Files home.
+ * only admins, work with reports — and every endpoint that names an
+ * administration or a stored report is authorised here against the caller's
+ * memberships (AdministrationContextService, ADR-005 / REQ-MA-001).
+ *
+ * ⚠️ This paragraph previously stated that the service "scopes file access to
+ * the current user's Files home". It did not: `resolveFile()` used
+ * `IRootFolder::getById()` and `IRootFolder::get($path)`, both of which resolve
+ * across EVERY user's storage, and `generated()` treated `administrationId` as
+ * an OPTIONAL filter, so omitting it listed every tenant's reports together
+ * with the ids that feed `download/{id}`. Both are fixed; the sentence is
+ * retained as a warning because it is the reason nobody looked.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -24,7 +32,23 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec exclude The reporting capability has no canonical spec. This tag pointed at
+ *       openspec/changes/reporting-compliance-consolidation (a change directory that
+ *       exists neither under changes nor under changes/archive), and no canonical
+ *       reporting capability exists under openspec/specs either. Tracked in #525.
+ *       Deliberately NOT resolved by writing that spec — authoring the requirement
+ *       a tag is checked against turns the gate green over an unspecified capability.
+ *
+ * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
+ * The change directory it names was never committed, and the `reporting`
+ * capability has NO canonical spec. One was drafted during gate remediation
+ * and withdrawn: a spec written to fit the code, by the process whose job is
+ * to check the code against a spec, is not a specification anyone agreed to.
+ * Authoring it is the capability owner's decision, not a gate fix. No existing
+ * target is honest either — bookkeeping-iv3-reporting REQ-IV3-004 and
+ * bookkeeping-vat-btw-filing REQ-VBTW-004 forbid the PHP renderers in this
+ * directory, so pointing there would report conformance to a rule this code
+ * breaks.
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,6 +61,7 @@ namespace OCA\Shillinq\Controller;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Reporting\ReportGenerationService;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -48,16 +73,33 @@ use OCP\IUserSession;
 /**
  * HTTP surface for Reporting & Compliance: catalogue, generation, listing, download.
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec exclude The reporting capability has no canonical spec. This tag pointed at
+ *       openspec/changes/reporting-compliance-consolidation (a change directory that
+ *       exists neither under changes nor under changes/archive), and no canonical
+ *       reporting capability exists under openspec/specs either. Tracked in #525.
+ *       Deliberately NOT resolved by writing that spec — authoring the requirement
+ *       a tag is checked against turns the gate green over an unspecified capability.
+ *
+ * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
+ * The change directory it names was never committed, and the `reporting`
+ * capability has NO canonical spec. One was drafted during gate remediation
+ * and withdrawn: a spec written to fit the code, by the process whose job is
+ * to check the code against a spec, is not a specification anyone agreed to.
+ * Authoring it is the capability owner's decision, not a gate fix. No existing
+ * target is honest either — bookkeeping-iv3-reporting REQ-IV3-004 and
+ * bookkeeping-vat-btw-filing REQ-VBTW-004 forbid the PHP renderers in this
+ * directory, so pointing there would report conformance to a rule this code
+ * breaks.
  */
 class ReportingController extends Controller
 {
     /**
      * Constructor.
      *
-     * @param IRequest                $request     The current request.
-     * @param IUserSession            $userSession Anonymous-rejection guard (ADR-005).
-     * @param ReportGenerationService $service     The generation/orchestration service.
+     * @param IRequest                     $request     The current request.
+     * @param IUserSession                 $userSession Anonymous-rejection guard (ADR-005).
+     * @param ReportGenerationService      $service     The generation/orchestration service.
+     * @param AdministrationContextService $context     RBAC guard — resolves the user's administration memberships.
      *
      * @return void
      */
@@ -65,6 +107,7 @@ class ReportingController extends Controller
         IRequest $request,
         private readonly IUserSession $userSession,
         private readonly ReportGenerationService $service,
+        private readonly AdministrationContextService $context,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -117,6 +160,8 @@ class ReportingController extends Controller
      * + downloadPath). A service-level `{ error: ... }` envelope is surfaced as 422.
      *
      * @return JSONResponse The GeneratedReport record, or an error envelope.
+     *
+     * @spec exclude No canonical requirement exists for the reporting capability — see #525.
      */
     #[NoAdminRequired]
     public function generate(): JSONResponse
@@ -132,6 +177,13 @@ class ReportingController extends Controller
 
         if ($reportType === '') {
             return new JSONResponse(['error' => 'missing-report-type'], Http::STATUS_BAD_REQUEST);
+        }
+
+        // ADR-005 / REQ-MA-001 — generating a report against another tenant's
+        // ledger. An empty administrationId means "no administration scope" and
+        // is left to the service; a NAMED administration must be one of ours.
+        if ($administrationId !== '' && $this->context->canAccess(administrationId: $administrationId) === false) {
+            return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
         }
 
         $result = $this->service->generate(
@@ -152,9 +204,16 @@ class ReportingController extends Controller
     /**
      * GET /api/reporting/generated — list previously generated reports.
      *
-     * Optional query filters: reportType, period, administrationId, category.
+     * Optional query filters: reportType, period, category. `administrationId`
+     * is NOT optional in effect: the listing is always scoped to the caller's
+     * administration memberships (ADR-005 / REQ-MA-001), and an explicit
+     * administrationId may only narrow that scope, never widen it. It used to be
+     * an optional filter, so omitting it returned every tenant's reports — ids
+     * included, which then fed `download/{id}`.
      *
      * @return JSONResponse `{ reports: [...] }`.
+     *
+     * @spec exclude No canonical requirement exists for the reporting capability — see #525.
      */
     #[NoAdminRequired]
     public function generated(): JSONResponse
@@ -163,27 +222,53 @@ class ReportingController extends Controller
             return new JSONResponse(['error' => 'not-logged-in'], Http::STATUS_UNAUTHORIZED);
         }
 
-        $filters = [
-            'reportType'       => $this->request->getParam('reportType'),
-            'period'           => $this->request->getParam('period'),
-            'administrationId' => $this->request->getParam('administrationId'),
-            'category'         => $this->request->getParam('category'),
-        ];
+        $requested = trim((string) $this->request->getParam('administrationId', ''));
+        $scope     = $this->context->accessibleAdministrationIds();
+        if ($requested !== '') {
+            if ($this->context->canAccess(administrationId: $requested) === false) {
+                return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
+            }
 
-        return new JSONResponse(['reports' => $this->service->listGenerated($filters)]);
+            $scope = [$requested];
+        }
+
+        $reports = [];
+        foreach ($scope as $administrationId) {
+            $reports = array_merge(
+                $reports,
+                $this->service->listGenerated(
+                    [
+                        'reportType'       => $this->request->getParam('reportType'),
+                        'period'           => $this->request->getParam('period'),
+                        'administrationId' => $administrationId,
+                        'category'         => $this->request->getParam('category'),
+                    ]
+                )
+            );
+        }
+
+        return new JSONResponse(['reports' => $reports]);
 
     }//end generated()
 
     /**
      * GET /api/reporting/download/{id} — stream a stored report file.
      *
-     * Resolves the GeneratedReport record and its Nextcloud file (scoped to the
-     * current user's Files home) and returns it as a download. Missing records/files
-     * yield 404.
+     * Loads the GeneratedReport record, authorises the caller against the
+     * administration that record belongs to (ADR-005 / REQ-MA-001), and only
+     * then resolves and streams the stored Nextcloud file. A record the caller
+     * has no membership for is masked as 404, never confirmed.
+     *
+     * ⚠️ This docblock used to claim the file was "scoped to the current user's
+     * Files home". It was not — `resolveFile()` went through `IRootFolder`,
+     * which resolves across every user's storage, so `download/{id}` was an
+     * arbitrary file read for any authenticated user.
      *
      * @param string $id The GeneratedReport id.
      *
      * @return DataDownloadResponse|JSONResponse The streamed file, or a 404 JSON envelope.
+     *
+     * @spec exclude No canonical requirement exists for the reporting capability — see #525.
      */
     #[NoAdminRequired]
     public function download(string $id): DataDownloadResponse|JSONResponse
@@ -196,7 +281,14 @@ class ReportingController extends Controller
             return new JSONResponse(['error' => 'missing-id'], Http::STATUS_BAD_REQUEST);
         }
 
-        $file = $this->service->resolveFile($id);
+        $record = $this->service->findRecord($id);
+        if ($record === null
+            || $this->context->canAccess(administrationId: (string) ($record['administrationId'] ?? '')) === false
+        ) {
+            return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
+        }
+
+        $file = $this->service->resolveRecordFile(record: $record);
         if ($file === null) {
             return new JSONResponse(['error' => 'not-found'], Http::STATUS_NOT_FOUND);
         }

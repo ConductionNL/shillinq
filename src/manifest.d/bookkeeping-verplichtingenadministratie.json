@@ -30,9 +30,6 @@
 				{
 					"id": "BudgetLineCommitments",
 					"label": "Committed vs. realised",
-					"i18n": {
-						"nl": "Verplicht vs. gerealiseerd"
-					},
 					"icon": "ChartBoxOutline",
 					"route": "BudgetLineCommitments",
 					"order": 40
@@ -149,7 +146,8 @@
 			"route": "/verplichtingen/budget-lines",
 			"type": "custom",
 			"title": "Committed vs. realised",
-			"component": "BudgetLineCommitments"
+			"component": "BudgetLineCommitments",
+			"_note": "Rows are AGGREGATION BUCKETS, not objects: the page renders the committedVsRealisedPerBudgetLine aggregation on Verplichtingsregel (geautoriseerd / verplicht / gerealiseerd / vrij per budget coding combination) and lets the controller drill from a bucket into the underlying Verplichtingen. `type: index` lists objects of one schema, so it cannot have aggregation buckets as its rows; `type: dashboard` can show an aggregation as a widget but not drill from a row into the commitments behind it (REQ-VPL-011). Both the aggregation and the drilldown go through OpenRegister's own APIs — no parallel shillinq reporting endpoint."
 		},
 		{
 			"id": "Mandaten",

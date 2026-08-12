@@ -41,6 +41,13 @@ class WidgetServiceTest extends TestCase
     private $container;
 
     /**
+     * Mock slot service — the availability authority (REQ-WSW-002).
+     *
+     * @var SlotService&\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $slotService;
+
+    /**
      * The service under test.
      *
      * @var WidgetService
@@ -56,20 +63,82 @@ class WidgetServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->container = $this->createMock(ContainerInterface::class);
-        $appConfig       = $this->createMock(IAppConfig::class);
-        $slotService     = $this->createMock(SlotService::class);
-        $logger          = $this->createMock(LoggerInterface::class);
+        $this->container   = $this->createMock(ContainerInterface::class);
+        $appConfig         = $this->createMock(IAppConfig::class);
+        $this->slotService = $this->createMock(SlotService::class);
+        $logger            = $this->createMock(LoggerInterface::class);
         $appConfig->method('getValueString')->willReturn('shillinq');
 
         $this->service = new WidgetService(
             container: $this->container,
             appConfig: $appConfig,
-            slotService: $slotService,
+            slotService: $this->slotService,
             logger: $logger,
         );
 
     }//end setUp()
+
+    /**
+     * Make SlotService offer exactly the canonical test interval.
+     *
+     * @return void
+     */
+    private function offerCanonicalSlot(): void
+    {
+        $this->slotService->method('getAvailableSlots')->willReturn(
+            [
+                'slots' => [
+                    [
+                        'startTime' => '2026-05-22T08:00:00Z',
+                        'endTime'   => '2026-05-22T08:45:00Z',
+                    ],
+                ],
+            ]
+        );
+
+    }//end offerCanonicalSlot()
+
+    /**
+     * The canonical valid widget payload.
+     *
+     * @param array<string,mixed> $overrides Fields to override.
+     *
+     * @return array<string,mixed>
+     */
+    private function payload(array $overrides=[]): array
+    {
+        return array_merge(
+            [
+                'serviceId'     => 'svc-001',
+                'resourceId'    => 'res-001',
+                'startTime'     => '2026-05-22T08:00:00Z',
+                'endTime'       => '2026-05-22T08:45:00Z',
+                'customerName'  => 'Alice Smith',
+                'customerEmail' => 'alice@example.com',
+                'customerPhone' => '+31612345678',
+            ],
+            $overrides
+        );
+
+    }//end payload()
+
+    /**
+     * A bookable public Service record.
+     *
+     * @return array<string,mixed>
+     */
+    private function bookableService(): array
+    {
+        return [
+            '@self'      => ['slug' => 'haircut'],
+            'serviceId'  => 'svc-001',
+            'isPublic'   => true,
+            'status'     => 'active',
+            'duration'   => 45,
+            'resourceId' => 'res-001',
+        ];
+
+    }//end bookableService()
 
     /**
      * Email validation accepts RFC-valid and rejects malformed addresses.
@@ -120,12 +189,7 @@ class WidgetServiceTest extends TestCase
     {
         $result = $this->service->createAppointment(
             'salon-demo',
-            [
-                'serviceSlug'   => 'haircut',
-                'startTime'     => '2026-05-22T08:00:00Z',
-                'customerName'  => 'Alice',
-                'customerEmail' => 'bad-email',
-            ]
+            $this->payload(['customerEmail' => 'bad-email'])
         );
 
         self::assertSame(400, $result['code']);
@@ -143,19 +207,52 @@ class WidgetServiceTest extends TestCase
         $objectService = $this->buildObjectService(services: [], appointments: [], saved: null);
         $this->container->method('get')->willReturn($objectService);
 
-        $result = $this->service->createAppointment(
-            'salon-demo',
-            [
-                'serviceSlug'   => 'haircut',
-                'startTime'     => '2026-05-22T08:00:00Z',
-                'customerName'  => 'Alice Smith',
-                'customerEmail' => 'alice@example.com',
-            ]
-        );
+        $result = $this->service->createAppointment('salon-demo', $this->payload());
 
         self::assertSame(404, $result['code']);
 
     }//end testCreateAppointmentServiceNotFound()
+
+    /**
+     * A service that exists but is NOT flagged isPublic must not be bookable.
+     *
+     * This is the PR #491 hole. It is pinned here because the check has now
+     * moved into the service: a regression would otherwise be invisible.
+     *
+     * @return void
+     */
+    public function testCreateAppointmentRejectsNonPublicService(): void
+    {
+        $private       = $this->bookableService();
+        $private['isPublic'] = false;
+
+        $objectService = $this->buildObjectService(services: [$private], appointments: [], saved: null);
+        $this->container->method('get')->willReturn($objectService);
+
+        $result = $this->service->createAppointment('salon-demo', $this->payload());
+
+        self::assertSame(404, $result['code'], 'a private service must not be bookable via the public widget');
+
+    }//end testCreateAppointmentRejectsNonPublicService()
+
+    /**
+     * A service that is public but not `active` must not be bookable either.
+     *
+     * @return void
+     */
+    public function testCreateAppointmentRejectsInactiveService(): void
+    {
+        $retired           = $this->bookableService();
+        $retired['status'] = 'archived';
+
+        $objectService = $this->buildObjectService(services: [$retired], appointments: [], saved: null);
+        $this->container->method('get')->willReturn($objectService);
+
+        $result = $this->service->createAppointment('salon-demo', $this->payload());
+
+        self::assertSame(404, $result['code']);
+
+    }//end testCreateAppointmentRejectsInactiveService()
 
     /**
      * createAppointment returns 409 when the slot already has a confirmed booking.
@@ -164,42 +261,45 @@ class WidgetServiceTest extends TestCase
      */
     public function testCreateAppointmentConflict(): void
     {
-        $service  = [
-            '@self'      => ['slug' => 'haircut'],
-            'serviceId'  => 'svc-001',
-            'isPublic'   => true,
-            'duration'   => 45,
-            'resourceId' => 'res-001',
-        ];
-        $existing = [
-            '@self'      => ['slug' => 'apt-1'],
-            'resourceId' => 'res-001',
-            'status'     => 'confirmed',
-            'startTime'  => '2026-05-22T08:00:00Z',
-            'endTime'    => '2026-05-22T08:45:00Z',
-        ];
-
         $objectService = $this->buildObjectService(
-            services: [$service],
-            appointments: [$existing],
+            services: [$this->bookableService()],
+            appointments: [],
             saved: null,
         );
         $this->container->method('get')->willReturn($objectService);
 
-        $result = $this->service->createAppointment(
-            'salon-demo',
-            [
-                'serviceSlug'   => 'haircut',
-                'startTime'     => '2026-05-22T08:00:00Z',
-                'customerName'  => 'Alice Smith',
-                'customerEmail' => 'alice@example.com',
-            ]
-        );
+        // SlotService no longer offers the interval — it was just booked.
+        $this->slotService->method('getAvailableSlots')->willReturn(['slots' => []]);
+
+        $result = $this->service->createAppointment('salon-demo', $this->payload());
 
         self::assertSame(409, $result['code']);
         self::assertSame('slot_unavailable', $result['error']);
 
     }//end testCreateAppointmentConflict()
+
+    /**
+     * A SlotService failure must DENY the booking, never permit it.
+     *
+     * @return void
+     */
+    public function testCreateAppointmentFailsClosedWhenAvailabilityCheckThrows(): void
+    {
+        $objectService = $this->buildObjectService(
+            services: [$this->bookableService()],
+            appointments: [],
+            saved: null,
+        );
+        $this->container->method('get')->willReturn($objectService);
+
+        $this->slotService->method('getAvailableSlots')
+            ->willThrowException(new \RuntimeException('slot backend down'));
+
+        $result = $this->service->createAppointment('salon-demo', $this->payload());
+
+        self::assertSame(409, $result['code'], 'an unavailable slot backend must not permit a booking');
+
+    }//end testCreateAppointmentFailsClosedWhenAvailabilityCheckThrows()
 
     /**
      * Happy path: 201 and the response NEVER echoes customer PII (design D6).
@@ -208,41 +308,88 @@ class WidgetServiceTest extends TestCase
      */
     public function testCreateAppointmentSucceedsWithoutLeakingPii(): void
     {
-        $service = [
-            '@self'      => ['slug' => 'haircut'],
-            'serviceId'  => 'svc-001',
-            'isPublic'   => true,
-            'duration'   => 45,
-            'resourceId' => 'res-001',
-        ];
-
         $objectService = $this->buildObjectService(
-            services: [$service],
+            services: [$this->bookableService()],
             appointments: [],
-            saved: ['@self' => ['slug' => 'apt-new']],
+            saved: ['appointmentId' => 'apt-new', 'status' => 'pending_confirmation'],
         );
         $this->container->method('get')->willReturn($objectService);
+        $this->offerCanonicalSlot();
 
-        $result = $this->service->createAppointment(
-            'salon-demo',
-            [
-                'serviceSlug'   => 'haircut',
-                'startTime'     => '2026-05-22T08:00:00Z',
-                'customerName'  => 'Alice Smith',
-                'customerEmail' => 'alice@example.com',
-                'customerPhone' => '+31612345678',
-            ]
-        );
+        $result = $this->service->createAppointment('salon-demo', $this->payload());
 
         self::assertSame(201, $result['code']);
-        self::assertSame('confirmed', $result['status']);
-        // PII must not appear anywhere in the public response.
+        // PII must not appear anywhere in the public response (design D6).
         $encoded = json_encode($result);
         self::assertStringNotContainsString('alice@example.com', (string) $encoded);
         self::assertStringNotContainsString('Alice Smith', (string) $encoded);
         self::assertStringNotContainsString('+31612345678', (string) $encoded);
 
     }//end testCreateAppointmentSucceedsWithoutLeakingPii()
+
+    /**
+     * The customer's contact details MUST be persisted on the Appointment.
+     *
+     * REGRESSION PIN. `register.d/30-bookings-self-service-widget.json` declares
+     * customerName / customerEmail / customerPhone on Appointment; REQ-WSW-006's
+     * scenario requires the appointment to be created with the phone number, and
+     * the REQ-BCF-003 confirmation email needs the address. The routed controller
+     * copy of this write path persisted only an anonymised customerId and dropped
+     * all three — a gap that was invisible because nothing asserted the SAVED
+     * payload, only the returned one. Write-only is the point: they are stored
+     * and never echoed back, so a response-shape assertion cannot see them.
+     *
+     * @return void
+     */
+    public function testCreateAppointmentPersistsCustomerContactDetails(): void
+    {
+        $objectService = $this->buildObjectService(
+            services: [$this->bookableService()],
+            appointments: [],
+            saved: ['appointmentId' => 'apt-new', 'status' => 'pending_confirmation'],
+        );
+        $this->container->method('get')->willReturn($objectService);
+        $this->offerCanonicalSlot();
+
+        $this->service->createAppointment('salon-demo', $this->payload());
+
+        $written = $objectService->lastSaved();
+
+        self::assertNotNull($written, 'the appointment must have been persisted');
+        self::assertSame('Alice Smith', $written['customerName'] ?? null);
+        self::assertSame('alice@example.com', $written['customerEmail'] ?? null);
+        self::assertSame('+31612345678', $written['customerPhone'] ?? null);
+        self::assertSame('widget', $written['source'] ?? null);
+
+    }//end testCreateAppointmentPersistsCustomerContactDetails()
+
+    /**
+     * A widget booking starts `pending_confirmation`, never `confirmed`.
+     *
+     * REQ-BCA-005 pathway 2 / REQ-BCF-010: the customer self-service pathway
+     * awaits confirmation. bookings-confirm-flow keys its ConfirmationToken,
+     * its confirmation email and the CancelUnconfirmedAppointments job off this
+     * value, so creating the row already `confirmed` would silently bypass the
+     * entire capability.
+     *
+     * @return void
+     */
+    public function testCreateAppointmentStartsPendingConfirmation(): void
+    {
+        $objectService = $this->buildObjectService(
+            services: [$this->bookableService()],
+            appointments: [],
+            saved: ['appointmentId' => 'apt-new', 'status' => 'pending_confirmation'],
+        );
+        $this->container->method('get')->willReturn($objectService);
+        $this->offerCanonicalSlot();
+
+        $result = $this->service->createAppointment('salon-demo', $this->payload());
+
+        self::assertSame('pending_confirmation', $objectService->lastSaved()['status'] ?? null);
+        self::assertSame('pending_confirmation', $result['status']);
+
+    }//end testCreateAppointmentStartsPendingConfirmation()
 
     /**
      * listPublicServices exposes only the safe-public subset (no admin fields/PII).
@@ -303,6 +450,13 @@ class WidgetServiceTest extends TestCase
              */
             private ?array $saved;
 
+            /**
+             * The payload the service last handed to saveObject().
+             *
+             * @var array<string,mixed>|null
+             */
+            private ?array $lastSaved = null;
+
             private string $schema = '';
 
             /**
@@ -351,8 +505,19 @@ class WidgetServiceTest extends TestCase
              */
             public function saveObject(array $object, string $register='', string $schema=''): ?array
             {
+                $this->lastSaved = $object;
                 return $this->saved;
             }//end saveObject()
+
+            /**
+             * The payload last handed to saveObject(), for write-side assertions.
+             *
+             * @return array<string,mixed>|null
+             */
+            public function lastSaved(): ?array
+            {
+                return $this->lastSaved;
+            }//end lastSaved()
         };
 
     }//end buildObjectService()

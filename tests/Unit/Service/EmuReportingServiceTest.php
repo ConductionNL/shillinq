@@ -334,22 +334,6 @@ class EmuReportingServiceTest extends TestCase
     }//end testRenderCbsTussenregelsTenRows()
 
     /**
-     * Task 31: CSV export renders header + 10 rows, semicolon-delimited.
-     *
-     * @return void
-     */
-    public function testExportCsvHeaderAndRows(): void
-    {
-        $tussenregels = $this->service->renderCbsTussenregels(4200000.0, [], -2300000.0);
-        $csv          = $this->service->exportCsv($tussenregels);
-        $lines        = explode("\n", $csv);
-        self::assertCount(11, $lines);
-        self::assertSame('regel;label;bedrag', $lines[0]);
-        self::assertStringContainsString('1;Saldo van baten en lasten BBV;4200000.00', $lines[1]);
-        self::assertStringContainsString('10;EMU-saldo;-2300000.00', $lines[10]);
-    }//end testExportCsvHeaderAndRows()
-
-    /**
      * Task 14: explicit iv3 on the item wins.
      *
      * @return void

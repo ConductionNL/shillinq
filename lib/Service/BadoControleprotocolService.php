@@ -549,6 +549,56 @@ class BadoControleprotocolService
     }//end allSisaRegelingenCovered()
 
     /**
+     * Resolve the tenant (organisation) a Controleprotocol belongs to.
+     *
+     * `Controleprotocol.organisationId` is the tenant scope for the whole BADO
+     * bundle: none of the six child schemas (ToleranceMatrix, Materialiteit,
+     * AuditSample, AuditFinding, VerklaringDraft, SiSaAssurance) carries a tenant
+     * field of its own — they hang off the protocol's FK. So the protocol's
+     * organisationId is the only value an ADR-005 membership check can be made
+     * against, and this accessor exists so the controller can make it: every
+     * loader in this class and in AccountantsdossierExportService was private.
+     *
+     * @param string $protocolId The Controleprotocol.id.
+     *
+     * @return string|null The organisation id, or null when the protocol does not exist.
+     *
+     * @spec openspec/changes/bookkeeping-bado-controleprotocol/tasks.md#task-12
+     */
+    public function organisationIdFor(string $protocolId): ?string
+    {
+        if ($protocolId === '') {
+            return null;
+        }
+
+        // ⚠️ Deliberately NOT resolveProtocol()/resolveObject(). Those go through
+        // `findAll(['filters' => ['id' => $id]])`, and `id` is NOT a body
+        // property — it is `@self.id`, a bigint column. Postgres answers that
+        // query with SQLSTATE[22P02] "invalid input syntax for type bigint",
+        // which the service swallows, so the lookup returns null for every
+        // protocol that exists. Using it here would have made this guard refuse
+        // the legitimate owner as well as the attacker — measured on a
+        // two-account rig: owner 200 → 404. ObjectService::find() addresses the
+        // object by its identity and is the call the rest of the app uses.
+        $protocol = $this->objects()->find(
+            id: $protocolId,
+            register: $this->register(),
+            schema: 'Controleprotocol'
+        );
+
+        if ($protocol === null) {
+            return null;
+        }
+
+        if (is_array($protocol) === false) {
+            $protocol = (array) $protocol->jsonSerialize();
+        }
+
+        return (string) ($protocol['organisationId'] ?? '');
+
+    }//end organisationIdFor()
+
+    /**
      * Resolve a Controleprotocol from a supplied object or by id.
      *
      * @param string                   $protocolId The Controleprotocol.id.

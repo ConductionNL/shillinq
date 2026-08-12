@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for BezwaarTermijnGuard.
+ * Unit tests for ObjectionPeriodGuard.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Lifecycle
@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\Shillinq\Lifecycle\BezwaarTermijnGuard;
+use OCA\Shillinq\Lifecycle\ObjectionPeriodGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -30,12 +30,12 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Tests for BezwaarTermijnGuard.
+ * Tests for ObjectionPeriodGuard.
  *
  * Covers REQ-VPB-010 — bezwaar within 6 weeks of the aanslag dagtekening and
  * beroep within 6 weeks of the inspecteur uitspraak.
  */
-class BezwaarTermijnGuardTest extends TestCase
+class ObjectionPeriodGuardTest extends TestCase
 {
 
     /**
@@ -62,9 +62,9 @@ class BezwaarTermijnGuardTest extends TestCase
     /**
      * The guard under test.
      *
-     * @var BezwaarTermijnGuard
+     * @var ObjectionPeriodGuard
      */
-    private BezwaarTermijnGuard $guard;
+    private ObjectionPeriodGuard $guard;
 
     /**
      * Set up test fixtures.
@@ -83,7 +83,7 @@ class BezwaarTermijnGuardTest extends TestCase
 
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->guard = new BezwaarTermijnGuard(
+        $this->guard = new ObjectionPeriodGuard(
             container: $this->container,
             appConfig: $this->appConfig,
             logger: $this->logger,
@@ -104,7 +104,7 @@ class BezwaarTermijnGuardTest extends TestCase
         );
 
         // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertTrue($this->guard->canBezwaarMaken(aangifteId: 'aangifte-1', object: ['id' => 'aangifte-1']));
+        self::assertTrue($this->guard->canFileObjection(taxReturnId:'aangifte-1', object: ['id' => 'aangifte-1']));
 
     }//end testCanBezwaarMakenWithinTermijn()
 
@@ -121,7 +121,7 @@ class BezwaarTermijnGuardTest extends TestCase
         );
 
         // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canBezwaarMaken(aangifteId: 'aangifte-2', object: ['id' => 'aangifte-2']));
+        self::assertFalse($this->guard->canFileObjection(taxReturnId:'aangifte-2', object: ['id' => 'aangifte-2']));
 
     }//end testCannotBezwaarMakenAfterTermijn()
 
@@ -135,7 +135,7 @@ class BezwaarTermijnGuardTest extends TestCase
         $this->container->method('get')->willReturn($this->buildSchemaStub(recordsBySchema: ['DefinitieveAanslag' => []]));
 
         // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canBezwaarMaken(aangifteId: 'aangifte-3', object: ['id' => 'aangifte-3']));
+        self::assertFalse($this->guard->canFileObjection(taxReturnId:'aangifte-3', object: ['id' => 'aangifte-3']));
 
     }//end testCannotBezwaarMakenWithoutAanslag()
 
@@ -150,7 +150,7 @@ class BezwaarTermijnGuardTest extends TestCase
 
         // phpcs:ignore CustomSniffs.Functions.NamedParameters
         self::assertTrue(
-            $this->guard->canBeroepInstellen(bezwaarId: 'bezwaar-1', object: ['uitspraakDatum' => $uitspraak])
+            $this->guard->canFileAppeal(objectionId:'bezwaar-1', object: ['uitspraakDatum' => $uitspraak])
         );
 
     }//end testCanBeroepInstellenWithinTermijn()
@@ -166,7 +166,7 @@ class BezwaarTermijnGuardTest extends TestCase
 
         // phpcs:ignore CustomSniffs.Functions.NamedParameters
         self::assertFalse(
-            $this->guard->canBeroepInstellen(bezwaarId: 'bezwaar-2', object: ['uitspraakDatum' => $uitspraak])
+            $this->guard->canFileAppeal(objectionId:'bezwaar-2', object: ['uitspraakDatum' => $uitspraak])
         );
 
     }//end testCannotBeroepInstellenAfterTermijn()
@@ -180,7 +180,7 @@ class BezwaarTermijnGuardTest extends TestCase
     {
         // phpcs:ignore CustomSniffs.Functions.NamedParameters
         self::assertFalse(
-            $this->guard->canBeroepInstellen(bezwaarId: 'bezwaar-3', object: ['uitspraakDatum' => ''])
+            $this->guard->canFileAppeal(objectionId:'bezwaar-3', object: ['uitspraakDatum' => ''])
         );
 
     }//end testCannotBeroepInstellenWithoutUitspraak()
@@ -196,7 +196,7 @@ class BezwaarTermijnGuardTest extends TestCase
         $this->logger->expects($this->once())->method('error');
 
         // phpcs:ignore CustomSniffs.Functions.NamedParameters
-        self::assertFalse($this->guard->canBezwaarMaken(aangifteId: 'aangifte-x', object: ['id' => 'aangifte-x']));
+        self::assertFalse($this->guard->canFileObjection(taxReturnId:'aangifte-x', object: ['id' => 'aangifte-x']));
 
     }//end testBezwaarExceptionFailsClosed()
 

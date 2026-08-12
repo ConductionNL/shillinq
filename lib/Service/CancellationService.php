@@ -19,7 +19,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-cancellation-rules/specs/spec.md
+ * @spec openspec/specs/bookings-cancellation-rules/spec.md#requirement-cancellation-service-layer
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
  * operates on plain appointment/policy arrays so it can be unit-tested in full
  * isolation and reused from any caller (admin UI, customer portal, REST API).
  *
- * @spec openspec/changes/bookings-cancellation-rules/specs/spec.md (REQ-BCR-003)
+ * @spec openspec/specs/bookings-cancellation-rules/spec.md#requirement-cancellation-service-layer
  */
 class CancellationService
 {
@@ -120,7 +120,7 @@ class CancellationService
      *
      * @return int Refund amount in integer cents (0 <= refund <= appointmentCost).
      *
-     * @spec openspec/changes/bookings-cancellation-rules/specs/spec.md (REQ-BCR-003)
+     * @spec openspec/specs/bookings-cancellation-rules/spec.md#requirement-cancellation-service-layer
      */
     public function calculateRefund(array $appointment, ?DateTimeImmutable $cancelledAt=null): int
     {
@@ -176,7 +176,7 @@ class CancellationService
      *
      * @return array{allowed: bool, code: string, message: string} Validation result.
      *
-     * @spec openspec/changes/bookings-cancellation-rules/specs/spec.md (REQ-BCR-003, REQ-BCR-008)
+     * @spec openspec/specs/bookings-cancellation-rules/spec.md#requirement-cancellation-cannot-be-undone-immutability
      */
     public function validateCancellation(array $appointment, ?string $reason=null): array
     {
@@ -222,7 +222,7 @@ class CancellationService
      *
      * @throws InvalidArgumentException When the appointment cannot be cancelled.
      *
-     * @spec openspec/changes/bookings-cancellation-rules/specs/spec.md (REQ-BCR-003, REQ-BCR-009)
+     * @spec openspec/specs/bookings-cancellation-rules/spec.md#requirement-cancellation-service-layer
      */
     public function initiateCancellation(
         array $appointment,

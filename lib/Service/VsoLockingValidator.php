@@ -30,7 +30,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-3
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -49,7 +49,7 @@ use Throwable;
 /**
  * Determines whether an innovatiebox boekjaar is VSO-locked (REQ-IBA-008).
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-3
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
  */
 class VsoLockingValidator
 {
@@ -79,7 +79,7 @@ class VsoLockingValidator
      *
      * @return bool TRUE when the year is VSO-locked.
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-3
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008
      */
     public function isYearLocked(string $administrationId, int $boekjaar): bool
     {

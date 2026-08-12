@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,7 +42,7 @@ use Psr\Container\ContainerInterface;
 /**
  * Detects innovatiebox/GL cost duplication (doorsnijdingsverbod, REQ-IBA-004).
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-1
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004
  *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
@@ -83,7 +83,7 @@ class DoorsnijdingsVerbodValidator
      *
      * @return array{findings: array<int,array<string,mixed>>, blocking: bool, total: int}
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-1
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004
      */
     public function validateNoDuplication(string $administrationId, int $boekjaar): array
     {
@@ -141,7 +141,7 @@ class DoorsnijdingsVerbodValidator
      *
      * @return array<int,array<string,mixed>> Duplication findings (empty when clean).
      *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-1
+     * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-004
      */
     public function detectDuplicates(array $allocations, array $glLines): array
     {

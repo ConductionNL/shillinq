@@ -28,14 +28,16 @@
 			"route": "/inkoop/goods-receipt-notes/new",
 			"type": "custom",
 			"title": "Receive goods",
-			"component": "GoodsReceiptNoteForm"
+			"component": "GoodsReceiptNoteForm",
+			"_note": "Warehouse capture form that writes MORE THAN ONE object per submit: it creates the GoodsReceiptNote, then POSTs every line (received / accepted / rejected quantity + rejection reason) in sequence, and uploads the delivery-condition photos, before navigating to the detail view. `type: form` submits ONE object against one schema and has no notion of a line array whose rows are derived from the purchase orders the operator picks first. The layout is also deliberately mobile-first (single column, large touch targets, picker-style carrier and reason lists) because it is used on the warehouse floor."
 		},
 		{
 			"id": "GoodsReceiptNoteDetail",
 			"route": "/inkoop/goods-receipt-notes/:id",
 			"type": "custom",
 			"title": "Goods Receipt Note",
-			"component": "GoodsReceiptNoteDetail"
+			"component": "GoodsReceiptNoteDetail",
+			"_note": "Beyond the GRN header and lines this page renders the delivery-photo gallery and links to every ThreeWayMatch whose `grnIds` ARRAY contains this GRN — a many-to-many join that config.relatedCollections, which filters a related schema by one foreign-key field, cannot express. Its two transitions also POST to bespoke endpoints (/api/goods-receipt-notes/{id}/quality-check and /accept) with per-status visibility, and the accept call is what posts the StockMove credit and advances the originating purchase orders (REQ-PO3W-003) — not a field write on this object."
 		}
 	]
 }

@@ -256,12 +256,26 @@
               "action": "submit"
             },
             "description": "Notify the bookkeeper when a filing is successfully submitted (REQ-SBR-003).",
-            "recipients": {
-              "role": "bookkeeper",
-              "scope": "@self.administrationId"
-            },
-            "title": "SBR/XBRL ingediend",
-            "message": "XBRL-instance @self.instanceNumber (@self.entryPoint) is ingediend bij Digipoort."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "SBR/XBRL ingediend: instance {{instanceNumber}} ({{entryPoint}}) is verstuurd naar Digipoort",
+              "en": "SBR/XBRL submitted: instance {{instanceNumber}} ({{entryPoint}}) was filed with Digipoort"
+            }
           },
           "onRejected": {
             "trigger": {
@@ -269,12 +283,26 @@
               "action": "reject"
             },
             "description": "Notify the bookkeeper when Digipoort rejects a submission (REQ-SBR-003).",
-            "recipients": {
-              "role": "bookkeeper",
-              "scope": "@self.administrationId"
-            },
-            "title": "SBR/XBRL afgewezen",
-            "message": "XBRL-instance @self.instanceNumber (@self.entryPoint) is afgewezen door Digipoort: @self.rejectionReason."
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "SBR/XBRL afgewezen: instance {{instanceNumber}} ({{entryPoint}}) is afgewezen door Digipoort — {{rejectionReason}}",
+              "en": "SBR/XBRL rejected: instance {{instanceNumber}} ({{entryPoint}}) was rejected by Digipoort — {{rejectionReason}}"
+            }
           }
         },
         "x-openregister-audit-trail": {

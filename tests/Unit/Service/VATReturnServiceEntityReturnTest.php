@@ -84,6 +84,49 @@ final class VATReturnServiceEntityReturnTest extends TestCase
     }//end testCreateReturnAcceptsObjectEntityReturns()
 
     /**
+     * findReturn() resolves an ObjectEntity, and yields null ONLY when absent.
+     *
+     * This is the exact boundary that produced the "create returns an id the
+     * show endpoint then 404s on" defect: VATReturnController tested
+     * `is_array()` on ObjectService::find()'s return value, which is
+     * `?ObjectEntity` and therefore never an array — so GET
+     * /api/vat-returns/{id} answered 404 for every return that exists, and
+     * DELETE answered 404 where the "only drafts can be deleted" rule owes a
+     * 409. Both directions are asserted here: a present row must come back as a
+     * populated array, and only a genuinely missing row may be null.
+     *
+     * @return void
+     */
+    public function testFindReturnResolvesAnEntityAndNullsOnlyWhenAbsent(): void
+    {
+        $objectService = $this->entityReturningObjectService();
+        $service       = new VATReturnService(
+            container: $this->containerFor(objectService: $objectService),
+            appConfig: $this->createMock(IAppConfig::class),
+            logger: new NullLogger()
+        );
+
+        $created = $service->createReturn(
+            administrationId: 'adm-smb-1',
+            period: 'quarter',
+            periodYear: 2024,
+            periodNumber: 1,
+            regime: 'standard'
+        );
+        $id = (string) ($created['id'] ?? '');
+
+        $found = $service->findReturn(returnId: $id);
+        self::assertIsArray($found, 'findReturn() must normalise the ObjectEntity into an array.');
+        self::assertSame($id, (string) ($found['id'] ?? ''));
+        self::assertSame('draft', $found['statusCode'] ?? null);
+
+        self::assertNull(
+            $service->findReturn(returnId: 'no-such-return'),
+            'findReturn() may only be null when the row genuinely does not exist.'
+        );
+    }//end testFindReturnResolvesAnEntityAndNullsOnlyWhenAbsent()
+
+    /**
      * A row the fake cannot serialise still fails loudly rather than silently.
      *
      * Positive control: proves the guard above is asserting something. If

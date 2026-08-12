@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/modular-register-manifest-fragments/specs/modular-config/spec.md
+ * @spec openspec/specs/apphost-adoption/spec.md#requirement-mechanical-boilerplate-served-by-apphost-generics
  */
 
 declare(strict_types=1);

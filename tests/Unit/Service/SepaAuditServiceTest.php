@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\SepaAuditService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -141,29 +142,33 @@ final class SepaAuditServiceTest extends TestCase
 
 
     /**
-     * Build the subject with the given administration scope + fake OR rows.
+     * Build the subject with the CALLER's administration memberships + fake OR rows.
      *
-     * @param string                                              $admin Administration scope (empty = unconfigured).
-     * @param array<string, array<int, array<string,mixed>>>      $rows  Seed rows per schema.
+     * ⚠️ `$admin` used to be `appConfig('administration_id')` — an instance-wide
+     * constant with no relation to the calling user. It is now the
+     * administration the caller is actually a member of, which is what
+     * AdministrationContextService::canAccess() answers on. An empty string
+     * means "member of nothing" and, unlike before, refuses everything: the old
+     * empty value SKIPPED the comparison entirely.
+     *
+     * @param string                                         $admin The administration the caller is a member of ('' = none).
+     * @param array<string, array<int, array<string,mixed>>> $rows  Seed rows per schema.
      *
      * @return SepaAuditService
      */
     private function svc(string $admin, array $rows): SepaAuditService
     {
-        $this->appConfig->method('getValueString')->willReturnCallback(
-            static function (string $appId, string $key, string $default) use ($admin): string {
-                if ($key === 'administration_id') {
-                    return $admin;
-                }
+        $this->appConfig->method('getValueString')->willReturn('shillinq');
 
-                return 'shillinq';
-            }
+        $context = $this->createMock(AdministrationContextService::class);
+        $context->method('canAccess')->willReturnCallback(
+            static fn (string $administrationId): bool => $administrationId !== '' && $administrationId === $admin
         );
 
         $fake = new FakeSepaObjectService($rows);
         $this->container->method('get')->willReturn($fake);
 
-        return new SepaAuditService($this->container, $this->appConfig, $this->logger);
+        return new SepaAuditService($this->container, $this->appConfig, $context, $this->logger);
 
     }//end svc()
 
@@ -178,7 +183,12 @@ final class SepaAuditServiceTest extends TestCase
         $this->container->expects(self::never())->method('get');
         $this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $svc = new SepaAuditService($this->container, $this->appConfig, $this->logger);
+        $svc = new SepaAuditService(
+            $this->container,
+            $this->appConfig,
+            $this->createMock(AdministrationContextService::class),
+            $this->logger
+        );
 
         self::assertNull($svc->buildMandateDossier(''));
 
@@ -319,10 +329,10 @@ final class SepaAuditServiceTest extends TestCase
     public function testFilenameSlugsUnsafeChars(): void
     {
         $svc = $this->svc(
-            '',
+            'admin-A',
             [
                 'SepaMandate' => [
-                    ['id' => 'm', 'mandateReference' => 'M/2026 #01'],
+                    ['id' => 'm', 'administrationId' => 'admin-A', 'mandateReference' => 'M/2026 #01'],
                 ],
                 'DirectDebitCollection' => [],
             ]
@@ -337,12 +347,22 @@ final class SepaAuditServiceTest extends TestCase
 
 
     /**
-     * Unconfigured administration_id ('') accepts mandates regardless of
-     * administrationId — single-tenant mode.
+     * A caller with NO memberships gets nothing — the inverse of the old assertion (#518).
+     *
+     * ⚠️ This test replaces `testUnconfiguredAdminAcceptsAnyMandate`, which
+     * asserted that an unset `administration_id` "accepts mandates regardless of
+     * administrationId — single-tenant mode". That was the defect, written down
+     * as a requirement: `administration_id` is instance-wide config with no
+     * relation to the caller, its default is '', and at that value the guard was
+     * skipped entirely — so the audit dossier of ANY mandate on the instance was
+     * exportable by ANY authenticated user. The green test is exactly why nobody
+     * looked. Access is now decided by the caller's memberships.
      *
      * @return void
+     *
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
      */
-    public function testUnconfiguredAdminAcceptsAnyMandate(): void
+    public function testCallerWithNoMembershipsGetsNothing(): void
     {
         $svc = $this->svc(
             '',
@@ -354,12 +374,35 @@ final class SepaAuditServiceTest extends TestCase
             ]
         );
 
-        $result = $svc->buildMandateDossier('mandate-1');
+        self::assertNull($svc->buildMandateDossier('mandate-1'));
 
-        self::assertIsArray($result);
-        self::assertSame('sepa-dossier-M1.zip', $result['filename']);
+    }//end testCallerWithNoMembershipsGetsNothing()
 
-    }//end testUnconfiguredAdminAcceptsAnyMandate()
+    /**
+     * A mandate carrying NO administrationId is refused, not exported (#518).
+     *
+     * canAccess('') fails closed. Under the old config-based guard an untagged
+     * mandate compared equal to nothing and fell straight through.
+     *
+     * @return void
+     *
+     * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
+     */
+    public function testUntaggedMandateIsRefused(): void
+    {
+        $svc = $this->svc(
+            'admin-A',
+            [
+                'SepaMandate' => [
+                    ['id' => 'mandate-1', 'mandateReference' => 'M1'],
+                ],
+                'DirectDebitCollection' => [],
+            ]
+        );
+
+        self::assertNull($svc->buildMandateDossier('mandate-1'));
+
+    }//end testUntaggedMandateIsRefused()
 
 
     /**
@@ -370,10 +413,10 @@ final class SepaAuditServiceTest extends TestCase
     public function testCsvCellsAreEscaped(): void
     {
         $svc = $this->svc(
-            '',
+            'admin-A',
             [
                 'SepaMandate' => [
-                    ['id' => 'm', 'mandateReference' => 'M'],
+                    ['id' => 'm', 'administrationId' => 'admin-A', 'mandateReference' => 'M'],
                 ],
                 'DirectDebitCollection' => [
                     [

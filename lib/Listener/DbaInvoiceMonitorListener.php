@@ -48,7 +48,7 @@ use Throwable;
  *
  * @spec openspec/specs/dba-compliance-marker/spec.md
  */
-class DBAFactuurMonitorListener implements IEventListener
+class DbaInvoiceMonitorListener implements IEventListener
 {
     /**
      * Constructor.
@@ -111,7 +111,7 @@ class DBAFactuurMonitorListener implements IEventListener
             // Non-blocking: log and continue. The AP/AR factuur commit MUST NOT
             // be undone by a DBA monitoring hiccup.
             $this->logger->warning(
-                'DBAFactuurMonitorListener: VBAR assess/emit failed (non-blocking).',
+                'DbaInvoiceMonitorListener: VBAR assess/emit failed (non-blocking).',
                 ['opdrachtId' => $opdrachtId, 'factuurId' => $factuurId, 'exception' => $e->getMessage()]
             );
         }//end try
@@ -163,7 +163,7 @@ class DBAFactuurMonitorListener implements IEventListener
                 }
             }
         } catch (Throwable $e) {
-            $this->logger->debug('DBAFactuurMonitorListener: extract failed', ['exception' => $e->getMessage()]);
+            $this->logger->debug('DbaInvoiceMonitorListener: extract failed', ['exception' => $e->getMessage()]);
         }//end try
 
         return null;

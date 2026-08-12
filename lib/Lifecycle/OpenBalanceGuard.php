@@ -43,7 +43,7 @@ use Psr\Log\LoggerInterface;
  * APInvoice / ARInvoice schema lifecycle `requires:` / `preconditions:`
  * clauses. Each returns true when the precondition is satisfied.
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-2.2
+ * @spec openspec/specs/bookkeeping-accounts-payable-core/spec.md#req-ap-002
  */
 class OpenBalanceGuard
 {
@@ -201,7 +201,7 @@ class OpenBalanceGuard
      *
      * @return bool True when archival is permitted.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-2.2
+     * @spec openspec/specs/bookkeeping-accounts-payable-core/spec.md#req-ap-002
      */
     public function vendorBalanceZero(array $vendor): bool
     {
@@ -225,7 +225,7 @@ class OpenBalanceGuard
      *
      * @return bool True when archival is permitted.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-2.3
+     * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md#req-ar-002
      */
     public function customerBalanceZero(array $customer): bool
     {
@@ -251,7 +251,7 @@ class OpenBalanceGuard
      *
      * @return bool True when the vendor is not blocked.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-2.2
+     * @spec openspec/specs/bookkeeping-accounts-payable-core/spec.md#req-ap-002
      */
     public function vendorNotBlocked(array $invoice): bool
     {
@@ -278,7 +278,7 @@ class OpenBalanceGuard
      *
      * @return bool True when the customer is not blocked.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-2.3
+     * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md#req-ar-002
      */
     public function customerNotBlocked(array $invoice): bool
     {
@@ -310,7 +310,7 @@ class OpenBalanceGuard
      *
      * @return bool True when issuing stays within the credit limit.
      *
-     * @spec openspec/changes/add-shillinq-bookkeeping-compliance/tasks.md#task-2.3
+     * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md#req-ar-006
      */
     public function withinCreditLimit(array $invoice): bool
     {

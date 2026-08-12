@@ -9,8 +9,14 @@
  * by OpenRegister's generic object API (the shillinq frontend object store
  * already targets /apps/openregister/api/objects); only the bespoke
  * reconciliation lives here. The endpoint is available to any authenticated user
- * (#[NoAdminRequired]); the administration scope is validated and reads are
- * delegated to OpenRegister's ObjectService, which enforces multitenancy / RBAC.
+ * (#[NoAdminRequired]); the administration scope is validated AND authorised here
+ * against the caller's memberships (AdministrationContextService::canAccess(),
+ * ADR-005 / REQ-MA-001).
+ *
+ * ⚠️ This paragraph used to end "reads are delegated to OpenRegister's
+ * ObjectService, which enforces multitenancy / RBAC". It does not — no
+ * administration term is passed in, and a schema with no `authorization` block
+ * grants every action to every authenticated user. This endpoint also WRITES.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -32,6 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\TaxPaymentReconciliationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -54,6 +61,7 @@ class TaxPaymentController extends Controller
      * @param IRequest                        $request        The request object.
      * @param TaxPaymentReconciliationService $reconciliation The reconciliation service.
      * @param IUserSession                    $userSession    Session for the auth body-guard.
+     * @param AdministrationContextService    $context        RBAC guard — resolves the user's administration memberships.
      * @param LoggerInterface                 $logger         Logger (no stack traces to client).
      *
      * @return void
@@ -62,6 +70,7 @@ class TaxPaymentController extends Controller
         IRequest $request,
         private readonly TaxPaymentReconciliationService $reconciliation,
         private readonly IUserSession $userSession,
+        private readonly AdministrationContextService $context,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
@@ -108,6 +117,13 @@ class TaxPaymentController extends Controller
                 ['error' => 'id must be a valid payment identifier'],
                 Http::STATUS_BAD_REQUEST
             );
+        }
+
+        // ⚠️ Both checks above are character-class tests. The reconciliation
+        // WRITES against the administration named on the wire, so the membership
+        // check has to happen before it (ADR-005 / REQ-MA-001).
+        if ($this->context->canAccess(administrationId: $administrationId) === false) {
+            return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
         }
 
         try {

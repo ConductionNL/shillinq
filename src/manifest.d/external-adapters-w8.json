@@ -128,7 +128,8 @@
 			"route": "/external-adapters",
 			"type": "custom",
 			"title": "External Adapter Status",
-			"component": "ExternalAdaptersStatus"
+			"component": "ExternalAdaptersStatus",
+			"_note": "The adapter catalogue is a PHP-side registry served by externalAdaptersAdmin#index (/api/admin/external-adapters), not an OpenRegister register/schema — there is no object collection for `type: index` to bind config.register/config.schema to. Each row is also a live dormancy verdict computed per request from app-config keys and openconnector source presence, not a stored field, so a declarative column list cannot express it."
 		},
 		{
 			"id": "ExternalAdapterDigipoort",
@@ -136,7 +137,8 @@
 			"type": "custom",
 			"title": "Digipoort / SBR",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "digipoort-sbr" }
+			"config": { "adapterId": "digipoort-sbr" },
+			"_note": "Digipoort/SBR activation console. `type: detail` resolves an OpenRegister object from config.register + config.schema + :id; this page has no object — it reads the adapter descriptor from externalAdaptersAdmin#show and renders the SBR activation checklist, the oc_appconfig keys the operator must set, and the openconnector source slug that binds the live implementation."
 		},
 		{
 			"id": "ExternalAdapterSalarisbureau",
@@ -144,7 +146,8 @@
 			"type": "custom",
 			"title": "Payroll bureau",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "salarisbureau" }
+			"config": { "adapterId": "salarisbureau" },
+			"_note": "Payroll-bureau adapter console. Same reason as ExternalAdapterDigipoort: the payload is the adapter descriptor from externalAdaptersAdmin#show plus a computed dormant/live verdict, neither of which is an OpenRegister object, so `type: detail` has nothing to resolve."
 		},
 		{
 			"id": "ExternalAdapterRvO",
@@ -152,7 +155,8 @@
 			"type": "custom",
 			"title": "RvO",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "rvo" }
+			"config": { "adapterId": "rvo" },
+			"_note": "RvO (subsidy portal) adapter console — adapter descriptor + activation checklist from externalAdaptersAdmin#show, not an OpenRegister object, so no standard object-bound page type applies."
 		},
 		{
 			"id": "ExternalAdapterIb47",
@@ -160,7 +164,8 @@
 			"type": "custom",
 			"title": "Belastingdienst IB47",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "ib47" }
+			"config": { "adapterId": "ib47" },
+			"_note": "Belastingdienst IB47 adapter console — adapter descriptor + activation checklist from externalAdaptersAdmin#show, not an OpenRegister object. The IB47 DATA (the annual batch and its records) does have index/detail pages; this page is the transport binding, which does not."
 		},
 		{
 			"id": "ExternalAdapterCbsBestanden",
@@ -168,7 +173,8 @@
 			"type": "custom",
 			"title": "CBS files",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "cbs-bestanden" }
+			"config": { "adapterId": "cbs-bestanden" },
+			"_note": "CBS files adapter console — adapter descriptor + activation checklist from externalAdaptersAdmin#show, not an OpenRegister object, so no standard object-bound page type applies."
 		},
 		{
 			"id": "ExternalAdapterCbsIv3",
@@ -176,7 +182,8 @@
 			"type": "custom",
 			"title": "CBS Iv3",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "cbs-iv3" }
+			"config": { "adapterId": "cbs-iv3" },
+			"_note": "CBS Iv3 adapter console — adapter descriptor + activation checklist from externalAdaptersAdmin#show, not an OpenRegister object. The Iv3 submissions themselves are objects with their own pages; this page is the transport binding."
 		},
 		{
 			"id": "ExternalAdapterSisa",
@@ -184,7 +191,8 @@
 			"type": "custom",
 			"title": "BZK SiSa",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "bzk-sisa" }
+			"config": { "adapterId": "bzk-sisa" },
+			"_note": "BZK SiSa adapter console — adapter descriptor + activation checklist from externalAdaptersAdmin#show, not an OpenRegister object, so no standard object-bound page type applies."
 		},
 		{
 			"id": "ExternalAdapterMollie",
@@ -192,7 +200,8 @@
 			"type": "custom",
 			"title": "Mollie Payments",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "mollie" }
+			"config": { "adapterId": "mollie" },
+			"_note": "Mollie payment-provider adapter console — credential-key checklist and dormant/live verdict from externalAdaptersAdmin#show. Nothing here is stored as an object, so `type: detail` has no register/schema/:id triple to resolve."
 		},
 		{
 			"id": "ExternalAdapterBunq",
@@ -200,7 +209,8 @@
 			"type": "custom",
 			"title": "Bunq Bank Connector",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "bunq" }
+			"config": { "adapterId": "bunq" },
+			"_note": "Bunq bank-connector adapter console — credential-key checklist and dormant/live verdict from externalAdaptersAdmin#show. The imported bank transactions are objects with their own pages; the connector binding is not."
 		},
 		{
 			"id": "ExternalAdapterKvk",
@@ -208,7 +218,8 @@
 			"type": "custom",
 			"title": "KvK Trade Register",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "kvk" }
+			"config": { "adapterId": "kvk" },
+			"_note": "KvK Trade Register lookup adapter console — API-key checklist and dormant/live verdict from externalAdaptersAdmin#show, not an OpenRegister object, so no standard object-bound page type applies."
 		},
 		{
 			"id": "ExternalAdapterUwv",
@@ -216,7 +227,8 @@
 			"type": "custom",
 			"title": "UWV payroll filing",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "uwv" }
+			"config": { "adapterId": "uwv" },
+			"_note": "UWV payroll-filing adapter console — adapter descriptor + activation checklist from externalAdaptersAdmin#show, not an OpenRegister object, so no standard object-bound page type applies."
 		},
 		{
 			"id": "ExternalAdapterTreasuryRates",
@@ -224,7 +236,8 @@
 			"type": "custom",
 			"title": "Treasury Rates",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "treasury-rates" }
+			"config": { "adapterId": "treasury-rates" },
+			"_note": "Treasury-rates feed adapter console — feed URL and refresh-schedule config keys plus the dormant/live verdict from externalAdaptersAdmin#show. The fetched rates are objects; the feed binding is not, so `type: detail` has nothing to resolve."
 		},
 		{
 			"id": "ExternalAdapterCcm",
@@ -232,7 +245,8 @@
 			"type": "custom",
 			"title": "CCM Rule Engine",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "ccm-rule-engine" }
+			"config": { "adapterId": "ccm-rule-engine" },
+			"_note": "Continuous-controls-monitoring rule-engine adapter console — engine endpoint config keys and the dormant/live verdict from externalAdaptersAdmin#show. CCM rules and findings are objects with their own pages; the engine binding is not."
 		},
 		{
 			"id": "ExternalAdapterCsrd",
@@ -240,7 +254,8 @@
 			"type": "custom",
 			"title": "CSRD ESRS XBRL",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "csrd-esrs-xbrl" }
+			"config": { "adapterId": "csrd-esrs-xbrl" },
+			"_note": "CSRD/ESRS XBRL filing adapter console — taxonomy and endpoint config keys plus the dormant/live verdict from externalAdaptersAdmin#show, not an OpenRegister object, so no standard object-bound page type applies."
 		},
 		{
 			"id": "ExternalAdapterDepositPayment",
@@ -248,7 +263,8 @@
 			"type": "custom",
 			"title": "Deposit Payment lifecycle",
 			"component": "ExternalAdapterDetail",
-			"props": { "adapterId": "deposit-payment" }
+			"config": { "adapterId": "deposit-payment" },
+			"_note": "Deposit-payment lifecycle adapter console — provider config keys and the dormant/live verdict from externalAdaptersAdmin#show. Deposits themselves are objects with their own pages; the payment-provider binding is not."
 		}
 	]
 }

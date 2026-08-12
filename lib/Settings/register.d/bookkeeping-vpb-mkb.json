@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-vpb-mkb",
     "spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
-    "description": "ADR-037 register fragment declaring the reguliere Vennootschapsbelasting (Vpb) aangifte data model for BV/NV (T3, regulatory + compliance): Belastingplichtige, VpbAangifte, FiscaleCorrectie, Innovatiebox, Deelneming, FiscaleEenheid, Voorvoegingsverlies, InvesteringsAftrek, VoorlopigeAanslag, DefinitieveAanslag, BezwaarBeroep plus the VpbTariefcatalogus parameterisation table. Per ADR-031 all fiscal logic is declarative metadata: x-openregister-lifecycle state machines, x-openregister-calculations formulas (schijftarief, voorvoegingsverlies-verjaring, facility eligibility), x-openregister-unique constraints, x-openregister-relations and x-openregister-rbac. Cross-schema preconditions that the declarative DSL cannot yet express are delegated to OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard and OCA\\Shillinq\\Lifecycle\\BezwaarTermijnGuard (ADR-031 exception path). No PHP tax-calculation service is authored (ADR-022/ADR-031). Schijftarieven and facility percentages are stored as data (VpbTariefcatalogus) so wetswijzigingen are reproducible per belastingjaar.",
+    "description": "ADR-037 register fragment declaring the reguliere Vennootschapsbelasting (Vpb) aangifte data model for BV/NV (T3, regulatory + compliance): Belastingplichtige, VpbAangifte, FiscaleCorrectie, Innovatiebox, Deelneming, FiscaleEenheid, Voorvoegingsverlies, InvesteringsAftrek, VoorlopigeAanslag, DefinitieveAanslag, BezwaarBeroep plus the VpbTariefcatalogus parameterisation table. Per ADR-031 all fiscal logic is declarative metadata: x-openregister-lifecycle state machines, x-openregister-calculations formulas (schijftarief, voorvoegingsverlies-verjaring, facility eligibility), x-openregister-unique constraints, x-openregister-relations and x-openregister-rbac. Cross-schema preconditions that the declarative DSL cannot yet express are delegated to OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard and OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard (ADR-031 exception path). No PHP tax-calculation service is authored (ADR-022/ADR-031). Schijftarieven and facility percentages are stored as data (VpbTariefcatalogus) so wetswijzigingen are reproducible per belastingjaar.",
     "imported": "2026-06-05T00:00:00Z"
   },
   "components": {
@@ -294,7 +294,9 @@
           },
           "belastingplichtige": {
             "type": "string",
-            "description": "FK naar de Belastingplichtige.",
+            "format": "uuid",
+            "$ref": "Belastingplichtige",
+            "description": "Reference to the Belastingplichtige (taxable entity) this record belongs to.",
             "example": "belastingplichtige-acme-bv",
             "title": "Belastingplichtige"
           },
@@ -481,8 +483,8 @@
               "from": "aanslag-ontvangen",
               "to": "bezwaar",
               "label": "Bezwaar maken",
-              "description": "Bezwaar mag alleen binnen de wettelijke termijn van 6 weken na de dagtekening van de aanslag (REQ-VPB-010). Cross-schema termijn-check: BezwaarTermijnGuard::canBezwaarMaken.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\BezwaarTermijnGuard::canBezwaarMaken"
+              "description": "Bezwaar mag alleen binnen de wettelijke termijn van 6 weken na de dagtekening van de aanslag (REQ-VPB-010). Cross-schema termijn-check: ObjectionPeriodGuard::canFileObjection.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileObjection"
             },
             "beroepInstellen": {
               "from": "bezwaar",
@@ -502,43 +504,6 @@
               "label": "Beroep afgerond",
               "description": "Laatste rechtsmiddel uitgeput of niet aangewend; aanslag onherroepelijk."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "belastingplichtigeRef": {
-            "localField": "belastingplichtige",
-            "relatedSchema": "Belastingplichtige",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "De belastingplichtige van deze aangifte."
-          },
-          "correcties": {
-            "localField": "id",
-            "relatedSchema": "FiscaleCorrectie",
-            "relatedField": "aangifte",
-            "cardinality": "one-to-many",
-            "description": "Fiscale correcties commercieel → fiscaal (REQ-VPB-002)."
-          },
-          "innovatieboxClaims": {
-            "localField": "id",
-            "relatedSchema": "Innovatiebox",
-            "relatedField": "aangifte",
-            "cardinality": "one-to-many",
-            "description": "Innovatiebox-claims (REQ-VPB-004)."
-          },
-          "investeringsAftrekken": {
-            "localField": "id",
-            "relatedSchema": "InvesteringsAftrek",
-            "relatedField": "aangifte",
-            "cardinality": "one-to-many",
-            "description": "KIA/EIA/MIA/Vamil-claims (REQ-VPB-008)."
-          },
-          "definitieveAanslag": {
-            "localField": "id",
-            "relatedSchema": "DefinitieveAanslag",
-            "relatedField": "aangifte",
-            "cardinality": "one-to-one",
-            "description": "De definitieve aanslag (REQ-VPB-010)."
           }
         },
         "x-openregister-rbac": {
@@ -597,7 +562,9 @@
           },
           "aangifte": {
             "type": "string",
-            "description": "FK naar de VpbAangifte.",
+            "format": "uuid",
+            "$ref": "VpbAangifte",
+            "description": "Reference to the VpbAangifte (corporate income tax return) this record belongs to.",
             "example": "vpb-aangifte-acme-2026",
             "title": "Aangifte"
           },
@@ -645,15 +612,6 @@
           "correctieBedrag": {
             "description": "Fiscaal bedrag minus commercieel bedrag (REQ-VPB-002).",
             "expr": "(@self.fiscaalBedrag ?? 0) - (@self.commercieelBedrag ?? 0)"
-          }
-        },
-        "x-openregister-relations": {
-          "aangifteRef": {
-            "localField": "aangifte",
-            "relatedSchema": "VpbAangifte",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "De aangifte waartoe deze correctie behoort."
           }
         },
         "x-openregister-rbac": {
@@ -707,7 +665,9 @@
           },
           "aangifte": {
             "type": "string",
-            "description": "FK naar de VpbAangifte.",
+            "format": "uuid",
+            "$ref": "VpbAangifte",
+            "description": "Reference to the VpbAangifte (corporate income tax return) this record belongs to.",
             "example": "vpb-aangifte-acme-2026",
             "title": "Aangifte"
           },
@@ -797,15 +757,6 @@
           },
           "transitions": {}
         },
-        "x-openregister-relations": {
-          "aangifteRef": {
-            "localField": "aangifte",
-            "relatedSchema": "VpbAangifte",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "De aangifte waartoe deze claim behoort."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "fiscalist": {
@@ -857,7 +808,9 @@
           },
           "belastingplichtige": {
             "type": "string",
-            "description": "FK naar de Belastingplichtige (houdstermaatschappij).",
+            "format": "uuid",
+            "$ref": "Belastingplichtige",
+            "description": "Reference to the holding Belastingplichtige (houdstermaatschappij) that owns this participation.",
             "example": "belastingplichtige-acme-bv",
             "title": "Belastingplichtige"
           },
@@ -945,15 +898,6 @@
             "expr": "(@self.aandeelhouderschapPercentage ?? 0) >= 5"
           }
         },
-        "x-openregister-relations": {
-          "belastingplichtigeRef": {
-            "localField": "belastingplichtige",
-            "relatedSchema": "Belastingplichtige",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "De houdster-belastingplichtige."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "fiscalist": {
@@ -1004,7 +948,9 @@
           },
           "moedermaatschappij": {
             "type": "string",
-            "description": "FK naar de Belastingplichtige-moedermaatschappij.",
+            "format": "uuid",
+            "$ref": "Belastingplichtige",
+            "description": "Reference to the parent Belastingplichtige (moedermaatschappij) at the head of this fiscale eenheid.",
             "example": "belastingplichtige-acme-bv",
             "title": "Moedermaatschappij"
           },
@@ -1066,15 +1012,6 @@
             "title": "Voorvoegingsverliezen Per Dochter"
           }
         },
-        "x-openregister-relations": {
-          "moederRef": {
-            "localField": "moedermaatschappij",
-            "relatedSchema": "Belastingplichtige",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "De moedermaatschappij."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "fiscalist": {
@@ -1126,7 +1063,9 @@
           },
           "belastingplichtige": {
             "type": "string",
-            "description": "FK naar de Belastingplichtige.",
+            "format": "uuid",
+            "$ref": "Belastingplichtige",
+            "description": "Reference to the Belastingplichtige (taxable entity) this record belongs to.",
             "example": "belastingplichtige-acme-bv",
             "title": "Belastingplichtige"
           },
@@ -1200,15 +1139,6 @@
             "guard": "OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::bepaalVerjaardatum"
           }
         },
-        "x-openregister-relations": {
-          "belastingplichtigeRef": {
-            "localField": "belastingplichtige",
-            "relatedSchema": "Belastingplichtige",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "De belastingplichtige die het verlies droeg."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "fiscalist": {
@@ -1260,7 +1190,9 @@
           },
           "aangifte": {
             "type": "string",
-            "description": "FK naar de VpbAangifte.",
+            "format": "uuid",
+            "$ref": "VpbAangifte",
+            "description": "Reference to the VpbAangifte (corporate income tax return) this record belongs to.",
             "example": "vpb-aangifte-acme-2026",
             "title": "Aangifte"
           },
@@ -1343,15 +1275,6 @@
             "expr": "(@self.type == 'EIA' and contains(@self.gecombineerdMet, 'MIA')) or (@self.type == 'MIA' and contains(@self.gecombineerdMet, 'EIA'))"
           }
         },
-        "x-openregister-relations": {
-          "aangifteRef": {
-            "localField": "aangifte",
-            "relatedSchema": "VpbAangifte",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "De aangifte waartoe deze aftrek behoort."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "fiscalist": {
@@ -1404,7 +1327,9 @@
           },
           "belastingplichtige": {
             "type": "string",
-            "description": "FK naar de Belastingplichtige.",
+            "format": "uuid",
+            "$ref": "Belastingplichtige",
+            "description": "Reference to the Belastingplichtige (taxable entity) this record belongs to.",
             "example": "belastingplichtige-acme-bv",
             "title": "Belastingplichtige"
           },
@@ -1472,15 +1397,6 @@
             "title": "Herzieningsuitslag"
           }
         },
-        "x-openregister-relations": {
-          "belastingplichtigeRef": {
-            "localField": "belastingplichtige",
-            "relatedSchema": "Belastingplichtige",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "De belastingplichtige."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "fiscalist": {
@@ -1532,7 +1448,9 @@
           },
           "aangifte": {
             "type": "string",
-            "description": "FK naar de VpbAangifte.",
+            "format": "uuid",
+            "$ref": "VpbAangifte",
+            "description": "Reference to the VpbAangifte (corporate income tax return) this record belongs to.",
             "example": "vpb-aangifte-acme-2026",
             "title": "Aangifte"
           },
@@ -1648,22 +1566,6 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "aangifteRef": {
-            "localField": "aangifte",
-            "relatedSchema": "VpbAangifte",
-            "relatedField": "id",
-            "cardinality": "one-to-one",
-            "description": "De aangifte waarop deze aanslag ziet."
-          },
-          "bezwaren": {
-            "localField": "id",
-            "relatedSchema": "BezwaarBeroep",
-            "relatedField": "aanslag",
-            "cardinality": "one-to-many",
-            "description": "Bezwaar/beroep-procedures tegen deze aanslag (REQ-VPB-010)."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "fiscalist": {
@@ -1715,7 +1617,9 @@
           },
           "aanslag": {
             "type": "string",
-            "description": "FK naar de DefinitieveAanslag.",
+            "format": "uuid",
+            "$ref": "DefinitieveAanslag",
+            "description": "Reference to the DefinitieveAanslag (final assessment) this objection or appeal contests.",
             "example": "definitieve-aanslag-acme-2026",
             "title": "Aanslag"
           },
@@ -1895,8 +1799,8 @@
               "from": "uitspraak-inspecteur-ontvangen",
               "to": "beroep-pending",
               "label": "Beroep instellen",
-              "description": "Beroep bij de rechtbank binnen 6 weken na uitspraak (REQ-VPB-010). Termijn-check: BezwaarTermijnGuard::canBeroepInstellen.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\BezwaarTermijnGuard::canBeroepInstellen"
+              "description": "Beroep bij de rechtbank binnen 6 weken na uitspraak (REQ-VPB-010). Termijn-check: ObjectionPeriodGuard::canFileAppeal.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileAppeal"
             },
             "beroepUitspraak": {
               "from": "beroep-pending",
@@ -1940,15 +1844,6 @@
               "label": "Afronden (berusten)",
               "description": "Berusten in de uitspraak; procedure afgerond."
             }
-          }
-        },
-        "x-openregister-relations": {
-          "aanslagRef": {
-            "localField": "aanslag",
-            "relatedSchema": "DefinitieveAanslag",
-            "relatedField": "id",
-            "cardinality": "many-to-one",
-            "description": "De bestreden aanslag."
           }
         },
         "x-openregister-rbac": {
